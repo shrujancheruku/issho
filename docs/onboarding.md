@@ -121,4 +121,6 @@ Read [contributing.md](contributing.md). In short:
 | Pre-commit hook blocks a commit | It found a secret. Remove it from the staged files. If it's a confirmed false positive, add an allowlist entry to `.gitleaks.toml` in a reviewed PR. |
 | CI `roadmap` job fails | Your change touched code but not `docs/ROADMAP.md`. Update the status. |
 | CI "Generated code is up to date" fails | Run `make gen` and commit the result. |
+| `docker run postgis/postgis…` → "no matching manifest for linux/arm64" | That image is amd64-only. Use `supabase start`, or add `--platform linux/amd64` (OrbStack emulates it). |
+| CI "pnpm install" → `ERR_PNPM_IGNORED_BUILDS` | A new dependency has an install script. Run `pnpm approve-builds '<pkg>'` (allow) or `'!<pkg>'` (deny) and commit `pnpm-workspace.yaml`. |
 | App shows "unreachable" | API not running, or `EXPO_PUBLIC_API_URL` isn't reachable from the simulator or phone. |

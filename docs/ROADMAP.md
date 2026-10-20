@@ -45,8 +45,8 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
 - ✅ Starter data: 38 activities (English/Japanese) and the Tokyo pack (12 areas). Loaded with `cmd/tool seed`.
 - ✅ Local Supabase stack (`supabase start`) with ES256 signing keys. Verified end to end: sign-up → API with a real token.
 - ✅ Expo SDK 58 app wired to the generated client (health check on the home screen).
-- ✅ CI: secret scan, roadmap check, proto lint/breaking, codegen drift, Go vet/test, migration round-trip + seed on PostGIS, TypeScript typecheck, commitlint.
-- ✅ Releases: Conventional Commits + SemVer via release-please.
+- ✅ CI (green from a clean checkout; actions on Node 24 majors): secret scan, roadmap check, proto lint/breaking, codegen drift, Go vet/test, migration round-trip + seed on PostGIS, TypeScript typecheck, commitlint.
+- 🟡 Releases: Conventional Commits + SemVer via release-please. **Blocked on a repo setting:** Settings → Actions → General → "Allow GitHub Actions to create and approve pull requests".
 - ✅ Secrets management: gitleaks (custom rules), pre-commit hook, CI scan, gitignore patterns. See [secrets.md](secrets.md).
 - ✅ Onboarding documentation.
 - ⬜ Sentry and PostHog SDKs. *Moved to M9: nothing worth tracking yet.*
@@ -144,9 +144,12 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
 | 2026-10-20 | **Redundancy review: Zustand and connect-query deferred.** | TanStack Query plus the generated client cover current needs. Add them only when local UI state or query-key boilerplate actually hurts. |
 | 2026-10-20 | **Redundancy review: R2 kept, but only for off-site `pg_dump`.** | Supabase Pro does daily backups, but they live with the same vendor. A cheap off-site copy is real disaster recovery, not duplication. Photos use Supabase Storage. |
 | 2026-10-20 | Admin SPA and waitlist on **Cloudflare Pages** | Static hosting is free, and with Caddy gone the VPS serves only the API. |
+| 2026-10-20 | pnpm dependency build scripts deny-by-default (`allowBuilds` in `pnpm-workspace.yaml`) | pnpm 12 fails installs on unapproved install scripts. Each package is approved or denied explicitly; `unrs-resolver` is denied because its script only fetches fallback binaries. |
+| 2026-10-20 | Commit `apps/mobile/src/types/expo.d.ts` | Expo's generated `expo-env.d.ts` is gitignored by convention, so fresh clones and CI couldn't typecheck CSS imports. |
 | 2026-10-20 | CORS deny-by-default via an explicit origin allowlist | rs/cors treats an empty `AllowedOrigins` as allow-all. |
 
 ## 5. Known gaps & risks
 - **Not enough nearby users** is the main product risk. The admin proposal override lets the first city be hand-curated.
 - **Google Maps terms** restrict caching (store only place IDs long-term, fetch details live). Re-check the Maps Service Terms before M3 ships.
+- **`postgis/postgis` has no arm64 image.** CI (amd64) is unaffected. On Apple Silicon, use `supabase start` (arm64) or run that image with `--platform linux/amd64`.
 - **Disk space on dev machines:** Supabase images take several GB. OrbStack's VM disk can report "no space left" on its first launch; retrying fixes it.
