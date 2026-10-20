@@ -1,3 +1,4 @@
+import { DelaGothicOne_400Regular, useFonts } from '@expo-google-fonts/dela-gothic-one';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -15,6 +16,12 @@ const queryClient = new QueryClient();
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+  // The key becomes the font family name (DisplayFont in constants/theme.ts).
+  const [fontsLoaded, fontError] = useFonts({ DelaGothicOne_400Regular });
+  // Keep the splash screen up until the font is ready, so headings never flash in
+  // the system font. If loading fails, carry on: text falls back to the system font.
+  if (!fontsLoaded && !fontError) return null;
+
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>

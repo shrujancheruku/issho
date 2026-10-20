@@ -66,6 +66,13 @@ lib/api.ts ── Authorization: Bearer <access token> ────────�
 | `assets/images/logo.png` | The logo, rendered from `assets/brand/logo.svg` (`rsvg-convert -w 900 ../../assets/brand/logo.svg -o assets/images/logo.png`) |
 | `app.json` | App config: name, bundle IDs `com.joinissho.app`, scheme `issho`. `expo.version` is managed by release-please. |
 
+## Typography
+
+- **Standout and hero text** (`ThemedText` types `title` and `subtitle`) uses **Dela Gothic One**, the face of the "ISSHO" wordmark (see `assets/brand`). It covers Latin and Japanese.
+- Everything else (body text, inputs, buttons) uses the system font, for readability.
+- The font comes from `@expo-google-fonts/dela-gothic-one` (OFL) and is loaded at startup with `useFonts` in `app/_layout.tsx`, which also works in Expo Go. The splash screen stays up until it's loaded. If loading fails, the app falls back to the system font.
+- Use the `DisplayFont` constant (`constants/theme.ts`) rather than the family name. The face has a single weight, so **never set `fontWeight`** on display text: Android would fall back to the system font.
+
 ## Calling the API
 
 ```tsx
