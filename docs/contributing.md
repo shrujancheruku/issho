@@ -16,7 +16,7 @@
 
 ## Commit messages: Conventional Commits
 
-Write each message as `type(scope): summary`, in the imperative and lower-case, with no trailing period. CI (commitlint) checks every commit in a PR.
+Write each message as `type(scope): summary`, in the imperative and lower-case, with no trailing period. Wrap body lines at 72 characters (the hard limit is 100). commitlint checks every message locally through the `commit-msg` hook (enabled by `make setup`), and again in CI for every commit in a PR.
 
 - **Types:**
   - `feat`: new behaviour
@@ -76,10 +76,23 @@ See [../data/README.md](../data/README.md). It's a JSON file plus `make seed`, w
 | Go unit tests | `make test` | `*_test.go` next to the code; table-driven style |
 | Auth | Tests sign JWTs with a throwaway ES256 key | `internal/platform/auth/auth_test.go` |
 | Migrations | Up, down, up, then seed against PostGIS | CI `backend` job; locally against `supabase start` |
-| TypeScript | `pnpm typecheck` (Turborepo) | all workspace packages |
+| TypeScript | `pnpm typecheck`, `pnpm lint` (Turborepo) | all workspace packages |
+| Mobile unit tests | `pnpm test` (Jest, `jest-expo` preset) | `apps/mobile/src/**/__tests__/*.test.ts` |
 | End to end (manual for now) | Steps 3–4 of [onboarding.md](onboarding.md) | |
 
 Tests must not call paid APIs (Google, Anthropic). Use fakes behind the provider interfaces, with recorded fixtures.
+
+## AI agent skills
+
+The official Supabase skills ([supabase/agent-skills](https://github.com/supabase/agent-skills), MIT) are installed at project scope in `.claude/skills/`, and tracked in `skills-lock.json`. Repo-specific rules that override them are in [`CLAUDE.md`](../CLAUDE.md), e.g. goose owns migrations and the Data API stays off.
+
+Update them with a pinned CLI version that's at least two weeks old. Telemetry off:
+
+```sh
+DO_NOT_TRACK=1 npx -y skills@1.7.0 update
+```
+
+Review the diff before committing: skills run with full agent permissions. Check that nothing new conflicts with `CLAUDE.md`.
 
 ## Code style
 - Go: `gofmt` and `go vet`. Packages are named after their domain. Errors are wrapped with `%w`.

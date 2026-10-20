@@ -9,3 +9,8 @@ returning id, email, verified_at, deleted_at, created_at;
 
 -- name: HasProfile :one
 select exists (select 1 from app.profiles where user_id = $1);
+
+-- Explicit delete for databases without the auth.users foreign key (CI, plain
+-- Postgres). On Supabase the row is usually already gone via the cascade.
+-- name: DeleteUser :exec
+delete from app.users where id = $1;

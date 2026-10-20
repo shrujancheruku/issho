@@ -19,10 +19,13 @@
 |---|---|---|---|
 | Supabase JWT signing key | `supabase/signing_keys.json` (gitignored, generated per machine) | not needed | Supabase dashboard (never exported) |
 | `DATABASE_URL` (with password) | `.env.example` defaults are the well-known **local-only** Supabase credentials | service container, throwaway | Kamal secrets (`.kamal/secrets`, gitignored, filled from a password manager) |
-| Supabase secret key | not used yet | not used | Kamal secrets |
+| Hosted DB URL for a Supabase project (with password) | `.env.<project>` (e.g. `.env.issho-dev`, gitignored), used via `make … ENV_FILE=` | not used | Kamal secrets (`DATABASE_URL`) |
+| SMTP password (Resend API key) | `supabase/.env` as `SUPABASE_SMTP_PASS` (gitignored); `config push` uploads it to Supabase as a masked secret | not used | Supabase project config |
+| Supabase CLI access token | macOS keychain, via `supabase login --token` with a **scoped** token run in your own terminal (the browser login grants full-account access) | not used | n/a |
+| Supabase secret key (`SUPABASE_SECRET_KEY`) | `SECRET_KEY` from `supabase status`, exported in your shell or a gitignored `.env` (never in `.env.example`) | not used (tests use a fake admin) | Kamal secrets |
 | Google Maps server key (M3) | your shell env / untracked `.env` | GitHub Actions secret (only if a job needs it; tests use fakes) | Kamal secrets |
 | Anthropic API key (M5) | shell env / untracked `.env` | not used (tests use recorded fixtures) | Kamal secrets |
-| Apple / Google OAuth secrets (M2) | `supabase/.env` (gitignored), referenced as `env(...)` in `supabase/config.toml` | not used | Supabase dashboard |
+| Apple / Google OAuth secrets (post-MVP; not used) | `supabase/.env` (gitignored), referenced as `env(...)` in `supabase/config.toml` | not used | Supabase dashboard |
 | Apple `.p8` keys, Android keystores | not stored locally; EAS manages signing credentials | n/a | EAS (Expo) credential store |
 | SMTP relay credentials (M2) | not needed (Mailpit) | n/a | Supabase dashboard (custom SMTP) |
 

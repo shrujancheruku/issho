@@ -1,0 +1,4 @@
+#!/bin/sh
+# Checks the commit message against Conventional Commits (commitlint.config.mjs),
+# the same rules CI applies to every PR. Enabled by `make setup`.
+exec pnpm exec commitlint --edit "$1"

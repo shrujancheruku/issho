@@ -24,6 +24,22 @@ export const Colors = {
   },
 } as const;
 
+/**
+ * Display typeface for standout and hero text (the same face as the "ISSHO" wordmark).
+ * Loaded at runtime in app/_layout.tsx with useFonts, so it also works in Expo Go;
+ * the family name is the key passed to useFonts, identical on iOS and Android.
+ * It has a single weight, so never combine it with fontWeight: Android would fall
+ * back to the system font, and iOS would fake a bold.
+ */
+export const DisplayFont = 'DelaGothicOne_400Regular';
+
+/** Brand colours from assets/brand (see its README). */
+export const Brand = {
+  red: '#BC002D',
+  gold: '#C9A227',
+  ink: '#111111',
+} as const;
+
 export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
 
 export const Fonts = Platform.select({

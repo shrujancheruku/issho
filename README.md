@@ -28,6 +28,7 @@ Love film cameras, flat whites and wandering down side streets? Issho finds the 
 | [docs/generated/api.md](docs/generated/api.md) | API reference, generated from the protos |
 | [docs/contributing.md](docs/contributing.md) | Workflow, Conventional Commits, releases, testing, common tasks |
 | [docs/secrets.md](docs/secrets.md) | Where secrets live and how leaks are prevented (**public repo**) |
+| [docs/supabase-hosted.md](docs/supabase-hosted.md) | Step-by-step configuration of a hosted Supabase project |
 | [SECURITY.md](SECURITY.md) | Reporting vulnerabilities |
 
 Each directory has its own README:
@@ -42,7 +43,8 @@ Each directory has its own README:
 | [`supabase/`](supabase/README.md) | Local Supabase stack config |
 | [`assets/brand/`](assets/brand/README.md) | Logo, mark and brand colours (with the story behind the kanji) |
 | `scripts/` | CI helpers (`check-roadmap.sh`) and the logo generator (`brand/build_logo.py`) |
-| `.githooks/` | Pre-commit secret scan (enable with `make setup`) |
+| [`CLAUDE.md`](CLAUDE.md), `.claude/skills/` | Instructions for AI coding agents, and the official Supabase agent skills |
+| `.githooks/` | Git hooks: secret scan (pre-commit) and commit-message lint (commit-msg). Enable with `make setup`. |
 
 ## Quick start
 

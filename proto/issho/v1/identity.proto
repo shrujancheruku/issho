@@ -13,7 +13,17 @@ service IdentityService {
   // GetMe returns the caller's account, creating the app-side user row the
   // first time a Supabase user calls the API.
   rpc GetMe(GetMeRequest) returns (GetMeResponse) {}
+
+  // DeleteAccount permanently deletes the caller's Supabase auth user and all
+  // of their app data (cascaded from auth.users). The client should sign out
+  // afterwards; existing access tokens stop working once they expire.
+  // Returns FAILED_PRECONDITION if the server has no Supabase secret key configured.
+  rpc DeleteAccount(DeleteAccountRequest) returns (DeleteAccountResponse) {}
 }
+
+message DeleteAccountRequest {}
+
+message DeleteAccountResponse {}
 
 message GetMeRequest {}
 

@@ -30,3 +30,6 @@ google-services.json
 GoogleService-Info.plist
 .kamal/secrets*
 !.kamal/secrets.example
+
+# Claude Code: per-user settings stay local; .claude/skills is shared
+.claude/settings.local.json

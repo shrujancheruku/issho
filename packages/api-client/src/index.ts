@@ -4,6 +4,9 @@ import { CatalogService } from "./gen/issho/v1/catalog_pb";
 import { HealthService } from "./gen/issho/v1/health_pb";
 import { IdentityService } from "./gen/issho/v1/identity_pb";
 
+// Error types for callers (code checks like `err.code === Code.Unauthenticated`), so apps
+// don't need their own dependency on @connectrpc/connect.
+export { Code, ConnectError } from "@connectrpc/connect";
 export * from "./gen/issho/v1/catalog_pb";
 export * from "./gen/issho/v1/health_pb";
 export * from "./gen/issho/v1/identity_pb";

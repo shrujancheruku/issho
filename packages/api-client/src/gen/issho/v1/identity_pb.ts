@@ -10,7 +10,33 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file issho/v1/identity.proto.
  */
 export const file_issho_v1_identity: GenFile = /*@__PURE__*/
-  fileDesc("Chdpc3Noby92MS9pZGVudGl0eS5wcm90bxIIaXNzaG8udjEiDgoMR2V0TWVSZXF1ZXN0Ii0KDUdldE1lUmVzcG9uc2USHAoEdXNlchgBIAEoCzIOLmlzc2hvLnYxLlVzZXIiNAoEVXNlchIKCgJpZBgBIAEoCRINCgVlbWFpbBgCIAEoCRIRCglvbmJvYXJkZWQYAyABKAgyTQoPSWRlbnRpdHlTZXJ2aWNlEjoKBUdldE1lEhYuaXNzaG8udjEuR2V0TWVSZXF1ZXN0GhcuaXNzaG8udjEuR2V0TWVSZXNwb25zZSIAQj5aPGdpdGh1Yi5jb20vc2hydWphbmNoZXJ1a3UvaXNzaG8vYmFja2VuZC9nZW4vaXNzaG8vdjE7aXNzaG92MWIGcHJvdG8z");
+  fileDesc("Chdpc3Noby92MS9pZGVudGl0eS5wcm90bxIIaXNzaG8udjEiFgoURGVsZXRlQWNjb3VudFJlcXVlc3QiFwoVRGVsZXRlQWNjb3VudFJlc3BvbnNlIg4KDEdldE1lUmVxdWVzdCItCg1HZXRNZVJlc3BvbnNlEhwKBHVzZXIYASABKAsyDi5pc3Noby52MS5Vc2VyIjQKBFVzZXISCgoCaWQYASABKAkSDQoFZW1haWwYAiABKAkSEQoJb25ib2FyZGVkGAMgASgIMqEBCg9JZGVudGl0eVNlcnZpY2USOgoFR2V0TWUSFi5pc3Noby52MS5HZXRNZVJlcXVlc3QaFy5pc3Noby52MS5HZXRNZVJlc3BvbnNlIgASUgoNRGVsZXRlQWNjb3VudBIeLmlzc2hvLnYxLkRlbGV0ZUFjY291bnRSZXF1ZXN0Gh8uaXNzaG8udjEuRGVsZXRlQWNjb3VudFJlc3BvbnNlIgBCPlo8Z2l0aHViLmNvbS9zaHJ1amFuY2hlcnVrdS9pc3Noby9iYWNrZW5kL2dlbi9pc3Noby92MTtpc3Nob3YxYgZwcm90bzM");
+
+/**
+ * @generated from message issho.v1.DeleteAccountRequest
+ */
+export type DeleteAccountRequest = Message<"issho.v1.DeleteAccountRequest"> & {
+};
+
+/**
+ * Describes the message issho.v1.DeleteAccountRequest.
+ * Use `create(DeleteAccountRequestSchema)` to create a new message.
+ */
+export const DeleteAccountRequestSchema: GenMessage<DeleteAccountRequest> = /*@__PURE__*/
+  messageDesc(file_issho_v1_identity, 0);
+
+/**
+ * @generated from message issho.v1.DeleteAccountResponse
+ */
+export type DeleteAccountResponse = Message<"issho.v1.DeleteAccountResponse"> & {
+};
+
+/**
+ * Describes the message issho.v1.DeleteAccountResponse.
+ * Use `create(DeleteAccountResponseSchema)` to create a new message.
+ */
+export const DeleteAccountResponseSchema: GenMessage<DeleteAccountResponse> = /*@__PURE__*/
+  messageDesc(file_issho_v1_identity, 1);
 
 /**
  * @generated from message issho.v1.GetMeRequest
@@ -23,7 +49,7 @@ export type GetMeRequest = Message<"issho.v1.GetMeRequest"> & {
  * Use `create(GetMeRequestSchema)` to create a new message.
  */
 export const GetMeRequestSchema: GenMessage<GetMeRequest> = /*@__PURE__*/
-  messageDesc(file_issho_v1_identity, 0);
+  messageDesc(file_issho_v1_identity, 2);
 
 /**
  * @generated from message issho.v1.GetMeResponse
@@ -40,7 +66,7 @@ export type GetMeResponse = Message<"issho.v1.GetMeResponse"> & {
  * Use `create(GetMeResponseSchema)` to create a new message.
  */
 export const GetMeResponseSchema: GenMessage<GetMeResponse> = /*@__PURE__*/
-  messageDesc(file_issho_v1_identity, 1);
+  messageDesc(file_issho_v1_identity, 3);
 
 /**
  * @generated from message issho.v1.User
@@ -73,7 +99,7 @@ export type User = Message<"issho.v1.User"> & {
  * Use `create(UserSchema)` to create a new message.
  */
 export const UserSchema: GenMessage<User> = /*@__PURE__*/
-  messageDesc(file_issho_v1_identity, 2);
+  messageDesc(file_issho_v1_identity, 4);
 
 /**
  * IdentityService manages the signed-in user's app account.
@@ -95,6 +121,19 @@ export const IdentityService: GenService<{
     methodKind: "unary";
     input: typeof GetMeRequestSchema;
     output: typeof GetMeResponseSchema;
+  },
+  /**
+   * DeleteAccount permanently deletes the caller's Supabase auth user and all
+   * of their app data (cascaded from auth.users). The client should sign out
+   * afterwards; existing access tokens stop working once they expire.
+   * Returns FAILED_PRECONDITION if the server has no Supabase secret key configured.
+   *
+   * @generated from rpc issho.v1.IdentityService.DeleteAccount
+   */
+  deleteAccount: {
+    methodKind: "unary";
+    input: typeof DeleteAccountRequestSchema;
+    output: typeof DeleteAccountResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_issho_v1_identity, 0);

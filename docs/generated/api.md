@@ -17,6 +17,8 @@
     - [HealthService](#issho-v1-HealthService)
   
 - [issho/v1/identity.proto](#issho_v1_identity-proto)
+    - [DeleteAccountRequest](#issho-v1-DeleteAccountRequest)
+    - [DeleteAccountResponse](#issho-v1-DeleteAccountResponse)
     - [GetMeRequest](#issho-v1-GetMeRequest)
     - [GetMeResponse](#issho-v1-GetMeResponse)
     - [User](#issho-v1-User)
@@ -172,6 +174,26 @@ HTTP: POST /issho.v1.HealthService/Check
 
 
 
+<a name="issho-v1-DeleteAccountRequest"></a>
+
+### DeleteAccountRequest
+
+
+
+
+
+
+
+<a name="issho-v1-DeleteAccountResponse"></a>
+
+### DeleteAccountResponse
+
+
+
+
+
+
+
 <a name="issho-v1-GetMeRequest"></a>
 
 ### GetMeRequest
@@ -232,6 +254,7 @@ HTTP: POST /issho.v1.IdentityService/&lt;Method&gt;
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
 | GetMe | [GetMeRequest](#issho-v1-GetMeRequest) | [GetMeResponse](#issho-v1-GetMeResponse) | GetMe returns the caller&#39;s account, creating the app-side user row the first time a Supabase user calls the API. |
+| DeleteAccount | [DeleteAccountRequest](#issho-v1-DeleteAccountRequest) | [DeleteAccountResponse](#issho-v1-DeleteAccountResponse) | DeleteAccount permanently deletes the caller&#39;s Supabase auth user and all of their app data (cascaded from auth.users). The client should sign out afterwards; existing access tokens stop working once they expire. Returns FAILED_PRECONDITION if the server has no Supabase secret key configured. |
 
  
 

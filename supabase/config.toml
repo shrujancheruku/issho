@@ -5,7 +5,10 @@
 project_id = "issho"
 
 [api]
-enabled = true
+# Data API (PostgREST) is off: clients reach data only through the Go API. With it on,
+# anon could read and write public-schema tables such as PostGIS's spatial_ref_sys,
+# whose grants we can't revoke (owned by supabase_admin). Auth is unaffected.
+enabled = false
 # Port to use for the API URL.
 port = 54321
 # Schemas to expose in your API. Tables, views and stored procedures in this schema will get API
@@ -232,7 +235,7 @@ max_frequency = "1s"
 # Number of characters used in the email OTP.
 otp_length = 6
 # Number of seconds before the email OTP expires (defaults to 1 hour).
-otp_expiry = 3600
+otp_expiry = 600
 
 # Use a production-ready SMTP server
 # [auth.email.smtp]
@@ -243,6 +246,15 @@ otp_expiry = 3600
 # pass = "env(SENDGRID_API_KEY)"
 # admin_email = "admin@email.com"
 # sender_name = "Admin"
+
+# Sign-in emails carry a 6-digit code for the app instead of a link (see supabase/templates).
+[auth.email.template.magic_link]
+subject = "Your Issho sign-in code"
+content_path = "./supabase/templates/magic_link.html"
+
+[auth.email.template.confirmation]
+subject = "Your Issho sign-in code"
+content_path = "./supabase/templates/confirmation.html"
 
 # Uncomment to customize email template
 # [auth.email.template.invite]
@@ -413,3 +425,48 @@ enabled = true
 # formatted with uppercase keywords, indent 2, max width 180, trailing commas,
 # and column/key alignment. Set to "null" to emit raw, unformatted SQL.
 # format_options = "{\"keywordCase\":\"upper\",\"indent\":2,\"maxWidth\":180,\"commaStyle\":\"trailing\"}"
+
+# ---------------------------------------------------------------------------
+# Hosted project overrides. `supabase config push` (linked to a project) applies
+# the settings above, with these values replacing local-only ones. The project
+# ref isn't secret: it's part of the public Supabase URL. See docs/supabase-hosted.md.
+[remotes.issho-dev]
+project_id = "yjnzrhusfxilktbjrzsw"
+
+[remotes.issho-dev.auth]
+# Codes, not links, so no redirects are needed. Keep Supabase's default site URL until
+# the product domain is registered (our email templates don't use it).
+site_url = "http://localhost:3000"
+additional_redirect_urls = []
+
+[remotes.issho-dev.auth.email]
+# Hosted: new users verify their address with the code (locally off for quick testing).
+enable_confirmations = true
+# Hosted: at most one code request per address per minute (locally 1s for testing).
+max_frequency = "1m0s"
+
+[remotes.issho-dev.auth.email.smtp]
+# Resend relay. Supabase's built-in email can't carry custom templates on the Free tier,
+# and only reaches organisation members. Without a verified domain, Resend only delivers
+# from onboarding@resend.dev to the Resend account owner's address (fine for dev).
+# The password is the Resend API key, read from the gitignored supabase/.env at push time.
+enabled = true
+host = "smtp.resend.com"
+port = 465
+user = "resend"
+pass = "env(SUPABASE_SMTP_PASS)"
+admin_email = "onboarding@resend.dev"
+sender_name = "Issho"
+
+[remotes.issho-dev.auth.rate_limit]
+# The local default (2/hour) would block testing; 30/hour is Supabase's custom-SMTP default.
+email_sent = 30
+
+[remotes.issho-dev.db.ssl_enforcement]
+# Enforced on the hosted DB (set with `supabase ssl-enforcement update`); declared here so the file matches.
+enabled = true
+
+[remotes.issho-dev.db.pooler]
+# Keep the hosted pooler's plan-appropriate limits.
+default_pool_size = 15
+max_client_conn = 200

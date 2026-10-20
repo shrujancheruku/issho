@@ -8,9 +8,12 @@
     "dev": "turbo run dev",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
-    "gen": "make gen"
+    "gen": "make gen",
+    "test": "turbo run test"
   },
   "devDependencies": {
+    "@commitlint/cli": "^21.2.4",
+    "@commitlint/config-conventional": "^21.2.4",
     "turbo": "^2.11.9"
   }
 }

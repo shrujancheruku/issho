@@ -85,6 +85,10 @@ jobs:
           go run ./cmd/tool migrate down
           go run ./cmd/tool migrate up
           go run ./cmd/tool seed ../data/citypacks/tokyo.json
+      - name: Migration bookkeeping stays out of the public schema
+        # Supabase's Data API exposes public tables to anonymous clients; see internal/platform/db.
+        run: |
+          test "$(psql "$DATABASE_URL" -Atc "select to_regclass('goose.db_version') is not null and to_regclass('public.app_goose_db_version') is null")" = t
 
   typescript:
     runs-on: ubuntu-latest
@@ -96,4 +100,6 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm -r typecheck
+      - run: pnpm typecheck
+      - run: pnpm lint
+      - run: pnpm test

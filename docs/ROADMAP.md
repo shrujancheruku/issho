@@ -2,7 +2,7 @@
 
 > **This is the source of truth for what's planned, built and pending.** CI (`roadmap` job) fails any push or PR that changes code without updating this file. When you change code, update the status lines below. If the change made a decision, add it to the Decision log.
 
-**Last updated:** 2026-10-20 · **Version:** 0.1.0 (pre-release; [releases](https://github.com/shrujancheruku/issho/releases)) · **Current milestone:** M1 Foundations (nearly done) → M2 Auth
+**Last updated:** 2026-10-20 · **Version:** 0.1.0 (pre-release; [releases](https://github.com/shrujancheruku/issho/releases)) · **Current milestone:** M2 Authentication (in progress)
 
 Legend: ✅ done · 🟡 in progress / partial · ⬜ not started · ⏸ deferred (post-MVP)
 
@@ -36,7 +36,7 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
 
 ## 3. Milestones
 
-### M1 · Foundations (week 1): 🟡 nearly done
+### M1 · Foundations (week 1): ✅ done
 - ✅ Monorepo: pnpm workspaces + Turborepo (TypeScript), a Go module with pinned tools (`go tool` buf/sqlc/goose/protoc-gen-doc), and a `Makefile` as the single entry point.
 - ✅ API contract in protobuf (buf + ConnectRPC). Generates the Go server, the TypeScript client and an [API reference](generated/api.md).
 - ✅ Go API skeleton: config, pgx pool, goose migrations embedded in the binary, Supabase JWKS auth interceptor (deny-by-default), CORS deny-by-default.
@@ -52,12 +52,23 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
 - ✅ Brand: logo and mark (一緒 with gold thread and hinomaru sun), one version for every background (black outlined in gold, gold and red outlined in black), generated reproducibly from Noto Serif JP (`assets/brand/`). App icon and splash still use Expo defaults; wire them up in M9.
 - ⬜ Sentry and PostHog SDKs. *Moved to M9: nothing worth tracking yet.*
 
-### M2 · Authentication (week 2): ⬜
-- ⬜ Hosted Supabase project (Free tier for dev). Asymmetric signing keys enabled.
-- ⬜ Supabase Auth providers: Sign in with Apple, Google, email OTP. A custom SMTP relay (Resend/SES free tier) for OTP email.
-- ⬜ Expo sign-in screens: native Apple/Google → `signInWithIdToken`, and email OTP. Session stored in `expo-secure-store`.
-- ⬜ API client sends the Supabase access token; auth-gated navigation (onboarding vs main app).
-- ⬜ Account deletion (Supabase Admin API + cascade).
+### M2 · Authentication (week 2): 🟡 in progress
+- ✅ **Email OTP sign-in** (local): 6-digit code emails (EN/JA templates, 10-minute expiry). The Expo sign-in screen has an email step and a code step (with iOS autofill and auto-submit). Verified end to end with supabase-js against local Supabase.
+- ✅ **Secure session storage:** Keychain/Keystore through a chunked `expo-secure-store` adapter (sessions are ~2.2 KB, over SecureStore's ~2 KB limit). Per-write generation IDs, so a torn write can only sign the user out. Covered by unit tests (Jest).
+- ✅ **API client sends the Supabase access token.** Auth-gated navigation (`Stack.Protected`): sign-in → onboarding placeholder → tabs. Rejected sessions, e.g. after deletion on another device, sign out automatically.
+- ✅ **Account deletion:** `IdentityService.DeleteAccount` (Supabase Admin API, cascade to app data, safe to retry). Sign out and delete in the app. Stale tokens of deleted users get `unauthenticated: account deleted`.
+- ✅ **API error hygiene:** internal errors are logged server-side and returned as a generic `internal error`. Database details no longer leak.
+- ✅ **Hosted `issho-dev` project**, configured with the Supabase CLI ([supabase-hosted.md](supabase-hosted.md)):
+  - config pushed from `config.toml` with `[remotes.issho-dev]` overrides
+  - Data API off, SSL enforced
+  - Resend SMTP with the code templates
+  - legacy keys disabled, ES256 signing
+  - schema and seed applied
+  - verified: DB state, Data API 503, advisors (only the known PostGIS warning), Go API health against the project
+- ⬜ **Email OTP expiry set to 600 s in the dashboard.** `config push` (CLI 2.121) doesn't manage it.
+- ✅ **End-to-end sign-in against `issho-dev` on a real device** (Pixel 8 Pro, Android 17, Expo Go 58 via USB): code delivered by Resend, signed in, onboarding shown. The API was also tested against `issho-dev` with a throwaway user (all RPCs, deletion and cleanup verified).
+- 🟡 **SMTP:** Resend is configured for `issho-dev` (free tier, `onboarding@resend.dev`, delivers only to the owner's address). Before real users, it needs a **verified sending domain**.
+- ✅ **On-device test of the sign-in flow** (see above). It found an Android bug, now fixed: the keyboard covered the code field, because SDK 58 Android apps are edge-to-edge.
 
 ### M3 · Cities, catalogue & geo (weeks 2–3): 🟡
 - ✅ City pack format and seeding tool.
@@ -116,6 +127,7 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
 - ⬜ 5–10 hosts and partner venues per city. Seed users from university, language-exchange, newcomer and coworking communities.
 
 ### Post-MVP (deferred): ⏸
+- ⏸ Sign in with Apple and Google (native, `signInWithIdToken`). Email codes are enough for the MVP. If any social login is added on iOS, Sign in with Apple becomes mandatory.
 - ⏸ Paid tier (per-event fee or membership).
 - ⏸ OTA updates (EAS Update).
 - ⏸ Learned matching weights.
@@ -150,10 +162,26 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
 | 2026-10-20 | One logo version everywhere: no dark variant. Contrasting outlines instead. | Brand consistency. Gold outlines on black and black outlines on gold/red keep it legible on light and dark backgrounds. |
 | 2026-10-20 | pnpm dependency build scripts deny-by-default (`allowBuilds` in `pnpm-workspace.yaml`) | pnpm 12 fails installs on unapproved install scripts. Each package is approved or denied explicitly; `unrs-resolver` is denied because its script only fetches fallback binaries. |
 | 2026-10-20 | Commit `apps/mobile/src/types/expo.d.ts` | Expo's generated `expo-env.d.ts` is gitignored by convention, so fresh clones and CI couldn't typecheck CSS imports. |
+| 2026-10-20 | Passwordless **email OTP codes**, not magic links | Links can't reliably open a native app, so the user types a 6-digit code instead (iOS autofills it from Mail). Codes expire in 10 minutes, down from 1 hour. |
+| 2026-10-20 | Sessions in **`expo-secure-store`** (chunked), not expo-sqlite/AsyncStorage | Refresh tokens are long-lived credentials and belong in the Keychain/Keystore. Chunking works around the ~2 KB value limit; generation IDs make torn writes detectable. |
+| 2026-10-20 | Error-sanitising Connect interceptor | connect-go returns `err.Error()` for plain errors, which leaked SQL constraint names to clients. |
+| 2026-10-20 | Deleting an account: auth user first, then app data | If deleting the auth user fails, nothing is lost and the user can retry. The reverse order could leave a live login with no data. |
+| 2026-10-20 | **Email OTP is the only sign-in method for the MVP**; Apple/Google deferred | Not needed to validate the product. It avoids OAuth setup and secrets, and the App Store rule that requires Sign in with Apple once any social login exists. |
+| 2026-10-20 | **Supabase Data API disabled**; goose's version table moved from `public` to its own `goose` schema | Found while preparing the hosted project: through the Data API, anonymous clients could **write** to `public.app_goose_db_version` (marking migrations as applied) and modify PostGIS's `spatial_ref_sys`. Its grants are owned by `supabase_admin`, so a migration can't revoke them. Auth works without the Data API. CI now checks the version table isn't in `public`. |
+| 2026-10-20 | Production `DATABASE_URL` uses the **session pooler** (or direct connection), not the transaction pooler | pgx uses prepared statements by default, and River needs LISTEN/NOTIFY. The transaction pooler supports neither. |
+| 2026-10-20 | **Device testing on Android over USB** (`adb` plus Expo CLI) while the store builds of Expo Go lag behind SDK 58 | The App Store/Play Store Expo Go only ran SDK 57. Local iOS needs Xcode 26.4+, which needs macOS 26.2+ (the dev Mac runs 15.7). The CLI installs a matching Expo Go over USB with just `adb`. |
+| 2026-10-20 | Hosted Supabase configured **declaratively with the CLI** (`config push`, `[remotes.<name>]` overrides) | Reproducible and reviewable via `config diff`. The diff caught local-only values that would have leaked: confirmations off, a 1 s resend interval, a 2/hour email cap. |
+| 2026-10-20 | **Custom SMTP (Resend) is required even in development** | On the Free plan, Supabase blocks custom email templates while its built-in email service is in use, and the built-in templates only contain links, which can't drive code sign-in. |
+| 2026-10-20 | Official **Supabase agent skills** in `.claude/skills/` (installed with a pinned `skills` CLI, verified byte-for-byte against upstream) plus a root `CLAUDE.md` | Gives coding agents current Supabase and Postgres guidance. `CLAUDE.md` overrides where the generic skills conflict with this repo (goose migrations, Data API off, MCP not configured). |
+| 2026-10-20 | **Dela Gothic One** for standout/hero text in the app (`title`, `subtitle`); system font for body text | Ties the app to the wordmark. Loaded at runtime (`useFonts`) so it works in Expo Go; it has a single weight, so no `fontWeight` on display text. |
+| 2026-10-20 | commitlint also runs as a local `commit-msg` hook | The first M2 PR failed CI on over-long commit bodies. Catching that at commit time is cheaper than rewriting history after a push. |
+| 2026-10-20 | **jest-expo** for mobile unit tests; runs in CI with lint | Security-critical client code (session storage) needs tests. jest-expo is Expo's standard preset. |
 | 2026-10-20 | CORS deny-by-default via an explicit origin allowlist | rs/cors treats an empty `AllowedOrigins` as allow-all. |
 
 ## 5. Known gaps & risks
 - **Not enough nearby users** is the main product risk. The admin proposal override lets the first city be hand-curated.
+- **PostGIS lives in the `public` schema** (migration 00001). With the Data API disabled, no anonymous path reaches it, but Supabase's advisors flag it. Move it into the `extensions` schema with a migration **before production data exists**: PostGIS can't be relocated in place, so the geography column has to be recreated.
 - **Google Maps terms** restrict caching (store only place IDs long-term, fetch details live). Re-check the Maps Service Terms before M3 ships.
 - **`postgis/postgis` has no arm64 image.** CI (amd64) is unaffected. On Apple Silicon, use `supabase start` (arm64) or run that image with `--platform linux/amd64`.
+- **Local iOS builds need macOS 26.2+** (Xcode 26.4+ for SDK 58). The dev Mac is on macOS 15.7. Either upgrade before M9, or build iOS in the cloud with EAS.
 - **Disk space on dev machines:** Supabase images take several GB. OrbStack's VM disk can report "no space left" on its first launch; retrying fixes it.

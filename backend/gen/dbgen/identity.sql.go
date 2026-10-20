@@ -11,6 +11,17 @@ import (
 	"github.com/google/uuid"
 )
 
+const deleteUser = `-- name: DeleteUser :exec
+delete from app.users where id = $1
+`
+
+// Explicit delete for databases without the auth.users foreign key (CI, plain
+// Postgres). On Supabase the row is usually already gone via the cascade.
+func (q *Queries) DeleteUser(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.Exec(ctx, deleteUser, id)
+	return err
+}
+
 const hasProfile = `-- name: HasProfile :one
 select exists (select 1 from app.profiles where user_id = $1)
 `
