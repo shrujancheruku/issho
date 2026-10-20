@@ -74,25 +74,27 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
 ### M3 · Cities, catalogue & geo (weeks 2–3): 🟡 in progress
 - ✅ City pack format and seeding tool. Packs now declare `travel_modes`, and everything in `data/` is validated by a test (CI) and before seeding.
 - ✅ **Activity catalogue: 230 activities** in 12 categories (English only; other languages on demand), each linked to the **venue categories** it happens at (48 categories mapped to Google place types, checked against a snapshot of Google's type list).
-- ⬜ **Google Cloud project** `issho-dev` with restricted keys (Maps server key, Translation key), quotas and a $10 budget alert. Needs the owner's Google account; steps in [google-maps.md](google-maps.md). Mobile keys can wait until M6.
+- ✅ **Google Cloud project** `issho-dev` with Maps and Translation keys (kept in the gitignored `.env.issho-dev`). Confirm the quotas and budget alert from [google-maps.md](google-maps.md) are set. Needs the owner's Google account; steps in [google-maps.md](google-maps.md). Mobile keys can wait until M6.
 - 🟡 **`tool build-matrix`** (`make matrix CITY=…`): Routes API Compute Route Matrix per city and travel mode.
   - no same-area calls; walking only for areas < 4 km apart; minutes rounded up; transit timed for Saturday 11:00
   - stored in `area_travel_times`; rows older than 30 days deleted (Maps caching terms)
   - `-dry-run` prints requests and billed elements (Tokyo 166, Austin 90)
-  - tested with fakes and a DB integration test. **Not yet run against Google** (needs the key).
+  - tested with fakes and a DB integration test
+  - **run against Google (local DB):** Austin drive matrix done (90 elements, plausible, e.g. Downtown → Round Rock 25 min); Tokyo walk done (34 pairs within 4 km, 18–63 min)
+  - 🔴 **Tokyo transit: Google returns no transit routes in Japan** (`ROUTE_NOT_FOUND` for every pair, while Austin transit works). Japan transit isn't available through the Maps Platform APIs. Needs a Japan transit source; decision pending (see Known gaps).
 - 🟡 **`tool discover-venues`** (`make venues CITY=…`): Places API (New) Nearby Search per area × venue category.
   - field mask: id, types, location only
   - wide categories (≥ 10 km) searched once per city
   - each place assigned to its nearest area; stores only `google_place_id` + our data
   - `-categories` for partial runs; `-dry-run` (Tokyo ~490 requests)
-  - **Not yet run against Google.**
+  - **run against Google (local DB):** Tokyo cafés and parks (24 requests → 424 venues across all 12 areas). Spot-checked names live in EN/JA (e.g. Inokashira Park / 井の頭恩賜公園). The full run for both cities is still pending.
 - ✅ **Synthetic second city pack: Austin** (car-based, `travel_modes: ["drive"]`, EN/ES, 10 areas, Japan-specific activities disabled, local renames and seasons). Seeded, validated and planned with no code changes.
 - ⬜ Run both tools for Tokyo and Austin once the key exists; spot-check travel times and venues.
 - ✅ **Language model** (decided mid-M3, before anything depended on it; see [architecture](architecture.md#languages)):
   - `i18n.ForEvent` / `i18n.ForApp` pick the primary/secondary pair; `i18n.Pair` resolves text, showing the secondary alone rather than an unreadable fallback
   - `ListActivities` takes `locale` (primary) plus `secondary_language` and returns `name` plus `secondary_name`; any language code accepted; verified end to end against local Supabase
   - `profiles.primary_language` + `secondary_language` (migration 00003); language codes validated in the DB
-- ✅ **On-demand translation** (`internal/translate`): English is the only language that must be stored. Other languages come from stored text (local names, prefilled events), then the `app.translations` cache (migration 00004), then Google Cloud Translation, cached for everyone. Requests wait up to 8 s, and slower translations finish in the background. Concurrent requests share one call; failures aren't cached; `Prefill` for events. Off without `GOOGLE_TRANSLATE_API_KEY`. Cache path and fallbacks verified end to end; **live translation not yet run** (needs the Google Cloud project).
+- ✅ **On-demand translation** (`internal/translate`): English is the only language that must be stored. Other languages come from stored text (local names, prefilled events), then the `app.translations` cache (migration 00004), then Google Cloud Translation, cached for everyone. Requests wait up to 8 s, and slower translations finish in the background. Concurrent requests share one call; failures aren't cached; `Prefill` for events. Off without `GOOGLE_TRANSLATE_API_KEY`. Cache path and fallbacks verified end to end; **Live translation verified** (local DB): 230 names into ja/es/fr/ko; cold request 0.65 s for two languages, cached 0.01 s. Quality issues on short labels without context (Pottery → 陶器 "pottery ware" instead of 陶芸, "Kickabout" left untranslated).
   - the catalogue and overrides are English-only; city packs keep only real local names (東京, 吉祥寺)
 
 ### M4 · Matching engine (weeks 3–5): ⬜
@@ -216,6 +218,8 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
 | 2026-10-20 | Second city pack is **Austin** (synthetic, not a launch city) | A real car-based city with real coordinates, so the Google tools can be exercised end to end. It's Japan-free on purpose, which forced per-city disables and renames. |
 
 ## 5. Known gaps & risks
+- 🔴 **No Japan transit routing from Google.** The Routes API returns no transit routes in Japan, so Tokyo (a transit city) has no transit matrix. Options: a Japanese transit API (NAVITIME, Ekispert) behind `maps.Router` for Japanese cities; self-hosted OpenTripPlanner on ODPT open data (gaps in JR/private-railway coverage, plus a routing server to run); or hand-curated times in the city pack. Decision pending.
+- **Machine-translation quality on short labels.** Cloud Translation Basic has no context, so one-word activity names can come out wrong. Mitigations: clearer English names ("Pottery class"), admin corrections of cached rows (`reviewed`, M8), or Advanced (v3) glossaries.
 - **Not enough nearby users** is the main product risk. The admin proposal override lets the first city be hand-curated.
 - **PostGIS lives in the `public` schema** (migration 00001). With the Data API disabled, no anonymous path reaches it, but Supabase's advisors flag it. Move it into the `extensions` schema with a migration **before production data exists**: PostGIS can't be relocated in place, so the geography column has to be recreated.
 - **Google Maps terms** restrict caching. What we do: store only place IDs plus our own data, use place locations in memory only, and delete travel times after 30 days ([google-maps.md](google-maps.md#5-terms-what-we-may-store)). The Routes policy says most content is cache-restricted but doesn't state a window for durations; 30 days follows the Service Specific Terms' limit for other content. Re-check with the current terms before launch.
