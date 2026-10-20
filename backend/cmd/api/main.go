@@ -24,6 +24,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/platform/auth"
 	"github.com/shrujancheruku/issho/backend/internal/platform/config"
 	"github.com/shrujancheruku/issho/backend/internal/platform/db"
+	"github.com/shrujancheruku/issho/backend/internal/platform/errs"
 	"github.com/shrujancheruku/issho/backend/internal/platform/supabase"
 )
 
@@ -74,7 +75,11 @@ func run() error {
 	}
 
 	q := dbgen.New(pool)
-	opts := connect.WithInterceptors(auth.Interceptor(verifier, isshov1connect.HealthServiceCheckProcedure))
+	// errs runs outermost so it also sanitises errors returned by the auth interceptor.
+	opts := connect.WithInterceptors(
+		errs.Interceptor(slog.Default()),
+		auth.Interceptor(verifier, isshov1connect.HealthServiceCheckProcedure),
+	)
 
 	mux := http.NewServeMux()
 	mux.Handle(isshov1connect.NewHealthServiceHandler(&health.Handler{Pool: pool, Version: version}, opts))
