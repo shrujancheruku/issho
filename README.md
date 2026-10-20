@@ -1,6 +1,11 @@
-# Issho (一緒)
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/brand/logo-dark.svg">
+    <img src="assets/brand/logo.svg" alt="Issho 一緒" width="380">
+  </picture>
+</p>
 
-### Stop scrolling for plans. We'll make them for you.
+<h3 align="center">Stop scrolling for plans. We'll make them for you.</h3>
 
 Love film cameras, flat whites and wandering down side streets? Issho finds the handful of people near you who do too, and hands you all the same plan:
 
@@ -38,7 +43,8 @@ Each directory has its own README:
 | [`proto/`](proto/README.md) | API contract (protobuf), source of truth for types and docs |
 | [`data/`](data/README.md) | Activity catalogue and city packs |
 | [`supabase/`](supabase/README.md) | Local Supabase stack config |
-| `scripts/` | CI helper scripts (e.g. `check-roadmap.sh`) |
+| [`assets/brand/`](assets/brand/README.md) | Logo, mark and brand colours (with the story behind the kanji) |
+| `scripts/` | CI helpers (`check-roadmap.sh`) and the logo generator (`brand/build_logo.py`) |
 | `.githooks/` | Pre-commit secret scan (enable with `make setup`) |
 
 ## Quick start
