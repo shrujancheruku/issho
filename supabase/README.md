@@ -35,6 +35,12 @@ supabase gen signing-key --algorithm ES256
 
 `signing_keys.json` holds a **private key**. It's gitignored and blocked by the secret scanner, and each developer generates their own. In hosted projects, enable asymmetric JWT signing keys in the dashboard; the private key never leaves Supabase.
 
+## Sign-in emails
+
+The app signs in with **6-digit email codes** (not links, which can't reliably open a native app). `config.toml` points the `magic_link` and `confirmation` templates at `templates/*.html`, which show `{{ .Token }}` in English and Japanese. Codes expire after **10 minutes** (`otp_expiry = 600`). Locally, every email lands in Mailpit (http://127.0.0.1:54324). After editing templates or config, run `supabase stop && supabase start`.
+
+For the hosted project, the same templates and expiry must be set in the dashboard (Auth → Emails), together with a production SMTP relay, and a sensible resend limit (`max_frequency`, e.g. 60s).
+
 ## Auth providers (M2)
 
 Apple, Google and email OTP get configured in `config.toml` under `[auth.external.*]` and `[auth.email]`. Provider secrets are referenced as `env(...)` and supplied from the gitignored `supabase/.env`. Never write them inline.

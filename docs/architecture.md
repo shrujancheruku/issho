@@ -23,6 +23,14 @@
 - **Supabase Auth issues the identity.** The app signs in with Supabase and gets a short-lived access JWT. The Go API verifies that JWT against the project's public JWKS. It never holds a signing secret.
 - **The app user row is created lazily.** The first authenticated `GetMe` creates `app.users` with the same UUID as `auth.users`. On Supabase, a foreign key ties the two together and cascades deletes.
 
+## Authentication flow
+
+1. **Sign-in** (mobile): `supabase.auth.signInWithOtp({ email })` → Supabase emails a 6-digit code → `verifyOtp` → session (short-lived ES256 access token plus refresh token).
+2. The session is stored in the iOS Keychain / Android Keystore through a chunked `expo-secure-store` adapter (`apps/mobile/src/lib/secure-storage.ts`).
+3. Every API call sends `Authorization: Bearer <access token>`. The API verifies it against Supabase's JWKS; there's no call to Supabase per request.
+4. The first `IdentityService.GetMe` creates the `app.users` row. `onboarded` decides whether the app shows onboarding or the main tabs.
+5. **Account deletion:** `DeleteAccount` uses the server-only secret key to delete the Supabase auth user. The foreign key cascades to all app data. Tokens already issued stay cryptographically valid until they expire, but `GetMe` then answers `unauthenticated: account deleted`, and the app signs out.
+
 ## Request lifecycle
 
 1. The client calls, for example, `POST /issho.v1.IdentityService/GetMe` with JSON and `Authorization: Bearer <token>`.
@@ -32,7 +40,7 @@
    - Everything else must have a valid ES256/RS256 token with Supabase's issuer, the `authenticated` audience and an unexpired `exp`. The caller is put on the request context.
 4. The **handler** (`internal/<domain>/handler.go`) validates input and calls the domain **service**.
 5. The **service** contains the business logic and talks to Postgres through **sqlc** queries (`backend/gen/dbgen`).
-6. Errors come back as Connect error codes (`unauthenticated`, `invalid_argument`, …).
+6. Errors come back as Connect error codes (`unauthenticated`, `invalid_argument`, …). The outermost **errs interceptor** replaces any non-Connect error with a generic `internal error`, after logging it, so database and upstream details never reach clients.
 
 ## Backend layout (modular monolith)
 

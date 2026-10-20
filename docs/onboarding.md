@@ -45,6 +45,8 @@ Then migrate, seed and run the API:
 
 ```sh
 export $(grep -v '^#' .env.example | xargs)   # local DATABASE_URL, SUPABASE_URL, API_ADDR
+# Optional, enables account deletion locally (server-only secret, never commit):
+export SUPABASE_SECRET_KEY=$(supabase status -o env | grep '^SECRET_KEY=' | cut -d= -f2 | tr -d '"')
 make migrate-up   # applies backend/db/migrations
 make seed         # 38 activities + Tokyo city pack
 make api          # http://localhost:8080
@@ -75,19 +77,19 @@ curl -s -X POST localhost:8080/issho.v1.IdentityService/GetMe \
 
 ```sh
 cd apps/mobile
-cp .env.example .env          # EXPO_PUBLIC_API_URL=http://localhost:8080
-npx expo start                # press i for the iOS Simulator
+cp .env.example .env          # fill in EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY from `supabase status`
+npx expo start                # i = iOS Simulator (needs Xcode), or scan the QR code with Expo Go
 ```
 
-On a physical phone, set `EXPO_PUBLIC_API_URL` to your Mac's LAN IP (e.g. `http://192.168.1.20:8080`). The home screen's **API** row should say `ok · dev`. See [../apps/mobile/README.md](../apps/mobile/README.md).
+On a physical phone, swap `localhost`/`127.0.0.1` in **both** URLs for your Mac's LAN IP. Sign in with any email; the 6-digit code arrives in **Mailpit** (http://127.0.0.1:54324). See [../apps/mobile/README.md](../apps/mobile/README.md#signing-in-locally).
 
 ## 5. Everyday commands
 
 | Command | What it does |
 |---|---|
 | `make gen` | Regenerates protobuf (Go, TS, API docs) and sqlc code |
-| `make lint` | buf lint, `go vet`, `sqlc vet`, TypeScript typecheck (via Turborepo) |
-| `make test` | Go tests |
+| `make lint` | buf lint, `go vet`, `sqlc vet`, TypeScript typecheck, ESLint (via Turborepo) |
+| `make test` | Go tests and mobile unit tests (Jest) |
 | `make secrets-scan` | Scans all git history for secrets |
 | `make migrate-up` / `make migrate-status` | goose migrations against `DATABASE_URL` |
 | `make seed` | Loads the catalogue and the Tokyo pack (idempotent) |
@@ -123,4 +125,6 @@ Read [contributing.md](contributing.md). In short:
 | CI "Generated code is up to date" fails | Run `make gen` and commit the result. |
 | `docker run postgis/postgis…` → "no matching manifest for linux/arm64" | That image is amd64-only. Use `supabase start`, or add `--platform linux/amd64` (OrbStack emulates it). |
 | CI "pnpm install" → `ERR_PNPM_IGNORED_BUILDS` | A new dependency has an install script. Run `pnpm approve-builds '<pkg>'` (allow) or `'!<pkg>'` (deny) and commit `pnpm-workspace.yaml`. |
+| `DeleteAccount` → `failed_precondition` | The API has no `SUPABASE_SECRET_KEY`. Export it (step 3) and restart the API. |
+| Sign-in code email never arrives | Locally, emails only go to Mailpit (http://127.0.0.1:54324). After changing `supabase/config.toml` or templates, run `supabase stop && supabase start`. |
 | App shows "unreachable" | API not running, or `EXPO_PUBLIC_API_URL` isn't reachable from the simulator or phone. |

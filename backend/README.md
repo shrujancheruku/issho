@@ -12,8 +12,10 @@ The Go backend for Issho: a modular monolith serving a ConnectRPC API. It uses P
 | `internal/platform/db` | pgx pool and goose migration runner |
 | `internal/platform/auth` | Supabase JWT verification (JWKS) and the Connect auth interceptor |
 | `internal/platform/i18n` | Resolves localised JSON text (`{"en": …, "ja": …}`) |
+| `internal/platform/errs` | Connect interceptor: logs unexpected errors and returns a generic `internal error` (no leaked details) |
+| `internal/platform/supabase` | Supabase admin API client (account deletion), using the secret key |
 | `internal/health` | `HealthService` |
-| `internal/identity` | `IdentityService`: app account on top of Supabase users |
+| `internal/identity` | `IdentityService`: app account on top of Supabase users (get, delete) |
 | `internal/catalog` | `CatalogService`: activity catalogue with city overrides |
 | `internal/cities` | City-pack JSON format and seeding |
 | `db/migrations/` | goose SQL migrations (embedded via `db/embed.go`) |
@@ -27,6 +29,7 @@ The Go backend for Issho: a modular monolith serving a ConnectRPC API. It uses P
 | `DATABASE_URL` | yes | `postgres://postgres:postgres@127.0.0.1:54322/postgres?sslmode=disable` | Supabase local DB. In production, use the transaction pooler for the API. |
 | `SUPABASE_URL` | yes | `http://127.0.0.1:54321` | The JWKS is fetched from `$SUPABASE_URL/auth/v1/.well-known/jwks.json`. The token issuer must be `$SUPABASE_URL/auth/v1`. |
 | `API_ADDR` | no | `:8080` | Listen address |
+| `SUPABASE_SECRET_KEY` | no | `SECRET_KEY` from `supabase status` | **Server-only secret.** Enables admin calls (account deletion). Without it, `DeleteAccount` returns `failed_precondition`. Never commit it; see [secrets](../docs/secrets.md). |
 | `ALLOWED_ORIGINS` | no | `https://admin.example.com` | Comma-separated browser origins. **Empty = no browser origins allowed.** |
 
 Local defaults are in `../.env.example`: `export $(grep -v '^#' ../.env.example | xargs)`.
@@ -47,7 +50,8 @@ The full reference, generated from the proto comments, is in **[../docs/generate
 | Endpoint | Auth | Purpose |
 |---|---|---|
 | `POST /issho.v1.HealthService/Check` | public | Database ping and build version |
-| `POST /issho.v1.IdentityService/GetMe` | bearer | Returns (and lazily creates) the caller's account |
+| `POST /issho.v1.IdentityService/GetMe` | bearer | Returns (and lazily creates) the caller's account. `unauthenticated: account deleted` for tokens of deleted users. |
+| `POST /issho.v1.IdentityService/DeleteAccount` | bearer | Permanently deletes the caller (Supabase auth user → cascades to app data). Safe to retry. |
 | `POST /issho.v1.CatalogService/ListActivities` | bearer | Activities enabled in a city, localised |
 
 Example:
@@ -58,6 +62,8 @@ curl -s -X POST localhost:8080/issho.v1.CatalogService/ListActivities \
 ```
 
 Errors use Connect codes, e.g. `{"code":"unauthenticated","message":"missing bearer token"}` with HTTP 401.
+
+**Error hygiene:** handlers return `connect.NewError(code, err)` for anything the caller should see. Any other error is logged server-side (`unhandled error` with the procedure name) and the client receives only `{"code":"internal","message":"internal error"}`. So a raw database or upstream error never leaks to callers.
 
 ### Authentication
 - Clients send `Authorization: Bearer <Supabase access token>`.
@@ -95,6 +101,9 @@ go test ./...          # or `make test` from the root
 | `internal/platform/auth/auth_test.go` | Valid token; expired, missing `exp`, wrong issuer/audience/key/subject; HS256 rejected |
 | `internal/platform/i18n/i18n_test.go` | Locale fallback chain |
 | `cmd/api/cors_test.go` | CORS allowlist; empty list denies all |
+| `internal/platform/errs/errs_test.go` | Raw errors become generic `internal`; Connect errors pass through |
+| `internal/platform/supabase/admin_test.go` | Admin delete: request shape, 404 treated as already deleted, other errors surfaced |
+| `internal/identity/service_test.go` | Account creation keeps an existing email; deletion order (auth first, app data kept if that fails) |
 
 CI also runs migrations up → down → up and seeds against a PostGIS container. Tests must never call paid external APIs.
 

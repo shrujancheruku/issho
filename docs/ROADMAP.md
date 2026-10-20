@@ -2,7 +2,7 @@
 
 > **This is the source of truth for what's planned, built and pending.** CI (`roadmap` job) fails any push or PR that changes code without updating this file. When you change code, update the status lines below. If the change made a decision, add it to the Decision log.
 
-**Last updated:** 2026-10-20 · **Version:** 0.1.0 (pre-release; [releases](https://github.com/shrujancheruku/issho/releases)) · **Current milestone:** M1 Foundations (nearly done) → M2 Auth
+**Last updated:** 2026-10-20 · **Version:** 0.1.0 (pre-release; [releases](https://github.com/shrujancheruku/issho/releases)) · **Current milestone:** M2 Authentication (in progress)
 
 Legend: ✅ done · 🟡 in progress / partial · ⬜ not started · ⏸ deferred (post-MVP)
 
@@ -36,7 +36,7 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
 
 ## 3. Milestones
 
-### M1 · Foundations (week 1): 🟡 nearly done
+### M1 · Foundations (week 1): ✅ done
 - ✅ Monorepo: pnpm workspaces + Turborepo (TypeScript), a Go module with pinned tools (`go tool` buf/sqlc/goose/protoc-gen-doc), and a `Makefile` as the single entry point.
 - ✅ API contract in protobuf (buf + ConnectRPC). Generates the Go server, the TypeScript client and an [API reference](generated/api.md).
 - ✅ Go API skeleton: config, pgx pool, goose migrations embedded in the binary, Supabase JWKS auth interceptor (deny-by-default), CORS deny-by-default.
@@ -52,12 +52,16 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
 - ✅ Brand: logo and mark (一緒 with gold thread and hinomaru sun), one version for every background (black outlined in gold, gold and red outlined in black), generated reproducibly from Noto Serif JP (`assets/brand/`). App icon and splash still use Expo defaults; wire them up in M9.
 - ⬜ Sentry and PostHog SDKs. *Moved to M9: nothing worth tracking yet.*
 
-### M2 · Authentication (week 2): ⬜
-- ⬜ Hosted Supabase project (Free tier for dev). Asymmetric signing keys enabled.
-- ⬜ Supabase Auth providers: Sign in with Apple, Google, email OTP. A custom SMTP relay (Resend/SES free tier) for OTP email.
-- ⬜ Expo sign-in screens: native Apple/Google → `signInWithIdToken`, and email OTP. Session stored in `expo-secure-store`.
-- ⬜ API client sends the Supabase access token; auth-gated navigation (onboarding vs main app).
-- ⬜ Account deletion (Supabase Admin API + cascade).
+### M2 · Authentication (week 2): 🟡 in progress
+- ✅ **Email OTP sign-in** (local): 6-digit code emails (EN/JA templates, 10-minute expiry). The Expo sign-in screen has an email step and a code step (with iOS autofill and auto-submit). Verified end to end with supabase-js against local Supabase.
+- ✅ **Secure session storage:** Keychain/Keystore through a chunked `expo-secure-store` adapter (sessions are ~2.2 KB, over SecureStore's ~2 KB limit). Per-write generation IDs, so a torn write can only sign the user out. Covered by unit tests (Jest).
+- ✅ **API client sends the Supabase access token.** Auth-gated navigation (`Stack.Protected`): sign-in → onboarding placeholder → tabs. Rejected sessions, e.g. after deletion on another device, sign out automatically.
+- ✅ **Account deletion:** `IdentityService.DeleteAccount` (Supabase Admin API, cascade to app data, safe to retry). Sign out and delete in the app. Stale tokens of deleted users get `unauthenticated: account deleted`.
+- ✅ **API error hygiene:** internal errors are logged server-side and returned as a generic `internal error`. Database details no longer leak.
+- ⬜ **Hosted Supabase project** (Free tier for dev) with asymmetric signing keys. *Needs the owner's Supabase account.*
+- ⬜ **Sign in with Apple and Google** (native, `signInWithIdToken`). *Needs Apple Developer Program membership and Google Cloud OAuth clients.*
+- ⬜ **Production SMTP relay** (Resend/SES) for OTP email, plus a verified sending domain. *Needs an account and a domain.*
+- ⬜ **On-device test of the sign-in flow.** *Needs a phone with Expo Go, or Xcode (not installed on the dev machine).*
 
 ### M3 · Cities, catalogue & geo (weeks 2–3): 🟡
 - ✅ City pack format and seeding tool.
@@ -149,6 +153,11 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
 | 2026-10-20 | One logo version everywhere: no dark variant. Contrasting outlines instead. | Brand consistency. Gold outlines on black and black outlines on gold/red keep it legible on light and dark backgrounds. |
 | 2026-10-20 | pnpm dependency build scripts deny-by-default (`allowBuilds` in `pnpm-workspace.yaml`) | pnpm 12 fails installs on unapproved install scripts. Each package is approved or denied explicitly; `unrs-resolver` is denied because its script only fetches fallback binaries. |
 | 2026-10-20 | Commit `apps/mobile/src/types/expo.d.ts` | Expo's generated `expo-env.d.ts` is gitignored by convention, so fresh clones and CI couldn't typecheck CSS imports. |
+| 2026-10-20 | Passwordless **email OTP codes**, not magic links | Links can't reliably open a native app, so the user types a 6-digit code instead (iOS autofills it from Mail). Codes expire in 10 minutes, down from 1 hour. |
+| 2026-10-20 | Sessions in **`expo-secure-store`** (chunked), not expo-sqlite/AsyncStorage | Refresh tokens are long-lived credentials and belong in the Keychain/Keystore. Chunking works around the ~2 KB value limit; generation IDs make torn writes detectable. |
+| 2026-10-20 | Error-sanitising Connect interceptor | connect-go returns `err.Error()` for plain errors, which leaked SQL constraint names to clients. |
+| 2026-10-20 | Deleting an account: auth user first, then app data | If deleting the auth user fails, nothing is lost and the user can retry. The reverse order could leave a live login with no data. |
+| 2026-10-20 | **jest-expo** for mobile unit tests; runs in CI with lint | Security-critical client code (session storage) needs tests. jest-expo is Expo's standard preset. |
 | 2026-10-20 | CORS deny-by-default via an explicit origin allowlist | rs/cors treats an empty `AllowedOrigins` as allow-all. |
 
 ## 5. Known gaps & risks

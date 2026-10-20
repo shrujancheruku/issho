@@ -76,7 +76,8 @@ See [../data/README.md](../data/README.md). It's a JSON file plus `make seed`, w
 | Go unit tests | `make test` | `*_test.go` next to the code; table-driven style |
 | Auth | Tests sign JWTs with a throwaway ES256 key | `internal/platform/auth/auth_test.go` |
 | Migrations | Up, down, up, then seed against PostGIS | CI `backend` job; locally against `supabase start` |
-| TypeScript | `pnpm typecheck` (Turborepo) | all workspace packages |
+| TypeScript | `pnpm typecheck`, `pnpm lint` (Turborepo) | all workspace packages |
+| Mobile unit tests | `pnpm test` (Jest, `jest-expo` preset) | `apps/mobile/src/**/__tests__/*.test.ts` |
 | End to end (manual for now) | Steps 3–4 of [onboarding.md](onboarding.md) | |
 
 Tests must not call paid APIs (Google, Anthropic). Use fakes behind the provider interfaces, with recorded fixtures.
