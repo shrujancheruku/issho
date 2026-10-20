@@ -1,16 +1,20 @@
-"""Generates the Issho logo SVGs in assets/brand/ from Noto Serif JP outlines.
+"""Generates the Issho logo SVGs in assets/brand/ from font outlines.
 
 Concept: 一緒 ("together"). 一 ("one") is drawn as a single gold thread. In 緒,
 the thread radical 糸 is gold, and the 日 ("sun") at the bottom of 者 ("person")
 is replaced by the red hinomaru disc. The mark reads: one thread joining people
 under one sun.
 
+The kanji use Noto Serif JP; the "ISSHO" wordmark uses Dela Gothic One.
+
 Usage (from repo root):
     python3 -m venv /tmp/brand-venv && /tmp/brand-venv/bin/pip install fonttools
     curl -L -o /tmp/NotoSerifJP.ttf "https://github.com/google/fonts/raw/main/ofl/notoserifjp/NotoSerifJP%5Bwght%5D.ttf"
-    /tmp/brand-venv/bin/python scripts/brand/build_logo.py /tmp/NotoSerifJP.ttf assets/brand
+    curl -L -o /tmp/DelaGothicOne.ttf "https://github.com/google/fonts/raw/main/ofl/delagothicone/DelaGothicOne-Regular.ttf"
+    /tmp/brand-venv/bin/python scripts/brand/build_logo.py /tmp/NotoSerifJP.ttf assets/brand /tmp/DelaGothicOne.ttf
 
-The font (SIL Open Font License 1.1) is not committed; only the generated outlines are.
+Both fonts are under the SIL Open Font License 1.1 and are not committed; only the
+generated outlines are.
 """
 import sys
 
@@ -27,6 +31,11 @@ RED, GOLD, INK = "#BC002D", "#C9A227", "#111111"  # hinomaru red, gold, ink blac
 # the fill, so only the outer half shows and the letterforms keep their weight.
 OUTLINE = 28  # font units (1000 per em); only half of it is visible
 
+# Wordmark "ISSHO" in Dela Gothic One: letter spacing in that font's units, and
+# size relative to the kanji. At these values it spans about the width of 一緒.
+WORDMARK_TRACK = 120
+WORDMARK_SIZE = 0.34
+
 # Contour indices of 緒 in Noto Serif JP (weight 800), worked out by rendering each
 # contour in its own colour. If the font version changes, check these indices again.
 THREAD_IDX = range(7, 15)  # 糸 radical
@@ -34,8 +43,12 @@ PERSON_IDX = range(0, 4)   # 土 + ノ of 者
 SUN_IDX = (4, 5, 6)        # 日 of 者 → drawn as the hinomaru disc
 
 
-def load(path, wght):
-    return instantiateVariableFont(TTFont(path), {"wght": wght})
+def load(path, wght=None):
+    """Loads a font; variable fonts are pinned to the given weight."""
+    font = TTFont(path)
+    if "fvar" in font and wght is not None:
+        return instantiateVariableFont(font, {"wght": wght})
+    return font
 
 
 def contours(font, ch):
@@ -70,9 +83,9 @@ def to_path(glyphset, cs):
     return pen.getCommands()
 
 
-def build(font_path, out_dir):
+def build(font_path, out_dir, wordmark_path):
     heavy = load(font_path, 800)  # kanji
-    medium = load(font_path, 600)  # wordmark
+    medium = load(wordmark_path)  # wordmark (single-weight font)
     gs = heavy.getGlyphSet()
 
     ichi = contours(heavy, "一")
@@ -88,15 +101,16 @@ def build(font_path, out_dir):
 
     def cho_group():
         # Font units are y-up; scale(1,-1) flips them into SVG's y-down space.
-        # The sun is drawn first so the ノ stroke of 者 passes over it; its gold
-        # outline then separates the black stroke from the red disc.
+        # Paint order: black-on-gold parts first, then everything outlined in
+        # black (sun, thread) on top. So where the ノ stroke of 者 meets the sun,
+        # the sun and its black outline sit over the stroke.
         return (f'<g transform="scale(1,-1)">'
+                f'<path d="{to_path(gs, person)}" fill="{INK}" {outlined(GOLD)}/>'
                 f'<circle cx="{sun_cx:.1f}" cy="{sun_cy:.1f}" r="{sun_r:.1f}" fill="{RED}" {outlined(INK)}/>'
-                f'<path d="{to_path(gs, thread)}" fill="{GOLD}" {outlined(INK)}/>'
-                f'<path d="{to_path(gs, person)}" fill="{INK}" {outlined(GOLD)}/></g>')
+                f'<path d="{to_path(gs, thread)}" fill="{GOLD}" {outlined(INK)}/></g>')
 
     def wordmark():
-        text, track, size = "ISSHO", 300, 0.30  # tracking in font units; size relative to the kanji
+        text, track, size = "ISSHO", WORDMARK_TRACK, WORDMARK_SIZE
         mgs, cmap = medium.getGlyphSet(), medium.getBestCmap()
         glyphs = [mgs[cmap[ord(ch)]] for ch in text]
         total = sum(g.width for g in glyphs) + track * (len(glyphs) - 1)
@@ -132,4 +146,6 @@ def build(font_path, out_dir):
 
 
 if __name__ == "__main__":
-    build(sys.argv[1], sys.argv[2])
+    if len(sys.argv) != 4:
+        sys.exit("usage: build_logo.py <NotoSerifJP.ttf> <out-dir> <DelaGothicOne.ttf>")
+    build(sys.argv[1], sys.argv[2], sys.argv[3])
