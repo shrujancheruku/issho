@@ -445,6 +445,27 @@ enable_confirmations = true
 # Hosted: at most one code request per address per minute (locally 1s for testing).
 max_frequency = "1m0s"
 
+[remotes.issho-dev.auth.email.smtp]
+# Resend relay. Supabase's built-in email can't carry custom templates on the Free tier,
+# and only reaches organisation members. Without a verified domain, Resend only delivers
+# from onboarding@resend.dev to the Resend account owner's address (fine for dev).
+# The password is the Resend API key, read from the gitignored supabase/.env at push time.
+enabled = true
+host = "smtp.resend.com"
+port = 465
+user = "resend"
+pass = "env(SUPABASE_SMTP_PASS)"
+admin_email = "onboarding@resend.dev"
+sender_name = "Issho"
+
+[remotes.issho-dev.auth.rate_limit]
+# The local default (2/hour) would block testing; 30/hour is Supabase's custom-SMTP default.
+email_sent = 30
+
+[remotes.issho-dev.db.ssl_enforcement]
+# Enforced on the hosted DB (set with `supabase ssl-enforcement update`); declared here so the file matches.
+enabled = true
+
 [remotes.issho-dev.db.pooler]
 # Keep the hosted pooler's plan-appropriate limits.
 default_pool_size = 15
