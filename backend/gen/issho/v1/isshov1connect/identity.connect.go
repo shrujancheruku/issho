@@ -35,6 +35,9 @@ const (
 const (
 	// IdentityServiceGetMeProcedure is the fully-qualified name of the IdentityService's GetMe RPC.
 	IdentityServiceGetMeProcedure = "/issho.v1.IdentityService/GetMe"
+	// IdentityServiceDeleteAccountProcedure is the fully-qualified name of the IdentityService's
+	// DeleteAccount RPC.
+	IdentityServiceDeleteAccountProcedure = "/issho.v1.IdentityService/DeleteAccount"
 )
 
 // IdentityServiceClient is a client for the issho.v1.IdentityService service.
@@ -42,6 +45,11 @@ type IdentityServiceClient interface {
 	// GetMe returns the caller's account, creating the app-side user row the
 	// first time a Supabase user calls the API.
 	GetMe(context.Context, *connect.Request[v1.GetMeRequest]) (*connect.Response[v1.GetMeResponse], error)
+	// DeleteAccount permanently deletes the caller's Supabase auth user and all
+	// of their app data (cascaded from auth.users). The client should sign out
+	// afterwards; existing access tokens stop working once they expire.
+	// Returns FAILED_PRECONDITION if the server has no Supabase secret key configured.
+	DeleteAccount(context.Context, *connect.Request[v1.DeleteAccountRequest]) (*connect.Response[v1.DeleteAccountResponse], error)
 }
 
 // NewIdentityServiceClient constructs a client for the issho.v1.IdentityService service. By
@@ -61,12 +69,19 @@ func NewIdentityServiceClient(httpClient connect.HTTPClient, baseURL string, opt
 			connect.WithSchema(identityServiceMethods.ByName("GetMe")),
 			connect.WithClientOptions(opts...),
 		),
+		deleteAccount: connect.NewClient[v1.DeleteAccountRequest, v1.DeleteAccountResponse](
+			httpClient,
+			baseURL+IdentityServiceDeleteAccountProcedure,
+			connect.WithSchema(identityServiceMethods.ByName("DeleteAccount")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // identityServiceClient implements IdentityServiceClient.
 type identityServiceClient struct {
-	getMe *connect.Client[v1.GetMeRequest, v1.GetMeResponse]
+	getMe         *connect.Client[v1.GetMeRequest, v1.GetMeResponse]
+	deleteAccount *connect.Client[v1.DeleteAccountRequest, v1.DeleteAccountResponse]
 }
 
 // GetMe calls issho.v1.IdentityService.GetMe.
@@ -74,11 +89,21 @@ func (c *identityServiceClient) GetMe(ctx context.Context, req *connect.Request[
 	return c.getMe.CallUnary(ctx, req)
 }
 
+// DeleteAccount calls issho.v1.IdentityService.DeleteAccount.
+func (c *identityServiceClient) DeleteAccount(ctx context.Context, req *connect.Request[v1.DeleteAccountRequest]) (*connect.Response[v1.DeleteAccountResponse], error) {
+	return c.deleteAccount.CallUnary(ctx, req)
+}
+
 // IdentityServiceHandler is an implementation of the issho.v1.IdentityService service.
 type IdentityServiceHandler interface {
 	// GetMe returns the caller's account, creating the app-side user row the
 	// first time a Supabase user calls the API.
 	GetMe(context.Context, *connect.Request[v1.GetMeRequest]) (*connect.Response[v1.GetMeResponse], error)
+	// DeleteAccount permanently deletes the caller's Supabase auth user and all
+	// of their app data (cascaded from auth.users). The client should sign out
+	// afterwards; existing access tokens stop working once they expire.
+	// Returns FAILED_PRECONDITION if the server has no Supabase secret key configured.
+	DeleteAccount(context.Context, *connect.Request[v1.DeleteAccountRequest]) (*connect.Response[v1.DeleteAccountResponse], error)
 }
 
 // NewIdentityServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -94,10 +119,18 @@ func NewIdentityServiceHandler(svc IdentityServiceHandler, opts ...connect.Handl
 		connect.WithSchema(identityServiceMethods.ByName("GetMe")),
 		connect.WithHandlerOptions(opts...),
 	)
+	identityServiceDeleteAccountHandler := connect.NewUnaryHandler(
+		IdentityServiceDeleteAccountProcedure,
+		svc.DeleteAccount,
+		connect.WithSchema(identityServiceMethods.ByName("DeleteAccount")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/issho.v1.IdentityService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case IdentityServiceGetMeProcedure:
 			identityServiceGetMeHandler.ServeHTTP(w, r)
+		case IdentityServiceDeleteAccountProcedure:
+			identityServiceDeleteAccountHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -109,4 +142,8 @@ type UnimplementedIdentityServiceHandler struct{}
 
 func (UnimplementedIdentityServiceHandler) GetMe(context.Context, *connect.Request[v1.GetMeRequest]) (*connect.Response[v1.GetMeResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.IdentityService.GetMe is not implemented"))
+}
+
+func (UnimplementedIdentityServiceHandler) DeleteAccount(context.Context, *connect.Request[v1.DeleteAccountRequest]) (*connect.Response[v1.DeleteAccountResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.IdentityService.DeleteAccount is not implemented"))
 }

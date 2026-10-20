@@ -21,6 +21,9 @@ func (h *Handler) GetMe(ctx context.Context, _ *connect.Request[isshov1.GetMeReq
 	}
 	acct, err := h.Svc.Me(ctx, c)
 	if err != nil {
+		if errors.Is(err, ErrAccountDeleted) {
+			return nil, connect.NewError(connect.CodeUnauthenticated, err)
+		}
 		return nil, err
 	}
 	u := &isshov1.User{Id: acct.User.ID.String(), Onboarded: acct.Onboarded}
@@ -28,4 +31,18 @@ func (h *Handler) GetMe(ctx context.Context, _ *connect.Request[isshov1.GetMeReq
 		u.Email = *acct.User.Email
 	}
 	return connect.NewResponse(&isshov1.GetMeResponse{User: u}), nil
+}
+
+func (h *Handler) DeleteAccount(ctx context.Context, _ *connect.Request[isshov1.DeleteAccountRequest]) (*connect.Response[isshov1.DeleteAccountResponse], error) {
+	c, ok := auth.FromContext(ctx)
+	if !ok {
+		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("no caller"))
+	}
+	if err := h.Svc.DeleteAccount(ctx, c); err != nil {
+		if errors.Is(err, ErrDeletionUnavailable) {
+			return nil, connect.NewError(connect.CodeFailedPrecondition, err)
+		}
+		return nil, err
+	}
+	return connect.NewResponse(&isshov1.DeleteAccountResponse{}), nil
 }

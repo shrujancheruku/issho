@@ -21,6 +21,78 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type DeleteAccountRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteAccountRequest) Reset() {
+	*x = DeleteAccountRequest{}
+	mi := &file_issho_v1_identity_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteAccountRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteAccountRequest) ProtoMessage() {}
+
+func (x *DeleteAccountRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_issho_v1_identity_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteAccountRequest.ProtoReflect.Descriptor instead.
+func (*DeleteAccountRequest) Descriptor() ([]byte, []int) {
+	return file_issho_v1_identity_proto_rawDescGZIP(), []int{0}
+}
+
+type DeleteAccountResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteAccountResponse) Reset() {
+	*x = DeleteAccountResponse{}
+	mi := &file_issho_v1_identity_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteAccountResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteAccountResponse) ProtoMessage() {}
+
+func (x *DeleteAccountResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_issho_v1_identity_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteAccountResponse.ProtoReflect.Descriptor instead.
+func (*DeleteAccountResponse) Descriptor() ([]byte, []int) {
+	return file_issho_v1_identity_proto_rawDescGZIP(), []int{1}
+}
+
 type GetMeRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -29,7 +101,7 @@ type GetMeRequest struct {
 
 func (x *GetMeRequest) Reset() {
 	*x = GetMeRequest{}
-	mi := &file_issho_v1_identity_proto_msgTypes[0]
+	mi := &file_issho_v1_identity_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -41,7 +113,7 @@ func (x *GetMeRequest) String() string {
 func (*GetMeRequest) ProtoMessage() {}
 
 func (x *GetMeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_identity_proto_msgTypes[0]
+	mi := &file_issho_v1_identity_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -54,7 +126,7 @@ func (x *GetMeRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetMeRequest.ProtoReflect.Descriptor instead.
 func (*GetMeRequest) Descriptor() ([]byte, []int) {
-	return file_issho_v1_identity_proto_rawDescGZIP(), []int{0}
+	return file_issho_v1_identity_proto_rawDescGZIP(), []int{2}
 }
 
 type GetMeResponse struct {
@@ -66,7 +138,7 @@ type GetMeResponse struct {
 
 func (x *GetMeResponse) Reset() {
 	*x = GetMeResponse{}
-	mi := &file_issho_v1_identity_proto_msgTypes[1]
+	mi := &file_issho_v1_identity_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -78,7 +150,7 @@ func (x *GetMeResponse) String() string {
 func (*GetMeResponse) ProtoMessage() {}
 
 func (x *GetMeResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_identity_proto_msgTypes[1]
+	mi := &file_issho_v1_identity_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -91,7 +163,7 @@ func (x *GetMeResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetMeResponse.ProtoReflect.Descriptor instead.
 func (*GetMeResponse) Descriptor() ([]byte, []int) {
-	return file_issho_v1_identity_proto_rawDescGZIP(), []int{1}
+	return file_issho_v1_identity_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *GetMeResponse) GetUser() *User {
@@ -115,7 +187,7 @@ type User struct {
 
 func (x *User) Reset() {
 	*x = User{}
-	mi := &file_issho_v1_identity_proto_msgTypes[2]
+	mi := &file_issho_v1_identity_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -127,7 +199,7 @@ func (x *User) String() string {
 func (*User) ProtoMessage() {}
 
 func (x *User) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_identity_proto_msgTypes[2]
+	mi := &file_issho_v1_identity_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -140,7 +212,7 @@ func (x *User) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use User.ProtoReflect.Descriptor instead.
 func (*User) Descriptor() ([]byte, []int) {
-	return file_issho_v1_identity_proto_rawDescGZIP(), []int{2}
+	return file_issho_v1_identity_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *User) GetId() string {
@@ -168,16 +240,19 @@ var File_issho_v1_identity_proto protoreflect.FileDescriptor
 
 const file_issho_v1_identity_proto_rawDesc = "" +
 	"\n" +
-	"\x17issho/v1/identity.proto\x12\bissho.v1\"\x0e\n" +
+	"\x17issho/v1/identity.proto\x12\bissho.v1\"\x16\n" +
+	"\x14DeleteAccountRequest\"\x17\n" +
+	"\x15DeleteAccountResponse\"\x0e\n" +
 	"\fGetMeRequest\"3\n" +
 	"\rGetMeResponse\x12\"\n" +
 	"\x04user\x18\x01 \x01(\v2\x0e.issho.v1.UserR\x04user\"J\n" +
 	"\x04User\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
 	"\x05email\x18\x02 \x01(\tR\x05email\x12\x1c\n" +
-	"\tonboarded\x18\x03 \x01(\bR\tonboarded2M\n" +
+	"\tonboarded\x18\x03 \x01(\bR\tonboarded2\xa1\x01\n" +
 	"\x0fIdentityService\x12:\n" +
-	"\x05GetMe\x12\x16.issho.v1.GetMeRequest\x1a\x17.issho.v1.GetMeResponse\"\x00B>Z<github.com/shrujancheruku/issho/backend/gen/issho/v1;isshov1b\x06proto3"
+	"\x05GetMe\x12\x16.issho.v1.GetMeRequest\x1a\x17.issho.v1.GetMeResponse\"\x00\x12R\n" +
+	"\rDeleteAccount\x12\x1e.issho.v1.DeleteAccountRequest\x1a\x1f.issho.v1.DeleteAccountResponse\"\x00B>Z<github.com/shrujancheruku/issho/backend/gen/issho/v1;isshov1b\x06proto3"
 
 var (
 	file_issho_v1_identity_proto_rawDescOnce sync.Once
@@ -191,18 +266,22 @@ func file_issho_v1_identity_proto_rawDescGZIP() []byte {
 	return file_issho_v1_identity_proto_rawDescData
 }
 
-var file_issho_v1_identity_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_issho_v1_identity_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_issho_v1_identity_proto_goTypes = []any{
-	(*GetMeRequest)(nil),  // 0: issho.v1.GetMeRequest
-	(*GetMeResponse)(nil), // 1: issho.v1.GetMeResponse
-	(*User)(nil),          // 2: issho.v1.User
+	(*DeleteAccountRequest)(nil),  // 0: issho.v1.DeleteAccountRequest
+	(*DeleteAccountResponse)(nil), // 1: issho.v1.DeleteAccountResponse
+	(*GetMeRequest)(nil),          // 2: issho.v1.GetMeRequest
+	(*GetMeResponse)(nil),         // 3: issho.v1.GetMeResponse
+	(*User)(nil),                  // 4: issho.v1.User
 }
 var file_issho_v1_identity_proto_depIdxs = []int32{
-	2, // 0: issho.v1.GetMeResponse.user:type_name -> issho.v1.User
-	0, // 1: issho.v1.IdentityService.GetMe:input_type -> issho.v1.GetMeRequest
-	1, // 2: issho.v1.IdentityService.GetMe:output_type -> issho.v1.GetMeResponse
-	2, // [2:3] is the sub-list for method output_type
-	1, // [1:2] is the sub-list for method input_type
+	4, // 0: issho.v1.GetMeResponse.user:type_name -> issho.v1.User
+	2, // 1: issho.v1.IdentityService.GetMe:input_type -> issho.v1.GetMeRequest
+	0, // 2: issho.v1.IdentityService.DeleteAccount:input_type -> issho.v1.DeleteAccountRequest
+	3, // 3: issho.v1.IdentityService.GetMe:output_type -> issho.v1.GetMeResponse
+	1, // 4: issho.v1.IdentityService.DeleteAccount:output_type -> issho.v1.DeleteAccountResponse
+	3, // [3:5] is the sub-list for method output_type
+	1, // [1:3] is the sub-list for method input_type
 	1, // [1:1] is the sub-list for extension type_name
 	1, // [1:1] is the sub-list for extension extendee
 	0, // [0:1] is the sub-list for field type_name
@@ -219,7 +298,7 @@ func file_issho_v1_identity_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_issho_v1_identity_proto_rawDesc), len(file_issho_v1_identity_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   3,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

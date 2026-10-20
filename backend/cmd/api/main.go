@@ -24,6 +24,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/platform/auth"
 	"github.com/shrujancheruku/issho/backend/internal/platform/config"
 	"github.com/shrujancheruku/issho/backend/internal/platform/db"
+	"github.com/shrujancheruku/issho/backend/internal/platform/supabase"
 )
 
 var version = "dev"
@@ -77,7 +78,13 @@ func run() error {
 
 	mux := http.NewServeMux()
 	mux.Handle(isshov1connect.NewHealthServiceHandler(&health.Handler{Pool: pool, Version: version}, opts))
-	mux.Handle(isshov1connect.NewIdentityServiceHandler(&identity.Handler{Svc: &identity.Service{Q: q}}, opts))
+	identitySvc := &identity.Service{Store: q}
+	if cfg.SupabaseSecretKey != "" {
+		identitySvc.Admin = supabase.NewAdmin(cfg.SupabaseURL, cfg.SupabaseSecretKey)
+	} else {
+		slog.Warn("SUPABASE_SECRET_KEY not set; account deletion disabled")
+	}
+	mux.Handle(isshov1connect.NewIdentityServiceHandler(&identity.Handler{Svc: identitySvc}, opts))
 	mux.Handle(isshov1connect.NewCatalogServiceHandler(&catalog.Handler{Q: q}, opts))
 
 	handler := withCORS(mux, cfg.AllowedOrigins)
