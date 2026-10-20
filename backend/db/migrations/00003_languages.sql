@@ -6,8 +6,8 @@
 --   primary_language:   the user's main language; the app is shown in it, and
 --                       it's the second language on events held in another one
 --   secondary_language: optional extra language shown next to it
--- Any language is allowed (ISO 639 base codes). Our own content is translated
--- into i18n.Translated; other languages fall back (i18n.Pair).
+-- Any language is allowed (ISO 639-1 codes). Text in languages other than
+-- English is translated on demand (internal/translate, app.translations).
 -- Separate from app.user_languages, which records every language a person can
 -- *speak* (used for matching).
 -- not null is safe: profiles are only created from M5 onboarding, which sets it.
