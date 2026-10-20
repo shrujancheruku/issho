@@ -26,6 +26,8 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/platform/db"
 	"github.com/shrujancheruku/issho/backend/internal/platform/errs"
 	"github.com/shrujancheruku/issho/backend/internal/platform/supabase"
+	"github.com/shrujancheruku/issho/backend/internal/translate"
+	"github.com/shrujancheruku/issho/backend/internal/translate/claude"
 )
 
 var version = "dev"
@@ -90,7 +92,13 @@ func run() error {
 		slog.Warn("SUPABASE_SECRET_KEY not set; account deletion disabled")
 	}
 	mux.Handle(isshov1connect.NewIdentityServiceHandler(&identity.Handler{Svc: identitySvc}, opts))
-	mux.Handle(isshov1connect.NewCatalogServiceHandler(&catalog.Handler{Q: q}, opts))
+	translations := &translate.Service{Store: q}
+	if cfg.AnthropicAPIKey != "" {
+		translations.Translator = claude.New(cfg.AnthropicAPIKey)
+	} else {
+		slog.Warn("ANTHROPIC_API_KEY not set: machine translation off, text shown in stored languages only")
+	}
+	mux.Handle(isshov1connect.NewCatalogServiceHandler(&catalog.Handler{Q: q, Translations: translations}, opts))
 
 	handler := withCORS(mux, cfg.AllowedOrigins)
 

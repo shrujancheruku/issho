@@ -81,6 +81,17 @@ type AppProfile struct {
 	SecondaryLanguage *string
 }
 
+type AppTranslation struct {
+	SourceHash string
+	Lang       string
+	Source     string
+	Context    string
+	Text       string
+	Model      string
+	Reviewed   bool
+	CreatedAt  pgtype.Timestamptz
+}
+
 type AppUser struct {
 	ID         uuid.UUID
 	Email      *string

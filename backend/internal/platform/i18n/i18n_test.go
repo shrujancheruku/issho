@@ -55,18 +55,15 @@ func TestForApp(t *testing.T) {
 }
 
 func TestPair(t *testing.T) {
-	raw := []byte(`{"en":"Karaoke","ja":"カラオケ","es":"Karaoke"}`)
 	tests := []struct{ primary, secondary, wantP, wantS string }{
-		{"ja", "es", "カラオケ", "Karaoke"},
-		{"es", "ja", "Karaoke", "カラオケ"},
-		{"en", "es", "Karaoke", ""}, // identical: shown once
-		{"ja", "fr", "カラオケ", ""},    // missing secondary
-		{"fr", "ja", "カラオケ", ""},    // missing primary: the secondary alone, not a fallback
-		{"ko", "pt", "Karaoke", ""}, // neither translated: authoring language
-		{"ja", "", "カラオケ", ""},
+		{"カラオケ", "Karaoke", "カラオケ", "Karaoke"},
+		{"Karaoke", "Karaoke", "Karaoke", ""}, // identical: shown once
+		{"カラオケ", "", "カラオケ", ""},              // no secondary
+		{"", "カラオケ", "カラオケ", ""},              // missing primary: the secondary alone, not English
+		{"", "", "Karaoke (en)", ""},          // nothing yet: English
 	}
 	for _, tt := range tests {
-		p, s := Pair(raw, tt.primary, tt.secondary)
+		p, s := Pair(tt.primary, tt.secondary, "Karaoke (en)")
 		if p != tt.wantP || s != tt.wantS {
 			t.Errorf("Pair(%q, %q) = %q, %q; want %q, %q", tt.primary, tt.secondary, p, s, tt.wantP, tt.wantS)
 		}
@@ -74,12 +71,12 @@ func TestPair(t *testing.T) {
 }
 
 func TestValid(t *testing.T) {
-	for _, ok := range []string{"ja", "es", "fil"} {
+	for _, ok := range []string{"ja", "es", "ko", "zh"} {
 		if !Valid(ok) {
 			t.Errorf("Valid(%q) = false", ok)
 		}
 	}
-	for _, bad := range []string{"", "JA", "ja-JP", "japanese", "j"} {
+	for _, bad := range []string{"", "JA", "ja-JP", "japanese", "j", "zz", "fil"} {
 		if Valid(bad) {
 			t.Errorf("Valid(%q) = true", bad)
 		}

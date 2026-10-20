@@ -2,10 +2,7 @@
   "id": "austin",
   "_comment": "Synthetic test pack: a real car-based city used to prove the app needs no code changes for a second city. Not a launch city.",
   "name": {
-    "en": "Austin",
-    "ja": "オースティン",
-    "es": "Austin",
-    "fr": "Austin"
+    "en": "Austin"
   },
   "timezone": "America/Chicago",
   "currency": "USD",
@@ -20,8 +17,7 @@
     {
       "id": "austin-downtown",
       "name": {
-        "en": "Downtown",
-        "es": "Centro"
+        "en": "Downtown"
       },
       "lat": 30.2672,
       "lng": -97.7431
@@ -29,8 +25,7 @@
     {
       "id": "austin-east",
       "name": {
-        "en": "East Austin",
-        "es": "Este de Austin"
+        "en": "East Austin"
       },
       "lat": 30.263,
       "lng": -97.719
@@ -38,8 +33,7 @@
     {
       "id": "austin-south-congress",
       "name": {
-        "en": "South Congress",
-        "es": "South Congress"
+        "en": "South Congress"
       },
       "lat": 30.249,
       "lng": -97.7495
@@ -47,8 +41,7 @@
     {
       "id": "austin-zilker",
       "name": {
-        "en": "Zilker",
-        "es": "Zilker"
+        "en": "Zilker"
       },
       "lat": 30.2669,
       "lng": -97.7729
@@ -56,8 +49,7 @@
     {
       "id": "austin-hyde-park",
       "name": {
-        "en": "Hyde Park",
-        "es": "Hyde Park"
+        "en": "Hyde Park"
       },
       "lat": 30.305,
       "lng": -97.727
@@ -65,8 +57,7 @@
     {
       "id": "austin-mueller",
       "name": {
-        "en": "Mueller",
-        "es": "Mueller"
+        "en": "Mueller"
       },
       "lat": 30.2985,
       "lng": -97.705
@@ -74,8 +65,7 @@
     {
       "id": "austin-domain",
       "name": {
-        "en": "The Domain",
-        "es": "The Domain"
+        "en": "The Domain"
       },
       "lat": 30.402,
       "lng": -97.7253
@@ -83,8 +73,7 @@
     {
       "id": "austin-round-rock",
       "name": {
-        "en": "Round Rock",
-        "es": "Round Rock"
+        "en": "Round Rock"
       },
       "lat": 30.5083,
       "lng": -97.6789
@@ -92,8 +81,7 @@
     {
       "id": "austin-cedar-park",
       "name": {
-        "en": "Cedar Park",
-        "es": "Cedar Park"
+        "en": "Cedar Park"
       },
       "lat": 30.5052,
       "lng": -97.8203
@@ -101,8 +89,7 @@
     {
       "id": "austin-pflugerville",
       "name": {
-        "en": "Pflugerville",
-        "es": "Pflugerville"
+        "en": "Pflugerville"
       },
       "lat": 30.4394,
       "lng": -97.62
@@ -204,19 +191,13 @@
     {
       "activity_id": "izakaya",
       "name": {
-        "en": "Japanese pub",
-        "ja": "居酒屋",
-        "es": "Bar japonés",
-        "fr": "Bistrot japonais"
+        "en": "Japanese pub"
       }
     },
     {
       "activity_id": "language-exchange",
       "name": {
-        "en": "Spanish–English exchange",
-        "ja": "スペイン語・英語交換",
-        "es": "Intercambio español–inglés",
-        "fr": "Échange espagnol–anglais"
+        "en": "Spanish–English exchange"
       }
     },
     {
@@ -228,10 +209,7 @@
     {
       "activity_id": "beach-day",
       "name": {
-        "en": "Lake day",
-        "ja": "湖で過ごす一日",
-        "es": "Día en el lago",
-        "fr": "Journée au lac"
+        "en": "Lake day"
       },
       "months": [
         5,

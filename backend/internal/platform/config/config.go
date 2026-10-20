@@ -16,6 +16,9 @@ type Config struct {
 	APIAddr           string
 	// AllowedOrigins lists browser origins (the admin SPA) allowed to call the API.
 	AllowedOrigins []string
+	// AnthropicAPIKey enables on-demand machine translation (Claude). Optional:
+	// without it, text is shown in the languages already stored.
+	AnthropicAPIKey string
 }
 
 func Load() (Config, error) {
@@ -24,6 +27,7 @@ func Load() (Config, error) {
 		SupabaseURL:       strings.TrimRight(os.Getenv("SUPABASE_URL"), "/"),
 		APIAddr:           getenv("API_ADDR", ":8080"),
 		SupabaseSecretKey: os.Getenv("SUPABASE_SECRET_KEY"),
+		AnthropicAPIKey:   os.Getenv("ANTHROPIC_API_KEY"),
 	}
 	if v := os.Getenv("ALLOWED_ORIGINS"); v != "" {
 		c.AllowedOrigins = strings.Split(v, ",")

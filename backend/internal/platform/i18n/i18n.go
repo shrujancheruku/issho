@@ -9,29 +9,29 @@ package i18n
 
 import (
 	"encoding/json"
-	"regexp"
 	"slices"
 	"strings"
 )
 
-// Translated lists the languages our own content (activity catalogue, venue
-// categories, app strings) is fully translated into (MVP). People and events
-// may use any language; for others, text falls back as described on Pair.
-var Translated = []string{"en", "ja", "es", "fr"}
-
-// Authoring is the language every piece of our own data must exist in, so a
-// fallback always exists. It's an authoring rule, not a display preference.
+// Authoring is the one language every piece of stored text must have. All
+// other languages are translated on demand (internal/translate). It's a
+// storage rule, not a display preference: nobody is shown English unless
+// nothing else is available.
 const Authoring = "en"
 
-// IsTranslated reports whether our content is fully translated into lang.
-func IsTranslated(lang string) bool { return slices.Contains(Translated, lang) }
+// iso6391 lists the ISO 639-1 language codes. Only these are accepted, so a
+// client can't make the server pay to translate into made-up languages.
+var iso6391 = strings.Fields(`aa ab ae af ak am an ar as av ay az ba be bg bi bm bn bo br bs ca ce ch co
+cr cs cu cv cy da de dv dz ee el en eo es et eu fa ff fi fj fo fr fy ga gd gl gn gu gv ha he hi ho hr
+ht hu hy hz ia id ie ig ii ik io is it iu ja jv ka kg ki kj kk kl km kn ko kr ks ku kv kw ky la lb lg
+li ln lo lt lu lv mg mh mi mk ml mn mr ms mt my na nb nd ne ng nl nn no nr nv ny oc oj om or os pa pi
+pl ps pt qu rm rn ro ru rw sa sc sd se sg si sk sl sm sn so sq sr ss st su sv sw ta te tg th ti tk tl
+tn to tr ts tt tw ty ug uk ur uz ve vi vo wa wo xh yi yo za zh zu`)
 
-// ISO 639-1/639-3 base codes ("ja", "es", "fil"), lowercase, no region:
-// regional variants don't change which language someone can read.
-var codeRE = regexp.MustCompile(`^[a-z]{2,3}$`)
-
-// Valid reports whether lang is a well-formed base language code.
-func Valid(lang string) bool { return codeRE.MatchString(lang) }
+// Valid reports whether lang is an ISO 639-1 code ("ja", "es"), lowercase,
+// without a region: regional variants don't change which language someone
+// can read.
+func Valid(lang string) bool { return slices.Contains(iso6391, lang) }
 
 // ForEvent picks the two languages to show a user for an event.
 //
@@ -62,31 +62,22 @@ func ForApp(userPrimary, userSecondary string) (primary, secondary string) {
 	return userPrimary, userSecondary
 }
 
-// Pair resolves a localised JSON object into the text for a primary and a
-// secondary language.
+// Pair decides what to display from text already resolved into the primary
+// and secondary languages ("" = not available) and the stored English text.
 //
-//   - If the primary translation is missing but the secondary exists, the
-//     secondary is shown alone: better one language the person reads than a
-//     fallback they may not.
-//   - If both are missing, the authoring language (then any value) is used,
-//     so a label is never blank.
-//   - secondary is "" when there's no translation or it's identical to the
-//     primary text (e.g. "Karaoke" in English and Spanish), so callers never
-//     show the same words twice.
-func Pair(raw []byte, primaryLang, secondaryLang string) (primary, secondary string) {
-	var m map[string]string
-	if err := json.Unmarshal(raw, &m); err != nil || len(m) == 0 {
-		return "", ""
-	}
-	primary, secondary = m[primaryLang], ""
-	if secondaryLang != "" && secondaryLang != primaryLang {
-		secondary = m[secondaryLang]
-	}
+//   - If the primary is missing but the secondary exists, the secondary is
+//     shown alone: better one language the person reads than a fallback they
+//     may not.
+//   - If both are missing (translation off or still running), the English
+//     text is shown, so a label is never blank.
+//   - secondary is "" when it's identical to the primary (e.g. "Karaoke" in
+//     English and Spanish), so callers never show the same words twice.
+func Pair(primary, secondary, english string) (string, string) {
 	switch {
 	case primary == "" && secondary != "":
 		primary, secondary = secondary, ""
 	case primary == "":
-		primary = Pick(raw, Authoring)
+		primary = english
 	}
 	if secondary == primary {
 		secondary = ""

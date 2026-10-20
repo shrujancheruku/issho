@@ -20,7 +20,7 @@ After each event, attendees **privately** pick who they'd meet again. **Mutual**
   - photos are shown only to confirmed attendees
   - gender-composition rules
   - a "here for dating" report option
-- **Any language, two at a time.** People can speak any language and events can be held in any language; nobody needs English. Everything is shown in a primary language plus an optional secondary one. For events, primary = the event's language; secondary = the event's second language (e.g. a JP–ES exchange), else the user's own language. Elsewhere, it's the user's primary language plus their secondary choice. Short text side by side, longer text behind a switch. Our own content is translated into English, Japanese, Spanish and French for the MVP.
+- **Any language, two at a time.** People can speak any language and events can be held in any language; nobody needs English. Everything is shown in a primary language plus an optional secondary one. For events, primary = the event's language; secondary = the event's second language (e.g. a JP–ES exchange), else the user's own language. Elsewhere, it's the user's primary language plus their secondary choice. Short text side by side, longer text behind a switch. Only English is stored for our own content; every other language is machine-translated on demand and cached.
 - **Location-agnostic.** Everything local (areas, travel times, languages, venues, activity names) is data in a **city pack**, not code. The first city is Tokyo.
 - **North-star metric:** weekly attendees who have been to more than one event.
 
@@ -73,7 +73,7 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
 
 ### M3 · Cities, catalogue & geo (weeks 2–3): 🟡 in progress
 - ✅ City pack format and seeding tool. Packs now declare `travel_modes`, and everything in `data/` is validated by a test (CI) and before seeding.
-- ✅ **Activity catalogue: 230 activities** in 12 categories (EN/JA/ES/FR), each linked to the **venue categories** it happens at (48 categories mapped to Google place types, checked against a snapshot of Google's type list).
+- ✅ **Activity catalogue: 230 activities** in 12 categories (English only; other languages on demand), each linked to the **venue categories** it happens at (48 categories mapped to Google place types, checked against a snapshot of Google's type list).
 - ⬜ **Google Cloud project** `issho-dev` with restricted keys, quotas and a $10 budget alert. Needs the owner's Google account; steps in [google-maps.md](google-maps.md). Mobile keys can wait until M6.
 - 🟡 **`tool build-matrix`** (`make matrix CITY=…`): Routes API Compute Route Matrix per city and travel mode.
   - no same-area calls; walking only for areas < 4 km apart; minutes rounded up; transit timed for Saturday 11:00
@@ -92,7 +92,8 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
   - `i18n.ForEvent` / `i18n.ForApp` pick the primary/secondary pair; `i18n.Pair` resolves text, showing the secondary alone rather than an unreadable fallback
   - `ListActivities` takes `locale` (primary) plus `secondary_language` and returns `name` plus `secondary_name`; any language code accepted; verified end to end against local Supabase
   - `profiles.primary_language` + `secondary_language` (migration 00003); language codes validated in the DB
-  - catalogue names complete in EN/JA/ES/FR, enforced by validation
+- ✅ **On-demand translation** (`internal/translate`): English is the only language that must be stored. Other languages come from stored text (local names, prefilled events), then the `app.translations` cache (migration 00004), then Claude Haiku, cached for everyone. Requests wait up to 8 s, and slower translations finish in the background. Concurrent requests share one call; failures aren't cached; `Prefill` for events. Off without `ANTHROPIC_API_KEY`. Cache path and fallbacks verified end to end; **live Claude translation not yet run** (no key in local dev yet).
+  - the catalogue and overrides are English-only; city packs keep only real local names (東京, 吉祥寺)
 
 ### M4 · Matching engine (weeks 3–5): ⬜
 - ⬜ `internal/matching` as a pure package (no I/O) with table-driven tests.
@@ -105,10 +106,10 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
 - ⬜ A synthetic-user simulator (500 users × 2 cities).
 
 ### M5 · Onboarding & profile (weeks 5–6): ⬜
-- ⬜ **App i18n framework** (moved up from M9) so every screen is built with EN/JA/ES/FR strings and the primary ↔ secondary switch from the start. Primary and secondary language pickers in onboarding and settings; the very first screens (sign-in) follow the device language.
+- ⬜ **App i18n framework** (moved up from M9): UI strings written in English in the app; other languages fetched from the server's translation cache on demand (and cached on the device), with the primary ↔ secondary switch from the start. Primary and secondary language pickers in onboarding and settings; the sign-in screens follow the device language.
 - ⬜ Auth emails in the user's language(s), if Supabase templates can branch on user metadata (currently EN/JA for everyone).
 - ⬜ Profile RPCs and screens: city/area plus maximum travel time, spoken languages, primary and secondary display languages, availability grid, activity tiles (like/love/open to try), group size, energy, budget, gender plus same-gender-only, birth year (18+), code of conduct.
-- ⬜ Free-text interests → activity tags with Claude (Haiku). The user confirms the suggested tags. Includes a tagging eval set (EN/JA/ES/FR).
+- ⬜ Free-text interests → activity tags with Claude (Haiku). The user confirms the suggested tags. Includes a tagging eval set in several languages.
 
 ### M6 · Proposals & events (weeks 6–8): ⬜
 - ⬜ The River worker (`cmd/worker`):
@@ -119,7 +120,8 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
   - chat opens 48h before the event
   - push via Expo Push
 - ⬜ Proposals feed with accept/decline. Event screen: attendees, meeting point after the reveal, Google map, WebSocket group chat, check-in, share with a trusted contact.
-- ⬜ Events have a `primary_language` (any language) and an optional `secondary_language` (e.g. language exchanges). Plan descriptions are written by Claude in the event's language(s) and in each attendee's language where `i18n.ForEvent` needs it, with a template fallback.
+- ⬜ Events have a `primary_language` (any language) and an optional `secondary_language` (e.g. language exchanges). Event text is **prefilled in English plus the event's own languages** when the event is created (`translate.Service.Prefill`); each attendee's other language is translated on demand. Plan descriptions are written by Claude, with a template fallback.
+- ⬜ Venue names, addresses and hours fetched **live** from Places in each displayed language (Google's own localised names; nothing stored).
 
 ### M7 · Feedback loop & crews (weeks 8–9): ⬜
 - ⬜ Post-event feedback: rate the plan, rate the group, pick who you'd meet again (private), report.
@@ -131,7 +133,7 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
 - ⬜ City-pack editor, venue/route curation, proposal review/override (build groups by hand for the first city), moderation queue, domain metrics.
 
 ### M9 · Release prep (weeks 11–12): ⬜
-- ⬜ Translation review pass (JA/ES/FR) by native speakers: catalogue names were drafted by the developer.
+- ⬜ Spot-check machine translations for the launch languages (admin can mark `app.translations.reviewed`; M8).
 - ⬜ Sentry (crashes and errors, mobile and Go) and PostHog (product analytics, feature flags).
 - ⬜ Production deploy:
   - Dockerfiles for `api`/`worker`
@@ -196,7 +198,11 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
 | 2026-10-20 | commitlint also runs as a local `commit-msg` hook | The first M2 PR failed CI on over-long commit bodies. Catching that at commit time is cheaper than rewriting history after a push. |
 | 2026-10-20 | **jest-expo** for mobile unit tests; runs in CI with lint | Security-critical client code (session storage) needs tests. jest-expo is Expo's standard preset. |
 | 2026-10-20 | CORS deny-by-default via an explicit origin allowlist | rs/cors treats an empty `AllowedOrigins` as allow-all. |
-| 2026-10-20 | **Symmetric languages, two at a time.** No default language; people speak and events run in any language. Event: its language + its second language, else the viewer's language. App: the user's primary + secondary choice. Side by side for short text, a switch for long text. Translated content: en, ja, es, fr. | Product decision: people who don't speak English must be fully served. A short-lived "English-first" version was replaced before it shipped. Centralised in `i18n.ForEvent`/`ForApp` so every surface applies the same rule. |
+| 2026-10-20 | **Symmetric languages, two at a time.** No default language; people speak and events run in any language. Event: its language + its second language, else the viewer's language. App: the user's primary + secondary choice. Side by side for short text, a switch for long text. | Product decision: people who don't speak English must be fully served. A short-lived "English-first" version was replaced before it shipped. Centralised in `i18n.ForEvent`/`ForApp` so every surface applies the same rule. |
+| 2026-10-20 | **English is the only stored language; everything else is translated on demand and cached** (Claude Haiku), not maintained by hand | No translation files to keep in sync, and any language works from day one. Caching makes it a one-off cost per text and language (cents), and everyone sees the same wording. Events are prefilled in their own languages because those are certain to be needed. Replaces hand-written ja/es/fr catalogue names. |
+| 2026-10-20 | Server-side translation, not on-device (ML Kit / Apple Translation) | Labels get context (better quality than a bare one-word label), the result is consistent across iOS and Android, can be reviewed, and needs no native modules (keeps Expo Go). On-device stays an option for user-written text such as chat (M6). |
+| 2026-10-20 | **Google place names are not stored**, even when Google has several languages; they're fetched live per displayed language | Maps terms allow storing only place IDs. Live fetches give Google's own local names, which beat machine-translating proper nouns. |
+| 2026-10-20 | Language codes limited to **ISO 639-1** | Every language people use is covered, and clients can't make the server pay to translate into made-up codes. |
 | 2026-10-20 | Missing translations fall back to the **other displayed language** first, English last | For someone who doesn't read English, showing only the language they do read beats a fallback they can't. English stays the authoring language for our data so a last resort always exists. |
 | 2026-10-20 | Display languages (`profiles.primary_language`/`secondary_language`) kept **separate from spoken languages** (`user_languages`) | What someone wants to read and what they can talk in at an event are different questions; matching uses only the latter. |
 | 2026-10-20 | APIs return primary **and** secondary text (`name` + `secondary_name`) instead of one localised string | Clients need both for side-by-side display; the switch is then a client-side choice with no extra round trip. Identical translations come back empty so nothing is shown twice. |

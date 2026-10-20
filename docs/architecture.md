@@ -94,7 +94,17 @@ Examples: a JP–ES exchange in Tokyo shows Japanese + Spanish to everyone; a Ja
 
 `i18n.ForEvent` and `i18n.ForApp` implement these rules; nothing else should re-implement them. Short text (names, titles) is shown **side by side** ("陶芸 · Cerámica"); longer text (descriptions, UI copy) uses a **switch** between the two languages.
 
-Localised text is stored as JSON objects (`{"en": …, "ja": …, "es": …, "fr": …}`). Our own content (catalogue, app strings) is translated into `i18n.Translated` (MVP: en, ja, es, fr), and CI checks the catalogue is complete. `i18n.Pair` resolves text for the two languages: if the primary has no translation, the secondary is shown alone; English is only the last-resort fallback (it's our authoring language). APIs return both texts (e.g. `name` + `secondary_name`) and clients choose the layout. Event text written by Claude (M6) can be in any language.
+**Storage: English always, everything else on demand.** Localised text is stored as JSON objects (`{"en": …, "ja": …}`). English is the only language that must always be present; our own content (activity catalogue, venue categories) is stored in English only. Other languages come from `internal/translate`:
+
+1. text already stored in that language wins: real local names in city packs (`吉祥寺`), and events prefilled in their own languages (M6)
+2. otherwise a cached machine translation from `app.translations`
+3. otherwise Claude (Haiku) translates it now, the result is cached and reused for everyone. A request waits up to 8 s; a slower translation finishes in the background for the next request. Without `ANTHROPIC_API_KEY`, step 3 is skipped.
+
+`i18n.Pair` then decides what to show: if the primary language isn't available yet, the secondary is shown alone; English is only the last resort. APIs return both texts (e.g. `name` + `secondary_name`) and clients choose the layout. Any ISO 639-1 language is accepted.
+
+**Events** (M6) are stored with English **plus each of their own languages prefilled** (`translate.Service.Prefill`), so a JP–ES exchange exists in en, ja and es from the start; any other viewer's language is translated on demand.
+
+**Google place names** are never stored (Maps terms allow storing only place IDs). They're fetched live from Places in each displayed language, so people see Google's own local names rather than machine translations of proper nouns.
 
 What a person **reads** (`profiles.primary_language`, `secondary_language`) is separate from what they can **speak** (`user_languages`, used for matching).
 

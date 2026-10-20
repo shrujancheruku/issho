@@ -17,7 +17,7 @@ Load with `make seed` (everything) or `cd backend && go run ./cmd/tool seed ../d
 ```json
 {
   "id": "photo-walk",                       // stable slug; referenced by user prefs. Never rename.
-  "name": { "en": "Photo walk", "ja": "フォトウォーク", "es": "Paseo fotográfico", "fr": "Balade photo" }, // all four required
+  "name": { "en": "Photo walk" },          // English only; other languages are translated on demand
   "category": "outdoors",                   // tile-grid grouping
   "indoor": false,
   "energy": 2,                              // 1 calm … 3 active
@@ -37,7 +37,7 @@ Load with `make seed` (everything) or `cd backend && go run ./cmd/tool seed ../d
 ```json
 {
   "id": "cafe",                             // stable slug; referenced by activities and app.venues
-  "name": { "en": "Café", "ja": "カフェ" },
+  "name": { "en": "Café" },                // English only
   "google_types": ["cafe", "coffee_shop"],  // Places API (New) Table A types; any match counts
   "search_radius_m": 800                    // Nearby Search radius around each area (100–50000)
 }
@@ -76,7 +76,6 @@ Common places get a small radius, rare ones a large one. Categories with a radiu
 6. Build its travel matrix and discover venues: `make matrix CITY=<city>` and `make venues CITY=<city>` (dry-run first with `ARGS=-dry-run`; see [../docs/google-maps.md](../docs/google-maps.md)). Rebuild the matrix at least every 30 days.
 7. Update [../docs/ROADMAP.md](../docs/ROADMAP.md).
 
-Translations (how languages are shown: [../docs/architecture.md](../docs/architecture.md#languages)):
-- Activity and venue-category names **must** have every language in `i18n.Translated` (`en`, `ja`, `es`, `fr`); validation fails otherwise. An override `name` replaces the whole name, so it must be complete too.
-- City and area names need `en` (the authoring language, used as the last-resort fallback); add other languages where the name actually differs (`東京`, `Tokio`).
-- Adding a translated language: add it to `i18n.Translated`, translate every catalogue name, and add the app's strings. People and events can already use any language; this only adds our own translations.
+Languages (how they're shown: [../docs/architecture.md](../docs/architecture.md#languages)):
+- **English is the only language stored here.** Activity names, venue-category names and override names are English-only (validation rejects anything else). Every other language is machine-translated on demand and cached in the database, so there are no translations to maintain.
+- City and area names need `en`, and may also carry the **real local name** in one of the city's own `languages` (`東京`, `吉祥寺`). These are names, not translations, so they're kept and used as is.

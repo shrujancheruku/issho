@@ -2,9 +2,7 @@
   "id": "tokyo",
   "name": {
     "en": "Tokyo",
-    "ja": "東京",
-    "es": "Tokio",
-    "fr": "Tokyo"
+    "ja": "東京"
   },
   "timezone": "Asia/Tokyo",
   "currency": "JPY",

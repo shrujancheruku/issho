@@ -3,6 +3,7 @@ package cities
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/shrujancheruku/issho/backend/internal/platform/i18n"
@@ -10,17 +11,20 @@ import (
 
 var travelModes = map[string]bool{"transit": true, "walk": true, "drive": true, "bicycle": true}
 
-// missingLangs returns the translated languages (i18n.Translated) that t
-// lacks. Catalogue names must be complete: a gap would make one activity
-// silently fall back to another language for some users.
-func missingLangs(t Text) []string {
-	var out []string
-	for _, l := range i18n.Translated {
-		if t[l] == "" {
-			out = append(out, l)
+// checkName validates a stored name: English is required (it's the source for
+// on-demand translation) and any other language must be in allowed. The
+// catalogue allows none (English-only, everything else translated on demand);
+// city packs allow their own languages, for real local names like 吉祥寺.
+func checkName(t Text, allowed []string) error {
+	if t[i18n.Authoring] == "" {
+		return fmt.Errorf("missing %q", i18n.Authoring)
+	}
+	for l := range t {
+		if l != i18n.Authoring && !slices.Contains(allowed, l) {
+			return fmt.Errorf("language %q not allowed here (only %q, plus the city's own languages in city packs)", l, i18n.Authoring)
 		}
 	}
-	return out
+	return nil
 }
 
 // ValidateCatalog checks the venue categories and activities against each
@@ -36,8 +40,8 @@ func ValidateCatalog(cats []VenueCategory, acts []Activity) error {
 			bad("venue category %q: empty or duplicate id", c.ID)
 		}
 		catIDs[c.ID] = true
-		if m := missingLangs(c.Name); len(m) > 0 {
-			bad("venue category %s: name missing %v", c.ID, m)
+		if err := checkName(c.Name, nil); err != nil {
+			bad("venue category %s: name: %v", c.ID, err)
 		}
 		if len(c.GoogleTypes) == 0 {
 			bad("venue category %s: no google_types", c.ID)
@@ -54,8 +58,8 @@ func ValidateCatalog(cats []VenueCategory, acts []Activity) error {
 			bad("activity %q: empty or duplicate id", a.ID)
 		}
 		actIDs[a.ID] = true
-		if m := missingLangs(a.Name); len(m) > 0 {
-			bad("activity %s: name missing %v", a.ID, m)
+		if err := checkName(a.Name, nil); err != nil {
+			bad("activity %s: name: %v", a.ID, err)
 		}
 		if a.Category == "" {
 			bad("activity %s: missing category", a.ID)
@@ -87,8 +91,8 @@ func ValidatePack(p Pack, activityIDs map[string]bool) error {
 	if p.ID == "" || p.Timezone == "" || p.Currency == "" {
 		bad("id, timezone and currency are required")
 	}
-	if p.Name[i18n.Authoring] == "" {
-		bad("missing %s name (the authoring language, needed as a fallback)", i18n.Authoring)
+	if err := checkName(p.Name, p.Languages); err != nil {
+		bad("name: %v", err)
 	}
 	// languages = the languages commonly used in the city, most common first.
 	// Any language is allowed: they're suggestions for onboarding and events.
@@ -97,7 +101,7 @@ func ValidatePack(p Pack, activityIDs map[string]bool) error {
 	}
 	for _, l := range p.Languages {
 		if !i18n.Valid(l) {
-			bad("language %q is not a base language code like \"ja\"", l)
+			bad("language %q is not an ISO 639-1 code like \"ja\"", l)
 		}
 	}
 	if len(p.TravelModes) == 0 {
@@ -118,8 +122,8 @@ func ValidatePack(p Pack, activityIDs map[string]bool) error {
 			bad("area %q: id must be unique and start with %q", a.ID, p.ID+"-")
 		}
 		areaIDs[a.ID] = true
-		if a.Name[i18n.Authoring] == "" {
-			bad("area %s: missing %s name", a.ID, i18n.Authoring)
+		if err := checkName(a.Name, p.Languages); err != nil {
+			bad("area %s: name: %v", a.ID, err)
 		}
 		if a.Lat < -90 || a.Lat > 90 || a.Lng < -180 || a.Lng > 180 || (a.Lat == 0 && a.Lng == 0) {
 			bad("area %s: invalid coordinates %v,%v", a.ID, a.Lat, a.Lng)
@@ -130,11 +134,11 @@ func ValidatePack(p Pack, activityIDs map[string]bool) error {
 		if seen[o.ActivityID] {
 			bad("override %s: duplicate", o.ActivityID)
 		}
-		// An override name replaces the whole catalogue name, so it must be as
-		// complete as the catalogue.
+		// An override name replaces the catalogue name, so it follows the same
+		// rule: English only, other languages on demand.
 		if len(o.Name) > 0 {
-			if m := missingLangs(o.Name); len(m) > 0 {
-				bad("override %s: name missing %v", o.ActivityID, m)
+			if err := checkName(o.Name, nil); err != nil {
+				bad("override %s: name: %v", o.ActivityID, err)
 			}
 		}
 		seen[o.ActivityID] = true

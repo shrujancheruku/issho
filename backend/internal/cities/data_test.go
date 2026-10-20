@@ -64,15 +64,17 @@ func TestValidatePackRejects(t *testing.T) {
 	cases := map[string]func(p *Pack){
 		"bad mode":      func(p *Pack) { p.TravelModes = []string{"teleport"} },
 		"bad lang code": func(p *Pack) { p.Languages = []string{"ja", "Japanese"} },
-		"partial override": func(p *Pack) {
-			p.ActivityOverrides = []ActivityOverride{{ActivityID: "hike", Name: Text{"en": "Hike"}}}
+		"translated override": func(p *Pack) {
+			p.ActivityOverrides = []ActivityOverride{{ActivityID: "hike", Name: Text{"en": "Hike", "fr": "Rando"}}}
 		},
-		"no modes":       func(p *Pack) { p.TravelModes = nil },
-		"area prefix":    func(p *Pack) { p.Areas[0].ID = "a" },
-		"null island":    func(p *Pack) { p.Areas[0].Lat, p.Areas[0].Lng = 0, 0 },
-		"bad month":      func(p *Pack) { p.ActivityOverrides = []ActivityOverride{{ActivityID: "hike", Months: []int16{13}}} },
-		"unknown act":    func(p *Pack) { p.ActivityOverrides = []ActivityOverride{{ActivityID: "nope"}} },
-		"duplicate area": func(p *Pack) { p.Areas = append(p.Areas, p.Areas[0]) },
+		"foreign area name": func(p *Pack) { p.Areas[0].Name = Text{"en": "A", "fr": "A"} },
+		"no english name":   func(p *Pack) { p.Areas[0].Name = Text{"ja": "エー"} },
+		"no modes":          func(p *Pack) { p.TravelModes = nil },
+		"area prefix":       func(p *Pack) { p.Areas[0].ID = "a" },
+		"null island":       func(p *Pack) { p.Areas[0].Lat, p.Areas[0].Lng = 0, 0 },
+		"bad month":         func(p *Pack) { p.ActivityOverrides = []ActivityOverride{{ActivityID: "hike", Months: []int16{13}}} },
+		"unknown act":       func(p *Pack) { p.ActivityOverrides = []ActivityOverride{{ActivityID: "nope"}} },
+		"duplicate area":    func(p *Pack) { p.Areas = append(p.Areas, p.Areas[0]) },
 	}
 	for name, mutate := range cases {
 		p := good
