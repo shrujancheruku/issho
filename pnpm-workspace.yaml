@@ -3,8 +3,10 @@ packages:
   - packages/*
 # pnpm blocks dependency install scripts unless approved here (true = allow,
 # false = deny). Deny by default; allow only packages that need their script.
-# unrs-resolver (via eslint-config-expo) only downloads fallback binaries.
+# unrs-resolver (via eslint-config-expo) only downloads fallback binaries;
+# @parcel/watcher (via jest) ships prebuilt platform packages, so its build step is unneeded.
 allowBuilds:
+  '@parcel/watcher': false
   unrs-resolver: false
 minimumReleaseAgeExclude:
   - '@expo/cli@58.1.13'

@@ -24,6 +24,13 @@ export const Colors = {
   },
 } as const;
 
+/** Brand colours from assets/brand (see its README). */
+export const Brand = {
+  red: '#BC002D',
+  gold: '#C9A227',
+  ink: '#111111',
+} as const;
+
 export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
 
 export const Fonts = Platform.select({
