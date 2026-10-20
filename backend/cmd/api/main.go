@@ -27,7 +27,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/platform/errs"
 	"github.com/shrujancheruku/issho/backend/internal/platform/supabase"
 	"github.com/shrujancheruku/issho/backend/internal/translate"
-	"github.com/shrujancheruku/issho/backend/internal/translate/claude"
+	gtranslate "github.com/shrujancheruku/issho/backend/internal/translate/google"
 )
 
 var version = "dev"
@@ -93,10 +93,10 @@ func run() error {
 	}
 	mux.Handle(isshov1connect.NewIdentityServiceHandler(&identity.Handler{Svc: identitySvc}, opts))
 	translations := &translate.Service{Store: q}
-	if cfg.AnthropicAPIKey != "" {
-		translations.Translator = claude.New(cfg.AnthropicAPIKey)
+	if cfg.GoogleTranslateAPIKey != "" {
+		translations.Translator = gtranslate.New(cfg.GoogleTranslateAPIKey)
 	} else {
-		slog.Warn("ANTHROPIC_API_KEY not set: machine translation off, text shown in stored languages only")
+		slog.Warn("GOOGLE_TRANSLATE_API_KEY not set: machine translation off, text shown in stored languages only")
 	}
 	mux.Handle(isshov1connect.NewCatalogServiceHandler(&catalog.Handler{Q: q, Translations: translations}, opts))
 

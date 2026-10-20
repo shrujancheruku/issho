@@ -98,7 +98,7 @@ Examples: a JP–ES exchange in Tokyo shows Japanese + Spanish to everyone; a Ja
 
 1. text already stored in that language wins: real local names in city packs (`吉祥寺`), and events prefilled in their own languages (M6)
 2. otherwise a cached machine translation from `app.translations`
-3. otherwise Claude (Haiku) translates it now, the result is cached and reused for everyone. A request waits up to 8 s; a slower translation finishes in the background for the next request. Without `ANTHROPIC_API_KEY`, step 3 is skipped.
+3. otherwise Google Cloud Translation translates it now, and the result is cached and reused for everyone. A request waits up to 8 s; a slower translation finishes in the background for the next request. Without `GOOGLE_TRANSLATE_API_KEY`, step 3 is skipped.
 
 `i18n.Pair` then decides what to show: if the primary language isn't available yet, the secondary is shown alone; English is only the last resort. APIs return both texts (e.g. `name` + `secondary_name`) and clients choose the layout. Any ISO 639-1 language is accepted.
 

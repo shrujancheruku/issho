@@ -93,9 +93,9 @@ func TestResolveOrder(t *testing.T) {
 
 	got := s.Resolve(context.Background(), "ja", texts(
 		`{"en":"Kichijoji","ja":"吉祥寺"}`, // stored in ja: used as is
-		`{"en":"Bowling"}`,               // cached
-		`{"en":"Pottery"}`,               // translated now
-		`{"en":"Pottery"}`,               // same text twice: translated once
+		`{"en":"Bowling"}`,              // cached
+		`{"en":"Pottery"}`,              // translated now
+		`{"en":"Pottery"}`,              // same text twice: translated once
 	))
 	want := []string{"吉祥寺", "ボウリング", "ja:Pottery", "ja:Pottery"}
 	for i := range want {

@@ -19,7 +19,7 @@ func newTestClient(t *testing.T, h http.HandlerFunc) *Client {
 	t.Cleanup(srv.Close)
 	c := New("test-key")
 	c.RoutesURL, c.PlacesURL = srv.URL, srv.URL
-	c.Backoff = time.Millisecond
+	c.api.Backoff = time.Millisecond
 	return c
 }
 
@@ -150,8 +150,8 @@ func TestRetriesOn429ThenFailsLoudly(t *testing.T) {
 	if !errors.As(err, &apiErr) || apiErr.StatusCode != 429 {
 		t.Fatalf("got %v, want a 429 APIError", err)
 	}
-	if calls.Load() != int32(c.MaxRetries+1) {
-		t.Errorf("got %d attempts, want %d", calls.Load(), c.MaxRetries+1)
+	if calls.Load() != int32(c.api.MaxRetries+1) {
+		t.Errorf("got %d attempts, want %d", calls.Load(), c.api.MaxRetries+1)
 	}
 }
 

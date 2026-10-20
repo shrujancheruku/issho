@@ -27,7 +27,8 @@ import (
 )
 
 // Item is one English string to translate, with a short note on what it is
-// ("activity name", "venue category"): one-word labels are ambiguous without it.
+// ("activity name", "venue category"). Translators that can use context get it;
+// it's also part of the cache key, so the same word in two roles can differ.
 type Item struct {
 	Text    string
 	Context string

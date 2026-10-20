@@ -8,18 +8,15 @@
 package google
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
-	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/shrujancheruku/issho/backend/internal/maps"
+	"github.com/shrujancheruku/issho/backend/internal/platform/googleapi"
 )
 
 const (
@@ -35,24 +32,13 @@ const (
 )
 
 type Client struct {
-	key  string
-	http *http.Client
+	api *googleapi.Client
 	// Overridable for tests.
 	RoutesURL, PlacesURL string
-	// Retries for 429 and 5xx responses, with exponential backoff from Backoff.
-	MaxRetries int
-	Backoff    time.Duration
 }
 
 func New(apiKey string) *Client {
-	return &Client{
-		key:        apiKey,
-		http:       &http.Client{Timeout: 60 * time.Second},
-		RoutesURL:  defaultRoutesURL,
-		PlacesURL:  defaultPlacesURL,
-		MaxRetries: 3,
-		Backoff:    time.Second,
-	}
+	return &Client{api: googleapi.New(apiKey), RoutesURL: defaultRoutesURL, PlacesURL: defaultPlacesURL}
 }
 
 var (
@@ -241,61 +227,11 @@ func (c *Client) Nearby(ctx context.Context, req maps.NearbyRequest) ([]maps.Pla
 	return out, nil
 }
 
-// ---- transport ----
-
-// APIError is a non-2xx response from Google. The body is Google's error JSON,
-// which never contains the API key.
-type APIError struct {
-	StatusCode int
-	Body       string
-}
-
-func (e *APIError) Error() string {
-	return fmt.Sprintf("google maps: HTTP %d: %s", e.StatusCode, e.Body)
-}
-
-func retryable(code int) bool { return code == http.StatusTooManyRequests || code >= 500 }
-
+// post calls a Maps endpoint with a field mask (required by Google, and it
+// decides the billing SKU).
 func (c *Client) post(ctx context.Context, url, fieldMask string, body, out any) error {
-	payload, err := json.Marshal(body)
-	if err != nil {
-		return err
-	}
-	for attempt := 0; ; attempt++ {
-		err := c.postOnce(ctx, url, fieldMask, payload, out)
-		var apiErr *APIError
-		if err == nil || !errors.As(err, &apiErr) || !retryable(apiErr.StatusCode) || attempt >= c.MaxRetries {
-			return err
-		}
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case <-time.After(c.Backoff << attempt):
-		}
-	}
+	return c.api.Post(ctx, url, map[string]string{"X-Goog-FieldMask": fieldMask}, body, out)
 }
 
-func (c *Client) postOnce(ctx context.Context, url, fieldMask string, payload []byte, out any) error {
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(payload))
-	if err != nil {
-		return err
-	}
-	req.Header.Set("Content-Type", "application/json")
-	// Header rather than ?key= so the key never appears in URLs, which end up in
-	// logs and error messages.
-	req.Header.Set("X-Goog-Api-Key", c.key)
-	req.Header.Set("X-Goog-FieldMask", fieldMask)
-	resp, err := c.http.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	b, err := io.ReadAll(io.LimitReader(resp.Body, 10<<20))
-	if err != nil {
-		return err
-	}
-	if resp.StatusCode/100 != 2 {
-		return &APIError{StatusCode: resp.StatusCode, Body: strings.TrimSpace(string(b))}
-	}
-	return json.Unmarshal(b, out)
-}
+// APIError is a non-2xx response from Google.
+type APIError = googleapi.APIError
