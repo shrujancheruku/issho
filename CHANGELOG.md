@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/shrujancheruku/issho/compare/v0.2.0...v0.3.0) (2026-10-20)
+
+
+### Features
+
+* M3 walk/drive travel times, venue discovery, on-demand translation and an Austin pack ([#5](https://github.com/shrujancheruku/issho/issues/5)) ([877265c](https://github.com/shrujancheruku/issho/commit/877265cf4f4f1ce45d09ed8bd5070be057ce579c))
+
 ## [0.2.0](https://github.com/shrujancheruku/issho/compare/v0.1.0...v0.2.0) (2026-10-20)
 
 
