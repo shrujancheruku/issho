@@ -6,6 +6,30 @@ on:
   pull_request:
 
 jobs:
+  # Every push/PR that changes code must also update docs/ROADMAP.md.
+  roadmap:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Roadmap updated with this change
+        run: scripts/check-roadmap.sh "${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}"
+
+  # Scans every commit in the push/PR for secrets (see .gitleaks.toml). Runs on
+  # every event because the repo is public: a leaked key must fail loudly.
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+          cache: false
+      - run: make secrets-scan
+
   commits:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest

@@ -1,0 +1,4 @@
+#!/bin/sh
+# Blocks commits that contain secrets. Enabled by `make setup` (git config core.hooksPath .githooks).
+# Bypass only for a confirmed false positive: add it to .gitleaks.toml's allowlist instead of --no-verify.
+exec go run github.com/zricethezav/gitleaks/v8@v8.30.1 git --pre-commit --staged --redact --config .gitleaks.toml --no-banner

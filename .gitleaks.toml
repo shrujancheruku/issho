@@ -1,0 +1,40 @@
+# Secret scanning rules. Runs in CI on every push/PR, in the pre-commit hook
+# (.githooks/pre-commit) and via `make secrets-scan`.
+# Extends gitleaks' built-in rules with patterns specific to this stack.
+title = "issho"
+
+[extend]
+useDefault = true
+
+# Private JWKs (e.g. supabase/signing_keys.json) carry the private scalar in "d".
+[[rules]]
+id = "jwk-private-key"
+description = "JSON Web Key containing a private component"
+regex = '''"d"\s*:\s*"[A-Za-z0-9_-]{32,}"'''
+keywords = ['"d"']
+
+# Supabase API keys. Secret keys bypass row-level security entirely.
+[[rules]]
+id = "supabase-secret-key"
+description = "Supabase secret API key"
+regex = '''sb_secret_[A-Za-z0-9_-]{20,}'''
+keywords = ["sb_secret_"]
+
+# Legacy Supabase service_role JWTs (role claim base64url-encoded in the payload).
+[[rules]]
+id = "supabase-service-role-jwt"
+description = "Supabase service_role JWT"
+regex = '''eyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]*(c2VydmljZV9yb2xl|NlcnZpY2Vfcm9sZ|zZXJ2aWNlX3JvbG)[A-Za-z0-9_-]*\.[A-Za-z0-9_-]+'''
+keywords = ["eyj"]
+
+# Apple .p8 keys (Sign in with Apple, APNs) and similar PEM private keys are
+# covered by the default "private-key" rule.
+
+[allowlist]
+description = "Lockfiles and generated code never contain secrets"
+paths = [
+  '''pnpm-lock\.yaml''',
+  '''go\.sum''',
+  '''backend/gen/''',
+  '''packages/api-client/src/gen/''',
+]

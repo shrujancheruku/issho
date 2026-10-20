@@ -14,3 +14,19 @@ expo-env.d.ts
 supabase/signing_keys.json
 supabase/.temp/
 supabase/.branches/
+
+# --- Secrets: never commit. See docs/secrets.md ---
+supabase/.env
+*.pem
+*.p8
+*.p12
+*.key
+*.keystore
+*.jks
+*.mobileprovision
+credentials.json
+service-account*.json
+google-services.json
+GoogleService-Info.plist
+.kamal/secrets*
+!.kamal/secrets.example
