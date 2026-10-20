@@ -8,7 +8,8 @@
     "dev": "turbo run dev",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
-    "gen": "make gen"
+    "gen": "make gen",
+    "test": "turbo run test"
   },
   "devDependencies": {
     "turbo": "^2.11.9"

@@ -31,9 +31,11 @@ lint:
 	$(GOTOOL) buf lint proto
 	cd backend && go vet ./... && go tool sqlc vet
 	pnpm typecheck
+	pnpm lint
 
 test:
 	cd backend && go test ./...
+	pnpm test
 
 migrate-up:
 	cd backend && go run ./cmd/tool migrate up
