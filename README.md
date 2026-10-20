@@ -42,7 +42,7 @@ Each directory has its own README:
 | [`supabase/`](supabase/README.md) | Local Supabase stack config |
 | [`assets/brand/`](assets/brand/README.md) | Logo, mark and brand colours (with the story behind the kanji) |
 | `scripts/` | CI helpers (`check-roadmap.sh`) and the logo generator (`brand/build_logo.py`) |
-| `.githooks/` | Pre-commit secret scan (enable with `make setup`) |
+| `.githooks/` | Git hooks: secret scan (pre-commit) and commit-message lint (commit-msg). Enable with `make setup`. |
 
 ## Quick start
 

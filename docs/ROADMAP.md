@@ -157,6 +157,7 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
 | 2026-10-20 | Sessions in **`expo-secure-store`** (chunked), not expo-sqlite/AsyncStorage | Refresh tokens are long-lived credentials and belong in the Keychain/Keystore. Chunking works around the ~2 KB value limit; generation IDs make torn writes detectable. |
 | 2026-10-20 | Error-sanitising Connect interceptor | connect-go returns `err.Error()` for plain errors, which leaked SQL constraint names to clients. |
 | 2026-10-20 | Deleting an account: auth user first, then app data | If deleting the auth user fails, nothing is lost and the user can retry. The reverse order could leave a live login with no data. |
+| 2026-10-20 | commitlint also runs as a local `commit-msg` hook | The first M2 PR failed CI on over-long commit bodies. Catching that at commit time is cheaper than rewriting history after a push. |
 | 2026-10-20 | **jest-expo** for mobile unit tests; runs in CI with lint | Security-critical client code (session storage) needs tests. jest-expo is Expo's standard preset. |
 | 2026-10-20 | CORS deny-by-default via an explicit origin allowlist | rs/cors treats an empty `AllowedOrigins` as allow-all. |
 

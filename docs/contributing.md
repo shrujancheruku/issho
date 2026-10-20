@@ -16,7 +16,7 @@
 
 ## Commit messages: Conventional Commits
 
-Write each message as `type(scope): summary`, in the imperative and lower-case, with no trailing period. CI (commitlint) checks every commit in a PR.
+Write each message as `type(scope): summary`, in the imperative and lower-case, with no trailing period. Wrap body lines at 72 characters (the hard limit is 100). commitlint checks every message locally through the `commit-msg` hook (enabled by `make setup`), and again in CI for every commit in a PR.
 
 - **Types:**
   - `feat`: new behaviour

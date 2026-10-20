@@ -21,10 +21,12 @@ You **don't** need to install buf, sqlc, goose or gitleaks. They're pinned in `b
 ```sh
 git clone git@github.com:shrujancheruku/issho.git
 cd issho
-make setup        # pnpm install + enables the secret-scanning pre-commit hook
+make setup        # pnpm install + enables git hooks (secret scan, commit-message lint)
 ```
 
-`make setup` sets `git config core.hooksPath .githooks`. Without it, the pre-commit secret scan won't run on your machine. CI still scans every push, but by then the secret is already public. See [secrets.md](secrets.md).
+`make setup` sets `git config core.hooksPath .githooks`, which enables two hooks:
+- **pre-commit:** scans staged changes for secrets. CI scans every push too, but by then a secret is already public. See [secrets.md](secrets.md).
+- **commit-msg:** checks the message against Conventional Commits, the same rules CI applies.
 
 ## 3. Start the local backend stack
 
