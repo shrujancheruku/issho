@@ -49,7 +49,7 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
 - ✅ Releases: Conventional Commits + SemVer via release-please. Needs the repo setting Settings → Actions → General → "Allow GitHub Actions to create and approve pull requests" (enabled 2026-10-20). Can be re-run manually from the Actions tab.
 - ✅ Secrets management: gitleaks (custom rules), pre-commit hook, CI scan, gitignore patterns. See [secrets.md](secrets.md).
 - ✅ Onboarding documentation.
-- ✅ Brand: logo and mark (一緒 with gold thread and hinomaru sun), light and dark variants, generated reproducibly from Noto Serif JP (`assets/brand/`). App icon and splash still use Expo defaults; wire them up in M9.
+- ✅ Brand: logo and mark (一緒 with gold thread and hinomaru sun), one version for every background (black outlined in gold, gold and red outlined in black), generated reproducibly from Noto Serif JP (`assets/brand/`). App icon and splash still use Expo defaults; wire them up in M9.
 - ⬜ Sentry and PostHog SDKs. *Moved to M9: nothing worth tracking yet.*
 
 ### M2 · Authentication (week 2): ⬜
@@ -146,6 +146,7 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
 | 2026-10-20 | **Redundancy review: R2 kept, but only for off-site `pg_dump`.** | Supabase Pro does daily backups, but they live with the same vendor. A cheap off-site copy is real disaster recovery, not duplication. Photos use Supabase Storage. |
 | 2026-10-20 | Admin SPA and waitlist on **Cloudflare Pages** | Static hosting is free, and with Caddy gone the VPS serves only the API. |
 | 2026-10-20 | Logo built from Noto Serif JP outlines by a script (`scripts/brand/build_logo.py`) | Reproducible, OFL-licensed, no font dependency at display time. Colours: red `#BC002D`, gold `#C9A227`, black `#111111`. |
+| 2026-10-20 | One logo version everywhere: no dark variant. Contrasting outlines instead. | Brand consistency. Gold outlines on black and black outlines on gold/red keep it legible on light and dark backgrounds. |
 | 2026-10-20 | pnpm dependency build scripts deny-by-default (`allowBuilds` in `pnpm-workspace.yaml`) | pnpm 12 fails installs on unapproved install scripts. Each package is approved or denied explicitly; `unrs-resolver` is denied because its script only fetches fallback binaries. |
 | 2026-10-20 | Commit `apps/mobile/src/types/expo.d.ts` | Expo's generated `expo-env.d.ts` is gitignored by convention, so fresh clones and CI couldn't typecheck CSS imports. |
 | 2026-10-20 | CORS deny-by-default via an explicit origin allowlist | rs/cors treats an empty `AllowedOrigins` as allow-all. |

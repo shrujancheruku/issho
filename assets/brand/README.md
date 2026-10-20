@@ -19,14 +19,16 @@ The logo is the word **一緒** (*issho*, "together"), with each part of the kan
 
 Read together, it says: *one thread joining people under one sun*. Small groups, tied together, out in the world.
 
+Every shape is outlined in a contrasting brand colour: **black parts have a gold outline**, and **gold and red parts have a black outline**. That's why a single version of the logo works on any background, light or dark. There are no alternate colour versions.
+
 ## Files
 
 | File | Use |
 |---|---|
-| `logo.svg` | Full lockup (一緒 + ISSHO) for light backgrounds |
-| `logo-dark.svg` | Full lockup for dark backgrounds (ink becomes off-white) |
-| `mark.svg` | Square mark (緒 only) for app icons, favicons and avatars, on light backgrounds |
-| `mark-dark.svg` | Square mark for dark backgrounds |
+| `logo.svg` | Full lockup (一緒 + ISSHO) |
+| `mark.svg` | Square mark (緒 only) for app icons, favicons and avatars |
+
+Both work on any background colour.
 
 All files are pure vector paths, so no font is needed to display them.
 
@@ -35,13 +37,12 @@ All files are pure vector paths, so no font is needed to display them.
 | Name | Hex | Use |
 |---|---|---|
 | Hinomaru red | `#BC002D` | The sun. Use sparingly, as the single focal point. |
-| Gold | `#C9A227` | The thread (一 and 糸) |
-| Ink black | `#111111` | Kanji strokes and wordmark on light backgrounds |
-| Washi white | `#F5EFE0` | Replaces ink black on dark backgrounds |
+| Gold | `#C9A227` | The thread (一 and 糸), and the outline around black |
+| Ink black | `#111111` | Kanji strokes and wordmark, and the outline around gold and red |
 
 ## Usage
 
-- Don't recolour individual parts, add effects, or rearrange the kanji. The meaning depends on each part keeping its colour.
+- Always use these files as they are. Don't recolour parts, make dark or light versions, remove the outlines, add effects or rearrange the kanji. The meaning depends on each part keeping its colour.
 - Keep clear space around the logo of at least the width of the red sun.
 - At sizes below 32 px, use `mark.svg`.
 

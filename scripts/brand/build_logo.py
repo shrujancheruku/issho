@@ -19,8 +19,13 @@ from fontTools.pens.svgPathPen import SVGPathPen
 from fontTools.ttLib import TTFont
 from fontTools.varLib.instancer import instantiateVariableFont
 
-RED, GOLD = "#BC002D", "#C9A227"  # hinomaru red and gold
-INK = {"light": "#111111", "dark": "#F5EFE0"}  # dark variant uses a warm off-white ("washi") ink
+RED, GOLD, INK = "#BC002D", "#C9A227", "#111111"  # hinomaru red, gold, ink black
+
+# Every shape gets an outline in a contrasting brand colour: gold for black parts,
+# black for gold and red parts. This keeps one version of the logo readable on
+# light and dark backgrounds alike. paint-order="stroke" draws the stroke under
+# the fill, so only the outer half shows and the letterforms keep their weight.
+OUTLINE = 28  # font units (1000 per em); only half of it is visible
 
 # Contour indices of 緒 in Noto Serif JP (weight 800), worked out by rendering each
 # contour in its own colour. If the font version changes, check these indices again.
@@ -52,6 +57,11 @@ def bounds(cs):
     return min(xs), min(ys), max(xs), max(ys)
 
 
+def outlined(stroke):
+    return (f'stroke="{stroke}" stroke-width="{OUTLINE}" stroke-linejoin="round" '
+            f'paint-order="stroke"')
+
+
 def to_path(glyphset, cs):
     pen = SVGPathPen(glyphset)
     for c in cs:
@@ -76,15 +86,16 @@ def build(font_path, out_dir):
     sun_cx, sun_cy = (sx0 + sx1) / 2, (sy0 + sy1) / 2 + 10
     sun_r = 0.43 * max(sx1 - sx0, sy1 - sy0)
 
-    def cho_group(ink):
+    def cho_group():
         # Font units are y-up; scale(1,-1) flips them into SVG's y-down space.
-        # The sun is drawn first so the ノ stroke of 者 passes over it.
+        # The sun is drawn first so the ノ stroke of 者 passes over it; its gold
+        # outline then separates the black stroke from the red disc.
         return (f'<g transform="scale(1,-1)">'
-                f'<circle cx="{sun_cx:.1f}" cy="{sun_cy:.1f}" r="{sun_r:.1f}" fill="{RED}"/>'
-                f'<path d="{to_path(gs, thread)}" fill="{GOLD}"/>'
-                f'<path d="{to_path(gs, person)}" fill="{ink}"/></g>')
+                f'<circle cx="{sun_cx:.1f}" cy="{sun_cy:.1f}" r="{sun_r:.1f}" fill="{RED}" {outlined(INK)}/>'
+                f'<path d="{to_path(gs, thread)}" fill="{GOLD}" {outlined(INK)}/>'
+                f'<path d="{to_path(gs, person)}" fill="{INK}" {outlined(GOLD)}/></g>')
 
-    def wordmark(ink):
+    def wordmark():
         text, track, size = "ISSHO", 300, 0.30  # tracking in font units; size relative to the kanji
         mgs, cmap = medium.getGlyphSet(), medium.getBestCmap()
         glyphs = [mgs[cmap[ord(ch)]] for ch in text]
@@ -96,26 +107,28 @@ def build(font_path, out_dir):
             parts.append(f'<path transform="translate({x},0)" d="{pen.getCommands()}"/>')
             x += g.width + track
         ox = 1000 - total * size / 2  # centred under the 2000-unit-wide 一緒
-        return (f'<g fill="{ink}" transform="translate({ox:.1f},400) scale({size},{-size})">'
+        # The stroke is drawn in unscaled font units, so compensate for the scale to
+        # match the kanji outline thickness.
+        stroke = (f'stroke="{GOLD}" stroke-width="{OUTLINE / size:.1f}" stroke-linejoin="round" '
+                  f'paint-order="stroke"')
+        return (f'<g fill="{INK}" {stroke} transform="translate({ox:.1f},400) scale({size},{-size})">'
                 f'{"".join(parts)}</g>')
 
-    def mark(ink):
+    def mark():
         return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="-20 -900 1040 1040" role="img" aria-label="Issho">'
-                f'<title>Issho</title>{cho_group(ink)}</svg>\n')
+                f'<title>Issho</title>{cho_group()}</svg>\n')
 
-    def logo(ink):
+    def logo():
         return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="-40 -920 2080 1380" role="img" aria-label="Issho 一緒">'
                 f'<title>Issho 一緒</title>'
-                f'<g transform="scale(1,-1)"><path d="{to_path(gs, ichi)}" fill="{GOLD}"/></g>'
-                f'<g transform="translate(1000,0)">{cho_group(ink)}</g>'
-                f'{wordmark(ink)}</svg>\n')
+                f'<g transform="scale(1,-1)"><path d="{to_path(gs, ichi)}" fill="{GOLD}" {outlined(INK)}/></g>'
+                f'<g transform="translate(1000,0)">{cho_group()}</g>'
+                f'{wordmark()}</svg>\n')
 
-    for theme, ink in INK.items():
-        sfx = "" if theme == "light" else "-dark"
-        with open(f"{out_dir}/logo{sfx}.svg", "w") as fh:
-            fh.write(logo(ink))
-        with open(f"{out_dir}/mark{sfx}.svg", "w") as fh:
-            fh.write(mark(ink))
+    with open(f"{out_dir}/logo.svg", "w") as fh:
+        fh.write(logo())
+    with open(f"{out_dir}/mark.svg", "w") as fh:
+        fh.write(mark())
 
 
 if __name__ == "__main__":

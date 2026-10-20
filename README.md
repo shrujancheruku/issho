@@ -1,8 +1,5 @@
 <p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="assets/brand/logo-dark.svg">
-    <img src="assets/brand/logo.svg" alt="Issho 一緒" width="380">
-  </picture>
+  <img src="assets/brand/logo.svg" alt="Issho 一緒" width="380">
 </p>
 
 <h3 align="center">Stop scrolling for plans. We'll make them for you.</h3>
