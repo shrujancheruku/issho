@@ -46,7 +46,7 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
 - ✅ Local Supabase stack (`supabase start`) with ES256 signing keys. Verified end to end: sign-up → API with a real token.
 - ✅ Expo SDK 58 app wired to the generated client (health check on the home screen).
 - ✅ CI (green from a clean checkout; actions on Node 24 majors): secret scan, roadmap check, proto lint/breaking, codegen drift, Go vet/test, migration round-trip + seed on PostGIS, TypeScript typecheck, commitlint.
-- 🟡 Releases: Conventional Commits + SemVer via release-please. **Blocked on a repo setting:** Settings → Actions → General → "Allow GitHub Actions to create and approve pull requests".
+- ✅ Releases: Conventional Commits + SemVer via release-please. Needs the repo setting Settings → Actions → General → "Allow GitHub Actions to create and approve pull requests" (enabled 2026-10-20). Can be re-run manually from the Actions tab.
 - ✅ Secrets management: gitleaks (custom rules), pre-commit hook, CI scan, gitignore patterns. See [secrets.md](secrets.md).
 - ✅ Onboarding documentation.
 - ⬜ Sentry and PostHog SDKs. *Moved to M9: nothing worth tracking yet.*

@@ -6,6 +6,8 @@ name: release-please
 on:
   push:
     branches: [main]
+  # Manual re-run from the Actions tab (e.g. after changing repo permissions).
+  workflow_dispatch:
 
 permissions:
   contents: write
