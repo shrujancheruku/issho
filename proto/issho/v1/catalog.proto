@@ -5,28 +5,42 @@ package issho.v1;
 option go_package = "github.com/shrujancheruku/issho/backend/gen/issho/v1;isshov1";
 
 // CatalogService exposes the activity catalogue, localised per city.
+// Requires `Authorization: Bearer <Supabase access token>`.
+//
+// HTTP: POST /issho.v1.CatalogService/<Method>
 service CatalogService {
+  // ListActivities returns the activities enabled in a city, with display
+  // names resolved for the requested locale (falling back to English).
   rpc ListActivities(ListActivitiesRequest) returns (ListActivitiesResponse) {}
 }
 
 message ListActivitiesRequest {
+  // City pack id, e.g. "tokyo". Required.
   string city_id = 1;
-  // BCP 47 language tag for display names, e.g. "ja" or "en".
+  // BCP 47 language tag for display names, e.g. "ja" or "en-GB".
   string locale = 2;
 }
 
 message ListActivitiesResponse {
+  // Sorted by category, then id.
   repeated Activity activities = 1;
 }
 
 message Activity {
+  // Stable slug, e.g. "photo-walk".
   string id = 1;
+  // Localised display name (city override if set).
   string name = 2;
+  // Grouping for the onboarding tile grid, e.g. "outdoors", "food".
   string category = 3;
   bool indoor = 4;
+  // 1 = calm, 2 = moderate, 3 = active.
   int32 energy = 5;
+  // 0 = free … 3 = expensive.
   int32 cost_level = 6;
+  // True when people can easily talk while doing it (affects friendship formation).
   bool conversational = 7;
+  // Smallest and largest group size this activity works for.
   int32 min_group_size = 8;
   int32 max_group_size = 9;
 }

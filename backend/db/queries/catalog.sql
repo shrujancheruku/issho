@@ -1,3 +1,6 @@
+-- Global catalogue merged with the city's overrides: a city can rename an
+-- activity (o.name) or hide it (o.enabled = false). Activities without an
+-- override row are enabled with their global name.
 -- name: ListCityActivities :many
 select a.id, coalesce(o.name, a.name) as name, a.category, a.indoor, a.energy, a.cost_level,
        a.conversational, a.min_group_size, a.max_group_size

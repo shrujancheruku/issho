@@ -1,48 +1,51 @@
-# Issho
+# Issho (一緒)
 
-Issho proposes real-world outings, like a photo walk that ends at a café, to small groups of nearby people who share interests. After each outing, people privately pick who they'd meet again. Mutual picks shape future groups and recurring crews.
+Issho proposes real-world outings to small groups of nearby people who share interests, for example *a Sunday photo walk that ends at a café, with 5 people near you*. After each outing, people privately pick who they'd like to meet again. Mutual picks shape future groups and recurring **crews**. The app is platonic and location-agnostic. The first city is Tokyo.
 
-## Layout
+**Status:** pre-release, milestone M1 (foundations). See the **[build plan & status → docs/ROADMAP.md](docs/ROADMAP.md)**.
+
+## Documentation
+
+| Doc | Read it for |
+|---|---|
+| [docs/onboarding.md](docs/onboarding.md) | **Start here.** Set up a machine from scratch and run everything locally. |
+| [docs/ROADMAP.md](docs/ROADMAP.md) | Full build plan, what's done and what isn't, and the decision log. Updated with every change. |
+| [docs/architecture.md](docs/architecture.md) | System design, request lifecycle, data model, code generation |
+| [docs/generated/api.md](docs/generated/api.md) | API reference, generated from the protos |
+| [docs/contributing.md](docs/contributing.md) | Workflow, Conventional Commits, releases, testing, common tasks |
+| [docs/secrets.md](docs/secrets.md) | Where secrets live and how leaks are prevented (**public repo**) |
+| [SECURITY.md](SECURITY.md) | Reporting vulnerabilities |
+
+Each directory has its own README:
 
 | Path | What |
 |---|---|
-| `proto/` | API contract (protobuf, ConnectRPC). The source of truth for Go and TypeScript types. |
-| `backend/` | Go modular monolith. `cmd/api` serves the API, `cmd/tool` runs migrations and seeding. Domain code lives in `internal/<domain>`. |
-| `backend/db/` | goose migrations and sqlc queries. Generated code goes in `backend/gen/`. |
-| `apps/mobile/` | Expo (SDK 58) app using Expo Router. |
-| `packages/api-client/` | Generated Connect-ES client, plus `createApi()`. |
-| `supabase/` | Local Supabase config (`supabase start`). Postgres + PostGIS, Auth (ES256 signing key in the gitignored `signing_keys.json`), Storage and Mailpit. goose, not the Supabase CLI, owns migrations. |
-| `data/` | Global activity catalogue and per-city packs (`data/citypacks/*.json`). To add a city, add a pack; no code changes. |
+| [`backend/`](backend/README.md) | Go API (ConnectRPC), migrations, seeding tool, tests |
+| [`apps/mobile/`](apps/mobile/README.md) | Expo (SDK 58) iOS/Android app |
+| [`packages/api-client/`](packages/api-client/README.md) | Generated TypeScript API client |
+| [`proto/`](proto/README.md) | API contract (protobuf), source of truth for types and docs |
+| [`data/`](data/README.md) | Activity catalogue and city packs |
+| [`supabase/`](supabase/README.md) | Local Supabase stack config |
+| `scripts/` | CI helper scripts (e.g. `check-roadmap.sh`) |
+| `.githooks/` | Pre-commit secret scan (enable with `make setup`) |
 
-## Prerequisites
+## Quick start
 
-- Go (version pinned in `backend/go.mod`), Node 24, pnpm.
-- buf, sqlc and goose come from `go tool`, pinned in `backend/go.mod`. Nothing to install globally.
-- To run locally: Docker plus the [Supabase CLI](https://supabase.com/docs/guides/cli). They provide Postgres + PostGIS, Auth and Storage.
-
-## Common tasks
+Prerequisites: Go, Node 24, pnpm, OrbStack (Docker) and the Supabase CLI. Details are in [onboarding](docs/onboarding.md).
 
 ```sh
-pnpm install
-make gen          # regenerate protobuf (Go + TS) and sqlc code
-make test         # Go tests
-make lint         # buf lint, go vet, sqlc vet, TypeScript typecheck
-
-# local stack (Docker via OrbStack). First time only: echo '[]' > supabase/signing_keys.json && supabase gen signing-key --algorithm ES256
+make setup                                   # deps + secret-scanning git hook
+echo '[]' > supabase/signing_keys.json && supabase gen signing-key --algorithm ES256   # first time only
 supabase start
-export $(grep -v '^#' .env.example | xargs)   # local DATABASE_URL / SUPABASE_URL
-make migrate-up
-make seed         # activity catalogue + Tokyo city pack
-make api          # http://localhost:8080
-
-cd apps/mobile && npx expo start
+export $(grep -v '^#' .env.example | xargs)
+make migrate-up seed api                     # API on http://localhost:8080
+cd apps/mobile && cp .env.example .env && npx expo start
 ```
 
-The API verifies Supabase access tokens with the project's JWKS. In the Supabase project, enable **asymmetric JWT signing keys**.
+## Common commands
 
-## Commits and releases
+`make gen` · `make lint` · `make test` · `make secrets-scan` · `make migrate-up` · `make seed` · `make api`
 
-- Commit messages follow [Conventional Commits](https://www.conventionalcommits.org), for example `feat(mobile): add sign-in screen` or `fix(backend): reject expired tokens`. Breaking changes use `feat!:` or a `BREAKING CHANGE:` footer. CI checks the commits on every PR.
-- Versions follow [SemVer](https://semver.org). [release-please](https://github.com/googleapis/release-please) opens a release PR on `main` with the next version and `CHANGELOG.md`. Merging it tags `vX.Y.Z` and creates the GitHub release.
-- While the version is below 1.0.0, `feat` bumps the minor version and `fix` bumps the patch.
-- The version is kept in sync in `version.txt`, `package.json`, `apps/mobile/package.json` and `apps/mobile/app.json` (`expo.version`).
+## Stack
+
+Expo / React Native · Go (ConnectRPC, pgx, sqlc, goose, River) · Supabase (Postgres + PostGIS, Auth, Storage) · Google Maps Platform · Claude · GitHub Actions · release-please. The reasons for each choice are in the [decision log](docs/ROADMAP.md#4-decision-log).

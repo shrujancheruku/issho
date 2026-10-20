@@ -11,3 +11,8 @@ plugins:
   - local: packages/api-client/node_modules/.bin/protoc-gen-es
     out: packages/api-client/src/gen
     opt: target=ts
+  # API reference generated from proto comments; CI fails if it is stale.
+  - local: [go, tool, protoc-gen-doc]
+    out: docs/generated
+    opt: markdown,api.md
+    strategy: all

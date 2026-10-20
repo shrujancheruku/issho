@@ -102,10 +102,13 @@ func (x *GetMeResponse) GetUser() *User {
 }
 
 type User struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Email         string                 `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty"`
-	Onboarded     bool                   `protobuf:"varint,3,opt,name=onboarded,proto3" json:"onboarded,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Same UUID as the Supabase auth user (auth.users.id).
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// Email from the Supabase token; empty for providers that hide it.
+	Email string `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty"`
+	// True once the user has completed onboarding (has a profile).
+	Onboarded     bool `protobuf:"varint,3,opt,name=onboarded,proto3" json:"onboarded,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }

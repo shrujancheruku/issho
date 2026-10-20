@@ -6,6 +6,7 @@ tool (
 	connectrpc.com/connect/cmd/protoc-gen-connect-go
 	github.com/bufbuild/buf/cmd/buf
 	github.com/pressly/goose/v3/cmd/goose
+	github.com/pseudomuto/protoc-gen-doc/cmd/protoc-gen-doc
 	github.com/sqlc-dev/sqlc/cmd/sqlc
 	google.golang.org/protobuf/cmd/protoc-gen-go
 )
@@ -38,11 +39,14 @@ require (
 	github.com/AzureAD/microsoft-authentication-library-for-go v1.10.1 // indirect
 	github.com/ClickHouse/ch-go v0.74.0 // indirect
 	github.com/ClickHouse/clickhouse-go/v2 v2.49.0 // indirect
+	github.com/Masterminds/semver v1.4.2 // indirect
+	github.com/Masterminds/sprig v2.15.0+incompatible // indirect
 	github.com/MicahParks/jwkset v0.11.3 // indirect
 	github.com/MicahParks/keyfunc/v3 v3.8.2 // indirect
 	github.com/Microsoft/go-winio v0.6.3 // indirect
 	github.com/andybalholm/brotli v1.2.6 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
+	github.com/aokoli/goutils v1.0.1 // indirect
 	github.com/bufbuild/buf v1.74.0 // indirect
 	github.com/bufbuild/protocompile v0.14.2-0.20261013160345-b79bfe2f85df // indirect
 	github.com/bufbuild/protoplugin v0.0.0-20260414125817-25d1d281b46b // indirect
@@ -63,6 +67,7 @@ require (
 	github.com/dustin/go-humanize v1.1.0 // indirect
 	github.com/elastic/go-sysinfo v1.15.5 // indirect
 	github.com/elastic/go-windows v1.0.2 // indirect
+	github.com/envoyproxy/protoc-gen-validate v1.3.3 // indirect
 	github.com/fatih/structtag v1.2.0 // indirect
 	github.com/felixge/httpsnoop v1.1.0 // indirect
 	github.com/go-faster/city v1.0.1 // indirect
@@ -71,13 +76,17 @@ require (
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-sql-driver/mysql v1.10.1 // indirect
 	github.com/gofrs/flock v0.13.1 // indirect
+	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang-jwt/jwt/v4 v4.5.2 // indirect
 	github.com/golang-jwt/jwt/v5 v5.3.1 // indirect
 	github.com/golang-sql/civil v0.0.0-20220223132316-b832511892a9 // indirect
 	github.com/golang-sql/sqlexp v0.1.0 // indirect
+	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/cel-go v0.29.0 // indirect
 	github.com/google/go-containerregistry v0.22.1 // indirect
 	github.com/google/uuid v1.6.0 // indirect
+	github.com/huandu/xstrings v1.0.0 // indirect
+	github.com/imdario/mergo v0.3.4 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
@@ -98,6 +107,7 @@ require (
 	github.com/moby/docker-image-spec v1.3.1 // indirect
 	github.com/moby/moby/api v1.56.1 // indirect
 	github.com/moby/moby/client v0.6.2 // indirect
+	github.com/mwitkow/go-proto-validators v0.0.0-20180403085117-0950a7990007 // indirect
 	github.com/ncruces/go-sqlite3 v0.32.0 // indirect
 	github.com/ncruces/go-strftime v1.1.0 // indirect
 	github.com/ncruces/julianday v1.0.0 // indirect
@@ -114,6 +124,8 @@ require (
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c // indirect
 	github.com/pressly/goose/v3 v3.29.0 // indirect
 	github.com/prometheus/procfs v0.22.0 // indirect
+	github.com/pseudomuto/protoc-gen-doc v1.5.1 // indirect
+	github.com/pseudomuto/protokit v0.2.0 // indirect
 	github.com/quic-go/qpack v0.6.0 // indirect
 	github.com/quic-go/quic-go v0.63.0 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect

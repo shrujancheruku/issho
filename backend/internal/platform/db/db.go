@@ -32,6 +32,8 @@ func Migrate(ctx context.Context, pool *pgxpool.Pool, command string, args ...st
 	return migrate(ctx, sqlDB, command, args...)
 }
 
+// goose keeps its settings in package-level globals, so concurrent Migrate calls
+// with different settings are not safe. Migrations only run from cmd/tool and tests.
 func migrate(ctx context.Context, sqlDB *sql.DB, command string, args ...string) error {
 	goose.SetBaseFS(db.Migrations)
 	if err := goose.SetDialect("postgres"); err != nil {

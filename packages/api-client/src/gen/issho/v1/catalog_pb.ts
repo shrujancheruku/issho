@@ -17,12 +17,14 @@ export const file_issho_v1_catalog: GenFile = /*@__PURE__*/
  */
 export type ListActivitiesRequest = Message<"issho.v1.ListActivitiesRequest"> & {
   /**
+   * City pack id, e.g. "tokyo". Required.
+   *
    * @generated from field: string city_id = 1;
    */
   cityId: string;
 
   /**
-   * BCP 47 language tag for display names, e.g. "ja" or "en".
+   * BCP 47 language tag for display names, e.g. "ja" or "en-GB".
    *
    * @generated from field: string locale = 2;
    */
@@ -41,6 +43,8 @@ export const ListActivitiesRequestSchema: GenMessage<ListActivitiesRequest> = /*
  */
 export type ListActivitiesResponse = Message<"issho.v1.ListActivitiesResponse"> & {
   /**
+   * Sorted by category, then id.
+   *
    * @generated from field: repeated issho.v1.Activity activities = 1;
    */
   activities: Activity[];
@@ -58,16 +62,22 @@ export const ListActivitiesResponseSchema: GenMessage<ListActivitiesResponse> = 
  */
 export type Activity = Message<"issho.v1.Activity"> & {
   /**
+   * Stable slug, e.g. "photo-walk".
+   *
    * @generated from field: string id = 1;
    */
   id: string;
 
   /**
+   * Localised display name (city override if set).
+   *
    * @generated from field: string name = 2;
    */
   name: string;
 
   /**
+   * Grouping for the onboarding tile grid, e.g. "outdoors", "food".
+   *
    * @generated from field: string category = 3;
    */
   category: string;
@@ -78,21 +88,29 @@ export type Activity = Message<"issho.v1.Activity"> & {
   indoor: boolean;
 
   /**
+   * 1 = calm, 2 = moderate, 3 = active.
+   *
    * @generated from field: int32 energy = 5;
    */
   energy: number;
 
   /**
+   * 0 = free … 3 = expensive.
+   *
    * @generated from field: int32 cost_level = 6;
    */
   costLevel: number;
 
   /**
+   * True when people can easily talk while doing it (affects friendship formation).
+   *
    * @generated from field: bool conversational = 7;
    */
   conversational: boolean;
 
   /**
+   * Smallest and largest group size this activity works for.
+   *
    * @generated from field: int32 min_group_size = 8;
    */
   minGroupSize: number;
@@ -112,11 +130,17 @@ export const ActivitySchema: GenMessage<Activity> = /*@__PURE__*/
 
 /**
  * CatalogService exposes the activity catalogue, localised per city.
+ * Requires `Authorization: Bearer <Supabase access token>`.
+ *
+ * HTTP: POST /issho.v1.CatalogService/<Method>
  *
  * @generated from service issho.v1.CatalogService
  */
 export const CatalogService: GenService<{
   /**
+   * ListActivities returns the activities enabled in a city, with display
+   * names resolved for the requested locale (falling back to English).
+   *
    * @generated from rpc issho.v1.CatalogService.ListActivities
    */
   listActivities: {

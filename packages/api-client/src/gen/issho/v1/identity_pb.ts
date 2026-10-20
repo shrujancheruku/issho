@@ -47,16 +47,22 @@ export const GetMeResponseSchema: GenMessage<GetMeResponse> = /*@__PURE__*/
  */
 export type User = Message<"issho.v1.User"> & {
   /**
+   * Same UUID as the Supabase auth user (auth.users.id).
+   *
    * @generated from field: string id = 1;
    */
   id: string;
 
   /**
+   * Email from the Supabase token; empty for providers that hide it.
+   *
    * @generated from field: string email = 2;
    */
   email: string;
 
   /**
+   * True once the user has completed onboarding (has a profile).
+   *
    * @generated from field: bool onboarded = 3;
    */
   onboarded: boolean;
@@ -71,14 +77,17 @@ export const UserSchema: GenMessage<User> = /*@__PURE__*/
 
 /**
  * IdentityService manages the signed-in user's app account.
- * Authentication itself is handled by Supabase Auth; every call carries a
- * Supabase access token in the Authorization header.
+ * Authentication itself is handled by Supabase Auth; every call must send
+ * `Authorization: Bearer <Supabase access token>`.
+ *
+ * HTTP: POST /issho.v1.IdentityService/<Method>
  *
  * @generated from service issho.v1.IdentityService
  */
 export const IdentityService: GenService<{
   /**
-   * GetMe returns the caller's account, creating it on first call.
+   * GetMe returns the caller's account, creating the app-side user row the
+   * first time a Supabase user calls the API.
    *
    * @generated from rpc issho.v1.IdentityService.GetMe
    */

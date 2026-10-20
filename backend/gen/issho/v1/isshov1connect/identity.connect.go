@@ -39,7 +39,8 @@ const (
 
 // IdentityServiceClient is a client for the issho.v1.IdentityService service.
 type IdentityServiceClient interface {
-	// GetMe returns the caller's account, creating it on first call.
+	// GetMe returns the caller's account, creating the app-side user row the
+	// first time a Supabase user calls the API.
 	GetMe(context.Context, *connect.Request[v1.GetMeRequest]) (*connect.Response[v1.GetMeResponse], error)
 }
 
@@ -75,7 +76,8 @@ func (c *identityServiceClient) GetMe(ctx context.Context, req *connect.Request[
 
 // IdentityServiceHandler is an implementation of the issho.v1.IdentityService service.
 type IdentityServiceHandler interface {
-	// GetMe returns the caller's account, creating it on first call.
+	// GetMe returns the caller's account, creating the app-side user row the
+	// first time a Supabase user calls the API.
 	GetMe(context.Context, *connect.Request[v1.GetMeRequest]) (*connect.Response[v1.GetMeResponse], error)
 }
 

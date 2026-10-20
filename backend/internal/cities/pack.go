@@ -88,7 +88,10 @@ func SeedCatalog(ctx context.Context, pool *pgxpool.Pool, path string) (int, err
 	return len(acts), err
 }
 
-// SeedPack upserts a city pack. The catalogue must be seeded first.
+// SeedPack upserts a city pack in one transaction, so a bad pack never leaves a
+// half-seeded city. The catalogue must be seeded first because overrides
+// reference activity ids. Seeding is idempotent: re-running updates in place.
+// Areas or overrides removed from the JSON are not deleted from the database.
 func SeedPack(ctx context.Context, pool *pgxpool.Pool, path string) (Pack, error) {
 	var p Pack
 	if err := readJSON(path, &p); err != nil {

@@ -30,11 +30,15 @@ export const CheckRequestSchema: GenMessage<CheckRequest> = /*@__PURE__*/
  */
 export type CheckResponse = Message<"issho.v1.CheckResponse"> & {
   /**
+   * True when the API could ping Postgres during this request.
+   *
    * @generated from field: bool database_ok = 1;
    */
   databaseOk: boolean;
 
   /**
+   * Build version of the API binary ("dev" for local builds).
+   *
    * @generated from field: string version = 2;
    */
   version: string;
@@ -49,11 +53,16 @@ export const CheckResponseSchema: GenMessage<CheckResponse> = /*@__PURE__*/
 
 /**
  * HealthService reports whether the API and its dependencies are reachable.
+ * Public: no Authorization header required. Used by load balancers and the app's status row.
+ *
+ * HTTP: POST /issho.v1.HealthService/Check
  *
  * @generated from service issho.v1.HealthService
  */
 export const HealthService: GenService<{
   /**
+   * Check pings the database and returns the running build version.
+   *
    * @generated from rpc issho.v1.HealthService.Check
    */
   check: {

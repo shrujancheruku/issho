@@ -5,10 +5,13 @@ package issho.v1;
 option go_package = "github.com/shrujancheruku/issho/backend/gen/issho/v1;isshov1";
 
 // IdentityService manages the signed-in user's app account.
-// Authentication itself is handled by Supabase Auth; every call carries a
-// Supabase access token in the Authorization header.
+// Authentication itself is handled by Supabase Auth; every call must send
+// `Authorization: Bearer <Supabase access token>`.
+//
+// HTTP: POST /issho.v1.IdentityService/<Method>
 service IdentityService {
-  // GetMe returns the caller's account, creating it on first call.
+  // GetMe returns the caller's account, creating the app-side user row the
+  // first time a Supabase user calls the API.
   rpc GetMe(GetMeRequest) returns (GetMeResponse) {}
 }
 
@@ -19,7 +22,10 @@ message GetMeResponse {
 }
 
 message User {
+  // Same UUID as the Supabase auth user (auth.users.id).
   string id = 1;
+  // Email from the Supabase token; empty for providers that hide it.
   string email = 2;
+  // True once the user has completed onboarding (has a profile).
   bool onboarded = 3;
 }

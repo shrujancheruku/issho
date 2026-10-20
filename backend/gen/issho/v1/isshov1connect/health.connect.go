@@ -39,6 +39,7 @@ const (
 
 // HealthServiceClient is a client for the issho.v1.HealthService service.
 type HealthServiceClient interface {
+	// Check pings the database and returns the running build version.
 	Check(context.Context, *connect.Request[v1.CheckRequest]) (*connect.Response[v1.CheckResponse], error)
 }
 
@@ -74,6 +75,7 @@ func (c *healthServiceClient) Check(ctx context.Context, req *connect.Request[v1
 
 // HealthServiceHandler is an implementation of the issho.v1.HealthService service.
 type HealthServiceHandler interface {
+	// Check pings the database and returns the running build version.
 	Check(context.Context, *connect.Request[v1.CheckRequest]) (*connect.Response[v1.CheckResponse], error)
 }
 

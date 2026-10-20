@@ -5,13 +5,19 @@ package issho.v1;
 option go_package = "github.com/shrujancheruku/issho/backend/gen/issho/v1;isshov1";
 
 // HealthService reports whether the API and its dependencies are reachable.
+// Public: no Authorization header required. Used by load balancers and the app's status row.
+//
+// HTTP: POST /issho.v1.HealthService/Check
 service HealthService {
+  // Check pings the database and returns the running build version.
   rpc Check(CheckRequest) returns (CheckResponse) {}
 }
 
 message CheckRequest {}
 
 message CheckResponse {
+  // True when the API could ping Postgres during this request.
   bool database_ok = 1;
+  // Build version of the API binary ("dev" for local builds).
   string version = 2;
 }

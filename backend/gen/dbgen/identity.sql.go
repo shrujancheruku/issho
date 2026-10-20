@@ -34,6 +34,9 @@ type UpsertUserParams struct {
 	Email *string
 }
 
+// Creates the app user on first sight of a Supabase user. On later calls it only
+// refreshes the email, and keeps the stored one when the token carries none
+// (some providers, like Apple with private relay, can omit it).
 func (q *Queries) UpsertUser(ctx context.Context, arg UpsertUserParams) (AppUser, error) {
 	row := q.db.QueryRow(ctx, upsertUser, arg.ID, arg.Email)
 	var i AppUser

@@ -1,56 +1,59 @@
-# Welcome to your Expo app 👋
+# apps/mobile
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+The Issho iOS/Android app: **Expo SDK 58**, React Native 0.88, Expo Router, TanStack Query.
 
-## Get started
+> Expo changes quickly between SDKs. Before touching Expo or React Native APIs, read [AGENTS.md](AGENTS.md) and the versioned docs at https://docs.expo.dev/versions/v58.0.0/.
 
-1. Install dependencies
+## Run
 
-   ```bash
-   npm install
-   ```
+From the repo root, first start the backend ([../../docs/onboarding.md](../../docs/onboarding.md) steps 3–4). Then:
 
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **src/app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```sh
+cd apps/mobile
+cp .env.example .env     # set EXPO_PUBLIC_API_URL
+npx expo start           # i = iOS Simulator, a = Android emulator, scan QR = device (Expo Go / dev build)
 ```
 
-This command will move the starter code to the **example** directory and create a blank **src/app** directory where you can start developing.
+| Variable | Example | Notes |
+|---|---|---|
+| `EXPO_PUBLIC_API_URL` | `http://localhost:8080` | Go API base URL. On a physical device, use your Mac's LAN IP. |
 
-### Other setup steps
+**Every `EXPO_PUBLIC_*` value is bundled into the app and is public.** Never put secrets here (see [../../docs/secrets.md](../../docs/secrets.md)).
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+Expo Go only includes bundled native modules. Once a library with native code is added (e.g. Apple sign-in in M2), use a development build: `npx expo run:ios`, or `npx eas-cli@latest build --profile development`.
 
-## Learn more
+## Structure
 
-To learn more about developing your project with Expo, look at the following resources:
+| Path | Contents |
+|---|---|
+| `src/app/` | **Routes only** (Expo Router file-based routing). `_layout.tsx` sets up providers (React Query, theme) and tabs. |
+| `src/lib/api.ts` | The single API client instance (`createApi` from `@issho/api-client`). Auth token wiring arrives in M2. |
+| `src/components/`, `src/hooks/`, `src/constants/` | UI building blocks, theme (from the Expo template) |
+| `assets/` | Icons and splash images |
+| `app.json` | App config: name, bundle IDs `com.joinissho.app`, scheme `issho`. `expo.version` is managed by release-please. |
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## Calling the API
 
-## Join the community
+```tsx
+import { useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api';
 
-Join our community of developers creating universal apps.
+const activities = useQuery({
+  queryKey: ['activities', 'tokyo', 'ja'],
+  queryFn: () => api.catalog.listActivities({ cityId: 'tokyo', locale: 'ja' }),
+});
+```
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Types come from the protos (`@issho/api-client`). After a proto change, run `make gen` at the root.
+
+## Checks
+
+```sh
+npx tsc --noEmit      # typecheck (also runs in CI via `pnpm typecheck`)
+npx expo-doctor       # dependency / config diagnostics
+npx expo install <pkg>   # always use this to add packages (picks SDK-compatible versions)
+```
+
+## Builds & releases
+
+M9 is planned to use EAS Build/Submit (TestFlight, Play internal testing). `ios/` and `android/` are generated (Continuous Native Generation) and gitignored. Never edit them by hand; configure native behaviour in `app.json` and config plugins.

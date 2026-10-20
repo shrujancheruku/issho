@@ -30,6 +30,9 @@ type ListCityActivitiesRow struct {
 	MaxGroupSize   int16
 }
 
+// Global catalogue merged with the city's overrides: a city can rename an
+// activity (o.name) or hide it (o.enabled = false). Activities without an
+// override row are enabled with their global name.
 func (q *Queries) ListCityActivities(ctx context.Context, cityID string) ([]ListCityActivitiesRow, error) {
 	rows, err := q.db.Query(ctx, listCityActivities, cityID)
 	if err != nil {

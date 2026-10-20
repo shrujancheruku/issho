@@ -34,6 +34,8 @@ type Verifier struct {
 // NewVerifier fetches and keeps refreshing the signing keys of a Supabase project.
 // It requires asymmetric JWT signing keys to be enabled in the project.
 func NewVerifier(ctx context.Context, supabaseURL string) (*Verifier, error) {
+	// keyfunc caches the JWKS and refreshes it in the background (and on unknown
+	// key IDs, rate-limited), so key rotation in Supabase needs no API restart.
 	k, err := keyfunc.NewDefaultCtx(ctx, []string{supabaseURL + "/auth/v1/.well-known/jwks.json"})
 	if err != nil {
 		return nil, fmt.Errorf("load jwks: %w", err)
@@ -46,6 +48,14 @@ func NewVerifierWithKeyfunc(kf jwt.Keyfunc, supabaseURL string) *Verifier {
 	return &Verifier{keyfunc: kf, issuer: supabaseURL + "/auth/v1"}
 }
 
+// Verify validates signature, issuer, audience and expiry, then extracts the caller.
+//
+// Only asymmetric algorithms are accepted. Pinning the method list prevents
+// algorithm-confusion attacks (e.g. a token signed with HS256 using the public
+// key as the HMAC secret) and rejects legacy Supabase HS256 tokens, which are
+// signed with a shared secret we deliberately never load into the API.
+// Audience "authenticated" excludes anon/service_role tokens, which Supabase
+// signs with the same keys.
 func (v *Verifier) Verify(token string) (Caller, error) {
 	var c claims
 	_, err := jwt.ParseWithClaims(token, &c, v.keyfunc,
@@ -78,6 +88,9 @@ func WithCaller(ctx context.Context, c Caller) context.Context {
 }
 
 // Interceptor rejects unauthenticated calls, except to procedures listed in public.
+// Auth is deny-by-default: a newly added RPC requires a valid token unless it is
+// explicitly listed as public where the interceptor is constructed (cmd/api).
+// Error messages are intentionally generic so callers can't probe why a token failed.
 func Interceptor(v *Verifier, public ...string) connect.UnaryInterceptorFunc {
 	open := make(map[string]bool, len(public))
 	for _, p := range public {

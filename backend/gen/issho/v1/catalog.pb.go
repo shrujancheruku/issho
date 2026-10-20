@@ -22,9 +22,10 @@ const (
 )
 
 type ListActivitiesRequest struct {
-	state  protoimpl.MessageState `protogen:"open.v1"`
-	CityId string                 `protobuf:"bytes,1,opt,name=city_id,json=cityId,proto3" json:"city_id,omitempty"`
-	// BCP 47 language tag for display names, e.g. "ja" or "en".
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// City pack id, e.g. "tokyo". Required.
+	CityId string `protobuf:"bytes,1,opt,name=city_id,json=cityId,proto3" json:"city_id,omitempty"`
+	// BCP 47 language tag for display names, e.g. "ja" or "en-GB".
 	Locale        string `protobuf:"bytes,2,opt,name=locale,proto3" json:"locale,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -75,8 +76,9 @@ func (x *ListActivitiesRequest) GetLocale() string {
 }
 
 type ListActivitiesResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Activities    []*Activity            `protobuf:"bytes,1,rep,name=activities,proto3" json:"activities,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Sorted by category, then id.
+	Activities    []*Activity `protobuf:"bytes,1,rep,name=activities,proto3" json:"activities,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -119,18 +121,25 @@ func (x *ListActivitiesResponse) GetActivities() []*Activity {
 }
 
 type Activity struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	Id             string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name           string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Category       string                 `protobuf:"bytes,3,opt,name=category,proto3" json:"category,omitempty"`
-	Indoor         bool                   `protobuf:"varint,4,opt,name=indoor,proto3" json:"indoor,omitempty"`
-	Energy         int32                  `protobuf:"varint,5,opt,name=energy,proto3" json:"energy,omitempty"`
-	CostLevel      int32                  `protobuf:"varint,6,opt,name=cost_level,json=costLevel,proto3" json:"cost_level,omitempty"`
-	Conversational bool                   `protobuf:"varint,7,opt,name=conversational,proto3" json:"conversational,omitempty"`
-	MinGroupSize   int32                  `protobuf:"varint,8,opt,name=min_group_size,json=minGroupSize,proto3" json:"min_group_size,omitempty"`
-	MaxGroupSize   int32                  `protobuf:"varint,9,opt,name=max_group_size,json=maxGroupSize,proto3" json:"max_group_size,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Stable slug, e.g. "photo-walk".
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// Localised display name (city override if set).
+	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	// Grouping for the onboarding tile grid, e.g. "outdoors", "food".
+	Category string `protobuf:"bytes,3,opt,name=category,proto3" json:"category,omitempty"`
+	Indoor   bool   `protobuf:"varint,4,opt,name=indoor,proto3" json:"indoor,omitempty"`
+	// 1 = calm, 2 = moderate, 3 = active.
+	Energy int32 `protobuf:"varint,5,opt,name=energy,proto3" json:"energy,omitempty"`
+	// 0 = free … 3 = expensive.
+	CostLevel int32 `protobuf:"varint,6,opt,name=cost_level,json=costLevel,proto3" json:"cost_level,omitempty"`
+	// True when people can easily talk while doing it (affects friendship formation).
+	Conversational bool `protobuf:"varint,7,opt,name=conversational,proto3" json:"conversational,omitempty"`
+	// Smallest and largest group size this activity works for.
+	MinGroupSize  int32 `protobuf:"varint,8,opt,name=min_group_size,json=minGroupSize,proto3" json:"min_group_size,omitempty"`
+	MaxGroupSize  int32 `protobuf:"varint,9,opt,name=max_group_size,json=maxGroupSize,proto3" json:"max_group_size,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Activity) Reset() {

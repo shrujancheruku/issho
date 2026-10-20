@@ -58,9 +58,11 @@ func (*CheckRequest) Descriptor() ([]byte, []int) {
 }
 
 type CheckResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	DatabaseOk    bool                   `protobuf:"varint,1,opt,name=database_ok,json=databaseOk,proto3" json:"database_ok,omitempty"`
-	Version       string                 `protobuf:"bytes,2,opt,name=version,proto3" json:"version,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// True when the API could ping Postgres during this request.
+	DatabaseOk bool `protobuf:"varint,1,opt,name=database_ok,json=databaseOk,proto3" json:"database_ok,omitempty"`
+	// Build version of the API binary ("dev" for local builds).
+	Version       string `protobuf:"bytes,2,opt,name=version,proto3" json:"version,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
