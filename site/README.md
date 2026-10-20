@@ -14,3 +14,4 @@ Preview locally: `python3 -m http.server -d site 8000`.
 - Section dividers are a seigaiha (wave) pattern: one `<symbol id="seigaiha">` at the top of `<body>`, reused by each `.divider` with `--from`/`--to` set to the colours of the sections either side.
 - The community steps are a gold thread with a red sun at each knot, drawn in CSS (no images).
 - The kanji cards colour each part like the logo: gold strokes (一, 糸), black ink outlined in gold (者), red sun (日).
+- Kanji in the breakdown use Noto Serif JP ExtraBold (800), the same font and weight as the logo, loaded as a four-character subset from Google Fonts.
