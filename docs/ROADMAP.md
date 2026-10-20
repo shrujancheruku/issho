@@ -2,7 +2,7 @@
 
 > **This is the source of truth for what's planned, built and pending.** CI (`roadmap` job) fails any push or PR that changes code without updating this file. When you change code, update the status lines below. If the change made a decision, add it to the Decision log.
 
-**Last updated:** 2026-10-20 · **Version:** 0.1.0 (pre-release; [releases](https://github.com/shrujancheruku/issho/releases)) · **Current milestone:** M3 Cities, catalogue & geo (in progress)
+**Last updated:** 2026-10-20 · **Version:** 0.2.0 (pre-release; [releases](https://github.com/shrujancheruku/issho/releases)) · **Current milestone:** M4 Matching engine (next)
 
 Legend: ✅ done · 🟡 in progress / partial · ⬜ not started · ⏸ deferred (post-MVP)
 
@@ -71,7 +71,7 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
 - 🟡 **SMTP:** Resend is configured for `issho-dev` (free tier, `onboarding@resend.dev`, delivers only to the owner's address). Before real users, it needs a **verified sending domain**.
 - ✅ **On-device test of the sign-in flow** (see above). It found an Android bug, now fixed: the keyboard covered the code field, because SDK 58 Android apps are edge-to-edge.
 
-### M3 · Cities, catalogue & geo (weeks 2–3): 🟡 in progress
+### M3 · Cities, catalogue & geo (weeks 2–3): ✅ done
 - ✅ City pack format and seeding tool. Packs now declare `travel_modes`, and everything in `data/` is validated by a test (CI) and before seeding.
 - ✅ **Activity catalogue: 230 activities** in 12 categories (English only; other languages on demand), each linked to the **venue categories** it happens at (48 categories mapped to Google place types, checked against a snapshot of Google's type list).
 - ✅ **Google Cloud project** `issho-dev` with Maps and Translation keys (kept in the gitignored `.env.issho-dev`). Confirm the quotas and budget alert from [google-maps.md](google-maps.md) are set. Mobile keys can wait until M6.
@@ -80,7 +80,7 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
   - stored in `area_travel_times`; rows older than 30 days deleted (Maps caching terms)
   - `-dry-run` prints requests and billed elements (Tokyo 166, Austin 102)
   - tested with fakes and a DB integration test
-  - **run against Google (local DB) for both cities:** Tokyo drive 132 pairs (6–44 min, e.g. Kichijoji → Shinjuku 29) and walk 34 pairs (18–63 min); Austin drive 90 pairs (8–32 min) and walk 12 pairs. The hosted `issho-dev` DB gets them after this branch's migrations are applied there.
+  - **run against Google (local DB) for both cities:** Tokyo drive 132 pairs (6–44 min, e.g. Kichijoji → Shinjuku 29) and walk 34 pairs (18–63 min); Austin drive 90 pairs (8–32 min) and walk 12 pairs. Same results on the hosted `issho-dev` DB.
 - ✅ **`tool discover-venues`** (`make venues CITY=…`): Places API (New) Nearby Search per area × venue category.
   - field mask: id, types, location only
   - matches on the place's **primary type** (`includedPrimaryTypes`, plus our own check of the returned primary type). Matching on any type pulled in gyms for "sauna", supermarkets for "market" and **hostess bars (スナック)** for "night_club".
@@ -88,6 +88,7 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
   - each place assigned to its nearest area; stores only `google_place_id` + our data
   - `-categories` for partial runs; `-dry-run` (Tokyo 488 requests, Austin 408)
   - **run against Google (local DB):** Tokyo 4,424 venues in all 48 categories, Austin 1,373 in 45. Names spot-checked live per category (e.g. Inokashira Park / 井の頭恩賜公園, Big Echo karaoke, Jo's Coffee).
+- ✅ **Hosted `issho-dev` updated:** migrations 00002–00004 applied, both cities seeded, matrices built (312 rows) and venues discovered (5,797). Verified that the new tables aren't granted to `anon`/`authenticated`, goose bookkeeping is out of `public`, and the Data API still answers 503 (disabled).
 - ✅ **Synthetic second city pack: Austin** (car-based, walk + drive, 10 areas, Japan-specific activities disabled, local renames and seasons). Seeded, validated, matrix built and venues discovered with no code changes.
 - ✅ **Clearer English activity names** for machine translation: 27 idioms and ambiguous words replaced (Pottery → Pottery class: 陶器 "pottery ware" became 陶芸教室; Kickabout → Casual soccer game; "Go" → Shogi or Go board games; "crawl" → tour). The translator also keeps the source's leading capital ("Concierto de banda indie").
 - ✅ **Language model** (decided mid-M3, before anything depended on it; see [architecture](architecture.md#languages)):
