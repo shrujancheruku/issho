@@ -10,46 +10,70 @@
 <meta property="og:description" content="Find your people through the things you already love.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
     --red: #BC002D;
     --gold: #C9A227;
-    --ink: #111111;
-    --paper: #FBF8F1;
-    --muted: #5a554b;
-    --line: #e6dfcf;
-    --serif: "Noto Serif JP", "Hiragino Mincho ProN", Georgia, serif;
+    --bg: #0e0e0e;
+    --surface: #181818;
+    --text: #f4f0e6;
+    --muted: #b3ad9e;
+    --line: #2c2a25;
+    --display: "Dela Gothic One", "Hiragino Kaku Gothic ProN", "Arial Black", sans-serif;
     --sans: Inter, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color-scheme: dark;
   }
   * { box-sizing: border-box; }
   html { scroll-behavior: smooth; }
   body {
-    margin: 0; background: var(--paper); color: var(--ink);
+    margin: 0; background: var(--bg); color: var(--text);
     font: 400 1.0625rem/1.65 var(--sans);
     -webkit-font-smoothing: antialiased;
   }
   .wrap { max-width: 64rem; margin: 0 auto; padding-inline: 1.25rem; }
+  h1, h2, .display { font-family: var(--display); font-weight: 400; }
 
   /* Hero: the logo is the focal point, so it gets most of the first screen. */
-  .hero {
-    text-align: center; padding-block: clamp(2.5rem, 7vw, 5rem) clamp(2.5rem, 6vw, 4.5rem);
-    border-bottom: 4px solid var(--gold);
-  }
+  .hero { text-align: center; padding-block: clamp(2.5rem, 7vw, 5rem) clamp(2.5rem, 6vw, 4.5rem); }
   .hero img.logo { display: block; width: min(92vw, 44rem); height: auto; margin: 0 auto; }
   .hero h1 {
-    font: 700 clamp(1.6rem, 4.2vw, 2.75rem)/1.2 var(--serif);
-    margin: clamp(1.5rem, 4vw, 2.5rem) auto 0; max-width: 22ch; letter-spacing: -0.01em;
+    font-size: clamp(1.6rem, 4.2vw, 2.75rem); line-height: 1.2;
+    margin: clamp(1.5rem, 4vw, 2.5rem) auto 0; max-width: 22ch;
   }
-  .hero p.lede { max-width: 36rem; margin: 1rem auto 0; color: var(--muted); font-size: 1.1875rem; }
+  .hero p.lede { max-width: 36rem; margin: 1.1rem auto 0; color: var(--muted); font-size: 1.1875rem; }
 
-  form.signup {
-    display: flex; flex-wrap: wrap; gap: .75rem; justify-content: center;
-    margin: 2rem auto 0; max-width: 40rem;
-  }
+  section { padding-block: clamp(2.5rem, 6vw, 4.5rem); }
+  h2 { font-size: clamp(1.5rem, 3.4vw, 2.2rem); line-height: 1.25; margin: 0 0 1rem; }
+  .intro { max-width: 40rem; color: var(--muted); margin: 0; }
+  .accent { color: var(--gold); }
+
+  /* Thread/sun section */
+  .thread { background: var(--surface); border-block: 3px solid var(--gold); }
+  .statement { font-family: var(--display); font-size: clamp(1.05rem, 2.2vw, 1.35rem); line-height: 1.5; max-width: 40rem; margin: 0; }
+  .parts { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); margin: 2rem 0 0; padding: 0; list-style: none; }
+  .parts li { background: var(--bg); border: 1px solid var(--line); border-radius: .5rem; padding: 1.25rem; }
+  .parts .kanji { font: 400 2.25rem/1 var(--display); }
+  .parts .meaning { display: block; margin: .35rem 0 .6rem; font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .parts .role { margin: 0; color: var(--text); font-size: .98rem; }
+  .parts .gold .kanji { color: var(--gold); }
+  .parts .red .kanji { color: var(--red); }
+  .parts .ink .kanji { color: var(--text); }
+  .parts .role b { font-weight: 600; }
+  .parts .gold .role b { color: var(--gold); }
+  .parts .red .role b { color: #e0476b; }
+
+  .steps { display: grid; gap: 1.25rem; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); margin-top: 2rem; padding: 0; list-style: none; }
+  .steps li { background: var(--surface); border: 1px solid var(--line); border-top: 4px solid var(--gold); border-radius: .5rem; padding: 1.4rem; }
+  .steps b { display: block; font: 400 1.15rem/1.3 var(--display); margin-bottom: .5rem; }
+  .steps span { color: var(--muted); }
+
+  /* Waitlist, last on the page */
+  .join { text-align: center; border-top: 4px solid var(--red); background: var(--surface); }
+  form.signup { display: flex; flex-wrap: wrap; gap: .75rem; justify-content: center; margin: 2rem auto 0; max-width: 40rem; }
   form.signup input {
-    flex: 1 1 13rem; min-width: 0; padding: .9rem 1rem; font: inherit; color: var(--ink);
-    background: #fff; border: 1.5px solid var(--ink); border-radius: .5rem;
+    flex: 1 1 13rem; min-width: 0; padding: .9rem 1rem; font: inherit; color: var(--text);
+    background: var(--bg); border: 1.5px solid #4a463c; border-radius: .5rem;
   }
   form.signup input::placeholder { color: #8a8478; }
   form.signup input:focus-visible, form.signup button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
@@ -57,22 +81,9 @@
     flex: 0 0 auto; padding: .9rem 1.5rem; font: 600 1rem var(--sans); color: #fff;
     background: var(--red); border: 1.5px solid var(--red); border-radius: .5rem; cursor: pointer;
   }
-  form.signup button:hover { background: #9b0025; border-color: #9b0025; }
+  form.signup button:hover { background: #d4003a; border-color: #d4003a; }
   .fine { margin: .85rem 0 0; font-size: .875rem; color: var(--muted); }
-
-  section { padding-block: clamp(2.5rem, 6vw, 4.5rem); }
-  h2 { font: 700 clamp(1.5rem, 3.4vw, 2.1rem)/1.25 var(--serif); margin: 0 0 1rem; }
-  .intro { max-width: 40rem; color: var(--muted); margin: 0; }
-
-  .steps { display: grid; gap: 1.25rem; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); margin-top: 2rem; padding: 0; list-style: none; }
-  .steps li { background: #fff; border: 1px solid var(--line); border-top: 4px solid var(--gold); border-radius: .5rem; padding: 1.4rem; }
-  .steps b { display: block; font: 700 1.2rem var(--serif); margin-bottom: .4rem; }
-  .steps span { color: var(--muted); }
-
-  .band { background: var(--ink); color: var(--paper); }
-  .band h2 { color: #fff; }
-  .band p { color: #d8d2c3; max-width: 40rem; margin: 0; }
-  .band .accent { color: var(--gold); }
+  .join .intro { margin-inline: auto; }
 
   footer { padding-block: 2rem; text-align: center; color: var(--muted); font-size: .9rem; }
   footer img { width: 2.5rem; height: 2.5rem; display: block; margin: 0 auto .5rem; }
@@ -84,18 +95,35 @@
     <img class="logo" src="logo.svg" alt="Issho (一緒)">
     <h1>Find your people through the things you already love.</h1>
     <p class="lede">Issho is a modern way to build community. We bring small groups of like-minded people together for real-world activities, so friendships grow from time spent doing what you enjoy.</p>
-
-    <!-- Placeholder: submission is intentionally not wired up yet. -->
-    <form class="signup" id="signup" aria-label="Join the waitlist">
-      <input type="email" name="email" placeholder="Email address" autocomplete="email" aria-label="Email address" required>
-      <input type="text" name="city" placeholder="Your city" autocomplete="address-level2" aria-label="City" required>
-      <button type="submit">Join the waitlist</button>
-    </form>
-    <p class="fine">Be first to know when Issho opens in your city.</p>
   </div>
 </header>
 
 <main>
+  <section class="thread">
+    <div class="wrap">
+      <h2>One thread, <span class="accent">one sun</span>.</h2>
+      <p class="statement">Issho (一緒) means &ldquo;together&rdquo;. Our mark says it plainly: a single thread joining people under the same sun. Each part of the kanji has a role.</p>
+      <ul class="parts">
+        <li class="gold">
+          <span class="kanji">一</span><span class="meaning">&ldquo;one&rdquo;</span>
+          <p class="role">A single <b>gold</b> stroke, the thread that starts it all.</p>
+        </li>
+        <li class="gold">
+          <span class="kanji">糸</span><span class="meaning">&ldquo;thread&rdquo; &middot; left side of 緒</span>
+          <p class="role"><b>Gold</b>, continuing the thread from 一.</p>
+        </li>
+        <li class="ink">
+          <span class="kanji">土 ノ</span><span class="meaning">top of 者, &ldquo;person&rdquo;</span>
+          <p class="role">Black ink. The sun and the thread sit on top of it.</p>
+        </li>
+        <li class="red">
+          <span class="kanji">日</span><span class="meaning">&ldquo;sun&rdquo; &middot; bottom of 者</span>
+          <p class="role">Replaced by the <b>red</b> hinomaru disc from the Japanese flag.</p>
+        </li>
+      </ul>
+    </div>
+  </section>
+
   <section>
     <div class="wrap">
       <h2>Community, without the awkward part.</h2>
@@ -108,10 +136,16 @@
     </div>
   </section>
 
-  <section class="band">
+  <section class="join" id="join">
     <div class="wrap">
-      <h2>One thread, <span class="accent">one sun</span>.</h2>
-      <p>Issho (一緒) means &ldquo;together&rdquo;. Our name and mark say it plainly: a single thread joining people under the same sun. Friendly, platonic and local, wherever you are.</p>
+      <h2>Be there <span class="accent">from the start</span>.</h2>
+      <p class="intro">Tell us where you are and we will let you know when Issho opens in your city.</p>
+      <!-- Placeholder: submission is intentionally not wired up yet. -->
+      <form class="signup" id="signup" aria-label="Join the waitlist">
+        <input type="email" name="email" placeholder="Email address" autocomplete="email" aria-label="Email address" required>
+        <input type="text" name="city" placeholder="Your city" autocomplete="address-level2" aria-label="City" required>
+        <button type="submit">Join the waitlist</button>
+      </form>
     </div>
   </section>
 </main>
