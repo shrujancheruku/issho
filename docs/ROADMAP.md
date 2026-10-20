@@ -50,7 +50,7 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
 - ✅ Releases: Conventional Commits + SemVer via release-please. Needs the repo setting Settings → Actions → General → "Allow GitHub Actions to create and approve pull requests" (enabled 2026-10-20). Can be re-run manually from the Actions tab.
 - ✅ Secrets management: gitleaks (custom rules), pre-commit hook, CI scan, gitignore patterns. See [secrets.md](secrets.md).
 - ✅ Onboarding documentation.
-- ✅ Marketing site: static landing page in `site/` (dark, logo-led, Dela Gothic One headings, favicon on a solid dark circle, placeholder email + city signup at the end that does nothing yet), deployed to GitHub Pages by `.github/workflows/pages.yml`. Wire the form to a backend before collecting real data.
+- ✅ Marketing site: static landing page in `site/` (dark, logo-led, Dela Gothic One headings, favicon on a solid dark circle, seigaiha (wave) pattern dividers between sections, a thread-and-sun timeline for the steps, kanji breakdown coloured like the logo, placeholder email + city signup at the end that does nothing yet), deployed to GitHub Pages by `.github/workflows/pages.yml`. Wire the form to a backend before collecting real data.
 - ✅ Brand: logo and mark (一緒 with gold thread and hinomaru sun), one version for every background (black outlined in gold, gold and red outlined in black), generated reproducibly from Noto Serif JP (`assets/brand/`). App icon and splash still use Expo defaults; wire them up in M9.
 - ⬜ Sentry and PostHog SDKs. *Moved to M9: nothing worth tracking yet.*
 
