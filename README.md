@@ -1,8 +1,20 @@
 # Issho (一緒)
 
-Issho proposes real-world outings to small groups of nearby people who share interests, for example *a Sunday photo walk that ends at a café, with 5 people near you*. After each outing, people privately pick who they'd like to meet again. Mutual picks shape future groups and recurring **crews**. The app is platonic and location-agnostic. The first city is Tokyo.
+### Stop scrolling for plans. We'll make them for you.
 
-**Status:** pre-release, milestone M1 (foundations). See the **[build plan & status → docs/ROADMAP.md](docs/ROADMAP.md)**.
+Love film cameras, flat whites and wandering down side streets? Issho finds the handful of people near you who do too, and hands you all the same plan:
+
+> 📸 **Sunday, 10am.** Photo walk from Kichijoji station, ending at a café we've already picked. **5 people. Just say yes.**
+
+- 🗺️ **Plans, not profiles.** No swiping, no endless "so… what should we do?" chats. Real outings, built from what you actually love.
+- 👋 **Small groups, real chemistry.** A few people, matched on interests, schedule and language.
+- 🔁 **Clicked? Do it again.** After each outing, quietly pick who you'd hang out with again. When it's mutual, Issho brings you back together, and the best groups become **crews**.
+- 🤝 **Friends first.** Built for platonic connection, with safety designed in from day one.
+- 🌏 **Starting in Tokyo.** Ready for any city.
+
+*Issho (一緒) means "together" in Japanese.*
+
+> 🚧 **Pre-release.** We're building it now: see the [roadmap & status](docs/ROADMAP.md).
 
 ## Documentation
 
