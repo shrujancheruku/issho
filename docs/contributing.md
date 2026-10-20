@@ -82,6 +82,18 @@ See [../data/README.md](../data/README.md). It's a JSON file plus `make seed`, w
 
 Tests must not call paid APIs (Google, Anthropic). Use fakes behind the provider interfaces, with recorded fixtures.
 
+## AI agent skills
+
+The official Supabase skills ([supabase/agent-skills](https://github.com/supabase/agent-skills), MIT) are installed at project scope in `.claude/skills/`, and tracked in `skills-lock.json`. Repo-specific rules that override them are in [`CLAUDE.md`](../CLAUDE.md), e.g. goose owns migrations and the Data API stays off.
+
+Update them with a pinned CLI version that's at least two weeks old. Telemetry off:
+
+```sh
+DO_NOT_TRACK=1 npx -y skills@1.7.0 update
+```
+
+Review the diff before committing: skills run with full agent permissions. Check that nothing new conflicts with `CLAUDE.md`.
+
 ## Code style
 - Go: `gofmt` and `go vet`. Packages are named after their domain. Errors are wrapped with `%w`.
 - **Comment the why.** Any logic that isn't obvious from the code itself (security checks, SQL with subtle merge rules, matching heuristics) gets a comment explaining the reasoning.
