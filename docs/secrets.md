@@ -10,7 +10,7 @@
    - The **publishable key** (`sb_publishable_…`) is public by design.
    - The **secret key** (`sb_secret_…`), the legacy **service_role** JWT and the **JWT signing keys** are server-only.
    - The Go API needs **none** of these to verify tokens: it uses the public JWKS.
-4. **Google Maps keys:** use one *server* key, restricted to the Places and Routes APIs and used only by the backend, plus separate *iOS* and *Android* keys restricted by bundle ID and package name. Set quotas and a budget alert.
+4. **Google Maps keys:** use one *server* key, restricted to the Places and Routes APIs and used only by the backend, plus separate *iOS* and *Android* keys restricted by bundle ID and package name. Set quotas and a budget alert. Setup steps: [google-maps.md](google-maps.md).
 5. **Least privilege:** each environment (local, staging, production) gets its own keys.
 
 ## Where secrets live
@@ -23,7 +23,7 @@
 | SMTP password (Resend API key) | `supabase/.env` as `SUPABASE_SMTP_PASS` (gitignored); `config push` uploads it to Supabase as a masked secret | not used | Supabase project config |
 | Supabase CLI access token | macOS keychain, via `supabase login --token` with a **scoped** token run in your own terminal (the browser login grants full-account access) | not used | n/a |
 | Supabase secret key (`SUPABASE_SECRET_KEY`) | `SECRET_KEY` from `supabase status`, exported in your shell or a gitignored `.env` (never in `.env.example`) | not used (tests use a fake admin) | Kamal secrets |
-| Google Maps server key (M3) | your shell env / untracked `.env` | GitHub Actions secret (only if a job needs it; tests use fakes) | Kamal secrets |
+| Google Maps server key (`GOOGLE_MAPS_API_KEY`) | your shell env or `.env.issho-dev` (gitignored), used via `make … ENV_FILE=` | not used (tests use `httptest` fakes; CI only dry-runs) | Kamal secrets |
 | Anthropic API key (M5) | shell env / untracked `.env` | not used (tests use recorded fixtures) | Kamal secrets |
 | Apple / Google OAuth secrets (post-MVP; not used) | `supabase/.env` (gitignored), referenced as `env(...)` in `supabase/config.toml` | not used | Supabase dashboard |
 | Apple `.p8` keys, Android keystores | not stored locally; EAS manages signing credentials | n/a | EAS (Expo) credential store |

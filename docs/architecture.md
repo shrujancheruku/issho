@@ -60,18 +60,20 @@ backend/
 Rules:
 - **Domains talk to each other only through service types**, never through each other's queries.
 - **`internal/matching` (M4) will be pure:** plain structs in, proposals out, no I/O. This makes it deterministic and easy to simulate.
-- **Every external vendor sits behind a Go interface**, so implementations can be swapped. Planned interfaces: `VenueProvider`, `TravelTimeProvider`, `Tagger`, `Copywriter`, `Verifier`, `Push`, `Storage`.
+- **Every external vendor sits behind a Go interface**, so implementations can be swapped. Done: `maps.Router` (travel times) and `maps.PlaceSearcher` (venues), with Google implementations in `internal/maps/google`. Planned: `Tagger`, `Copywriter`, `Verifier`, `Push`, `Storage`.
 
 ## Data model
 
-Defined in `backend/db/migrations/00001_init.sql`. All app tables live in the `app` schema.
+Defined in `backend/db/migrations/` (`00001_init.sql`, `00002_geo.sql`). All app tables live in the `app` schema.
 
 | Table | Purpose |
 |---|---|
-| `cities` | One row per city pack: timezone, currency, default languages, matching-weight overrides |
+| `cities` | One row per city pack: timezone, currency, default languages, travel modes (`transit`/`walk`/`drive`/`bicycle`), matching-weight overrides |
 | `areas` | The unit a user chooses as "home" (a neighbourhood or station), with its centre as PostGIS `geography` |
-| `area_travel_times` | Precomputed area-to-area minutes per mode (filled by `tool build-matrix`, M3) |
-| `activities` | The global catalogue. `name` is JSON keyed by language (`{"en": …, "ja": …}`) |
+| `area_travel_times` | Area-to-area minutes per mode, from the Routes API (`tool build-matrix`). A cache: rows older than 30 days are deleted. |
+| `activities` | The global catalogue. `name` is JSON keyed by language (`{"en": …, "ja": …}`); `venue_categories` lists where it can happen |
+| `venue_categories` | Our venue kinds (cafe, park, karaoke …) mapped to Google place types, with a search radius |
+| `venues` | Discovered places: `google_place_id` + category, nearest area, curation status, our tags. **No Google content** (names, addresses, locations) is stored; see [google-maps.md](google-maps.md#5-terms-what-we-may-store). |
 | `city_activity_overrides` | A city can rename, disable or set seasonal months for an activity |
 | `users` | App account; `id` = Supabase `auth.users.id` |
 | `profiles` | Matching preferences (home area, travel time, group size, gender rules, …) |
@@ -83,7 +85,7 @@ Localised text is stored as JSON objects and resolved with `i18n.Pick`: exact lo
 
 ## City packs (location independence)
 
-A city is defined entirely by data in `data/citypacks/<city>.json`: areas with coordinates, languages, and activity overrides. `cmd/tool seed` loads it in a single transaction. Adding a city means adding a JSON file and seeding it; no code changes. See [../data/README.md](../data/README.md).
+A city is defined entirely by data in `data/citypacks/<city>.json`: areas with coordinates, languages, travel modes, and activity overrides. `cmd/tool seed` validates it and loads it in a single transaction; `tool build-matrix` and `tool discover-venues` then fill its travel times and venues from Google Maps. Adding a city means adding a JSON file and running those three commands; no code changes. `austin.json` (car-based) exists to prove this. See [../data/README.md](../data/README.md).
 
 ## Code generation
 

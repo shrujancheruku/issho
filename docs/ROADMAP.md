@@ -2,7 +2,7 @@
 
 > **This is the source of truth for what's planned, built and pending.** CI (`roadmap` job) fails any push or PR that changes code without updating this file. When you change code, update the status lines below. If the change made a decision, add it to the Decision log.
 
-**Last updated:** 2026-10-20 · **Version:** 0.1.0 (pre-release; [releases](https://github.com/shrujancheruku/issho/releases)) · **Current milestone:** M2 Authentication (in progress)
+**Last updated:** 2026-10-20 · **Version:** 0.1.0 (pre-release; [releases](https://github.com/shrujancheruku/issho/releases)) · **Current milestone:** M3 Cities, catalogue & geo (in progress)
 
 Legend: ✅ done · 🟡 in progress / partial · ⬜ not started · ⏸ deferred (post-MVP)
 
@@ -70,13 +70,23 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
 - 🟡 **SMTP:** Resend is configured for `issho-dev` (free tier, `onboarding@resend.dev`, delivers only to the owner's address). Before real users, it needs a **verified sending domain**.
 - ✅ **On-device test of the sign-in flow** (see above). It found an Android bug, now fixed: the keyboard covered the code field, because SDK 58 Android apps are edge-to-edge.
 
-### M3 · Cities, catalogue & geo (weeks 2–3): 🟡
-- ✅ City pack format and seeding tool.
-- 🟡 Activity catalogue: 38 of a target ~200 activities.
-- ⬜ Google Cloud project with restricted API keys (one server key, plus iOS and Android keys restricted to the app), per-API quotas and a budget alert.
-- ⬜ `tool build-matrix`: area-to-area travel-time matrix from the Google Routes API (transit/walk/drive). Stored in `area_travel_times`.
-- ⬜ `tool discover-venues`: Places API (New) Nearby Search per area × category, using field masks. Stores `google_place_id` plus our own tags.
-- ⬜ A synthetic second city pack (car-based) to prove the app works in other cities without code changes.
+### M3 · Cities, catalogue & geo (weeks 2–3): 🟡 in progress
+- ✅ City pack format and seeding tool. Packs now declare `travel_modes`, and everything in `data/` is validated by a test (CI) and before seeding.
+- ✅ **Activity catalogue: 230 activities** in 12 categories (EN/JA), each linked to the **venue categories** it happens at (48 categories mapped to Google place types, checked against a snapshot of Google's type list).
+- ⬜ **Google Cloud project** `issho-dev` with restricted keys, quotas and a $10 budget alert. Needs the owner's Google account; steps in [google-maps.md](google-maps.md). Mobile keys can wait until M6.
+- 🟡 **`tool build-matrix`** (`make matrix CITY=…`): Routes API Compute Route Matrix per city and travel mode.
+  - no same-area calls; walking only for areas < 4 km apart; minutes rounded up; transit timed for Saturday 11:00
+  - stored in `area_travel_times`; rows older than 30 days deleted (Maps caching terms)
+  - `-dry-run` prints requests and billed elements (Tokyo 166, Austin 90)
+  - tested with fakes and a DB integration test. **Not yet run against Google** (needs the key).
+- 🟡 **`tool discover-venues`** (`make venues CITY=…`): Places API (New) Nearby Search per area × venue category.
+  - field mask: id, types, location only
+  - wide categories (≥ 10 km) searched once per city
+  - each place assigned to its nearest area; stores only `google_place_id` + our data
+  - `-categories` for partial runs; `-dry-run` (Tokyo ~490 requests)
+  - **Not yet run against Google.**
+- ✅ **Synthetic second city pack: Austin** (car-based, `travel_modes: ["drive"]`, EN/ES, 10 areas, Japan-specific activities disabled, local renames and seasons). Seeded, validated and planned with no code changes.
+- ⬜ Run both tools for Tokyo and Austin once the key exists; spot-check travel times and venues.
 
 ### M4 · Matching engine (weeks 3–5): ⬜
 - ⬜ `internal/matching` as a pure package (no I/O) with table-driven tests.
@@ -97,6 +107,7 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
   - weekly matching, daily top-ups
   - expiry and quorum checks
   - meeting-point reveal 24h before the event
+  - travel-matrix refresh for each city at least every 30 days (Maps caching terms)
   - chat opens 48h before the event
   - push via Expo Push
 - ⬜ Proposals feed with accept/decline. Event screen: attendees, meeting point after the reveal, Google map, WebSocket group chat, check-in, share with a trusted contact.
@@ -177,11 +188,19 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
 | 2026-10-20 | commitlint also runs as a local `commit-msg` hook | The first M2 PR failed CI on over-long commit bodies. Catching that at commit time is cheaper than rewriting history after a push. |
 | 2026-10-20 | **jest-expo** for mobile unit tests; runs in CI with lint | Security-critical client code (session storage) needs tests. jest-expo is Expo's standard preset. |
 | 2026-10-20 | CORS deny-by-default via an explicit origin allowlist | rs/cors treats an empty `AllowedOrigins` as allow-all. |
+| 2026-10-20 | Google Maps over **plain REST** (`net/http`), not Google's Go client libraries | Two endpoints. The REST client gives full control over field masks (which set the billing SKU), keeps the key in a header and adds no dependency tree. |
+| 2026-10-20 | **Venues store only `google_place_id` + our data**, and one row per place × category | Maps terms allow storing place IDs indefinitely but not names, addresses or locations. A karaoke bar is legitimately both `bar` and `karaoke`. |
+| 2026-10-20 | **Travel times are a 30-day cache**, rebuilt per city | Routes content may only be cached temporarily. A full rebuild is cheap (~170 elements for Tokyo). |
+| 2026-10-20 | Travel modes are **per city** (`travel_modes` in the pack) | Transit cities and car cities need different matrices; computing every mode everywhere would waste billed elements and mislead the matcher. |
+| 2026-10-20 | Venue discovery assigns each place to its **nearest area**, and searches wide categories (≥ 10 km) **once per city** | Search circles overlap. Nearest-area assignment gives the matcher the right travel time, and searching beaches or trails from every area would pay for the same results again. |
+| 2026-10-20 | Activities link to **venue categories** (our ids), not Google types directly | Keeps the catalogue provider-neutral, and gives M4 the "is there a venue for this?" check. |
+| 2026-10-20 | Second city pack is **Austin** (synthetic, not a launch city) | A real car-based city with real coordinates, so the Google tools can be exercised end to end. It's Japan-free on purpose, which forced per-city disables and renames. |
 
 ## 5. Known gaps & risks
 - **Not enough nearby users** is the main product risk. The admin proposal override lets the first city be hand-curated.
 - **PostGIS lives in the `public` schema** (migration 00001). With the Data API disabled, no anonymous path reaches it, but Supabase's advisors flag it. Move it into the `extensions` schema with a migration **before production data exists**: PostGIS can't be relocated in place, so the geography column has to be recreated.
-- **Google Maps terms** restrict caching (store only place IDs long-term, fetch details live). Re-check the Maps Service Terms before M3 ships.
+- **Google Maps terms** restrict caching. What we do: store only place IDs plus our own data, use place locations in memory only, and delete travel times after 30 days ([google-maps.md](google-maps.md#5-terms-what-we-may-store)). The Routes policy says most content is cache-restricted but doesn't state a window for durations; 30 days follows the Service Specific Terms' limit for other content. Re-check with the current terms before launch.
+- **Venue quality** comes from popularity ranking only (ratings and "good for groups" are pricier Enterprise fields). Admin curation (M8) approves venues before the matcher uses them.
 - **`postgis/postgis` has no arm64 image.** CI (amd64) is unaffected. On Apple Silicon, use `supabase start` (arm64) or run that image with `--platform linux/amd64`.
 - **Local iOS builds need macOS 26.2+** (Xcode 26.4+ for SDK 58). The dev Mac is on macOS 15.7. Either upgrade before M9, or build iOS in the cloud with EAS.
 - **Disk space on dev machines:** Supabase images take several GB. OrbStack's VM disk can report "no space left" on its first launch; retrying fixes it.

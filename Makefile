@@ -11,7 +11,7 @@ include $(ENV_FILE)
 export
 endif
 
-.PHONY: setup secrets-scan docs gen gen-proto gen-sql lint test migrate-up migrate-status api seed
+.PHONY: setup secrets-scan docs gen gen-proto gen-sql lint test migrate-up migrate-status api seed matrix venues
 
 # One-time setup after cloning: install JS deps and enable the secret-scanning pre-commit hook.
 setup:
@@ -56,4 +56,13 @@ api:
 	cd backend && go run ./cmd/api
 
 seed:
-	cd backend && go run ./cmd/tool seed ../data/citypacks/tokyo.json
+	cd backend && go run ./cmd/tool seed ../data/citypacks/*.json
+
+# Google Maps data for one city (needs GOOGLE_MAPS_API_KEY; see docs/google-maps.md).
+# Add ARGS=-dry-run to see the planned API usage without calling Google.
+CITY ?= tokyo
+matrix:
+	cd backend && go run ./cmd/tool build-matrix $(ARGS) $(CITY)
+
+venues:
+	cd backend && go run ./cmd/tool discover-venues $(ARGS) $(CITY)

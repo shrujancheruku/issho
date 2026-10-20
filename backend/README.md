@@ -7,7 +7,7 @@ The Go backend for Issho: a modular monolith serving a ConnectRPC API. It uses P
 | Path | Contents |
 |---|---|
 | `cmd/api/` | API server: wires config, DB pool, the JWKS verifier and handlers, then serves HTTP/1.1 and h2c on `API_ADDR` |
-| `cmd/tool/` | Ops CLI: `migrate <goose command>`, `seed [-catalog file] <citypack.json>...` |
+| `cmd/tool/` | Ops CLI: `migrate <goose command>`, `seed [-catalog file] [-venue-categories file] <citypack.json>...`, `build-matrix [-dry-run] [-depart time] <city>`, `discover-venues [-dry-run] [-categories ids] <city>` |
 | `internal/platform/config` | Environment variables → `Config` |
 | `internal/platform/db` | pgx pool and goose migration runner |
 | `internal/platform/auth` | Supabase JWT verification (JWKS) and the Connect auth interceptor |
@@ -17,7 +17,10 @@ The Go backend for Issho: a modular monolith serving a ConnectRPC API. It uses P
 | `internal/health` | `HealthService` |
 | `internal/identity` | `IdentityService`: app account on top of Supabase users (get, delete) |
 | `internal/catalog` | `CatalogService`: activity catalogue with city overrides |
-| `internal/cities` | City-pack JSON format and seeding |
+| `internal/cities` | City-pack, catalogue and venue-category JSON formats; validation and seeding |
+| `internal/maps` | Provider-neutral geo interfaces (`Router` for travel-time matrices, `PlaceSearcher` for nearby places) |
+| `internal/maps/google` | Google implementation: Routes API (Compute Route Matrix) and Places API (New) Nearby Search over REST, with retries on 429/5xx. `placetypes.txt` is a snapshot of valid place types. |
+| `internal/geo` | Builds a city's travel-time matrix and venue list through the `maps` interfaces, and stores them |
 | `db/migrations/` | goose SQL migrations (embedded via `db/embed.go`) |
 | `db/queries/` | sqlc queries |
 | `gen/` | **Generated.** `gen/issho` (protobuf/Connect), `gen/dbgen` (sqlc). Don't edit; run `make gen`. |
@@ -30,6 +33,7 @@ The Go backend for Issho: a modular monolith serving a ConnectRPC API. It uses P
 | `SUPABASE_URL` | yes | `http://127.0.0.1:54321` | The JWKS is fetched from `$SUPABASE_URL/auth/v1/.well-known/jwks.json`. The token issuer must be `$SUPABASE_URL/auth/v1`. |
 | `API_ADDR` | no | `:8080` | Listen address |
 | `SUPABASE_SECRET_KEY` | no | `SECRET_KEY` from `supabase status` | **Server-only secret.** Enables admin calls (account deletion). Without it, `DeleteAccount` returns `failed_precondition`. Never commit it; see [secrets](../docs/secrets.md). |
+| `GOOGLE_MAPS_API_KEY` | only for `tool build-matrix` / `discover-venues` | (empty) | **Server-only secret**, restricted to the Routes and Places APIs. Not needed for `-dry-run`, tests or the API server. See [google-maps](../docs/google-maps.md). |
 | `ALLOWED_ORIGINS` | no | `https://admin.example.com` | Comma-separated browser origins. **Empty = no browser origins allowed.** |
 
 Local defaults are in `../.env.example`: `export $(grep -v '^#' ../.env.example | xargs)`.
@@ -88,7 +92,21 @@ go run ./cmd/tool migrate status
 
 ## Seeding
 
-`cmd/tool seed` upserts `../data/activities.json`, then each city pack given. It's idempotent. Note that removing an area from the JSON does **not** delete it from the database. See [../data/README.md](../data/README.md).
+`cmd/tool seed` validates and upserts `../data/venue-categories.json` and `../data/activities.json`, then each city pack given (`make seed` loads them all). It's idempotent. Note that removing an area from the JSON does **not** delete it from the database. See [../data/README.md](../data/README.md).
+
+## Geo data (Google Maps)
+
+Set up keys first: [../docs/google-maps.md](../docs/google-maps.md). Then, for a seeded city:
+
+```sh
+go run ./cmd/tool build-matrix -dry-run tokyo     # plan only: requests and billed elements
+go run ./cmd/tool build-matrix tokyo              # fills app.area_travel_times
+go run ./cmd/tool discover-venues -dry-run tokyo
+go run ./cmd/tool discover-venues -categories cafe,park tokyo
+```
+
+- **`build-matrix`** computes travel times between every pair of the city's areas, for each of the city's `travel_modes`. Same-area pairs are stored as 0 minutes without an API call. Walking is only requested for areas less than 4 km apart. Minutes are rounded up. Transit uses the next Saturday 11:00 city time (override with `-depart`). Pairs with no route are left out. Rows older than 30 days are deleted (Google caching terms), so **rebuild each city at least every 30 days**.
+- **`discover-venues`** runs a Nearby Search per area × venue category, for categories used by an activity enabled in the city. Categories with a radius of 10 km or more are searched once from the city centre. Each place is assigned to its **nearest** area and stored as `google_place_id` + category. Re-running only bumps `last_seen_at`; curation status and tags are kept.
 
 ## Testing
 
@@ -104,8 +122,12 @@ go test ./...          # or `make test` from the root
 | `internal/platform/errs/errs_test.go` | Raw errors become generic `internal`; Connect errors pass through |
 | `internal/platform/supabase/admin_test.go` | Admin delete: request shape, 404 treated as already deleted, other errors surfaced |
 | `internal/identity/service_test.go` | Account creation keeps an existing email; deletion order (auth first, app data kept if that fails) |
+| `internal/maps/google/google_test.go` | Matrix chunking (≤ 100 transit / 625 other elements), global origin indexes, no-route and element errors, drive is traffic-unaware, key only in a header, field masks, retry on 429 but not on 400 |
+| `internal/geo/geo_test.go` | Matrix plan (no self pairs, no long walks), rounding up, missing routes left out, next-Saturday departure across time zones, venue plan (wide categories once), nearest-area assignment, dedupe |
+| `internal/geo/store_test.go` | **Integration** (runs when `TEST_DATABASE_URL` is set; CI sets it): area coordinates round-trip, upsert, 30-day stale deletion, one venue in two categories, curation kept on re-discovery |
+| `internal/cities/data_test.go` | Every file in `../data` is valid: catalogue fields, venue category references, Google place types, city packs (area ids, modes, months, override ids) |
 
-CI also runs migrations up → down → up and seeds against a PostGIS container. Tests must never call paid external APIs.
+CI also runs migrations up → down → up, seeds every city pack, runs the geo integration test and dry-runs both geo tools against a PostGIS container. Tests must never call paid external APIs. Run the integration test locally with `TEST_DATABASE_URL=$DATABASE_URL go test ./internal/geo/ -run Integration`; it creates and removes its own throwaway city.
 
 ## Code generation
 
