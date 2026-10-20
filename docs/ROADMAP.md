@@ -58,8 +58,16 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
 - ✅ **API client sends the Supabase access token.** Auth-gated navigation (`Stack.Protected`): sign-in → onboarding placeholder → tabs. Rejected sessions, e.g. after deletion on another device, sign out automatically.
 - ✅ **Account deletion:** `IdentityService.DeleteAccount` (Supabase Admin API, cascade to app data, safe to retry). Sign out and delete in the app. Stale tokens of deleted users get `unauthenticated: account deleted`.
 - ✅ **API error hygiene:** internal errors are logged server-side and returned as a generic `internal error`. Database details no longer leak.
-- ⬜ **Hosted Supabase project** (Free tier for dev), set up following [supabase-hosted.md](supabase-hosted.md). *Needs the owner's Supabase account.*
-- ⬜ **Production SMTP relay** (Resend/SES) for OTP email, plus a verified sending domain. *Needs an account and a domain.*
+- ✅ **Hosted `issho-dev` project**, configured with the Supabase CLI ([supabase-hosted.md](supabase-hosted.md)):
+  - config pushed from `config.toml` with `[remotes.issho-dev]` overrides
+  - Data API off, SSL enforced
+  - Resend SMTP with the code templates
+  - legacy keys disabled, ES256 signing
+  - schema and seed applied
+  - verified: DB state, Data API 503, advisors (only the known PostGIS warning), Go API health against the project
+- ⬜ **Email OTP expiry set to 600 s in the dashboard.** `config push` (CLI 2.121) doesn't manage it.
+- ⬜ **End-to-end sign-in against `issho-dev`** (code delivered by Resend to the account owner's inbox).
+- 🟡 **SMTP:** Resend is configured for `issho-dev` (free tier, `onboarding@resend.dev`, delivers only to the owner's address). Before real users, it needs a **verified sending domain**.
 - ⬜ **On-device test of the sign-in flow.** *Needs a phone with Expo Go, or Xcode (not installed on the dev machine).*
 
 ### M3 · Cities, catalogue & geo (weeks 2–3): 🟡
@@ -160,6 +168,8 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
 | 2026-10-20 | **Email OTP is the only sign-in method for the MVP**; Apple/Google deferred | Not needed to validate the product. It avoids OAuth setup and secrets, and the App Store rule that requires Sign in with Apple once any social login exists. |
 | 2026-10-20 | **Supabase Data API disabled**; goose's version table moved from `public` to its own `goose` schema | Found while preparing the hosted project: through the Data API, anonymous clients could **write** to `public.app_goose_db_version` (marking migrations as applied) and modify PostGIS's `spatial_ref_sys`. Its grants are owned by `supabase_admin`, so a migration can't revoke them. Auth works without the Data API. CI now checks the version table isn't in `public`. |
 | 2026-10-20 | Production `DATABASE_URL` uses the **session pooler** (or direct connection), not the transaction pooler | pgx uses prepared statements by default, and River needs LISTEN/NOTIFY. The transaction pooler supports neither. |
+| 2026-10-20 | Hosted Supabase configured **declaratively with the CLI** (`config push`, `[remotes.<name>]` overrides) | Reproducible and reviewable via `config diff`. The diff caught local-only values that would have leaked: confirmations off, a 1 s resend interval, a 2/hour email cap. |
+| 2026-10-20 | **Custom SMTP (Resend) is required even in development** | On the Free plan, Supabase blocks custom email templates while its built-in email service is in use, and the built-in templates only contain links, which can't drive code sign-in. |
 | 2026-10-20 | Official **Supabase agent skills** in `.claude/skills/` (installed with a pinned `skills` CLI, verified byte-for-byte against upstream) plus a root `CLAUDE.md` | Gives coding agents current Supabase and Postgres guidance. `CLAUDE.md` overrides where the generic skills conflict with this repo (goose migrations, Data API off, MCP not configured). |
 | 2026-10-20 | **Dela Gothic One** for standout/hero text in the app (`title`, `subtitle`); system font for body text | Ties the app to the wordmark. Loaded at runtime (`useFonts`) so it works in Expo Go; it has a single weight, so no `fontWeight` on display text. |
 | 2026-10-20 | commitlint also runs as a local `commit-msg` hook | The first M2 PR failed CI on over-long commit bodies. Catching that at commit time is cheaper than rewriting history after a push. |

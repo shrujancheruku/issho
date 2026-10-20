@@ -1,128 +1,128 @@
 # Hosted Supabase project setup
 
-How to configure a hosted Supabase project for Issho so it matches the local stack (`supabase/config.toml`) and the security assumptions in the code. Do this once per environment (e.g. `issho-dev`, later `issho-prod`).
+How a hosted Supabase project is configured for Issho, almost entirely with the **Supabase CLI**. `supabase/config.toml` is the source of truth. Settings that must differ from the local stack live in a `[remotes.<name>]` block, which `supabase config push` applies to that project.
 
-> **Secrets** created along the way (database password, secret API key, SMTP password) go into a password manager and from there into the API server's environment. Never put them in the repo, a `.env.example` or an `EXPO_PUBLIC_*` variable. See [secrets.md](secrets.md).
+Current projects:
 
-Dashboard menu names change from time to time. If a label below doesn't match, search the Supabase docs for the setting name.
+| Name | Ref | Region | Plan |
+|---|---|---|---|
+| `issho-dev` | `yjnzrhusfxilktbjrzsw` | ap-northeast-2 (Seoul) | Free |
 
-## 1. Create the project
+For **production**, create the project in **ap-northeast-1 (Tokyo)**, closest to the first city's users. A project's region can't be changed later.
 
-| Setting | Value |
-|---|---|
-| Name | `issho-dev` (or `issho-prod`) |
-| Region | **Northeast Asia (Tokyo)**, closest to the first city's users |
-| Database password | Generate a long random one and store it in the password manager |
-| Plan | Free for development. Free projects **pause after 7 days without activity**, so production needs Pro. |
+> **Secrets** (database password, SMTP key, Supabase secret key) live only in gitignored files on your machine and in the deployment's secret store. Never paste them into chats, commands or issues. Commands below read them from files and filter their output. See [secrets.md](secrets.md).
 
-## 2. Turn off the Data API
+## 0. Prerequisites
 
-**Project Settings → Data API → disable.**
+- Supabase CLI (`brew install supabase/tap/supabase`).
+- **Log in with a scoped personal access token**, not the browser flow. The browser flow creates a classic token with full access to every organisation and project on your account. Create a token limited to the Issho project(s) under **Account → Access Tokens**, then run `supabase login --token <token>` **in your own terminal**.
 
-The app never queries Supabase's database directly; everything goes through the Go API. With the Data API on, anonymous clients could read and *write* tables in the `public` schema. That includes PostGIS's `spatial_ref_sys`, whose grants belong to Supabase's internal admin role and can't be revoked by our migrations. Auth keeps working with the Data API off.
+## 1. Create and link the project
 
-## 3. Authentication: email codes only
-
-**Authentication → Sign In / Providers**
-
-| Setting | Value | Why |
-|---|---|---|
-| Allow new users to sign up | On | The first sign-in creates the account |
-| **Email** provider | On | The only sign-in method in the MVP |
-| Confirm email | On (default) | New users verify their address with the same 6-digit code |
-| Email OTP expiration | **600** seconds | Matches `otp_expiry` locally (the default is 3600) |
-| Email OTP length | 6 (if shown) | The app expects 6 digits |
-| Phone, anonymous sign-ins, all social providers (Apple, Google, …) | Off | Not used. Apple and Google sign-in are deferred until after the MVP. |
-
-**Authentication → URL Configuration:** set **Site URL** to the product site (e.g. `https://joinissho.com`). No redirect URLs are needed, because sign-in uses codes, not links.
-
-## 4. Email templates
-
-**Authentication → Emails → Templates.** Set **both** templates. Existing users get "Magic link"; brand-new users get "Confirm signup".
-
-| Template | Subject | Body (paste the file's contents) |
-|---|---|---|
-| Confirm signup | `Your Issho sign-in code` | [`supabase/templates/confirmation.html`](../supabase/templates/confirmation.html) |
-| Magic link | `Your Issho sign-in code` | [`supabase/templates/magic_link.html`](../supabase/templates/magic_link.html) |
-
-The bodies show `{{ .Token }}`, the 6-digit code, rather than a link.
-
-## 5. Email delivery (SMTP)
-
-Supabase's built-in email only reaches members of your Supabase organisation, at about **2 emails per hour**. That's fine for a quick test of your own account, but real users need a custom SMTP relay.
-
-1. Create an account with a relay (e.g. Resend or Amazon SES, both with free tiers) and verify a sending domain, e.g. `joinissho.com` (DNS records for SPF/DKIM).
-2. **Authentication → Emails → SMTP Settings:** enable custom SMTP and fill in host, port, username, **password** (a secret), sender address `no-reply@<your domain>` and sender name `Issho`.
-3. **Authentication → Rate Limits:** custom SMTP starts at **30 emails/hour**. Raise it for launch (e.g. 100–300) according to the relay's limits. Keep the default of one code request per user every 60 seconds.
-
-## 6. JWT signing keys (ES256)
-
-The Go API only accepts asymmetric tokens (ES256/RS256) and verifies them with the project's public JWKS. It rejects tokens signed with the legacy shared secret.
-
-**Project Settings → JWT Keys** (if the project still shows a legacy JWT secret):
-
-1. **Migrate JWT secret.** This creates a standby asymmetric key; make sure it's **ES256**.
-2. **Rotate keys.** New tokens are now signed with ES256, and existing ones stay valid.
-3. **Project Settings → API Keys:** disable the legacy `anon` and `service_role` keys. We use the new publishable and secret keys instead.
-4. After at least **1 hour 15 minutes** (access-token lifetime plus caching), **revoke** the legacy secret.
-
-Check it worked: `https://<project-ref>.supabase.co/auth/v1/.well-known/jwks.json` returns a key with `"alg":"ES256"`.
-
-Session settings (Authentication → Sessions) can stay at their defaults: 1-hour access tokens, refresh-token rotation on.
-
-## 7. API keys
-
-**Project Settings → API Keys**
-
-| Key | Goes to | Public? |
-|---|---|---|
-| **Publishable** key (`sb_publishable_…`) | Mobile app: `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Yes, by design |
-| **Secret** key (`sb_secret_…`); create a dedicated one named `issho-api` | API server only: `SUPABASE_SECRET_KEY` | **No.** It bypasses all access rules. |
-
-A dedicated secret key per service can be rotated or revoked without affecting anything else.
-
-## 8. Database connection
-
-**Project Settings → Database:** turn on **Enforce SSL**.
-
-From the **Connect** dialog, copy the **Session pooler** connection string (IPv4, port **5432**):
-
-```
-postgres://postgres.<project-ref>:<db-password>@aws-<n>-ap-northeast-1.pooler.supabase.com:5432/postgres?sslmode=require
-```
-
-Don't use the **transaction pooler** (port 6543). pgx's prepared statements and the River job queue's LISTEN/NOTIFY don't work through it. The direct connection (`db.<project-ref>.supabase.co:5432`) also works, but only over IPv6.
-
-## 9. Apply migrations and seed data
-
-From your machine, with the session-pooler URL. The database password is in it, so don't paste it into shared shells or scripts:
+Create the project in the dashboard (name, region, generated DB password saved in your password manager), then:
 
 ```sh
-export DATABASE_URL='postgres://postgres.<project-ref>:<db-password>@<pooler-host>:5432/postgres?sslmode=require'
-make migrate-up seed
-unset DATABASE_URL
+supabase projects list               # find its ref
+supabase link --project-ref <ref>    # stored in supabase/.temp (gitignored)
 ```
 
-This creates the `app` schema (with no access for `anon`/`authenticated`), links `app.users` to `auth.users`, and loads the activity catalogue and the Tokyo city pack. goose's bookkeeping table goes into its own `goose` schema.
+Add a `[remotes.<name>]` block for it in `supabase/config.toml`, copying `[remotes.issho-dev]` (see section 3 for why each override exists).
 
-## 10. Wire up the environments
+## 2. Secret files (gitignored)
 
-| Where | Variable | Value |
+| File | Contents | Used by |
 |---|---|---|
-| Mobile `apps/mobile/.env` | `EXPO_PUBLIC_SUPABASE_URL` | `https://<project-ref>.supabase.co` |
-| | `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | publishable key |
-| | `EXPO_PUBLIC_API_URL` | URL of the Go API (local or deployed) |
-| API server environment | `SUPABASE_URL` | `https://<project-ref>.supabase.co` |
-| | `DATABASE_URL` | session-pooler URL (step 8) **(secret)** |
-| | `SUPABASE_SECRET_KEY` | `issho-api` secret key **(secret)** |
+| `.env.<name>` (e.g. `.env.issho-dev`) | `DATABASE_URL=postgres://postgres.<ref>:<password>@<pooler-host>:5432/postgres?sslmode=require`. The **session pooler** URL from the dashboard's **Connect** dialog. | `make … ENV_FILE=.env.<name>` |
+| `supabase/.env` | `SUPABASE_SMTP_PASS=<Resend API key>` | `supabase config push` (resolves `env(SUPABASE_SMTP_PASS)`) |
 
-## 11. Verify
+- **Use the session pooler (port 5432)**, not the transaction pooler (6543). pgx's prepared statements and River's LISTEN/NOTIFY don't work through the transaction pooler. The direct connection also works, but it's IPv6-only.
+- The Makefile reads `ENV_FILE` with make's `include`. Values must not contain `$` or `#`; if a password does, reset it to one without them.
 
-1. `curl https://<project-ref>.supabase.co/auth/v1/.well-known/jwks.json` shows an ES256 key.
-2. Run the API locally against the hosted project (variables above) and run `make api`. Then `HealthService/Check` should return `"databaseOk": true`.
-3. Sign in from the app with your own email. The code arrives through your SMTP relay. Before SMTP is set up, the built-in service only delivers to your organisation's members.
-4. `IdentityService/GetMe` returns your user, and **Delete account** removes it (check **Authentication → Users**).
+## 3. Push the configuration
 
-## Expected advisor warnings
+```sh
+supabase config diff        # always review first: every line should be intended
+supabase config push --yes
+```
 
-Supabase's **Advisors** page will flag *"Extension in public schema"* for `postgis`, and *"RLS disabled"* on `public.spatial_ref_sys`. Both are mitigated by the Data API being off: no anonymous path reaches them. Moving PostGIS into the `extensions` schema is tracked in [ROADMAP.md](ROADMAP.md#5-known-gaps--risks). It's cheapest to do before any production data exists.
+What the `[remotes.issho-dev]` overrides keep different from the local stack, and why:
+
+| Setting | Local | Hosted | Why |
+|---|---|---|---|
+| `auth.email.enable_confirmations` | off | **on** | New users verify their address with the same code |
+| `auth.email.max_frequency` | 1s | **1m** | At most one code request per address per minute |
+| `auth.rate_limit.email_sent` | 2/h | **30/h** | The local default would block testing; raise it before launch |
+| `auth.email.smtp` | Mailpit | **Resend** | See below |
+| `auth.site_url`, redirect URLs | 127.0.0.1 | Supabase default | Sign-in uses codes, not links |
+| `db.pooler` sizes | 20/100 | 15/200 | Keep the hosted plan's limits |
+| `db.ssl_enforcement` | n/a | **on** | Set with `supabase ssl-enforcement update --experimental --project-ref <ref> --enable-db-ssl-enforcement` |
+
+Shared settings pushed from the base config include:
+- **Data API disabled** (`[api] enabled = false`). Anonymous clients could otherwise read and write public tables such as PostGIS's `spatial_ref_sys`.
+- The **code email templates** (`supabase/templates/*.html`).
+- TOTP multi-factor auth **off** (unused).
+
+**Not managed by `config push`** (CLI 2.121); set these in the dashboard:
+- **Email OTP expiration: 600 s.** Authentication → Sign In / Providers → Email. The default is 3600.
+
+### Email (SMTP) is required
+
+On the **Free plan**, Supabase refuses custom email templates while its built-in email service is in use. The built-in templates only contain a sign-in *link*, so **the app's code sign-in doesn't work until custom SMTP is configured**. The built-in service also only reaches organisation members, at about 2 emails an hour.
+
+Issho uses **Resend** (free tier): host `smtp.resend.com`, port 465, user `resend`, password = a Resend API key with sending access.
+- **Development:** without a verified domain, Resend only sends from `onboarding@resend.dev`, and **only to the Resend account owner's address**.
+- **Before real users:** verify a sending domain in Resend (DNS records), then change `admin_email` to e.g. `no-reply@<domain>`.
+
+## 4. Keys
+
+```sh
+supabase projects api-keys --project-ref <ref> -o json   # contains the SECRET key: filter output, never paste it
+```
+
+| Key | Goes to |
+|---|---|
+| **Publishable** (`sb_publishable_…`) | Mobile app `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (public by design) |
+| **Secret** (`sb_secret_…`), ideally a dedicated `issho-api` key (dashboard) | API server `SUPABASE_SECRET_KEY` only |
+
+In the **dashboard** (no CLI equivalent):
+- **Project Settings → API Keys → Legacy API keys:** disable the legacy `anon` and `service_role` keys.
+- **Project Settings → JWT Keys:** new projects already sign with **ES256**. Revoke any legacy JWT secret listed under *Previously used*.
+
+## 5. Schema and seed
+
+```sh
+make migrate-up seed ENV_FILE=.env.<name>
+```
+
+This creates the `app` schema (with no access for `anon`/`authenticated`), links `app.users` to `auth.users`, puts goose's bookkeeping table in its own `goose` schema, and loads the activity catalogue and the Tokyo city pack.
+
+## 6. Verify
+
+```sh
+# Database state (runs through the Management API, no password needed)
+supabase db query --linked "select to_regclass('goose.db_version') is not null as goose_private,
+  has_schema_privilege('anon','app','USAGE') as anon_can_use_app,
+  exists(select 1 from pg_constraint where conname='users_auth_fk') as users_fk"
+# expected: goose_private = true, anon_can_use_app = false, users_fk = true
+
+# Data API is off: anonymous REST calls get 503
+curl -s -o /dev/null -w "%{http_code}\n" "https://<ref>.supabase.co/rest/v1/spatial_ref_sys" -H "apikey: <publishable key>"
+
+# Signing keys: expect an ES256 key
+curl -s "https://<ref>.supabase.co/auth/v1/.well-known/jwks.json"
+
+# Advisors: only the known PostGIS "extension_in_public" warning is expected
+supabase db advisors --linked
+```
+
+Then run the API against the project and check `HealthService/Check` returns `"databaseOk": true`:
+
+```sh
+(set -a; . ./.env.<name>; set +a; SUPABASE_URL=https://<ref>.supabase.co make api)
+```
+
+Finally, sign in from the app. Point `apps/mobile/.env` at the hosted project (`EXPO_PUBLIC_SUPABASE_URL=https://<ref>.supabase.co` and its publishable key) and request a code. During development, the code arrives only at the Resend account owner's inbox.
+
+## Known advisor warning
+
+`extension_in_public` for `postgis`. Harmless while the Data API is off; moving PostGIS into the `extensions` schema is tracked in [ROADMAP.md](ROADMAP.md#5-known-gaps--risks).

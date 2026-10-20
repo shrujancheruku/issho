@@ -19,6 +19,9 @@
 |---|---|---|---|
 | Supabase JWT signing key | `supabase/signing_keys.json` (gitignored, generated per machine) | not needed | Supabase dashboard (never exported) |
 | `DATABASE_URL` (with password) | `.env.example` defaults are the well-known **local-only** Supabase credentials | service container, throwaway | Kamal secrets (`.kamal/secrets`, gitignored, filled from a password manager) |
+| Hosted DB URL for a Supabase project (with password) | `.env.<project>` (e.g. `.env.issho-dev`, gitignored), used via `make … ENV_FILE=` | not used | Kamal secrets (`DATABASE_URL`) |
+| SMTP password (Resend API key) | `supabase/.env` as `SUPABASE_SMTP_PASS` (gitignored); `config push` uploads it to Supabase as a masked secret | not used | Supabase project config |
+| Supabase CLI access token | macOS keychain, via `supabase login --token` with a **scoped** token run in your own terminal (the browser login grants full-account access) | not used | n/a |
 | Supabase secret key (`SUPABASE_SECRET_KEY`) | `SECRET_KEY` from `supabase status`, exported in your shell or a gitignored `.env` (never in `.env.example`) | not used (tests use a fake admin) | Kamal secrets |
 | Google Maps server key (M3) | your shell env / untracked `.env` | GitHub Actions secret (only if a job needs it; tests use fakes) | Kamal secrets |
 | Anthropic API key (M5) | shell env / untracked `.env` | not used (tests use recorded fixtures) | Kamal secrets |
