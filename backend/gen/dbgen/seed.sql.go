@@ -9,6 +9,20 @@ import (
 	"context"
 )
 
+const setActivityVenueCategories = `-- name: SetActivityVenueCategories :exec
+update app.activities set venue_categories = $1 where id = $2
+`
+
+type SetActivityVenueCategoriesParams struct {
+	VenueCategories []string
+	ID              string
+}
+
+func (q *Queries) SetActivityVenueCategories(ctx context.Context, arg SetActivityVenueCategoriesParams) error {
+	_, err := q.db.Exec(ctx, setActivityVenueCategories, arg.VenueCategories, arg.ID)
+	return err
+}
+
 const upsertActivity = `-- name: UpsertActivity :exec
 insert into app.activities (id, name, category, indoor, energy, cost_level, conversational,
                             skill_dependent, min_group_size, max_group_size)
@@ -76,19 +90,21 @@ func (q *Queries) UpsertArea(ctx context.Context, arg UpsertAreaParams) error {
 }
 
 const upsertCity = `-- name: UpsertCity :exec
-insert into app.cities (id, name, timezone, currency, languages)
-values ($1, $2, $3, $4, $5)
+insert into app.cities (id, name, timezone, currency, languages, travel_modes)
+values ($1, $2, $3, $4, $5, $6)
 on conflict (id) do update set
   name = excluded.name, timezone = excluded.timezone,
-  currency = excluded.currency, languages = excluded.languages
+  currency = excluded.currency, languages = excluded.languages,
+  travel_modes = excluded.travel_modes
 `
 
 type UpsertCityParams struct {
-	ID        string
-	Name      []byte
-	Timezone  string
-	Currency  string
-	Languages []string
+	ID          string
+	Name        []byte
+	Timezone    string
+	Currency    string
+	Languages   []string
+	TravelModes []string
 }
 
 func (q *Queries) UpsertCity(ctx context.Context, arg UpsertCityParams) error {
@@ -98,6 +114,7 @@ func (q *Queries) UpsertCity(ctx context.Context, arg UpsertCityParams) error {
 		arg.Timezone,
 		arg.Currency,
 		arg.Languages,
+		arg.TravelModes,
 	)
 	return err
 }
@@ -124,6 +141,31 @@ func (q *Queries) UpsertCityActivityOverride(ctx context.Context, arg UpsertCity
 		arg.Enabled,
 		arg.Name,
 		arg.Months,
+	)
+	return err
+}
+
+const upsertVenueCategory = `-- name: UpsertVenueCategory :exec
+insert into app.venue_categories (id, name, google_types, search_radius_m)
+values ($1, $2, $3, $4)
+on conflict (id) do update set
+  name = excluded.name, google_types = excluded.google_types,
+  search_radius_m = excluded.search_radius_m
+`
+
+type UpsertVenueCategoryParams struct {
+	ID            string
+	Name          []byte
+	GoogleTypes   []string
+	SearchRadiusM int32
+}
+
+func (q *Queries) UpsertVenueCategory(ctx context.Context, arg UpsertVenueCategoryParams) error {
+	_, err := q.db.Exec(ctx, upsertVenueCategory,
+		arg.ID,
+		arg.Name,
+		arg.GoogleTypes,
+		arg.SearchRadiusM,
 	)
 	return err
 }

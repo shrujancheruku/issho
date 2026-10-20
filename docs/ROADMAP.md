@@ -2,7 +2,7 @@
 
 > **This is the source of truth for what's planned, built and pending.** CI (`roadmap` job) fails any push or PR that changes code without updating this file. When you change code, update the status lines below. If the change made a decision, add it to the Decision log.
 
-**Last updated:** 2026-10-20 · **Version:** 0.1.0 (pre-release; [releases](https://github.com/shrujancheruku/issho/releases)) · **Current milestone:** M2 Authentication (in progress)
+**Last updated:** 2026-10-20 · **Version:** 0.2.0 (pre-release; [releases](https://github.com/shrujancheruku/issho/releases)) · **Current milestone:** M4 Matching engine (next)
 
 Legend: ✅ done · 🟡 in progress / partial · ⬜ not started · ⏸ deferred (post-MVP)
 
@@ -20,6 +20,7 @@ After each event, attendees **privately** pick who they'd meet again. **Mutual**
   - photos are shown only to confirmed attendees
   - gender-composition rules
   - a "here for dating" report option
+- **Any language, two at a time.** People can speak any language and events can be held in any language; nobody needs English. Everything is shown in a primary language plus an optional secondary one. For events, primary = the event's language; secondary = the event's second language (e.g. a JP–ES exchange), else the user's own language. Elsewhere, it's the user's primary language plus their secondary choice. Short text side by side, longer text behind a switch. Only English is stored for our own content; every other language is machine-translated on demand and cached.
 - **Location-agnostic.** Everything local (areas, travel times, languages, venues, activity names) is data in a **city pack**, not code. The first city is Tokyo.
 - **North-star metric:** weekly attendees who have been to more than one event.
 
@@ -70,17 +71,36 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
 - 🟡 **SMTP:** Resend is configured for `issho-dev` (free tier, `onboarding@resend.dev`, delivers only to the owner's address). Before real users, it needs a **verified sending domain**.
 - ✅ **On-device test of the sign-in flow** (see above). It found an Android bug, now fixed: the keyboard covered the code field, because SDK 58 Android apps are edge-to-edge.
 
-### M3 · Cities, catalogue & geo (weeks 2–3): 🟡
-- ✅ City pack format and seeding tool.
-- 🟡 Activity catalogue: 38 of a target ~200 activities.
-- ⬜ Google Cloud project with restricted API keys (one server key, plus iOS and Android keys restricted to the app), per-API quotas and a budget alert.
-- ⬜ `tool build-matrix`: area-to-area travel-time matrix from the Google Routes API (transit/walk/drive). Stored in `area_travel_times`.
-- ⬜ `tool discover-venues`: Places API (New) Nearby Search per area × category, using field masks. Stores `google_place_id` plus our own tags.
-- ⬜ A synthetic second city pack (car-based) to prove the app works in other cities without code changes.
+### M3 · Cities, catalogue & geo (weeks 2–3): ✅ done
+- ✅ City pack format and seeding tool. Packs now declare `travel_modes`, and everything in `data/` is validated by a test (CI) and before seeding.
+- ✅ **Activity catalogue: 230 activities** in 12 categories (English only; other languages on demand), each linked to the **venue categories** it happens at (48 categories mapped to Google place types, checked against a snapshot of Google's type list).
+- ✅ **Google Cloud project** `issho-dev` with Maps and Translation keys (kept in the gitignored `.env.issho-dev`). Confirm the quotas and budget alert from [google-maps.md](google-maps.md) are set. Mobile keys can wait until M6.
+- ✅ **`tool build-matrix`** (`make matrix CITY=…`): Routes API Compute Route Matrix per city, **walking and driving only** (public transport dropped; see the decision log).
+  - no same-area calls; walking only for areas < 4 km apart; driving is traffic-unaware; minutes rounded up
+  - stored in `area_travel_times`; rows older than 30 days deleted (Maps caching terms)
+  - `-dry-run` prints requests and billed elements (Tokyo 166, Austin 102)
+  - tested with fakes and a DB integration test
+  - **run against Google (local DB) for both cities:** Tokyo drive 132 pairs (6–44 min, e.g. Kichijoji → Shinjuku 29) and walk 34 pairs (18–63 min); Austin drive 90 pairs (8–32 min) and walk 12 pairs. Same results on the hosted `issho-dev` DB.
+- ✅ **`tool discover-venues`** (`make venues CITY=…`): Places API (New) Nearby Search per area × venue category.
+  - field mask: id, types, location only
+  - matches on the place's **primary type** (`includedPrimaryTypes`, plus our own check of the returned primary type). Matching on any type pulled in gyms for "sauna", supermarkets for "market" and **hostess bars (スナック)** for "night_club".
+  - wide categories (≥ 10 km) searched once per city
+  - each place assigned to its nearest area; stores only `google_place_id` + our data
+  - `-categories` for partial runs; `-dry-run` (Tokyo 488 requests, Austin 408)
+  - **run against Google (local DB):** Tokyo 4,424 venues in all 48 categories, Austin 1,373 in 45. Names spot-checked live per category (e.g. Inokashira Park / 井の頭恩賜公園, Big Echo karaoke, Jo's Coffee).
+- ✅ **Hosted `issho-dev` updated:** migrations 00002–00004 applied, both cities seeded, matrices built (312 rows) and venues discovered (5,797). Verified that the new tables aren't granted to `anon`/`authenticated`, goose bookkeeping is out of `public`, and the Data API still answers 503 (disabled).
+- ✅ **Synthetic second city pack: Austin** (car-based, walk + drive, 10 areas, Japan-specific activities disabled, local renames and seasons). Seeded, validated, matrix built and venues discovered with no code changes.
+- ✅ **Clearer English activity names** for machine translation: 27 idioms and ambiguous words replaced (Pottery → Pottery class: 陶器 "pottery ware" became 陶芸教室; Kickabout → Casual soccer game; "Go" → Shogi or Go board games; "crawl" → tour). The translator also keeps the source's leading capital ("Concierto de banda indie").
+- ✅ **Language model** (decided mid-M3, before anything depended on it; see [architecture](architecture.md#languages)):
+  - `i18n.ForEvent` / `i18n.ForApp` pick the primary/secondary pair; `i18n.Pair` resolves text, showing the secondary alone rather than an unreadable fallback
+  - `ListActivities` takes `locale` (primary) plus `secondary_language` and returns `name` plus `secondary_name`; any language code accepted; verified end to end against local Supabase
+  - `profiles.primary_language` + `secondary_language` (migration 00003); language codes validated in the DB
+- ✅ **On-demand translation** (`internal/translate`): English is the only language that must be stored. Other languages come from stored text (local names, prefilled events), then the `app.translations` cache (migration 00004), then Google Cloud Translation, cached for everyone. Requests wait up to 8 s, and slower translations finish in the background. Concurrent requests share one call; failures aren't cached; `Prefill` for events. Off without `GOOGLE_TRANSLATE_API_KEY`. Cache path and fallbacks verified end to end; **Live translation verified** (local DB): 230 names into ja/es/fr/ko; cold request 0.65 s for two languages, cached 0.01 s. Short labels without context translated poorly until the English names were clarified (below).
+  - the catalogue and overrides are English-only; city packs keep only real local names (東京, 吉祥寺)
 
 ### M4 · Matching engine (weeks 3–5): ⬜
 - ⬜ `internal/matching` as a pure package (no I/O) with table-driven tests.
-- ⬜ Step 1, bucketing: group users by area cluster (travel matrix), overlapping availability and a shared fluent language. Language-exchange buckets need complementary language pairs.
+- ⬜ Step 1, bucketing: group users by area cluster (travel matrix), overlapping availability and a shared fluent language, which becomes the event's primary language (any language). Language-exchange buckets need complementary language pairs, which become the event's primary and secondary languages.
 - ⬜ Step 2, candidate plans: activity combinations ranked by demand × feasibility (venue open, group size fits, time of day suits the activity).
 - ⬜ Step 3, group assembly: greedy placement, then local search.
   - Score: interest overlap, size fit, mutual picks (at most 2 people who already know each other), mixing in newcomers, reliability.
@@ -89,18 +109,22 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
 - ⬜ A synthetic-user simulator (500 users × 2 cities).
 
 ### M5 · Onboarding & profile (weeks 5–6): ⬜
-- ⬜ Profile RPCs and screens: city/area plus maximum travel time, languages, availability grid, activity tiles (like/love/open to try), group size, energy, budget, gender plus same-gender-only, birth year (18+), code of conduct.
-- ⬜ Free-text interests → activity tags with Claude (Haiku). The user confirms the suggested tags. Includes a tagging eval set (JA/EN/ES).
+- ⬜ **App i18n framework** (moved up from M9): UI strings written in English in the app; other languages fetched from the server's translation cache on demand (and cached on the device), with the primary ↔ secondary switch from the start. Primary and secondary language pickers in onboarding and settings; the sign-in screens follow the device language.
+- ⬜ Auth emails in the user's language(s), if Supabase templates can branch on user metadata (currently EN/JA for everyone).
+- ⬜ Profile RPCs and screens: city/area plus maximum travel time, spoken languages, primary and secondary display languages, availability grid, activity tiles (like/love/open to try), group size, energy, budget, gender plus same-gender-only, birth year (18+), code of conduct.
+- ⬜ Free-text interests → activity tags with Claude (Haiku). The user confirms the suggested tags. Includes a tagging eval set in several languages.
 
 ### M6 · Proposals & events (weeks 6–8): ⬜
 - ⬜ The River worker (`cmd/worker`):
   - weekly matching, daily top-ups
   - expiry and quorum checks
   - meeting-point reveal 24h before the event
+  - travel-matrix refresh for each city at least every 30 days (Maps caching terms)
   - chat opens 48h before the event
   - push via Expo Push
 - ⬜ Proposals feed with accept/decline. Event screen: attendees, meeting point after the reveal, Google map, WebSocket group chat, check-in, share with a trusted contact.
-- ⬜ Plan descriptions written by Claude in each user's language, with a template fallback.
+- ⬜ Events have a `primary_language` (any language) and an optional `secondary_language` (e.g. language exchanges). Event text is **prefilled in English plus the event's own languages** when the event is created (`translate.Service.Prefill`); each attendee's other language is translated on demand. Plan descriptions are written by Claude, with a template fallback.
+- ⬜ Venue names, addresses and hours fetched **live** from Places in each displayed language (Google's own localised names; nothing stored).
 
 ### M7 · Feedback loop & crews (weeks 8–9): ⬜
 - ⬜ Post-event feedback: rate the plan, rate the group, pick who you'd meet again (private), report.
@@ -112,7 +136,7 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
 - ⬜ City-pack editor, venue/route curation, proposal review/override (build groups by hand for the first city), moderation queue, domain metrics.
 
 ### M9 · Release prep (weeks 11–12): ⬜
-- ⬜ i18n pass (JA/EN).
+- ⬜ Spot-check machine translations for the launch languages (admin can mark `app.translations.reviewed`; M8).
 - ⬜ Sentry (crashes and errors, mobile and Go) and PostHog (product analytics, feature flags).
 - ⬜ Production deploy:
   - Dockerfiles for `api`/`worker`
@@ -143,7 +167,7 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
 | 2026-10-20 | **Go** modular monolith, **ConnectRPC** + protobuf | One contract for the Go server and TS client; works over HTTP/1.1 from mobile. |
 | 2026-10-20 | pgx + **sqlc** + **goose** + **River** | Type-safe SQL; migrations embedded in the binary; Postgres-backed jobs with no Redis. |
 | 2026-10-20 | **Supabase** (DB + Auth + Storage) instead of Neon + Clerk | Open source; users live in our own Postgres; free auth up to 50k MAU; one vendor. Neon's better branching wasn't worth a second vendor. |
-| 2026-10-20 | **Google Maps Platform** instead of OSM/Valhalla/OpenTripPlanner | Built-in transit; much better venue data (hours, ratings, "good for groups"); no routing servers to run. Fits the free tier at MVP scale. |
+| 2026-10-20 | **Google Maps Platform** instead of OSM/Valhalla/OpenTripPlanner | Built-in transit (later found unavailable in Japan; transit dropped, see below); much better venue data (hours, ratings, "good for groups"); no routing servers to run. Fits the free tier at MVP scale. |
 | 2026-10-20 | **Claude (Haiku)** for tagging and plan text instead of self-hosted embeddings | Better multilingual understanding; nothing to host; costs cents. |
 | 2026-10-20 | Sentry, PostHog, EAS, Expo Push, Cloudflare, GitHub Actions (free tiers) | Each has a clear advantage over self-hosting for a solo developer. |
 | 2026-10-20 | Prefer open source; paid/closed only when clearly better; every vendor behind a Go interface | Project principle. |
@@ -177,11 +201,30 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
 | 2026-10-20 | commitlint also runs as a local `commit-msg` hook | The first M2 PR failed CI on over-long commit bodies. Catching that at commit time is cheaper than rewriting history after a push. |
 | 2026-10-20 | **jest-expo** for mobile unit tests; runs in CI with lint | Security-critical client code (session storage) needs tests. jest-expo is Expo's standard preset. |
 | 2026-10-20 | CORS deny-by-default via an explicit origin allowlist | rs/cors treats an empty `AllowedOrigins` as allow-all. |
+| 2026-10-20 | **Symmetric languages, two at a time.** No default language; people speak and events run in any language. Event: its language + its second language, else the viewer's language. App: the user's primary + secondary choice. Side by side for short text, a switch for long text. | Product decision: people who don't speak English must be fully served. A short-lived "English-first" version was replaced before it shipped. Centralised in `i18n.ForEvent`/`ForApp` so every surface applies the same rule. |
+| 2026-10-20 | **English is the only stored language; everything else is translated on demand and cached**, not maintained by hand | No translation files to keep in sync, and any language works from day one. Caching makes it a one-off cost per text and language (cents), and everyone sees the same wording. Events are prefilled in their own languages because those are certain to be needed. Replaces hand-written ja/es/fr catalogue names. |
+| 2026-10-20 | Machine translation via **Google Cloud Translation (Basic, v2)** instead of Claude Haiku | Owner's choice. Purpose-built MT on the Google Cloud project we already use for Maps (one vendor, one bill, the same API-key REST client), with a free monthly allowance. Basic can't take per-string context; the `Translator` interface allows switching (Advanced v3 or an LLM) if label quality suffers. |
+| 2026-10-20 | Server-side translation, not on-device (ML Kit / Apple Translation) | The result is consistent across iOS and Android, cached once for everyone, can be reviewed, and needs no native modules (keeps Expo Go). On-device stays an option for user-written text such as chat (M6). |
+| 2026-10-20 | **Google place names are not stored**, even when Google has several languages; they're fetched live per displayed language | Maps terms allow storing only place IDs. Live fetches give Google's own local names, which beat machine-translating proper nouns. |
+| 2026-10-20 | Language codes limited to **ISO 639-1** | Every language people use is covered, and clients can't make the server pay to translate into made-up codes. |
+| 2026-10-20 | Missing translations fall back to the **other displayed language** first, English last | For someone who doesn't read English, showing only the language they do read beats a fallback they can't. English stays the authoring language for our data so a last resort always exists. |
+| 2026-10-20 | Display languages (`profiles.primary_language`/`secondary_language`) kept **separate from spoken languages** (`user_languages`) | What someone wants to read and what they can talk in at an event are different questions; matching uses only the latter. |
+| 2026-10-20 | APIs return primary **and** secondary text (`name` + `secondary_name`) instead of one localised string | Clients need both for side-by-side display; the switch is then a client-side choice with no extra round trip. Identical translations come back empty so nothing is shown twice. |
+| 2026-10-20 | Google Maps over **plain REST** (`net/http`), not Google's Go client libraries | Two endpoints. The REST client gives full control over field masks (which set the billing SKU), keeps the key in a header and adds no dependency tree. |
+| 2026-10-20 | **Venues store only `google_place_id` + our data**, and one row per place × category | Maps terms allow storing place IDs indefinitely but not names, addresses or locations. A karaoke bar is legitimately both `bar` and `karaoke`. |
+| 2026-10-20 | **Travel times are a 30-day cache**, rebuilt per city | Routes content may only be cached temporarily. A full rebuild is cheap (~170 elements for Tokyo). |
+| 2026-10-20 | Travel modes are **per city** (`travel_modes` in the pack) | Lets a city skip a mode that makes no sense there, saving billed elements. |
+| 2026-10-20 | **Walking and driving only; no public transport** in travel-time calculations | Google's Routes API returns no transit routes in Japan, which ruled out the Tokyo launch city. A Japan-specific transit API or a self-hosted OpenTripPlanner would add a vendor or a routing server. Walking and driving are available everywhere from the same API. Driving times understate a train city like Tokyo, so treat them as a relative measure of distance, not a promise. Removed from the schema (`area_travel_times`, `cities.travel_modes`), the Google client and the tool. |
+| 2026-10-20 | Venue discovery assigns each place to its **nearest area**, and searches wide categories (≥ 10 km) **once per city** | Search circles overlap. Nearest-area assignment gives the matcher the right travel time, and searching beaches or trails from every area would pay for the same results again. |
+| 2026-10-20 | Activities link to **venue categories** (our ids), not Google types directly | Keeps the catalogue provider-neutral, and gives M4 the "is there a venue for this?" check. |
+| 2026-10-20 | Second city pack is **Austin** (synthetic, not a launch city) | A real car-based city with real coordinates, so the Google tools can be exercised end to end. It's Japan-free on purpose, which forced per-city disables and renames. |
 
 ## 5. Known gaps & risks
+- **Machine-translation quality on short labels.** Cloud Translation Basic has no context, so short names can come out wrong. Clearer English names fixed the cases found so far; when writing new names, avoid idioms and words with two meanings. Further fixes: admin corrections of cached rows (`reviewed`, M8) or Advanced (v3) glossaries.
 - **Not enough nearby users** is the main product risk. The admin proposal override lets the first city be hand-curated.
 - **PostGIS lives in the `public` schema** (migration 00001). With the Data API disabled, no anonymous path reaches it, but Supabase's advisors flag it. Move it into the `extensions` schema with a migration **before production data exists**: PostGIS can't be relocated in place, so the geography column has to be recreated.
-- **Google Maps terms** restrict caching (store only place IDs long-term, fetch details live). Re-check the Maps Service Terms before M3 ships.
+- **Google Maps terms** restrict caching. What we do: store only place IDs plus our own data, use place locations in memory only, and delete travel times after 30 days ([google-maps.md](google-maps.md#5-terms-what-we-may-store)). The Routes policy says most content is cache-restricted but doesn't state a window for durations; 30 days follows the Service Specific Terms' limit for other content. Re-check with the current terms before launch.
+- **Venue quality** comes from popularity ranking and primary-type matching only (ratings and "good for groups" are pricier Enterprise fields). Some unsuitable places still share a valid primary type: Japanese **snack bars (スナック, hostess bars) are typed `bar`**, and a tattoo studio appeared as `art_studio`. Every venue starts as `candidate`; admin curation (M8) must approve venues before the matcher uses them, and the M8 review should look for snack bars specifically.
 - **`postgis/postgis` has no arm64 image.** CI (amd64) is unaffected. On Apple Silicon, use `supabase start` (arm64) or run that image with `--platform linux/amd64`.
 - **Local iOS builds need macOS 26.2+** (Xcode 26.4+ for SDK 58). The dev Mac is on macOS 15.7. Either upgrade before M9, or build iOS in the cloud with EAS.
 - **Disk space on dev machines:** Supabase images take several GB. OrbStack's VM disk can report "no space left" on its first launch; retrying fixes it.

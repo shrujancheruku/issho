@@ -50,7 +50,7 @@ export $(grep -v '^#' .env.example | xargs)   # local DATABASE_URL, SUPABASE_URL
 # Optional, enables account deletion locally (server-only secret, never commit):
 export SUPABASE_SECRET_KEY=$(supabase status -o env | grep '^SECRET_KEY=' | cut -d= -f2 | tr -d '"')
 make migrate-up   # applies backend/db/migrations
-make seed         # 38 activities + Tokyo city pack
+make seed         # 230 activities, 48 venue categories, every city pack (Tokyo, Austin)
 make api          # http://localhost:8080
 ```
 
@@ -94,7 +94,9 @@ On a physical phone, swap `localhost`/`127.0.0.1` in **both** URLs for your Mac'
 | `make test` | Go tests and mobile unit tests (Jest) |
 | `make secrets-scan` | Scans all git history for secrets |
 | `make migrate-up` / `make migrate-status` | goose migrations against `DATABASE_URL` |
-| `make seed` | Loads the catalogue and the Tokyo pack (idempotent) |
+| `make seed` | Loads the catalogue, venue categories and every city pack (idempotent) |
+| `make matrix CITY=tokyo ARGS=-dry-run` | Plans a city's travel-time matrix; without `-dry-run` it calls Google ([google-maps.md](google-maps.md)) |
+| `make venues CITY=tokyo ARGS=-dry-run` | Plans venue discovery for a city; same key requirement |
 | `make api` | Runs the API |
 | `supabase stop` / `supabase start` | Stops or starts the local stack (data persists between runs) |
 | `supabase db reset` | **Wipes** the local database. Then run `make migrate-up seed`. |

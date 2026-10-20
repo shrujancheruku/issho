@@ -45,7 +45,7 @@
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | id | [string](#string) |  | Stable slug, e.g. &#34;photo-walk&#34;. |
-| name | [string](#string) |  | Localised display name (city override if set). |
+| name | [string](#string) |  | Name in the primary language (the city&#39;s override if set). If there&#39;s no translation in the primary language, the secondary one is used instead; failing both, English. |
 | category | [string](#string) |  | Grouping for the onboarding tile grid, e.g. &#34;outdoors&#34;, &#34;food&#34;. |
 | indoor | [bool](#bool) |  |  |
 | energy | [int32](#int32) |  | 1 = calm, 2 = moderate, 3 = active. |
@@ -53,6 +53,7 @@
 | conversational | [bool](#bool) |  | True when people can easily talk while doing it (affects friendship formation). |
 | min_group_size | [int32](#int32) |  | Smallest and largest group size this activity works for. |
 | max_group_size | [int32](#int32) |  |  |
+| secondary_name | [string](#string) |  | Name in the secondary language. Empty when none was requested, there&#39;s no translation, or it&#39;s identical to name, so clients can render &#34;name · secondary_name&#34; without showing the same words twice. |
 
 
 
@@ -68,7 +69,8 @@
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | city_id | [string](#string) |  | City pack id, e.g. &#34;tokyo&#34;. Required. |
-| locale | [string](#string) |  | BCP 47 language tag for display names, e.g. &#34;ja&#34; or &#34;en-GB&#34;. |
+| locale | [string](#string) |  | Primary display language: a language code such as &#34;ja&#34; or &#34;es&#34; (a region, as in &#34;ja-JP&#34;, is ignored). Clients pass the user&#39;s primary language. Required. |
+| secondary_language | [string](#string) |  | Optional secondary display language, same format. Clients pass the user&#39;s secondary language (outside events) or the second language chosen for an event screen. |
 
 
 
@@ -100,13 +102,17 @@
 
 ### CatalogService
 CatalogService exposes the activity catalogue, localised per city.
+
+Names come back in two languages: a primary and an optional secondary, for
+display side by side. The catalogue is translated into en, ja, es and fr;
+other languages fall back (see secondary_name).
 Requires `Authorization: Bearer &lt;Supabase access token&gt;`.
 
 HTTP: POST /issho.v1.CatalogService/&lt;Method&gt;
 
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
-| ListActivities | [ListActivitiesRequest](#issho-v1-ListActivitiesRequest) | [ListActivitiesResponse](#issho-v1-ListActivitiesResponse) | ListActivities returns the activities enabled in a city, with display names resolved for the requested locale (falling back to English). |
+| ListActivities | [ListActivitiesRequest](#issho-v1-ListActivitiesRequest) | [ListActivitiesResponse](#issho-v1-ListActivitiesResponse) | ListActivities returns the activities enabled in a city, with names in the requested primary and secondary languages. |
 
  
 

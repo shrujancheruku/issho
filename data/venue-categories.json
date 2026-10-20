@@ -1,0 +1,528 @@
+[
+  {
+    "id": "cafe",
+    "name": {
+      "en": "Café"
+    },
+    "google_types": [
+      "cafe",
+      "coffee_shop",
+      "tea_house"
+    ],
+    "search_radius_m": 800
+  },
+  {
+    "id": "brunch",
+    "name": {
+      "en": "Brunch spot"
+    },
+    "google_types": [
+      "brunch_restaurant",
+      "breakfast_restaurant"
+    ],
+    "search_radius_m": 1200
+  },
+  {
+    "id": "restaurant",
+    "name": {
+      "en": "Restaurant"
+    },
+    "google_types": [
+      "restaurant"
+    ],
+    "search_radius_m": 800
+  },
+  {
+    "id": "ramen",
+    "name": {
+      "en": "Ramen / noodles"
+    },
+    "google_types": [
+      "ramen_restaurant",
+      "noodle_shop"
+    ],
+    "search_radius_m": 1000
+  },
+  {
+    "id": "sushi",
+    "name": {
+      "en": "Sushi"
+    },
+    "google_types": [
+      "sushi_restaurant"
+    ],
+    "search_radius_m": 1200
+  },
+  {
+    "id": "bbq-grill",
+    "name": {
+      "en": "BBQ / grill"
+    },
+    "google_types": [
+      "yakiniku_restaurant",
+      "korean_barbecue_restaurant",
+      "barbecue_restaurant"
+    ],
+    "search_radius_m": 1200
+  },
+  {
+    "id": "hot-pot",
+    "name": {
+      "en": "Hot pot"
+    },
+    "google_types": [
+      "hot_pot_restaurant"
+    ],
+    "search_radius_m": 1500
+  },
+  {
+    "id": "dessert",
+    "name": {
+      "en": "Dessert / bakery"
+    },
+    "google_types": [
+      "dessert_shop",
+      "ice_cream_shop",
+      "bakery",
+      "cake_shop"
+    ],
+    "search_radius_m": 1000
+  },
+  {
+    "id": "bar",
+    "name": {
+      "en": "Bar / pub"
+    },
+    "google_types": [
+      "bar",
+      "pub",
+      "wine_bar",
+      "cocktail_bar",
+      "gastropub",
+      "japanese_izakaya_restaurant"
+    ],
+    "search_radius_m": 800
+  },
+  {
+    "id": "brewery",
+    "name": {
+      "en": "Brewery / winery"
+    },
+    "google_types": [
+      "brewery",
+      "brewpub",
+      "winery"
+    ],
+    "search_radius_m": 3000
+  },
+  {
+    "id": "food-market",
+    "name": {
+      "en": "Food hall / market"
+    },
+    "google_types": [
+      "food_court",
+      "farmers_market"
+    ],
+    "search_radius_m": 2500
+  },
+  {
+    "id": "karaoke",
+    "name": {
+      "en": "Karaoke"
+    },
+    "google_types": [
+      "karaoke"
+    ],
+    "search_radius_m": 1000
+  },
+  {
+    "id": "bowling",
+    "name": {
+      "en": "Bowling alley"
+    },
+    "google_types": [
+      "bowling_alley"
+    ],
+    "search_radius_m": 3000
+  },
+  {
+    "id": "arcade",
+    "name": {
+      "en": "Arcade"
+    },
+    "google_types": [
+      "video_arcade",
+      "amusement_center"
+    ],
+    "search_radius_m": 1500
+  },
+  {
+    "id": "animal-cafe",
+    "name": {
+      "en": "Animal café"
+    },
+    "google_types": [
+      "cat_cafe",
+      "dog_cafe"
+    ],
+    "search_radius_m": 2500
+  },
+  {
+    "id": "museum",
+    "name": {
+      "en": "Museum"
+    },
+    "google_types": [
+      "museum",
+      "art_museum",
+      "history_museum"
+    ],
+    "search_radius_m": 2500
+  },
+  {
+    "id": "gallery",
+    "name": {
+      "en": "Gallery"
+    },
+    "google_types": [
+      "art_gallery"
+    ],
+    "search_radius_m": 1500
+  },
+  {
+    "id": "cinema",
+    "name": {
+      "en": "Cinema"
+    },
+    "google_types": [
+      "movie_theater"
+    ],
+    "search_radius_m": 2000
+  },
+  {
+    "id": "live-music",
+    "name": {
+      "en": "Live music venue"
+    },
+    "google_types": [
+      "live_music_venue",
+      "concert_hall"
+    ],
+    "search_radius_m": 2000
+  },
+  {
+    "id": "theatre",
+    "name": {
+      "en": "Theatre / comedy"
+    },
+    "google_types": [
+      "performing_arts_theater",
+      "comedy_club"
+    ],
+    "search_radius_m": 3000
+  },
+  {
+    "id": "planetarium",
+    "name": {
+      "en": "Planetarium"
+    },
+    "google_types": [
+      "planetarium",
+      "observation_deck"
+    ],
+    "search_radius_m": 5000
+  },
+  {
+    "id": "aquarium-zoo",
+    "name": {
+      "en": "Aquarium / zoo"
+    },
+    "google_types": [
+      "aquarium",
+      "zoo",
+      "wildlife_park"
+    ],
+    "search_radius_m": 8000
+  },
+  {
+    "id": "bookshop",
+    "name": {
+      "en": "Bookshop"
+    },
+    "google_types": [
+      "book_store"
+    ],
+    "search_radius_m": 1200
+  },
+  {
+    "id": "library",
+    "name": {
+      "en": "Library / coworking"
+    },
+    "google_types": [
+      "library",
+      "coworking_space"
+    ],
+    "search_radius_m": 1500
+  },
+  {
+    "id": "community-center",
+    "name": {
+      "en": "Community centre"
+    },
+    "google_types": [
+      "community_center",
+      "cultural_center"
+    ],
+    "search_radius_m": 2500
+  },
+  {
+    "id": "art-studio",
+    "name": {
+      "en": "Art studio"
+    },
+    "google_types": [
+      "art_studio"
+    ],
+    "search_radius_m": 3000
+  },
+  {
+    "id": "park",
+    "name": {
+      "en": "Park / garden"
+    },
+    "google_types": [
+      "park",
+      "city_park",
+      "garden",
+      "botanical_garden"
+    ],
+    "search_radius_m": 1500
+  },
+  {
+    "id": "picnic-bbq",
+    "name": {
+      "en": "Picnic / BBQ area"
+    },
+    "google_types": [
+      "picnic_ground",
+      "barbecue_area"
+    ],
+    "search_radius_m": 5000
+  },
+  {
+    "id": "nature",
+    "name": {
+      "en": "Trail / nature area"
+    },
+    "google_types": [
+      "hiking_area",
+      "national_park",
+      "nature_preserve",
+      "state_park"
+    ],
+    "search_radius_m": 30000
+  },
+  {
+    "id": "beach",
+    "name": {
+      "en": "Beach"
+    },
+    "google_types": [
+      "beach"
+    ],
+    "search_radius_m": 50000
+  },
+  {
+    "id": "temple-shrine",
+    "name": {
+      "en": "Temple / shrine"
+    },
+    "google_types": [
+      "buddhist_temple",
+      "shinto_shrine"
+    ],
+    "search_radius_m": 1500
+  },
+  {
+    "id": "bath",
+    "name": {
+      "en": "Bath / sauna"
+    },
+    "google_types": [
+      "public_bath",
+      "sauna"
+    ],
+    "search_radius_m": 1500
+  },
+  {
+    "id": "yoga-studio",
+    "name": {
+      "en": "Yoga studio"
+    },
+    "google_types": [
+      "yoga_studio"
+    ],
+    "search_radius_m": 2000
+  },
+  {
+    "id": "gym",
+    "name": {
+      "en": "Gym / fitness"
+    },
+    "google_types": [
+      "gym",
+      "fitness_center"
+    ],
+    "search_radius_m": 2000
+  },
+  {
+    "id": "sports-facility",
+    "name": {
+      "en": "Sports facility"
+    },
+    "google_types": [
+      "sports_complex",
+      "athletic_field",
+      "sports_club",
+      "tennis_court"
+    ],
+    "search_radius_m": 3000
+  },
+  {
+    "id": "swimming-pool",
+    "name": {
+      "en": "Swimming pool"
+    },
+    "google_types": [
+      "swimming_pool"
+    ],
+    "search_radius_m": 3000
+  },
+  {
+    "id": "ice-rink",
+    "name": {
+      "en": "Ice rink"
+    },
+    "google_types": [
+      "ice_skating_rink"
+    ],
+    "search_radius_m": 10000
+  },
+  {
+    "id": "golf",
+    "name": {
+      "en": "Golf / mini golf"
+    },
+    "google_types": [
+      "golf_course",
+      "indoor_golf_course",
+      "miniature_golf_course"
+    ],
+    "search_radius_m": 10000
+  },
+  {
+    "id": "go-kart",
+    "name": {
+      "en": "Go-karts"
+    },
+    "google_types": [
+      "go_karting_venue"
+    ],
+    "search_radius_m": 15000
+  },
+  {
+    "id": "amusement-park",
+    "name": {
+      "en": "Amusement park"
+    },
+    "google_types": [
+      "amusement_park",
+      "water_park"
+    ],
+    "search_radius_m": 20000
+  },
+  {
+    "id": "skate-park",
+    "name": {
+      "en": "Skate park"
+    },
+    "google_types": [
+      "skateboard_park"
+    ],
+    "search_radius_m": 8000
+  },
+  {
+    "id": "dance",
+    "name": {
+      "en": "Dance hall / club"
+    },
+    "google_types": [
+      "dance_hall"
+    ],
+    "search_radius_m": 2000
+  },
+  {
+    "id": "flea-market",
+    "name": {
+      "en": "Flea market"
+    },
+    "google_types": [
+      "flea_market"
+    ],
+    "search_radius_m": 3000
+  },
+  {
+    "id": "thrift",
+    "name": {
+      "en": "Thrift / vintage"
+    },
+    "google_types": [
+      "thrift_store"
+    ],
+    "search_radius_m": 1500
+  },
+  {
+    "id": "shopping",
+    "name": {
+      "en": "Shopping centre"
+    },
+    "google_types": [
+      "shopping_mall",
+      "department_store"
+    ],
+    "search_radius_m": 2500
+  },
+  {
+    "id": "campground",
+    "name": {
+      "en": "Campground"
+    },
+    "google_types": [
+      "campground"
+    ],
+    "search_radius_m": 50000
+  },
+  {
+    "id": "stadium",
+    "name": {
+      "en": "Stadium / arena"
+    },
+    "google_types": [
+      "stadium",
+      "arena"
+    ],
+    "search_radius_m": 10000
+  },
+  {
+    "id": "dog-park",
+    "name": {
+      "en": "Dog park"
+    },
+    "google_types": [
+      "dog_park"
+    ],
+    "search_radius_m": 5000
+  }
+]

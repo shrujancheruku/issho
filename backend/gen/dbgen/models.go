@@ -10,16 +10,17 @@ import (
 )
 
 type AppActivity struct {
-	ID             string
-	Name           []byte
-	Category       string
-	Indoor         bool
-	Energy         int16
-	CostLevel      int16
-	Conversational bool
-	SkillDependent bool
-	MinGroupSize   int16
-	MaxGroupSize   int16
+	ID              string
+	Name            []byte
+	Category        string
+	Indoor          bool
+	Energy          int16
+	CostLevel       int16
+	Conversational  bool
+	SkillDependent  bool
+	MinGroupSize    int16
+	MaxGroupSize    int16
+	VenueCategories []string
 }
 
 type AppArea struct {
@@ -44,13 +45,15 @@ type AppAvailabilitySlot struct {
 }
 
 type AppCity struct {
-	ID              string
-	Name            []byte
-	Timezone        string
-	Currency        string
+	ID       string
+	Name     []byte
+	Timezone string
+	Currency string
+	// Languages commonly used in the city, most common first (suggestions only)
 	Languages       []string
 	MatchingWeights []byte
 	CreatedAt       pgtype.Timestamptz
+	TravelModes     []string
 }
 
 type AppCityActivityOverride struct {
@@ -62,18 +65,31 @@ type AppCityActivityOverride struct {
 }
 
 type AppProfile struct {
-	UserID         uuid.UUID
-	DisplayName    string
-	BirthYear      int16
-	Gender         string
-	SameGenderOnly bool
-	HomeAreaID     string
-	MaxTravelMin   int16
-	Energy         int16
-	Budget         int16
-	SizePref       string
-	Reliability    float32
-	UpdatedAt      pgtype.Timestamptz
+	UserID            uuid.UUID
+	DisplayName       string
+	BirthYear         int16
+	Gender            string
+	SameGenderOnly    bool
+	HomeAreaID        string
+	MaxTravelMin      int16
+	Energy            int16
+	Budget            int16
+	SizePref          string
+	Reliability       float32
+	UpdatedAt         pgtype.Timestamptz
+	PrimaryLanguage   string
+	SecondaryLanguage *string
+}
+
+type AppTranslation struct {
+	SourceHash string
+	Lang       string
+	Source     string
+	Context    string
+	Text       string
+	Model      string
+	Reviewed   bool
+	CreatedAt  pgtype.Timestamptz
 }
 
 type AppUser struct {
@@ -95,4 +111,22 @@ type AppUserLanguage struct {
 	Lang   string
 	Fluent bool
 	Level  *int16
+}
+
+type AppVenue struct {
+	GooglePlaceID string
+	CityID        string
+	AreaID        string
+	CategoryID    string
+	Tags          []string
+	Status        string
+	DiscoveredAt  pgtype.Timestamptz
+	LastSeenAt    pgtype.Timestamptz
+}
+
+type AppVenueCategory struct {
+	ID            string
+	Name          []byte
+	GoogleTypes   []string
+	SearchRadiusM int32
 }

@@ -23,6 +23,7 @@ type Pack struct {
 	Timezone          string             `json:"timezone"`
 	Currency          string             `json:"currency"`
 	Languages         []string           `json:"languages"`
+	TravelModes       []string           `json:"travel_modes"`
 	Areas             []Area             `json:"areas"`
 	ActivityOverrides []ActivityOverride `json:"activity_overrides"`
 }
@@ -52,6 +53,19 @@ type Activity struct {
 	SkillDependent bool   `json:"skill_dependent"`
 	MinGroupSize   int16  `json:"min_group_size"`
 	MaxGroupSize   int16  `json:"max_group_size"`
+	// Venue category ids (venue-categories.json) the activity happens at;
+	// empty when it only needs a meeting point.
+	VenueCategories []string `json:"venue_categories"`
+}
+
+// VenueCategory maps one of our venue kinds to provider place types.
+type VenueCategory struct {
+	ID          string   `json:"id"`
+	Name        Text     `json:"name"`
+	GoogleTypes []string `json:"google_types"`
+	// Nearby-search radius around an area centre. Common places (cafés) use a
+	// small radius; rare ones (beaches, campgrounds) need a large one.
+	SearchRadiusM int32 `json:"search_radius_m"`
 }
 
 func readJSON(path string, v any) error {
@@ -65,14 +79,30 @@ func readJSON(path string, v any) error {
 	return nil
 }
 
-// SeedCatalog upserts the global activity catalogue from a JSON file.
-func SeedCatalog(ctx context.Context, pool *pgxpool.Pool, path string) (int, error) {
+// SeedCatalog upserts the venue categories and the global activity catalogue
+// from JSON files, after validating them.
+func SeedCatalog(ctx context.Context, pool *pgxpool.Pool, venueCategoriesPath, activitiesPath string) (int, error) {
+	var cats []VenueCategory
+	if err := readJSON(venueCategoriesPath, &cats); err != nil {
+		return 0, err
+	}
 	var acts []Activity
-	if err := readJSON(path, &acts); err != nil {
+	if err := readJSON(activitiesPath, &acts); err != nil {
+		return 0, err
+	}
+	if err := ValidateCatalog(cats, acts); err != nil {
 		return 0, err
 	}
 	err := pgx.BeginFunc(ctx, pool, func(tx pgx.Tx) error {
 		q := dbgen.New(tx)
+		for _, c := range cats {
+			name, _ := json.Marshal(c.Name)
+			if err := q.UpsertVenueCategory(ctx, dbgen.UpsertVenueCategoryParams{
+				ID: c.ID, Name: name, GoogleTypes: c.GoogleTypes, SearchRadiusM: c.SearchRadiusM,
+			}); err != nil {
+				return fmt.Errorf("venue category %s: %w", c.ID, err)
+			}
+		}
 		for _, a := range acts {
 			name, _ := json.Marshal(a.Name)
 			if err := q.UpsertActivity(ctx, dbgen.UpsertActivityParams{
@@ -80,6 +110,14 @@ func SeedCatalog(ctx context.Context, pool *pgxpool.Pool, path string) (int, err
 				CostLevel: a.CostLevel, Conversational: a.Conversational, SkillDependent: a.SkillDependent,
 				MinGroupSize: a.MinGroupSize, MaxGroupSize: a.MaxGroupSize,
 			}); err != nil {
+				return fmt.Errorf("activity %s: %w", a.ID, err)
+			}
+			// Separate statement so UpsertActivity keeps its positional params.
+			vc := a.VenueCategories
+			if vc == nil {
+				vc = []string{}
+			}
+			if err := q.SetActivityVenueCategories(ctx, dbgen.SetActivityVenueCategoriesParams{ID: a.ID, VenueCategories: vc}); err != nil {
 				return fmt.Errorf("activity %s: %w", a.ID, err)
 			}
 		}
@@ -97,11 +135,15 @@ func SeedPack(ctx context.Context, pool *pgxpool.Pool, path string) (Pack, error
 	if err := readJSON(path, &p); err != nil {
 		return p, err
 	}
+	if err := ValidatePack(p, nil); err != nil {
+		return p, fmt.Errorf("%s: %w", path, err)
+	}
 	err := pgx.BeginFunc(ctx, pool, func(tx pgx.Tx) error {
 		q := dbgen.New(tx)
 		name, _ := json.Marshal(p.Name)
 		if err := q.UpsertCity(ctx, dbgen.UpsertCityParams{
 			ID: p.ID, Name: name, Timezone: p.Timezone, Currency: p.Currency, Languages: p.Languages,
+			TravelModes: p.TravelModes,
 		}); err != nil {
 			return err
 		}

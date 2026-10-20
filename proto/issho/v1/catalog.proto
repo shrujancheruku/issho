@@ -5,20 +5,30 @@ package issho.v1;
 option go_package = "github.com/shrujancheruku/issho/backend/gen/issho/v1;isshov1";
 
 // CatalogService exposes the activity catalogue, localised per city.
+//
+// Names come back in two languages: a primary and an optional secondary, for
+// display side by side. The catalogue is translated into en, ja, es and fr;
+// other languages fall back (see secondary_name).
 // Requires `Authorization: Bearer <Supabase access token>`.
 //
 // HTTP: POST /issho.v1.CatalogService/<Method>
 service CatalogService {
-  // ListActivities returns the activities enabled in a city, with display
-  // names resolved for the requested locale (falling back to English).
+  // ListActivities returns the activities enabled in a city, with names in
+  // the requested primary and secondary languages.
   rpc ListActivities(ListActivitiesRequest) returns (ListActivitiesResponse) {}
 }
 
 message ListActivitiesRequest {
   // City pack id, e.g. "tokyo". Required.
   string city_id = 1;
-  // BCP 47 language tag for display names, e.g. "ja" or "en-GB".
+  // Primary display language: a language code such as "ja" or "es" (a region,
+  // as in "ja-JP", is ignored). Clients pass the user's primary language.
+  // Required.
   string locale = 2;
+  // Optional secondary display language, same format. Clients pass the
+  // user's secondary language (outside events) or the second language chosen
+  // for an event screen.
+  string secondary_language = 3;
 }
 
 message ListActivitiesResponse {
@@ -29,7 +39,9 @@ message ListActivitiesResponse {
 message Activity {
   // Stable slug, e.g. "photo-walk".
   string id = 1;
-  // Localised display name (city override if set).
+  // Name in the primary language (the city's override if set). If there's no
+  // translation in the primary language, the secondary one is used instead;
+  // failing both, English.
   string name = 2;
   // Grouping for the onboarding tile grid, e.g. "outdoors", "food".
   string category = 3;
@@ -43,4 +55,8 @@ message Activity {
   // Smallest and largest group size this activity works for.
   int32 min_group_size = 8;
   int32 max_group_size = 9;
+  // Name in the secondary language. Empty when none was requested, there's
+  // no translation, or it's identical to name, so clients can render
+  // "name · secondary_name" without showing the same words twice.
+  string secondary_name = 10;
 }

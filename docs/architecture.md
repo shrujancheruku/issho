@@ -60,30 +60,57 @@ backend/
 Rules:
 - **Domains talk to each other only through service types**, never through each other's queries.
 - **`internal/matching` (M4) will be pure:** plain structs in, proposals out, no I/O. This makes it deterministic and easy to simulate.
-- **Every external vendor sits behind a Go interface**, so implementations can be swapped. Planned interfaces: `VenueProvider`, `TravelTimeProvider`, `Tagger`, `Copywriter`, `Verifier`, `Push`, `Storage`.
+- **Every external vendor sits behind a Go interface**, so implementations can be swapped. Done: `maps.Router` (travel times) and `maps.PlaceSearcher` (venues), with Google implementations in `internal/maps/google`. Planned: `Tagger`, `Copywriter`, `Verifier`, `Push`, `Storage`.
 
 ## Data model
 
-Defined in `backend/db/migrations/00001_init.sql`. All app tables live in the `app` schema.
+Defined in `backend/db/migrations/` (`00001_init.sql`, `00002_geo.sql`). All app tables live in the `app` schema.
 
 | Table | Purpose |
 |---|---|
-| `cities` | One row per city pack: timezone, currency, default languages, matching-weight overrides |
+| `cities` | One row per city pack: timezone, currency, default languages, travel modes (`walk`/`drive`; no public transport), matching-weight overrides |
 | `areas` | The unit a user chooses as "home" (a neighbourhood or station), with its centre as PostGIS `geography` |
-| `area_travel_times` | Precomputed area-to-area minutes per mode (filled by `tool build-matrix`, M3) |
-| `activities` | The global catalogue. `name` is JSON keyed by language (`{"en": …, "ja": …}`) |
+| `area_travel_times` | Area-to-area minutes per mode, from the Routes API (`tool build-matrix`). A cache: rows older than 30 days are deleted. |
+| `activities` | The global catalogue. `name` is JSON keyed by language (`{"en": …, "ja": …}`); `venue_categories` lists where it can happen |
+| `venue_categories` | Our venue kinds (cafe, park, karaoke …) mapped to Google place types, with a search radius |
+| `venues` | Discovered places: `google_place_id` + category, nearest area, curation status, our tags. **No Google content** (names, addresses, locations) is stored; see [google-maps.md](google-maps.md#5-terms-what-we-may-store). |
 | `city_activity_overrides` | A city can rename, disable or set seasonal months for an activity |
 | `users` | App account; `id` = Supabase `auth.users.id` |
-| `profiles` | Matching preferences (home area, travel time, group size, gender rules, …) |
-| `user_languages` | Fluent languages, and languages being learned with a level |
+| `profiles` | Matching preferences (home area, travel time, group size, gender rules, …) and display languages (`primary_language`, optional `secondary_language`) |
+| `user_languages` | Languages a person **speaks** (fluent, or learning with a level); used for matching |
 | `availability_slots` | Weekday × morning/afternoon/evening |
 | `user_activity_prefs` | Weight per activity: 0 = open to try, 1 = like, 2 = love |
 
-Localised text is stored as JSON objects and resolved with `i18n.Pick`: exact locale → base language → English → any value.
+### Languages
+
+Languages are **symmetric**: no language is the default, and people who don't speak English are fully supported. People can speak any language, and events can be held in any language. Everything is shown in a **primary** language plus an optional **secondary** one:
+
+| Where | Primary | Secondary |
+|---|---|---|
+| An event | The event's language | The event's second language if it has one (e.g. a JP–ES exchange). Otherwise the user's primary language, if different; failing that, the user's secondary choice. |
+| The rest of the app | The user's primary language | The user's secondary choice, if any |
+
+Examples: a JP–ES exchange in Tokyo shows Japanese + Spanish to everyone; a Japanese-only event shows Japanese + the viewer's own language (Spanish for a Spanish speaker).
+
+`i18n.ForEvent` and `i18n.ForApp` implement these rules; nothing else should re-implement them. Short text (names, titles) is shown **side by side** ("陶芸 · Cerámica"); longer text (descriptions, UI copy) uses a **switch** between the two languages.
+
+**Storage: English always, everything else on demand.** Localised text is stored as JSON objects (`{"en": …, "ja": …}`). English is the only language that must always be present; our own content (activity catalogue, venue categories) is stored in English only. Other languages come from `internal/translate`:
+
+1. text already stored in that language wins: real local names in city packs (`吉祥寺`), and events prefilled in their own languages (M6)
+2. otherwise a cached machine translation from `app.translations`
+3. otherwise Google Cloud Translation translates it now, and the result is cached and reused for everyone. A request waits up to 8 s; a slower translation finishes in the background for the next request. Without `GOOGLE_TRANSLATE_API_KEY`, step 3 is skipped.
+
+`i18n.Pair` then decides what to show: if the primary language isn't available yet, the secondary is shown alone; English is only the last resort. APIs return both texts (e.g. `name` + `secondary_name`) and clients choose the layout. Any ISO 639-1 language is accepted.
+
+**Events** (M6) are stored with English **plus each of their own languages prefilled** (`translate.Service.Prefill`), so a JP–ES exchange exists in en, ja and es from the start; any other viewer's language is translated on demand.
+
+**Google place names** are never stored (Maps terms allow storing only place IDs). They're fetched live from Places in each displayed language, so people see Google's own local names rather than machine translations of proper nouns.
+
+What a person **reads** (`profiles.primary_language`, `secondary_language`) is separate from what they can **speak** (`user_languages`, used for matching).
 
 ## City packs (location independence)
 
-A city is defined entirely by data in `data/citypacks/<city>.json`: areas with coordinates, languages, and activity overrides. `cmd/tool seed` loads it in a single transaction. Adding a city means adding a JSON file and seeding it; no code changes. See [../data/README.md](../data/README.md).
+A city is defined entirely by data in `data/citypacks/<city>.json`: areas with coordinates, languages, travel modes, and activity overrides. `cmd/tool seed` validates it and loads it in a single transaction; `tool build-matrix` and `tool discover-venues` then fill its travel times and venues from Google Maps. Adding a city means adding a JSON file and running those three commands; no code changes. `austin.json` (car-based) exists to prove this. See [../data/README.md](../data/README.md).
 
 ## Code generation
 
