@@ -7,7 +7,7 @@ The Go backend for Issho: a modular monolith serving a ConnectRPC API. It uses P
 | Path | Contents |
 |---|---|
 | `cmd/api/` | API server: wires config, DB pool, the JWKS verifier and handlers, then serves HTTP/1.1 and h2c on `API_ADDR` |
-| `cmd/tool/` | Ops CLI: `migrate <goose command>`, `seed [-catalog file] [-venue-categories file] <citypack.json>...`, `build-matrix [-dry-run] [-depart time] <city>`, `discover-venues [-dry-run] [-categories ids] <city>` |
+| `cmd/tool/` | Ops CLI: `migrate <goose command>`, `seed [-catalog file] [-venue-categories file] <citypack.json>...`, `build-matrix [-dry-run] <city>`, `discover-venues [-dry-run] [-categories ids] <city>` |
 | `internal/platform/config` | Environment variables → `Config` |
 | `internal/platform/db` | pgx pool and goose migration runner |
 | `internal/platform/auth` | Supabase JWT verification (JWKS) and the Connect auth interceptor |
@@ -110,7 +110,7 @@ go run ./cmd/tool discover-venues -dry-run tokyo
 go run ./cmd/tool discover-venues -categories cafe,park tokyo
 ```
 
-- **`build-matrix`** computes travel times between every pair of the city's areas, for each of the city's `travel_modes`. Same-area pairs are stored as 0 minutes without an API call. Walking is only requested for areas less than 4 km apart. Minutes are rounded up. Transit uses the next Saturday 11:00 city time (override with `-depart`). Pairs with no route are left out. Rows older than 30 days are deleted (Google caching terms), so **rebuild each city at least every 30 days**.
+- **`build-matrix`** computes travel times between every pair of the city's areas, for each of the city's `travel_modes`. Same-area pairs are stored as 0 minutes without an API call. Only walking and driving are calculated (no public transport). Walking is only requested for areas less than 4 km apart; driving uses typical, traffic-unaware times. Minutes are rounded up. Pairs with no route are left out. Rows older than 30 days are deleted (Google caching terms), so **rebuild each city at least every 30 days**.
 - **`discover-venues`** runs a Nearby Search per area × venue category, for categories used by an activity enabled in the city. Categories with a radius of 10 km or more are searched once from the city centre. Each place is assigned to its **nearest** area and stored as `google_place_id` + category. Re-running only bumps `last_seen_at`; curation status and tags are kept.
 
 ## Testing
@@ -127,8 +127,8 @@ go test ./...          # or `make test` from the root
 | `internal/platform/errs/errs_test.go` | Raw errors become generic `internal`; Connect errors pass through |
 | `internal/platform/supabase/admin_test.go` | Admin delete: request shape, 404 treated as already deleted, other errors surfaced |
 | `internal/identity/service_test.go` | Account creation keeps an existing email; deletion order (auth first, app data kept if that fails) |
-| `internal/maps/google/google_test.go` | Matrix chunking (≤ 100 transit / 625 other elements), global origin indexes, no-route and element errors, drive is traffic-unaware, key only in a header, field masks, retry on 429 but not on 400 |
-| `internal/geo/geo_test.go` | Matrix plan (no self pairs, no long walks), rounding up, missing routes left out, next-Saturday departure across time zones, venue plan (wide categories once), nearest-area assignment, dedupe |
+| `internal/maps/google/google_test.go` | Matrix chunking (≤ 625 elements per request), global origin indexes, no-route and element errors, drive is traffic-unaware, key only in a header, field masks, retry on 429 but not on 400 |
+| `internal/geo/geo_test.go` | Matrix plan (no self pairs, no long walks), rounding up, missing routes left out, venue plan (wide categories once), nearest-area assignment, dedupe |
 | `internal/geo/store_test.go` | **Integration** (runs when `TEST_DATABASE_URL` is set; CI sets it): area coordinates round-trip, upsert, 30-day stale deletion, one venue in two categories, curation kept on re-discovery |
 | `internal/cities/data_test.go` | Every file in `../data` is valid: English-only catalogue, venue category references, Google place types, city packs (area ids, modes, months, override ids, names only in English or the city's own languages) |
 | `internal/translate/translate_test.go` | Stored language wins, cache hits skip the translator, duplicates translated once, concurrent requests share one call, slow translations finish in the background after the request is gone, failures aren't cached, batching keeps positions, prefill fails loudly (run with `-race`) |

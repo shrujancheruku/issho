@@ -57,7 +57,7 @@ make venues CITY=tokyo
 Always dry-run first: it reads the city from the database and prints exactly what a real run would call.
 
 **Costs at MVP scale** (check current [pricing](https://developers.google.com/maps/billing-and-pricing/pricing); each SKU has a free monthly usage allowance):
-- `build-matrix`: one billed element per origin/destination pair. Tokyo (12 areas, transit + walk) ≈ 166 elements; Austin (10 areas, drive) = 90. Same-area pairs are never requested, and walking is only requested between areas less than 4 km apart.
+- `build-matrix`: one billed element per origin/destination pair. Only walking and driving are calculated (Google has no transit routes in Japan). Tokyo (12 areas) = 166 elements, Austin (10 areas) = 102. Same-area pairs are never requested, and walking is only requested between areas less than 4 km apart.
 - `discover-venues`: one Nearby Search request per area × venue category, except wide-radius categories (≥ 10 km, e.g. beaches, trails), which are searched once per city. The field mask asks only for id, types and location.
 
 ## 5. Terms: what we may store

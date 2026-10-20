@@ -44,17 +44,6 @@ func (q *Queries) GetCityLanguages(ctx context.Context, id string) ([]string, er
 	return languages, err
 }
 
-const getCityTimezone = `-- name: GetCityTimezone :one
-select timezone from app.cities where id = $1
-`
-
-func (q *Queries) GetCityTimezone(ctx context.Context, id string) (string, error) {
-	row := q.db.QueryRow(ctx, getCityTimezone, id)
-	var timezone string
-	err := row.Scan(&timezone)
-	return timezone, err
-}
-
 const getCityTravelModes = `-- name: GetCityTravelModes :one
 select travel_modes from app.cities where id = $1
 `

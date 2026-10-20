@@ -6,7 +6,7 @@ Seed data that makes Issho location-agnostic. Code never hard-codes a city, so a
 |---|---|
 | `activities.json` | The **global activity catalogue** (230 activities in 12 categories) |
 | `venue-categories.json` | **Venue categories** (48): our kinds of place, mapped to Google place types |
-| `citypacks/<city>.json` | One **city pack** per city: `tokyo.json` (launch city, transit) and `austin.json` (a **synthetic test pack**: a real car-based city that proves a second city needs no code changes; not a launch city) |
+| `citypacks/<city>.json` | One **city pack** per city: `tokyo.json` (launch city) and `austin.json` (a **synthetic test pack**: a real car-based city that proves a second city needs no code changes; not a launch city) |
 
 Load with `make seed` (everything) or `cd backend && go run ./cmd/tool seed ../data/citypacks/<city>.json`.
 
@@ -54,7 +54,7 @@ Common places get a small radius, rare ones a large one. Categories with a radiu
   "timezone": "Asia/Tokyo",                 // IANA tz; event times are local to this
   "currency": "JPY",
   "languages": ["ja", "en"],                // languages commonly used here, most common first; any language code. Suggestions for onboarding/events; the first is used for venue search
-  "travel_modes": ["transit", "walk"],      // how people get around: transit, walk, drive, bicycle. Car-based cities: ["drive"]
+  "travel_modes": ["walk", "drive"],        // modes to calculate: walk and/or drive (no public transport)
   "areas": [                                // the unit users pick as "home"
     { "id": "tokyo-kichijoji", "name": { "en": "Kichijoji", "ja": "吉祥寺" }, "lat": 35.7030, "lng": 139.5798 }
   ],

@@ -78,7 +78,7 @@ func Elements(jobs []MatrixJob) int {
 // BuildMatrix runs the plan and returns every travel time, including 0-minute
 // same-area rows for each mode. Pairs with no route are left out, which the
 // matching engine reads as "not reachable in this mode".
-func BuildMatrix(ctx context.Context, r maps.Router, areas []Area, modes []maps.Mode, departure time.Time) ([]TravelTime, error) {
+func BuildMatrix(ctx context.Context, r maps.Router, areas []Area, modes []maps.Mode) ([]TravelTime, error) {
 	var out []TravelTime
 	for _, mode := range modes {
 		for _, a := range areas {
@@ -91,7 +91,7 @@ func BuildMatrix(ctx context.Context, r maps.Router, areas []Area, modes []maps.
 			dests[i] = d.LatLng
 		}
 		els, err := r.Matrix(ctx, maps.MatrixRequest{
-			Origins: []maps.LatLng{j.Origin.LatLng}, Destinations: dests, Mode: j.Mode, Departure: departure,
+			Origins: []maps.LatLng{j.Origin.LatLng}, Destinations: dests, Mode: j.Mode,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("%s from %s: %w", j.Mode, j.Origin.ID, err)
@@ -111,17 +111,4 @@ func BuildMatrix(ctx context.Context, r maps.Router, areas []Area, modes []maps.
 		}
 	}
 	return out, nil
-}
-
-// NextDeparture returns the next Saturday at 11:00 in loc, the typical start of
-// a weekend outing. Transit times depend on the timetable, so the matrix is
-// computed for when events actually happen rather than for "now".
-func NextDeparture(now time.Time, loc *time.Location) time.Time {
-	n := now.In(loc)
-	days := (int(time.Saturday) - int(n.Weekday()) + 7) % 7
-	d := time.Date(n.Year(), n.Month(), n.Day()+days, 11, 0, 0, 0, loc)
-	if !d.After(n) {
-		d = d.AddDate(0, 0, 7)
-	}
-	return d
 }

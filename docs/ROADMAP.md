@@ -74,14 +74,13 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
 ### M3 · Cities, catalogue & geo (weeks 2–3): 🟡 in progress
 - ✅ City pack format and seeding tool. Packs now declare `travel_modes`, and everything in `data/` is validated by a test (CI) and before seeding.
 - ✅ **Activity catalogue: 230 activities** in 12 categories (English only; other languages on demand), each linked to the **venue categories** it happens at (48 categories mapped to Google place types, checked against a snapshot of Google's type list).
-- ✅ **Google Cloud project** `issho-dev` with Maps and Translation keys (kept in the gitignored `.env.issho-dev`). Confirm the quotas and budget alert from [google-maps.md](google-maps.md) are set. Needs the owner's Google account; steps in [google-maps.md](google-maps.md). Mobile keys can wait until M6.
-- 🟡 **`tool build-matrix`** (`make matrix CITY=…`): Routes API Compute Route Matrix per city and travel mode.
-  - no same-area calls; walking only for areas < 4 km apart; minutes rounded up; transit timed for Saturday 11:00
+- ✅ **Google Cloud project** `issho-dev` with Maps and Translation keys (kept in the gitignored `.env.issho-dev`). Confirm the quotas and budget alert from [google-maps.md](google-maps.md) are set. Mobile keys can wait until M6.
+- ✅ **`tool build-matrix`** (`make matrix CITY=…`): Routes API Compute Route Matrix per city, **walking and driving only** (public transport dropped; see the decision log).
+  - no same-area calls; walking only for areas < 4 km apart; driving is traffic-unaware; minutes rounded up
   - stored in `area_travel_times`; rows older than 30 days deleted (Maps caching terms)
-  - `-dry-run` prints requests and billed elements (Tokyo 166, Austin 90)
+  - `-dry-run` prints requests and billed elements (Tokyo 166, Austin 102)
   - tested with fakes and a DB integration test
-  - **run against Google (local DB):** Austin drive matrix done (90 elements, plausible, e.g. Downtown → Round Rock 25 min); Tokyo walk done (34 pairs within 4 km, 18–63 min)
-  - 🔴 **Tokyo transit: Google returns no transit routes in Japan** (`ROUTE_NOT_FOUND` for every pair, while Austin transit works). Japan transit isn't available through the Maps Platform APIs. Needs a Japan transit source; decision pending (see Known gaps).
+  - **run against Google (local DB) for both cities:** Tokyo drive 132 pairs (6–44 min, e.g. Kichijoji → Shinjuku 29) and walk 34 pairs (18–63 min); Austin drive 90 pairs (8–32 min) and walk 12 pairs. The hosted `issho-dev` DB gets them after this branch's migrations are applied there.
 - 🟡 **`tool discover-venues`** (`make venues CITY=…`): Places API (New) Nearby Search per area × venue category.
   - field mask: id, types, location only
   - wide categories (≥ 10 km) searched once per city
@@ -166,7 +165,7 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
 | 2026-10-20 | **Go** modular monolith, **ConnectRPC** + protobuf | One contract for the Go server and TS client; works over HTTP/1.1 from mobile. |
 | 2026-10-20 | pgx + **sqlc** + **goose** + **River** | Type-safe SQL; migrations embedded in the binary; Postgres-backed jobs with no Redis. |
 | 2026-10-20 | **Supabase** (DB + Auth + Storage) instead of Neon + Clerk | Open source; users live in our own Postgres; free auth up to 50k MAU; one vendor. Neon's better branching wasn't worth a second vendor. |
-| 2026-10-20 | **Google Maps Platform** instead of OSM/Valhalla/OpenTripPlanner | Built-in transit; much better venue data (hours, ratings, "good for groups"); no routing servers to run. Fits the free tier at MVP scale. |
+| 2026-10-20 | **Google Maps Platform** instead of OSM/Valhalla/OpenTripPlanner | Built-in transit (later found unavailable in Japan; transit dropped, see below); much better venue data (hours, ratings, "good for groups"); no routing servers to run. Fits the free tier at MVP scale. |
 | 2026-10-20 | **Claude (Haiku)** for tagging and plan text instead of self-hosted embeddings | Better multilingual understanding; nothing to host; costs cents. |
 | 2026-10-20 | Sentry, PostHog, EAS, Expo Push, Cloudflare, GitHub Actions (free tiers) | Each has a clear advantage over self-hosting for a solo developer. |
 | 2026-10-20 | Prefer open source; paid/closed only when clearly better; every vendor behind a Go interface | Project principle. |
@@ -212,13 +211,13 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
 | 2026-10-20 | Google Maps over **plain REST** (`net/http`), not Google's Go client libraries | Two endpoints. The REST client gives full control over field masks (which set the billing SKU), keeps the key in a header and adds no dependency tree. |
 | 2026-10-20 | **Venues store only `google_place_id` + our data**, and one row per place × category | Maps terms allow storing place IDs indefinitely but not names, addresses or locations. A karaoke bar is legitimately both `bar` and `karaoke`. |
 | 2026-10-20 | **Travel times are a 30-day cache**, rebuilt per city | Routes content may only be cached temporarily. A full rebuild is cheap (~170 elements for Tokyo). |
-| 2026-10-20 | Travel modes are **per city** (`travel_modes` in the pack) | Transit cities and car cities need different matrices; computing every mode everywhere would waste billed elements and mislead the matcher. |
+| 2026-10-20 | Travel modes are **per city** (`travel_modes` in the pack) | Lets a city skip a mode that makes no sense there, saving billed elements. |
+| 2026-10-20 | **Walking and driving only; no public transport** in travel-time calculations | Google's Routes API returns no transit routes in Japan, which ruled out the Tokyo launch city. A Japan-specific transit API or a self-hosted OpenTripPlanner would add a vendor or a routing server. Walking and driving are available everywhere from the same API. Driving times understate a train city like Tokyo, so treat them as a relative measure of distance, not a promise. Removed from the schema (`area_travel_times`, `cities.travel_modes`), the Google client and the tool. |
 | 2026-10-20 | Venue discovery assigns each place to its **nearest area**, and searches wide categories (≥ 10 km) **once per city** | Search circles overlap. Nearest-area assignment gives the matcher the right travel time, and searching beaches or trails from every area would pay for the same results again. |
 | 2026-10-20 | Activities link to **venue categories** (our ids), not Google types directly | Keeps the catalogue provider-neutral, and gives M4 the "is there a venue for this?" check. |
 | 2026-10-20 | Second city pack is **Austin** (synthetic, not a launch city) | A real car-based city with real coordinates, so the Google tools can be exercised end to end. It's Japan-free on purpose, which forced per-city disables and renames. |
 
 ## 5. Known gaps & risks
-- 🔴 **No Japan transit routing from Google.** The Routes API returns no transit routes in Japan, so Tokyo (a transit city) has no transit matrix. Options: a Japanese transit API (NAVITIME, Ekispert) behind `maps.Router` for Japanese cities; self-hosted OpenTripPlanner on ODPT open data (gaps in JR/private-railway coverage, plus a routing server to run); or hand-curated times in the city pack. Decision pending.
 - **Machine-translation quality on short labels.** Cloud Translation Basic has no context, so one-word activity names can come out wrong. Mitigations: clearer English names ("Pottery class"), admin corrections of cached rows (`reviewed`, M8), or Advanced (v3) glossaries.
 - **Not enough nearby users** is the main product risk. The admin proposal override lets the first city be hand-curated.
 - **PostGIS lives in the `public` schema** (migration 00001). With the Data API disabled, no anonymous path reaches it, but Supabase's advisors flag it. Move it into the `extensions` schema with a migration **before production data exists**: PostGIS can't be relocated in place, so the geography column has to be recreated.

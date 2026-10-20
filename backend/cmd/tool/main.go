@@ -3,7 +3,7 @@
 //
 //	tool migrate up|down|status|...
 //	tool seed [-catalog data/activities.json] [-venue-categories data/venue-categories.json] data/citypacks/tokyo.json ...
-//	tool build-matrix [-dry-run] [-depart RFC3339] <city>
+//	tool build-matrix [-dry-run] <city>
 //	tool discover-venues [-dry-run] [-categories cafe,park] <city>
 package main
 
@@ -15,7 +15,6 @@ import (
 	"log/slog"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
@@ -101,7 +100,6 @@ func cityArg(fs *flag.FlagSet) (string, error) {
 func buildMatrix(ctx context.Context, pool *pgxpool.Pool, args []string) error {
 	fs := flag.NewFlagSet("build-matrix", flag.ExitOnError)
 	dryRun := fs.Bool("dry-run", false, "print the planned API usage without calling Google")
-	depart := fs.String("depart", "", "transit departure time (RFC 3339); default: next Saturday 11:00 city time")
 	_ = fs.Parse(args)
 	city, err := cityArg(fs)
 	if err != nil {
@@ -113,24 +111,10 @@ func buildMatrix(ctx context.Context, pool *pgxpool.Pool, args []string) error {
 	if err != nil {
 		return err
 	}
-	tz, err := q.GetCityTimezone(ctx, city)
-	if err != nil {
-		return err
-	}
-	loc, err := time.LoadLocation(tz)
-	if err != nil {
-		return err
-	}
-	dep := geo.NextDeparture(time.Now(), loc)
-	if *depart != "" {
-		if dep, err = time.Parse(time.RFC3339, *depart); err != nil {
-			return fmt.Errorf("-depart: %w", err)
-		}
-	}
 
 	jobs := geo.PlanMatrix(areas, modes)
 	slog.Info("travel matrix plan", "city", city, "areas", len(areas), "modes", modes,
-		"requests", len(jobs), "billed_elements", geo.Elements(jobs), "transit_departure", dep.Format(time.RFC3339))
+		"requests", len(jobs), "billed_elements", geo.Elements(jobs))
 	if *dryRun {
 		return nil
 	}
@@ -138,7 +122,7 @@ func buildMatrix(ctx context.Context, pool *pgxpool.Pool, args []string) error {
 	if err != nil {
 		return err
 	}
-	rows, err := geo.BuildMatrix(ctx, google.New(key), areas, modes, dep)
+	rows, err := geo.BuildMatrix(ctx, google.New(key), areas, modes)
 	if err != nil {
 		return err
 	}

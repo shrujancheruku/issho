@@ -10,14 +10,13 @@ import (
 	"time"
 )
 
-// Mode is a travel mode. Values match app.area_travel_times.mode.
+// Mode is a travel mode. Values match app.area_travel_times.mode. Issho uses
+// walking and driving only (no public transport; see the ROADMAP decision log).
 type Mode string
 
 const (
-	Transit Mode = "transit"
-	Walk    Mode = "walk"
-	Drive   Mode = "drive"
-	Bicycle Mode = "bicycle"
+	Walk  Mode = "walk"
+	Drive Mode = "drive"
 )
 
 type LatLng struct {
@@ -29,13 +28,10 @@ type MatrixRequest struct {
 	Origins      []LatLng
 	Destinations []LatLng
 	Mode         Mode
-	// Departure matters for transit (timetables) and is ignored by providers
-	// for modes where it doesn't apply.
-	Departure time.Time
 }
 
 // MatrixElement is one origin→destination result. OK is false when the
-// provider found no route (e.g. no transit connection); Duration is then zero.
+// provider found no route (e.g. across water with no road); Duration is then zero.
 type MatrixElement struct {
 	Origin, Destination int // indexes into the request slices
 	Duration            time.Duration

@@ -16,8 +16,8 @@ var areas = []Area{
 }
 
 func TestPlanMatrixSkipsSelfAndFarWalks(t *testing.T) {
-	jobs := PlanMatrix(areas, []maps.Mode{maps.Transit, maps.Walk})
-	if got := Elements(jobs); got != 6+2 { // transit: 3×2; walk: only a↔b
+	jobs := PlanMatrix(areas, []maps.Mode{maps.Drive, maps.Walk})
+	if got := Elements(jobs); got != 6+2 { // drive: 3×2; walk: only a↔b
 		t.Errorf("got %d elements, want 8", got)
 	}
 	for _, j := range jobs {
@@ -32,7 +32,7 @@ func TestPlanMatrixSkipsSelfAndFarWalks(t *testing.T) {
 	}
 }
 
-// fakeRouter: 90 s per km of latitude difference, no route to x-c by transit.
+// fakeRouter: 90 s per km, and no driving route to or from x-c (e.g. an island).
 type fakeRouter struct{ calls int }
 
 func (f *fakeRouter) Matrix(_ context.Context, r maps.MatrixRequest) ([]maps.MatrixElement, error) {
@@ -42,7 +42,7 @@ func (f *fakeRouter) Matrix(_ context.Context, r maps.MatrixRequest) ([]maps.Mat
 		for di, d := range r.Destinations {
 			e := maps.MatrixElement{Origin: oi, Destination: di, OK: true,
 				Duration: time.Duration(maps.DistanceM(o, d)*0.09) * time.Second}
-			if r.Mode == maps.Transit && (d.Lat == 35.9 || o.Lat == 35.9) {
+			if r.Mode == maps.Drive && (d.Lat == 35.9 || o.Lat == 35.9) {
 				e = maps.MatrixElement{Origin: oi, Destination: di}
 			}
 			out = append(out, e)
@@ -53,7 +53,7 @@ func (f *fakeRouter) Matrix(_ context.Context, r maps.MatrixRequest) ([]maps.Mat
 
 func TestBuildMatrix(t *testing.T) {
 	r := &fakeRouter{}
-	got, err := BuildMatrix(context.Background(), r, areas, []maps.Mode{maps.Transit, maps.Walk}, time.Time{})
+	got, err := BuildMatrix(context.Background(), r, areas, []maps.Mode{maps.Drive, maps.Walk})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -61,10 +61,10 @@ func TestBuildMatrix(t *testing.T) {
 	for _, tt := range got {
 		byKey[tt.From+">"+tt.To+">"+string(tt.Mode)] = tt.Minutes
 	}
-	if m, ok := byKey["x-a>x-a>transit"]; !ok || m != 0 {
+	if m, ok := byKey["x-a>x-a>drive"]; !ok || m != 0 {
 		t.Error("same-area rows must be stored as 0 minutes")
 	}
-	if _, ok := byKey["x-a>x-c>transit"]; ok {
+	if _, ok := byKey["x-a>x-c>drive"]; ok {
 		t.Error("pairs without a route must be left out")
 	}
 	// 1112 m × 0.09 s/m = 100 s → rounded up to 2 minutes.
@@ -73,22 +73,6 @@ func TestBuildMatrix(t *testing.T) {
 	}
 	if r.calls != 3+2 {
 		t.Errorf("got %d provider calls, want 5", r.calls)
-	}
-}
-
-func TestNextDeparture(t *testing.T) {
-	tokyo := time.FixedZone("JST", 9*3600)
-	cases := map[string]string{
-		"2026-10-20T09:00:00+09:00": "2026-10-24T11:00:00+09:00", // Tuesday
-		"2026-10-24T10:59:00+09:00": "2026-10-24T11:00:00+09:00", // Saturday morning
-		"2026-10-24T11:00:00+09:00": "2026-10-31T11:00:00+09:00", // Saturday, too late
-		"2026-10-23T20:00:00Z":      "2026-10-24T11:00:00+09:00", // Friday in UTC, Saturday 05:00 in Tokyo
-	}
-	for in, want := range cases {
-		now, _ := time.Parse(time.RFC3339, in)
-		if got := NextDeparture(now, tokyo).Format(time.RFC3339); got != want {
-			t.Errorf("NextDeparture(%s) = %s, want %s", in, got, want)
-		}
 	}
 }
 

@@ -68,7 +68,7 @@ Defined in `backend/db/migrations/` (`00001_init.sql`, `00002_geo.sql`). All app
 
 | Table | Purpose |
 |---|---|
-| `cities` | One row per city pack: timezone, currency, default languages, travel modes (`transit`/`walk`/`drive`/`bicycle`), matching-weight overrides |
+| `cities` | One row per city pack: timezone, currency, default languages, travel modes (`walk`/`drive`; no public transport), matching-weight overrides |
 | `areas` | The unit a user chooses as "home" (a neighbourhood or station), with its centre as PostGIS `geography` |
 | `area_travel_times` | Area-to-area minutes per mode, from the Routes API (`tool build-matrix`). A cache: rows older than 30 days are deleted. |
 | `activities` | The global catalogue. `name` is JSON keyed by language (`{"en": …, "ja": …}`); `venue_categories` lists where it can happen |

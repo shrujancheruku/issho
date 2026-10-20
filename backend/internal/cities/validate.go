@@ -9,7 +9,8 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/platform/i18n"
 )
 
-var travelModes = map[string]bool{"transit": true, "walk": true, "drive": true, "bicycle": true}
+// Walking and driving only; public transport isn't calculated (see 00002_geo.sql).
+var travelModes = map[string]bool{"walk": true, "drive": true}
 
 // checkName validates a stored name: English is required (it's the source for
 // on-demand translation) and any other language must be in allowed. The

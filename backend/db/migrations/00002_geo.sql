@@ -1,13 +1,20 @@
 -- +goose Up
 
--- How people get around in a city. Transit cities (Tokyo) use transit + walk;
--- car-based cities use drive. build-matrix computes only these modes, and the
--- matching engine reads only these modes. The default exists only to backfill
--- existing rows; city packs always set it explicitly.
+-- Travel modes Issho calculates with: walking and driving only. Public
+-- transport was dropped: Google's APIs return no transit routes in Japan, and
+-- one consistent model everywhere beats per-country routing vendors.
+-- build-matrix computes only a city's modes, and matching reads only these.
+-- The default exists only to backfill existing rows; city packs always set it.
 alter table app.cities
-  add column travel_modes text[] not null default '{transit,walk}'
-  check (travel_modes <@ array['transit', 'walk', 'drive', 'bicycle']::text[] and cardinality(travel_modes) > 0);
+  add column travel_modes text[] not null default '{walk,drive}'
+  check (travel_modes <@ array['walk', 'drive']::text[] and cardinality(travel_modes) > 0);
 alter table app.cities alter column travel_modes drop default;
+
+-- 00001 allowed transit and bicycle times too; restrict to the same two modes.
+delete from app.area_travel_times where mode not in ('walk', 'drive');
+alter table app.area_travel_times
+  drop constraint area_travel_times_mode_check,
+  add constraint area_travel_times_mode_check check (mode in ('walk', 'drive'));
 
 -- Kinds of place an activity happens at (cafe, park, karaoke box ...), mapped to
 -- Google Places (New) types. Keeping our own ids means the provider can change
@@ -56,6 +63,9 @@ end $$;
 -- +goose StatementEnd
 
 -- +goose Down
+alter table app.area_travel_times
+  drop constraint area_travel_times_mode_check,
+  add constraint area_travel_times_mode_check check (mode in ('transit', 'walk', 'drive', 'bicycle'));
 drop table app.venues;
 alter table app.activities drop column venue_categories;
 drop table app.venue_categories;

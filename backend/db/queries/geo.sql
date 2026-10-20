@@ -1,9 +1,6 @@
 -- name: GetCityTravelModes :one
 select travel_modes from app.cities where id = $1;
 
--- name: GetCityTimezone :one
-select timezone from app.cities where id = $1;
-
 -- name: GetCityLanguages :one
 select languages from app.cities where id = $1;
 

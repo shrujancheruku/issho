@@ -32,7 +32,7 @@ func pts(n int) []maps.LatLng {
 }
 
 // fakeMatrix answers like Compute Route Matrix: one element per pair, every
-// route 600s except origin 0 → destination 1, which has no route.
+// route 600s except global origin 0 → destination 1, which has no route.
 func fakeMatrix(t *testing.T, calls *atomic.Int32, maxElements *atomic.Int32, body *matrixBody) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Header.Get("X-Goog-Api-Key") != "test-key" {
@@ -71,27 +71,26 @@ func fakeMatrix(t *testing.T, calls *atomic.Int32, maxElements *atomic.Int32, bo
 	}
 }
 
-func TestMatrixChunksTransitTo100Elements(t *testing.T) {
+func TestMatrixChunksTo625Elements(t *testing.T) {
 	var calls, maxEl atomic.Int32
 	var last matrixBody
 	c := newTestClient(t, fakeMatrix(t, &calls, &maxEl, &last))
-	dep := time.Date(2026, 10, 24, 11, 0, 0, 0, time.FixedZone("JST", 9*3600))
 
-	got, err := c.Matrix(context.Background(), maps.MatrixRequest{Origins: pts(25), Destinations: pts(25), Mode: maps.Transit, Departure: dep})
+	got, err := c.Matrix(context.Background(), maps.MatrixRequest{Origins: pts(40), Destinations: pts(25), Mode: maps.Walk})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(got) != 625 {
-		t.Fatalf("got %d elements, want 625", len(got))
+	if len(got) != 1000 {
+		t.Fatalf("got %d elements, want 1000", len(got))
 	}
-	if maxEl.Load() > transitMaxElements {
-		t.Errorf("a request had %d elements, limit is %d", maxEl.Load(), transitMaxElements)
+	if maxEl.Load() > maxElements {
+		t.Errorf("a request had %d elements, limit is %d", maxEl.Load(), maxElements)
 	}
-	if calls.Load() != 7 { // 4 origins per request → ceil(25/4)
-		t.Errorf("got %d requests, want 7", calls.Load())
+	if calls.Load() != 2 { // 25 origins per request → ceil(40/25)
+		t.Errorf("got %d requests, want 2", calls.Load())
 	}
-	if last.TravelMode != "TRANSIT" || last.DepartureTime != "2026-10-24T02:00:00Z" || last.RoutingPreference != "" {
-		t.Errorf("unexpected transit body: %+v", last)
+	if last.TravelMode != "WALK" || last.RoutingPreference != "" {
+		t.Errorf("unexpected walk body: %+v", last)
 	}
 
 	// Origin indexes must be global, not per chunk, and unique.
@@ -116,14 +115,14 @@ func TestMatrixDriveIsTrafficUnaware(t *testing.T) {
 	var calls, maxEl atomic.Int32
 	var last matrixBody
 	c := newTestClient(t, fakeMatrix(t, &calls, &maxEl, &last))
-	_, err := c.Matrix(context.Background(), maps.MatrixRequest{Origins: pts(25), Destinations: pts(25), Mode: maps.Drive, Departure: time.Now()})
+	_, err := c.Matrix(context.Background(), maps.MatrixRequest{Origins: pts(25), Destinations: pts(25), Mode: maps.Drive})
 	if err != nil {
 		t.Fatal(err)
 	}
 	if calls.Load() != 1 {
 		t.Errorf("625 drive elements should fit one request, got %d", calls.Load())
 	}
-	if last.RoutingPreference != "TRAFFIC_UNAWARE" || last.DepartureTime != "" {
+	if last.TravelMode != "DRIVE" || last.RoutingPreference != "TRAFFIC_UNAWARE" {
 		t.Errorf("unexpected drive body: %+v", last)
 	}
 }

@@ -23,10 +23,9 @@ const (
 	defaultRoutesURL = "https://routes.googleapis.com/distanceMatrix/v2:computeRouteMatrix"
 	defaultPlacesURL = "https://places.googleapis.com/v1/places:searchNearby"
 
-	// Compute Route Matrix limits origins × destinations to 100 for TRANSIT and
-	// 625 for other modes without traffic awareness.
-	transitMaxElements = 100
-	otherMaxElements   = 625
+	// Compute Route Matrix allows up to 625 origins × destinations without
+	// traffic awareness.
+	maxElements = 625
 	// Nearby Search (New) returns at most 20 places and has no pagination.
 	nearbyMaxResults = 20
 )
@@ -66,7 +65,6 @@ type matrixBody struct {
 	Destinations      []waypoint `json:"destinations"`
 	TravelMode        string     `json:"travelMode"`
 	RoutingPreference string     `json:"routingPreference,omitempty"`
-	DepartureTime     string     `json:"departureTime,omitempty"`
 }
 
 type matrixElement struct {
@@ -82,14 +80,10 @@ type matrixElement struct {
 
 func travelMode(m maps.Mode) (string, error) {
 	switch m {
-	case maps.Transit:
-		return "TRANSIT", nil
 	case maps.Walk:
 		return "WALK", nil
 	case maps.Drive:
 		return "DRIVE", nil
-	case maps.Bicycle:
-		return "BICYCLE", nil
 	}
 	return "", fmt.Errorf("unsupported travel mode %q", m)
 }
@@ -112,14 +106,10 @@ func (c *Client) Matrix(ctx context.Context, req maps.MatrixRequest) ([]maps.Mat
 	if len(req.Origins) == 0 || len(req.Destinations) == 0 {
 		return nil, nil
 	}
-	limit := otherMaxElements
-	if req.Mode == maps.Transit {
-		limit = transitMaxElements
+	if len(req.Destinations) > maxElements {
+		return nil, fmt.Errorf("%d destinations exceed the %d-element limit", len(req.Destinations), maxElements)
 	}
-	if len(req.Destinations) > limit {
-		return nil, fmt.Errorf("%d destinations exceed the %d-element limit for %s", len(req.Destinations), limit, req.Mode)
-	}
-	chunk := limit / len(req.Destinations)
+	chunk := maxElements / len(req.Destinations)
 
 	var out []maps.MatrixElement
 	for start := 0; start < len(req.Origins); start += chunk {
@@ -129,15 +119,10 @@ func (c *Client) Matrix(ctx context.Context, req maps.MatrixRequest) ([]maps.Mat
 			Destinations: toWaypoints(req.Destinations),
 			TravelMode:   mode,
 		}
-		switch req.Mode {
-		case maps.Drive:
+		if req.Mode == maps.Drive {
 			// Typical rather than live traffic: the matrix is reused for weeks.
-			// TRAFFIC_UNAWARE is also the cheapest SKU and rejects departureTime.
+			// TRAFFIC_UNAWARE is also the cheapest SKU.
 			body.RoutingPreference = "TRAFFIC_UNAWARE"
-		case maps.Transit:
-			if !req.Departure.IsZero() {
-				body.DepartureTime = req.Departure.UTC().Format(time.RFC3339)
-			}
 		}
 		var elems []matrixElement
 		// "status" must be in the mask, otherwise every element looks OK.

@@ -11,8 +11,8 @@
     "en"
   ],
   "travel_modes": [
-    "transit",
-    "walk"
+    "walk",
+    "drive"
   ],
   "areas": [
     {
