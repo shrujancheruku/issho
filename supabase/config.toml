@@ -425,3 +425,27 @@ enabled = true
 # formatted with uppercase keywords, indent 2, max width 180, trailing commas,
 # and column/key alignment. Set to "null" to emit raw, unformatted SQL.
 # format_options = "{\"keywordCase\":\"upper\",\"indent\":2,\"maxWidth\":180,\"commaStyle\":\"trailing\"}"
+
+# ---------------------------------------------------------------------------
+# Hosted project overrides. `supabase config push` (linked to a project) applies
+# the settings above, with these values replacing local-only ones. The project
+# ref isn't secret: it's part of the public Supabase URL. See docs/supabase-hosted.md.
+[remotes.issho-dev]
+project_id = "yjnzrhusfxilktbjrzsw"
+
+[remotes.issho-dev.auth]
+# Codes, not links, so no redirects are needed. Keep Supabase's default site URL until
+# the product domain is registered (our email templates don't use it).
+site_url = "http://localhost:3000"
+additional_redirect_urls = []
+
+[remotes.issho-dev.auth.email]
+# Hosted: new users verify their address with the code (locally off for quick testing).
+enable_confirmations = true
+# Hosted: at most one code request per address per minute (locally 1s for testing).
+max_frequency = "1m0s"
+
+[remotes.issho-dev.db.pooler]
+# Keep the hosted pooler's plan-appropriate limits.
+default_pool_size = 15
+max_client_conn = 200

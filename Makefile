@@ -2,6 +2,14 @@
 GOTOOL := go tool
 GITLEAKS := go run github.com/zricethezav/gitleaks/v8@v8.30.1
 
+# Optional env file for targeting another environment without exporting secrets in
+# your shell, e.g. `make migrate-up seed ENV_FILE=.env.issho-dev`. Files matching
+# .env.* are gitignored. Values are exported to commands, never echoed.
+ifdef ENV_FILE
+include $(ENV_FILE)
+export
+endif
+
 .PHONY: setup secrets-scan docs gen gen-proto gen-sql lint test migrate-up migrate-status api seed
 
 # One-time setup after cloning: install JS deps and enable the secret-scanning pre-commit hook.
