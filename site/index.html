@@ -11,6 +11,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<!-- Noto Serif JP ExtraBold is the logo's kanji font; subset to the four characters shown in the breakdown -->
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@800&text=%E4%B8%80%E7%B3%B8%E8%80%85%E6%97%A5&display=swap" rel="stylesheet">
 <style>
   :root {
     --red: #BC002D;
@@ -23,6 +25,7 @@
     --muted: #b3ad9e;
     --line: #302e29;
     --display: "Dela Gothic One", "Hiragino Kaku Gothic ProN", "Arial Black", sans-serif;
+    --kanji: "Noto Serif JP", "Hiragino Mincho ProN", serif;
     --sans: Inter, -apple-system, "Segoe UI", Roboto, sans-serif;
     color-scheme: dark;
   }
@@ -68,7 +71,7 @@
   .parts .role b { font-weight: 600; }
   .parts .role { margin: 0; color: var(--text); font-size: .98rem; }
   /* Colours follow the logo: gold strokes, black ink outlined in gold, red sun. */
-  .parts .kanji { font-size: 2.75rem; }
+  .parts .kanji { font: 800 2.75rem/1 var(--kanji); }
   .parts .gold .kanji { color: var(--gold); }
   .parts .ink .kanji { color: #111; -webkit-text-stroke: 1px var(--gold); paint-order: stroke fill; }
   .parts .red .kanji { color: var(--red); }
