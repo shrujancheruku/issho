@@ -1,9 +1,10 @@
 -- name: UpsertCity :exec
-insert into app.cities (id, name, timezone, currency, languages)
-values ($1, $2, $3, $4, $5)
+insert into app.cities (id, name, timezone, currency, languages, travel_modes)
+values ($1, $2, $3, $4, $5, $6)
 on conflict (id) do update set
   name = excluded.name, timezone = excluded.timezone,
-  currency = excluded.currency, languages = excluded.languages;
+  currency = excluded.currency, languages = excluded.languages,
+  travel_modes = excluded.travel_modes;
 
 -- name: UpsertArea :exec
 insert into app.areas (id, city_id, name, centroid)
@@ -26,3 +27,13 @@ insert into app.city_activity_overrides (city_id, activity_id, enabled, name, mo
 values ($1, $2, $3, $4, $5)
 on conflict (city_id, activity_id) do update set
   enabled = excluded.enabled, name = excluded.name, months = excluded.months;
+
+-- name: UpsertVenueCategory :exec
+insert into app.venue_categories (id, name, google_types, search_radius_m)
+values ($1, $2, $3, $4)
+on conflict (id) do update set
+  name = excluded.name, google_types = excluded.google_types,
+  search_radius_m = excluded.search_radius_m;
+
+-- name: SetActivityVenueCategories :exec
+update app.activities set venue_categories = @venue_categories where id = @id;

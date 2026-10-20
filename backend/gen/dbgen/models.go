@@ -10,16 +10,17 @@ import (
 )
 
 type AppActivity struct {
-	ID             string
-	Name           []byte
-	Category       string
-	Indoor         bool
-	Energy         int16
-	CostLevel      int16
-	Conversational bool
-	SkillDependent bool
-	MinGroupSize   int16
-	MaxGroupSize   int16
+	ID              string
+	Name            []byte
+	Category        string
+	Indoor          bool
+	Energy          int16
+	CostLevel       int16
+	Conversational  bool
+	SkillDependent  bool
+	MinGroupSize    int16
+	MaxGroupSize    int16
+	VenueCategories []string
 }
 
 type AppArea struct {
@@ -51,6 +52,7 @@ type AppCity struct {
 	Languages       []string
 	MatchingWeights []byte
 	CreatedAt       pgtype.Timestamptz
+	TravelModes     []string
 }
 
 type AppCityActivityOverride struct {
@@ -95,4 +97,22 @@ type AppUserLanguage struct {
 	Lang   string
 	Fluent bool
 	Level  *int16
+}
+
+type AppVenue struct {
+	GooglePlaceID string
+	CityID        string
+	AreaID        string
+	CategoryID    string
+	Tags          []string
+	Status        string
+	DiscoveredAt  pgtype.Timestamptz
+	LastSeenAt    pgtype.Timestamptz
+}
+
+type AppVenueCategory struct {
+	ID            string
+	Name          []byte
+	GoogleTypes   []string
+	SearchRadiusM int32
 }
