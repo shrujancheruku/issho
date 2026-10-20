@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import { useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
@@ -62,7 +62,9 @@ export default function SignInScreen() {
   return (
     <ThemedView style={styles.fill}>
       <SafeAreaView style={styles.fill}>
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.content}>
+        {/* Padding on both platforms: SDK 58 Android apps are edge-to-edge, so the window no
+            longer resizes for the keyboard and the code field would sit behind it. */}
+        <KeyboardAvoidingView behavior="padding" style={styles.content}>
           <Image source={require('@/assets/images/logo.png')} style={styles.logo} contentFit="contain" accessibilityLabel="Issho" />
 
           {step === 'email' ? (

@@ -66,9 +66,9 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
   - schema and seed applied
   - verified: DB state, Data API 503, advisors (only the known PostGIS warning), Go API health against the project
 - ⬜ **Email OTP expiry set to 600 s in the dashboard.** `config push` (CLI 2.121) doesn't manage it.
-- ⬜ **End-to-end sign-in against `issho-dev`** (code delivered by Resend to the account owner's inbox).
+- ✅ **End-to-end sign-in against `issho-dev` on a real device** (Pixel 8 Pro, Android 17, Expo Go 58 via USB): code delivered by Resend, signed in, onboarding shown. The API was also tested against `issho-dev` with a throwaway user (all RPCs, deletion and cleanup verified).
 - 🟡 **SMTP:** Resend is configured for `issho-dev` (free tier, `onboarding@resend.dev`, delivers only to the owner's address). Before real users, it needs a **verified sending domain**.
-- ⬜ **On-device test of the sign-in flow.** *Needs a phone with Expo Go, or Xcode (not installed on the dev machine).*
+- ✅ **On-device test of the sign-in flow** (see above). It found an Android bug, now fixed: the keyboard covered the code field, because SDK 58 Android apps are edge-to-edge.
 
 ### M3 · Cities, catalogue & geo (weeks 2–3): 🟡
 - ✅ City pack format and seeding tool.
@@ -168,6 +168,7 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
 | 2026-10-20 | **Email OTP is the only sign-in method for the MVP**; Apple/Google deferred | Not needed to validate the product. It avoids OAuth setup and secrets, and the App Store rule that requires Sign in with Apple once any social login exists. |
 | 2026-10-20 | **Supabase Data API disabled**; goose's version table moved from `public` to its own `goose` schema | Found while preparing the hosted project: through the Data API, anonymous clients could **write** to `public.app_goose_db_version` (marking migrations as applied) and modify PostGIS's `spatial_ref_sys`. Its grants are owned by `supabase_admin`, so a migration can't revoke them. Auth works without the Data API. CI now checks the version table isn't in `public`. |
 | 2026-10-20 | Production `DATABASE_URL` uses the **session pooler** (or direct connection), not the transaction pooler | pgx uses prepared statements by default, and River needs LISTEN/NOTIFY. The transaction pooler supports neither. |
+| 2026-10-20 | **Device testing on Android over USB** (`adb` plus Expo CLI) while the store builds of Expo Go lag behind SDK 58 | The App Store/Play Store Expo Go only ran SDK 57. Local iOS needs Xcode 26.4+, which needs macOS 26.2+ (the dev Mac runs 15.7). The CLI installs a matching Expo Go over USB with just `adb`. |
 | 2026-10-20 | Hosted Supabase configured **declaratively with the CLI** (`config push`, `[remotes.<name>]` overrides) | Reproducible and reviewable via `config diff`. The diff caught local-only values that would have leaked: confirmations off, a 1 s resend interval, a 2/hour email cap. |
 | 2026-10-20 | **Custom SMTP (Resend) is required even in development** | On the Free plan, Supabase blocks custom email templates while its built-in email service is in use, and the built-in templates only contain links, which can't drive code sign-in. |
 | 2026-10-20 | Official **Supabase agent skills** in `.claude/skills/` (installed with a pinned `skills` CLI, verified byte-for-byte against upstream) plus a root `CLAUDE.md` | Gives coding agents current Supabase and Postgres guidance. `CLAUDE.md` overrides where the generic skills conflict with this repo (goose migrations, Data API off, MCP not configured). |
@@ -181,4 +182,5 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
 - **PostGIS lives in the `public` schema** (migration 00001). With the Data API disabled, no anonymous path reaches it, but Supabase's advisors flag it. Move it into the `extensions` schema with a migration **before production data exists**: PostGIS can't be relocated in place, so the geography column has to be recreated.
 - **Google Maps terms** restrict caching (store only place IDs long-term, fetch details live). Re-check the Maps Service Terms before M3 ships.
 - **`postgis/postgis` has no arm64 image.** CI (amd64) is unaffected. On Apple Silicon, use `supabase start` (arm64) or run that image with `--platform linux/amd64`.
+- **Local iOS builds need macOS 26.2+** (Xcode 26.4+ for SDK 58). The dev Mac is on macOS 15.7. Either upgrade before M9, or build iOS in the cloud with EAS.
 - **Disk space on dev machines:** Supabase images take several GB. OrbStack's VM disk can report "no space left" on its first launch; retrying fixes it.

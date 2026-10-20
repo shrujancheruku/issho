@@ -24,6 +24,23 @@ npx expo start           # i = iOS Simulator (needs Xcode), a = Android emulator
 
 **On a physical phone**, `localhost` and `127.0.0.1` refer to the phone itself. Replace both hosts with your Mac's LAN IP (e.g. `http://192.168.1.20:8080` and `http://192.168.1.20:54321`). The phone and the Mac must be on the same network.
 
+### Running on a device
+
+The **App Store / Play Store builds of Expo Go can lag behind** a new SDK. On 2026-10-20 they still only ran SDK 57. The Expo CLI can install the matching Expo Go itself:
+
+| Device | How | Needs |
+|---|---|---|
+| **Android phone (USB)** *(tested on a Pixel 8 Pro, Android 17)* | Turn on Developer options and **USB debugging**, connect with a data cable and accept the prompt. Then `npx expo start --android --lan`. The CLI installs the right Expo Go and opens the app. | `adb`: `brew install --cask android-platform-tools` (no Android Studio needed) |
+| Android emulator | `npx expo start --android` | Android Studio with an emulator |
+| iOS Simulator | `npx expo start --ios` | **Xcode 26.4+**, which needs **macOS 26.2+** |
+| iPhone | `eas go` (your own Expo Go build on TestFlight), or a development build | Apple Developer Program membership |
+
+Notes:
+- Expo Go loads over the LAN, so set `EXPO_PUBLIC_API_URL` to the Mac's LAN IP (`ipconfig getifaddr en0`) and keep the phone on the same Wi-Fi.
+- "Failed to resolve the Android SDK path" warnings are harmless when only `adb` is installed.
+- If Expo Go opens to a **blank screen right after it was installed**, the CLI sent the project URL before the install finished. Reopen it: `adb shell am start -a android.intent.action.VIEW -d "exp://<mac-ip>:8081" host.exp.exponent`.
+- Screenshots for bug reports: `adb exec-out screencap -p > screen.png`.
+
 ### Signing in locally
 
 1. Enter any email address and tap **Send code**.
