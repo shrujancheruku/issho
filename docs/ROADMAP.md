@@ -2,7 +2,7 @@
 
 > **This is the source of truth for what's planned, built and pending.** CI (`roadmap` job) fails any push or PR that changes code without updating this file. When you change code, update the status lines below. If the change made a decision, add it to the Decision log.
 
-**Last updated:** 2026-10-20 · **Version:** 0.2.0 (pre-release; [releases](https://github.com/shrujancheruku/issho/releases)) · **Current milestone:** M4 Matching engine (next)
+**Last updated:** 2026-10-20 · **Version:** 0.3.0 (pre-release; [releases](https://github.com/shrujancheruku/issho/releases)) · **Current milestone:** M4 Matching engine (next)
 
 Legend: ✅ done · 🟡 in progress / partial · ⬜ not started · ⏸ deferred (post-MVP)
 
@@ -53,7 +53,7 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
 - ✅ Brand: logo and mark (一緒 with gold thread and hinomaru sun), one version for every background (black outlined in gold, gold and red outlined in black), generated reproducibly from Noto Serif JP (`assets/brand/`). App icon and splash still use Expo defaults; wire them up in M9.
 - ⬜ Sentry and PostHog SDKs. *Moved to M9: nothing worth tracking yet.*
 
-### M2 · Authentication (week 2): 🟡 in progress
+### M2 · Authentication (week 2): ✅ done
 - ✅ **Email OTP sign-in** (local): 6-digit code emails (EN/JA templates, 10-minute expiry). The Expo sign-in screen has an email step and a code step (with iOS autofill and auto-submit). Verified end to end with supabase-js against local Supabase.
 - ✅ **Secure session storage:** Keychain/Keystore through a chunked `expo-secure-store` adapter (sessions are ~2.2 KB, over SecureStore's ~2 KB limit). Per-write generation IDs, so a torn write can only sign the user out. Covered by unit tests (Jest).
 - ✅ **API client sends the Supabase access token.** Auth-gated navigation (`Stack.Protected`): sign-in → onboarding placeholder → tabs. Rejected sessions, e.g. after deletion on another device, sign out automatically.
@@ -66,9 +66,8 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
   - legacy keys disabled, ES256 signing
   - schema and seed applied
   - verified: DB state, Data API 503, advisors (only the known PostGIS warning), Go API health against the project
-- ⬜ **Email OTP expiry set to 600 s in the dashboard.** `config push` (CLI 2.121) doesn't manage it.
+- ✅ **Email OTP expiry set to 600 s** on `issho-dev`, in the dashboard: `config push` (CLI 2.121) doesn't manage it, so repeat this by hand for each new project (see [supabase-hosted.md](supabase-hosted.md#3-push-the-configuration)).
 - ✅ **End-to-end sign-in against `issho-dev` on a real device** (Pixel 8 Pro, Android 17, Expo Go 58 via USB): code delivered by Resend, signed in, onboarding shown. The API was also tested against `issho-dev` with a throwaway user (all RPCs, deletion and cleanup verified).
-- 🟡 **SMTP:** Resend is configured for `issho-dev` (free tier, `onboarding@resend.dev`, delivers only to the owner's address). Before real users, it needs a **verified sending domain**.
 - ✅ **On-device test of the sign-in flow** (see above). It found an Android bug, now fixed: the keyboard covered the code field, because SDK 58 Android apps are edge-to-edge.
 
 ### M3 · Cities, catalogue & geo (weeks 2–3): ✅ done
@@ -136,6 +135,7 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
 - ⬜ City-pack editor, venue/route curation, proposal review/override (build groups by hand for the first city), moderation queue, domain metrics.
 
 ### M9 · Release prep (weeks 11–12): ⬜
+- ⬜ **SMTP sending domain** (moved from M2): Resend is configured for `issho-dev` (free tier, `onboarding@resend.dev`, delivers only to the owner's address). Before real users, it needs a **verified sending domain**.
 - ⬜ Spot-check machine translations for the launch languages (admin can mark `app.translations.reviewed`; M8).
 - ⬜ Sentry (crashes and errors, mobile and Go) and PostHog (product analytics, feature flags).
 - ⬜ Production deploy:
