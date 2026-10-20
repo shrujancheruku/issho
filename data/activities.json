@@ -3,7 +3,9 @@
     "id": "photo-walk",
     "name": {
       "en": "Photo walk",
-      "ja": "フォトウォーク"
+      "ja": "フォトウォーク",
+      "es": "Paseo fotográfico",
+      "fr": "Balade photo"
     },
     "category": "outdoors",
     "indoor": false,
@@ -19,7 +21,9 @@
     "id": "city-walk",
     "name": {
       "en": "City walk",
-      "ja": "街歩き"
+      "ja": "街歩き",
+      "es": "Paseo por la ciudad",
+      "fr": "Balade en ville"
     },
     "category": "outdoors",
     "indoor": false,
@@ -35,7 +39,9 @@
     "id": "park-picnic",
     "name": {
       "en": "Park picnic",
-      "ja": "公園ピクニック"
+      "ja": "公園ピクニック",
+      "es": "Pícnic en el parque",
+      "fr": "Pique-nique au parc"
     },
     "category": "outdoors",
     "indoor": false,
@@ -54,7 +60,9 @@
     "id": "hike",
     "name": {
       "en": "Day hike",
-      "ja": "日帰りハイキング"
+      "ja": "日帰りハイキング",
+      "es": "Excursión de un día",
+      "fr": "Randonnée à la journée"
     },
     "category": "outdoors",
     "indoor": false,
@@ -72,7 +80,9 @@
     "id": "running",
     "name": {
       "en": "Social run",
-      "ja": "ランニング"
+      "ja": "ランニング",
+      "es": "Correr",
+      "fr": "Course à pied"
     },
     "category": "sports",
     "indoor": false,
@@ -90,7 +100,9 @@
     "id": "cycling",
     "name": {
       "en": "Bike ride",
-      "ja": "サイクリング"
+      "ja": "サイクリング",
+      "es": "Ciclismo",
+      "fr": "Vélo"
     },
     "category": "sports",
     "indoor": false,
@@ -106,7 +118,9 @@
     "id": "bouldering",
     "name": {
       "en": "Bouldering",
-      "ja": "ボルダリング"
+      "ja": "ボルダリング",
+      "es": "Búlder",
+      "fr": "Bloc (escalade)"
     },
     "category": "sports",
     "indoor": true,
@@ -122,7 +136,9 @@
     "id": "yoga",
     "name": {
       "en": "Yoga",
-      "ja": "ヨガ"
+      "ja": "ヨガ",
+      "es": "Yoga",
+      "fr": "Yoga"
     },
     "category": "sports",
     "indoor": true,
@@ -140,7 +156,9 @@
     "id": "badminton",
     "name": {
       "en": "Badminton",
-      "ja": "バドミントン"
+      "ja": "バドミントン",
+      "es": "Bádminton",
+      "fr": "Badminton"
     },
     "category": "sports",
     "indoor": true,
@@ -158,7 +176,9 @@
     "id": "cafe-hop",
     "name": {
       "en": "Café hopping",
-      "ja": "カフェ巡り"
+      "ja": "カフェ巡り",
+      "es": "Ruta de cafeterías",
+      "fr": "Tournée des cafés"
     },
     "category": "food",
     "indoor": true,
@@ -176,7 +196,9 @@
     "id": "coffee-chat",
     "name": {
       "en": "Coffee chat",
-      "ja": "コーヒー"
+      "ja": "コーヒー",
+      "es": "Café y charla",
+      "fr": "Café et discussion"
     },
     "category": "food",
     "indoor": true,
@@ -194,7 +216,9 @@
     "id": "brunch",
     "name": {
       "en": "Brunch",
-      "ja": "ブランチ"
+      "ja": "ブランチ",
+      "es": "Brunch",
+      "fr": "Brunch"
     },
     "category": "food",
     "indoor": true,
@@ -213,7 +237,9 @@
     "id": "izakaya",
     "name": {
       "en": "Izakaya night",
-      "ja": "居酒屋"
+      "ja": "居酒屋",
+      "es": "Izakaya",
+      "fr": "Izakaya"
     },
     "category": "food",
     "indoor": true,
@@ -231,7 +257,9 @@
     "id": "ramen-crawl",
     "name": {
       "en": "Ramen crawl",
-      "ja": "ラーメン巡り"
+      "ja": "ラーメン巡り",
+      "es": "Ruta de ramen",
+      "fr": "Tournée des ramen"
     },
     "category": "food",
     "indoor": true,
@@ -249,7 +277,9 @@
     "id": "cooking-class",
     "name": {
       "en": "Cooking class",
-      "ja": "料理教室"
+      "ja": "料理教室",
+      "es": "Clase de cocina",
+      "fr": "Cours de cuisine"
     },
     "category": "food",
     "indoor": true,
@@ -265,7 +295,9 @@
     "id": "sento",
     "name": {
       "en": "Sento & sauna",
-      "ja": "銭湯・サウナ"
+      "ja": "銭湯・サウナ",
+      "es": "Baño público y sauna",
+      "fr": "Bain public et sauna"
     },
     "category": "wellness",
     "indoor": true,
@@ -283,7 +315,9 @@
     "id": "museum",
     "name": {
       "en": "Museum visit",
-      "ja": "美術館・博物館"
+      "ja": "美術館・博物館",
+      "es": "Museo",
+      "fr": "Musée"
     },
     "category": "culture",
     "indoor": true,
@@ -301,7 +335,9 @@
     "id": "gallery-hop",
     "name": {
       "en": "Gallery hopping",
-      "ja": "ギャラリー巡り"
+      "ja": "ギャラリー巡り",
+      "es": "Ruta de galerías",
+      "fr": "Tournée des galeries"
     },
     "category": "culture",
     "indoor": true,
@@ -319,7 +355,9 @@
     "id": "live-music",
     "name": {
       "en": "Live music",
-      "ja": "ライブ"
+      "ja": "ライブ",
+      "es": "Música en directo",
+      "fr": "Concert"
     },
     "category": "culture",
     "indoor": true,
@@ -337,7 +375,9 @@
     "id": "cinema",
     "name": {
       "en": "Film night",
-      "ja": "映画"
+      "ja": "映画",
+      "es": "Cine",
+      "fr": "Cinéma"
     },
     "category": "culture",
     "indoor": true,
@@ -355,7 +395,9 @@
     "id": "bookshop-browse",
     "name": {
       "en": "Bookshop browse",
-      "ja": "本屋巡り"
+      "ja": "本屋巡り",
+      "es": "Ruta de librerías",
+      "fr": "Tournée des librairies"
     },
     "category": "culture",
     "indoor": true,
@@ -373,7 +415,9 @@
     "id": "book-club",
     "name": {
       "en": "Book club",
-      "ja": "読書会"
+      "ja": "読書会",
+      "es": "Club de lectura",
+      "fr": "Club de lecture"
     },
     "category": "culture",
     "indoor": true,
@@ -392,7 +436,9 @@
     "id": "temple-shrine",
     "name": {
       "en": "Temple & shrine walk",
-      "ja": "寺社巡り"
+      "ja": "寺社巡り",
+      "es": "Templos y santuarios",
+      "fr": "Temples et sanctuaires"
     },
     "category": "culture",
     "indoor": false,
@@ -410,7 +456,9 @@
     "id": "board-games",
     "name": {
       "en": "Board games",
-      "ja": "ボードゲーム"
+      "ja": "ボードゲーム",
+      "es": "Juegos de mesa",
+      "fr": "Jeux de société"
     },
     "category": "games",
     "indoor": true,
@@ -426,7 +474,9 @@
     "id": "karaoke",
     "name": {
       "en": "Karaoke",
-      "ja": "カラオケ"
+      "ja": "カラオケ",
+      "es": "Karaoke",
+      "fr": "Karaoké"
     },
     "category": "games",
     "indoor": true,
@@ -444,7 +494,9 @@
     "id": "bowling",
     "name": {
       "en": "Bowling",
-      "ja": "ボウリング"
+      "ja": "ボウリング",
+      "es": "Bolos",
+      "fr": "Bowling"
     },
     "category": "games",
     "indoor": true,
@@ -462,7 +514,9 @@
     "id": "escape-room",
     "name": {
       "en": "Escape room",
-      "ja": "脱出ゲーム"
+      "ja": "脱出ゲーム",
+      "es": "Escape room",
+      "fr": "Escape game"
     },
     "category": "games",
     "indoor": true,
@@ -478,7 +532,9 @@
     "id": "sketching",
     "name": {
       "en": "Urban sketching",
-      "ja": "スケッチ"
+      "ja": "スケッチ",
+      "es": "Dibujo al aire libre",
+      "fr": "Croquis en plein air"
     },
     "category": "creative",
     "indoor": false,
@@ -496,7 +552,9 @@
     "id": "pottery",
     "name": {
       "en": "Pottery",
-      "ja": "陶芸"
+      "ja": "陶芸",
+      "es": "Cerámica",
+      "fr": "Poterie"
     },
     "category": "creative",
     "indoor": true,
@@ -514,7 +572,9 @@
     "id": "craft-workshop",
     "name": {
       "en": "Craft workshop",
-      "ja": "クラフト体験"
+      "ja": "クラフト体験",
+      "es": "Taller de manualidades",
+      "fr": "Atelier créatif"
     },
     "category": "creative",
     "indoor": true,
@@ -532,7 +592,9 @@
     "id": "language-exchange",
     "name": {
       "en": "Language exchange",
-      "ja": "言語交換"
+      "ja": "言語交換",
+      "es": "Intercambio de idiomas",
+      "fr": "Échange linguistique"
     },
     "category": "learning",
     "indoor": true,
@@ -551,7 +613,9 @@
     "id": "study-session",
     "name": {
       "en": "Co-working session",
-      "ja": "もくもく会"
+      "ja": "もくもく会",
+      "es": "Sesión de estudio",
+      "fr": "Session d'étude"
     },
     "category": "learning",
     "indoor": true,
@@ -570,7 +634,9 @@
     "id": "flea-market",
     "name": {
       "en": "Flea market",
-      "ja": "フリーマーケット"
+      "ja": "フリーマーケット",
+      "es": "Mercadillo",
+      "fr": "Marché aux puces"
     },
     "category": "shopping",
     "indoor": false,
@@ -588,7 +654,9 @@
     "id": "vintage-shopping",
     "name": {
       "en": "Vintage shopping",
-      "ja": "古着巡り"
+      "ja": "古着巡り",
+      "es": "Tiendas vintage",
+      "fr": "Friperies"
     },
     "category": "shopping",
     "indoor": true,
@@ -606,7 +674,9 @@
     "id": "volunteering",
     "name": {
       "en": "Volunteering",
-      "ja": "ボランティア"
+      "ja": "ボランティア",
+      "es": "Voluntariado",
+      "fr": "Bénévolat"
     },
     "category": "community",
     "indoor": false,
@@ -622,7 +692,9 @@
     "id": "beach-day",
     "name": {
       "en": "Beach day",
-      "ja": "海"
+      "ja": "海",
+      "es": "Día de playa",
+      "fr": "Journée à la plage"
     },
     "category": "outdoors",
     "indoor": false,
@@ -640,7 +712,9 @@
     "id": "hanami",
     "name": {
       "en": "Cherry blossom viewing",
-      "ja": "花見"
+      "ja": "花見",
+      "es": "Hanami (cerezos en flor)",
+      "fr": "Hanami (cerisiers en fleurs)"
     },
     "category": "seasonal",
     "indoor": false,
@@ -658,7 +732,9 @@
     "id": "fireworks",
     "name": {
       "en": "Fireworks festival",
-      "ja": "花火大会"
+      "ja": "花火大会",
+      "es": "Fuegos artificiales",
+      "fr": "Feu d'artifice"
     },
     "category": "seasonal",
     "indoor": false,
@@ -674,7 +750,9 @@
     "id": "night-walk",
     "name": {
       "en": "Night walk",
-      "ja": "夜散歩"
+      "ja": "夜散歩",
+      "es": "Paseo nocturno",
+      "fr": "Balade nocturne"
     },
     "category": "outdoors",
     "indoor": false,
@@ -690,7 +768,9 @@
     "id": "river-walk",
     "name": {
       "en": "Riverside walk",
-      "ja": "川沿い散歩"
+      "ja": "川沿い散歩",
+      "es": "Paseo junto al río",
+      "fr": "Balade au bord de l'eau"
     },
     "category": "outdoors",
     "indoor": false,
@@ -706,7 +786,9 @@
     "id": "architecture-walk",
     "name": {
       "en": "Architecture walk",
-      "ja": "建築散歩"
+      "ja": "建築散歩",
+      "es": "Paseo de arquitectura",
+      "fr": "Balade architecture"
     },
     "category": "outdoors",
     "indoor": false,
@@ -722,7 +804,9 @@
     "id": "street-art-walk",
     "name": {
       "en": "Street art walk",
-      "ja": "ストリートアート巡り"
+      "ja": "ストリートアート巡り",
+      "es": "Ruta de arte urbano",
+      "fr": "Balade street art"
     },
     "category": "outdoors",
     "indoor": false,
@@ -738,7 +822,9 @@
     "id": "history-walk",
     "name": {
       "en": "History walk",
-      "ja": "歴史散歩"
+      "ja": "歴史散歩",
+      "es": "Paseo histórico",
+      "fr": "Balade historique"
     },
     "category": "outdoors",
     "indoor": false,
@@ -756,7 +842,9 @@
     "id": "garden-visit",
     "name": {
       "en": "Garden visit",
-      "ja": "庭園めぐり"
+      "ja": "庭園めぐり",
+      "es": "Visita a jardines",
+      "fr": "Visite de jardins"
     },
     "category": "outdoors",
     "indoor": false,
@@ -774,7 +862,9 @@
     "id": "botanical-garden",
     "name": {
       "en": "Botanical garden",
-      "ja": "植物園"
+      "ja": "植物園",
+      "es": "Jardín botánico",
+      "fr": "Jardin botanique"
     },
     "category": "outdoors",
     "indoor": false,
@@ -792,7 +882,9 @@
     "id": "birdwatching",
     "name": {
       "en": "Birdwatching",
-      "ja": "バードウォッチング"
+      "ja": "バードウォッチング",
+      "es": "Observación de aves",
+      "fr": "Observation des oiseaux"
     },
     "category": "outdoors",
     "indoor": false,
@@ -811,7 +903,9 @@
     "id": "stargazing",
     "name": {
       "en": "Stargazing",
-      "ja": "星空観察"
+      "ja": "星空観察",
+      "es": "Observación de estrellas",
+      "fr": "Observation des étoiles"
     },
     "category": "outdoors",
     "indoor": false,
@@ -829,7 +923,9 @@
     "id": "camping",
     "name": {
       "en": "Camping",
-      "ja": "キャンプ"
+      "ja": "キャンプ",
+      "es": "Acampada",
+      "fr": "Camping"
     },
     "category": "outdoors",
     "indoor": false,
@@ -847,7 +943,9 @@
     "id": "bbq",
     "name": {
       "en": "Barbecue",
-      "ja": "バーベキュー"
+      "ja": "バーベキュー",
+      "es": "Barbacoa",
+      "fr": "Barbecue"
     },
     "category": "outdoors",
     "indoor": false,
@@ -865,7 +963,9 @@
     "id": "sunrise-walk",
     "name": {
       "en": "Sunrise walk",
-      "ja": "朝日散歩"
+      "ja": "朝日散歩",
+      "es": "Paseo al amanecer",
+      "fr": "Balade au lever du soleil"
     },
     "category": "outdoors",
     "indoor": false,
@@ -883,7 +983,9 @@
     "id": "trail-run",
     "name": {
       "en": "Trail running",
-      "ja": "トレイルラン"
+      "ja": "トレイルラン",
+      "es": "Trail running",
+      "fr": "Trail"
     },
     "category": "outdoors",
     "indoor": false,
@@ -901,7 +1003,9 @@
     "id": "kayaking",
     "name": {
       "en": "Kayaking",
-      "ja": "カヤック"
+      "ja": "カヤック",
+      "es": "Kayak",
+      "fr": "Kayak"
     },
     "category": "outdoors",
     "indoor": false,
@@ -917,7 +1021,9 @@
     "id": "sup",
     "name": {
       "en": "Stand-up paddleboarding",
-      "ja": "SUP"
+      "ja": "SUP",
+      "es": "Paddle surf",
+      "fr": "Stand up paddle"
     },
     "category": "outdoors",
     "indoor": false,
@@ -935,7 +1041,9 @@
     "id": "fishing",
     "name": {
       "en": "Fishing",
-      "ja": "釣り"
+      "ja": "釣り",
+      "es": "Pesca",
+      "fr": "Pêche"
     },
     "category": "outdoors",
     "indoor": false,
@@ -951,7 +1059,9 @@
     "id": "dog-walk",
     "name": {
       "en": "Dog walk meetup",
-      "ja": "犬の散歩会"
+      "ja": "犬の散歩会",
+      "es": "Paseo con perros",
+      "fr": "Balade avec chiens"
     },
     "category": "outdoors",
     "indoor": false,
@@ -970,7 +1080,9 @@
     "id": "foraging-walk",
     "name": {
       "en": "Nature walk",
-      "ja": "自然観察散歩"
+      "ja": "自然観察散歩",
+      "es": "Paseo por la naturaleza",
+      "fr": "Balade nature"
     },
     "category": "outdoors",
     "indoor": false,
@@ -989,7 +1101,9 @@
     "id": "waterfall-hike",
     "name": {
       "en": "Waterfall hike",
-      "ja": "滝ハイキング"
+      "ja": "滝ハイキング",
+      "es": "Ruta a una cascada",
+      "fr": "Randonnée vers une cascade"
     },
     "category": "outdoors",
     "indoor": false,
@@ -1007,7 +1121,9 @@
     "id": "island-day-trip",
     "name": {
       "en": "Island day trip",
-      "ja": "島への日帰り旅"
+      "ja": "島への日帰り旅",
+      "es": "Excursión a una isla",
+      "fr": "Excursion sur une île"
     },
     "category": "outdoors",
     "indoor": false,
@@ -1023,7 +1139,9 @@
     "id": "hot-spring-trip",
     "name": {
       "en": "Hot spring day trip",
-      "ja": "日帰り温泉旅"
+      "ja": "日帰り温泉旅",
+      "es": "Excursión a aguas termales",
+      "fr": "Excursion aux sources chaudes"
     },
     "category": "outdoors",
     "indoor": false,
@@ -1041,7 +1159,9 @@
     "id": "scenic-drive",
     "name": {
       "en": "Scenic drive",
-      "ja": "ドライブ"
+      "ja": "ドライブ",
+      "es": "Ruta en coche",
+      "fr": "Balade en voiture"
     },
     "category": "outdoors",
     "indoor": false,
@@ -1057,7 +1177,9 @@
     "id": "geocaching",
     "name": {
       "en": "Geocaching",
-      "ja": "ジオキャッシング"
+      "ja": "ジオキャッシング",
+      "es": "Geocaching",
+      "fr": "Géocaching"
     },
     "category": "outdoors",
     "indoor": false,
@@ -1075,7 +1197,9 @@
     "id": "futsal",
     "name": {
       "en": "Futsal",
-      "ja": "フットサル"
+      "ja": "フットサル",
+      "es": "Fútbol sala",
+      "fr": "Futsal"
     },
     "category": "sports",
     "indoor": true,
@@ -1093,7 +1217,9 @@
     "id": "basketball",
     "name": {
       "en": "Pick-up basketball",
-      "ja": "バスケットボール"
+      "ja": "バスケットボール",
+      "es": "Baloncesto informal",
+      "fr": "Basket entre amis"
     },
     "category": "sports",
     "indoor": false,
@@ -1112,7 +1238,9 @@
     "id": "volleyball",
     "name": {
       "en": "Volleyball",
-      "ja": "バレーボール"
+      "ja": "バレーボール",
+      "es": "Voleibol",
+      "fr": "Volley-ball"
     },
     "category": "sports",
     "indoor": true,
@@ -1130,7 +1258,9 @@
     "id": "beach-volleyball",
     "name": {
       "en": "Beach volleyball",
-      "ja": "ビーチバレー"
+      "ja": "ビーチバレー",
+      "es": "Vóley playa",
+      "fr": "Beach-volley"
     },
     "category": "sports",
     "indoor": false,
@@ -1148,7 +1278,9 @@
     "id": "tennis",
     "name": {
       "en": "Tennis",
-      "ja": "テニス"
+      "ja": "テニス",
+      "es": "Tenis",
+      "fr": "Tennis"
     },
     "category": "sports",
     "indoor": false,
@@ -1166,7 +1298,9 @@
     "id": "table-tennis",
     "name": {
       "en": "Table tennis",
-      "ja": "卓球"
+      "ja": "卓球",
+      "es": "Ping-pong",
+      "fr": "Ping-pong"
     },
     "category": "sports",
     "indoor": true,
@@ -1184,7 +1318,9 @@
     "id": "swimming",
     "name": {
       "en": "Swimming",
-      "ja": "水泳"
+      "ja": "水泳",
+      "es": "Natación",
+      "fr": "Natation"
     },
     "category": "sports",
     "indoor": true,
@@ -1202,7 +1338,9 @@
     "id": "climbing-gym",
     "name": {
       "en": "Rope climbing",
-      "ja": "クライミング"
+      "ja": "クライミング",
+      "es": "Escalada con cuerda",
+      "fr": "Escalade en salle"
     },
     "category": "sports",
     "indoor": true,
@@ -1218,7 +1356,9 @@
     "id": "frisbee",
     "name": {
       "en": "Frisbee",
-      "ja": "フリスビー"
+      "ja": "フリスビー",
+      "es": "Frisbee",
+      "fr": "Frisbee"
     },
     "category": "sports",
     "indoor": false,
@@ -1236,7 +1376,9 @@
     "id": "ultimate",
     "name": {
       "en": "Ultimate frisbee",
-      "ja": "アルティメット"
+      "ja": "アルティメット",
+      "es": "Ultimate frisbee",
+      "fr": "Ultimate"
     },
     "category": "sports",
     "indoor": false,
@@ -1255,7 +1397,9 @@
     "id": "softball",
     "name": {
       "en": "Softball",
-      "ja": "ソフトボール"
+      "ja": "ソフトボール",
+      "es": "Sóftbol",
+      "fr": "Softball"
     },
     "category": "sports",
     "indoor": false,
@@ -1274,7 +1418,9 @@
     "id": "golf-range",
     "name": {
       "en": "Driving range",
-      "ja": "打ちっぱなし"
+      "ja": "打ちっぱなし",
+      "es": "Campo de prácticas de golf",
+      "fr": "Practice de golf"
     },
     "category": "sports",
     "indoor": false,
@@ -1292,7 +1438,9 @@
     "id": "mini-golf",
     "name": {
       "en": "Mini golf",
-      "ja": "ミニゴルフ"
+      "ja": "ミニゴルフ",
+      "es": "Minigolf",
+      "fr": "Minigolf"
     },
     "category": "sports",
     "indoor": false,
@@ -1310,7 +1458,9 @@
     "id": "ice-skating",
     "name": {
       "en": "Ice skating",
-      "ja": "アイススケート"
+      "ja": "アイススケート",
+      "es": "Patinaje sobre hielo",
+      "fr": "Patin à glace"
     },
     "category": "sports",
     "indoor": true,
@@ -1328,7 +1478,9 @@
     "id": "skiing",
     "name": {
       "en": "Skiing / snowboarding",
-      "ja": "スキー・スノボ"
+      "ja": "スキー・スノボ",
+      "es": "Esquí / snowboard",
+      "fr": "Ski / snowboard"
     },
     "category": "sports",
     "indoor": false,
@@ -1344,7 +1496,9 @@
     "id": "skateboarding",
     "name": {
       "en": "Skateboarding",
-      "ja": "スケボー"
+      "ja": "スケボー",
+      "es": "Skate",
+      "fr": "Skateboard"
     },
     "category": "sports",
     "indoor": false,
@@ -1362,7 +1516,9 @@
     "id": "go-kart",
     "name": {
       "en": "Go-karting",
-      "ja": "ゴーカート"
+      "ja": "ゴーカート",
+      "es": "Karts",
+      "fr": "Karting"
     },
     "category": "sports",
     "indoor": false,
@@ -1380,7 +1536,9 @@
     "id": "trampoline",
     "name": {
       "en": "Trampoline park",
-      "ja": "トランポリン"
+      "ja": "トランポリン",
+      "es": "Parque de camas elásticas",
+      "fr": "Trampoline park"
     },
     "category": "sports",
     "indoor": true,
@@ -1396,7 +1554,9 @@
     "id": "dance-class",
     "name": {
       "en": "Dance class",
-      "ja": "ダンスレッスン"
+      "ja": "ダンスレッスン",
+      "es": "Clase de baile",
+      "fr": "Cours de danse"
     },
     "category": "sports",
     "indoor": true,
@@ -1412,7 +1572,9 @@
     "id": "salsa",
     "name": {
       "en": "Salsa social",
-      "ja": "サルサ"
+      "ja": "サルサ",
+      "es": "Noche de salsa",
+      "fr": "Soirée salsa"
     },
     "category": "sports",
     "indoor": true,
@@ -1430,7 +1592,9 @@
     "id": "pilates",
     "name": {
       "en": "Pilates",
-      "ja": "ピラティス"
+      "ja": "ピラティス",
+      "es": "Pilates",
+      "fr": "Pilates"
     },
     "category": "sports",
     "indoor": true,
@@ -1448,7 +1612,9 @@
     "id": "gym-session",
     "name": {
       "en": "Gym session",
-      "ja": "ジムトレーニング"
+      "ja": "ジムトレーニング",
+      "es": "Sesión de gimnasio",
+      "fr": "Séance de sport"
     },
     "category": "sports",
     "indoor": true,
@@ -1466,7 +1632,9 @@
     "id": "martial-arts",
     "name": {
       "en": "Martial arts trial",
-      "ja": "武道体験"
+      "ja": "武道体験",
+      "es": "Clase de prueba de artes marciales",
+      "fr": "Initiation aux arts martiaux"
     },
     "category": "sports",
     "indoor": true,
@@ -1482,7 +1650,9 @@
     "id": "archery",
     "name": {
       "en": "Archery",
-      "ja": "アーチェリー・弓道体験"
+      "ja": "アーチェリー・弓道体験",
+      "es": "Tiro con arco",
+      "fr": "Tir à l'arc"
     },
     "category": "sports",
     "indoor": true,
@@ -1498,7 +1668,9 @@
     "id": "batting-cage",
     "name": {
       "en": "Batting cages",
-      "ja": "バッティングセンター"
+      "ja": "バッティングセンター",
+      "es": "Jaula de bateo",
+      "fr": "Cage de frappe (baseball)"
     },
     "category": "sports",
     "indoor": true,
@@ -1514,7 +1686,9 @@
     "id": "roller-skating",
     "name": {
       "en": "Roller skating",
-      "ja": "ローラースケート"
+      "ja": "ローラースケート",
+      "es": "Patinaje sobre ruedas",
+      "fr": "Roller"
     },
     "category": "sports",
     "indoor": true,
@@ -1530,7 +1704,9 @@
     "id": "walking-football",
     "name": {
       "en": "Kickabout",
-      "ja": "ボール遊び"
+      "ja": "ボール遊び",
+      "es": "Pachanga de fútbol",
+      "fr": "Foot entre amis"
     },
     "category": "sports",
     "indoor": false,
@@ -1548,7 +1724,9 @@
     "id": "sports-watching",
     "name": {
       "en": "Watch a game",
-      "ja": "スポーツ観戦"
+      "ja": "スポーツ観戦",
+      "es": "Ver un partido",
+      "fr": "Regarder un match"
     },
     "category": "sports",
     "indoor": true,
@@ -1567,7 +1745,9 @@
     "id": "marathon-training",
     "name": {
       "en": "Long run group",
-      "ja": "ロング走"
+      "ja": "ロング走",
+      "es": "Grupo de tirada larga",
+      "fr": "Sortie longue en groupe"
     },
     "category": "sports",
     "indoor": false,
@@ -1585,7 +1765,9 @@
     "id": "cycling-tour",
     "name": {
       "en": "Cycling tour",
-      "ja": "サイクリングツアー"
+      "ja": "サイクリングツアー",
+      "es": "Ruta en bici",
+      "fr": "Balade à vélo"
     },
     "category": "sports",
     "indoor": false,
@@ -1601,7 +1783,9 @@
     "id": "dumplings",
     "name": {
       "en": "Dumpling night",
-      "ja": "餃子の会"
+      "ja": "餃子の会",
+      "es": "Noche de gyozas",
+      "fr": "Soirée gyoza"
     },
     "category": "food",
     "indoor": true,
@@ -1619,7 +1803,9 @@
     "id": "sushi",
     "name": {
       "en": "Sushi lunch",
-      "ja": "寿司ランチ"
+      "ja": "寿司ランチ",
+      "es": "Comida de sushi",
+      "fr": "Déjeuner sushi"
     },
     "category": "food",
     "indoor": true,
@@ -1637,7 +1823,9 @@
     "id": "yakiniku",
     "name": {
       "en": "Yakiniku / Korean BBQ",
-      "ja": "焼肉"
+      "ja": "焼肉",
+      "es": "Yakiniku / barbacoa coreana",
+      "fr": "Yakiniku / barbecue coréen"
     },
     "category": "food",
     "indoor": true,
@@ -1655,7 +1843,9 @@
     "id": "hot-pot",
     "name": {
       "en": "Hot pot",
-      "ja": "鍋"
+      "ja": "鍋",
+      "es": "Hot pot",
+      "fr": "Fondue asiatique"
     },
     "category": "food",
     "indoor": true,
@@ -1673,7 +1863,9 @@
     "id": "curry",
     "name": {
       "en": "Curry crawl",
-      "ja": "カレー巡り"
+      "ja": "カレー巡り",
+      "es": "Ruta de curri",
+      "fr": "Tournée des currys"
     },
     "category": "food",
     "indoor": true,
@@ -1691,7 +1883,9 @@
     "id": "dessert-crawl",
     "name": {
       "en": "Dessert crawl",
-      "ja": "スイーツ巡り"
+      "ja": "スイーツ巡り",
+      "es": "Ruta de postres",
+      "fr": "Tournée des desserts"
     },
     "category": "food",
     "indoor": true,
@@ -1709,7 +1903,9 @@
     "id": "bakery-crawl",
     "name": {
       "en": "Bakery crawl",
-      "ja": "パン屋巡り"
+      "ja": "パン屋巡り",
+      "es": "Ruta de panaderías",
+      "fr": "Tournée des boulangeries"
     },
     "category": "food",
     "indoor": true,
@@ -1727,7 +1923,9 @@
     "id": "street-food",
     "name": {
       "en": "Street food tour",
-      "ja": "食べ歩き"
+      "ja": "食べ歩き",
+      "es": "Ruta de comida callejera",
+      "fr": "Tournée street food"
     },
     "category": "food",
     "indoor": false,
@@ -1745,7 +1943,9 @@
     "id": "food-market",
     "name": {
       "en": "Food market",
-      "ja": "市場めぐり"
+      "ja": "市場めぐり",
+      "es": "Mercado gastronómico",
+      "fr": "Marché gourmand"
     },
     "category": "food",
     "indoor": true,
@@ -1763,7 +1963,9 @@
     "id": "tea-tasting",
     "name": {
       "en": "Tea tasting",
-      "ja": "お茶のテイスティング"
+      "ja": "お茶のテイスティング",
+      "es": "Cata de té",
+      "fr": "Dégustation de thé"
     },
     "category": "food",
     "indoor": true,
@@ -1781,7 +1983,9 @@
     "id": "coffee-roastery",
     "name": {
       "en": "Coffee roastery visit",
-      "ja": "焙煎所めぐり"
+      "ja": "焙煎所めぐり",
+      "es": "Visita a un tostadero de café",
+      "fr": "Visite d'une brûlerie"
     },
     "category": "food",
     "indoor": true,
@@ -1799,7 +2003,9 @@
     "id": "craft-beer",
     "name": {
       "en": "Craft beer",
-      "ja": "クラフトビール"
+      "ja": "クラフトビール",
+      "es": "Cerveza artesana",
+      "fr": "Bière artisanale"
     },
     "category": "food",
     "indoor": true,
@@ -1818,7 +2024,9 @@
     "id": "wine-tasting",
     "name": {
       "en": "Wine tasting",
-      "ja": "ワインテイスティング"
+      "ja": "ワインテイスティング",
+      "es": "Cata de vinos",
+      "fr": "Dégustation de vins"
     },
     "category": "food",
     "indoor": true,
@@ -1837,7 +2045,9 @@
     "id": "sake-tasting",
     "name": {
       "en": "Sake tasting",
-      "ja": "日本酒テイスティング"
+      "ja": "日本酒テイスティング",
+      "es": "Cata de sake",
+      "fr": "Dégustation de saké"
     },
     "category": "food",
     "indoor": true,
@@ -1855,7 +2065,9 @@
     "id": "potluck",
     "name": {
       "en": "Potluck",
-      "ja": "持ち寄りごはん"
+      "ja": "持ち寄りごはん",
+      "es": "Comida compartida",
+      "fr": "Repas partagé"
     },
     "category": "food",
     "indoor": true,
@@ -1874,7 +2086,9 @@
     "id": "vegan-food",
     "name": {
       "en": "Vegan food",
-      "ja": "ヴィーガンごはん"
+      "ja": "ヴィーガンごはん",
+      "es": "Comida vegana",
+      "fr": "Cuisine végane"
     },
     "category": "food",
     "indoor": true,
@@ -1892,7 +2106,9 @@
     "id": "spicy-food",
     "name": {
       "en": "Spicy food challenge",
-      "ja": "激辛グルメ"
+      "ja": "激辛グルメ",
+      "es": "Reto de comida picante",
+      "fr": "Défi épicé"
     },
     "category": "food",
     "indoor": true,
@@ -1910,7 +2126,9 @@
     "id": "breakfast-club",
     "name": {
       "en": "Breakfast club",
-      "ja": "朝活ごはん"
+      "ja": "朝活ごはん",
+      "es": "Club del desayuno",
+      "fr": "Club du petit-déjeuner"
     },
     "category": "food",
     "indoor": true,
@@ -1929,7 +2147,9 @@
     "id": "lunch-meetup",
     "name": {
       "en": "Lunch meetup",
-      "ja": "ランチ会"
+      "ja": "ランチ会",
+      "es": "Comida en grupo",
+      "fr": "Déjeuner en groupe"
     },
     "category": "food",
     "indoor": true,
@@ -1947,7 +2167,9 @@
     "id": "dinner-meetup",
     "name": {
       "en": "Dinner meetup",
-      "ja": "夕食会"
+      "ja": "夕食会",
+      "es": "Cena en grupo",
+      "fr": "Dîner en groupe"
     },
     "category": "food",
     "indoor": true,
@@ -1965,7 +2187,9 @@
     "id": "baking",
     "name": {
       "en": "Baking session",
-      "ja": "お菓子作り"
+      "ja": "お菓子作り",
+      "es": "Repostería",
+      "fr": "Pâtisserie maison"
     },
     "category": "food",
     "indoor": true,
@@ -1981,7 +2205,9 @@
     "id": "tacos",
     "name": {
       "en": "Taco night",
-      "ja": "タコスの会"
+      "ja": "タコスの会",
+      "es": "Noche de tacos",
+      "fr": "Soirée tacos"
     },
     "category": "food",
     "indoor": true,
@@ -1999,7 +2225,9 @@
     "id": "pizza",
     "name": {
       "en": "Pizza night",
-      "ja": "ピザの会"
+      "ja": "ピザの会",
+      "es": "Noche de pizza",
+      "fr": "Soirée pizza"
     },
     "category": "food",
     "indoor": true,
@@ -2017,7 +2245,9 @@
     "id": "brewery-tour",
     "name": {
       "en": "Brewery tour",
-      "ja": "ブルワリー見学"
+      "ja": "ブルワリー見学",
+      "es": "Visita a una cervecería",
+      "fr": "Visite de brasserie"
     },
     "category": "food",
     "indoor": true,
@@ -2035,7 +2265,9 @@
     "id": "food-festival",
     "name": {
       "en": "Food festival",
-      "ja": "グルメフェス"
+      "ja": "グルメフェス",
+      "es": "Festival gastronómico",
+      "fr": "Festival gastronomique"
     },
     "category": "food",
     "indoor": false,
@@ -2051,7 +2283,9 @@
     "id": "afternoon-tea",
     "name": {
       "en": "Afternoon tea",
-      "ja": "アフタヌーンティー"
+      "ja": "アフタヌーンティー",
+      "es": "Té de la tarde",
+      "fr": "Afternoon tea"
     },
     "category": "food",
     "indoor": true,
@@ -2070,7 +2304,9 @@
     "id": "yakitori",
     "name": {
       "en": "Yakitori",
-      "ja": "焼き鳥"
+      "ja": "焼き鳥",
+      "es": "Yakitori",
+      "fr": "Yakitori"
     },
     "category": "food",
     "indoor": true,
@@ -2089,7 +2325,9 @@
     "id": "sauna",
     "name": {
       "en": "Sauna",
-      "ja": "サウナ"
+      "ja": "サウナ",
+      "es": "Sauna",
+      "fr": "Sauna"
     },
     "category": "wellness",
     "indoor": true,
@@ -2107,7 +2345,9 @@
     "id": "meditation",
     "name": {
       "en": "Meditation",
-      "ja": "瞑想"
+      "ja": "瞑想",
+      "es": "Meditación",
+      "fr": "Méditation"
     },
     "category": "wellness",
     "indoor": true,
@@ -2126,7 +2366,9 @@
     "id": "zazen",
     "name": {
       "en": "Zazen",
-      "ja": "座禅体験"
+      "ja": "座禅体験",
+      "es": "Zazen",
+      "fr": "Zazen"
     },
     "category": "wellness",
     "indoor": true,
@@ -2144,7 +2386,9 @@
     "id": "forest-bathing",
     "name": {
       "en": "Forest bathing",
-      "ja": "森林浴"
+      "ja": "森林浴",
+      "es": "Baño de bosque",
+      "fr": "Bain de forêt"
     },
     "category": "wellness",
     "indoor": false,
@@ -2163,7 +2407,9 @@
     "id": "morning-yoga",
     "name": {
       "en": "Park yoga",
-      "ja": "朝ヨガ"
+      "ja": "朝ヨガ",
+      "es": "Yoga en el parque",
+      "fr": "Yoga au parc"
     },
     "category": "wellness",
     "indoor": false,
@@ -2181,7 +2427,9 @@
     "id": "tai-chi",
     "name": {
       "en": "Tai chi",
-      "ja": "太極拳"
+      "ja": "太極拳",
+      "es": "Taichí",
+      "fr": "Tai-chi"
     },
     "category": "wellness",
     "indoor": false,
@@ -2199,7 +2447,9 @@
     "id": "stretching",
     "name": {
       "en": "Stretch session",
-      "ja": "ストレッチ会"
+      "ja": "ストレッチ会",
+      "es": "Sesión de estiramientos",
+      "fr": "Séance d'étirements"
     },
     "category": "wellness",
     "indoor": true,
@@ -2218,7 +2468,9 @@
     "id": "journaling",
     "name": {
       "en": "Journaling café",
-      "ja": "ジャーナリング会"
+      "ja": "ジャーナリング会",
+      "es": "Café de escritura personal",
+      "fr": "Café journaling"
     },
     "category": "wellness",
     "indoor": true,
@@ -2236,7 +2488,9 @@
     "id": "digital-detox",
     "name": {
       "en": "Digital detox walk",
-      "ja": "デジタルデトックス散歩"
+      "ja": "デジタルデトックス散歩",
+      "es": "Paseo sin pantallas",
+      "fr": "Balade déconnexion"
     },
     "category": "wellness",
     "indoor": false,
@@ -2255,7 +2509,9 @@
     "id": "spa-day",
     "name": {
       "en": "Spa day",
-      "ja": "スパ"
+      "ja": "スパ",
+      "es": "Día de spa",
+      "fr": "Journée spa"
     },
     "category": "wellness",
     "indoor": true,
@@ -2273,7 +2529,9 @@
     "id": "theatre",
     "name": {
       "en": "Theatre",
-      "ja": "演劇"
+      "ja": "演劇",
+      "es": "Teatro",
+      "fr": "Théâtre"
     },
     "category": "culture",
     "indoor": true,
@@ -2291,7 +2549,9 @@
     "id": "comedy",
     "name": {
       "en": "Comedy show",
-      "ja": "お笑いライブ"
+      "ja": "お笑いライブ",
+      "es": "Espectáculo de comedia",
+      "fr": "Spectacle d'humour"
     },
     "category": "culture",
     "indoor": true,
@@ -2309,7 +2569,9 @@
     "id": "classical-concert",
     "name": {
       "en": "Classical concert",
-      "ja": "クラシックコンサート"
+      "ja": "クラシックコンサート",
+      "es": "Concierto de música clásica",
+      "fr": "Concert classique"
     },
     "category": "culture",
     "indoor": true,
@@ -2327,7 +2589,9 @@
     "id": "jazz-bar",
     "name": {
       "en": "Jazz bar",
-      "ja": "ジャズバー"
+      "ja": "ジャズバー",
+      "es": "Bar de jazz",
+      "fr": "Bar de jazz"
     },
     "category": "culture",
     "indoor": true,
@@ -2346,7 +2610,9 @@
     "id": "open-mic",
     "name": {
       "en": "Open mic",
-      "ja": "オープンマイク"
+      "ja": "オープンマイク",
+      "es": "Micro abierto",
+      "fr": "Scène ouverte"
     },
     "category": "culture",
     "indoor": true,
@@ -2365,7 +2631,9 @@
     "id": "rakugo",
     "name": {
       "en": "Rakugo",
-      "ja": "落語"
+      "ja": "落語",
+      "es": "Rakugo",
+      "fr": "Rakugo"
     },
     "category": "culture",
     "indoor": true,
@@ -2383,7 +2651,9 @@
     "id": "kabuki",
     "name": {
       "en": "Kabuki / Noh",
-      "ja": "歌舞伎・能"
+      "ja": "歌舞伎・能",
+      "es": "Kabuki / Noh",
+      "fr": "Kabuki / Nô"
     },
     "category": "culture",
     "indoor": true,
@@ -2401,7 +2671,9 @@
     "id": "planetarium",
     "name": {
       "en": "Planetarium",
-      "ja": "プラネタリウム"
+      "ja": "プラネタリウム",
+      "es": "Planetario",
+      "fr": "Planétarium"
     },
     "category": "culture",
     "indoor": true,
@@ -2419,7 +2691,9 @@
     "id": "aquarium",
     "name": {
       "en": "Aquarium",
-      "ja": "水族館"
+      "ja": "水族館",
+      "es": "Acuario",
+      "fr": "Aquarium"
     },
     "category": "culture",
     "indoor": true,
@@ -2437,7 +2711,9 @@
     "id": "zoo",
     "name": {
       "en": "Zoo",
-      "ja": "動物園"
+      "ja": "動物園",
+      "es": "Zoo",
+      "fr": "Zoo"
     },
     "category": "culture",
     "indoor": false,
@@ -2455,7 +2731,9 @@
     "id": "history-museum",
     "name": {
       "en": "History museum",
-      "ja": "歴史博物館"
+      "ja": "歴史博物館",
+      "es": "Museo de historia",
+      "fr": "Musée d'histoire"
     },
     "category": "culture",
     "indoor": true,
@@ -2473,7 +2751,9 @@
     "id": "science-museum",
     "name": {
       "en": "Science museum",
-      "ja": "科学館"
+      "ja": "科学館",
+      "es": "Museo de ciencia",
+      "fr": "Musée des sciences"
     },
     "category": "culture",
     "indoor": true,
@@ -2491,7 +2771,9 @@
     "id": "film-club",
     "name": {
       "en": "Film club",
-      "ja": "映画鑑賞会"
+      "ja": "映画鑑賞会",
+      "es": "Cineclub",
+      "fr": "Ciné-club"
     },
     "category": "culture",
     "indoor": true,
@@ -2510,7 +2792,9 @@
     "id": "anime-pilgrimage",
     "name": {
       "en": "Anime location walk",
-      "ja": "聖地巡礼"
+      "ja": "聖地巡礼",
+      "es": "Ruta por lugares de anime",
+      "fr": "Balade sur les lieux d'anime"
     },
     "category": "culture",
     "indoor": false,
@@ -2526,7 +2810,9 @@
     "id": "manga-cafe",
     "name": {
       "en": "Manga café",
-      "ja": "漫画喫茶"
+      "ja": "漫画喫茶",
+      "es": "Manga café",
+      "fr": "Manga café"
     },
     "category": "culture",
     "indoor": true,
@@ -2542,7 +2828,9 @@
     "id": "record-shopping",
     "name": {
       "en": "Record shop crawl",
-      "ja": "レコード屋巡り"
+      "ja": "レコード屋巡り",
+      "es": "Ruta de tiendas de discos",
+      "fr": "Tournée des disquaires"
     },
     "category": "culture",
     "indoor": true,
@@ -2558,7 +2846,9 @@
     "id": "poetry-reading",
     "name": {
       "en": "Poetry reading",
-      "ja": "詩の朗読会"
+      "ja": "詩の朗読会",
+      "es": "Lectura de poesía",
+      "fr": "Lecture de poésie"
     },
     "category": "culture",
     "indoor": true,
@@ -2577,7 +2867,9 @@
     "id": "tea-ceremony",
     "name": {
       "en": "Tea ceremony",
-      "ja": "茶道体験"
+      "ja": "茶道体験",
+      "es": "Ceremonia del té",
+      "fr": "Cérémonie du thé"
     },
     "category": "culture",
     "indoor": true,
@@ -2593,7 +2885,9 @@
     "id": "festival",
     "name": {
       "en": "Local festival",
-      "ja": "お祭り"
+      "ja": "お祭り",
+      "es": "Fiesta local",
+      "fr": "Fête locale"
     },
     "category": "culture",
     "indoor": false,
@@ -2611,7 +2905,9 @@
     "id": "observation-deck",
     "name": {
       "en": "City views",
-      "ja": "展望台"
+      "ja": "展望台",
+      "es": "Vistas de la ciudad",
+      "fr": "Vue panoramique"
     },
     "category": "culture",
     "indoor": true,
@@ -2629,7 +2925,9 @@
     "id": "architecture-tour",
     "name": {
       "en": "Building tour",
-      "ja": "建築ツアー"
+      "ja": "建築ツアー",
+      "es": "Visita a edificios",
+      "fr": "Visite architecturale"
     },
     "category": "culture",
     "indoor": true,
@@ -2645,7 +2943,9 @@
     "id": "silent-disco",
     "name": {
       "en": "Silent disco",
-      "ja": "サイレントディスコ"
+      "ja": "サイレントディスコ",
+      "es": "Silent disco",
+      "fr": "Silent disco"
     },
     "category": "culture",
     "indoor": true,
@@ -2661,7 +2961,9 @@
     "id": "trivia-night",
     "name": {
       "en": "Trivia night",
-      "ja": "クイズナイト"
+      "ja": "クイズナイト",
+      "es": "Noche de trivia",
+      "fr": "Soirée quiz"
     },
     "category": "games",
     "indoor": true,
@@ -2679,7 +2981,9 @@
     "id": "darts",
     "name": {
       "en": "Darts",
-      "ja": "ダーツ"
+      "ja": "ダーツ",
+      "es": "Dardos",
+      "fr": "Fléchettes"
     },
     "category": "games",
     "indoor": true,
@@ -2697,7 +3001,9 @@
     "id": "billiards",
     "name": {
       "en": "Pool / billiards",
-      "ja": "ビリヤード"
+      "ja": "ビリヤード",
+      "es": "Billar",
+      "fr": "Billard"
     },
     "category": "games",
     "indoor": true,
@@ -2715,7 +3021,9 @@
     "id": "arcade",
     "name": {
       "en": "Arcade",
-      "ja": "ゲームセンター"
+      "ja": "ゲームセンター",
+      "es": "Salón recreativo",
+      "fr": "Salle d'arcade"
     },
     "category": "games",
     "indoor": true,
@@ -2733,7 +3041,9 @@
     "id": "retro-games",
     "name": {
       "en": "Retro video games",
-      "ja": "レトロゲーム"
+      "ja": "レトロゲーム",
+      "es": "Videojuegos retro",
+      "fr": "Jeux vidéo rétro"
     },
     "category": "games",
     "indoor": true,
@@ -2752,7 +3062,9 @@
     "id": "mahjong",
     "name": {
       "en": "Mahjong",
-      "ja": "麻雀"
+      "ja": "麻雀",
+      "es": "Mahjong",
+      "fr": "Mahjong"
     },
     "category": "games",
     "indoor": true,
@@ -2768,7 +3080,9 @@
     "id": "chess",
     "name": {
       "en": "Chess",
-      "ja": "チェス"
+      "ja": "チェス",
+      "es": "Ajedrez",
+      "fr": "Échecs"
     },
     "category": "games",
     "indoor": true,
@@ -2786,7 +3100,9 @@
     "id": "shogi-go",
     "name": {
       "en": "Shogi / Go",
-      "ja": "将棋・囲碁"
+      "ja": "将棋・囲碁",
+      "es": "Shogi / go",
+      "fr": "Shogi / go"
     },
     "category": "games",
     "indoor": true,
@@ -2804,7 +3120,9 @@
     "id": "card-games",
     "name": {
       "en": "Card games",
-      "ja": "カードゲーム"
+      "ja": "カードゲーム",
+      "es": "Juegos de cartas",
+      "fr": "Jeux de cartes"
     },
     "category": "games",
     "indoor": true,
@@ -2822,7 +3140,9 @@
     "id": "tabletop-rpg",
     "name": {
       "en": "Tabletop RPG",
-      "ja": "TRPG"
+      "ja": "TRPG",
+      "es": "Juego de rol de mesa",
+      "fr": "Jeu de rôle sur table"
     },
     "category": "games",
     "indoor": true,
@@ -2838,7 +3158,9 @@
     "id": "murder-mystery",
     "name": {
       "en": "Murder mystery game",
-      "ja": "マーダーミステリー"
+      "ja": "マーダーミステリー",
+      "es": "Juego de misterio y asesinato",
+      "fr": "Murder party"
     },
     "category": "games",
     "indoor": true,
@@ -2854,7 +3176,9 @@
     "id": "scavenger-hunt",
     "name": {
       "en": "Scavenger hunt",
-      "ja": "宝探し"
+      "ja": "宝探し",
+      "es": "Búsqueda del tesoro",
+      "fr": "Chasse au trésor"
     },
     "category": "games",
     "indoor": false,
@@ -2870,7 +3194,9 @@
     "id": "puzzle-hunt",
     "name": {
       "en": "Puzzle hunt",
-      "ja": "謎解き街歩き"
+      "ja": "謎解き街歩き",
+      "es": "Gincana de enigmas",
+      "fr": "Jeu de piste à énigmes"
     },
     "category": "games",
     "indoor": false,
@@ -2886,7 +3212,9 @@
     "id": "video-game-night",
     "name": {
       "en": "Video game night",
-      "ja": "ゲーム大会"
+      "ja": "ゲーム大会",
+      "es": "Noche de videojuegos",
+      "fr": "Soirée jeux vidéo"
     },
     "category": "games",
     "indoor": true,
@@ -2904,7 +3232,9 @@
     "id": "amusement-park",
     "name": {
       "en": "Amusement park",
-      "ja": "遊園地"
+      "ja": "遊園地",
+      "es": "Parque de atracciones",
+      "fr": "Parc d'attractions"
     },
     "category": "games",
     "indoor": false,
@@ -2922,7 +3252,9 @@
     "id": "laser-tag",
     "name": {
       "en": "Laser tag",
-      "ja": "レーザータグ"
+      "ja": "レーザータグ",
+      "es": "Láser tag",
+      "fr": "Laser game"
     },
     "category": "games",
     "indoor": true,
@@ -2938,7 +3270,9 @@
     "id": "photography-class",
     "name": {
       "en": "Photography workshop",
-      "ja": "写真教室"
+      "ja": "写真教室",
+      "es": "Taller de fotografía",
+      "fr": "Atelier photo"
     },
     "category": "creative",
     "indoor": false,
@@ -2954,7 +3288,9 @@
     "id": "film-photo-walk",
     "name": {
       "en": "Film camera walk",
-      "ja": "フィルムカメラ散歩"
+      "ja": "フィルムカメラ散歩",
+      "es": "Paseo con cámara analógica",
+      "fr": "Balade argentique"
     },
     "category": "creative",
     "indoor": false,
@@ -2970,7 +3306,9 @@
     "id": "watercolor",
     "name": {
       "en": "Watercolour painting",
-      "ja": "水彩画"
+      "ja": "水彩画",
+      "es": "Acuarela",
+      "fr": "Aquarelle"
     },
     "category": "creative",
     "indoor": true,
@@ -2989,7 +3327,9 @@
     "id": "calligraphy",
     "name": {
       "en": "Calligraphy",
-      "ja": "書道"
+      "ja": "書道",
+      "es": "Caligrafía",
+      "fr": "Calligraphie"
     },
     "category": "creative",
     "indoor": true,
@@ -3008,7 +3348,9 @@
     "id": "ikebana",
     "name": {
       "en": "Flower arranging",
-      "ja": "生け花"
+      "ja": "生け花",
+      "es": "Arreglos florales",
+      "fr": "Art floral"
     },
     "category": "creative",
     "indoor": true,
@@ -3026,7 +3368,9 @@
     "id": "origami",
     "name": {
       "en": "Origami",
-      "ja": "折り紙"
+      "ja": "折り紙",
+      "es": "Origami",
+      "fr": "Origami"
     },
     "category": "creative",
     "indoor": true,
@@ -3045,7 +3389,9 @@
     "id": "knitting",
     "name": {
       "en": "Knitting circle",
-      "ja": "編み物の会"
+      "ja": "編み物の会",
+      "es": "Círculo de punto",
+      "fr": "Cercle de tricot"
     },
     "category": "creative",
     "indoor": true,
@@ -3063,7 +3409,9 @@
     "id": "embroidery",
     "name": {
       "en": "Embroidery",
-      "ja": "刺繍"
+      "ja": "刺繍",
+      "es": "Bordado",
+      "fr": "Broderie"
     },
     "category": "creative",
     "indoor": true,
@@ -3082,7 +3430,9 @@
     "id": "candle-making",
     "name": {
       "en": "Candle making",
-      "ja": "キャンドル作り"
+      "ja": "キャンドル作り",
+      "es": "Taller de velas",
+      "fr": "Fabrication de bougies"
     },
     "category": "creative",
     "indoor": true,
@@ -3100,7 +3450,9 @@
     "id": "leathercraft",
     "name": {
       "en": "Leathercraft",
-      "ja": "レザークラフト"
+      "ja": "レザークラフト",
+      "es": "Marroquinería",
+      "fr": "Maroquinerie"
     },
     "category": "creative",
     "indoor": true,
@@ -3118,7 +3470,9 @@
     "id": "woodworking",
     "name": {
       "en": "Woodworking",
-      "ja": "木工"
+      "ja": "木工",
+      "es": "Carpintería",
+      "fr": "Travail du bois"
     },
     "category": "creative",
     "indoor": true,
@@ -3136,7 +3490,9 @@
     "id": "jewelry-making",
     "name": {
       "en": "Jewellery making",
-      "ja": "アクセサリー作り"
+      "ja": "アクセサリー作り",
+      "es": "Taller de bisutería",
+      "fr": "Création de bijoux"
     },
     "category": "creative",
     "indoor": true,
@@ -3154,7 +3510,9 @@
     "id": "zine-making",
     "name": {
       "en": "Zine making",
-      "ja": "ZINE作り"
+      "ja": "ZINE作り",
+      "es": "Taller de fanzines",
+      "fr": "Atelier fanzine"
     },
     "category": "creative",
     "indoor": true,
@@ -3173,7 +3531,9 @@
     "id": "writing-group",
     "name": {
       "en": "Writing group",
-      "ja": "執筆会"
+      "ja": "執筆会",
+      "es": "Grupo de escritura",
+      "fr": "Atelier d'écriture"
     },
     "category": "creative",
     "indoor": true,
@@ -3192,7 +3552,9 @@
     "id": "music-jam",
     "name": {
       "en": "Music jam",
-      "ja": "セッション"
+      "ja": "セッション",
+      "es": "Jam session",
+      "fr": "Bœuf musical"
     },
     "category": "creative",
     "indoor": true,
@@ -3208,7 +3570,9 @@
     "id": "choir",
     "name": {
       "en": "Group singing",
-      "ja": "合唱"
+      "ja": "合唱",
+      "es": "Canto en grupo",
+      "fr": "Chant en groupe"
     },
     "category": "creative",
     "indoor": true,
@@ -3226,7 +3590,9 @@
     "id": "improv",
     "name": {
       "en": "Improv workshop",
-      "ja": "インプロ"
+      "ja": "インプロ",
+      "es": "Taller de improvisación",
+      "fr": "Atelier d'impro"
     },
     "category": "creative",
     "indoor": true,
@@ -3244,7 +3610,9 @@
     "id": "dye-workshop",
     "name": {
       "en": "Indigo dyeing",
-      "ja": "藍染め体験"
+      "ja": "藍染め体験",
+      "es": "Teñido con índigo",
+      "fr": "Teinture à l'indigo"
     },
     "category": "creative",
     "indoor": true,
@@ -3262,7 +3630,9 @@
     "id": "japanese-practice",
     "name": {
       "en": "Japanese practice",
-      "ja": "日本語練習会"
+      "ja": "日本語練習会",
+      "es": "Práctica de japonés",
+      "fr": "Pratique du japonais"
     },
     "category": "learning",
     "indoor": true,
@@ -3280,7 +3650,9 @@
     "id": "english-practice",
     "name": {
       "en": "English practice",
-      "ja": "英会話練習会"
+      "ja": "英会話練習会",
+      "es": "Práctica de inglés",
+      "fr": "Pratique de l'anglais"
     },
     "category": "learning",
     "indoor": true,
@@ -3298,7 +3670,9 @@
     "id": "coding-meetup",
     "name": {
       "en": "Coding meetup",
-      "ja": "もくもくコーディング"
+      "ja": "もくもくコーディング",
+      "es": "Quedada de programación",
+      "fr": "Session de code"
     },
     "category": "learning",
     "indoor": true,
@@ -3317,7 +3691,9 @@
     "id": "lecture",
     "name": {
       "en": "Talk or lecture",
-      "ja": "講演会"
+      "ja": "講演会",
+      "es": "Charla o conferencia",
+      "fr": "Conférence"
     },
     "category": "learning",
     "indoor": true,
@@ -3336,7 +3712,9 @@
     "id": "workshop-skill-swap",
     "name": {
       "en": "Skill swap",
-      "ja": "スキル交換会"
+      "ja": "スキル交換会",
+      "es": "Intercambio de habilidades",
+      "fr": "Échange de compétences"
     },
     "category": "learning",
     "indoor": true,
@@ -3355,7 +3733,9 @@
     "id": "museum-tour",
     "name": {
       "en": "Guided museum tour",
-      "ja": "美術館ガイドツアー"
+      "ja": "美術館ガイドツアー",
+      "es": "Visita guiada a un museo",
+      "fr": "Visite guidée de musée"
     },
     "category": "learning",
     "indoor": true,
@@ -3373,7 +3753,9 @@
     "id": "history-talk",
     "name": {
       "en": "Local history talk",
-      "ja": "郷土史トーク"
+      "ja": "郷土史トーク",
+      "es": "Charla de historia local",
+      "fr": "Causerie d'histoire locale"
     },
     "category": "learning",
     "indoor": true,
@@ -3392,7 +3774,9 @@
     "id": "philosophy-cafe",
     "name": {
       "en": "Philosophy café",
-      "ja": "哲学カフェ"
+      "ja": "哲学カフェ",
+      "es": "Café filosófico",
+      "fr": "Café philo"
     },
     "category": "learning",
     "indoor": true,
@@ -3410,7 +3794,9 @@
     "id": "podcast-club",
     "name": {
       "en": "Podcast club",
-      "ja": "ポッドキャスト会"
+      "ja": "ポッドキャスト会",
+      "es": "Club de pódcast",
+      "fr": "Club podcast"
     },
     "category": "learning",
     "indoor": true,
@@ -3428,7 +3814,9 @@
     "id": "first-aid-class",
     "name": {
       "en": "First aid class",
-      "ja": "救命講習"
+      "ja": "救命講習",
+      "es": "Curso de primeros auxilios",
+      "fr": "Formation aux premiers secours"
     },
     "category": "learning",
     "indoor": true,
@@ -3446,7 +3834,9 @@
     "id": "gardening",
     "name": {
       "en": "Community gardening",
-      "ja": "畑仕事"
+      "ja": "畑仕事",
+      "es": "Huerto comunitario",
+      "fr": "Jardinage collectif"
     },
     "category": "learning",
     "indoor": false,
@@ -3462,7 +3852,9 @@
     "id": "science-cafe",
     "name": {
       "en": "Science café",
-      "ja": "サイエンスカフェ"
+      "ja": "サイエンスカフェ",
+      "es": "Café científico",
+      "fr": "Café des sciences"
     },
     "category": "learning",
     "indoor": true,
@@ -3480,7 +3872,9 @@
     "id": "startup-chat",
     "name": {
       "en": "Side project chat",
-      "ja": "サイドプロジェクト談義"
+      "ja": "サイドプロジェクト談義",
+      "es": "Charla de proyectos personales",
+      "fr": "Discussion projets perso"
     },
     "category": "learning",
     "indoor": true,
@@ -3499,7 +3893,9 @@
     "id": "antique-market",
     "name": {
       "en": "Antique market",
-      "ja": "骨董市"
+      "ja": "骨董市",
+      "es": "Mercado de antigüedades",
+      "fr": "Marché d'antiquités"
     },
     "category": "shopping",
     "indoor": false,
@@ -3518,7 +3914,9 @@
     "id": "stationery-shopping",
     "name": {
       "en": "Stationery shops",
-      "ja": "文房具屋巡り"
+      "ja": "文房具屋巡り",
+      "es": "Ruta de papelerías",
+      "fr": "Tournée des papeteries"
     },
     "category": "shopping",
     "indoor": true,
@@ -3536,7 +3934,9 @@
     "id": "craft-market",
     "name": {
       "en": "Craft market",
-      "ja": "クラフトマーケット"
+      "ja": "クラフトマーケット",
+      "es": "Mercado de artesanía",
+      "fr": "Marché artisanal"
     },
     "category": "shopping",
     "indoor": false,
@@ -3554,7 +3954,9 @@
     "id": "shotengai-walk",
     "name": {
       "en": "Shopping street walk",
-      "ja": "商店街散策"
+      "ja": "商店街散策",
+      "es": "Paseo por calles comerciales",
+      "fr": "Balade dans les rues commerçantes"
     },
     "category": "shopping",
     "indoor": false,
@@ -3570,7 +3972,9 @@
     "id": "plant-shopping",
     "name": {
       "en": "Plant shops",
-      "ja": "植物屋巡り"
+      "ja": "植物屋巡り",
+      "es": "Ruta de tiendas de plantas",
+      "fr": "Tournée des boutiques de plantes"
     },
     "category": "shopping",
     "indoor": true,
@@ -3586,7 +3990,9 @@
     "id": "autumn-leaves",
     "name": {
       "en": "Autumn leaves",
-      "ja": "紅葉狩り"
+      "ja": "紅葉狩り",
+      "es": "Hojas de otoño",
+      "fr": "Feuillages d'automne"
     },
     "category": "seasonal",
     "indoor": false,
@@ -3606,7 +4012,9 @@
     "id": "plum-blossoms",
     "name": {
       "en": "Plum blossoms",
-      "ja": "梅見"
+      "ja": "梅見",
+      "es": "Flores de ciruelo",
+      "fr": "Fleurs de prunier"
     },
     "category": "seasonal",
     "indoor": false,
@@ -3625,7 +4033,9 @@
     "id": "hydrangea-walk",
     "name": {
       "en": "Hydrangea walk",
-      "ja": "紫陽花散歩"
+      "ja": "紫陽花散歩",
+      "es": "Paseo de hortensias",
+      "fr": "Balade des hortensias"
     },
     "category": "seasonal",
     "indoor": false,
@@ -3644,7 +4054,9 @@
     "id": "illuminations",
     "name": {
       "en": "Winter illuminations",
-      "ja": "イルミネーション"
+      "ja": "イルミネーション",
+      "es": "Iluminaciones de invierno",
+      "fr": "Illuminations d'hiver"
     },
     "category": "seasonal",
     "indoor": false,
@@ -3660,7 +4072,9 @@
     "id": "summer-festival",
     "name": {
       "en": "Summer festival",
-      "ja": "夏祭り"
+      "ja": "夏祭り",
+      "es": "Fiesta de verano",
+      "fr": "Fête d'été"
     },
     "category": "seasonal",
     "indoor": false,
@@ -3678,7 +4092,9 @@
     "id": "new-year-visit",
     "name": {
       "en": "New Year shrine visit",
-      "ja": "初詣"
+      "ja": "初詣",
+      "es": "Visita de Año Nuevo al santuario",
+      "fr": "Visite du Nouvel An au sanctuaire"
     },
     "category": "seasonal",
     "indoor": false,
@@ -3696,7 +4112,9 @@
     "id": "christmas-market",
     "name": {
       "en": "Christmas market",
-      "ja": "クリスマスマーケット"
+      "ja": "クリスマスマーケット",
+      "es": "Mercado navideño",
+      "fr": "Marché de Noël"
     },
     "category": "seasonal",
     "indoor": false,
@@ -3712,7 +4130,9 @@
     "id": "halloween",
     "name": {
       "en": "Halloween event",
-      "ja": "ハロウィン"
+      "ja": "ハロウィン",
+      "es": "Halloween",
+      "fr": "Halloween"
     },
     "category": "seasonal",
     "indoor": false,
@@ -3728,7 +4148,9 @@
     "id": "snow-day",
     "name": {
       "en": "Snow day trip",
-      "ja": "雪遊び"
+      "ja": "雪遊び",
+      "es": "Excursión a la nieve",
+      "fr": "Sortie à la neige"
     },
     "category": "seasonal",
     "indoor": false,
@@ -3744,7 +4166,9 @@
     "id": "fruit-picking",
     "name": {
       "en": "Fruit picking",
-      "ja": "果物狩り"
+      "ja": "果物狩り",
+      "es": "Recogida de fruta",
+      "fr": "Cueillette de fruits"
     },
     "category": "seasonal",
     "indoor": false,
@@ -3760,7 +4184,9 @@
     "id": "moon-viewing",
     "name": {
       "en": "Moon viewing",
-      "ja": "お月見"
+      "ja": "お月見",
+      "es": "Contemplación de la luna",
+      "fr": "Contemplation de la lune"
     },
     "category": "seasonal",
     "indoor": false,
@@ -3778,7 +4204,9 @@
     "id": "pool-day",
     "name": {
       "en": "Pool day",
-      "ja": "プール"
+      "ja": "プール",
+      "es": "Día de piscina",
+      "fr": "Journée piscine"
     },
     "category": "seasonal",
     "indoor": false,
@@ -3797,7 +4225,9 @@
     "id": "beach-cleanup",
     "name": {
       "en": "Beach clean-up",
-      "ja": "ビーチクリーン"
+      "ja": "ビーチクリーン",
+      "es": "Limpieza de playa",
+      "fr": "Nettoyage de plage"
     },
     "category": "community",
     "indoor": false,
@@ -3815,7 +4245,9 @@
     "id": "park-cleanup",
     "name": {
       "en": "Park clean-up",
-      "ja": "公園清掃"
+      "ja": "公園清掃",
+      "es": "Limpieza del parque",
+      "fr": "Nettoyage du parc"
     },
     "category": "community",
     "indoor": false,
@@ -3833,7 +4265,9 @@
     "id": "food-bank",
     "name": {
       "en": "Food bank shift",
-      "ja": "フードバンク"
+      "ja": "フードバンク",
+      "es": "Turno en un banco de alimentos",
+      "fr": "Banque alimentaire"
     },
     "category": "community",
     "indoor": true,
@@ -3849,7 +4283,9 @@
     "id": "animal-shelter",
     "name": {
       "en": "Animal shelter visit",
-      "ja": "保護動物ボランティア"
+      "ja": "保護動物ボランティア",
+      "es": "Visita a un refugio de animales",
+      "fr": "Visite d'un refuge animalier"
     },
     "category": "community",
     "indoor": true,
@@ -3865,7 +4301,9 @@
     "id": "blood-donation",
     "name": {
       "en": "Blood donation",
-      "ja": "献血"
+      "ja": "献血",
+      "es": "Donación de sangre",
+      "fr": "Don du sang"
     },
     "category": "community",
     "indoor": true,
@@ -3881,7 +4319,9 @@
     "id": "tree-planting",
     "name": {
       "en": "Tree planting",
-      "ja": "植樹"
+      "ja": "植樹",
+      "es": "Plantación de árboles",
+      "fr": "Plantation d'arbres"
     },
     "category": "community",
     "indoor": false,
@@ -3900,7 +4340,9 @@
     "id": "charity-run",
     "name": {
       "en": "Charity run",
-      "ja": "チャリティラン"
+      "ja": "チャリティラン",
+      "es": "Carrera solidaria",
+      "fr": "Course solidaire"
     },
     "category": "community",
     "indoor": false,
@@ -3916,7 +4358,9 @@
     "id": "repair-cafe",
     "name": {
       "en": "Repair café",
-      "ja": "リペアカフェ"
+      "ja": "リペアカフェ",
+      "es": "Repair café",
+      "fr": "Repair café"
     },
     "category": "community",
     "indoor": true,
@@ -3934,7 +4378,9 @@
     "id": "rooftop-bar",
     "name": {
       "en": "Rooftop bar",
-      "ja": "ルーフトップバー"
+      "ja": "ルーフトップバー",
+      "es": "Bar en azotea",
+      "fr": "Bar en rooftop"
     },
     "category": "nightlife",
     "indoor": true,
@@ -3952,7 +4398,9 @@
     "id": "bar-hop",
     "name": {
       "en": "Bar hop",
-      "ja": "はしご酒"
+      "ja": "はしご酒",
+      "es": "Ruta de bares",
+      "fr": "Tournée des bars"
     },
     "category": "nightlife",
     "indoor": true,
@@ -3970,7 +4418,9 @@
     "id": "dj-night",
     "name": {
       "en": "DJ night",
-      "ja": "DJイベント"
+      "ja": "DJイベント",
+      "es": "Noche de DJ",
+      "fr": "Soirée DJ"
     },
     "category": "nightlife",
     "indoor": true,
@@ -3988,7 +4438,9 @@
     "id": "standing-bar",
     "name": {
       "en": "Standing bar",
-      "ja": "立ち飲み"
+      "ja": "立ち飲み",
+      "es": "Bar de pie",
+      "fr": "Bar debout"
     },
     "category": "nightlife",
     "indoor": true,
@@ -4006,7 +4458,9 @@
     "id": "pub-quiz",
     "name": {
       "en": "Pub quiz",
-      "ja": "パブクイズ"
+      "ja": "パブクイズ",
+      "es": "Quiz en un pub",
+      "fr": "Quiz au pub"
     },
     "category": "nightlife",
     "indoor": true,
@@ -4024,7 +4478,9 @@
     "id": "live-house",
     "name": {
       "en": "Indie gig",
-      "ja": "ライブハウス"
+      "ja": "ライブハウス",
+      "es": "Concierto indie",
+      "fr": "Concert indé"
     },
     "category": "nightlife",
     "indoor": true,
@@ -4042,7 +4498,9 @@
     "id": "animal-cafe",
     "name": {
       "en": "Animal café",
-      "ja": "動物カフェ"
+      "ja": "動物カフェ",
+      "es": "Café de animales",
+      "fr": "Café animalier"
     },
     "category": "food",
     "indoor": true,
@@ -4060,7 +4518,9 @@
     "id": "bookshop-cafe",
     "name": {
       "en": "Book café",
-      "ja": "ブックカフェ"
+      "ja": "ブックカフェ",
+      "es": "Café librería",
+      "fr": "Café-librairie"
     },
     "category": "culture",
     "indoor": true,

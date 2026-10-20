@@ -3,7 +3,9 @@
   "_comment": "Synthetic test pack: a real car-based city used to prove the app needs no code changes for a second city. Not a launch city.",
   "name": {
     "en": "Austin",
-    "es": "Austin"
+    "ja": "オースティン",
+    "es": "Austin",
+    "fr": "Austin"
   },
   "timezone": "America/Chicago",
   "currency": "USD",
@@ -203,14 +205,18 @@
       "activity_id": "izakaya",
       "name": {
         "en": "Japanese pub",
-        "es": "Bar japonés"
+        "ja": "居酒屋",
+        "es": "Bar japonés",
+        "fr": "Bistrot japonais"
       }
     },
     {
       "activity_id": "language-exchange",
       "name": {
         "en": "Spanish–English exchange",
-        "es": "Intercambio español–inglés"
+        "ja": "スペイン語・英語交換",
+        "es": "Intercambio español–inglés",
+        "fr": "Échange espagnol–anglais"
       }
     },
     {
@@ -223,7 +229,9 @@
       "activity_id": "beach-day",
       "name": {
         "en": "Lake day",
-        "es": "Día en el lago"
+        "ja": "湖で過ごす一日",
+        "es": "Día en el lago",
+        "fr": "Journée au lac"
       },
       "months": [
         5,

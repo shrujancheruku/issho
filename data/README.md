@@ -17,7 +17,7 @@ Load with `make seed` (everything) or `cd backend && go run ./cmd/tool seed ../d
 ```json
 {
   "id": "photo-walk",                       // stable slug; referenced by user prefs. Never rename.
-  "name": { "en": "Photo walk", "ja": "フォトウォーク" },
+  "name": { "en": "Photo walk", "ja": "フォトウォーク", "es": "Paseo fotográfico", "fr": "Balade photo" }, // all four required
   "category": "outdoors",                   // tile-grid grouping
   "indoor": false,
   "energy": 2,                              // 1 calm … 3 active
@@ -53,7 +53,7 @@ Common places get a small radius, rare ones a large one. Categories with a radiu
   "name": { "en": "Tokyo", "ja": "東京" },
   "timezone": "Asia/Tokyo",                 // IANA tz; event times are local to this
   "currency": "JPY",
-  "languages": ["ja", "en"],                // defaults offered during onboarding; the first is used for venue search
+  "languages": ["ja", "en"],                // languages commonly used here, most common first; any language code. Suggestions for onboarding/events; the first is used for venue search
   "travel_modes": ["transit", "walk"],      // how people get around: transit, walk, drive, bicycle. Car-based cities: ["drive"]
   "areas": [                                // the unit users pick as "home"
     { "id": "tokyo-kichijoji", "name": { "en": "Kichijoji", "ja": "吉祥寺" }, "lat": 35.7030, "lng": 139.5798 }
@@ -76,4 +76,7 @@ Common places get a small radius, rare ones a large one. Categories with a radiu
 6. Build its travel matrix and discover venues: `make matrix CITY=<city>` and `make venues CITY=<city>` (dry-run first with `ARGS=-dry-run`; see [../docs/google-maps.md](../docs/google-maps.md)). Rebuild the matrix at least every 30 days.
 7. Update [../docs/ROADMAP.md](../docs/ROADMAP.md).
 
-Translations: provide at least `en`, plus the city's local language. Missing locales fall back to English (`i18n.Pick`).
+Translations (how languages are shown: [../docs/architecture.md](../docs/architecture.md#languages)):
+- Activity and venue-category names **must** have every language in `i18n.Translated` (`en`, `ja`, `es`, `fr`); validation fails otherwise. An override `name` replaces the whole name, so it must be complete too.
+- City and area names need `en` (the authoring language, used as the last-resort fallback); add other languages where the name actually differs (`東京`, `Tokio`).
+- Adding a translated language: add it to `i18n.Translated`, translate every catalogue name, and add the app's strings. People and events can already use any language; this only adds our own translations.

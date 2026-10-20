@@ -54,7 +54,7 @@ func TestDataFiles(t *testing.T) {
 
 func TestValidatePackRejects(t *testing.T) {
 	good := Pack{
-		ID: "x", Name: Text{"en": "X"}, Timezone: "UTC", Currency: "USD", Languages: []string{"en"},
+		ID: "x", Name: Text{"en": "X"}, Timezone: "UTC", Currency: "USD", Languages: []string{"en", "ja"},
 		TravelModes: []string{"drive"},
 		Areas:       []Area{{ID: "x-a", Name: Text{"en": "A"}, Lat: 1, Lng: 1}},
 	}
@@ -62,7 +62,11 @@ func TestValidatePackRejects(t *testing.T) {
 		t.Fatalf("valid pack rejected: %v", err)
 	}
 	cases := map[string]func(p *Pack){
-		"bad mode":       func(p *Pack) { p.TravelModes = []string{"teleport"} },
+		"bad mode":      func(p *Pack) { p.TravelModes = []string{"teleport"} },
+		"bad lang code": func(p *Pack) { p.Languages = []string{"ja", "Japanese"} },
+		"partial override": func(p *Pack) {
+			p.ActivityOverrides = []ActivityOverride{{ActivityID: "hike", Name: Text{"en": "Hike"}}}
+		},
 		"no modes":       func(p *Pack) { p.TravelModes = nil },
 		"area prefix":    func(p *Pack) { p.Areas[0].ID = "a" },
 		"null island":    func(p *Pack) { p.Areas[0].Lat, p.Areas[0].Lng = 0, 0 },

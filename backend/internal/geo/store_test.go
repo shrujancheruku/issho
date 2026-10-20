@@ -24,11 +24,17 @@ func TestIntegrationStore(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer pool.Close()
+	// t.Cleanup, not defer: cleanups run after the test body and in reverse
+	// order, so the pool must still be open when the city is deleted below.
+	t.Cleanup(pool.Close)
 	q := dbgen.New(pool)
 
 	const city = "zz-geo-test"
-	cleanup := func() { _, _ = pool.Exec(ctx, "delete from app.cities where id = $1", city) }
+	cleanup := func() {
+		if _, err := pool.Exec(ctx, "delete from app.cities where id = $1", city); err != nil {
+			t.Errorf("cleanup: %v", err)
+		}
+	}
 	cleanup()
 	t.Cleanup(cleanup)
 	if err := q.UpsertCity(ctx, dbgen.UpsertCityParams{

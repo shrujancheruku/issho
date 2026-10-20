@@ -45,10 +45,11 @@ type AppAvailabilitySlot struct {
 }
 
 type AppCity struct {
-	ID              string
-	Name            []byte
-	Timezone        string
-	Currency        string
+	ID       string
+	Name     []byte
+	Timezone string
+	Currency string
+	// Languages commonly used in the city, most common first (suggestions only)
 	Languages       []string
 	MatchingWeights []byte
 	CreatedAt       pgtype.Timestamptz
@@ -64,18 +65,20 @@ type AppCityActivityOverride struct {
 }
 
 type AppProfile struct {
-	UserID         uuid.UUID
-	DisplayName    string
-	BirthYear      int16
-	Gender         string
-	SameGenderOnly bool
-	HomeAreaID     string
-	MaxTravelMin   int16
-	Energy         int16
-	Budget         int16
-	SizePref       string
-	Reliability    float32
-	UpdatedAt      pgtype.Timestamptz
+	UserID            uuid.UUID
+	DisplayName       string
+	BirthYear         int16
+	Gender            string
+	SameGenderOnly    bool
+	HomeAreaID        string
+	MaxTravelMin      int16
+	Energy            int16
+	Budget            int16
+	SizePref          string
+	Reliability       float32
+	UpdatedAt         pgtype.Timestamptz
+	PrimaryLanguage   string
+	SecondaryLanguage *string
 }
 
 type AppUser struct {

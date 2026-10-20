@@ -40,8 +40,8 @@ const (
 
 // CatalogServiceClient is a client for the issho.v1.CatalogService service.
 type CatalogServiceClient interface {
-	// ListActivities returns the activities enabled in a city, with display
-	// names resolved for the requested locale (falling back to English).
+	// ListActivities returns the activities enabled in a city, with names in
+	// the requested primary and secondary languages.
 	ListActivities(context.Context, *connect.Request[v1.ListActivitiesRequest]) (*connect.Response[v1.ListActivitiesResponse], error)
 }
 
@@ -77,8 +77,8 @@ func (c *catalogServiceClient) ListActivities(ctx context.Context, req *connect.
 
 // CatalogServiceHandler is an implementation of the issho.v1.CatalogService service.
 type CatalogServiceHandler interface {
-	// ListActivities returns the activities enabled in a city, with display
-	// names resolved for the requested locale (falling back to English).
+	// ListActivities returns the activities enabled in a city, with names in
+	// the requested primary and secondary languages.
 	ListActivities(context.Context, *connect.Request[v1.ListActivitiesRequest]) (*connect.Response[v1.ListActivitiesResponse], error)
 }
 

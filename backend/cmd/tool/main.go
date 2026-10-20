@@ -173,14 +173,6 @@ func discoverVenues(ctx context.Context, pool *pgxpool.Pool, args []string) erro
 	if err != nil {
 		return err
 	}
-	langs, err := q.GetCityLanguages(ctx, city)
-	if err != nil {
-		return err
-	}
-	lang := ""
-	if len(langs) > 0 {
-		lang = langs[0]
-	}
 
 	jobs := geo.PlanVenues(areas, cats)
 	slog.Info("venue discovery plan", "city", city, "areas", len(areas), "categories", len(cats), "requests", len(jobs))
@@ -191,7 +183,12 @@ func discoverVenues(ctx context.Context, pool *pgxpool.Pool, args []string) erro
 	if err != nil {
 		return err
 	}
-	venues, err := geo.DiscoverVenues(ctx, google.New(key), areas, cats, lang)
+	// The city's main language. It only affects ranking: no names are stored.
+	langs, err := q.GetCityLanguages(ctx, city)
+	if err != nil {
+		return err
+	}
+	venues, err := geo.DiscoverVenues(ctx, google.New(key), areas, cats, langs[0])
 	if err != nil {
 		return err
 	}

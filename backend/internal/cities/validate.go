@@ -4,9 +4,24 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+
+	"github.com/shrujancheruku/issho/backend/internal/platform/i18n"
 )
 
 var travelModes = map[string]bool{"transit": true, "walk": true, "drive": true, "bicycle": true}
+
+// missingLangs returns the translated languages (i18n.Translated) that t
+// lacks. Catalogue names must be complete: a gap would make one activity
+// silently fall back to another language for some users.
+func missingLangs(t Text) []string {
+	var out []string
+	for _, l := range i18n.Translated {
+		if t[l] == "" {
+			out = append(out, l)
+		}
+	}
+	return out
+}
 
 // ValidateCatalog checks the venue categories and activities against each
 // other and against the database constraints, so a bad edit fails with a clear
@@ -21,8 +36,8 @@ func ValidateCatalog(cats []VenueCategory, acts []Activity) error {
 			bad("venue category %q: empty or duplicate id", c.ID)
 		}
 		catIDs[c.ID] = true
-		if c.Name["en"] == "" {
-			bad("venue category %s: missing English name", c.ID)
+		if m := missingLangs(c.Name); len(m) > 0 {
+			bad("venue category %s: name missing %v", c.ID, m)
 		}
 		if len(c.GoogleTypes) == 0 {
 			bad("venue category %s: no google_types", c.ID)
@@ -39,8 +54,8 @@ func ValidateCatalog(cats []VenueCategory, acts []Activity) error {
 			bad("activity %q: empty or duplicate id", a.ID)
 		}
 		actIDs[a.ID] = true
-		if a.Name["en"] == "" {
-			bad("activity %s: missing English name", a.ID)
+		if m := missingLangs(a.Name); len(m) > 0 {
+			bad("activity %s: name missing %v", a.ID, m)
 		}
 		if a.Category == "" {
 			bad("activity %s: missing category", a.ID)
@@ -72,11 +87,18 @@ func ValidatePack(p Pack, activityIDs map[string]bool) error {
 	if p.ID == "" || p.Timezone == "" || p.Currency == "" {
 		bad("id, timezone and currency are required")
 	}
-	if p.Name["en"] == "" {
-		bad("missing English name")
+	if p.Name[i18n.Authoring] == "" {
+		bad("missing %s name (the authoring language, needed as a fallback)", i18n.Authoring)
 	}
+	// languages = the languages commonly used in the city, most common first.
+	// Any language is allowed: they're suggestions for onboarding and events.
 	if len(p.Languages) == 0 {
 		bad("no languages")
+	}
+	for _, l := range p.Languages {
+		if !i18n.Valid(l) {
+			bad("language %q is not a base language code like \"ja\"", l)
+		}
 	}
 	if len(p.TravelModes) == 0 {
 		bad("no travel_modes")
@@ -96,8 +118,8 @@ func ValidatePack(p Pack, activityIDs map[string]bool) error {
 			bad("area %q: id must be unique and start with %q", a.ID, p.ID+"-")
 		}
 		areaIDs[a.ID] = true
-		if a.Name["en"] == "" {
-			bad("area %s: missing English name", a.ID)
+		if a.Name[i18n.Authoring] == "" {
+			bad("area %s: missing %s name", a.ID, i18n.Authoring)
 		}
 		if a.Lat < -90 || a.Lat > 90 || a.Lng < -180 || a.Lng > 180 || (a.Lat == 0 && a.Lng == 0) {
 			bad("area %s: invalid coordinates %v,%v", a.ID, a.Lat, a.Lng)
@@ -107,6 +129,13 @@ func ValidatePack(p Pack, activityIDs map[string]bool) error {
 	for _, o := range p.ActivityOverrides {
 		if seen[o.ActivityID] {
 			bad("override %s: duplicate", o.ActivityID)
+		}
+		// An override name replaces the whole catalogue name, so it must be as
+		// complete as the catalogue.
+		if len(o.Name) > 0 {
+			if m := missingLangs(o.Name); len(m) > 0 {
+				bad("override %s: name missing %v", o.ActivityID, m)
+			}
 		}
 		seen[o.ActivityID] = true
 		if activityIDs != nil && !activityIDs[o.ActivityID] {

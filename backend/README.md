@@ -11,7 +11,7 @@ The Go backend for Issho: a modular monolith serving a ConnectRPC API. It uses P
 | `internal/platform/config` | Environment variables → `Config` |
 | `internal/platform/db` | pgx pool and goose migration runner |
 | `internal/platform/auth` | Supabase JWT verification (JWKS) and the Connect auth interceptor |
-| `internal/platform/i18n` | Resolves localised JSON text (`{"en": …, "ja": …}`) |
+| `internal/platform/i18n` | Language rules: which primary/secondary pair to show (`ForEvent`, `ForApp`), resolving localised JSON (`{"en": …, "ja": …}`) into that pair with fallbacks (`Pair`), language-code validation |
 | `internal/platform/errs` | Connect interceptor: logs unexpected errors and returns a generic `internal error` (no leaked details) |
 | `internal/platform/supabase` | Supabase admin API client (account deletion), using the secret key |
 | `internal/health` | `HealthService` |
@@ -56,13 +56,14 @@ The full reference, generated from the proto comments, is in **[../docs/generate
 | `POST /issho.v1.HealthService/Check` | public | Database ping and build version |
 | `POST /issho.v1.IdentityService/GetMe` | bearer | Returns (and lazily creates) the caller's account. `unauthenticated: account deleted` for tokens of deleted users. |
 | `POST /issho.v1.IdentityService/DeleteAccount` | bearer | Permanently deletes the caller (Supabase auth user → cascades to app data). Safe to retry. |
-| `POST /issho.v1.CatalogService/ListActivities` | bearer | Activities enabled in a city, localised |
+| `POST /issho.v1.CatalogService/ListActivities` | bearer | Activities enabled in a city: `name` in `locale` (required, the user's primary language) and `secondaryName` in the optional `secondaryLanguage`. Any language code is accepted; the catalogue has en/ja/es/fr and falls back as described in [architecture](../docs/architecture.md#languages). Malformed codes → `invalid_argument`. |
 
 Example:
 ```sh
 curl -s -X POST localhost:8080/issho.v1.CatalogService/ListActivities \
   -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" \
-  -d '{"cityId":"tokyo","locale":"ja"}'
+  -d '{"cityId":"tokyo","locale":"ja","secondaryLanguage":"es"}'
+# → {"activities":[…, {"id":"pottery","name":"陶芸","secondaryName":"Cerámica", …}]}
 ```
 
 Errors use Connect codes, e.g. `{"code":"unauthenticated","message":"missing bearer token"}` with HTTP 401.
@@ -117,7 +118,7 @@ go test ./...          # or `make test` from the root
 | Test | Covers |
 |---|---|
 | `internal/platform/auth/auth_test.go` | Valid token; expired, missing `exp`, wrong issuer/audience/key/subject; HS256 rejected |
-| `internal/platform/i18n/i18n_test.go` | Locale fallback chain |
+| `internal/platform/i18n/i18n_test.go` | Event and app language pairs (JP–ES exchange, single-language events, any language), text pairs (missing primary shows the secondary alone, identical text shown once, last-resort fallback), code validation |
 | `cmd/api/cors_test.go` | CORS allowlist; empty list denies all |
 | `internal/platform/errs/errs_test.go` | Raw errors become generic `internal`; Connect errors pass through |
 | `internal/platform/supabase/admin_test.go` | Admin delete: request shape, 404 treated as already deleted, other errors surfaced |

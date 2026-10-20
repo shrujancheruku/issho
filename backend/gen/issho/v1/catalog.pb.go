@@ -25,10 +25,16 @@ type ListActivitiesRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// City pack id, e.g. "tokyo". Required.
 	CityId string `protobuf:"bytes,1,opt,name=city_id,json=cityId,proto3" json:"city_id,omitempty"`
-	// BCP 47 language tag for display names, e.g. "ja" or "en-GB".
-	Locale        string `protobuf:"bytes,2,opt,name=locale,proto3" json:"locale,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	// Primary display language: a language code such as "ja" or "es" (a region,
+	// as in "ja-JP", is ignored). Clients pass the user's primary language.
+	// Required.
+	Locale string `protobuf:"bytes,2,opt,name=locale,proto3" json:"locale,omitempty"`
+	// Optional secondary display language, same format. Clients pass the
+	// user's secondary language (outside events) or the second language chosen
+	// for an event screen.
+	SecondaryLanguage string `protobuf:"bytes,3,opt,name=secondary_language,json=secondaryLanguage,proto3" json:"secondary_language,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *ListActivitiesRequest) Reset() {
@@ -71,6 +77,13 @@ func (x *ListActivitiesRequest) GetCityId() string {
 func (x *ListActivitiesRequest) GetLocale() string {
 	if x != nil {
 		return x.Locale
+	}
+	return ""
+}
+
+func (x *ListActivitiesRequest) GetSecondaryLanguage() string {
+	if x != nil {
+		return x.SecondaryLanguage
 	}
 	return ""
 }
@@ -124,7 +137,9 @@ type Activity struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Stable slug, e.g. "photo-walk".
 	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	// Localised display name (city override if set).
+	// Name in the primary language (the city's override if set). If there's no
+	// translation in the primary language, the secondary one is used instead;
+	// failing both, English.
 	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	// Grouping for the onboarding tile grid, e.g. "outdoors", "food".
 	Category string `protobuf:"bytes,3,opt,name=category,proto3" json:"category,omitempty"`
@@ -136,8 +151,12 @@ type Activity struct {
 	// True when people can easily talk while doing it (affects friendship formation).
 	Conversational bool `protobuf:"varint,7,opt,name=conversational,proto3" json:"conversational,omitempty"`
 	// Smallest and largest group size this activity works for.
-	MinGroupSize  int32 `protobuf:"varint,8,opt,name=min_group_size,json=minGroupSize,proto3" json:"min_group_size,omitempty"`
-	MaxGroupSize  int32 `protobuf:"varint,9,opt,name=max_group_size,json=maxGroupSize,proto3" json:"max_group_size,omitempty"`
+	MinGroupSize int32 `protobuf:"varint,8,opt,name=min_group_size,json=minGroupSize,proto3" json:"min_group_size,omitempty"`
+	MaxGroupSize int32 `protobuf:"varint,9,opt,name=max_group_size,json=maxGroupSize,proto3" json:"max_group_size,omitempty"`
+	// Name in the secondary language. Empty when none was requested, there's
+	// no translation, or it's identical to name, so clients can render
+	// "name · secondary_name" without showing the same words twice.
+	SecondaryName string `protobuf:"bytes,10,opt,name=secondary_name,json=secondaryName,proto3" json:"secondary_name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -235,18 +254,26 @@ func (x *Activity) GetMaxGroupSize() int32 {
 	return 0
 }
 
+func (x *Activity) GetSecondaryName() string {
+	if x != nil {
+		return x.SecondaryName
+	}
+	return ""
+}
+
 var File_issho_v1_catalog_proto protoreflect.FileDescriptor
 
 const file_issho_v1_catalog_proto_rawDesc = "" +
 	"\n" +
-	"\x16issho/v1/catalog.proto\x12\bissho.v1\"H\n" +
+	"\x16issho/v1/catalog.proto\x12\bissho.v1\"w\n" +
 	"\x15ListActivitiesRequest\x12\x17\n" +
 	"\acity_id\x18\x01 \x01(\tR\x06cityId\x12\x16\n" +
-	"\x06locale\x18\x02 \x01(\tR\x06locale\"L\n" +
+	"\x06locale\x18\x02 \x01(\tR\x06locale\x12-\n" +
+	"\x12secondary_language\x18\x03 \x01(\tR\x11secondaryLanguage\"L\n" +
 	"\x16ListActivitiesResponse\x122\n" +
 	"\n" +
 	"activities\x18\x01 \x03(\v2\x12.issho.v1.ActivityR\n" +
-	"activities\"\x8d\x02\n" +
+	"activities\"\xb4\x02\n" +
 	"\bActivity\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1a\n" +
@@ -257,7 +284,9 @@ const file_issho_v1_catalog_proto_rawDesc = "" +
 	"cost_level\x18\x06 \x01(\x05R\tcostLevel\x12&\n" +
 	"\x0econversational\x18\a \x01(\bR\x0econversational\x12$\n" +
 	"\x0emin_group_size\x18\b \x01(\x05R\fminGroupSize\x12$\n" +
-	"\x0emax_group_size\x18\t \x01(\x05R\fmaxGroupSize2g\n" +
+	"\x0emax_group_size\x18\t \x01(\x05R\fmaxGroupSize\x12%\n" +
+	"\x0esecondary_name\x18\n" +
+	" \x01(\tR\rsecondaryName2g\n" +
 	"\x0eCatalogService\x12U\n" +
 	"\x0eListActivities\x12\x1f.issho.v1.ListActivitiesRequest\x1a .issho.v1.ListActivitiesResponse\"\x00B>Z<github.com/shrujancheruku/issho/backend/gen/issho/v1;isshov1b\x06proto3"
 

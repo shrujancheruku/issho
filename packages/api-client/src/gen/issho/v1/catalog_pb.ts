@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file issho/v1/catalog.proto.
  */
 export const file_issho_v1_catalog: GenFile = /*@__PURE__*/
-  fileDesc("ChZpc3Noby92MS9jYXRhbG9nLnByb3RvEghpc3Noby52MSI4ChVMaXN0QWN0aXZpdGllc1JlcXVlc3QSDwoHY2l0eV9pZBgBIAEoCRIOCgZsb2NhbGUYAiABKAkiQAoWTGlzdEFjdGl2aXRpZXNSZXNwb25zZRImCgphY3Rpdml0aWVzGAEgAygLMhIuaXNzaG8udjEuQWN0aXZpdHkisgEKCEFjdGl2aXR5EgoKAmlkGAEgASgJEgwKBG5hbWUYAiABKAkSEAoIY2F0ZWdvcnkYAyABKAkSDgoGaW5kb29yGAQgASgIEg4KBmVuZXJneRgFIAEoBRISCgpjb3N0X2xldmVsGAYgASgFEhYKDmNvbnZlcnNhdGlvbmFsGAcgASgIEhYKDm1pbl9ncm91cF9zaXplGAggASgFEhYKDm1heF9ncm91cF9zaXplGAkgASgFMmcKDkNhdGFsb2dTZXJ2aWNlElUKDkxpc3RBY3Rpdml0aWVzEh8uaXNzaG8udjEuTGlzdEFjdGl2aXRpZXNSZXF1ZXN0GiAuaXNzaG8udjEuTGlzdEFjdGl2aXRpZXNSZXNwb25zZSIAQj5aPGdpdGh1Yi5jb20vc2hydWphbmNoZXJ1a3UvaXNzaG8vYmFja2VuZC9nZW4vaXNzaG8vdjE7aXNzaG92MWIGcHJvdG8z");
+  fileDesc("ChZpc3Noby92MS9jYXRhbG9nLnByb3RvEghpc3Noby52MSJUChVMaXN0QWN0aXZpdGllc1JlcXVlc3QSDwoHY2l0eV9pZBgBIAEoCRIOCgZsb2NhbGUYAiABKAkSGgoSc2Vjb25kYXJ5X2xhbmd1YWdlGAMgASgJIkAKFkxpc3RBY3Rpdml0aWVzUmVzcG9uc2USJgoKYWN0aXZpdGllcxgBIAMoCzISLmlzc2hvLnYxLkFjdGl2aXR5IsoBCghBY3Rpdml0eRIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEhAKCGNhdGVnb3J5GAMgASgJEg4KBmluZG9vchgEIAEoCBIOCgZlbmVyZ3kYBSABKAUSEgoKY29zdF9sZXZlbBgGIAEoBRIWCg5jb252ZXJzYXRpb25hbBgHIAEoCBIWCg5taW5fZ3JvdXBfc2l6ZRgIIAEoBRIWCg5tYXhfZ3JvdXBfc2l6ZRgJIAEoBRIWCg5zZWNvbmRhcnlfbmFtZRgKIAEoCTJnCg5DYXRhbG9nU2VydmljZRJVCg5MaXN0QWN0aXZpdGllcxIfLmlzc2hvLnYxLkxpc3RBY3Rpdml0aWVzUmVxdWVzdBogLmlzc2hvLnYxLkxpc3RBY3Rpdml0aWVzUmVzcG9uc2UiAEI+WjxnaXRodWIuY29tL3NocnVqYW5jaGVydWt1L2lzc2hvL2JhY2tlbmQvZ2VuL2lzc2hvL3YxO2lzc2hvdjFiBnByb3RvMw");
 
 /**
  * @generated from message issho.v1.ListActivitiesRequest
@@ -24,11 +24,22 @@ export type ListActivitiesRequest = Message<"issho.v1.ListActivitiesRequest"> & 
   cityId: string;
 
   /**
-   * BCP 47 language tag for display names, e.g. "ja" or "en-GB".
+   * Primary display language: a language code such as "ja" or "es" (a region,
+   * as in "ja-JP", is ignored). Clients pass the user's primary language.
+   * Required.
    *
    * @generated from field: string locale = 2;
    */
   locale: string;
+
+  /**
+   * Optional secondary display language, same format. Clients pass the
+   * user's secondary language (outside events) or the second language chosen
+   * for an event screen.
+   *
+   * @generated from field: string secondary_language = 3;
+   */
+  secondaryLanguage: string;
 };
 
 /**
@@ -69,7 +80,9 @@ export type Activity = Message<"issho.v1.Activity"> & {
   id: string;
 
   /**
-   * Localised display name (city override if set).
+   * Name in the primary language (the city's override if set). If there's no
+   * translation in the primary language, the secondary one is used instead;
+   * failing both, English.
    *
    * @generated from field: string name = 2;
    */
@@ -119,6 +132,15 @@ export type Activity = Message<"issho.v1.Activity"> & {
    * @generated from field: int32 max_group_size = 9;
    */
   maxGroupSize: number;
+
+  /**
+   * Name in the secondary language. Empty when none was requested, there's
+   * no translation, or it's identical to name, so clients can render
+   * "name · secondary_name" without showing the same words twice.
+   *
+   * @generated from field: string secondary_name = 10;
+   */
+  secondaryName: string;
 };
 
 /**
@@ -130,6 +152,10 @@ export const ActivitySchema: GenMessage<Activity> = /*@__PURE__*/
 
 /**
  * CatalogService exposes the activity catalogue, localised per city.
+ *
+ * Names come back in two languages: a primary and an optional secondary, for
+ * display side by side. The catalogue is translated into en, ja, es and fr;
+ * other languages fall back (see secondary_name).
  * Requires `Authorization: Bearer <Supabase access token>`.
  *
  * HTTP: POST /issho.v1.CatalogService/<Method>
@@ -138,8 +164,8 @@ export const ActivitySchema: GenMessage<Activity> = /*@__PURE__*/
  */
 export const CatalogService: GenService<{
   /**
-   * ListActivities returns the activities enabled in a city, with display
-   * names resolved for the requested locale (falling back to English).
+   * ListActivities returns the activities enabled in a city, with names in
+   * the requested primary and secondary languages.
    *
    * @generated from rpc issho.v1.CatalogService.ListActivities
    */

@@ -3,7 +3,9 @@
     "id": "cafe",
     "name": {
       "en": "Café",
-      "ja": "カフェ"
+      "ja": "カフェ",
+      "es": "Cafetería",
+      "fr": "Café"
     },
     "google_types": [
       "cafe",
@@ -16,7 +18,9 @@
     "id": "brunch",
     "name": {
       "en": "Brunch spot",
-      "ja": "ブランチ"
+      "ja": "ブランチ",
+      "es": "Brunch",
+      "fr": "Brunch"
     },
     "google_types": [
       "brunch_restaurant",
@@ -28,7 +32,9 @@
     "id": "restaurant",
     "name": {
       "en": "Restaurant",
-      "ja": "レストラン"
+      "ja": "レストラン",
+      "es": "Restaurante",
+      "fr": "Restaurant"
     },
     "google_types": [
       "restaurant"
@@ -39,7 +45,9 @@
     "id": "ramen",
     "name": {
       "en": "Ramen / noodles",
-      "ja": "ラーメン・麺類"
+      "ja": "ラーメン・麺類",
+      "es": "Ramen / fideos",
+      "fr": "Ramen / nouilles"
     },
     "google_types": [
       "ramen_restaurant",
@@ -51,7 +59,9 @@
     "id": "sushi",
     "name": {
       "en": "Sushi",
-      "ja": "寿司"
+      "ja": "寿司",
+      "es": "Sushi",
+      "fr": "Sushi"
     },
     "google_types": [
       "sushi_restaurant"
@@ -62,7 +72,9 @@
     "id": "bbq-grill",
     "name": {
       "en": "BBQ / grill",
-      "ja": "焼肉・BBQ"
+      "ja": "焼肉・BBQ",
+      "es": "Barbacoa / parrilla",
+      "fr": "Barbecue / grill"
     },
     "google_types": [
       "yakiniku_restaurant",
@@ -75,7 +87,9 @@
     "id": "hot-pot",
     "name": {
       "en": "Hot pot",
-      "ja": "鍋"
+      "ja": "鍋",
+      "es": "Hot pot",
+      "fr": "Fondue asiatique"
     },
     "google_types": [
       "hot_pot_restaurant"
@@ -86,7 +100,9 @@
     "id": "dessert",
     "name": {
       "en": "Dessert / bakery",
-      "ja": "スイーツ・パン"
+      "ja": "スイーツ・パン",
+      "es": "Postres / panadería",
+      "fr": "Desserts / boulangerie"
     },
     "google_types": [
       "dessert_shop",
@@ -100,7 +116,9 @@
     "id": "bar",
     "name": {
       "en": "Bar / pub",
-      "ja": "バー・居酒屋"
+      "ja": "バー・居酒屋",
+      "es": "Bar / pub",
+      "fr": "Bar / pub"
     },
     "google_types": [
       "bar",
@@ -116,7 +134,9 @@
     "id": "brewery",
     "name": {
       "en": "Brewery / winery",
-      "ja": "ブルワリー・ワイナリー"
+      "ja": "ブルワリー・ワイナリー",
+      "es": "Cervecería / bodega",
+      "fr": "Brasserie / domaine viticole"
     },
     "google_types": [
       "brewery",
@@ -129,7 +149,9 @@
     "id": "food-market",
     "name": {
       "en": "Food hall / market",
-      "ja": "フードコート・市場"
+      "ja": "フードコート・市場",
+      "es": "Mercado gastronómico",
+      "fr": "Halle gourmande / marché"
     },
     "google_types": [
       "food_court",
@@ -141,7 +163,9 @@
     "id": "karaoke",
     "name": {
       "en": "Karaoke",
-      "ja": "カラオケ"
+      "ja": "カラオケ",
+      "es": "Karaoke",
+      "fr": "Karaoké"
     },
     "google_types": [
       "karaoke"
@@ -152,7 +176,9 @@
     "id": "bowling",
     "name": {
       "en": "Bowling alley",
-      "ja": "ボウリング場"
+      "ja": "ボウリング場",
+      "es": "Bolera",
+      "fr": "Bowling"
     },
     "google_types": [
       "bowling_alley"
@@ -163,7 +189,9 @@
     "id": "arcade",
     "name": {
       "en": "Arcade",
-      "ja": "ゲームセンター"
+      "ja": "ゲームセンター",
+      "es": "Salón recreativo",
+      "fr": "Salle d'arcade"
     },
     "google_types": [
       "video_arcade",
@@ -175,7 +203,9 @@
     "id": "animal-cafe",
     "name": {
       "en": "Animal café",
-      "ja": "動物カフェ"
+      "ja": "動物カフェ",
+      "es": "Café de animales",
+      "fr": "Café animalier"
     },
     "google_types": [
       "cat_cafe",
@@ -187,7 +217,9 @@
     "id": "museum",
     "name": {
       "en": "Museum",
-      "ja": "美術館・博物館"
+      "ja": "美術館・博物館",
+      "es": "Museo",
+      "fr": "Musée"
     },
     "google_types": [
       "museum",
@@ -200,7 +232,9 @@
     "id": "gallery",
     "name": {
       "en": "Gallery",
-      "ja": "ギャラリー"
+      "ja": "ギャラリー",
+      "es": "Galería",
+      "fr": "Galerie"
     },
     "google_types": [
       "art_gallery"
@@ -211,7 +245,9 @@
     "id": "cinema",
     "name": {
       "en": "Cinema",
-      "ja": "映画館"
+      "ja": "映画館",
+      "es": "Cine",
+      "fr": "Cinéma"
     },
     "google_types": [
       "movie_theater"
@@ -222,7 +258,9 @@
     "id": "live-music",
     "name": {
       "en": "Live music venue",
-      "ja": "ライブハウス"
+      "ja": "ライブハウス",
+      "es": "Sala de conciertos",
+      "fr": "Salle de concert"
     },
     "google_types": [
       "live_music_venue",
@@ -234,7 +272,9 @@
     "id": "theatre",
     "name": {
       "en": "Theatre / comedy",
-      "ja": "劇場・お笑い"
+      "ja": "劇場・お笑い",
+      "es": "Teatro / comedia",
+      "fr": "Théâtre / humour"
     },
     "google_types": [
       "performing_arts_theater",
@@ -246,7 +286,9 @@
     "id": "planetarium",
     "name": {
       "en": "Planetarium",
-      "ja": "プラネタリウム"
+      "ja": "プラネタリウム",
+      "es": "Planetario",
+      "fr": "Planétarium"
     },
     "google_types": [
       "planetarium",
@@ -258,7 +300,9 @@
     "id": "aquarium-zoo",
     "name": {
       "en": "Aquarium / zoo",
-      "ja": "水族館・動物園"
+      "ja": "水族館・動物園",
+      "es": "Acuario / zoo",
+      "fr": "Aquarium / zoo"
     },
     "google_types": [
       "aquarium",
@@ -271,7 +315,9 @@
     "id": "bookshop",
     "name": {
       "en": "Bookshop",
-      "ja": "本屋"
+      "ja": "本屋",
+      "es": "Librería",
+      "fr": "Librairie"
     },
     "google_types": [
       "book_store"
@@ -282,7 +328,9 @@
     "id": "library",
     "name": {
       "en": "Library / coworking",
-      "ja": "図書館・コワーキング"
+      "ja": "図書館・コワーキング",
+      "es": "Biblioteca / coworking",
+      "fr": "Bibliothèque / coworking"
     },
     "google_types": [
       "library",
@@ -294,7 +342,9 @@
     "id": "community-center",
     "name": {
       "en": "Community centre",
-      "ja": "公民館・文化センター"
+      "ja": "公民館・文化センター",
+      "es": "Centro cultural",
+      "fr": "Centre culturel"
     },
     "google_types": [
       "community_center",
@@ -306,7 +356,9 @@
     "id": "art-studio",
     "name": {
       "en": "Art studio",
-      "ja": "アトリエ・工房"
+      "ja": "アトリエ・工房",
+      "es": "Taller de arte",
+      "fr": "Atelier d'art"
     },
     "google_types": [
       "art_studio"
@@ -317,7 +369,9 @@
     "id": "park",
     "name": {
       "en": "Park / garden",
-      "ja": "公園・庭園"
+      "ja": "公園・庭園",
+      "es": "Parque / jardín",
+      "fr": "Parc / jardin"
     },
     "google_types": [
       "park",
@@ -331,7 +385,9 @@
     "id": "picnic-bbq",
     "name": {
       "en": "Picnic / BBQ area",
-      "ja": "ピクニック・BBQ場"
+      "ja": "ピクニック・BBQ場",
+      "es": "Zona de pícnic / barbacoa",
+      "fr": "Aire de pique-nique / barbecue"
     },
     "google_types": [
       "picnic_ground",
@@ -343,7 +399,9 @@
     "id": "nature",
     "name": {
       "en": "Trail / nature area",
-      "ja": "自然・ハイキング"
+      "ja": "自然・ハイキング",
+      "es": "Sendero / espacio natural",
+      "fr": "Sentier / espace naturel"
     },
     "google_types": [
       "hiking_area",
@@ -357,7 +415,9 @@
     "id": "beach",
     "name": {
       "en": "Beach",
-      "ja": "海辺"
+      "ja": "海辺",
+      "es": "Playa",
+      "fr": "Plage"
     },
     "google_types": [
       "beach"
@@ -368,7 +428,9 @@
     "id": "temple-shrine",
     "name": {
       "en": "Temple / shrine",
-      "ja": "寺社"
+      "ja": "寺社",
+      "es": "Templo / santuario",
+      "fr": "Temple / sanctuaire"
     },
     "google_types": [
       "buddhist_temple",
@@ -380,7 +442,9 @@
     "id": "bath",
     "name": {
       "en": "Bath / sauna",
-      "ja": "銭湯・サウナ"
+      "ja": "銭湯・サウナ",
+      "es": "Baños / sauna",
+      "fr": "Bains / sauna"
     },
     "google_types": [
       "public_bath",
@@ -392,7 +456,9 @@
     "id": "yoga-studio",
     "name": {
       "en": "Yoga studio",
-      "ja": "ヨガスタジオ"
+      "ja": "ヨガスタジオ",
+      "es": "Estudio de yoga",
+      "fr": "Studio de yoga"
     },
     "google_types": [
       "yoga_studio"
@@ -403,7 +469,9 @@
     "id": "gym",
     "name": {
       "en": "Gym / fitness",
-      "ja": "ジム"
+      "ja": "ジム",
+      "es": "Gimnasio",
+      "fr": "Salle de sport"
     },
     "google_types": [
       "gym",
@@ -415,7 +483,9 @@
     "id": "sports-facility",
     "name": {
       "en": "Sports facility",
-      "ja": "スポーツ施設"
+      "ja": "スポーツ施設",
+      "es": "Instalación deportiva",
+      "fr": "Équipement sportif"
     },
     "google_types": [
       "sports_complex",
@@ -429,7 +499,9 @@
     "id": "swimming-pool",
     "name": {
       "en": "Swimming pool",
-      "ja": "プール"
+      "ja": "プール",
+      "es": "Piscina",
+      "fr": "Piscine"
     },
     "google_types": [
       "swimming_pool"
@@ -440,7 +512,9 @@
     "id": "ice-rink",
     "name": {
       "en": "Ice rink",
-      "ja": "スケートリンク"
+      "ja": "スケートリンク",
+      "es": "Pista de hielo",
+      "fr": "Patinoire"
     },
     "google_types": [
       "ice_skating_rink"
@@ -451,7 +525,9 @@
     "id": "golf",
     "name": {
       "en": "Golf / mini golf",
-      "ja": "ゴルフ"
+      "ja": "ゴルフ",
+      "es": "Golf / minigolf",
+      "fr": "Golf / minigolf"
     },
     "google_types": [
       "golf_course",
@@ -464,7 +540,9 @@
     "id": "go-kart",
     "name": {
       "en": "Go-karts",
-      "ja": "ゴーカート"
+      "ja": "ゴーカート",
+      "es": "Karts",
+      "fr": "Karting"
     },
     "google_types": [
       "go_karting_venue"
@@ -475,7 +553,9 @@
     "id": "amusement-park",
     "name": {
       "en": "Amusement park",
-      "ja": "遊園地"
+      "ja": "遊園地",
+      "es": "Parque de atracciones",
+      "fr": "Parc d'attractions"
     },
     "google_types": [
       "amusement_park",
@@ -487,7 +567,9 @@
     "id": "skate-park",
     "name": {
       "en": "Skate park",
-      "ja": "スケートパーク"
+      "ja": "スケートパーク",
+      "es": "Skatepark",
+      "fr": "Skatepark"
     },
     "google_types": [
       "skateboard_park"
@@ -498,7 +580,9 @@
     "id": "dance",
     "name": {
       "en": "Dance hall / club",
-      "ja": "ダンスホール・クラブ"
+      "ja": "ダンスホール・クラブ",
+      "es": "Sala de baile / discoteca",
+      "fr": "Salle de danse / club"
     },
     "google_types": [
       "dance_hall",
@@ -510,7 +594,9 @@
     "id": "flea-market",
     "name": {
       "en": "Flea market",
-      "ja": "フリーマーケット"
+      "ja": "フリーマーケット",
+      "es": "Mercadillo",
+      "fr": "Marché aux puces"
     },
     "google_types": [
       "flea_market",
@@ -522,7 +608,9 @@
     "id": "thrift",
     "name": {
       "en": "Thrift / vintage",
-      "ja": "古着・リサイクル"
+      "ja": "古着・リサイクル",
+      "es": "Segunda mano / vintage",
+      "fr": "Friperie / vintage"
     },
     "google_types": [
       "thrift_store"
@@ -533,7 +621,9 @@
     "id": "shopping",
     "name": {
       "en": "Shopping centre",
-      "ja": "ショッピングモール"
+      "ja": "ショッピングモール",
+      "es": "Centro comercial",
+      "fr": "Centre commercial"
     },
     "google_types": [
       "shopping_mall",
@@ -545,7 +635,9 @@
     "id": "campground",
     "name": {
       "en": "Campground",
-      "ja": "キャンプ場"
+      "ja": "キャンプ場",
+      "es": "Camping",
+      "fr": "Camping"
     },
     "google_types": [
       "campground"
@@ -556,7 +648,9 @@
     "id": "stadium",
     "name": {
       "en": "Stadium / arena",
-      "ja": "スタジアム"
+      "ja": "スタジアム",
+      "es": "Estadio / pabellón",
+      "fr": "Stade / aréna"
     },
     "google_types": [
       "stadium",
@@ -568,7 +662,9 @@
     "id": "dog-park",
     "name": {
       "en": "Dog park",
-      "ja": "ドッグラン"
+      "ja": "ドッグラン",
+      "es": "Parque para perros",
+      "fr": "Parc canin"
     },
     "google_types": [
       "dog_park"

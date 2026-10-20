@@ -76,12 +76,27 @@ Defined in `backend/db/migrations/` (`00001_init.sql`, `00002_geo.sql`). All app
 | `venues` | Discovered places: `google_place_id` + category, nearest area, curation status, our tags. **No Google content** (names, addresses, locations) is stored; see [google-maps.md](google-maps.md#5-terms-what-we-may-store). |
 | `city_activity_overrides` | A city can rename, disable or set seasonal months for an activity |
 | `users` | App account; `id` = Supabase `auth.users.id` |
-| `profiles` | Matching preferences (home area, travel time, group size, gender rules, …) |
-| `user_languages` | Fluent languages, and languages being learned with a level |
+| `profiles` | Matching preferences (home area, travel time, group size, gender rules, …) and display languages (`primary_language`, optional `secondary_language`) |
+| `user_languages` | Languages a person **speaks** (fluent, or learning with a level); used for matching |
 | `availability_slots` | Weekday × morning/afternoon/evening |
 | `user_activity_prefs` | Weight per activity: 0 = open to try, 1 = like, 2 = love |
 
-Localised text is stored as JSON objects and resolved with `i18n.Pick`: exact locale → base language → English → any value.
+### Languages
+
+Languages are **symmetric**: no language is the default, and people who don't speak English are fully supported. People can speak any language, and events can be held in any language. Everything is shown in a **primary** language plus an optional **secondary** one:
+
+| Where | Primary | Secondary |
+|---|---|---|
+| An event | The event's language | The event's second language if it has one (e.g. a JP–ES exchange). Otherwise the user's primary language, if different; failing that, the user's secondary choice. |
+| The rest of the app | The user's primary language | The user's secondary choice, if any |
+
+Examples: a JP–ES exchange in Tokyo shows Japanese + Spanish to everyone; a Japanese-only event shows Japanese + the viewer's own language (Spanish for a Spanish speaker).
+
+`i18n.ForEvent` and `i18n.ForApp` implement these rules; nothing else should re-implement them. Short text (names, titles) is shown **side by side** ("陶芸 · Cerámica"); longer text (descriptions, UI copy) uses a **switch** between the two languages.
+
+Localised text is stored as JSON objects (`{"en": …, "ja": …, "es": …, "fr": …}`). Our own content (catalogue, app strings) is translated into `i18n.Translated` (MVP: en, ja, es, fr), and CI checks the catalogue is complete. `i18n.Pair` resolves text for the two languages: if the primary has no translation, the secondary is shown alone; English is only the last-resort fallback (it's our authoring language). APIs return both texts (e.g. `name` + `secondary_name`) and clients choose the layout. Event text written by Claude (M6) can be in any language.
+
+What a person **reads** (`profiles.primary_language`, `secondary_language`) is separate from what they can **speak** (`user_languages`, used for matching).
 
 ## City packs (location independence)
 
