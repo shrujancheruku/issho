@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package issho.v1;
+
+option go_package = "github.com/shrujancheruku/issho/backend/gen/issho/v1;isshov1";
+
+// IdentityService manages the signed-in user's app account.
+// Authentication itself is handled by Supabase Auth; every call carries a
+// Supabase access token in the Authorization header.
+service IdentityService {
+  // GetMe returns the caller's account, creating it on first call.
+  rpc GetMe(GetMeRequest) returns (GetMeResponse) {}
+}
+
+message GetMeRequest {}
+
+message GetMeResponse {
+  User user = 1;
+}
+
+message User {
+  string id = 1;
+  string email = 2;
+  bool onboarded = 3;
+}

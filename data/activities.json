@@ -1,0 +1,572 @@
+[
+  {
+    "id": "photo-walk",
+    "name": {
+      "en": "Photo walk",
+      "ja": "フォトウォーク"
+    },
+    "category": "outdoors",
+    "indoor": false,
+    "energy": 2,
+    "cost_level": 0,
+    "conversational": true,
+    "skill_dependent": false,
+    "min_group_size": 3,
+    "max_group_size": 8
+  },
+  {
+    "id": "city-walk",
+    "name": {
+      "en": "City walk",
+      "ja": "街歩き"
+    },
+    "category": "outdoors",
+    "indoor": false,
+    "energy": 2,
+    "cost_level": 0,
+    "conversational": true,
+    "skill_dependent": false,
+    "min_group_size": 3,
+    "max_group_size": 8
+  },
+  {
+    "id": "park-picnic",
+    "name": {
+      "en": "Park picnic",
+      "ja": "公園ピクニック"
+    },
+    "category": "outdoors",
+    "indoor": false,
+    "energy": 1,
+    "cost_level": 1,
+    "conversational": true,
+    "skill_dependent": false,
+    "min_group_size": 3,
+    "max_group_size": 10
+  },
+  {
+    "id": "hike",
+    "name": {
+      "en": "Day hike",
+      "ja": "日帰りハイキング"
+    },
+    "category": "outdoors",
+    "indoor": false,
+    "energy": 3,
+    "cost_level": 1,
+    "conversational": true,
+    "skill_dependent": false,
+    "min_group_size": 3,
+    "max_group_size": 10
+  },
+  {
+    "id": "running",
+    "name": {
+      "en": "Social run",
+      "ja": "ランニング"
+    },
+    "category": "sports",
+    "indoor": false,
+    "energy": 3,
+    "cost_level": 0,
+    "conversational": false,
+    "skill_dependent": false,
+    "min_group_size": 4,
+    "max_group_size": 15
+  },
+  {
+    "id": "cycling",
+    "name": {
+      "en": "Bike ride",
+      "ja": "サイクリング"
+    },
+    "category": "sports",
+    "indoor": false,
+    "energy": 3,
+    "cost_level": 1,
+    "conversational": false,
+    "skill_dependent": false,
+    "min_group_size": 3,
+    "max_group_size": 8
+  },
+  {
+    "id": "bouldering",
+    "name": {
+      "en": "Bouldering",
+      "ja": "ボルダリング"
+    },
+    "category": "sports",
+    "indoor": true,
+    "energy": 3,
+    "cost_level": 2,
+    "conversational": true,
+    "skill_dependent": true,
+    "min_group_size": 3,
+    "max_group_size": 6
+  },
+  {
+    "id": "yoga",
+    "name": {
+      "en": "Yoga",
+      "ja": "ヨガ"
+    },
+    "category": "sports",
+    "indoor": true,
+    "energy": 2,
+    "cost_level": 2,
+    "conversational": false,
+    "skill_dependent": false,
+    "min_group_size": 4,
+    "max_group_size": 12
+  },
+  {
+    "id": "badminton",
+    "name": {
+      "en": "Badminton",
+      "ja": "バドミントン"
+    },
+    "category": "sports",
+    "indoor": true,
+    "energy": 3,
+    "cost_level": 1,
+    "conversational": true,
+    "skill_dependent": false,
+    "min_group_size": 4,
+    "max_group_size": 8
+  },
+  {
+    "id": "cafe-hop",
+    "name": {
+      "en": "Café hopping",
+      "ja": "カフェ巡り"
+    },
+    "category": "food",
+    "indoor": true,
+    "energy": 1,
+    "cost_level": 1,
+    "conversational": true,
+    "skill_dependent": false,
+    "min_group_size": 3,
+    "max_group_size": 5
+  },
+  {
+    "id": "coffee-chat",
+    "name": {
+      "en": "Coffee chat",
+      "ja": "コーヒー"
+    },
+    "category": "food",
+    "indoor": true,
+    "energy": 1,
+    "cost_level": 1,
+    "conversational": true,
+    "skill_dependent": false,
+    "min_group_size": 3,
+    "max_group_size": 4
+  },
+  {
+    "id": "brunch",
+    "name": {
+      "en": "Brunch",
+      "ja": "ブランチ"
+    },
+    "category": "food",
+    "indoor": true,
+    "energy": 1,
+    "cost_level": 2,
+    "conversational": true,
+    "skill_dependent": false,
+    "min_group_size": 3,
+    "max_group_size": 6
+  },
+  {
+    "id": "izakaya",
+    "name": {
+      "en": "Izakaya night",
+      "ja": "居酒屋"
+    },
+    "category": "food",
+    "indoor": true,
+    "energy": 1,
+    "cost_level": 2,
+    "conversational": true,
+    "skill_dependent": false,
+    "min_group_size": 4,
+    "max_group_size": 8
+  },
+  {
+    "id": "ramen-crawl",
+    "name": {
+      "en": "Ramen crawl",
+      "ja": "ラーメン巡り"
+    },
+    "category": "food",
+    "indoor": true,
+    "energy": 1,
+    "cost_level": 1,
+    "conversational": true,
+    "skill_dependent": false,
+    "min_group_size": 3,
+    "max_group_size": 5
+  },
+  {
+    "id": "cooking-class",
+    "name": {
+      "en": "Cooking class",
+      "ja": "料理教室"
+    },
+    "category": "food",
+    "indoor": true,
+    "energy": 1,
+    "cost_level": 3,
+    "conversational": true,
+    "skill_dependent": false,
+    "min_group_size": 4,
+    "max_group_size": 8
+  },
+  {
+    "id": "sento",
+    "name": {
+      "en": "Sento & sauna",
+      "ja": "銭湯・サウナ"
+    },
+    "category": "wellness",
+    "indoor": true,
+    "energy": 1,
+    "cost_level": 1,
+    "conversational": true,
+    "skill_dependent": false,
+    "min_group_size": 2,
+    "max_group_size": 4
+  },
+  {
+    "id": "museum",
+    "name": {
+      "en": "Museum visit",
+      "ja": "美術館・博物館"
+    },
+    "category": "culture",
+    "indoor": true,
+    "energy": 1,
+    "cost_level": 2,
+    "conversational": true,
+    "skill_dependent": false,
+    "min_group_size": 3,
+    "max_group_size": 6
+  },
+  {
+    "id": "gallery-hop",
+    "name": {
+      "en": "Gallery hopping",
+      "ja": "ギャラリー巡り"
+    },
+    "category": "culture",
+    "indoor": true,
+    "energy": 1,
+    "cost_level": 0,
+    "conversational": true,
+    "skill_dependent": false,
+    "min_group_size": 3,
+    "max_group_size": 6
+  },
+  {
+    "id": "live-music",
+    "name": {
+      "en": "Live music",
+      "ja": "ライブ"
+    },
+    "category": "culture",
+    "indoor": true,
+    "energy": 2,
+    "cost_level": 2,
+    "conversational": false,
+    "skill_dependent": false,
+    "min_group_size": 3,
+    "max_group_size": 8
+  },
+  {
+    "id": "cinema",
+    "name": {
+      "en": "Film night",
+      "ja": "映画"
+    },
+    "category": "culture",
+    "indoor": true,
+    "energy": 1,
+    "cost_level": 2,
+    "conversational": false,
+    "skill_dependent": false,
+    "min_group_size": 3,
+    "max_group_size": 6
+  },
+  {
+    "id": "bookshop-browse",
+    "name": {
+      "en": "Bookshop browse",
+      "ja": "本屋巡り"
+    },
+    "category": "culture",
+    "indoor": true,
+    "energy": 1,
+    "cost_level": 1,
+    "conversational": true,
+    "skill_dependent": false,
+    "min_group_size": 3,
+    "max_group_size": 5
+  },
+  {
+    "id": "book-club",
+    "name": {
+      "en": "Book club",
+      "ja": "読書会"
+    },
+    "category": "culture",
+    "indoor": true,
+    "energy": 1,
+    "cost_level": 1,
+    "conversational": true,
+    "skill_dependent": false,
+    "min_group_size": 4,
+    "max_group_size": 8
+  },
+  {
+    "id": "temple-shrine",
+    "name": {
+      "en": "Temple & shrine walk",
+      "ja": "寺社巡り"
+    },
+    "category": "culture",
+    "indoor": false,
+    "energy": 2,
+    "cost_level": 0,
+    "conversational": true,
+    "skill_dependent": false,
+    "min_group_size": 3,
+    "max_group_size": 6
+  },
+  {
+    "id": "board-games",
+    "name": {
+      "en": "Board games",
+      "ja": "ボードゲーム"
+    },
+    "category": "games",
+    "indoor": true,
+    "energy": 1,
+    "cost_level": 1,
+    "conversational": true,
+    "skill_dependent": false,
+    "min_group_size": 4,
+    "max_group_size": 6
+  },
+  {
+    "id": "karaoke",
+    "name": {
+      "en": "Karaoke",
+      "ja": "カラオケ"
+    },
+    "category": "games",
+    "indoor": true,
+    "energy": 2,
+    "cost_level": 2,
+    "conversational": true,
+    "skill_dependent": false,
+    "min_group_size": 4,
+    "max_group_size": 8
+  },
+  {
+    "id": "bowling",
+    "name": {
+      "en": "Bowling",
+      "ja": "ボウリング"
+    },
+    "category": "games",
+    "indoor": true,
+    "energy": 2,
+    "cost_level": 2,
+    "conversational": true,
+    "skill_dependent": false,
+    "min_group_size": 4,
+    "max_group_size": 8
+  },
+  {
+    "id": "escape-room",
+    "name": {
+      "en": "Escape room",
+      "ja": "脱出ゲーム"
+    },
+    "category": "games",
+    "indoor": true,
+    "energy": 2,
+    "cost_level": 3,
+    "conversational": true,
+    "skill_dependent": false,
+    "min_group_size": 4,
+    "max_group_size": 6
+  },
+  {
+    "id": "sketching",
+    "name": {
+      "en": "Urban sketching",
+      "ja": "スケッチ"
+    },
+    "category": "creative",
+    "indoor": false,
+    "energy": 1,
+    "cost_level": 0,
+    "conversational": true,
+    "skill_dependent": false,
+    "min_group_size": 3,
+    "max_group_size": 8
+  },
+  {
+    "id": "pottery",
+    "name": {
+      "en": "Pottery",
+      "ja": "陶芸"
+    },
+    "category": "creative",
+    "indoor": true,
+    "energy": 1,
+    "cost_level": 3,
+    "conversational": true,
+    "skill_dependent": true,
+    "min_group_size": 3,
+    "max_group_size": 6
+  },
+  {
+    "id": "craft-workshop",
+    "name": {
+      "en": "Craft workshop",
+      "ja": "クラフト体験"
+    },
+    "category": "creative",
+    "indoor": true,
+    "energy": 1,
+    "cost_level": 2,
+    "conversational": true,
+    "skill_dependent": false,
+    "min_group_size": 3,
+    "max_group_size": 8
+  },
+  {
+    "id": "language-exchange",
+    "name": {
+      "en": "Language exchange",
+      "ja": "言語交換"
+    },
+    "category": "learning",
+    "indoor": true,
+    "energy": 1,
+    "cost_level": 1,
+    "conversational": true,
+    "skill_dependent": false,
+    "min_group_size": 4,
+    "max_group_size": 8
+  },
+  {
+    "id": "study-session",
+    "name": {
+      "en": "Co-working session",
+      "ja": "もくもく会"
+    },
+    "category": "learning",
+    "indoor": true,
+    "energy": 1,
+    "cost_level": 1,
+    "conversational": false,
+    "skill_dependent": false,
+    "min_group_size": 3,
+    "max_group_size": 8
+  },
+  {
+    "id": "flea-market",
+    "name": {
+      "en": "Flea market",
+      "ja": "フリーマーケット"
+    },
+    "category": "shopping",
+    "indoor": false,
+    "energy": 1,
+    "cost_level": 1,
+    "conversational": true,
+    "skill_dependent": false,
+    "min_group_size": 3,
+    "max_group_size": 6
+  },
+  {
+    "id": "vintage-shopping",
+    "name": {
+      "en": "Vintage shopping",
+      "ja": "古着巡り"
+    },
+    "category": "shopping",
+    "indoor": true,
+    "energy": 1,
+    "cost_level": 2,
+    "conversational": true,
+    "skill_dependent": false,
+    "min_group_size": 3,
+    "max_group_size": 5
+  },
+  {
+    "id": "volunteering",
+    "name": {
+      "en": "Volunteering",
+      "ja": "ボランティア"
+    },
+    "category": "community",
+    "indoor": false,
+    "energy": 2,
+    "cost_level": 0,
+    "conversational": true,
+    "skill_dependent": false,
+    "min_group_size": 4,
+    "max_group_size": 15
+  },
+  {
+    "id": "beach-day",
+    "name": {
+      "en": "Beach day",
+      "ja": "海"
+    },
+    "category": "outdoors",
+    "indoor": false,
+    "energy": 2,
+    "cost_level": 1,
+    "conversational": true,
+    "skill_dependent": false,
+    "min_group_size": 3,
+    "max_group_size": 10
+  },
+  {
+    "id": "hanami",
+    "name": {
+      "en": "Cherry blossom viewing",
+      "ja": "花見"
+    },
+    "category": "seasonal",
+    "indoor": false,
+    "energy": 1,
+    "cost_level": 1,
+    "conversational": true,
+    "skill_dependent": false,
+    "min_group_size": 4,
+    "max_group_size": 12
+  },
+  {
+    "id": "fireworks",
+    "name": {
+      "en": "Fireworks festival",
+      "ja": "花火大会"
+    },
+    "category": "seasonal",
+    "indoor": false,
+    "energy": 1,
+    "cost_level": 1,
+    "conversational": true,
+    "skill_dependent": false,
+    "min_group_size": 3,
+    "max_group_size": 8
+  }
+]

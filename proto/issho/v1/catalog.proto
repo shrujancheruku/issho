@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package issho.v1;
+
+option go_package = "github.com/shrujancheruku/issho/backend/gen/issho/v1;isshov1";
+
+// CatalogService exposes the activity catalogue, localised per city.
+service CatalogService {
+  rpc ListActivities(ListActivitiesRequest) returns (ListActivitiesResponse) {}
+}
+
+message ListActivitiesRequest {
+  string city_id = 1;
+  // BCP 47 language tag for display names, e.g. "ja" or "en".
+  string locale = 2;
+}
+
+message ListActivitiesResponse {
+  repeated Activity activities = 1;
+}
+
+message Activity {
+  string id = 1;
+  string name = 2;
+  string category = 3;
+  bool indoor = 4;
+  int32 energy = 5;
+  int32 cost_level = 6;
+  bool conversational = 7;
+  int32 min_group_size = 8;
+  int32 max_group_size = 9;
+}

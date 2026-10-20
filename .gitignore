@@ -1,0 +1,16 @@
+node_modules/
+dist/
+.turbo/
+.expo/
+*.log
+.env
+.env.*
+!.env.example
+backend/bin/
+ios/
+android/
+.DS_Store
+expo-env.d.ts
+supabase/signing_keys.json
+supabase/.temp/
+supabase/.branches/

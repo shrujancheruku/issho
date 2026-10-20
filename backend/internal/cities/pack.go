@@ -1,0 +1,125 @@
+// Package cities loads city packs: the data that makes the app work in a new city
+// without code changes (areas, languages, local activity overrides).
+package cities
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"os"
+
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/shrujancheruku/issho/backend/gen/dbgen"
+)
+
+// Text is a localised string keyed by BCP 47 language tag.
+type Text map[string]string
+
+type Pack struct {
+	ID                string             `json:"id"`
+	Name              Text               `json:"name"`
+	Timezone          string             `json:"timezone"`
+	Currency          string             `json:"currency"`
+	Languages         []string           `json:"languages"`
+	Areas             []Area             `json:"areas"`
+	ActivityOverrides []ActivityOverride `json:"activity_overrides"`
+}
+
+type Area struct {
+	ID   string  `json:"id"`
+	Name Text    `json:"name"`
+	Lat  float64 `json:"lat"`
+	Lng  float64 `json:"lng"`
+}
+
+type ActivityOverride struct {
+	ActivityID string  `json:"activity_id"`
+	Disabled   bool    `json:"disabled"`
+	Name       Text    `json:"name,omitempty"`
+	Months     []int16 `json:"months,omitempty"`
+}
+
+type Activity struct {
+	ID             string `json:"id"`
+	Name           Text   `json:"name"`
+	Category       string `json:"category"`
+	Indoor         bool   `json:"indoor"`
+	Energy         int16  `json:"energy"`
+	CostLevel      int16  `json:"cost_level"`
+	Conversational bool   `json:"conversational"`
+	SkillDependent bool   `json:"skill_dependent"`
+	MinGroupSize   int16  `json:"min_group_size"`
+	MaxGroupSize   int16  `json:"max_group_size"`
+}
+
+func readJSON(path string, v any) error {
+	b, err := os.ReadFile(path)
+	if err != nil {
+		return err
+	}
+	if err := json.Unmarshal(b, v); err != nil {
+		return fmt.Errorf("%s: %w", path, err)
+	}
+	return nil
+}
+
+// SeedCatalog upserts the global activity catalogue from a JSON file.
+func SeedCatalog(ctx context.Context, pool *pgxpool.Pool, path string) (int, error) {
+	var acts []Activity
+	if err := readJSON(path, &acts); err != nil {
+		return 0, err
+	}
+	err := pgx.BeginFunc(ctx, pool, func(tx pgx.Tx) error {
+		q := dbgen.New(tx)
+		for _, a := range acts {
+			name, _ := json.Marshal(a.Name)
+			if err := q.UpsertActivity(ctx, dbgen.UpsertActivityParams{
+				ID: a.ID, Name: name, Category: a.Category, Indoor: a.Indoor, Energy: a.Energy,
+				CostLevel: a.CostLevel, Conversational: a.Conversational, SkillDependent: a.SkillDependent,
+				MinGroupSize: a.MinGroupSize, MaxGroupSize: a.MaxGroupSize,
+			}); err != nil {
+				return fmt.Errorf("activity %s: %w", a.ID, err)
+			}
+		}
+		return nil
+	})
+	return len(acts), err
+}
+
+// SeedPack upserts a city pack. The catalogue must be seeded first.
+func SeedPack(ctx context.Context, pool *pgxpool.Pool, path string) (Pack, error) {
+	var p Pack
+	if err := readJSON(path, &p); err != nil {
+		return p, err
+	}
+	err := pgx.BeginFunc(ctx, pool, func(tx pgx.Tx) error {
+		q := dbgen.New(tx)
+		name, _ := json.Marshal(p.Name)
+		if err := q.UpsertCity(ctx, dbgen.UpsertCityParams{
+			ID: p.ID, Name: name, Timezone: p.Timezone, Currency: p.Currency, Languages: p.Languages,
+		}); err != nil {
+			return err
+		}
+		for _, a := range p.Areas {
+			n, _ := json.Marshal(a.Name)
+			if err := q.UpsertArea(ctx, dbgen.UpsertAreaParams{ID: a.ID, CityID: p.ID, Name: n, Lat: a.Lat, Lng: a.Lng}); err != nil {
+				return fmt.Errorf("area %s: %w", a.ID, err)
+			}
+		}
+		for _, o := range p.ActivityOverrides {
+			var n []byte
+			if len(o.Name) > 0 {
+				n, _ = json.Marshal(o.Name)
+			}
+			if err := q.UpsertCityActivityOverride(ctx, dbgen.UpsertCityActivityOverrideParams{
+				CityID: p.ID, ActivityID: o.ActivityID, Enabled: !o.Disabled, Name: n, Months: o.Months,
+			}); err != nil {
+				return fmt.Errorf("override %s: %w", o.ActivityID, err)
+			}
+		}
+		return nil
+	})
+	return p, err
+}

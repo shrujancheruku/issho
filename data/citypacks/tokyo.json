@@ -1,0 +1,148 @@
+{
+  "id": "tokyo",
+  "name": {
+    "en": "Tokyo",
+    "ja": "東京"
+  },
+  "timezone": "Asia/Tokyo",
+  "currency": "JPY",
+  "languages": [
+    "ja",
+    "en"
+  ],
+  "areas": [
+    {
+      "id": "tokyo-kichijoji",
+      "name": {
+        "en": "Kichijoji",
+        "ja": "吉祥寺"
+      },
+      "lat": 35.703,
+      "lng": 139.5798
+    },
+    {
+      "id": "tokyo-ogikubo",
+      "name": {
+        "en": "Ogikubo",
+        "ja": "荻窪"
+      },
+      "lat": 35.7046,
+      "lng": 139.62
+    },
+    {
+      "id": "tokyo-asagaya",
+      "name": {
+        "en": "Asagaya",
+        "ja": "阿佐ヶ谷"
+      },
+      "lat": 35.7049,
+      "lng": 139.6359
+    },
+    {
+      "id": "tokyo-koenji",
+      "name": {
+        "en": "Koenji",
+        "ja": "高円寺"
+      },
+      "lat": 35.7054,
+      "lng": 139.6497
+    },
+    {
+      "id": "tokyo-nakano",
+      "name": {
+        "en": "Nakano",
+        "ja": "中野"
+      },
+      "lat": 35.7058,
+      "lng": 139.6658
+    },
+    {
+      "id": "tokyo-shinjuku",
+      "name": {
+        "en": "Shinjuku",
+        "ja": "新宿"
+      },
+      "lat": 35.6896,
+      "lng": 139.7006
+    },
+    {
+      "id": "tokyo-shimokitazawa",
+      "name": {
+        "en": "Shimokitazawa",
+        "ja": "下北沢"
+      },
+      "lat": 35.6616,
+      "lng": 139.668
+    },
+    {
+      "id": "tokyo-sangenjaya",
+      "name": {
+        "en": "Sangenjaya",
+        "ja": "三軒茶屋"
+      },
+      "lat": 35.6436,
+      "lng": 139.6713
+    },
+    {
+      "id": "tokyo-shibuya",
+      "name": {
+        "en": "Shibuya",
+        "ja": "渋谷"
+      },
+      "lat": 35.658,
+      "lng": 139.7016
+    },
+    {
+      "id": "tokyo-ebisu",
+      "name": {
+        "en": "Ebisu",
+        "ja": "恵比寿"
+      },
+      "lat": 35.6467,
+      "lng": 139.7101
+    },
+    {
+      "id": "tokyo-nakameguro",
+      "name": {
+        "en": "Naka-Meguro",
+        "ja": "中目黒"
+      },
+      "lat": 35.644,
+      "lng": 139.6988
+    },
+    {
+      "id": "tokyo-jiyugaoka",
+      "name": {
+        "en": "Jiyugaoka",
+        "ja": "自由が丘"
+      },
+      "lat": 35.6075,
+      "lng": 139.6688
+    }
+  ],
+  "activity_overrides": [
+    {
+      "activity_id": "hanami",
+      "months": [
+        3,
+        4
+      ]
+    },
+    {
+      "activity_id": "fireworks",
+      "months": [
+        7,
+        8
+      ]
+    },
+    {
+      "activity_id": "beach-day",
+      "months": [
+        6,
+        7,
+        8,
+        9
+      ]
+    }
+  ]
+}
