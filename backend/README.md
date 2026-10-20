@@ -26,7 +26,7 @@ The Go backend for Issho: a modular monolith serving a ConnectRPC API. It uses P
 
 | Variable | Required | Example (local) | Notes |
 |---|---|---|---|
-| `DATABASE_URL` | yes | `postgres://postgres:postgres@127.0.0.1:54322/postgres?sslmode=disable` | Supabase local DB. In production, use the transaction pooler for the API. |
+| `DATABASE_URL` | yes | `postgres://postgres:postgres@127.0.0.1:54322/postgres?sslmode=disable` | Supabase local DB. In production, use the **session pooler** (port 5432) or the direct connection, with `sslmode=require`. **Not** the transaction pooler (port 6543): pgx's prepared statements and River's LISTEN/NOTIFY don't work through it. |
 | `SUPABASE_URL` | yes | `http://127.0.0.1:54321` | The JWKS is fetched from `$SUPABASE_URL/auth/v1/.well-known/jwks.json`. The token issuer must be `$SUPABASE_URL/auth/v1`. |
 | `API_ADDR` | no | `:8080` | Listen address |
 | `SUPABASE_SECRET_KEY` | no | `SECRET_KEY` from `supabase status` | **Server-only secret.** Enables admin calls (account deletion). Without it, `DeleteAccount` returns `failed_precondition`. Never commit it; see [secrets](../docs/secrets.md). |
@@ -83,7 +83,7 @@ go run ./cmd/tool migrate status
 ```
 
 - Write new files as `db/migrations/000NN_name.sql` with `-- +goose Up` / `-- +goose Down` sections. Wrap multi-statement blocks (`DO $$ … $$`) in `-- +goose StatementBegin/End`.
-- goose records its versions in `app_goose_db_version`.
+- goose records its versions in `goose.db_version`, in a schema of its own. Not `public`, which Supabase's Data API would expose. Not `app`, which migration 00001's Down drops. Older databases with `public.app_goose_db_version` are moved automatically on the next run.
 - Supabase-only statements (the `auth.users` foreign key, revoking `anon`) are guarded with `IF EXISTS` checks, so the same migrations also run on plain Postgres in CI.
 
 ## Seeding

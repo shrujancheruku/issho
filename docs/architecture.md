@@ -19,7 +19,7 @@
                                                      └───────────────────────────────┘
 ```
 
-- **Clients never talk to the database directly.** The `app` schema is revoked from Supabase's `anon` and `authenticated` roles (see migration `00001`). All reads and writes go through Go services. PostgREST and Realtime are unused.
+- **Clients never talk to the database directly.** The `app` schema is revoked from Supabase's `anon` and `authenticated` roles (see migration `00001`). All reads and writes go through Go services. PostgREST and Realtime are unused. Supabase's Data API (PostgREST) is **disabled**, locally and on the hosted project, so `anon` can't reach any table, including PostGIS's `public.spatial_ref_sys`, whose grants we can't revoke. goose's version table lives in its own `goose` schema.
 - **Supabase Auth issues the identity.** The app signs in with Supabase and gets a short-lived access JWT. The Go API verifies that JWT against the project's public JWKS. It never holds a signing secret.
 - **The app user row is created lazily.** The first authenticated `GetMe` creates `app.users` with the same UUID as `auth.users`. On Supabase, a foreign key ties the two together and cascades deletes.
 

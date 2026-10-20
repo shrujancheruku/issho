@@ -22,7 +22,7 @@
 | Supabase secret key (`SUPABASE_SECRET_KEY`) | `SECRET_KEY` from `supabase status`, exported in your shell or a gitignored `.env` (never in `.env.example`) | not used (tests use a fake admin) | Kamal secrets |
 | Google Maps server key (M3) | your shell env / untracked `.env` | GitHub Actions secret (only if a job needs it; tests use fakes) | Kamal secrets |
 | Anthropic API key (M5) | shell env / untracked `.env` | not used (tests use recorded fixtures) | Kamal secrets |
-| Apple / Google OAuth secrets (M2) | `supabase/.env` (gitignored), referenced as `env(...)` in `supabase/config.toml` | not used | Supabase dashboard |
+| Apple / Google OAuth secrets (post-MVP; not used) | `supabase/.env` (gitignored), referenced as `env(...)` in `supabase/config.toml` | not used | Supabase dashboard |
 | Apple `.p8` keys, Android keystores | not stored locally; EAS manages signing credentials | n/a | EAS (Expo) credential store |
 | SMTP relay credentials (M2) | not needed (Mailpit) | n/a | Supabase dashboard (custom SMTP) |
 

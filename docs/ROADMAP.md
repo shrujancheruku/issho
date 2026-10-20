@@ -58,8 +58,7 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
 - ✅ **API client sends the Supabase access token.** Auth-gated navigation (`Stack.Protected`): sign-in → onboarding placeholder → tabs. Rejected sessions, e.g. after deletion on another device, sign out automatically.
 - ✅ **Account deletion:** `IdentityService.DeleteAccount` (Supabase Admin API, cascade to app data, safe to retry). Sign out and delete in the app. Stale tokens of deleted users get `unauthenticated: account deleted`.
 - ✅ **API error hygiene:** internal errors are logged server-side and returned as a generic `internal error`. Database details no longer leak.
-- ⬜ **Hosted Supabase project** (Free tier for dev) with asymmetric signing keys. *Needs the owner's Supabase account.*
-- ⬜ **Sign in with Apple and Google** (native, `signInWithIdToken`). *Needs Apple Developer Program membership and Google Cloud OAuth clients.*
+- ⬜ **Hosted Supabase project** (Free tier for dev), set up following [supabase-hosted.md](supabase-hosted.md). *Needs the owner's Supabase account.*
 - ⬜ **Production SMTP relay** (Resend/SES) for OTP email, plus a verified sending domain. *Needs an account and a domain.*
 - ⬜ **On-device test of the sign-in flow.** *Needs a phone with Expo Go, or Xcode (not installed on the dev machine).*
 
@@ -120,6 +119,7 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
 - ⬜ 5–10 hosts and partner venues per city. Seed users from university, language-exchange, newcomer and coworking communities.
 
 ### Post-MVP (deferred): ⏸
+- ⏸ Sign in with Apple and Google (native, `signInWithIdToken`). Email codes are enough for the MVP. If any social login is added on iOS, Sign in with Apple becomes mandatory.
 - ⏸ Paid tier (per-event fee or membership).
 - ⏸ OTA updates (EAS Update).
 - ⏸ Learned matching weights.
@@ -157,12 +157,16 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
 | 2026-10-20 | Sessions in **`expo-secure-store`** (chunked), not expo-sqlite/AsyncStorage | Refresh tokens are long-lived credentials and belong in the Keychain/Keystore. Chunking works around the ~2 KB value limit; generation IDs make torn writes detectable. |
 | 2026-10-20 | Error-sanitising Connect interceptor | connect-go returns `err.Error()` for plain errors, which leaked SQL constraint names to clients. |
 | 2026-10-20 | Deleting an account: auth user first, then app data | If deleting the auth user fails, nothing is lost and the user can retry. The reverse order could leave a live login with no data. |
+| 2026-10-20 | **Email OTP is the only sign-in method for the MVP**; Apple/Google deferred | Not needed to validate the product. It avoids OAuth setup and secrets, and the App Store rule that requires Sign in with Apple once any social login exists. |
+| 2026-10-20 | **Supabase Data API disabled**; goose's version table moved from `public` to its own `goose` schema | Found while preparing the hosted project: through the Data API, anonymous clients could **write** to `public.app_goose_db_version` (marking migrations as applied) and modify PostGIS's `spatial_ref_sys`. Its grants are owned by `supabase_admin`, so a migration can't revoke them. Auth works without the Data API. CI now checks the version table isn't in `public`. |
+| 2026-10-20 | Production `DATABASE_URL` uses the **session pooler** (or direct connection), not the transaction pooler | pgx uses prepared statements by default, and River needs LISTEN/NOTIFY. The transaction pooler supports neither. |
 | 2026-10-20 | commitlint also runs as a local `commit-msg` hook | The first M2 PR failed CI on over-long commit bodies. Catching that at commit time is cheaper than rewriting history after a push. |
 | 2026-10-20 | **jest-expo** for mobile unit tests; runs in CI with lint | Security-critical client code (session storage) needs tests. jest-expo is Expo's standard preset. |
 | 2026-10-20 | CORS deny-by-default via an explicit origin allowlist | rs/cors treats an empty `AllowedOrigins` as allow-all. |
 
 ## 5. Known gaps & risks
 - **Not enough nearby users** is the main product risk. The admin proposal override lets the first city be hand-curated.
+- **PostGIS lives in the `public` schema** (migration 00001). With the Data API disabled, no anonymous path reaches it, but Supabase's advisors flag it. Move it into the `extensions` schema with a migration **before production data exists**: PostGIS can't be relocated in place, so the geography column has to be recreated.
 - **Google Maps terms** restrict caching (store only place IDs long-term, fetch details live). Re-check the Maps Service Terms before M3 ships.
 - **`postgis/postgis` has no arm64 image.** CI (amd64) is unaffected. On Apple Silicon, use `supabase start` (arm64) or run that image with `--platform linux/amd64`.
 - **Disk space on dev machines:** Supabase images take several GB. OrbStack's VM disk can report "no space left" on its first launch; retrying fixes it.

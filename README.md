@@ -28,6 +28,7 @@ Love film cameras, flat whites and wandering down side streets? Issho finds the 
 | [docs/generated/api.md](docs/generated/api.md) | API reference, generated from the protos |
 | [docs/contributing.md](docs/contributing.md) | Workflow, Conventional Commits, releases, testing, common tasks |
 | [docs/secrets.md](docs/secrets.md) | Where secrets live and how leaks are prevented (**public repo**) |
+| [docs/supabase-hosted.md](docs/supabase-hosted.md) | Step-by-step configuration of a hosted Supabase project |
 | [SECURITY.md](SECURITY.md) | Reporting vulnerabilities |
 
 Each directory has its own README:
