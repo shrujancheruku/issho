@@ -134,7 +134,7 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
 | 2026-10-20 | **Claude (Haiku)** for tagging and plan text instead of self-hosted embeddings | Better multilingual understanding; nothing to host; costs cents. |
 | 2026-10-20 | Sentry, PostHog, EAS, Expo Push, Cloudflare, GitHub Actions (free tiers) | Each has a clear advantage over self-hosting for a solo developer. |
 | 2026-10-20 | Prefer open source; paid/closed only when clearly better; every vendor behind a Go interface | Project principle. |
-| 2026-10-20 | Conventional Commits + SemVer (release-please) | Automated changelog and versioning. |
+| 2026-10-20 | Conventional Commits + SemVer (release-please), first release `0.1.0` (`initial-version`) | Automated changelog and versioning. Without `initial-version`, release-please makes the first release 1.0.0 even with `bump-minor-pre-major`. |
 | 2026-10-20 | Supabase config at repo root (`supabase/`), not `deploy/supabase` | The Supabase CLI expects `./supabase`. goose (not the CLI) owns migrations. |
 | 2026-10-20 | `Makefile` as the task entry point; Turborepo runs the TS tasks | `just`/`mise` weren't installed and add nothing over make here. |
 | 2026-10-20 | **Redundancy review: Caddy dropped.** | Kamal 2's built-in kamal-proxy already does TLS and routing, and Cloudflare sits in front. |
