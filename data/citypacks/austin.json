@@ -1,0 +1,274 @@
+{
+  "id": "austin",
+  "_comment": "Synthetic test pack: a real car-based city used to prove the app needs no code changes for a second city. Not a launch city.",
+  "name": {
+    "en": "Austin",
+    "es": "Austin"
+  },
+  "timezone": "America/Chicago",
+  "currency": "USD",
+  "languages": [
+    "en",
+    "es"
+  ],
+  "travel_modes": [
+    "drive"
+  ],
+  "areas": [
+    {
+      "id": "austin-downtown",
+      "name": {
+        "en": "Downtown",
+        "es": "Centro"
+      },
+      "lat": 30.2672,
+      "lng": -97.7431
+    },
+    {
+      "id": "austin-east",
+      "name": {
+        "en": "East Austin",
+        "es": "Este de Austin"
+      },
+      "lat": 30.263,
+      "lng": -97.719
+    },
+    {
+      "id": "austin-south-congress",
+      "name": {
+        "en": "South Congress",
+        "es": "South Congress"
+      },
+      "lat": 30.249,
+      "lng": -97.7495
+    },
+    {
+      "id": "austin-zilker",
+      "name": {
+        "en": "Zilker",
+        "es": "Zilker"
+      },
+      "lat": 30.2669,
+      "lng": -97.7729
+    },
+    {
+      "id": "austin-hyde-park",
+      "name": {
+        "en": "Hyde Park",
+        "es": "Hyde Park"
+      },
+      "lat": 30.305,
+      "lng": -97.727
+    },
+    {
+      "id": "austin-mueller",
+      "name": {
+        "en": "Mueller",
+        "es": "Mueller"
+      },
+      "lat": 30.2985,
+      "lng": -97.705
+    },
+    {
+      "id": "austin-domain",
+      "name": {
+        "en": "The Domain",
+        "es": "The Domain"
+      },
+      "lat": 30.402,
+      "lng": -97.7253
+    },
+    {
+      "id": "austin-round-rock",
+      "name": {
+        "en": "Round Rock",
+        "es": "Round Rock"
+      },
+      "lat": 30.5083,
+      "lng": -97.6789
+    },
+    {
+      "id": "austin-cedar-park",
+      "name": {
+        "en": "Cedar Park",
+        "es": "Cedar Park"
+      },
+      "lat": 30.5052,
+      "lng": -97.8203
+    },
+    {
+      "id": "austin-pflugerville",
+      "name": {
+        "en": "Pflugerville",
+        "es": "Pflugerville"
+      },
+      "lat": 30.4394,
+      "lng": -97.62
+    }
+  ],
+  "activity_overrides": [
+    {
+      "activity_id": "hanami",
+      "disabled": true
+    },
+    {
+      "activity_id": "sento",
+      "disabled": true
+    },
+    {
+      "activity_id": "rakugo",
+      "disabled": true
+    },
+    {
+      "activity_id": "kabuki",
+      "disabled": true
+    },
+    {
+      "activity_id": "zazen",
+      "disabled": true
+    },
+    {
+      "activity_id": "tea-ceremony",
+      "disabled": true
+    },
+    {
+      "activity_id": "new-year-visit",
+      "disabled": true
+    },
+    {
+      "activity_id": "plum-blossoms",
+      "disabled": true
+    },
+    {
+      "activity_id": "hydrangea-walk",
+      "disabled": true
+    },
+    {
+      "activity_id": "moon-viewing",
+      "disabled": true
+    },
+    {
+      "activity_id": "shotengai-walk",
+      "disabled": true
+    },
+    {
+      "activity_id": "temple-shrine",
+      "disabled": true
+    },
+    {
+      "activity_id": "hot-spring-trip",
+      "disabled": true
+    },
+    {
+      "activity_id": "manga-cafe",
+      "disabled": true
+    },
+    {
+      "activity_id": "anime-pilgrimage",
+      "disabled": true
+    },
+    {
+      "activity_id": "shogi-go",
+      "disabled": true
+    },
+    {
+      "activity_id": "standing-bar",
+      "disabled": true
+    },
+    {
+      "activity_id": "snow-day",
+      "disabled": true
+    },
+    {
+      "activity_id": "japanese-practice",
+      "disabled": true
+    },
+    {
+      "activity_id": "english-practice",
+      "disabled": true
+    },
+    {
+      "activity_id": "dye-workshop",
+      "disabled": true
+    },
+    {
+      "activity_id": "ikebana",
+      "disabled": true
+    },
+    {
+      "activity_id": "illuminations",
+      "disabled": true
+    },
+    {
+      "activity_id": "izakaya",
+      "name": {
+        "en": "Japanese pub",
+        "es": "Bar japonés"
+      }
+    },
+    {
+      "activity_id": "language-exchange",
+      "name": {
+        "en": "Spanish–English exchange",
+        "es": "Intercambio español–inglés"
+      }
+    },
+    {
+      "activity_id": "fireworks",
+      "months": [
+        7
+      ]
+    },
+    {
+      "activity_id": "beach-day",
+      "name": {
+        "en": "Lake day",
+        "es": "Día en el lago"
+      },
+      "months": [
+        5,
+        6,
+        7,
+        8,
+        9
+      ]
+    },
+    {
+      "activity_id": "autumn-leaves",
+      "months": [
+        11
+      ]
+    },
+    {
+      "activity_id": "halloween",
+      "months": [
+        10
+      ]
+    },
+    {
+      "activity_id": "christmas-market",
+      "months": [
+        11,
+        12
+      ]
+    },
+    {
+      "activity_id": "pool-day",
+      "months": [
+        5,
+        6,
+        7,
+        8,
+        9
+      ]
+    },
+    {
+      "activity_id": "summer-festival",
+      "months": [
+        6,
+        7,
+        8
+      ]
+    }
+  ]
+}

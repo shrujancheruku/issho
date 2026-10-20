@@ -10,6 +10,10 @@
     "ja",
     "en"
   ],
+  "travel_modes": [
+    "transit",
+    "walk"
+  ],
   "areas": [
     {
       "id": "tokyo-kichijoji",
@@ -139,6 +143,97 @@
       "activity_id": "beach-day",
       "months": [
         6,
+        7,
+        8,
+        9
+      ]
+    },
+    {
+      "activity_id": "autumn-leaves",
+      "months": [
+        11,
+        12
+      ]
+    },
+    {
+      "activity_id": "plum-blossoms",
+      "months": [
+        2,
+        3
+      ]
+    },
+    {
+      "activity_id": "hydrangea-walk",
+      "months": [
+        6
+      ]
+    },
+    {
+      "activity_id": "illuminations",
+      "months": [
+        11,
+        12,
+        1,
+        2
+      ]
+    },
+    {
+      "activity_id": "summer-festival",
+      "months": [
+        7,
+        8
+      ]
+    },
+    {
+      "activity_id": "new-year-visit",
+      "months": [
+        1
+      ]
+    },
+    {
+      "activity_id": "christmas-market",
+      "months": [
+        11,
+        12
+      ]
+    },
+    {
+      "activity_id": "halloween",
+      "months": [
+        10
+      ]
+    },
+    {
+      "activity_id": "snow-day",
+      "months": [
+        1,
+        2,
+        3
+      ]
+    },
+    {
+      "activity_id": "fruit-picking",
+      "months": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "activity_id": "moon-viewing",
+      "months": [
+        9,
+        10
+      ]
+    },
+    {
+      "activity_id": "pool-day",
+      "months": [
         7,
         8,
         9
