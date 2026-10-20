@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Issho - Find your people through the things you already love</title>
+<meta name="description" content="Issho is a modern way to build community: small, local groups of like-minded people, brought together over activities you already enjoy.">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<meta property="og:title" content="Issho">
+<meta property="og:description" content="Find your people through the things you already love.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --red: #BC002D;
+    --gold: #C9A227;
+    --ink: #111111;
+    --paper: #FBF8F1;
+    --muted: #5a554b;
+    --line: #e6dfcf;
+    --serif: "Noto Serif JP", "Hiragino Mincho ProN", Georgia, serif;
+    --sans: Inter, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--paper); color: var(--ink);
+    font: 400 1.0625rem/1.65 var(--sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 64rem; margin: 0 auto; padding-inline: 1.25rem; }
+
+  /* Hero: the logo is the focal point, so it gets most of the first screen. */
+  .hero {
+    text-align: center; padding-block: clamp(2.5rem, 7vw, 5rem) clamp(2.5rem, 6vw, 4.5rem);
+    border-bottom: 4px solid var(--gold);
+  }
+  .hero img.logo { display: block; width: min(92vw, 44rem); height: auto; margin: 0 auto; }
+  .hero h1 {
+    font: 700 clamp(1.6rem, 4.2vw, 2.75rem)/1.2 var(--serif);
+    margin: clamp(1.5rem, 4vw, 2.5rem) auto 0; max-width: 22ch; letter-spacing: -0.01em;
+  }
+  .hero p.lede { max-width: 36rem; margin: 1rem auto 0; color: var(--muted); font-size: 1.1875rem; }
+
+  form.signup {
+    display: flex; flex-wrap: wrap; gap: .75rem; justify-content: center;
+    margin: 2rem auto 0; max-width: 40rem;
+  }
+  form.signup input {
+    flex: 1 1 13rem; min-width: 0; padding: .9rem 1rem; font: inherit; color: var(--ink);
+    background: #fff; border: 1.5px solid var(--ink); border-radius: .5rem;
+  }
+  form.signup input::placeholder { color: #8a8478; }
+  form.signup input:focus-visible, form.signup button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+  form.signup button {
+    flex: 0 0 auto; padding: .9rem 1.5rem; font: 600 1rem var(--sans); color: #fff;
+    background: var(--red); border: 1.5px solid var(--red); border-radius: .5rem; cursor: pointer;
+  }
+  form.signup button:hover { background: #9b0025; border-color: #9b0025; }
+  .fine { margin: .85rem 0 0; font-size: .875rem; color: var(--muted); }
+
+  section { padding-block: clamp(2.5rem, 6vw, 4.5rem); }
+  h2 { font: 700 clamp(1.5rem, 3.4vw, 2.1rem)/1.25 var(--serif); margin: 0 0 1rem; }
+  .intro { max-width: 40rem; color: var(--muted); margin: 0; }
+
+  .steps { display: grid; gap: 1.25rem; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); margin-top: 2rem; padding: 0; list-style: none; }
+  .steps li { background: #fff; border: 1px solid var(--line); border-top: 4px solid var(--gold); border-radius: .5rem; padding: 1.4rem; }
+  .steps b { display: block; font: 700 1.2rem var(--serif); margin-bottom: .4rem; }
+  .steps span { color: var(--muted); }
+
+  .band { background: var(--ink); color: var(--paper); }
+  .band h2 { color: #fff; }
+  .band p { color: #d8d2c3; max-width: 40rem; margin: 0; }
+  .band .accent { color: var(--gold); }
+
+  footer { padding-block: 2rem; text-align: center; color: var(--muted); font-size: .9rem; }
+  footer img { width: 2.5rem; height: 2.5rem; display: block; margin: 0 auto .5rem; }
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="wrap">
+    <img class="logo" src="logo.svg" alt="Issho (一緒)">
+    <h1>Find your people through the things you already love.</h1>
+    <p class="lede">Issho is a modern way to build community. We bring small groups of like-minded people together for real-world activities, so friendships grow from time spent doing what you enjoy.</p>
+
+    <!-- Placeholder: submission is intentionally not wired up yet. -->
+    <form class="signup" id="signup" aria-label="Join the waitlist">
+      <input type="email" name="email" placeholder="Email address" autocomplete="email" aria-label="Email address" required>
+      <input type="text" name="city" placeholder="Your city" autocomplete="address-level2" aria-label="City" required>
+      <button type="submit">Join the waitlist</button>
+    </form>
+    <p class="fine">Be first to know when Issho opens in your city.</p>
+  </div>
+</header>
+
+<main>
+  <section>
+    <div class="wrap">
+      <h2>Community, without the awkward part.</h2>
+      <p class="intro">Making friends as an adult is hard because no one is organising it. Issho does the organising: tell us what you enjoy and when you are free, and we propose a concrete plan with a small group of nearby people who share your interests.</p>
+      <ol class="steps">
+        <li><b>Pick what you enjoy</b><span>Photo walks, board games, climbing, ramen crawls. Start from activities you already like.</span></li>
+        <li><b>Meet a small group</b><span>We match you with a few nearby people and suggest a time and a place that works for everyone.</span></li>
+        <li><b>Keep the ones you click with</b><span>Afterwards, privately choose who you would like to meet again. Matches become a regular crew.</span></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="band">
+    <div class="wrap">
+      <h2>One thread, <span class="accent">one sun</span>.</h2>
+      <p>Issho (一緒) means &ldquo;together&rdquo;. Our name and mark say it plainly: a single thread joining people under the same sun. Friendly, platonic and local, wherever you are.</p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <img src="favicon.svg" alt="">
+  <div>&copy; <span id="year">2026</span> Issho</div>
+</footer>
+
+<script>
+  // The signup form is a placeholder for now: it captures nothing and sends nothing.
+  document.getElementById("signup").addEventListener("submit", function (e) { e.preventDefault(); });
+  document.getElementById("year").textContent = new Date().getFullYear();
+</script>
+</body>
+</html>
