@@ -48,7 +48,7 @@ type Router interface {
 type NearbyRequest struct {
 	Center   LatLng
 	RadiusM  float64
-	Types    []string // provider place types, e.g. "cafe"
+	Types    []string // provider place types the place's PRIMARY type must be one of, e.g. "cafe"
 	Max      int      // provider caps apply (Google: 20)
 	Language string   // BCP 47; affects ranking only, we store no names
 }

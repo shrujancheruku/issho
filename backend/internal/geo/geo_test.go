@@ -80,8 +80,12 @@ type fakeSearcher struct{ reqs []maps.NearbyRequest }
 
 func (f *fakeSearcher) Nearby(_ context.Context, r maps.NearbyRequest) ([]maps.Place, error) {
 	f.reqs = append(f.reqs, r)
-	// Every search finds the same café, located right next to x-b.
-	return []maps.Place{{ID: "p1", Location: maps.LatLng{Lat: 35.7101, Lng: 139.58}}}, nil
+	// Every search finds the same place right next to x-b, plus one whose
+	// primary type doesn't match the category (it must be dropped).
+	return []maps.Place{
+		{ID: "p1", PrimaryType: r.Types[0], Location: maps.LatLng{Lat: 35.7101, Lng: 139.58}},
+		{ID: "bar-in-karaoke-results", PrimaryType: "bar", Location: maps.LatLng{Lat: 35.7101, Lng: 139.58}},
+	}, nil
 }
 
 func TestDiscoverVenues(t *testing.T) {
@@ -98,7 +102,7 @@ func TestDiscoverVenues(t *testing.T) {
 		t.Errorf("got %d searches, want 4", len(s.reqs))
 	}
 	if len(got) != 2 {
-		t.Fatalf("got %d venues, want one per category: %+v", len(got), got)
+		t.Fatalf("got %d venues, want one per category (wrong primary types dropped): %+v", len(got), got)
 	}
 	for _, v := range got {
 		if v.AreaID != "x-b" {

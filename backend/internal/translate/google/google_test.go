@@ -25,7 +25,7 @@ func newTest(t *testing.T, h http.HandlerFunc) *Translator {
 	return tr
 }
 
-// echo translates by prefixing the target language, like the real API's shape.
+// echo "translates" by appending the target language, like the real API's shape.
 func echo(t *testing.T, calls *atomic.Int32, maxQ *atomic.Int32) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Header.Get("X-Goog-Api-Key") != "test-key" || r.URL.Query().Get("key") != "" {
@@ -44,7 +44,7 @@ func echo(t *testing.T, calls *atomic.Int32, maxQ *atomic.Int32) http.HandlerFun
 		for _, q := range req.Q {
 			resp.Data.Translations = append(resp.Data.Translations, struct {
 				TranslatedText string `json:"translatedText"`
-			}{req.Target + ":" + q})
+			}{q + " [" + req.Target + "]"})
 		}
 		_ = json.NewEncoder(w).Encode(resp)
 	}
@@ -57,7 +57,7 @@ func TestTranslate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got[0] != "ja:Bowling" || got[1] != "ja:Rock & roll" {
+	if got[0] != "Bowling [ja]" || got[1] != "Rock & roll [ja]" {
 		t.Errorf("got %q", got)
 	}
 }
@@ -113,5 +113,19 @@ func TestErrors(t *testing.T) {
 	})
 	if _, err := short.Translate(context.Background(), "fr", []translate.Item{{Text: "Hike"}}); err == nil {
 		t.Error("a response with the wrong number of translations must fail")
+	}
+}
+
+func TestMatchCapital(t *testing.T) {
+	for _, tc := range []struct{ src, in, want string }{
+		{"Indie band concert", "concierto de banda indie", "Concierto de banda indie"},
+		{"Golf driving range", "été", "Été"},            // non-ASCII letters too
+		{"Pottery class", "陶芸教室", "陶芸教室"},               // no case: unchanged
+		{"eBay meetup", "réunion eBay", "réunion eBay"}, // lower-case source: unchanged
+		{"Karaoke", "", ""},
+	} {
+		if got := matchCapital(tc.src, tc.in); got != tc.want {
+			t.Errorf("matchCapital(%q, %q) = %q, want %q", tc.src, tc.in, got, tc.want)
+		}
 	}
 }

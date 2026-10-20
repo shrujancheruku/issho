@@ -81,19 +81,20 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
   - `-dry-run` prints requests and billed elements (Tokyo 166, Austin 102)
   - tested with fakes and a DB integration test
   - **run against Google (local DB) for both cities:** Tokyo drive 132 pairs (6–44 min, e.g. Kichijoji → Shinjuku 29) and walk 34 pairs (18–63 min); Austin drive 90 pairs (8–32 min) and walk 12 pairs. The hosted `issho-dev` DB gets them after this branch's migrations are applied there.
-- 🟡 **`tool discover-venues`** (`make venues CITY=…`): Places API (New) Nearby Search per area × venue category.
+- ✅ **`tool discover-venues`** (`make venues CITY=…`): Places API (New) Nearby Search per area × venue category.
   - field mask: id, types, location only
+  - matches on the place's **primary type** (`includedPrimaryTypes`, plus our own check of the returned primary type). Matching on any type pulled in gyms for "sauna", supermarkets for "market" and **hostess bars (スナック)** for "night_club".
   - wide categories (≥ 10 km) searched once per city
   - each place assigned to its nearest area; stores only `google_place_id` + our data
-  - `-categories` for partial runs; `-dry-run` (Tokyo ~490 requests)
-  - **run against Google (local DB):** Tokyo cafés and parks (24 requests → 424 venues across all 12 areas). Spot-checked names live in EN/JA (e.g. Inokashira Park / 井の頭恩賜公園). The full run for both cities is still pending.
-- ✅ **Synthetic second city pack: Austin** (car-based, `travel_modes: ["drive"]`, EN/ES, 10 areas, Japan-specific activities disabled, local renames and seasons). Seeded, validated and planned with no code changes.
-- ⬜ Run both tools for Tokyo and Austin once the key exists; spot-check travel times and venues.
+  - `-categories` for partial runs; `-dry-run` (Tokyo 488 requests, Austin 408)
+  - **run against Google (local DB):** Tokyo 4,424 venues in all 48 categories, Austin 1,373 in 45. Names spot-checked live per category (e.g. Inokashira Park / 井の頭恩賜公園, Big Echo karaoke, Jo's Coffee).
+- ✅ **Synthetic second city pack: Austin** (car-based, walk + drive, 10 areas, Japan-specific activities disabled, local renames and seasons). Seeded, validated, matrix built and venues discovered with no code changes.
+- ✅ **Clearer English activity names** for machine translation: 27 idioms and ambiguous words replaced (Pottery → Pottery class: 陶器 "pottery ware" became 陶芸教室; Kickabout → Casual soccer game; "Go" → Shogi or Go board games; "crawl" → tour). The translator also keeps the source's leading capital ("Concierto de banda indie").
 - ✅ **Language model** (decided mid-M3, before anything depended on it; see [architecture](architecture.md#languages)):
   - `i18n.ForEvent` / `i18n.ForApp` pick the primary/secondary pair; `i18n.Pair` resolves text, showing the secondary alone rather than an unreadable fallback
   - `ListActivities` takes `locale` (primary) plus `secondary_language` and returns `name` plus `secondary_name`; any language code accepted; verified end to end against local Supabase
   - `profiles.primary_language` + `secondary_language` (migration 00003); language codes validated in the DB
-- ✅ **On-demand translation** (`internal/translate`): English is the only language that must be stored. Other languages come from stored text (local names, prefilled events), then the `app.translations` cache (migration 00004), then Google Cloud Translation, cached for everyone. Requests wait up to 8 s, and slower translations finish in the background. Concurrent requests share one call; failures aren't cached; `Prefill` for events. Off without `GOOGLE_TRANSLATE_API_KEY`. Cache path and fallbacks verified end to end; **Live translation verified** (local DB): 230 names into ja/es/fr/ko; cold request 0.65 s for two languages, cached 0.01 s. Quality issues on short labels without context (Pottery → 陶器 "pottery ware" instead of 陶芸, "Kickabout" left untranslated).
+- ✅ **On-demand translation** (`internal/translate`): English is the only language that must be stored. Other languages come from stored text (local names, prefilled events), then the `app.translations` cache (migration 00004), then Google Cloud Translation, cached for everyone. Requests wait up to 8 s, and slower translations finish in the background. Concurrent requests share one call; failures aren't cached; `Prefill` for events. Off without `GOOGLE_TRANSLATE_API_KEY`. Cache path and fallbacks verified end to end; **Live translation verified** (local DB): 230 names into ja/es/fr/ko; cold request 0.65 s for two languages, cached 0.01 s. Short labels without context translated poorly until the English names were clarified (below).
   - the catalogue and overrides are English-only; city packs keep only real local names (東京, 吉祥寺)
 
 ### M4 · Matching engine (weeks 3–5): ⬜
@@ -218,11 +219,11 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
 | 2026-10-20 | Second city pack is **Austin** (synthetic, not a launch city) | A real car-based city with real coordinates, so the Google tools can be exercised end to end. It's Japan-free on purpose, which forced per-city disables and renames. |
 
 ## 5. Known gaps & risks
-- **Machine-translation quality on short labels.** Cloud Translation Basic has no context, so one-word activity names can come out wrong. Mitigations: clearer English names ("Pottery class"), admin corrections of cached rows (`reviewed`, M8), or Advanced (v3) glossaries.
+- **Machine-translation quality on short labels.** Cloud Translation Basic has no context, so short names can come out wrong. Clearer English names fixed the cases found so far; when writing new names, avoid idioms and words with two meanings. Further fixes: admin corrections of cached rows (`reviewed`, M8) or Advanced (v3) glossaries.
 - **Not enough nearby users** is the main product risk. The admin proposal override lets the first city be hand-curated.
 - **PostGIS lives in the `public` schema** (migration 00001). With the Data API disabled, no anonymous path reaches it, but Supabase's advisors flag it. Move it into the `extensions` schema with a migration **before production data exists**: PostGIS can't be relocated in place, so the geography column has to be recreated.
 - **Google Maps terms** restrict caching. What we do: store only place IDs plus our own data, use place locations in memory only, and delete travel times after 30 days ([google-maps.md](google-maps.md#5-terms-what-we-may-store)). The Routes policy says most content is cache-restricted but doesn't state a window for durations; 30 days follows the Service Specific Terms' limit for other content. Re-check with the current terms before launch.
-- **Venue quality** comes from popularity ranking only (ratings and "good for groups" are pricier Enterprise fields). Admin curation (M8) approves venues before the matcher uses them.
+- **Venue quality** comes from popularity ranking and primary-type matching only (ratings and "good for groups" are pricier Enterprise fields). Some unsuitable places still share a valid primary type: Japanese **snack bars (スナック, hostess bars) are typed `bar`**, and a tattoo studio appeared as `art_studio`. Every venue starts as `candidate`; admin curation (M8) must approve venues before the matcher uses them, and the M8 review should look for snack bars specifically.
 - **`postgis/postgis` has no arm64 image.** CI (amd64) is unaffected. On Apple Silicon, use `supabase start` (arm64) or run that image with `--platform linux/amd64`.
 - **Local iOS builds need macOS 26.2+** (Xcode 26.4+ for SDK 58). The dev Mac is on macOS 15.7. Either upgrade before M9, or build iOS in the cloud with EAS.
 - **Disk space on dev machines:** Supabase images take several GB. OrbStack's VM disk can report "no space left" on its first launch; retrying fixes it.

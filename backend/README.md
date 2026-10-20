@@ -111,7 +111,7 @@ go run ./cmd/tool discover-venues -categories cafe,park tokyo
 ```
 
 - **`build-matrix`** computes travel times between every pair of the city's areas, for each of the city's `travel_modes`. Same-area pairs are stored as 0 minutes without an API call. Only walking and driving are calculated (no public transport). Walking is only requested for areas less than 4 km apart; driving uses typical, traffic-unaware times. Minutes are rounded up. Pairs with no route are left out. Rows older than 30 days are deleted (Google caching terms), so **rebuild each city at least every 30 days**.
-- **`discover-venues`** runs a Nearby Search per area × venue category, for categories used by an activity enabled in the city. Categories with a radius of 10 km or more are searched once from the city centre. Each place is assigned to its **nearest** area and stored as `google_place_id` + category. Re-running only bumps `last_seen_at`; curation status and tags are kept.
+- **`discover-venues`** runs a Nearby Search per area × venue category, for categories used by an activity enabled in the city. Only places whose **primary** type is one of the category's types are kept. Categories with a radius of 10 km or more are searched once from the city centre. Each place is assigned to its **nearest** area and stored as `google_place_id` + category. Re-running only bumps `last_seen_at`; curation status and tags are kept.
 
 ## Testing
 

@@ -38,12 +38,12 @@ Load with `make seed` (everything) or `cd backend && go run ./cmd/tool seed ../d
 {
   "id": "cafe",                             // stable slug; referenced by activities and app.venues
   "name": { "en": "Café" },                // English only
-  "google_types": ["cafe", "coffee_shop"],  // Places API (New) Table A types; any match counts
+  "google_types": ["cafe", "coffee_shop"],  // Places API (New) Table A types; the place's PRIMARY type must be one of these
   "search_radius_m": 800                    // Nearby Search radius around each area (100–50000)
 }
 ```
 
-Common places get a small radius, rare ones a large one. Categories with a radius of 10 km or more (beaches, trails, campgrounds) are searched once per city instead of once per area. If Google adds new types, refresh `backend/internal/maps/google/placetypes.txt`.
+Matching is on the primary type, so prefer specific types (`flea_market`, `dance_hall`) over broad ones: `market` matched supermarkets and `night_club` matched hostess bars. Common places get a small radius, rare ones a large one. Categories with a radius of 10 km or more (beaches, trails, campgrounds) are searched once per city instead of once per area. If Google adds new types, refresh `backend/internal/maps/google/placetypes.txt`.
 
 ## City pack schema (`citypacks/*.json`)
 

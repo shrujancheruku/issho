@@ -67,7 +67,7 @@
   {
     "id": "running",
     "name": {
-      "en": "Social run"
+      "en": "Group run"
     },
     "category": "sports",
     "indoor": false,
@@ -217,7 +217,7 @@
   {
     "id": "ramen-crawl",
     "name": {
-      "en": "Ramen crawl"
+      "en": "Ramen shop tour"
     },
     "category": "food",
     "indoor": true,
@@ -249,7 +249,7 @@
   {
     "id": "sento",
     "name": {
-      "en": "Sento & sauna"
+      "en": "Public bath & sauna"
     },
     "category": "wellness",
     "indoor": true,
@@ -317,7 +317,7 @@
   {
     "id": "cinema",
     "name": {
-      "en": "Film night"
+      "en": "Movie night"
     },
     "category": "culture",
     "indoor": true,
@@ -334,7 +334,7 @@
   {
     "id": "bookshop-browse",
     "name": {
-      "en": "Bookshop browse"
+      "en": "Bookshop browsing"
     },
     "category": "culture",
     "indoor": true,
@@ -467,7 +467,7 @@
   {
     "id": "pottery",
     "name": {
-      "en": "Pottery"
+      "en": "Pottery class"
     },
     "category": "creative",
     "indoor": true,
@@ -1201,7 +1201,7 @@
   {
     "id": "golf-range",
     "name": {
-      "en": "Driving range"
+      "en": "Golf driving range"
     },
     "category": "sports",
     "indoor": false,
@@ -1442,7 +1442,7 @@
   {
     "id": "walking-football",
     "name": {
-      "en": "Kickabout"
+      "en": "Casual soccer game"
     },
     "category": "sports",
     "indoor": false,
@@ -1459,7 +1459,7 @@
   {
     "id": "sports-watching",
     "name": {
-      "en": "Watch a game"
+      "en": "Watch a sports game"
     },
     "category": "sports",
     "indoor": true,
@@ -1477,7 +1477,7 @@
   {
     "id": "marathon-training",
     "name": {
-      "en": "Long run group"
+      "en": "Long-distance group run"
     },
     "category": "sports",
     "indoor": false,
@@ -1577,7 +1577,7 @@
   {
     "id": "curry",
     "name": {
-      "en": "Curry crawl"
+      "en": "Curry restaurant tour"
     },
     "category": "food",
     "indoor": true,
@@ -1594,7 +1594,7 @@
   {
     "id": "dessert-crawl",
     "name": {
-      "en": "Dessert crawl"
+      "en": "Dessert shop tour"
     },
     "category": "food",
     "indoor": true,
@@ -1611,7 +1611,7 @@
   {
     "id": "bakery-crawl",
     "name": {
-      "en": "Bakery crawl"
+      "en": "Bakery tour"
     },
     "category": "food",
     "indoor": true,
@@ -1749,7 +1749,7 @@
   {
     "id": "potluck",
     "name": {
-      "en": "Potluck"
+      "en": "Potluck meal"
     },
     "category": "food",
     "indoor": true,
@@ -2213,7 +2213,7 @@
   {
     "id": "open-mic",
     "name": {
-      "en": "Open mic"
+      "en": "Open mic night"
     },
     "category": "culture",
     "indoor": true,
@@ -2398,7 +2398,7 @@
   {
     "id": "record-shopping",
     "name": {
-      "en": "Record shop crawl"
+      "en": "Record shop tour"
     },
     "category": "culture",
     "indoor": true,
@@ -2463,7 +2463,7 @@
   {
     "id": "observation-deck",
     "name": {
-      "en": "City views"
+      "en": "Observation deck visit"
     },
     "category": "culture",
     "indoor": true,
@@ -2480,7 +2480,7 @@
   {
     "id": "architecture-tour",
     "name": {
-      "en": "Building tour"
+      "en": "Architecture tour"
     },
     "category": "culture",
     "indoor": true,
@@ -2544,7 +2544,7 @@
   {
     "id": "billiards",
     "name": {
-      "en": "Pool / billiards"
+      "en": "Billiards"
     },
     "category": "games",
     "indoor": true,
@@ -2628,7 +2628,7 @@
   {
     "id": "shogi-go",
     "name": {
-      "en": "Shogi / Go"
+      "en": "Shogi or Go board games"
     },
     "category": "games",
     "indoor": true,
@@ -3011,7 +3011,7 @@
   {
     "id": "music-jam",
     "name": {
-      "en": "Music jam"
+      "en": "Music jam session"
     },
     "category": "creative",
     "indoor": true,
@@ -3383,7 +3383,7 @@
   {
     "id": "autumn-leaves",
     "name": {
-      "en": "Autumn leaves"
+      "en": "Autumn leaf viewing"
     },
     "category": "seasonal",
     "indoor": false,
@@ -3402,7 +3402,7 @@
   {
     "id": "plum-blossoms",
     "name": {
-      "en": "Plum blossoms"
+      "en": "Plum blossom viewing"
     },
     "category": "seasonal",
     "indoor": false,
@@ -3517,7 +3517,7 @@
   {
     "id": "snow-day",
     "name": {
-      "en": "Snow day trip"
+      "en": "Day trip to the snow"
     },
     "category": "seasonal",
     "indoor": false,
@@ -3564,7 +3564,7 @@
   {
     "id": "pool-day",
     "name": {
-      "en": "Pool day"
+      "en": "Swimming pool day"
     },
     "category": "seasonal",
     "indoor": false,
@@ -3728,7 +3728,7 @@
   {
     "id": "bar-hop",
     "name": {
-      "en": "Bar hop"
+      "en": "Bar hopping"
     },
     "category": "nightlife",
     "indoor": true,
@@ -3796,7 +3796,7 @@
   {
     "id": "live-house",
     "name": {
-      "en": "Indie gig"
+      "en": "Indie band concert"
     },
     "category": "nightlife",
     "indoor": true,

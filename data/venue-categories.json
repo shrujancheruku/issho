@@ -459,8 +459,7 @@
       "en": "Dance hall / club"
     },
     "google_types": [
-      "dance_hall",
-      "night_club"
+      "dance_hall"
     ],
     "search_radius_m": 2000
   },
@@ -470,8 +469,7 @@
       "en": "Flea market"
     },
     "google_types": [
-      "flea_market",
-      "market"
+      "flea_market"
     ],
     "search_radius_m": 3000
   },

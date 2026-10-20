@@ -163,11 +163,14 @@ func parseDuration(s string) (time.Duration, error) {
 // ---- Places API (New): Nearby Search ----
 
 type nearbyBody struct {
-	IncludedTypes       []string `json:"includedTypes"`
-	MaxResultCount      int      `json:"maxResultCount"`
-	RankPreference      string   `json:"rankPreference"`
-	LanguageCode        string   `json:"languageCode,omitempty"`
-	LocationRestriction struct {
+	// Primary types, not includedTypes: includedTypes matches a place if ANY of
+	// its types matches, which brought in gyms for "sauna", supermarkets for
+	// "market" and hostess bars for "night_club".
+	IncludedPrimaryTypes []string `json:"includedPrimaryTypes"`
+	MaxResultCount       int      `json:"maxResultCount"`
+	RankPreference       string   `json:"rankPreference"`
+	LanguageCode         string   `json:"languageCode,omitempty"`
+	LocationRestriction  struct {
 		Circle struct {
 			Center latLng  `json:"center"`
 			Radius float64 `json:"radius"`
@@ -184,8 +187,8 @@ func (c *Client) Nearby(ctx context.Context, req maps.NearbyRequest) ([]maps.Pla
 		n = nearbyMaxResults
 	}
 	body := nearbyBody{
-		IncludedTypes:  req.Types,
-		MaxResultCount: n,
+		IncludedPrimaryTypes: req.Types,
+		MaxResultCount:       n,
 		// Popular places first: they're more likely to be open, findable and
 		// good for groups than the closest ones.
 		RankPreference: "POPULARITY",

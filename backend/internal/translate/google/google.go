@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"html"
+	"unicode"
 	"unicode/utf8"
 
 	"github.com/shrujancheruku/issho/backend/internal/platform/googleapi"
@@ -78,11 +79,24 @@ func (t *Translator) Translate(ctx context.Context, lang string, items []transla
 		if len(resp.Data.Translations) != end-start {
 			return nil, fmt.Errorf("google translate: sent %d strings, got %d translations", end-start, len(resp.Data.Translations))
 		}
-		for _, tr := range resp.Data.Translations {
+		for i, tr := range resp.Data.Translations {
 			// Defensive: some responses still carry HTML entities in text mode.
-			out = append(out, html.UnescapeString(tr.TranslatedText))
+			out = append(out, matchCapital(items[start+i].Text, html.UnescapeString(tr.TranslatedText)))
 		}
 		start = end
 	}
 	return out, nil
+}
+
+// matchCapital capitalises the translation's first letter when the English
+// source starts with one: Google sometimes returns labels in lower case
+// ("concierto de banda indie"). Scripts without case (Japanese, Korean) are
+// unaffected.
+func matchCapital(source, translated string) string {
+	s, _ := utf8.DecodeRuneInString(source)
+	t, size := utf8.DecodeRuneInString(translated)
+	if !unicode.IsUpper(s) || !unicode.IsLower(t) {
+		return translated
+	}
+	return string(unicode.ToUpper(t)) + translated[size:]
 }

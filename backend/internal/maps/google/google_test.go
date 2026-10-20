@@ -175,7 +175,7 @@ func TestNearby(t *testing.T) {
 		}
 		var b nearbyBody
 		_ = json.NewDecoder(r.Body).Decode(&b)
-		if b.MaxResultCount != 20 || b.LocationRestriction.Circle.Radius != 800 || b.IncludedTypes[0] != "cafe" {
+		if b.MaxResultCount != 20 || b.LocationRestriction.Circle.Radius != 800 || b.IncludedPrimaryTypes[0] != "cafe" {
 			t.Errorf("unexpected body %+v", b)
 		}
 		_, _ = w.Write([]byte(`{"places":[{"id":"ChIJ1","primaryType":"cafe","types":["cafe","food"],"location":{"latitude":35.71,"longitude":139.59}}]}`))

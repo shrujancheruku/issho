@@ -3,6 +3,7 @@ package geo
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	"github.com/shrujancheruku/issho/backend/internal/maps"
 )
@@ -73,6 +74,12 @@ func DiscoverVenues(ctx context.Context, s maps.PlaceSearcher, areas []Area, cat
 		for _, p := range places {
 			k := [2]string{p.ID, j.Category.ID}
 			if p.ID == "" || seen[k] {
+				continue
+			}
+			// The provider's primary-type filter isn't strict (Google returned
+			// bars for "karaoke"), so check the primary type ourselves. Places
+			// without one are skipped too: precision beats recall here.
+			if !slices.Contains(j.Category.GoogleTypes, p.PrimaryType) {
 				continue
 			}
 			seen[k] = true
