@@ -80,6 +80,7 @@
   /* Node: 25px red sun centred on the title's first line (25px tall) */
   .steps li::before {
     content: ""; position: absolute; left: 0; top: 0; z-index: 1; width: 25px; height: 25px; border-radius: 50%;
+    box-sizing: border-box;
     background: var(--red); border: 3px solid var(--mid); box-shadow: 0 0 0 2px var(--gold);
   }
   /* Thread: runs from this node's centre to the next node's centre (li height + the 12.5px offset) */
