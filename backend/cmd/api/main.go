@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -32,6 +33,25 @@ func main() {
 		slog.Error("api exited", "err", err)
 		os.Exit(1)
 	}
+}
+
+// withCORS allows browser calls only from the configured origins (the admin SPA).
+// Native mobile clients don't send Origin and are unaffected.
+//
+// An explicit origin check is used instead of rs/cors' AllowedOrigins because an
+// empty AllowedOrigins list there means "allow every origin"; here an empty list
+// (ALLOWED_ORIGINS unset) allows none.
+func withCORS(h http.Handler, origins []string) http.Handler {
+	allowed := make(map[string]bool, len(origins))
+	for _, o := range origins {
+		allowed[strings.TrimSpace(o)] = true
+	}
+	return cors.New(cors.Options{
+		AllowOriginFunc: func(origin string) bool { return allowed[origin] },
+		AllowedMethods:  connectcors.AllowedMethods(),
+		AllowedHeaders:  append(connectcors.AllowedHeaders(), "Authorization"),
+		ExposedHeaders:  connectcors.ExposedHeaders(),
+	}).Handler(h)
 }
 
 func run() error {
@@ -60,12 +80,7 @@ func run() error {
 	mux.Handle(isshov1connect.NewIdentityServiceHandler(&identity.Handler{Svc: &identity.Service{Q: q}}, opts))
 	mux.Handle(isshov1connect.NewCatalogServiceHandler(&catalog.Handler{Q: q}, opts))
 
-	handler := cors.New(cors.Options{
-		AllowedOrigins: cfg.AllowedOrigins,
-		AllowedMethods: connectcors.AllowedMethods(),
-		AllowedHeaders: append(connectcors.AllowedHeaders(), "Authorization"),
-		ExposedHeaders: connectcors.ExposedHeaders(),
-	}).Handler(mux)
+	handler := withCORS(mux, cfg.AllowedOrigins)
 
 	// Serve HTTP/1.1 and cleartext HTTP/2; TLS terminates at Caddy/Cloudflare.
 	protocols := new(http.Protocols)
