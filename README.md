@@ -19,8 +19,8 @@ Making friends as an adult is hard because no one is organising it. Issho does t
   <sub>LONDON</sub><br>
   <b>Sunday wander through Columbia Road flower market, then a roast at the pub around the corner.</b>
   <br><br>
-  <sub>NEW YORK</sub><br>
-  <b>Bouldering in Williamsburg, then ramen down the street to swap stories.</b>
+  <sub>MEXICO CITY</sub><br>
+  <b>Sunday bike ride down a car-free Paseo de la Reforma, then tacos al pastor in Roma.</b>
   <br><br>
   <sub>MELBOURNE</sub><br>
   <b>Coffee crawl through the CBD laneways, finishing at Queen Victoria Market.</b>
