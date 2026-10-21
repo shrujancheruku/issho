@@ -447,10 +447,13 @@ const conductRules: StringKey[] = [
   'conduct.rule.report',
 ];
 
+// The screen's heading is already "Code of conduct" (stepTitles), so this
+// starts with the introduction rather than a second heading.
 function ConductStep({ draft, onChange }: StepProps) {
   const { t } = useI18n();
   return (
-    <Section title={t('conduct.title')} hint={t('conduct.intro')}>
+    <View style={styles.section}>
+      <ThemedText themeColor="textSecondary">{t('conduct.intro')}</ThemedText>
       {conductRules.map((k) => (
         <View key={k} style={styles.rule}>
           <ThemedText style={styles.bullet}>•</ThemedText>
@@ -467,7 +470,7 @@ function ConductStep({ draft, onChange }: StepProps) {
           trackColor={{ true: Brand.red }}
         />
       </View>
-    </Section>
+    </View>
   );
 }
 
