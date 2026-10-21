@@ -4,7 +4,7 @@ Seed data that makes Issho location-agnostic. Code never hard-codes a city, so a
 
 | File | Contents |
 |---|---|
-| `activities.json` | The **global activity catalogue** (57 activities in 8 categories; broad on purpose, see below) |
+| `activities.json` | The **global activity catalogue** (63 activities in 8 categories; broad on purpose, see below) |
 | `venue-categories.json` | **Venue categories** (48): our kinds of place, mapped to Google place types |
 | `citypacks/<city>.json` | One **city pack** per city: `tokyo.json` (launch city) and `austin.json` (a **synthetic test pack**: a real car-based city that proves a second city needs no code changes; not a launch city) |
 
@@ -36,7 +36,7 @@ Set `blocks` only for activities tied to a time of day: bars and dinners in the 
 
 `category` groups the onboarding tile grid, in this order: `outdoors`, `sports`, `wellness`, `food` (and drink), `culture`, `games`, `creative`, `learning` (and volunteering). The list is `cities.Categories`; the app needs a `category.<id>` label in `apps/mobile/src/i18n/en.json` for each (a test checks both ways). Activities that only make sense in some cities (e.g. `temple-shrine`, `japanese-arts`) stay in the global catalogue and are disabled in other cities' packs.
 
-**Keep activities broad.** Onboarding shows every activity as a tile, and every tap is a decision; 230 narrow activities (ten kinds of walk, nine kinds of volunteering) made it a chore. Broad activities also pool interest: matching suggests plans per activity, so "Hiking and nature walks" gathers people who'd otherwise be split across waterfall hikes and birdwatching. The specific flavour belongs to the plan (its description, M6), not the catalogue. Before adding an activity, check whether it's a variant of an existing one; examples in a name ("Craft workshop (knitting, candles, woodwork …)") help people recognise what's covered.
+**Keep activities broad.** Onboarding shows every activity as a tile, and every tap is a decision; 230 narrow activities (ten kinds of walk, nine kinds of volunteering) made it a chore. Broad activities also pool interest: matching suggests plans per activity, so "Hiking and nature walks" gathers people who'd otherwise be split across waterfall hikes and birdwatching. The specific flavour belongs to the plan (its description, M6), not the catalogue. Before adding an activity, check whether it's a variant of an existing one; examples in a name ("Craft workshop (knitting, candles, woodwork …)") help people recognise what's covered. Don't merge activities people choose between, though: someone who plays tennis doesn't necessarily want basketball, so sports are one activity each (with close variants such as beach volleyball folded in).
 
 **Merging activities:** list the retired ids in the surviving activity's `replaces` and delete their entries. Seeding (in one transaction) moves each person's preferences to the surviving activity, keeping their strongest interest, then deletes the retired activities; their city overrides go with them, so update the packs too. A replaced id can't still be an activity or be replaced twice (validated). Keep `replaces` entries until every environment has been seeded.
 

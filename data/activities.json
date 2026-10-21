@@ -269,13 +269,47 @@
     ]
   },
   {
-    "id": "racket-sports",
+    "id": "tennis",
     "name": {
-      "en": "Tennis, badminton or table tennis"
+      "en": "Tennis"
+    },
+    "category": "sports",
+    "indoor": false,
+    "energy": 3,
+    "cost_level": 2,
+    "conversational": false,
+    "skill_dependent": true,
+    "min_group_size": 4,
+    "max_group_size": 4,
+    "venue_categories": [
+      "sports-facility"
+    ]
+  },
+  {
+    "id": "badminton",
+    "name": {
+      "en": "Badminton"
     },
     "category": "sports",
     "indoor": true,
     "energy": 3,
+    "cost_level": 1,
+    "conversational": true,
+    "skill_dependent": false,
+    "min_group_size": 4,
+    "max_group_size": 8,
+    "venue_categories": [
+      "sports-facility"
+    ]
+  },
+  {
+    "id": "table-tennis",
+    "name": {
+      "en": "Table tennis"
+    },
+    "category": "sports",
+    "indoor": true,
+    "energy": 2,
     "cost_level": 1,
     "conversational": true,
     "skill_dependent": true,
@@ -283,17 +317,94 @@
     "max_group_size": 8,
     "venue_categories": [
       "sports-facility"
-    ],
-    "replaces": [
-      "badminton",
-      "tennis",
-      "table-tennis"
     ]
   },
   {
-    "id": "team-sports",
+    "id": "futsal",
     "name": {
-      "en": "Team sports (soccer, basketball, volleyball …)"
+      "en": "Soccer or futsal"
+    },
+    "category": "sports",
+    "indoor": false,
+    "energy": 2,
+    "cost_level": 0,
+    "conversational": true,
+    "skill_dependent": false,
+    "min_group_size": 6,
+    "max_group_size": 12,
+    "venue_categories": [
+      "park",
+      "sports-facility"
+    ],
+    "replaces": [
+      "walking-football"
+    ]
+  },
+  {
+    "id": "basketball",
+    "name": {
+      "en": "Basketball"
+    },
+    "category": "sports",
+    "indoor": false,
+    "energy": 3,
+    "cost_level": 0,
+    "conversational": false,
+    "skill_dependent": true,
+    "min_group_size": 6,
+    "max_group_size": 10,
+    "venue_categories": [
+      "sports-facility",
+      "park"
+    ]
+  },
+  {
+    "id": "volleyball",
+    "name": {
+      "en": "Volleyball or beach volleyball"
+    },
+    "category": "sports",
+    "indoor": true,
+    "energy": 3,
+    "cost_level": 1,
+    "conversational": false,
+    "skill_dependent": true,
+    "min_group_size": 4,
+    "max_group_size": 12,
+    "venue_categories": [
+      "sports-facility",
+      "beach"
+    ],
+    "replaces": [
+      "beach-volleyball"
+    ]
+  },
+  {
+    "id": "softball",
+    "name": {
+      "en": "Softball or baseball"
+    },
+    "category": "sports",
+    "indoor": false,
+    "energy": 2,
+    "cost_level": 1,
+    "conversational": true,
+    "skill_dependent": false,
+    "min_group_size": 10,
+    "max_group_size": 18,
+    "venue_categories": [
+      "sports-facility",
+      "park"
+    ],
+    "blocks": [
+      "morning",
+      "afternoon"
+    ]
+  },
+  {
+    "id": "ultimate",
+    "name": {
+      "en": "Frisbee or ultimate"
     },
     "category": "sports",
     "indoor": false,
@@ -302,21 +413,17 @@
     "conversational": false,
     "skill_dependent": true,
     "min_group_size": 4,
-    "max_group_size": 18,
+    "max_group_size": 14,
     "venue_categories": [
-      "sports-facility",
       "park",
-      "beach"
+      "sports-facility"
+    ],
+    "blocks": [
+      "morning",
+      "afternoon"
     ],
     "replaces": [
-      "futsal",
-      "basketball",
-      "volleyball",
-      "beach-volleyball",
-      "softball",
-      "walking-football",
-      "frisbee",
-      "ultimate"
+      "frisbee"
     ]
   },
   {
