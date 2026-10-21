@@ -2,7 +2,7 @@
 
 > **This is the source of truth for what's planned, built and pending.** CI (`roadmap` job) fails any push or PR that changes code without updating this file. When you change code, update the status lines below. If the change made a decision, add it to the Decision log.
 
-**Last updated:** 2026-10-21 · **Version:** 0.4.0 (pre-release; [releases](https://github.com/shrujancheruku/issho/releases)) · **Current milestone:** M6 Plans, signups & events (next; M5 done and applied to `issho-dev`)
+**Last updated:** 2026-10-22 · **Version:** 0.4.0 (pre-release; [releases](https://github.com/shrujancheruku/issho/releases)) · **Current milestone:** M6 Plans, signups & events (in progress; M5 done and applied to `issho-dev`)
 
 Legend: ✅ done · 🟡 in progress / partial · ⬜ not started · ⏸ deferred (post-MVP)
 
@@ -155,8 +155,9 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
   - **Live eval (issho-dev key, 2026-10-21): recall 100% (47/47), interest levels 100% (10/10), no must-not hits, both empty cases empty** (unrelated text and the prompt injection returned nothing); about 1.2 s per call. Extras flagged for review were reasonable ("anything outdoors" also gave hiking, camping and day trips).
   - ⬜ Set `GOOGLE_GEMINI_API_KEY` on the hosted API when it's deployed (M9).
 
-### M6 · Plans, signups & events (weeks 6–8): ⬜
-- ⬜ Schema: open plans (window, signup deadline, status), signups (per-plan weekly pattern + blocked-out dates/occasions), scheduled events, groups and confirmations.
+### M6 · Plans, signups & events (weeks 6–8): 🟡
+- ✅ Schema (migration 00007): open plans in rounds (window, signup deadline, round, close reason `done`/`no_group`/`withdrawn`), signups (per-plan weekly pattern + blocked-out dates or occasions; no pattern = profile availability), events (one per plan round: date + part of the day, confirmation deadline, forced or not), groups (quorum, minimum attendance, venue place id and meeting point per group) and members (invited → confirmed/declined → dropped, check-in). The database allows one group per person per event. uuid ids, since they reach the app. Applied up → down → up locally; `anon`/`authenticated` have no grants on the new tables. Not yet applied to `issho-dev`.
+- ✅ `internal/plans` store: converts to and from `matching` types (open plans with signup counts, signups, scheduled rounds). Invited people stop waiting and the rest roll over; occasions people are already invited to are blocked out of their other signups; saves lock the plan row so a signup and a scheduling pass can't race. Integration test in CI.
 - ⬜ The River worker (`cmd/worker`):
   - suggest new plans as plans close or fill (`matching.Suggest`), within the city cap
   - daily readiness check per open plan (`matching.Schedule`), forced at the signup deadline; people waiting roll over to the plan's next round or a similar plan; plans that can't form close and say so
@@ -320,6 +321,8 @@ The app builds for the web and CI keeps it building. Before a public web release
 | 2026-10-21 | **Backend CI: PostGIS started in the background, codegen split into its own job** | Only ~12 s of the 70–94 s `backend` job was checks. A service container blocks the job for ~20 s (pull, then health wait) before the first step; started with `docker run` in the first step, the pull overlaps with Go setup. Only `make gen` needs Node (`protoc-gen-es`), so moving proto/codegen checks to a parallel job takes ~17 s of pnpm setup off `backend`. |
 | 2026-10-21 | **TypeScript CI: Metro cache restored between runs; typecheck, lint and test in one turbo run** | The web export's cold Metro bundle (~24 s) was the biggest part of the job; with its ~10 MB transform cache restored it takes ~3 s. One cache per lockfile, so dependency updates start clean. One `turbo run` runs the three tasks in parallel. |
 | 2026-10-21 | **One Go cache per CI job** (`actions/cache`), not setup-go's shared cache | The shared cache held what both jobs built: 473 MB compressed, ~17 s to restore. Building buf and sqlc accounts for 464 MB of it; `backend` never runs them and needs 68 MB. Trimming the codegen cache doesn't work: without the package archives or module zips, `go tool` rebuilds buf and sqlc (~45 s). |
+| 2026-10-22 | A **signup row means "waiting"**: it's deleted when the person is invited to a group, not given a status | The "7 interested" count and the scheduler read the same rows, so they can't disagree; the invitation (`app.group_members`) is the record from then on. Whoever isn't placed simply stays for the plan's next round. |
+| 2026-10-22 | **Venues per group, not per event**; one event per plan round | An event with three groups shouldn't send 15 people to one café table. The plan keeps the area, activity and languages; the round decides the date. |
 
 ## 5. Known gaps & risks
 - **Machine-translation quality on short labels.** Cloud Translation Basic has no context, so short names can come out wrong. Clearer English names fixed the cases found so far; when writing new names, avoid idioms and words with two meanings. Further fixes: admin corrections of cached rows (`reviewed`, M8) or Advanced (v3) glossaries.

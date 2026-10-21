@@ -65,6 +65,81 @@ type AppCityActivityOverride struct {
 	Months     []int16
 }
 
+type AppEvent struct {
+	ID        uuid.UUID
+	PlanID    uuid.UUID
+	Round     int16
+	Date      pgtype.Date
+	Block     string
+	StartsAt  pgtype.Timestamptz
+	ConfirmBy pgtype.Timestamptz
+	Forced    bool
+	Status    string
+	CreatedAt pgtype.Timestamptz
+}
+
+type AppEventGroup struct {
+	ID            uuid.UUID
+	EventID       uuid.UUID
+	Quorum        int16
+	MinAttendance int16
+	Score         float32
+	Status        string
+	VenuePlaceID  *string
+	MeetingPoint  []byte
+	CreatedAt     pgtype.Timestamptz
+}
+
+type AppGroupMember struct {
+	GroupID     uuid.UUID
+	EventID     uuid.UUID
+	UserID      uuid.UUID
+	Response    string
+	RespondedAt pgtype.Timestamptz
+	CheckedInAt pgtype.Timestamptz
+}
+
+type AppPlan struct {
+	ID                uuid.UUID
+	CityID            string
+	AreaID            string
+	ActivityID        string
+	FollowUpID        *string
+	PrimaryLanguage   string
+	SecondaryLanguage *string
+	Description       []byte
+	Audience          int32
+	Score             float32
+	Round             int16
+	WindowStart       pgtype.Date
+	WindowDays        int16
+	SignupDeadline    pgtype.Timestamptz
+	Status            string
+	ClosedReason      *string
+	ClosedAt          pgtype.Timestamptz
+	CreatedAt         pgtype.Timestamptz
+}
+
+type AppPlanSignup struct {
+	PlanID    uuid.UUID
+	UserID    uuid.UUID
+	CreatedAt pgtype.Timestamptz
+}
+
+type AppPlanSignupSlot struct {
+	PlanID  uuid.UUID
+	UserID  uuid.UUID
+	Weekday int16
+	Block   string
+}
+
+type AppPlanSignupUnavailable struct {
+	PlanID uuid.UUID
+	UserID uuid.UUID
+	Date   pgtype.Date
+	Block  string
+}
+
 type AppProfile struct {
 	UserID            uuid.UUID
 	DisplayName       string
