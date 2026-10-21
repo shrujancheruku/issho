@@ -293,7 +293,11 @@ function AvailabilityStep({ draft, onChange }: StepProps) {
   const lang = showing === 'secondary' ? languages.secondary : languages.primary;
   const blockKeys: StringKey[] = ['profile.block.morning', 'profile.block.afternoon', 'profile.block.evening'];
   return (
-    <Section title={t('profile.availability')} hint={t('profile.availabilityHint')}>
+    // The screen's heading is already "When you're free" (stepTitles).
+    <View style={styles.section}>
+      <ThemedText type="small" themeColor="textSecondary">
+        {t('profile.availabilityHint')}
+      </ThemedText>
       <View style={styles.gridRow}>
         <View style={styles.dayCell} />
         {blockKeys.map((k) => (
@@ -322,7 +326,7 @@ function AvailabilityStep({ draft, onChange }: StepProps) {
           })}
         </View>
       ))}
-    </Section>
+    </View>
   );
 }
 

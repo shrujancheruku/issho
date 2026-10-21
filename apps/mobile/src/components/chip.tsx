@@ -44,7 +44,8 @@ export function Chip({
         styles.chip,
         { backgroundColor: colors.background, opacity: disabled ? 0.4 : pressed ? 0.7 : 1 },
       ]}>
-      <View>
+      {/* flexShrink lets long labels wrap inside the chip instead of overflowing the row. */}
+      <View style={styles.label}>
         <ThemedText type="small" style={{ color: colors.text }}>
           {label}
         </ThemedText>
@@ -64,7 +65,8 @@ export function Chip({
 }
 
 const styles = StyleSheet.create({
-  chip: { borderRadius: 12, paddingVertical: Spacing.two, paddingHorizontal: Spacing.three },
+  chip: { borderRadius: 12, paddingVertical: Spacing.two, paddingHorizontal: Spacing.three, maxWidth: '100%' },
+  label: { flexShrink: 1 },
   secondary: { fontSize: 12, lineHeight: 16, opacity: 0.85 },
   badge: { fontSize: 11, lineHeight: 14, fontWeight: 700 },
 });
