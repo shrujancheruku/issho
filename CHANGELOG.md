@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.4.0](https://github.com/shrujancheruku/issho/compare/v0.3.0...v0.4.0) (2026-10-21)
+
+
+### Features
+
+* **infra:** add marketing landing page and GitHub Pages deploy ([#8](https://github.com/shrujancheruku/issho/issues/8)) ([4149f56](https://github.com/shrujancheruku/issho/commit/4149f5666782733b208f6dfa4ff278f2221b3bed))
+* **infra:** dark theme, Dela Gothic One and reordered sections ([#10](https://github.com/shrujancheruku/issho/issues/10)) ([debab34](https://github.com/shrujancheruku/issho/commit/debab34b4fc1038bf88c3c372fbb4b28b8e30e70))
+* **infra:** favicon circle, lighter hero, kanji meanings, sleeker steps, copy tweaks ([#11](https://github.com/shrujancheruku/issho/issues/11)) ([2eed1fa](https://github.com/shrujancheruku/issho/commit/2eed1fae85391a16219d96e7a39c94b3cf5f87ff))
+* **infra:** rewrite the landing page copy for flow and voice ([#16](https://github.com/shrujancheruku/issho/issues/16)) ([e85abbe](https://github.com/shrujancheruku/issho/commit/e85abbee9186fdd14def6676d53bd91428f78198))
+* **infra:** seigaiha dividers, logo-coloured kanji and a thread timeline ([#12](https://github.com/shrujancheruku/issho/issues/12)) ([a24b687](https://github.com/shrujancheruku/issho/commit/a24b687823017ff17376658e0883e59736a346c6))
+* **infra:** set the kanji in the logo's font ([#15](https://github.com/shrujancheruku/issho/issues/15)) ([03da5eb](https://github.com/shrujancheruku/issho/commit/03da5eb0aed7032b560bca9e8b57eb0c887c17e4))
+* **infra:** thinner two-sided dividers, aligned timeline and kanji statement words ([#13](https://github.com/shrujancheruku/issho/issues/13)) ([21c7d6e](https://github.com/shrujancheruku/issho/commit/21c7d6e3d41ced262341c5c2aef4fc55c9b49c11))
+* **matching:** candidate plans, group assembly, invites and a simulator ([5b9eaea](https://github.com/shrujancheruku/issho/commit/5b9eaea91b9155c48e7436e16ab813de80b52ad4))
+* **matching:** M4 matching engine (plan first, time second) ([#17](https://github.com/shrujancheruku/issho/issues/17)) ([5c374c4](https://github.com/shrujancheruku/issho/commit/5c374c4f140a0229509f581a2731eb1b4ea4eadf))
+* **matching:** make group size and gender balance preferences ([0e41111](https://github.com/shrujancheruku/issho/commit/0e41111766c0e4452dfc9a0487ff95df0257cfb6))
+* **matching:** plan first, time second ([2ab3665](https://github.com/shrujancheruku/issho/commit/2ab36655e187301795f6b1a132ac9882d855939d))
+* **matching:** pure matching package with step 1 bucketing ([396b1a4](https://github.com/shrujancheruku/issho/commit/396b1a401d3616a00b4366a57f82ae23a8a13726))
+
+
+### Bug Fixes
+
+* **infra:** centre the timeline thread on each sun ([#14](https://github.com/shrujancheruku/issho/issues/14)) ([56b0474](https://github.com/shrujancheruku/issho/commit/56b0474eeee96c9f2f5b1dcd9842495f7ea6c841))
+
 ## [0.3.0](https://github.com/shrujancheruku/issho/compare/v0.2.0...v0.3.0) (2026-10-20)
 
 
