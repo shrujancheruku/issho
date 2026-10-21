@@ -21,6 +21,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/catalog"
 	"github.com/shrujancheruku/issho/backend/internal/health"
 	"github.com/shrujancheruku/issho/backend/internal/identity"
+	"github.com/shrujancheruku/issho/backend/internal/plans"
 	"github.com/shrujancheruku/issho/backend/internal/platform/auth"
 	"github.com/shrujancheruku/issho/backend/internal/platform/config"
 	"github.com/shrujancheruku/issho/backend/internal/platform/db"
@@ -113,6 +114,7 @@ func run() error {
 	}
 	mux.Handle(isshov1connect.NewCatalogServiceHandler(&catalog.Handler{Q: q, Translations: translations, Suggestions: suggestions}, opts))
 	mux.Handle(isshov1connect.NewProfileServiceHandler(&profile.Handler{Svc: &profile.Service{DB: pool}}, opts))
+	mux.Handle(isshov1connect.NewPlanServiceHandler(&plans.Handler{Svc: &plans.Service{DB: pool}}, opts))
 	uiCatalog, err := uistrings.Load()
 	if err != nil {
 		return err

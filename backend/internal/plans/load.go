@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
@@ -29,6 +30,19 @@ type City struct {
 // LoadCity reads a city for matching, with the activities enabled there and
 // in season in the given month (0 = any month).
 func LoadCity(ctx context.Context, q *dbgen.Queries, cityID string, month time.Month) (*City, error) {
+	c, err := loadPlaces(ctx, q, cityID, month)
+	if err != nil {
+		return nil, err
+	}
+	if err := loadUsers(ctx, q, c); err != nil {
+		return nil, err
+	}
+	return c, nil
+}
+
+// loadPlaces reads everything about a city except its people: settings,
+// areas, travel times, activities and venues.
+func loadPlaces(ctx context.Context, q *dbgen.Queries, cityID string, month time.Month) (*City, error) {
 	row, err := q.GetCityMatching(ctx, cityID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -87,11 +101,53 @@ func LoadCity(ctx context.Context, q *dbgen.Queries, cityID string, month time.M
 		}
 		c.Venues[area][matching.CategoryID(v.CategoryID)] = int(v.Venues)
 	}
-
-	if err := loadUsers(ctx, q, c); err != nil {
-		return nil, err
-	}
 	return c, nil
+}
+
+// LoadUser reads one person for matching and returns their city's id.
+// pgx.ErrNoRows means they have no profile.
+func LoadUser(ctx context.Context, q *dbgen.Queries, userID uuid.UUID) (*matching.User, string, error) {
+	r, err := q.GetMatchingUser(ctx, userID)
+	if err != nil {
+		return nil, "", err
+	}
+	u := &matching.User{
+		ID:             matching.UserID(userID.String()),
+		HomeArea:       matching.AreaID(r.HomeAreaID),
+		MaxTravelMin:   int(r.MaxTravelMin),
+		Gender:         matching.Gender(r.Gender),
+		SameGenderOnly: r.SameGenderOnly,
+		Size:           matching.SizePref(r.SizePref),
+		Budget:         int(r.Budget),
+		Prefs:          map[matching.ActivityID]int{},
+		Reliability:    float64(r.Reliability),
+	}
+	langs, err := q.ListUserLanguages(ctx, userID)
+	if err != nil {
+		return nil, "", err
+	}
+	for _, l := range langs {
+		level := 0
+		if l.Level != nil {
+			level = int(*l.Level)
+		}
+		u.Languages = append(u.Languages, matching.Language{Code: l.Lang, Fluent: l.Fluent, Level: level})
+	}
+	slots, err := q.ListAvailability(ctx, userID)
+	if err != nil {
+		return nil, "", err
+	}
+	for _, s := range slots {
+		u.Availability = append(u.Availability, matching.Slot{Weekday: time.Weekday(s.Weekday), Block: matching.Block(s.Block)})
+	}
+	prefs, err := q.ListActivityPrefs(ctx, userID)
+	if err != nil {
+		return nil, "", err
+	}
+	for _, p := range prefs {
+		u.Prefs[matching.ActivityID(p.ActivityID)] = int(p.Weight)
+	}
+	return u, r.CityID, nil
 }
 
 // loadUsers reads every profile in the city with its languages,

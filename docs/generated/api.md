@@ -51,6 +51,23 @@
   
     - [IdentityService](#issho-v1-IdentityService)
   
+- [issho/v1/plans.proto](#issho_v1_plans-proto)
+    - [FeedPlan](#issho-v1-FeedPlan)
+    - [GetPlanRequest](#issho-v1-GetPlanRequest)
+    - [GetPlanResponse](#issho-v1-GetPlanResponse)
+    - [ListFeedRequest](#issho-v1-ListFeedRequest)
+    - [ListFeedResponse](#issho-v1-ListFeedResponse)
+    - [SignUpRequest](#issho-v1-SignUpRequest)
+    - [SignUpResponse](#issho-v1-SignUpResponse)
+    - [Signup](#issho-v1-Signup)
+    - [UnavailableTime](#issho-v1-UnavailableTime)
+    - [WithdrawRequest](#issho-v1-WithdrawRequest)
+    - [WithdrawResponse](#issho-v1-WithdrawResponse)
+  
+    - [PlanLevel](#issho-v1-PlanLevel)
+  
+    - [PlanService](#issho-v1-PlanService)
+  
 - [issho/v1/ui.proto](#issho_v1_ui-proto)
     - [GetStringsRequest](#issho-v1-GetStringsRequest)
     - [GetStringsResponse](#issho-v1-GetStringsResponse)
@@ -671,6 +688,232 @@ HTTP: POST /issho.v1.IdentityService/&lt;Method&gt;
 | ----------- | ------------ | ------------- | ------------|
 | GetMe | [GetMeRequest](#issho-v1-GetMeRequest) | [GetMeResponse](#issho-v1-GetMeResponse) | GetMe returns the caller&#39;s account, creating the app-side user row the first time a Supabase user calls the API. |
 | DeleteAccount | [DeleteAccountRequest](#issho-v1-DeleteAccountRequest) | [DeleteAccountResponse](#issho-v1-DeleteAccountResponse) | DeleteAccount permanently deletes the caller&#39;s Supabase auth user and all of their app data (cascaded from auth.users). The client should sign out afterwards; existing access tokens stop working once they expire. Returns FAILED_PRECONDITION if the server has no Supabase secret key configured. |
+
+ 
+
+
+
+<a name="issho_v1_plans-proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## issho/v1/plans.proto
+
+
+
+<a name="issho-v1-FeedPlan"></a>
+
+### FeedPlan
+An open plan as the caller sees it.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [string](#string) |  |  |
+| area_id | [string](#string) |  | Area id (CatalogService.ListCities), e.g. &#34;tokyo-kichijoji&#34;. |
+| activity_id | [string](#string) |  | Activity id (CatalogService.ListActivities). |
+| follow_up_activity_id | [string](#string) |  | An optional second activity, such as a meal after bouldering; &#34;&#34; = none. |
+| primary_language | [string](#string) |  | The plan&#39;s languages (ISO 639-1): everyone at the event speaks the primary one, or the secondary one for a language exchange (&#34;&#34; = none). |
+| secondary_language | [string](#string) |  |  |
+| signups | [int32](#int32) |  | How many people are waiting for this round, including the caller. |
+| level | [PlanLevel](#issho-v1-PlanLevel) |  |  |
+| travel_minutes | [int32](#int32) |  | Travel time from the caller&#39;s home area; -1 = no route. |
+| window_start | [string](#string) |  | When this round can happen: window_days days from window_start, a date in the city (&#34;2030-01-05&#34;). The worker can schedule it any time in the window once it&#39;s ready. |
+| window_days | [int32](#int32) |  |  |
+| signup_deadline | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | Signups for this round close then; the round goes ahead with whoever can make it. |
+| signed_up | [bool](#bool) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-GetPlanRequest"></a>
+
+### GetPlanRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| plan_id | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-GetPlanResponse"></a>
+
+### GetPlanResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| plan | [FeedPlan](#issho-v1-FeedPlan) |  |  |
+| signup | [Signup](#issho-v1-Signup) |  | The caller&#39;s signup; unset when they haven&#39;t signed up. |
+
+
+
+
+
+
+<a name="issho-v1-ListFeedRequest"></a>
+
+### ListFeedRequest
+
+
+
+
+
+
+
+<a name="issho-v1-ListFeedResponse"></a>
+
+### ListFeedResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| plans | [FeedPlan](#issho-v1-FeedPlan) | repeated |  |
+
+
+
+
+
+
+<a name="issho-v1-SignUpRequest"></a>
+
+### SignUpRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| plan_id | [string](#string) |  |  |
+| signup | [Signup](#issho-v1-Signup) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-SignUpResponse"></a>
+
+### SignUpResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| plan | [FeedPlan](#issho-v1-FeedPlan) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-Signup"></a>
+
+### Signup
+The times that suit someone for one plan. Pre-fill pattern with the
+profile&#39;s availability; an empty pattern means &#34;my usual availability&#34;.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| pattern | [AvailabilitySlot](#issho-v1-AvailabilitySlot) | repeated | Weekly slots that suit them for this plan. No duplicates. |
+| unavailable | [UnavailableTime](#issho-v1-UnavailableTime) | repeated | Dates or parts of a date in the plan&#39;s window they can&#39;t make. |
+
+
+
+
+
+
+<a name="issho-v1-UnavailableTime"></a>
+
+### UnavailableTime
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| date | [string](#string) |  | A date in the plan&#39;s window, &#34;2030-01-09&#34;. |
+| block | [TimeBlock](#issho-v1-TimeBlock) |  | TIME_BLOCK_UNSPECIFIED = the whole day. |
+
+
+
+
+
+
+<a name="issho-v1-WithdrawRequest"></a>
+
+### WithdrawRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| plan_id | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-WithdrawResponse"></a>
+
+### WithdrawResponse
+
+
+
+
+
+
+ 
+
+
+<a name="issho-v1-PlanLevel"></a>
+
+### PlanLevel
+How well a plan suits the caller, best last.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| PLAN_LEVEL_UNSPECIFIED | 0 |  |
+| PLAN_LEVEL_NOT_FOR_YOU | 1 | They don&#39;t speak the plan&#39;s language(s): shown greyed out, no signup. |
+| PLAN_LEVEL_LOW | 2 | No preference for the activity, or beyond their longest trip. |
+| PLAN_LEVEL_MAYBE | 3 | An activity they&#39;re open to try. |
+| PLAN_LEVEL_GOOD | 4 | One they like. |
+| PLAN_LEVEL_TOP | 5 | One they love. |
+
+
+ 
+
+ 
+
+
+<a name="issho-v1-PlanService"></a>
+
+### PlanService
+PlanService shows open plans to the caller and signs them up. A plan is an
+outing without a date yet (an activity in an area, in a language); once
+enough people sign up, the worker picks a date and forms groups.
+Plans carry ids only: names come from CatalogService (ListActivities,
+ListCities), which the app already has in the caller&#39;s languages.
+Signup counts are shown, never who signed up.
+Requires `Authorization: Bearer &lt;Supabase access token&gt;` and a saved
+profile (FAILED_PRECONDITION otherwise).
+
+HTTP: POST /issho.v1.PlanService/&lt;Method&gt;
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| ListFeed | [ListFeedRequest](#issho-v1-ListFeedRequest) | [ListFeedResponse](#issho-v1-ListFeedResponse) | ListFeed returns every open plan in the caller&#39;s city, best for them first, so scrolling far enough shows everything. Each plan&#39;s level also colours the map. |
+| GetPlan | [GetPlanRequest](#issho-v1-GetPlanRequest) | [GetPlanResponse](#issho-v1-GetPlanResponse) | GetPlan returns one open plan with the caller&#39;s signup, if any. NOT_FOUND for an unknown or closed plan, or one in another city. |
+| SignUp | [SignUpRequest](#issho-v1-SignUpRequest) | [SignUpResponse](#issho-v1-SignUpResponse) | SignUp signs the caller up for an open plan, or replaces the times they gave. FAILED_PRECONDITION when the plan has closed or they don&#39;t speak its language; INVALID_ARGUMENT for times outside the plan&#39;s window. |
+| Withdraw | [WithdrawRequest](#issho-v1-WithdrawRequest) | [WithdrawResponse](#issho-v1-WithdrawResponse) | Withdraw removes the caller&#39;s signup. Withdrawing twice is fine. |
 
  
 

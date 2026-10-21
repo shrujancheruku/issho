@@ -55,19 +55,7 @@ func TestIntegrationRunner(t *testing.T) {
 	f := newFixture(t, "zz-plans-runner", "Asia/Tokyo", 8)
 	ctx := context.Background()
 	for _, id := range f.users {
-		stmts := [][]any{
-			{`insert into app.profiles (user_id, display_name, birth_year, gender, home_area_id, max_travel_min,
-			   energy, budget, size_pref, primary_language, conduct_version)
-			  values ($1, 'Test', 1995, 'unspecified', $2, 30, 2, 1, 'medium', 'ja', 1)`, id, f.area},
-			{"insert into app.user_languages (user_id, lang, fluent) values ($1, 'ja', true)", id},
-			{"insert into app.availability_slots (user_id, weekday, block) values ($1, 6, 'afternoon')", id},
-			{"insert into app.user_activity_prefs (user_id, activity_id, weight) values ($1, $2, 2)", id, f.act},
-		}
-		for _, s := range stmts {
-			if _, err := f.pool.Exec(ctx, s[0].(string), s[1:]...); err != nil {
-				t.Fatal(err)
-			}
-		}
+		f.addProfile(t, id, "ja")
 	}
 	r := &Runner{DB: f.pool, Timing: DefaultTiming(), Log: slog.New(slog.NewTextHandler(io.Discard, nil))}
 	// Tuesday 1 January, 18:00 in Tokyo: the window runs 3–16 January.

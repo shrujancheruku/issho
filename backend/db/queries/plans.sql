@@ -106,3 +106,16 @@ where m.user_id = any(@user_ids::uuid[])
   and e.status = 'scheduled'
   and e.date >= @from_date
 order by m.user_id, e.date, e.block;
+
+-- name: ListUserOpenSignups :many
+select s.plan_id from app.plan_signups s
+join app.plans p on p.id = s.plan_id
+where s.user_id = $1 and p.status = 'open';
+
+-- name: ListUserSignupSlots :many
+select weekday, block from app.plan_signup_slots
+where plan_id = $1 and user_id = $2 order by weekday, block;
+
+-- name: ListUserSignupUnavailable :many
+select date, block from app.plan_signup_unavailable
+where plan_id = $1 and user_id = $2 order by date, block;

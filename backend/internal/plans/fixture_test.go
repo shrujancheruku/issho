@@ -88,3 +88,23 @@ func newFixture(t *testing.T, id, timezone string, n int) *fixture {
 	}
 	return f
 }
+
+// addProfile gives a fixture user a profile in the fixture's area: fluent in
+// lang, free on Saturday afternoons, loving the fixture's activity.
+func (f *fixture) addProfile(t *testing.T, id uuid.UUID, lang string) {
+	t.Helper()
+	ctx := context.Background()
+	stmts := [][]any{
+		{`insert into app.profiles (user_id, display_name, birth_year, gender, home_area_id, max_travel_min,
+		   energy, budget, size_pref, primary_language, conduct_version)
+		  values ($1, 'Test', 1995, 'unspecified', $2, 30, 2, 1, 'medium', $3, 1)`, id, f.area, lang},
+		{"insert into app.user_languages (user_id, lang, fluent) values ($1, $2, true)", id, lang},
+		{"insert into app.availability_slots (user_id, weekday, block) values ($1, 6, 'afternoon')", id},
+		{"insert into app.user_activity_prefs (user_id, activity_id, weight) values ($1, $2, 2)", id, f.act},
+	}
+	for _, s := range stmts {
+		if _, err := f.pool.Exec(ctx, s[0].(string), s[1:]...); err != nil {
+			t.Fatal(err)
+		}
+	}
+}
