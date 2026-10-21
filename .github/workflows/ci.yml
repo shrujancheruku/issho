@@ -87,10 +87,13 @@ jobs:
       # first step, which blocked the job for ~20s. Started in the background,
       # the pull overlaps with Go setup; "Wait for PostGIS" joins it before the
       # first step that needs the database.
+      # The health check goes over TCP (-h 127.0.0.1): the image's init scripts
+      # (creating PostGIS) run on a temporary server that listens only on the
+      # Unix socket, so a socket check reports healthy before that server stops.
       - name: Start PostGIS in the background
         run: |
           nohup docker run -d --name postgis -p 5432:5432 -e POSTGRES_PASSWORD=postgres \
-            --health-cmd "pg_isready -U postgres" --health-interval 2s --health-timeout 5s --health-retries 30 \
+            --health-cmd "pg_isready -h 127.0.0.1 -U postgres" --health-interval 2s --health-timeout 5s --health-retries 30 \
             postgis/postgis:17-3.5 > "$RUNNER_TEMP/postgis.log" 2>&1 &
       - uses: actions/checkout@v7
       - uses: actions/setup-go@v7
