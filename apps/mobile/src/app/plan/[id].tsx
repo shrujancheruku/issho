@@ -22,22 +22,69 @@ import { useTheme } from '@/hooks/use-theme';
 import { useI18n } from '@/i18n/i18n-provider';
 import { slotKey } from '@/lib/slots';
 
-/** A labelled detail in the plan's facts card: label above, value, optional note. */
-function Fact({ label, value, note, last }: { label: string; value: string; note?: string; last?: boolean }) {
+/**
+ * One detail of the plan as a light two-column row: the label in a narrow
+ * grey column, the value beside it, an optional note under the value.
+ * `info` adds a tappable ⓘ after the value that shows `infoText` below it.
+ */
+function Fact({
+  label,
+  value,
+  note,
+  info,
+}: {
+  label: string;
+  value: string;
+  note?: string;
+  info?: { label: string; text: string };
+}) {
   const theme = useTheme();
+  const [open, setOpen] = useState(false);
   return (
-    <View style={[styles.fact, !last && { borderBottomWidth: 1, borderBottomColor: theme.backgroundSelected }]}>
-      <ThemedText type="small" themeColor="textSecondary">
+    <View style={styles.fact}>
+      <ThemedText type="small" themeColor="textSecondary" style={styles.factLabel}>
         {label}
       </ThemedText>
-      <ThemedText type="smallBold" style={styles.factValue}>
-        {value}
+      <View style={styles.factBody}>
+        <View style={styles.factValueRow}>
+          <ThemedText style={styles.factValue}>{value}</ThemedText>
+          {info && (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={info.label}
+              accessibilityState={{ expanded: open }}
+              onPress={() => setOpen(!open)}
+              hitSlop={10}
+              style={[styles.info, { borderColor: open ? theme.text : theme.textSecondary }]}>
+              <ThemedText type="small" style={[styles.infoMark, { color: open ? theme.text : theme.textSecondary }]}>
+                i
+              </ThemedText>
+            </Pressable>
+          )}
+        </View>
+        {!!note && (
+          <ThemedText type="small" themeColor="textSecondary">
+            {note}
+          </ThemedText>
+        )}
+        {info && open && (
+          <ThemedText type="small" themeColor="textSecondary">
+            {info.text}
+          </ThemedText>
+        )}
+      </View>
+    </View>
+  );
+}
+
+/** A section heading with its hint directly underneath, read as one unit. */
+function Heading({ title, hint }: { title: string; hint: string }) {
+  return (
+    <View style={styles.heading}>
+      <ThemedText type="smallBold">{title}</ThemedText>
+      <ThemedText type="small" themeColor="textSecondary">
+        {hint}
       </ThemedText>
-      {!!note && (
-        <ThemedText type="small" themeColor="textSecondary">
-          {note}
-        </ThemedText>
-      )}
     </View>
   );
 }
@@ -104,17 +151,19 @@ export default function PlanScreen() {
             <ThemedText style={styles.followUp}>{t('plan.followUp', { activity: pairText(followUp) })}</ThemedText>
           )}
         </View>
-        {/* One labelled row per fact, so they read as separate details rather than a paragraph. */}
-        <View style={[styles.facts, { backgroundColor: theme.backgroundElement }]}>
+        {/* One labelled row per detail, so they read as separate facts rather than a paragraph. */}
+        <View style={styles.facts}>
           <Fact label={t('plan.where')} value={pairText(names.area(p.areaId))} note={distanceText(t, p.travelMinutes)} />
           <Fact label={t('plan.language')} value={language} />
           <Fact
             label={t('plan.when')}
-            value={t('plan.dateRange', { start: formatDate(dates[0], lang), end: formatDate(dates[dates.length - 1], lang) })}
-            note={t('plan.whenHint')}
+            // A dash rather than a translated "{start} to {end}": machine translation
+            // lost the placeholders in Japanese, and a range needs no words.
+            value={`${formatDate(dates[0], lang)} – ${formatDate(dates[dates.length - 1], lang)}`}
+            info={{ label: t('plan.whenInfo'), text: t('plan.whenHint') }}
           />
           <Fact label={t('plan.signupBy')} value={lastSignupDay(p.signupDeadline, lang)} />
-          <Fact label={t('plan.interestedLabel')} value={String(p.signups)} last />
+          <Fact label={t('plan.interestedLabel')} value={String(p.signups)} />
         </View>
 
         {notForYou ? (
@@ -122,20 +171,14 @@ export default function PlanScreen() {
         ) : (
           <>
             <View style={styles.section}>
-              <ThemedText type="smallBold">{t('plan.times')}</ThemedText>
-              <ThemedText type="small" themeColor="textSecondary">
-                {t('plan.timesHint')}
-              </ThemedText>
+              <Heading title={t('plan.times')} hint={t('plan.timesHint')} />
               <AvailabilityGrid
                 selected={times.pattern}
                 onToggle={(day, b) => setTimes({ ...times, pattern: toggle(times.pattern, slotKey(day, b)) })}
               />
             </View>
             <View style={styles.section}>
-              <ThemedText type="smallBold">{t('plan.blockOut')}</ThemedText>
-              <ThemedText type="small" themeColor="textSecondary">
-                {t('plan.blockOutHint')}
-              </ThemedText>
+              <Heading title={t('plan.blockOut')} hint={t('plan.blockOutHint')} />
               <View style={styles.wrap}>
                 {dates.map((d) => (
                   <Chip
@@ -215,9 +258,16 @@ const styles = StyleSheet.create({
   pill: { alignSelf: 'flex-start', borderRadius: 999, paddingVertical: Spacing.half, paddingHorizontal: Spacing.two },
   titleBlock: { gap: Spacing.one },
   followUp: { marginTop: Spacing.one },
-  facts: { borderRadius: 16, paddingHorizontal: Spacing.three },
-  fact: { paddingVertical: Spacing.three, gap: Spacing.half },
+  facts: { gap: Spacing.three },
+  fact: { flexDirection: 'row', gap: Spacing.three },
+  // Wide enough for "Number of people interested" to wrap onto two lines, not five.
+  factLabel: { width: 112, paddingTop: 2 },
+  factBody: { flex: 1, gap: Spacing.half },
+  factValueRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two, flexWrap: 'wrap' },
   factValue: { fontSize: 16, lineHeight: 22 },
+  info: { width: 20, height: 20, borderRadius: 10, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
+  infoMark: { fontSize: 12, lineHeight: 14, fontWeight: 700 },
+  heading: { gap: Spacing.half },
   section: { gap: Spacing.three },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
   footer: { padding: Spacing.four, gap: Spacing.two },
