@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file issho/v1/identity.proto.
  */
 export const file_issho_v1_identity: GenFile = /*@__PURE__*/
-  fileDesc("Chdpc3Noby92MS9pZGVudGl0eS5wcm90bxIIaXNzaG8udjEiFgoURGVsZXRlQWNjb3VudFJlcXVlc3QiFwoVRGVsZXRlQWNjb3VudFJlc3BvbnNlIg4KDEdldE1lUmVxdWVzdCItCg1HZXRNZVJlc3BvbnNlEhwKBHVzZXIYASABKAsyDi5pc3Noby52MS5Vc2VyIjQKBFVzZXISCgoCaWQYASABKAkSDQoFZW1haWwYAiABKAkSEQoJb25ib2FyZGVkGAMgASgIMqEBCg9JZGVudGl0eVNlcnZpY2USOgoFR2V0TWUSFi5pc3Noby52MS5HZXRNZVJlcXVlc3QaFy5pc3Noby52MS5HZXRNZVJlc3BvbnNlIgASUgoNRGVsZXRlQWNjb3VudBIeLmlzc2hvLnYxLkRlbGV0ZUFjY291bnRSZXF1ZXN0Gh8uaXNzaG8udjEuRGVsZXRlQWNjb3VudFJlc3BvbnNlIgBCPlo8Z2l0aHViLmNvbS9zaHJ1amFuY2hlcnVrdS9pc3Noby9iYWNrZW5kL2dlbi9pc3Noby92MTtpc3Nob3YxYgZwcm90bzM");
+  fileDesc("Chdpc3Noby92MS9pZGVudGl0eS5wcm90bxIIaXNzaG8udjEiFgoURGVsZXRlQWNjb3VudFJlcXVlc3QiFwoVRGVsZXRlQWNjb3VudFJlc3BvbnNlIg4KDEdldE1lUmVxdWVzdCItCg1HZXRNZVJlc3BvbnNlEhwKBHVzZXIYASABKAsyDi5pc3Noby52MS5Vc2VyImoKBFVzZXISCgoCaWQYASABKAkSDQoFZW1haWwYAiABKAkSEQoJb25ib2FyZGVkGAMgASgIEhgKEHByaW1hcnlfbGFuZ3VhZ2UYBCABKAkSGgoSc2Vjb25kYXJ5X2xhbmd1YWdlGAUgASgJMqEBCg9JZGVudGl0eVNlcnZpY2USOgoFR2V0TWUSFi5pc3Noby52MS5HZXRNZVJlcXVlc3QaFy5pc3Noby52MS5HZXRNZVJlc3BvbnNlIgASUgoNRGVsZXRlQWNjb3VudBIeLmlzc2hvLnYxLkRlbGV0ZUFjY291bnRSZXF1ZXN0Gh8uaXNzaG8udjEuRGVsZXRlQWNjb3VudFJlc3BvbnNlIgBCPlo8Z2l0aHViLmNvbS9zaHJ1amFuY2hlcnVrdS9pc3Noby9iYWNrZW5kL2dlbi9pc3Noby92MTtpc3Nob3YxYgZwcm90bzM");
 
 /**
  * @generated from message issho.v1.DeleteAccountRequest
@@ -92,6 +92,19 @@ export type User = Message<"issho.v1.User"> & {
    * @generated from field: bool onboarded = 3;
    */
   onboarded: boolean;
+
+  /**
+   * Display languages from the profile (empty until onboarded), so the app
+   * can show itself in the right languages straight after GetMe.
+   *
+   * @generated from field: string primary_language = 4;
+   */
+  primaryLanguage: string;
+
+  /**
+   * @generated from field: string secondary_language = 5;
+   */
+  secondaryLanguage: string;
 };
 
 /**

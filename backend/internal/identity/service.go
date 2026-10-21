@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgerrcode"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
@@ -23,7 +24,7 @@ var (
 // Store is the subset of generated queries this service needs (dbgen.Queries satisfies it).
 type Store interface {
 	UpsertUser(ctx context.Context, arg dbgen.UpsertUserParams) (dbgen.AppUser, error)
-	HasProfile(ctx context.Context, userID uuid.UUID) (bool, error)
+	GetDisplayLanguages(ctx context.Context, userID uuid.UUID) (dbgen.GetDisplayLanguagesRow, error)
 	DeleteUser(ctx context.Context, id uuid.UUID) error
 }
 
@@ -35,6 +36,8 @@ type AuthAdmin interface {
 type Account struct {
 	User      dbgen.AppUser
 	Onboarded bool
+	// Display languages; empty until onboarded.
+	PrimaryLanguage, SecondaryLanguage string
 }
 
 type Service struct {
@@ -59,11 +62,20 @@ func (s *Service) Me(ctx context.Context, c auth.Caller) (Account, error) {
 		}
 		return Account{}, err
 	}
-	onboarded, err := s.Store.HasProfile(ctx, u.ID)
-	if err != nil {
+	acct := Account{User: u}
+	langs, err := s.Store.GetDisplayLanguages(ctx, u.ID)
+	switch {
+	case errors.Is(err, pgx.ErrNoRows): // no profile yet
+	case err != nil:
 		return Account{}, err
+	default:
+		acct.Onboarded = true
+		acct.PrimaryLanguage = langs.PrimaryLanguage
+		if langs.SecondaryLanguage != nil {
+			acct.SecondaryLanguage = *langs.SecondaryLanguage
+		}
 	}
-	return Account{User: u, Onboarded: onboarded}, nil
+	return acct, nil
 }
 
 // DeleteAccount deletes the auth user first, then the app row.

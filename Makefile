@@ -11,7 +11,7 @@ include $(ENV_FILE)
 export
 endif
 
-.PHONY: setup secrets-scan docs gen gen-proto gen-sql lint test migrate-up migrate-status api seed matrix venues sim
+.PHONY: setup secrets-scan docs gen gen-proto gen-sql gen-strings lint test migrate-up migrate-status api seed matrix venues sim
 
 # One-time setup after cloning: install JS deps and enable the secret-scanning pre-commit hook.
 setup:
@@ -27,7 +27,7 @@ secrets-scan:
 # Regenerate docs/generated/api.md (part of gen-proto).
 docs: gen-proto
 
-gen: gen-proto gen-sql
+gen: gen-proto gen-sql gen-strings
 
 gen-proto:
 	rm -rf backend/gen/issho packages/api-client/src/gen docs/generated
@@ -35,6 +35,11 @@ gen-proto:
 
 gen-sql:
 	cd backend && go tool sqlc generate
+
+# The app's English UI text is the source; the API embeds a copy and only
+# ever translates strings in it (internal/uistrings).
+gen-strings:
+	cp apps/mobile/src/i18n/en.json backend/internal/uistrings/en.json
 
 lint:
 	$(GOTOOL) buf lint proto

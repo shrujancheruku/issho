@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	"github.com/shrujancheruku/issho/backend/internal/platform/auth"
@@ -13,12 +14,12 @@ import (
 
 type fakeStore struct {
 	users     map[uuid.UUID]dbgen.AppUser
-	profiles  map[uuid.UUID]bool
+	profiles  map[uuid.UUID]dbgen.GetDisplayLanguagesRow
 	deleteErr error
 }
 
 func newFakeStore() *fakeStore {
-	return &fakeStore{users: map[uuid.UUID]dbgen.AppUser{}, profiles: map[uuid.UUID]bool{}}
+	return &fakeStore{users: map[uuid.UUID]dbgen.AppUser{}, profiles: map[uuid.UUID]dbgen.GetDisplayLanguagesRow{}}
 }
 
 func (f *fakeStore) UpsertUser(_ context.Context, arg dbgen.UpsertUserParams) (dbgen.AppUser, error) {
@@ -33,8 +34,12 @@ func (f *fakeStore) UpsertUser(_ context.Context, arg dbgen.UpsertUserParams) (d
 	return u, nil
 }
 
-func (f *fakeStore) HasProfile(_ context.Context, id uuid.UUID) (bool, error) {
-	return f.profiles[id], nil
+func (f *fakeStore) GetDisplayLanguages(_ context.Context, id uuid.UUID) (dbgen.GetDisplayLanguagesRow, error) {
+	p, ok := f.profiles[id]
+	if !ok {
+		return p, pgx.ErrNoRows
+	}
+	return p, nil
 }
 
 func (f *fakeStore) DeleteUser(_ context.Context, id uuid.UUID) error {
@@ -73,9 +78,10 @@ func TestMe(t *testing.T) {
 	if acct.User.Email == nil || *acct.User.Email != "a@example.com" {
 		t.Fatalf("email lost: %+v", acct.User)
 	}
-	store.profiles[c.UserID] = true
-	if acct, _ = svc.Me(ctx, c); !acct.Onboarded {
-		t.Fatal("expected onboarded once a profile exists")
+	es := "es"
+	store.profiles[c.UserID] = dbgen.GetDisplayLanguagesRow{PrimaryLanguage: "ja", SecondaryLanguage: &es}
+	if acct, _ = svc.Me(ctx, c); !acct.Onboarded || acct.PrimaryLanguage != "ja" || acct.SecondaryLanguage != "es" {
+		t.Fatalf("expected onboarded with languages once a profile exists: %+v", acct)
 	}
 }
 

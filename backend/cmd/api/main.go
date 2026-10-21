@@ -26,8 +26,10 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/platform/db"
 	"github.com/shrujancheruku/issho/backend/internal/platform/errs"
 	"github.com/shrujancheruku/issho/backend/internal/platform/supabase"
+	"github.com/shrujancheruku/issho/backend/internal/profile"
 	"github.com/shrujancheruku/issho/backend/internal/translate"
 	gtranslate "github.com/shrujancheruku/issho/backend/internal/translate/google"
+	"github.com/shrujancheruku/issho/backend/internal/uistrings"
 )
 
 var version = "dev"
@@ -80,7 +82,10 @@ func run() error {
 	// errs runs outermost so it also sanitises errors returned by the auth interceptor.
 	opts := connect.WithInterceptors(
 		errs.Interceptor(slog.Default()),
-		auth.Interceptor(verifier, isshov1connect.HealthServiceCheckProcedure),
+		// UIService is public because the sign-in screens need their text
+		// before anyone is signed in; it only translates the server's own
+		// copy of the UI catalogue.
+		auth.Interceptor(verifier, isshov1connect.HealthServiceCheckProcedure, isshov1connect.UIServiceGetStringsProcedure),
 	)
 
 	mux := http.NewServeMux()
@@ -99,6 +104,12 @@ func run() error {
 		slog.Warn("GOOGLE_TRANSLATE_API_KEY not set: machine translation off, text shown in stored languages only")
 	}
 	mux.Handle(isshov1connect.NewCatalogServiceHandler(&catalog.Handler{Q: q, Translations: translations}, opts))
+	mux.Handle(isshov1connect.NewProfileServiceHandler(&profile.Handler{Svc: &profile.Service{DB: pool}}, opts))
+	uiCatalog, err := uistrings.Load()
+	if err != nil {
+		return err
+	}
+	mux.Handle(isshov1connect.NewUIServiceHandler(&uistrings.Handler{Catalog: uiCatalog, Translations: translations}, opts))
 
 	handler := withCORS(mux, cfg.AllowedOrigins)
 

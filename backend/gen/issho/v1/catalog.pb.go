@@ -261,6 +261,401 @@ func (x *Activity) GetSecondaryName() string {
 	return ""
 }
 
+type ListCitiesRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Primary and optional secondary display language, as in
+	// ListActivitiesRequest.
+	Locale            string `protobuf:"bytes,1,opt,name=locale,proto3" json:"locale,omitempty"`
+	SecondaryLanguage string `protobuf:"bytes,2,opt,name=secondary_language,json=secondaryLanguage,proto3" json:"secondary_language,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *ListCitiesRequest) Reset() {
+	*x = ListCitiesRequest{}
+	mi := &file_issho_v1_catalog_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListCitiesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListCitiesRequest) ProtoMessage() {}
+
+func (x *ListCitiesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_issho_v1_catalog_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListCitiesRequest.ProtoReflect.Descriptor instead.
+func (*ListCitiesRequest) Descriptor() ([]byte, []int) {
+	return file_issho_v1_catalog_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *ListCitiesRequest) GetLocale() string {
+	if x != nil {
+		return x.Locale
+	}
+	return ""
+}
+
+func (x *ListCitiesRequest) GetSecondaryLanguage() string {
+	if x != nil {
+		return x.SecondaryLanguage
+	}
+	return ""
+}
+
+type ListCitiesResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Sorted by id.
+	Cities        []*City `protobuf:"bytes,1,rep,name=cities,proto3" json:"cities,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListCitiesResponse) Reset() {
+	*x = ListCitiesResponse{}
+	mi := &file_issho_v1_catalog_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListCitiesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListCitiesResponse) ProtoMessage() {}
+
+func (x *ListCitiesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_issho_v1_catalog_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListCitiesResponse.ProtoReflect.Descriptor instead.
+func (*ListCitiesResponse) Descriptor() ([]byte, []int) {
+	return file_issho_v1_catalog_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *ListCitiesResponse) GetCities() []*City {
+	if x != nil {
+		return x.Cities
+	}
+	return nil
+}
+
+type City struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// City pack id, e.g. "tokyo".
+	Id   string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	// Empty when not requested, unavailable or identical to name.
+	SecondaryName string `protobuf:"bytes,3,opt,name=secondary_name,json=secondaryName,proto3" json:"secondary_name,omitempty"`
+	// Languages commonly used in the city, most common first. Suggestions
+	// only: any language is allowed.
+	Languages []string `protobuf:"bytes,4,rep,name=languages,proto3" json:"languages,omitempty"`
+	// Sorted by id.
+	Areas         []*Area `protobuf:"bytes,5,rep,name=areas,proto3" json:"areas,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *City) Reset() {
+	*x = City{}
+	mi := &file_issho_v1_catalog_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *City) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*City) ProtoMessage() {}
+
+func (x *City) ProtoReflect() protoreflect.Message {
+	mi := &file_issho_v1_catalog_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use City.ProtoReflect.Descriptor instead.
+func (*City) Descriptor() ([]byte, []int) {
+	return file_issho_v1_catalog_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *City) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *City) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *City) GetSecondaryName() string {
+	if x != nil {
+		return x.SecondaryName
+	}
+	return ""
+}
+
+func (x *City) GetLanguages() []string {
+	if x != nil {
+		return x.Languages
+	}
+	return nil
+}
+
+func (x *City) GetAreas() []*Area {
+	if x != nil {
+		return x.Areas
+	}
+	return nil
+}
+
+type Area struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// e.g. "tokyo-kichijoji".
+	Id            string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name          string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	SecondaryName string `protobuf:"bytes,3,opt,name=secondary_name,json=secondaryName,proto3" json:"secondary_name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Area) Reset() {
+	*x = Area{}
+	mi := &file_issho_v1_catalog_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Area) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Area) ProtoMessage() {}
+
+func (x *Area) ProtoReflect() protoreflect.Message {
+	mi := &file_issho_v1_catalog_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Area.ProtoReflect.Descriptor instead.
+func (*Area) Descriptor() ([]byte, []int) {
+	return file_issho_v1_catalog_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *Area) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *Area) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *Area) GetSecondaryName() string {
+	if x != nil {
+		return x.SecondaryName
+	}
+	return ""
+}
+
+type ListLanguagesRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Language to name the languages in, e.g. "ja" gives "スペイン語" for es.
+	Locale        string `protobuf:"bytes,1,opt,name=locale,proto3" json:"locale,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListLanguagesRequest) Reset() {
+	*x = ListLanguagesRequest{}
+	mi := &file_issho_v1_catalog_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListLanguagesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListLanguagesRequest) ProtoMessage() {}
+
+func (x *ListLanguagesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_issho_v1_catalog_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListLanguagesRequest.ProtoReflect.Descriptor instead.
+func (*ListLanguagesRequest) Descriptor() ([]byte, []int) {
+	return file_issho_v1_catalog_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *ListLanguagesRequest) GetLocale() string {
+	if x != nil {
+		return x.Locale
+	}
+	return ""
+}
+
+type ListLanguagesResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Sorted by code.
+	Languages     []*Language `protobuf:"bytes,1,rep,name=languages,proto3" json:"languages,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListLanguagesResponse) Reset() {
+	*x = ListLanguagesResponse{}
+	mi := &file_issho_v1_catalog_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListLanguagesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListLanguagesResponse) ProtoMessage() {}
+
+func (x *ListLanguagesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_issho_v1_catalog_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListLanguagesResponse.ProtoReflect.Descriptor instead.
+func (*ListLanguagesResponse) Descriptor() ([]byte, []int) {
+	return file_issho_v1_catalog_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *ListLanguagesResponse) GetLanguages() []*Language {
+	if x != nil {
+		return x.Languages
+	}
+	return nil
+}
+
+type Language struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// ISO 639-1 code, e.g. "es".
+	Code string `protobuf:"bytes,1,opt,name=code,proto3" json:"code,omitempty"`
+	// The language's name for itself ("Español"), or its English name where
+	// none is known.
+	Autonym string `protobuf:"bytes,2,opt,name=autonym,proto3" json:"autonym,omitempty"`
+	// Its name in the requested locale ("スペイン語"); falls back to English.
+	Name          string `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Language) Reset() {
+	*x = Language{}
+	mi := &file_issho_v1_catalog_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Language) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Language) ProtoMessage() {}
+
+func (x *Language) ProtoReflect() protoreflect.Message {
+	mi := &file_issho_v1_catalog_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Language.ProtoReflect.Descriptor instead.
+func (*Language) Descriptor() ([]byte, []int) {
+	return file_issho_v1_catalog_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *Language) GetCode() string {
+	if x != nil {
+		return x.Code
+	}
+	return ""
+}
+
+func (x *Language) GetAutonym() string {
+	if x != nil {
+		return x.Autonym
+	}
+	return ""
+}
+
+func (x *Language) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
 var File_issho_v1_catalog_proto protoreflect.FileDescriptor
 
 const file_issho_v1_catalog_proto_rawDesc = "" +
@@ -286,9 +681,35 @@ const file_issho_v1_catalog_proto_rawDesc = "" +
 	"\x0emin_group_size\x18\b \x01(\x05R\fminGroupSize\x12$\n" +
 	"\x0emax_group_size\x18\t \x01(\x05R\fmaxGroupSize\x12%\n" +
 	"\x0esecondary_name\x18\n" +
-	" \x01(\tR\rsecondaryName2g\n" +
+	" \x01(\tR\rsecondaryName\"Z\n" +
+	"\x11ListCitiesRequest\x12\x16\n" +
+	"\x06locale\x18\x01 \x01(\tR\x06locale\x12-\n" +
+	"\x12secondary_language\x18\x02 \x01(\tR\x11secondaryLanguage\"<\n" +
+	"\x12ListCitiesResponse\x12&\n" +
+	"\x06cities\x18\x01 \x03(\v2\x0e.issho.v1.CityR\x06cities\"\x95\x01\n" +
+	"\x04City\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12%\n" +
+	"\x0esecondary_name\x18\x03 \x01(\tR\rsecondaryName\x12\x1c\n" +
+	"\tlanguages\x18\x04 \x03(\tR\tlanguages\x12$\n" +
+	"\x05areas\x18\x05 \x03(\v2\x0e.issho.v1.AreaR\x05areas\"Q\n" +
+	"\x04Area\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12%\n" +
+	"\x0esecondary_name\x18\x03 \x01(\tR\rsecondaryName\".\n" +
+	"\x14ListLanguagesRequest\x12\x16\n" +
+	"\x06locale\x18\x01 \x01(\tR\x06locale\"I\n" +
+	"\x15ListLanguagesResponse\x120\n" +
+	"\tlanguages\x18\x01 \x03(\v2\x12.issho.v1.LanguageR\tlanguages\"L\n" +
+	"\bLanguage\x12\x12\n" +
+	"\x04code\x18\x01 \x01(\tR\x04code\x12\x18\n" +
+	"\aautonym\x18\x02 \x01(\tR\aautonym\x12\x12\n" +
+	"\x04name\x18\x03 \x01(\tR\x04name2\x86\x02\n" +
 	"\x0eCatalogService\x12U\n" +
-	"\x0eListActivities\x12\x1f.issho.v1.ListActivitiesRequest\x1a .issho.v1.ListActivitiesResponse\"\x00B>Z<github.com/shrujancheruku/issho/backend/gen/issho/v1;isshov1b\x06proto3"
+	"\x0eListActivities\x12\x1f.issho.v1.ListActivitiesRequest\x1a .issho.v1.ListActivitiesResponse\"\x00\x12I\n" +
+	"\n" +
+	"ListCities\x12\x1b.issho.v1.ListCitiesRequest\x1a\x1c.issho.v1.ListCitiesResponse\"\x00\x12R\n" +
+	"\rListLanguages\x12\x1e.issho.v1.ListLanguagesRequest\x1a\x1f.issho.v1.ListLanguagesResponse\"\x00B>Z<github.com/shrujancheruku/issho/backend/gen/issho/v1;isshov1b\x06proto3"
 
 var (
 	file_issho_v1_catalog_proto_rawDescOnce sync.Once
@@ -302,21 +723,35 @@ func file_issho_v1_catalog_proto_rawDescGZIP() []byte {
 	return file_issho_v1_catalog_proto_rawDescData
 }
 
-var file_issho_v1_catalog_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_issho_v1_catalog_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_issho_v1_catalog_proto_goTypes = []any{
 	(*ListActivitiesRequest)(nil),  // 0: issho.v1.ListActivitiesRequest
 	(*ListActivitiesResponse)(nil), // 1: issho.v1.ListActivitiesResponse
 	(*Activity)(nil),               // 2: issho.v1.Activity
+	(*ListCitiesRequest)(nil),      // 3: issho.v1.ListCitiesRequest
+	(*ListCitiesResponse)(nil),     // 4: issho.v1.ListCitiesResponse
+	(*City)(nil),                   // 5: issho.v1.City
+	(*Area)(nil),                   // 6: issho.v1.Area
+	(*ListLanguagesRequest)(nil),   // 7: issho.v1.ListLanguagesRequest
+	(*ListLanguagesResponse)(nil),  // 8: issho.v1.ListLanguagesResponse
+	(*Language)(nil),               // 9: issho.v1.Language
 }
 var file_issho_v1_catalog_proto_depIdxs = []int32{
 	2, // 0: issho.v1.ListActivitiesResponse.activities:type_name -> issho.v1.Activity
-	0, // 1: issho.v1.CatalogService.ListActivities:input_type -> issho.v1.ListActivitiesRequest
-	1, // 2: issho.v1.CatalogService.ListActivities:output_type -> issho.v1.ListActivitiesResponse
-	2, // [2:3] is the sub-list for method output_type
-	1, // [1:2] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	5, // 1: issho.v1.ListCitiesResponse.cities:type_name -> issho.v1.City
+	6, // 2: issho.v1.City.areas:type_name -> issho.v1.Area
+	9, // 3: issho.v1.ListLanguagesResponse.languages:type_name -> issho.v1.Language
+	0, // 4: issho.v1.CatalogService.ListActivities:input_type -> issho.v1.ListActivitiesRequest
+	3, // 5: issho.v1.CatalogService.ListCities:input_type -> issho.v1.ListCitiesRequest
+	7, // 6: issho.v1.CatalogService.ListLanguages:input_type -> issho.v1.ListLanguagesRequest
+	1, // 7: issho.v1.CatalogService.ListActivities:output_type -> issho.v1.ListActivitiesResponse
+	4, // 8: issho.v1.CatalogService.ListCities:output_type -> issho.v1.ListCitiesResponse
+	8, // 9: issho.v1.CatalogService.ListLanguages:output_type -> issho.v1.ListLanguagesResponse
+	7, // [7:10] is the sub-list for method output_type
+	4, // [4:7] is the sub-list for method input_type
+	4, // [4:4] is the sub-list for extension type_name
+	4, // [4:4] is the sub-list for extension extendee
+	0, // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_issho_v1_catalog_proto_init() }
@@ -330,7 +765,7 @@ func file_issho_v1_catalog_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_issho_v1_catalog_proto_rawDesc), len(file_issho_v1_catalog_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   3,
+			NumMessages:   10,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

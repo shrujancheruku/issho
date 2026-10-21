@@ -180,9 +180,13 @@ type User struct {
 	// Email from the Supabase token; empty for providers that hide it.
 	Email string `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty"`
 	// True once the user has completed onboarding (has a profile).
-	Onboarded     bool `protobuf:"varint,3,opt,name=onboarded,proto3" json:"onboarded,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	Onboarded bool `protobuf:"varint,3,opt,name=onboarded,proto3" json:"onboarded,omitempty"`
+	// Display languages from the profile (empty until onboarded), so the app
+	// can show itself in the right languages straight after GetMe.
+	PrimaryLanguage   string `protobuf:"bytes,4,opt,name=primary_language,json=primaryLanguage,proto3" json:"primary_language,omitempty"`
+	SecondaryLanguage string `protobuf:"bytes,5,opt,name=secondary_language,json=secondaryLanguage,proto3" json:"secondary_language,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *User) Reset() {
@@ -236,6 +240,20 @@ func (x *User) GetOnboarded() bool {
 	return false
 }
 
+func (x *User) GetPrimaryLanguage() string {
+	if x != nil {
+		return x.PrimaryLanguage
+	}
+	return ""
+}
+
+func (x *User) GetSecondaryLanguage() string {
+	if x != nil {
+		return x.SecondaryLanguage
+	}
+	return ""
+}
+
 var File_issho_v1_identity_proto protoreflect.FileDescriptor
 
 const file_issho_v1_identity_proto_rawDesc = "" +
@@ -245,11 +263,13 @@ const file_issho_v1_identity_proto_rawDesc = "" +
 	"\x15DeleteAccountResponse\"\x0e\n" +
 	"\fGetMeRequest\"3\n" +
 	"\rGetMeResponse\x12\"\n" +
-	"\x04user\x18\x01 \x01(\v2\x0e.issho.v1.UserR\x04user\"J\n" +
+	"\x04user\x18\x01 \x01(\v2\x0e.issho.v1.UserR\x04user\"\xa4\x01\n" +
 	"\x04User\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
 	"\x05email\x18\x02 \x01(\tR\x05email\x12\x1c\n" +
-	"\tonboarded\x18\x03 \x01(\bR\tonboarded2\xa1\x01\n" +
+	"\tonboarded\x18\x03 \x01(\bR\tonboarded\x12)\n" +
+	"\x10primary_language\x18\x04 \x01(\tR\x0fprimaryLanguage\x12-\n" +
+	"\x12secondary_language\x18\x05 \x01(\tR\x11secondaryLanguage2\xa1\x01\n" +
 	"\x0fIdentityService\x12:\n" +
 	"\x05GetMe\x12\x16.issho.v1.GetMeRequest\x1a\x17.issho.v1.GetMeResponse\"\x00\x12R\n" +
 	"\rDeleteAccount\x12\x1e.issho.v1.DeleteAccountRequest\x1a\x1f.issho.v1.DeleteAccountResponse\"\x00B>Z<github.com/shrujancheruku/issho/backend/gen/issho/v1;isshov1b\x06proto3"

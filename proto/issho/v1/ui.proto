@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package issho.v1;
+
+option go_package = "github.com/shrujancheruku/issho/backend/gen/issho/v1;isshov1";
+
+// UIService translates the app's own UI text. The app is written in English
+// (apps/mobile/src/i18n/en.json, copied into the server by `make gen`); other
+// languages are machine-translated on demand, cached on the server for
+// everyone and on the device.
+//
+// Public (no token): the sign-in screens need it before anyone is signed in.
+// Only the server's copy of the catalogue is ever translated, so callers can't
+// make the server pay for arbitrary text.
+//
+// HTTP: POST /issho.v1.UIService/<Method>
+service UIService {
+  // GetStrings returns the UI catalogue in one language.
+  rpc GetStrings(GetStringsRequest) returns (GetStringsResponse) {}
+}
+
+message GetStringsRequest {
+  // ISO 639-1 code; a region ("pt-BR") is ignored. Required.
+  string language = 1;
+}
+
+message GetStringsResponse {
+  // Key → text. Keys whose translation isn't ready (or came back with broken
+  // {placeholders}) are left out; show the English text for those.
+  map<string, string> strings = 1;
+  // False while some translations are still running: cache what came back,
+  // but ask again later.
+  bool complete = 2;
+  // Changes whenever the English catalogue changes.
+  string catalog_version = 3;
+}

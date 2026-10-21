@@ -19,7 +19,9 @@ The Go backend for Issho: a modular monolith serving a ConnectRPC API. It uses P
 | `internal/platform/supabase` | Supabase admin API client (account deletion), using the secret key |
 | `internal/health` | `HealthService` |
 | `internal/identity` | `IdentityService`: app account on top of Supabase users (get, delete) |
-| `internal/catalog` | `CatalogService`: activity catalogue with city overrides |
+| `internal/catalog` | `CatalogService`: activity catalogue with city overrides, cities and areas, language names (CLDR via `golang.org/x/text`) |
+| `internal/profile` | `ProfileService`: the caller's own profile (validation in `validate.go`, one-transaction save in `service.go`); `ConductVersion` |
+| `internal/uistrings` | `UIService`: the app's UI text in any language. `en.json` is a copy of `apps/mobile/src/i18n/en.json` made by `make gen`; only those strings are translated |
 | `internal/cities` | City-pack, catalogue and venue-category JSON formats; validation and seeding |
 | `internal/maps` | Provider-neutral geo interfaces (`Router` for travel-time matrices, `PlaceSearcher` for nearby places) |
 | `internal/maps/google` | Google implementation: Routes API (Compute Route Matrix) and Places API (New) Nearby Search over REST, with retries on 429/5xx. `placetypes.txt` is a snapshot of valid place types. |
@@ -60,8 +62,13 @@ The full reference, generated from the proto comments, is in **[../docs/generate
 | Endpoint | Auth | Purpose |
 |---|---|---|
 | `POST /issho.v1.HealthService/Check` | public | Database ping and build version |
-| `POST /issho.v1.IdentityService/GetMe` | bearer | Returns (and lazily creates) the caller's account. `unauthenticated: account deleted` for tokens of deleted users. |
+| `POST /issho.v1.IdentityService/GetMe` | bearer | Returns (and lazily creates) the caller's account: `onboarded` and, once onboarded, the display languages. `unauthenticated: account deleted` for tokens of deleted users. |
 | `POST /issho.v1.IdentityService/DeleteAccount` | bearer | Permanently deletes the caller (Supabase auth user → cascades to app data). Safe to retry. |
+| `POST /issho.v1.UIService/GetStrings` | public | The app's UI text in `language` (any ISO 639-1 code), machine-translated on demand and cached. Strings still being translated, or whose `{placeholders}` didn't survive, are left out (the app shows English); `complete: false` means ask again later. Public because the sign-in screens need it. |
+| `POST /issho.v1.ProfileService/GetProfile` | bearer | The caller's profile and the current code-of-conduct version. `not_found` before onboarding. |
+| `POST /issho.v1.ProfileService/SaveProfile` | bearer | Creates or replaces the whole profile (languages, availability and activity preferences included) in one transaction. `invalid_argument` names the field (e.g. `birth_year: must be at least 18`); `failed_precondition` if `GetMe` hasn't created the account. |
+| `POST /issho.v1.CatalogService/ListCities` | bearer | Cities with their areas. City names in `locale` + `secondaryLanguage` (translated); area names only as stored (English plus a real local name such as 吉祥寺), never machine-translated. |
+| `POST /issho.v1.CatalogService/ListLanguages` | bearer | Every ISO 639-1 language: its own name (`autonym`) and its name in `locale`, from CLDR. |
 | `POST /issho.v1.CatalogService/ListActivities` | bearer | Activities enabled in a city: `name` in `locale` (required, the user's primary language) and `secondaryName` in the optional `secondaryLanguage`. Any ISO 639-1 code; names are stored in English and translated on demand (the first request for a language can take a few seconds and may return English for names not ready yet). Other codes → `invalid_argument`. |
 
 Example:
@@ -83,7 +90,7 @@ Errors use Connect codes, e.g. `{"code":"unauthenticated","message":"missing bea
   - have issuer `$SUPABASE_URL/auth/v1`
   - have audience `authenticated`
   - have an `exp` claim that hasn't passed
-- **Deny-by-default:** every RPC requires auth unless it's listed as public in `cmd/api/main.go`.
+- **Deny-by-default:** every RPC requires auth unless it's listed as public in `cmd/api/main.go` (`HealthService.Check`, `UIService.GetStrings`).
 
 ## Migrations
 
@@ -151,7 +158,11 @@ go test ./...          # or `make test` from the root
 | `cmd/api/cors_test.go` | CORS allowlist; empty list denies all |
 | `internal/platform/errs/errs_test.go` | Raw errors become generic `internal`; Connect errors pass through |
 | `internal/platform/supabase/admin_test.go` | Admin delete: request shape, 404 treated as already deleted, other errors surfaced |
-| `internal/identity/service_test.go` | Account creation keeps an existing email; deletion order (auth first, app data kept if that fails) |
+| `internal/identity/service_test.go` | Account creation keeps an existing email; onboarded and display languages once a profile exists; deletion order (auth first, app data kept if that fails) |
+| `internal/profile/validate_test.go` | Every profile rule (age 18+ this year, a fluent language, ≥ 3 activities, same-gender-only needs a gender, current code of conduct, …), normalisation, proto round trip, unknown enums and duplicates rejected |
+| `internal/profile/service_test.go` | **Integration** (`TEST_DATABASE_URL`): no account → `ErrNoAccount`; save, read back, a second save replaces every list; unknown areas and activities rejected; a failed save changes nothing |
+| `internal/uistrings/uistrings_test.go` | The embedded catalogue parses and uses only `{name}` placeholders; English passes through; untranslated strings make the result incomplete; translations that lose a placeholder are dropped |
+| `internal/catalog/languages_test.go` | Every ISO 639-1 language has an autonym and a localised name (English where CLDR has none); area names are read only as stored |
 | `internal/maps/google/google_test.go` | Matrix chunking (≤ 625 elements per request), global origin indexes, no-route and element errors, drive is traffic-unaware, key only in a header, field masks, retry on 429 but not on 400 |
 | `internal/geo/geo_test.go` | Matrix plan (no self pairs, no long walks), rounding up, missing routes left out, venue plan (wide categories once), nearest-area assignment, dedupe |
 | `internal/geo/store_test.go` | **Integration** (runs when `TEST_DATABASE_URL` is set; CI sets it): area coordinates round-trip, upsert, 30-day stale deletion, one venue in two categories, curation kept on re-discovery |
@@ -159,12 +170,12 @@ go test ./...          # or `make test` from the root
 | `internal/translate/translate_test.go` | Stored language wins, cache hits skip the translator, duplicates translated once, concurrent requests share one call, slow translations finish in the background after the request is gone, failures aren't cached, batching keeps positions, prefill fails loudly (run with `-race`) |
 | `internal/translate/google/google_test.go` | Key only in a header, source/format sent, batching by segment count and size, HTML entities unescaped, API errors and wrong result counts fail |
 
-CI also runs migrations up → down → up, seeds every city pack, runs the geo integration test and dry-runs both geo tools against a PostGIS container. Tests must never call paid external APIs. Run the integration test locally with `TEST_DATABASE_URL=$DATABASE_URL go test ./internal/geo/ -run Integration`; it creates and removes its own throwaway city.
+CI also runs migrations up → down → up, seeds every city pack, runs the geo and profile integration tests and dry-runs both geo tools against a PostGIS container. Tests must never call paid external APIs. Run the integration tests locally with `TEST_DATABASE_URL=$DATABASE_URL go test ./internal/geo/ ./internal/profile/ -run Integration`; they create and remove their own throwaway city and user (the profile test needs the Tokyo pack seeded).
 
 ## Code generation
 
 ```sh
-make gen   # from root: buf (Go + TS + docs) and sqlc
+make gen   # from root: buf (Go + TS + docs), sqlc, and the UI-text copy (internal/uistrings/en.json)
 ```
 
 The code generators are pinned as `tool` directives in `go.mod`, and `../go.work` makes `go tool` work from the repo root.

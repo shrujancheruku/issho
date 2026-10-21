@@ -4,11 +4,13 @@ package issho.v1;
 
 option go_package = "github.com/shrujancheruku/issho/backend/gen/issho/v1;isshov1";
 
-// CatalogService exposes the activity catalogue, localised per city.
+// CatalogService exposes reference data for onboarding and settings: the
+// activity catalogue (localised per city), cities with their areas, and the
+// languages people can choose.
 //
 // Names come back in two languages: a primary and an optional secondary, for
-// display side by side. The catalogue is translated into en, ja, es and fr;
-// other languages fall back (see secondary_name).
+// display side by side. Any ISO 639-1 language works: names are stored in
+// English (plus real local names such as 吉祥寺) and translated on demand.
 // Requires `Authorization: Bearer <Supabase access token>`.
 //
 // HTTP: POST /issho.v1.CatalogService/<Method>
@@ -16,6 +18,14 @@ service CatalogService {
   // ListActivities returns the activities enabled in a city, with names in
   // the requested primary and secondary languages.
   rpc ListActivities(ListActivitiesRequest) returns (ListActivitiesResponse) {}
+
+  // ListCities returns every city with its areas (the "home" choices), with
+  // names in the requested primary and secondary languages.
+  rpc ListCities(ListCitiesRequest) returns (ListCitiesResponse) {}
+
+  // ListLanguages returns every language a person can choose to speak or
+  // read (ISO 639-1), each named in itself and in the requested language.
+  rpc ListLanguages(ListLanguagesRequest) returns (ListLanguagesResponse) {}
 }
 
 message ListActivitiesRequest {
@@ -59,4 +69,56 @@ message Activity {
   // no translation, or it's identical to name, so clients can render
   // "name · secondary_name" without showing the same words twice.
   string secondary_name = 10;
+}
+
+message ListCitiesRequest {
+  // Primary and optional secondary display language, as in
+  // ListActivitiesRequest.
+  string locale = 1;
+  string secondary_language = 2;
+}
+
+message ListCitiesResponse {
+  // Sorted by id.
+  repeated City cities = 1;
+}
+
+message City {
+  // City pack id, e.g. "tokyo".
+  string id = 1;
+  string name = 2;
+  // Empty when not requested, unavailable or identical to name.
+  string secondary_name = 3;
+  // Languages commonly used in the city, most common first. Suggestions
+  // only: any language is allowed.
+  repeated string languages = 4;
+  // Sorted by id.
+  repeated Area areas = 5;
+}
+
+message Area {
+  // e.g. "tokyo-kichijoji".
+  string id = 1;
+  string name = 2;
+  string secondary_name = 3;
+}
+
+message ListLanguagesRequest {
+  // Language to name the languages in, e.g. "ja" gives "スペイン語" for es.
+  string locale = 1;
+}
+
+message ListLanguagesResponse {
+  // Sorted by code.
+  repeated Language languages = 1;
+}
+
+message Language {
+  // ISO 639-1 code, e.g. "es".
+  string code = 1;
+  // The language's name for itself ("Español"), or its English name where
+  // none is known.
+  string autonym = 2;
+  // Its name in the requested locale ("スペイン語"); falls back to English.
+  string name = 3;
 }

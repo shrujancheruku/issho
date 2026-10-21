@@ -9,6 +9,66 @@ import (
 	"context"
 )
 
+const listAreas = `-- name: ListAreas :many
+select id, city_id, name from app.areas order by city_id, id
+`
+
+type ListAreasRow struct {
+	ID     string
+	CityID string
+	Name   []byte
+}
+
+func (q *Queries) ListAreas(ctx context.Context) ([]ListAreasRow, error) {
+	rows, err := q.db.Query(ctx, listAreas)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListAreasRow
+	for rows.Next() {
+		var i ListAreasRow
+		if err := rows.Scan(&i.ID, &i.CityID, &i.Name); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listCities = `-- name: ListCities :many
+select id, name, languages from app.cities order by id
+`
+
+type ListCitiesRow struct {
+	ID        string
+	Name      []byte
+	Languages []string
+}
+
+func (q *Queries) ListCities(ctx context.Context) ([]ListCitiesRow, error) {
+	rows, err := q.db.Query(ctx, listCities)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListCitiesRow
+	for rows.Next() {
+		var i ListCitiesRow
+		if err := rows.Scan(&i.ID, &i.Name, &i.Languages); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listCityActivities = `-- name: ListCityActivities :many
 select a.id, coalesce(o.name, a.name) as name, a.category, a.indoor, a.energy, a.cost_level,
        a.conversational, a.min_group_size, a.max_group_size

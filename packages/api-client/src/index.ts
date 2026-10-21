@@ -3,6 +3,8 @@ import { createConnectTransport } from "@connectrpc/connect-web";
 import { CatalogService } from "./gen/issho/v1/catalog_pb";
 import { HealthService } from "./gen/issho/v1/health_pb";
 import { IdentityService } from "./gen/issho/v1/identity_pb";
+import { ProfileService } from "./gen/issho/v1/profile_pb";
+import { UIService } from "./gen/issho/v1/ui_pb";
 
 // Error types for callers (code checks like `err.code === Code.Unauthenticated`), so apps
 // don't need their own dependency on @connectrpc/connect.
@@ -10,6 +12,8 @@ export { Code, ConnectError } from "@connectrpc/connect";
 export * from "./gen/issho/v1/catalog_pb";
 export * from "./gen/issho/v1/health_pb";
 export * from "./gen/issho/v1/identity_pb";
+export * from "./gen/issho/v1/profile_pb";
+export * from "./gen/issho/v1/ui_pb";
 
 export type ApiClientOptions = {
   baseUrl: string;
@@ -29,6 +33,8 @@ export function createApi({ baseUrl, getAccessToken }: ApiClientOptions) {
     catalog: createClient(CatalogService, transport),
     health: createClient(HealthService, transport),
     identity: createClient(IdentityService, transport),
+    profile: createClient(ProfileService, transport),
+    ui: createClient(UIService, transport),
   };
 }
 

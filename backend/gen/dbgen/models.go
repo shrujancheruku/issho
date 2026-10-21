@@ -80,6 +80,8 @@ type AppProfile struct {
 	UpdatedAt         pgtype.Timestamptz
 	PrimaryLanguage   string
 	SecondaryLanguage *string
+	ConductVersion    int16
+	ConductAcceptedAt pgtype.Timestamptz
 }
 
 type AppTranslation struct {
