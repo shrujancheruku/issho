@@ -1,132 +1,88 @@
 package matching
 
 import (
-	"cmp"
 	"errors"
 	"fmt"
 	"math"
 	"slices"
 )
 
-// Proposal is one outing offered to a group.
-type Proposal struct {
-	Area      AreaID
-	Slot      Slot
-	Primary   string // the event's language
-	Secondary string // its second language, for two-language events
-	Plan      Plan
-	// Invited is everyone invited (sorted): the target size plus up to
-	// cfg.ExtraInvites more, because some will decline. Together they
+// Group is one group formed for a scheduled plan.
+type Group struct {
+	// Invited is everyone asked to confirm (sorted): the target size plus up
+	// to cfg.ExtraInvites more, because some will drop out. Together they
 	// satisfy every hard rule.
 	Invited []UserID
-	// Quorum is how many acceptances confirm the event straight away: the
+	// Quorum is how many confirmations confirm the event straight away: the
 	// target size, or fewer when fewer than target + ExtraInvites could be
 	// invited, but never below MinAttendance.
 	Quorum int
-	// MinAttendance is the fewest acceptances the event can still go ahead
-	// with at the response deadline (cfg.MinGroupSize), so a decline in a
-	// small group doesn't cancel it.
+	// MinAttendance is the fewest confirmations the event can still go
+	// ahead with at the response deadline (cfg.MinGroupSize), so a decline
+	// in a small group doesn't cancel it.
 	MinAttendance int
 	// Score is the group score (see Weights), for ranking and diagnostics.
 	Score float64
 }
 
-type candidate struct {
-	bucket *Bucket
-	plan   Plan
-}
-
-// group is a proposal being assembled.
+// group is a Group being assembled.
 type group struct {
-	cand    candidate
 	act     *Activity
 	target  int // the attendance aimed for
 	cap     int // the most to invite: target + extras, within the activity's maximum
 	members []*User
-	// eligible are the bucket's members interested in the activity, in
-	// bucket order, placed or not: swaps can move placed people.
+	// eligible is everyone who could be in the group, placed or not: swaps
+	// can move placed people.
 	eligible []*User
+	// interestOf is how much a member wants the activity.
+	interestOf func(*User) float64
 }
 
-// Assemble runs steps 3 and 4. Candidates are taken best first and each is
-// filled greedily from people not yet placed, up to its target size plus
-// cfg.ExtraInvites (step 4: over-invite, confirm on quorum). A local search
-// then swaps people between groups, or with people left over, while that
-// raises the total score (each group's score × its size). Each person is
-// invited at most once.
-func Assemble(cands []candidate, users map[UserID]*User, acts map[ActivityID]*Activity, rel Relations, cfg Config) []Proposal {
-	// Two-language buckets contain everyone in both single-language buckets,
-	// so they'd always win on demand. They go after single-language
-	// candidates of the same score, and at a discount, so people are first
-	// grouped in a language they all share.
-	rank := func(c candidate) float64 {
-		if c.bucket.Bilingual() {
-			return c.plan.Score * cfg.BilingualWeight
-		}
-		return c.plan.Score
-	}
-	order := slices.Clone(cands)
-	slices.SortStableFunc(order, func(a, b candidate) int { return cmp.Compare(rank(b), rank(a)) })
-
+// assemble splits people into groups for one activity: greedily (start from
+// the keenest, keep adding whoever raises the score most, up to the target
+// plus cfg.ExtraInvites), then a local search that fills, replaces, swaps
+// and spreads small groups while the total score (each group's score × its
+// size) rises. People left over stay unplaced.
+func assemble(eligible []*User, act *Activity, interestOf func(*User) float64, rel Relations, cfg Config) []*group {
 	placed := map[UserID]bool{}
 	var groups []*group
-	for _, c := range order {
-		act := acts[c.plan.Activity]
-		var eligible []*User
-		for _, id := range c.bucket.Members {
-			if _, ok := interest(users[id], act, cfg); ok {
-				eligible = append(eligible, users[id])
+	for {
+		var free []*User
+		for _, u := range eligible {
+			if !placed[u.ID] {
+				free = append(free, u)
 			}
 		}
-		// A popular plan in a big bucket can fill several groups.
-		for {
-			var free []*User
-			for _, u := range eligible {
-				if !placed[u.ID] {
-					free = append(free, u)
-				}
-			}
-			if len(free) < cfg.MinGroupSize {
-				break
-			}
-			g := &group{cand: c, act: act, eligible: eligible, target: targetSize(free, act, cfg)}
-			g.cap = min(g.target+cfg.ExtraInvites, act.MaxSize)
-			g.fill(placed, rel, cfg)
-			if len(g.members) < cfg.MinGroupSize {
-				break
-			}
-			for _, u := range g.members {
-				placed[u.ID] = true
-			}
-			groups = append(groups, g)
+		if len(free) < cfg.MinGroupSize {
+			break
 		}
+		g := &group{act: act, eligible: eligible, interestOf: interestOf, target: targetSize(free, act, cfg)}
+		g.cap = min(g.target+cfg.ExtraInvites, act.MaxSize)
+		g.fill(placed, rel, cfg)
+		if len(g.members) < cfg.MinGroupSize {
+			break
+		}
+		for _, u := range g.members {
+			placed[u.ID] = true
+		}
+		groups = append(groups, g)
 	}
-
-	groups = localSearch(groups, placed, rel, cfg)
-
-	out := make([]Proposal, 0, len(groups))
-	for _, g := range groups {
-		b := g.cand.bucket
-		out = append(out, Proposal{
-			Area: b.Area, Slot: b.Slot, Primary: b.Primary, Secondary: b.Secondary,
-			Plan: g.cand.plan, Invited: ids(g.members),
-			Quorum: g.quorum(len(g.members), cfg), MinAttendance: cfg.MinGroupSize,
-			Score: g.score(g.members, rel, cfg),
-		})
-	}
-	slices.SortFunc(out, func(a, b Proposal) int {
-		return cmp.Or(compareSlots(a.Slot, b.Slot), cmp.Compare(a.Area, b.Area),
-			cmp.Compare(a.Primary, b.Primary), cmp.Compare(a.Secondary, b.Secondary),
-			cmp.Compare(a.Plan.Activity, b.Plan.Activity), slices.Compare(a.Invited, b.Invited))
-	})
-	return out
+	return localSearch(groups, placed, rel, cfg)
 }
 
-// targetSize is the median of the eligible people's preferred sizes, within
-// the activity's limits.
-func targetSize(eligible []*User, act *Activity, cfg Config) int {
-	sizes := make([]int, len(eligible))
-	for i, u := range eligible {
+// result converts an assembled group.
+func (g *group) result(rel Relations, cfg Config) Group {
+	return Group{
+		Invited: ids(g.members), Quorum: g.quorum(len(g.members), cfg),
+		MinAttendance: cfg.MinGroupSize, Score: g.score(g.members, rel, cfg),
+	}
+}
+
+// targetSize is the median of the people's preferred sizes, within the
+// activity's limits.
+func targetSize(people []*User, act *Activity, cfg Config) int {
+	sizes := make([]int, len(people))
+	for i, u := range people {
 		sizes[i] = prefSize(u, cfg)
 	}
 	slices.Sort(sizes)
@@ -153,7 +109,7 @@ func (g *group) fill(placed map[UserID]bool, rel Relations, cfg Config) {
 	var seed *User
 	best := -1.0
 	for _, u := range g.eligible {
-		if v, _ := interest(u, g.act, cfg); !placed[u.ID] && v > best {
+		if v := g.interestOf(u); !placed[u.ID] && v > best {
 			seed, best = u, v
 		}
 	}
@@ -360,8 +316,7 @@ func (g *group) score(ms []*User, rel Relations, cfg Config) float64 {
 	// invitees beyond the target are assumed to cover declines.
 	expected := float64(min(len(ms), g.target))
 	for _, u := range ms {
-		v, _ := interest(u, g.act, cfg)
-		interestSum += v
+		interestSum += g.interestOf(u)
 		t := float64(prefSize(u, cfg))
 		fitSum += max(0, 1-math.Abs(expected-t)/t)
 		reliability += u.Reliability

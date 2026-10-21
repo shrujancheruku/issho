@@ -1,13 +1,15 @@
-// Package sim generates synthetic users for a city pack and measures what the
-// matching engine does with them. It needs no database or Google calls:
-// travel times are estimated from straight-line distance and venue counts
-// are made up, so results show the engine's behaviour, not real demand.
-// Generation is seeded, so a given seed always produces the same city.
+// Package sim generates synthetic users for a city pack and runs the whole
+// matching flow on them: suggest plans, let people sign up from their feeds,
+// then schedule. It needs no database or Google calls: travel times are
+// estimated from straight-line distance, venue counts are made up and
+// signup behaviour is a guess, so results show the engine's behaviour, not
+// real demand. Everything is seeded: a given seed always gives the same run.
 package sim
 
 import (
 	"cmp"
 	"fmt"
+	"maps"
 	"math"
 	"math/rand/v2"
 	"slices"
@@ -23,16 +25,28 @@ type Options struct {
 	Users int
 	Seed  uint64
 	Month time.Month // for seasonal activities; 0 = ignore seasons
+	Start time.Time  // first day of the plans' window (midnight UTC); zero = 2026-11-02
+	Days  int        // length of the window; 0 = 14
+}
+
+// City is a generated city: the engine's inputs.
+type City struct {
+	Users      []matching.User
+	Areas      []matching.AreaID
+	Travel     matching.TravelTimes
+	Activities []matching.Activity
+	Venues     matching.Venues
+	Relations  matching.Relations
 }
 
 // otherLanguages are spoken by a minority of people in any city, so buckets
 // in less common languages get exercised too.
 var otherLanguages = []string{"es", "zh", "ko", "fr", "pt"}
 
-// Generate builds a matching input for one city.
-func Generate(pack cities.Pack, catalogue []cities.Activity, opt Options) matching.Input {
+// Generate builds a synthetic city.
+func Generate(pack cities.Pack, catalogue []cities.Activity, opt Options) City {
 	r := rand.New(rand.NewPCG(opt.Seed, 1))
-	in := matching.Input{
+	in := City{
 		Travel:    matching.TravelTimes{},
 		Venues:    matching.Venues{},
 		Relations: matching.Relations{Mutual: map[matching.Pair]float64{}, Blocked: map[matching.Pair]bool{}},
@@ -232,67 +246,143 @@ func sortedKeys[K cmp.Ordered](m map[K]bool) []K {
 	return keys
 }
 
+// Signup behaviour: the chance of signing up for a plan by feed level
+// (NotForYou can't), how far down the feed people scroll, and how many plans
+// one person signs up for at most.
+var (
+	signupChance = map[matching.Level]float64{matching.Top: 0.35, matching.Good: 0.15, matching.Maybe: 0.05, matching.Low: 0.01}
+	scrollDepth  = 25
+	maxSignups   = 3
+)
+
 // Stats summarise one run.
 type Stats struct {
-	Users, Proposals, Invited int
-	Quorum                    int               // the proposals' quorums added up
-	Bilingual                 int               // proposals with two languages
-	LoneGender                int               // proposals with an only woman or only man (a preference, not a rule)
-	Sizes                     map[int]int       // people invited → proposals
-	PlacedBy                  map[string][2]int // "gender:woman", "lang:ja" → invited, total
-	TopActivities             []string
-	Violations                []string // should always be empty
-	Duration                  time.Duration
+	Users, Suggestions, Signups, SignedUp int // SignedUp: people with at least one signup
+	SignupsBy                             map[matching.Level]int
+	Ready, Forced, Unscheduled            int               // plans: scheduled when ready, at the deadline, not at all
+	Groups, Invited                       int               // Invited: distinct people
+	Sizes                                 map[int]int       // people invited → groups
+	Pairs, LoneGender                     int               // groups of 2; groups with an only woman or only man
+	InvitedBy                             map[string][2]int // "gender:woman", "lang:ja" → invited, signed up
+	TopActivities                         []string
+	Violations                            []string // should always be empty
+	Duration                              time.Duration
 }
 
-// Run generates a city, runs the engine and measures the result.
+// Run generates a city and runs suggest → signups → schedule on it. Plans
+// are scheduled most-signups first; each scheduled event blocks its
+// occasion in its people's other signups. Plans not ready are then
+// scheduled at their deadline (force) if any group can form.
 func Run(pack cities.Pack, catalogue []cities.Activity, opt Options, cfg matching.Config) Stats {
-	in := Generate(pack, catalogue, opt)
+	if opt.Start.IsZero() {
+		opt.Start = time.Date(2026, 11, 2, 0, 0, 0, 0, time.UTC)
+	}
+	if opt.Days == 0 {
+		opt.Days = 14
+	}
+	city := Generate(pack, catalogue, opt)
+	// A second stream for behaviour, so changing it doesn't change the city.
+	r := rand.New(rand.NewPCG(opt.Seed, 2))
+	window := matching.Occasions(opt.Start, opt.Days)
 	start := time.Now()
-	ps := matching.Run(in, cfg)
-	st := Measure(in, ps, cfg)
-	st.Duration = time.Since(start)
-	return st
-}
 
-// Measure checks the proposals against the input: every hard rule holds and
-// nobody is placed twice. It also counts who got placed.
-func Measure(in matching.Input, ps []matching.Proposal, cfg matching.Config) Stats {
-	st := Stats{Users: len(in.Users), Proposals: len(ps), Sizes: map[int]int{}, PlacedBy: map[string][2]int{}}
-	byID := map[matching.UserID]*matching.User{}
-	for i := range in.Users {
-		byID[in.Users[i].ID] = &in.Users[i]
+	users := map[matching.UserID]*matching.User{}
+	for i := range city.Users {
+		users[city.Users[i].ID] = &city.Users[i]
 	}
-	placed := map[matching.UserID]bool{}
-	acts := map[matching.ActivityID]int{}
-	for _, p := range ps {
-		st.Sizes[len(p.Invited)]++
-		st.Invited += len(p.Invited)
-		st.Quorum += p.Quorum
-		acts[p.Plan.Activity]++
-		if p.Secondary != "" {
-			st.Bilingual++
-		}
-		counts := map[matching.Gender]int{}
-		for _, id := range p.Invited {
-			counts[byID[id].Gender]++
-		}
-		if counts[matching.Woman] == 1 || counts[matching.Man] == 1 {
-			st.LoneGender++
-		}
-		var group []*matching.User
-		for _, id := range p.Invited {
-			if placed[id] {
-				st.Violations = append(st.Violations, fmt.Sprintf("%s placed twice", id))
+	acts := map[matching.ActivityID]*matching.Activity{}
+	for i := range city.Activities {
+		acts[city.Activities[i].ID] = &city.Activities[i]
+	}
+	suggestions := matching.Suggest(matching.SuggestInput{
+		Users: city.Users, Areas: city.Areas, Travel: city.Travel, Activities: city.Activities, Venues: city.Venues,
+	}, cfg)
+	open := make([]matching.OpenPlan, len(suggestions))
+	index := map[matching.Plan]int{}
+	for i, s := range suggestions {
+		open[i] = matching.OpenPlan{Plan: s.Plan}
+		index[s.Plan] = i
+	}
+
+	st := Stats{Users: len(city.Users), Suggestions: len(open), SignupsBy: map[matching.Level]int{},
+		Sizes: map[int]int{}, InvitedBy: map[string][2]int{}}
+	signups := make([][]matching.Signup, len(open))
+	// People arrive one by one, so later arrivals see earlier signups as
+	// momentum.
+	for _, i := range r.Perm(len(city.Users)) {
+		u := &city.Users[i]
+		n := 0
+		for _, item := range matching.Feed(u, open, acts, city.Travel, cfg)[:min(scrollDepth, len(open))] {
+			if n == maxSignups || r.Float64() >= signupChance[item.Level] {
+				continue
 			}
-			placed[id] = true
-			group = append(group, byID[id])
+			p := index[item.Plan]
+			signups[p] = append(signups[p], signup(r, u, window))
+			open[p].Signups++
+			st.SignupsBy[item.Level]++
+			n++
 		}
-		if err := matching.Violation(group, in.Relations, cfg); err != nil {
-			st.Violations = append(st.Violations, err.Error())
+		st.Signups += n
+		if n > 0 {
+			st.SignedUp++
 		}
 	}
-	for _, u := range in.Users {
+
+	order := make([]int, len(open))
+	for i := range order {
+		order[i] = i
+	}
+	slices.SortStableFunc(order, func(a, b int) int { return cmp.Compare(open[b].Signups, open[a].Signups) })
+	busy := map[matching.UserID][]matching.Occasion{}
+	invited := map[matching.UserID]bool{}
+	acted := map[string]int{}
+	done := make([]bool, len(open))
+	for _, force := range []bool{false, true} {
+		for _, p := range order {
+			if done[p] || len(signups[p]) == 0 {
+				continue
+			}
+			ss := make([]matching.Signup, len(signups[p]))
+			for i, s := range signups[p] {
+				s.Unavailable = slices.Concat(s.Unavailable, busy[s.User])
+				ss[i] = s
+			}
+			got, ok := matching.Schedule(matching.ScheduleInput{
+				Plan: open[p].Plan, Activity: acts[open[p].Activity], Signups: ss, Users: users,
+				Relations: city.Relations, Window: window,
+			}, cfg, force)
+			if !ok {
+				continue
+			}
+			done[p] = true
+			if force {
+				st.Forced++
+			} else {
+				st.Ready++
+			}
+			acted[string(open[p].Activity)]++
+			st.check(got, ss, users, city.Relations, cfg)
+			for _, g := range got.Groups {
+				for _, id := range g.Invited {
+					busy[id] = append(busy[id], got.Occasion)
+					invited[id] = true
+				}
+			}
+		}
+	}
+	st.Unscheduled = len(open) - st.Ready - st.Forced
+	st.Invited = len(invited)
+
+	signedUp := map[matching.UserID]bool{}
+	for _, ss := range signups {
+		for _, s := range ss {
+			signedUp[s.User] = true
+		}
+	}
+	for _, u := range city.Users {
+		if !signedUp[u.ID] {
+			continue
+		}
 		keys := []string{"gender:" + string(u.Gender)}
 		for _, l := range u.Languages {
 			keys = append(keys, "lang:"+l.Code)
@@ -301,23 +391,90 @@ func Measure(in matching.Input, ps []matching.Proposal, cfg matching.Config) Sta
 			keys = append(keys, "same-gender-only")
 		}
 		for _, k := range keys {
-			c := st.PlacedBy[k]
-			if placed[u.ID] {
+			c := st.InvitedBy[k]
+			if invited[u.ID] {
 				c[0]++
 			}
 			c[1]++
-			st.PlacedBy[k] = c
+			st.InvitedBy[k] = c
 		}
 	}
-	ids := make([]string, 0, len(acts))
-	for a := range acts {
-		ids = append(ids, string(a))
-	}
-	slices.SortFunc(ids, func(a, b string) int {
-		return cmp.Or(cmp.Compare(acts[matching.ActivityID(b)], acts[matching.ActivityID(a)]), cmp.Compare(a, b))
-	})
+	ids := slices.Collect(maps.Keys(acted))
+	slices.SortFunc(ids, func(a, b string) int { return cmp.Or(cmp.Compare(acted[b], acted[a]), cmp.Compare(a, b)) })
 	st.TopActivities = ids[:min(len(ids), 10)]
+	st.Duration = time.Since(start)
 	return st
+}
+
+// signup makes one person's signup: usually their profile availability;
+// sometimes a preset for this plan ("weekday evenings", "weekend
+// mornings"), or the profile minus one slot ("not Wednesday evenings");
+// sometimes with one date blocked out.
+func signup(r *rand.Rand, u *matching.User, window []matching.Occasion) matching.Signup {
+	s := matching.Signup{User: u.ID}
+	switch x := r.Float64(); {
+	case x < 0.25:
+		presets := [][]matching.Slot{weekdays(matching.Evening), weekend(matching.Morning), weekend(matching.Afternoon), weekend(matching.Evening)}
+		for _, i := range r.Perm(len(presets))[:1+r.IntN(2)] {
+			s.Pattern = append(s.Pattern, presets[i]...)
+		}
+	case x < 0.4 && len(u.Availability) > 1:
+		drop := r.IntN(len(u.Availability))
+		s.Pattern = slices.Delete(slices.Clone(u.Availability), drop, drop+1)
+	}
+	if r.Float64() < 0.25 {
+		s.Unavailable = []matching.Occasion{{Date: window[r.IntN(len(window))].Date}}
+	}
+	return s
+}
+
+func weekdays(b matching.Block) []matching.Slot {
+	var out []matching.Slot
+	for d := time.Monday; d <= time.Friday; d++ {
+		out = append(out, matching.Slot{Weekday: d, Block: b})
+	}
+	return out
+}
+
+func weekend(b matching.Block) []matching.Slot {
+	return []matching.Slot{{Weekday: time.Saturday, Block: b}, {Weekday: time.Sunday, Block: b}}
+}
+
+// check verifies a scheduled plan: hard rules, nobody twice, everyone free.
+// It also counts sizes.
+func (st *Stats) check(got matching.Scheduled, ss []matching.Signup, users map[matching.UserID]*matching.User, rel matching.Relations, cfg matching.Config) {
+	byUser := map[matching.UserID]*matching.Signup{}
+	for i := range ss {
+		byUser[ss[i].User] = &ss[i]
+	}
+	seen := map[matching.UserID]bool{}
+	for _, g := range got.Groups {
+		st.Groups++
+		st.Sizes[len(g.Invited)]++
+		if len(g.Invited) == 2 {
+			st.Pairs++
+		}
+		var ms []*matching.User
+		counts := map[matching.Gender]int{}
+		for _, id := range g.Invited {
+			if seen[id] {
+				st.Violations = append(st.Violations, fmt.Sprintf("%s placed twice", id))
+			}
+			seen[id] = true
+			s := byUser[id]
+			if s == nil || !s.Available(users[id], got.Occasion) {
+				st.Violations = append(st.Violations, fmt.Sprintf("%s invited when not free (or double-booked)", id))
+			}
+			ms = append(ms, users[id])
+			counts[users[id].Gender]++
+		}
+		if counts[matching.Woman] == 1 || counts[matching.Man] == 1 {
+			st.LoneGender++
+		}
+		if err := matching.Violation(ms, rel, cfg); err != nil {
+			st.Violations = append(st.Violations, err.Error())
+		}
+	}
 }
 
 // String formats the stats as a short report.
@@ -326,35 +483,26 @@ func (s Stats) String() string {
 	rate := func(n, of int) string {
 		return fmt.Sprintf("%d/%d (%.0f%%)", n, of, 100*float64(n)/float64(max(of, 1)))
 	}
-	fmt.Fprintf(&b, "users %d · proposals %d (%d two-language) · invited %s · seats needed for quorum %d · %v\n",
-		s.Users, s.Proposals, s.Bilingual, rate(s.Invited, s.Users), s.Quorum, s.Duration.Round(time.Millisecond))
+	fmt.Fprintf(&b, "users %d · plans suggested %d · signups %d from %s people (top %d, good %d, maybe %d, low %d) · %v\n",
+		s.Users, s.Suggestions, s.Signups, rate(s.SignedUp, s.Users),
+		s.SignupsBy[matching.Top], s.SignupsBy[matching.Good], s.SignupsBy[matching.Maybe], s.SignupsBy[matching.Low],
+		s.Duration.Round(time.Millisecond))
+	fmt.Fprintf(&b, "plans scheduled when ready %d, at the deadline %d, not at all %d\n", s.Ready, s.Forced, s.Unscheduled)
+	fmt.Fprintf(&b, "groups %d · invited %s of people who signed up · pairs %d · with an only woman or only man %d\n",
+		s.Groups, rate(s.Invited, s.SignedUp), s.Pairs, s.LoneGender)
 	var sizes []string
-	for _, n := range sortedKeys(boolKeys(s.Sizes)) {
+	for _, n := range slices.Sorted(maps.Keys(s.Sizes)) {
 		sizes = append(sizes, fmt.Sprintf("%d×%d", n, s.Sizes[n]))
 	}
-	fmt.Fprintf(&b, "invited per proposal: %s\n", strings.Join(sizes, " "))
-	fmt.Fprintf(&b, "with an only woman or only man: %d\n", s.LoneGender)
+	fmt.Fprintf(&b, "invited per group: %s\n", strings.Join(sizes, " "))
 	fmt.Fprintf(&b, "top activities: %s\n", strings.Join(s.TopActivities, ", "))
-	keys := make([]string, 0, len(s.PlacedBy))
-	for k := range s.PlacedBy {
-		keys = append(keys, k)
-	}
-	slices.Sort(keys)
-	for _, k := range keys {
-		c := s.PlacedBy[k]
-		fmt.Fprintf(&b, "  invited, %-22s %s\n", k, rate(c[0], c[1]))
+	for _, k := range slices.Sorted(maps.Keys(s.InvitedBy)) {
+		c := s.InvitedBy[k]
+		fmt.Fprintf(&b, "  invited of signed up, %-22s %s\n", k, rate(c[0], c[1]))
 	}
 	fmt.Fprintf(&b, "rule violations: %d\n", len(s.Violations))
 	for _, v := range s.Violations {
 		fmt.Fprintf(&b, "  %s\n", v)
 	}
 	return b.String()
-}
-
-func boolKeys(m map[int]int) map[int]bool {
-	out := map[int]bool{}
-	for k := range m {
-		out[k] = true
-	}
-	return out
 }

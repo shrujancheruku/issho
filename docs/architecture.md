@@ -59,7 +59,7 @@ backend/
 
 Rules:
 - **Domains talk to each other only through service types**, never through each other's queries.
-- **`internal/matching` (M4) is pure:** plain structs in, proposals out, no I/O, no clock, no randomness. This makes it deterministic and easy to simulate (`internal/matching/sim`). Bucketing treats **every area as a candidate meeting place**: a person joins the bucket of each area they can reach, so they usually sit in several buckets and group assembly places them once. Steps and rules: [backend README](../backend/README.md#matching).
+- **`internal/matching` (M4) is pure:** plain structs in, results out, no I/O, no clock, no randomness. This makes it deterministic and easy to simulate (`internal/matching/sim`). It works **plan first, time second**: `Suggest` opens plans without a date, `Feed` ranks them per person, and `Schedule` picks a date and forms groups once a plan's signups are enough. **Every area is a candidate meeting place**: a person joins the pool of each area they can reach. Steps and rules: [backend README](../backend/README.md#matching).
 - **Every external vendor sits behind a Go interface**, so implementations can be swapped. Done: `maps.Router` (travel times) and `maps.PlaceSearcher` (venues), with Google implementations in `internal/maps/google`. Planned: `Tagger`, `Copywriter`, `Verifier`, `Push`, `Storage`.
 
 ## Data model

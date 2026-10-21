@@ -12,7 +12,7 @@ import (
 // them with JSON in app.cities.matching_weights; see ParseConfig.
 type Config struct {
 	// MinGroupSize is the only hard size limit: below it there's no group,
-	// so smaller buckets are dropped too.
+	// so smaller pools are dropped too.
 	// Everything above it is a preference (PreferredMinSize, the activity's
 	// own minimum, SizeTargets).
 	MinGroupSize int `json:"min_group_size"`
@@ -24,8 +24,8 @@ type Config struct {
 	// [["ja", "en"]] in Tokyo. Anyone fluent in either language can join;
 	// language learning isn't used yet. Empty = single-language events only.
 	LanguagePairs [][2]string `json:"language_pairs"`
-	// BilingualWeight discounts two-language candidates during assembly so
-	// people are grouped in a language they all share first (0..1).
+	// BilingualWeight discounts two-language suggestions so most plans are
+	// in one language everyone shares (0..1).
 	BilingualWeight float64 `json:"bilingual_weight"`
 
 	// PrefValues is how much an OpenToTry, Like and Love counts towards an
@@ -38,8 +38,20 @@ type Config struct {
 	// as fully feasible there. Fewer venues scale its score down: the one
 	// café might be shut or full.
 	VenueChoice int `json:"venue_choice"`
-	// PlansPerBucket keeps only the best few plans per bucket.
-	PlansPerBucket int `json:"plans_per_bucket"`
+	// PlansPerPool is how many plans to suggest per pool (area × language).
+	PlansPerPool int `json:"plans_per_pool"`
+	// PlanSpacingMin keeps plans for the same activity in a shared language
+	// at least this many minutes apart, so they don't split one crowd.
+	PlanSpacingMin int `json:"plan_spacing_min"`
+	// UsersPerPlan caps open plans at one per this many people in the city,
+	// so signups concentrate on plans that can fill.
+	UsersPerPlan int `json:"users_per_plan"`
+	// MinAudience is how many people in a pool must want an activity for it
+	// to be suggested: only some of them will sign up.
+	MinAudience int `json:"min_audience"`
+	// MomentumAt is the signup count at which a plan's momentum bonus in the
+	// feed is full (see Weights.Momentum).
+	MomentumAt int `json:"momentum_at"`
 	// FollowUpCategories are activity categories that can follow a
 	// non-conversational main activity (bouldering, then ramen), so the
 	// group gets a chance to talk.
@@ -58,12 +70,13 @@ type Config struct {
 	SearchPasses int `json:"search_passes"`
 
 	// ExtraInvites is how many people are invited beyond the group's target
-	// size, since some will decline. The event confirms early at the target
-	// (Proposal.Quorum), or at the deadline with at least MinGroupSize.
+	// size, since some will drop out. The event confirms early at the
+	// target (Group.Quorum), or at the deadline with at least MinGroupSize.
 	ExtraInvites int `json:"extra_invites"`
 }
 
-// Weights of the group score's parts, each of which is between 0 and 1.
+// Weights of the group score's parts, each of which is between 0 and 1,
+// and of the feed's momentum.
 type Weights struct {
 	Interest    float64 `json:"interest"`    // how much members want the activity
 	SizeFit     float64 `json:"size_fit"`    // how close the size is to what members prefer
@@ -72,6 +85,11 @@ type Weights struct {
 	Mutual      float64 `json:"mutual"`      // a pair who picked each other before
 	Newcomers   float64 `json:"newcomers"`   // newcomers mixed in, but not a majority
 	Reliability float64 `json:"reliability"` // members who turn up
+
+	// Momentum is how much a plan's signups so far lift it in someone's
+	// feed (on the same scale as a Like = 1), so plans close to happening
+	// fill up.
+	Momentum float64 `json:"momentum"`
 }
 
 // DefaultConfig returns the settings used when a city doesn't override them.
@@ -83,12 +101,16 @@ func DefaultConfig() Config {
 		PrefValues:         [3]float64{0.5, 1, 2},
 		OverBudget:         0.3,
 		VenueChoice:        3,
-		PlansPerBucket:     5,
+		PlansPerPool:       5,
+		PlanSpacingMin:     20,
+		UsersPerPlan:       10,
+		MinAudience:        6,
+		MomentumAt:         8,
 		FollowUpCategories: []string{"food"},
 		FollowUpWeight:     0.3,
 		SizeTargets:        map[SizePref]int{Small: 4, Medium: 6, Large: 8},
 		MaxKnown:           2,
-		Weights:            Weights{Interest: 3, SizeFit: 1, MinSize: 1, Balance: 2, Mutual: 1, Newcomers: 1, Reliability: 1},
+		Weights:            Weights{Interest: 3, SizeFit: 1, MinSize: 1, Balance: 2, Mutual: 1, Newcomers: 1, Reliability: 1, Momentum: 0.5},
 		SearchPasses:       5,
 		ExtraInvites:       2,
 	}
@@ -132,8 +154,9 @@ func (c Config) Validate() error {
 	if c.OverBudget < 0 || c.OverBudget > 1 {
 		bad("over_budget %v: must be within 0..1", c.OverBudget)
 	}
-	if c.VenueChoice < 1 || c.PlansPerBucket < 1 || c.SearchPasses < 0 || c.ExtraInvites < 0 || c.MaxKnown < 0 {
-		bad("venue_choice, plans_per_bucket must be ≥ 1; search_passes, extra_invites, max_known ≥ 0")
+	if min(c.VenueChoice, c.PlansPerPool, c.UsersPerPlan, c.MinAudience, c.MomentumAt) < 1 ||
+		min(c.SearchPasses, c.ExtraInvites, c.MaxKnown, c.PlanSpacingMin) < 0 {
+		bad("venue_choice, plans_per_pool, users_per_plan, min_audience, momentum_at must be ≥ 1; search_passes, extra_invites, max_known, plan_spacing_min ≥ 0")
 	}
 	for _, s := range []SizePref{Small, Medium, Large} {
 		if c.SizeTargets[s] < 2 {
@@ -141,7 +164,7 @@ func (c Config) Validate() error {
 		}
 	}
 	w := c.Weights
-	if min(w.Interest, w.SizeFit, w.MinSize, w.Balance, w.Mutual, w.Newcomers, w.Reliability) < 0 {
+	if min(w.Interest, w.SizeFit, w.MinSize, w.Balance, w.Mutual, w.Newcomers, w.Reliability, w.Momentum) < 0 {
 		bad("weights must be non-negative")
 	}
 	return errors.Join(errs...)

@@ -1,15 +1,21 @@
-// Package matching proposes outings to groups of people. It is pure: plain
-// structs in, results out, no I/O, no clock and no randomness, so the same
-// input always gives the same output. Callers (the worker, the simulator)
-// load the data and store the results.
+// Package matching suggests outings and, once enough people sign up,
+// schedules them and forms the groups. It is pure: plain structs in, results
+// out, no I/O, no clock and no randomness, so the same input always gives
+// the same output. Callers (the worker, the API, the simulator) load the
+// data and store the results.
 //
-// Run chains the steps:
+// An outing happens in two phases: the plan first, the time second.
 //
-//  1. Bucketing (Buckets): who could meet whom, where, when and in which
-//     language.
-//  2. Candidate plans (Plans): activities ranked by demand × feasibility.
-//  3. Group assembly (Assemble): greedy placement, then local search.
-//  4. Invitations: a few more invites than needed, confirmed on quorum.
+//  1. Suggest: plans (an activity in an area, in a language) that enough
+//     nearby people would want, with no date yet. Pools groups people by
+//     where and in which language they could meet.
+//  2. Feed: each person sees every open plan, ranked and labelled by how
+//     likely they are to want it, for a feed and a colour-coded map. People
+//     sign up, saying which times suit them for that plan.
+//  3. Schedule: once a plan's signups can make a good group on some date in
+//     its window, pick that date and form the groups (greedy, then local
+//     search). Each group invites a few more than it needs and confirms on
+//     a quorum. Signups not placed wait for the plan's next round.
 package matching
 
 import (
@@ -39,6 +45,9 @@ const (
 	Evening   Block = "evening"
 )
 
+// Blocks lists the parts of the day in order.
+var Blocks = []Block{Morning, Afternoon, Evening}
+
 // Slot is a recurring weekly time window: "Sunday afternoon".
 type Slot struct {
 	Weekday time.Weekday
@@ -48,8 +57,33 @@ type Slot struct {
 // blockOrder sorts a day's blocks chronologically rather than alphabetically.
 var blockOrder = map[Block]int{Morning: 0, Afternoon: 1, Evening: 2}
 
-func compareSlots(a, b Slot) int {
-	return cmp.Or(cmp.Compare(a.Weekday, b.Weekday), cmp.Compare(blockOrder[a.Block], blockOrder[b.Block]))
+// Occasion is one concrete time an outing could happen: a date and a part
+// of that day.
+type Occasion struct {
+	// Date is the local calendar date in the city, as midnight UTC (e.g.
+	// time.Date(2026, 11, 8, 0, 0, 0, 0, time.UTC)). Only the date matters;
+	// UTC keeps Weekday right whatever the server's time zone.
+	Date  time.Time
+	Block Block // "" in Signup.Unavailable means the whole day
+}
+
+// Slot is the weekly slot the occasion falls in.
+func (o Occasion) Slot() Slot { return Slot{o.Date.Weekday(), o.Block} }
+
+func compareOccasions(a, b Occasion) int {
+	return cmp.Or(a.Date.Compare(b.Date), cmp.Compare(blockOrder[a.Block], blockOrder[b.Block]))
+}
+
+// Occasions lists every block of every day from start for the given number
+// of days: a plan's scheduling window.
+func Occasions(start time.Time, days int) []Occasion {
+	var out []Occasion
+	for d := range days {
+		for _, b := range Blocks {
+			out = append(out, Occasion{start.AddDate(0, 0, d), b})
+		}
+	}
+	return out
 }
 
 // Gender as in app.profiles.gender.
@@ -86,19 +120,18 @@ type Language struct {
 }
 
 // User is what the engine needs to know about one person. The caller leaves
-// out deleted and unverified accounts, and anyone who already has an event
-// in the week being matched.
+// out deleted and unverified accounts.
 type User struct {
 	ID             UserID
 	HomeArea       AreaID
 	MaxTravelMin   int // the longest trip from HomeArea they'll make
 	Languages      []Language
-	Availability   []Slot
+	Availability   []Slot // usual weekly availability (profile); the default for signups
 	Gender         Gender
 	SameGenderOnly bool
 	Size           SizePref
 	Budget         int                // 0 free … 3 expensive, like Activity.CostLevel
-	Prefs          map[ActivityID]int // OpenToTry, Like or Love; missing = not interested
+	Prefs          map[ActivityID]int // OpenToTry, Like or Love; missing = no preference
 	Reliability    float64            // 0..1: how often they turn up after accepting
 	EventsAttended int                // 0 = newcomer
 }
@@ -112,8 +145,15 @@ func (u *User) fluent(lang string) bool {
 	return false
 }
 
+// speaks reports whether the person can join an event in these languages.
+// It's the only language rule: everyone speaks the event's primary or
+// secondary language.
+func (u *User) speaks(primary, secondary string) bool {
+	return u.fluent(primary) || (secondary != "" && u.fluent(secondary))
+}
+
 // Activity is a catalogue activity as enabled in the city. The caller leaves
-// out activities that are disabled or out of season for the week matched.
+// out activities that are disabled or out of season for the window.
 type Activity struct {
 	ID              ActivityID
 	Category        string
@@ -165,6 +205,11 @@ func (t TravelTimes) Minutes(from, to AreaID) (int, bool) {
 	return m, ok
 }
 
+func (t TravelTimes) reachable(u *User, area AreaID) bool {
+	m, ok := t.Minutes(u.HomeArea, area)
+	return ok && m <= u.MaxTravelMin
+}
+
 // Pair is an unordered pair of people. Build it with MakePair.
 type Pair struct{ A, B UserID }
 
@@ -186,33 +231,45 @@ type Relations struct {
 	Blocked map[Pair]bool
 }
 
-// Input is everything one matching run needs, for one city and one week.
-type Input struct {
-	Users      []User
-	Areas      []AreaID
-	Travel     TravelTimes
-	Activities []Activity
-	Venues     Venues
-	Relations  Relations
+// Plan is an outing without a time: an activity in an area, in a language.
+type Plan struct {
+	Area     AreaID
+	Activity ActivityID
+	// FollowUp is an optional second activity, such as a meal after
+	// bouldering, so a group whose main activity leaves little room to talk
+	// still gets to know each other. "" = none.
+	FollowUp  ActivityID
+	Primary   string // the event's language
+	Secondary string // its second language (Config.LanguagePairs), or ""
 }
 
-// Run executes all the steps and returns the week's proposals, sorted by
-// slot, area and plan. Each person is invited to at most one.
-func Run(in Input, cfg Config) []Proposal {
-	buckets := Buckets(in.Users, in.Areas, in.Travel, cfg)
-	users := make(map[UserID]*User, len(in.Users))
-	for i := range in.Users {
-		users[in.Users[i].ID] = &in.Users[i]
+// Signup is one person's "I'm in" for an open plan, with the times that
+// suit them for it.
+type Signup struct {
+	User UserID
+	// Pattern is the weekly slots that suit them for this plan, e.g. weekday
+	// evenings and weekend mornings. nil = their profile availability (the
+	// app pre-fills it and lets them change it per plan).
+	Pattern []Slot
+	// Unavailable are times they can't do within the window: a whole date
+	// (Block "") such as "not Wednesday the 11th", or one occasion. The
+	// caller also adds the occasions of events they're already going to.
+	Unavailable []Occasion
+}
+
+// Available reports whether the signup can make the occasion.
+func (s *Signup) Available(u *User, o Occasion) bool {
+	pattern := s.Pattern
+	if pattern == nil {
+		pattern = u.Availability
 	}
-	acts := make(map[ActivityID]*Activity, len(in.Activities))
-	for i := range in.Activities {
-		acts[in.Activities[i].ID] = &in.Activities[i]
+	if !slices.Contains(pattern, o.Slot()) {
+		return false
 	}
-	var cands []candidate
-	for i := range buckets {
-		for _, p := range Plans(buckets[i], users, in.Activities, in.Venues, cfg) {
-			cands = append(cands, candidate{bucket: &buckets[i], plan: p})
+	for _, x := range s.Unavailable {
+		if x.Date.Equal(o.Date) && (x.Block == "" || x.Block == o.Block) {
+			return false
 		}
 	}
-	return Assemble(cands, users, acts, in.Relations, cfg)
+	return true
 }

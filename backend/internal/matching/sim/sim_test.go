@@ -2,7 +2,6 @@ package sim
 
 import (
 	"path/filepath"
-	"slices"
 	"testing"
 	"time"
 
@@ -25,13 +24,10 @@ func load(t *testing.T, city string) (cities.Pack, []cities.Activity) {
 	return pack, acts
 }
 
-// TestSimulate runs the engine on 500 synthetic users in each city pack and
-// checks the invariants: every hard rule holds, nobody is placed twice, and
-// most people get a proposal.
+// TestSimulate runs the whole flow on 500 synthetic users in each city pack
+// and checks the invariants: every hard rule holds, nobody is placed twice
+// or invited when not free, and most people who sign up get invited.
 func TestSimulate(t *testing.T) {
-	if testing.Short() {
-		t.Skip("simulation is slow-ish")
-	}
 	cfg := matching.DefaultConfig()
 	cfg.LanguagePairs = [][2]string{{"ja", "en"}}
 	for _, city := range []string{"tokyo", "austin"} {
@@ -42,8 +38,8 @@ func TestSimulate(t *testing.T) {
 			if len(st.Violations) > 0 {
 				t.Errorf("%d rule violations, e.g. %s", len(st.Violations), st.Violations[0])
 			}
-			if rate := float64(st.Invited) / float64(st.Users); rate < 0.6 {
-				t.Errorf("only %.0f%% of users got a proposal", 100*rate)
+			if rate := float64(st.Invited) / float64(st.SignedUp); rate < 0.5 {
+				t.Errorf("only %.0f%% of people who signed up were invited", 100*rate)
 			}
 		})
 	}
@@ -53,15 +49,9 @@ func TestDeterministic(t *testing.T) {
 	pack, acts := load(t, "tokyo")
 	cfg := matching.DefaultConfig()
 	opt := Options{Users: 150, Seed: 7}
-	first := matching.Run(Generate(pack, acts, opt), cfg)
-	again := matching.Run(Generate(pack, acts, opt), cfg)
-	if len(first) != len(again) {
-		t.Fatalf("%d vs %d proposals", len(first), len(again))
-	}
-	for i := range first {
-		a, b := first[i], again[i]
-		if a.Plan != b.Plan || a.Area != b.Area || a.Slot != b.Slot || a.Quorum != b.Quorum || !slices.Equal(a.Invited, b.Invited) {
-			t.Fatalf("proposal %d differs: %+v vs %+v", i, a, b)
-		}
+	a, b := Run(pack, acts, opt, cfg), Run(pack, acts, opt, cfg)
+	a.Duration, b.Duration = 0, 0
+	if a.String() != b.String() {
+		t.Fatalf("runs differ:\n%s\n%s", a, b)
 	}
 }
