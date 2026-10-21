@@ -94,6 +94,7 @@ The app is written in English; every other language comes from the server (`UISe
 - **Two languages:** `t()` returns the language currently shown; `LanguageSwitch` toggles it for longer text. Short labels show both side by side: `pair()` for UI text, or `name` + `secondaryName` from the API (e.g. activity tiles via `Chip secondary`).
 - **Fallbacks:** a missing translation shows the other display language, then English (`lookup` in `strings.ts`). Incomplete catalogues are refetched every 30 seconds while the app is open.
 - **Weekday names** come from `Intl.DateTimeFormat`, not the catalogue.
+- **Sign-in emails** follow the same language: sign-up stores the screen's language as `user_metadata.lang`, and `AuthProvider` keeps it equal to the profile's main language (`supabase.auth.updateUser`). See `supabase/README.md`.
 
 ## Typography
 

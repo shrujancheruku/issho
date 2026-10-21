@@ -1,0 +1,10 @@
+{
+  "_comment": "Source for the sign-in code emails. Edit this, then run `make email-templates` to regenerate magic_link.html, confirmation.html and the subjects in config.toml in every listed language (machine-translated, cached in app.translations). English is the fallback for any other language.",
+  "languages": ["ja", "es", "zh", "ko", "fr", "de", "pt", "it", "vi", "th", "id", "tl", "hi", "ar", "ru", "uk", "pl", "nl", "tr"],
+  "strings": {
+    "subject": "Your Issho sign-in code",
+    "heading": "Your Issho sign-in code",
+    "expiry": "This sign-in code expires in 10 minutes.",
+    "ignore": "If you didn't ask for this code, you can ignore this email."
+  }
+}

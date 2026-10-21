@@ -37,9 +37,11 @@ supabase gen signing-key --algorithm ES256
 
 ## Sign-in emails
 
-The app signs in with **6-digit email codes** (not links, which can't reliably open a native app). `config.toml` points the `magic_link` and `confirmation` templates at `templates/*.html`, which show `{{ .Token }}` in English and Japanese. Codes expire after **10 minutes** (`otp_expiry = 600`). Locally, every email lands in Mailpit (http://127.0.0.1:54324). After editing templates or config, run `supabase stop && supabase start`.
+The app signs in with **6-digit email codes** (not links, which can't reliably open a native app). `config.toml` points the `magic_link` and `confirmation` templates at `templates/*.html`, which show `{{ .Token }}`.
 
-For the hosted project, the same templates and expiry must be set in the dashboard (Auth → Emails), together with a production SMTP relay, and a sensible resend limit (`max_frequency`, e.g. 60s).
+**Emails in the user's language.** Each email is written in the language in the account's metadata (`user_metadata.lang`): the app sends the device language when it creates the account, and later keeps it equal to the profile's main language. The templates branch on it (`{{ if eq $lang "ja" }}…`) and fall back to English; the subjects do the same. They're **generated**: edit `templates/source.json` (the English sentences and the list of languages), then run `make email-templates` (needs `DATABASE_URL` for the translation cache and `GOOGLE_TRANSLATE_API_KEY`). It machine-translates through `app.translations` and rewrites `templates/magic_link.html`, `templates/confirmation.html` and the two `subject` lines here; nothing is written unless every language succeeds. Write unambiguous English: "This code expires" became "this *coupon* code" in Chinese until it said "This sign-in code". Never edit the generated files by hand. Codes expire after **10 minutes** (`otp_expiry = 600`). Locally, every email lands in Mailpit (http://127.0.0.1:54324). After editing templates or config, run `supabase stop && supabase start`.
+
+For the hosted project, the templates, subjects, SMTP relay and resend limit are pushed from this config with `supabase config push` (review `supabase config diff` first); the code expiry is set by hand in the dashboard. See [../docs/supabase-hosted.md](../docs/supabase-hosted.md).
 
 ## Auth providers
 

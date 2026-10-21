@@ -38,7 +38,7 @@ func main() {
 
 func run(args []string) error {
 	if len(args) == 0 {
-		return fmt.Errorf("usage: tool migrate|seed|build-matrix|discover-venues|simulate ...")
+		return fmt.Errorf("usage: tool migrate|seed|build-matrix|discover-venues|email-templates|simulate ...")
 	}
 	if args[0] == "simulate" {
 		return simulate(args[1:]) // synthetic data only: no database needed
@@ -82,6 +82,8 @@ func run(args []string) error {
 		return buildMatrix(ctx, pool, args[1:])
 	case "discover-venues":
 		return discoverVenues(ctx, pool, args[1:])
+	case "email-templates":
+		return emailTemplates(ctx, pool, args[1:])
 	default:
 		return fmt.Errorf("unknown command %q", args[0])
 	}

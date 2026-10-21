@@ -11,7 +11,7 @@ include $(ENV_FILE)
 export
 endif
 
-.PHONY: setup secrets-scan docs gen gen-proto gen-sql gen-strings lint test migrate-up migrate-status api seed matrix venues sim
+.PHONY: setup secrets-scan docs gen gen-proto gen-sql gen-strings email-templates lint test migrate-up migrate-status api seed matrix venues sim
 
 # One-time setup after cloning: install JS deps and enable the secret-scanning pre-commit hook.
 setup:
@@ -75,3 +75,9 @@ venues:
 # Matching on synthetic users (no database or API keys): make sim [ARGS='-users 1000 -seed 2']
 sim:
 	cd backend && go run ./cmd/tool simulate $(ARGS) ../data/citypacks/*.json
+
+# Sign-in emails in every language listed in supabase/templates/source.json
+# (needs DATABASE_URL for the translation cache and GOOGLE_TRANSLATE_API_KEY).
+# Rewrites supabase/templates/*.html and the subjects in supabase/config.toml.
+email-templates:
+	cd backend && go run ./cmd/tool email-templates

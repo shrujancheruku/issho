@@ -52,6 +52,16 @@ export function AuthProvider({ children }: PropsWithChildren) {
     retry: (count, err) => !isUnauthenticated(err) && count < 2,
   });
 
+  // Sign-in emails are written in user_metadata.lang (supabase/templates).
+  // Keep it equal to the profile's main language, so the next code arrives
+  // in the language the person chose. Users may update their own metadata;
+  // a failure only means the next email uses the previous language.
+  const emailLang = me.data?.user?.onboarded ? me.data.user.primaryLanguage : '';
+  const storedLang = session?.user.user_metadata?.lang;
+  useEffect(() => {
+    if (emailLang && storedLang !== emailLang) void supabase.auth.updateUser({ data: { lang: emailLang } });
+  }, [emailLang, storedLang]);
+
   // A session the API rejects (e.g. the account was deleted on another device)
   // is useless; drop it so the user lands back on sign-in.
   useEffect(() => {
