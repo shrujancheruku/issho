@@ -50,7 +50,7 @@ export function toSignup(t: Times, usual: string[]) {
   return {
     pattern: same ? [] : t.pattern.map(parseSlotKey),
     unavailable: [
-      ...t.blocked.toSorted().map((date) => ({ date, block: TimeBlock.UNSPECIFIED })),
+      ...[...t.blocked].sort().map((date) => ({ date, block: TimeBlock.UNSPECIFIED })),
       ...t.keep.filter((u) => !t.blocked.includes(u.date)).map(({ date, block }) => ({ date, block })),
     ],
   };
