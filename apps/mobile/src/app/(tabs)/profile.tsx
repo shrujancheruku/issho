@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LanguageSwitch } from '@/components/language-switch';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { BottomTabInset, FormWidth, Spacing } from '@/constants/theme';
 import { AccountActions } from '@/features/account/account-actions';
 import { steps } from '@/features/profile/draft';
 import { stepTitles } from '@/features/profile/steps';
@@ -53,7 +53,7 @@ const styles = StyleSheet.create({
     paddingBottom: BottomTabInset + Spacing.four,
     gap: Spacing.four,
     width: '100%',
-    maxWidth: MaxContentWidth,
+    maxWidth: FormWidth,
     alignSelf: 'center',
   },
   header: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },

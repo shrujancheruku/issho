@@ -130,6 +130,21 @@ Tests use the `jest-expo` preset. TypeScript 6 no longer loads `@types` packages
 
 If installing a package fails with `ERR_PNPM_IGNORED_BUILDS`, approve or deny its install script in `pnpm-workspace.yaml` (see [onboarding troubleshooting](../../docs/onboarding.md#troubleshooting)).
 
+## Web
+
+The app also builds for the web (Expo Router + react-native-web) as a static single-page app. It isn't released yet; CI exports it on every PR so it keeps building. See the roadmap's "Web release" section for what's left before a launch.
+
+```sh
+npx expo start --web                 # dev server at http://localhost:8081
+npx expo export -p web               # static build in dist/ (pnpm export:web)
+```
+
+- The API only accepts browser origins in its allowlist: start it with `ALLOWED_ORIGINS=http://localhost:8081` (see the backend README).
+- Web-only code lives in `*.web.ts(x)` files, which Metro picks over the native ones: `lib/secure-storage.web.ts` (session in `localStorage`; read its comment before any public release), `i18n/cache.web.ts`, `components/app-tabs.web.tsx`, `hooks/use-color-scheme.web.ts`.
+- `app.json` uses `"web": { "output": "single" }`: one `index.html` for every route, with no server rendering. Server rendering would run app code in Node at build time, where the secure store doesn't exist.
+- **Wide screens:** form-like screens (sign-in, onboarding, profile editing, the language picker) keep their header, content and footer in one centred column at most `FormWidth` (560 px, `constants/theme.ts`) wide; the logo is capped too. Phones are narrower, so this only changes tablets and the web. `global.css` sets `color-scheme` so browser scrollbars follow the theme.
+- `Alert.alert` does nothing on web, so confirmation dialogs (account deletion) need a web version before release.
+
 ## Builds & releases
 
 M9 is planned to use EAS Build/Submit (TestFlight and Play internal testing). `ios/` and `android/` are generated (Continuous Native Generation) and gitignored. Never edit them by hand; configure native behaviour in `app.json` and config plugins (e.g. `expo-secure-store` is registered there).
