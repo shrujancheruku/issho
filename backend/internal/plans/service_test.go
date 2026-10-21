@@ -181,6 +181,8 @@ func TestTitle(t *testing.T) {
 		{"Climbing and bouldering", "Lunch or dinner out", "Climbing and bouldering, then lunch or dinner out"},
 		{"Hiking", "BBQ night", "Hiking, then BBQ night"},
 		{"Hiking", "Ébisu tour", "Hiking, then ébisu tour"},
+		{"Temples and shrines", "Food tour (ramen, desserts, markets …)", "Temples and shrines, then food tour"},
+		{"Live music (bands, DJs)", "", "Live music"},
 	} {
 		if got := Title(c.act, c.follow); got != c.want {
 			t.Errorf("Title(%q, %q) = %q, want %q", c.act, c.follow, got, c.want)

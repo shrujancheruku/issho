@@ -6,6 +6,7 @@ import { Brand, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useI18n } from '@/i18n/i18n-provider';
 
+import { withoutExamples } from './format';
 import type { usePlanNames } from './names';
 
 /**
@@ -36,7 +37,7 @@ export function Timeline({ steps, names }: { steps: PlanStep[]; names: ReturnTyp
             </View>
             <View style={[styles.body, !last && styles.bodyGap]}>
               <ThemedText type="smallBold" style={styles.activity}>
-                {activity.name}
+                {withoutExamples(activity.name)}
               </ThemedText>
               {venue ? (
                 <>

@@ -160,12 +160,23 @@ func (s *Service) addTitles(ctx context.Context, q *dbgen.Queries, cityID string
 
 // Title summarises a plan in English: "Climbing and bouldering, then lunch
 // or dinner out". Area names are left out: they're proper nouns, which
-// machine translation mangles, and the app shows them separately.
+// machine translation mangles, and the app shows them separately. Examples
+// in brackets, which help on the onboarding tiles ("Food tour (ramen,
+// desserts, markets …)"), are dropped.
 func Title(activity, followUp string) string {
+	activity = withoutExamples(activity)
 	if followUp == "" {
 		return activity
 	}
-	return activity + ", then " + lowerFirst(followUp)
+	return activity + ", then " + lowerFirst(withoutExamples(followUp))
+}
+
+// withoutExamples drops a trailing "(…)" from a name.
+func withoutExamples(name string) string {
+	if i := strings.LastIndex(name, " ("); i > 0 && strings.HasSuffix(name, ")") {
+		return name[:i]
+	}
+	return name
 }
 
 // lowerFirst lowercases the first letter for use mid-sentence, unless the

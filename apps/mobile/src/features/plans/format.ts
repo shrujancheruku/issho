@@ -28,3 +28,13 @@ export function lastSignupDay(ts: FeedPlan['signupDeadline'], lang: string) {
     return new Intl.DateTimeFormat('en', opts).format(at);
   }
 }
+
+/**
+ * An activity name without the examples in brackets that help on the
+ * onboarding tiles ("Food tour (ramen, desserts, markets …)"): in a timeline
+ * the venue already says which. Handles Japanese and Chinese full-width
+ * brackets too. Mirrors withoutExamples in the API's plan titles.
+ */
+export function withoutExamples(name: string) {
+  return name.replace(/\s*[(（][^()（）]*[)）]\s*$/, '');
+}
