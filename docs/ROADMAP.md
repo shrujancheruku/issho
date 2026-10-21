@@ -2,7 +2,7 @@
 
 > **This is the source of truth for what's planned, built and pending.** CI (`roadmap` job) fails any push or PR that changes code without updating this file. When you change code, update the status lines below. If the change made a decision, add it to the Decision log.
 
-**Last updated:** 2026-10-21 · **Version:** 0.3.0 (pre-release; [releases](https://github.com/shrujancheruku/issho/releases)) · **Current milestone:** M4 Matching engine (next)
+**Last updated:** 2026-10-21 · **Version:** 0.3.0 (pre-release; [releases](https://github.com/shrujancheruku/issho/releases)) · **Current milestone:** M5 Onboarding & profile (next; M4 done, its DB wiring lands with the M6 worker)
 
 Legend: ✅ done · 🟡 in progress / partial · ⬜ not started · ⏸ deferred (post-MVP)
 
@@ -10,7 +10,7 @@ Legend: ✅ done · 🟡 in progress / partial · ⬜ not started · ⏸ deferre
 
 ## 1. Product
 
-Issho proposes concrete outings to small groups of nearby people aged 18–40 who share interests. An outing is a plan such as *"Sunday photo walk from Kichijoji station, ending at Café X, 5 people"*. Groups are matched on interests, availability, a shared language and preferred group size.
+Issho suggests outings to nearby people aged 18–40 who share interests, then turns them into small groups. An outing starts as a **plan** such as *"Photo walk from Kichijoji station, ending at Café X"*, with no date yet. People see the plans they'd most like first (in a feed and on a map), sign up and say which times suit them. Once enough people have signed up, the plan gets a **date and time** and they're split into groups, matched on interests, availability, a shared language and preferred group size.
 
 After each event, attendees **privately** pick who they'd meet again. **Mutual** picks make those people more likely to be grouped again. Groups that click are offered a recurring **crew**.
 
@@ -98,33 +98,53 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
 - ✅ **On-demand translation** (`internal/translate`): English is the only language that must be stored. Other languages come from stored text (local names, prefilled events), then the `app.translations` cache (migration 00004), then Google Cloud Translation, cached for everyone. Requests wait up to 8 s, and slower translations finish in the background. Concurrent requests share one call; failures aren't cached; `Prefill` for events. Off without `GOOGLE_TRANSLATE_API_KEY`. Cache path and fallbacks verified end to end; **Live translation verified** (local DB): 230 names into ja/es/fr/ko; cold request 0.65 s for two languages, cached 0.01 s. Short labels without context translated poorly until the English names were clarified (below).
   - the catalogue and overrides are English-only; city packs keep only real local names (東京, 吉祥寺)
 
-### M4 · Matching engine (weeks 3–5): ⬜
-- ⬜ `internal/matching` as a pure package (no I/O) with table-driven tests.
-- ⬜ Step 1, bucketing: group users by area cluster (travel matrix), overlapping availability and a shared fluent language, which becomes the event's primary language (any language). Language-exchange buckets need complementary language pairs, which become the event's primary and secondary languages.
-- ⬜ Step 2, candidate plans: activity combinations ranked by demand × feasibility (venue open, group size fits, time of day suits the activity).
-- ⬜ Step 3, group assembly: greedy placement, then local search.
-  - Score: interest overlap, size fit, mutual picks (at most 2 people who already know each other), mixing in newcomers, reliability.
-  - Hard constraints: same-gender-only preferences, nobody is the only person of their gender, blocks.
-- ⬜ Step 4: invite 1–2 more people than needed; the event confirms once enough people accept. Weights can be tuned per city pack.
-- ⬜ A synthetic-user simulator (500 users × 2 cities).
+### M4 · Matching engine (weeks 3–5): ✅ done
+**Plan first, time second** (owner's decision, 2026-10-21): plans are suggested without a date; people sign up and say which times suit them; once a plan's signups can make a good group, it's scheduled and groups are formed. Group size stays open-ended until then.
+
+- ✅ `internal/matching` as a pure package (no I/O, no clock, no randomness; deterministic output) with table-driven tests (90% coverage). See the [backend README](../backend/README.md#matching).
+- ✅ Pools (`Pools`): people by meeting area (travel matrix) and a shared fluent language, which becomes the event's primary language (any language). No time: that's decided per plan from its signups.
+  - every area is a candidate meeting place; a person joins each area within their `max_travel_min` (fastest mode; no route = unreachable)
+  - **two-language events are designed in but not a primary feature:** only for pairs a city lists in `language_pairs` (none by default); anyone fluent in either language joins; primary = the language more members speak. Language learning (`user_languages.fluent = false`) isn't used yet.
+- ✅ Suggest (`Suggest`): plans (activity + area + language, no date) ranked by demand × feasibility, taken best first across the city.
+  - feasible = a venue in the area (or needs only a meeting point) and an audience of at least 6 people who want it and are usually free at a part of the day it suits (`activities.blocks`, migration 00005; 99 of 230 activities restricted)
+  - demand = love 2 / like 1 / open to try 0.5, × 0.3 when over budget; fewer than 3 venues scale the score down
+  - combinations: a non-conversational activity gets a conversational food follow-up (bouldering → ramen)
+  - **concentration:** no two plans for the same activity in a shared language within 20 minutes (`plan_spacing_min`); at most one open plan per 10 users (`users_per_plan`). Without these the simulator opened 297 plans for 500 people, signups spread thin and 30% of groups were pairs.
+  - opening hours can't be stored (Maps terms): check the chosen venue live at event creation (M6)
+- ✅ Feed (`Feed`): every open plan ranked for one person, with a level for the map's colours: top (love), good (like), maybe (open to try), low (no preference or beyond their travel time), not for you (doesn't speak the language: shown greyed, can't sign up). Momentum from signups so far lifts plans close to happening; signup counts are shown, never who.
+- ✅ Signups (`Signup`): the person's profile availability is the default; per plan they can pick other weekly slots (e.g. weekday evenings + weekend mornings) and block out dates or single occasions. Events they're already going to are blocked out by the caller.
+- ✅ Schedule (`Schedule`): for each occasion in the plan's window (default 14 days), form groups from the signups free then; keep the best occasion (ties: earliest). **Ready** when a group reaches its target size; until then the plan keeps collecting. Remnants below the preferred size wait for the next round. `force` (signup deadline) goes ahead with whatever groups can form.
+  - assembly: greedy, then local search (fill, replace, swap, spread small groups into bigger ones)
+  - score: interest, size fit, reaching the preferred minimum, gender balance, one known pair, newcomers mixed in (not a majority), reliability
+  - hard rules (`Violation`; still hold after declines): blocks, same-gender-only, at most 2 who know each other, at least 2 people. **Preferences, not rules** (owner's decision): groups of at least 3 (or the activity's own minimum), nobody the only woman or only man.
+  - each group invites its target + 2; `Quorum` confirms straight away; `MinAttendance` (2) is the fewest it can go ahead with at the deadline, so a decline in a group of 3 doesn't cancel it
+- ✅ Every setting tunable per city (`ParseConfig` on `cities.matching_weights`; unknown keys rejected).
+- ✅ Simulator (`internal/matching/sim`, `make sim`): 500 synthetic users × 2 cities in CI, the whole flow: suggest → each person scrolls their feed and signs up (by level) with varied availability → schedule (ready first, then at the deadline) with double-booking prevented. No DB or keys. Seed 1:
+  - Tokyo: 50 plans, 68% of people signed up, 30 plans ready + 20 at the deadline, 72% of signups invited, 78 groups (mostly 4–6), 7 pairs, 0 rule violations
+  - Austin: 50 plans, 58% signed up, 26 ready + 22 at the deadline (2 never), 73% invited, 66 groups, 9 pairs, 0 violations
+  - one round only: in the real flow, people waiting roll over and plans keep collecting
+- ✅ Migration 00005 (`activities.blocks`) applied to the hosted `issho-dev` project and the catalogue re-seeded (2026-10-21). Verified: goose version 5, 99 of 230 activities restricted, `anon` still has no access to `app`. Locally: up, down, up, seed.
+- ➡ Storing plans and signups, loading the engine's input and running suggest/schedule are the M6 worker's job.
 
 ### M5 · Onboarding & profile (weeks 5–6): ⬜
 - ⬜ **App i18n framework** (moved up from M9): UI strings written in English in the app; other languages fetched from the server's translation cache on demand (and cached on the device), with the primary ↔ secondary switch from the start. Primary and secondary language pickers in onboarding and settings; the sign-in screens follow the device language.
 - ⬜ Auth emails in the user's language(s), if Supabase templates can branch on user metadata (currently EN/JA for everyone).
-- ⬜ Profile RPCs and screens: city/area plus maximum travel time, spoken languages, primary and secondary display languages, availability grid, activity tiles (like/love/open to try), group size, energy, budget, gender plus same-gender-only, birth year (18+), code of conduct.
+- ⬜ Profile RPCs and screens: city/area plus maximum travel time, spoken languages, primary and secondary display languages, availability grid (the default for every signup), activity tiles (like/love/open to try), group size, energy, budget, gender plus same-gender-only, birth year (18+), code of conduct.
 - ⬜ Free-text interests → activity tags with Claude (Haiku). The user confirms the suggested tags. Includes a tagging eval set in several languages.
 
-### M6 · Proposals & events (weeks 6–8): ⬜
+### M6 · Plans, signups & events (weeks 6–8): ⬜
+- ⬜ Schema: open plans (window, signup deadline, status), signups (per-plan weekly pattern + blocked-out dates/occasions), scheduled events, groups and confirmations.
 - ⬜ The River worker (`cmd/worker`):
-  - weekly matching, daily top-ups
-  - expiry and quorum checks
+  - suggest new plans as plans close or fill (`matching.Suggest`), within the city cap
+  - daily readiness check per open plan (`matching.Schedule`), forced at the signup deadline; people waiting roll over to the plan's next round or a similar plan; plans that can't form close and say so
+  - confirmation deadlines: confirm at `Quorum`, go ahead with at least `MinAttendance`, re-check `matching.Violation` as people drop out
   - meeting-point reveal 24h before the event
   - travel-matrix refresh for each city at least every 30 days (Maps caching terms)
   - chat opens 48h before the event
-  - push via Expo Push
-- ⬜ Proposals feed with accept/decline. Event screen: attendees, meeting point after the reveal, Google map, WebSocket group chat, check-in, share with a trusted contact.
+  - push via Expo Push (a plan you signed up for is scheduled; please confirm)
+- ⬜ App: **feed** of open plans ranked for you (`matching.Feed`), scrollable to everything; **map view** of every open plan nearby, colour-coded by level; plan screen with the interest count ("7 interested", never who) and signup with availability pre-filled from the profile (pick weekly windows, block out dates). Event screen: attendees (after confirmation), meeting point after the reveal, Google map, WebSocket group chat, check-in, share with a trusted contact.
 - ⬜ Events have a `primary_language` (any language) and an optional `secondary_language` (e.g. language exchanges). Event text is **prefilled in English plus the event's own languages** when the event is created (`translate.Service.Prefill`); each attendee's other language is translated on demand. Plan descriptions are written by Claude, with a template fallback.
-- ⬜ Venue names, addresses and hours fetched **live** from Places in each displayed language (Google's own localised names; nothing stored).
+- ⬜ Venue names, addresses and hours fetched **live** from Places in each displayed language (Google's own localised names; nothing stored); the scheduled venue's opening hours checked live.
 
 ### M7 · Feedback loop & crews (weeks 8–9): ⬜
 - ⬜ Post-event feedback: rate the plan, rate the group, pick who you'd meet again (private), report.
@@ -133,7 +153,7 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
 
 ### M8 · Admin SPA (weeks 9–11): ⬜
 - ⬜ Vite + React app on Cloudflare Pages, signed in with Supabase Auth (admin role claim).
-- ⬜ City-pack editor, venue/route curation, proposal review/override (build groups by hand for the first city), moderation queue, domain metrics.
+- ⬜ City-pack editor, venue/route curation, plan and group review/override (suggest plans and build groups by hand for the first city), moderation queue, domain metrics.
 
 ### M9 · Release prep (weeks 11–12): ⬜
 - ⬜ **SMTP sending domain** (moved from M2): Resend is configured for `issho-dev` (free tier, `onboarding@resend.dev`, delivers only to the owner's address). Before real users, it needs a **verified sending domain**.
@@ -220,10 +240,29 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
 | 2026-10-20 | Activities link to **venue categories** (our ids), not Google types directly | Keeps the catalogue provider-neutral, and gives M4 the "is there a venue for this?" check. |
 | 2026-10-20 | Marketing site is a **single static HTML file in `site/`**, deployed with the official Pages Actions workflow | No build step or dependency to maintain, and the site stays separate from the app. Signup form is a deliberate no-op until a backend and privacy wording exist. |
 | 2026-10-20 | Second city pack is **Austin** (synthetic, not a launch city) | A real car-based city with real coordinates, so the Google tools can be exercised end to end. It's Japan-free on purpose, which forced per-city disables and renames. |
+| 2026-10-21 | Matching pools are **per meeting area** (everyone who can reach it), not fixed area clusters | Clusters split neighbours who live either side of a boundary. Overlapping pools cost nothing at city scale (areas × languages). |
+| 2026-10-21 | Pool travel uses the **fastest** of the city's modes per area pair | Someone who'd walk 20 minutes won't drive 25. The DB loader takes the minimum so the engine sees one number per pair. |
+| 2026-10-21 | **Two-language events are not an MVP feature, only designed for:** pools for city-listed `language_pairs` (default none), open to anyone fluent in either language; learner data unused | Owner's decision. Keeps the schema and engine ready (`Plan.Secondary`, event `secondary_language`) without building language-exchange matching yet. They're discounted (`bilingual_weight` 0.5) so most plans are in one language everyone shares. |
+| 2026-10-21 | Activity **time-of-day blocks** in the catalogue (`activities.blocks`, migration 00005) | The roadmap's "time of day suits the activity" needs data, and Maps terms forbid storing opening hours. Coarse blocks cover the common cases (bars in the evening, hikes in daylight); live hours are checked when the event is created. |
+| 2026-10-21 | **Only 2 people is a hard minimum**; groups of at least 3 (or the activity's own minimum) are a **preference** in the score | Owner's decision: a smaller outing beats no outing. Catalogue minimums are mostly social choices (chess says 4). Replaces a same-day hard minimum of 3. A city can make 3 strict again with `min_group_size`. |
+| 2026-10-21 | **Confirm at `Quorum`, go ahead at the deadline with `MinAttendance` (2)** | Owner's decision: a decline in a group of 3 shouldn't cancel an event that can still happen with 2. |
+| 2026-10-21 | **Nobody the only woman or only man is a preference**, not a rule (`balance` weight 2) | Owner's decision: better to invite someone into an unbalanced group than to leave them out. Same-gender-only stays a hard rule for those who ask for it. |
+| 2026-10-21 | The **only language requirement** is the event's own: everyone speaks its primary or secondary language | Owner's decision. Two-language events are expected to mix people who share only one of the two. |
+| 2026-10-21 | **Plan first, time second:** suggest plans without a date, collect signups with per-plan availability, schedule once the signups can form a good group | Owner's decision. Pools interest over time instead of needing a week's slot to line up (the main density risk), makes group size open-ended, mostly removes leftover pairs, and gives an explicit interest signal. Replaces weekly proposals with accept/decline. |
+| 2026-10-21 | Signup availability: **profile by default, per-plan weekly windows and blocked-out dates** | Owner's decision. One tap for most people, while still capturing "not Wednesday nights" so the scheduled time is one they can make. |
+| 2026-10-21 | **Interest counts are shown** ("7 interested"), never who | Owner's decision: momentum helps plans fill. Names stay hidden (no profile browsing). |
+| 2026-10-21 | **Targeted feed plus everything:** plans ranked by likely interest, then the rest; a map of all nearby plans colour-coded by level | Owner's decision. People who don't speak a plan's language see it greyed out and can't sign up. |
+| 2026-10-21 | Suggestions are **concentrated**: same activity + shared language ≥ 20 min apart, at most one open plan per 10 users | The simulator showed 297 plans for 500 people without it: signups spread thin, plans only went ahead at the deadline and 30% of groups were pairs. With it: 50 plans, 7 pairs in 78 groups. |
+| 2026-10-21 | A ready plan schedules only groups at the preferred size; smaller remnants wait for the next round (all groups are kept at the deadline) | Waiting may turn a pair into a proper group; at the deadline something beats nothing. |
+| 2026-10-21 | Over-invite **inside the group**: invite target + 2, confirm at the target (`Quorum`) | Inviting leftovers as extras after assembly almost never happened: leftovers were used for new groups first (the simulator showed 0 extras in Tokyo), so one decline would sink an event. Still applies after the switch to signups: some who signed up won't confirm the chosen time. |
+| 2026-10-21 | The gender-balance preference applies to **women and men**; nonbinary and unspecified are exempt | Requiring two nonbinary people per group would leave most nonbinary users unmatched. Revisit with real data and feedback. |
+| 2026-10-21 | ~~One proposal per person per matching run~~ | Superseded the same day by signups: people can sign up for several plans; an event they're going to blocks its occasion in their other signups, so they're never double-booked. |
 
 ## 5. Known gaps & risks
 - **Machine-translation quality on short labels.** Cloud Translation Basic has no context, so short names can come out wrong. Clearer English names fixed the cases found so far; when writing new names, avoid idioms and words with two meanings. Further fixes: admin corrections of cached rows (`reviewed`, M8) or Advanced (v3) glossaries.
-- **Not enough nearby users** is the main product risk. The admin proposal override lets the first city be hand-curated.
+- **Matching untested on real behaviour.** The simulator's users, venues, travel times and signup behaviour (who signs up, how far they scroll) are guesses, so its numbers show the engine works, not that the density or conversion is enough. ~10% of simulated groups are pairs, effectively 1:1 meetings, which the platonic rules try to avoid; M6 should watch how pairs (especially mixed pairs) go and tune `min_size`/`balance`, or set `min_group_size` to 3 per city.
+- **Drop-off between signup and confirmation.** Signing up is cheap; some won't confirm the chosen time. Per-plan availability and extra invites reduce it; M6 should measure it and tune `extra_invites`, the window and deadlines.
+- **Not enough nearby users** is the main product risk. Plan-first scheduling pools interest over time, and the admin override lets the first city be hand-curated.
 - **PostGIS lives in the `public` schema** (migration 00001). With the Data API disabled, no anonymous path reaches it, but Supabase's advisors flag it. Move it into the `extensions` schema with a migration **before production data exists**: PostGIS can't be relocated in place, so the geography column has to be recreated.
 - **Google Maps terms** restrict caching. What we do: store only place IDs plus our own data, use place locations in memory only, and delete travel times after 30 days ([google-maps.md](google-maps.md#5-terms-what-we-may-store)). The Routes policy says most content is cache-restricted but doesn't state a window for durations; 30 days follows the Service Specific Terms' limit for other content. Re-check with the current terms before launch.
 - **Venue quality** comes from popularity ranking and primary-type matching only (ratings and "good for groups" are pricier Enterprise fields). Some unsuitable places still share a valid primary type: Japanese **snack bars (スナック, hostess bars) are typed `bar`**, and a tattoo studio appeared as `art_studio`. Every venue starts as `candidate`; admin curation (M8) must approve venues before the matcher uses them, and the M8 review should look for snack bars specifically.

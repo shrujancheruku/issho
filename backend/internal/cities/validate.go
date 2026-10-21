@@ -79,6 +79,13 @@ func ValidateCatalog(cats []VenueCategory, acts []Activity) error {
 				bad("activity %s: unknown venue category %q", a.ID, v)
 			}
 		}
+		seenBlock := map[string]bool{}
+		for _, b := range a.Blocks {
+			if !slices.Contains(AllBlocks, b) || seenBlock[b] {
+				bad("activity %s: block %q unknown or repeated", a.ID, b)
+			}
+			seenBlock[b] = true
+		}
 	}
 	return errors.Join(errs...)
 }

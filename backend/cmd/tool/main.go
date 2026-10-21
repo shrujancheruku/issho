@@ -1,10 +1,11 @@
-// Command tool runs operational tasks: migrations, seeding city data, and
-// building a city's geo data from Google Maps.
+// Command tool runs operational tasks: migrations, seeding city data,
+// building a city's geo data from Google Maps, and simulating matching.
 //
 //	tool migrate up|down|status|...
 //	tool seed [-catalog data/activities.json] [-venue-categories data/venue-categories.json] data/citypacks/tokyo.json ...
 //	tool build-matrix [-dry-run] <city>
 //	tool discover-venues [-dry-run] [-categories cafe,park] <city>
+//	tool simulate [-users 500] [-seed 1] [-month 5] [-config '{...}'] data/citypacks/tokyo.json ...
 package main
 
 import (
@@ -15,6 +16,7 @@ import (
 	"log/slog"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
@@ -22,6 +24,8 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/cities"
 	"github.com/shrujancheruku/issho/backend/internal/geo"
 	"github.com/shrujancheruku/issho/backend/internal/maps/google"
+	"github.com/shrujancheruku/issho/backend/internal/matching"
+	"github.com/shrujancheruku/issho/backend/internal/matching/sim"
 	"github.com/shrujancheruku/issho/backend/internal/platform/db"
 )
 
@@ -34,7 +38,10 @@ func main() {
 
 func run(args []string) error {
 	if len(args) == 0 {
-		return fmt.Errorf("usage: tool migrate|seed|build-matrix|discover-venues ...")
+		return fmt.Errorf("usage: tool migrate|seed|build-matrix|discover-venues|simulate ...")
+	}
+	if args[0] == "simulate" {
+		return simulate(args[1:]) // synthetic data only: no database needed
 	}
 	ctx := context.Background()
 	url := os.Getenv("DATABASE_URL")
@@ -180,5 +187,38 @@ func discoverVenues(ctx context.Context, pool *pgxpool.Pool, args []string) erro
 		return err
 	}
 	slog.Info("venues saved", "city", city, "venues", len(venues))
+	return nil
+}
+
+func simulate(args []string) error {
+	fs := flag.NewFlagSet("simulate", flag.ExitOnError)
+	catalog := fs.String("catalog", "../data/activities.json", "activity catalogue JSON")
+	users := fs.Int("users", 500, "synthetic users per city")
+	seed := fs.Uint64("seed", 1, "random seed; the same seed generates the same city")
+	month := fs.Int("month", int(time.Now().Month()), "month for seasonal activities (1-12, 0 = ignore seasons)")
+	config := fs.String("config", "{}", "matching config overrides as JSON, e.g. '{\"language_pairs\":[[\"ja\",\"en\"]]}'")
+	_ = fs.Parse(args)
+	if fs.NArg() == 0 {
+		return fmt.Errorf("usage: tool simulate [flags] <citypack.json>...")
+	}
+	cfg, err := matching.ParseConfig([]byte(*config))
+	if err != nil {
+		return err
+	}
+	acts, err := cities.ReadActivities(*catalog)
+	if err != nil {
+		return err
+	}
+	for _, path := range fs.Args() {
+		pack, err := cities.ReadPack(path)
+		if err != nil {
+			return err
+		}
+		st := sim.Run(pack, acts, sim.Options{Users: *users, Seed: *seed, Month: time.Month(*month)}, cfg)
+		fmt.Printf("== %s\n%s\n", pack.ID, st)
+		if len(st.Violations) > 0 {
+			return fmt.Errorf("%s: %d rule violations", pack.ID, len(st.Violations))
+		}
+	}
 	return nil
 }

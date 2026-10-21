@@ -56,7 +56,12 @@ type Activity struct {
 	// Venue category ids (venue-categories.json) the activity happens at;
 	// empty when it only needs a meeting point.
 	VenueCategories []string `json:"venue_categories"`
+	// Parts of the day it suits (morning, afternoon, evening); empty = any.
+	Blocks []string `json:"blocks,omitempty"`
 }
+
+// AllBlocks lists the parts of the day, in order (app.availability_slots.block).
+var AllBlocks = []string{"morning", "afternoon", "evening"}
 
 // VenueCategory maps one of our venue kinds to provider place types.
 type VenueCategory struct {
@@ -66,6 +71,18 @@ type VenueCategory struct {
 	// Nearby-search radius around an area centre. Common places (cafés) use a
 	// small radius; rare ones (beaches, campgrounds) need a large one.
 	SearchRadiusM int32 `json:"search_radius_m"`
+}
+
+// ReadPack reads a city pack without validating or seeding it.
+func ReadPack(path string) (Pack, error) {
+	var p Pack
+	return p, readJSON(path, &p)
+}
+
+// ReadActivities reads the activity catalogue without validating it.
+func ReadActivities(path string) ([]Activity, error) {
+	var acts []Activity
+	return acts, readJSON(path, &acts)
 }
 
 func readJSON(path string, v any) error {
@@ -118,6 +135,13 @@ func SeedCatalog(ctx context.Context, pool *pgxpool.Pool, venueCategoriesPath, a
 				vc = []string{}
 			}
 			if err := q.SetActivityVenueCategories(ctx, dbgen.SetActivityVenueCategoriesParams{ID: a.ID, VenueCategories: vc}); err != nil {
+				return fmt.Errorf("activity %s: %w", a.ID, err)
+			}
+			blocks := a.Blocks
+			if len(blocks) == 0 {
+				blocks = AllBlocks
+			}
+			if err := q.SetActivityBlocks(ctx, dbgen.SetActivityBlocksParams{ID: a.ID, Blocks: blocks}); err != nil {
 				return fmt.Errorf("activity %s: %w", a.ID, err)
 			}
 		}
