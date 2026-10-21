@@ -10,13 +10,14 @@ Issho is a new way to build community, rooted in the way we always have. We brin
 
 Making friends as an adult is hard because no one is organising it. Issho does the organising. Tell us what you enjoy and when you're free, and we'll suggest plans near you with people who share your interests:
 
-<br>
-
-<p align="center">
-  <img src="assets/readme/example-plans.svg" width="820" alt="Plans like: a photo walk from Kichijoji station in Tokyo, ending at a café we've already picked; a flower market wander on Columbia Road in London, then a Sunday roast at the pub; a bike ride down car-free Reforma in Mexico City, then tacos al pastor in Roma; a coffee crawl through Melbourne's CBD laneways, ending at Queen Victoria Market; antique hunting at the San Telmo fair in Buenos Aires, then empanadas on Plaza Dorrego; a sunrise hike up Lion's Head in Cape Town, then breakfast together in Sea Point.">
-</p>
-
-<br>
+| City | Plan |
+|---|---|
+| **TOKYO** | **Photo walk** from Kichijoji station, ending at a **café** we've already picked. |
+| **LONDON** | **Flower market** wander on Columbia Road, then a **Sunday roast** at the pub. |
+| **MEXICO CITY** | **Bike ride** down car-free Reforma, then **tacos al pastor** in Roma. |
+| **MELBOURNE** | **Coffee crawl** through the CBD laneways, ending at **Queen Victoria Market**. |
+| **BUENOS AIRES** | **Antique hunting** at the San Telmo fair, then **empanadas** on Plaza Dorrego. |
+| **CAPE TOWN** | **Sunrise hike** up Lion's Head, then **breakfast** together in Sea Point. |
 
 1. **Pick what you enjoy.** Photo walks, board games, climbing, ramen crawls. Start from activities you already like.
 2. **Meet a small group.** Join the plans that appeal to you. Once enough nearby people are in, we match you into a small group and find a time and place that works for everyone.
