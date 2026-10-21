@@ -10,7 +10,29 @@ Issho is a new way to build community, rooted in the way we always have. We brin
 
 Making friends as an adult is hard because no one is organising it. Issho does the organising. Tell us what you enjoy and when you're free, and we'll suggest plans near you with people who share your interests:
 
-> **Photo walk from Kichijoji station, ending at a café we've already picked.**
+<br>
+
+<p align="center">
+  <sub>TOKYO</sub><br>
+  <b>Photo walk from Kichijoji station, ending at a café we've already picked.</b>
+  <br><br>
+  <sub>LONDON</sub><br>
+  <b>Sunday wander through Columbia Road flower market, then a roast at the pub around the corner.</b>
+  <br><br>
+  <sub>NEW YORK</sub><br>
+  <b>Bouldering in Williamsburg, then ramen down the street to swap stories.</b>
+  <br><br>
+  <sub>MELBOURNE</sub><br>
+  <b>Coffee crawl through the CBD laneways, finishing at Queen Victoria Market.</b>
+  <br><br>
+  <sub>BUENOS AIRES</sub><br>
+  <b>Browse the San Telmo Sunday market, then empanadas on Plaza Dorrego.</b>
+  <br><br>
+  <sub>CAPE TOWN</sub><br>
+  <b>Sunrise hike up Lion's Head, then breakfast together in Sea Point.</b>
+</p>
+
+<br>
 
 1. **Pick what you enjoy.** Photo walks, board games, climbing, ramen crawls. Start from activities you already like.
 2. **Meet a small group.** Join the plans that appeal to you. Once enough nearby people are in, we match you into a small group and find a time and place that works for everyone.
