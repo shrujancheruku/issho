@@ -1,11 +1,11 @@
-// Package catalog serves the activity catalogue, localised per city.
+// Package catalog serves reference data for onboarding and settings: the
+// activity catalogue (localised per city), cities and areas, and languages.
 package catalog
 
 import (
 	"context"
 	"errors"
 	"strings"
-	"sync"
 
 	"connectrpc.com/connect"
 
@@ -25,14 +25,10 @@ func (h *Handler) ListActivities(ctx context.Context, req *connect.Request[issho
 	if req.Msg.CityId == "" {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("city_id is required"))
 	}
-	primary, secondary := baseLang(req.Msg.Locale), baseLang(req.Msg.SecondaryLanguage)
-	if !i18n.Valid(primary) {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("locale must be a language code such as \"ja\""))
+	primary, secondary, err := displayLanguages(req.Msg.Locale, req.Msg.SecondaryLanguage)
+	if err != nil {
+		return nil, err
 	}
-	if secondary != "" && !i18n.Valid(secondary) {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("secondary_language must be a language code such as \"es\""))
-	}
-	primary, secondary = i18n.ForApp(primary, secondary)
 	rows, err := h.Q.ListCityActivities(ctx, req.Msg.CityId)
 	if err != nil {
 		return nil, err
@@ -41,13 +37,7 @@ func (h *Handler) ListActivities(ctx context.Context, req *connect.Request[issho
 	for i, r := range rows {
 		texts[i] = translate.Text{Raw: r.Name, Context: "name of a group activity, shown on a tile"}
 	}
-	// Both languages concurrently: on a cold cache each may wait for the translator.
-	var primaryNames, secondaryNames []string
-	var wg sync.WaitGroup
-	wg.Add(2)
-	go func() { defer wg.Done(); primaryNames = h.Translations.Resolve(ctx, primary, texts) }()
-	go func() { defer wg.Done(); secondaryNames = h.Translations.Resolve(ctx, secondary, texts) }()
-	wg.Wait()
+	primaryNames, secondaryNames := h.resolvePair(ctx, primary, secondary, texts)
 
 	out := make([]*isshov1.Activity, 0, len(rows))
 	for i, r := range rows {

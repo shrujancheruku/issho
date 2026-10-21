@@ -1,112 +1,55 @@
 import { useQuery } from '@tanstack/react-query';
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { api } from '@/lib/api';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { useI18n } from '@/i18n/i18n-provider';
+import { api } from '@/lib/api';
 
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
-  return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
-  );
-}
-
+/** Developer aid: API reachability and build version. */
 function ApiStatus() {
   const health = useQuery({ queryKey: ['health'], queryFn: () => api.health.check({}) });
-  if (health.isPending) return <ThemedText type="small">checking…</ThemedText>;
-  if (health.isError) return <ThemedText type="small">unreachable</ThemedText>;
+  if (health.isPending) return <ThemedText type="code">API …</ThemedText>;
+  if (health.isError) return <ThemedText type="code">API unreachable</ThemedText>;
   return (
-    <ThemedText type="small">
-      {health.data.databaseOk ? 'ok' : 'database down'} · {health.data.version}
+    <ThemedText type="code">
+      API {health.data.databaseOk ? 'ok' : 'database down'} · {health.data.version}
     </ThemedText>
   );
 }
 
+/** Placeholder until the plan feed (roadmap M6). */
 export default function HomeScreen() {
+  const { t } = useI18n();
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Issho
-          </ThemedText>
-        </ThemedView>
-
-        <ThemedText type="code" style={styles.code}>
-          get started
+        <AnimatedIcon />
+        <ThemedText type="subtitle" style={styles.center}>
+          {t('home.welcome')}
         </ThemedText>
-
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="API" hint={<ApiStatus />} />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
-
-        {Platform.OS === 'web' && <WebBadge />}
+        <ThemedText themeColor="textSecondary" style={styles.center}>
+          {t('home.welcomeBody')}
+        </ThemedText>
+        <ApiStatus />
       </SafeAreaView>
     </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
-  },
+  container: { flex: 1, flexDirection: 'row', justifyContent: 'center' },
   safeArea: {
     flex: 1,
-    paddingHorizontal: Spacing.four,
+    justifyContent: 'center',
     alignItems: 'center',
     gap: Spacing.three,
+    padding: Spacing.four,
     paddingBottom: BottomTabInset + Spacing.three,
     maxWidth: MaxContentWidth,
   },
-  heroSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
-  },
-  title: {
-    textAlign: 'center',
-  },
-  code: {
-    textTransform: 'uppercase',
-  },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
-  },
+  center: { textAlign: 'center' },
 });

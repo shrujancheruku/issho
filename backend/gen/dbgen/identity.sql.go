@@ -22,15 +22,21 @@ func (q *Queries) DeleteUser(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
-const hasProfile = `-- name: HasProfile :one
-select exists (select 1 from app.profiles where user_id = $1)
+const getDisplayLanguages = `-- name: GetDisplayLanguages :one
+select primary_language, secondary_language from app.profiles where user_id = $1
 `
 
-func (q *Queries) HasProfile(ctx context.Context, userID uuid.UUID) (bool, error) {
-	row := q.db.QueryRow(ctx, hasProfile, userID)
-	var exists bool
-	err := row.Scan(&exists)
-	return exists, err
+type GetDisplayLanguagesRow struct {
+	PrimaryLanguage   string
+	SecondaryLanguage *string
+}
+
+// No row = not onboarded yet.
+func (q *Queries) GetDisplayLanguages(ctx context.Context, userID uuid.UUID) (GetDisplayLanguagesRow, error) {
+	row := q.db.QueryRow(ctx, getDisplayLanguages, userID)
+	var i GetDisplayLanguagesRow
+	err := row.Scan(&i.PrimaryLanguage, &i.SecondaryLanguage)
+	return i, err
 }
 
 const upsertUser = `-- name: UpsertUser :one

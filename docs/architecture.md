@@ -36,7 +36,7 @@
 1. The client calls, for example, `POST /issho.v1.IdentityService/GetMe` with JSON and `Authorization: Bearer <token>`.
 2. **CORS** (`cmd/api`) checks the origin. Only browser origins in `ALLOWED_ORIGINS` pass. Native apps send no Origin header.
 3. The **auth interceptor** (`internal/platform/auth`) runs:
-   - Public procedures (currently only `HealthService.Check`) skip it.
+   - Public procedures (`HealthService.Check`, and `UIService.GetStrings` because the sign-in screens need their text) skip it.
    - Everything else must have a valid ES256/RS256 token with Supabase's issuer, the `authenticated` audience and an unexpired `exp`. The caller is put on the request context.
 4. The **handler** (`internal/<domain>/handler.go`) validates input and calls the domain **service**.
 5. The **service** contains the business logic and talks to Postgres through **sqlc** queries (`backend/gen/dbgen`).
@@ -76,7 +76,7 @@ Defined in `backend/db/migrations/` (`00001_init.sql`, `00002_geo.sql`). All app
 | `venues` | Discovered places: `google_place_id` + category, nearest area, curation status, our tags. **No Google content** (names, addresses, locations) is stored; see [google-maps.md](google-maps.md#5-terms-what-we-may-store). |
 | `city_activity_overrides` | A city can rename, disable or set seasonal months for an activity |
 | `users` | App account; `id` = Supabase `auth.users.id` |
-| `profiles` | Matching preferences (home area, travel time, group size, gender rules, …) and display languages (`primary_language`, optional `secondary_language`) |
+| `profiles` | Matching preferences (home area, travel time, group size, gender rules, …), display languages (`primary_language`, optional `secondary_language`) and the accepted code-of-conduct version. Written only whole, by `ProfileService.SaveProfile` (onboarding and settings) |
 | `user_languages` | Languages a person **speaks** (fluent, or learning with a level); used for matching |
 | `availability_slots` | Weekday × morning/afternoon/evening |
 | `user_activity_prefs` | Weight per activity: 0 = open to try, 1 = like, 2 = love |
@@ -103,6 +103,10 @@ Examples: a JP–ES exchange in Tokyo shows Japanese + Spanish to everyone; a Ja
 `i18n.Pair` then decides what to show: if the primary language isn't available yet, the secondary is shown alone; English is only the last resort. APIs return both texts (e.g. `name` + `secondary_name`) and clients choose the layout. Any ISO 639-1 language is accepted.
 
 **Events** (M6) are stored with English **plus each of their own languages prefilled** (`translate.Service.Prefill`), so a JP–ES exchange exists in en, ja and es from the start; any other viewer's language is translated on demand.
+
+**The app's own UI text** is written in English in `apps/mobile/src/i18n/en.json`. `UIService.GetStrings` translates the whole catalogue into one language through the same cache; the app keeps a copy on the device and asks again while translations are still running. The server only translates its own copy of that file (`make gen` copies it into `backend/internal/uistrings`), so the RPC can be public, for the sign-in screens, without translating arbitrary text. Placeholders (`{email}`) are checked: a translation that loses one is dropped, and the app shows English for that string. Before sign-in the app uses the device language; afterwards, the profile's two languages.
+
+**Area names are never machine-translated.** They're proper nouns, and translation mangled them ("The Domain" → "El dominio"). Only stored names are shown: English plus a real local name such as 吉祥寺. City names are translated (Tokyo → Tokio).
 
 **Google place names** are never stored (Maps terms allow storing only place IDs). They're fetched live from Places in each displayed language, so people see Google's own local names rather than machine translations of proper nouns.
 

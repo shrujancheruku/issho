@@ -26,7 +26,12 @@ func (h *Handler) GetMe(ctx context.Context, _ *connect.Request[isshov1.GetMeReq
 		}
 		return nil, err
 	}
-	u := &isshov1.User{Id: acct.User.ID.String(), Onboarded: acct.Onboarded}
+	u := &isshov1.User{
+		Id:                acct.User.ID.String(),
+		Onboarded:         acct.Onboarded,
+		PrimaryLanguage:   acct.PrimaryLanguage,
+		SecondaryLanguage: acct.SecondaryLanguage,
+	}
 	if acct.User.Email != nil {
 		u.Email = *acct.User.Email
 	}

@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file issho/v1/catalog.proto.
  */
 export const file_issho_v1_catalog: GenFile = /*@__PURE__*/
-  fileDesc("ChZpc3Noby92MS9jYXRhbG9nLnByb3RvEghpc3Noby52MSJUChVMaXN0QWN0aXZpdGllc1JlcXVlc3QSDwoHY2l0eV9pZBgBIAEoCRIOCgZsb2NhbGUYAiABKAkSGgoSc2Vjb25kYXJ5X2xhbmd1YWdlGAMgASgJIkAKFkxpc3RBY3Rpdml0aWVzUmVzcG9uc2USJgoKYWN0aXZpdGllcxgBIAMoCzISLmlzc2hvLnYxLkFjdGl2aXR5IsoBCghBY3Rpdml0eRIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEhAKCGNhdGVnb3J5GAMgASgJEg4KBmluZG9vchgEIAEoCBIOCgZlbmVyZ3kYBSABKAUSEgoKY29zdF9sZXZlbBgGIAEoBRIWCg5jb252ZXJzYXRpb25hbBgHIAEoCBIWCg5taW5fZ3JvdXBfc2l6ZRgIIAEoBRIWCg5tYXhfZ3JvdXBfc2l6ZRgJIAEoBRIWCg5zZWNvbmRhcnlfbmFtZRgKIAEoCTJnCg5DYXRhbG9nU2VydmljZRJVCg5MaXN0QWN0aXZpdGllcxIfLmlzc2hvLnYxLkxpc3RBY3Rpdml0aWVzUmVxdWVzdBogLmlzc2hvLnYxLkxpc3RBY3Rpdml0aWVzUmVzcG9uc2UiAEI+WjxnaXRodWIuY29tL3NocnVqYW5jaGVydWt1L2lzc2hvL2JhY2tlbmQvZ2VuL2lzc2hvL3YxO2lzc2hvdjFiBnByb3RvMw");
+  fileDesc("ChZpc3Noby92MS9jYXRhbG9nLnByb3RvEghpc3Noby52MSJUChVMaXN0QWN0aXZpdGllc1JlcXVlc3QSDwoHY2l0eV9pZBgBIAEoCRIOCgZsb2NhbGUYAiABKAkSGgoSc2Vjb25kYXJ5X2xhbmd1YWdlGAMgASgJIkAKFkxpc3RBY3Rpdml0aWVzUmVzcG9uc2USJgoKYWN0aXZpdGllcxgBIAMoCzISLmlzc2hvLnYxLkFjdGl2aXR5IsoBCghBY3Rpdml0eRIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEhAKCGNhdGVnb3J5GAMgASgJEg4KBmluZG9vchgEIAEoCBIOCgZlbmVyZ3kYBSABKAUSEgoKY29zdF9sZXZlbBgGIAEoBRIWCg5jb252ZXJzYXRpb25hbBgHIAEoCBIWCg5taW5fZ3JvdXBfc2l6ZRgIIAEoBRIWCg5tYXhfZ3JvdXBfc2l6ZRgJIAEoBRIWCg5zZWNvbmRhcnlfbmFtZRgKIAEoCSI/ChFMaXN0Q2l0aWVzUmVxdWVzdBIOCgZsb2NhbGUYASABKAkSGgoSc2Vjb25kYXJ5X2xhbmd1YWdlGAIgASgJIjQKEkxpc3RDaXRpZXNSZXNwb25zZRIeCgZjaXRpZXMYASADKAsyDi5pc3Noby52MS5DaXR5ImoKBENpdHkSCgoCaWQYASABKAkSDAoEbmFtZRgCIAEoCRIWCg5zZWNvbmRhcnlfbmFtZRgDIAEoCRIRCglsYW5ndWFnZXMYBCADKAkSHQoFYXJlYXMYBSADKAsyDi5pc3Noby52MS5BcmVhIjgKBEFyZWESCgoCaWQYASABKAkSDAoEbmFtZRgCIAEoCRIWCg5zZWNvbmRhcnlfbmFtZRgDIAEoCSImChRMaXN0TGFuZ3VhZ2VzUmVxdWVzdBIOCgZsb2NhbGUYASABKAkiPgoVTGlzdExhbmd1YWdlc1Jlc3BvbnNlEiUKCWxhbmd1YWdlcxgBIAMoCzISLmlzc2hvLnYxLkxhbmd1YWdlIjcKCExhbmd1YWdlEgwKBGNvZGUYASABKAkSDwoHYXV0b255bRgCIAEoCRIMCgRuYW1lGAMgASgJMoYCCg5DYXRhbG9nU2VydmljZRJVCg5MaXN0QWN0aXZpdGllcxIfLmlzc2hvLnYxLkxpc3RBY3Rpdml0aWVzUmVxdWVzdBogLmlzc2hvLnYxLkxpc3RBY3Rpdml0aWVzUmVzcG9uc2UiABJJCgpMaXN0Q2l0aWVzEhsuaXNzaG8udjEuTGlzdENpdGllc1JlcXVlc3QaHC5pc3Noby52MS5MaXN0Q2l0aWVzUmVzcG9uc2UiABJSCg1MaXN0TGFuZ3VhZ2VzEh4uaXNzaG8udjEuTGlzdExhbmd1YWdlc1JlcXVlc3QaHy5pc3Noby52MS5MaXN0TGFuZ3VhZ2VzUmVzcG9uc2UiAEI+WjxnaXRodWIuY29tL3NocnVqYW5jaGVydWt1L2lzc2hvL2JhY2tlbmQvZ2VuL2lzc2hvL3YxO2lzc2hvdjFiBnByb3RvMw");
 
 /**
  * @generated from message issho.v1.ListActivitiesRequest
@@ -151,11 +151,204 @@ export const ActivitySchema: GenMessage<Activity> = /*@__PURE__*/
   messageDesc(file_issho_v1_catalog, 2);
 
 /**
- * CatalogService exposes the activity catalogue, localised per city.
+ * @generated from message issho.v1.ListCitiesRequest
+ */
+export type ListCitiesRequest = Message<"issho.v1.ListCitiesRequest"> & {
+  /**
+   * Primary and optional secondary display language, as in
+   * ListActivitiesRequest.
+   *
+   * @generated from field: string locale = 1;
+   */
+  locale: string;
+
+  /**
+   * @generated from field: string secondary_language = 2;
+   */
+  secondaryLanguage: string;
+};
+
+/**
+ * Describes the message issho.v1.ListCitiesRequest.
+ * Use `create(ListCitiesRequestSchema)` to create a new message.
+ */
+export const ListCitiesRequestSchema: GenMessage<ListCitiesRequest> = /*@__PURE__*/
+  messageDesc(file_issho_v1_catalog, 3);
+
+/**
+ * @generated from message issho.v1.ListCitiesResponse
+ */
+export type ListCitiesResponse = Message<"issho.v1.ListCitiesResponse"> & {
+  /**
+   * Sorted by id.
+   *
+   * @generated from field: repeated issho.v1.City cities = 1;
+   */
+  cities: City[];
+};
+
+/**
+ * Describes the message issho.v1.ListCitiesResponse.
+ * Use `create(ListCitiesResponseSchema)` to create a new message.
+ */
+export const ListCitiesResponseSchema: GenMessage<ListCitiesResponse> = /*@__PURE__*/
+  messageDesc(file_issho_v1_catalog, 4);
+
+/**
+ * @generated from message issho.v1.City
+ */
+export type City = Message<"issho.v1.City"> & {
+  /**
+   * City pack id, e.g. "tokyo".
+   *
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * @generated from field: string name = 2;
+   */
+  name: string;
+
+  /**
+   * Empty when not requested, unavailable or identical to name.
+   *
+   * @generated from field: string secondary_name = 3;
+   */
+  secondaryName: string;
+
+  /**
+   * Languages commonly used in the city, most common first. Suggestions
+   * only: any language is allowed.
+   *
+   * @generated from field: repeated string languages = 4;
+   */
+  languages: string[];
+
+  /**
+   * Sorted by id.
+   *
+   * @generated from field: repeated issho.v1.Area areas = 5;
+   */
+  areas: Area[];
+};
+
+/**
+ * Describes the message issho.v1.City.
+ * Use `create(CitySchema)` to create a new message.
+ */
+export const CitySchema: GenMessage<City> = /*@__PURE__*/
+  messageDesc(file_issho_v1_catalog, 5);
+
+/**
+ * @generated from message issho.v1.Area
+ */
+export type Area = Message<"issho.v1.Area"> & {
+  /**
+   * e.g. "tokyo-kichijoji".
+   *
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * @generated from field: string name = 2;
+   */
+  name: string;
+
+  /**
+   * @generated from field: string secondary_name = 3;
+   */
+  secondaryName: string;
+};
+
+/**
+ * Describes the message issho.v1.Area.
+ * Use `create(AreaSchema)` to create a new message.
+ */
+export const AreaSchema: GenMessage<Area> = /*@__PURE__*/
+  messageDesc(file_issho_v1_catalog, 6);
+
+/**
+ * @generated from message issho.v1.ListLanguagesRequest
+ */
+export type ListLanguagesRequest = Message<"issho.v1.ListLanguagesRequest"> & {
+  /**
+   * Language to name the languages in, e.g. "ja" gives "スペイン語" for es.
+   *
+   * @generated from field: string locale = 1;
+   */
+  locale: string;
+};
+
+/**
+ * Describes the message issho.v1.ListLanguagesRequest.
+ * Use `create(ListLanguagesRequestSchema)` to create a new message.
+ */
+export const ListLanguagesRequestSchema: GenMessage<ListLanguagesRequest> = /*@__PURE__*/
+  messageDesc(file_issho_v1_catalog, 7);
+
+/**
+ * @generated from message issho.v1.ListLanguagesResponse
+ */
+export type ListLanguagesResponse = Message<"issho.v1.ListLanguagesResponse"> & {
+  /**
+   * Sorted by code.
+   *
+   * @generated from field: repeated issho.v1.Language languages = 1;
+   */
+  languages: Language[];
+};
+
+/**
+ * Describes the message issho.v1.ListLanguagesResponse.
+ * Use `create(ListLanguagesResponseSchema)` to create a new message.
+ */
+export const ListLanguagesResponseSchema: GenMessage<ListLanguagesResponse> = /*@__PURE__*/
+  messageDesc(file_issho_v1_catalog, 8);
+
+/**
+ * @generated from message issho.v1.Language
+ */
+export type Language = Message<"issho.v1.Language"> & {
+  /**
+   * ISO 639-1 code, e.g. "es".
+   *
+   * @generated from field: string code = 1;
+   */
+  code: string;
+
+  /**
+   * The language's name for itself ("Español"), or its English name where
+   * none is known.
+   *
+   * @generated from field: string autonym = 2;
+   */
+  autonym: string;
+
+  /**
+   * Its name in the requested locale ("スペイン語"); falls back to English.
+   *
+   * @generated from field: string name = 3;
+   */
+  name: string;
+};
+
+/**
+ * Describes the message issho.v1.Language.
+ * Use `create(LanguageSchema)` to create a new message.
+ */
+export const LanguageSchema: GenMessage<Language> = /*@__PURE__*/
+  messageDesc(file_issho_v1_catalog, 9);
+
+/**
+ * CatalogService exposes reference data for onboarding and settings: the
+ * activity catalogue (localised per city), cities with their areas, and the
+ * languages people can choose.
  *
  * Names come back in two languages: a primary and an optional secondary, for
- * display side by side. The catalogue is translated into en, ja, es and fr;
- * other languages fall back (see secondary_name).
+ * display side by side. Any ISO 639-1 language works: names are stored in
+ * English (plus real local names such as 吉祥寺) and translated on demand.
  * Requires `Authorization: Bearer <Supabase access token>`.
  *
  * HTTP: POST /issho.v1.CatalogService/<Method>
@@ -173,6 +366,28 @@ export const CatalogService: GenService<{
     methodKind: "unary";
     input: typeof ListActivitiesRequestSchema;
     output: typeof ListActivitiesResponseSchema;
+  },
+  /**
+   * ListCities returns every city with its areas (the "home" choices), with
+   * names in the requested primary and secondary languages.
+   *
+   * @generated from rpc issho.v1.CatalogService.ListCities
+   */
+  listCities: {
+    methodKind: "unary";
+    input: typeof ListCitiesRequestSchema;
+    output: typeof ListCitiesResponseSchema;
+  },
+  /**
+   * ListLanguages returns every language a person can choose to speak or
+   * read (ISO 639-1), each named in itself and in the requested language.
+   *
+   * @generated from rpc issho.v1.CatalogService.ListLanguages
+   */
+  listLanguages: {
+    methodKind: "unary";
+    input: typeof ListLanguagesRequestSchema;
+    output: typeof ListLanguagesResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_issho_v1_catalog, 0);

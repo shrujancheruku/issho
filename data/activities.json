@@ -1,24 +1,5 @@
 [
   {
-    "id": "photo-walk",
-    "name": {
-      "en": "Photo walk"
-    },
-    "category": "outdoors",
-    "indoor": false,
-    "energy": 2,
-    "cost_level": 0,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 8,
-    "venue_categories": [],
-    "blocks": [
-      "morning",
-      "afternoon"
-    ]
-  },
-  {
     "id": "city-walk",
     "name": {
       "en": "City walk"
@@ -31,1020 +12,40 @@
     "skill_dependent": false,
     "min_group_size": 3,
     "max_group_size": 8,
-    "venue_categories": []
-  },
-  {
-    "id": "park-picnic",
-    "name": {
-      "en": "Park picnic"
-    },
-    "category": "outdoors",
-    "indoor": false,
-    "energy": 1,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 10,
     "venue_categories": [
+      "temple-shrine",
       "park",
-      "picnic-bbq"
+      "nature",
+      "planetarium",
+      "dog-park"
     ],
-    "blocks": [
-      "morning",
-      "afternoon"
+    "replaces": [
+      "night-walk",
+      "river-walk",
+      "architecture-walk",
+      "street-art-walk",
+      "history-walk",
+      "sunrise-walk",
+      "digital-detox",
+      "shotengai-walk",
+      "architecture-tour",
+      "observation-deck",
+      "dog-walk"
     ]
   },
   {
     "id": "hike",
     "name": {
-      "en": "Day hike"
+      "en": "Hiking and nature walks"
     },
     "category": "outdoors",
     "indoor": false,
-    "energy": 3,
-    "cost_level": 1,
+    "energy": 2,
+    "cost_level": 0,
     "conversational": true,
     "skill_dependent": false,
     "min_group_size": 3,
     "max_group_size": 10,
-    "venue_categories": [
-      "nature"
-    ],
-    "blocks": [
-      "morning",
-      "afternoon"
-    ]
-  },
-  {
-    "id": "running",
-    "name": {
-      "en": "Group run"
-    },
-    "category": "sports",
-    "indoor": false,
-    "energy": 3,
-    "cost_level": 0,
-    "conversational": false,
-    "skill_dependent": false,
-    "min_group_size": 4,
-    "max_group_size": 15,
-    "venue_categories": [
-      "park"
-    ]
-  },
-  {
-    "id": "cycling",
-    "name": {
-      "en": "Bike ride"
-    },
-    "category": "sports",
-    "indoor": false,
-    "energy": 3,
-    "cost_level": 1,
-    "conversational": false,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 8,
-    "venue_categories": []
-  },
-  {
-    "id": "bouldering",
-    "name": {
-      "en": "Bouldering"
-    },
-    "category": "sports",
-    "indoor": true,
-    "energy": 3,
-    "cost_level": 2,
-    "conversational": true,
-    "skill_dependent": true,
-    "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": []
-  },
-  {
-    "id": "yoga",
-    "name": {
-      "en": "Yoga"
-    },
-    "category": "sports",
-    "indoor": true,
-    "energy": 2,
-    "cost_level": 2,
-    "conversational": false,
-    "skill_dependent": false,
-    "min_group_size": 4,
-    "max_group_size": 12,
-    "venue_categories": [
-      "yoga-studio"
-    ]
-  },
-  {
-    "id": "badminton",
-    "name": {
-      "en": "Badminton"
-    },
-    "category": "sports",
-    "indoor": true,
-    "energy": 3,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 4,
-    "max_group_size": 8,
-    "venue_categories": [
-      "sports-facility"
-    ]
-  },
-  {
-    "id": "cafe-hop",
-    "name": {
-      "en": "Café hopping"
-    },
-    "category": "food",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 5,
-    "venue_categories": [
-      "cafe"
-    ],
-    "blocks": [
-      "morning",
-      "afternoon"
-    ]
-  },
-  {
-    "id": "coffee-chat",
-    "name": {
-      "en": "Coffee chat"
-    },
-    "category": "food",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 4,
-    "venue_categories": [
-      "cafe"
-    ]
-  },
-  {
-    "id": "brunch",
-    "name": {
-      "en": "Brunch"
-    },
-    "category": "food",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 2,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": [
-      "brunch",
-      "cafe"
-    ],
-    "blocks": [
-      "morning"
-    ]
-  },
-  {
-    "id": "izakaya",
-    "name": {
-      "en": "Izakaya night"
-    },
-    "category": "food",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 2,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 4,
-    "max_group_size": 8,
-    "venue_categories": [
-      "bar"
-    ],
-    "blocks": [
-      "evening"
-    ]
-  },
-  {
-    "id": "ramen-crawl",
-    "name": {
-      "en": "Ramen shop tour"
-    },
-    "category": "food",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 5,
-    "venue_categories": [
-      "ramen"
-    ]
-  },
-  {
-    "id": "cooking-class",
-    "name": {
-      "en": "Cooking class"
-    },
-    "category": "food",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 3,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 4,
-    "max_group_size": 8,
-    "venue_categories": []
-  },
-  {
-    "id": "sento",
-    "name": {
-      "en": "Public bath & sauna"
-    },
-    "category": "wellness",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 2,
-    "max_group_size": 4,
-    "venue_categories": [
-      "bath"
-    ]
-  },
-  {
-    "id": "museum",
-    "name": {
-      "en": "Museum visit"
-    },
-    "category": "culture",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 2,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": [
-      "museum"
-    ],
-    "blocks": [
-      "morning",
-      "afternoon"
-    ]
-  },
-  {
-    "id": "gallery-hop",
-    "name": {
-      "en": "Gallery hopping"
-    },
-    "category": "culture",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 0,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": [
-      "gallery"
-    ],
-    "blocks": [
-      "morning",
-      "afternoon"
-    ]
-  },
-  {
-    "id": "live-music",
-    "name": {
-      "en": "Live music"
-    },
-    "category": "culture",
-    "indoor": true,
-    "energy": 2,
-    "cost_level": 2,
-    "conversational": false,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 8,
-    "venue_categories": [
-      "live-music"
-    ],
-    "blocks": [
-      "evening"
-    ]
-  },
-  {
-    "id": "cinema",
-    "name": {
-      "en": "Movie night"
-    },
-    "category": "culture",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 2,
-    "conversational": false,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": [
-      "cinema"
-    ]
-  },
-  {
-    "id": "bookshop-browse",
-    "name": {
-      "en": "Bookshop browsing"
-    },
-    "category": "culture",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 5,
-    "venue_categories": [
-      "bookshop"
-    ]
-  },
-  {
-    "id": "book-club",
-    "name": {
-      "en": "Book club"
-    },
-    "category": "culture",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 4,
-    "max_group_size": 8,
-    "venue_categories": [
-      "cafe",
-      "library"
-    ]
-  },
-  {
-    "id": "temple-shrine",
-    "name": {
-      "en": "Temple & shrine walk"
-    },
-    "category": "culture",
-    "indoor": false,
-    "energy": 2,
-    "cost_level": 0,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": [
-      "temple-shrine"
-    ],
-    "blocks": [
-      "morning",
-      "afternoon"
-    ]
-  },
-  {
-    "id": "board-games",
-    "name": {
-      "en": "Board games"
-    },
-    "category": "games",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 4,
-    "max_group_size": 6,
-    "venue_categories": []
-  },
-  {
-    "id": "karaoke",
-    "name": {
-      "en": "Karaoke"
-    },
-    "category": "games",
-    "indoor": true,
-    "energy": 2,
-    "cost_level": 2,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 4,
-    "max_group_size": 8,
-    "venue_categories": [
-      "karaoke"
-    ]
-  },
-  {
-    "id": "bowling",
-    "name": {
-      "en": "Bowling"
-    },
-    "category": "games",
-    "indoor": true,
-    "energy": 2,
-    "cost_level": 2,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 4,
-    "max_group_size": 8,
-    "venue_categories": [
-      "bowling"
-    ]
-  },
-  {
-    "id": "escape-room",
-    "name": {
-      "en": "Escape room"
-    },
-    "category": "games",
-    "indoor": true,
-    "energy": 2,
-    "cost_level": 3,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 4,
-    "max_group_size": 6,
-    "venue_categories": []
-  },
-  {
-    "id": "sketching",
-    "name": {
-      "en": "Urban sketching"
-    },
-    "category": "creative",
-    "indoor": false,
-    "energy": 1,
-    "cost_level": 0,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 8,
-    "venue_categories": [
-      "park"
-    ],
-    "blocks": [
-      "morning",
-      "afternoon"
-    ]
-  },
-  {
-    "id": "pottery",
-    "name": {
-      "en": "Pottery class"
-    },
-    "category": "creative",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 3,
-    "conversational": true,
-    "skill_dependent": true,
-    "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": [
-      "art-studio"
-    ]
-  },
-  {
-    "id": "craft-workshop",
-    "name": {
-      "en": "Craft workshop"
-    },
-    "category": "creative",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 2,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 8,
-    "venue_categories": [
-      "art-studio"
-    ]
-  },
-  {
-    "id": "language-exchange",
-    "name": {
-      "en": "Language exchange"
-    },
-    "category": "learning",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 4,
-    "max_group_size": 8,
-    "venue_categories": [
-      "cafe",
-      "bar"
-    ]
-  },
-  {
-    "id": "study-session",
-    "name": {
-      "en": "Co-working session"
-    },
-    "category": "learning",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 1,
-    "conversational": false,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 8,
-    "venue_categories": [
-      "library",
-      "cafe"
-    ]
-  },
-  {
-    "id": "flea-market",
-    "name": {
-      "en": "Flea market"
-    },
-    "category": "shopping",
-    "indoor": false,
-    "energy": 1,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": [
-      "flea-market"
-    ],
-    "blocks": [
-      "morning",
-      "afternoon"
-    ]
-  },
-  {
-    "id": "vintage-shopping",
-    "name": {
-      "en": "Vintage shopping"
-    },
-    "category": "shopping",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 2,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 5,
-    "venue_categories": [
-      "thrift"
-    ]
-  },
-  {
-    "id": "volunteering",
-    "name": {
-      "en": "Volunteering"
-    },
-    "category": "community",
-    "indoor": false,
-    "energy": 2,
-    "cost_level": 0,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 4,
-    "max_group_size": 15,
-    "venue_categories": [],
-    "blocks": [
-      "morning",
-      "afternoon"
-    ]
-  },
-  {
-    "id": "beach-day",
-    "name": {
-      "en": "Beach day"
-    },
-    "category": "outdoors",
-    "indoor": false,
-    "energy": 2,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 10,
-    "venue_categories": [
-      "beach"
-    ],
-    "blocks": [
-      "morning",
-      "afternoon"
-    ]
-  },
-  {
-    "id": "hanami",
-    "name": {
-      "en": "Cherry blossom viewing"
-    },
-    "category": "seasonal",
-    "indoor": false,
-    "energy": 1,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 4,
-    "max_group_size": 12,
-    "venue_categories": [
-      "park"
-    ],
-    "blocks": [
-      "morning",
-      "afternoon"
-    ]
-  },
-  {
-    "id": "fireworks",
-    "name": {
-      "en": "Fireworks festival"
-    },
-    "category": "seasonal",
-    "indoor": false,
-    "energy": 1,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 8,
-    "venue_categories": [],
-    "blocks": [
-      "evening"
-    ]
-  },
-  {
-    "id": "night-walk",
-    "name": {
-      "en": "Night walk"
-    },
-    "category": "outdoors",
-    "indoor": false,
-    "energy": 1,
-    "cost_level": 0,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 8,
-    "venue_categories": [],
-    "blocks": [
-      "evening"
-    ]
-  },
-  {
-    "id": "river-walk",
-    "name": {
-      "en": "Riverside walk"
-    },
-    "category": "outdoors",
-    "indoor": false,
-    "energy": 1,
-    "cost_level": 0,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 8,
-    "venue_categories": [],
-    "blocks": [
-      "morning",
-      "afternoon"
-    ]
-  },
-  {
-    "id": "architecture-walk",
-    "name": {
-      "en": "Architecture walk"
-    },
-    "category": "outdoors",
-    "indoor": false,
-    "energy": 2,
-    "cost_level": 0,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 8,
-    "venue_categories": [],
-    "blocks": [
-      "morning",
-      "afternoon"
-    ]
-  },
-  {
-    "id": "street-art-walk",
-    "name": {
-      "en": "Street art walk"
-    },
-    "category": "outdoors",
-    "indoor": false,
-    "energy": 2,
-    "cost_level": 0,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 8,
-    "venue_categories": [],
-    "blocks": [
-      "morning",
-      "afternoon"
-    ]
-  },
-  {
-    "id": "history-walk",
-    "name": {
-      "en": "History walk"
-    },
-    "category": "outdoors",
-    "indoor": false,
-    "energy": 2,
-    "cost_level": 0,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 8,
-    "venue_categories": [
-      "temple-shrine"
-    ],
-    "blocks": [
-      "morning",
-      "afternoon"
-    ]
-  },
-  {
-    "id": "garden-visit",
-    "name": {
-      "en": "Garden visit"
-    },
-    "category": "outdoors",
-    "indoor": false,
-    "energy": 1,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": [
-      "park"
-    ],
-    "blocks": [
-      "morning",
-      "afternoon"
-    ]
-  },
-  {
-    "id": "botanical-garden",
-    "name": {
-      "en": "Botanical garden"
-    },
-    "category": "outdoors",
-    "indoor": false,
-    "energy": 1,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": [
-      "park"
-    ],
-    "blocks": [
-      "morning",
-      "afternoon"
-    ]
-  },
-  {
-    "id": "birdwatching",
-    "name": {
-      "en": "Birdwatching"
-    },
-    "category": "outdoors",
-    "indoor": false,
-    "energy": 1,
-    "cost_level": 0,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": [
-      "park",
-      "nature"
-    ],
-    "blocks": [
-      "morning",
-      "afternoon"
-    ]
-  },
-  {
-    "id": "stargazing",
-    "name": {
-      "en": "Stargazing"
-    },
-    "category": "outdoors",
-    "indoor": false,
-    "energy": 1,
-    "cost_level": 0,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 8,
-    "venue_categories": [
-      "nature"
-    ],
-    "blocks": [
-      "evening"
-    ]
-  },
-  {
-    "id": "camping",
-    "name": {
-      "en": "Camping"
-    },
-    "category": "outdoors",
-    "indoor": false,
-    "energy": 2,
-    "cost_level": 2,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 4,
-    "max_group_size": 8,
-    "venue_categories": [
-      "campground"
-    ]
-  },
-  {
-    "id": "bbq",
-    "name": {
-      "en": "Barbecue"
-    },
-    "category": "outdoors",
-    "indoor": false,
-    "energy": 1,
-    "cost_level": 2,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 4,
-    "max_group_size": 12,
-    "venue_categories": [
-      "picnic-bbq"
-    ],
-    "blocks": [
-      "morning",
-      "afternoon"
-    ]
-  },
-  {
-    "id": "sunrise-walk",
-    "name": {
-      "en": "Sunrise walk"
-    },
-    "category": "outdoors",
-    "indoor": false,
-    "energy": 2,
-    "cost_level": 0,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 8,
-    "venue_categories": [
-      "park"
-    ],
-    "blocks": [
-      "morning"
-    ]
-  },
-  {
-    "id": "trail-run",
-    "name": {
-      "en": "Trail running"
-    },
-    "category": "outdoors",
-    "indoor": false,
-    "energy": 3,
-    "cost_level": 1,
-    "conversational": false,
-    "skill_dependent": true,
-    "min_group_size": 3,
-    "max_group_size": 8,
-    "venue_categories": [
-      "nature"
-    ],
-    "blocks": [
-      "morning",
-      "afternoon"
-    ]
-  },
-  {
-    "id": "kayaking",
-    "name": {
-      "en": "Kayaking"
-    },
-    "category": "outdoors",
-    "indoor": false,
-    "energy": 3,
-    "cost_level": 3,
-    "conversational": false,
-    "skill_dependent": true,
-    "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": [],
-    "blocks": [
-      "morning",
-      "afternoon"
-    ]
-  },
-  {
-    "id": "sup",
-    "name": {
-      "en": "Stand-up paddleboarding"
-    },
-    "category": "outdoors",
-    "indoor": false,
-    "energy": 3,
-    "cost_level": 3,
-    "conversational": false,
-    "skill_dependent": true,
-    "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": [
-      "beach"
-    ],
-    "blocks": [
-      "morning",
-      "afternoon"
-    ]
-  },
-  {
-    "id": "fishing",
-    "name": {
-      "en": "Fishing"
-    },
-    "category": "outdoors",
-    "indoor": false,
-    "energy": 1,
-    "cost_level": 2,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": [],
-    "blocks": [
-      "morning",
-      "afternoon"
-    ]
-  },
-  {
-    "id": "dog-walk",
-    "name": {
-      "en": "Dog walk meetup"
-    },
-    "category": "outdoors",
-    "indoor": false,
-    "energy": 2,
-    "cost_level": 0,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 8,
-    "venue_categories": [
-      "dog-park",
-      "park"
-    ],
-    "blocks": [
-      "morning",
-      "afternoon"
-    ]
-  },
-  {
-    "id": "foraging-walk",
-    "name": {
-      "en": "Nature walk"
-    },
-    "category": "outdoors",
-    "indoor": false,
-    "energy": 2,
-    "cost_level": 0,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 8,
     "venue_categories": [
       "nature",
       "park"
@@ -1052,176 +53,219 @@
     "blocks": [
       "morning",
       "afternoon"
-    ]
-  },
-  {
-    "id": "waterfall-hike",
-    "name": {
-      "en": "Waterfall hike"
-    },
-    "category": "outdoors",
-    "indoor": false,
-    "energy": 3,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 8,
-    "venue_categories": [
-      "nature"
     ],
-    "blocks": [
-      "morning",
-      "afternoon"
+    "replaces": [
+      "waterfall-hike",
+      "foraging-walk",
+      "forest-bathing",
+      "birdwatching",
+      "geocaching"
     ]
   },
   {
-    "id": "island-day-trip",
+    "id": "park-picnic",
     "name": {
-      "en": "Island day trip"
-    },
-    "category": "outdoors",
-    "indoor": false,
-    "energy": 2,
-    "cost_level": 2,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 8,
-    "venue_categories": [],
-    "blocks": [
-      "morning",
-      "afternoon"
-    ]
-  },
-  {
-    "id": "hot-spring-trip",
-    "name": {
-      "en": "Hot spring day trip"
+      "en": "Picnic in a park or garden"
     },
     "category": "outdoors",
     "indoor": false,
     "energy": 1,
-    "cost_level": 3,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": [
-      "bath"
-    ]
-  },
-  {
-    "id": "scenic-drive",
-    "name": {
-      "en": "Scenic drive"
-    },
-    "category": "outdoors",
-    "indoor": false,
-    "energy": 1,
-    "cost_level": 2,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 4,
-    "venue_categories": [],
-    "blocks": [
-      "morning",
-      "afternoon"
-    ]
-  },
-  {
-    "id": "geocaching",
-    "name": {
-      "en": "Geocaching"
-    },
-    "category": "outdoors",
-    "indoor": false,
-    "energy": 2,
-    "cost_level": 0,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": [
-      "park"
-    ],
-    "blocks": [
-      "morning",
-      "afternoon"
-    ]
-  },
-  {
-    "id": "futsal",
-    "name": {
-      "en": "Futsal"
-    },
-    "category": "sports",
-    "indoor": true,
-    "energy": 3,
     "cost_level": 1,
-    "conversational": false,
-    "skill_dependent": true,
-    "min_group_size": 8,
-    "max_group_size": 12,
-    "venue_categories": [
-      "sports-facility"
-    ]
-  },
-  {
-    "id": "basketball",
-    "name": {
-      "en": "Pick-up basketball"
-    },
-    "category": "sports",
-    "indoor": false,
-    "energy": 3,
-    "cost_level": 0,
-    "conversational": false,
-    "skill_dependent": true,
-    "min_group_size": 6,
+    "conversational": true,
+    "skill_dependent": false,
+    "min_group_size": 3,
     "max_group_size": 10,
     "venue_categories": [
-      "sports-facility",
-      "park"
+      "park",
+      "picnic-bbq"
+    ],
+    "blocks": [
+      "morning",
+      "afternoon"
+    ],
+    "replaces": [
+      "garden-visit",
+      "botanical-garden"
     ]
   },
   {
-    "id": "volleyball",
+    "id": "beach-day",
     "name": {
-      "en": "Volleyball"
+      "en": "Beach or pool day"
     },
-    "category": "sports",
-    "indoor": true,
-    "energy": 3,
+    "category": "outdoors",
+    "indoor": false,
+    "energy": 2,
     "cost_level": 1,
-    "conversational": false,
-    "skill_dependent": true,
-    "min_group_size": 6,
-    "max_group_size": 12,
+    "conversational": true,
+    "skill_dependent": false,
+    "min_group_size": 3,
+    "max_group_size": 10,
     "venue_categories": [
-      "sports-facility"
+      "beach",
+      "swimming-pool",
+      "amusement-park"
+    ],
+    "blocks": [
+      "morning",
+      "afternoon"
+    ],
+    "replaces": [
+      "pool-day"
     ]
   },
   {
-    "id": "beach-volleyball",
+    "id": "kayaking",
     "name": {
-      "en": "Beach volleyball"
+      "en": "Kayaking, paddleboarding or fishing"
     },
-    "category": "sports",
+    "category": "outdoors",
     "indoor": false,
     "energy": 3,
-    "cost_level": 0,
+    "cost_level": 3,
     "conversational": false,
     "skill_dependent": true,
-    "min_group_size": 4,
-    "max_group_size": 8,
+    "min_group_size": 3,
+    "max_group_size": 6,
     "venue_categories": [
       "beach"
     ],
     "blocks": [
       "morning",
       "afternoon"
+    ],
+    "replaces": [
+      "sup",
+      "fishing"
+    ]
+  },
+  {
+    "id": "day-trip",
+    "name": {
+      "en": "Day trip out of the city"
+    },
+    "category": "outdoors",
+    "indoor": false,
+    "energy": 2,
+    "cost_level": 2,
+    "conversational": true,
+    "skill_dependent": false,
+    "min_group_size": 3,
+    "max_group_size": 8,
+    "venue_categories": [
+      "bath"
+    ],
+    "replaces": [
+      "island-day-trip",
+      "hot-spring-trip",
+      "scenic-drive",
+      "fruit-picking"
+    ]
+  },
+  {
+    "id": "camping",
+    "name": {
+      "en": "Camping and stargazing"
+    },
+    "category": "outdoors",
+    "indoor": false,
+    "energy": 2,
+    "cost_level": 1,
+    "conversational": true,
+    "skill_dependent": false,
+    "min_group_size": 3,
+    "max_group_size": 8,
+    "venue_categories": [
+      "campground",
+      "nature"
+    ],
+    "replaces": [
+      "stargazing"
+    ]
+  },
+  {
+    "id": "seasonal-viewing",
+    "name": {
+      "en": "Seasonal sights (cherry blossoms, autumn leaves …)"
+    },
+    "category": "outdoors",
+    "indoor": false,
+    "energy": 1,
+    "cost_level": 0,
+    "conversational": true,
+    "skill_dependent": false,
+    "min_group_size": 3,
+    "max_group_size": 12,
+    "venue_categories": [
+      "park",
+      "temple-shrine",
+      "nature"
+    ],
+    "replaces": [
+      "hanami",
+      "plum-blossoms",
+      "autumn-leaves",
+      "hydrangea-walk",
+      "moon-viewing"
+    ]
+  },
+  {
+    "id": "running",
+    "name": {
+      "en": "Running"
+    },
+    "category": "sports",
+    "indoor": false,
+    "energy": 3,
+    "cost_level": 0,
+    "conversational": false,
+    "skill_dependent": false,
+    "min_group_size": 3,
+    "max_group_size": 15,
+    "venue_categories": [
+      "park",
+      "nature"
+    ],
+    "replaces": [
+      "trail-run",
+      "marathon-training",
+      "charity-run"
+    ]
+  },
+  {
+    "id": "cycling",
+    "name": {
+      "en": "Cycling"
+    },
+    "category": "sports",
+    "indoor": false,
+    "energy": 2,
+    "cost_level": 1,
+    "conversational": true,
+    "skill_dependent": false,
+    "min_group_size": 3,
+    "max_group_size": 8,
+    "venue_categories": [],
+    "replaces": [
+      "cycling-tour"
+    ]
+  },
+  {
+    "id": "bouldering",
+    "name": {
+      "en": "Climbing and bouldering"
+    },
+    "category": "sports",
+    "indoor": true,
+    "energy": 3,
+    "cost_level": 2,
+    "conversational": true,
+    "skill_dependent": true,
+    "min_group_size": 3,
+    "max_group_size": 6,
+    "venue_categories": [],
+    "replaces": [
+      "climbing-gym"
     ]
   },
   {
@@ -1237,6 +281,23 @@
     "skill_dependent": true,
     "min_group_size": 4,
     "max_group_size": 4,
+    "venue_categories": [
+      "sports-facility"
+    ]
+  },
+  {
+    "id": "badminton",
+    "name": {
+      "en": "Badminton"
+    },
+    "category": "sports",
+    "indoor": true,
+    "energy": 3,
+    "cost_level": 1,
+    "conversational": true,
+    "skill_dependent": false,
+    "min_group_size": 4,
+    "max_group_size": 8,
     "venue_categories": [
       "sports-facility"
     ]
@@ -1259,6 +320,116 @@
     ]
   },
   {
+    "id": "futsal",
+    "name": {
+      "en": "Soccer or futsal"
+    },
+    "category": "sports",
+    "indoor": false,
+    "energy": 2,
+    "cost_level": 0,
+    "conversational": true,
+    "skill_dependent": false,
+    "min_group_size": 6,
+    "max_group_size": 12,
+    "venue_categories": [
+      "park",
+      "sports-facility"
+    ],
+    "replaces": [
+      "walking-football"
+    ]
+  },
+  {
+    "id": "basketball",
+    "name": {
+      "en": "Basketball"
+    },
+    "category": "sports",
+    "indoor": false,
+    "energy": 3,
+    "cost_level": 0,
+    "conversational": false,
+    "skill_dependent": true,
+    "min_group_size": 6,
+    "max_group_size": 10,
+    "venue_categories": [
+      "sports-facility",
+      "park"
+    ]
+  },
+  {
+    "id": "volleyball",
+    "name": {
+      "en": "Volleyball or beach volleyball"
+    },
+    "category": "sports",
+    "indoor": true,
+    "energy": 3,
+    "cost_level": 1,
+    "conversational": false,
+    "skill_dependent": true,
+    "min_group_size": 4,
+    "max_group_size": 12,
+    "venue_categories": [
+      "sports-facility",
+      "beach"
+    ],
+    "replaces": [
+      "beach-volleyball"
+    ]
+  },
+  {
+    "id": "softball",
+    "name": {
+      "en": "Softball or baseball"
+    },
+    "category": "sports",
+    "indoor": false,
+    "energy": 2,
+    "cost_level": 1,
+    "conversational": true,
+    "skill_dependent": false,
+    "min_group_size": 3,
+    "max_group_size": 18,
+    "venue_categories": [
+      "sports-facility",
+      "park"
+    ],
+    "blocks": [
+      "morning",
+      "afternoon"
+    ],
+    "replaces": [
+      "batting-cage"
+    ]
+  },
+  {
+    "id": "ultimate",
+    "name": {
+      "en": "Frisbee or ultimate"
+    },
+    "category": "sports",
+    "indoor": false,
+    "energy": 3,
+    "cost_level": 0,
+    "conversational": false,
+    "skill_dependent": true,
+    "min_group_size": 4,
+    "max_group_size": 14,
+    "venue_categories": [
+      "park",
+      "sports-facility"
+    ],
+    "blocks": [
+      "morning",
+      "afternoon"
+    ],
+    "replaces": [
+      "frisbee"
+    ]
+  },
+  {
     "id": "swimming",
     "name": {
       "en": "Swimming"
@@ -1276,274 +447,9 @@
     ]
   },
   {
-    "id": "climbing-gym",
-    "name": {
-      "en": "Rope climbing"
-    },
-    "category": "sports",
-    "indoor": true,
-    "energy": 3,
-    "cost_level": 2,
-    "conversational": true,
-    "skill_dependent": true,
-    "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": []
-  },
-  {
-    "id": "frisbee",
-    "name": {
-      "en": "Frisbee"
-    },
-    "category": "sports",
-    "indoor": false,
-    "energy": 2,
-    "cost_level": 0,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 4,
-    "max_group_size": 10,
-    "venue_categories": [
-      "park"
-    ],
-    "blocks": [
-      "morning",
-      "afternoon"
-    ]
-  },
-  {
-    "id": "ultimate",
-    "name": {
-      "en": "Ultimate frisbee"
-    },
-    "category": "sports",
-    "indoor": false,
-    "energy": 3,
-    "cost_level": 0,
-    "conversational": false,
-    "skill_dependent": true,
-    "min_group_size": 8,
-    "max_group_size": 14,
-    "venue_categories": [
-      "park",
-      "sports-facility"
-    ],
-    "blocks": [
-      "morning",
-      "afternoon"
-    ]
-  },
-  {
-    "id": "softball",
-    "name": {
-      "en": "Softball"
-    },
-    "category": "sports",
-    "indoor": false,
-    "energy": 2,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 10,
-    "max_group_size": 18,
-    "venue_categories": [
-      "sports-facility",
-      "park"
-    ],
-    "blocks": [
-      "morning",
-      "afternoon"
-    ]
-  },
-  {
-    "id": "golf-range",
-    "name": {
-      "en": "Golf driving range"
-    },
-    "category": "sports",
-    "indoor": false,
-    "energy": 2,
-    "cost_level": 2,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": [
-      "golf"
-    ]
-  },
-  {
-    "id": "mini-golf",
-    "name": {
-      "en": "Mini golf"
-    },
-    "category": "sports",
-    "indoor": false,
-    "energy": 1,
-    "cost_level": 2,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": [
-      "golf"
-    ]
-  },
-  {
-    "id": "ice-skating",
-    "name": {
-      "en": "Ice skating"
-    },
-    "category": "sports",
-    "indoor": true,
-    "energy": 2,
-    "cost_level": 2,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 8,
-    "venue_categories": [
-      "ice-rink"
-    ]
-  },
-  {
-    "id": "skiing",
-    "name": {
-      "en": "Skiing / snowboarding"
-    },
-    "category": "sports",
-    "indoor": false,
-    "energy": 3,
-    "cost_level": 3,
-    "conversational": false,
-    "skill_dependent": true,
-    "min_group_size": 3,
-    "max_group_size": 8,
-    "venue_categories": [],
-    "blocks": [
-      "morning",
-      "afternoon"
-    ]
-  },
-  {
-    "id": "skateboarding",
-    "name": {
-      "en": "Skateboarding"
-    },
-    "category": "sports",
-    "indoor": false,
-    "energy": 3,
-    "cost_level": 0,
-    "conversational": false,
-    "skill_dependent": true,
-    "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": [
-      "skate-park"
-    ]
-  },
-  {
-    "id": "go-kart",
-    "name": {
-      "en": "Go-karting"
-    },
-    "category": "sports",
-    "indoor": false,
-    "energy": 2,
-    "cost_level": 3,
-    "conversational": false,
-    "skill_dependent": false,
-    "min_group_size": 4,
-    "max_group_size": 8,
-    "venue_categories": [
-      "go-kart"
-    ]
-  },
-  {
-    "id": "trampoline",
-    "name": {
-      "en": "Trampoline park"
-    },
-    "category": "sports",
-    "indoor": true,
-    "energy": 3,
-    "cost_level": 2,
-    "conversational": false,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 8,
-    "venue_categories": []
-  },
-  {
-    "id": "dance-class",
-    "name": {
-      "en": "Dance class"
-    },
-    "category": "sports",
-    "indoor": true,
-    "energy": 3,
-    "cost_level": 2,
-    "conversational": false,
-    "skill_dependent": true,
-    "min_group_size": 4,
-    "max_group_size": 12,
-    "venue_categories": []
-  },
-  {
-    "id": "salsa",
-    "name": {
-      "en": "Salsa social"
-    },
-    "category": "sports",
-    "indoor": true,
-    "energy": 2,
-    "cost_level": 2,
-    "conversational": true,
-    "skill_dependent": true,
-    "min_group_size": 6,
-    "max_group_size": 12,
-    "venue_categories": [
-      "dance"
-    ]
-  },
-  {
-    "id": "pilates",
-    "name": {
-      "en": "Pilates"
-    },
-    "category": "sports",
-    "indoor": true,
-    "energy": 2,
-    "cost_level": 2,
-    "conversational": false,
-    "skill_dependent": false,
-    "min_group_size": 4,
-    "max_group_size": 10,
-    "venue_categories": [
-      "yoga-studio"
-    ]
-  },
-  {
-    "id": "gym-session",
-    "name": {
-      "en": "Gym session"
-    },
-    "category": "sports",
-    "indoor": true,
-    "energy": 3,
-    "cost_level": 2,
-    "conversational": false,
-    "skill_dependent": false,
-    "min_group_size": 2,
-    "max_group_size": 4,
-    "venue_categories": [
-      "gym"
-    ]
-  },
-  {
     "id": "martial-arts",
     "name": {
-      "en": "Martial arts trial"
+      "en": "Martial arts"
     },
     "category": "sports",
     "indoor": true,
@@ -1571,24 +477,64 @@
     "venue_categories": []
   },
   {
-    "id": "batting-cage",
+    "id": "golf-range",
     "name": {
-      "en": "Batting cages"
+      "en": "Golf"
     },
     "category": "sports",
-    "indoor": true,
+    "indoor": false,
     "energy": 2,
-    "cost_level": 1,
+    "cost_level": 2,
     "conversational": true,
     "skill_dependent": false,
     "min_group_size": 3,
     "max_group_size": 6,
-    "venue_categories": []
+    "venue_categories": [
+      "golf"
+    ]
   },
   {
-    "id": "roller-skating",
+    "id": "gym-session",
     "name": {
-      "en": "Roller skating"
+      "en": "Gym workout"
+    },
+    "category": "sports",
+    "indoor": true,
+    "energy": 3,
+    "cost_level": 2,
+    "conversational": false,
+    "skill_dependent": false,
+    "min_group_size": 2,
+    "max_group_size": 4,
+    "venue_categories": [
+      "gym"
+    ]
+  },
+  {
+    "id": "dance-class",
+    "name": {
+      "en": "Dancing"
+    },
+    "category": "sports",
+    "indoor": true,
+    "energy": 2,
+    "cost_level": 2,
+    "conversational": false,
+    "skill_dependent": true,
+    "min_group_size": 4,
+    "max_group_size": 12,
+    "venue_categories": [
+      "dance"
+    ],
+    "replaces": [
+      "salsa",
+      "silent-disco"
+    ]
+  },
+  {
+    "id": "skating",
+    "name": {
+      "en": "Skating"
     },
     "category": "sports",
     "indoor": true,
@@ -1598,23 +544,36 @@
     "skill_dependent": false,
     "min_group_size": 3,
     "max_group_size": 8,
-    "venue_categories": []
+    "venue_categories": [
+      "ice-rink",
+      "skate-park"
+    ],
+    "replaces": [
+      "ice-skating",
+      "roller-skating",
+      "skateboarding"
+    ]
   },
   {
-    "id": "walking-football",
+    "id": "skiing",
     "name": {
-      "en": "Casual soccer game"
+      "en": "Skiing or snowboarding"
     },
     "category": "sports",
     "indoor": false,
     "energy": 2,
-    "cost_level": 0,
+    "cost_level": 2,
     "conversational": true,
     "skill_dependent": false,
-    "min_group_size": 6,
-    "max_group_size": 12,
-    "venue_categories": [
-      "park"
+    "min_group_size": 3,
+    "max_group_size": 8,
+    "venue_categories": [],
+    "blocks": [
+      "morning",
+      "afternoon"
+    ],
+    "replaces": [
+      "snow-day"
     ]
   },
   {
@@ -1636,553 +595,48 @@
     ]
   },
   {
-    "id": "marathon-training",
+    "id": "yoga",
     "name": {
-      "en": "Long-distance group run"
+      "en": "Yoga, pilates or tai chi"
     },
-    "category": "sports",
-    "indoor": false,
-    "energy": 3,
-    "cost_level": 0,
-    "conversational": true,
-    "skill_dependent": true,
+    "category": "wellness",
+    "indoor": true,
+    "energy": 1,
+    "cost_level": 1,
+    "conversational": false,
+    "skill_dependent": false,
     "min_group_size": 3,
-    "max_group_size": 10,
+    "max_group_size": 12,
     "venue_categories": [
+      "yoga-studio",
       "park"
-    ]
-  },
-  {
-    "id": "cycling-tour",
-    "name": {
-      "en": "Cycling tour"
-    },
-    "category": "sports",
-    "indoor": false,
-    "energy": 2,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 8,
-    "venue_categories": [],
-    "blocks": [
-      "morning",
-      "afternoon"
-    ]
-  },
-  {
-    "id": "dumplings",
-    "name": {
-      "en": "Dumpling night"
-    },
-    "category": "food",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": [
-      "restaurant"
-    ]
-  },
-  {
-    "id": "sushi",
-    "name": {
-      "en": "Sushi lunch"
-    },
-    "category": "food",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 2,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 5,
-    "venue_categories": [
-      "sushi"
-    ]
-  },
-  {
-    "id": "yakiniku",
-    "name": {
-      "en": "Yakiniku / Korean BBQ"
-    },
-    "category": "food",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 2,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 4,
-    "max_group_size": 6,
-    "venue_categories": [
-      "bbq-grill"
-    ]
-  },
-  {
-    "id": "hot-pot",
-    "name": {
-      "en": "Hot pot"
-    },
-    "category": "food",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 2,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": [
-      "hot-pot"
-    ]
-  },
-  {
-    "id": "curry",
-    "name": {
-      "en": "Curry restaurant tour"
-    },
-    "category": "food",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 5,
-    "venue_categories": [
-      "restaurant"
-    ]
-  },
-  {
-    "id": "dessert-crawl",
-    "name": {
-      "en": "Dessert shop tour"
-    },
-    "category": "food",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 5,
-    "venue_categories": [
-      "dessert"
-    ]
-  },
-  {
-    "id": "bakery-crawl",
-    "name": {
-      "en": "Bakery tour"
-    },
-    "category": "food",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 5,
-    "venue_categories": [
-      "dessert"
     ],
-    "blocks": [
-      "morning",
-      "afternoon"
+    "replaces": [
+      "morning-yoga",
+      "pilates",
+      "stretching",
+      "tai-chi"
     ]
   },
   {
-    "id": "street-food",
+    "id": "sento",
     "name": {
-      "en": "Street food tour"
-    },
-    "category": "food",
-    "indoor": false,
-    "energy": 2,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": [
-      "food-market"
-    ]
-  },
-  {
-    "id": "food-market",
-    "name": {
-      "en": "Food market"
-    },
-    "category": "food",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": [
-      "food-market"
-    ],
-    "blocks": [
-      "morning",
-      "afternoon"
-    ]
-  },
-  {
-    "id": "tea-tasting",
-    "name": {
-      "en": "Tea tasting"
-    },
-    "category": "food",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 2,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": [
-      "cafe"
-    ]
-  },
-  {
-    "id": "coffee-roastery",
-    "name": {
-      "en": "Coffee roastery visit"
-    },
-    "category": "food",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 5,
-    "venue_categories": [
-      "cafe"
-    ],
-    "blocks": [
-      "morning",
-      "afternoon"
-    ]
-  },
-  {
-    "id": "craft-beer",
-    "name": {
-      "en": "Craft beer"
-    },
-    "category": "food",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 2,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": [
-      "brewery",
-      "bar"
-    ],
-    "blocks": [
-      "evening"
-    ]
-  },
-  {
-    "id": "wine-tasting",
-    "name": {
-      "en": "Wine tasting"
-    },
-    "category": "food",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 3,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": [
-      "bar",
-      "brewery"
-    ],
-    "blocks": [
-      "evening"
-    ]
-  },
-  {
-    "id": "sake-tasting",
-    "name": {
-      "en": "Sake tasting"
-    },
-    "category": "food",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 2,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": [
-      "bar"
-    ],
-    "blocks": [
-      "evening"
-    ]
-  },
-  {
-    "id": "potluck",
-    "name": {
-      "en": "Potluck meal"
-    },
-    "category": "food",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 4,
-    "max_group_size": 10,
-    "venue_categories": [
-      "community-center",
-      "picnic-bbq"
-    ]
-  },
-  {
-    "id": "vegan-food",
-    "name": {
-      "en": "Vegan food"
-    },
-    "category": "food",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 2,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": [
-      "restaurant"
-    ]
-  },
-  {
-    "id": "spicy-food",
-    "name": {
-      "en": "Spicy food challenge"
-    },
-    "category": "food",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": [
-      "restaurant"
-    ]
-  },
-  {
-    "id": "breakfast-club",
-    "name": {
-      "en": "Breakfast club"
-    },
-    "category": "food",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": [
-      "brunch",
-      "cafe"
-    ],
-    "blocks": [
-      "morning"
-    ]
-  },
-  {
-    "id": "lunch-meetup",
-    "name": {
-      "en": "Lunch meetup"
-    },
-    "category": "food",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": [
-      "restaurant"
-    ],
-    "blocks": [
-      "afternoon"
-    ]
-  },
-  {
-    "id": "dinner-meetup",
-    "name": {
-      "en": "Dinner meetup"
-    },
-    "category": "food",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 2,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 4,
-    "max_group_size": 8,
-    "venue_categories": [
-      "restaurant"
-    ],
-    "blocks": [
-      "evening"
-    ]
-  },
-  {
-    "id": "baking",
-    "name": {
-      "en": "Baking session"
-    },
-    "category": "food",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 2,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": []
-  },
-  {
-    "id": "tacos",
-    "name": {
-      "en": "Taco night"
-    },
-    "category": "food",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": [
-      "restaurant"
-    ]
-  },
-  {
-    "id": "pizza",
-    "name": {
-      "en": "Pizza night"
-    },
-    "category": "food",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 8,
-    "venue_categories": [
-      "restaurant"
-    ]
-  },
-  {
-    "id": "brewery-tour",
-    "name": {
-      "en": "Brewery tour"
-    },
-    "category": "food",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 2,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 8,
-    "venue_categories": [
-      "brewery"
-    ]
-  },
-  {
-    "id": "food-festival",
-    "name": {
-      "en": "Food festival"
-    },
-    "category": "food",
-    "indoor": false,
-    "energy": 2,
-    "cost_level": 2,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 8,
-    "venue_categories": []
-  },
-  {
-    "id": "afternoon-tea",
-    "name": {
-      "en": "Afternoon tea"
-    },
-    "category": "food",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 3,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 5,
-    "venue_categories": [
-      "cafe",
-      "dessert"
-    ],
-    "blocks": [
-      "afternoon"
-    ]
-  },
-  {
-    "id": "yakitori",
-    "name": {
-      "en": "Yakitori"
-    },
-    "category": "food",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 2,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": [
-      "bar",
-      "restaurant"
-    ],
-    "blocks": [
-      "evening"
-    ]
-  },
-  {
-    "id": "sauna",
-    "name": {
-      "en": "Sauna"
+      "en": "Public bath, sauna or spa"
     },
     "category": "wellness",
     "indoor": true,
     "energy": 1,
     "cost_level": 2,
-    "conversational": false,
+    "conversational": true,
     "skill_dependent": false,
     "min_group_size": 2,
     "max_group_size": 4,
     "venue_categories": [
       "bath"
+    ],
+    "replaces": [
+      "sauna",
+      "spa-day"
     ]
   },
   {
@@ -2201,235 +655,125 @@
     "venue_categories": [
       "yoga-studio",
       "temple-shrine"
-    ]
-  },
-  {
-    "id": "zazen",
-    "name": {
-      "en": "Zazen"
-    },
-    "category": "wellness",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 1,
-    "conversational": false,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 8,
-    "venue_categories": [
-      "temple-shrine"
-    ]
-  },
-  {
-    "id": "forest-bathing",
-    "name": {
-      "en": "Forest bathing"
-    },
-    "category": "wellness",
-    "indoor": false,
-    "energy": 1,
-    "cost_level": 0,
-    "conversational": false,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 8,
-    "venue_categories": [
-      "nature",
-      "park"
     ],
-    "blocks": [
-      "morning",
-      "afternoon"
+    "replaces": [
+      "zazen"
     ]
   },
   {
-    "id": "morning-yoga",
+    "id": "bbq",
     "name": {
-      "en": "Park yoga"
+      "en": "Barbecue or potluck"
     },
-    "category": "wellness",
+    "category": "food",
     "indoor": false,
     "energy": 1,
-    "cost_level": 0,
-    "conversational": false,
+    "cost_level": 2,
+    "conversational": true,
     "skill_dependent": false,
     "min_group_size": 4,
     "max_group_size": 12,
     "venue_categories": [
-      "park"
+      "picnic-bbq",
+      "community-center"
+    ],
+    "replaces": [
+      "potluck"
+    ]
+  },
+  {
+    "id": "cafe-hop",
+    "name": {
+      "en": "Cafés and tea"
+    },
+    "category": "food",
+    "indoor": true,
+    "energy": 1,
+    "cost_level": 1,
+    "conversational": true,
+    "skill_dependent": false,
+    "min_group_size": 3,
+    "max_group_size": 6,
+    "venue_categories": [
+      "cafe",
+      "bookshop",
+      "dessert",
+      "animal-cafe"
+    ],
+    "replaces": [
+      "coffee-chat",
+      "coffee-roastery",
+      "bookshop-cafe",
+      "journaling",
+      "afternoon-tea",
+      "tea-tasting",
+      "animal-cafe"
+    ]
+  },
+  {
+    "id": "brunch",
+    "name": {
+      "en": "Brunch or breakfast"
+    },
+    "category": "food",
+    "indoor": true,
+    "energy": 1,
+    "cost_level": 2,
+    "conversational": true,
+    "skill_dependent": false,
+    "min_group_size": 3,
+    "max_group_size": 6,
+    "venue_categories": [
+      "brunch",
+      "cafe"
     ],
     "blocks": [
       "morning"
+    ],
+    "replaces": [
+      "breakfast-club"
     ]
   },
   {
-    "id": "tai-chi",
+    "id": "dinner-meetup",
     "name": {
-      "en": "Tai chi"
+      "en": "Lunch or dinner out"
     },
-    "category": "wellness",
-    "indoor": false,
-    "energy": 1,
-    "cost_level": 0,
-    "conversational": false,
-    "skill_dependent": false,
-    "min_group_size": 4,
-    "max_group_size": 12,
-    "venue_categories": [
-      "park"
-    ]
-  },
-  {
-    "id": "stretching",
-    "name": {
-      "en": "Stretch session"
-    },
-    "category": "wellness",
+    "category": "food",
     "indoor": true,
     "energy": 1,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 10,
-    "venue_categories": [
-      "yoga-studio",
-      "park"
-    ]
-  },
-  {
-    "id": "journaling",
-    "name": {
-      "en": "Journaling café"
-    },
-    "category": "wellness",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": [
-      "cafe"
-    ]
-  },
-  {
-    "id": "digital-detox",
-    "name": {
-      "en": "Digital detox walk"
-    },
-    "category": "wellness",
-    "indoor": false,
-    "energy": 1,
-    "cost_level": 0,
+    "cost_level": 2,
     "conversational": true,
     "skill_dependent": false,
     "min_group_size": 3,
     "max_group_size": 8,
     "venue_categories": [
-      "park",
-      "nature"
-    ]
-  },
-  {
-    "id": "spa-day",
-    "name": {
-      "en": "Spa day"
-    },
-    "category": "wellness",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 3,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 2,
-    "max_group_size": 4,
-    "venue_categories": [
-      "bath"
-    ]
-  },
-  {
-    "id": "theatre",
-    "name": {
-      "en": "Theatre"
-    },
-    "category": "culture",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 3,
-    "conversational": false,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": [
-      "theatre"
-    ]
-  },
-  {
-    "id": "comedy",
-    "name": {
-      "en": "Comedy show"
-    },
-    "category": "culture",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 2,
-    "conversational": false,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": [
-      "theatre"
+      "restaurant",
+      "sushi",
+      "bbq-grill",
+      "hot-pot",
+      "bar"
     ],
-    "blocks": [
-      "evening"
+    "replaces": [
+      "lunch-meetup",
+      "sushi",
+      "yakiniku",
+      "hot-pot",
+      "dumplings",
+      "curry",
+      "tacos",
+      "pizza",
+      "vegan-food",
+      "spicy-food",
+      "yakitori"
     ]
   },
   {
-    "id": "classical-concert",
+    "id": "food-tour",
     "name": {
-      "en": "Classical concert"
+      "en": "Food tour (ramen, desserts, markets …)"
     },
-    "category": "culture",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 3,
-    "conversational": false,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": [
-      "live-music"
-    ]
-  },
-  {
-    "id": "jazz-bar",
-    "name": {
-      "en": "Jazz bar"
-    },
-    "category": "culture",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 2,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 5,
-    "venue_categories": [
-      "bar",
-      "live-music"
-    ],
-    "blocks": [
-      "evening"
-    ]
-  },
-  {
-    "id": "open-mic",
-    "name": {
-      "en": "Open mic night"
-    },
-    "category": "culture",
+    "category": "food",
     "indoor": true,
     "energy": 1,
     "cost_level": 1,
@@ -2438,301 +782,124 @@
     "min_group_size": 3,
     "max_group_size": 8,
     "venue_categories": [
-      "bar",
-      "live-music"
+      "ramen",
+      "dessert",
+      "food-market"
     ],
-    "blocks": [
-      "evening"
+    "replaces": [
+      "ramen-crawl",
+      "dessert-crawl",
+      "bakery-crawl",
+      "street-food",
+      "food-market",
+      "food-festival"
     ]
   },
   {
-    "id": "rakugo",
+    "id": "cooking-class",
     "name": {
-      "en": "Rakugo"
+      "en": "Cooking or baking"
     },
-    "category": "culture",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 2,
-    "conversational": false,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": [
-      "theatre"
-    ]
-  },
-  {
-    "id": "kabuki",
-    "name": {
-      "en": "Kabuki / Noh"
-    },
-    "category": "culture",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 3,
-    "conversational": false,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": [
-      "theatre"
-    ]
-  },
-  {
-    "id": "planetarium",
-    "name": {
-      "en": "Planetarium"
-    },
-    "category": "culture",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 1,
-    "conversational": false,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": [
-      "planetarium"
-    ]
-  },
-  {
-    "id": "aquarium",
-    "name": {
-      "en": "Aquarium"
-    },
-    "category": "culture",
+    "category": "food",
     "indoor": true,
     "energy": 1,
     "cost_level": 2,
     "conversational": true,
     "skill_dependent": false,
     "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": [
-      "aquarium-zoo"
-    ],
-    "blocks": [
-      "morning",
-      "afternoon"
-    ]
-  },
-  {
-    "id": "zoo",
-    "name": {
-      "en": "Zoo"
-    },
-    "category": "culture",
-    "indoor": false,
-    "energy": 2,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": [
-      "aquarium-zoo"
-    ],
-    "blocks": [
-      "morning",
-      "afternoon"
-    ]
-  },
-  {
-    "id": "history-museum",
-    "name": {
-      "en": "History museum"
-    },
-    "category": "culture",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": [
-      "museum"
-    ],
-    "blocks": [
-      "morning",
-      "afternoon"
-    ]
-  },
-  {
-    "id": "science-museum",
-    "name": {
-      "en": "Science museum"
-    },
-    "category": "culture",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": [
-      "museum"
-    ],
-    "blocks": [
-      "morning",
-      "afternoon"
-    ]
-  },
-  {
-    "id": "film-club",
-    "name": {
-      "en": "Film club"
-    },
-    "category": "culture",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 4,
-    "max_group_size": 10,
-    "venue_categories": [
-      "cinema",
-      "community-center"
-    ]
-  },
-  {
-    "id": "anime-pilgrimage",
-    "name": {
-      "en": "Anime location walk"
-    },
-    "category": "culture",
-    "indoor": false,
-    "energy": 2,
-    "cost_level": 0,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": []
-  },
-  {
-    "id": "manga-cafe",
-    "name": {
-      "en": "Manga café"
-    },
-    "category": "culture",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 1,
-    "conversational": false,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 5,
-    "venue_categories": []
-  },
-  {
-    "id": "record-shopping",
-    "name": {
-      "en": "Record shop tour"
-    },
-    "category": "culture",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 5,
-    "venue_categories": []
-  },
-  {
-    "id": "poetry-reading",
-    "name": {
-      "en": "Poetry reading"
-    },
-    "category": "culture",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 10,
-    "venue_categories": [
-      "cafe",
-      "bookshop"
-    ]
-  },
-  {
-    "id": "tea-ceremony",
-    "name": {
-      "en": "Tea ceremony"
-    },
-    "category": "culture",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 2,
-    "conversational": false,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 6,
+    "max_group_size": 8,
     "venue_categories": [],
+    "replaces": [
+      "baking"
+    ]
+  },
+  {
+    "id": "drinks",
+    "name": {
+      "en": "Drinks out (bars, pubs, tastings)"
+    },
+    "category": "food",
+    "indoor": true,
+    "energy": 1,
+    "cost_level": 2,
+    "conversational": true,
+    "skill_dependent": false,
+    "min_group_size": 3,
+    "max_group_size": 8,
+    "venue_categories": [
+      "bar",
+      "brewery"
+    ],
+    "replaces": [
+      "izakaya",
+      "craft-beer",
+      "wine-tasting",
+      "sake-tasting",
+      "brewery-tour",
+      "bar-hop",
+      "standing-bar",
+      "rooftop-bar"
+    ],
     "blocks": [
-      "morning",
-      "afternoon"
+      "afternoon",
+      "evening"
     ]
   },
   {
     "id": "festival",
     "name": {
-      "en": "Local festival"
+      "en": "Festivals and seasonal events"
     },
     "category": "culture",
     "indoor": false,
-    "energy": 2,
+    "energy": 1,
+    "cost_level": 1,
+    "conversational": true,
+    "skill_dependent": false,
+    "min_group_size": 3,
+    "max_group_size": 10,
+    "venue_categories": [
+      "temple-shrine"
+    ],
+    "replaces": [
+      "summer-festival",
+      "fireworks",
+      "christmas-market",
+      "halloween",
+      "illuminations",
+      "new-year-visit"
+    ]
+  },
+  {
+    "id": "museum",
+    "name": {
+      "en": "Museums and galleries"
+    },
+    "category": "culture",
+    "indoor": true,
+    "energy": 1,
     "cost_level": 1,
     "conversational": true,
     "skill_dependent": false,
     "min_group_size": 3,
     "max_group_size": 8,
     "venue_categories": [
-      "temple-shrine"
-    ]
-  },
-  {
-    "id": "observation-deck",
-    "name": {
-      "en": "Observation deck visit"
-    },
-    "category": "culture",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 2,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": [
+      "museum",
+      "gallery",
+      "planetarium"
+    ],
+    "replaces": [
+      "gallery-hop",
+      "history-museum",
+      "science-museum",
+      "museum-tour",
       "planetarium"
     ]
   },
   {
-    "id": "architecture-tour",
+    "id": "live-music",
     "name": {
-      "en": "Architecture tour"
-    },
-    "category": "culture",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 8,
-    "venue_categories": []
-  },
-  {
-    "id": "silent-disco",
-    "name": {
-      "en": "Silent disco"
+      "en": "Live music"
     },
     "category": "culture",
     "indoor": true,
@@ -2740,11 +907,316 @@
     "cost_level": 2,
     "conversational": false,
     "skill_dependent": false,
-    "min_group_size": 4,
-    "max_group_size": 12,
-    "venue_categories": [],
+    "min_group_size": 3,
+    "max_group_size": 8,
+    "venue_categories": [
+      "live-music",
+      "bar",
+      "dance"
+    ],
+    "replaces": [
+      "jazz-bar",
+      "classical-concert",
+      "live-house",
+      "dj-night"
+    ]
+  },
+  {
+    "id": "theatre",
+    "name": {
+      "en": "Theatre, comedy and spoken word"
+    },
+    "category": "culture",
+    "indoor": true,
+    "energy": 1,
+    "cost_level": 2,
+    "conversational": false,
+    "skill_dependent": false,
+    "min_group_size": 3,
+    "max_group_size": 10,
+    "venue_categories": [
+      "theatre",
+      "bar",
+      "live-music",
+      "cafe",
+      "bookshop"
+    ],
+    "replaces": [
+      "comedy",
+      "rakugo",
+      "kabuki",
+      "open-mic",
+      "poetry-reading"
+    ]
+  },
+  {
+    "id": "cinema",
+    "name": {
+      "en": "Movies"
+    },
+    "category": "culture",
+    "indoor": true,
+    "energy": 1,
+    "cost_level": 2,
+    "conversational": true,
+    "skill_dependent": false,
+    "min_group_size": 3,
+    "max_group_size": 10,
+    "venue_categories": [
+      "cinema",
+      "community-center"
+    ],
+    "replaces": [
+      "film-club"
+    ]
+  },
+  {
+    "id": "book-club",
+    "name": {
+      "en": "Books and writing"
+    },
+    "category": "culture",
+    "indoor": true,
+    "energy": 1,
+    "cost_level": 1,
+    "conversational": true,
+    "skill_dependent": false,
+    "min_group_size": 3,
+    "max_group_size": 8,
+    "venue_categories": [
+      "cafe",
+      "library",
+      "bookshop"
+    ],
+    "replaces": [
+      "bookshop-browse",
+      "writing-group",
+      "zine-making"
+    ]
+  },
+  {
+    "id": "temple-shrine",
+    "name": {
+      "en": "Temples and shrines"
+    },
+    "category": "culture",
+    "indoor": false,
+    "energy": 2,
+    "cost_level": 0,
+    "conversational": true,
+    "skill_dependent": false,
+    "min_group_size": 3,
+    "max_group_size": 6,
+    "venue_categories": [
+      "temple-shrine"
+    ],
     "blocks": [
-      "evening"
+      "morning",
+      "afternoon"
+    ]
+  },
+  {
+    "id": "japanese-arts",
+    "name": {
+      "en": "Japanese arts (tea ceremony, calligraphy, flower arranging)"
+    },
+    "category": "culture",
+    "indoor": true,
+    "energy": 1,
+    "cost_level": 2,
+    "conversational": false,
+    "skill_dependent": false,
+    "min_group_size": 3,
+    "max_group_size": 8,
+    "venue_categories": [
+      "art-studio",
+      "community-center"
+    ],
+    "replaces": [
+      "tea-ceremony",
+      "calligraphy",
+      "ikebana"
+    ]
+  },
+  {
+    "id": "aquarium",
+    "name": {
+      "en": "Zoos and aquariums"
+    },
+    "category": "culture",
+    "indoor": false,
+    "energy": 2,
+    "cost_level": 2,
+    "conversational": true,
+    "skill_dependent": false,
+    "min_group_size": 3,
+    "max_group_size": 6,
+    "venue_categories": [
+      "aquarium-zoo"
+    ],
+    "blocks": [
+      "morning",
+      "afternoon"
+    ],
+    "replaces": [
+      "zoo"
+    ]
+  },
+  {
+    "id": "anime",
+    "name": {
+      "en": "Anime and manga"
+    },
+    "category": "culture",
+    "indoor": false,
+    "energy": 2,
+    "cost_level": 0,
+    "conversational": true,
+    "skill_dependent": false,
+    "min_group_size": 3,
+    "max_group_size": 6,
+    "venue_categories": [],
+    "replaces": [
+      "anime-pilgrimage",
+      "manga-cafe"
+    ]
+  },
+  {
+    "id": "flea-market",
+    "name": {
+      "en": "Markets and vintage shopping"
+    },
+    "category": "culture",
+    "indoor": true,
+    "energy": 1,
+    "cost_level": 1,
+    "conversational": true,
+    "skill_dependent": false,
+    "min_group_size": 3,
+    "max_group_size": 6,
+    "venue_categories": [
+      "flea-market",
+      "thrift",
+      "temple-shrine",
+      "shopping"
+    ],
+    "replaces": [
+      "vintage-shopping",
+      "antique-market",
+      "craft-market",
+      "record-shopping",
+      "stationery-shopping",
+      "plant-shopping"
+    ]
+  },
+  {
+    "id": "fun-park",
+    "name": {
+      "en": "Go-karts, mini golf, laser tag and theme parks"
+    },
+    "category": "games",
+    "indoor": false,
+    "energy": 2,
+    "cost_level": 2,
+    "conversational": false,
+    "skill_dependent": false,
+    "min_group_size": 3,
+    "max_group_size": 12,
+    "venue_categories": [
+      "go-kart",
+      "golf",
+      "amusement-park"
+    ],
+    "replaces": [
+      "go-kart",
+      "trampoline",
+      "mini-golf",
+      "laser-tag",
+      "amusement-park"
+    ]
+  },
+  {
+    "id": "board-games",
+    "name": {
+      "en": "Board and card games"
+    },
+    "category": "games",
+    "indoor": true,
+    "energy": 1,
+    "cost_level": 0,
+    "conversational": true,
+    "skill_dependent": false,
+    "min_group_size": 4,
+    "max_group_size": 8,
+    "venue_categories": [
+      "cafe",
+      "community-center"
+    ],
+    "replaces": [
+      "card-games",
+      "mahjong",
+      "chess",
+      "shogi-go",
+      "tabletop-rpg"
+    ]
+  },
+  {
+    "id": "karaoke",
+    "name": {
+      "en": "Karaoke"
+    },
+    "category": "games",
+    "indoor": true,
+    "energy": 2,
+    "cost_level": 2,
+    "conversational": true,
+    "skill_dependent": false,
+    "min_group_size": 4,
+    "max_group_size": 8,
+    "venue_categories": [
+      "karaoke"
+    ]
+  },
+  {
+    "id": "bowling",
+    "name": {
+      "en": "Bowling, darts or pool"
+    },
+    "category": "games",
+    "indoor": true,
+    "energy": 1,
+    "cost_level": 1,
+    "conversational": true,
+    "skill_dependent": false,
+    "min_group_size": 3,
+    "max_group_size": 8,
+    "venue_categories": [
+      "bowling",
+      "bar"
+    ],
+    "replaces": [
+      "darts",
+      "billiards"
+    ]
+  },
+  {
+    "id": "escape-room",
+    "name": {
+      "en": "Escape rooms and puzzle games"
+    },
+    "category": "games",
+    "indoor": true,
+    "energy": 2,
+    "cost_level": 2,
+    "conversational": true,
+    "skill_dependent": false,
+    "min_group_size": 3,
+    "max_group_size": 8,
+    "venue_categories": [],
+    "replaces": [
+      "murder-mystery",
+      "scavenger-hunt",
+      "puzzle-hunt"
     ]
   },
   {
@@ -2765,12 +1237,15 @@
     ],
     "blocks": [
       "evening"
+    ],
+    "replaces": [
+      "pub-quiz"
     ]
   },
   {
-    "id": "darts",
+    "id": "video-games",
     "name": {
-      "en": "Darts"
+      "en": "Video games and arcades"
     },
     "category": "games",
     "indoor": true,
@@ -2779,436 +1254,72 @@
     "conversational": true,
     "skill_dependent": false,
     "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": [
-      "bar"
-    ]
-  },
-  {
-    "id": "billiards",
-    "name": {
-      "en": "Billiards"
-    },
-    "category": "games",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 4,
-    "max_group_size": 6,
-    "venue_categories": [
-      "bar"
-    ]
-  },
-  {
-    "id": "arcade",
-    "name": {
-      "en": "Arcade"
-    },
-    "category": "games",
-    "indoor": true,
-    "energy": 2,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": [
-      "arcade"
-    ]
-  },
-  {
-    "id": "retro-games",
-    "name": {
-      "en": "Retro video games"
-    },
-    "category": "games",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 6,
+    "max_group_size": 8,
     "venue_categories": [
       "arcade",
       "bar"
+    ],
+    "replaces": [
+      "arcade",
+      "retro-games",
+      "video-game-night"
     ]
   },
   {
-    "id": "mahjong",
+    "id": "sketching",
     "name": {
-      "en": "Mahjong"
+      "en": "Drawing and painting"
     },
-    "category": "games",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": true,
-    "min_group_size": 4,
-    "max_group_size": 4,
-    "venue_categories": []
-  },
-  {
-    "id": "chess",
-    "name": {
-      "en": "Chess"
-    },
-    "category": "games",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 0,
-    "conversational": true,
-    "skill_dependent": true,
-    "min_group_size": 4,
-    "max_group_size": 8,
-    "venue_categories": [
-      "cafe"
-    ]
-  },
-  {
-    "id": "shogi-go",
-    "name": {
-      "en": "Shogi or Go board games"
-    },
-    "category": "games",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 0,
-    "conversational": true,
-    "skill_dependent": true,
-    "min_group_size": 4,
-    "max_group_size": 8,
-    "venue_categories": [
-      "community-center"
-    ]
-  },
-  {
-    "id": "card-games",
-    "name": {
-      "en": "Card games"
-    },
-    "category": "games",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 0,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 4,
-    "max_group_size": 6,
-    "venue_categories": [
-      "cafe"
-    ]
-  },
-  {
-    "id": "tabletop-rpg",
-    "name": {
-      "en": "Tabletop RPG"
-    },
-    "category": "games",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 4,
-    "max_group_size": 6,
-    "venue_categories": []
-  },
-  {
-    "id": "murder-mystery",
-    "name": {
-      "en": "Murder mystery game"
-    },
-    "category": "games",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 2,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 5,
-    "max_group_size": 8,
-    "venue_categories": [],
-    "blocks": [
-      "evening"
-    ]
-  },
-  {
-    "id": "scavenger-hunt",
-    "name": {
-      "en": "Scavenger hunt"
-    },
-    "category": "games",
+    "category": "creative",
     "indoor": false,
-    "energy": 2,
+    "energy": 1,
     "cost_level": 0,
     "conversational": true,
     "skill_dependent": false,
-    "min_group_size": 4,
+    "min_group_size": 3,
     "max_group_size": 8,
-    "venue_categories": []
+    "venue_categories": [
+      "park",
+      "art-studio"
+    ],
+    "blocks": [
+      "morning",
+      "afternoon"
+    ],
+    "replaces": [
+      "watercolor"
+    ]
   },
   {
-    "id": "puzzle-hunt",
+    "id": "photography",
     "name": {
-      "en": "Puzzle hunt"
+      "en": "Photography"
     },
-    "category": "games",
+    "category": "creative",
     "indoor": false,
     "energy": 2,
     "cost_level": 1,
     "conversational": true,
     "skill_dependent": false,
     "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": []
-  },
-  {
-    "id": "video-game-night",
-    "name": {
-      "en": "Video game night"
-    },
-    "category": "games",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 4,
     "max_group_size": 8,
-    "venue_categories": [
-      "arcade"
-    ],
-    "blocks": [
-      "evening"
+    "venue_categories": [],
+    "replaces": [
+      "photo-walk",
+      "photography-class",
+      "film-photo-walk"
     ]
   },
   {
-    "id": "amusement-park",
+    "id": "pottery",
     "name": {
-      "en": "Amusement park"
+      "en": "Pottery"
     },
-    "category": "games",
-    "indoor": false,
-    "energy": 2,
+    "category": "creative",
+    "indoor": true,
+    "energy": 1,
     "cost_level": 3,
     "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": [
-      "amusement-park"
-    ],
-    "blocks": [
-      "morning",
-      "afternoon"
-    ]
-  },
-  {
-    "id": "laser-tag",
-    "name": {
-      "en": "Laser tag"
-    },
-    "category": "games",
-    "indoor": true,
-    "energy": 3,
-    "cost_level": 2,
-    "conversational": false,
-    "skill_dependent": false,
-    "min_group_size": 6,
-    "max_group_size": 12,
-    "venue_categories": []
-  },
-  {
-    "id": "photography-class",
-    "name": {
-      "en": "Photography workshop"
-    },
-    "category": "creative",
-    "indoor": false,
-    "energy": 2,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": true,
-    "min_group_size": 3,
-    "max_group_size": 8,
-    "venue_categories": []
-  },
-  {
-    "id": "film-photo-walk",
-    "name": {
-      "en": "Film camera walk"
-    },
-    "category": "creative",
-    "indoor": false,
-    "energy": 2,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": [],
-    "blocks": [
-      "morning",
-      "afternoon"
-    ]
-  },
-  {
-    "id": "watercolor",
-    "name": {
-      "en": "Watercolour painting"
-    },
-    "category": "creative",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 8,
-    "venue_categories": [
-      "art-studio",
-      "park"
-    ],
-    "blocks": [
-      "morning",
-      "afternoon"
-    ]
-  },
-  {
-    "id": "calligraphy",
-    "name": {
-      "en": "Calligraphy"
-    },
-    "category": "creative",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 1,
-    "conversational": false,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 8,
-    "venue_categories": [
-      "art-studio",
-      "community-center"
-    ]
-  },
-  {
-    "id": "ikebana",
-    "name": {
-      "en": "Flower arranging"
-    },
-    "category": "creative",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 2,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": [
-      "art-studio"
-    ]
-  },
-  {
-    "id": "origami",
-    "name": {
-      "en": "Origami"
-    },
-    "category": "creative",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 0,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 8,
-    "venue_categories": [
-      "cafe",
-      "community-center"
-    ]
-  },
-  {
-    "id": "knitting",
-    "name": {
-      "en": "Knitting circle"
-    },
-    "category": "creative",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 8,
-    "venue_categories": [
-      "cafe"
-    ]
-  },
-  {
-    "id": "embroidery",
-    "name": {
-      "en": "Embroidery"
-    },
-    "category": "creative",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 8,
-    "venue_categories": [
-      "cafe",
-      "art-studio"
-    ]
-  },
-  {
-    "id": "candle-making",
-    "name": {
-      "en": "Candle making"
-    },
-    "category": "creative",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 2,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": [
-      "art-studio"
-    ]
-  },
-  {
-    "id": "leathercraft",
-    "name": {
-      "en": "Leathercraft"
-    },
-    "category": "creative",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 2,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": [
-      "art-studio"
-    ]
-  },
-  {
-    "id": "woodworking",
-    "name": {
-      "en": "Woodworking"
-    },
-    "category": "creative",
-    "indoor": true,
-    "energy": 2,
-    "cost_level": 2,
-    "conversational": true,
     "skill_dependent": true,
     "min_group_size": 3,
     "max_group_size": 6,
@@ -3217,9 +1328,9 @@
     ]
   },
   {
-    "id": "jewelry-making",
+    "id": "craft-workshop",
     "name": {
-      "en": "Jewellery making"
+      "en": "Craft workshop (knitting, candles, woodwork …)"
     },
     "category": "creative",
     "indoor": true,
@@ -3228,77 +1339,41 @@
     "conversational": true,
     "skill_dependent": false,
     "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": [
-      "art-studio"
-    ]
-  },
-  {
-    "id": "zine-making",
-    "name": {
-      "en": "Zine making"
-    },
-    "category": "creative",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
     "max_group_size": 8,
     "venue_categories": [
+      "art-studio",
       "cafe",
-      "library"
-    ]
-  },
-  {
-    "id": "writing-group",
-    "name": {
-      "en": "Writing group"
-    },
-    "category": "creative",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 8,
-    "venue_categories": [
-      "cafe",
-      "library"
+      "community-center"
+    ],
+    "replaces": [
+      "origami",
+      "knitting",
+      "embroidery",
+      "candle-making",
+      "leathercraft",
+      "woodworking",
+      "jewelry-making",
+      "dye-workshop"
     ]
   },
   {
     "id": "music-jam",
     "name": {
-      "en": "Music jam session"
+      "en": "Making music or singing"
     },
     "category": "creative",
     "indoor": true,
     "energy": 2,
     "cost_level": 1,
     "conversational": false,
-    "skill_dependent": true,
-    "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": []
-  },
-  {
-    "id": "choir",
-    "name": {
-      "en": "Group singing"
-    },
-    "category": "creative",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 1,
-    "conversational": false,
     "skill_dependent": false,
-    "min_group_size": 6,
+    "min_group_size": 3,
     "max_group_size": 15,
     "venue_categories": [
       "community-center"
+    ],
+    "replaces": [
+      "choir"
     ]
   },
   {
@@ -3319,26 +1394,9 @@
     ]
   },
   {
-    "id": "dye-workshop",
+    "id": "language-exchange",
     "name": {
-      "en": "Indigo dyeing"
-    },
-    "category": "creative",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 2,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": [
-      "art-studio"
-    ]
-  },
-  {
-    "id": "japanese-practice",
-    "name": {
-      "en": "Japanese practice"
+      "en": "Language exchange"
     },
     "category": "learning",
     "indoor": true,
@@ -3349,30 +1407,18 @@
     "min_group_size": 3,
     "max_group_size": 8,
     "venue_categories": [
-      "cafe"
+      "cafe",
+      "bar"
+    ],
+    "replaces": [
+      "japanese-practice",
+      "english-practice"
     ]
   },
   {
-    "id": "english-practice",
+    "id": "study-session",
     "name": {
-      "en": "English practice"
-    },
-    "category": "learning",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 8,
-    "venue_categories": [
-      "cafe"
-    ]
-  },
-  {
-    "id": "coding-meetup",
-    "name": {
-      "en": "Coding meetup"
+      "en": "Co-working or side projects"
     },
     "category": "learning",
     "indoor": true,
@@ -3385,829 +1431,67 @@
     "venue_categories": [
       "library",
       "cafe"
+    ],
+    "replaces": [
+      "coding-meetup",
+      "startup-chat"
     ]
   },
   {
     "id": "lecture",
     "name": {
-      "en": "Talk or lecture"
+      "en": "Talks, discussions and classes"
     },
     "category": "learning",
     "indoor": true,
     "energy": 1,
     "cost_level": 1,
-    "conversational": false,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 8,
-    "venue_categories": [
-      "community-center",
-      "library"
-    ]
-  },
-  {
-    "id": "workshop-skill-swap",
-    "name": {
-      "en": "Skill swap"
-    },
-    "category": "learning",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 0,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 4,
-    "max_group_size": 8,
-    "venue_categories": [
-      "cafe",
-      "community-center"
-    ]
-  },
-  {
-    "id": "museum-tour",
-    "name": {
-      "en": "Guided museum tour"
-    },
-    "category": "learning",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 2,
     "conversational": true,
     "skill_dependent": false,
     "min_group_size": 3,
-    "max_group_size": 8,
-    "venue_categories": [
-      "museum"
-    ],
-    "blocks": [
-      "morning",
-      "afternoon"
-    ]
-  },
-  {
-    "id": "history-talk",
-    "name": {
-      "en": "Local history talk"
-    },
-    "category": "learning",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 0,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 10,
-    "venue_categories": [
-      "community-center",
-      "library"
-    ]
-  },
-  {
-    "id": "philosophy-cafe",
-    "name": {
-      "en": "Philosophy café"
-    },
-    "category": "learning",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 4,
-    "max_group_size": 8,
-    "venue_categories": [
-      "cafe"
-    ]
-  },
-  {
-    "id": "podcast-club",
-    "name": {
-      "en": "Podcast club"
-    },
-    "category": "learning",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 4,
-    "max_group_size": 8,
-    "venue_categories": [
-      "cafe"
-    ]
-  },
-  {
-    "id": "first-aid-class",
-    "name": {
-      "en": "First aid class"
-    },
-    "category": "learning",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 4,
     "max_group_size": 12,
     "venue_categories": [
-      "community-center"
-    ]
-  },
-  {
-    "id": "gardening",
-    "name": {
-      "en": "Community gardening"
-    },
-    "category": "learning",
-    "indoor": false,
-    "energy": 2,
-    "cost_level": 0,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 10,
-    "venue_categories": []
-  },
-  {
-    "id": "science-cafe",
-    "name": {
-      "en": "Science café"
-    },
-    "category": "learning",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 4,
-    "max_group_size": 10,
-    "venue_categories": [
+      "community-center",
+      "library",
       "cafe"
+    ],
+    "replaces": [
+      "history-talk",
+      "philosophy-cafe",
+      "science-cafe",
+      "podcast-club",
+      "workshop-skill-swap",
+      "first-aid-class"
     ]
   },
   {
-    "id": "startup-chat",
+    "id": "volunteering",
     "name": {
-      "en": "Side project chat"
+      "en": "Volunteering"
     },
     "category": "learning",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": [
-      "cafe",
-      "library"
-    ]
-  },
-  {
-    "id": "antique-market",
-    "name": {
-      "en": "Antique market"
-    },
-    "category": "shopping",
-    "indoor": false,
-    "energy": 1,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": [
-      "flea-market",
-      "temple-shrine"
-    ],
-    "blocks": [
-      "morning",
-      "afternoon"
-    ]
-  },
-  {
-    "id": "stationery-shopping",
-    "name": {
-      "en": "Stationery shops"
-    },
-    "category": "shopping",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 5,
-    "venue_categories": [
-      "shopping"
-    ]
-  },
-  {
-    "id": "craft-market",
-    "name": {
-      "en": "Craft market"
-    },
-    "category": "shopping",
-    "indoor": false,
-    "energy": 1,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": [
-      "flea-market"
-    ],
-    "blocks": [
-      "morning",
-      "afternoon"
-    ]
-  },
-  {
-    "id": "shotengai-walk",
-    "name": {
-      "en": "Shopping street walk"
-    },
-    "category": "shopping",
-    "indoor": false,
-    "energy": 1,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": [],
-    "blocks": [
-      "morning",
-      "afternoon"
-    ]
-  },
-  {
-    "id": "plant-shopping",
-    "name": {
-      "en": "Plant shops"
-    },
-    "category": "shopping",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 5,
-    "venue_categories": [],
-    "blocks": [
-      "morning",
-      "afternoon"
-    ]
-  },
-  {
-    "id": "autumn-leaves",
-    "name": {
-      "en": "Autumn leaf viewing"
-    },
-    "category": "seasonal",
     "indoor": false,
     "energy": 2,
-    "cost_level": 0,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 8,
-    "venue_categories": [
-      "park",
-      "temple-shrine",
-      "nature"
-    ],
-    "blocks": [
-      "morning",
-      "afternoon"
-    ]
-  },
-  {
-    "id": "plum-blossoms",
-    "name": {
-      "en": "Plum blossom viewing"
-    },
-    "category": "seasonal",
-    "indoor": false,
-    "energy": 1,
-    "cost_level": 0,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 8,
-    "venue_categories": [
-      "park",
-      "temple-shrine"
-    ],
-    "blocks": [
-      "morning",
-      "afternoon"
-    ]
-  },
-  {
-    "id": "hydrangea-walk",
-    "name": {
-      "en": "Hydrangea walk"
-    },
-    "category": "seasonal",
-    "indoor": false,
-    "energy": 1,
-    "cost_level": 0,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 8,
-    "venue_categories": [
-      "temple-shrine",
-      "park"
-    ],
-    "blocks": [
-      "morning",
-      "afternoon"
-    ]
-  },
-  {
-    "id": "illuminations",
-    "name": {
-      "en": "Winter illuminations"
-    },
-    "category": "seasonal",
-    "indoor": false,
-    "energy": 1,
-    "cost_level": 0,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 8,
-    "venue_categories": [],
-    "blocks": [
-      "evening"
-    ]
-  },
-  {
-    "id": "summer-festival",
-    "name": {
-      "en": "Summer festival"
-    },
-    "category": "seasonal",
-    "indoor": false,
-    "energy": 2,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 8,
-    "venue_categories": [
-      "temple-shrine"
-    ]
-  },
-  {
-    "id": "new-year-visit",
-    "name": {
-      "en": "New Year shrine visit"
-    },
-    "category": "seasonal",
-    "indoor": false,
-    "energy": 1,
-    "cost_level": 0,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 8,
-    "venue_categories": [
-      "temple-shrine"
-    ],
-    "blocks": [
-      "morning",
-      "afternoon"
-    ]
-  },
-  {
-    "id": "christmas-market",
-    "name": {
-      "en": "Christmas market"
-    },
-    "category": "seasonal",
-    "indoor": false,
-    "energy": 1,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 8,
-    "venue_categories": []
-  },
-  {
-    "id": "halloween",
-    "name": {
-      "en": "Halloween event"
-    },
-    "category": "seasonal",
-    "indoor": false,
-    "energy": 2,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 4,
-    "max_group_size": 10,
-    "venue_categories": []
-  },
-  {
-    "id": "snow-day",
-    "name": {
-      "en": "Day trip to the snow"
-    },
-    "category": "seasonal",
-    "indoor": false,
-    "energy": 2,
-    "cost_level": 2,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 8,
-    "venue_categories": [],
-    "blocks": [
-      "morning",
-      "afternoon"
-    ]
-  },
-  {
-    "id": "fruit-picking",
-    "name": {
-      "en": "Fruit picking"
-    },
-    "category": "seasonal",
-    "indoor": false,
-    "energy": 2,
-    "cost_level": 2,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 8,
-    "venue_categories": [],
-    "blocks": [
-      "morning",
-      "afternoon"
-    ]
-  },
-  {
-    "id": "moon-viewing",
-    "name": {
-      "en": "Moon viewing"
-    },
-    "category": "seasonal",
-    "indoor": false,
-    "energy": 1,
-    "cost_level": 0,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 8,
-    "venue_categories": [
-      "park"
-    ],
-    "blocks": [
-      "evening"
-    ]
-  },
-  {
-    "id": "pool-day",
-    "name": {
-      "en": "Swimming pool day"
-    },
-    "category": "seasonal",
-    "indoor": false,
-    "energy": 2,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 8,
-    "venue_categories": [
-      "swimming-pool",
-      "amusement-park"
-    ],
-    "blocks": [
-      "morning",
-      "afternoon"
-    ]
-  },
-  {
-    "id": "beach-cleanup",
-    "name": {
-      "en": "Beach clean-up"
-    },
-    "category": "community",
-    "indoor": false,
-    "energy": 2,
-    "cost_level": 0,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 4,
-    "max_group_size": 15,
-    "venue_categories": [
-      "beach"
-    ],
-    "blocks": [
-      "morning",
-      "afternoon"
-    ]
-  },
-  {
-    "id": "park-cleanup",
-    "name": {
-      "en": "Park clean-up"
-    },
-    "category": "community",
-    "indoor": false,
-    "energy": 2,
-    "cost_level": 0,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 4,
-    "max_group_size": 15,
-    "venue_categories": [
-      "park"
-    ],
-    "blocks": [
-      "morning",
-      "afternoon"
-    ]
-  },
-  {
-    "id": "food-bank",
-    "name": {
-      "en": "Food bank shift"
-    },
-    "category": "community",
-    "indoor": true,
-    "energy": 2,
-    "cost_level": 0,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 4,
-    "max_group_size": 12,
-    "venue_categories": [],
-    "blocks": [
-      "morning",
-      "afternoon"
-    ]
-  },
-  {
-    "id": "animal-shelter",
-    "name": {
-      "en": "Animal shelter visit"
-    },
-    "category": "community",
-    "indoor": true,
-    "energy": 2,
-    "cost_level": 0,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": [],
-    "blocks": [
-      "morning",
-      "afternoon"
-    ]
-  },
-  {
-    "id": "blood-donation",
-    "name": {
-      "en": "Blood donation"
-    },
-    "category": "community",
-    "indoor": true,
-    "energy": 1,
     "cost_level": 0,
     "conversational": true,
     "skill_dependent": false,
     "min_group_size": 2,
-    "max_group_size": 4,
-    "venue_categories": [],
-    "blocks": [
-      "morning",
-      "afternoon"
-    ]
-  },
-  {
-    "id": "tree-planting",
-    "name": {
-      "en": "Tree planting"
-    },
-    "category": "community",
-    "indoor": false,
-    "energy": 3,
-    "cost_level": 0,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 4,
     "max_group_size": 15,
     "venue_categories": [
+      "beach",
+      "park",
       "nature",
-      "park"
-    ],
-    "blocks": [
-      "morning",
-      "afternoon"
-    ]
-  },
-  {
-    "id": "charity-run",
-    "name": {
-      "en": "Charity run"
-    },
-    "category": "community",
-    "indoor": false,
-    "energy": 3,
-    "cost_level": 1,
-    "conversational": false,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 10,
-    "venue_categories": [],
-    "blocks": [
-      "morning",
-      "afternoon"
-    ]
-  },
-  {
-    "id": "repair-cafe",
-    "name": {
-      "en": "Repair café"
-    },
-    "category": "community",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 0,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 8,
-    "venue_categories": [
       "community-center"
     ],
-    "blocks": [
-      "morning",
-      "afternoon"
-    ]
-  },
-  {
-    "id": "rooftop-bar",
-    "name": {
-      "en": "Rooftop bar"
-    },
-    "category": "nightlife",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 3,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": [
-      "bar"
-    ],
-    "blocks": [
-      "evening"
-    ]
-  },
-  {
-    "id": "bar-hop",
-    "name": {
-      "en": "Bar hopping"
-    },
-    "category": "nightlife",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 2,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": [
-      "bar"
-    ],
-    "blocks": [
-      "evening"
-    ]
-  },
-  {
-    "id": "dj-night",
-    "name": {
-      "en": "DJ night"
-    },
-    "category": "nightlife",
-    "indoor": true,
-    "energy": 2,
-    "cost_level": 2,
-    "conversational": false,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 8,
-    "venue_categories": [
-      "dance"
-    ],
-    "blocks": [
-      "evening"
-    ]
-  },
-  {
-    "id": "standing-bar",
-    "name": {
-      "en": "Standing bar"
-    },
-    "category": "nightlife",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 5,
-    "venue_categories": [
-      "bar"
-    ],
-    "blocks": [
-      "evening"
-    ]
-  },
-  {
-    "id": "pub-quiz",
-    "name": {
-      "en": "Pub quiz"
-    },
-    "category": "nightlife",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 4,
-    "max_group_size": 6,
-    "venue_categories": [
-      "bar"
-    ],
-    "blocks": [
-      "evening"
-    ]
-  },
-  {
-    "id": "live-house",
-    "name": {
-      "en": "Indie band concert"
-    },
-    "category": "nightlife",
-    "indoor": true,
-    "energy": 2,
-    "cost_level": 2,
-    "conversational": false,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 6,
-    "venue_categories": [
-      "live-music"
-    ],
-    "blocks": [
-      "evening"
-    ]
-  },
-  {
-    "id": "animal-cafe",
-    "name": {
-      "en": "Animal café"
-    },
-    "category": "food",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 2,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 5,
-    "venue_categories": [
-      "animal-cafe"
-    ]
-  },
-  {
-    "id": "bookshop-cafe",
-    "name": {
-      "en": "Book café"
-    },
-    "category": "culture",
-    "indoor": true,
-    "energy": 1,
-    "cost_level": 1,
-    "conversational": true,
-    "skill_dependent": false,
-    "min_group_size": 3,
-    "max_group_size": 5,
-    "venue_categories": [
-      "cafe",
-      "bookshop"
+    "replaces": [
+      "beach-cleanup",
+      "park-cleanup",
+      "food-bank",
+      "animal-shelter",
+      "blood-donation",
+      "tree-planting",
+      "repair-cafe",
+      "gardening"
     ]
   }
 ]

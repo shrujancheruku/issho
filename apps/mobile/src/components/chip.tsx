@@ -1,0 +1,72 @@
+import { Pressable, StyleSheet, View } from 'react-native';
+
+import { ThemedText } from '@/components/themed-text';
+import { Brand, Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
+
+export type ChipColors = { background: string; text: string };
+
+const selectedDefault: ChipColors = { background: Brand.red, text: '#ffffff' };
+
+/**
+ * A selectable pill. `secondary` is the same label in the second display
+ * language, shown underneath (short text is shown side by side).
+ * `selectedColors` overrides the selected look, e.g. per interest level.
+ */
+export function Chip({
+  label,
+  secondary,
+  selected,
+  selectedColors = selectedDefault,
+  badge,
+  onPress,
+  disabled,
+}: {
+  label: string;
+  secondary?: string;
+  selected: boolean;
+  selectedColors?: ChipColors;
+  badge?: string;
+  onPress?: () => void;
+  disabled?: boolean;
+}) {
+  const theme = useTheme();
+  const colors = selected ? selectedColors : { background: theme.backgroundElement, text: theme.text };
+  const muted = selected ? colors.text : theme.textSecondary;
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ selected, disabled }}
+      accessibilityLabel={[label, secondary, badge].filter(Boolean).join(', ')}
+      onPress={onPress}
+      disabled={disabled || !onPress}
+      style={({ pressed }) => [
+        styles.chip,
+        { backgroundColor: colors.background, opacity: disabled ? 0.4 : pressed ? 0.7 : 1 },
+      ]}>
+      {/* flexShrink lets long labels wrap inside the chip instead of overflowing the row. */}
+      <View style={styles.label}>
+        <ThemedText type="small" style={{ color: colors.text }}>
+          {label}
+        </ThemedText>
+        {!!secondary && (
+          <ThemedText type="small" style={[styles.secondary, { color: muted }]}>
+            {secondary}
+          </ThemedText>
+        )}
+        {!!badge && (
+          <ThemedText type="small" style={[styles.badge, { color: colors.text }]}>
+            {badge}
+          </ThemedText>
+        )}
+      </View>
+    </Pressable>
+  );
+}
+
+const styles = StyleSheet.create({
+  chip: { borderRadius: 12, paddingVertical: Spacing.two, paddingHorizontal: Spacing.three, maxWidth: '100%' },
+  label: { flexShrink: 1 },
+  secondary: { fontSize: 12, lineHeight: 16, opacity: 0.85 },
+  badge: { fontSize: 11, lineHeight: 14, fontWeight: 700 },
+});

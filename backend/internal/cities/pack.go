@@ -58,7 +58,14 @@ type Activity struct {
 	VenueCategories []string `json:"venue_categories"`
 	// Parts of the day it suits (morning, afternoon, evening); empty = any.
 	Blocks []string `json:"blocks,omitempty"`
+	// Ids of retired activities merged into this one. Seeding moves people's
+	// preferences for them here and then deletes them.
+	Replaces []string `json:"replaces,omitempty"`
 }
+
+// Categories are the onboarding tile groups, in display order. The app has
+// a label for each (apps/mobile/src/i18n/en.json, "category.<id>").
+var Categories = []string{"outdoors", "sports", "wellness", "food", "culture", "games", "creative", "learning"}
 
 // AllBlocks lists the parts of the day, in order (app.availability_slots.block).
 var AllBlocks = []string{"morning", "afternoon", "evening"}
@@ -143,6 +150,20 @@ func SeedCatalog(ctx context.Context, pool *pgxpool.Pool, venueCategoriesPath, a
 			}
 			if err := q.SetActivityBlocks(ctx, dbgen.SetActivityBlocksParams{ID: a.ID, Blocks: blocks}); err != nil {
 				return fmt.Errorf("activity %s: %w", a.ID, err)
+			}
+		}
+		// Merges run after every activity exists, and in the same transaction,
+		// so nobody's preferences are lost halfway. Deleting a retired activity
+		// cascades to its city overrides and anything left of its preferences.
+		for _, a := range acts {
+			if len(a.Replaces) == 0 {
+				continue
+			}
+			if err := q.MergeActivityPrefs(ctx, dbgen.MergeActivityPrefsParams{ActivityID: a.ID, Replaced: a.Replaces}); err != nil {
+				return fmt.Errorf("activity %s: merging preferences: %w", a.ID, err)
+			}
+			if err := q.DeleteActivities(ctx, a.Replaces); err != nil {
+				return fmt.Errorf("activity %s: deleting replaced activities: %w", a.ID, err)
 			}
 		}
 		return nil

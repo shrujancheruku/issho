@@ -1,0 +1,132 @@
+syntax = "proto3";
+
+package issho.v1;
+
+option go_package = "github.com/shrujancheruku/issho/backend/gen/issho/v1;isshov1";
+
+// ProfileService reads and writes the caller's own profile: what matching
+// needs to know about them. Nobody can read another person's profile (there's
+// no profile browsing).
+// Requires `Authorization: Bearer <Supabase access token>`, and the account
+// must already exist (`IdentityService.GetMe` creates it).
+//
+// HTTP: POST /issho.v1.ProfileService/<Method>
+service ProfileService {
+  // GetProfile returns the caller's profile. NOT_FOUND until onboarding has
+  // saved one.
+  rpc GetProfile(GetProfileRequest) returns (GetProfileResponse) {}
+
+  // SaveProfile creates or replaces the caller's whole profile, including
+  // languages, availability and activity preferences, in one transaction.
+  // Saving it the first time completes onboarding (`User.onboarded`).
+  // INVALID_ARGUMENT names the first field that's wrong.
+  rpc SaveProfile(SaveProfileRequest) returns (SaveProfileResponse) {}
+}
+
+message GetProfileRequest {}
+
+message GetProfileResponse {
+  Profile profile = 1;
+  // The code-of-conduct version the app must show and send back. When it's
+  // newer than profile.conduct_version, the person has to accept it again.
+  int32 current_conduct_version = 2;
+}
+
+message SaveProfileRequest {
+  Profile profile = 1;
+}
+
+message SaveProfileResponse {
+  Profile profile = 1;
+}
+
+message Profile {
+  // First name or nickname, shown only to confirmed attendees. 1–40 characters.
+  string display_name = 1;
+  // Must make the person at least 18 this year.
+  int32 birth_year = 2;
+  Gender gender = 3;
+  // Only be grouped with people of the same gender. Needs gender woman, man
+  // or nonbinary.
+  bool same_gender_only = 4;
+  // Read-only: the city of home_area_id.
+  string city_id = 5;
+  // Area id from CatalogService.ListCities, e.g. "tokyo-kichijoji".
+  string home_area_id = 6;
+  // Longest trip from home_area_id they'll make, 5–180 minutes.
+  int32 max_travel_min = 7;
+  // Languages they can speak at an event (used for matching). At least one
+  // fluent; no duplicates.
+  repeated SpokenLanguage spoken_languages = 8;
+  // Display languages (what they read): ISO 639-1 codes. primary_language is
+  // required; secondary_language is optional and must differ.
+  string primary_language = 9;
+  string secondary_language = 10;
+  // When they're usually free. The default availability for every signup.
+  // At least one slot; no duplicates.
+  repeated AvailabilitySlot availability = 11;
+  // Activities they'd do, from CatalogService.ListActivities for their city.
+  // Activities not listed have no preference. At least three.
+  repeated ActivityPreference activities = 12;
+  GroupSize group_size = 13;
+  // 1 = calm, 2 = moderate, 3 = active.
+  int32 energy = 14;
+  // Most they're happy to spend: 0 = free … 3 = expensive.
+  int32 budget = 15;
+  // The code-of-conduct version they accepted. On save it must equal
+  // GetProfileResponse.current_conduct_version.
+  int32 conduct_version = 16;
+}
+
+enum Gender {
+  GENDER_UNSPECIFIED = 0;
+  GENDER_WOMAN = 1;
+  GENDER_MAN = 2;
+  GENDER_NONBINARY = 3;
+  // An answer, unlike GENDER_UNSPECIFIED (not sent), which is rejected.
+  GENDER_PREFER_NOT_TO_SAY = 4;
+}
+
+enum GroupSize {
+  GROUP_SIZE_UNSPECIFIED = 0;
+  // Around 4 people.
+  GROUP_SIZE_SMALL = 1;
+  // Around 6.
+  GROUP_SIZE_MEDIUM = 2;
+  // Around 8.
+  GROUP_SIZE_LARGE = 3;
+}
+
+message SpokenLanguage {
+  // ISO 639-1 code, e.g. "ja".
+  string code = 1;
+  // False = still learning (then level is required).
+  bool fluent = 2;
+  // For learners: 1 beginner, 2 intermediate, 3 advanced. 0 when fluent.
+  int32 level = 3;
+}
+
+message AvailabilitySlot {
+  // 0 = Sunday … 6 = Saturday.
+  int32 weekday = 1;
+  TimeBlock block = 2;
+}
+
+enum TimeBlock {
+  TIME_BLOCK_UNSPECIFIED = 0;
+  TIME_BLOCK_MORNING = 1;
+  TIME_BLOCK_AFTERNOON = 2;
+  TIME_BLOCK_EVENING = 3;
+}
+
+message ActivityPreference {
+  string activity_id = 1;
+  Interest interest = 2;
+}
+
+enum Interest {
+  INTEREST_UNSPECIFIED = 0;
+  INTEREST_OPEN_TO_TRY = 1;
+  INTEREST_LIKE = 2;
+  INTEREST_LOVE = 3;
+}

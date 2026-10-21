@@ -98,101 +98,21 @@
   ],
   "activity_overrides": [
     {
-      "activity_id": "hanami",
-      "disabled": true
-    },
-    {
-      "activity_id": "sento",
-      "disabled": true
-    },
-    {
-      "activity_id": "rakugo",
-      "disabled": true
-    },
-    {
-      "activity_id": "kabuki",
-      "disabled": true
-    },
-    {
-      "activity_id": "zazen",
-      "disabled": true
-    },
-    {
-      "activity_id": "tea-ceremony",
-      "disabled": true
-    },
-    {
-      "activity_id": "new-year-visit",
-      "disabled": true
-    },
-    {
-      "activity_id": "plum-blossoms",
-      "disabled": true
-    },
-    {
-      "activity_id": "hydrangea-walk",
-      "disabled": true
-    },
-    {
-      "activity_id": "moon-viewing",
-      "disabled": true
-    },
-    {
-      "activity_id": "shotengai-walk",
-      "disabled": true
-    },
-    {
       "activity_id": "temple-shrine",
       "disabled": true
     },
     {
-      "activity_id": "hot-spring-trip",
+      "activity_id": "japanese-arts",
       "disabled": true
     },
     {
-      "activity_id": "manga-cafe",
+      "activity_id": "anime",
       "disabled": true
     },
     {
-      "activity_id": "anime-pilgrimage",
-      "disabled": true
-    },
-    {
-      "activity_id": "shogi-go",
-      "disabled": true
-    },
-    {
-      "activity_id": "standing-bar",
-      "disabled": true
-    },
-    {
-      "activity_id": "snow-day",
-      "disabled": true
-    },
-    {
-      "activity_id": "japanese-practice",
-      "disabled": true
-    },
-    {
-      "activity_id": "english-practice",
-      "disabled": true
-    },
-    {
-      "activity_id": "dye-workshop",
-      "disabled": true
-    },
-    {
-      "activity_id": "ikebana",
-      "disabled": true
-    },
-    {
-      "activity_id": "illuminations",
-      "disabled": true
-    },
-    {
-      "activity_id": "izakaya",
+      "activity_id": "sento",
       "name": {
-        "en": "Japanese pub"
+        "en": "Sauna or spa"
       }
     },
     {
@@ -202,15 +122,9 @@
       }
     },
     {
-      "activity_id": "fireworks",
-      "months": [
-        7
-      ]
-    },
-    {
       "activity_id": "beach-day",
       "name": {
-        "en": "Lake day"
+        "en": "Lake or pool day"
       },
       "months": [
         5,
@@ -221,40 +135,14 @@
       ]
     },
     {
-      "activity_id": "autumn-leaves",
+      "activity_id": "seasonal-viewing",
+      "name": {
+        "en": "Wildflowers and autumn leaves"
+      },
       "months": [
+        3,
+        4,
         11
-      ]
-    },
-    {
-      "activity_id": "halloween",
-      "months": [
-        10
-      ]
-    },
-    {
-      "activity_id": "christmas-market",
-      "months": [
-        11,
-        12
-      ]
-    },
-    {
-      "activity_id": "pool-day",
-      "months": [
-        5,
-        6,
-        7,
-        8,
-        9
-      ]
-    },
-    {
-      "activity_id": "summer-festival",
-      "months": [
-        6,
-        7,
-        8
       ]
     }
   ]

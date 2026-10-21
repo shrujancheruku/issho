@@ -38,4 +38,8 @@ message User {
   string email = 2;
   // True once the user has completed onboarding (has a profile).
   bool onboarded = 3;
+  // Display languages from the profile (empty until onboarded), so the app
+  // can show itself in the right languages straight after GetMe.
+  string primary_language = 4;
+  string secondary_language = 5;
 }

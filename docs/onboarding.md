@@ -50,7 +50,7 @@ export $(grep -v '^#' .env.example | xargs)   # local DATABASE_URL, SUPABASE_URL
 # Optional, enables account deletion locally (server-only secret, never commit):
 export SUPABASE_SECRET_KEY=$(supabase status -o env | grep '^SECRET_KEY=' | cut -d= -f2 | tr -d '"')
 make migrate-up   # applies backend/db/migrations
-make seed         # 230 activities, 48 venue categories, every city pack (Tokyo, Austin)
+make seed         # 66 activities, 48 venue categories, every city pack (Tokyo, Austin)
 make api          # http://localhost:8080
 ```
 

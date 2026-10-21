@@ -36,6 +36,12 @@ const (
 	// CatalogServiceListActivitiesProcedure is the fully-qualified name of the CatalogService's
 	// ListActivities RPC.
 	CatalogServiceListActivitiesProcedure = "/issho.v1.CatalogService/ListActivities"
+	// CatalogServiceListCitiesProcedure is the fully-qualified name of the CatalogService's ListCities
+	// RPC.
+	CatalogServiceListCitiesProcedure = "/issho.v1.CatalogService/ListCities"
+	// CatalogServiceListLanguagesProcedure is the fully-qualified name of the CatalogService's
+	// ListLanguages RPC.
+	CatalogServiceListLanguagesProcedure = "/issho.v1.CatalogService/ListLanguages"
 )
 
 // CatalogServiceClient is a client for the issho.v1.CatalogService service.
@@ -43,6 +49,12 @@ type CatalogServiceClient interface {
 	// ListActivities returns the activities enabled in a city, with names in
 	// the requested primary and secondary languages.
 	ListActivities(context.Context, *connect.Request[v1.ListActivitiesRequest]) (*connect.Response[v1.ListActivitiesResponse], error)
+	// ListCities returns every city with its areas (the "home" choices), with
+	// names in the requested primary and secondary languages.
+	ListCities(context.Context, *connect.Request[v1.ListCitiesRequest]) (*connect.Response[v1.ListCitiesResponse], error)
+	// ListLanguages returns every language a person can choose to speak or
+	// read (ISO 639-1), each named in itself and in the requested language.
+	ListLanguages(context.Context, *connect.Request[v1.ListLanguagesRequest]) (*connect.Response[v1.ListLanguagesResponse], error)
 }
 
 // NewCatalogServiceClient constructs a client for the issho.v1.CatalogService service. By default,
@@ -62,12 +74,26 @@ func NewCatalogServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			connect.WithSchema(catalogServiceMethods.ByName("ListActivities")),
 			connect.WithClientOptions(opts...),
 		),
+		listCities: connect.NewClient[v1.ListCitiesRequest, v1.ListCitiesResponse](
+			httpClient,
+			baseURL+CatalogServiceListCitiesProcedure,
+			connect.WithSchema(catalogServiceMethods.ByName("ListCities")),
+			connect.WithClientOptions(opts...),
+		),
+		listLanguages: connect.NewClient[v1.ListLanguagesRequest, v1.ListLanguagesResponse](
+			httpClient,
+			baseURL+CatalogServiceListLanguagesProcedure,
+			connect.WithSchema(catalogServiceMethods.ByName("ListLanguages")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // catalogServiceClient implements CatalogServiceClient.
 type catalogServiceClient struct {
 	listActivities *connect.Client[v1.ListActivitiesRequest, v1.ListActivitiesResponse]
+	listCities     *connect.Client[v1.ListCitiesRequest, v1.ListCitiesResponse]
+	listLanguages  *connect.Client[v1.ListLanguagesRequest, v1.ListLanguagesResponse]
 }
 
 // ListActivities calls issho.v1.CatalogService.ListActivities.
@@ -75,11 +101,27 @@ func (c *catalogServiceClient) ListActivities(ctx context.Context, req *connect.
 	return c.listActivities.CallUnary(ctx, req)
 }
 
+// ListCities calls issho.v1.CatalogService.ListCities.
+func (c *catalogServiceClient) ListCities(ctx context.Context, req *connect.Request[v1.ListCitiesRequest]) (*connect.Response[v1.ListCitiesResponse], error) {
+	return c.listCities.CallUnary(ctx, req)
+}
+
+// ListLanguages calls issho.v1.CatalogService.ListLanguages.
+func (c *catalogServiceClient) ListLanguages(ctx context.Context, req *connect.Request[v1.ListLanguagesRequest]) (*connect.Response[v1.ListLanguagesResponse], error) {
+	return c.listLanguages.CallUnary(ctx, req)
+}
+
 // CatalogServiceHandler is an implementation of the issho.v1.CatalogService service.
 type CatalogServiceHandler interface {
 	// ListActivities returns the activities enabled in a city, with names in
 	// the requested primary and secondary languages.
 	ListActivities(context.Context, *connect.Request[v1.ListActivitiesRequest]) (*connect.Response[v1.ListActivitiesResponse], error)
+	// ListCities returns every city with its areas (the "home" choices), with
+	// names in the requested primary and secondary languages.
+	ListCities(context.Context, *connect.Request[v1.ListCitiesRequest]) (*connect.Response[v1.ListCitiesResponse], error)
+	// ListLanguages returns every language a person can choose to speak or
+	// read (ISO 639-1), each named in itself and in the requested language.
+	ListLanguages(context.Context, *connect.Request[v1.ListLanguagesRequest]) (*connect.Response[v1.ListLanguagesResponse], error)
 }
 
 // NewCatalogServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -95,10 +137,26 @@ func NewCatalogServiceHandler(svc CatalogServiceHandler, opts ...connect.Handler
 		connect.WithSchema(catalogServiceMethods.ByName("ListActivities")),
 		connect.WithHandlerOptions(opts...),
 	)
+	catalogServiceListCitiesHandler := connect.NewUnaryHandler(
+		CatalogServiceListCitiesProcedure,
+		svc.ListCities,
+		connect.WithSchema(catalogServiceMethods.ByName("ListCities")),
+		connect.WithHandlerOptions(opts...),
+	)
+	catalogServiceListLanguagesHandler := connect.NewUnaryHandler(
+		CatalogServiceListLanguagesProcedure,
+		svc.ListLanguages,
+		connect.WithSchema(catalogServiceMethods.ByName("ListLanguages")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/issho.v1.CatalogService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case CatalogServiceListActivitiesProcedure:
 			catalogServiceListActivitiesHandler.ServeHTTP(w, r)
+		case CatalogServiceListCitiesProcedure:
+			catalogServiceListCitiesHandler.ServeHTTP(w, r)
+		case CatalogServiceListLanguagesProcedure:
+			catalogServiceListLanguagesHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -110,4 +168,12 @@ type UnimplementedCatalogServiceHandler struct{}
 
 func (UnimplementedCatalogServiceHandler) ListActivities(context.Context, *connect.Request[v1.ListActivitiesRequest]) (*connect.Response[v1.ListActivitiesResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.CatalogService.ListActivities is not implemented"))
+}
+
+func (UnimplementedCatalogServiceHandler) ListCities(context.Context, *connect.Request[v1.ListCitiesRequest]) (*connect.Response[v1.ListCitiesResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.CatalogService.ListCities is not implemented"))
+}
+
+func (UnimplementedCatalogServiceHandler) ListLanguages(context.Context, *connect.Request[v1.ListLanguagesRequest]) (*connect.Response[v1.ListLanguagesResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.CatalogService.ListLanguages is not implemented"))
 }

@@ -40,3 +40,16 @@ update app.activities set venue_categories = @venue_categories where id = @id;
 
 -- name: SetActivityBlocks :exec
 update app.activities set blocks = @blocks where id = @id;
+
+-- Moves preferences for retired activities to the one that replaces them.
+-- Someone who rated several of them keeps their strongest interest.
+-- name: MergeActivityPrefs :exec
+insert into app.user_activity_prefs (user_id, activity_id, weight)
+select user_id, @activity_id::text, max(weight)
+from app.user_activity_prefs
+where activity_id = any(@replaced::text[])
+group by user_id
+on conflict (user_id, activity_id) do update set weight = greatest(app.user_activity_prefs.weight, excluded.weight);
+
+-- name: DeleteActivities :exec
+delete from app.activities where id = any(@ids::text[]);

@@ -9,6 +9,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { AuthProvider, useAuth } from '@/features/auth/auth-provider';
+import { I18nProvider, useI18n } from '@/i18n/i18n-provider';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -25,10 +26,13 @@ export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-          <AnimatedSplashOverlay />
-          <RootNavigator />
-        </ThemeProvider>
+        {/* Inside AuthProvider: the languages come from the account. */}
+        <I18nProvider>
+          <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+            <AnimatedSplashOverlay />
+            <RootNavigator />
+          </ThemeProvider>
+        </I18nProvider>
       </AuthProvider>
     </QueryClientProvider>
   );
@@ -45,6 +49,7 @@ export default function RootLayout() {
  */
 function RootNavigator() {
   const { ready, session, onboarded, accountError, retryAccount, signOut } = useAuth();
+  const { t } = useI18n();
   if (!ready) return null; // the splash screen stays up while SecureStore is read
 
   // Signed in, but the API hasn't told us yet whether the user is onboarded.
@@ -53,12 +58,12 @@ function RootNavigator() {
       <ThemedView style={styles.center}>
         {accountError ? (
           <>
-            <ThemedText>Couldn&apos;t reach Issho. Check your connection.</ThemedText>
+            <ThemedText>{t('error.network')}</ThemedText>
             <Pressable onPress={retryAccount}>
-              <ThemedText type="link">Try again</ThemedText>
+              <ThemedText type="link">{t('common.retry')}</ThemedText>
             </Pressable>
             <Pressable onPress={signOut}>
-              <ThemedText type="link">Sign out</ThemedText>
+              <ThemedText type="link">{t('account.signOut')}</ThemedText>
             </Pressable>
           </>
         ) : (
@@ -78,6 +83,7 @@ function RootNavigator() {
       </Stack.Protected>
       <Stack.Protected guard={!!session && onboarded === true}>
         <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="profile-edit/[step]" />
       </Stack.Protected>
     </Stack>
   );

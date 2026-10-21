@@ -4,21 +4,21 @@ Seed data that makes Issho location-agnostic. Code never hard-codes a city, so a
 
 | File | Contents |
 |---|---|
-| `activities.json` | The **global activity catalogue** (230 activities in 12 categories) |
+| `activities.json` | The **global activity catalogue** (66 activities in 8 categories; broad on purpose, see below) |
 | `venue-categories.json` | **Venue categories** (48): our kinds of place, mapped to Google place types |
 | `citypacks/<city>.json` | One **city pack** per city: `tokyo.json` (launch city) and `austin.json` (a **synthetic test pack**: a real car-based city that proves a second city needs no code changes; not a launch city) |
 
 Load with `make seed` (everything) or `cd backend && go run ./cmd/tool seed ../data/citypacks/<city>.json`.
 
-**Validation:** `go test ./internal/cities/` (part of `make test` and CI) checks every file here: required fields, ranges, duplicate ids, references between files, and that every Google type is a valid Places API (New) type. Seeding validates too. Seeding runs in a transaction and is idempotent (upserts). **Removing** an entry from the JSON does not delete it from the database; disable it with an override or write a migration instead.
+**Validation:** `go test ./internal/cities/` (part of `make test` and CI) checks every file here: required fields, ranges, duplicate ids, references between files, and that every Google type is a valid Places API (New) type. Seeding validates too. Seeding runs in a transaction and is idempotent (upserts). **Removing** an entry from the JSON does not delete it from the database; disable it with an override, or merge it into another activity with `replaces` (below).
 
 ## Activity schema (`activities.json`)
 
 ```json
 {
-  "id": "photo-walk",                       // stable slug; referenced by user prefs. Never rename.
-  "name": { "en": "Photo walk" },          // English only; other languages are translated on demand
-  "category": "outdoors",                   // tile-grid grouping
+  "id": "hike",                             // stable slug; referenced by user prefs. Never rename; merge instead (replaces)
+  "name": { "en": "Hiking and nature walks" }, // English only; other languages are translated on demand
+  "category": "outdoors",                   // tile-grid grouping (one of the 8 below)
   "indoor": false,
   "energy": 2,                              // 1 calm … 3 active
   "cost_level": 0,                          // 0 free … 3 expensive
@@ -27,13 +27,18 @@ Load with `make seed` (everything) or `cd backend && go run ./cmd/tool seed ../d
   "min_group_size": 3,                      // at least 2
   "max_group_size": 8,
   "venue_categories": [],                   // where it happens (ids from venue-categories.json); [] = meeting point only
-  "blocks": ["morning", "afternoon"]        // optional: parts of the day it suits (morning, afternoon, evening); omitted = any
+  "blocks": ["morning", "afternoon"],       // optional: parts of the day it suits (morning, afternoon, evening); omitted = any
+  "replaces": ["waterfall-hike", "birdwatching"] // optional: retired activity ids merged into this one
 }
 ```
 
 Set `blocks` only for activities tied to a time of day: bars and dinners in the evening, outdoor and museum activities in daylight, brunch in the morning. Matching uses it because venue opening hours can't be stored (Google Maps terms).
 
-`category` groups the onboarding tile grid: `outdoors`, `sports`, `food`, `wellness`, `culture`, `games`, `creative`, `learning`, `shopping`, `seasonal`, `community`, `nightlife`. Activities that only make sense in some cities (e.g. `rakugo`, `hanami`) stay in the global catalogue and are disabled in other cities' packs.
+`category` groups the onboarding tile grid, in this order: `outdoors`, `sports`, `wellness`, `food` (and drink), `culture`, `games`, `creative`, `learning` (and volunteering). The list is `cities.Categories`; the app needs a `category.<id>` label in `apps/mobile/src/i18n/en.json` for each (a test checks both ways). Activities that only make sense in some cities (e.g. `temple-shrine`, `japanese-arts`) stay in the global catalogue and are disabled in other cities' packs.
+
+**Keep activities broad.** Onboarding shows every activity as a tile, and every tap is a decision; 230 narrow activities (ten kinds of walk, nine kinds of volunteering) made it a chore. Broad activities also pool interest: matching suggests plans per activity, so "Hiking and nature walks" gathers people who'd otherwise be split across waterfall hikes and birdwatching. The specific flavour belongs to the plan (its description, M6), not the catalogue. Before adding an activity, check whether it's a variant of an existing one; examples in a name ("Craft workshop (knitting, candles, woodwork …)") help people recognise what's covered. Don't merge activities people choose between, though: someone who plays tennis doesn't necessarily want basketball, so sports are one activity each (with close variants such as beach volleyball folded in). And an activity must be something people do, not a way of feeling about it: "Try a new sport" was removed because "open to try" on a specific sport already says that.
+
+**Merging activities:** list the retired ids in the surviving activity's `replaces` and delete their entries. Seeding (in one transaction) moves each person's preferences to the surviving activity, keeping their strongest interest, then deletes the retired activities; their city overrides go with them, so update the packs too. A replaced id can't still be an activity or be replaced twice (validated). Keep `replaces` entries until every environment has been seeded.
 
 ## Venue category schema (`venue-categories.json`)
 
@@ -62,7 +67,7 @@ Matching is on the primary type, so prefer specific types (`flea_market`, `dance
     { "id": "tokyo-kichijoji", "name": { "en": "Kichijoji", "ja": "吉祥寺" }, "lat": 35.7030, "lng": 139.5798 }
   ],
   "activity_overrides": [
-    { "activity_id": "hanami", "months": [3, 4] },              // seasonal
+    { "activity_id": "seasonal-viewing", "months": [3, 4] },    // seasonal
     { "activity_id": "beach-day", "disabled": true },           // hide in this city
     { "activity_id": "sento", "name": { "en": "Public bath" } } // local name
   ]

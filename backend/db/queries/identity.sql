@@ -7,8 +7,9 @@ values ($1, $2)
 on conflict (id) do update set email = coalesce(excluded.email, app.users.email)
 returning id, email, verified_at, deleted_at, created_at;
 
--- name: HasProfile :one
-select exists (select 1 from app.profiles where user_id = $1);
+-- No row = not onboarded yet.
+-- name: GetDisplayLanguages :one
+select primary_language, secondary_language from app.profiles where user_id = $1;
 
 -- Explicit delete for databases without the auth.users foreign key (CI, plain
 -- Postgres). On Supabase the row is usually already gone via the cascade.

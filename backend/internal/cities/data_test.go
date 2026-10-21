@@ -2,6 +2,8 @@ package cities
 
 import (
 	"path/filepath"
+	"slices"
+	"strings"
 	"testing"
 
 	"github.com/shrujancheruku/issho/backend/internal/maps/google"
@@ -83,5 +85,38 @@ func TestValidatePackRejects(t *testing.T) {
 		if err := ValidatePack(p, map[string]bool{"hike": true}); err == nil {
 			t.Errorf("%s: expected an error", name)
 		}
+	}
+}
+
+// TestCategoryLabels keeps the catalogue's categories and the app's labels in
+// step: the onboarding grid shows "category.<id>" from the app's UI text
+// (copied into internal/uistrings by make gen).
+func TestCategoryLabels(t *testing.T) {
+	var ui map[string]string
+	if err := readJSON("../uistrings/en.json", &ui); err != nil {
+		t.Fatal(err)
+	}
+	for _, c := range Categories {
+		if ui["category."+c] == "" {
+			t.Errorf("no app label category.%s", c)
+		}
+	}
+	for k := range ui {
+		if c, ok := strings.CutPrefix(k, "category."); ok && !slices.Contains(Categories, c) {
+			t.Errorf("app label %s has no category", k)
+		}
+	}
+}
+
+func TestValidateCatalogReplaces(t *testing.T) {
+	acts := []Activity{
+		{ID: "hike", Name: Text{"en": "Hike"}, Category: "outdoors", Energy: 2, MinGroupSize: 2, MaxGroupSize: 8, Replaces: []string{"walk"}},
+		{ID: "walk", Name: Text{"en": "Walk"}, Category: "outdoors", Energy: 1, MinGroupSize: 2, MaxGroupSize: 8},
+		{ID: "run", Name: Text{"en": "Run"}, Category: "sports", Energy: 3, MinGroupSize: 2, MaxGroupSize: 8, Replaces: []string{"jog"}},
+		{ID: "sprint", Name: Text{"en": "Sprint"}, Category: "sports", Energy: 3, MinGroupSize: 2, MaxGroupSize: 8, Replaces: []string{"jog"}},
+	}
+	err := ValidateCatalog(nil, acts)
+	if err == nil || !strings.Contains(err.Error(), `"walk", which is still an activity`) || !strings.Contains(err.Error(), `"jog" is already replaced by run`) {
+		t.Errorf("got %v", err)
 	}
 }

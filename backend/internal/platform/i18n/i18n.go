@@ -33,6 +33,9 @@ tn to tr ts tt tw ty ug uk ur uz ve vi vo wa wo xh yi yo za zh zu`)
 // can read.
 func Valid(lang string) bool { return slices.Contains(iso6391, lang) }
 
+// Codes returns every valid language code, sorted.
+func Codes() []string { return slices.Clone(iso6391) }
+
 // ForEvent picks the two languages to show a user for an event.
 //
 //   - Primary is the event's language: what they'll hear when they get there.
