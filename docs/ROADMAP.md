@@ -2,7 +2,7 @@
 
 > **This is the source of truth for what's planned, built and pending.** CI (`roadmap` job) fails any push or PR that changes code without updating this file. When you change code, update the status lines below. If the change made a decision, add it to the Decision log.
 
-**Last updated:** 2026-10-21 · **Version:** 0.3.0 (pre-release; [releases](https://github.com/shrujancheruku/issho/releases)) · **Current milestone:** M4 Matching engine (engine done; wiring to the DB lands with the M6 worker)
+**Last updated:** 2026-10-21 · **Version:** 0.3.0 (pre-release; [releases](https://github.com/shrujancheruku/issho/releases)) · **Current milestone:** M5 Onboarding & profile (next; M4 done, its DB wiring lands with the M6 worker)
 
 Legend: ✅ done · 🟡 in progress / partial · ⬜ not started · ⏸ deferred (post-MVP)
 
@@ -97,7 +97,7 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
 - ✅ **On-demand translation** (`internal/translate`): English is the only language that must be stored. Other languages come from stored text (local names, prefilled events), then the `app.translations` cache (migration 00004), then Google Cloud Translation, cached for everyone. Requests wait up to 8 s, and slower translations finish in the background. Concurrent requests share one call; failures aren't cached; `Prefill` for events. Off without `GOOGLE_TRANSLATE_API_KEY`. Cache path and fallbacks verified end to end; **Live translation verified** (local DB): 230 names into ja/es/fr/ko; cold request 0.65 s for two languages, cached 0.01 s. Short labels without context translated poorly until the English names were clarified (below).
   - the catalogue and overrides are English-only; city packs keep only real local names (東京, 吉祥寺)
 
-### M4 · Matching engine (weeks 3–5): 🟡 engine done
+### M4 · Matching engine (weeks 3–5): ✅ done
 **Plan first, time second** (owner's decision, 2026-10-21): plans are suggested without a date; people sign up and say which times suit them; once a plan's signups can make a good group, it's scheduled and groups are formed. Group size stays open-ended until then.
 
 - ✅ `internal/matching` as a pure package (no I/O, no clock, no randomness; deterministic output) with table-driven tests (90% coverage). See the [backend README](../backend/README.md#matching).
@@ -122,7 +122,7 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
   - Tokyo: 50 plans, 68% of people signed up, 30 plans ready + 20 at the deadline, 72% of signups invited, 78 groups (mostly 4–6), 7 pairs, 0 rule violations
   - Austin: 50 plans, 58% signed up, 26 ready + 22 at the deadline (2 never), 73% invited, 66 groups, 9 pairs, 0 violations
   - one round only: in the real flow, people waiting roll over and plans keep collecting
-- ⬜ Apply migration 00005 (`activities.blocks`) to the hosted `issho-dev` project and re-seed the catalogue. Verified locally (up, down, up, seed).
+- ✅ Migration 00005 (`activities.blocks`) applied to the hosted `issho-dev` project and the catalogue re-seeded (2026-10-21). Verified: goose version 5, 99 of 230 activities restricted, `anon` still has no access to `app`. Locally: up, down, up, seed.
 - ➡ Storing plans and signups, loading the engine's input and running suggest/schedule are the M6 worker's job.
 
 ### M5 · Onboarding & profile (weeks 5–6): ⬜
