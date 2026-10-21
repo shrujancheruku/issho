@@ -1,5 +1,5 @@
-import { Gender, GroupSize, Interest } from '@issho/api-client';
-import { useMemo, useState, type ReactNode } from 'react';
+import { Gender, GroupSize } from '@issho/api-client';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Switch, TextInput, View } from 'react-native';
 
 import { Chip } from '@/components/chip';
@@ -27,6 +27,7 @@ import {
   type Draft,
   type Step,
 } from './draft';
+import { categoryOrder, interestLevels, interestStyles } from './interest';
 import { LanguagePicker } from './language-picker';
 
 export type StepProps = { draft: Draft; onChange: (d: Draft) => void };
@@ -325,12 +326,6 @@ function AvailabilityStep({ draft, onChange }: StepProps) {
   );
 }
 
-const interestLabels: Partial<Record<Interest, StringKey>> = {
-  [Interest.OPEN_TO_TRY]: 'interest.openToTry',
-  [Interest.LIKE]: 'interest.like',
-  [Interest.LOVE]: 'interest.love',
-};
-
 function ActivitiesStep({ draft, onChange }: StepProps) {
   const { t } = useI18n();
   const activities = useActivities(draft.cityId);
@@ -338,32 +333,32 @@ function ActivitiesStep({ draft, onChange }: StepProps) {
   const byCategory = useMemo(() => {
     const groups = new Map<string, NonNullable<typeof data>>();
     for (const a of data ?? []) groups.set(a.category, [...(groups.get(a.category) ?? []), a]);
-    return [...groups];
+    const rank = (c: string) => (categoryOrder.includes(c) ? categoryOrder.indexOf(c) : categoryOrder.length);
+    return [...groups].sort(([a], [b]) => rank(a) - rank(b));
   }, [data]);
   const picked = Object.keys(draft.activities).length;
 
   return (
     <>
-      <Section title={t('profile.activities')} hint={t('profile.activitiesHint', { count: MinActivities })}>
-        <ThemedText type="smallBold" style={{ color: picked >= MinActivities ? undefined : Brand.red }}>
-          {t('profile.activitiesPicked', { count: picked })}
-        </ThemedText>
-        <LoadState query={activities} />
-      </Section>
+      <HowToChoose example={data?.[0]?.name} />
+      <ThemedText type="smallBold" style={{ color: picked >= MinActivities ? undefined : Brand.red }}>
+        {t('interest.minimum', { count: MinActivities })} {t('profile.activitiesPicked', { count: picked })}
+      </ThemedText>
+      <LoadState query={activities} />
       {byCategory.map(([category, items]) => (
         <Section key={category} title={categoryTitle(t, category)}>
           <Wrap>
             {items.map((a) => {
               const interest = draft.activities[a.id];
-              const labelKey = interest ? interestLabels[interest] : undefined;
+              const style = interest ? interestStyles[interest as keyof typeof interestStyles] : undefined;
               return (
                 <Chip
                   key={a.id}
                   label={a.name}
                   secondary={a.secondaryName}
-                  selected={!!interest}
-                  strength={interest === Interest.LOVE ? 3 : interest === Interest.LIKE ? 2 : 1}
-                  badge={labelKey ? t(labelKey) : undefined}
+                  selected={!!style}
+                  selectedColors={style}
+                  badge={style ? t(style.label) : undefined}
                   onPress={() => onChange(cycleInterest(draft, a.id))}
                 />
               );
@@ -372,6 +367,57 @@ function ActivitiesStep({ draft, onChange }: StepProps) {
         </Section>
       ))}
     </>
+  );
+}
+
+/**
+ * Explains the three taps before the grid, in the tiles' own colours, with an
+ * example tile that steps through the levels by itself so the idea is clear
+ * before anyone starts tapping.
+ */
+function HowToChoose({ example }: { example?: string }) {
+  const { t } = useI18n();
+  const theme = useTheme();
+  const [demo, setDemo] = useState(0); // 0 = not selected, then each level
+  useEffect(() => {
+    const id = setInterval(() => setDemo((d) => (d + 1) % (interestLevels.length + 1)), 1200);
+    return () => clearInterval(id);
+  }, []);
+  const demoStyle = demo ? interestStyles[interestLevels[demo - 1]] : undefined;
+
+  return (
+    <View style={[styles.howTo, { borderColor: Brand.gold, backgroundColor: theme.backgroundElement }]}>
+      <ThemedText type="smallBold">{t('interest.howTitle')}</ThemedText>
+      {interestLevels.map((level) => {
+        const st = interestStyles[level];
+        return (
+          <View key={level} style={styles.legendRow}>
+            <ThemedText style={styles.legendTap}>{t(st.tap)}</ThemedText>
+            <View style={[styles.pill, { backgroundColor: st.background }]}>
+              <ThemedText type="smallBold" style={{ color: st.text }}>
+                {t(st.label)}
+              </ThemedText>
+            </View>
+          </View>
+        );
+      })}
+      <ThemedText type="small" themeColor="textSecondary">
+        {t('interest.tapClear')}
+      </ThemedText>
+      {!!example && (
+        <View style={styles.legendRow} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+          <ThemedText type="small" themeColor="textSecondary" style={styles.legendTap}>
+            {t('interest.example')}
+          </ThemedText>
+          <Chip
+            label={example}
+            selected={!!demoStyle}
+            selectedColors={demoStyle}
+            badge={demoStyle ? t(demoStyle.label) : undefined}
+          />
+        </View>
+      )}
+    </View>
   );
 }
 
@@ -462,4 +508,8 @@ const styles = StyleSheet.create({
   cell: { flex: 1, height: 40, borderRadius: 8 },
   rule: { flexDirection: 'row', gap: Spacing.two },
   bullet: { width: 12 },
+  howTo: { borderWidth: 2, borderRadius: 16, padding: Spacing.three, gap: Spacing.two },
+  legendRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
+  legendTap: { width: 120 },
+  pill: { borderRadius: 999, paddingVertical: Spacing.one, paddingHorizontal: Spacing.three },
 });
