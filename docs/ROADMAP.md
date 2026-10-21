@@ -275,6 +275,7 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
 | 2026-10-21 | **Age: born in or before (this year − 18)** | Only the birth year is asked, so someone turning 18 later this year passes. Identity verification (Stripe Identity, M9) is the real check. |
 | 2026-10-21 | **At least 3 activities** and **a fluent spoken language** to finish onboarding | The feed needs preferences to rank by, and matching pools people by a fluent language. |
 | 2026-10-21 | The **code-of-conduct version** is stored with the profile; the rules text is UI copy | Bumping `ConductVersion` (server and app) makes everyone accept again; settings never accepts on the person's behalf. |
+| 2026-10-21 | The code of conduct asks for **platonic intentions and respect for boundaries**; it doesn't ban romantic interest | Owner's decision: feelings can't be prohibited, and the rule should be one people can keep. Unwanted pursuit is still reportable ("here for dating"). Worded without idioms so machine translation keeps the meaning. |
 | 2026-10-21 | Profile **settings live in a Profile tab**, replacing the Expo template's Explore tab | Somewhere to edit the profile and to reach sign-out and deletion, which used to be on the onboarding placeholder. |
 | 2026-10-21 | ~~One proposal per person per matching run~~ | Superseded the same day by signups: people can sign up for several plans; an event they're going to blocks its occasion in their other signups, so they're never double-booked. |
 
