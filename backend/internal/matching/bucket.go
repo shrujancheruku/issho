@@ -32,7 +32,7 @@ func (b *Bucket) Bilingual() bool { return b.Secondary != "" }
 // buckets; group assembly places each person at most once. Fixed area
 // clusters would split neighbours who live either side of a boundary.
 //
-// Buckets with fewer than cfg.MinBucketSize people are dropped. The result
+// Buckets with fewer than cfg.MinGroupSize people are dropped. The result
 // is sorted by slot, area, then languages.
 func Buckets(users []User, areas []AreaID, travel TravelTimes, cfg Config) []Bucket {
 	type key struct {
@@ -83,7 +83,7 @@ func Buckets(users []User, areas []AreaID, travel TravelTimes, cfg Config) []Buc
 
 	var out []Bucket
 	for k, members := range pools {
-		if len(members) < cfg.MinBucketSize {
+		if len(members) < cfg.MinGroupSize {
 			continue
 		}
 		b := Bucket{Area: k.area, Slot: k.slot, Primary: k.lang, Secondary: k.second, Members: members}

@@ -26,8 +26,9 @@ type Plan struct {
 //
 // An activity is feasible when it suits the slot's part of the day, the area
 // has a venue for it (or it needs only a meeting point), and enough members
-// are interested to reach its minimum group size (never below
-// cfg.MinGroupSize). Demand adds up members' interest (cfg.PrefValues),
+// are interested to form a group (cfg.MinGroupSize; the activity's own
+// minimum is a preference, applied when groups are scored). Demand adds up
+// members' interest (cfg.PrefValues),
 // scaled down for those whose budget is below its cost. Feasibility scales
 // the score down when the area has fewer than cfg.VenueChoice venues for it.
 //
@@ -65,7 +66,7 @@ func Plans(b Bucket, users map[UserID]*User, activities []Activity, venues Venue
 				s.interested++
 			}
 		}
-		if s.interested < a.minSize(cfg) {
+		if s.interested < cfg.MinGroupSize {
 			continue
 		}
 		mains = append(mains, s)

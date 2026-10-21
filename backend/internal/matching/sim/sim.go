@@ -237,6 +237,7 @@ type Stats struct {
 	Users, Proposals, Invited int
 	Quorum                    int               // the proposals' quorums added up
 	Bilingual                 int               // proposals with two languages
+	LoneGender                int               // proposals with an only woman or only man (a preference, not a rule)
 	Sizes                     map[int]int       // people invited → proposals
 	PlacedBy                  map[string][2]int // "gender:woman", "lang:ja" → invited, total
 	TopActivities             []string
@@ -271,6 +272,13 @@ func Measure(in matching.Input, ps []matching.Proposal, cfg matching.Config) Sta
 		acts[p.Plan.Activity]++
 		if p.Secondary != "" {
 			st.Bilingual++
+		}
+		counts := map[matching.Gender]int{}
+		for _, id := range p.Invited {
+			counts[byID[id].Gender]++
+		}
+		if counts[matching.Woman] == 1 || counts[matching.Man] == 1 {
+			st.LoneGender++
 		}
 		var group []*matching.User
 		for _, id := range p.Invited {
@@ -325,6 +333,7 @@ func (s Stats) String() string {
 		sizes = append(sizes, fmt.Sprintf("%d×%d", n, s.Sizes[n]))
 	}
 	fmt.Fprintf(&b, "invited per proposal: %s\n", strings.Join(sizes, " "))
+	fmt.Fprintf(&b, "with an only woman or only man: %d\n", s.LoneGender)
 	fmt.Fprintf(&b, "top activities: %s\n", strings.Join(s.TopActivities, ", "))
 	keys := make([]string, 0, len(s.PlacedBy))
 	for k := range s.PlacedBy {

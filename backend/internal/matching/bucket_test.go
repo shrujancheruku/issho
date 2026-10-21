@@ -72,7 +72,10 @@ func TestBuckets(t *testing.T) {
 				user("u2", "a", 30, fluent("ja"), sunPM),
 				user("u3", "c", 30, fluent("ja"), sunPM), // c is 40 min away
 			},
-			want: nil,
+			want: []string{
+				"Sun afternoon@a ja [u1 u2]",
+				"Sun afternoon@b ja [u1 u2]",
+			},
 		},
 		{
 			name: "only overlapping slots",
@@ -81,7 +84,7 @@ func TestBuckets(t *testing.T) {
 				user("u2", "a", 0, fluent("ja"), sunPM),
 				user("u3", "a", 0, fluent("ja"), sunPM, satAM),
 			},
-			want: []string{"Sun afternoon@a ja [u1 u2 u3]"},
+			want: []string{"Sun afternoon@a ja [u1 u2 u3]", "Sat morning@a ja [u1 u3]"},
 		},
 		{
 			name: "a shared fluent language, any language; learners don't count",
@@ -91,7 +94,7 @@ func TestBuckets(t *testing.T) {
 				user("u3", "a", 0, []Language{{Code: "es", Fluent: true}, learning("ja", 3)}, sunPM),
 				user("u4", "a", 0, fluent("ja"), sunPM),
 			},
-			want: []string{"Sun afternoon@a es [u1 u2 u3]"},
+			want: []string{"Sun afternoon@a es [u1 u2 u3]", "Sun afternoon@a ja [u1 u4]"}, // u3 only learns ja
 		},
 		{
 			name: "no route: unreachable even with a generous limit",
@@ -100,7 +103,11 @@ func TestBuckets(t *testing.T) {
 				user("u2", "a", 180, fluent("ja"), sunPM),
 				user("u3", "z", 180, fluent("ja"), sunPM), // z isn't in the matrix
 			},
-			want: nil, // u3 is in no bucket, leaving u1 and u2: too few anywhere
+			want: []string{ // u3 is in no bucket
+				"Sun afternoon@a ja [u1 u2]",
+				"Sun afternoon@b ja [u1 u2]",
+				"Sun afternoon@c ja [u1 u2]",
+			},
 		},
 		{
 			name: "sorted by day, then chronological block",
@@ -140,6 +147,7 @@ func TestBucketsLanguagePairs(t *testing.T) {
 	// Anyone fluent in either language joins; ja has more speakers (4 vs 2),
 	// so it's the primary language even though the pair lists en first.
 	want := []string{
+		"Sun afternoon@a en [bi en1]",
 		"Sun afternoon@a ja [bi ja1 ja2 ja3]",
 		"Sun afternoon@a ja+en [bi en1 ja1 ja2 ja3]",
 	}

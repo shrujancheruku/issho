@@ -125,9 +125,12 @@ type Activity struct {
 	Blocks          []Block      // parts of the day it suits; empty = any
 }
 
-// minSize is the activity's minimum group size, but never below
-// cfg.MinGroupSize: two people would be a 1:1 meeting, which Issho avoids.
-func (a *Activity) minSize(cfg Config) int { return max(a.MinSize, cfg.MinGroupSize) }
+// preferredMin is the size a group should reach: the activity's own minimum
+// or cfg.PreferredMinSize, whichever is larger. Smaller groups are allowed
+// (down to cfg.MinGroupSize) but score lower.
+func (a *Activity) preferredMin(cfg Config) int {
+	return max(a.MinSize, cfg.PreferredMinSize, cfg.MinGroupSize)
+}
 
 func (a *Activity) suits(b Block) bool { return len(a.Blocks) == 0 || slices.Contains(a.Blocks, b) }
 

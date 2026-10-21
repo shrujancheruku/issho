@@ -121,10 +121,12 @@ go run ./cmd/tool discover-venues -categories cafe,park tokyo
 
 1. **Buckets:** every area is a candidate meeting place. A person joins each area they can reach within `max_travel_min`, for each weekly slot they're free, in each language they speak fluently. Two-language buckets exist only for the city's `language_pairs`, and anyone fluent in either language joins.
 2. **Plans:** activities that suit the slot's part of the day (`activities.blocks`), have a venue in the area (or need only a meeting point), and interest enough members. Ranked by demand (love 2, like 1, open to try 0.5; × 0.3 if over budget) × venue choice. A non-conversational activity gets a food follow-up.
-3. **Assembly:** best candidates first. Each is filled greedily, then a local search replaces and swaps people while the total score rises. Score: interest, size fit, one known pair, newcomers mixed in (not a majority), reliability.
-4. **Invitations:** each group invites its target size plus 2 (`extra_invites`). `Quorum` is the target (lower if fewer could be invited, never below 3).
+3. **Assembly:** best candidates first. Each is filled greedily, then a local search replaces and swaps people, and spreads groups below the preferred size into other groups, while the total score rises. Score: interest, size fit, reaching the preferred minimum, gender balance, one known pair, newcomers mixed in (not a majority), reliability.
+4. **Invitations:** each group invites its target size plus 2 (`extra_invites`). `Quorum` (confirm straight away) is the target, lower if fewer could be invited; `MinAttendance` (go ahead at the deadline) is 2, so a decline in a group of 3 doesn't cancel it.
 
-Hard rules (`Violation`): no blocked pairs; same-gender-only is respected; nobody is the only woman or the only man; at most 2 people who already know each other; groups of at least 3 (`min_group_size`). Each person is invited to at most one proposal per run.
+Hard rules (`Violation`): no blocked pairs; same-gender-only is respected; at most 2 people who already know each other; at least 2 people (`min_group_size`). Removing people never breaks them, so they still hold after declines. Each person is invited to at most one proposal per run.
+
+Preferences (in the score, so the engine avoids them when it can but would rather propose than leave someone out): groups of at least 3 or the activity's own minimum (`preferred_min_size`, weight `min_size`); nobody the only woman or only man (weight `balance`; nonbinary and unspecified exempt). The only language rule is the event's: everyone speaks its primary or secondary language.
 
 Settings are in `matching.Config` (`DefaultConfig`). A city overrides any of them with JSON in `app.cities.matching_weights`, e.g. `{"language_pairs": [["ja", "en"]], "weights": {"mutual": 2}}`. Unknown keys are rejected.
 

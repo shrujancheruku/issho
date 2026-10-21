@@ -69,10 +69,16 @@ func TestPlans(t *testing.T) {
 			want:  []string{"walk", "cafe-hop"},
 		},
 		{
-			name:  "not enough interested for the minimum size",
-			users: slices.Concat(fan("x", 3, 3, map[ActivityID]int{"walk": Love}), fan("y", 3, 3, map[ActivityID]int{"futsal": Love})),
+			name:  "below an activity's minimum is fine; one person isn't a group",
+			users: slices.Concat(fan("x", 3, 3, map[ActivityID]int{"walk": Love}), fan("y", 1, 3, map[ActivityID]int{"futsal": Love})),
 			acts:  []Activity{act("walk", 3, 8), act("futsal", 4, 10)},
 			want:  []string{"walk"},
+		},
+		{
+			name:  "a pair can make a plan below the activity's minimum",
+			users: fan("x", 2, 3, map[ActivityID]int{"futsal": Love}),
+			acts:  []Activity{act("futsal", 4, 10)},
+			want:  []string{"futsal"},
 		},
 		{
 			name:  "no venue in the area, or the wrong part of the day",

@@ -11,12 +11,15 @@ import (
 // Config holds the engine's tunable settings. A city overrides any subset of
 // them with JSON in app.cities.matching_weights; see ParseConfig.
 type Config struct {
-	// MinBucketSize drops buckets with fewer people than this: they can't
-	// produce even the smallest group.
-	MinBucketSize int `json:"min_bucket_size"`
-	// MinGroupSize raises activities' own minimums: two people would be a
-	// 1:1 meeting, which the platonic rules avoid.
+	// MinGroupSize is the only hard size limit: below it there's no group,
+	// so smaller buckets are dropped too.
+	// Everything above it is a preference (PreferredMinSize, the activity's
+	// own minimum, SizeTargets).
 	MinGroupSize int `json:"min_group_size"`
+	// PreferredMinSize is the smallest size groups aim for; smaller groups
+	// (a pair is close to a 1:1 meeting) are allowed but score lower. An
+	// activity's own min_group_size raises it.
+	PreferredMinSize int `json:"preferred_min_size"`
 	// LanguagePairs lists the two-language events the city runs, such as
 	// [["ja", "en"]] in Tokyo. Anyone fluent in either language can join;
 	// language learning isn't used yet. Empty = single-language events only.
@@ -55,8 +58,8 @@ type Config struct {
 	SearchPasses int `json:"search_passes"`
 
 	// ExtraInvites is how many people are invited beyond the group's target
-	// size, since some will decline. The event confirms at the target
-	// (Proposal.Quorum).
+	// size, since some will decline. The event confirms early at the target
+	// (Proposal.Quorum), or at the deadline with at least MinGroupSize.
 	ExtraInvites int `json:"extra_invites"`
 }
 
@@ -64,6 +67,8 @@ type Config struct {
 type Weights struct {
 	Interest    float64 `json:"interest"`    // how much members want the activity
 	SizeFit     float64 `json:"size_fit"`    // how close the size is to what members prefer
+	MinSize     float64 `json:"min_size"`    // expected attendance reaches the preferred minimum
+	Balance     float64 `json:"balance"`     // nobody is the only woman or the only man
 	Mutual      float64 `json:"mutual"`      // a pair who picked each other before
 	Newcomers   float64 `json:"newcomers"`   // newcomers mixed in, but not a majority
 	Reliability float64 `json:"reliability"` // members who turn up
@@ -72,8 +77,8 @@ type Weights struct {
 // DefaultConfig returns the settings used when a city doesn't override them.
 func DefaultConfig() Config {
 	return Config{
-		MinBucketSize:      3,
-		MinGroupSize:       3,
+		MinGroupSize:       2,
+		PreferredMinSize:   3,
 		BilingualWeight:    0.5,
 		PrefValues:         [3]float64{0.5, 1, 2},
 		OverBudget:         0.3,
@@ -83,7 +88,7 @@ func DefaultConfig() Config {
 		FollowUpWeight:     0.3,
 		SizeTargets:        map[SizePref]int{Small: 4, Medium: 6, Large: 8},
 		MaxKnown:           2,
-		Weights:            Weights{Interest: 3, SizeFit: 1, Mutual: 1, Newcomers: 1, Reliability: 1},
+		Weights:            Weights{Interest: 3, SizeFit: 1, MinSize: 1, Balance: 2, Mutual: 1, Newcomers: 1, Reliability: 1},
 		SearchPasses:       5,
 		ExtraInvites:       2,
 	}
@@ -109,8 +114,9 @@ func ParseConfig(raw []byte) (Config, error) {
 func (c Config) Validate() error {
 	var errs []error
 	bad := func(format string, a ...any) { errs = append(errs, fmt.Errorf(format, a...)) }
-	if c.MinBucketSize < 2 || c.MinGroupSize < 3 {
-		bad("min_bucket_size %d, min_group_size %d: must be at least 2 and 3", c.MinBucketSize, c.MinGroupSize)
+	if c.MinGroupSize < 2 || c.PreferredMinSize < c.MinGroupSize {
+		bad("min_group_size %d: must be at least 2; preferred_min_size %d: at least min_group_size",
+			c.MinGroupSize, c.PreferredMinSize)
 	}
 	for _, p := range c.LanguagePairs {
 		if p[0] == "" || p[1] == "" || p[0] == p[1] {
@@ -135,7 +141,7 @@ func (c Config) Validate() error {
 		}
 	}
 	w := c.Weights
-	if min(w.Interest, w.SizeFit, w.Mutual, w.Newcomers, w.Reliability) < 0 {
+	if min(w.Interest, w.SizeFit, w.MinSize, w.Balance, w.Mutual, w.Newcomers, w.Reliability) < 0 {
 		bad("weights must be non-negative")
 	}
 	return errors.Join(errs...)

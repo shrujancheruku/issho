@@ -58,10 +58,8 @@ func TestViolation(t *testing.T) {
 		members []*User
 		want    string // substring of the error; "" = valid
 	}{
-		{"mixed with two of each", []*User{&w1, &w2, &m1, &nb}, "only man"},
-		{"two women, two men", []*User{&w1, &w2, &m1, &m3}, ""},
-		{"a lone nonbinary person is allowed", []*User{&w1, &w2, &nb}, ""},
-		{"the only woman", []*User{&w1, &m1, &m3}, "only woman"},
+		{"the only man is a preference, not a rule", []*User{&w1, &w2, &m1, &nb}, ""},
+		{"a pair is allowed", []*User{&w1, &m1}, ""},
 		{"blocked", []*User{&w1, &w3, &m2, &m3}, "blocked"},
 		{"same-gender only", []*User{&sgo, &w1, &m1, &m3}, "same-gender"},
 		{"same-gender only, all women", []*User{&sgo, &w1, &w2}, ""},
@@ -99,29 +97,49 @@ func TestRunGroupsAndRules(t *testing.T) {
 			},
 		},
 		{
-			name:      "fewer invites lower the quorum, not below the minimum",
+			name:      "fewer invites lower the quorum",
 			users:     people("u", 4, Unspecified),
 			proposals: 1,
 			check: func(t *testing.T, ps []Proposal) {
-				if len(ps[0].Invited) != 4 || ps[0].Quorum != 3 {
+				if len(ps[0].Invited) != 4 || ps[0].Quorum != 2 {
 					t.Errorf("got %d invited, quorum %d", len(ps[0].Invited), ps[0].Quorum)
 				}
 			},
 		},
 		{
-			name:      "a lone woman is not proposed into a group of men",
-			users:     slices.Concat(people("m", 5, Man), people("w", 1, Woman)),
+			name:      "a group of three survives a decline",
+			users:     people("u", 3, Unspecified),
 			proposals: 1,
 			check: func(t *testing.T, ps []Proposal) {
-				if slices.Contains(ps[0].Invited, "wa") {
-					t.Errorf("lone woman placed: %v", ps[0].Invited)
+				if ps[0].Quorum != 2 || ps[0].MinAttendance != 2 {
+					t.Errorf("quorum %d, min attendance %d", ps[0].Quorum, ps[0].MinAttendance)
 				}
 			},
 		},
 		{
-			name:      "too few people once the rules apply",
-			users:     slices.Concat(people("m", 1, Man), people("w", 2, Woman)),
-			proposals: 0,
+			name:      "two people still get a proposal when nobody else is around",
+			users:     people("u", 2, Unspecified),
+			proposals: 1,
+		},
+		{
+			name:      "a lone woman is still invited rather than left out",
+			users:     slices.Concat(people("m", 5, Man), people("w", 1, Woman)),
+			proposals: 1,
+			check: func(t *testing.T, ps []Proposal) {
+				if !slices.Contains(ps[0].Invited, "wa") {
+					t.Errorf("woman left out: %v", ps[0].Invited)
+				}
+			},
+		},
+		{
+			name:      "same-gender only is still a hard rule",
+			users:     slices.Concat(people("m", 3, Man), sameGenderOnly(people("w", 1, Woman))),
+			proposals: 1,
+			check: func(t *testing.T, ps []Proposal) {
+				if slices.Contains(ps[0].Invited, "wa") {
+					t.Errorf("same-gender-only woman grouped with men: %v", ps[0].Invited)
+				}
+			},
 		},
 		{
 			name:  "blocked pairs end up apart",
@@ -162,6 +180,28 @@ func TestRunGroupsAndRules(t *testing.T) {
 	}
 }
 
+func sameGenderOnly(us []User) []User {
+	for i := range us {
+		us[i].SameGenderOnly = true
+	}
+	return us
+}
+
+// The preferences count in the score: balance and the preferred minimum.
+func TestScorePreferences(t *testing.T) {
+	cfg := DefaultConfig()
+	w1, w2, m1, m2 := person("w1", Woman), person("w2", Woman), person("m1", Man), person("m2", Man)
+	w3 := person("w3", Woman)
+	walk := act("walk", 3, 8)
+	g := &group{act: &walk, target: 4}
+	if lone, balanced := g.score([]*User{&w1, &m1, &m2}, Relations{}, cfg), g.score([]*User{&w1, &w2, &m1, &m2}, Relations{}, cfg); lone >= balanced {
+		t.Errorf("lone woman %.2f should score below balanced %.2f", lone, balanced)
+	}
+	if pair, trio := g.score([]*User{&w1, &w2}, Relations{}, cfg), g.score([]*User{&w1, &w2, &w3}, Relations{}, cfg); pair >= trio {
+		t.Errorf("pair %.2f should score below trio %.2f", pair, trio)
+	}
+}
+
 func TestRunPrefersOneKnownPair(t *testing.T) {
 	cfg := DefaultConfig()
 	cfg.ExtraInvites = 0
@@ -194,7 +234,7 @@ func TestParseConfig(t *testing.T) {
 	if len(cfg.LanguagePairs) != 1 {
 		t.Errorf("language pairs: %v", cfg.LanguagePairs)
 	}
-	for _, raw := range []string{`{"wieghts": {}}`, `{"min_bucket_size": 1}`, `{"min_group_size": 2}`, `{"language_pairs": [["ja", "ja"]]}`} {
+	for _, raw := range []string{`{"wieghts": {}}`, `{"min_group_size": 1}`, `{"language_pairs": [["ja", "ja"]]}`} {
 		if _, err := ParseConfig([]byte(raw)); err == nil {
 			t.Errorf("%s: accepted", raw)
 		}
