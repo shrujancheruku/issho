@@ -11,7 +11,7 @@ include $(ENV_FILE)
 export
 endif
 
-.PHONY: setup secrets-scan docs gen gen-proto gen-sql lint test migrate-up migrate-status api seed matrix venues
+.PHONY: setup secrets-scan docs gen gen-proto gen-sql lint test migrate-up migrate-status api seed matrix venues sim
 
 # One-time setup after cloning: install JS deps and enable the secret-scanning pre-commit hook.
 setup:
@@ -66,3 +66,7 @@ matrix:
 
 venues:
 	cd backend && go run ./cmd/tool discover-venues $(ARGS) $(CITY)
+
+# Matching on synthetic users (no database or API keys): make sim [ARGS='-users 1000 -seed 2']
+sim:
+	cd backend && go run ./cmd/tool simulate $(ARGS) ../data/citypacks/*.json

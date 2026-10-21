@@ -21,6 +21,7 @@ type AppActivity struct {
 	MinGroupSize    int16
 	MaxGroupSize    int16
 	VenueCategories []string
+	Blocks          []string
 }
 
 type AppArea struct {

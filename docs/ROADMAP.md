@@ -2,7 +2,7 @@
 
 > **This is the source of truth for what's planned, built and pending.** CI (`roadmap` job) fails any push or PR that changes code without updating this file. When you change code, update the status lines below. If the change made a decision, add it to the Decision log.
 
-**Last updated:** 2026-10-21 · **Version:** 0.3.0 (pre-release; [releases](https://github.com/shrujancheruku/issho/releases)) · **Current milestone:** M4 Matching engine (in progress)
+**Last updated:** 2026-10-21 · **Version:** 0.3.0 (pre-release; [releases](https://github.com/shrujancheruku/issho/releases)) · **Current milestone:** M4 Matching engine (engine done; wiring to the DB lands with the M6 worker)
 
 Legend: ✅ done · 🟡 in progress / partial · ⬜ not started · ⏸ deferred (post-MVP)
 
@@ -97,19 +97,24 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
 - ✅ **On-demand translation** (`internal/translate`): English is the only language that must be stored. Other languages come from stored text (local names, prefilled events), then the `app.translations` cache (migration 00004), then Google Cloud Translation, cached for everyone. Requests wait up to 8 s, and slower translations finish in the background. Concurrent requests share one call; failures aren't cached; `Prefill` for events. Off without `GOOGLE_TRANSLATE_API_KEY`. Cache path and fallbacks verified end to end; **Live translation verified** (local DB): 230 names into ja/es/fr/ko; cold request 0.65 s for two languages, cached 0.01 s. Short labels without context translated poorly until the English names were clarified (below).
   - the catalogue and overrides are English-only; city packs keep only real local names (東京, 吉祥寺)
 
-### M4 · Matching engine (weeks 3–5): 🟡
-- 🟡 `internal/matching` as a pure package (no I/O, deterministic output) with table-driven tests. Core types (`User`, `Slot`, `TravelTimes`, `Config`) in place; grows with each step.
-- ✅ Step 1, bucketing (`matching.Buckets`): group users by meeting area (travel matrix), overlapping availability and a shared fluent language, which becomes the event's primary language (any language). Language-exchange buckets need complementary language pairs, which become the event's primary and secondary languages.
+### M4 · Matching engine (weeks 3–5): 🟡 engine done
+- ✅ `internal/matching` as a pure package (no I/O, no clock, no randomness; deterministic output) with table-driven tests (92% coverage). `matching.Run` chains the steps; see the [backend README](../backend/README.md#matching).
+- ✅ Step 1, bucketing (`Buckets`): group users by meeting area (travel matrix), overlapping availability and a shared fluent language, which becomes the event's primary language (any language).
   - every area is a candidate meeting place; a person joins each area within their `max_travel_min` (fastest mode; no route = unreachable)
-  - exchanges: fluent in one language and learning the other, at least 2 per side (`ExchangeMinPerSide`); primary = the bigger side; people fluent in both stay out
-  - buckets under 3 people (`MinBucketSize`) dropped; output sorted
-  - open: exchanges currently include every learner; M5 may need an explicit "open to language exchange" opt-in and a minimum level
-- ⬜ Step 2, candidate plans: activity combinations ranked by demand × feasibility (venue open, group size fits, time of day suits the activity).
-- ⬜ Step 3, group assembly: greedy placement, then local search.
-  - Score: interest overlap, size fit, mutual picks (at most 2 people who already know each other), mixing in newcomers, reliability.
-  - Hard constraints: same-gender-only preferences, nobody is the only person of their gender, blocks.
-- ⬜ Step 4: invite 1–2 more people than needed; the event confirms once enough people accept. Weights can be tuned per city pack.
-- ⬜ A synthetic-user simulator (500 users × 2 cities).
+  - **two-language events are designed in but not a primary feature:** only for pairs a city lists in `language_pairs` (none by default); anyone fluent in either language joins; primary = the language more members speak. Language learning (`user_languages.fluent = false`) isn't used yet.
+  - buckets under 3 people dropped; output sorted
+- ✅ Step 2, candidate plans (`Plans`): activities ranked by demand × feasibility.
+  - feasible = suits the slot's part of the day (new `activities.blocks`, migration 00005; 99 of 230 activities restricted), has a venue in the area (or needs only a meeting point), and enough interested people for its minimum size
+  - demand = love 2 / like 1 / open to try 0.5, × 0.3 when over budget; fewer than 3 venues scale the score down
+  - combinations: a non-conversational activity gets a conversational food follow-up (bouldering → ramen)
+  - opening hours can't be stored (Maps terms): check the chosen venue live at event creation (M6)
+- ✅ Step 3, group assembly (`Assemble`): greedy placement (a popular plan can fill several groups), then local search (fill, replace, swap between groups).
+  - Score: interest overlap, size fit, mutual picks (at most 2 people who already know each other), mixing in newcomers (some, not a majority), reliability.
+  - Hard constraints (`Violation`, reusable by the worker as people decline): same-gender-only preferences, nobody is the only woman or only man, blocks, at most 2 who know each other, groups of at least 3.
+- ✅ Step 4: each group invites its target size + 2; `Quorum` is the target (lower when fewer could be invited, never below 3). Weights and every other setting can be tuned per city (`ParseConfig` on `cities.matching_weights`; unknown keys rejected).
+- ✅ Synthetic-user simulator (`internal/matching/sim`, `make sim`): 500 users × 2 cities in CI (`go test`), estimated travel times and made-up venues, no DB or keys. Seed 1: **Tokyo 89% invited, Austin 87%, 0 rule violations, ~0.2 s per city.**
+- ⬜ Apply migration 00005 (`activities.blocks`) to the hosted `issho-dev` project and re-seed the catalogue. Verified locally (up, down, up, seed).
+- ➡ Loading the engine's input from the DB and storing proposals is done by the weekly matching job (M6 worker).
 
 ### M5 · Onboarding & profile (weeks 5–6): ⬜
 - ⬜ **App i18n framework** (moved up from M9): UI strings written in English in the app; other languages fetched from the server's translation cache on demand (and cached on the device), with the primary ↔ secondary switch from the start. Primary and secondary language pickers in onboarding and settings; the sign-in screens follow the device language.
@@ -224,9 +229,17 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
 | 2026-10-20 | Second city pack is **Austin** (synthetic, not a launch city) | A real car-based city with real coordinates, so the Google tools can be exercised end to end. It's Japan-free on purpose, which forced per-city disables and renames. |
 | 2026-10-21 | Matching buckets are **per meeting area** (everyone who can reach it), not fixed area clusters | Clusters split neighbours who live either side of a boundary. Overlapping buckets cost nothing at city scale (areas × 21 slots × languages); group assembly places each person once. |
 | 2026-10-21 | Bucket travel uses the **fastest** of the city's modes per area pair | Someone who'd walk 20 minutes won't drive 25. The DB loader takes the minimum so the engine sees one number per pair. |
+| 2026-10-21 | **Two-language events are not an MVP feature, only designed for:** buckets for city-listed `language_pairs` (default none), open to anyone fluent in either language; learner data unused | Owner's decision. Keeps the schema and engine ready (`Bucket.Secondary`, event `secondary_language`) without building language-exchange matching yet. They're discounted (`bilingual_weight` 0.5) so people are grouped in a language they all share first. |
+| 2026-10-21 | Activity **time-of-day blocks** in the catalogue (`activities.blocks`, migration 00005) | The roadmap's "time of day suits the activity" needs data, and Maps terms forbid storing opening hours. Coarse blocks cover the common cases (bars in the evening, hikes in daylight); live hours are checked when the event is created. |
+| 2026-10-21 | **Groups of at least 3**, whatever the activity's own minimum (`min_group_size`) | Some activities allow 2, but a pair is a 1:1 meeting, which the platonic rules avoid. |
+| 2026-10-21 | Over-invite **inside the group**: invite target + 2, confirm at the target (`Quorum`) | Inviting leftovers as extras after assembly almost never happened: leftovers were used for new groups first (the simulator showed 0 extras in Tokyo), so one decline would sink an event. |
+| 2026-10-21 | "Nobody is the only person of their gender" applies to **women and men**; nonbinary and unspecified are exempt | Requiring two nonbinary people per group would leave most nonbinary users unmatched. Revisit with real data and feedback. |
+| 2026-10-21 | One proposal per person per matching run | Keeps invitations simple and avoids double-booking; daily top-ups (M6) re-run for people who declined or weren't placed. |
 
 ## 5. Known gaps & risks
 - **Machine-translation quality on short labels.** Cloud Translation Basic has no context, so short names can come out wrong. Clearer English names fixed the cases found so far; when writing new names, avoid idioms and words with two meanings. Further fixes: admin corrections of cached rows (`reviewed`, M8) or Advanced (v3) glossaries.
+- **Matching untested on real behaviour.** The simulator's users, venues and travel times are synthetic, so placement rates show the engine works, not that the density is enough. 25–30% of simulated groups can invite only 3 people (quorum 3: one decline cancels); M6 should measure acceptance and tune `extra_invites` and sizes.
+- **Two-language groups can mix people with no shared language** (anyone fluent in either joins). Fine while no city lists `language_pairs`; before enabling one, require learners or bilingual members.
 - **Not enough nearby users** is the main product risk. The admin proposal override lets the first city be hand-curated.
 - **PostGIS lives in the `public` schema** (migration 00001). With the Data API disabled, no anonymous path reaches it, but Supabase's advisors flag it. Move it into the `extensions` schema with a migration **before production data exists**: PostGIS can't be relocated in place, so the geography column has to be recreated.
 - **Google Maps terms** restrict caching. What we do: store only place IDs plus our own data, use place locations in memory only, and delete travel times after 30 days ([google-maps.md](google-maps.md#5-terms-what-we-may-store)). The Routes policy says most content is cache-restricted but doesn't state a window for durations; 30 days follows the Service Specific Terms' limit for other content. Re-check with the current terms before launch.

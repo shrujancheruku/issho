@@ -9,6 +9,20 @@ import (
 	"context"
 )
 
+const setActivityBlocks = `-- name: SetActivityBlocks :exec
+update app.activities set blocks = $1 where id = $2
+`
+
+type SetActivityBlocksParams struct {
+	Blocks []string
+	ID     string
+}
+
+func (q *Queries) SetActivityBlocks(ctx context.Context, arg SetActivityBlocksParams) error {
+	_, err := q.db.Exec(ctx, setActivityBlocks, arg.Blocks, arg.ID)
+	return err
+}
+
 const setActivityVenueCategories = `-- name: SetActivityVenueCategories :exec
 update app.activities set venue_categories = $1 where id = $2
 `

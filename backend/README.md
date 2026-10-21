@@ -7,7 +7,7 @@ The Go backend for Issho: a modular monolith serving a ConnectRPC API. It uses P
 | Path | Contents |
 |---|---|
 | `cmd/api/` | API server: wires config, DB pool, the JWKS verifier and handlers, then serves HTTP/1.1 and h2c on `API_ADDR` |
-| `cmd/tool/` | Ops CLI: `migrate <goose command>`, `seed [-catalog file] [-venue-categories file] <citypack.json>...`, `build-matrix [-dry-run] <city>`, `discover-venues [-dry-run] [-categories ids] <city>` |
+| `cmd/tool/` | Ops CLI: `migrate <goose command>`, `seed [-catalog file] [-venue-categories file] <citypack.json>...`, `build-matrix [-dry-run] <city>`, `discover-venues [-dry-run] [-categories ids] <city>`, `simulate [-users n] [-seed n] [-month n] [-config json] <citypack.json>...` (no database needed) |
 | `internal/platform/config` | Environment variables → `Config` |
 | `internal/platform/db` | pgx pool and goose migration runner |
 | `internal/platform/auth` | Supabase JWT verification (JWKS) and the Connect auth interceptor |
@@ -23,7 +23,8 @@ The Go backend for Issho: a modular monolith serving a ConnectRPC API. It uses P
 | `internal/cities` | City-pack, catalogue and venue-category JSON formats; validation and seeding |
 | `internal/maps` | Provider-neutral geo interfaces (`Router` for travel-time matrices, `PlaceSearcher` for nearby places) |
 | `internal/maps/google` | Google implementation: Routes API (Compute Route Matrix) and Places API (New) Nearby Search over REST, with retries on 429/5xx. `placetypes.txt` is a snapshot of valid place types. |
-| `internal/matching` | The matching engine (M4), pure: no I/O, deterministic. Step 1 so far: `Buckets` groups people by meeting area (anyone within their max travel time), shared weekly slot and a shared fluent language, plus language-exchange buckets (fluent in one language, learning the other, ≥ 2 per side) |
+| `internal/matching` | The matching engine (M4), pure: no I/O, deterministic. `Run` chains `Buckets` → `Plans` → `Assemble`; `Violation` checks a group's hard rules; `ParseConfig` reads a city's overrides. See [Matching](#matching) |
+| `internal/matching/sim` | Synthetic users for any city pack (estimated travel times, made-up venues), and checks of the engine's output |
 | `internal/geo` | Builds a city's travel-time matrix and venue list through the `maps` interfaces, and stores them |
 | `db/migrations/` | goose SQL migrations (embedded via `db/embed.go`) |
 | `db/queries/` | sqlc queries |
@@ -113,6 +114,26 @@ go run ./cmd/tool discover-venues -categories cafe,park tokyo
 
 - **`build-matrix`** computes travel times between every pair of the city's areas, for each of the city's `travel_modes`. Same-area pairs are stored as 0 minutes without an API call. Only walking and driving are calculated (no public transport). Walking is only requested for areas less than 4 km apart; driving uses typical, traffic-unaware times. Minutes are rounded up. Pairs with no route are left out. Rows older than 30 days are deleted (Google caching terms), so **rebuild each city at least every 30 days**.
 - **`discover-venues`** runs a Nearby Search per area × venue category, for categories used by an activity enabled in the city. Only places whose **primary** type is one of the category's types are kept. Categories with a radius of 10 km or more are searched once from the city centre. Each place is assigned to its **nearest** area and stored as `google_place_id` + category. Re-running only bumps `last_seen_at`; curation status and tags are kept.
+
+## Matching
+
+`internal/matching` turns one city's users into a week of proposals. The caller loads everything (users without an event that week, approved venues, enabled and in-season activities, the fastest travel time per area pair, mutual picks and blocks) and stores the result; the engine itself does no I/O.
+
+1. **Buckets:** every area is a candidate meeting place. A person joins each area they can reach within `max_travel_min`, for each weekly slot they're free, in each language they speak fluently. Two-language buckets exist only for the city's `language_pairs`, and anyone fluent in either language joins.
+2. **Plans:** activities that suit the slot's part of the day (`activities.blocks`), have a venue in the area (or need only a meeting point), and interest enough members. Ranked by demand (love 2, like 1, open to try 0.5; × 0.3 if over budget) × venue choice. A non-conversational activity gets a food follow-up.
+3. **Assembly:** best candidates first. Each is filled greedily, then a local search replaces and swaps people while the total score rises. Score: interest, size fit, one known pair, newcomers mixed in (not a majority), reliability.
+4. **Invitations:** each group invites its target size plus 2 (`extra_invites`). `Quorum` is the target (lower if fewer could be invited, never below 3).
+
+Hard rules (`Violation`): no blocked pairs; same-gender-only is respected; nobody is the only woman or the only man; at most 2 people who already know each other; groups of at least 3 (`min_group_size`). Each person is invited to at most one proposal per run.
+
+Settings are in `matching.Config` (`DefaultConfig`). A city overrides any of them with JSON in `app.cities.matching_weights`, e.g. `{"language_pairs": [["ja", "en"]], "weights": {"mutual": 2}}`. Unknown keys are rejected.
+
+```sh
+make sim                                           # 500 synthetic users per city pack
+make sim ARGS="-users 1000 -seed 2 -config '{\"language_pairs\":[[\"ja\",\"en\"]]}'"
+```
+
+The simulator reports how many people were invited (overall, per gender and language), group sizes, top activities and any rule violations, which fail the run. `go test ./internal/matching/sim` runs it for every pack in CI.
 
 ## Testing
 

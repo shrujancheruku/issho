@@ -38,7 +38,7 @@ func describe(bs []Bucket) []string {
 	var out []string
 	for _, b := range bs {
 		lang := b.Primary
-		if b.IsExchange() {
+		if b.Bilingual() {
 			lang += "+" + b.Secondary
 		}
 		out = append(out, fmt.Sprintf("%s %s@%s %s %v", b.Slot.Weekday.String()[:3], b.Slot.Block, b.Area, lang, b.Members))
@@ -94,33 +94,6 @@ func TestBuckets(t *testing.T) {
 			want: []string{"Sun afternoon@a es [u1 u2 u3]"},
 		},
 		{
-			name: "language exchange: complementary pairs, primary is the bigger side",
-			users: []User{
-				user("ja1", "a", 0, []Language{{Code: "ja", Fluent: true}, learning("es", 1)}, sunPM),
-				user("ja2", "a", 0, []Language{{Code: "ja", Fluent: true}, learning("es", 2)}, sunPM),
-				user("ja3", "a", 0, []Language{{Code: "ja", Fluent: true}, learning("es", 2)}, sunPM),
-				user("es1", "a", 0, []Language{{Code: "es", Fluent: true}, learning("ja", 1)}, sunPM),
-				user("es2", "a", 0, []Language{{Code: "es", Fluent: true}, learning("ja", 3)}, sunPM),
-				// Bilingual: in both regular buckets, not in the exchange.
-				user("bi", "a", 0, fluent("es", "ja"), sunPM),
-			},
-			want: []string{
-				"Sun afternoon@a es [bi es1 es2]",
-				"Sun afternoon@a ja [bi ja1 ja2 ja3]",
-				"Sun afternoon@a ja+es [es1 es2 ja1 ja2 ja3]",
-			},
-		},
-		{
-			name: "exchange needs enough people on each side",
-			users: []User{
-				user("ja1", "a", 0, []Language{{Code: "ja", Fluent: true}, learning("es", 1)}, sunPM),
-				user("ja2", "a", 0, []Language{{Code: "ja", Fluent: true}, learning("es", 1)}, sunPM),
-				user("ja3", "a", 0, []Language{{Code: "ja", Fluent: true}, learning("es", 1)}, sunPM),
-				user("es1", "a", 0, []Language{{Code: "es", Fluent: true}, learning("ja", 1)}, sunPM),
-			},
-			want: []string{"Sun afternoon@a ja [ja1 ja2 ja3]"},
-		},
-		{
 			name: "no route: unreachable even with a generous limit",
 			users: []User{
 				user("u1", "a", 180, fluent("ja"), sunPM),
@@ -150,6 +123,28 @@ func TestBuckets(t *testing.T) {
 				t.Errorf("got\n  %q\nwant\n  %q", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestBucketsLanguagePairs(t *testing.T) {
+	cfg := DefaultConfig()
+	cfg.LanguagePairs = [][2]string{{"en", "ja"}}
+	users := []User{
+		user("ja1", "a", 0, fluent("ja"), sunPM),
+		user("ja2", "a", 0, []Language{{Code: "ja", Fluent: true}, learning("en", 1)}, sunPM),
+		user("ja3", "a", 0, fluent("ja"), sunPM),
+		user("en1", "a", 0, fluent("en"), sunPM),
+		user("bi", "a", 0, fluent("en", "ja"), sunPM),
+		user("es1", "a", 0, fluent("es"), sunPM), // knows neither: never in the pair's bucket
+	}
+	// Anyone fluent in either language joins; ja has more speakers (4 vs 2),
+	// so it's the primary language even though the pair lists en first.
+	want := []string{
+		"Sun afternoon@a ja [bi ja1 ja2 ja3]",
+		"Sun afternoon@a ja+en [bi en1 ja1 ja2 ja3]",
+	}
+	if got := describe(Buckets(users, testAreas, testTravel, cfg)); !slices.Equal(got, want) {
+		t.Errorf("got\n  %q\nwant\n  %q", got, want)
 	}
 }
 

@@ -37,3 +37,6 @@ on conflict (id) do update set
 
 -- name: SetActivityVenueCategories :exec
 update app.activities set venue_categories = @venue_categories where id = @id;
+
+-- name: SetActivityBlocks :exec
+update app.activities set blocks = @blocks where id = @id;

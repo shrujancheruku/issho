@@ -26,9 +26,12 @@ Load with `make seed` (everything) or `cd backend && go run ./cmd/tool seed ../d
   "skill_dependent": false,                 // does skill level matter for grouping?
   "min_group_size": 3,                      // at least 2
   "max_group_size": 8,
-  "venue_categories": []                    // where it happens (ids from venue-categories.json); [] = meeting point only
+  "venue_categories": [],                   // where it happens (ids from venue-categories.json); [] = meeting point only
+  "blocks": ["morning", "afternoon"]        // optional: parts of the day it suits (morning, afternoon, evening); omitted = any
 }
 ```
+
+Set `blocks` only for activities tied to a time of day: bars and dinners in the evening, outdoor and museum activities in daylight, brunch in the morning. Matching uses it because venue opening hours can't be stored (Google Maps terms).
 
 `category` groups the onboarding tile grid: `outdoors`, `sports`, `food`, `wellness`, `culture`, `games`, `creative`, `learning`, `shopping`, `seasonal`, `community`, `nightlife`. Activities that only make sense in some cities (e.g. `rakugo`, `hanami`) stay in the global catalogue and are disabled in other cities' packs.
 
