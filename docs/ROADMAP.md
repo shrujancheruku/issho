@@ -156,16 +156,21 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
   - ⬜ Set `GOOGLE_GEMINI_API_KEY` on the hosted API when it's deployed (M9).
 
 ### M6 · Plans, signups & events (weeks 6–8): 🟡
-- ✅ Schema (migration 00007): open plans in rounds (window, signup deadline, round, close reason `done`/`no_group`/`withdrawn`), signups (per-plan weekly pattern + blocked-out dates or occasions; no pattern = profile availability), events (one per plan round: date + part of the day, confirmation deadline, forced or not), groups (quorum, minimum attendance, venue place id and meeting point per group) and members (invited → confirmed/declined → dropped, check-in). The database allows one group per person per event. uuid ids, since they reach the app. Applied up → down → up locally; `anon`/`authenticated` have no grants on the new tables. Not yet applied to `issho-dev`.
+- ✅ Schema (migration 00007): open plans in rounds (window, signup deadline, round, close reason `done`/`no_group`/`withdrawn`), signups (per-plan weekly pattern + blocked-out dates or occasions; no pattern = profile availability), events (one per plan round: date + part of the day, confirmation deadline, forced or not), groups (quorum, minimum attendance, venue place id and meeting point per group) and members (invited → confirmed/declined → dropped, check-in). The database allows one group per person per event. uuid ids, since they reach the app. Applied up → down → up locally; `anon`/`authenticated` have no grants on the new tables. Applied to `issho-dev` (2026-10-22): goose version 7, the seven tables present, no `anon`/`authenticated` grants.
 - ✅ `internal/plans` store: converts to and from `matching` types (open plans with signup counts, signups, scheduled rounds). Invited people stop waiting and the rest roll over; occasions people are already invited to are blocked out of their other signups; saves lock the plan row so a signup and a scheduling pass can't race. Integration test in CI.
-- ⬜ The River worker (`cmd/worker`):
-  - suggest new plans as plans close or fill (`matching.Suggest`), within the city cap
-  - daily readiness check per open plan (`matching.Schedule`), forced at the signup deadline; people waiting roll over to the plan's next round or a similar plan; plans that can't form close and say so
-  - confirmation deadlines: confirm at `Quorum`, go ahead with at least `MinAttendance`, re-check `matching.Violation` as people drop out
-  - meeting-point reveal 24h before the event
-  - travel-matrix refresh for each city at least every 30 days (Maps caching terms)
-  - chat opens 48h before the event
-  - push via Expo Push (a plan you signed up for is scheduled; please confirm)
+- 🟡 The River worker (`cmd/worker`, `make worker`):
+  - ✅ River 0.49 with its tables in a `river` schema, created by goose migration `00008_river.go` (River's own migrator, pinned version; see the decision log). Up → down → up locally; `anon` has no access to the schema.
+  - ✅ hourly pass per city (`match_all` → one unique `match_city` job per city, also run on start): schedule, then suggest
+  - ✅ a city's matching input loaded from the database (`plans.LoadCity`: profiles, languages, availability, preferences, fastest travel times, venue counts, activities enabled and in season)
+  - ✅ suggest new plans as plans close or fill (`matching.Suggest`), within the city cap; plans that just closed without a group wait out a 14-day cool-down
+  - ✅ readiness check per open plan (`matching.Schedule`), forced at the signup deadline (7 days into a 14-day window; occasions at least 2 days ahead); people waiting roll over to the plan's next round in the same transaction; plans that can't form close as `no_group`. (Rolling over to a *similar* plan isn't done.)
+  - ✅ integration test: a plan opened, scheduled with six invited and two rolling over, then closed at its deadline and kept closed by the cool-down. Ran against local Supabase: both cities passed, nothing to open with 2 local profiles.
+  - ⬜ confirmation deadlines: confirm at `Quorum`, go ahead with at least `MinAttendance`, re-check `matching.Violation` as people drop out
+  - ⬜ meeting-point reveal 24h before the event
+  - ⬜ travel-matrix refresh for each city at least every 30 days (Maps caching terms)
+  - ⬜ chat opens 48h before the event
+  - ⬜ push via Expo Push (a plan you signed up for is scheduled; please confirm)
+  - ⬜ plan descriptions (Claude, with a template fallback)
 - ⬜ App: **feed** of open plans ranked for you (`matching.Feed`), scrollable to everything; **map view** of every open plan nearby, colour-coded by level; plan screen with the interest count ("7 interested", never who) and signup with availability pre-filled from the profile (pick weekly windows, block out dates). Event screen: attendees (after confirmation), meeting point after the reveal, Google map, WebSocket group chat, check-in, share with a trusted contact.
 - ⬜ Events have a `primary_language` (any language) and an optional `secondary_language` (e.g. language exchanges). Event text is **prefilled in English plus the event's own languages** when the event is created (`translate.Service.Prefill`); each attendee's other language is translated on demand. Plan descriptions are written by Claude, with a template fallback.
 - ⬜ Venue names, addresses and hours fetched **live** from Places in each displayed language (Google's own localised names; nothing stored); the scheduled venue's opening hours checked live.
@@ -323,6 +328,9 @@ The app builds for the web and CI keeps it building. Before a public web release
 | 2026-10-21 | **One Go cache per CI job** (`actions/cache`), not setup-go's shared cache | The shared cache held what both jobs built: 473 MB compressed, ~17 s to restore. Building buf and sqlc accounts for 464 MB of it; `backend` never runs them and needs 68 MB. Trimming the codegen cache doesn't work: without the package archives or module zips, `go tool` rebuilds buf and sqlc (~45 s). |
 | 2026-10-22 | A **signup row means "waiting"**: it's deleted when the person is invited to a group, not given a status | The "7 interested" count and the scheduler read the same rows, so they can't disagree; the invitation (`app.group_members`) is the record from then on. Whoever isn't placed simply stays for the plan's next round. |
 | 2026-10-22 | **Venues per group, not per event**; one event per plan round | An event with three groups shouldn't send 15 people to one café table. The plan keeps the area, activity and languages; the round decides the date. |
+| 2026-10-22 | **River's tables created by a goose Go migration** (`00008_river.go` runs River's own migrator to a pinned version, in a `river` schema) | goose stays the single owner of migration order, and CI's up → down → up covers River too. River ships its schema as versioned migrations tied to the library, so running its migrator is safer than copying its SQL. A separate schema keeps job tables away from `app` and from the Data API. |
+| 2026-10-22 | The worker matches each city **hourly**, schedule first, then suggest | Signup deadlines fall at local midnight and a ready plan should be scheduled soon after it fills; a pass on MVP data is cheap. Scheduling first frees room under the city's cap for new plans. |
+| 2026-10-22 | Plans that close without a group **can't be suggested again for 14 days** | `Suggest` is deterministic, so a failed plan would otherwise reopen at the next pass. During the cool-down they count towards the city's cap, which slows reopening in a quiet city rather than churning the same plan. |
 
 ## 5. Known gaps & risks
 - **Machine-translation quality on short labels.** Cloud Translation Basic has no context, so short names can come out wrong. Clearer English names fixed the cases found so far; when writing new names, avoid idioms and words with two meanings. Further fixes: admin corrections of cached rows (`reviewed`, M8) or Advanced (v3) glossaries.

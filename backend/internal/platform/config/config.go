@@ -47,6 +47,23 @@ func Load() (Config, error) {
 	return c, nil
 }
 
+// Worker is cmd/worker's configuration.
+type Worker struct {
+	// DatabaseURL must allow LISTEN/NOTIFY (River): a direct or
+	// session-pooler connection, never the transaction pooler.
+	DatabaseURL string
+}
+
+// LoadWorker reads WORKER_DATABASE_URL, falling back to DATABASE_URL (fine
+// locally, where both are the same direct connection).
+func LoadWorker() (Worker, error) {
+	w := Worker{DatabaseURL: getenv("WORKER_DATABASE_URL", os.Getenv("DATABASE_URL"))}
+	if w.DatabaseURL == "" {
+		return w, fmt.Errorf("WORKER_DATABASE_URL or DATABASE_URL is required")
+	}
+	return w, nil
+}
+
 func getenv(key, fallback string) string {
 	if v := os.Getenv(key); v != "" {
 		return v

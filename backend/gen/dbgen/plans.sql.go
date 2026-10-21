@@ -13,17 +13,18 @@ import (
 )
 
 const closePlan = `-- name: ClosePlan :exec
-update app.plans set status = 'closed', closed_reason = $1::text, closed_at = now()
-where id = $2 and status = 'open'
+update app.plans set status = 'closed', closed_reason = $1::text, closed_at = $2
+where id = $3 and status = 'open'
 `
 
 type ClosePlanParams struct {
-	Reason string
-	ID     uuid.UUID
+	Reason   string
+	ClosedAt pgtype.Timestamptz
+	ID       uuid.UUID
 }
 
 func (q *Queries) ClosePlan(ctx context.Context, arg ClosePlanParams) error {
-	_, err := q.db.Exec(ctx, closePlan, arg.Reason, arg.ID)
+	_, err := q.db.Exec(ctx, closePlan, arg.Reason, arg.ClosedAt, arg.ID)
 	return err
 }
 

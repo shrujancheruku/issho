@@ -11,7 +11,7 @@ include $(ENV_FILE)
 export
 endif
 
-.PHONY: setup secrets-scan docs gen gen-proto gen-sql gen-strings email-templates lint test migrate-up migrate-status api seed matrix venues sim
+.PHONY: setup secrets-scan docs gen gen-proto gen-sql gen-strings email-templates lint test migrate-up migrate-status api worker seed matrix venues sim
 
 # One-time setup after cloning: install JS deps and enable the secret-scanning pre-commit hook.
 setup:
@@ -59,6 +59,10 @@ migrate-status:
 
 api:
 	cd backend && go run ./cmd/api
+
+# Background jobs (River): hourly matching passes per city.
+worker:
+	cd backend && go run ./cmd/worker
 
 seed:
 	cd backend && go run ./cmd/tool seed ../data/citypacks/*.json

@@ -7,6 +7,7 @@ The Go backend for Issho: a modular monolith serving a ConnectRPC API. It uses P
 | Path | Contents |
 |---|---|
 | `cmd/api/` | API server: wires config, DB pool, the JWKS verifier and handlers, then serves HTTP/1.1 and h2c on `API_ADDR` |
+| `cmd/worker/` | Background jobs on River (`internal/worker`): starts the River client and stops it gracefully on SIGINT/SIGTERM |
 | `cmd/tool/` | Ops CLI: `migrate <goose command>`, `seed [-catalog file] [-venue-categories file] <citypack.json>...` (also applies catalogue merges: `replaces`), `build-matrix [-dry-run] <city>`, `discover-venues [-dry-run] [-categories ids] <city>`, `email-templates [-source file] [-out dir] [-config file]` (sign-in emails in every language of `supabase/templates/source.json`, machine-translated; needs `GOOGLE_TRANSLATE_API_KEY`), `simulate [-users n] [-seed n] [-month n] [-config json] <citypack.json>...` (no database needed) |
 | `internal/platform/config` | Environment variables → `Config` |
 | `internal/platform/db` | pgx pool and goose migration runner |
@@ -30,7 +31,8 @@ The Go backend for Issho: a modular monolith serving a ConnectRPC API. It uses P
 | `internal/maps/google` | Google implementation: Routes API (Compute Route Matrix) and Places API (New) Nearby Search over REST, with retries on 429/5xx. `placetypes.txt` is a snapshot of valid place types. |
 | `internal/matching` | The matching engine (M4), pure: no I/O, deterministic. `Suggest` (plans without a date), `Feed` (plans ranked for one person, with map levels), `Schedule` (date and groups from signups); `Violation` checks a group's hard rules; `ParseConfig` reads a city's overrides. See [Matching](#matching) |
 | `internal/matching/sim` | Synthetic users for any city pack (estimated travel times, made-up venues, guessed signup behaviour); runs suggest → signups → schedule and checks the output |
-| `internal/plans` | Stores open plans, signups and scheduled events (M6) and converts them to and from `internal/matching`'s types: `Create`, `ListOpen` (with signup counts), `SaveSignup` (times replaced wholesale), `LoadSignups` (adds the occasions people are already invited to, so nobody is double-booked), `SaveEvent` (event, groups and invitations; invited people stop waiting), `NextRound`, `Close`. Saves lock the plan row, so a signup lands either before a round is scheduled or in the next one |
+| `internal/worker` | River jobs: `match_all` (periodic, hourly, and once on start) queues a `match_city` pass per city, which runs `plans.Runner.Schedule` then `Suggest`. One pass per city is queued or running at a time (unique jobs). River's tables live in the `river` schema |
+| `internal/plans` | `Runner` (the worker's passes: `Schedule` checks every open plan, `Suggest` opens plans up to the city's cap) and `LoadCity` (a city's matching input from the database), plus the store. Stores open plans, signups and scheduled events (M6) and converts them to and from `internal/matching`'s types: `Create`, `ListOpen` (with signup counts), `SaveSignup` (times replaced wholesale), `LoadSignups` (adds the occasions people are already invited to, so nobody is double-booked), `SaveEvent` (event, groups and invitations; invited people stop waiting), `NextRound`, `Close`. Saves lock the plan row, so a signup lands either before a round is scheduled or in the next one |
 | `internal/geo` | Builds a city's travel-time matrix and venue list through the `maps` interfaces, and stores them |
 | `db/migrations/` | goose SQL migrations (embedded via `db/embed.go`) |
 | `db/queries/` | sqlc queries |
@@ -41,6 +43,7 @@ The Go backend for Issho: a modular monolith serving a ConnectRPC API. It uses P
 | Variable | Required | Example (local) | Notes |
 |---|---|---|---|
 | `DATABASE_URL` | yes | `postgres://postgres:postgres@127.0.0.1:54322/postgres?sslmode=disable` | Supabase local DB. In production, use the **session pooler** (port 5432) or the direct connection, with `sslmode=require`. **Not** the transaction pooler (port 6543): pgx's prepared statements and River's LISTEN/NOTIFY don't work through it. |
+| `WORKER_DATABASE_URL` | worker only; falls back to `DATABASE_URL` | same as `DATABASE_URL` | The worker's connection. River needs LISTEN/NOTIFY: direct connection or session pooler only. The worker needs no other variable. |
 | `SUPABASE_URL` | yes | `http://127.0.0.1:54321` | The JWKS is fetched from `$SUPABASE_URL/auth/v1/.well-known/jwks.json`. The token issuer must be `$SUPABASE_URL/auth/v1`. |
 | `API_ADDR` | no | `:8080` | Listen address |
 | `SUPABASE_SECRET_KEY` | no | `SECRET_KEY` from `supabase status` | **Server-only secret.** Enables admin calls (account deletion). Without it, `DeleteAccount` returns `failed_precondition`. Never commit it; see [secrets](../docs/secrets.md). |
@@ -56,6 +59,7 @@ Local defaults are in `../.env.example`: `export $(grep -v '^#' ../.env.example 
 ```sh
 supabase start                 # from repo root; see ../supabase/README.md
 make migrate-up seed api       # from repo root
+make worker                    # background jobs (another terminal)
 ```
 
 Or from this directory: `go run ./cmd/tool migrate up`, `go run ./cmd/tool seed ../data/citypacks/tokyo.json`, `go run ./cmd/api`.
@@ -108,6 +112,7 @@ go run ./cmd/tool migrate status
 
 - Write new files as `db/migrations/000NN_name.sql` with `-- +goose Up` / `-- +goose Down` sections. Wrap multi-statement blocks (`DO $$ … $$`) in `-- +goose StatementBegin/End`.
 - goose records its versions in `goose.db_version`, in a schema of its own. Not `public`, which Supabase's Data API would expose. Not `app`, which migration 00001's Down drops. Older databases with `public.app_goose_db_version` are moved automatically on the next run.
+- **River's tables** (the worker's job queue) are created by `00008_river.go` (`db/river.go`), a Go migration that runs River's own migrator up to `RiverVersion` in the `river` schema; Down drops the schema. When a River upgrade brings a new schema version, add a goose migration that migrates up to it, so goose stays the one owner of migration order.
 - Supabase-only statements (the `auth.users` foreign key, revoking `anon`) are guarded with `IF EXISTS` checks, so the same migrations also run on plain Postgres in CI.
 
 ## Seeding
@@ -131,6 +136,13 @@ go run ./cmd/tool discover-venues -categories cafe,park tokyo
 ## Plans, signups and events
 
 A **plan** (`app.plans`) is open for signups in rounds, each with a window (default 14 days) and a signup deadline. **Signups** (`app.plan_signups`, with `plan_signup_slots` for a custom weekly pattern and `plan_signup_unavailable` for blocked-out dates or occasions) are the people waiting for the current round. Scheduling a round creates an **event** (`app.events`, one per round) with one or more **groups** (`app.event_groups`), each inviting people (`app.group_members`: invited → confirmed/declined, confirmed → dropped). Invited people leave the signups; the rest roll over to the next round. A person is in at most one group per event (enforced by the database). Venues are per group and only Google place ids are stored. Plans close as `done`, `no_group` or `withdrawn`.
+
+**The worker** (`make worker`) runs a pass per city every hour (`plans.Runner`, timing in `plans.Timing`):
+
+1. **Schedule** every open plan, most signups first (each event blocks its occasion for the people invited). Occasions start 2 days from today (time to confirm). Ready plans get an event; at the signup deadline (7 days into the 14-day window) the round goes ahead with whatever groups can form, or the plan closes as `no_group`. People not placed roll over to the next round, which starts in the same transaction; a plan with nobody left closes as `done`. A plan whose activity was disabled closes as `withdrawn`. Invitees answer by the start of the day before the event (local time).
+2. **Suggest** new plans up to the city's cap, with the activities in season in the month the round starts. Plans that closed as `no_group` in the last 14 days count as open, so they don't reopen the next hour.
+
+Not done yet: confirmations at the deadline, the meeting-point reveal, chat, push notifications, the travel-matrix refresh and plan descriptions.
 
 ## Matching
 
@@ -179,6 +191,7 @@ go test ./...          # or `make test` from the root
 | `internal/catalog/languages_test.go` | Every ISO 639-1 language has an autonym and a localised name (English where CLDR has none); area names are read only as stored |
 | `internal/maps/google/google_test.go` | Matrix chunking (≤ 625 elements per request), global origin indexes, no-route and element errors, drive is traffic-unaware, key only in a header, field masks, retry on 429 but not on 400 |
 | `internal/geo/geo_test.go` | Matrix plan (no self pairs, no long walks), rounding up, missing routes left out, venue plan (wide categories once), nearest-area assignment, dedupe |
+| `internal/plans/run_test.go` | `Timing`: the window and deadline in the city's time zone (a UTC evening that's already the next day in Tokyo), occasions left at the deadline, the confirmation deadline, invalid timings. **Integration:** eight people who love one activity: `Suggest` opens one plan (the cap), nothing happens with no signups, all eight sign up and it's scheduled on the first Saturday afternoon with six invited (the activity's maximum) and two rolling over to round 2; the cap stops a second plan; at the deadline one person left can't form a group, so the plan closes as `no_group` and isn't suggested again during the cool-down |
 | `internal/plans/store_test.go` | **Integration** (`TEST_DATABASE_URL`): a plan through custom and default signups (re-saving replaces the times), scheduling (a stale round is refused; invited people stop waiting), a second plan seeing the event as busy, next round, close, signups refused once closed, withdrawing |
 | `internal/geo/store_test.go` | **Integration** (runs when `TEST_DATABASE_URL` is set; CI sets it): area coordinates round-trip, upsert, 30-day stale deletion, one venue in two categories, curation kept on re-discovery |
 | `internal/cities/data_test.go` | Every file in `../data` is valid: English-only catalogue, known categories (each with an app label, and no app label without a category), `replaces` only naming retired ids once, venue category references, Google place types, city packs (area ids, modes, months, override ids, names only in English or the city's own languages) |
