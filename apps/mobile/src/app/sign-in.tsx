@@ -7,6 +7,8 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Brand, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { PrimaryButton } from '@/components/primary-button';
+import { useI18n } from '@/i18n/i18n-provider';
 import { supabase } from '@/lib/supabase';
 
 const CODE_LENGTH = 6; // matches [auth.email] otp_length in supabase/config.toml
@@ -16,9 +18,11 @@ const CODE_LENGTH = 6; // matches [auth.email] otp_length in supabase/config.tom
  * types it here. The same flow creates the account on first use.
  * On success, the auth listener in AuthProvider switches the navigator away
  * from this screen; nothing here navigates explicitly.
+ * Shown in the device language (I18nProvider): nobody has chosen one yet.
  */
 export default function SignInScreen() {
   const theme = useTheme();
+  const { t } = useI18n();
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [step, setStep] = useState<'email' | 'code'>('email');
@@ -69,7 +73,7 @@ export default function SignInScreen() {
 
           {step === 'email' ? (
             <View style={styles.form}>
-              <ThemedText type="subtitle">Sign in or create an account</ThemedText>
+              <ThemedText type="subtitle">{t('signIn.title')}</ThemedText>
               <TextInput
                 style={inputStyle}
                 value={email}
@@ -84,12 +88,12 @@ export default function SignInScreen() {
                 returnKeyType="send"
                 onSubmitEditing={() => validEmail && void sendCode()}
               />
-              <PrimaryButton label="Send code" onPress={sendCode} disabled={!validEmail} busy={busy} />
+              <PrimaryButton label={t('signIn.sendCode')} onPress={sendCode} disabled={!validEmail} busy={busy} />
             </View>
           ) : (
             <View style={styles.form}>
-              <ThemedText type="subtitle">Check your email</ThemedText>
-              <ThemedText themeColor="textSecondary">We sent a {CODE_LENGTH}-digit code to {email.trim()}.</ThemedText>
+              <ThemedText type="subtitle">{t('signIn.checkEmail')}</ThemedText>
+              <ThemedText themeColor="textSecondary">{t('signIn.codeSent', { email: email.trim() })}</ThemedText>
               <TextInput
                 style={[inputStyle, styles.code]}
                 value={code}
@@ -100,15 +104,15 @@ export default function SignInScreen() {
                 maxLength={CODE_LENGTH}
                 autoFocus
                 editable={!busy}
-                accessibilityLabel="Sign-in code"
+                accessibilityLabel={t('signIn.codeLabel')}
               />
               {busy && <ActivityIndicator />}
               <View style={styles.row}>
                 <Pressable onPress={sendCode} disabled={busy}>
-                  <ThemedText type="link">Resend code</ThemedText>
+                  <ThemedText type="link">{t('signIn.resend')}</ThemedText>
                 </Pressable>
                 <Pressable onPress={() => setStep('email')} disabled={busy}>
-                  <ThemedText type="link">Use a different email</ThemedText>
+                  <ThemedText type="link">{t('signIn.differentEmail')}</ThemedText>
                 </Pressable>
               </View>
             </View>
@@ -121,18 +125,6 @@ export default function SignInScreen() {
   );
 }
 
-function PrimaryButton({ label, onPress, disabled, busy }: { label: string; onPress: () => void; disabled?: boolean; busy?: boolean }) {
-  return (
-    <Pressable
-      accessibilityRole="button"
-      onPress={onPress}
-      disabled={disabled || busy}
-      style={({ pressed }) => [styles.button, (disabled || busy) && styles.buttonDisabled, pressed && styles.pressed]}>
-      {busy ? <ActivityIndicator color="#ffffff" /> : <ThemedText style={styles.buttonLabel}>{label}</ThemedText>}
-    </Pressable>
-  );
-}
-
 const styles = StyleSheet.create({
   fill: { flex: 1 },
   content: { flex: 1, justifyContent: 'center', padding: Spacing.four, gap: Spacing.four },
@@ -141,9 +133,5 @@ const styles = StyleSheet.create({
   input: { borderRadius: 12, paddingHorizontal: Spacing.three, paddingVertical: Spacing.three, fontSize: 17 },
   code: { fontSize: 28, letterSpacing: 12, textAlign: 'center' },
   row: { flexDirection: 'row', justifyContent: 'space-between' },
-  button: { backgroundColor: Brand.red, borderRadius: 12, paddingVertical: Spacing.three, alignItems: 'center' },
-  buttonDisabled: { opacity: 0.4 },
-  pressed: { opacity: 0.8 },
-  buttonLabel: { color: '#ffffff', fontWeight: '600' },
   error: { color: Brand.red, textAlign: 'center' },
 });

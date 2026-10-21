@@ -13,6 +13,8 @@ type AuthState = {
   session: Session | null;
   /** Null while the account is loading (or when signed out). */
   onboarded: boolean | null;
+  /** Display languages from the profile; null until onboarded. */
+  languages: { primary: string; secondary: string } | null;
   /** Set when the account couldn't be loaded (e.g. API unreachable). */
   accountError: Error | null;
   retryAccount: () => void;
@@ -60,6 +62,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
     ready,
     session,
     onboarded: me.data?.user?.onboarded ?? null,
+    languages: me.data?.user?.onboarded
+      ? { primary: me.data.user.primaryLanguage, secondary: me.data.user.secondaryLanguage }
+      : null,
     accountError: me.error,
     retryAccount: () => void me.refetch(),
     signOut: async () => {

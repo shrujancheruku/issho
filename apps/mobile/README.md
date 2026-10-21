@@ -47,7 +47,7 @@ Notes:
 2. Open **Mailpit** at http://127.0.0.1:54324. Local Supabase never sends real email.
 3. Type the 6-digit code. It submits automatically once all six digits are in.
 
-A first sign-in creates the account. New users land on the **onboarding** placeholder, which has **Sign out** and **Delete account**. Account deletion needs `SUPABASE_SECRET_KEY` set for the API (see [../../backend/README.md](../../backend/README.md)).
+A first sign-in creates the account. New users go through **onboarding** (languages, about you, area, availability, activities, kind of outing, code of conduct), saved in one `SaveProfile` at the end; the **Profile** tab edits each section afterwards and has **Sign out** and **Delete account**. Account deletion needs `SUPABASE_SECRET_KEY` set for the API (see [../../backend/README.md](../../backend/README.md)).
 
 ## How auth works
 
@@ -74,14 +74,26 @@ lib/api.ts ── Authorization: Bearer <access token> ────────�
 
 | Path | Contents |
 |---|---|
-| `src/app/` | **Routes only** (Expo Router). `_layout.tsx` sets up the providers and auth guards; `sign-in.tsx`, `onboarding.tsx`, and `(tabs)/` for the main app. |
-| `src/features/auth/` | `AuthProvider` / `useAuth()`: session state, onboarding status, sign-out |
+| `src/app/` | **Routes only** (Expo Router). `_layout.tsx` sets up the providers and auth guards; `sign-in.tsx`, `onboarding.tsx`, `(tabs)/` for the main app (home, profile) and `profile-edit/[step].tsx` for editing one profile section. |
+| `src/features/auth/` | `AuthProvider` / `useAuth()`: session state, onboarding status, display languages, sign-out |
+| `src/features/profile/` | Onboarding and settings: `draft.ts` (the profile being edited, step rules; unit-tested), `steps.tsx` (one component per step), `language-picker.tsx`, `data.ts` (cities, activities, languages) |
+| `src/i18n/` | The app's UI text: `en.json` (the source), `i18n-provider.tsx` (`useI18n()`: `t`, `pair`, the language switch), `cache.ts` (translations kept on the device) |
 | `src/features/account/` | Account actions (sign out, delete account) |
 | `src/lib/` | `supabase.ts` (client), `secure-storage.ts` (session storage), `api.ts` (Go API client) |
 | `src/components/`, `src/hooks/`, `src/constants/` | UI building blocks and theme. `Brand` colours are in `constants/theme.ts`. |
 | `src/types/expo.d.ts` | Expo's ambient types, committed so fresh clones and CI can typecheck |
 | `assets/images/logo.png` | The logo, rendered from `assets/brand/logo.svg` (`rsvg-convert -w 900 ../../assets/brand/logo.svg -o assets/images/logo.png`) |
 | `app.json` | App config: name, bundle IDs `com.joinissho.app`, scheme `issho`. `expo.version` is managed by release-please. |
+
+## Languages (i18n)
+
+The app is written in English; every other language comes from the server (`UIService.GetStrings`), machine-translated once and cached for everyone, then kept on the device in `ui-strings-<lang>.json` (documents directory), so the next launch shows the right language immediately, even offline.
+
+- **Which languages:** before sign-in, the device language (`expo-localization`, re-read when it changes). Signed in, the profile's primary + optional secondary language, which `GetMe` returns. During onboarding, and while editing languages in settings, the screens preview the languages being chosen.
+- **Writing UI text:** add the English string to `src/i18n/en.json` and use `const { t } = useI18n(); t('key', { name })`. Never hard-code UI text in components. Placeholders are `{camelCase}` only. Run `make gen` afterwards: the API embeds a copy and only translates strings it knows (CI fails if the copy is stale). Write plain, unambiguous English: machine translation has no context ("Pick at least 3" became "tap at least 3 times" in Japanese until it said "Choose at least 3 activities").
+- **Two languages:** `t()` returns the language currently shown; `LanguageSwitch` toggles it for longer text. Short labels show both side by side: `pair()` for UI text, or `name` + `secondaryName` from the API (e.g. activity tiles via `Chip secondary`).
+- **Fallbacks:** a missing translation shows the other display language, then English (`lookup` in `strings.ts`). Incomplete catalogues are refetched every 30 seconds while the app is open.
+- **Weekday names** come from `Intl.DateTimeFormat`, not the catalogue.
 
 ## Typography
 

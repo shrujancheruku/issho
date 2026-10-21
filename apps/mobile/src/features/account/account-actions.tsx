@@ -4,35 +4,37 @@ import { Alert, Pressable, StyleSheet, View } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useAuth } from '@/features/auth/auth-provider';
+import { useI18n } from '@/i18n/i18n-provider';
 import { api } from '@/lib/api';
 
 /** Sign-out and account-deletion controls, shown wherever account settings live. */
 export function AccountActions() {
   const { session, signOut } = useAuth();
+  const { t } = useI18n();
   const deleteAccount = useMutation({
     mutationFn: () => api.identity.deleteAccount({}),
     // The server has deleted the auth user; clear the local session too.
     onSuccess: () => signOut(),
-    onError: () => Alert.alert('Could not delete account', 'Please check your connection and try again.'),
+    onError: () => Alert.alert(t('account.deleteFailed'), t('account.deleteFailedBody')),
   });
 
   const confirmDelete = () =>
     Alert.alert(
-      'Delete your account?',
-      'This permanently deletes your account, preferences and history. It cannot be undone.',
+      t('account.deleteTitle'),
+      t('account.deleteBody'),
       [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Delete', style: 'destructive', onPress: () => deleteAccount.mutate() },
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('account.deleteConfirm'), style: 'destructive', onPress: () => deleteAccount.mutate() },
       ],
     );
 
   return (
     <View style={styles.container}>
       <ThemedText type="small" themeColor="textSecondary">
-        Signed in as {session?.user.email}
+        {t('account.signedInAs', { email: session?.user.email ?? '' })}
       </ThemedText>
       <Pressable accessibilityRole="button" onPress={signOut} style={styles.button}>
-        <ThemedText>Sign out</ThemedText>
+        <ThemedText>{t('account.signOut')}</ThemedText>
       </Pressable>
       <Pressable
         accessibilityRole="button"
@@ -40,7 +42,7 @@ export function AccountActions() {
         onPress={confirmDelete}
         style={styles.button}>
         <ThemedText style={styles.destructive}>
-          {deleteAccount.isPending ? 'Deleting…' : 'Delete account'}
+          {deleteAccount.isPending ? t('account.deleting') : t('account.delete')}
         </ThemedText>
       </Pressable>
     </View>
