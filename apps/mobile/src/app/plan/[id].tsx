@@ -22,6 +22,26 @@ import { useTheme } from '@/hooks/use-theme';
 import { useI18n } from '@/i18n/i18n-provider';
 import { slotKey } from '@/lib/slots';
 
+/** A labelled detail in the plan's facts card: label above, value, optional note. */
+function Fact({ label, value, note, last }: { label: string; value: string; note?: string; last?: boolean }) {
+  const theme = useTheme();
+  return (
+    <View style={[styles.fact, !last && { borderBottomWidth: 1, borderBottomColor: theme.backgroundSelected }]}>
+      <ThemedText type="small" themeColor="textSecondary">
+        {label}
+      </ThemedText>
+      <ThemedText type="smallBold" style={styles.factValue}>
+        {value}
+      </ThemedText>
+      {!!note && (
+        <ThemedText type="small" themeColor="textSecondary">
+          {note}
+        </ThemedText>
+      )}
+    </View>
+  );
+}
+
 /** One plan: what it is, how it works, and signing up with the times that suit you. */
 export default function PlanScreen() {
   const { id = '' } = useLocalSearchParams<{ id: string }>();
@@ -77,27 +97,25 @@ export default function PlanScreen() {
             {t(level.label)}
           </ThemedText>
         </View>
-        <View>
+        <View style={styles.titleBlock}>
           <ThemedText type="subtitle">{activity.name}</ThemedText>
           {!!activity.secondary && <ThemedText themeColor="textSecondary">{activity.secondary}</ThemedText>}
-          {followUp && <ThemedText>{t('plan.followUp', { activity: pairText(followUp) })}</ThemedText>}
+          {followUp && (
+            <ThemedText style={styles.followUp}>{t('plan.followUp', { activity: pairText(followUp) })}</ThemedText>
+          )}
         </View>
-        <View style={styles.facts}>
-          <ThemedText>
-            {pairText(names.area(p.areaId))} · {distanceText(t, p.travelMinutes)}
-          </ThemedText>
-          <ThemedText>
-            {t('plan.language')}: {language}
-          </ThemedText>
-          <ThemedText>
-            {t('plan.window', { start: formatDate(dates[0], lang), end: formatDate(dates[dates.length - 1], lang) })}
-          </ThemedText>
-          <ThemedText>{t('plan.deadline', { date: lastSignupDay(p.signupDeadline, lang) })}</ThemedText>
-          <ThemedText type="smallBold">{t('plan.interested', { count: p.signups })}</ThemedText>
+        {/* One labelled row per fact, so they read as separate details rather than a paragraph. */}
+        <View style={[styles.facts, { backgroundColor: theme.backgroundElement }]}>
+          <Fact label={t('plan.where')} value={pairText(names.area(p.areaId))} note={distanceText(t, p.travelMinutes)} />
+          <Fact label={t('plan.language')} value={language} />
+          <Fact
+            label={t('plan.when')}
+            value={t('plan.dateRange', { start: formatDate(dates[0], lang), end: formatDate(dates[dates.length - 1], lang) })}
+            note={t('plan.whenHint')}
+          />
+          <Fact label={t('plan.signupBy')} value={lastSignupDay(p.signupDeadline, lang)} />
+          <Fact label={t('plan.interestedLabel')} value={String(p.signups)} last />
         </View>
-        <ThemedText type="small" themeColor="textSecondary">
-          {t('plan.howItWorks')}
-        </ThemedText>
 
         {notForYou ? (
           <ThemedText>{t('plan.notForYouBody')}</ThemedText>
@@ -195,7 +213,11 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: Spacing.four, paddingTop: Spacing.three },
   content: { padding: Spacing.four, gap: Spacing.four },
   pill: { alignSelf: 'flex-start', borderRadius: 999, paddingVertical: Spacing.half, paddingHorizontal: Spacing.two },
-  facts: { gap: Spacing.one },
+  titleBlock: { gap: Spacing.one },
+  followUp: { marginTop: Spacing.one },
+  facts: { borderRadius: 16, paddingHorizontal: Spacing.three },
+  fact: { paddingVertical: Spacing.three, gap: Spacing.half },
+  factValue: { fontSize: 16, lineHeight: 22 },
   section: { gap: Spacing.three },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
   footer: { padding: Spacing.four, gap: Spacing.two },
