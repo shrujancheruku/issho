@@ -2,7 +2,7 @@
 
 > **This is the source of truth for what's planned, built and pending.** CI (`roadmap` job) fails any push or PR that changes code without updating this file. When you change code, update the status lines below. If the change made a decision, add it to the Decision log.
 
-**Last updated:** 2026-10-20 · **Version:** 0.3.0 (pre-release; [releases](https://github.com/shrujancheruku/issho/releases)) · **Current milestone:** M4 Matching engine (next)
+**Last updated:** 2026-10-21 · **Version:** 0.3.0 (pre-release; [releases](https://github.com/shrujancheruku/issho/releases)) · **Current milestone:** M4 Matching engine (in progress)
 
 Legend: ✅ done · 🟡 in progress / partial · ⬜ not started · ⏸ deferred (post-MVP)
 
@@ -97,9 +97,13 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
 - ✅ **On-demand translation** (`internal/translate`): English is the only language that must be stored. Other languages come from stored text (local names, prefilled events), then the `app.translations` cache (migration 00004), then Google Cloud Translation, cached for everyone. Requests wait up to 8 s, and slower translations finish in the background. Concurrent requests share one call; failures aren't cached; `Prefill` for events. Off without `GOOGLE_TRANSLATE_API_KEY`. Cache path and fallbacks verified end to end; **Live translation verified** (local DB): 230 names into ja/es/fr/ko; cold request 0.65 s for two languages, cached 0.01 s. Short labels without context translated poorly until the English names were clarified (below).
   - the catalogue and overrides are English-only; city packs keep only real local names (東京, 吉祥寺)
 
-### M4 · Matching engine (weeks 3–5): ⬜
-- ⬜ `internal/matching` as a pure package (no I/O) with table-driven tests.
-- ⬜ Step 1, bucketing: group users by area cluster (travel matrix), overlapping availability and a shared fluent language, which becomes the event's primary language (any language). Language-exchange buckets need complementary language pairs, which become the event's primary and secondary languages.
+### M4 · Matching engine (weeks 3–5): 🟡
+- 🟡 `internal/matching` as a pure package (no I/O, deterministic output) with table-driven tests. Core types (`User`, `Slot`, `TravelTimes`, `Config`) in place; grows with each step.
+- ✅ Step 1, bucketing (`matching.Buckets`): group users by meeting area (travel matrix), overlapping availability and a shared fluent language, which becomes the event's primary language (any language). Language-exchange buckets need complementary language pairs, which become the event's primary and secondary languages.
+  - every area is a candidate meeting place; a person joins each area within their `max_travel_min` (fastest mode; no route = unreachable)
+  - exchanges: fluent in one language and learning the other, at least 2 per side (`ExchangeMinPerSide`); primary = the bigger side; people fluent in both stay out
+  - buckets under 3 people (`MinBucketSize`) dropped; output sorted
+  - open: exchanges currently include every learner; M5 may need an explicit "open to language exchange" opt-in and a minimum level
 - ⬜ Step 2, candidate plans: activity combinations ranked by demand × feasibility (venue open, group size fits, time of day suits the activity).
 - ⬜ Step 3, group assembly: greedy placement, then local search.
   - Score: interest overlap, size fit, mutual picks (at most 2 people who already know each other), mixing in newcomers, reliability.
@@ -218,6 +222,8 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
 | 2026-10-20 | Venue discovery assigns each place to its **nearest area**, and searches wide categories (≥ 10 km) **once per city** | Search circles overlap. Nearest-area assignment gives the matcher the right travel time, and searching beaches or trails from every area would pay for the same results again. |
 | 2026-10-20 | Activities link to **venue categories** (our ids), not Google types directly | Keeps the catalogue provider-neutral, and gives M4 the "is there a venue for this?" check. |
 | 2026-10-20 | Second city pack is **Austin** (synthetic, not a launch city) | A real car-based city with real coordinates, so the Google tools can be exercised end to end. It's Japan-free on purpose, which forced per-city disables and renames. |
+| 2026-10-21 | Matching buckets are **per meeting area** (everyone who can reach it), not fixed area clusters | Clusters split neighbours who live either side of a boundary. Overlapping buckets cost nothing at city scale (areas × 21 slots × languages); group assembly places each person once. |
+| 2026-10-21 | Bucket travel uses the **fastest** of the city's modes per area pair | Someone who'd walk 20 minutes won't drive 25. The DB loader takes the minimum so the engine sees one number per pair. |
 
 ## 5. Known gaps & risks
 - **Machine-translation quality on short labels.** Cloud Translation Basic has no context, so short names can come out wrong. Clearer English names fixed the cases found so far; when writing new names, avoid idioms and words with two meanings. Further fixes: admin corrections of cached rows (`reviewed`, M8) or Advanced (v3) glossaries.

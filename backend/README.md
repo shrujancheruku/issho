@@ -23,6 +23,7 @@ The Go backend for Issho: a modular monolith serving a ConnectRPC API. It uses P
 | `internal/cities` | City-pack, catalogue and venue-category JSON formats; validation and seeding |
 | `internal/maps` | Provider-neutral geo interfaces (`Router` for travel-time matrices, `PlaceSearcher` for nearby places) |
 | `internal/maps/google` | Google implementation: Routes API (Compute Route Matrix) and Places API (New) Nearby Search over REST, with retries on 429/5xx. `placetypes.txt` is a snapshot of valid place types. |
+| `internal/matching` | The matching engine (M4), pure: no I/O, deterministic. Step 1 so far: `Buckets` groups people by meeting area (anyone within their max travel time), shared weekly slot and a shared fluent language, plus language-exchange buckets (fluent in one language, learning the other, ≥ 2 per side) |
 | `internal/geo` | Builds a city's travel-time matrix and venue list through the `maps` interfaces, and stores them |
 | `db/migrations/` | goose SQL migrations (embedded via `db/embed.go`) |
 | `db/queries/` | sqlc queries |
