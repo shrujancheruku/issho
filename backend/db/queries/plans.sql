@@ -34,7 +34,7 @@ where p.id = $1;
 select round from app.plans where id = $1 and status = 'open' for update;
 
 -- name: ClosePlan :exec
-update app.plans set status = 'closed', closed_reason = @reason::text, closed_at = now()
+update app.plans set status = 'closed', closed_reason = @reason::text, closed_at = @closed_at
 where id = @id and status = 'open';
 
 -- name: NextPlanRound :exec

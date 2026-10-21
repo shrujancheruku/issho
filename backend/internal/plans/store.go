@@ -204,12 +204,17 @@ type Event struct {
 	Scheduled matching.Scheduled
 	ConfirmBy time.Time
 	Forced    bool
+	// Next is the plan's next round, for whoever is still waiting; nil
+	// closes the plan as done, at Now.
+	Next *Window
+	Now  time.Time
 }
 
 // SaveEvent stores a scheduled round: the event, its groups and their
 // invitations. Everyone invited stops waiting; the rest stay signed up for
-// the next round. It fails with ErrClosed if the plan closed or moved to
-// another round in the meantime.
+// the next round, which starts in the same transaction, so a crash can't
+// leave a round scheduled but still open. It fails with ErrClosed if the
+// plan closed or moved to another round in the meantime.
 func SaveEvent(ctx context.Context, pool *pgxpool.Pool, e Event) (uuid.UUID, error) {
 	var eventID uuid.UUID
 	err := pgx.BeginFunc(ctx, pool, func(tx pgx.Tx) error {
@@ -255,7 +260,13 @@ func SaveEvent(ctx context.Context, pool *pgxpool.Pool, e Event) (uuid.UUID, err
 			}
 			invited = append(invited, members...)
 		}
-		return q.DeleteSignups(ctx, dbgen.DeleteSignupsParams{PlanID: e.PlanID, UserIds: invited})
+		if err := q.DeleteSignups(ctx, dbgen.DeleteSignupsParams{PlanID: e.PlanID, UserIds: invited}); err != nil {
+			return err
+		}
+		if e.Next == nil {
+			return Close(ctx, q, e.PlanID, ClosedDone, e.Now)
+		}
+		return NextRound(ctx, q, e.PlanID, *e.Next)
 	})
 	if err != nil {
 		return uuid.Nil, err
@@ -273,9 +284,10 @@ func NextRound(ctx context.Context, q *dbgen.Queries, planID uuid.UUID, w Window
 	})
 }
 
-// Close stops a plan taking signups; reason is one of the Closed* constants.
-func Close(ctx context.Context, q *dbgen.Queries, planID uuid.UUID, reason string) error {
-	return q.ClosePlan(ctx, dbgen.ClosePlanParams{ID: planID, Reason: reason})
+// Close stops a plan taking signups at the given time; reason is one of the
+// Closed* constants.
+func Close(ctx context.Context, q *dbgen.Queries, planID uuid.UUID, reason string, at time.Time) error {
+	return q.ClosePlan(ctx, dbgen.ClosePlanParams{ID: planID, Reason: reason, ClosedAt: pgtype.Timestamptz{Time: at, Valid: true}})
 }
 
 func date(t time.Time) pgtype.Date { return pgtype.Date{Time: t, Valid: true} }

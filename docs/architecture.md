@@ -13,7 +13,7 @@
 │ Supabase Auth        │ ◀─────────────────────────── API fetches and caches  │
 └──────────────────────┘                                                       ▼
                                                      ┌───────────────────────────────┐
-  backend/cmd/worker (planned, River jobs) ────────▶ │ Postgres + PostGIS (Supabase) │
+  backend/cmd/worker (River jobs) ──────────────────▶ │ Postgres + PostGIS (Supabase) │
                                                      │  schema `app` (ours)          │
                                                      │  schema `auth` (Supabase)     │
                                                      └───────────────────────────────┘
