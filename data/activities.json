@@ -390,7 +390,7 @@
     "cost_level": 1,
     "conversational": true,
     "skill_dependent": false,
-    "min_group_size": 10,
+    "min_group_size": 3,
     "max_group_size": 18,
     "venue_categories": [
       "sports-facility",
@@ -399,6 +399,9 @@
     "blocks": [
       "morning",
       "afternoon"
+    ],
+    "replaces": [
+      "batting-cage"
     ]
   },
   {
@@ -444,28 +447,67 @@
     ]
   },
   {
-    "id": "sports-taster",
+    "id": "martial-arts",
     "name": {
-      "en": "Try a new sport (martial arts, archery, golf …)"
+      "en": "Martial arts"
+    },
+    "category": "sports",
+    "indoor": true,
+    "energy": 3,
+    "cost_level": 2,
+    "conversational": false,
+    "skill_dependent": true,
+    "min_group_size": 3,
+    "max_group_size": 8,
+    "venue_categories": []
+  },
+  {
+    "id": "archery",
+    "name": {
+      "en": "Archery"
     },
     "category": "sports",
     "indoor": true,
     "energy": 2,
     "cost_level": 2,
     "conversational": true,
+    "skill_dependent": true,
+    "min_group_size": 3,
+    "max_group_size": 6,
+    "venue_categories": []
+  },
+  {
+    "id": "golf-range",
+    "name": {
+      "en": "Golf"
+    },
+    "category": "sports",
+    "indoor": false,
+    "energy": 2,
+    "cost_level": 2,
+    "conversational": true,
+    "skill_dependent": false,
+    "min_group_size": 3,
+    "max_group_size": 6,
+    "venue_categories": [
+      "golf"
+    ]
+  },
+  {
+    "id": "gym-session",
+    "name": {
+      "en": "Gym workout"
+    },
+    "category": "sports",
+    "indoor": true,
+    "energy": 3,
+    "cost_level": 2,
+    "conversational": false,
     "skill_dependent": false,
     "min_group_size": 2,
-    "max_group_size": 8,
+    "max_group_size": 4,
     "venue_categories": [
-      "gym",
-      "golf"
-    ],
-    "replaces": [
-      "gym-session",
-      "martial-arts",
-      "archery",
-      "batting-cage",
-      "golf-range"
+      "gym"
     ]
   },
   {
