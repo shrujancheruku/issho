@@ -29,6 +29,7 @@ import {
 } from './draft';
 import { categoryOrder, interestLevels, interestStyles } from './interest';
 import { LanguagePicker } from './language-picker';
+import { SuggestActivities } from './suggest-activities';
 
 export type StepProps = { draft: Draft; onChange: (d: Draft) => void };
 
@@ -345,6 +346,7 @@ function ActivitiesStep({ draft, onChange }: StepProps) {
   return (
     <>
       <HowToChoose />
+      {!!data?.length && <SuggestActivities draft={draft} onChange={onChange} activities={data} />}
       <ThemedText type="smallBold" style={{ color: picked >= MinActivities ? undefined : Brand.red }}>
         {t('interest.minimum', { count: MinActivities })} {t('profile.activitiesPicked', { count: picked })}
       </ThemedText>

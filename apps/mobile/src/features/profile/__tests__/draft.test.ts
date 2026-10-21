@@ -3,6 +3,8 @@ import { Gender, Interest, TimeBlock } from '@issho/api-client';
 
 import {
   addSpoken,
+  addSuggestions,
+  cycleSuggestion,
   cycleInterest,
   emptyDraft,
   setCity,
@@ -104,4 +106,23 @@ it('builds the SaveProfile payload', () => {
   expect(p.availability).toEqual([{ weekday: 6, block: TimeBlock.MORNING }]);
   expect(p.activities).toHaveLength(3);
   expect(p.conductVersion).toBe(1);
+});
+
+it('adds suggestions without overriding what the person chose', () => {
+  const d = cycleInterest(emptyDraft('en'), 'hike'); // open to try, chosen by hand
+  const { draft, added } = addSuggestions(d, [
+    { activityId: 'hike', interest: Interest.LOVE },
+    { activityId: 'karaoke', interest: Interest.LIKE },
+    { activityId: 'pottery', interest: Interest.UNSPECIFIED },
+  ]);
+  expect(added).toBe(1);
+  expect(draft.activities).toEqual({ hike: Interest.OPEN_TO_TRY, karaoke: Interest.LIKE });
+});
+
+it('cycles a suggestion up and then off', () => {
+  let list = [{ activityId: 'hike', interest: Interest.LIKE }, { activityId: 'karaoke', interest: Interest.OPEN_TO_TRY }];
+  list = cycleSuggestion(list, 'hike');
+  expect(list[0].interest).toBe(Interest.LOVE);
+  list = cycleSuggestion(list, 'hike');
+  expect(list.map((s) => s.activityId)).toEqual(['karaoke']);
 });
