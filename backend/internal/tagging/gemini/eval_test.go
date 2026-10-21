@@ -3,12 +3,14 @@ package gemini
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
 	"testing"
 
 	"github.com/shrujancheruku/issho/backend/internal/cities"
+	"github.com/shrujancheruku/issho/backend/internal/platform/googleapi"
 	"github.com/shrujancheruku/issho/backend/internal/tagging"
 )
 
@@ -58,6 +60,11 @@ func TestEval(t *testing.T) {
 	var expected, found, levelsChecked, levelsRight, mustNotHits, noneCases, noneRight int
 	for _, c := range cases {
 		tags, err := tagger.Tag(context.Background(), c.Text, catalog)
+		// A key or permission problem fails every case the same way: stop.
+		var apiErr *googleapi.APIError
+		if errors.As(err, &apiErr) && apiErr.StatusCode >= 400 && apiErr.StatusCode < 500 && apiErr.StatusCode != 429 {
+			t.Fatalf("Gemini API refused the request (HTTP %d); check the key and its API restrictions: %v", apiErr.StatusCode, err)
+		}
 		if err != nil {
 			t.Errorf("[%s] %q: %v", c.Lang, c.Text, err)
 			continue
