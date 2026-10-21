@@ -132,6 +132,6 @@ Run `make gen` after editing protos or queries. CI fails if the generated code i
 See the decision log in [ROADMAP.md](ROADMAP.md#4-decision-log). The most important ones:
 - Supabase for the database, auth and storage
 - Google Maps Platform for venues and travel times
-- Google's Gemini API for interest tagging; Claude for plan text (M6)
+- Gemini on Google Cloud's Agent Platform for interest tagging; Claude for plan text (M6)
 - Kamal 2 on a VPS for deploys
 - Conventional Commits with release-please for versions and changelogs

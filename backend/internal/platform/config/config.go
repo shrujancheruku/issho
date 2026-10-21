@@ -20,8 +20,9 @@ type Config struct {
 	// Translation). Optional: without it, text is shown in the languages
 	// already stored.
 	GoogleTranslateAPIKey string
-	// GeminiAPIKey enables interest suggestions (Google Gemini API). Optional:
-	// without it, CatalogService.SuggestActivities returns FAILED_PRECONDITION.
+	// GeminiAPIKey (a Google Cloud Agent Platform key) enables interest
+	// suggestions (Gemini). Optional: without it,
+	// CatalogService.SuggestActivities returns FAILED_PRECONDITION.
 	GeminiAPIKey string
 }
 
