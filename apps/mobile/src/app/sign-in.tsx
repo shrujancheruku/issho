@@ -22,7 +22,7 @@ const CODE_LENGTH = 6; // matches [auth.email] otp_length in supabase/config.tom
  */
 export default function SignInScreen() {
   const theme = useTheme();
-  const { t } = useI18n();
+  const { t, languages } = useI18n();
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [step, setStep] = useState<'email' | 'code'>('email');
@@ -34,7 +34,11 @@ export default function SignInScreen() {
     setError(null);
     const { error } = await supabase.auth.signInWithOtp({
       email: email.trim(),
-      options: { shouldCreateUser: true },
+      // data becomes the new account's user_metadata (ignored for existing
+      // accounts): the code emails are written in metadata.lang
+      // (supabase/templates), so a new user's first email is in the language
+      // this screen is showing.
+      options: { shouldCreateUser: true, data: { lang: languages.primary } },
     });
     setBusy(false);
     if (error) return setError(error.message);
