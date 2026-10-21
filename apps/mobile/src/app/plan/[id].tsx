@@ -44,7 +44,9 @@ export default function PlanScreen() {
     [plan.data, profile.data, usual],
   );
   const times = edited ?? saved;
-  const [done, setDone] = useState(false);
+
+  // Opened directly (a link on the web), there's no screen to go back to.
+  const leave = () => (router.canGoBack() ? router.back() : router.replace('/'));
 
   const notFound = plan.error instanceof ConnectError && plan.error.code === Code.NotFound;
   const p = plan.data?.plan;
@@ -143,7 +145,7 @@ export default function PlanScreen() {
       <SafeAreaView style={styles.fill}>
         <View style={[styles.fill, styles.column]}>
           <View style={styles.header}>
-            <Pressable accessibilityRole="button" onPress={() => router.back()} hitSlop={8} style={styles.grow}>
+            <Pressable accessibilityRole="button" onPress={leave} hitSlop={8} style={styles.grow}>
               <ThemedText type="link">‹ {t('common.back')}</ThemedText>
             </Pressable>
             <LanguageSwitch />
@@ -151,7 +153,6 @@ export default function PlanScreen() {
           <ScrollView contentContainerStyle={styles.content}>{body}</ScrollView>
           {canSave && (
             <View style={styles.footer}>
-              {done && !signUp.isPending && <ThemedText style={styles.center}>{t('plan.saved')}</ThemedText>}
               {times!.pattern.length === 0 && <ThemedText style={styles.error}>{t('plan.pickTime')}</ThemedText>}
               {error && (
                 <ThemedText style={styles.error}>
@@ -164,10 +165,9 @@ export default function PlanScreen() {
                 busy={signUp.isPending}
                 onPress={() =>
                   signUp.mutate(toSignup(times!, usual), {
-                    onSuccess: () => {
-                      setDone(true);
-                      setTimes(null);
-                    },
+                    // Back to the feed, which useSignupActions has refreshed by
+                    // now, so the plan already shows as signed up there.
+                    onSuccess: leave,
                   })
                 }
               />
@@ -175,7 +175,7 @@ export default function PlanScreen() {
                 <Pressable
                   accessibilityRole="button"
                   disabled={withdraw.isPending}
-                  onPress={() => withdraw.mutate(undefined, { onSuccess: () => setDone(false) })}
+                  onPress={() => withdraw.mutate()}
                   style={styles.withdraw}>
                   <ThemedText type="link">{t('plan.withdraw')}</ThemedText>
                 </Pressable>
@@ -200,6 +200,5 @@ const styles = StyleSheet.create({
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
   footer: { padding: Spacing.four, gap: Spacing.two },
   withdraw: { alignItems: 'center', paddingVertical: Spacing.two },
-  center: { textAlign: 'center' },
   error: { color: Brand.red, textAlign: 'center' },
 });
