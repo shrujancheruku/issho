@@ -9,6 +9,36 @@ import (
 	"context"
 )
 
+const deleteActivities = `-- name: DeleteActivities :exec
+delete from app.activities where id = any($1::text[])
+`
+
+func (q *Queries) DeleteActivities(ctx context.Context, ids []string) error {
+	_, err := q.db.Exec(ctx, deleteActivities, ids)
+	return err
+}
+
+const mergeActivityPrefs = `-- name: MergeActivityPrefs :exec
+insert into app.user_activity_prefs (user_id, activity_id, weight)
+select user_id, $1::text, max(weight)
+from app.user_activity_prefs
+where activity_id = any($2::text[])
+group by user_id
+on conflict (user_id, activity_id) do update set weight = greatest(app.user_activity_prefs.weight, excluded.weight)
+`
+
+type MergeActivityPrefsParams struct {
+	ActivityID string
+	Replaced   []string
+}
+
+// Moves preferences for retired activities to the one that replaces them.
+// Someone who rated several of them keeps their strongest interest.
+func (q *Queries) MergeActivityPrefs(ctx context.Context, arg MergeActivityPrefsParams) error {
+	_, err := q.db.Exec(ctx, mergeActivityPrefs, arg.ActivityID, arg.Replaced)
+	return err
+}
+
 const setActivityBlocks = `-- name: SetActivityBlocks :exec
 update app.activities set blocks = $1 where id = $2
 `

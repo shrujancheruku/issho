@@ -59,11 +59,27 @@ func ValidateCatalog(cats []VenueCategory, acts []Activity) error {
 			bad("activity %q: empty or duplicate id", a.ID)
 		}
 		actIDs[a.ID] = true
+	}
+	// A replaced id must be retired: not a current activity, and merged into
+	// only one, or seeding would delete a live activity or merge it twice.
+	replaced := map[string]string{}
+	for _, a := range acts {
+		for _, r := range a.Replaces {
+			if actIDs[r] {
+				bad("activity %s: replaces %q, which is still an activity", a.ID, r)
+			}
+			if prev, ok := replaced[r]; ok {
+				bad("activity %s: %q is already replaced by %s", a.ID, r, prev)
+			}
+			replaced[r] = a.ID
+		}
+	}
+	for _, a := range acts {
 		if err := checkName(a.Name, nil); err != nil {
 			bad("activity %s: name: %v", a.ID, err)
 		}
-		if a.Category == "" {
-			bad("activity %s: missing category", a.ID)
+		if !slices.Contains(Categories, a.Category) {
+			bad("activity %s: category %q is not one of %v", a.ID, a.Category, Categories)
 		}
 		if a.Energy < 1 || a.Energy > 3 {
 			bad("activity %s: energy %d outside 1..3", a.ID, a.Energy)

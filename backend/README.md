@@ -7,7 +7,7 @@ The Go backend for Issho: a modular monolith serving a ConnectRPC API. It uses P
 | Path | Contents |
 |---|---|
 | `cmd/api/` | API server: wires config, DB pool, the JWKS verifier and handlers, then serves HTTP/1.1 and h2c on `API_ADDR` |
-| `cmd/tool/` | Ops CLI: `migrate <goose command>`, `seed [-catalog file] [-venue-categories file] <citypack.json>...`, `build-matrix [-dry-run] <city>`, `discover-venues [-dry-run] [-categories ids] <city>`, `simulate [-users n] [-seed n] [-month n] [-config json] <citypack.json>...` (no database needed) |
+| `cmd/tool/` | Ops CLI: `migrate <goose command>`, `seed [-catalog file] [-venue-categories file] <citypack.json>...` (also applies catalogue merges: `replaces`), `build-matrix [-dry-run] <city>`, `discover-venues [-dry-run] [-categories ids] <city>`, `simulate [-users n] [-seed n] [-month n] [-config json] <citypack.json>...` (no database needed) |
 | `internal/platform/config` | Environment variables → `Config` |
 | `internal/platform/db` | pgx pool and goose migration runner |
 | `internal/platform/auth` | Supabase JWT verification (JWKS) and the Connect auth interceptor |
@@ -166,7 +166,7 @@ go test ./...          # or `make test` from the root
 | `internal/maps/google/google_test.go` | Matrix chunking (≤ 625 elements per request), global origin indexes, no-route and element errors, drive is traffic-unaware, key only in a header, field masks, retry on 429 but not on 400 |
 | `internal/geo/geo_test.go` | Matrix plan (no self pairs, no long walks), rounding up, missing routes left out, venue plan (wide categories once), nearest-area assignment, dedupe |
 | `internal/geo/store_test.go` | **Integration** (runs when `TEST_DATABASE_URL` is set; CI sets it): area coordinates round-trip, upsert, 30-day stale deletion, one venue in two categories, curation kept on re-discovery |
-| `internal/cities/data_test.go` | Every file in `../data` is valid: English-only catalogue, venue category references, Google place types, city packs (area ids, modes, months, override ids, names only in English or the city's own languages) |
+| `internal/cities/data_test.go` | Every file in `../data` is valid: English-only catalogue, known categories (each with an app label, and no app label without a category), `replaces` only naming retired ids once, venue category references, Google place types, city packs (area ids, modes, months, override ids, names only in English or the city's own languages) |
 | `internal/translate/translate_test.go` | Stored language wins, cache hits skip the translator, duplicates translated once, concurrent requests share one call, slow translations finish in the background after the request is gone, failures aren't cached, batching keeps positions, prefill fails loudly (run with `-race`) |
 | `internal/translate/google/google_test.go` | Key only in a header, source/format sent, batching by segment count and size, HTML entities unescaped, API errors and wrong result counts fail |
 
