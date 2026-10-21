@@ -1,0 +1,128 @@
+syntax = "proto3";
+
+package issho.v1;
+
+import "google/protobuf/timestamp.proto";
+import "issho/v1/profile.proto";
+
+option go_package = "github.com/shrujancheruku/issho/backend/gen/issho/v1;isshov1";
+
+// PlanService shows open plans to the caller and signs them up. A plan is an
+// outing without a date yet (an activity in an area, in a language); once
+// enough people sign up, the worker picks a date and forms groups.
+// Plans carry ids only: names come from CatalogService (ListActivities,
+// ListCities), which the app already has in the caller's languages.
+// Signup counts are shown, never who signed up.
+// Requires `Authorization: Bearer <Supabase access token>` and a saved
+// profile (FAILED_PRECONDITION otherwise).
+//
+// HTTP: POST /issho.v1.PlanService/<Method>
+service PlanService {
+  // ListFeed returns every open plan in the caller's city, best for them
+  // first, so scrolling far enough shows everything. Each plan's level also
+  // colours the map.
+  rpc ListFeed(ListFeedRequest) returns (ListFeedResponse) {}
+
+  // GetPlan returns one open plan with the caller's signup, if any.
+  // NOT_FOUND for an unknown or closed plan, or one in another city.
+  rpc GetPlan(GetPlanRequest) returns (GetPlanResponse) {}
+
+  // SignUp signs the caller up for an open plan, or replaces the times they
+  // gave. FAILED_PRECONDITION when the plan has closed or they don't speak
+  // its language; INVALID_ARGUMENT for times outside the plan's window.
+  rpc SignUp(SignUpRequest) returns (SignUpResponse) {}
+
+  // Withdraw removes the caller's signup. Withdrawing twice is fine.
+  rpc Withdraw(WithdrawRequest) returns (WithdrawResponse) {}
+}
+
+message ListFeedRequest {}
+
+message ListFeedResponse {
+  repeated FeedPlan plans = 1;
+}
+
+message GetPlanRequest {
+  string plan_id = 1;
+}
+
+message GetPlanResponse {
+  FeedPlan plan = 1;
+  // The caller's signup; unset when they haven't signed up.
+  Signup signup = 2;
+}
+
+message SignUpRequest {
+  string plan_id = 1;
+  Signup signup = 2;
+}
+
+message SignUpResponse {
+  FeedPlan plan = 1;
+}
+
+message WithdrawRequest {
+  string plan_id = 1;
+}
+
+message WithdrawResponse {}
+
+// An open plan as the caller sees it.
+message FeedPlan {
+  string id = 1;
+  // Area id (CatalogService.ListCities), e.g. "tokyo-kichijoji".
+  string area_id = 2;
+  // Activity id (CatalogService.ListActivities).
+  string activity_id = 3;
+  // An optional second activity, such as a meal after bouldering; "" = none.
+  string follow_up_activity_id = 4;
+  // The plan's languages (ISO 639-1): everyone at the event speaks the
+  // primary one, or the secondary one for a language exchange ("" = none).
+  string primary_language = 5;
+  string secondary_language = 6;
+  // How many people are waiting for this round, including the caller.
+  int32 signups = 7;
+  PlanLevel level = 8;
+  // Travel time from the caller's home area; -1 = no route.
+  int32 travel_minutes = 9;
+  // When this round can happen: window_days days from window_start, a date
+  // in the city ("2030-01-05"). The worker can schedule it any time in the
+  // window once it's ready.
+  string window_start = 10;
+  int32 window_days = 11;
+  // Signups for this round close then; the round goes ahead with whoever
+  // can make it.
+  google.protobuf.Timestamp signup_deadline = 12;
+  bool signed_up = 13;
+}
+
+// How well a plan suits the caller, best last.
+enum PlanLevel {
+  PLAN_LEVEL_UNSPECIFIED = 0;
+  // They don't speak the plan's language(s): shown greyed out, no signup.
+  PLAN_LEVEL_NOT_FOR_YOU = 1;
+  // No preference for the activity, or beyond their longest trip.
+  PLAN_LEVEL_LOW = 2;
+  // An activity they're open to try.
+  PLAN_LEVEL_MAYBE = 3;
+  // One they like.
+  PLAN_LEVEL_GOOD = 4;
+  // One they love.
+  PLAN_LEVEL_TOP = 5;
+}
+
+// The times that suit someone for one plan. Pre-fill pattern with the
+// profile's availability; an empty pattern means "my usual availability".
+message Signup {
+  // Weekly slots that suit them for this plan. No duplicates.
+  repeated AvailabilitySlot pattern = 1;
+  // Dates or parts of a date in the plan's window they can't make.
+  repeated UnavailableTime unavailable = 2;
+}
+
+message UnavailableTime {
+  // A date in the plan's window, "2030-01-09".
+  string date = 1;
+  // TIME_BLOCK_UNSPECIFIED = the whole day.
+  TimeBlock block = 2;
+}

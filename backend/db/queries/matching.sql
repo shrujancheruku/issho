@@ -76,3 +76,11 @@ order by f.user_id, f.activity_id;
 select area_id, activity_id, follow_up_id, primary_language, secondary_language
 from app.plans
 where city_id = @city_id and closed_reason = 'no_group' and closed_at >= @since;
+
+-- One person and their city, for their feed.
+-- name: GetMatchingUser :one
+select p.user_id, a.city_id, p.home_area_id, p.max_travel_min, p.gender, p.same_gender_only, p.size_pref,
+       p.budget, p.reliability
+from app.profiles p
+join app.areas a on a.id = p.home_area_id
+where p.user_id = $1;

@@ -472,6 +472,102 @@ func (q *Queries) ListSignups(ctx context.Context, planID uuid.UUID) ([]uuid.UUI
 	return items, nil
 }
 
+const listUserOpenSignups = `-- name: ListUserOpenSignups :many
+select s.plan_id from app.plan_signups s
+join app.plans p on p.id = s.plan_id
+where s.user_id = $1 and p.status = 'open'
+`
+
+func (q *Queries) ListUserOpenSignups(ctx context.Context, userID uuid.UUID) ([]uuid.UUID, error) {
+	rows, err := q.db.Query(ctx, listUserOpenSignups, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []uuid.UUID
+	for rows.Next() {
+		var plan_id uuid.UUID
+		if err := rows.Scan(&plan_id); err != nil {
+			return nil, err
+		}
+		items = append(items, plan_id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listUserSignupSlots = `-- name: ListUserSignupSlots :many
+select weekday, block from app.plan_signup_slots
+where plan_id = $1 and user_id = $2 order by weekday, block
+`
+
+type ListUserSignupSlotsParams struct {
+	PlanID uuid.UUID
+	UserID uuid.UUID
+}
+
+type ListUserSignupSlotsRow struct {
+	Weekday int16
+	Block   string
+}
+
+func (q *Queries) ListUserSignupSlots(ctx context.Context, arg ListUserSignupSlotsParams) ([]ListUserSignupSlotsRow, error) {
+	rows, err := q.db.Query(ctx, listUserSignupSlots, arg.PlanID, arg.UserID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListUserSignupSlotsRow
+	for rows.Next() {
+		var i ListUserSignupSlotsRow
+		if err := rows.Scan(&i.Weekday, &i.Block); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listUserSignupUnavailable = `-- name: ListUserSignupUnavailable :many
+select date, block from app.plan_signup_unavailable
+where plan_id = $1 and user_id = $2 order by date, block
+`
+
+type ListUserSignupUnavailableParams struct {
+	PlanID uuid.UUID
+	UserID uuid.UUID
+}
+
+type ListUserSignupUnavailableRow struct {
+	Date  pgtype.Date
+	Block string
+}
+
+func (q *Queries) ListUserSignupUnavailable(ctx context.Context, arg ListUserSignupUnavailableParams) ([]ListUserSignupUnavailableRow, error) {
+	rows, err := q.db.Query(ctx, listUserSignupUnavailable, arg.PlanID, arg.UserID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListUserSignupUnavailableRow
+	for rows.Next() {
+		var i ListUserSignupUnavailableRow
+		if err := rows.Scan(&i.Date, &i.Block); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const lockOpenPlan = `-- name: LockOpenPlan :one
 select round from app.plans where id = $1 and status = 'open' for update
 `
