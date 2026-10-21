@@ -27,6 +27,14 @@ description = "Supabase service_role JWT"
 regex = '''eyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]*(c2VydmljZV9yb2xl|NlcnZpY2Vfcm9sZ|zZXJ2aWNlX3JvbG)[A-Za-z0-9_-]*\.[A-Za-z0-9_-]+'''
 keywords = ["eyj"]
 
+# Google Cloud Agent Platform API keys (GOOGLE_GEMINI_API_KEY). They start
+# "AQ." rather than "AIza", so gitleaks' default GCP rule misses them.
+[[rules]]
+id = "gcp-agent-platform-key"
+description = "Google Cloud Agent Platform API key"
+regex = '''\bAQ\.[A-Za-z0-9_-]{40,}'''
+keywords = ["aq."]
+
 # Apple .p8 keys (Sign in with Apple, APNs) and similar PEM private keys are
 # covered by the default "private-key" rule.
 

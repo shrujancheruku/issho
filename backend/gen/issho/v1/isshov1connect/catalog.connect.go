@@ -42,6 +42,9 @@ const (
 	// CatalogServiceListLanguagesProcedure is the fully-qualified name of the CatalogService's
 	// ListLanguages RPC.
 	CatalogServiceListLanguagesProcedure = "/issho.v1.CatalogService/ListLanguages"
+	// CatalogServiceSuggestActivitiesProcedure is the fully-qualified name of the CatalogService's
+	// SuggestActivities RPC.
+	CatalogServiceSuggestActivitiesProcedure = "/issho.v1.CatalogService/SuggestActivities"
 )
 
 // CatalogServiceClient is a client for the issho.v1.CatalogService service.
@@ -55,6 +58,13 @@ type CatalogServiceClient interface {
 	// ListLanguages returns every language a person can choose to speak or
 	// read (ISO 639-1), each named in itself and in the requested language.
 	ListLanguages(context.Context, *connect.Request[v1.ListLanguagesRequest]) (*connect.Response[v1.ListLanguagesResponse], error)
+	// SuggestActivities reads what someone writes about their interests, in any
+	// language, and suggests activities offered in the city, each with an
+	// interest level. Suggestions only: the app shows them and the person
+	// confirms each one. Uses Gemini on Google Cloud's Agent Platform;
+	// FAILED_PRECONDITION when the server has no GOOGLE_GEMINI_API_KEY, so the
+	// app can hide the feature. An empty list means nothing in the text matched.
+	SuggestActivities(context.Context, *connect.Request[v1.SuggestActivitiesRequest]) (*connect.Response[v1.SuggestActivitiesResponse], error)
 }
 
 // NewCatalogServiceClient constructs a client for the issho.v1.CatalogService service. By default,
@@ -86,14 +96,21 @@ func NewCatalogServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			connect.WithSchema(catalogServiceMethods.ByName("ListLanguages")),
 			connect.WithClientOptions(opts...),
 		),
+		suggestActivities: connect.NewClient[v1.SuggestActivitiesRequest, v1.SuggestActivitiesResponse](
+			httpClient,
+			baseURL+CatalogServiceSuggestActivitiesProcedure,
+			connect.WithSchema(catalogServiceMethods.ByName("SuggestActivities")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // catalogServiceClient implements CatalogServiceClient.
 type catalogServiceClient struct {
-	listActivities *connect.Client[v1.ListActivitiesRequest, v1.ListActivitiesResponse]
-	listCities     *connect.Client[v1.ListCitiesRequest, v1.ListCitiesResponse]
-	listLanguages  *connect.Client[v1.ListLanguagesRequest, v1.ListLanguagesResponse]
+	listActivities    *connect.Client[v1.ListActivitiesRequest, v1.ListActivitiesResponse]
+	listCities        *connect.Client[v1.ListCitiesRequest, v1.ListCitiesResponse]
+	listLanguages     *connect.Client[v1.ListLanguagesRequest, v1.ListLanguagesResponse]
+	suggestActivities *connect.Client[v1.SuggestActivitiesRequest, v1.SuggestActivitiesResponse]
 }
 
 // ListActivities calls issho.v1.CatalogService.ListActivities.
@@ -111,6 +128,11 @@ func (c *catalogServiceClient) ListLanguages(ctx context.Context, req *connect.R
 	return c.listLanguages.CallUnary(ctx, req)
 }
 
+// SuggestActivities calls issho.v1.CatalogService.SuggestActivities.
+func (c *catalogServiceClient) SuggestActivities(ctx context.Context, req *connect.Request[v1.SuggestActivitiesRequest]) (*connect.Response[v1.SuggestActivitiesResponse], error) {
+	return c.suggestActivities.CallUnary(ctx, req)
+}
+
 // CatalogServiceHandler is an implementation of the issho.v1.CatalogService service.
 type CatalogServiceHandler interface {
 	// ListActivities returns the activities enabled in a city, with names in
@@ -122,6 +144,13 @@ type CatalogServiceHandler interface {
 	// ListLanguages returns every language a person can choose to speak or
 	// read (ISO 639-1), each named in itself and in the requested language.
 	ListLanguages(context.Context, *connect.Request[v1.ListLanguagesRequest]) (*connect.Response[v1.ListLanguagesResponse], error)
+	// SuggestActivities reads what someone writes about their interests, in any
+	// language, and suggests activities offered in the city, each with an
+	// interest level. Suggestions only: the app shows them and the person
+	// confirms each one. Uses Gemini on Google Cloud's Agent Platform;
+	// FAILED_PRECONDITION when the server has no GOOGLE_GEMINI_API_KEY, so the
+	// app can hide the feature. An empty list means nothing in the text matched.
+	SuggestActivities(context.Context, *connect.Request[v1.SuggestActivitiesRequest]) (*connect.Response[v1.SuggestActivitiesResponse], error)
 }
 
 // NewCatalogServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -149,6 +178,12 @@ func NewCatalogServiceHandler(svc CatalogServiceHandler, opts ...connect.Handler
 		connect.WithSchema(catalogServiceMethods.ByName("ListLanguages")),
 		connect.WithHandlerOptions(opts...),
 	)
+	catalogServiceSuggestActivitiesHandler := connect.NewUnaryHandler(
+		CatalogServiceSuggestActivitiesProcedure,
+		svc.SuggestActivities,
+		connect.WithSchema(catalogServiceMethods.ByName("SuggestActivities")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/issho.v1.CatalogService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case CatalogServiceListActivitiesProcedure:
@@ -157,6 +192,8 @@ func NewCatalogServiceHandler(svc CatalogServiceHandler, opts ...connect.Handler
 			catalogServiceListCitiesHandler.ServeHTTP(w, r)
 		case CatalogServiceListLanguagesProcedure:
 			catalogServiceListLanguagesHandler.ServeHTTP(w, r)
+		case CatalogServiceSuggestActivitiesProcedure:
+			catalogServiceSuggestActivitiesHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -176,4 +213,8 @@ func (UnimplementedCatalogServiceHandler) ListCities(context.Context, *connect.R
 
 func (UnimplementedCatalogServiceHandler) ListLanguages(context.Context, *connect.Request[v1.ListLanguagesRequest]) (*connect.Response[v1.ListLanguagesResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.CatalogService.ListLanguages is not implemented"))
+}
+
+func (UnimplementedCatalogServiceHandler) SuggestActivities(context.Context, *connect.Request[v1.SuggestActivitiesRequest]) (*connect.Response[v1.SuggestActivitiesResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.CatalogService.SuggestActivities is not implemented"))
 }

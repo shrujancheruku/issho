@@ -4,6 +4,8 @@ package issho.v1;
 
 option go_package = "github.com/shrujancheruku/issho/backend/gen/issho/v1;isshov1";
 
+import "issho/v1/profile.proto";
+
 // CatalogService exposes reference data for onboarding and settings: the
 // activity catalogue (localised per city), cities with their areas, and the
 // languages people can choose.
@@ -26,6 +28,14 @@ service CatalogService {
   // ListLanguages returns every language a person can choose to speak or
   // read (ISO 639-1), each named in itself and in the requested language.
   rpc ListLanguages(ListLanguagesRequest) returns (ListLanguagesResponse) {}
+
+  // SuggestActivities reads what someone writes about their interests, in any
+  // language, and suggests activities offered in the city, each with an
+  // interest level. Suggestions only: the app shows them and the person
+  // confirms each one. Uses Gemini on Google Cloud's Agent Platform;
+  // FAILED_PRECONDITION when the server has no GOOGLE_GEMINI_API_KEY, so the
+  // app can hide the feature. An empty list means nothing in the text matched.
+  rpc SuggestActivities(SuggestActivitiesRequest) returns (SuggestActivitiesResponse) {}
 }
 
 message ListActivitiesRequest {
@@ -121,4 +131,16 @@ message Language {
   string autonym = 2;
   // Its name in the requested locale ("スペイン語"); falls back to English.
   string name = 3;
+}
+
+message SuggestActivitiesRequest {
+  // City pack id; only activities offered there are suggested. Required.
+  string city_id = 1;
+  // What they enjoy, in their own words and any language. 1–500 characters.
+  string text = 2;
+}
+
+message SuggestActivitiesResponse {
+  // In the order the text mentions them; at most one per activity.
+  repeated ActivityPreference suggestions = 1;
 }

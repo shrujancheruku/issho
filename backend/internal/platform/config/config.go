@@ -20,6 +20,10 @@ type Config struct {
 	// Translation). Optional: without it, text is shown in the languages
 	// already stored.
 	GoogleTranslateAPIKey string
+	// GeminiAPIKey (a Google Cloud Agent Platform key) enables interest
+	// suggestions (Gemini). Optional: without it,
+	// CatalogService.SuggestActivities returns FAILED_PRECONDITION.
+	GeminiAPIKey string
 }
 
 func Load() (Config, error) {
@@ -29,6 +33,7 @@ func Load() (Config, error) {
 		APIAddr:               getenv("API_ADDR", ":8080"),
 		SupabaseSecretKey:     os.Getenv("SUPABASE_SECRET_KEY"),
 		GoogleTranslateAPIKey: os.Getenv("GOOGLE_TRANSLATE_API_KEY"),
+		GeminiAPIKey:          os.Getenv("GOOGLE_GEMINI_API_KEY"),
 	}
 	if v := os.Getenv("ALLOWED_ORIGINS"); v != "" {
 		c.AllowedOrigins = strings.Split(v, ",")

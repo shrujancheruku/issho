@@ -111,6 +111,15 @@
   "signIn.resend": "Resend code",
   "signIn.sendCode": "Send code",
   "signIn.title": "Sign in or create an account",
+  "suggest.add": "Add these",
+  "suggest.added": "Added {count} activities.",
+  "suggest.button": "Suggest activities",
+  "suggest.dismiss": "Dismiss",
+  "suggest.none": "Nothing matched. Choose from the list below.",
+  "suggest.placeholder": "For example: I love hiking and board games, and I would like to try pottery.",
+  "suggest.results": "Suggested for you. Tap one to change it, then add them.",
+  "suggest.title": "Or describe what you enjoy",
+  "suggest.unavailable": "Suggestions are not available right now. Choose from the list below.",
   "tabs.home": "Home",
   "tabs.profile": "Profile"
 }

@@ -656,11 +656,110 @@ func (x *Language) GetName() string {
 	return ""
 }
 
+type SuggestActivitiesRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// City pack id; only activities offered there are suggested. Required.
+	CityId string `protobuf:"bytes,1,opt,name=city_id,json=cityId,proto3" json:"city_id,omitempty"`
+	// What they enjoy, in their own words and any language. 1–500 characters.
+	Text          string `protobuf:"bytes,2,opt,name=text,proto3" json:"text,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SuggestActivitiesRequest) Reset() {
+	*x = SuggestActivitiesRequest{}
+	mi := &file_issho_v1_catalog_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SuggestActivitiesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SuggestActivitiesRequest) ProtoMessage() {}
+
+func (x *SuggestActivitiesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_issho_v1_catalog_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SuggestActivitiesRequest.ProtoReflect.Descriptor instead.
+func (*SuggestActivitiesRequest) Descriptor() ([]byte, []int) {
+	return file_issho_v1_catalog_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *SuggestActivitiesRequest) GetCityId() string {
+	if x != nil {
+		return x.CityId
+	}
+	return ""
+}
+
+func (x *SuggestActivitiesRequest) GetText() string {
+	if x != nil {
+		return x.Text
+	}
+	return ""
+}
+
+type SuggestActivitiesResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// In the order the text mentions them; at most one per activity.
+	Suggestions   []*ActivityPreference `protobuf:"bytes,1,rep,name=suggestions,proto3" json:"suggestions,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SuggestActivitiesResponse) Reset() {
+	*x = SuggestActivitiesResponse{}
+	mi := &file_issho_v1_catalog_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SuggestActivitiesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SuggestActivitiesResponse) ProtoMessage() {}
+
+func (x *SuggestActivitiesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_issho_v1_catalog_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SuggestActivitiesResponse.ProtoReflect.Descriptor instead.
+func (*SuggestActivitiesResponse) Descriptor() ([]byte, []int) {
+	return file_issho_v1_catalog_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *SuggestActivitiesResponse) GetSuggestions() []*ActivityPreference {
+	if x != nil {
+		return x.Suggestions
+	}
+	return nil
+}
+
 var File_issho_v1_catalog_proto protoreflect.FileDescriptor
 
 const file_issho_v1_catalog_proto_rawDesc = "" +
 	"\n" +
-	"\x16issho/v1/catalog.proto\x12\bissho.v1\"w\n" +
+	"\x16issho/v1/catalog.proto\x12\bissho.v1\x1a\x16issho/v1/profile.proto\"w\n" +
 	"\x15ListActivitiesRequest\x12\x17\n" +
 	"\acity_id\x18\x01 \x01(\tR\x06cityId\x12\x16\n" +
 	"\x06locale\x18\x02 \x01(\tR\x06locale\x12-\n" +
@@ -704,12 +803,18 @@ const file_issho_v1_catalog_proto_rawDesc = "" +
 	"\bLanguage\x12\x12\n" +
 	"\x04code\x18\x01 \x01(\tR\x04code\x12\x18\n" +
 	"\aautonym\x18\x02 \x01(\tR\aautonym\x12\x12\n" +
-	"\x04name\x18\x03 \x01(\tR\x04name2\x86\x02\n" +
+	"\x04name\x18\x03 \x01(\tR\x04name\"G\n" +
+	"\x18SuggestActivitiesRequest\x12\x17\n" +
+	"\acity_id\x18\x01 \x01(\tR\x06cityId\x12\x12\n" +
+	"\x04text\x18\x02 \x01(\tR\x04text\"[\n" +
+	"\x19SuggestActivitiesResponse\x12>\n" +
+	"\vsuggestions\x18\x01 \x03(\v2\x1c.issho.v1.ActivityPreferenceR\vsuggestions2\xe6\x02\n" +
 	"\x0eCatalogService\x12U\n" +
 	"\x0eListActivities\x12\x1f.issho.v1.ListActivitiesRequest\x1a .issho.v1.ListActivitiesResponse\"\x00\x12I\n" +
 	"\n" +
 	"ListCities\x12\x1b.issho.v1.ListCitiesRequest\x1a\x1c.issho.v1.ListCitiesResponse\"\x00\x12R\n" +
-	"\rListLanguages\x12\x1e.issho.v1.ListLanguagesRequest\x1a\x1f.issho.v1.ListLanguagesResponse\"\x00B>Z<github.com/shrujancheruku/issho/backend/gen/issho/v1;isshov1b\x06proto3"
+	"\rListLanguages\x12\x1e.issho.v1.ListLanguagesRequest\x1a\x1f.issho.v1.ListLanguagesResponse\"\x00\x12^\n" +
+	"\x11SuggestActivities\x12\".issho.v1.SuggestActivitiesRequest\x1a#.issho.v1.SuggestActivitiesResponse\"\x00B>Z<github.com/shrujancheruku/issho/backend/gen/issho/v1;isshov1b\x06proto3"
 
 var (
 	file_issho_v1_catalog_proto_rawDescOnce sync.Once
@@ -723,35 +828,41 @@ func file_issho_v1_catalog_proto_rawDescGZIP() []byte {
 	return file_issho_v1_catalog_proto_rawDescData
 }
 
-var file_issho_v1_catalog_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_issho_v1_catalog_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_issho_v1_catalog_proto_goTypes = []any{
-	(*ListActivitiesRequest)(nil),  // 0: issho.v1.ListActivitiesRequest
-	(*ListActivitiesResponse)(nil), // 1: issho.v1.ListActivitiesResponse
-	(*Activity)(nil),               // 2: issho.v1.Activity
-	(*ListCitiesRequest)(nil),      // 3: issho.v1.ListCitiesRequest
-	(*ListCitiesResponse)(nil),     // 4: issho.v1.ListCitiesResponse
-	(*City)(nil),                   // 5: issho.v1.City
-	(*Area)(nil),                   // 6: issho.v1.Area
-	(*ListLanguagesRequest)(nil),   // 7: issho.v1.ListLanguagesRequest
-	(*ListLanguagesResponse)(nil),  // 8: issho.v1.ListLanguagesResponse
-	(*Language)(nil),               // 9: issho.v1.Language
+	(*ListActivitiesRequest)(nil),     // 0: issho.v1.ListActivitiesRequest
+	(*ListActivitiesResponse)(nil),    // 1: issho.v1.ListActivitiesResponse
+	(*Activity)(nil),                  // 2: issho.v1.Activity
+	(*ListCitiesRequest)(nil),         // 3: issho.v1.ListCitiesRequest
+	(*ListCitiesResponse)(nil),        // 4: issho.v1.ListCitiesResponse
+	(*City)(nil),                      // 5: issho.v1.City
+	(*Area)(nil),                      // 6: issho.v1.Area
+	(*ListLanguagesRequest)(nil),      // 7: issho.v1.ListLanguagesRequest
+	(*ListLanguagesResponse)(nil),     // 8: issho.v1.ListLanguagesResponse
+	(*Language)(nil),                  // 9: issho.v1.Language
+	(*SuggestActivitiesRequest)(nil),  // 10: issho.v1.SuggestActivitiesRequest
+	(*SuggestActivitiesResponse)(nil), // 11: issho.v1.SuggestActivitiesResponse
+	(*ActivityPreference)(nil),        // 12: issho.v1.ActivityPreference
 }
 var file_issho_v1_catalog_proto_depIdxs = []int32{
-	2, // 0: issho.v1.ListActivitiesResponse.activities:type_name -> issho.v1.Activity
-	5, // 1: issho.v1.ListCitiesResponse.cities:type_name -> issho.v1.City
-	6, // 2: issho.v1.City.areas:type_name -> issho.v1.Area
-	9, // 3: issho.v1.ListLanguagesResponse.languages:type_name -> issho.v1.Language
-	0, // 4: issho.v1.CatalogService.ListActivities:input_type -> issho.v1.ListActivitiesRequest
-	3, // 5: issho.v1.CatalogService.ListCities:input_type -> issho.v1.ListCitiesRequest
-	7, // 6: issho.v1.CatalogService.ListLanguages:input_type -> issho.v1.ListLanguagesRequest
-	1, // 7: issho.v1.CatalogService.ListActivities:output_type -> issho.v1.ListActivitiesResponse
-	4, // 8: issho.v1.CatalogService.ListCities:output_type -> issho.v1.ListCitiesResponse
-	8, // 9: issho.v1.CatalogService.ListLanguages:output_type -> issho.v1.ListLanguagesResponse
-	7, // [7:10] is the sub-list for method output_type
-	4, // [4:7] is the sub-list for method input_type
-	4, // [4:4] is the sub-list for extension type_name
-	4, // [4:4] is the sub-list for extension extendee
-	0, // [0:4] is the sub-list for field type_name
+	2,  // 0: issho.v1.ListActivitiesResponse.activities:type_name -> issho.v1.Activity
+	5,  // 1: issho.v1.ListCitiesResponse.cities:type_name -> issho.v1.City
+	6,  // 2: issho.v1.City.areas:type_name -> issho.v1.Area
+	9,  // 3: issho.v1.ListLanguagesResponse.languages:type_name -> issho.v1.Language
+	12, // 4: issho.v1.SuggestActivitiesResponse.suggestions:type_name -> issho.v1.ActivityPreference
+	0,  // 5: issho.v1.CatalogService.ListActivities:input_type -> issho.v1.ListActivitiesRequest
+	3,  // 6: issho.v1.CatalogService.ListCities:input_type -> issho.v1.ListCitiesRequest
+	7,  // 7: issho.v1.CatalogService.ListLanguages:input_type -> issho.v1.ListLanguagesRequest
+	10, // 8: issho.v1.CatalogService.SuggestActivities:input_type -> issho.v1.SuggestActivitiesRequest
+	1,  // 9: issho.v1.CatalogService.ListActivities:output_type -> issho.v1.ListActivitiesResponse
+	4,  // 10: issho.v1.CatalogService.ListCities:output_type -> issho.v1.ListCitiesResponse
+	8,  // 11: issho.v1.CatalogService.ListLanguages:output_type -> issho.v1.ListLanguagesResponse
+	11, // 12: issho.v1.CatalogService.SuggestActivities:output_type -> issho.v1.SuggestActivitiesResponse
+	9,  // [9:13] is the sub-list for method output_type
+	5,  // [5:9] is the sub-list for method input_type
+	5,  // [5:5] is the sub-list for extension type_name
+	5,  // [5:5] is the sub-list for extension extendee
+	0,  // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_issho_v1_catalog_proto_init() }
@@ -759,13 +870,14 @@ func file_issho_v1_catalog_proto_init() {
 	if File_issho_v1_catalog_proto != nil {
 		return
 	}
+	file_issho_v1_profile_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_issho_v1_catalog_proto_rawDesc), len(file_issho_v1_catalog_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   10,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -25,7 +25,8 @@
 | Supabase secret key (`SUPABASE_SECRET_KEY`) | `SECRET_KEY` from `supabase status`, exported in your shell or a gitignored `.env` (never in `.env.example`) | not used (tests use a fake admin) | Kamal secrets |
 | Google Maps server key (`GOOGLE_MAPS_API_KEY`) | your shell env or `.env.issho-dev` (gitignored), used via `make … ENV_FILE=` | not used (tests use `httptest` fakes; CI only dry-runs) | Kamal secrets |
 | Google Cloud Translation key (`GOOGLE_TRANSLATE_API_KEY`, API server) | shell env / untracked `.env` | not used (tests use `httptest` fakes) | Kamal secrets |
-| Anthropic API key (`ANTHROPIC_API_KEY`, M5 tagging and plan text) | shell env / untracked `.env` | not used (tests use fakes) | Kamal secrets |
+| Google Cloud Agent Platform key for Gemini (`GOOGLE_GEMINI_API_KEY`, API server: interest suggestions; starts `AQ.`) | shell env / untracked `.env` | not used (tests use `httptest` fakes) | Kamal secrets |
+| Anthropic API key (`ANTHROPIC_API_KEY`, M6 plan text) | shell env / untracked `.env` | not used (tests use fakes) | Kamal secrets |
 | Apple / Google OAuth secrets (post-MVP; not used) | `supabase/.env` (gitignored), referenced as `env(...)` in `supabase/config.toml` | not used | Supabase dashboard |
 | Apple `.p8` keys, Android keystores | not stored locally; EAS manages signing credentials | n/a | EAS (Expo) credential store |
 | SMTP relay credentials (M2) | not needed (Mailpit) | n/a | Supabase dashboard (custom SMTP) |

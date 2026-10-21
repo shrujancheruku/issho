@@ -12,6 +12,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
 	"github.com/shrujancheruku/issho/backend/internal/platform/i18n"
+	"github.com/shrujancheruku/issho/backend/internal/tagging"
 	"github.com/shrujancheruku/issho/backend/internal/translate"
 )
 
@@ -19,6 +20,8 @@ type Handler struct {
 	Q *dbgen.Queries
 	// Names are stored in English; other languages come from here.
 	Translations *translate.Service
+	// Suggestions maps free text to activities (SuggestActivities).
+	Suggestions *tagging.Service
 }
 
 func (h *Handler) ListActivities(ctx context.Context, req *connect.Request[isshov1.ListActivitiesRequest]) (*connect.Response[isshov1.ListActivitiesResponse], error) {

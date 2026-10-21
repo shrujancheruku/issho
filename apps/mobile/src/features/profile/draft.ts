@@ -85,6 +85,35 @@ export function cycleInterest(d: Draft, activityId: string): Draft {
   return { ...d, activities };
 }
 
+/**
+ * Adds confirmed suggestions (CatalogService.SuggestActivities) to the draft.
+ * A tile the person already set keeps their choice: a suggestion never
+ * overrides what they picked themselves. Returns how many were added.
+ */
+export function addSuggestions(
+  d: Draft,
+  suggestions: { activityId: string; interest: Interest }[],
+): { draft: Draft; added: number } {
+  const activities = { ...d.activities };
+  let added = 0;
+  for (const s of suggestions) {
+    if (s.interest === Interest.UNSPECIFIED || activities[s.activityId] !== undefined) continue;
+    activities[s.activityId] = s.interest;
+    added++;
+  }
+  return { draft: { ...d, activities }, added };
+}
+
+/** Cycles a suggestion's level before it's added, like a tile: open → like → love → removed. */
+export function cycleSuggestion<T extends { activityId: string; interest: Interest }>(list: T[], activityId: string): T[] {
+  const order = [Interest.OPEN_TO_TRY, Interest.LIKE, Interest.LOVE];
+  return list.flatMap((s) => {
+    if (s.activityId !== activityId) return [s];
+    const next = order.indexOf(s.interest) + 1;
+    return next < order.length ? [{ ...s, interest: order[next] }] : [];
+  });
+}
+
 /** Changing city clears choices that belong to the old one. */
 export function setCity(d: Draft, cityId: string): Draft {
   if (cityId === d.cityId) return d;
