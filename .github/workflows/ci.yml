@@ -41,19 +41,10 @@ jobs:
         with:
           configFile: commitlint.config.mjs
 
-  backend:
+  # Proto checks and codegen drift. Kept apart from `backend` because only this
+  # needs Node (protoc-gen-es), and the two jobs then run side by side.
+  codegen:
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgis/postgis:17-3.5
-        env:
-          POSTGRES_PASSWORD: postgres
-        ports: ["5432:5432"]
-        options: >-
-          --health-cmd "pg_isready -U postgres"
-          --health-interval 5s --health-timeout 5s --health-retries 10
-    env:
-      DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
     steps:
       - uses: actions/checkout@v7
         with:
@@ -61,7 +52,18 @@ jobs:
       - uses: actions/setup-go@v7
         with:
           go-version-file: backend/go.mod
-          cache-dependency-path: backend/go.sum
+          cache: false
+      # One Go cache per job instead of setup-go's shared one. Building buf and
+      # sqlc fills ~2.4 GB (464 MB compressed); backend never runs them, and
+      # its own cache is 68 MB. Go needs every archive and module zip to treat
+      # a cached tool binary as up to date, so this cache can't be trimmed.
+      - uses: actions/cache@v6
+        with:
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+          key: go-${{ runner.os }}-codegen-${{ hashFiles('backend/go.sum') }}
+          restore-keys: go-${{ runner.os }}-codegen-
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with:
@@ -75,9 +77,48 @@ jobs:
         run: go tool buf breaking proto --against '.git#branch=origin/main,subdir=proto'
       - name: Generated code is up to date
         run: make gen && git diff --exit-code
+
+  backend:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
+    steps:
+      # Not a service container: those are pulled and health-checked before the
+      # first step, which blocked the job for ~20s. Started in the background,
+      # the pull overlaps with Go setup; "Wait for PostGIS" joins it before the
+      # first step that needs the database.
+      # The health check goes over TCP (-h 127.0.0.1): the image's init scripts
+      # (creating PostGIS) run on a temporary server that listens only on the
+      # Unix socket, so a socket check reports healthy before that server stops.
+      - name: Start PostGIS in the background
+        run: |
+          nohup docker run -d --name postgis -p 5432:5432 -e POSTGRES_PASSWORD=postgres \
+            --health-cmd "pg_isready -h 127.0.0.1 -U postgres" --health-interval 2s --health-timeout 5s --health-retries 30 \
+            postgis/postgis:17-3.5 > "$RUNNER_TEMP/postgis.log" 2>&1 &
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: backend/go.mod
+          cache: false
+      # Per-job Go cache: see the codegen job.
+      - uses: actions/cache@v6
+        with:
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+          key: go-${{ runner.os }}-backend-${{ hashFiles('backend/go.sum') }}
+          restore-keys: go-${{ runner.os }}-backend-
       - name: Vet and test
         working-directory: backend
         run: go vet ./... && go test ./...
+      - name: Wait for PostGIS
+        run: |
+          for _ in $(seq 90); do
+            [ "$(docker inspect -f '{{.State.Health.Status}}' postgis 2>/dev/null)" = healthy ] && exit 0
+            sleep 1
+          done
+          echo "PostGIS not healthy after 90s"; cat "$RUNNER_TEMP/postgis.log"; docker logs postgis || true
+          exit 1
       - name: Migrations apply, roll back and re-apply; seed loads
         working-directory: backend
         run: |
@@ -106,9 +147,19 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm typecheck
-      - run: pnpm lint
-      - run: pnpm test
+      # One turbo run so the three tasks run in parallel; turbo prefixes each line with its task.
+      - name: Typecheck, lint and test
+        run: pnpm turbo run typecheck lint test
+      # Metro's transform cache (~10 MB; Expo's default location is $TMPDIR/metro-cache).
+      # A cold web bundle took ~24s, a warm one ~3s. Entries are keyed by file
+      # content, so a stale cache only costs re-transforms. Saved per commit
+      # but restored only within the same lockfile, so dependency updates
+      # start clean instead of piling up unused entries.
+      - uses: actions/cache@v6
+        with:
+          path: /tmp/metro-cache
+          key: metro-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ github.sha }}
+          restore-keys: metro-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
       - name: Web build exports (not released yet; keeps it from breaking)
         working-directory: apps/mobile
         run: pnpm export:web --output-dir "$RUNNER_TEMP/web"
