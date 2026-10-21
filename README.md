@@ -13,23 +13,7 @@ Making friends as an adult is hard because no one is organising it. Issho does t
 <br>
 
 <p align="center">
-  <sub>TOKYO</sub><br>
-  <b>Photo walk from Kichijoji station, ending at a café we've already picked.</b>
-  <br><br>
-  <sub>LONDON</sub><br>
-  <b>Sunday wander through Columbia Road flower market, then a roast at the pub around the corner.</b>
-  <br><br>
-  <sub>MEXICO CITY</sub><br>
-  <b>Sunday bike ride down a car-free Paseo de la Reforma, then tacos al pastor in Roma.</b>
-  <br><br>
-  <sub>MELBOURNE</sub><br>
-  <b>Coffee crawl through the CBD laneways, finishing at Queen Victoria Market.</b>
-  <br><br>
-  <sub>BUENOS AIRES</sub><br>
-  <b>Browse the San Telmo Sunday market, then empanadas on Plaza Dorrego.</b>
-  <br><br>
-  <sub>CAPE TOWN</sub><br>
-  <b>Sunrise hike up Lion's Head, then breakfast together in Sea Point.</b>
+  <img src="assets/readme/example-plans.svg" width="820" alt="Plans like: a photo walk from Kichijoji station in Tokyo, ending at a café we've already picked; a flower market wander on Columbia Road in London, then a Sunday roast at the pub; a bike ride down car-free Reforma in Mexico City, then tacos al pastor in Roma; a coffee crawl through Melbourne's CBD laneways, ending at Queen Victoria Market; antique hunting at the San Telmo fair in Buenos Aires, then empanadas on Plaza Dorrego; a sunrise hike up Lion's Head in Cape Town, then breakfast together in Sea Point.">
 </p>
 
 <br>
