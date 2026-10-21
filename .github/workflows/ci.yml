@@ -52,7 +52,18 @@ jobs:
       - uses: actions/setup-go@v7
         with:
           go-version-file: backend/go.mod
-          cache-dependency-path: backend/go.sum
+          cache: false
+      # One Go cache per job instead of setup-go's shared one. Building buf and
+      # sqlc fills ~2.4 GB (464 MB compressed); backend never runs them, and
+      # its own cache is 68 MB. Go needs every archive and module zip to treat
+      # a cached tool binary as up to date, so this cache can't be trimmed.
+      - uses: actions/cache@v6
+        with:
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+          key: go-${{ runner.os }}-codegen-${{ hashFiles('backend/go.sum') }}
+          restore-keys: go-${{ runner.os }}-codegen-
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with:
@@ -85,7 +96,15 @@ jobs:
       - uses: actions/setup-go@v7
         with:
           go-version-file: backend/go.mod
-          cache-dependency-path: backend/go.sum
+          cache: false
+      # Per-job Go cache: see the codegen job.
+      - uses: actions/cache@v6
+        with:
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+          key: go-${{ runner.os }}-backend-${{ hashFiles('backend/go.sum') }}
+          restore-keys: go-${{ runner.os }}-backend-
       - name: Vet and test
         working-directory: backend
         run: go vet ./... && go test ./...
