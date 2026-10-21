@@ -7,7 +7,7 @@ import { LanguageSwitch } from '@/components/language-switch';
 import { PrimaryButton } from '@/components/primary-button';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Brand, MaxContentWidth, Spacing } from '@/constants/theme';
+import { Brand, FormWidth, Spacing } from '@/constants/theme';
 import { useAuth } from '@/features/auth/auth-provider';
 import { ConductVersion, emptyDraft, steps, stepValid, toProfile } from '@/features/profile/draft';
 import { saveErrorMessage } from '@/features/profile/save-error';
@@ -53,7 +53,7 @@ export default function OnboardingScreen() {
   return (
     <ThemedView style={styles.fill}>
       <SafeAreaView style={styles.fill}>
-        <KeyboardAvoidingView behavior="padding" style={styles.fill}>
+        <KeyboardAvoidingView behavior="padding" style={[styles.fill, styles.column]}>
           <View style={styles.header}>
             <ThemedText type="small" themeColor="textSecondary" style={styles.grow}>
               {t('onboarding.step', { step: index + 1, total: steps.length })}
@@ -92,9 +92,10 @@ export default function OnboardingScreen() {
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },
+  column: { width: '100%', maxWidth: FormWidth, alignSelf: 'center' },
   grow: { flex: 1 },
   header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: Spacing.four, paddingTop: Spacing.three },
-  content: { padding: Spacing.four, gap: Spacing.four, width: '100%', maxWidth: MaxContentWidth, alignSelf: 'center' },
+  content: { padding: Spacing.four, gap: Spacing.four },
   footer: { flexDirection: 'row', gap: Spacing.three, padding: Spacing.four, alignItems: 'center' },
   back: { paddingVertical: Spacing.three, paddingHorizontal: Spacing.three },
   signOut: { alignSelf: 'center' },

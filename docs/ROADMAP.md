@@ -186,7 +186,7 @@ The app builds for the web and CI keeps it building (M5). Before a public web re
 - ⬜ **Session security (decision needed):** browsers have no secure store, so the session is in `localStorage`, where any script on the page could read the refresh token. Either keep it with a strict Content-Security-Policy and no third-party scripts, or move to cookie-based sessions (needs an auth endpoint on our side).
 - ⬜ **Confirmation dialogs:** `Alert.alert` is a no-op on web, so "Delete your account?" never appears. Add a web confirm (a modal, or `window.confirm`).
 - ⬜ **Hosting:** a Cloudflare Pages project (like the admin SPA) with a single-page-app fallback (`/* /index.html 200`), `EXPO_PUBLIC_*` values set at build time, the web origin in the API's `ALLOWED_ORIGINS`, and a deploy job.
-- ⬜ **Desktop layout:** screens are phone-first; check wide windows (content is capped at `MaxContentWidth`) and keyboard navigation.
+- 🟡 **Desktop layout:** form screens are a centred column of at most 560 px (`FormWidth`) with a capped logo, checked at 1440×900 (M5; the owner found the logo and full-width buttons oversized). Still to check: keyboard navigation and the M6 screens (feed and map can use more width).
 - ⬜ **Each native feature needs a web counterpart**, so budget roughly 10–20% extra on these:
   - the M6 map of plans (the usual native map library has no web support: use a web map component)
   - push notifications (Expo Push doesn't reach browsers: web push or an email fallback)

@@ -8,7 +8,7 @@ import { LanguageSwitch } from '@/components/language-switch';
 import { PrimaryButton } from '@/components/primary-button';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Brand, MaxContentWidth, Spacing } from '@/constants/theme';
+import { Brand, FormWidth, Spacing } from '@/constants/theme';
 import { fromProfile, steps, stepValid, toProfile, type Draft, type Step } from '@/features/profile/draft';
 import { saveErrorMessage } from '@/features/profile/save-error';
 import { StepView, stepTitles } from '@/features/profile/steps';
@@ -53,7 +53,7 @@ export default function ProfileEditScreen() {
   return (
     <ThemedView style={styles.fill}>
       <SafeAreaView style={styles.fill}>
-        <KeyboardAvoidingView behavior="padding" style={styles.fill}>
+        <KeyboardAvoidingView behavior="padding" style={[styles.fill, styles.column]}>
           <View style={styles.header}>
             <Pressable accessibilityRole="button" onPress={() => router.back()} hitSlop={8} style={styles.grow}>
               <ThemedText type="link">‹ {t('common.back')}</ThemedText>
@@ -90,9 +90,10 @@ export default function ProfileEditScreen() {
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },
+  column: { width: '100%', maxWidth: FormWidth, alignSelf: 'center' },
   grow: { flex: 1 },
   header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: Spacing.four, paddingTop: Spacing.three },
-  content: { padding: Spacing.four, gap: Spacing.four, width: '100%', maxWidth: MaxContentWidth, alignSelf: 'center' },
+  content: { padding: Spacing.four, gap: Spacing.four },
   footer: { padding: Spacing.four },
   error: { color: Brand.red, textAlign: 'center', paddingHorizontal: Spacing.four },
 });

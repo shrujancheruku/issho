@@ -79,3 +79,10 @@ export const Spacing = {
 
 export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
 export const MaxContentWidth = 800;
+/**
+ * Widest a form-like screen gets (sign-in, onboarding, profile editing):
+ * header, content and footer share one centred column. Phones are narrower,
+ * so it only matters on tablets and the web, where full-width inputs and
+ * buttons looked oversized.
+ */
+export const FormWidth = 560;

@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Brand, Spacing } from '@/constants/theme';
+import { Brand, FormWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { PrimaryButton } from '@/components/primary-button';
 import { useI18n } from '@/i18n/i18n-provider';
@@ -127,8 +127,9 @@ export default function SignInScreen() {
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },
-  content: { flex: 1, justifyContent: 'center', padding: Spacing.four, gap: Spacing.four },
-  logo: { width: '70%', aspectRatio: 900 / 598, alignSelf: 'center' },
+  content: { flex: 1, justifyContent: 'center', padding: Spacing.four, gap: Spacing.four, width: '100%', maxWidth: FormWidth, alignSelf: 'center' },
+  // Capped so the logo stays a logo on wide screens instead of filling them.
+  logo: { width: '70%', maxWidth: 280, aspectRatio: 900 / 598, alignSelf: 'center' },
   form: { gap: Spacing.three },
   input: { borderRadius: 12, paddingHorizontal: Spacing.three, paddingVertical: Spacing.three, fontSize: 17 },
   code: { fontSize: 28, letterSpacing: 12, textAlign: 'center' },

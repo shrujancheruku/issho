@@ -142,6 +142,7 @@ npx expo export -p web               # static build in dist/ (pnpm export:web)
 - The API only accepts browser origins in its allowlist: start it with `ALLOWED_ORIGINS=http://localhost:8081` (see the backend README).
 - Web-only code lives in `*.web.ts(x)` files, which Metro picks over the native ones: `lib/secure-storage.web.ts` (session in `localStorage`; read its comment before any public release), `i18n/cache.web.ts`, `components/app-tabs.web.tsx`, `hooks/use-color-scheme.web.ts`.
 - `app.json` uses `"web": { "output": "single" }`: one `index.html` for every route, with no server rendering. Server rendering would run app code in Node at build time, where the secure store doesn't exist.
+- **Wide screens:** form-like screens (sign-in, onboarding, profile editing, the language picker) keep their header, content and footer in one centred column at most `FormWidth` (560 px, `constants/theme.ts`) wide; the logo is capped too. Phones are narrower, so this only changes tablets and the web. `global.css` sets `color-scheme` so browser scrollbars follow the theme.
 - `Alert.alert` does nothing on web, so confirmation dialogs (account deletion) need a web version before release.
 
 ## Builds & releases
