@@ -21,11 +21,12 @@ import { api } from '@/lib/api';
  * route guards in app/_layout.tsx move on to the tabs.
  */
 export default function OnboardingScreen() {
-  const { t, languages, previewLanguages } = useI18n();
+  const { t, device, previewLanguages } = useI18n();
   const { signOut } = useAuth();
   const queryClient = useQueryClient();
-  // Until the person chooses, they're in the device language.
-  const [draft, setDraft] = useState(() => emptyDraft(languages.primary));
+  // Start from the device's languages: its first as the main language, its
+  // second (if any) as the suggested second language.
+  const [draft, setDraft] = useState(() => emptyDraft(device.primary, device.secondary));
   const [index, setIndex] = useState(0);
   const scroll = useRef<ScrollViewInstance>(null);
   const step = steps[index];

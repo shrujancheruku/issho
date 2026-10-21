@@ -6,13 +6,16 @@ import { useAuth } from '@/features/auth/auth-provider';
 import { api } from '@/lib/api';
 
 import { readCached, writeCached, type CachedStrings } from './cache';
-import { baseLanguage, coversApp, english, lookup, type Params, type StringKey } from './strings';
+import { deviceLanguages } from './device';
+import { coversApp, english, lookup, type Params, type StringKey } from './strings';
 
 export type Languages = { primary: string; secondary: string };
 
 type I18nState = {
   /** The display languages in effect ('' = no secondary). */
   languages: Languages;
+  /** The device's preferred languages (deviceLanguages): where onboarding starts. */
+  device: Languages;
   /** Which of the two languages longer text is shown in (the switch). */
   showing: 'primary' | 'secondary';
   toggleShowing: () => void;
@@ -31,7 +34,8 @@ const I18nContext = createContext<I18nState | null>(null);
 
 /**
  * The language rules for the app's own text (see docs/architecture.md#languages):
- *   - signed out (sign-in screens): the device language
+ *   - signed out (sign-in screens): the device's most preferred language that
+ *     we support (deviceLanguages)
  *   - signed in: the profile's primary + secondary language (from GetMe),
  *     or the device language until onboarding sets them
  * Short labels show both languages side by side (pair); longer text shows one
@@ -41,7 +45,8 @@ export function I18nProvider({ children }: PropsWithChildren) {
   const { session, languages: account } = useAuth();
   // useLocales re-renders when the device language changes (Android can
   // change it while the app runs).
-  const device = baseLanguage(useLocales()[0]?.languageCode) || 'en';
+  const locales = useLocales();
+  const { primary: devicePrimary, secondary: deviceSecondary } = deviceLanguages(locales);
   const [preview, setPreview] = useState<{ userId: string; langs: Languages } | null>(null);
   const [showing, setShowing] = useState<'primary' | 'secondary'>('primary');
 
@@ -54,9 +59,10 @@ export function I18nProvider({ children }: PropsWithChildren) {
     [userId],
   );
 
+  // Sign-in is shown in one language: nobody has chosen a second yet.
   const languages: Languages = session
-    ? (previewing ?? account ?? { primary: device, secondary: '' })
-    : { primary: device, secondary: '' };
+    ? (previewing ?? account ?? { primary: devicePrimary, secondary: '' })
+    : { primary: devicePrimary, secondary: '' };
   const primary = useUiStrings(languages.primary);
   const secondary = useUiStrings(languages.secondary);
   const shown = showing === 'secondary' && languages.secondary ? 'secondary' : 'primary';
@@ -78,6 +84,7 @@ export function I18nProvider({ children }: PropsWithChildren) {
   const value = useMemo<I18nState>(
     () => ({
       languages,
+      device: { primary: devicePrimary, secondary: deviceSecondary },
       showing: shown,
       toggleShowing: () => setShowing((s) => (s === 'primary' ? 'secondary' : 'primary')),
       previewLanguages,
@@ -86,7 +93,7 @@ export function I18nProvider({ children }: PropsWithChildren) {
     }),
     // languages is rebuilt each render; its fields are what matter.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [languages.primary, languages.secondary, shown, t, pair, previewLanguages],
+    [languages.primary, languages.secondary, devicePrimary, deviceSecondary, shown, t, pair, previewLanguages],
   );
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
 }

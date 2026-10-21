@@ -1,6 +1,12 @@
 package i18n
 
-import "testing"
+import (
+	"os"
+	"regexp"
+	"slices"
+	"strings"
+	"testing"
+)
 
 func TestPick(t *testing.T) {
 	raw := []byte(`{"en":"Photo walk","ja":"フォトウォーク"}`)
@@ -80,5 +86,24 @@ func TestValid(t *testing.T) {
 		if Valid(bad) {
 			t.Errorf("Valid(%q) = true", bad)
 		}
+	}
+}
+
+// TestAppLanguageCodes keeps the app's copy of the language list
+// (apps/mobile/src/i18n/device.ts), used to pick a supported device
+// language, identical to the one the server validates against.
+func TestAppLanguageCodes(t *testing.T) {
+	src, err := os.ReadFile("../../../../apps/mobile/src/i18n/device.ts")
+	if err != nil {
+		t.Fatal(err)
+	}
+	m := regexp.MustCompile("(?s)languageCodes = new Set\\(\\s*`([^`]+)`").FindSubmatch(src)
+	if m == nil {
+		t.Fatal("language list not found in device.ts")
+	}
+	app := strings.Fields(string(m[1]))
+	slices.Sort(app)
+	if !slices.Equal(app, Codes()) {
+		t.Errorf("app and server language lists differ:\napp:    %v\nserver: %v", app, Codes())
 	}
 }

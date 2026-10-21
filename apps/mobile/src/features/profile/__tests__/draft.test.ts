@@ -33,6 +33,14 @@ it('starts in the device language, spoken fluently', () => {
   expect(stepValid('about', d, year)).toBe(false);
 });
 
+it("suggests the device's second language as the second display language", () => {
+  const d = emptyDraft('ja', 'en');
+  expect([d.primaryLanguage, d.secondaryLanguage]).toEqual(['ja', 'en']);
+  // Only the main language is assumed to be spoken.
+  expect(d.spoken.map((l) => l.code)).toEqual(['ja']);
+  expect(emptyDraft('ja', 'ja').secondaryLanguage).toBe('');
+});
+
 it('cycles interest none → open → like → love → none', () => {
   let d = emptyDraft('en');
   const seen = [];

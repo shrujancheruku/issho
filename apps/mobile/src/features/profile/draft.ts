@@ -43,7 +43,7 @@ export const blocks = [TimeBlock.MORNING, TimeBlock.AFTERNOON, TimeBlock.EVENING
 /** Monday first; values are 0 = Sunday as on the server. */
 export const weekdays = [1, 2, 3, 4, 5, 6, 0];
 
-export function emptyDraft(deviceLanguage: string): Draft {
+export function emptyDraft(deviceLanguage: string, deviceSecondary = ''): Draft {
   return {
     displayName: '',
     birthYear: '',
@@ -54,7 +54,7 @@ export function emptyDraft(deviceLanguage: string): Draft {
     maxTravelMin: 30,
     spoken: [{ code: deviceLanguage, fluent: true, level: 0 }],
     primaryLanguage: deviceLanguage,
-    secondaryLanguage: '',
+    secondaryLanguage: deviceSecondary === deviceLanguage ? '' : deviceSecondary,
     availability: [],
     activities: {},
     groupSize: GroupSize.MEDIUM,
