@@ -214,7 +214,10 @@ type GetPlanResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	Plan  *FeedPlan              `protobuf:"bytes,1,opt,name=plan,proto3" json:"plan,omitempty"`
 	// The caller's signup; unset when they haven't signed up.
-	Signup        *Signup `protobuf:"bytes,2,opt,name=signup,proto3" json:"signup,omitempty"`
+	Signup *Signup `protobuf:"bytes,2,opt,name=signup,proto3" json:"signup,omitempty"`
+	// What the outing is, in order: the activity, then any follow-up, each at
+	// its venue.
+	Steps         []*PlanStep `protobuf:"bytes,3,rep,name=steps,proto3" json:"steps,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -263,6 +266,108 @@ func (x *GetPlanResponse) GetSignup() *Signup {
 	return nil
 }
 
+func (x *GetPlanResponse) GetSteps() []*PlanStep {
+	if x != nil {
+		return x.Steps
+	}
+	return nil
+}
+
+// One stop of a plan.
+type PlanStep struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Activity id (CatalogService.ListActivities): what happens here.
+	ActivityId string `protobuf:"bytes,1,opt,name=activity_id,json=activityId,proto3" json:"activity_id,omitempty"`
+	// The venue's name from Google, in the caller's primary and secondary
+	// display languages, fetched live (Maps terms: nothing but the place id is
+	// stored). Empty when the activity needs only a meeting point, no venue
+	// was found, or the server has no GOOGLE_MAPS_API_KEY.
+	VenueName string `protobuf:"bytes,2,opt,name=venue_name,json=venueName,proto3" json:"venue_name,omitempty"`
+	// Empty when the same as venue_name.
+	VenueSecondaryName string `protobuf:"bytes,3,opt,name=venue_secondary_name,json=venueSecondaryName,proto3" json:"venue_secondary_name,omitempty"`
+	// Short address in the primary language.
+	VenueAddress string `protobuf:"bytes,4,opt,name=venue_address,json=venueAddress,proto3" json:"venue_address,omitempty"`
+	// Opens the venue in Google Maps.
+	VenueMapsUrl string `protobuf:"bytes,5,opt,name=venue_maps_url,json=venueMapsUrl,proto3" json:"venue_maps_url,omitempty"`
+	// Estimated walk from the previous stop's venue, in minutes; 0 for the
+	// first stop or when either venue is unknown.
+	WalkMinutes   int32 `protobuf:"varint,6,opt,name=walk_minutes,json=walkMinutes,proto3" json:"walk_minutes,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PlanStep) Reset() {
+	*x = PlanStep{}
+	mi := &file_issho_v1_plans_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PlanStep) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PlanStep) ProtoMessage() {}
+
+func (x *PlanStep) ProtoReflect() protoreflect.Message {
+	mi := &file_issho_v1_plans_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PlanStep.ProtoReflect.Descriptor instead.
+func (*PlanStep) Descriptor() ([]byte, []int) {
+	return file_issho_v1_plans_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *PlanStep) GetActivityId() string {
+	if x != nil {
+		return x.ActivityId
+	}
+	return ""
+}
+
+func (x *PlanStep) GetVenueName() string {
+	if x != nil {
+		return x.VenueName
+	}
+	return ""
+}
+
+func (x *PlanStep) GetVenueSecondaryName() string {
+	if x != nil {
+		return x.VenueSecondaryName
+	}
+	return ""
+}
+
+func (x *PlanStep) GetVenueAddress() string {
+	if x != nil {
+		return x.VenueAddress
+	}
+	return ""
+}
+
+func (x *PlanStep) GetVenueMapsUrl() string {
+	if x != nil {
+		return x.VenueMapsUrl
+	}
+	return ""
+}
+
+func (x *PlanStep) GetWalkMinutes() int32 {
+	if x != nil {
+		return x.WalkMinutes
+	}
+	return 0
+}
+
 type SignUpRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	PlanId        string                 `protobuf:"bytes,1,opt,name=plan_id,json=planId,proto3" json:"plan_id,omitempty"`
@@ -273,7 +378,7 @@ type SignUpRequest struct {
 
 func (x *SignUpRequest) Reset() {
 	*x = SignUpRequest{}
-	mi := &file_issho_v1_plans_proto_msgTypes[4]
+	mi := &file_issho_v1_plans_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -285,7 +390,7 @@ func (x *SignUpRequest) String() string {
 func (*SignUpRequest) ProtoMessage() {}
 
 func (x *SignUpRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_plans_proto_msgTypes[4]
+	mi := &file_issho_v1_plans_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -298,7 +403,7 @@ func (x *SignUpRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SignUpRequest.ProtoReflect.Descriptor instead.
 func (*SignUpRequest) Descriptor() ([]byte, []int) {
-	return file_issho_v1_plans_proto_rawDescGZIP(), []int{4}
+	return file_issho_v1_plans_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *SignUpRequest) GetPlanId() string {
@@ -324,7 +429,7 @@ type SignUpResponse struct {
 
 func (x *SignUpResponse) Reset() {
 	*x = SignUpResponse{}
-	mi := &file_issho_v1_plans_proto_msgTypes[5]
+	mi := &file_issho_v1_plans_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -336,7 +441,7 @@ func (x *SignUpResponse) String() string {
 func (*SignUpResponse) ProtoMessage() {}
 
 func (x *SignUpResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_plans_proto_msgTypes[5]
+	mi := &file_issho_v1_plans_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -349,7 +454,7 @@ func (x *SignUpResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SignUpResponse.ProtoReflect.Descriptor instead.
 func (*SignUpResponse) Descriptor() ([]byte, []int) {
-	return file_issho_v1_plans_proto_rawDescGZIP(), []int{5}
+	return file_issho_v1_plans_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *SignUpResponse) GetPlan() *FeedPlan {
@@ -368,7 +473,7 @@ type WithdrawRequest struct {
 
 func (x *WithdrawRequest) Reset() {
 	*x = WithdrawRequest{}
-	mi := &file_issho_v1_plans_proto_msgTypes[6]
+	mi := &file_issho_v1_plans_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -380,7 +485,7 @@ func (x *WithdrawRequest) String() string {
 func (*WithdrawRequest) ProtoMessage() {}
 
 func (x *WithdrawRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_plans_proto_msgTypes[6]
+	mi := &file_issho_v1_plans_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -393,7 +498,7 @@ func (x *WithdrawRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WithdrawRequest.ProtoReflect.Descriptor instead.
 func (*WithdrawRequest) Descriptor() ([]byte, []int) {
-	return file_issho_v1_plans_proto_rawDescGZIP(), []int{6}
+	return file_issho_v1_plans_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *WithdrawRequest) GetPlanId() string {
@@ -411,7 +516,7 @@ type WithdrawResponse struct {
 
 func (x *WithdrawResponse) Reset() {
 	*x = WithdrawResponse{}
-	mi := &file_issho_v1_plans_proto_msgTypes[7]
+	mi := &file_issho_v1_plans_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -423,7 +528,7 @@ func (x *WithdrawResponse) String() string {
 func (*WithdrawResponse) ProtoMessage() {}
 
 func (x *WithdrawResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_plans_proto_msgTypes[7]
+	mi := &file_issho_v1_plans_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -436,7 +541,7 @@ func (x *WithdrawResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WithdrawResponse.ProtoReflect.Descriptor instead.
 func (*WithdrawResponse) Descriptor() ([]byte, []int) {
-	return file_issho_v1_plans_proto_rawDescGZIP(), []int{7}
+	return file_issho_v1_plans_proto_rawDescGZIP(), []int{8}
 }
 
 // An open plan as the caller sees it.
@@ -467,13 +572,20 @@ type FeedPlan struct {
 	// can make it.
 	SignupDeadline *timestamppb.Timestamp `protobuf:"bytes,12,opt,name=signup_deadline,json=signupDeadline,proto3" json:"signup_deadline,omitempty"`
 	SignedUp       bool                   `protobuf:"varint,13,opt,name=signed_up,json=signedUp,proto3" json:"signed_up,omitempty"`
+	// What the outing is, as one line: "Climbing and bouldering, then lunch
+	// or dinner out". In the caller's primary display language, with the
+	// secondary below it ("" when the same or not chosen). Area names are left
+	// out on purpose: they're proper nouns, never machine-translated, and
+	// shown with area_id's name.
+	Title          string `protobuf:"bytes,14,opt,name=title,proto3" json:"title,omitempty"`
+	SecondaryTitle string `protobuf:"bytes,15,opt,name=secondary_title,json=secondaryTitle,proto3" json:"secondary_title,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
 
 func (x *FeedPlan) Reset() {
 	*x = FeedPlan{}
-	mi := &file_issho_v1_plans_proto_msgTypes[8]
+	mi := &file_issho_v1_plans_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -485,7 +597,7 @@ func (x *FeedPlan) String() string {
 func (*FeedPlan) ProtoMessage() {}
 
 func (x *FeedPlan) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_plans_proto_msgTypes[8]
+	mi := &file_issho_v1_plans_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -498,7 +610,7 @@ func (x *FeedPlan) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FeedPlan.ProtoReflect.Descriptor instead.
 func (*FeedPlan) Descriptor() ([]byte, []int) {
-	return file_issho_v1_plans_proto_rawDescGZIP(), []int{8}
+	return file_issho_v1_plans_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *FeedPlan) GetId() string {
@@ -592,6 +704,20 @@ func (x *FeedPlan) GetSignedUp() bool {
 	return false
 }
 
+func (x *FeedPlan) GetTitle() string {
+	if x != nil {
+		return x.Title
+	}
+	return ""
+}
+
+func (x *FeedPlan) GetSecondaryTitle() string {
+	if x != nil {
+		return x.SecondaryTitle
+	}
+	return ""
+}
+
 // The times that suit someone for one plan. Pre-fill pattern with the
 // profile's availability; an empty pattern means "my usual availability".
 type Signup struct {
@@ -606,7 +732,7 @@ type Signup struct {
 
 func (x *Signup) Reset() {
 	*x = Signup{}
-	mi := &file_issho_v1_plans_proto_msgTypes[9]
+	mi := &file_issho_v1_plans_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -618,7 +744,7 @@ func (x *Signup) String() string {
 func (*Signup) ProtoMessage() {}
 
 func (x *Signup) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_plans_proto_msgTypes[9]
+	mi := &file_issho_v1_plans_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -631,7 +757,7 @@ func (x *Signup) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Signup.ProtoReflect.Descriptor instead.
 func (*Signup) Descriptor() ([]byte, []int) {
-	return file_issho_v1_plans_proto_rawDescGZIP(), []int{9}
+	return file_issho_v1_plans_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *Signup) GetPattern() []*AvailabilitySlot {
@@ -660,7 +786,7 @@ type UnavailableTime struct {
 
 func (x *UnavailableTime) Reset() {
 	*x = UnavailableTime{}
-	mi := &file_issho_v1_plans_proto_msgTypes[10]
+	mi := &file_issho_v1_plans_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -672,7 +798,7 @@ func (x *UnavailableTime) String() string {
 func (*UnavailableTime) ProtoMessage() {}
 
 func (x *UnavailableTime) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_plans_proto_msgTypes[10]
+	mi := &file_issho_v1_plans_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -685,7 +811,7 @@ func (x *UnavailableTime) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UnavailableTime.ProtoReflect.Descriptor instead.
 func (*UnavailableTime) Descriptor() ([]byte, []int) {
-	return file_issho_v1_plans_proto_rawDescGZIP(), []int{10}
+	return file_issho_v1_plans_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *UnavailableTime) GetDate() string {
@@ -711,10 +837,20 @@ const file_issho_v1_plans_proto_rawDesc = "" +
 	"\x10ListFeedResponse\x12(\n" +
 	"\x05plans\x18\x01 \x03(\v2\x12.issho.v1.FeedPlanR\x05plans\")\n" +
 	"\x0eGetPlanRequest\x12\x17\n" +
-	"\aplan_id\x18\x01 \x01(\tR\x06planId\"c\n" +
+	"\aplan_id\x18\x01 \x01(\tR\x06planId\"\x8d\x01\n" +
 	"\x0fGetPlanResponse\x12&\n" +
 	"\x04plan\x18\x01 \x01(\v2\x12.issho.v1.FeedPlanR\x04plan\x12(\n" +
-	"\x06signup\x18\x02 \x01(\v2\x10.issho.v1.SignupR\x06signup\"R\n" +
+	"\x06signup\x18\x02 \x01(\v2\x10.issho.v1.SignupR\x06signup\x12(\n" +
+	"\x05steps\x18\x03 \x03(\v2\x12.issho.v1.PlanStepR\x05steps\"\xea\x01\n" +
+	"\bPlanStep\x12\x1f\n" +
+	"\vactivity_id\x18\x01 \x01(\tR\n" +
+	"activityId\x12\x1d\n" +
+	"\n" +
+	"venue_name\x18\x02 \x01(\tR\tvenueName\x120\n" +
+	"\x14venue_secondary_name\x18\x03 \x01(\tR\x12venueSecondaryName\x12#\n" +
+	"\rvenue_address\x18\x04 \x01(\tR\fvenueAddress\x12$\n" +
+	"\x0evenue_maps_url\x18\x05 \x01(\tR\fvenueMapsUrl\x12!\n" +
+	"\fwalk_minutes\x18\x06 \x01(\x05R\vwalkMinutes\"R\n" +
 	"\rSignUpRequest\x12\x17\n" +
 	"\aplan_id\x18\x01 \x01(\tR\x06planId\x12(\n" +
 	"\x06signup\x18\x02 \x01(\v2\x10.issho.v1.SignupR\x06signup\"8\n" +
@@ -722,7 +858,7 @@ const file_issho_v1_plans_proto_rawDesc = "" +
 	"\x04plan\x18\x01 \x01(\v2\x12.issho.v1.FeedPlanR\x04plan\"*\n" +
 	"\x0fWithdrawRequest\x12\x17\n" +
 	"\aplan_id\x18\x01 \x01(\tR\x06planId\"\x12\n" +
-	"\x10WithdrawResponse\"\xf3\x03\n" +
+	"\x10WithdrawResponse\"\xb2\x04\n" +
 	"\bFeedPlan\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
 	"\aarea_id\x18\x02 \x01(\tR\x06areaId\x12\x1f\n" +
@@ -739,7 +875,9 @@ const file_issho_v1_plans_proto_rawDesc = "" +
 	"\vwindow_days\x18\v \x01(\x05R\n" +
 	"windowDays\x12C\n" +
 	"\x0fsignup_deadline\x18\f \x01(\v2\x1a.google.protobuf.TimestampR\x0esignupDeadline\x12\x1b\n" +
-	"\tsigned_up\x18\r \x01(\bR\bsignedUp\"{\n" +
+	"\tsigned_up\x18\r \x01(\bR\bsignedUp\x12\x14\n" +
+	"\x05title\x18\x0e \x01(\tR\x05title\x12'\n" +
+	"\x0fsecondary_title\x18\x0f \x01(\tR\x0esecondaryTitle\"{\n" +
 	"\x06Signup\x124\n" +
 	"\apattern\x18\x01 \x03(\v2\x1a.issho.v1.AvailabilitySlotR\apattern\x12;\n" +
 	"\vunavailable\x18\x02 \x03(\v2\x19.issho.v1.UnavailableTimeR\vunavailable\"P\n" +
@@ -772,48 +910,50 @@ func file_issho_v1_plans_proto_rawDescGZIP() []byte {
 }
 
 var file_issho_v1_plans_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_issho_v1_plans_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
+var file_issho_v1_plans_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_issho_v1_plans_proto_goTypes = []any{
 	(PlanLevel)(0),                // 0: issho.v1.PlanLevel
 	(*ListFeedRequest)(nil),       // 1: issho.v1.ListFeedRequest
 	(*ListFeedResponse)(nil),      // 2: issho.v1.ListFeedResponse
 	(*GetPlanRequest)(nil),        // 3: issho.v1.GetPlanRequest
 	(*GetPlanResponse)(nil),       // 4: issho.v1.GetPlanResponse
-	(*SignUpRequest)(nil),         // 5: issho.v1.SignUpRequest
-	(*SignUpResponse)(nil),        // 6: issho.v1.SignUpResponse
-	(*WithdrawRequest)(nil),       // 7: issho.v1.WithdrawRequest
-	(*WithdrawResponse)(nil),      // 8: issho.v1.WithdrawResponse
-	(*FeedPlan)(nil),              // 9: issho.v1.FeedPlan
-	(*Signup)(nil),                // 10: issho.v1.Signup
-	(*UnavailableTime)(nil),       // 11: issho.v1.UnavailableTime
-	(*timestamppb.Timestamp)(nil), // 12: google.protobuf.Timestamp
-	(*AvailabilitySlot)(nil),      // 13: issho.v1.AvailabilitySlot
-	(TimeBlock)(0),                // 14: issho.v1.TimeBlock
+	(*PlanStep)(nil),              // 5: issho.v1.PlanStep
+	(*SignUpRequest)(nil),         // 6: issho.v1.SignUpRequest
+	(*SignUpResponse)(nil),        // 7: issho.v1.SignUpResponse
+	(*WithdrawRequest)(nil),       // 8: issho.v1.WithdrawRequest
+	(*WithdrawResponse)(nil),      // 9: issho.v1.WithdrawResponse
+	(*FeedPlan)(nil),              // 10: issho.v1.FeedPlan
+	(*Signup)(nil),                // 11: issho.v1.Signup
+	(*UnavailableTime)(nil),       // 12: issho.v1.UnavailableTime
+	(*timestamppb.Timestamp)(nil), // 13: google.protobuf.Timestamp
+	(*AvailabilitySlot)(nil),      // 14: issho.v1.AvailabilitySlot
+	(TimeBlock)(0),                // 15: issho.v1.TimeBlock
 }
 var file_issho_v1_plans_proto_depIdxs = []int32{
-	9,  // 0: issho.v1.ListFeedResponse.plans:type_name -> issho.v1.FeedPlan
-	9,  // 1: issho.v1.GetPlanResponse.plan:type_name -> issho.v1.FeedPlan
-	10, // 2: issho.v1.GetPlanResponse.signup:type_name -> issho.v1.Signup
-	10, // 3: issho.v1.SignUpRequest.signup:type_name -> issho.v1.Signup
-	9,  // 4: issho.v1.SignUpResponse.plan:type_name -> issho.v1.FeedPlan
-	0,  // 5: issho.v1.FeedPlan.level:type_name -> issho.v1.PlanLevel
-	12, // 6: issho.v1.FeedPlan.signup_deadline:type_name -> google.protobuf.Timestamp
-	13, // 7: issho.v1.Signup.pattern:type_name -> issho.v1.AvailabilitySlot
-	11, // 8: issho.v1.Signup.unavailable:type_name -> issho.v1.UnavailableTime
-	14, // 9: issho.v1.UnavailableTime.block:type_name -> issho.v1.TimeBlock
-	1,  // 10: issho.v1.PlanService.ListFeed:input_type -> issho.v1.ListFeedRequest
-	3,  // 11: issho.v1.PlanService.GetPlan:input_type -> issho.v1.GetPlanRequest
-	5,  // 12: issho.v1.PlanService.SignUp:input_type -> issho.v1.SignUpRequest
-	7,  // 13: issho.v1.PlanService.Withdraw:input_type -> issho.v1.WithdrawRequest
-	2,  // 14: issho.v1.PlanService.ListFeed:output_type -> issho.v1.ListFeedResponse
-	4,  // 15: issho.v1.PlanService.GetPlan:output_type -> issho.v1.GetPlanResponse
-	6,  // 16: issho.v1.PlanService.SignUp:output_type -> issho.v1.SignUpResponse
-	8,  // 17: issho.v1.PlanService.Withdraw:output_type -> issho.v1.WithdrawResponse
-	14, // [14:18] is the sub-list for method output_type
-	10, // [10:14] is the sub-list for method input_type
-	10, // [10:10] is the sub-list for extension type_name
-	10, // [10:10] is the sub-list for extension extendee
-	0,  // [0:10] is the sub-list for field type_name
+	10, // 0: issho.v1.ListFeedResponse.plans:type_name -> issho.v1.FeedPlan
+	10, // 1: issho.v1.GetPlanResponse.plan:type_name -> issho.v1.FeedPlan
+	11, // 2: issho.v1.GetPlanResponse.signup:type_name -> issho.v1.Signup
+	5,  // 3: issho.v1.GetPlanResponse.steps:type_name -> issho.v1.PlanStep
+	11, // 4: issho.v1.SignUpRequest.signup:type_name -> issho.v1.Signup
+	10, // 5: issho.v1.SignUpResponse.plan:type_name -> issho.v1.FeedPlan
+	0,  // 6: issho.v1.FeedPlan.level:type_name -> issho.v1.PlanLevel
+	13, // 7: issho.v1.FeedPlan.signup_deadline:type_name -> google.protobuf.Timestamp
+	14, // 8: issho.v1.Signup.pattern:type_name -> issho.v1.AvailabilitySlot
+	12, // 9: issho.v1.Signup.unavailable:type_name -> issho.v1.UnavailableTime
+	15, // 10: issho.v1.UnavailableTime.block:type_name -> issho.v1.TimeBlock
+	1,  // 11: issho.v1.PlanService.ListFeed:input_type -> issho.v1.ListFeedRequest
+	3,  // 12: issho.v1.PlanService.GetPlan:input_type -> issho.v1.GetPlanRequest
+	6,  // 13: issho.v1.PlanService.SignUp:input_type -> issho.v1.SignUpRequest
+	8,  // 14: issho.v1.PlanService.Withdraw:input_type -> issho.v1.WithdrawRequest
+	2,  // 15: issho.v1.PlanService.ListFeed:output_type -> issho.v1.ListFeedResponse
+	4,  // 16: issho.v1.PlanService.GetPlan:output_type -> issho.v1.GetPlanResponse
+	7,  // 17: issho.v1.PlanService.SignUp:output_type -> issho.v1.SignUpResponse
+	9,  // 18: issho.v1.PlanService.Withdraw:output_type -> issho.v1.WithdrawResponse
+	15, // [15:19] is the sub-list for method output_type
+	11, // [11:15] is the sub-list for method input_type
+	11, // [11:11] is the sub-list for extension type_name
+	11, // [11:11] is the sub-list for extension extendee
+	0,  // [0:11] is the sub-list for field type_name
 }
 
 func init() { file_issho_v1_plans_proto_init() }
@@ -828,7 +968,7 @@ func file_issho_v1_plans_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_issho_v1_plans_proto_rawDesc), len(file_issho_v1_plans_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   11,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

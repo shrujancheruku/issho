@@ -34,22 +34,24 @@ func (q *Queries) GetCityMatching(ctx context.Context, id string) (GetCityMatchi
 
 const getMatchingUser = `-- name: GetMatchingUser :one
 select p.user_id, a.city_id, p.home_area_id, p.max_travel_min, p.gender, p.same_gender_only, p.size_pref,
-       p.budget, p.reliability
+       p.budget, p.reliability, p.primary_language, p.secondary_language
 from app.profiles p
 join app.areas a on a.id = p.home_area_id
 where p.user_id = $1
 `
 
 type GetMatchingUserRow struct {
-	UserID         uuid.UUID
-	CityID         string
-	HomeAreaID     string
-	MaxTravelMin   int16
-	Gender         string
-	SameGenderOnly bool
-	SizePref       string
-	Budget         int16
-	Reliability    float32
+	UserID            uuid.UUID
+	CityID            string
+	HomeAreaID        string
+	MaxTravelMin      int16
+	Gender            string
+	SameGenderOnly    bool
+	SizePref          string
+	Budget            int16
+	Reliability       float32
+	PrimaryLanguage   string
+	SecondaryLanguage *string
 }
 
 // One person and their city, for their feed.
@@ -66,6 +68,8 @@ func (q *Queries) GetMatchingUser(ctx context.Context, userID uuid.UUID) (GetMat
 		&i.SizePref,
 		&i.Budget,
 		&i.Reliability,
+		&i.PrimaryLanguage,
+		&i.SecondaryLanguage,
 	)
 	return i, err
 }

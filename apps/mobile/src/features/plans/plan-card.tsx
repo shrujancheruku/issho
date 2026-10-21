@@ -15,6 +15,16 @@ export function pairText(n: { name: string; secondary: string }) {
   return n.secondary ? `${n.name} · ${n.secondary}` : n.name;
 }
 
+/**
+ * The plan's title in the language being shown first: the server sends it in
+ * the primary display language with the secondary below.
+ */
+export function planTitle(plan: FeedPlan, showing: 'primary' | 'secondary') {
+  return showing === 'secondary' && plan.secondaryTitle
+    ? { name: plan.secondaryTitle, secondary: plan.title }
+    : { name: plan.title, secondary: plan.secondaryTitle };
+}
+
 /** How far a plan is from the person's home area. */
 export function distanceText(t: ReturnType<typeof useI18n>['t'], minutes: number) {
   if (minutes < 0) return t('plan.noRoute');
@@ -23,12 +33,11 @@ export function distanceText(t: ReturnType<typeof useI18n>['t'], minutes: number
 
 /** One plan in the feed: what, where, how it suits you, how many are interested. */
 export function PlanCard({ plan, names }: { plan: FeedPlan; names: ReturnType<typeof usePlanNames> }) {
-  const { t } = useI18n();
+  const { t, showing } = useI18n();
   const theme = useTheme();
   const level = levelStyles[plan.level];
   const greyed = plan.level === PlanLevel.NOT_FOR_YOU;
-  const activity = names.activity(plan.activityId);
-  const followUp = plan.followUpActivityId ? names.activity(plan.followUpActivityId) : null;
+  const title = planTitle(plan, showing);
   const area = names.area(plan.areaId);
   const distance = distanceText(t, plan.travelMinutes);
   const language = [plan.primaryLanguage, plan.secondaryLanguage].filter(Boolean).map(names.language).join(' / ');
@@ -57,10 +66,9 @@ export function PlanCard({ plan, names }: { plan: FeedPlan; names: ReturnType<ty
         )}
       </View>
       <ThemedText type="subtitle" style={styles.title}>
-        {activity.name}
+        {title.name}
       </ThemedText>
-      {!!activity.secondary && <ThemedText themeColor="textSecondary">{activity.secondary}</ThemedText>}
-      {followUp && <ThemedText type="small">{t('plan.followUp', { activity: pairText(followUp) })}</ThemedText>}
+      {!!title.secondary && <ThemedText themeColor="textSecondary">{title.secondary}</ThemedText>}
       <ThemedText type="small" themeColor="textSecondary">
         {pairText(area)} · {distance}
       </ThemedText>

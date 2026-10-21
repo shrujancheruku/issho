@@ -18,7 +18,7 @@ func newTestClient(t *testing.T, h http.HandlerFunc) *Client {
 	srv := httptest.NewServer(h)
 	t.Cleanup(srv.Close)
 	c := New("test-key")
-	c.RoutesURL, c.PlacesURL = srv.URL, srv.URL
+	c.RoutesURL, c.PlacesURL, c.DetailsURL = srv.URL, srv.URL, srv.URL
 	c.api.Backoff = time.Millisecond
 	return c
 }
@@ -199,5 +199,34 @@ func TestParseDuration(t *testing.T) {
 	}
 	if _, err := parseDuration("12"); err == nil {
 		t.Error("expected error for a duration without unit")
+	}
+}
+
+func TestDetails(t *testing.T) {
+	c := newTestClient(t, func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet || r.URL.Path != "/ChIJabc" || r.URL.Query().Get("languageCode") != "ja" {
+			t.Errorf("request %s %s", r.Method, r.URL)
+		}
+		if r.Header.Get("X-Goog-Api-Key") != "test-key" || r.Header.Get("X-Goog-FieldMask") == "" {
+			t.Errorf("headers %v", r.Header)
+		}
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"displayName":           map[string]string{"text": "B-PUMP 荻窪", "languageCode": "ja"},
+			"shortFormattedAddress": "杉並区上荻1-2-3",
+			"googleMapsUri":         "https://maps.google.com/?cid=1",
+			"location":              map[string]float64{"latitude": 35.7, "longitude": 139.6},
+		})
+	})
+	got, err := c.Details(context.Background(), "ChIJabc", "ja")
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := maps.PlaceDetails{Name: "B-PUMP 荻窪", Address: "杉並区上荻1-2-3", MapsURL: "https://maps.google.com/?cid=1", Location: maps.LatLng{Lat: 35.7, Lng: 139.6}}
+	if got != want {
+		t.Errorf("got %+v, want %+v", got, want)
+	}
+	// An id that could change the path is refused before any request.
+	if _, err := c.Details(context.Background(), "../places:searchNearby", "ja"); err == nil {
+		t.Error("no error for a path-like id")
 	}
 }

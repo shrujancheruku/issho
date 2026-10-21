@@ -49,6 +49,9 @@ type Open struct {
 	matching.OpenPlan
 	Round  int
 	Window Window
+	// Google place ids of the activity's and the follow-up's venues; "" =
+	// none (a meeting point only, or nothing found when it opened).
+	Venue, FollowUpVenue string
 }
 
 // ListOpen returns a city's open plans with their signup counts, oldest first.
@@ -71,28 +74,65 @@ func ListOpen(ctx context.Context, q *dbgen.Queries, cityID string) ([]Open, err
 				},
 				Signups: int(r.Signups),
 			},
-			Round:  int(r.Round),
-			Window: Window{Start: r.WindowStart.Time, Days: int(r.WindowDays), Deadline: r.SignupDeadline.Time},
+			Round:         int(r.Round),
+			Window:        Window{Start: r.WindowStart.Time, Days: int(r.WindowDays), Deadline: r.SignupDeadline.Time},
+			Venue:         deref(r.VenuePlaceID),
+			FollowUpVenue: deref(r.FollowUpVenuePlaceID),
 		}
 	}
 	return out, nil
 }
 
-// Create opens a plan for a suggestion and returns its id.
-func Create(ctx context.Context, q *dbgen.Queries, cityID string, s matching.Suggestion, w Window) (uuid.UUID, error) {
+// Create opens a plan for a suggestion and returns its id. It picks a venue
+// in the plan's area for the activity and the follow-up from their venue
+// categories (acts; a missing activity gets none, as do activities that need
+// only a meeting point).
+func Create(ctx context.Context, q *dbgen.Queries, cityID string, s matching.Suggestion, w Window, acts map[matching.ActivityID]*matching.Activity) (uuid.UUID, error) {
+	venue, err := pickVenue(ctx, q, s.Area, acts[s.Activity])
+	if err != nil {
+		return uuid.Nil, err
+	}
+	var followUpVenue *string
+	if s.FollowUp != "" {
+		if followUpVenue, err = pickVenue(ctx, q, s.Area, acts[s.FollowUp]); err != nil {
+			return uuid.Nil, err
+		}
+	}
 	return q.InsertPlan(ctx, dbgen.InsertPlanParams{
-		CityID:            cityID,
-		AreaID:            string(s.Area),
-		ActivityID:        string(s.Activity),
-		FollowUpID:        ptr(string(s.FollowUp)),
-		PrimaryLanguage:   s.Primary,
-		SecondaryLanguage: ptr(s.Secondary),
-		Audience:          int32(s.Audience),
-		Score:             float32(s.Score),
-		WindowStart:       date(w.Start),
-		WindowDays:        int16(w.Days),
-		SignupDeadline:    pgtype.Timestamptz{Time: w.Deadline, Valid: true},
+		VenuePlaceID:         venue,
+		FollowUpVenuePlaceID: followUpVenue,
+		CityID:               cityID,
+		AreaID:               string(s.Area),
+		ActivityID:           string(s.Activity),
+		FollowUpID:           ptr(string(s.FollowUp)),
+		PrimaryLanguage:      s.Primary,
+		SecondaryLanguage:    ptr(s.Secondary),
+		Audience:             int32(s.Audience),
+		Score:                float32(s.Score),
+		WindowStart:          date(w.Start),
+		WindowDays:           int16(w.Days),
+		SignupDeadline:       pgtype.Timestamptz{Time: w.Deadline, Valid: true},
 	})
+}
+
+// pickVenue returns a venue for the activity in the area, or nil when it
+// needs none or none was discovered there.
+func pickVenue(ctx context.Context, q *dbgen.Queries, area matching.AreaID, act *matching.Activity) (*string, error) {
+	if act == nil || len(act.VenueCategories) == 0 {
+		return nil, nil
+	}
+	cats := make([]string, len(act.VenueCategories))
+	for i, c := range act.VenueCategories {
+		cats[i] = string(c)
+	}
+	id, err := q.PickVenue(ctx, dbgen.PickVenueParams{AreaID: string(area), Categories: cats})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &id, nil
 }
 
 // SaveSignup signs a person up for a plan's current round, or replaces the

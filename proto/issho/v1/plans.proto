@@ -50,6 +50,29 @@ message GetPlanResponse {
   FeedPlan plan = 1;
   // The caller's signup; unset when they haven't signed up.
   Signup signup = 2;
+  // What the outing is, in order: the activity, then any follow-up, each at
+  // its venue.
+  repeated PlanStep steps = 3;
+}
+
+// One stop of a plan.
+message PlanStep {
+  // Activity id (CatalogService.ListActivities): what happens here.
+  string activity_id = 1;
+  // The venue's name from Google, in the caller's primary and secondary
+  // display languages, fetched live (Maps terms: nothing but the place id is
+  // stored). Empty when the activity needs only a meeting point, no venue
+  // was found, or the server has no GOOGLE_MAPS_API_KEY.
+  string venue_name = 2;
+  // Empty when the same as venue_name.
+  string venue_secondary_name = 3;
+  // Short address in the primary language.
+  string venue_address = 4;
+  // Opens the venue in Google Maps.
+  string venue_maps_url = 5;
+  // Estimated walk from the previous stop's venue, in minutes; 0 for the
+  // first stop or when either venue is unknown.
+  int32 walk_minutes = 6;
 }
 
 message SignUpRequest {
@@ -94,6 +117,13 @@ message FeedPlan {
   // can make it.
   google.protobuf.Timestamp signup_deadline = 12;
   bool signed_up = 13;
+  // What the outing is, as one line: "Climbing and bouldering, then lunch
+  // or dinner out". In the caller's primary display language, with the
+  // secondary below it ("" when the same or not chosen). Area names are left
+  // out on purpose: they're proper nouns, never machine-translated, and
+  // shown with area_id's name.
+  string title = 14;
+  string secondary_title = 15;
 }
 
 // How well a plan suits the caller, best last.

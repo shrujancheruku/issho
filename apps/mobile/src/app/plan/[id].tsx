@@ -15,7 +15,8 @@ import { useSignupActions, usePlan } from '@/features/plans/data';
 import { formatDate, lastSignupDay } from '@/features/plans/format';
 import { levelStyles } from '@/features/plans/level';
 import { usePlanNames } from '@/features/plans/names';
-import { distanceText, pairText } from '@/features/plans/plan-card';
+import { distanceText, pairText, planTitle } from '@/features/plans/plan-card';
+import { Timeline } from '@/features/plans/timeline';
 import { initialTimes, toggle, toSignup, windowDates, type Times } from '@/features/plans/signup';
 import { useProfile } from '@/features/profile/use-profile';
 import { useTheme } from '@/hooks/use-theme';
@@ -131,8 +132,7 @@ export default function PlanScreen() {
   } else if (!p || !times) {
     body = <ActivityIndicator />;
   } else {
-    const activity = names.activity(p.activityId);
-    const followUp = p.followUpActivityId ? names.activity(p.followUpActivityId) : null;
+    const title = planTitle(p, showing);
     const dates = windowDates(p.windowStart, p.windowDays);
     const level = levelStyles[p.level];
     const notForYou = p.level === PlanLevel.NOT_FOR_YOU;
@@ -145,12 +145,10 @@ export default function PlanScreen() {
           </ThemedText>
         </View>
         <View style={styles.titleBlock}>
-          <ThemedText type="subtitle">{activity.name}</ThemedText>
-          {!!activity.secondary && <ThemedText themeColor="textSecondary">{activity.secondary}</ThemedText>}
-          {followUp && (
-            <ThemedText style={styles.followUp}>{t('plan.followUp', { activity: pairText(followUp) })}</ThemedText>
-          )}
+          <ThemedText type="subtitle">{title.name}</ThemedText>
+          {!!title.secondary && <ThemedText themeColor="textSecondary">{title.secondary}</ThemedText>}
         </View>
+        <Timeline steps={plan.data?.steps ?? []} names={names} />
         {/* One labelled row per detail, so they read as separate facts rather than a paragraph. */}
         <View style={styles.facts}>
           <Fact label={t('plan.where')} value={pairText(names.area(p.areaId))} note={distanceText(t, p.travelMinutes)} />
@@ -257,7 +255,6 @@ const styles = StyleSheet.create({
   content: { padding: Spacing.four, gap: Spacing.four },
   pill: { alignSelf: 'flex-start', borderRadius: 999, paddingVertical: Spacing.half, paddingHorizontal: Spacing.two },
   titleBlock: { gap: Spacing.one },
-  followUp: { marginTop: Spacing.one },
   facts: { gap: Spacing.three },
   fact: { flexDirection: 'row', gap: Spacing.three },
   // Wide enough for "Number of people interested" to wrap onto two lines, not five.

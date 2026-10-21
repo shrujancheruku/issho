@@ -100,24 +100,26 @@ type AppGroupMember struct {
 }
 
 type AppPlan struct {
-	ID                uuid.UUID
-	CityID            string
-	AreaID            string
-	ActivityID        string
-	FollowUpID        *string
-	PrimaryLanguage   string
-	SecondaryLanguage *string
-	Description       []byte
-	Audience          int32
-	Score             float32
-	Round             int16
-	WindowStart       pgtype.Date
-	WindowDays        int16
-	SignupDeadline    pgtype.Timestamptz
-	Status            string
-	ClosedReason      *string
-	ClosedAt          pgtype.Timestamptz
-	CreatedAt         pgtype.Timestamptz
+	ID                   uuid.UUID
+	CityID               string
+	AreaID               string
+	ActivityID           string
+	FollowUpID           *string
+	PrimaryLanguage      string
+	SecondaryLanguage    *string
+	Description          []byte
+	Audience             int32
+	Score                float32
+	Round                int16
+	WindowStart          pgtype.Date
+	WindowDays           int16
+	SignupDeadline       pgtype.Timestamptz
+	Status               string
+	ClosedReason         *string
+	ClosedAt             pgtype.Timestamptz
+	CreatedAt            pgtype.Timestamptz
+	VenuePlaceID         *string
+	FollowUpVenuePlaceID *string
 }
 
 type AppPlanSignup struct {

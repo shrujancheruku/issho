@@ -21,7 +21,7 @@ func TestIntegrationStore(t *testing.T) {
 
 	w := Window{Start: day(7), Days: 14, Deadline: time.Date(2030, 1, 20, 12, 0, 0, 0, time.UTC)}
 	plan := matching.Plan{Area: area, Activity: act, Primary: "ja"}
-	planID, err := Create(ctx, q, city, matching.Suggestion{Plan: plan, Audience: 9, Score: 4.5}, w)
+	planID, err := Create(ctx, q, city, matching.Suggestion{Plan: plan, Audience: 9, Score: 4.5}, w, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -85,7 +85,7 @@ func TestIntegrationStore(t *testing.T) {
 	}
 
 	// Signing up for another plan, the event already invited to is blocked out.
-	other, err := Create(ctx, q, city, matching.Suggestion{Plan: matching.Plan{Area: area, Activity: act, Primary: "en"}, Audience: 6, Score: 1}, w)
+	other, err := Create(ctx, q, city, matching.Suggestion{Plan: matching.Plan{Area: area, Activity: act, Primary: "en"}, Audience: 6, Score: 1}, w, nil)
 	if err != nil {
 		t.Fatal(err)
 	}

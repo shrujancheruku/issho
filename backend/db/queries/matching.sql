@@ -80,7 +80,7 @@ where city_id = @city_id and closed_reason = 'no_group' and closed_at >= @since;
 -- One person and their city, for their feed.
 -- name: GetMatchingUser :one
 select p.user_id, a.city_id, p.home_area_id, p.max_travel_min, p.gender, p.same_gender_only, p.size_pref,
-       p.budget, p.reliability
+       p.budget, p.reliability, p.primary_language, p.secondary_language
 from app.profiles p
 join app.areas a on a.id = p.home_area_id
 where p.user_id = $1;

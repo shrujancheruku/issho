@@ -11,6 +11,7 @@ import (
 
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	"github.com/shrujancheruku/issho/backend/internal/matching"
+	"github.com/shrujancheruku/issho/backend/internal/platform/i18n"
 )
 
 // City is everything matching needs about one city.
@@ -104,13 +105,23 @@ func loadPlaces(ctx context.Context, q *dbgen.Queries, cityID string, month time
 	return c, nil
 }
 
-// LoadUser reads one person for matching and returns their city's id.
-// pgx.ErrNoRows means they have no profile.
-func LoadUser(ctx context.Context, q *dbgen.Queries, userID uuid.UUID) (*matching.User, string, error) {
+// Caller is what the plan API needs about the person asking, besides
+// their matching profile.
+type Caller struct {
+	City string
+	// Display languages (i18n.ForApp): what plan titles are shown in.
+	Primary, Secondary string
+}
+
+// LoadUser reads one person for matching, with their city and display
+// languages. pgx.ErrNoRows means they have no profile.
+func LoadUser(ctx context.Context, q *dbgen.Queries, userID uuid.UUID) (*matching.User, Caller, error) {
 	r, err := q.GetMatchingUser(ctx, userID)
 	if err != nil {
-		return nil, "", err
+		return nil, Caller{}, err
 	}
+	primary, secondary := i18n.ForApp(r.PrimaryLanguage, deref(r.SecondaryLanguage))
+	caller := Caller{City: r.CityID, Primary: primary, Secondary: secondary}
 	u := &matching.User{
 		ID:             matching.UserID(userID.String()),
 		HomeArea:       matching.AreaID(r.HomeAreaID),
@@ -124,7 +135,7 @@ func LoadUser(ctx context.Context, q *dbgen.Queries, userID uuid.UUID) (*matchin
 	}
 	langs, err := q.ListUserLanguages(ctx, userID)
 	if err != nil {
-		return nil, "", err
+		return nil, Caller{}, err
 	}
 	for _, l := range langs {
 		level := 0
@@ -135,19 +146,19 @@ func LoadUser(ctx context.Context, q *dbgen.Queries, userID uuid.UUID) (*matchin
 	}
 	slots, err := q.ListAvailability(ctx, userID)
 	if err != nil {
-		return nil, "", err
+		return nil, Caller{}, err
 	}
 	for _, s := range slots {
 		u.Availability = append(u.Availability, matching.Slot{Weekday: time.Weekday(s.Weekday), Block: matching.Block(s.Block)})
 	}
 	prefs, err := q.ListActivityPrefs(ctx, userID)
 	if err != nil {
-		return nil, "", err
+		return nil, Caller{}, err
 	}
 	for _, p := range prefs {
 		u.Prefs[matching.ActivityID(p.ActivityID)] = int(p.Weight)
 	}
-	return u, r.CityID, nil
+	return u, caller, nil
 }
 
 // loadUsers reads every profile in the city with its languages,

@@ -1,12 +1,21 @@
 -- name: InsertPlan :one
 insert into app.plans (
   city_id, area_id, activity_id, follow_up_id, primary_language, secondary_language,
-  audience, score, window_start, window_days, signup_deadline
+  audience, score, window_start, window_days, signup_deadline, venue_place_id, follow_up_venue_place_id
 ) values (
   @city_id, @area_id, @activity_id, @follow_up_id, @primary_language, @secondary_language,
-  @audience, @score, @window_start, @window_days, @signup_deadline
+  @audience, @score, @window_start, @window_days, @signup_deadline, @venue_place_id, @follow_up_venue_place_id
 )
 returning id;
+
+-- A venue for an activity in an area: one of its venue categories, never a
+-- rejected place, approved ones first (admin curation, M8), otherwise any
+-- candidate at random so plans in one area don't all use the same café.
+-- name: PickVenue :one
+select google_place_id from app.venues
+where area_id = @area_id and category_id = any(@categories::text[]) and status <> 'rejected'
+order by (status = 'approved') desc, random()
+limit 1;
 
 -- name: SetPlanDescription :exec
 update app.plans set description = @description where id = @id;
@@ -15,7 +24,7 @@ update app.plans set description = @description where id = @id;
 -- feed's "7 interested" always matches.
 -- name: ListOpenPlans :many
 select p.id, p.area_id, p.activity_id, p.follow_up_id, p.primary_language, p.secondary_language,
-       p.round, p.window_start, p.window_days, p.signup_deadline,
+       p.round, p.window_start, p.window_days, p.signup_deadline, p.venue_place_id, p.follow_up_venue_place_id,
        (select count(*) from app.plan_signups s where s.plan_id = p.id)::int as signups
 from app.plans p
 where p.city_id = @city_id and p.status = 'open'

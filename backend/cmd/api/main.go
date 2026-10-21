@@ -21,6 +21,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/catalog"
 	"github.com/shrujancheruku/issho/backend/internal/health"
 	"github.com/shrujancheruku/issho/backend/internal/identity"
+	mapsgoogle "github.com/shrujancheruku/issho/backend/internal/maps/google"
 	"github.com/shrujancheruku/issho/backend/internal/plans"
 	"github.com/shrujancheruku/issho/backend/internal/platform/auth"
 	"github.com/shrujancheruku/issho/backend/internal/platform/config"
@@ -114,7 +115,13 @@ func run() error {
 	}
 	mux.Handle(isshov1connect.NewCatalogServiceHandler(&catalog.Handler{Q: q, Translations: translations, Suggestions: suggestions}, opts))
 	mux.Handle(isshov1connect.NewProfileServiceHandler(&profile.Handler{Svc: &profile.Service{DB: pool}}, opts))
-	mux.Handle(isshov1connect.NewPlanServiceHandler(&plans.Handler{Svc: &plans.Service{DB: pool}}, opts))
+	planSvc := &plans.Service{DB: pool, Translations: translations}
+	if cfg.GoogleMapsAPIKey != "" {
+		planSvc.Places = mapsgoogle.New(cfg.GoogleMapsAPIKey)
+	} else {
+		slog.Warn("GOOGLE_MAPS_API_KEY not set: plans show no venue names")
+	}
+	mux.Handle(isshov1connect.NewPlanServiceHandler(&plans.Handler{Svc: planSvc}, opts))
 	uiCatalog, err := uistrings.Load()
 	if err != nil {
 		return err

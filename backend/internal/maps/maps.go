@@ -68,6 +68,20 @@ type PlaceSearcher interface {
 	Nearby(ctx context.Context, req NearbyRequest) ([]Place, error)
 }
 
+// PlaceDetails is what's shown about a venue, fetched live in one language
+// each time (none of it may be stored).
+type PlaceDetails struct {
+	Name     string // the provider's localised name, e.g. "B-PUMP 荻窪"
+	Address  string // short form, without the country
+	MapsURL  string // opens the place in the provider's maps app
+	Location LatLng
+}
+
+type PlaceLookup interface {
+	// Details returns a place in the given language (BCP 47).
+	Details(ctx context.Context, id, language string) (PlaceDetails, error)
+}
+
 // DistanceM is the great-circle (haversine) distance in metres. Used to skip
 // provider calls that can't be useful, e.g. walking between areas 20 km apart.
 func DistanceM(a, b LatLng) float64 {

@@ -57,6 +57,7 @@
     - [GetPlanResponse](#issho-v1-GetPlanResponse)
     - [ListFeedRequest](#issho-v1-ListFeedRequest)
     - [ListFeedResponse](#issho-v1-ListFeedResponse)
+    - [PlanStep](#issho-v1-PlanStep)
     - [SignUpRequest](#issho-v1-SignUpRequest)
     - [SignUpResponse](#issho-v1-SignUpResponse)
     - [Signup](#issho-v1-Signup)
@@ -721,6 +722,8 @@ An open plan as the caller sees it.
 | window_days | [int32](#int32) |  |  |
 | signup_deadline | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | Signups for this round close then; the round goes ahead with whoever can make it. |
 | signed_up | [bool](#bool) |  |  |
+| title | [string](#string) |  | What the outing is, as one line: &#34;Climbing and bouldering, then lunch or dinner out&#34;. In the caller&#39;s primary display language, with the secondary below it (&#34;&#34; when the same or not chosen). Area names are left out on purpose: they&#39;re proper nouns, never machine-translated, and shown with area_id&#39;s name. |
+| secondary_title | [string](#string) |  |  |
 
 
 
@@ -752,6 +755,7 @@ An open plan as the caller sees it.
 | ----- | ---- | ----- | ----------- |
 | plan | [FeedPlan](#issho-v1-FeedPlan) |  |  |
 | signup | [Signup](#issho-v1-Signup) |  | The caller&#39;s signup; unset when they haven&#39;t signed up. |
+| steps | [PlanStep](#issho-v1-PlanStep) | repeated | What the outing is, in order: the activity, then any follow-up, each at its venue. |
 
 
 
@@ -777,6 +781,26 @@ An open plan as the caller sees it.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | plans | [FeedPlan](#issho-v1-FeedPlan) | repeated |  |
+
+
+
+
+
+
+<a name="issho-v1-PlanStep"></a>
+
+### PlanStep
+One stop of a plan.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| activity_id | [string](#string) |  | Activity id (CatalogService.ListActivities): what happens here. |
+| venue_name | [string](#string) |  | The venue&#39;s name from Google, in the caller&#39;s primary and secondary display languages, fetched live (Maps terms: nothing but the place id is stored). Empty when the activity needs only a meeting point, no venue was found, or the server has no GOOGLE_MAPS_API_KEY. |
+| venue_secondary_name | [string](#string) |  | Empty when the same as venue_name. |
+| venue_address | [string](#string) |  | Short address in the primary language. |
+| venue_maps_url | [string](#string) |  | Opens the venue in Google Maps. |
+| walk_minutes | [int32](#int32) |  | Estimated walk from the previous stop&#39;s venue, in minutes; 0 for the first stop or when either venue is unknown. |
 
 
 

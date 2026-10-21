@@ -11,6 +11,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -22,6 +23,8 @@ import (
 const (
 	defaultRoutesURL = "https://routes.googleapis.com/distanceMatrix/v2:computeRouteMatrix"
 	defaultPlacesURL = "https://places.googleapis.com/v1/places:searchNearby"
+	// Place Details: GET {defaultDetailsURL}/{place id}.
+	defaultDetailsURL = "https://places.googleapis.com/v1/places"
 
 	// Compute Route Matrix allows up to 625 origins × destinations without
 	// traffic awareness.
@@ -33,16 +36,17 @@ const (
 type Client struct {
 	api *googleapi.Client
 	// Overridable for tests.
-	RoutesURL, PlacesURL string
+	RoutesURL, PlacesURL, DetailsURL string
 }
 
 func New(apiKey string) *Client {
-	return &Client{api: googleapi.New(apiKey), RoutesURL: defaultRoutesURL, PlacesURL: defaultPlacesURL}
+	return &Client{api: googleapi.New(apiKey), RoutesURL: defaultRoutesURL, PlacesURL: defaultPlacesURL, DetailsURL: defaultDetailsURL}
 }
 
 var (
 	_ maps.Router        = (*Client)(nil)
 	_ maps.PlaceSearcher = (*Client)(nil)
+	_ maps.PlaceLookup   = (*Client)(nil)
 )
 
 // ---- Routes: Compute Route Matrix ----
@@ -213,6 +217,38 @@ func (c *Client) Nearby(ctx context.Context, req maps.NearbyRequest) ([]maps.Pla
 		out = append(out, maps.Place{ID: p.ID, PrimaryType: p.PrimaryType, Types: p.Types, Location: maps.LatLng{Lat: p.Location.Latitude, Lng: p.Location.Longitude}})
 	}
 	return out, nil
+}
+
+// ---- Places API (New): Place Details ----
+
+// Details fetches what the app shows about a venue. The field mask decides
+// the billing SKU: displayName and googleMapsUri make it Place Details Pro.
+func (c *Client) Details(ctx context.Context, id, language string) (maps.PlaceDetails, error) {
+	if id == "" || strings.ContainsAny(id, "/?#") {
+		return maps.PlaceDetails{}, fmt.Errorf("invalid place id %q", id)
+	}
+	u := c.DetailsURL + "/" + url.PathEscape(id)
+	if language != "" {
+		u += "?languageCode=" + url.QueryEscape(language)
+	}
+	var resp struct {
+		DisplayName struct {
+			Text string `json:"text"`
+		} `json:"displayName"`
+		ShortFormattedAddress string `json:"shortFormattedAddress"`
+		GoogleMapsURI         string `json:"googleMapsUri"`
+		Location              latLng `json:"location"`
+	}
+	mask := "displayName,shortFormattedAddress,googleMapsUri,location"
+	if err := c.api.Get(ctx, u, map[string]string{"X-Goog-FieldMask": mask}, &resp); err != nil {
+		return maps.PlaceDetails{}, err
+	}
+	return maps.PlaceDetails{
+		Name:     resp.DisplayName.Text,
+		Address:  resp.ShortFormattedAddress,
+		MapsURL:  resp.GoogleMapsURI,
+		Location: maps.LatLng{Lat: resp.Location.Latitude, Lng: resp.Location.Longitude},
+	}, nil
 }
 
 // post calls a Maps endpoint with a field mask (required by Google, and it
