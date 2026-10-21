@@ -1,5 +1,37 @@
 # Changelog
 
+## [0.5.0](https://github.com/shrujancheruku/issho/compare/v0.4.0...v0.5.0) (2026-10-21)
+
+
+### Features
+
+* **api:** profile, city/language lists and UI text RPCs ([4ce4722](https://github.com/shrujancheruku/issho/commit/4ce47222fb1c4f997005ba1e45dca458adfaf959))
+* **api:** suggest activities from free-text interests with Claude ([bc2d20a](https://github.com/shrujancheruku/issho/commit/bc2d20abd85e4fc7047cc3b37d6e383cf18f23cb))
+* **data:** merge the activity catalogue from 230 into 57 ([c228351](https://github.com/shrujancheruku/issho/commit/c228351062b984e6cfe6b47dc2d6f51bd60b6a17))
+* **data:** replace "Try a new sport" with the sports it covered ([477a476](https://github.com/shrujancheruku/issho/commit/477a476b8b720cf4ae1b0e0268a0308ea94ff82c))
+* **data:** split team and racket sports into individual sports ([77fe52a](https://github.com/shrujancheruku/issho/commit/77fe52a190c5a44876040bc598112b7116dd6f38))
+* **infra:** sign-in emails in the user's language ([c75ea73](https://github.com/shrujancheruku/issho/commit/c75ea73dcfb4683bc27c81483077414782ccf562))
+* **infra:** sign-in emails in the user's language (M5) ([#24](https://github.com/shrujancheruku/issho/issues/24)) ([a23ec9c](https://github.com/shrujancheruku/issho/commit/a23ec9c996d88209b2b7374e6c5e1b084020b725))
+* M5 profile, onboarding and app i18n ([#20](https://github.com/shrujancheruku/issho/issues/20)) ([8fb0aaf](https://github.com/shrujancheruku/issho/commit/8fb0aaf9fd691f6bbe9dd096c149d4a55c7f73a4))
+* **mobile:** describe your interests and confirm suggested activities ([400ae69](https://github.com/shrujancheruku/issho/commit/400ae69855ddfc05580096fbfadb6f12b85060e2))
+* **mobile:** explain interest levels before the activity grid ([0501330](https://github.com/shrujancheruku/issho/commit/050133086423247c84dffe45216e0ea477aae329))
+* **mobile:** fit form screens to a centred column on wide screens ([4ad3d20](https://github.com/shrujancheruku/issho/commit/4ad3d203ee39153c45d9ccf2a070107f807b227e))
+* **mobile:** keep a web build working, checked in CI ([2d7fdbc](https://github.com/shrujancheruku/issho/commit/2d7fdbc08bb91cdd261d8a5f967e1d237435746b))
+* **mobile:** keep a web build working, fitted to desktop screens ([#21](https://github.com/shrujancheruku/issho/issues/21)) ([a7bcbd7](https://github.com/shrujancheruku/issho/commit/a7bcbd72404a3fc50a7c4dead79880391aee2563))
+* **mobile:** onboarding, profile settings and app i18n ([7ae534a](https://github.com/shrujancheruku/issho/commit/7ae534a22c63dd907383560f15492eabbec294b6))
+* suggest activities from free-text interests with Gemini on Agent Platform (M5) ([#23](https://github.com/shrujancheruku/issho/issues/23)) ([17bb55e](https://github.com/shrujancheruku/issho/commit/17bb55e87445e2d2af48ce24e56d6fb60d015480))
+
+
+### Bug Fixes
+
+* **api:** call Gemini through Google Cloud's Agent Platform ([3eae8f6](https://github.com/shrujancheruku/issho/commit/3eae8f60162c295c824d6580ac8426521801e625))
+* **api:** use current activity ids in the profile tests ([94f40c4](https://github.com/shrujancheruku/issho/commit/94f40c4619a4536c5cadb7d6de44348acedd79dc))
+* **mobile:** code of conduct asks for platonic intentions, not a ban ([b2dea3f](https://github.com/shrujancheruku/issho/commit/b2dea3ffea58d69475b5211a5d352d9181bfdfe7))
+* **mobile:** remove the animated example tile from the interest legend ([d069469](https://github.com/shrujancheruku/issho/commit/d0694699e11943a45bac9b64126f2d7c9a86b514))
+* **mobile:** show the code-of-conduct heading once ([448db9e](https://github.com/shrujancheruku/issho/commit/448db9edd324d37d79b500f736d6ec87ee72aa1c))
+* **mobile:** start from the device's first two supported languages ([e0ca66d](https://github.com/shrujancheruku/issho/commit/e0ca66daea07af133032112bad00a309c00be91c))
+* **mobile:** wrap long chip labels and drop the duplicate availability heading ([78d0bf8](https://github.com/shrujancheruku/issho/commit/78d0bf81c93dccb8708ab9d2c65196621855f4d3))
+
 ## [0.4.0](https://github.com/shrujancheruku/issho/compare/v0.3.0...v0.4.0) (2026-10-21)
 
 
