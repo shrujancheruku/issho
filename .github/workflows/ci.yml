@@ -125,9 +125,19 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm typecheck
-      - run: pnpm lint
-      - run: pnpm test
+      # One turbo run so the three tasks run in parallel; turbo prefixes each line with its task.
+      - name: Typecheck, lint and test
+        run: pnpm turbo run typecheck lint test
+      # Metro's transform cache (~10 MB; Expo's default location is $TMPDIR/metro-cache).
+      # A cold web bundle took ~24s, a warm one ~3s. Entries are keyed by file
+      # content, so a stale cache only costs re-transforms. Saved per commit
+      # but restored only within the same lockfile, so dependency updates
+      # start clean instead of piling up unused entries.
+      - uses: actions/cache@v6
+        with:
+          path: /tmp/metro-cache
+          key: metro-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ github.sha }}
+          restore-keys: metro-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
       - name: Web build exports (not released yet; keeps it from breaking)
         working-directory: apps/mobile
         run: pnpm export:web --output-dir "$RUNNER_TEMP/web"
