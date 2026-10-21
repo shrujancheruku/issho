@@ -70,7 +70,7 @@ func TestIntegrationSave(t *testing.T) {
 	if got.CityID != "tokyo" || got.DisplayName != "Aiko" || len(got.Languages) != 2 || len(got.Availability) != 2 || len(got.Prefs) != 3 {
 		t.Fatalf("saved %+v", got)
 	}
-	if got.Languages[1] != (Language{Code: "es", Level: 1}) || got.Prefs["photo-walk"] != 2 {
+	if got.Languages[1] != (Language{Code: "es", Level: 1}) || got.Prefs["photography"] != 2 {
 		t.Errorf("children: %+v %+v", got.Languages, got.Prefs)
 	}
 
@@ -78,13 +78,13 @@ func TestIntegrationSave(t *testing.T) {
 	p := valid()
 	p.Languages = []Language{{Code: "en", Fluent: true}}
 	p.Availability = []Slot{{3, "evening"}}
-	p.Prefs = map[string]int{"bowling": 1, "board-games": 1, "ramen-crawl": 2}
+	p.Prefs = map[string]int{"bowling": 1, "board-games": 1, "food-tour": 2}
 	p.SecondaryLanguage = "en"
 	got, err = svc.Save(ctx, id, p)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(got.Languages) != 1 || got.Availability[0] != (Slot{3, "evening"}) || len(got.Prefs) != 3 || got.Prefs["photo-walk"] != 0 || got.SecondaryLanguage != "en" {
+	if len(got.Languages) != 1 || got.Availability[0] != (Slot{3, "evening"}) || len(got.Prefs) != 3 || got.Prefs["photography"] != 0 || got.SecondaryLanguage != "en" {
 		t.Errorf("replace: %+v", got)
 	}
 	if again, err := svc.Get(ctx, id); err != nil || again.SecondaryLanguage != "en" {

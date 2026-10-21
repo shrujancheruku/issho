@@ -19,7 +19,7 @@ func valid() Profile {
 		Languages:       []Language{{Code: "JA", Fluent: true, Level: 3}, {Code: "es", Level: 1}},
 		PrimaryLanguage: "ja",
 		Availability:    []Slot{{6, "morning"}, {0, "evening"}},
-		Prefs:           map[string]int{"photo-walk": 2, "pottery": 1, "karaoke": 0},
+		Prefs:           map[string]int{"photography": 2, "pottery": 1, "karaoke": 0},
 		SizePref:        "medium",
 		Energy:          2,
 		Budget:          1,
