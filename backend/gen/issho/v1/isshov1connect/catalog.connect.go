@@ -61,8 +61,9 @@ type CatalogServiceClient interface {
 	// SuggestActivities reads what someone writes about their interests, in any
 	// language, and suggests activities offered in the city, each with an
 	// interest level. Suggestions only: the app shows them and the person
-	// confirms each one. Uses Claude; FAILED_PRECONDITION when the server has no
-	// ANTHROPIC_API_KEY, so the app can hide the feature. An empty list means
+	// confirms each one. Uses Google's Gemini API; FAILED_PRECONDITION when the
+	// server has no GOOGLE_GEMINI_API_KEY, so the app can hide the feature. An
+	// empty list means
 	// nothing in the text matched.
 	SuggestActivities(context.Context, *connect.Request[v1.SuggestActivitiesRequest]) (*connect.Response[v1.SuggestActivitiesResponse], error)
 }
@@ -147,8 +148,9 @@ type CatalogServiceHandler interface {
 	// SuggestActivities reads what someone writes about their interests, in any
 	// language, and suggests activities offered in the city, each with an
 	// interest level. Suggestions only: the app shows them and the person
-	// confirms each one. Uses Claude; FAILED_PRECONDITION when the server has no
-	// ANTHROPIC_API_KEY, so the app can hide the feature. An empty list means
+	// confirms each one. Uses Google's Gemini API; FAILED_PRECONDITION when the
+	// server has no GOOGLE_GEMINI_API_KEY, so the app can hide the feature. An
+	// empty list means
 	// nothing in the text matched.
 	SuggestActivities(context.Context, *connect.Request[v1.SuggestActivitiesRequest]) (*connect.Response[v1.SuggestActivitiesResponse], error)
 }

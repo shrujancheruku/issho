@@ -18,7 +18,7 @@ type Suggestion = { activityId: string; interest: Interest };
 
 /**
  * Free-text interests → suggested tiles (CatalogService.SuggestActivities,
- * Claude on the server). The person reviews the suggestions, can change or
+ * Gemini on the server). The person reviews the suggestions, can change or
  * drop each one, and only "Add these" puts them in the draft.
  */
 export function SuggestActivities({

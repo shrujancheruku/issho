@@ -1,4 +1,4 @@
-package claude
+package gemini
 
 import (
 	"context"
@@ -13,12 +13,10 @@ import (
 )
 
 // TestEval runs the tagging eval set (testdata/eval.json) against the real
-// Claude API. It costs money (about $0.01 for the whole set), so it only runs
-// when asked:
+// Gemini API. It costs money (well under $0.01 for the whole set), so it only
+// runs when asked:
 //
-//	TAGGING_EVAL=1 go test ./internal/tagging/claude/ -run Eval -v
-//
-// Credentials: ANTHROPIC_API_KEY, or an `ant auth login` profile.
+//	TAGGING_EVAL=1 GOOGLE_GEMINI_API_KEY=… go test ./internal/tagging/gemini/ -run Eval -v
 //
 // Each case lists the activities its text should produce (optionally with the
 // interest level), activities it must not produce, or that it should produce
@@ -26,7 +24,11 @@ import (
 // failed: broad matches are often right.
 func TestEval(t *testing.T) {
 	if os.Getenv("TAGGING_EVAL") == "" {
-		t.Skip("set TAGGING_EVAL=1 to run against the Claude API")
+		t.Skip("set TAGGING_EVAL=1 to run against the Gemini API")
+	}
+	key := os.Getenv("GOOGLE_GEMINI_API_KEY")
+	if key == "" {
+		t.Fatal("GOOGLE_GEMINI_API_KEY is required")
 	}
 	acts, err := cities.ReadActivities("../../../../data/activities.json")
 	if err != nil {
@@ -51,7 +53,7 @@ func TestEval(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	tagger := New(os.Getenv("ANTHROPIC_API_KEY"))
+	tagger := New(key)
 	level := map[int]string{0: "open_to_try", 1: "like", 2: "love"}
 	var expected, found, levelsChecked, levelsRight, mustNotHits, noneCases, noneRight int
 	for _, c := range cases {

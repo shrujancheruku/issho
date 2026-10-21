@@ -19,7 +19,7 @@ import (
 const MaxTextLen = 500
 
 var (
-	// ErrUnavailable means no Tagger is configured (ANTHROPIC_API_KEY unset).
+	// ErrUnavailable means no Tagger is configured (GOOGLE_GEMINI_API_KEY unset).
 	ErrUnavailable = errors.New("interest suggestions are not configured on this server")
 	// ErrNoSuggestion means the model declined to answer (a refusal); the app
 	// asks the person to pick tiles themselves.
@@ -96,7 +96,7 @@ func (s *Service) Suggest(ctx context.Context, cityID, text string) ([]Tag, erro
 	if err != nil {
 		return nil, err
 	}
-	// Defence in depth: the Claude tagger's schema already restricts ids to
+	// Defence in depth: the Gemini tagger's schema already restricts ids to
 	// this list, but a Tagger is an interface.
 	best := map[string]int{}
 	var order []string

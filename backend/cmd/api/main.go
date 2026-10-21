@@ -28,7 +28,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/platform/supabase"
 	"github.com/shrujancheruku/issho/backend/internal/profile"
 	"github.com/shrujancheruku/issho/backend/internal/tagging"
-	tagclaude "github.com/shrujancheruku/issho/backend/internal/tagging/claude"
+	"github.com/shrujancheruku/issho/backend/internal/tagging/gemini"
 	"github.com/shrujancheruku/issho/backend/internal/translate"
 	gtranslate "github.com/shrujancheruku/issho/backend/internal/translate/google"
 	"github.com/shrujancheruku/issho/backend/internal/uistrings"
@@ -106,10 +106,10 @@ func run() error {
 		slog.Warn("GOOGLE_TRANSLATE_API_KEY not set: machine translation off, text shown in stored languages only")
 	}
 	suggestions := &tagging.Service{Store: q}
-	if cfg.AnthropicAPIKey != "" {
-		suggestions.Tagger = tagclaude.New(cfg.AnthropicAPIKey)
+	if cfg.GeminiAPIKey != "" {
+		suggestions.Tagger = gemini.New(cfg.GeminiAPIKey)
 	} else {
-		slog.Warn("ANTHROPIC_API_KEY not set: interest suggestions off")
+		slog.Warn("GOOGLE_GEMINI_API_KEY not set: interest suggestions off")
 	}
 	mux.Handle(isshov1connect.NewCatalogServiceHandler(&catalog.Handler{Q: q, Translations: translations, Suggestions: suggestions}, opts))
 	mux.Handle(isshov1connect.NewProfileServiceHandler(&profile.Handler{Svc: &profile.Service{DB: pool}}, opts))
