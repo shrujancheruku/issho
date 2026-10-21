@@ -2,6 +2,7 @@ import { Gender, GroupSize } from '@issho/api-client';
 import { useMemo, useState, type ReactNode } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Switch, TextInput, View } from 'react-native';
 
+import { AvailabilityGrid } from '@/components/availability-grid';
 import { Chip } from '@/components/chip';
 import { ThemedText } from '@/components/themed-text';
 import { Brand, Spacing } from '@/constants/theme';
@@ -12,18 +13,15 @@ import { english, type StringKey } from '@/i18n/strings';
 import { languageLabel, useActivities, useCities, useLanguages } from './data';
 import {
   addSpoken,
-  blocks,
   cycleInterest,
   MinActivities,
   removeSpoken,
   setCity,
   setGender,
   setPrimaryLanguage,
-  slotKey,
   toggleSlot,
   travelChoices,
   updateSpoken,
-  weekdays,
   type Draft,
   type Step,
 } from './draft';
@@ -277,56 +275,15 @@ function AreaStep({ draft, onChange }: StepProps) {
   );
 }
 
-/** Weekday names from the platform (Intl), in the language being shown. */
-function weekdayName(weekday: number, lang: string) {
-  // 2024-01-07 was a Sunday (weekday 0).
-  const date = new Date(Date.UTC(2024, 0, 7 + weekday, 12));
-  try {
-    return new Intl.DateTimeFormat(lang, { weekday: 'short', timeZone: 'UTC' }).format(date);
-  } catch {
-    return new Intl.DateTimeFormat('en', { weekday: 'short', timeZone: 'UTC' }).format(date);
-  }
-}
-
 function AvailabilityStep({ draft, onChange }: StepProps) {
-  const { t, languages, showing } = useI18n();
-  const theme = useTheme();
-  const lang = showing === 'secondary' ? languages.secondary : languages.primary;
-  const blockKeys: StringKey[] = ['profile.block.morning', 'profile.block.afternoon', 'profile.block.evening'];
+  const { t } = useI18n();
   return (
     // The screen's heading is already "When you're free" (stepTitles).
     <View style={styles.section}>
       <ThemedText type="small" themeColor="textSecondary">
         {t('profile.availabilityHint')}
       </ThemedText>
-      <View style={styles.gridRow}>
-        <View style={styles.dayCell} />
-        {blockKeys.map((k) => (
-          <ThemedText key={k} type="small" themeColor="textSecondary" style={styles.gridHead}>
-            {t(k)}
-          </ThemedText>
-        ))}
-      </View>
-      {weekdays.map((day) => (
-        <View key={day} style={styles.gridRow}>
-          <ThemedText type="small" style={styles.dayCell}>
-            {weekdayName(day, lang)}
-          </ThemedText>
-          {blocks.map((b, i) => {
-            const on = draft.availability.includes(slotKey(day, b));
-            return (
-              <Pressable
-                key={b}
-                accessibilityRole="checkbox"
-                accessibilityState={{ checked: on }}
-                accessibilityLabel={`${weekdayName(day, lang)} ${t(blockKeys[i])}`}
-                onPress={() => onChange(toggleSlot(draft, day, b))}
-                style={[styles.cell, { backgroundColor: on ? Brand.red : theme.backgroundElement }]}
-              />
-            );
-          })}
-        </View>
-      ))}
+      <AvailabilityGrid selected={draft.availability} onToggle={(day, b) => onChange(toggleSlot(draft, day, b))} />
     </View>
   );
 }
@@ -488,10 +445,6 @@ const styles = StyleSheet.create({
   grow: { flex: 1 },
   spoken: { gap: Spacing.two, paddingVertical: Spacing.two },
   spokenHeader: { flexDirection: 'row', alignItems: 'center' },
-  gridRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
-  gridHead: { flex: 1, textAlign: 'center' },
-  dayCell: { width: 56 },
-  cell: { flex: 1, height: 40, borderRadius: 8 },
   rule: { flexDirection: 'row', gap: Spacing.two },
   bullet: { width: 12 },
   howTo: { borderWidth: 2, borderRadius: 16, padding: Spacing.three, gap: Spacing.two },
