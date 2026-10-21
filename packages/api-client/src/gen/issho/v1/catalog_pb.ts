@@ -4,13 +4,15 @@
 
 import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import type { ActivityPreference } from "./profile_pb";
+import { file_issho_v1_profile } from "./profile_pb";
 import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file issho/v1/catalog.proto.
  */
 export const file_issho_v1_catalog: GenFile = /*@__PURE__*/
-  fileDesc("ChZpc3Noby92MS9jYXRhbG9nLnByb3RvEghpc3Noby52MSJUChVMaXN0QWN0aXZpdGllc1JlcXVlc3QSDwoHY2l0eV9pZBgBIAEoCRIOCgZsb2NhbGUYAiABKAkSGgoSc2Vjb25kYXJ5X2xhbmd1YWdlGAMgASgJIkAKFkxpc3RBY3Rpdml0aWVzUmVzcG9uc2USJgoKYWN0aXZpdGllcxgBIAMoCzISLmlzc2hvLnYxLkFjdGl2aXR5IsoBCghBY3Rpdml0eRIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEhAKCGNhdGVnb3J5GAMgASgJEg4KBmluZG9vchgEIAEoCBIOCgZlbmVyZ3kYBSABKAUSEgoKY29zdF9sZXZlbBgGIAEoBRIWCg5jb252ZXJzYXRpb25hbBgHIAEoCBIWCg5taW5fZ3JvdXBfc2l6ZRgIIAEoBRIWCg5tYXhfZ3JvdXBfc2l6ZRgJIAEoBRIWCg5zZWNvbmRhcnlfbmFtZRgKIAEoCSI/ChFMaXN0Q2l0aWVzUmVxdWVzdBIOCgZsb2NhbGUYASABKAkSGgoSc2Vjb25kYXJ5X2xhbmd1YWdlGAIgASgJIjQKEkxpc3RDaXRpZXNSZXNwb25zZRIeCgZjaXRpZXMYASADKAsyDi5pc3Noby52MS5DaXR5ImoKBENpdHkSCgoCaWQYASABKAkSDAoEbmFtZRgCIAEoCRIWCg5zZWNvbmRhcnlfbmFtZRgDIAEoCRIRCglsYW5ndWFnZXMYBCADKAkSHQoFYXJlYXMYBSADKAsyDi5pc3Noby52MS5BcmVhIjgKBEFyZWESCgoCaWQYASABKAkSDAoEbmFtZRgCIAEoCRIWCg5zZWNvbmRhcnlfbmFtZRgDIAEoCSImChRMaXN0TGFuZ3VhZ2VzUmVxdWVzdBIOCgZsb2NhbGUYASABKAkiPgoVTGlzdExhbmd1YWdlc1Jlc3BvbnNlEiUKCWxhbmd1YWdlcxgBIAMoCzISLmlzc2hvLnYxLkxhbmd1YWdlIjcKCExhbmd1YWdlEgwKBGNvZGUYASABKAkSDwoHYXV0b255bRgCIAEoCRIMCgRuYW1lGAMgASgJMoYCCg5DYXRhbG9nU2VydmljZRJVCg5MaXN0QWN0aXZpdGllcxIfLmlzc2hvLnYxLkxpc3RBY3Rpdml0aWVzUmVxdWVzdBogLmlzc2hvLnYxLkxpc3RBY3Rpdml0aWVzUmVzcG9uc2UiABJJCgpMaXN0Q2l0aWVzEhsuaXNzaG8udjEuTGlzdENpdGllc1JlcXVlc3QaHC5pc3Noby52MS5MaXN0Q2l0aWVzUmVzcG9uc2UiABJSCg1MaXN0TGFuZ3VhZ2VzEh4uaXNzaG8udjEuTGlzdExhbmd1YWdlc1JlcXVlc3QaHy5pc3Noby52MS5MaXN0TGFuZ3VhZ2VzUmVzcG9uc2UiAEI+WjxnaXRodWIuY29tL3NocnVqYW5jaGVydWt1L2lzc2hvL2JhY2tlbmQvZ2VuL2lzc2hvL3YxO2lzc2hvdjFiBnByb3RvMw");
+  fileDesc("ChZpc3Noby92MS9jYXRhbG9nLnByb3RvEghpc3Noby52MSJUChVMaXN0QWN0aXZpdGllc1JlcXVlc3QSDwoHY2l0eV9pZBgBIAEoCRIOCgZsb2NhbGUYAiABKAkSGgoSc2Vjb25kYXJ5X2xhbmd1YWdlGAMgASgJIkAKFkxpc3RBY3Rpdml0aWVzUmVzcG9uc2USJgoKYWN0aXZpdGllcxgBIAMoCzISLmlzc2hvLnYxLkFjdGl2aXR5IsoBCghBY3Rpdml0eRIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEhAKCGNhdGVnb3J5GAMgASgJEg4KBmluZG9vchgEIAEoCBIOCgZlbmVyZ3kYBSABKAUSEgoKY29zdF9sZXZlbBgGIAEoBRIWCg5jb252ZXJzYXRpb25hbBgHIAEoCBIWCg5taW5fZ3JvdXBfc2l6ZRgIIAEoBRIWCg5tYXhfZ3JvdXBfc2l6ZRgJIAEoBRIWCg5zZWNvbmRhcnlfbmFtZRgKIAEoCSI/ChFMaXN0Q2l0aWVzUmVxdWVzdBIOCgZsb2NhbGUYASABKAkSGgoSc2Vjb25kYXJ5X2xhbmd1YWdlGAIgASgJIjQKEkxpc3RDaXRpZXNSZXNwb25zZRIeCgZjaXRpZXMYASADKAsyDi5pc3Noby52MS5DaXR5ImoKBENpdHkSCgoCaWQYASABKAkSDAoEbmFtZRgCIAEoCRIWCg5zZWNvbmRhcnlfbmFtZRgDIAEoCRIRCglsYW5ndWFnZXMYBCADKAkSHQoFYXJlYXMYBSADKAsyDi5pc3Noby52MS5BcmVhIjgKBEFyZWESCgoCaWQYASABKAkSDAoEbmFtZRgCIAEoCRIWCg5zZWNvbmRhcnlfbmFtZRgDIAEoCSImChRMaXN0TGFuZ3VhZ2VzUmVxdWVzdBIOCgZsb2NhbGUYASABKAkiPgoVTGlzdExhbmd1YWdlc1Jlc3BvbnNlEiUKCWxhbmd1YWdlcxgBIAMoCzISLmlzc2hvLnYxLkxhbmd1YWdlIjcKCExhbmd1YWdlEgwKBGNvZGUYASABKAkSDwoHYXV0b255bRgCIAEoCRIMCgRuYW1lGAMgASgJIjkKGFN1Z2dlc3RBY3Rpdml0aWVzUmVxdWVzdBIPCgdjaXR5X2lkGAEgASgJEgwKBHRleHQYAiABKAkiTgoZU3VnZ2VzdEFjdGl2aXRpZXNSZXNwb25zZRIxCgtzdWdnZXN0aW9ucxgBIAMoCzIcLmlzc2hvLnYxLkFjdGl2aXR5UHJlZmVyZW5jZTLmAgoOQ2F0YWxvZ1NlcnZpY2USVQoOTGlzdEFjdGl2aXRpZXMSHy5pc3Noby52MS5MaXN0QWN0aXZpdGllc1JlcXVlc3QaIC5pc3Noby52MS5MaXN0QWN0aXZpdGllc1Jlc3BvbnNlIgASSQoKTGlzdENpdGllcxIbLmlzc2hvLnYxLkxpc3RDaXRpZXNSZXF1ZXN0GhwuaXNzaG8udjEuTGlzdENpdGllc1Jlc3BvbnNlIgASUgoNTGlzdExhbmd1YWdlcxIeLmlzc2hvLnYxLkxpc3RMYW5ndWFnZXNSZXF1ZXN0Gh8uaXNzaG8udjEuTGlzdExhbmd1YWdlc1Jlc3BvbnNlIgASXgoRU3VnZ2VzdEFjdGl2aXRpZXMSIi5pc3Noby52MS5TdWdnZXN0QWN0aXZpdGllc1JlcXVlc3QaIy5pc3Noby52MS5TdWdnZXN0QWN0aXZpdGllc1Jlc3BvbnNlIgBCPlo8Z2l0aHViLmNvbS9zaHJ1amFuY2hlcnVrdS9pc3Noby9iYWNrZW5kL2dlbi9pc3Noby92MTtpc3Nob3YxYgZwcm90bzM", [file_issho_v1_profile]);
 
 /**
  * @generated from message issho.v1.ListActivitiesRequest
@@ -342,6 +344,51 @@ export const LanguageSchema: GenMessage<Language> = /*@__PURE__*/
   messageDesc(file_issho_v1_catalog, 9);
 
 /**
+ * @generated from message issho.v1.SuggestActivitiesRequest
+ */
+export type SuggestActivitiesRequest = Message<"issho.v1.SuggestActivitiesRequest"> & {
+  /**
+   * City pack id; only activities offered there are suggested. Required.
+   *
+   * @generated from field: string city_id = 1;
+   */
+  cityId: string;
+
+  /**
+   * What they enjoy, in their own words and any language. 1–500 characters.
+   *
+   * @generated from field: string text = 2;
+   */
+  text: string;
+};
+
+/**
+ * Describes the message issho.v1.SuggestActivitiesRequest.
+ * Use `create(SuggestActivitiesRequestSchema)` to create a new message.
+ */
+export const SuggestActivitiesRequestSchema: GenMessage<SuggestActivitiesRequest> = /*@__PURE__*/
+  messageDesc(file_issho_v1_catalog, 10);
+
+/**
+ * @generated from message issho.v1.SuggestActivitiesResponse
+ */
+export type SuggestActivitiesResponse = Message<"issho.v1.SuggestActivitiesResponse"> & {
+  /**
+   * In the order the text mentions them; at most one per activity.
+   *
+   * @generated from field: repeated issho.v1.ActivityPreference suggestions = 1;
+   */
+  suggestions: ActivityPreference[];
+};
+
+/**
+ * Describes the message issho.v1.SuggestActivitiesResponse.
+ * Use `create(SuggestActivitiesResponseSchema)` to create a new message.
+ */
+export const SuggestActivitiesResponseSchema: GenMessage<SuggestActivitiesResponse> = /*@__PURE__*/
+  messageDesc(file_issho_v1_catalog, 11);
+
+/**
  * CatalogService exposes reference data for onboarding and settings: the
  * activity catalogue (localised per city), cities with their areas, and the
  * languages people can choose.
@@ -388,6 +435,21 @@ export const CatalogService: GenService<{
     methodKind: "unary";
     input: typeof ListLanguagesRequestSchema;
     output: typeof ListLanguagesResponseSchema;
+  },
+  /**
+   * SuggestActivities reads what someone writes about their interests, in any
+   * language, and suggests activities offered in the city, each with an
+   * interest level. Suggestions only: the app shows them and the person
+   * confirms each one. Uses Claude; FAILED_PRECONDITION when the server has no
+   * ANTHROPIC_API_KEY, so the app can hide the feature. An empty list means
+   * nothing in the text matched.
+   *
+   * @generated from rpc issho.v1.CatalogService.SuggestActivities
+   */
+  suggestActivities: {
+    methodKind: "unary";
+    input: typeof SuggestActivitiesRequestSchema;
+    output: typeof SuggestActivitiesResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_issho_v1_catalog, 0);

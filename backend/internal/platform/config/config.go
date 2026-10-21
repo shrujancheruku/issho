@@ -20,6 +20,9 @@ type Config struct {
 	// Translation). Optional: without it, text is shown in the languages
 	// already stored.
 	GoogleTranslateAPIKey string
+	// AnthropicAPIKey enables interest suggestions (Claude). Optional: without
+	// it, CatalogService.SuggestActivities returns FAILED_PRECONDITION.
+	AnthropicAPIKey string
 }
 
 func Load() (Config, error) {
@@ -29,6 +32,7 @@ func Load() (Config, error) {
 		APIAddr:               getenv("API_ADDR", ":8080"),
 		SupabaseSecretKey:     os.Getenv("SUPABASE_SECRET_KEY"),
 		GoogleTranslateAPIKey: os.Getenv("GOOGLE_TRANSLATE_API_KEY"),
+		AnthropicAPIKey:       os.Getenv("ANTHROPIC_API_KEY"),
 	}
 	if v := os.Getenv("ALLOWED_ORIGINS"); v != "" {
 		c.AllowedOrigins = strings.Split(v, ",")
