@@ -2,19 +2,32 @@
   <img src="assets/brand/logo.svg" alt="Issho 一緒" width="380">
 </p>
 
-<h3 align="center">Stop scrolling for plans. We'll make them for you.</h3>
+<h3 align="center">Find your people through the things you already love.</h3>
 
-Love film cameras, flat whites and wandering down side streets? Issho finds the handful of people near you who do too, and hands you all the same plan:
+Issho is a new way to build community, rooted in the way we always have. We bring small groups of like-minded people together for real-world activities, so friendships grow from time spent doing what you enjoy.
 
-> 📸 **Sunday, 10am.** Photo walk from Kichijoji station, ending at a café we've already picked. **5 people. Just say yes.**
+### Community, without the awkward part
 
-- 🗺️ **Plans, not profiles.** No swiping, no endless "so… what should we do?" chats. Real outings, built from what you actually love.
-- 👋 **Small groups, real chemistry.** A few people, matched on interests, schedule and language.
-- 🔁 **Clicked? Do it again.** After each outing, quietly pick who you'd hang out with again. When it's mutual, Issho brings you back together, and the best groups become **crews**.
-- 🤝 **Friends first.** Built for platonic connection, with safety designed in from day one.
-- 🌏 **Starting in Tokyo.** Ready for any city.
+Making friends as an adult is hard because no one is organising it. Issho does the organising. Tell us what you enjoy and when you're free, and we'll suggest plans near you with people who share your interests:
 
-*Issho (一緒) means "together" in Japanese.*
+> **Photo walk from Kichijoji station, ending at a café we've already picked.**
+
+1. **Pick what you enjoy.** Photo walks, board games, climbing, ramen crawls. Start from activities you already like.
+2. **Meet a small group.** Join the plans that appeal to you. Once enough nearby people are in, we match you into a small group and find a time and place that works for everyone.
+3. **Keep the ones you click with.** Afterwards, privately choose who you'd like to meet again. Matches become a regular **crew**.
+
+It's built for friendship: no profiles to browse, no one-to-one messages, and safety designed in from the start. Every language is welcome, and every city is just data. We're starting in Tokyo.
+
+### One thread, one sun
+
+Issho (一緒) means "together" in Japanese, and the character tells the story:
+
+| | | |
+|---|---|---|
+| 一 | *one* | **Togetherness.** It all starts with being one. |
+| 糸 | *thread* | **Connection.** The thread that ties us to each other. |
+| 者 | *person* | **Community.** People who are tied together. |
+| 日 | *sun*, inside 者 | **Belonging.** We are all under the same sky. |
 
 > 🚧 **Pre-release.** We're building it now: see the [roadmap & status](docs/ROADMAP.md).
 
