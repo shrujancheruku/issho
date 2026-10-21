@@ -2,7 +2,7 @@
 
 > **This is the source of truth for what's planned, built and pending.** CI (`roadmap` job) fails any push or PR that changes code without updating this file. When you change code, update the status lines below. If the change made a decision, add it to the Decision log.
 
-**Last updated:** 2026-10-21 · **Version:** 0.3.0 (pre-release; [releases](https://github.com/shrujancheruku/issho/releases)) · **Current milestone:** M5 Onboarding & profile (next; M4 done, its DB wiring lands with the M6 worker)
+**Last updated:** 2026-10-21 · **Version:** 0.4.0 (pre-release; [releases](https://github.com/shrujancheruku/issho/releases)) · **Current milestone:** M5 Onboarding & profile (in progress: profile, onboarding and app i18n built; interest tagging and localised auth emails next)
 
 Legend: ✅ done · 🟡 in progress / partial · ⬜ not started · ⏸ deferred (post-MVP)
 
@@ -126,10 +126,20 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
 - ✅ Migration 00005 (`activities.blocks`) applied to the hosted `issho-dev` project and the catalogue re-seeded (2026-10-21). Verified: goose version 5, 99 of 230 activities restricted, `anon` still has no access to `app`. Locally: up, down, up, seed.
 - ➡ Storing plans and signups, loading the engine's input and running suggest/schedule are the M6 worker's job.
 
-### M5 · Onboarding & profile (weeks 5–6): ⬜
-- ⬜ **App i18n framework** (moved up from M9): UI strings written in English in the app; other languages fetched from the server's translation cache on demand (and cached on the device), with the primary ↔ secondary switch from the start. Primary and secondary language pickers in onboarding and settings; the sign-in screens follow the device language.
+### M5 · Onboarding & profile (weeks 5–6): 🟡
+- ✅ **App i18n framework** (moved up from M9):
+  - UI text written in English in `apps/mobile/src/i18n/en.json` (112 strings); `make gen` copies it into the API (`internal/uistrings`), which translates only those strings
+  - `UIService.GetStrings` (public, for the sign-in screens): the whole catalogue in one language through the `app.translations` cache; translations that lose a `{placeholder}` are dropped (English shown instead)
+  - on the device: kept in the documents directory, shown on the next launch straight away (also offline), refetched while incomplete
+  - `useI18n()`: `t` (the language shown, falling back to the other display language, then English), `pair` (both, side by side) and the primary ↔ secondary `LanguageSwitch`
+  - sign-in follows the device language (`expo-localization`); signed in, the profile's languages from `GetMe`; onboarding and settings preview the languages being picked
+  - **live check (local DB, Google Translation):** 112 strings into Japanese in 0.6 s on a cold cache, placeholders intact. It caught one ambiguous string ("Pick at least {count}" became "tap at least {count} times"), now reworded
 - ⬜ Auth emails in the user's language(s), if Supabase templates can branch on user metadata (currently EN/JA for everyone).
-- ⬜ Profile RPCs and screens: city/area plus maximum travel time, spoken languages, primary and secondary display languages, availability grid (the default for every signup), activity tiles (like/love/open to try), group size, energy, budget, gender plus same-gender-only, birth year (18+), code of conduct.
+- ✅ **Profile RPCs** (`ProfileService.GetProfile` / `SaveProfile`, migration 00006): the whole profile saved in one transaction (languages, availability and activity preferences replaced wholesale). Rules: 18+ this year, a fluent spoken language, distinct display languages, ≥ 1 availability slot, ≥ 3 activities offered in the home area's city, same-gender-only needs a gender, the current code-of-conduct version (`conduct_version` + `conduct_accepted_at`). `GetMe` now also returns the display languages.
+- ✅ **Reference data for the pickers:** `CatalogService.ListCities` (cities with areas) and `ListLanguages` (all 183 ISO 639-1 languages, each named in itself and in the viewer's language, from CLDR via `golang.org/x/text`).
+- ✅ **Onboarding screens** (seven steps, saved at the end): languages (main, optional second, spoken with fluent/learning + level, searchable picker), about you (name, birth year, gender, same-gender-only), city/area and longest trip, weekly availability grid (localised weekday names), activity tiles by category (tap: open to try → like → love, both languages side by side), group size/energy/budget, code of conduct. **Profile tab** edits each section; sign-out and deletion moved there. The Expo template's Explore tab and unused components were removed.
+- ✅ **Verified end to end** against local Supabase with a throwaway user (since deleted): `GetMe` before and after, `GetProfile` not found, an underage save rejected with the field named, a full save round-trips, `GetMe` reports onboarded with ja + es, `ListCities` in es + ja, `ListLanguages` in ja. Not yet run on a device.
+- ⬜ **Apply migration 00006 to `issho-dev`** after merging.
 - ⬜ Free-text interests → activity tags with Claude (Haiku). The user confirms the suggested tags. Includes a tagging eval set in several languages.
 
 ### M6 · Plans, signups & events (weeks 6–8): ⬜
@@ -256,10 +266,22 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
 | 2026-10-21 | A ready plan schedules only groups at the preferred size; smaller remnants wait for the next round (all groups are kept at the deadline) | Waiting may turn a pair into a proper group; at the deadline something beats nothing. |
 | 2026-10-21 | Over-invite **inside the group**: invite target + 2, confirm at the target (`Quorum`) | Inviting leftovers as extras after assembly almost never happened: leftovers were used for new groups first (the simulator showed 0 extras in Tokyo), so one decline would sink an event. Still applies after the switch to signups: some who signed up won't confirm the chosen time. |
 | 2026-10-21 | The gender-balance preference applies to **women and men**; nonbinary and unspecified are exempt | Requiring two nonbinary people per group would leave most nonbinary users unmatched. Revisit with real data and feedback. |
+| 2026-10-21 | **App UI text: English source in the app, translated on the server**, whole catalogue per language, cached on the device | Same model as the rest of the content (English stored, everything else on demand) with no translation files to maintain. One request per language keeps the client simple; the device copy makes later launches instant and works offline. |
+| 2026-10-21 | `UIService.GetStrings` is **public**, but translates only the server's copy of `en.json` | The sign-in screens need translated text before there's a token. An allowlist bounds the cost (one translation of ~110 strings per language, ever) and stops it being used as a free translator. |
+| 2026-10-21 | Translations that **lose a `{placeholder}` are dropped**, not shown | Cloud Translation Basic can translate or drop placeholders. English is better than a sentence with a hole in it. |
+| 2026-10-21 | **Area names are never machine-translated**; city names are | Live check: Spanish turned "The Domain" into "El dominio" and "Cedar Park" into "Parque Cedar". Neighbourhoods are proper nouns: show English plus a real local name (吉祥寺). Cities have genuine exonyms (Tokio). |
+| 2026-10-21 | **Language names from CLDR** (`golang.org/x/text/language/display`), not machine translation | Exactly what CLDR is for, and free. About a third of ISO 639-1 codes have no own-language name there; those show their English name. |
+| 2026-10-21 | **`SaveProfile` replaces the whole profile** in one transaction; no per-field RPCs | Onboarding saves once at the end and settings edits one section of a loaded profile, so one write path covers both, and a profile is never half-saved. |
+| 2026-10-21 | **Age: born in or before (this year − 18)** | Only the birth year is asked, so someone turning 18 later this year passes. Identity verification (Stripe Identity, M9) is the real check. |
+| 2026-10-21 | **At least 3 activities** and **a fluent spoken language** to finish onboarding | The feed needs preferences to rank by, and matching pools people by a fluent language. |
+| 2026-10-21 | The **code-of-conduct version** is stored with the profile; the rules text is UI copy | Bumping `ConductVersion` (server and app) makes everyone accept again; settings never accepts on the person's behalf. |
+| 2026-10-21 | Profile **settings live in a Profile tab**, replacing the Expo template's Explore tab | Somewhere to edit the profile and to reach sign-out and deletion, which used to be on the onboarding placeholder. |
 | 2026-10-21 | ~~One proposal per person per matching run~~ | Superseded the same day by signups: people can sign up for several plans; an event they're going to blocks its occasion in their other signups, so they're never double-booked. |
 
 ## 5. Known gaps & risks
 - **Machine-translation quality on short labels.** Cloud Translation Basic has no context, so short names can come out wrong. Clearer English names fixed the cases found so far; when writing new names, avoid idioms and words with two meanings. Further fixes: admin corrections of cached rows (`reviewed`, M8) or Advanced (v3) glossaries.
+- **UI text quality and coverage.** Every non-English UI string is machine-translated without context (Basic v2). Spot-check the launch languages (M9) and write unambiguous English. A string translated badly but with its placeholders intact is cached and shown until an admin corrects it (`reviewed`, M8).
+- **Re-accepting the code of conduct isn't built.** Bumping `ConductVersion` would make settings saves fail until the app asks people to accept the new version; add that screen before the first revision.
 - **Matching untested on real behaviour.** The simulator's users, venues, travel times and signup behaviour (who signs up, how far they scroll) are guesses, so its numbers show the engine works, not that the density or conversion is enough. ~10% of simulated groups are pairs, effectively 1:1 meetings, which the platonic rules try to avoid; M6 should watch how pairs (especially mixed pairs) go and tune `min_size`/`balance`, or set `min_group_size` to 3 per city.
 - **Drop-off between signup and confirmation.** Signing up is cheap; some won't confirm the chosen time. Per-plan availability and extra invites reduce it; M6 should measure it and tune `extra_invites`, the window and deadlines.
 - **Not enough nearby users** is the main product risk. Plan-first scheduling pools interest over time, and the admin override lets the first city be hand-curated.
