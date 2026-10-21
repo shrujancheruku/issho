@@ -1,5 +1,5 @@
 import { Gender, GroupSize } from '@issho/api-client';
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Switch, TextInput, View } from 'react-native';
 
 import { Chip } from '@/components/chip';
@@ -340,7 +340,7 @@ function ActivitiesStep({ draft, onChange }: StepProps) {
 
   return (
     <>
-      <HowToChoose example={data?.[0]?.name} />
+      <HowToChoose />
       <ThemedText type="smallBold" style={{ color: picked >= MinActivities ? undefined : Brand.red }}>
         {t('interest.minimum', { count: MinActivities })} {t('profile.activitiesPicked', { count: picked })}
       </ThemedText>
@@ -370,20 +370,10 @@ function ActivitiesStep({ draft, onChange }: StepProps) {
   );
 }
 
-/**
- * Explains the three taps before the grid, in the tiles' own colours, with an
- * example tile that steps through the levels by itself so the idea is clear
- * before anyone starts tapping.
- */
-function HowToChoose({ example }: { example?: string }) {
+/** Explains the three taps before the grid, in the tiles' own colours. */
+function HowToChoose() {
   const { t } = useI18n();
   const theme = useTheme();
-  const [demo, setDemo] = useState(0); // 0 = not selected, then each level
-  useEffect(() => {
-    const id = setInterval(() => setDemo((d) => (d + 1) % (interestLevels.length + 1)), 1200);
-    return () => clearInterval(id);
-  }, []);
-  const demoStyle = demo ? interestStyles[interestLevels[demo - 1]] : undefined;
 
   return (
     <View style={[styles.howTo, { borderColor: Brand.gold, backgroundColor: theme.backgroundElement }]}>
@@ -404,19 +394,6 @@ function HowToChoose({ example }: { example?: string }) {
       <ThemedText type="small" themeColor="textSecondary">
         {t('interest.tapClear')}
       </ThemedText>
-      {!!example && (
-        <View style={styles.legendRow} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-          <ThemedText type="small" themeColor="textSecondary" style={styles.legendTap}>
-            {t('interest.example')}
-          </ThemedText>
-          <Chip
-            label={example}
-            selected={!!demoStyle}
-            selectedColors={demoStyle}
-            badge={demoStyle ? t(demoStyle.label) : undefined}
-          />
-        </View>
-      )}
     </View>
   );
 }
