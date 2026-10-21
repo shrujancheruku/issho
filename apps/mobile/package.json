@@ -50,7 +50,8 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
-    "test": "jest"
+    "test": "jest",
+    "export:web": "expo export -p web"
   },
   "private": true,
   "jest": {

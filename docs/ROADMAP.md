@@ -142,6 +142,7 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
 - ✅ **Activity catalogue merged from 230 into 66 activities in 8 categories** after the first on-device test (Pixel 8 Pro, Expo Go over Wi-Fi, local stack): onboarding worked, but the tile grid was too long and full of near-duplicates (ten kinds of walk, nine kinds of volunteering). Each merged activity lists the ids it `replaces`; seeding moves saved preferences across (strongest interest kept) and deletes the old ones. Verified on the local DB: a test profile's 50 preferences became 24, a second seed is a no-op. A first cut of 57 grouped team sports and racket sports into one tile each; the owner split them again (people pick a sport, not "team sports"), and replaced "Try a new sport" with the sports it covered (martial arts, archery, golf, gym; batting cages joined softball), since "open to try" on a sport already says that. 66 in all. Simulator, seed 1 (230 → 66): Tokyo 67% → 78% of people signed up, 33 → 42 plans ready before the deadline, 67 → 79 groups, 6 → 3 pairs; Austin 52% → 66%, 26 → 32, 56 → 74, 8 → 7.
 - ✅ **Interest levels made obvious:** a "How to choose activities" card above the grid, outlined in gold, pairs each instruction ("Tap once", "Tap twice", "Tap three times") with a pill in that level's colour (open to try pale gold, like gold, love red). The tiles use the same colours, with fixed text colours so they stay legible in dark mode.
 - ✅ **Starting languages from the device:** the app walks the phone's or browser's whole preferred-language list and uses the first two languages the server supports: the first for sign-in and as the main language, the second as the suggested second language. Before this it took only the first and used it as-is, so a phone set to Filipino (`fil`) got English sign-in screens and an onboarding default the server rejected on the last step. A few codes map to the server's (`fil` → `tl`, `yue` → `zh`, old `iw`/`in`/`ji`); a Go test keeps the app's language list identical to the server's.
+- ✅ **Web build kept working:** the app exports as a static single-page app (`pnpm export:web`, `"output": "single"`), and CI runs the export on every PR. Web-only files: the session store (`localStorage`) and the UI-text cache. The Expo template's branding was removed from the web tab bar. Checked end to end with headless Chrome at phone size against the local stack: sign-in, all seven onboarding steps, saving, home and the Profile tab, with no console errors. Not released: see "Web release" below.
 - ⬜ **Apply migration 00006 to `issho-dev` and re-seed** (merges the catalogue there) after merging.
 - ⬜ Free-text interests → activity tags with Claude (Haiku). The user confirms the suggested tags. Includes a tagging eval set in several languages.
 
@@ -179,6 +180,19 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
   - nightly `pg_dump` → Cloudflare R2 as an off-site copy
 - ⬜ EAS Build/Submit → TestFlight and Play internal testing.
 - ⬜ Stripe Identity verification behind a feature flag, for the public launch.
+
+### Web release (not scheduled): ⬜
+The app builds for the web and CI keeps it building (M5). Before a public web release:
+- ⬜ **Session security (decision needed):** browsers have no secure store, so the session is in `localStorage`, where any script on the page could read the refresh token. Either keep it with a strict Content-Security-Policy and no third-party scripts, or move to cookie-based sessions (needs an auth endpoint on our side).
+- ⬜ **Confirmation dialogs:** `Alert.alert` is a no-op on web, so "Delete your account?" never appears. Add a web confirm (a modal, or `window.confirm`).
+- ⬜ **Hosting:** a Cloudflare Pages project (like the admin SPA) with a single-page-app fallback (`/* /index.html 200`), `EXPO_PUBLIC_*` values set at build time, the web origin in the API's `ALLOWED_ORIGINS`, and a deploy job.
+- ⬜ **Desktop layout:** screens are phone-first; check wide windows (content is capped at `MaxContentWidth`) and keyboard navigation.
+- ⬜ **Each native feature needs a web counterpart**, so budget roughly 10–20% extra on these:
+  - the M6 map of plans (the usual native map library has no web support: use a web map component)
+  - push notifications (Expo Push doesn't reach browsers: web push or an email fallback)
+  - event check-in and location
+  - photos (M7+: camera and picker differ on web)
+- ⬜ Sentry and PostHog for web (M9 sets them up for mobile).
 
 ### Launch (after M9): ⬜
 - ⬜ Waitlist page (Cloudflare Pages + PostHog) with counters per area. An area unlocks at a density threshold.
@@ -282,6 +296,7 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
 | 2026-10-21 | Merges are **data, not migrations**: `replaces` in the catalogue, applied by seeding | The catalogue is seed data, so its history belongs with it. Seeding moves preferences to the surviving activity in the same transaction, and only ever deletes ids named in `replaces`. |
 | 2026-10-21 | Interest levels shown as **colours shared by the legend and the tiles** | Owner's feedback: the tap-to-cycle levels weren't obvious. A legend in the tiles' own colours explains it before the first tap, without an extra screen. An animated example tile was tried and removed (distracting). |
 | 2026-10-21 | **Start from the device's first two supported languages** | The device already says what someone reads. Walking the whole preferred list means a language we can't show (Hawaiian) or name differently (Filipino) never blocks onboarding. Only the first is assumed to be spoken: a second display language doesn't mean fluency. |
+| 2026-10-21 | **Keep a web build working in CI**, release later | A web build needed only two small web-only files today. Exporting it on every PR costs a few seconds and stops native-only code from creeping in unnoticed, so a web release stays a small step. Launching it waits for a decision on browser session storage and for web versions of the M6 native features. |
 | 2026-10-21 | The code of conduct asks for **platonic intentions and respect for boundaries**; it doesn't ban romantic interest | Owner's decision: feelings can't be prohibited, and the rule should be one people can keep. Unwanted pursuit is still reportable ("here for dating"). Worded without idioms so machine translation keeps the meaning. |
 | 2026-10-21 | Profile **settings live in a Profile tab**, replacing the Expo template's Explore tab | Somewhere to edit the profile and to reach sign-out and deletion, which used to be on the onboarding placeholder. |
 | 2026-10-21 | ~~One proposal per person per matching run~~ | Superseded the same day by signups: people can sign up for several plans; an event they're going to blocks its occasion in their other signups, so they're never double-booked. |
