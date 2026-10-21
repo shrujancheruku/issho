@@ -2,7 +2,7 @@
 
 > **This is the source of truth for what's planned, built and pending.** CI (`roadmap` job) fails any push or PR that changes code without updating this file. When you change code, update the status lines below. If the change made a decision, add it to the Decision log.
 
-**Last updated:** 2026-10-21 · **Version:** 0.4.0 (pre-release; [releases](https://github.com/shrujancheruku/issho/releases)) · **Current milestone:** M6 Plans, signups & events (next; M5 done and applied to `issho-dev`)
+**Last updated:** 2026-10-22 · **Version:** 0.4.0 (pre-release; [releases](https://github.com/shrujancheruku/issho/releases)) · **Current milestone:** M6 Plans, signups & events (in progress; M5 done and applied to `issho-dev`)
 
 Legend: ✅ done · 🟡 in progress / partial · ⬜ not started · ⏸ deferred (post-MVP)
 
@@ -155,8 +155,9 @@ Supabase Auth ───────────┘  (JWT, verified via JWKS)│ 
   - **Live eval (issho-dev key, 2026-10-21): recall 100% (47/47), interest levels 100% (10/10), no must-not hits, both empty cases empty** (unrelated text and the prompt injection returned nothing); about 1.2 s per call. Extras flagged for review were reasonable ("anything outdoors" also gave hiking, camping and day trips).
   - ⬜ Set `GOOGLE_GEMINI_API_KEY` on the hosted API when it's deployed (M9).
 
-### M6 · Plans, signups & events (weeks 6–8): ⬜
-- ⬜ Schema: open plans (window, signup deadline, status), signups (per-plan weekly pattern + blocked-out dates/occasions), scheduled events, groups and confirmations.
+### M6 · Plans, signups & events (weeks 6–8): 🟡
+- ✅ Schema (migration 00007): open plans in rounds (window, signup deadline, round, close reason `done`/`no_group`/`withdrawn`), signups (per-plan weekly pattern + blocked-out dates or occasions; no pattern = profile availability), events (one per plan round: date + part of the day, confirmation deadline, forced or not), groups (quorum, minimum attendance, venue place id and meeting point per group) and members (invited → confirmed/declined → dropped, check-in). The database allows one group per person per event. uuid ids, since they reach the app. Applied up → down → up locally; `anon`/`authenticated` have no grants on the new tables. Not yet applied to `issho-dev`.
+- ✅ `internal/plans` store: converts to and from `matching` types (open plans with signup counts, signups, scheduled rounds). Invited people stop waiting and the rest roll over; occasions people are already invited to are blocked out of their other signups; saves lock the plan row so a signup and a scheduling pass can't race. Integration test in CI.
 - ⬜ The River worker (`cmd/worker`):
   - suggest new plans as plans close or fill (`matching.Suggest`), within the city cap
   - daily readiness check per open plan (`matching.Schedule`), forced at the signup deadline; people waiting roll over to the plan's next round or a similar plan; plans that can't form close and say so
@@ -317,6 +318,8 @@ The app builds for the web and CI keeps it building. Before a public web release
 | 2026-10-21 | The code of conduct asks for **platonic intentions and respect for boundaries**; it doesn't ban romantic interest | Owner's decision: feelings can't be prohibited, and the rule should be one people can keep. Unwanted pursuit is still reportable ("here for dating"). Worded without idioms so machine translation keeps the meaning. |
 | 2026-10-21 | Profile **settings live in a Profile tab**, replacing the Expo template's Explore tab | Somewhere to edit the profile and to reach sign-out and deletion, which used to be on the onboarding placeholder. |
 | 2026-10-21 | ~~One proposal per person per matching run~~ | Superseded the same day by signups: people can sign up for several plans; an event they're going to blocks its occasion in their other signups, so they're never double-booked. |
+| 2026-10-22 | A **signup row means "waiting"**: it's deleted when the person is invited to a group, not given a status | The "7 interested" count and the scheduler read the same rows, so they can't disagree; the invitation (`app.group_members`) is the record from then on. Whoever isn't placed simply stays for the plan's next round. |
+| 2026-10-22 | **Venues per group, not per event**; one event per plan round | An event with three groups shouldn't send 15 people to one café table. The plan keeps the area, activity and languages; the round decides the date. |
 
 ## 5. Known gaps & risks
 - **Machine-translation quality on short labels.** Cloud Translation Basic has no context, so short names can come out wrong. Clearer English names fixed the cases found so far; when writing new names, avoid idioms and words with two meanings. Further fixes: admin corrections of cached rows (`reviewed`, M8) or Advanced (v3) glossaries.
