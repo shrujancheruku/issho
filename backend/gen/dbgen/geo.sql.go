@@ -33,6 +33,24 @@ func (q *Queries) DeleteStaleTravelTimes(ctx context.Context, arg DeleteStaleTra
 	return result.RowsAffected(), nil
 }
 
+const deleteTravelTimesNotRefreshed = `-- name: DeleteTravelTimesNotRefreshed :execrows
+delete from app.area_travel_times t
+using app.areas a
+where a.id = t.from_area_id and a.city_id = $1 and t.computed_at < now()
+`
+
+// A full rebuild replaces the city's matrix: rows it didn't write (a pair
+// that lost its route, a mode the city dropped) go at once. now() is the
+// transaction's start, the same value every upsert in it stored, so this
+// removes exactly the rows not refreshed by this transaction.
+func (q *Queries) DeleteTravelTimesNotRefreshed(ctx context.Context, cityID string) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteTravelTimesNotRefreshed, cityID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const getCityLanguages = `-- name: GetCityLanguages :one
 select languages from app.cities where id = $1
 `
@@ -126,6 +144,30 @@ func (q *Queries) ListCityVenueCategories(ctx context.Context, cityID string) ([
 		return nil, err
 	}
 	return items, nil
+}
+
+const newestTravelTime = `-- name: NewestTravelTime :one
+select max(t.computed_at)::timestamptz
+from app.area_travel_times t
+join app.areas a on a.id = t.from_area_id
+where a.city_id = $1
+`
+
+func (q *Queries) NewestTravelTime(ctx context.Context, cityID string) (pgtype.Timestamptz, error) {
+	row := q.db.QueryRow(ctx, newestTravelTime, cityID)
+	var column_1 pgtype.Timestamptz
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
+const rejectVenue = `-- name: RejectVenue :exec
+update app.venues set status = 'rejected' where google_place_id = $1
+`
+
+// A venue Google reports as permanently closed is never picked again.
+func (q *Queries) RejectVenue(ctx context.Context, googlePlaceID string) error {
+	_, err := q.db.Exec(ctx, rejectVenue, googlePlaceID)
+	return err
 }
 
 const upsertTravelTime = `-- name: UpsertTravelTime :exec

@@ -5,6 +5,7 @@ package worker
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"time"
@@ -17,6 +18,8 @@ import (
 
 	"github.com/shrujancheruku/issho/backend/db"
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
+	"github.com/shrujancheruku/issho/backend/internal/geo"
+	"github.com/shrujancheruku/issho/backend/internal/maps"
 	"github.com/shrujancheruku/issho/backend/internal/plans"
 )
 
@@ -100,6 +103,45 @@ func (w *matchCityWorker) Work(ctx context.Context, job *river.Job[MatchCityArgs
 	return nil
 }
 
+// RefreshMapsEvery is how often cities' travel times are checked; each is
+// rebuilt only when it's geo.RefreshAge old.
+const RefreshMapsEvery = 24 * time.Hour
+
+// RefreshMapsArgs rebuilds stale travel-time matrices (Maps caching terms).
+type RefreshMapsArgs struct{}
+
+func (RefreshMapsArgs) Kind() string { return "refresh_maps" }
+
+type refreshMapsWorker struct {
+	river.WorkerDefaults[RefreshMapsArgs]
+	pool   *pgxpool.Pool
+	router maps.Router // nil: no Maps key
+	log    *slog.Logger
+}
+
+// Work checks every city; one city failing doesn't stop the others, but
+// fails the job so River retries it.
+func (w *refreshMapsWorker) Work(ctx context.Context, _ *river.Job[RefreshMapsArgs]) error {
+	cities, err := dbgen.New(w.pool).ListCities(ctx)
+	if err != nil {
+		return err
+	}
+	var errs []error
+	for _, c := range cities {
+		rebuilt, deleted, err := geo.Refresh(ctx, w.pool, w.router, c.ID, time.Now())
+		switch {
+		case err != nil:
+			errs = append(errs, fmt.Errorf("%s: %w", c.ID, err))
+		case w.router == nil && deleted > 0:
+			w.log.Error("travel times past the Maps caching limit deleted; set GOOGLE_MAPS_API_KEY on the worker to rebuild them",
+				"city", c.ID, "deleted", deleted)
+		case rebuilt:
+			w.log.Info("travel times rebuilt", "city", c.ID, "stale_deleted", deleted)
+		}
+	}
+	return errors.Join(errs...)
+}
+
 // NotifyEvery is how often queued push notifications are sent.
 const NotifyEvery = time.Minute
 
@@ -133,13 +175,20 @@ func (w *sendNotificationsWorker) Work(ctx context.Context, _ *river.Job[SendNot
 // NewClient builds the River client with every job and its schedule. The
 // pool must be a direct or session-pooler connection: River needs
 // LISTEN/NOTIFY, which the transaction pooler doesn't support.
-func NewClient(pool *pgxpool.Pool, log *slog.Logger, timing plans.Timing, notifier *plans.Notifier) (*river.Client[pgx.Tx], error) {
+// Maps are the Google Maps lookups the worker uses; both nil without a key.
+type Maps struct {
+	Router maps.Router
+	Hours  maps.HoursLookup
+}
+
+func NewClient(pool *pgxpool.Pool, log *slog.Logger, timing plans.Timing, notifier *plans.Notifier, m Maps) (*river.Client[pgx.Tx], error) {
 	if err := timing.Validate(); err != nil {
 		return nil, err
 	}
 	workers := river.NewWorkers()
 	river.AddWorker(workers, &matchAllWorker{q: dbgen.New(pool)})
-	river.AddWorker(workers, &matchCityWorker{runner: &plans.Runner{DB: pool, Timing: timing, Log: log}, now: time.Now})
+	river.AddWorker(workers, &matchCityWorker{runner: &plans.Runner{DB: pool, Timing: timing, Log: log, Hours: m.Hours}, now: time.Now})
+	river.AddWorker(workers, &refreshMapsWorker{pool: pool, router: m.Router, log: log})
 	river.AddWorker(workers, &sendNotificationsWorker{notifier: notifier, now: time.Now})
 	return river.NewClient(riverpgxv5.New(pool), &river.Config{
 		Schema: db.RiverSchema,
@@ -152,6 +201,9 @@ func NewClient(pool *pgxpool.Pool, log *slog.Logger, timing plans.Timing, notifi
 			river.NewPeriodicJob(river.PeriodicInterval(NotifyEvery),
 				func() (river.JobArgs, *river.InsertOpts) { return SendNotificationsArgs{}, nil },
 				&river.PeriodicJobOpts{ID: "send_notifications", RunOnStart: true}),
+			river.NewPeriodicJob(river.PeriodicInterval(RefreshMapsEvery),
+				func() (river.JobArgs, *river.InsertOpts) { return RefreshMapsArgs{}, nil },
+				&river.PeriodicJobOpts{ID: "refresh_maps", RunOnStart: true}),
 		},
 		Workers: workers,
 	})

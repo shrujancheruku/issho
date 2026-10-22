@@ -13,6 +13,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
+	"github.com/shrujancheruku/issho/backend/internal/maps"
 	"github.com/shrujancheruku/issho/backend/internal/matching"
 )
 
@@ -116,6 +117,71 @@ type Runner struct {
 	DB     *pgxpool.Pool
 	Timing Timing
 	Log    *slog.Logger
+	// Hours checks venues are open before a round is scheduled; nil skips
+	// the check (no Maps key).
+	Hours maps.HoursLookup
+}
+
+// When venues must be open, from an event's start. Activities have no
+// stored duration, so this assumes about two hours, then the follow-up.
+var (
+	activityOpen = []time.Duration{0, 90 * time.Minute}
+	followUpOpen = []time.Duration{2 * time.Hour, 3 * time.Hour}
+)
+
+// venueProblem is why a scheduled time doesn't work for a plan's venues.
+type venueProblem int
+
+const (
+	venuesOK      venueProblem = iota
+	venueClosedAt              // closed at that time: try another occasion
+	venueGone                  // closed for good or until further notice: withdraw the plan
+)
+
+// checkVenues looks up the plan's venues' opening hours (once per venue per
+// pass; cache) and says whether they're open around an event starting at
+// start. Lookup failures don't block scheduling: they're logged and the
+// venue is assumed open.
+func (r *Runner) checkVenues(ctx context.Context, p Open, start time.Time, cache map[string]*maps.Hours) venueProblem {
+	if r.Hours == nil {
+		return venuesOK
+	}
+	check := func(venue string, offsets []time.Duration) venueProblem {
+		if venue == "" {
+			return venuesOK
+		}
+		h, seen := cache[venue]
+		if !seen {
+			got, err := r.Hours.Hours(ctx, venue)
+			if err != nil {
+				r.Log.Warn("venue hours", "plan", p.ID, "place", venue, "err", err)
+			} else {
+				h = &got
+			}
+			cache[venue] = h
+		}
+		if h == nil {
+			return venuesOK
+		}
+		if h.Closed {
+			if h.PermanentlyClosed {
+				if err := dbgen.New(r.DB).RejectVenue(ctx, venue); err != nil {
+					r.Log.Warn("reject closed venue", "place", venue, "err", err)
+				}
+			}
+			return venueGone
+		}
+		for _, o := range offsets {
+			if !h.OpenAt(start.Add(o)) {
+				return venueClosedAt
+			}
+		}
+		return venuesOK
+	}
+	if v := check(p.Venue, activityOpen); v != venuesOK {
+		return v
+	}
+	return check(p.FollowUpVenue, followUpOpen)
 }
 
 // Suggest opens new plans in a city, up to its cap (matching.Suggest),
@@ -239,14 +305,39 @@ func (r *Runner) schedulePlan(ctx context.Context, q *dbgen.Queries, c *City, us
 		}
 		return 0, 0, nil
 	}
-	res, ok := matching.Schedule(matching.ScheduleInput{
-		Plan: p.Plan, Activity: act, Signups: signups, Users: users, Relations: c.Relations, Window: window,
-	}, c.Config, force)
-	if !ok {
-		if force {
-			return closeAs(ClosedNoGroup)
+	// Schedule, then check the venues are open then; if not, take that
+	// occasion out of the window and schedule again.
+	hours := map[string]*maps.Hours{}
+	var res matching.Scheduled
+	for {
+		var ok bool
+		res, ok = matching.Schedule(matching.ScheduleInput{
+			Plan: p.Plan, Activity: act, Signups: signups, Users: users, Relations: c.Relations, Window: window,
+		}, c.Config, force)
+		if !ok {
+			if force {
+				return closeAs(ClosedNoGroup)
+			}
+			return 0, 0, nil
 		}
-		return 0, 0, nil
+		problem := r.checkVenues(ctx, p, r.Timing.startsAt(res.Occasion, c.Location), hours)
+		if problem == venuesOK {
+			break
+		}
+		if problem == venueGone {
+			r.Log.Info("venue closed, plan withdrawn", "city", c.ID, "plan", p.ID)
+			return closeAs(ClosedWithdrawn)
+		}
+		window = slices.DeleteFunc(window, func(o matching.Occasion) bool {
+			return o.Date.Equal(res.Occasion.Date) && o.Block == res.Occasion.Block
+		})
+		if len(window) == 0 {
+			// No time in the round suits the venues.
+			if force {
+				return closeAs(ClosedNoGroup)
+			}
+			return 0, 0, nil
+		}
 	}
 	ev := Event{
 		PlanID: p.ID, Round: p.Round, Scheduled: res, Forced: force, Now: now,

@@ -42,3 +42,22 @@ order by c.id;
 insert into app.venues (google_place_id, city_id, area_id, category_id)
 values ($1, $2, $3, $4)
 on conflict (google_place_id, category_id) do update set last_seen_at = now();
+
+-- A full rebuild replaces the city's matrix: rows it didn't write (a pair
+-- that lost its route, a mode the city dropped) go at once. now() is the
+-- transaction's start, the same value every upsert in it stored, so this
+-- removes exactly the rows not refreshed by this transaction.
+-- name: DeleteTravelTimesNotRefreshed :execrows
+delete from app.area_travel_times t
+using app.areas a
+where a.id = t.from_area_id and a.city_id = @city_id and t.computed_at < now();
+
+-- name: NewestTravelTime :one
+select max(t.computed_at)::timestamptz
+from app.area_travel_times t
+join app.areas a on a.id = t.from_area_id
+where a.city_id = $1;
+
+-- A venue Google reports as permanently closed is never picked again.
+-- name: RejectVenue :exec
+update app.venues set status = 'rejected' where google_place_id = $1;

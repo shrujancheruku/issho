@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
+	mapsgoogle "github.com/shrujancheruku/issho/backend/internal/maps/google"
 	"github.com/shrujancheruku/issho/backend/internal/plans"
 	"github.com/shrujancheruku/issho/backend/internal/platform/config"
 	"github.com/shrujancheruku/issho/backend/internal/platform/db"
@@ -57,7 +58,14 @@ func run() error {
 		Catalog: catalog,
 		Log:     slog.Default(),
 	}
-	client, err := worker.NewClient(pool, slog.Default(), plans.DefaultTiming(), notifier)
+	var m worker.Maps
+	if cfg.GoogleMapsAPIKey != "" {
+		g := mapsgoogle.New(cfg.GoogleMapsAPIKey)
+		m = worker.Maps{Router: g, Hours: g}
+	} else {
+		slog.Warn("GOOGLE_MAPS_API_KEY not set: travel times past 30 days are deleted, not rebuilt; venue hours not checked")
+	}
+	client, err := worker.NewClient(pool, slog.Default(), plans.DefaultTiming(), notifier, m)
 	if err != nil {
 		return err
 	}

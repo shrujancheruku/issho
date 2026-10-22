@@ -47,6 +47,7 @@ var (
 	_ maps.Router        = (*Client)(nil)
 	_ maps.PlaceSearcher = (*Client)(nil)
 	_ maps.PlaceLookup   = (*Client)(nil)
+	_ maps.HoursLookup   = (*Client)(nil)
 )
 
 // ---- Routes: Compute Route Matrix ----
@@ -249,6 +250,56 @@ func (c *Client) Details(ctx context.Context, id, language string) (maps.PlaceDe
 		MapsURL:  resp.GoogleMapsURI,
 		Location: maps.LatLng{Lat: resp.Location.Latitude, Lng: resp.Location.Longitude},
 	}, nil
+}
+
+// Hours fetches a venue's business status and regular opening hours. The
+// opening-hours field makes it Place Details Enterprise, the dearest SKU,
+// so callers fetch it only when about to schedule.
+func (c *Client) Hours(ctx context.Context, id string) (maps.Hours, error) {
+	if id == "" || strings.ContainsAny(id, "/?#") {
+		return maps.Hours{}, fmt.Errorf("invalid place id %q", id)
+	}
+	type point struct {
+		Day    *int `json:"day"`
+		Hour   int  `json:"hour"`
+		Minute int  `json:"minute"`
+	}
+	var resp struct {
+		BusinessStatus      string `json:"businessStatus"`
+		RegularOpeningHours *struct {
+			Periods []struct {
+				Open  point  `json:"open"`
+				Close *point `json:"close"`
+			} `json:"periods"`
+		} `json:"regularOpeningHours"`
+	}
+	u := c.DetailsURL + "/" + url.PathEscape(id)
+	if err := c.api.Get(ctx, u, map[string]string{"X-Goog-FieldMask": "businessStatus,regularOpeningHours"}, &resp); err != nil {
+		return maps.Hours{}, err
+	}
+	h := maps.Hours{
+		PermanentlyClosed: resp.BusinessStatus == "CLOSED_PERMANENTLY",
+		Closed:            resp.BusinessStatus == "CLOSED_PERMANENTLY" || resp.BusinessStatus == "CLOSED_TEMPORARILY",
+	}
+	if resp.RegularOpeningHours == nil || len(resp.RegularOpeningHours.Periods) == 0 {
+		return h, nil
+	}
+	h.Known = true
+	at := func(p point) maps.WeekTime {
+		d := 0
+		if p.Day != nil {
+			d = *p.Day
+		}
+		return maps.WeekTime{Day: time.Weekday(d), Hour: p.Hour, Minute: p.Minute}
+	}
+	for _, p := range resp.RegularOpeningHours.Periods {
+		period := maps.Period{Open: at(p.Open), NoClose: p.Close == nil}
+		if p.Close != nil {
+			period.Close = at(*p.Close)
+		}
+		h.Periods = append(h.Periods, period)
+	}
+	return h, nil
 }
 
 // post calls a Maps endpoint with a field mask (required by Google, and it

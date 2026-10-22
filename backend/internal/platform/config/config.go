@@ -63,6 +63,11 @@ type Worker struct {
 	// GoogleTranslateAPIKey translates notification text and plan titles
 	// into each person's language. Optional: without it they're English.
 	GoogleTranslateAPIKey string
+	// GoogleMapsAPIKey rebuilds travel-time matrices before the Maps
+	// caching limit and checks venues are open before scheduling. Optional:
+	// without it, stale travel times are deleted instead of rebuilt and
+	// opening hours aren't checked.
+	GoogleMapsAPIKey string
 }
 
 // LoadWorker reads WORKER_DATABASE_URL, falling back to DATABASE_URL (fine
@@ -72,6 +77,7 @@ func LoadWorker() (Worker, error) {
 		DatabaseURL:           getenv("WORKER_DATABASE_URL", os.Getenv("DATABASE_URL")),
 		ExpoAccessToken:       os.Getenv("EXPO_ACCESS_TOKEN"),
 		GoogleTranslateAPIKey: os.Getenv("GOOGLE_TRANSLATE_API_KEY"),
+		GoogleMapsAPIKey:      os.Getenv("GOOGLE_MAPS_API_KEY"),
 	}
 	if w.DatabaseURL == "" {
 		return w, fmt.Errorf("WORKER_DATABASE_URL or DATABASE_URL is required")
