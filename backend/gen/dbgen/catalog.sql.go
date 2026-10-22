@@ -10,13 +10,16 @@ import (
 )
 
 const listAreas = `-- name: ListAreas :many
-select id, city_id, name from app.areas order by city_id, id
+select id, city_id, name, st_y(centroid::geometry)::float8 as lat, st_x(centroid::geometry)::float8 as lng
+from app.areas order by city_id, id
 `
 
 type ListAreasRow struct {
 	ID     string
 	CityID string
 	Name   []byte
+	Lat    float64
+	Lng    float64
 }
 
 func (q *Queries) ListAreas(ctx context.Context) ([]ListAreasRow, error) {
@@ -28,7 +31,13 @@ func (q *Queries) ListAreas(ctx context.Context) ([]ListAreasRow, error) {
 	var items []ListAreasRow
 	for rows.Next() {
 		var i ListAreasRow
-		if err := rows.Scan(&i.ID, &i.CityID, &i.Name); err != nil {
+		if err := rows.Scan(
+			&i.ID,
+			&i.CityID,
+			&i.Name,
+			&i.Lat,
+			&i.Lng,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

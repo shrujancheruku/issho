@@ -447,6 +447,10 @@ type Area struct {
 	Id            string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	Name          string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	SecondaryName string `protobuf:"bytes,3,opt,name=secondary_name,json=secondaryName,proto3" json:"secondary_name,omitempty"`
+	// The area's centre (WGS 84), from the city pack: where the map of plans
+	// puts the area's pin.
+	Lat           float64 `protobuf:"fixed64,4,opt,name=lat,proto3" json:"lat,omitempty"`
+	Lng           float64 `protobuf:"fixed64,5,opt,name=lng,proto3" json:"lng,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -500,6 +504,20 @@ func (x *Area) GetSecondaryName() string {
 		return x.SecondaryName
 	}
 	return ""
+}
+
+func (x *Area) GetLat() float64 {
+	if x != nil {
+		return x.Lat
+	}
+	return 0
+}
+
+func (x *Area) GetLng() float64 {
+	if x != nil {
+		return x.Lng
+	}
+	return 0
 }
 
 type ListLanguagesRequest struct {
@@ -791,11 +809,13 @@ const file_issho_v1_catalog_proto_rawDesc = "" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12%\n" +
 	"\x0esecondary_name\x18\x03 \x01(\tR\rsecondaryName\x12\x1c\n" +
 	"\tlanguages\x18\x04 \x03(\tR\tlanguages\x12$\n" +
-	"\x05areas\x18\x05 \x03(\v2\x0e.issho.v1.AreaR\x05areas\"Q\n" +
+	"\x05areas\x18\x05 \x03(\v2\x0e.issho.v1.AreaR\x05areas\"u\n" +
 	"\x04Area\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12%\n" +
-	"\x0esecondary_name\x18\x03 \x01(\tR\rsecondaryName\".\n" +
+	"\x0esecondary_name\x18\x03 \x01(\tR\rsecondaryName\x12\x10\n" +
+	"\x03lat\x18\x04 \x01(\x01R\x03lat\x12\x10\n" +
+	"\x03lng\x18\x05 \x01(\x01R\x03lng\".\n" +
 	"\x14ListLanguagesRequest\x12\x16\n" +
 	"\x06locale\x18\x01 \x01(\tR\x06locale\"I\n" +
 	"\x15ListLanguagesResponse\x120\n" +

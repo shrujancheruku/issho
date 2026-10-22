@@ -28,11 +28,14 @@ export function usePlanNames() {
       (cities.data ?? []).flatMap((c) => c.areas).map((a) => [a.id, { name: a.name, secondary: a.secondaryName }]),
     );
     const langs = new Map((languages.data ?? []).map((l) => [l.code, l]));
+    const coords = new Map((cities.data ?? []).flatMap((c) => c.areas).map((a) => [a.id, { lat: a.lat, lng: a.lng }]));
     return {
       ready: !!activities.data && !!cities.data,
       activity: (id: string): Names => order(acts.get(id) ?? { name: id, secondary: '' }),
       area: (id: string): Names => order(areas.get(id) ?? { name: id, secondary: '' }),
       language: (code: string) => languageLabel(langs, code),
+      /** Area centres, for the map of plans. */
+      coords,
     };
   }, [activities.data, cities.data, languages.data, showing]);
 }

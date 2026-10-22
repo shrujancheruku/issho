@@ -49,7 +49,7 @@ func (h *Handler) ListCities(ctx context.Context, req *connect.Request[isshov1.L
 	for _, a := range areas {
 		name, sec := i18n.Pair(stored(a.Name, primary), stored(a.Name, secondary), i18n.Pick(a.Name, i18n.Authoring))
 		if c := byID[a.CityID]; c != nil {
-			c.Areas = append(c.Areas, &isshov1.Area{Id: a.ID, Name: name, SecondaryName: sec})
+			c.Areas = append(c.Areas, &isshov1.Area{Id: a.ID, Name: name, SecondaryName: sec, Lat: a.Lat, Lng: a.Lng})
 		}
 	}
 	return connect.NewResponse(&isshov1.ListCitiesResponse{Cities: out}), nil

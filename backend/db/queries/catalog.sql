@@ -13,4 +13,5 @@ order by a.category, a.id;
 select id, name, languages from app.cities order by id;
 
 -- name: ListAreas :many
-select id, city_id, name from app.areas order by city_id, id;
+select id, city_id, name, st_y(centroid::geometry)::float8 as lat, st_x(centroid::geometry)::float8 as lng
+from app.areas order by city_id, id;
