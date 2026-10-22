@@ -326,7 +326,11 @@ func (q *Queries) ListMatchingPrefs(ctx context.Context, cityID string) ([]AppUs
 
 const listMatchingUsers = `-- name: ListMatchingUsers :many
 select p.user_id, p.home_area_id, p.max_travel_min, p.gender, p.same_gender_only, p.size_pref,
-       p.budget, p.reliability,
+       p.budget,
+       ((2 + (select count(*) from app.group_members m join app.events e on e.id = m.event_id
+              where m.user_id = p.user_id and e.status = 'done' and m.response = 'confirmed' and m.checked_in_at is not null))::real
+        / (2 + (select count(*) from app.group_members m join app.events e on e.id = m.event_id
+                where m.user_id = p.user_id and e.status = 'done' and m.response = 'confirmed'))::real)::real as reliability,
        (select count(*) from app.group_members m
         where m.user_id = p.user_id and m.checked_in_at is not null)::int as events_attended
 from app.profiles p
@@ -348,6 +352,11 @@ type ListMatchingUsersRow struct {
 	EventsAttended int32
 }
 
+// Reliability is how often someone turned up when they'd confirmed: check-ins
+// over confirmed places at finished events, with a prior of two outings
+// attended so a newcomer starts at 1.0 and one miss doesn't sink them
+// (one no-show in their first outing gives 0.67). Cancelling in advance
+// (dropped) isn't a miss.
 func (q *Queries) ListMatchingUsers(ctx context.Context, cityID string) ([]ListMatchingUsersRow, error) {
 	rows, err := q.db.Query(ctx, listMatchingUsers, cityID)
 	if err != nil {

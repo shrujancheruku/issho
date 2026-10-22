@@ -7,7 +7,7 @@ select e.id, e.date, e.block, e.starts_at, e.confirm_by, e.status,
        p.id as plan_id, p.city_id, p.area_id, p.activity_id, p.follow_up_id, p.primary_language,
        p.secondary_language, p.venue_place_id, p.follow_up_venue_place_id, p.route_polyline, p.route_seconds,
        g.id as group_id, g.status as group_status, g.quorum, g.min_attendance, g.venue_place_id as group_venue_place_id,
-       g.meeting_point, m.response,
+       g.meeting_point, m.response, m.checked_in_at,
        (select count(*) from app.group_members c where c.group_id = g.id and c.response = 'confirmed')::int as confirmed
 from app.group_members m
 join app.event_groups g on g.id = m.group_id
@@ -85,3 +85,12 @@ for update of g, e;
 update app.events e set status = 'done'
 from app.plans p
 where p.id = e.plan_id and p.city_id = @city_id and e.status = 'scheduled' and e.date < @today;
+
+-- Checking in: only someone who confirmed, once (checking in twice keeps
+-- the first time).
+-- name: CheckIn :execrows
+update app.group_members set checked_in_at = @at
+where event_id = @event_id and user_id = @user_id and response = 'confirmed' and checked_in_at is null;
+
+-- name: GetCheckIn :one
+select checked_in_at from app.group_members where event_id = @event_id and user_id = @user_id;

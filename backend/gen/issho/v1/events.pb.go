@@ -239,6 +239,94 @@ func (InviteResponse) EnumDescriptor() ([]byte, []int) {
 	return file_issho_v1_events_proto_rawDescGZIP(), []int{3}
 }
 
+type CheckInRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	EventId       string                 `protobuf:"bytes,1,opt,name=event_id,json=eventId,proto3" json:"event_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CheckInRequest) Reset() {
+	*x = CheckInRequest{}
+	mi := &file_issho_v1_events_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CheckInRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CheckInRequest) ProtoMessage() {}
+
+func (x *CheckInRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_issho_v1_events_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CheckInRequest.ProtoReflect.Descriptor instead.
+func (*CheckInRequest) Descriptor() ([]byte, []int) {
+	return file_issho_v1_events_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *CheckInRequest) GetEventId() string {
+	if x != nil {
+		return x.EventId
+	}
+	return ""
+}
+
+type CheckInResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Event         *MyEvent               `protobuf:"bytes,1,opt,name=event,proto3" json:"event,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CheckInResponse) Reset() {
+	*x = CheckInResponse{}
+	mi := &file_issho_v1_events_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CheckInResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CheckInResponse) ProtoMessage() {}
+
+func (x *CheckInResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_issho_v1_events_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CheckInResponse.ProtoReflect.Descriptor instead.
+func (*CheckInResponse) Descriptor() ([]byte, []int) {
+	return file_issho_v1_events_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *CheckInResponse) GetEvent() *MyEvent {
+	if x != nil {
+		return x.Event
+	}
+	return nil
+}
+
 type ListChatMessagesRequest struct {
 	state   protoimpl.MessageState `protogen:"open.v1"`
 	EventId string                 `protobuf:"bytes,1,opt,name=event_id,json=eventId,proto3" json:"event_id,omitempty"`
@@ -250,7 +338,7 @@ type ListChatMessagesRequest struct {
 
 func (x *ListChatMessagesRequest) Reset() {
 	*x = ListChatMessagesRequest{}
-	mi := &file_issho_v1_events_proto_msgTypes[0]
+	mi := &file_issho_v1_events_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -262,7 +350,7 @@ func (x *ListChatMessagesRequest) String() string {
 func (*ListChatMessagesRequest) ProtoMessage() {}
 
 func (x *ListChatMessagesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_events_proto_msgTypes[0]
+	mi := &file_issho_v1_events_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -275,7 +363,7 @@ func (x *ListChatMessagesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListChatMessagesRequest.ProtoReflect.Descriptor instead.
 func (*ListChatMessagesRequest) Descriptor() ([]byte, []int) {
-	return file_issho_v1_events_proto_rawDescGZIP(), []int{0}
+	return file_issho_v1_events_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *ListChatMessagesRequest) GetEventId() string {
@@ -305,7 +393,7 @@ type ListChatMessagesResponse struct {
 
 func (x *ListChatMessagesResponse) Reset() {
 	*x = ListChatMessagesResponse{}
-	mi := &file_issho_v1_events_proto_msgTypes[1]
+	mi := &file_issho_v1_events_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -317,7 +405,7 @@ func (x *ListChatMessagesResponse) String() string {
 func (*ListChatMessagesResponse) ProtoMessage() {}
 
 func (x *ListChatMessagesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_events_proto_msgTypes[1]
+	mi := &file_issho_v1_events_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -330,7 +418,7 @@ func (x *ListChatMessagesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListChatMessagesResponse.ProtoReflect.Descriptor instead.
 func (*ListChatMessagesResponse) Descriptor() ([]byte, []int) {
-	return file_issho_v1_events_proto_rawDescGZIP(), []int{1}
+	return file_issho_v1_events_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *ListChatMessagesResponse) GetMessages() []*ChatMessage {
@@ -371,7 +459,7 @@ type SendChatMessageRequest struct {
 
 func (x *SendChatMessageRequest) Reset() {
 	*x = SendChatMessageRequest{}
-	mi := &file_issho_v1_events_proto_msgTypes[2]
+	mi := &file_issho_v1_events_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -383,7 +471,7 @@ func (x *SendChatMessageRequest) String() string {
 func (*SendChatMessageRequest) ProtoMessage() {}
 
 func (x *SendChatMessageRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_events_proto_msgTypes[2]
+	mi := &file_issho_v1_events_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -396,7 +484,7 @@ func (x *SendChatMessageRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SendChatMessageRequest.ProtoReflect.Descriptor instead.
 func (*SendChatMessageRequest) Descriptor() ([]byte, []int) {
-	return file_issho_v1_events_proto_rawDescGZIP(), []int{2}
+	return file_issho_v1_events_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *SendChatMessageRequest) GetEventId() string {
@@ -422,7 +510,7 @@ type SendChatMessageResponse struct {
 
 func (x *SendChatMessageResponse) Reset() {
 	*x = SendChatMessageResponse{}
-	mi := &file_issho_v1_events_proto_msgTypes[3]
+	mi := &file_issho_v1_events_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -434,7 +522,7 @@ func (x *SendChatMessageResponse) String() string {
 func (*SendChatMessageResponse) ProtoMessage() {}
 
 func (x *SendChatMessageResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_events_proto_msgTypes[3]
+	mi := &file_issho_v1_events_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -447,7 +535,7 @@ func (x *SendChatMessageResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SendChatMessageResponse.ProtoReflect.Descriptor instead.
 func (*SendChatMessageResponse) Descriptor() ([]byte, []int) {
-	return file_issho_v1_events_proto_rawDescGZIP(), []int{3}
+	return file_issho_v1_events_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *SendChatMessageResponse) GetMessage() *ChatMessage {
@@ -473,7 +561,7 @@ type ChatMessage struct {
 
 func (x *ChatMessage) Reset() {
 	*x = ChatMessage{}
-	mi := &file_issho_v1_events_proto_msgTypes[4]
+	mi := &file_issho_v1_events_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -485,7 +573,7 @@ func (x *ChatMessage) String() string {
 func (*ChatMessage) ProtoMessage() {}
 
 func (x *ChatMessage) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_events_proto_msgTypes[4]
+	mi := &file_issho_v1_events_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -498,7 +586,7 @@ func (x *ChatMessage) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ChatMessage.ProtoReflect.Descriptor instead.
 func (*ChatMessage) Descriptor() ([]byte, []int) {
-	return file_issho_v1_events_proto_rawDescGZIP(), []int{4}
+	return file_issho_v1_events_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *ChatMessage) GetId() int64 {
@@ -544,7 +632,7 @@ type ListMyEventsRequest struct {
 
 func (x *ListMyEventsRequest) Reset() {
 	*x = ListMyEventsRequest{}
-	mi := &file_issho_v1_events_proto_msgTypes[5]
+	mi := &file_issho_v1_events_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -556,7 +644,7 @@ func (x *ListMyEventsRequest) String() string {
 func (*ListMyEventsRequest) ProtoMessage() {}
 
 func (x *ListMyEventsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_events_proto_msgTypes[5]
+	mi := &file_issho_v1_events_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -569,7 +657,7 @@ func (x *ListMyEventsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListMyEventsRequest.ProtoReflect.Descriptor instead.
 func (*ListMyEventsRequest) Descriptor() ([]byte, []int) {
-	return file_issho_v1_events_proto_rawDescGZIP(), []int{5}
+	return file_issho_v1_events_proto_rawDescGZIP(), []int{7}
 }
 
 type ListMyEventsResponse struct {
@@ -581,7 +669,7 @@ type ListMyEventsResponse struct {
 
 func (x *ListMyEventsResponse) Reset() {
 	*x = ListMyEventsResponse{}
-	mi := &file_issho_v1_events_proto_msgTypes[6]
+	mi := &file_issho_v1_events_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -593,7 +681,7 @@ func (x *ListMyEventsResponse) String() string {
 func (*ListMyEventsResponse) ProtoMessage() {}
 
 func (x *ListMyEventsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_events_proto_msgTypes[6]
+	mi := &file_issho_v1_events_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -606,7 +694,7 @@ func (x *ListMyEventsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListMyEventsResponse.ProtoReflect.Descriptor instead.
 func (*ListMyEventsResponse) Descriptor() ([]byte, []int) {
-	return file_issho_v1_events_proto_rawDescGZIP(), []int{6}
+	return file_issho_v1_events_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *ListMyEventsResponse) GetEvents() []*MyEvent {
@@ -625,7 +713,7 @@ type GetEventRequest struct {
 
 func (x *GetEventRequest) Reset() {
 	*x = GetEventRequest{}
-	mi := &file_issho_v1_events_proto_msgTypes[7]
+	mi := &file_issho_v1_events_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -637,7 +725,7 @@ func (x *GetEventRequest) String() string {
 func (*GetEventRequest) ProtoMessage() {}
 
 func (x *GetEventRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_events_proto_msgTypes[7]
+	mi := &file_issho_v1_events_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -650,7 +738,7 @@ func (x *GetEventRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetEventRequest.ProtoReflect.Descriptor instead.
 func (*GetEventRequest) Descriptor() ([]byte, []int) {
-	return file_issho_v1_events_proto_rawDescGZIP(), []int{7}
+	return file_issho_v1_events_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *GetEventRequest) GetEventId() string {
@@ -678,7 +766,7 @@ type GetEventResponse struct {
 
 func (x *GetEventResponse) Reset() {
 	*x = GetEventResponse{}
-	mi := &file_issho_v1_events_proto_msgTypes[8]
+	mi := &file_issho_v1_events_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -690,7 +778,7 @@ func (x *GetEventResponse) String() string {
 func (*GetEventResponse) ProtoMessage() {}
 
 func (x *GetEventResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_events_proto_msgTypes[8]
+	mi := &file_issho_v1_events_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -703,7 +791,7 @@ func (x *GetEventResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetEventResponse.ProtoReflect.Descriptor instead.
 func (*GetEventResponse) Descriptor() ([]byte, []int) {
-	return file_issho_v1_events_proto_rawDescGZIP(), []int{8}
+	return file_issho_v1_events_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *GetEventResponse) GetEvent() *MyEvent {
@@ -744,7 +832,7 @@ type RespondToEventRequest struct {
 
 func (x *RespondToEventRequest) Reset() {
 	*x = RespondToEventRequest{}
-	mi := &file_issho_v1_events_proto_msgTypes[9]
+	mi := &file_issho_v1_events_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -756,7 +844,7 @@ func (x *RespondToEventRequest) String() string {
 func (*RespondToEventRequest) ProtoMessage() {}
 
 func (x *RespondToEventRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_events_proto_msgTypes[9]
+	mi := &file_issho_v1_events_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -769,7 +857,7 @@ func (x *RespondToEventRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RespondToEventRequest.ProtoReflect.Descriptor instead.
 func (*RespondToEventRequest) Descriptor() ([]byte, []int) {
-	return file_issho_v1_events_proto_rawDescGZIP(), []int{9}
+	return file_issho_v1_events_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *RespondToEventRequest) GetEventId() string {
@@ -795,7 +883,7 @@ type RespondToEventResponse struct {
 
 func (x *RespondToEventResponse) Reset() {
 	*x = RespondToEventResponse{}
-	mi := &file_issho_v1_events_proto_msgTypes[10]
+	mi := &file_issho_v1_events_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -807,7 +895,7 @@ func (x *RespondToEventResponse) String() string {
 func (*RespondToEventResponse) ProtoMessage() {}
 
 func (x *RespondToEventResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_events_proto_msgTypes[10]
+	mi := &file_issho_v1_events_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -820,7 +908,7 @@ func (x *RespondToEventResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RespondToEventResponse.ProtoReflect.Descriptor instead.
 func (*RespondToEventResponse) Descriptor() ([]byte, []int) {
-	return file_issho_v1_events_proto_rawDescGZIP(), []int{10}
+	return file_issho_v1_events_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *RespondToEventResponse) GetEvent() *MyEvent {
@@ -863,14 +951,20 @@ type MyEvent struct {
 	// reveal_at or when no more than the first stop's venue is needed.
 	MeetingPoint string `protobuf:"bytes,20,opt,name=meeting_point,json=meetingPoint,proto3" json:"meeting_point,omitempty"`
 	// When the meeting point is shown (24 hours before the start).
-	RevealAt      *timestamppb.Timestamp `protobuf:"bytes,21,opt,name=reveal_at,json=revealAt,proto3" json:"reveal_at,omitempty"`
+	RevealAt *timestamppb.Timestamp `protobuf:"bytes,21,opt,name=reveal_at,json=revealAt,proto3" json:"reveal_at,omitempty"`
+	// The caller has checked in.
+	CheckedIn bool `protobuf:"varint,22,opt,name=checked_in,json=checkedIn,proto3" json:"checked_in,omitempty"`
+	// When check-in is open (30 minutes before the start to 3 hours after);
+	// unset without a start time.
+	CheckInFrom   *timestamppb.Timestamp `protobuf:"bytes,23,opt,name=check_in_from,json=checkInFrom,proto3" json:"check_in_from,omitempty"`
+	CheckInUntil  *timestamppb.Timestamp `protobuf:"bytes,24,opt,name=check_in_until,json=checkInUntil,proto3" json:"check_in_until,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *MyEvent) Reset() {
 	*x = MyEvent{}
-	mi := &file_issho_v1_events_proto_msgTypes[11]
+	mi := &file_issho_v1_events_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -882,7 +976,7 @@ func (x *MyEvent) String() string {
 func (*MyEvent) ProtoMessage() {}
 
 func (x *MyEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_events_proto_msgTypes[11]
+	mi := &file_issho_v1_events_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -895,7 +989,7 @@ func (x *MyEvent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MyEvent.ProtoReflect.Descriptor instead.
 func (*MyEvent) Descriptor() ([]byte, []int) {
-	return file_issho_v1_events_proto_rawDescGZIP(), []int{11}
+	return file_issho_v1_events_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *MyEvent) GetId() string {
@@ -1045,11 +1139,36 @@ func (x *MyEvent) GetRevealAt() *timestamppb.Timestamp {
 	return nil
 }
 
+func (x *MyEvent) GetCheckedIn() bool {
+	if x != nil {
+		return x.CheckedIn
+	}
+	return false
+}
+
+func (x *MyEvent) GetCheckInFrom() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CheckInFrom
+	}
+	return nil
+}
+
+func (x *MyEvent) GetCheckInUntil() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CheckInUntil
+	}
+	return nil
+}
+
 var File_issho_v1_events_proto protoreflect.FileDescriptor
 
 const file_issho_v1_events_proto_rawDesc = "" +
 	"\n" +
-	"\x15issho/v1/events.proto\x12\bissho.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x14issho/v1/plans.proto\x1a\x16issho/v1/profile.proto\"O\n" +
+	"\x15issho/v1/events.proto\x12\bissho.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x14issho/v1/plans.proto\x1a\x16issho/v1/profile.proto\"+\n" +
+	"\x0eCheckInRequest\x12\x19\n" +
+	"\bevent_id\x18\x01 \x01(\tR\aeventId\":\n" +
+	"\x0fCheckInResponse\x12'\n" +
+	"\x05event\x18\x01 \x01(\v2\x11.issho.v1.MyEventR\x05event\"O\n" +
 	"\x17ListChatMessagesRequest\x12\x19\n" +
 	"\bevent_id\x18\x01 \x01(\tR\aeventId\x12\x19\n" +
 	"\bafter_id\x18\x02 \x01(\x03R\aafterId\"\xd1\x01\n" +
@@ -1083,7 +1202,7 @@ const file_issho_v1_events_proto_rawDesc = "" +
 	"\bevent_id\x18\x01 \x01(\tR\aeventId\x12-\n" +
 	"\x06action\x18\x02 \x01(\x0e2\x15.issho.v1.EventActionR\x06action\"A\n" +
 	"\x16RespondToEventResponse\x12'\n" +
-	"\x05event\x18\x01 \x01(\v2\x11.issho.v1.MyEventR\x05event\"\xc5\x06\n" +
+	"\x05event\x18\x01 \x01(\v2\x11.issho.v1.MyEventR\x05event\"\xe6\a\n" +
 	"\aMyEvent\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
 	"\aplan_id\x18\x02 \x01(\tR\x06planId\x12\x14\n" +
@@ -1108,7 +1227,11 @@ const file_issho_v1_events_proto_rawDesc = "" +
 	"\x06quorum\x18\x12 \x01(\x05R\x06quorum\x12%\n" +
 	"\x0emin_attendance\x18\x13 \x01(\x05R\rminAttendance\x12#\n" +
 	"\rmeeting_point\x18\x14 \x01(\tR\fmeetingPoint\x127\n" +
-	"\treveal_at\x18\x15 \x01(\v2\x1a.google.protobuf.TimestampR\brevealAt*x\n" +
+	"\treveal_at\x18\x15 \x01(\v2\x1a.google.protobuf.TimestampR\brevealAt\x12\x1d\n" +
+	"\n" +
+	"checked_in\x18\x16 \x01(\bR\tcheckedIn\x12>\n" +
+	"\rcheck_in_from\x18\x17 \x01(\v2\x1a.google.protobuf.TimestampR\vcheckInFrom\x12@\n" +
+	"\x0echeck_in_until\x18\x18 \x01(\v2\x1a.google.protobuf.TimestampR\fcheckInUntil*x\n" +
 	"\vEventAction\x12\x1c\n" +
 	"\x18EVENT_ACTION_UNSPECIFIED\x10\x00\x12\x18\n" +
 	"\x14EVENT_ACTION_CONFIRM\x10\x01\x12\x18\n" +
@@ -1129,13 +1252,14 @@ const file_issho_v1_events_proto_rawDesc = "" +
 	"\x17INVITE_RESPONSE_INVITED\x10\x01\x12\x1d\n" +
 	"\x19INVITE_RESPONSE_CONFIRMED\x10\x02\x12\x1c\n" +
 	"\x18INVITE_RESPONSE_DECLINED\x10\x03\x12\x1b\n" +
-	"\x17INVITE_RESPONSE_DROPPED\x10\x042\xb2\x03\n" +
+	"\x17INVITE_RESPONSE_DROPPED\x10\x042\xf4\x03\n" +
 	"\fEventService\x12O\n" +
 	"\fListMyEvents\x12\x1d.issho.v1.ListMyEventsRequest\x1a\x1e.issho.v1.ListMyEventsResponse\"\x00\x12C\n" +
 	"\bGetEvent\x12\x19.issho.v1.GetEventRequest\x1a\x1a.issho.v1.GetEventResponse\"\x00\x12U\n" +
 	"\x0eRespondToEvent\x12\x1f.issho.v1.RespondToEventRequest\x1a .issho.v1.RespondToEventResponse\"\x00\x12[\n" +
 	"\x10ListChatMessages\x12!.issho.v1.ListChatMessagesRequest\x1a\".issho.v1.ListChatMessagesResponse\"\x00\x12X\n" +
-	"\x0fSendChatMessage\x12 .issho.v1.SendChatMessageRequest\x1a!.issho.v1.SendChatMessageResponse\"\x00B>Z<github.com/shrujancheruku/issho/backend/gen/issho/v1;isshov1b\x06proto3"
+	"\x0fSendChatMessage\x12 .issho.v1.SendChatMessageRequest\x1a!.issho.v1.SendChatMessageResponse\"\x00\x12@\n" +
+	"\aCheckIn\x12\x18.issho.v1.CheckInRequest\x1a\x19.issho.v1.CheckInResponse\"\x00B>Z<github.com/shrujancheruku/issho/backend/gen/issho/v1;isshov1b\x06proto3"
 
 var (
 	file_issho_v1_events_proto_rawDescOnce sync.Once
@@ -1150,61 +1274,68 @@ func file_issho_v1_events_proto_rawDescGZIP() []byte {
 }
 
 var file_issho_v1_events_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
-var file_issho_v1_events_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
+var file_issho_v1_events_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
 var file_issho_v1_events_proto_goTypes = []any{
 	(EventAction)(0),                 // 0: issho.v1.EventAction
 	(EventStatus)(0),                 // 1: issho.v1.EventStatus
 	(GroupStatus)(0),                 // 2: issho.v1.GroupStatus
 	(InviteResponse)(0),              // 3: issho.v1.InviteResponse
-	(*ListChatMessagesRequest)(nil),  // 4: issho.v1.ListChatMessagesRequest
-	(*ListChatMessagesResponse)(nil), // 5: issho.v1.ListChatMessagesResponse
-	(*SendChatMessageRequest)(nil),   // 6: issho.v1.SendChatMessageRequest
-	(*SendChatMessageResponse)(nil),  // 7: issho.v1.SendChatMessageResponse
-	(*ChatMessage)(nil),              // 8: issho.v1.ChatMessage
-	(*ListMyEventsRequest)(nil),      // 9: issho.v1.ListMyEventsRequest
-	(*ListMyEventsResponse)(nil),     // 10: issho.v1.ListMyEventsResponse
-	(*GetEventRequest)(nil),          // 11: issho.v1.GetEventRequest
-	(*GetEventResponse)(nil),         // 12: issho.v1.GetEventResponse
-	(*RespondToEventRequest)(nil),    // 13: issho.v1.RespondToEventRequest
-	(*RespondToEventResponse)(nil),   // 14: issho.v1.RespondToEventResponse
-	(*MyEvent)(nil),                  // 15: issho.v1.MyEvent
-	(*timestamppb.Timestamp)(nil),    // 16: google.protobuf.Timestamp
-	(*PlanStep)(nil),                 // 17: issho.v1.PlanStep
-	(TimeBlock)(0),                   // 18: issho.v1.TimeBlock
+	(*CheckInRequest)(nil),           // 4: issho.v1.CheckInRequest
+	(*CheckInResponse)(nil),          // 5: issho.v1.CheckInResponse
+	(*ListChatMessagesRequest)(nil),  // 6: issho.v1.ListChatMessagesRequest
+	(*ListChatMessagesResponse)(nil), // 7: issho.v1.ListChatMessagesResponse
+	(*SendChatMessageRequest)(nil),   // 8: issho.v1.SendChatMessageRequest
+	(*SendChatMessageResponse)(nil),  // 9: issho.v1.SendChatMessageResponse
+	(*ChatMessage)(nil),              // 10: issho.v1.ChatMessage
+	(*ListMyEventsRequest)(nil),      // 11: issho.v1.ListMyEventsRequest
+	(*ListMyEventsResponse)(nil),     // 12: issho.v1.ListMyEventsResponse
+	(*GetEventRequest)(nil),          // 13: issho.v1.GetEventRequest
+	(*GetEventResponse)(nil),         // 14: issho.v1.GetEventResponse
+	(*RespondToEventRequest)(nil),    // 15: issho.v1.RespondToEventRequest
+	(*RespondToEventResponse)(nil),   // 16: issho.v1.RespondToEventResponse
+	(*MyEvent)(nil),                  // 17: issho.v1.MyEvent
+	(*timestamppb.Timestamp)(nil),    // 18: google.protobuf.Timestamp
+	(*PlanStep)(nil),                 // 19: issho.v1.PlanStep
+	(TimeBlock)(0),                   // 20: issho.v1.TimeBlock
 }
 var file_issho_v1_events_proto_depIdxs = []int32{
-	8,  // 0: issho.v1.ListChatMessagesResponse.messages:type_name -> issho.v1.ChatMessage
-	16, // 1: issho.v1.ListChatMessagesResponse.opens_at:type_name -> google.protobuf.Timestamp
-	16, // 2: issho.v1.ListChatMessagesResponse.closes_at:type_name -> google.protobuf.Timestamp
-	8,  // 3: issho.v1.SendChatMessageResponse.message:type_name -> issho.v1.ChatMessage
-	16, // 4: issho.v1.ChatMessage.at:type_name -> google.protobuf.Timestamp
-	15, // 5: issho.v1.ListMyEventsResponse.events:type_name -> issho.v1.MyEvent
-	15, // 6: issho.v1.GetEventResponse.event:type_name -> issho.v1.MyEvent
-	17, // 7: issho.v1.GetEventResponse.steps:type_name -> issho.v1.PlanStep
-	0,  // 8: issho.v1.RespondToEventRequest.action:type_name -> issho.v1.EventAction
-	15, // 9: issho.v1.RespondToEventResponse.event:type_name -> issho.v1.MyEvent
-	18, // 10: issho.v1.MyEvent.block:type_name -> issho.v1.TimeBlock
-	16, // 11: issho.v1.MyEvent.starts_at:type_name -> google.protobuf.Timestamp
-	16, // 12: issho.v1.MyEvent.confirm_by:type_name -> google.protobuf.Timestamp
-	1,  // 13: issho.v1.MyEvent.status:type_name -> issho.v1.EventStatus
-	2,  // 14: issho.v1.MyEvent.group_status:type_name -> issho.v1.GroupStatus
-	3,  // 15: issho.v1.MyEvent.response:type_name -> issho.v1.InviteResponse
-	16, // 16: issho.v1.MyEvent.reveal_at:type_name -> google.protobuf.Timestamp
-	9,  // 17: issho.v1.EventService.ListMyEvents:input_type -> issho.v1.ListMyEventsRequest
-	11, // 18: issho.v1.EventService.GetEvent:input_type -> issho.v1.GetEventRequest
-	13, // 19: issho.v1.EventService.RespondToEvent:input_type -> issho.v1.RespondToEventRequest
-	4,  // 20: issho.v1.EventService.ListChatMessages:input_type -> issho.v1.ListChatMessagesRequest
-	6,  // 21: issho.v1.EventService.SendChatMessage:input_type -> issho.v1.SendChatMessageRequest
-	10, // 22: issho.v1.EventService.ListMyEvents:output_type -> issho.v1.ListMyEventsResponse
-	12, // 23: issho.v1.EventService.GetEvent:output_type -> issho.v1.GetEventResponse
-	14, // 24: issho.v1.EventService.RespondToEvent:output_type -> issho.v1.RespondToEventResponse
-	5,  // 25: issho.v1.EventService.ListChatMessages:output_type -> issho.v1.ListChatMessagesResponse
-	7,  // 26: issho.v1.EventService.SendChatMessage:output_type -> issho.v1.SendChatMessageResponse
-	22, // [22:27] is the sub-list for method output_type
-	17, // [17:22] is the sub-list for method input_type
-	17, // [17:17] is the sub-list for extension type_name
-	17, // [17:17] is the sub-list for extension extendee
-	0,  // [0:17] is the sub-list for field type_name
+	17, // 0: issho.v1.CheckInResponse.event:type_name -> issho.v1.MyEvent
+	10, // 1: issho.v1.ListChatMessagesResponse.messages:type_name -> issho.v1.ChatMessage
+	18, // 2: issho.v1.ListChatMessagesResponse.opens_at:type_name -> google.protobuf.Timestamp
+	18, // 3: issho.v1.ListChatMessagesResponse.closes_at:type_name -> google.protobuf.Timestamp
+	10, // 4: issho.v1.SendChatMessageResponse.message:type_name -> issho.v1.ChatMessage
+	18, // 5: issho.v1.ChatMessage.at:type_name -> google.protobuf.Timestamp
+	17, // 6: issho.v1.ListMyEventsResponse.events:type_name -> issho.v1.MyEvent
+	17, // 7: issho.v1.GetEventResponse.event:type_name -> issho.v1.MyEvent
+	19, // 8: issho.v1.GetEventResponse.steps:type_name -> issho.v1.PlanStep
+	0,  // 9: issho.v1.RespondToEventRequest.action:type_name -> issho.v1.EventAction
+	17, // 10: issho.v1.RespondToEventResponse.event:type_name -> issho.v1.MyEvent
+	20, // 11: issho.v1.MyEvent.block:type_name -> issho.v1.TimeBlock
+	18, // 12: issho.v1.MyEvent.starts_at:type_name -> google.protobuf.Timestamp
+	18, // 13: issho.v1.MyEvent.confirm_by:type_name -> google.protobuf.Timestamp
+	1,  // 14: issho.v1.MyEvent.status:type_name -> issho.v1.EventStatus
+	2,  // 15: issho.v1.MyEvent.group_status:type_name -> issho.v1.GroupStatus
+	3,  // 16: issho.v1.MyEvent.response:type_name -> issho.v1.InviteResponse
+	18, // 17: issho.v1.MyEvent.reveal_at:type_name -> google.protobuf.Timestamp
+	18, // 18: issho.v1.MyEvent.check_in_from:type_name -> google.protobuf.Timestamp
+	18, // 19: issho.v1.MyEvent.check_in_until:type_name -> google.protobuf.Timestamp
+	11, // 20: issho.v1.EventService.ListMyEvents:input_type -> issho.v1.ListMyEventsRequest
+	13, // 21: issho.v1.EventService.GetEvent:input_type -> issho.v1.GetEventRequest
+	15, // 22: issho.v1.EventService.RespondToEvent:input_type -> issho.v1.RespondToEventRequest
+	6,  // 23: issho.v1.EventService.ListChatMessages:input_type -> issho.v1.ListChatMessagesRequest
+	8,  // 24: issho.v1.EventService.SendChatMessage:input_type -> issho.v1.SendChatMessageRequest
+	4,  // 25: issho.v1.EventService.CheckIn:input_type -> issho.v1.CheckInRequest
+	12, // 26: issho.v1.EventService.ListMyEvents:output_type -> issho.v1.ListMyEventsResponse
+	14, // 27: issho.v1.EventService.GetEvent:output_type -> issho.v1.GetEventResponse
+	16, // 28: issho.v1.EventService.RespondToEvent:output_type -> issho.v1.RespondToEventResponse
+	7,  // 29: issho.v1.EventService.ListChatMessages:output_type -> issho.v1.ListChatMessagesResponse
+	9,  // 30: issho.v1.EventService.SendChatMessage:output_type -> issho.v1.SendChatMessageResponse
+	5,  // 31: issho.v1.EventService.CheckIn:output_type -> issho.v1.CheckInResponse
+	26, // [26:32] is the sub-list for method output_type
+	20, // [20:26] is the sub-list for method input_type
+	20, // [20:20] is the sub-list for extension type_name
+	20, // [20:20] is the sub-list for extension extendee
+	0,  // [0:20] is the sub-list for field type_name
 }
 
 func init() { file_issho_v1_events_proto_init() }
@@ -1220,7 +1351,7 @@ func file_issho_v1_events_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_issho_v1_events_proto_rawDesc), len(file_issho_v1_events_proto_rawDesc)),
 			NumEnums:      4,
-			NumMessages:   12,
+			NumMessages:   14,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

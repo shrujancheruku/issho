@@ -24,6 +24,27 @@ func (q *Queries) CancelEventIfNoGroups(ctx context.Context, eventID uuid.UUID) 
 	return err
 }
 
+const checkIn = `-- name: CheckIn :execrows
+update app.group_members set checked_in_at = $1
+where event_id = $2 and user_id = $3 and response = 'confirmed' and checked_in_at is null
+`
+
+type CheckInParams struct {
+	At      pgtype.Timestamptz
+	EventID uuid.UUID
+	UserID  uuid.UUID
+}
+
+// Checking in: only someone who confirmed, once (checking in twice keeps
+// the first time).
+func (q *Queries) CheckIn(ctx context.Context, arg CheckInParams) (int64, error) {
+	result, err := q.db.Exec(ctx, checkIn, arg.At, arg.EventID, arg.UserID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const countConfirmed = `-- name: CountConfirmed :one
 select count(*)::int from app.group_members where group_id = $1 and response = 'confirmed'
 `
@@ -52,6 +73,22 @@ func (q *Queries) FinishPastEvents(ctx context.Context, arg FinishPastEventsPara
 		return 0, err
 	}
 	return result.RowsAffected(), nil
+}
+
+const getCheckIn = `-- name: GetCheckIn :one
+select checked_in_at from app.group_members where event_id = $1 and user_id = $2
+`
+
+type GetCheckInParams struct {
+	EventID uuid.UUID
+	UserID  uuid.UUID
+}
+
+func (q *Queries) GetCheckIn(ctx context.Context, arg GetCheckInParams) (pgtype.Timestamptz, error) {
+	row := q.db.QueryRow(ctx, getCheckIn, arg.EventID, arg.UserID)
+	var checked_in_at pgtype.Timestamptz
+	err := row.Scan(&checked_in_at)
+	return checked_in_at, err
 }
 
 const listConfirmedNames = `-- name: ListConfirmedNames :many
@@ -154,7 +191,7 @@ select e.id, e.date, e.block, e.starts_at, e.confirm_by, e.status,
        p.id as plan_id, p.city_id, p.area_id, p.activity_id, p.follow_up_id, p.primary_language,
        p.secondary_language, p.venue_place_id, p.follow_up_venue_place_id, p.route_polyline, p.route_seconds,
        g.id as group_id, g.status as group_status, g.quorum, g.min_attendance, g.venue_place_id as group_venue_place_id,
-       g.meeting_point, m.response,
+       g.meeting_point, m.response, m.checked_in_at,
        (select count(*) from app.group_members c where c.group_id = g.id and c.response = 'confirmed')::int as confirmed
 from app.group_members m
 join app.event_groups g on g.id = m.group_id
@@ -194,6 +231,7 @@ type ListUserEventsRow struct {
 	GroupVenuePlaceID    *string
 	MeetingPoint         []byte
 	Response             string
+	CheckedInAt          pgtype.Timestamptz
 	Confirmed            int32
 }
 
@@ -234,6 +272,7 @@ func (q *Queries) ListUserEvents(ctx context.Context, arg ListUserEventsParams) 
 			&i.GroupVenuePlaceID,
 			&i.MeetingPoint,
 			&i.Response,
+			&i.CheckedInAt,
 			&i.Confirmed,
 		); err != nil {
 			return nil, err
