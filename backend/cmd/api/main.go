@@ -29,6 +29,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/platform/errs"
 	"github.com/shrujancheruku/issho/backend/internal/platform/supabase"
 	"github.com/shrujancheruku/issho/backend/internal/profile"
+	"github.com/shrujancheruku/issho/backend/internal/push"
 	"github.com/shrujancheruku/issho/backend/internal/tagging"
 	"github.com/shrujancheruku/issho/backend/internal/tagging/gemini"
 	"github.com/shrujancheruku/issho/backend/internal/translate"
@@ -123,6 +124,7 @@ func run() error {
 	}
 	mux.Handle(isshov1connect.NewPlanServiceHandler(&plans.Handler{Svc: planSvc}, opts))
 	mux.Handle(isshov1connect.NewEventServiceHandler(&plans.EventHandler{Svc: planSvc}, opts))
+	mux.Handle(isshov1connect.NewPushServiceHandler(&push.Handler{Q: q}, opts))
 	uiCatalog, err := uistrings.Load()
 	if err != nil {
 		return err

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/google/uuid"
@@ -38,6 +39,22 @@ const (
 	Decline                   // invited → declined, until confirm_by
 	Cancel                    // confirmed → dropped, until the event starts
 )
+
+// Notification kinds (app.notifications.kind), sent by SendNotifications.
+const (
+	NotifyInvited   = "event_invited"   // a round you signed up for has a date: please answer
+	NotifyConfirmed = "group_confirmed" // your group is going ahead
+	NotifyCancelled = "group_cancelled" // your group is cancelled
+)
+
+// notify queues a notification for each person, in the caller's
+// transaction (an outbox: nothing is sent for a change that rolls back).
+func notify(ctx context.Context, q *dbgen.Queries, kind string, eventID uuid.UUID, users []uuid.UUID) error {
+	if len(users) == 0 {
+		return nil
+	}
+	return q.InsertNotifications(ctx, dbgen.InsertNotificationsParams{UserIds: users, Kind: kind, EventID: eventID})
+}
 
 // RevealBefore is how long before an event its meeting point is shown to
 // the people going.
@@ -244,7 +261,16 @@ func (s *Service) Respond(ctx context.Context, userID, eventID uuid.UUID, action
 		}
 		switch {
 		case next == Confirmed && m.GroupStatus == GroupInviting && confirmed >= int32(m.Quorum):
-			return q.SetGroupStatus(ctx, dbgen.SetGroupStatusParams{ID: m.GroupID, Status: GroupConfirmed})
+			if err := q.SetGroupStatus(ctx, dbgen.SetGroupStatusParams{ID: m.GroupID, Status: GroupConfirmed}); err != nil {
+				return err
+			}
+			// Everyone who confirmed earlier hears it's on; the person who
+			// just confirmed sees it on screen.
+			users, err := q.ListConfirmedUsers(ctx, m.GroupID)
+			if err != nil {
+				return err
+			}
+			return notify(ctx, q, NotifyConfirmed, eventID, slices.DeleteFunc(users, func(u uuid.UUID) bool { return u == userID }))
 		case next == Dropped && m.GroupStatus == GroupConfirmed && confirmed < int32(m.MinAttendance):
 			if now.Before(m.ConfirmBy.Time) {
 				// Still time for others to answer.
@@ -265,6 +291,9 @@ func cancelGroup(ctx context.Context, q *dbgen.Queries, groupID, planID, eventID
 	}
 	users, err := q.ListConfirmedUsers(ctx, groupID)
 	if err != nil {
+		return err
+	}
+	if err := notify(ctx, q, NotifyCancelled, eventID, users); err != nil {
 		return err
 	}
 	if len(users) > 0 {
@@ -310,7 +339,14 @@ func (r *Runner) Settle(ctx context.Context, cityID string, now time.Time) (Sett
 			}
 			if confirmed >= int32(locked.MinAttendance) {
 				rep.Confirmed++
-				return q.SetGroupStatus(ctx, dbgen.SetGroupStatusParams{ID: g.ID, Status: GroupConfirmed})
+				if err := q.SetGroupStatus(ctx, dbgen.SetGroupStatusParams{ID: g.ID, Status: GroupConfirmed}); err != nil {
+					return err
+				}
+				users, err := q.ListConfirmedUsers(ctx, g.ID)
+				if err != nil {
+					return err
+				}
+				return notify(ctx, q, NotifyConfirmed, locked.EventID, users)
 			}
 			rep.Cancelled++
 			r.Log.Info("group cancelled at its deadline", "city", cityID, "event", locked.EventID, "group", g.ID, "confirmed", confirmed)

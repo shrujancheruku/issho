@@ -10,9 +10,14 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	"github.com/shrujancheruku/issho/backend/internal/plans"
 	"github.com/shrujancheruku/issho/backend/internal/platform/config"
 	"github.com/shrujancheruku/issho/backend/internal/platform/db"
+	"github.com/shrujancheruku/issho/backend/internal/push"
+	"github.com/shrujancheruku/issho/backend/internal/translate"
+	gtranslate "github.com/shrujancheruku/issho/backend/internal/translate/google"
+	"github.com/shrujancheruku/issho/backend/internal/uistrings"
 	"github.com/shrujancheruku/issho/backend/internal/worker"
 )
 
@@ -36,7 +41,23 @@ func run() error {
 		return err
 	}
 	defer pool.Close()
-	client, err := worker.NewClient(pool, slog.Default(), plans.DefaultTiming())
+	translations := &translate.Service{Store: dbgen.New(pool)}
+	if cfg.GoogleTranslateAPIKey != "" {
+		translations.Translator = gtranslate.New(cfg.GoogleTranslateAPIKey)
+	} else {
+		slog.Warn("GOOGLE_TRANSLATE_API_KEY not set: notifications in English only")
+	}
+	catalog, err := uistrings.Load()
+	if err != nil {
+		return err
+	}
+	notifier := &plans.Notifier{
+		Plans:   &plans.Service{DB: pool, Translations: translations},
+		Sender:  push.NewExpo(cfg.ExpoAccessToken),
+		Catalog: catalog,
+		Log:     slog.Default(),
+	}
+	client, err := worker.NewClient(pool, slog.Default(), plans.DefaultTiming(), notifier)
 	if err != nil {
 		return err
 	}

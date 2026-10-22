@@ -57,12 +57,22 @@ type Worker struct {
 	// DatabaseURL must allow LISTEN/NOTIFY (River): a direct or
 	// session-pooler connection, never the transaction pooler.
 	DatabaseURL string
+	// ExpoAccessToken is needed to send push notifications only when the
+	// Expo project enables enhanced push security. Optional.
+	ExpoAccessToken string
+	// GoogleTranslateAPIKey translates notification text and plan titles
+	// into each person's language. Optional: without it they're English.
+	GoogleTranslateAPIKey string
 }
 
 // LoadWorker reads WORKER_DATABASE_URL, falling back to DATABASE_URL (fine
 // locally, where both are the same direct connection).
 func LoadWorker() (Worker, error) {
-	w := Worker{DatabaseURL: getenv("WORKER_DATABASE_URL", os.Getenv("DATABASE_URL"))}
+	w := Worker{
+		DatabaseURL:           getenv("WORKER_DATABASE_URL", os.Getenv("DATABASE_URL")),
+		ExpoAccessToken:       os.Getenv("EXPO_ACCESS_TOKEN"),
+		GoogleTranslateAPIKey: os.Getenv("GOOGLE_TRANSLATE_API_KEY"),
+	}
 	if w.DatabaseURL == "" {
 		return w, fmt.Errorf("WORKER_DATABASE_URL or DATABASE_URL is required")
 	}

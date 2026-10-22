@@ -142,11 +142,30 @@ npx expo export -p web               # static build in dist/ (pnpm export:web)
 ```
 
 - The API only accepts browser origins in its allowlist: start it with `ALLOWED_ORIGINS=http://localhost:8081` (see the backend README).
-- Web-only code lives in `*.web.ts(x)` files, which Metro picks over the native ones: `lib/secure-storage.web.ts` (session in `localStorage`; read its comment before any public release), `i18n/cache.web.ts`, `components/app-tabs.web.tsx`, `hooks/use-color-scheme.web.ts`.
+- Web-only code lives in `*.web.ts(x)` files, which Metro picks over the native ones: `lib/secure-storage.web.ts` (session in `localStorage`; read its comment before any public release), `i18n/cache.web.ts`, `components/app-tabs.web.tsx`, `hooks/use-color-scheme.web.ts`, `lib/push.web.ts` (no push in browsers; `expo-notifications` throws there).
 - `app.json` uses `"web": { "output": "single" }`: one `index.html` for every route, with no server rendering. Server rendering would run app code in Node at build time, where the secure store doesn't exist.
 - **Wide screens:** form-like screens (sign-in, onboarding, profile editing, the language picker) keep their header, content and footer in one centred column at most `FormWidth` (560 px, `constants/theme.ts`) wide; the logo is capped too. Phones are narrower, so this only changes tablets and the web. `global.css` sets `color-scheme` so browser scrollbars follow the theme.
 - **The floating tab bar:** on the web the tab bar sits over the top of the screen, so tab screens add `TopTabInset` (`constants/theme.ts`, 0 on phones) to their top padding. The feed uses `MaxContentWidth` (800 px) rather than `FormWidth`.
 - `Alert.alert` does nothing on web, so confirmation dialogs (account deletion) need a web version before release.
+
+## Push notifications
+
+The server sends notifications through Expo's push service when a plan someone signed up for gets a date, and when their group goes ahead or is cancelled (backend: `app.notifications`, sent by the worker every minute). `lib/push.ts`:
+
+- registers the device's Expo push token with `PushService` when the main app opens, **only if permission was already given**; it asks for permission right after the person signs up for a plan, when notifications are worth having
+- unregisters it on sign-out, before the session ends
+- opens the event when a notification is tapped (`useNotificationTaps`, also for the one that launched the app)
+- does nothing in Expo Go (no remote push on Android since SDK 53), simulators, the web (`lib/push.web.ts`) or without an EAS project id, so the app works the same without push
+
+**One-time setup to make it work (owner; creates accounts and credentials, so not done in the repo):**
+
+1. **EAS project:** `npx eas-cli@latest init` in `apps/mobile`. It adds `owner` and `extra.eas.projectId` to `app.json`; commit that (it's public).
+2. **Android (FCM):** create a Firebase project, add an Android app with package `com.joinissho.app`, download `google-services.json` into `apps/mobile/` and set `"android": { "googleServicesFile": "./google-services.json" }` in `app.json`. Then create an FCM V1 service-account key in Firebase and upload it with `npx eas-cli@latest credentials` (Android → Google Service Account Key for FCM V1). The key is a secret; it lives only in EAS.
+3. **iOS (APNs):** with an Apple Developer account, `npx eas-cli@latest credentials` (iOS → Push Notifications) creates and uploads the APNs key.
+4. **A development build** (push doesn't work in Expo Go): `npx eas-cli@latest build --profile development --platform android` (needs an `eas.json`; `npx eas-cli@latest build:configure` creates one), or locally `npx expo run:android` with the Android SDK.
+5. If the Expo project enables enhanced push security, give the worker `EXPO_ACCESS_TOKEN`.
+
+Test it by signing up for a plan in the development build (allow notifications), then scheduling a round for it: the worker sends the invitation within a minute.
 
 ## Builds & releases
 

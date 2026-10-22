@@ -305,6 +305,9 @@ func SaveEvent(ctx context.Context, pool *pgxpool.Pool, e Event) (uuid.UUID, err
 		if err := q.DeleteSignups(ctx, dbgen.DeleteSignupsParams{PlanID: e.PlanID, UserIds: invited}); err != nil {
 			return err
 		}
+		if err := notify(ctx, q, NotifyInvited, eventID, invited); err != nil {
+			return err
+		}
 		if e.Next == nil {
 			return Close(ctx, q, e.PlanID, ClosedDone, e.Now)
 		}

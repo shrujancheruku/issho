@@ -22,6 +22,7 @@ import { initialTimes, toggle, toSignup, windowDates, type Times } from '@/featu
 import { useProfile } from '@/features/profile/use-profile';
 import { useTheme } from '@/hooks/use-theme';
 import { useI18n } from '@/i18n/i18n-provider';
+import { registerForPush } from '@/lib/push';
 import { slotKey } from '@/lib/slots';
 
 /** One plan: what it is, how it works, and signing up with the times that suit you. */
@@ -159,8 +160,13 @@ export default function PlanScreen() {
                 onPress={() =>
                   signUp.mutate(toSignup(times!, usual), {
                     // Back to the feed, which useSignupActions has refreshed by
-                    // now, so the plan already shows as signed up there.
-                    onSuccess: leave,
+                    // now, so the plan already shows as signed up there. Then
+                    // ask for notifications: this is when they're worth having
+                    // ("we'll tell you when there's a date").
+                    onSuccess: () => {
+                      leave();
+                      void registerForPush({ ask: true });
+                    },
                   })
                 }
               />

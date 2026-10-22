@@ -97,6 +97,22 @@ func (c *Catalog) In(ctx context.Context, tr *translate.Service, lang string) (m
 	return out, complete
 }
 
+// Text returns one string in lang, or its English text when the
+// translation isn't ready or lost a placeholder. For text the server sends
+// itself, such as push notifications.
+func (c *Catalog) Text(ctx context.Context, tr *translate.Service, lang, key string) string {
+	english := c.english[key]
+	if lang == i18n.Authoring || tr == nil || english == "" {
+		return english
+	}
+	raw, _ := json.Marshal(map[string]string{i18n.Authoring: english})
+	got := tr.Resolve(ctx, lang, []translate.Text{{Raw: raw, Context: translateContext}})[0]
+	if got == "" || !samePlaceholders(english, got) {
+		return english
+	}
+	return got
+}
+
 var placeholder = regexp.MustCompile(`\{[a-zA-Z]+\}`)
 
 // samePlaceholders reports whether a translation kept every {placeholder} of
