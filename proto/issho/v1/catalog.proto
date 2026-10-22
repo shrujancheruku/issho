@@ -111,6 +111,10 @@ message Area {
   string id = 1;
   string name = 2;
   string secondary_name = 3;
+  // The area's centre (WGS 84), from the city pack: where the map of plans
+  // puts the area's pin.
+  double lat = 4;
+  double lng = 5;
 }
 
 message ListLanguagesRequest {

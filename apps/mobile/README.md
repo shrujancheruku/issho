@@ -142,7 +142,7 @@ npx expo export -p web               # static build in dist/ (pnpm export:web)
 ```
 
 - The API only accepts browser origins in its allowlist: start it with `ALLOWED_ORIGINS=http://localhost:8081` (see the backend README).
-- Web-only code lives in `*.web.ts(x)` files, which Metro picks over the native ones: `lib/secure-storage.web.ts` (session in `localStorage`; read its comment before any public release), `i18n/cache.web.ts`, `components/app-tabs.web.tsx`, `hooks/use-color-scheme.web.ts`, `lib/push.web.ts` (no push in browsers; `expo-notifications` throws there).
+- Web-only code lives in `*.web.ts(x)` files, which Metro picks over the native ones: `lib/secure-storage.web.ts` (session in `localStorage`; read its comment before any public release), `i18n/cache.web.ts`, `components/app-tabs.web.tsx`, `hooks/use-color-scheme.web.ts`, `lib/push.web.ts` (no push in browsers; `expo-notifications` throws there), `features/plans/plans-map.web.tsx` (Google's web map instead of `react-native-maps`).
 - `app.json` uses `"web": { "output": "single" }`: one `index.html` for every route, with no server rendering. Server rendering would run app code in Node at build time, where the secure store doesn't exist.
 - **Wide screens:** form-like screens (sign-in, onboarding, profile editing, the language picker) keep their header, content and footer in one centred column at most `FormWidth` (560 px, `constants/theme.ts`) wide; the logo is capped too. Phones are narrower, so this only changes tablets and the web. `global.css` sets `color-scheme` so browser scrollbars follow the theme.
 - **The floating tab bar:** on the web the tab bar sits over the top of the screen, so tab screens add `TopTabInset` (`constants/theme.ts`, 0 on phones) to their top padding. The feed uses `MaxContentWidth` (800 px) rather than `FormWidth`.
@@ -175,11 +175,25 @@ The server sends notifications through Expo's push service when a plan someone s
    ```sh
    npx eas-cli@latest build --profile development --platform android
    ```
-   EAS prints a link and QR code to install the APK on the phone. It contains the native code only: the JavaScript still comes from your machine, so start Metro with `pnpm start` (or `npx expo start`) and open the project from the development build instead of Expo Go. Rebuild only when native code changes (a new native package or a config plugin change).
+   EAS prints a link and QR code to install the APK on the phone. The `development` profile builds only `arm64-v8a` (`ORG_GRADLE_PROJECT_reactNativeArchitectures` in `eas.json`), the CPU type of real modern phones: a much smaller APK and a faster compile, but it won't run on an Android emulator on an Intel Mac or an x86 emulator image; remove the variable for that. Expect about 20 minutes on the free plan (queue plus compile); only native changes need a new build. It contains the native code only: the JavaScript still comes from your machine, so start Metro with `pnpm start` (or `npx expo start`) and open the project from the development build instead of Expo Go. Rebuild only when native code changes (a new native package or a config plugin change).
 5. **iOS:** deferred to M9 (needs the paid Apple Developer Program).
 6. **Worker:** `EXPO_ACCESS_TOKEN` only if you turn on *Enhanced security for push notifications* in the Expo project settings.
 
 Test it by signing up for a plan in the development build (allow notifications; the token appears in `app.push_tokens`), then scheduling a round for it: the worker sends the invitation within a minute. To check delivery alone, paste the token into Expo's [push notifications tool](https://expo.dev/notifications).
+
+## Maps
+
+The feed has a **List | Map** toggle. The map shows one pin per area with open plans, coloured by the best plan there (as the feed's labels) and showing how many; tapping a pin lists that area's plans below the map. It's Google Maps everywhere (Google's Places policy: venue data on a map must be on a Google map):
+
+- **Phones:** `react-native-maps` with `PROVIDER_GOOGLE` (`features/plans/plans-map.tsx`). It's native code: a development build made before it was added doesn't have it, so the module is loaded defensively and the map says "not available" instead of crashing the feed. Expo Go includes it.
+- **Web:** Google's `@vis.gl/react-google-maps` (`plans-map.web.tsx`).
+
+**Keys (owner, one-time):** in the Google Cloud project, enable the **Maps SDK for Android** and the **Maps JavaScript API**, then create two keys:
+
+1. **Android key**, restricted to *Android apps*: package `com.joinissho.app` and the SHA-1 of the signing certificate (`npx eas-cli@latest credentials -p android` shows it, per build profile), API restriction *Maps SDK for Android*. Store it as the `GOOGLE_MAPS_ANDROID_API_KEY` EAS variable (`env:set … --visibility plaintext`; it's in the app anyway, the restriction protects it); `app.config.js` passes it to the `react-native-maps` plugin. Then **build a new development build**, since the plugin and native module changed.
+2. **Browser key**, restricted to *websites* (`http://localhost:8081/*` for development, plus the web app's address later), API restriction *Maps JavaScript API*. Put it in `apps/mobile/.env` as `EXPO_PUBLIC_GOOGLE_MAPS_WEB_API_KEY` (public by design). Optionally create a Map ID (Map management) for `EXPO_PUBLIC_GOOGLE_MAPS_WEB_MAP_ID`; without one the web map uses Google's `DEMO_MAP_ID`, fine for development.
+
+iOS (Maps SDK for iOS key) waits for M9 with the rest of iOS. Mobile map loads are free; web map loads are billed after a monthly free allowance.
 
 ## Builds & releases
 

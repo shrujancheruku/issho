@@ -378,6 +378,8 @@ HTTP: POST /issho.v1.ProfileService/&lt;Method&gt;
 | id | [string](#string) |  | e.g. &#34;tokyo-kichijoji&#34;. |
 | name | [string](#string) |  |  |
 | secondary_name | [string](#string) |  |  |
+| lat | [double](#double) |  | The area&#39;s centre (WGS 84), from the city pack: where the map of plans puts the area&#39;s pin. |
+| lng | [double](#double) |  |  |
 
 
 
