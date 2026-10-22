@@ -27,6 +27,9 @@ supabase/.env
 credentials.json
 service-account*.json
 google-services.json
+# Firebase service-account keys (FCM V1 for Expo push). Secrets: upload with
+# `eas credentials`, then delete the file. Never commit.
+*firebase-adminsdk*.json
 GoogleService-Info.plist
 .kamal/secrets*
 !.kamal/secrets.example

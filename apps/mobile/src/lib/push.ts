@@ -35,11 +35,18 @@ function projectId(): string | undefined {
   return Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
 }
 
+/** Why push is skipped, in development builds only (the code never throws, so it would be silent). */
+function devLog(...args: unknown[]) {
+  if (__DEV__) console.log('[push]', ...args);
+}
+
 /** Whether this build can receive remote push at all. */
 function pushCapable() {
   // Expo Go dropped remote push on Android in SDK 53.
   const expoGo = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
-  return Platform.OS !== 'web' && Device.isDevice && !expoGo && !!projectId();
+  const capable = Platform.OS !== 'web' && Device.isDevice && !expoGo && !!projectId();
+  if (!capable) devLog('skipped:', { os: Platform.OS, isDevice: Device.isDevice, expoGo, projectId: projectId() });
+  return capable;
 }
 
 let registered: string | null = null;
@@ -64,7 +71,10 @@ export async function registerForPush({ ask }: { ask: boolean }): Promise<boolea
     }
     let { granted, canAskAgain } = await Notifications.getPermissionsAsync();
     if (!granted && ask && canAskAgain) ({ granted } = await Notifications.requestPermissionsAsync());
-    if (!granted) return false;
+    if (!granted) {
+      devLog('no permission', { ask, canAskAgain });
+      return false;
+    }
     const { data: token } = await Notifications.getExpoPushTokenAsync({ projectId: projectId() });
     if (token === registered) return true;
     await api.push.registerPushToken({
@@ -72,9 +82,11 @@ export async function registerForPush({ ask }: { ask: boolean }): Promise<boolea
       platform: Platform.OS === 'ios' ? PushPlatform.IOS : PushPlatform.ANDROID,
     });
     registered = token;
+    devLog('registered');
     return true;
-  } catch {
+  } catch (e) {
     // Offline, or the token service failed: the next app start tries again.
+    devLog('failed:', e instanceof Error ? e.message : e);
     return false;
   }
 }
