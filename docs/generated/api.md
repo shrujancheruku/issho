@@ -55,13 +55,18 @@
     - [PlanService](#issho-v1-PlanService)
   
 - [issho/v1/events.proto](#issho_v1_events-proto)
+    - [ChatMessage](#issho-v1-ChatMessage)
     - [GetEventRequest](#issho-v1-GetEventRequest)
     - [GetEventResponse](#issho-v1-GetEventResponse)
+    - [ListChatMessagesRequest](#issho-v1-ListChatMessagesRequest)
+    - [ListChatMessagesResponse](#issho-v1-ListChatMessagesResponse)
     - [ListMyEventsRequest](#issho-v1-ListMyEventsRequest)
     - [ListMyEventsResponse](#issho-v1-ListMyEventsResponse)
     - [MyEvent](#issho-v1-MyEvent)
     - [RespondToEventRequest](#issho-v1-RespondToEventRequest)
     - [RespondToEventResponse](#issho-v1-RespondToEventResponse)
+    - [SendChatMessageRequest](#issho-v1-SendChatMessageRequest)
+    - [SendChatMessageResponse](#issho-v1-SendChatMessageResponse)
   
     - [EventAction](#issho-v1-EventAction)
     - [EventStatus](#issho-v1-EventStatus)
@@ -826,6 +831,25 @@ HTTP: POST /issho.v1.PlanService/&lt;Method&gt;
 
 
 
+<a name="issho-v1-ChatMessage"></a>
+
+### ChatMessage
+One message in a group chat.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [int64](#int64) |  |  |
+| name | [string](#string) |  | The sender&#39;s first name (&#34;&#34; for a deleted account). |
+| body | [string](#string) |  |  |
+| at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| mine | [bool](#bool) |  | Sent by the caller. |
+
+
+
+
+
+
 <a name="issho-v1-GetEventRequest"></a>
 
 ### GetEventRequest
@@ -852,6 +876,40 @@ HTTP: POST /issho.v1.PlanService/&lt;Method&gt;
 | event | [MyEvent](#issho-v1-MyEvent) |  |  |
 | steps | [PlanStep](#issho-v1-PlanStep) | repeated | As in GetPlanResponse.steps; the caller&#39;s group may meet at a different venue from the plan&#39;s. |
 | attendees | [string](#string) | repeated | First names of the people confirmed in the caller&#39;s group, including the caller. Empty unless the caller confirmed (no profile browsing). |
+
+
+
+
+
+
+<a name="issho-v1-ListChatMessagesRequest"></a>
+
+### ListChatMessagesRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| event_id | [string](#string) |  |  |
+| after_id | [int64](#int64) |  | 0 = the latest messages. |
+
+
+
+
+
+
+<a name="issho-v1-ListChatMessagesResponse"></a>
+
+### ListChatMessagesResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [ChatMessage](#issho-v1-ChatMessage) | repeated |  |
+| opens_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | When it can be written in; unset when the event has no start time. |
+| closes_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| open | [bool](#bool) |  |  |
 
 
 
@@ -948,6 +1006,37 @@ One event as the caller sees it.
 
 
 
+
+<a name="issho-v1-SendChatMessageRequest"></a>
+
+### SendChatMessageRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| event_id | [string](#string) |  |  |
+| body | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-SendChatMessageResponse"></a>
+
+### SendChatMessageResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| message | [ChatMessage](#issho-v1-ChatMessage) |  |  |
+
+
+
+
+
  
 
 
@@ -1030,6 +1119,8 @@ HTTP: POST /issho.v1.EventService/&lt;Method&gt;
 | ListMyEvents | [ListMyEventsRequest](#issho-v1-ListMyEventsRequest) | [ListMyEventsResponse](#issho-v1-ListMyEventsResponse) | ListMyEvents returns the caller&#39;s events from yesterday on, soonest first, whatever their answer. |
 | GetEvent | [GetEventRequest](#issho-v1-GetEventRequest) | [GetEventResponse](#issho-v1-GetEventResponse) | GetEvent returns one of the caller&#39;s events with its stops and, if the caller confirmed, who else is going. NOT_FOUND unless the caller is invited to it. |
 | RespondToEvent | [RespondToEventRequest](#issho-v1-RespondToEventRequest) | [RespondToEventResponse](#issho-v1-RespondToEventResponse) | RespondToEvent confirms, declines or cancels the caller&#39;s place. FAILED_PRECONDITION when it&#39;s too late, the event is cancelled or over, or the answer doesn&#39;t apply (e.g. cancelling a place not confirmed). |
+| ListChatMessages | [ListChatMessagesRequest](#issho-v1-ListChatMessagesRequest) | [ListChatMessagesResponse](#issho-v1-ListChatMessagesResponse) | ListChatMessages returns the caller&#39;s group chat for an event: the latest messages, or those after after_id. Only for people who confirmed (PERMISSION_DENIED otherwise); empty until it opens 48 hours before the start. New messages also arrive over the WebSocket at GET /ws/chat (see the backend README). |
+| SendChatMessage | [SendChatMessageRequest](#issho-v1-SendChatMessageRequest) | [SendChatMessageResponse](#issho-v1-SendChatMessageResponse) | SendChatMessage posts to the caller&#39;s group chat while it&#39;s open (48 hours before the start until 24 hours after; FAILED_PRECONDITION otherwise). 1–1000 characters. |
 
  
 

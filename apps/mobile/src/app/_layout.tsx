@@ -86,6 +86,7 @@ function RootNavigator() {
         <Stack.Screen name="profile-edit/[step]" />
         <Stack.Screen name="plan/[id]" />
         <Stack.Screen name="event/[id]" />
+        <Stack.Screen name="chat/[id]" />
       </Stack.Protected>
     </Stack>
   );

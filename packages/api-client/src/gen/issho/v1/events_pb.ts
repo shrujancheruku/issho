@@ -16,7 +16,147 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file issho/v1/events.proto.
  */
 export const file_issho_v1_events: GenFile = /*@__PURE__*/
-  fileDesc("ChVpc3Noby92MS9ldmVudHMucHJvdG8SCGlzc2hvLnYxIhUKE0xpc3RNeUV2ZW50c1JlcXVlc3QiOQoUTGlzdE15RXZlbnRzUmVzcG9uc2USIQoGZXZlbnRzGAEgAygLMhEuaXNzaG8udjEuTXlFdmVudCIjCg9HZXRFdmVudFJlcXVlc3QSEAoIZXZlbnRfaWQYASABKAkiagoQR2V0RXZlbnRSZXNwb25zZRIgCgVldmVudBgBIAEoCzIRLmlzc2hvLnYxLk15RXZlbnQSIQoFc3RlcHMYAiADKAsyEi5pc3Noby52MS5QbGFuU3RlcBIRCglhdHRlbmRlZXMYAyADKAkiUAoVUmVzcG9uZFRvRXZlbnRSZXF1ZXN0EhAKCGV2ZW50X2lkGAEgASgJEiUKBmFjdGlvbhgCIAEoDjIVLmlzc2hvLnYxLkV2ZW50QWN0aW9uIjoKFlJlc3BvbmRUb0V2ZW50UmVzcG9uc2USIAoFZXZlbnQYASABKAsyES5pc3Noby52MS5NeUV2ZW50ItsECgdNeUV2ZW50EgoKAmlkGAEgASgJEg8KB3BsYW5faWQYAiABKAkSDQoFdGl0bGUYAyABKAkSFwoPc2Vjb25kYXJ5X3RpdGxlGAQgASgJEhMKC2FjdGl2aXR5X2lkGAUgASgJEh0KFWZvbGxvd191cF9hY3Rpdml0eV9pZBgGIAEoCRIPCgdhcmVhX2lkGAcgASgJEhgKEHByaW1hcnlfbGFuZ3VhZ2UYCCABKAkSGgoSc2Vjb25kYXJ5X2xhbmd1YWdlGAkgASgJEgwKBGRhdGUYCiABKAkSIgoFYmxvY2sYCyABKA4yEy5pc3Noby52MS5UaW1lQmxvY2sSLQoJc3RhcnRzX2F0GAwgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIuCgpjb25maXJtX2J5GA0gASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIlCgZzdGF0dXMYDiABKA4yFS5pc3Noby52MS5FdmVudFN0YXR1cxIrCgxncm91cF9zdGF0dXMYDyABKA4yFS5pc3Noby52MS5Hcm91cFN0YXR1cxIqCghyZXNwb25zZRgQIAEoDjIYLmlzc2hvLnYxLkludml0ZVJlc3BvbnNlEhEKCWNvbmZpcm1lZBgRIAEoBRIOCgZxdW9ydW0YEiABKAUSFgoObWluX2F0dGVuZGFuY2UYEyABKAUSFQoNbWVldGluZ19wb2ludBgUIAEoCRItCglyZXZlYWxfYXQYFSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wKngKC0V2ZW50QWN0aW9uEhwKGEVWRU5UX0FDVElPTl9VTlNQRUNJRklFRBAAEhgKFEVWRU5UX0FDVElPTl9DT05GSVJNEAESGAoURVZFTlRfQUNUSU9OX0RFQ0xJTkUQAhIXChNFVkVOVF9BQ1RJT05fQ0FOQ0VMEAMqegoLRXZlbnRTdGF0dXMSHAoYRVZFTlRfU1RBVFVTX1VOU1BFQ0lGSUVEEAASGgoWRVZFTlRfU1RBVFVTX1NDSEVEVUxFRBABEhUKEUVWRU5UX1NUQVRVU19ET05FEAISGgoWRVZFTlRfU1RBVFVTX0NBTkNFTExFRBADKn4KC0dyb3VwU3RhdHVzEhwKGEdST1VQX1NUQVRVU19VTlNQRUNJRklFRBAAEhkKFUdST1VQX1NUQVRVU19JTlZJVElORxABEhoKFkdST1VQX1NUQVRVU19DT05GSVJNRUQQAhIaChZHUk9VUF9TVEFUVVNfQ0FOQ0VMTEVEEAMqqAEKDkludml0ZVJlc3BvbnNlEh8KG0lOVklURV9SRVNQT05TRV9VTlNQRUNJRklFRBAAEhsKF0lOVklURV9SRVNQT05TRV9JTlZJVEVEEAESHQoZSU5WSVRFX1JFU1BPTlNFX0NPTkZJUk1FRBACEhwKGElOVklURV9SRVNQT05TRV9ERUNMSU5FRBADEhsKF0lOVklURV9SRVNQT05TRV9EUk9QUEVEEAQy+wEKDEV2ZW50U2VydmljZRJPCgxMaXN0TXlFdmVudHMSHS5pc3Noby52MS5MaXN0TXlFdmVudHNSZXF1ZXN0Gh4uaXNzaG8udjEuTGlzdE15RXZlbnRzUmVzcG9uc2UiABJDCghHZXRFdmVudBIZLmlzc2hvLnYxLkdldEV2ZW50UmVxdWVzdBoaLmlzc2hvLnYxLkdldEV2ZW50UmVzcG9uc2UiABJVCg5SZXNwb25kVG9FdmVudBIfLmlzc2hvLnYxLlJlc3BvbmRUb0V2ZW50UmVxdWVzdBogLmlzc2hvLnYxLlJlc3BvbmRUb0V2ZW50UmVzcG9uc2UiAEI+WjxnaXRodWIuY29tL3NocnVqYW5jaGVydWt1L2lzc2hvL2JhY2tlbmQvZ2VuL2lzc2hvL3YxO2lzc2hvdjFiBnByb3RvMw", [file_google_protobuf_timestamp, file_issho_v1_plans, file_issho_v1_profile]);
+  fileDesc("ChVpc3Noby92MS9ldmVudHMucHJvdG8SCGlzc2hvLnYxIj0KF0xpc3RDaGF0TWVzc2FnZXNSZXF1ZXN0EhAKCGV2ZW50X2lkGAEgASgJEhAKCGFmdGVyX2lkGAIgASgDIq4BChhMaXN0Q2hhdE1lc3NhZ2VzUmVzcG9uc2USJwoIbWVzc2FnZXMYASADKAsyFS5pc3Noby52MS5DaGF0TWVzc2FnZRIsCghvcGVuc19hdBgCIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLQoJY2xvc2VzX2F0GAMgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIMCgRvcGVuGAQgASgIIjgKFlNlbmRDaGF0TWVzc2FnZVJlcXVlc3QSEAoIZXZlbnRfaWQYASABKAkSDAoEYm9keRgCIAEoCSJBChdTZW5kQ2hhdE1lc3NhZ2VSZXNwb25zZRImCgdtZXNzYWdlGAEgASgLMhUuaXNzaG8udjEuQ2hhdE1lc3NhZ2UiawoLQ2hhdE1lc3NhZ2USCgoCaWQYASABKAMSDAoEbmFtZRgCIAEoCRIMCgRib2R5GAMgASgJEiYKAmF0GAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIMCgRtaW5lGAUgASgIIhUKE0xpc3RNeUV2ZW50c1JlcXVlc3QiOQoUTGlzdE15RXZlbnRzUmVzcG9uc2USIQoGZXZlbnRzGAEgAygLMhEuaXNzaG8udjEuTXlFdmVudCIjCg9HZXRFdmVudFJlcXVlc3QSEAoIZXZlbnRfaWQYASABKAkiagoQR2V0RXZlbnRSZXNwb25zZRIgCgVldmVudBgBIAEoCzIRLmlzc2hvLnYxLk15RXZlbnQSIQoFc3RlcHMYAiADKAsyEi5pc3Noby52MS5QbGFuU3RlcBIRCglhdHRlbmRlZXMYAyADKAkiUAoVUmVzcG9uZFRvRXZlbnRSZXF1ZXN0EhAKCGV2ZW50X2lkGAEgASgJEiUKBmFjdGlvbhgCIAEoDjIVLmlzc2hvLnYxLkV2ZW50QWN0aW9uIjoKFlJlc3BvbmRUb0V2ZW50UmVzcG9uc2USIAoFZXZlbnQYASABKAsyES5pc3Noby52MS5NeUV2ZW50ItsECgdNeUV2ZW50EgoKAmlkGAEgASgJEg8KB3BsYW5faWQYAiABKAkSDQoFdGl0bGUYAyABKAkSFwoPc2Vjb25kYXJ5X3RpdGxlGAQgASgJEhMKC2FjdGl2aXR5X2lkGAUgASgJEh0KFWZvbGxvd191cF9hY3Rpdml0eV9pZBgGIAEoCRIPCgdhcmVhX2lkGAcgASgJEhgKEHByaW1hcnlfbGFuZ3VhZ2UYCCABKAkSGgoSc2Vjb25kYXJ5X2xhbmd1YWdlGAkgASgJEgwKBGRhdGUYCiABKAkSIgoFYmxvY2sYCyABKA4yEy5pc3Noby52MS5UaW1lQmxvY2sSLQoJc3RhcnRzX2F0GAwgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIuCgpjb25maXJtX2J5GA0gASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIlCgZzdGF0dXMYDiABKA4yFS5pc3Noby52MS5FdmVudFN0YXR1cxIrCgxncm91cF9zdGF0dXMYDyABKA4yFS5pc3Noby52MS5Hcm91cFN0YXR1cxIqCghyZXNwb25zZRgQIAEoDjIYLmlzc2hvLnYxLkludml0ZVJlc3BvbnNlEhEKCWNvbmZpcm1lZBgRIAEoBRIOCgZxdW9ydW0YEiABKAUSFgoObWluX2F0dGVuZGFuY2UYEyABKAUSFQoNbWVldGluZ19wb2ludBgUIAEoCRItCglyZXZlYWxfYXQYFSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wKngKC0V2ZW50QWN0aW9uEhwKGEVWRU5UX0FDVElPTl9VTlNQRUNJRklFRBAAEhgKFEVWRU5UX0FDVElPTl9DT05GSVJNEAESGAoURVZFTlRfQUNUSU9OX0RFQ0xJTkUQAhIXChNFVkVOVF9BQ1RJT05fQ0FOQ0VMEAMqegoLRXZlbnRTdGF0dXMSHAoYRVZFTlRfU1RBVFVTX1VOU1BFQ0lGSUVEEAASGgoWRVZFTlRfU1RBVFVTX1NDSEVEVUxFRBABEhUKEUVWRU5UX1NUQVRVU19ET05FEAISGgoWRVZFTlRfU1RBVFVTX0NBTkNFTExFRBADKn4KC0dyb3VwU3RhdHVzEhwKGEdST1VQX1NUQVRVU19VTlNQRUNJRklFRBAAEhkKFUdST1VQX1NUQVRVU19JTlZJVElORxABEhoKFkdST1VQX1NUQVRVU19DT05GSVJNRUQQAhIaChZHUk9VUF9TVEFUVVNfQ0FOQ0VMTEVEEAMqqAEKDkludml0ZVJlc3BvbnNlEh8KG0lOVklURV9SRVNQT05TRV9VTlNQRUNJRklFRBAAEhsKF0lOVklURV9SRVNQT05TRV9JTlZJVEVEEAESHQoZSU5WSVRFX1JFU1BPTlNFX0NPTkZJUk1FRBACEhwKGElOVklURV9SRVNQT05TRV9ERUNMSU5FRBADEhsKF0lOVklURV9SRVNQT05TRV9EUk9QUEVEEAQysgMKDEV2ZW50U2VydmljZRJPCgxMaXN0TXlFdmVudHMSHS5pc3Noby52MS5MaXN0TXlFdmVudHNSZXF1ZXN0Gh4uaXNzaG8udjEuTGlzdE15RXZlbnRzUmVzcG9uc2UiABJDCghHZXRFdmVudBIZLmlzc2hvLnYxLkdldEV2ZW50UmVxdWVzdBoaLmlzc2hvLnYxLkdldEV2ZW50UmVzcG9uc2UiABJVCg5SZXNwb25kVG9FdmVudBIfLmlzc2hvLnYxLlJlc3BvbmRUb0V2ZW50UmVxdWVzdBogLmlzc2hvLnYxLlJlc3BvbmRUb0V2ZW50UmVzcG9uc2UiABJbChBMaXN0Q2hhdE1lc3NhZ2VzEiEuaXNzaG8udjEuTGlzdENoYXRNZXNzYWdlc1JlcXVlc3QaIi5pc3Noby52MS5MaXN0Q2hhdE1lc3NhZ2VzUmVzcG9uc2UiABJYCg9TZW5kQ2hhdE1lc3NhZ2USIC5pc3Noby52MS5TZW5kQ2hhdE1lc3NhZ2VSZXF1ZXN0GiEuaXNzaG8udjEuU2VuZENoYXRNZXNzYWdlUmVzcG9uc2UiAEI+WjxnaXRodWIuY29tL3NocnVqYW5jaGVydWt1L2lzc2hvL2JhY2tlbmQvZ2VuL2lzc2hvL3YxO2lzc2hvdjFiBnByb3RvMw", [file_google_protobuf_timestamp, file_issho_v1_plans, file_issho_v1_profile]);
+
+/**
+ * @generated from message issho.v1.ListChatMessagesRequest
+ */
+export type ListChatMessagesRequest = Message<"issho.v1.ListChatMessagesRequest"> & {
+  /**
+   * @generated from field: string event_id = 1;
+   */
+  eventId: string;
+
+  /**
+   * 0 = the latest messages.
+   *
+   * @generated from field: int64 after_id = 2;
+   */
+  afterId: bigint;
+};
+
+/**
+ * Describes the message issho.v1.ListChatMessagesRequest.
+ * Use `create(ListChatMessagesRequestSchema)` to create a new message.
+ */
+export const ListChatMessagesRequestSchema: GenMessage<ListChatMessagesRequest> = /*@__PURE__*/
+  messageDesc(file_issho_v1_events, 0);
+
+/**
+ * @generated from message issho.v1.ListChatMessagesResponse
+ */
+export type ListChatMessagesResponse = Message<"issho.v1.ListChatMessagesResponse"> & {
+  /**
+   * @generated from field: repeated issho.v1.ChatMessage messages = 1;
+   */
+  messages: ChatMessage[];
+
+  /**
+   * When it can be written in; unset when the event has no start time.
+   *
+   * @generated from field: google.protobuf.Timestamp opens_at = 2;
+   */
+  opensAt?: Timestamp | undefined;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp closes_at = 3;
+   */
+  closesAt?: Timestamp | undefined;
+
+  /**
+   * @generated from field: bool open = 4;
+   */
+  open: boolean;
+};
+
+/**
+ * Describes the message issho.v1.ListChatMessagesResponse.
+ * Use `create(ListChatMessagesResponseSchema)` to create a new message.
+ */
+export const ListChatMessagesResponseSchema: GenMessage<ListChatMessagesResponse> = /*@__PURE__*/
+  messageDesc(file_issho_v1_events, 1);
+
+/**
+ * @generated from message issho.v1.SendChatMessageRequest
+ */
+export type SendChatMessageRequest = Message<"issho.v1.SendChatMessageRequest"> & {
+  /**
+   * @generated from field: string event_id = 1;
+   */
+  eventId: string;
+
+  /**
+   * @generated from field: string body = 2;
+   */
+  body: string;
+};
+
+/**
+ * Describes the message issho.v1.SendChatMessageRequest.
+ * Use `create(SendChatMessageRequestSchema)` to create a new message.
+ */
+export const SendChatMessageRequestSchema: GenMessage<SendChatMessageRequest> = /*@__PURE__*/
+  messageDesc(file_issho_v1_events, 2);
+
+/**
+ * @generated from message issho.v1.SendChatMessageResponse
+ */
+export type SendChatMessageResponse = Message<"issho.v1.SendChatMessageResponse"> & {
+  /**
+   * @generated from field: issho.v1.ChatMessage message = 1;
+   */
+  message?: ChatMessage | undefined;
+};
+
+/**
+ * Describes the message issho.v1.SendChatMessageResponse.
+ * Use `create(SendChatMessageResponseSchema)` to create a new message.
+ */
+export const SendChatMessageResponseSchema: GenMessage<SendChatMessageResponse> = /*@__PURE__*/
+  messageDesc(file_issho_v1_events, 3);
+
+/**
+ * One message in a group chat.
+ *
+ * @generated from message issho.v1.ChatMessage
+ */
+export type ChatMessage = Message<"issho.v1.ChatMessage"> & {
+  /**
+   * @generated from field: int64 id = 1;
+   */
+  id: bigint;
+
+  /**
+   * The sender's first name ("" for a deleted account).
+   *
+   * @generated from field: string name = 2;
+   */
+  name: string;
+
+  /**
+   * @generated from field: string body = 3;
+   */
+  body: string;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp at = 4;
+   */
+  at?: Timestamp | undefined;
+
+  /**
+   * Sent by the caller.
+   *
+   * @generated from field: bool mine = 5;
+   */
+  mine: boolean;
+};
+
+/**
+ * Describes the message issho.v1.ChatMessage.
+ * Use `create(ChatMessageSchema)` to create a new message.
+ */
+export const ChatMessageSchema: GenMessage<ChatMessage> = /*@__PURE__*/
+  messageDesc(file_issho_v1_events, 4);
 
 /**
  * @generated from message issho.v1.ListMyEventsRequest
@@ -29,7 +169,7 @@ export type ListMyEventsRequest = Message<"issho.v1.ListMyEventsRequest"> & {
  * Use `create(ListMyEventsRequestSchema)` to create a new message.
  */
 export const ListMyEventsRequestSchema: GenMessage<ListMyEventsRequest> = /*@__PURE__*/
-  messageDesc(file_issho_v1_events, 0);
+  messageDesc(file_issho_v1_events, 5);
 
 /**
  * @generated from message issho.v1.ListMyEventsResponse
@@ -46,7 +186,7 @@ export type ListMyEventsResponse = Message<"issho.v1.ListMyEventsResponse"> & {
  * Use `create(ListMyEventsResponseSchema)` to create a new message.
  */
 export const ListMyEventsResponseSchema: GenMessage<ListMyEventsResponse> = /*@__PURE__*/
-  messageDesc(file_issho_v1_events, 1);
+  messageDesc(file_issho_v1_events, 6);
 
 /**
  * @generated from message issho.v1.GetEventRequest
@@ -63,7 +203,7 @@ export type GetEventRequest = Message<"issho.v1.GetEventRequest"> & {
  * Use `create(GetEventRequestSchema)` to create a new message.
  */
 export const GetEventRequestSchema: GenMessage<GetEventRequest> = /*@__PURE__*/
-  messageDesc(file_issho_v1_events, 2);
+  messageDesc(file_issho_v1_events, 7);
 
 /**
  * @generated from message issho.v1.GetEventResponse
@@ -96,7 +236,7 @@ export type GetEventResponse = Message<"issho.v1.GetEventResponse"> & {
  * Use `create(GetEventResponseSchema)` to create a new message.
  */
 export const GetEventResponseSchema: GenMessage<GetEventResponse> = /*@__PURE__*/
-  messageDesc(file_issho_v1_events, 3);
+  messageDesc(file_issho_v1_events, 8);
 
 /**
  * @generated from message issho.v1.RespondToEventRequest
@@ -118,7 +258,7 @@ export type RespondToEventRequest = Message<"issho.v1.RespondToEventRequest"> & 
  * Use `create(RespondToEventRequestSchema)` to create a new message.
  */
 export const RespondToEventRequestSchema: GenMessage<RespondToEventRequest> = /*@__PURE__*/
-  messageDesc(file_issho_v1_events, 4);
+  messageDesc(file_issho_v1_events, 9);
 
 /**
  * @generated from message issho.v1.RespondToEventResponse
@@ -135,7 +275,7 @@ export type RespondToEventResponse = Message<"issho.v1.RespondToEventResponse"> 
  * Use `create(RespondToEventResponseSchema)` to create a new message.
  */
 export const RespondToEventResponseSchema: GenMessage<RespondToEventResponse> = /*@__PURE__*/
-  messageDesc(file_issho_v1_events, 5);
+  messageDesc(file_issho_v1_events, 10);
 
 /**
  * One event as the caller sees it.
@@ -273,7 +413,7 @@ export type MyEvent = Message<"issho.v1.MyEvent"> & {
  * Use `create(MyEventSchema)` to create a new message.
  */
 export const MyEventSchema: GenMessage<MyEvent> = /*@__PURE__*/
-  messageDesc(file_issho_v1_events, 6);
+  messageDesc(file_issho_v1_events, 11);
 
 /**
  * @generated from enum issho.v1.EventAction
@@ -464,6 +604,32 @@ export const EventService: GenService<{
     methodKind: "unary";
     input: typeof RespondToEventRequestSchema;
     output: typeof RespondToEventResponseSchema;
+  },
+  /**
+   * ListChatMessages returns the caller's group chat for an event: the
+   * latest messages, or those after after_id. Only for people who
+   * confirmed (PERMISSION_DENIED otherwise); empty until it opens 48 hours
+   * before the start. New messages also arrive over the WebSocket at
+   * GET /ws/chat (see the backend README).
+   *
+   * @generated from rpc issho.v1.EventService.ListChatMessages
+   */
+  listChatMessages: {
+    methodKind: "unary";
+    input: typeof ListChatMessagesRequestSchema;
+    output: typeof ListChatMessagesResponseSchema;
+  },
+  /**
+   * SendChatMessage posts to the caller's group chat while it's open (48
+   * hours before the start until 24 hours after; FAILED_PRECONDITION
+   * otherwise). 1–1000 characters.
+   *
+   * @generated from rpc issho.v1.EventService.SendChatMessage
+   */
+  sendChatMessage: {
+    methodKind: "unary";
+    input: typeof SendChatMessageRequestSchema;
+    output: typeof SendChatMessageResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_issho_v1_events, 0);
