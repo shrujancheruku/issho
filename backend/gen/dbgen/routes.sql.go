@@ -14,12 +14,17 @@ import (
 
 const clearStaleRoutes = `-- name: ClearStaleRoutes :execrows
 update app.plans set route_polyline = null, route_seconds = null, route_computed_at = null
-where route_computed_at < $1
+where city_id = $1 and route_computed_at < $2
 `
 
-// Routes past the Maps caching limit, whatever the plan's state.
-func (q *Queries) ClearStaleRoutes(ctx context.Context, cutoff pgtype.Timestamptz) (int64, error) {
-	result, err := q.db.Exec(ctx, clearStaleRoutes, cutoff)
+type ClearStaleRoutesParams struct {
+	CityID string
+	Cutoff pgtype.Timestamptz
+}
+
+// A city's routes past the Maps caching limit, whatever the plan's state.
+func (q *Queries) ClearStaleRoutes(ctx context.Context, arg ClearStaleRoutesParams) (int64, error) {
+	result, err := q.db.Exec(ctx, clearStaleRoutes, arg.CityID, arg.Cutoff)
 	if err != nil {
 		return 0, err
 	}

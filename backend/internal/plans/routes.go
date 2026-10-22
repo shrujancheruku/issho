@@ -39,13 +39,13 @@ func routeFrom(polyline *string, seconds *int32) *Route {
 func (r *Route) Minutes() int { return max(1, int(math.Ceil(float64(r.Seconds)/60))) }
 
 // RefreshRoutes keeps a city's plan routes within the Maps caching terms:
-// it clears every route older than RouteMaxAge, then (with a finder)
+// it clears the city's routes older than RouteMaxAge, then (with a finder)
 // computes routes that are missing or older than RouteRefreshAge for plans
 // still open or with an event to come. One failed route doesn't stop the
 // others.
 func (r *Runner) RefreshRoutes(ctx context.Context, cityID string, now time.Time) (computed, cleared int, err error) {
 	q := dbgen.New(r.DB)
-	n, err := q.ClearStaleRoutes(ctx, pgtype.Timestamptz{Time: now.Add(-RouteMaxAge), Valid: true})
+	n, err := q.ClearStaleRoutes(ctx, dbgen.ClearStaleRoutesParams{CityID: cityID, Cutoff: pgtype.Timestamptz{Time: now.Add(-RouteMaxAge), Valid: true}})
 	if err != nil {
 		return 0, 0, err
 	}

@@ -13,7 +13,7 @@ where p.city_id = @city_id and p.venue_place_id is not null and p.follow_up_venu
 order by p.route_computed_at nulls first, p.id
 limit @max;
 
--- Routes past the Maps caching limit, whatever the plan's state.
+-- A city's routes past the Maps caching limit, whatever the plan's state.
 -- name: ClearStaleRoutes :execrows
 update app.plans set route_polyline = null, route_seconds = null, route_computed_at = null
-where route_computed_at < @cutoff;
+where city_id = @city_id and route_computed_at < @cutoff;
