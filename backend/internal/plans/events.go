@@ -89,6 +89,7 @@ type EventItem struct {
 	matching.Plan
 	Venue, FollowUpVenue  string
 	Route                 *Route // the plan's; nil when a group meets elsewhere
+	MeetingPlace          string // a walk's meeting place (Google place id), or ""
 	Title, SecondaryTitle string
 	Date                  time.Time // local date in the city, as midnight UTC
 	Block                 matching.Block
@@ -175,7 +176,7 @@ func (s *Service) Event(ctx context.Context, userID, eventID uuid.UUID, now time
 			continue
 		}
 		it.reveal(caller, now)
-		steps := s.steps(ctx, it.Plan, it.Venue, it.FollowUpVenue, it.Route, caller)
+		steps := s.steps(ctx, it.Plan, it.Venue, it.FollowUpVenue, it.MeetingPlace, it.Route, caller)
 		var names []string
 		// Only people who are going see who else is (no profile browsing).
 		if it.Response == Confirmed {
@@ -196,8 +197,8 @@ func eventFromRow(r dbgen.ListUserEventsRow) EventItem {
 			FollowUp: matching.ActivityID(deref(r.FollowUpID)), Primary: r.PrimaryLanguage, Secondary: deref(r.SecondaryLanguage),
 		},
 		Venue: deref(r.VenuePlaceID), FollowUpVenue: deref(r.FollowUpVenuePlaceID),
-		Route: routeFrom(r.RoutePolyline, r.RouteSeconds),
-		Date:  r.Date.Time, Block: matching.Block(r.Block),
+		Route: routeFrom(r.RoutePolyline, r.RouteSeconds), MeetingPlace: deref(r.MeetingPlaceID),
+		Date: r.Date.Time, Block: matching.Block(r.Block),
 		StartsAt: r.StartsAt.Time, ConfirmBy: r.ConfirmBy.Time,
 		Status: r.Status, GroupStatus: r.GroupStatus, Response: r.Response,
 		Confirmed: int(r.Confirmed), Quorum: int(r.Quorum), MinAttendance: int(r.MinAttendance),

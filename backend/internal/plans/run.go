@@ -123,6 +123,9 @@ type Runner struct {
 	// Routes finds the walk between a plan's venues; nil leaves plans
 	// without routes (no Maps key).
 	Routes maps.RouteFinder
+	// Places finds meeting places for plans that start without a venue;
+	// nil leaves them without (no Maps key).
+	Places maps.PlaceSearcher
 }
 
 // When venues must be open, from an event's start. Activities have no

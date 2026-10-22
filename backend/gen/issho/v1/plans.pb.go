@@ -306,8 +306,11 @@ type PlanStep struct {
 	WalkMinutes int32 `protobuf:"varint,6,opt,name=walk_minutes,json=walkMinutes,proto3" json:"walk_minutes,omitempty"`
 	// The venue's location (WGS 84), live from Google like its name, for the
 	// plan's map; both 0 when there's no venue.
-	Lat           float64 `protobuf:"fixed64,7,opt,name=lat,proto3" json:"lat,omitempty"`
-	Lng           float64 `protobuf:"fixed64,8,opt,name=lng,proto3" json:"lng,omitempty"`
+	Lat float64 `protobuf:"fixed64,7,opt,name=lat,proto3" json:"lat,omitempty"`
+	Lng float64 `protobuf:"fixed64,8,opt,name=lng,proto3" json:"lng,omitempty"`
+	// The meeting point rather than an activity (activity_id ""): where a
+	// walk starts when its first activity has no venue.
+	Meeting       bool `protobuf:"varint,9,opt,name=meeting,proto3" json:"meeting,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -396,6 +399,13 @@ func (x *PlanStep) GetLng() float64 {
 		return x.Lng
 	}
 	return 0
+}
+
+func (x *PlanStep) GetMeeting() bool {
+	if x != nil {
+		return x.Meeting
+	}
+	return false
 }
 
 type SignUpRequest struct {
@@ -872,7 +882,7 @@ const file_issho_v1_plans_proto_rawDesc = "" +
 	"\x04plan\x18\x01 \x01(\v2\x12.issho.v1.FeedPlanR\x04plan\x12(\n" +
 	"\x06signup\x18\x02 \x01(\v2\x10.issho.v1.SignupR\x06signup\x12(\n" +
 	"\x05steps\x18\x03 \x03(\v2\x12.issho.v1.PlanStepR\x05steps\x12%\n" +
-	"\x0eroute_polyline\x18\x04 \x01(\tR\rroutePolyline\"\x8e\x02\n" +
+	"\x0eroute_polyline\x18\x04 \x01(\tR\rroutePolyline\"\xa8\x02\n" +
 	"\bPlanStep\x12\x1f\n" +
 	"\vactivity_id\x18\x01 \x01(\tR\n" +
 	"activityId\x12\x1d\n" +
@@ -883,7 +893,8 @@ const file_issho_v1_plans_proto_rawDesc = "" +
 	"\x0evenue_maps_url\x18\x05 \x01(\tR\fvenueMapsUrl\x12!\n" +
 	"\fwalk_minutes\x18\x06 \x01(\x05R\vwalkMinutes\x12\x10\n" +
 	"\x03lat\x18\a \x01(\x01R\x03lat\x12\x10\n" +
-	"\x03lng\x18\b \x01(\x01R\x03lng\"R\n" +
+	"\x03lng\x18\b \x01(\x01R\x03lng\x12\x18\n" +
+	"\ameeting\x18\t \x01(\bR\ameeting\"R\n" +
 	"\rSignUpRequest\x12\x17\n" +
 	"\aplan_id\x18\x01 \x01(\tR\x06planId\x12(\n" +
 	"\x06signup\x18\x02 \x01(\v2\x10.issho.v1.SignupR\x06signup\"8\n" +
