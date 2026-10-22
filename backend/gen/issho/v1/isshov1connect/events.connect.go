@@ -47,6 +47,8 @@ const (
 	// EventServiceSendChatMessageProcedure is the fully-qualified name of the EventService's
 	// SendChatMessage RPC.
 	EventServiceSendChatMessageProcedure = "/issho.v1.EventService/SendChatMessage"
+	// EventServiceCheckInProcedure is the fully-qualified name of the EventService's CheckIn RPC.
+	EventServiceCheckInProcedure = "/issho.v1.EventService/CheckIn"
 )
 
 // EventServiceClient is a client for the issho.v1.EventService service.
@@ -72,6 +74,10 @@ type EventServiceClient interface {
 	// hours before the start until 24 hours after; FAILED_PRECONDITION
 	// otherwise). 1–1000 characters.
 	SendChatMessage(context.Context, *connect.Request[v1.SendChatMessageRequest]) (*connect.Response[v1.SendChatMessageResponse], error)
+	// CheckIn records that the caller has arrived: only people who confirmed
+	// (PERMISSION_DENIED otherwise), from 30 minutes before the start until 3
+	// hours after (FAILED_PRECONDITION otherwise). Checking in again is fine.
+	CheckIn(context.Context, *connect.Request[v1.CheckInRequest]) (*connect.Response[v1.CheckInResponse], error)
 }
 
 // NewEventServiceClient constructs a client for the issho.v1.EventService service. By default, it
@@ -115,6 +121,12 @@ func NewEventServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 			connect.WithSchema(eventServiceMethods.ByName("SendChatMessage")),
 			connect.WithClientOptions(opts...),
 		),
+		checkIn: connect.NewClient[v1.CheckInRequest, v1.CheckInResponse](
+			httpClient,
+			baseURL+EventServiceCheckInProcedure,
+			connect.WithSchema(eventServiceMethods.ByName("CheckIn")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -125,6 +137,7 @@ type eventServiceClient struct {
 	respondToEvent   *connect.Client[v1.RespondToEventRequest, v1.RespondToEventResponse]
 	listChatMessages *connect.Client[v1.ListChatMessagesRequest, v1.ListChatMessagesResponse]
 	sendChatMessage  *connect.Client[v1.SendChatMessageRequest, v1.SendChatMessageResponse]
+	checkIn          *connect.Client[v1.CheckInRequest, v1.CheckInResponse]
 }
 
 // ListMyEvents calls issho.v1.EventService.ListMyEvents.
@@ -152,6 +165,11 @@ func (c *eventServiceClient) SendChatMessage(ctx context.Context, req *connect.R
 	return c.sendChatMessage.CallUnary(ctx, req)
 }
 
+// CheckIn calls issho.v1.EventService.CheckIn.
+func (c *eventServiceClient) CheckIn(ctx context.Context, req *connect.Request[v1.CheckInRequest]) (*connect.Response[v1.CheckInResponse], error) {
+	return c.checkIn.CallUnary(ctx, req)
+}
+
 // EventServiceHandler is an implementation of the issho.v1.EventService service.
 type EventServiceHandler interface {
 	// ListMyEvents returns the caller's events from yesterday on, soonest
@@ -175,6 +193,10 @@ type EventServiceHandler interface {
 	// hours before the start until 24 hours after; FAILED_PRECONDITION
 	// otherwise). 1–1000 characters.
 	SendChatMessage(context.Context, *connect.Request[v1.SendChatMessageRequest]) (*connect.Response[v1.SendChatMessageResponse], error)
+	// CheckIn records that the caller has arrived: only people who confirmed
+	// (PERMISSION_DENIED otherwise), from 30 minutes before the start until 3
+	// hours after (FAILED_PRECONDITION otherwise). Checking in again is fine.
+	CheckIn(context.Context, *connect.Request[v1.CheckInRequest]) (*connect.Response[v1.CheckInResponse], error)
 }
 
 // NewEventServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -214,6 +236,12 @@ func NewEventServiceHandler(svc EventServiceHandler, opts ...connect.HandlerOpti
 		connect.WithSchema(eventServiceMethods.ByName("SendChatMessage")),
 		connect.WithHandlerOptions(opts...),
 	)
+	eventServiceCheckInHandler := connect.NewUnaryHandler(
+		EventServiceCheckInProcedure,
+		svc.CheckIn,
+		connect.WithSchema(eventServiceMethods.ByName("CheckIn")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/issho.v1.EventService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case EventServiceListMyEventsProcedure:
@@ -226,6 +254,8 @@ func NewEventServiceHandler(svc EventServiceHandler, opts ...connect.HandlerOpti
 			eventServiceListChatMessagesHandler.ServeHTTP(w, r)
 		case EventServiceSendChatMessageProcedure:
 			eventServiceSendChatMessageHandler.ServeHTTP(w, r)
+		case EventServiceCheckInProcedure:
+			eventServiceCheckInHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -253,4 +283,8 @@ func (UnimplementedEventServiceHandler) ListChatMessages(context.Context, *conne
 
 func (UnimplementedEventServiceHandler) SendChatMessage(context.Context, *connect.Request[v1.SendChatMessageRequest]) (*connect.Response[v1.SendChatMessageResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.EventService.SendChatMessage is not implemented"))
+}
+
+func (UnimplementedEventServiceHandler) CheckIn(context.Context, *connect.Request[v1.CheckInRequest]) (*connect.Response[v1.CheckInResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.EventService.CheckIn is not implemented"))
 }

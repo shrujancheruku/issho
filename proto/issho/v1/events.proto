@@ -43,6 +43,19 @@ service EventService {
   // hours before the start until 24 hours after; FAILED_PRECONDITION
   // otherwise). 1–1000 characters.
   rpc SendChatMessage(SendChatMessageRequest) returns (SendChatMessageResponse) {}
+
+  // CheckIn records that the caller has arrived: only people who confirmed
+  // (PERMISSION_DENIED otherwise), from 30 minutes before the start until 3
+  // hours after (FAILED_PRECONDITION otherwise). Checking in again is fine.
+  rpc CheckIn(CheckInRequest) returns (CheckInResponse) {}
+}
+
+message CheckInRequest {
+  string event_id = 1;
+}
+
+message CheckInResponse {
+  MyEvent event = 1;
 }
 
 message ListChatMessagesRequest {
@@ -154,6 +167,12 @@ message MyEvent {
   string meeting_point = 20;
   // When the meeting point is shown (24 hours before the start).
   google.protobuf.Timestamp reveal_at = 21;
+  // The caller has checked in.
+  bool checked_in = 22;
+  // When check-in is open (30 minutes before the start to 3 hours after);
+  // unset without a start time.
+  google.protobuf.Timestamp check_in_from = 23;
+  google.protobuf.Timestamp check_in_until = 24;
 }
 
 enum EventStatus {

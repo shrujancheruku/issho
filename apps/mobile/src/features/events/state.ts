@@ -2,7 +2,7 @@ import { EventStatus, GroupStatus, InviteResponse, type MyEvent } from '@issho/a
 
 import type { StringKey } from '@/i18n/strings';
 
-export type EventAction = 'confirm' | 'decline' | 'cancel';
+export type EventAction = 'confirm' | 'decline' | 'cancel' | 'checkIn';
 
 /** What to tell the person about an event, and what they can do now. */
 export type EventState = {
@@ -17,7 +17,8 @@ const ms = (ts: MyEvent['confirmBy']) => (ts ? Number(ts.seconds) * 1000 : NaN);
 /**
  * The event from the person's side, following EventService's rules: answer
  * (confirm or decline, or change a decline) until confirm_by; cancel a
- * confirmed place until it starts.
+ * confirmed place until it starts; check in from 30 minutes before the
+ * start until 3 hours after.
  */
 export function eventState(e: MyEvent, now: number): EventState {
   const beforeDeadline = now < ms(e.confirmBy);
@@ -31,12 +32,17 @@ export function eventState(e: MyEvent, now: number): EventState {
       return beforeDeadline
         ? { message: 'event.state.answer', tone: 'action', actions: ['confirm', 'decline'] }
         : { message: 'event.state.noAnswer', tone: 'muted', actions: [] };
-    case InviteResponse.CONFIRMED:
+    case InviteResponse.CONFIRMED: {
+      if (e.checkedIn) return { message: 'event.state.checkedIn', tone: 'good', actions: [] };
+      const checkInOpen = now >= ms(e.checkInFrom) && now <= ms(e.checkInUntil);
+      // Checking in comes first: on the day it's the one thing to do.
+      const actions: EventAction[] = [...(checkInOpen ? (['checkIn'] as const) : []), ...(beforeStart ? (['cancel'] as const) : [])];
       return {
         message: e.groupStatus === GroupStatus.CONFIRMED ? 'event.state.going' : 'event.state.waiting',
         tone: e.groupStatus === GroupStatus.CONFIRMED ? 'good' : 'waiting',
-        actions: beforeStart ? ['cancel'] : [],
+        actions,
       };
+    }
     case InviteResponse.DECLINED:
       return { message: 'event.state.declined', tone: 'muted', actions: beforeDeadline ? ['confirm'] : [] };
     case InviteResponse.DROPPED:

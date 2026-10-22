@@ -14,6 +14,8 @@ function event(over: Partial<MyEvent>): MyEvent {
     response: InviteResponse.INVITED,
     confirmBy: at('2030-01-11T00:00:00Z'),
     startsAt: at('2030-01-12T14:00:00Z'),
+    checkInFrom: at('2030-01-12T13:30:00Z'),
+    checkInUntil: at('2030-01-12T17:00:00Z'),
     ...over,
   } as MyEvent;
 }
@@ -28,8 +30,19 @@ describe('eventState', () => {
     const waiting = event({ response: InviteResponse.CONFIRMED });
     expect(eventState(waiting, deadline - 1)).toMatchObject({ message: 'event.state.waiting', actions: ['cancel'] });
     const going = event({ response: InviteResponse.CONFIRMED, groupStatus: GroupStatus.CONFIRMED });
-    expect(eventState(going, start - 1)).toMatchObject({ message: 'event.state.going', tone: 'good', actions: ['cancel'] });
-    expect(eventState(going, start).actions).toEqual([]);
+    // Check-in is open by then too (see below).
+    expect(eventState(going, start - 1)).toMatchObject({ message: 'event.state.going', tone: 'good', actions: ['checkIn', 'cancel'] });
+    // From the start, cancelling is over; checking in isn't.
+    expect(eventState(going, start).actions).toEqual(['checkIn']);
+  });
+
+  it('offers check-in from 30 minutes before the start until 3 hours after, first', () => {
+    const going = event({ response: InviteResponse.CONFIRMED, groupStatus: GroupStatus.CONFIRMED });
+    expect(eventState(going, start - 31 * 60_000).actions).toEqual(['cancel']);
+    expect(eventState(going, start - 30 * 60_000).actions).toEqual(['checkIn', 'cancel']);
+    expect(eventState(going, start + 60_000).actions).toEqual(['checkIn']);
+    expect(eventState(going, start + 3 * 3_600_000 + 1).actions).toEqual([]);
+    expect(eventState(event({ response: InviteResponse.CONFIRMED, checkedIn: true }), start)).toMatchObject({ message: 'event.state.checkedIn', actions: [] });
   });
 
   it('lets a decline be changed until the deadline', () => {

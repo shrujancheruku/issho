@@ -1,6 +1,6 @@
 import { Code, ConnectError, EventStatus, InviteResponse } from '@issho/api-client';
 import { router, useLocalSearchParams } from 'expo-router';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Linking, Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { LanguageSwitch } from '@/components/language-switch';
@@ -10,6 +10,7 @@ import { ThemedView } from '@/components/themed-view';
 import { Brand, FormWidth, Spacing } from '@/constants/theme';
 import { useEvent, useRespond } from '@/features/events/data';
 import { stateText, toneColor } from '@/features/events/event-card';
+import { shareText } from '@/features/events/share';
 import { eventState, type EventAction } from '@/features/events/state';
 import { Fact, Facts, Heading } from '@/features/plans/fact';
 import { formatStart } from '@/features/plans/format';
@@ -20,6 +21,18 @@ import { Timeline } from '@/features/plans/timeline';
 import { useNow } from '@/hooks/use-now';
 import { useTheme } from '@/hooks/use-theme';
 import { useI18n } from '@/i18n/i18n-provider';
+
+/**
+ * Opens the share sheet with the outing's details. Browsers without the
+ * Web Share API (most desktop ones) get an email draft instead.
+ */
+async function shareOuting(message: string, title: string) {
+  try {
+    await Share.share({ message, title });
+  } catch {
+    void Linking.openURL(`mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(message)}`);
+  }
+}
 
 /**
  * One of the person's events: where they stand and what they can do
@@ -94,6 +107,20 @@ export default function EventScreen() {
             {t('event.confirmedCount', { count: e.confirmed })}
           </ThemedText>
         </View>
+        {/* A safety habit: tell someone outside the app where you'll be. */}
+        {e.response === InviteResponse.CONFIRMED && e.status === EventStatus.SCHEDULED && (
+          <Pressable
+            accessibilityRole="button"
+            onPress={() =>
+              void shareOuting(
+                shareText(e, formatStart(e.startsAt, lang), event.data?.steps ?? [], pairText(names.area(e.areaId)), t),
+                e.title,
+              )
+            }
+            style={styles.share}>
+            <ThemedText type="link">{t('event.share')}</ThemedText>
+          </Pressable>
+        )}
         {/* The chat is for people going; it says itself when it opens. */}
         {e.response === InviteResponse.CONFIRMED && e.status !== EventStatus.CANCELLED && (
           <Pressable
@@ -111,6 +138,7 @@ export default function EventScreen() {
     confirm: t('event.confirm'),
     decline: t('event.decline'),
     cancel: t('event.cancel'),
+    checkIn: t('event.checkIn'),
   };
   const error = respond.error;
 
@@ -167,6 +195,7 @@ const styles = StyleSheet.create({
   titleBlock: { gap: Spacing.one },
   section: { gap: Spacing.two },
   chatButton: { borderWidth: 1, borderRadius: 12, padding: Spacing.three, alignItems: 'center' },
+  share: { alignItems: 'center', paddingVertical: Spacing.one },
   footer: { padding: Spacing.four, gap: Spacing.two },
   secondary: { alignItems: 'center', paddingVertical: Spacing.two },
   error: { color: Brand.red, textAlign: 'center' },

@@ -56,6 +56,8 @@
   
 - [issho/v1/events.proto](#issho_v1_events-proto)
     - [ChatMessage](#issho-v1-ChatMessage)
+    - [CheckInRequest](#issho-v1-CheckInRequest)
+    - [CheckInResponse](#issho-v1-CheckInResponse)
     - [GetEventRequest](#issho-v1-GetEventRequest)
     - [GetEventResponse](#issho-v1-GetEventResponse)
     - [ListChatMessagesRequest](#issho-v1-ListChatMessagesRequest)
@@ -855,6 +857,36 @@ One message in a group chat.
 
 
 
+<a name="issho-v1-CheckInRequest"></a>
+
+### CheckInRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| event_id | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-CheckInResponse"></a>
+
+### CheckInResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| event | [MyEvent](#issho-v1-MyEvent) |  |  |
+
+
+
+
+
+
 <a name="issho-v1-GetEventRequest"></a>
 
 ### GetEventRequest
@@ -976,6 +1008,9 @@ One event as the caller sees it.
 | min_attendance | [int32](#int32) |  | The fewest it can go ahead with at confirm_by. |
 | meeting_point | [string](#string) |  | Exactly where to meet, once revealed to someone who confirmed; &#34;&#34; before reveal_at or when no more than the first stop&#39;s venue is needed. |
 | reveal_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | When the meeting point is shown (24 hours before the start). |
+| checked_in | [bool](#bool) |  | The caller has checked in. |
+| check_in_from | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | When check-in is open (30 minutes before the start to 3 hours after); unset without a start time. |
+| check_in_until | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 
 
 
@@ -1127,6 +1162,7 @@ HTTP: POST /issho.v1.EventService/&lt;Method&gt;
 | RespondToEvent | [RespondToEventRequest](#issho-v1-RespondToEventRequest) | [RespondToEventResponse](#issho-v1-RespondToEventResponse) | RespondToEvent confirms, declines or cancels the caller&#39;s place. FAILED_PRECONDITION when it&#39;s too late, the event is cancelled or over, or the answer doesn&#39;t apply (e.g. cancelling a place not confirmed). |
 | ListChatMessages | [ListChatMessagesRequest](#issho-v1-ListChatMessagesRequest) | [ListChatMessagesResponse](#issho-v1-ListChatMessagesResponse) | ListChatMessages returns the caller&#39;s group chat for an event: the latest messages, or those after after_id. Only for people who confirmed (PERMISSION_DENIED otherwise); empty until it opens 48 hours before the start. New messages also arrive over the WebSocket at GET /ws/chat (see the backend README). |
 | SendChatMessage | [SendChatMessageRequest](#issho-v1-SendChatMessageRequest) | [SendChatMessageResponse](#issho-v1-SendChatMessageResponse) | SendChatMessage posts to the caller&#39;s group chat while it&#39;s open (48 hours before the start until 24 hours after; FAILED_PRECONDITION otherwise). 1–1000 characters. |
+| CheckIn | [CheckInRequest](#issho-v1-CheckInRequest) | [CheckInResponse](#issho-v1-CheckInResponse) | CheckIn records that the caller has arrived: only people who confirmed (PERMISSION_DENIED otherwise), from 30 minutes before the start until 3 hours after (FAILED_PRECONDITION otherwise). Checking in again is fine. |
 
  
 

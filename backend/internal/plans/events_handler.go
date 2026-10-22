@@ -127,6 +127,26 @@ func (h *EventHandler) SendChatMessage(ctx context.Context, req *connect.Request
 	return connect.NewResponse(&isshov1.SendChatMessageResponse{Message: chatToProto(m)}), nil
 }
 
+func (h *EventHandler) CheckIn(ctx context.Context, req *connect.Request[isshov1.CheckInRequest]) (*connect.Response[isshov1.CheckInResponse], error) {
+	userID, err := caller(ctx)
+	if err != nil {
+		return nil, err
+	}
+	eventID, err := parseEventID(req.Msg.EventId)
+	if err != nil {
+		return nil, err
+	}
+	now := h.now()
+	if err := h.Svc.CheckIn(ctx, userID, eventID, now); err != nil {
+		return nil, eventError(err)
+	}
+	it, _, _, err := h.Svc.Event(ctx, userID, eventID, now)
+	if err != nil {
+		return nil, eventError(err)
+	}
+	return connect.NewResponse(&isshov1.CheckInResponse{Event: eventToProto(it)}), nil
+}
+
 func chatToProto(m ChatMessage) *isshov1.ChatMessage {
 	return &isshov1.ChatMessage{Id: m.ID, Name: m.Name, Body: m.Body, At: timestamp(m.At), Mine: m.Mine}
 }
@@ -148,7 +168,7 @@ func eventError(err error) error {
 		return connect.NewError(connect.CodeNotFound, err)
 	case errors.Is(err, ErrNotGoing):
 		return connect.NewError(connect.CodePermissionDenied, err)
-	case errors.Is(err, ErrChatClosed):
+	case errors.Is(err, ErrChatClosed), errors.Is(err, ErrCheckInClosed):
 		return connect.NewError(connect.CodeFailedPrecondition, err)
 	case errors.Is(err, ErrNoProfile), errors.Is(err, ErrEventOver), errors.Is(err, ErrTooLate), errors.Is(err, ErrNotNow):
 		return connect.NewError(connect.CodeFailedPrecondition, err)
@@ -205,5 +225,8 @@ func eventToProto(it EventItem) *isshov1.MyEvent {
 		MinAttendance:      int32(it.MinAttendance),
 		MeetingPoint:       it.MeetingPoint,
 		RevealAt:           timestamp(it.RevealAt),
+		CheckedIn:          it.CheckedIn,
+		CheckInFrom:        timestamp(it.CheckInFrom),
+		CheckInUntil:       timestamp(it.CheckInUntil),
 	}
 }

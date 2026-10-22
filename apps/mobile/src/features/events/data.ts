@@ -19,7 +19,7 @@ export function useEvent(id: string) {
   return useQuery({ queryKey: eventKey(id), queryFn: () => api.events.getEvent({ eventId: id }), enabled: !!id });
 }
 
-const actions: Record<EventAction, Action> = {
+const actions: Record<Exclude<EventAction, 'checkIn'>, Action> = {
   confirm: Action.CONFIRM,
   decline: Action.DECLINE,
   cancel: Action.CANCEL,
@@ -32,7 +32,11 @@ const actions: Record<EventAction, Action> = {
 export function useRespond(id: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (action: EventAction) => api.events.respondToEvent({ eventId: id, action: actions[action] }),
+    // Checking in is its own call; the rest are answers.
+    mutationFn: async (action: EventAction) => {
+      if (action === 'checkIn') await api.events.checkIn({ eventId: id });
+      else await api.events.respondToEvent({ eventId: id, action: actions[action] });
+    },
     onSuccess: () =>
       Promise.all([
         queryClient.invalidateQueries({ queryKey: eventKey(id) }),

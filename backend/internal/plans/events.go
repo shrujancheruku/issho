@@ -56,6 +56,16 @@ func notify(ctx context.Context, q *dbgen.Queries, kind string, eventID uuid.UUI
 	return q.InsertNotifications(ctx, dbgen.InsertNotificationsParams{UserIds: users, Kind: kind, EventID: eventID})
 }
 
+// Check-in opens CheckInBefore the start and closes CheckInAfter it:
+// arriving a little early, or late, still counts.
+const (
+	CheckInBefore = 30 * time.Minute
+	CheckInAfter  = 3 * time.Hour
+)
+
+// ErrCheckInClosed means it's not the time to check in.
+var ErrCheckInClosed = errors.New("check-in is open from 30 minutes before the start until 3 hours after")
+
 // RevealBefore is how long before an event its meeting point is shown to
 // the people going.
 const RevealBefore = 24 * time.Hour
@@ -92,6 +102,10 @@ type EventItem struct {
 	MeetingPoint string
 	RevealAt     time.Time
 	meetingRaw   []byte
+	// CheckedIn is set once the caller checked in; check-in is open from
+	// CheckInFrom to CheckInUntil (zero without a start time).
+	CheckedIn                 bool
+	CheckInFrom, CheckInUntil time.Time
 }
 
 // Events returns the caller's events from yesterday on, soonest first.
@@ -196,7 +210,9 @@ func eventFromRow(r dbgen.ListUserEventsRow) EventItem {
 	}
 	if !it.StartsAt.IsZero() {
 		it.RevealAt = it.StartsAt.Add(-RevealBefore)
+		it.CheckInFrom, it.CheckInUntil = it.StartsAt.Add(-CheckInBefore), it.StartsAt.Add(CheckInAfter)
 	}
+	it.CheckedIn = r.CheckedInAt.Valid
 	return it
 }
 
@@ -283,6 +299,33 @@ func (s *Service) Respond(ctx context.Context, userID, eventID uuid.UUID, action
 		}
 		return nil
 	})
+}
+
+// CheckIn records that the caller has arrived: only people who confirmed,
+// in a group going ahead, while check-in is open. Checking in again is
+// fine and keeps the first time. Check-ins count as attending (newcomer
+// status) and towards reliability.
+func (s *Service) CheckIn(ctx context.Context, userID, eventID uuid.UUID, now time.Time) error {
+	items, _, err := s.events(ctx, dbgen.New(s.DB), userID, time.Time{})
+	if err != nil {
+		return err
+	}
+	for _, it := range items {
+		if it.ID != eventID {
+			continue
+		}
+		switch {
+		case it.Response != Confirmed:
+			return ErrNotGoing
+		case it.Status == "cancelled" || it.GroupStatus == GroupCancelled:
+			return ErrEventOver
+		case it.CheckInFrom.IsZero() || now.Before(it.CheckInFrom) || now.After(it.CheckInUntil):
+			return ErrCheckInClosed
+		}
+		_, err := dbgen.New(s.DB).CheckIn(ctx, dbgen.CheckInParams{EventID: eventID, UserID: userID, At: pgtype.Timestamptz{Time: now, Valid: true}})
+		return err
+	}
+	return ErrNoEvent
 }
 
 // cancelGroup cancels a group, puts the people who had confirmed back on
