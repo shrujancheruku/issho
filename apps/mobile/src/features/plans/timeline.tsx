@@ -1,6 +1,7 @@
 import type { PlanStep } from '@issho/api-client';
 import { Linking, Pressable, StyleSheet, View } from 'react-native';
 
+import { GoogleMapsAttribution } from '@/components/google-maps-attribution';
 import { ThemedText } from '@/components/themed-text';
 import { Brand, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -18,6 +19,8 @@ import type { usePlanNames } from './names';
 export function Timeline({ steps, names }: { steps: PlanStep[]; names: ReturnType<typeof usePlanNames> }) {
   const { t, showing } = useI18n();
   const theme = useTheme();
+  // Google's terms: Places data shown without a Google map needs attribution.
+  const fromGoogle = steps.some((s) => s.venueName || s.venueAddress);
   return (
     <View>
       {steps.map((step, i) => {
@@ -74,6 +77,7 @@ export function Timeline({ steps, names }: { steps: PlanStep[]; names: ReturnTyp
           </View>
         );
       })}
+      {fromGoogle && <GoogleMapsAttribution />}
     </View>
   );
 }

@@ -72,6 +72,8 @@ The Google Maps Platform terms restrict caching of Maps content. How Issho follo
 - **Travel times** (Routes content) are cached for at most **30 days**. A rebuild (`build-matrix` or the worker) replaces a city's whole matrix and deletes every row it didn't write. The worker's daily `refresh_maps` job rebuilds a city once its matrix is 25 days old; without `GOOGLE_MAPS_API_KEY` it can't, so it deletes rows past 30 days instead (and logs an error), because staying within the terms matters more than keeping stale data.
 - **Opening hours and business status** are fetched when needed and never stored. A venue Google reports as permanently closed gets our own curation status `rejected` (that's our data, not Google's).
 
+- **Attribution:** wherever Places data (venue names, addresses) is shown without a Google map, the app shows the text **Google Maps** (`components/google-maps-attribution.tsx`): never translated, 12sp, #5E5E5E on light backgrounds and white on dark, the only colours Google allows. Today that's under the plan and event timelines. Don't restyle it to the app's greys. On a Google map, the map carries its own logo.
+
 Re-check the current [Service Specific Terms](https://cloud.google.com/maps-platform/terms/maps-service-terms) and the [Routes](https://developers.google.com/maps/documentation/routes/policies) and [Places](https://developers.google.com/maps/documentation/places/web-service/policies) policies before launch. Attribution rules apply wherever Google content is displayed in the app.
 
 ## 6. Cloud Translation
