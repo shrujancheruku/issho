@@ -160,8 +160,8 @@ The server sends notifications through Expo's push service when a plan someone s
 **One-time setup to make it work (owner; creates accounts and credentials, so not done in the repo):**
 
 1. **EAS project:** `npx eas-cli@latest init` in `apps/mobile`. It adds `owner` and `extra.eas.projectId` to `app.json`; commit that (it's public).
-2. **Android (FCM):** create a Firebase project, add an Android app with package `com.joinissho.app`, download `google-services.json` into `apps/mobile/` and set `"android": { "googleServicesFile": "./google-services.json" }` in `app.json`. Then create an FCM V1 service-account key in Firebase and upload it with `npx eas-cli@latest credentials` (Android → Google Service Account Key for FCM V1). The key is a secret; it lives only in EAS.
-3. **iOS (APNs):** with an Apple Developer account, `npx eas-cli@latest credentials` (iOS → Push Notifications) creates and uploads the APNs key.
+2. **Android (FCM):** Android push always goes through Google's Firebase Cloud Messaging, so this needs a Firebase project. It's free, and only FCM is used. Create a Firebase project, add an Android app with package `com.joinissho.app`, download `google-services.json` into `apps/mobile/` and set `"android": { "googleServicesFile": "./google-services.json" }` in `app.json`. Then create an FCM V1 service-account key in Firebase and upload it with `npx eas-cli@latest credentials` (Android → Google Service Account Key for FCM V1). The key is a secret; it lives only in EAS.
+3. **iOS (APNs), deferred to M9:** needs the paid Apple Developer Program (US$99 a year); free accounts can't use push. When M9 sets that up for TestFlight, `npx eas-cli@latest credentials` (iOS → Push Notifications) creates and uploads the APNs key. Until then iOS builds simply don't register for push.
 4. **A development build** (push doesn't work in Expo Go): `npx eas-cli@latest build --profile development --platform android` (needs an `eas.json`; `npx eas-cli@latest build:configure` creates one), or locally `npx expo run:android` with the Android SDK.
 5. If the Expo project enables enhanced push security, give the worker `EXPO_ACCESS_TOKEN`.
 
