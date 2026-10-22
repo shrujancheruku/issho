@@ -1,5 +1,46 @@
 # Changelog
 
+## [0.6.0](https://github.com/shrujancheruku/issho/compare/v0.5.0...v0.6.0) (2026-10-22)
+
+
+### Features
+
+* **api:** check-in and sharing an outing with a trusted contact (M6) ([#40](https://github.com/shrujancheruku/issho/issues/40)) ([233869f](https://github.com/shrujancheruku/issho/commit/233869f6d99e1dfc6de94782a0c75f66f119dc2a))
+* **api:** event invitations, confirmations and the event screen (M6) ([50b72cd](https://github.com/shrujancheruku/issho/commit/50b72cd49fdeb8f3af5a142783bac65a9c6e2353))
+* **api:** event invitations, confirmations and the event screen (M6) ([#33](https://github.com/shrujancheruku/issho/issues/33)) ([722b9d8](https://github.com/shrujancheruku/issho/commit/722b9d8055517f463f27bb286a137e26255b6aaf))
+* **api:** group chat for the people going on an event (M6) ([#36](https://github.com/shrujancheruku/issho/issues/36)) ([5e23287](https://github.com/shrujancheruku/issho/commit/5e2328765197f9af73b0a40667b6e1c855baa7c1))
+* **api:** keep a closed plan's screen for two weeks ([#44](https://github.com/shrujancheruku/issho/issues/44)) ([497047a](https://github.com/shrujancheruku/issho/commit/497047afabf03c99d37113f4fdd8592b8f7b7083))
+* **api:** meeting point for plans that start with a walk (M6) ([#42](https://github.com/shrujancheruku/issho/issues/42)) ([282a984](https://github.com/shrujancheruku/issho/commit/282a9841671d4dad437bde3be3fbc23dca4ebb1a))
+* **api:** plan and event maps with the walking route (M6) ([#39](https://github.com/shrujancheruku/issho/issues/39)) ([d4efe62](https://github.com/shrujancheruku/issho/commit/d4efe62373427e4fe6c1f4d18d3f236fb51f93f6))
+* **api:** plan feed, plan details and signups (M6) ([ff9cfb8](https://github.com/shrujancheruku/issho/commit/ff9cfb8378af10c67ce7eaa6389255f039c96ea6))
+* **api:** plan feed, plan details and signups (M6) ([#31](https://github.com/shrujancheruku/issho/issues/31)) ([5b18bd8](https://github.com/shrujancheruku/issho/commit/5b18bd859a8d3f028e827ac2e653fae8e18341ac))
+* **api:** plan titles, venues and a timeline of stops ([f597c21](https://github.com/shrujancheruku/issho/commit/f597c21752fb10d5862792257603c103c9cf1b8f))
+* **api:** push delivery receipts and a notice when a plan closes (M6) ([#43](https://github.com/shrujancheruku/issho/issues/43)) ([89cb94a](https://github.com/shrujancheruku/issho/commit/89cb94a18afa712e74894c6198959499f470d0c4))
+* **api:** push notifications for invitations and group changes (M6) ([80e867c](https://github.com/shrujancheruku/issho/commit/80e867ceb91e0e809e8277f1eb3a749ae872d828))
+* **api:** push notifications for invitations and group changes (M6) ([#34](https://github.com/shrujancheruku/issho/issues/34)) ([69ca4e3](https://github.com/shrujancheruku/issho/commit/69ca4e30d8325affdb16df85e7ac9e06eaffb834))
+* **backend:** travel-time refresh and venue opening hours (M6) ([6a8bf74](https://github.com/shrujancheruku/issho/commit/6a8bf743b949a1ff82ddadea5bf00022134db1d6))
+* **backend:** travel-time refresh and venue opening hours (M6) ([#35](https://github.com/shrujancheruku/issho/issues/35)) ([ac7184e](https://github.com/shrujancheruku/issho/commit/ac7184eeffc3e4b669d19b2235bb38fb79bdf2a6))
+* **backend:** worker that opens and schedules plans (M6) ([b84a5d9](https://github.com/shrujancheruku/issho/commit/b84a5d91247b74fb870df28c6e6163c70a686430))
+* **backend:** worker that opens and schedules plans (M6) ([#30](https://github.com/shrujancheruku/issho/issues/30)) ([1a7ca4e](https://github.com/shrujancheruku/issho/commit/1a7ca4ed4eb85dbb9a444bb5cdf8307e978743bf))
+* **db:** plans, signups, events and groups schema (M6) ([a662f2a](https://github.com/shrujancheruku/issho/commit/a662f2a1e3d6857d14f5acf3134ae4a7d8e2cf4f))
+* **db:** plans, signups, events and groups schema (M6) ([#29](https://github.com/shrujancheruku/issho/issues/29)) ([3077d43](https://github.com/shrujancheruku/issho/commit/3077d43481d9320dd5878d33dc430df3bb9a9ff4))
+* **mobile:** map of open plans on Google Maps (M6) ([#38](https://github.com/shrujancheruku/issho/issues/38)) ([43fec9c](https://github.com/shrujancheruku/issho/commit/43fec9c3ce61c86054595e9a1c4850c2f96562eb))
+* **mobile:** plan details as a card of labelled rows ([0303672](https://github.com/shrujancheruku/issho/commit/0303672b8b0485ae5c495e85a9f9b2b70f4cef28))
+* **mobile:** plan feed and signup screen (M6) ([6901f2b](https://github.com/shrujancheruku/issho/commit/6901f2bc6049be91604a39a91fdf98d5748e6e5b))
+* **mobile:** return to the feed after signing up ([e50800b](https://github.com/shrujancheruku/issho/commit/e50800b96b94cf32e044f36cf9358c58ef7a04db))
+* plan feed, signup screen, titles and timeline (M6) ([#32](https://github.com/shrujancheruku/issho/issues/32)) ([41fbcef](https://github.com/shrujancheruku/issho/commit/41fbcef97728e6d360108cf267b2451a52641297))
+
+
+### Bug Fixes
+
+* **ci:** check PostGIS health over TCP, not the init-time socket ([8ff3dee](https://github.com/shrujancheruku/issho/commit/8ff3dee28eda01d295762bd6a764c2161597147f))
+* **deps:** pin expo-notifications 58.1.5 instead of exempting day-old packages ([f2f3468](https://github.com/shrujancheruku/issho/commit/f2f34680a1c93d44277be206513c34ec828f3ad9))
+* drop bracketed examples from plan titles and stops ([8e57310](https://github.com/shrujancheruku/issho/commit/8e57310bfc5963fd56d28e54db94684072547885))
+* **mobile:** attribute Google venue data on plan and event timelines ([#37](https://github.com/shrujancheruku/issho/issues/37)) ([6ed1ae2](https://github.com/shrujancheruku/issho/commit/6ed1ae21cc1331f3ac5de20c6054f3a6103dd59d))
+* **mobile:** avoid toSorted, which Hermes lacks; lint against it ([ec787b7](https://github.com/shrujancheruku/issho/commit/ec787b7bb9952fed2d8033ef52627f28edb720b9))
+* **mobile:** log why push registration is skipped in development builds ([8f5f7f1](https://github.com/shrujancheruku/issho/commit/8f5f7f1ec4c7ec60342d2d02294d64db4b4c0ab4))
+* **mobile:** plan screen layout, translations and stale UI text ([9b93606](https://github.com/shrujancheruku/issho/commit/9b93606c47e6dcc613acccc01340bf196ac80673))
+
 ## [0.5.0](https://github.com/shrujancheruku/issho/compare/v0.4.0...v0.5.0) (2026-10-21)
 
 
