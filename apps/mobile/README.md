@@ -175,7 +175,7 @@ The server sends notifications through Expo's push service when a plan someone s
    ```sh
    npx eas-cli@latest build --profile development --platform android
    ```
-   EAS prints a link and QR code to install the APK on the phone. It contains the native code only: the JavaScript still comes from your machine, so start Metro with `pnpm start` (or `npx expo start`) and open the project from the development build instead of Expo Go. Rebuild only when native code changes (a new native package or a config plugin change).
+   EAS prints a link and QR code to install the APK on the phone. The `development` profile builds only `arm64-v8a` (`ORG_GRADLE_PROJECT_reactNativeArchitectures` in `eas.json`), the CPU type of real modern phones: a much smaller APK and a faster compile, but it won't run on an Android emulator on an Intel Mac or an x86 emulator image; remove the variable for that. Expect about 20 minutes on the free plan (queue plus compile); only native changes need a new build. It contains the native code only: the JavaScript still comes from your machine, so start Metro with `pnpm start` (or `npx expo start`) and open the project from the development build instead of Expo Go. Rebuild only when native code changes (a new native package or a config plugin change).
 5. **iOS:** deferred to M9 (needs the paid Apple Developer Program).
 6. **Worker:** `EXPO_ACCESS_TOKEN` only if you turn on *Enhanced security for push notifications* in the Expo project settings.
 
