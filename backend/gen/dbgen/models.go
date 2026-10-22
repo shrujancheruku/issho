@@ -45,6 +45,14 @@ type AppAvailabilitySlot struct {
 	Block   string
 }
 
+type AppChatMessage struct {
+	ID        int64
+	GroupID   uuid.UUID
+	UserID    uuid.UUID
+	Body      string
+	CreatedAt pgtype.Timestamptz
+}
+
 type AppCity struct {
 	ID       string
 	Name     []byte

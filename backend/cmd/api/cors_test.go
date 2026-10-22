@@ -32,3 +32,10 @@ func TestWithCORS(t *testing.T) {
 		})
 	}
 }
+
+func TestOriginHosts(t *testing.T) {
+	got := originHosts([]string{"https://admin.example.com", " http://localhost:8081 ", "not a url"})
+	if len(got) != 2 || got[0] != "admin.example.com" || got[1] != "localhost:8081" {
+		t.Errorf("originHosts = %v", got)
+	}
+}

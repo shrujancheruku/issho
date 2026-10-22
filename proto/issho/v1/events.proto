@@ -31,6 +31,52 @@ service EventService {
   // FAILED_PRECONDITION when it's too late, the event is cancelled or over,
   // or the answer doesn't apply (e.g. cancelling a place not confirmed).
   rpc RespondToEvent(RespondToEventRequest) returns (RespondToEventResponse) {}
+
+  // ListChatMessages returns the caller's group chat for an event: the
+  // latest messages, or those after after_id. Only for people who
+  // confirmed (PERMISSION_DENIED otherwise); empty until it opens 48 hours
+  // before the start. New messages also arrive over the WebSocket at
+  // GET /ws/chat (see the backend README).
+  rpc ListChatMessages(ListChatMessagesRequest) returns (ListChatMessagesResponse) {}
+
+  // SendChatMessage posts to the caller's group chat while it's open (48
+  // hours before the start until 24 hours after; FAILED_PRECONDITION
+  // otherwise). 1–1000 characters.
+  rpc SendChatMessage(SendChatMessageRequest) returns (SendChatMessageResponse) {}
+}
+
+message ListChatMessagesRequest {
+  string event_id = 1;
+  // 0 = the latest messages.
+  int64 after_id = 2;
+}
+
+message ListChatMessagesResponse {
+  repeated ChatMessage messages = 1;
+  // When it can be written in; unset when the event has no start time.
+  google.protobuf.Timestamp opens_at = 2;
+  google.protobuf.Timestamp closes_at = 3;
+  bool open = 4;
+}
+
+message SendChatMessageRequest {
+  string event_id = 1;
+  string body = 2;
+}
+
+message SendChatMessageResponse {
+  ChatMessage message = 1;
+}
+
+// One message in a group chat.
+message ChatMessage {
+  int64 id = 1;
+  // The sender's first name ("" for a deleted account).
+  string name = 2;
+  string body = 3;
+  google.protobuf.Timestamp at = 4;
+  // Sent by the caller.
+  bool mine = 5;
 }
 
 message ListMyEventsRequest {}
