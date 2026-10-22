@@ -49,6 +49,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "e302a4e7-1a12-4c73-b13f-30ece4681e37"
+      }
+    },
+    "owner": "shrujancheruku-team"
   }
 }

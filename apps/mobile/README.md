@@ -157,15 +157,29 @@ The server sends notifications through Expo's push service when a plan someone s
 - opens the event when a notification is tapped (`useNotificationTaps`, also for the one that launched the app)
 - does nothing in Expo Go (no remote push on Android since SDK 53), simulators, the web (`lib/push.web.ts`) or without an EAS project id, so the app works the same without push
 
-**One-time setup to make it work (owner; creates accounts and credentials, so not done in the repo):**
+**One-time setup for Android** (owner; uploads credentials to Expo, so it's done by hand). Already in the repo: the EAS project (`owner` and `extra.eas.projectId` in `app.json`), `eas.json` (a `development` profile that builds an installable APK with `expo-dev-client`) and `app.config.js`, which points the Android build at `google-services.json` without committing it.
 
-1. **EAS project:** `npx eas-cli@latest init` in `apps/mobile`. It adds `owner` and `extra.eas.projectId` to `app.json`; commit that (it's public).
-2. **Android (FCM):** Android push always goes through Google's Firebase Cloud Messaging, so this needs a Firebase project. It's free, and only FCM is used. Create a Firebase project, add an Android app with package `com.joinissho.app`, download `google-services.json` into `apps/mobile/` and set `"android": { "googleServicesFile": "./google-services.json" }` in `app.json`. Then create an FCM V1 service-account key in Firebase and upload it with `npx eas-cli@latest credentials` (Android → Google Service Account Key for FCM V1). The key is a secret; it lives only in EAS.
-3. **iOS (APNs), deferred to M9:** needs the paid Apple Developer Program (US$99 a year); free accounts can't use push. When M9 sets that up for TestFlight, `npx eas-cli@latest credentials` (iOS → Push Notifications) creates and uploads the APNs key. Until then iOS builds simply don't register for push.
-4. **A development build** (push doesn't work in Expo Go): `npx eas-cli@latest build --profile development --platform android` (needs an `eas.json`; `npx eas-cli@latest build:configure` creates one), or locally `npx expo run:android` with the Android SDK.
-5. If the Expo project enables enhanced push security, give the worker `EXPO_ACCESS_TOKEN`.
+1. **Register the app with Firebase.** In the [Firebase console](https://console.firebase.google.com), open the project → *Add app* → Android. Package name `com.joinissho.app`; the nickname is up to you; skip the SHA-1 (FCM doesn't need it). Download `google-services.json` into `apps/mobile/` (it's gitignored: the repo is public). Skip the "Add Firebase SDK" steps; `expo-notifications` does that.
+2. **Give EAS Build the same file**, as a file environment variable (`app.config.js` reads it):
+   ```sh
+   cd apps/mobile
+   npx eas-cli@latest env:set --name GOOGLE_SERVICES_JSON --type file --value ./google-services.json \
+     --visibility sensitive --environment development --environment preview --environment production
+   ```
+3. **Let Expo send through FCM.** Firebase console → *Project settings* → *Service accounts* → *Generate new private key*. That JSON is a **secret**: keep it out of the repo and delete it once uploaded. Upload it:
+   ```sh
+   npx eas-cli@latest credentials -p android
+   ```
+   Choose the `development` profile → *Google Service Account* → *Manage your Google Service Account Key for Push Notifications (FCM V1)* → *Set up a Google Service Account Key for Push Notifications (FCM V1)* → *Upload a new service account key* → pick the file. (If Firebase says the Cloud Messaging API is disabled, enable *Firebase Cloud Messaging API (V1)* under *Project settings* → *Cloud Messaging*.)
+4. **Build and install a development build** (push doesn't work in Expo Go):
+   ```sh
+   npx eas-cli@latest build --profile development --platform android
+   ```
+   EAS prints a link and QR code to install the APK on the phone. It contains the native code only: the JavaScript still comes from your machine, so start Metro with `pnpm start` (or `npx expo start`) and open the project from the development build instead of Expo Go. Rebuild only when native code changes (a new native package or a config plugin change).
+5. **iOS:** deferred to M9 (needs the paid Apple Developer Program).
+6. **Worker:** `EXPO_ACCESS_TOKEN` only if you turn on *Enhanced security for push notifications* in the Expo project settings.
 
-Test it by signing up for a plan in the development build (allow notifications), then scheduling a round for it: the worker sends the invitation within a minute.
+Test it by signing up for a plan in the development build (allow notifications; the token appears in `app.push_tokens`), then scheduling a round for it: the worker sends the invitation within a minute. To check delivery alone, paste the token into Expo's [push notifications tool](https://expo.dev/notifications).
 
 ## Builds & releases
 
