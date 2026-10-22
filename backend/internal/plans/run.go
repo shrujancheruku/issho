@@ -290,6 +290,10 @@ func (r *Runner) schedulePlan(ctx context.Context, q *dbgen.Queries, c *City, us
 	acts map[matching.ActivityID]*matching.Activity, p Open, now time.Time) (closed, scheduled int, err error) {
 	closeAs := func(reason string) (int, int, error) {
 		r.Log.Info("plan closed", "city", c.ID, "plan", p.ID, "reason", reason)
+		if reason == ClosedNoGroup {
+			// Whoever was still waiting hears; the feed shows them other plans.
+			return 1, 0, q.ClosePlanNoGroup(ctx, dbgen.ClosePlanNoGroupParams{ID: p.ID, ClosedAt: pgtype.Timestamptz{Time: now, Valid: true}})
+		}
 		return 1, 0, Close(ctx, q, p.ID, reason, now)
 	}
 	act := acts[p.Activity]

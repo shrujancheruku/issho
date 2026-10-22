@@ -10,4 +10,4 @@ export async function registerForPush(_: { ask: boolean }): Promise<boolean> {
 
 export async function unregisterPush() {}
 
-export function useNotificationTaps(_open: (eventId: string) => void) {}
+export function useNotificationTaps(_open: (eventId: string | null) => void) {}

@@ -172,6 +172,7 @@
   "push.cancelled": "Not enough people could go, so it is cancelled.",
   "push.confirmed": "Enough people confirmed, so it is going ahead.",
   "push.invited": "A date is set. Can you go? Open Issho to answer.",
+  "push.noGroup": "Not enough people signed up this time, so it is closed. Open Issho to see other plans.",
   "share.intro": "I am going to an Issho outing: {title}",
   "share.map": "Map: {url}",
   "share.when": "When: {date}",

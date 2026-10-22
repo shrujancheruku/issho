@@ -45,6 +45,7 @@ const (
 	NotifyInvited   = "event_invited"   // a round you signed up for has a date: please answer
 	NotifyConfirmed = "group_confirmed" // your group is going ahead
 	NotifyCancelled = "group_cancelled" // your group is cancelled
+	NotifyNoGroup   = "plan_no_group"   // a plan you waited for closed without a group
 )
 
 // notify queues a notification for each person, in the caller's
@@ -53,7 +54,7 @@ func notify(ctx context.Context, q *dbgen.Queries, kind string, eventID uuid.UUI
 	if len(users) == 0 {
 		return nil
 	}
-	return q.InsertNotifications(ctx, dbgen.InsertNotificationsParams{UserIds: users, Kind: kind, EventID: eventID})
+	return q.InsertNotifications(ctx, dbgen.InsertNotificationsParams{UserIds: users, Kind: kind, EventID: pgtype.UUID{Bytes: eventID, Valid: true}})
 }
 
 // Check-in opens CheckInBefore the start and closes CheckInAfter it:

@@ -104,15 +104,16 @@ export async function unregisterPush() {
 }
 
 /**
- * Opens the event a tapped notification is about, including the one that
- * launched the app. Mount where the person is signed in and onboarded.
+ * Opens what a tapped notification is about, including the one that
+ * launched the app: its event, or the feed (a plan that closed without a
+ * group). Mount where the person is signed in and onboarded.
  */
-export function useNotificationTaps(open: (eventId: string) => void) {
+export function useNotificationTaps(open: (eventId: string | null) => void) {
   const response = Notifications.useLastNotificationResponse();
   useEffect(() => {
-    const id = response?.notification.request.content.data?.eventId;
-    if (typeof id !== 'string') return;
-    open(id);
+    const data = response?.notification.request.content.data;
+    if (!data) return;
+    open(typeof data.eventId === 'string' ? data.eventId : null);
     // Otherwise the same notification would open the event again next launch.
     void Notifications.clearLastNotificationResponseAsync().catch(() => {});
   }, [response, open]);

@@ -28,6 +28,29 @@ func (q *Queries) ClosePlan(ctx context.Context, arg ClosePlanParams) error {
 	return err
 }
 
+const closePlanNoGroup = `-- name: ClosePlanNoGroup :exec
+with closed as (
+  update app.plans p set status = 'closed', closed_reason = 'no_group', closed_at = $1
+  where p.id = $2 and p.status = 'open'
+  returning p.id
+)
+insert into app.notifications (user_id, kind, plan_id)
+select s.user_id, 'plan_no_group', s.plan_id from app.plan_signups s join closed c on c.id = s.plan_id
+`
+
+type ClosePlanNoGroupParams struct {
+	ClosedAt pgtype.Timestamptz
+	ID       uuid.UUID
+}
+
+// Closing a plan no group could form for, and telling whoever was still
+// waiting, in one statement (nothing is sent if the plan was already
+// closed). Their signups stay, as the plan's record.
+func (q *Queries) ClosePlanNoGroup(ctx context.Context, arg ClosePlanNoGroupParams) error {
+	_, err := q.db.Exec(ctx, closePlanNoGroup, arg.ClosedAt, arg.ID)
+	return err
+}
+
 const deleteSignup = `-- name: DeleteSignup :exec
 delete from app.plan_signups where plan_id = $1 and user_id = $2
 `

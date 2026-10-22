@@ -177,12 +177,19 @@ type sendNotificationsWorker struct {
 	now      func() time.Time
 }
 
+// Work sends what's queued, then checks the receipts of pushes sent a
+// while ago (one job, so the two never overlap).
 func (w *sendNotificationsWorker) Work(ctx context.Context, _ *river.Job[SendNotificationsArgs]) error {
-	rep, err := w.notifier.Send(ctx, w.now())
+	now := w.now()
+	rep, err := w.notifier.Send(ctx, now)
 	if rep != (plans.NotifyReport{}) {
 		w.notifier.Log.Info("notifications", "sent", rep.Sent, "no_device", rep.NoDevice, "failed", rep.Failed, "unregistered", rep.Unregistered)
 	}
-	return err
+	rec, rErr := w.notifier.CheckReceipts(ctx, now)
+	if rec != (plans.ReceiptReport{}) {
+		w.notifier.Log.Info("push receipts", "delivered", rec.Delivered, "refused", rec.Refused, "unregistered", rec.Unregistered, "expired", rec.Expired)
+	}
+	return errors.Join(err, rErr)
 }
 
 // NewClient builds the River client with every job and its schedule. The

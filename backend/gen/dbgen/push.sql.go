@@ -12,6 +12,28 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const deleteExpiredPushTickets = `-- name: DeleteExpiredPushTickets :execrows
+delete from app.push_tickets where created_at < $1
+`
+
+// Receipts are kept for 24 hours; one still missing after that never comes.
+func (q *Queries) DeleteExpiredPushTickets(ctx context.Context, before pgtype.Timestamptz) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteExpiredPushTickets, before)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const deletePushTickets = `-- name: DeletePushTickets :exec
+delete from app.push_tickets where id = any($1::text[])
+`
+
+func (q *Queries) DeletePushTickets(ctx context.Context, ids []string) error {
+	_, err := q.db.Exec(ctx, deletePushTickets, ids)
+	return err
+}
+
 const deletePushToken = `-- name: DeletePushToken :exec
 delete from app.push_tokens where token = $1 and user_id = $2
 `
@@ -45,7 +67,7 @@ select unnest($1::uuid[]), $2, $3
 type InsertNotificationsParams struct {
 	UserIds []uuid.UUID
 	Kind    string
-	EventID uuid.UUID
+	EventID pgtype.UUID
 }
 
 func (q *Queries) InsertNotifications(ctx context.Context, arg InsertNotificationsParams) error {
@@ -53,12 +75,68 @@ func (q *Queries) InsertNotifications(ctx context.Context, arg InsertNotificatio
 	return err
 }
 
+const insertPushTickets = `-- name: InsertPushTickets :exec
+insert into app.push_tickets (id, token, created_at)
+select t.id, t.token, $1
+from (select unnest($2::text[]) as id, unnest($3::text[]) as token) t
+where exists (select 1 from app.push_tokens k where k.token = t.token)
+on conflict (id) do nothing
+`
+
+type InsertPushTicketsParams struct {
+	At     pgtype.Timestamptz
+	Ids    []string
+	Tokens []string
+}
+
+// Tickets for pushes Expo accepted, to check their receipts later. A token
+// deleted meanwhile (DeviceNotRegistered on another ticket) is skipped.
+func (q *Queries) InsertPushTickets(ctx context.Context, arg InsertPushTicketsParams) error {
+	_, err := q.db.Exec(ctx, insertPushTickets, arg.At, arg.Ids, arg.Tokens)
+	return err
+}
+
+const listDuePushTickets = `-- name: ListDuePushTickets :many
+select id, token from app.push_tickets where created_at < $1 order by created_at limit $2
+`
+
+type ListDuePushTicketsParams struct {
+	Ready pgtype.Timestamptz
+	Max   int32
+}
+
+type ListDuePushTicketsRow struct {
+	ID    string
+	Token string
+}
+
+// Tickets whose receipts should be ready: sent before @ready, oldest first.
+func (q *Queries) ListDuePushTickets(ctx context.Context, arg ListDuePushTicketsParams) ([]ListDuePushTicketsRow, error) {
+	rows, err := q.db.Query(ctx, listDuePushTickets, arg.Ready, arg.Max)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListDuePushTicketsRow
+	for rows.Next() {
+		var i ListDuePushTicketsRow
+		if err := rows.Scan(&i.ID, &i.Token); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listPendingNotifications = `-- name: ListPendingNotifications :many
-select n.id, n.user_id, n.kind, n.event_id, pr.primary_language, p.city_id, p.activity_id, p.follow_up_id
+select n.id, n.user_id, n.kind, n.event_id, n.plan_id, pr.primary_language, p.city_id, p.activity_id, p.follow_up_id
 from app.notifications n
 join app.profiles pr on pr.user_id = n.user_id
-join app.events e on e.id = n.event_id
-join app.plans p on p.id = e.plan_id
+left join app.events e on e.id = n.event_id
+join app.plans p on p.id = coalesce(e.plan_id, n.plan_id)
 where n.sent_at is null and n.attempts < 5
 order by n.created_at, n.id
 limit $1
@@ -68,7 +146,8 @@ type ListPendingNotificationsRow struct {
 	ID              int64
 	UserID          uuid.UUID
 	Kind            string
-	EventID         uuid.UUID
+	EventID         pgtype.UUID
+	PlanID          pgtype.UUID
 	PrimaryLanguage string
 	CityID          string
 	ActivityID      string
@@ -92,6 +171,7 @@ func (q *Queries) ListPendingNotifications(ctx context.Context, max int32) ([]Li
 			&i.UserID,
 			&i.Kind,
 			&i.EventID,
+			&i.PlanID,
 			&i.PrimaryLanguage,
 			&i.CityID,
 			&i.ActivityID,
