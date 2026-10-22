@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import { useCallback, useEffect } from 'react';
 
 import AppTabs from '@/components/app-tabs';
-import { registerForPush, useNotificationTaps } from '@/lib/push';
+import { registerForPush, useNotificationTaps, type NotificationTarget } from '@/lib/push';
 
 // The main app, available once the user is signed in and onboarded (see app/_layout.tsx).
 export default function TabsLayout() {
@@ -12,7 +12,13 @@ export default function TabsLayout() {
     void registerForPush({ ask: false });
   }, []);
   useNotificationTaps(
-    useCallback((id: string | null) => (id ? router.push({ pathname: '/event/[id]', params: { id } }) : router.navigate('/')), []),
+    useCallback(
+      (target: NotificationTarget) =>
+        'eventId' in target
+          ? router.push({ pathname: '/event/[id]', params: { id: target.eventId } })
+          : router.push({ pathname: '/plan/[id]', params: { id: target.planId } }),
+      [],
+    ),
   );
   return <AppTabs />;
 }

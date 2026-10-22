@@ -2,6 +2,7 @@ package plans
 
 import (
 	"context"
+	"errors"
 	"io"
 	"log/slog"
 	"testing"
@@ -157,5 +158,17 @@ func TestIntegrationRunner(t *testing.T) {
 	// It's in its cool-down now, so it isn't suggested again.
 	if opened, err := r.Suggest(ctx, f.city, deadline); err != nil || opened != 0 {
 		t.Errorf("Suggest during the cool-down opened %d, %v", opened, err)
+	}
+	// Its screen still opens for two weeks, saying why it closed; then it's gone.
+	svc := &Service{DB: f.pool}
+	waiting := uuid.MustParse(string(signups[1].User))
+	if it, _, _, err := svc.Plan(ctx, waiting, plan.ID); err != nil || it.ClosedReason != ClosedNoGroup || !it.SignedUp || it.Title == "" {
+		t.Errorf("closed plan's screen = %+v, %v", it, err)
+	}
+	if _, err := f.pool.Exec(ctx, "update app.plans set closed_at = now() - interval '15 days' where id = $1", plan.ID); err != nil {
+		t.Fatal(err)
+	}
+	if _, _, _, err := svc.Plan(ctx, waiting, plan.ID); !errors.Is(err, ErrNotFound) {
+		t.Errorf("after 15 days: %v, want ErrNotFound", err)
 	}
 }

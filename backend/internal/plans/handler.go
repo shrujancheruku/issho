@@ -161,7 +161,15 @@ func planToProto(it FeedItem) *isshov1.FeedPlan {
 		SignedUp:           it.SignedUp,
 		Title:              it.Title,
 		SecondaryTitle:     it.SecondaryTitle,
+		ClosedReason:       closedReasonsPB[it.ClosedReason],
+		ClosedAt:           timestamp(it.ClosedAt),
 	}
+}
+
+var closedReasonsPB = map[string]isshov1.PlanClosedReason{
+	ClosedNoGroup:   isshov1.PlanClosedReason_PLAN_CLOSED_REASON_NO_GROUP,
+	ClosedDone:      isshov1.PlanClosedReason_PLAN_CLOSED_REASON_DONE,
+	ClosedWithdrawn: isshov1.PlanClosedReason_PLAN_CLOSED_REASON_WITHDRAWN,
 }
 
 func stepsToProto(steps []Step) []*isshov1.PlanStep {

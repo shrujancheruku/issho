@@ -10,4 +10,6 @@ export async function registerForPush(_: { ask: boolean }): Promise<boolean> {
 
 export async function unregisterPush() {}
 
-export function useNotificationTaps(_open: (eventId: string | null) => void) {}
+export type NotificationTarget = { eventId: string } | { planId: string };
+
+export function useNotificationTaps(_open: (target: NotificationTarget) => void) {}

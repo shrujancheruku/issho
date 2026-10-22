@@ -14,7 +14,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file issho/v1/plans.proto.
  */
 export const file_issho_v1_plans: GenFile = /*@__PURE__*/
-  fileDesc("ChRpc3Noby92MS9wbGFucy5wcm90bxIIaXNzaG8udjEiEQoPTGlzdEZlZWRSZXF1ZXN0IjUKEExpc3RGZWVkUmVzcG9uc2USIQoFcGxhbnMYASADKAsyEi5pc3Noby52MS5GZWVkUGxhbiIhCg5HZXRQbGFuUmVxdWVzdBIPCgdwbGFuX2lkGAEgASgJIpABCg9HZXRQbGFuUmVzcG9uc2USIAoEcGxhbhgBIAEoCzISLmlzc2hvLnYxLkZlZWRQbGFuEiAKBnNpZ251cBgCIAEoCzIQLmlzc2hvLnYxLlNpZ251cBIhCgVzdGVwcxgDIAMoCzISLmlzc2hvLnYxLlBsYW5TdGVwEhYKDnJvdXRlX3BvbHlsaW5lGAQgASgJIsEBCghQbGFuU3RlcBITCgthY3Rpdml0eV9pZBgBIAEoCRISCgp2ZW51ZV9uYW1lGAIgASgJEhwKFHZlbnVlX3NlY29uZGFyeV9uYW1lGAMgASgJEhUKDXZlbnVlX2FkZHJlc3MYBCABKAkSFgoOdmVudWVfbWFwc191cmwYBSABKAkSFAoMd2Fsa19taW51dGVzGAYgASgFEgsKA2xhdBgHIAEoARILCgNsbmcYCCABKAESDwoHbWVldGluZxgJIAEoCCJCCg1TaWduVXBSZXF1ZXN0Eg8KB3BsYW5faWQYASABKAkSIAoGc2lnbnVwGAIgASgLMhAuaXNzaG8udjEuU2lnbnVwIjIKDlNpZ25VcFJlc3BvbnNlEiAKBHBsYW4YASABKAsyEi5pc3Noby52MS5GZWVkUGxhbiIiCg9XaXRoZHJhd1JlcXVlc3QSDwoHcGxhbl9pZBgBIAEoCSISChBXaXRoZHJhd1Jlc3BvbnNlIvkCCghGZWVkUGxhbhIKCgJpZBgBIAEoCRIPCgdhcmVhX2lkGAIgASgJEhMKC2FjdGl2aXR5X2lkGAMgASgJEh0KFWZvbGxvd191cF9hY3Rpdml0eV9pZBgEIAEoCRIYChBwcmltYXJ5X2xhbmd1YWdlGAUgASgJEhoKEnNlY29uZGFyeV9sYW5ndWFnZRgGIAEoCRIPCgdzaWdudXBzGAcgASgFEiIKBWxldmVsGAggASgOMhMuaXNzaG8udjEuUGxhbkxldmVsEhYKDnRyYXZlbF9taW51dGVzGAkgASgFEhQKDHdpbmRvd19zdGFydBgKIAEoCRITCgt3aW5kb3dfZGF5cxgLIAEoBRIzCg9zaWdudXBfZGVhZGxpbmUYDCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhEKCXNpZ25lZF91cBgNIAEoCBINCgV0aXRsZRgOIAEoCRIXCg9zZWNvbmRhcnlfdGl0bGUYDyABKAkiZQoGU2lnbnVwEisKB3BhdHRlcm4YASADKAsyGi5pc3Noby52MS5BdmFpbGFiaWxpdHlTbG90Ei4KC3VuYXZhaWxhYmxlGAIgAygLMhkuaXNzaG8udjEuVW5hdmFpbGFibGVUaW1lIkMKD1VuYXZhaWxhYmxlVGltZRIMCgRkYXRlGAEgASgJEiIKBWJsb2NrGAIgASgOMhMuaXNzaG8udjEuVGltZUJsb2NrKpYBCglQbGFuTGV2ZWwSGgoWUExBTl9MRVZFTF9VTlNQRUNJRklFRBAAEhoKFlBMQU5fTEVWRUxfTk9UX0ZPUl9ZT1UQARISCg5QTEFOX0xFVkVMX0xPVxACEhQKEFBMQU5fTEVWRUxfTUFZQkUQAxITCg9QTEFOX0xFVkVMX0dPT0QQBBISCg5QTEFOX0xFVkVMX1RPUBAFMpgCCgtQbGFuU2VydmljZRJDCghMaXN0RmVlZBIZLmlzc2hvLnYxLkxpc3RGZWVkUmVxdWVzdBoaLmlzc2hvLnYxLkxpc3RGZWVkUmVzcG9uc2UiABJACgdHZXRQbGFuEhguaXNzaG8udjEuR2V0UGxhblJlcXVlc3QaGS5pc3Noby52MS5HZXRQbGFuUmVzcG9uc2UiABI9CgZTaWduVXASFy5pc3Noby52MS5TaWduVXBSZXF1ZXN0GhguaXNzaG8udjEuU2lnblVwUmVzcG9uc2UiABJDCghXaXRoZHJhdxIZLmlzc2hvLnYxLldpdGhkcmF3UmVxdWVzdBoaLmlzc2hvLnYxLldpdGhkcmF3UmVzcG9uc2UiAEI+WjxnaXRodWIuY29tL3NocnVqYW5jaGVydWt1L2lzc2hvL2JhY2tlbmQvZ2VuL2lzc2hvL3YxO2lzc2hvdjFiBnByb3RvMw", [file_google_protobuf_timestamp, file_issho_v1_profile]);
+  fileDesc("ChRpc3Noby92MS9wbGFucy5wcm90bxIIaXNzaG8udjEiEQoPTGlzdEZlZWRSZXF1ZXN0IjUKEExpc3RGZWVkUmVzcG9uc2USIQoFcGxhbnMYASADKAsyEi5pc3Noby52MS5GZWVkUGxhbiIhCg5HZXRQbGFuUmVxdWVzdBIPCgdwbGFuX2lkGAEgASgJIpABCg9HZXRQbGFuUmVzcG9uc2USIAoEcGxhbhgBIAEoCzISLmlzc2hvLnYxLkZlZWRQbGFuEiAKBnNpZ251cBgCIAEoCzIQLmlzc2hvLnYxLlNpZ251cBIhCgVzdGVwcxgDIAMoCzISLmlzc2hvLnYxLlBsYW5TdGVwEhYKDnJvdXRlX3BvbHlsaW5lGAQgASgJIsEBCghQbGFuU3RlcBITCgthY3Rpdml0eV9pZBgBIAEoCRISCgp2ZW51ZV9uYW1lGAIgASgJEhwKFHZlbnVlX3NlY29uZGFyeV9uYW1lGAMgASgJEhUKDXZlbnVlX2FkZHJlc3MYBCABKAkSFgoOdmVudWVfbWFwc191cmwYBSABKAkSFAoMd2Fsa19taW51dGVzGAYgASgFEgsKA2xhdBgHIAEoARILCgNsbmcYCCABKAESDwoHbWVldGluZxgJIAEoCCJCCg1TaWduVXBSZXF1ZXN0Eg8KB3BsYW5faWQYASABKAkSIAoGc2lnbnVwGAIgASgLMhAuaXNzaG8udjEuU2lnbnVwIjIKDlNpZ25VcFJlc3BvbnNlEiAKBHBsYW4YASABKAsyEi5pc3Noby52MS5GZWVkUGxhbiIiCg9XaXRoZHJhd1JlcXVlc3QSDwoHcGxhbl9pZBgBIAEoCSISChBXaXRoZHJhd1Jlc3BvbnNlItsDCghGZWVkUGxhbhIKCgJpZBgBIAEoCRIPCgdhcmVhX2lkGAIgASgJEhMKC2FjdGl2aXR5X2lkGAMgASgJEh0KFWZvbGxvd191cF9hY3Rpdml0eV9pZBgEIAEoCRIYChBwcmltYXJ5X2xhbmd1YWdlGAUgASgJEhoKEnNlY29uZGFyeV9sYW5ndWFnZRgGIAEoCRIPCgdzaWdudXBzGAcgASgFEiIKBWxldmVsGAggASgOMhMuaXNzaG8udjEuUGxhbkxldmVsEhYKDnRyYXZlbF9taW51dGVzGAkgASgFEhQKDHdpbmRvd19zdGFydBgKIAEoCRITCgt3aW5kb3dfZGF5cxgLIAEoBRIzCg9zaWdudXBfZGVhZGxpbmUYDCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhEKCXNpZ25lZF91cBgNIAEoCBINCgV0aXRsZRgOIAEoCRIXCg9zZWNvbmRhcnlfdGl0bGUYDyABKAkSMQoNY2xvc2VkX3JlYXNvbhgQIAEoDjIaLmlzc2hvLnYxLlBsYW5DbG9zZWRSZWFzb24SLQoJY2xvc2VkX2F0GBEgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCJlCgZTaWdudXASKwoHcGF0dGVybhgBIAMoCzIaLmlzc2hvLnYxLkF2YWlsYWJpbGl0eVNsb3QSLgoLdW5hdmFpbGFibGUYAiADKAsyGS5pc3Noby52MS5VbmF2YWlsYWJsZVRpbWUiQwoPVW5hdmFpbGFibGVUaW1lEgwKBGRhdGUYASABKAkSIgoFYmxvY2sYAiABKA4yEy5pc3Noby52MS5UaW1lQmxvY2sqlgEKEFBsYW5DbG9zZWRSZWFzb24SIgoeUExBTl9DTE9TRURfUkVBU09OX1VOU1BFQ0lGSUVEEAASHwobUExBTl9DTE9TRURfUkVBU09OX05PX0dST1VQEAESGwoXUExBTl9DTE9TRURfUkVBU09OX0RPTkUQAhIgChxQTEFOX0NMT1NFRF9SRUFTT05fV0lUSERSQVdOEAMqlgEKCVBsYW5MZXZlbBIaChZQTEFOX0xFVkVMX1VOU1BFQ0lGSUVEEAASGgoWUExBTl9MRVZFTF9OT1RfRk9SX1lPVRABEhIKDlBMQU5fTEVWRUxfTE9XEAISFAoQUExBTl9MRVZFTF9NQVlCRRADEhMKD1BMQU5fTEVWRUxfR09PRBAEEhIKDlBMQU5fTEVWRUxfVE9QEAUymAIKC1BsYW5TZXJ2aWNlEkMKCExpc3RGZWVkEhkuaXNzaG8udjEuTGlzdEZlZWRSZXF1ZXN0GhouaXNzaG8udjEuTGlzdEZlZWRSZXNwb25zZSIAEkAKB0dldFBsYW4SGC5pc3Noby52MS5HZXRQbGFuUmVxdWVzdBoZLmlzc2hvLnYxLkdldFBsYW5SZXNwb25zZSIAEj0KBlNpZ25VcBIXLmlzc2hvLnYxLlNpZ25VcFJlcXVlc3QaGC5pc3Noby52MS5TaWduVXBSZXNwb25zZSIAEkMKCFdpdGhkcmF3EhkuaXNzaG8udjEuV2l0aGRyYXdSZXF1ZXN0GhouaXNzaG8udjEuV2l0aGRyYXdSZXNwb25zZSIAQj5aPGdpdGh1Yi5jb20vc2hydWphbmNoZXJ1a3UvaXNzaG8vYmFja2VuZC9nZW4vaXNzaG8vdjE7aXNzaG92MWIGcHJvdG8z", [file_google_protobuf_timestamp, file_issho_v1_profile]);
 
 /**
  * @generated from message issho.v1.ListFeedRequest
@@ -64,6 +64,9 @@ export const GetPlanRequestSchema: GenMessage<GetPlanRequest> = /*@__PURE__*/
   messageDesc(file_issho_v1_plans, 2);
 
 /**
+ * A plan that closed in the last 14 days is still returned, with
+ * closed_reason set; older or other cities' ones are NOT_FOUND.
+ *
  * @generated from message issho.v1.GetPlanResponse
  */
 export type GetPlanResponse = Message<"issho.v1.GetPlanResponse"> & {
@@ -361,6 +364,19 @@ export type FeedPlan = Message<"issho.v1.FeedPlan"> & {
    * @generated from field: string secondary_title = 15;
    */
   secondaryTitle: string;
+
+  /**
+   * Why the plan closed, for a plan closed in the last 14 days (GetPlan
+   * only; the feed lists open plans). Unspecified while it's open.
+   *
+   * @generated from field: issho.v1.PlanClosedReason closed_reason = 16;
+   */
+  closedReason: PlanClosedReason;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp closed_at = 17;
+   */
+  closedAt?: Timestamp | undefined;
 };
 
 /**
@@ -426,6 +442,43 @@ export const UnavailableTimeSchema: GenMessage<UnavailableTime> = /*@__PURE__*/
   messageDesc(file_issho_v1_plans, 11);
 
 /**
+ * @generated from enum issho.v1.PlanClosedReason
+ */
+export enum PlanClosedReason {
+  /**
+   * @generated from enum value: PLAN_CLOSED_REASON_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * The deadline passed and no group could form.
+   *
+   * @generated from enum value: PLAN_CLOSED_REASON_NO_GROUP = 1;
+   */
+  NO_GROUP = 1,
+
+  /**
+   * Scheduled, with nobody left waiting.
+   *
+   * @generated from enum value: PLAN_CLOSED_REASON_DONE = 2;
+   */
+  DONE = 2,
+
+  /**
+   * Taken down (its activity or venue is no longer available).
+   *
+   * @generated from enum value: PLAN_CLOSED_REASON_WITHDRAWN = 3;
+   */
+  WITHDRAWN = 3,
+}
+
+/**
+ * Describes the enum issho.v1.PlanClosedReason.
+ */
+export const PlanClosedReasonSchema: GenEnum<PlanClosedReason> = /*@__PURE__*/
+  enumDesc(file_issho_v1_plans, 0);
+
+/**
  * How well a plan suits the caller, best last.
  *
  * @generated from enum issho.v1.PlanLevel
@@ -476,7 +529,7 @@ export enum PlanLevel {
  * Describes the enum issho.v1.PlanLevel.
  */
 export const PlanLevelSchema: GenEnum<PlanLevel> = /*@__PURE__*/
-  enumDesc(file_issho_v1_plans, 0);
+  enumDesc(file_issho_v1_plans, 1);
 
 /**
  * PlanService shows open plans to the caller and signs them up. A plan is an

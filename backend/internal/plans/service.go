@@ -16,6 +16,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
@@ -58,6 +59,10 @@ type FeedItem struct {
 	Level    matching.Level
 	Minutes  int // from their home area; -1 = no route
 	SignedUp bool
+	// ClosedReason (a Closed* constant) and ClosedAt are set for a plan that
+	// has closed; "" while it's open.
+	ClosedReason string
+	ClosedAt     time.Time
 	// Title in the caller's two display languages (secondary "" when the
 	// same or not chosen).
 	Title, SecondaryTitle string
@@ -213,6 +218,9 @@ func (s *Service) Feed(ctx context.Context, userID uuid.UUID) ([]FeedItem, error
 func (s *Service) Plan(ctx context.Context, userID, planID uuid.UUID) (FeedItem, []Step, *matching.Signup, error) {
 	q := dbgen.New(s.DB)
 	item, _, caller, err := s.find(ctx, q, userID, planID)
+	if errors.Is(err, ErrNotFound) {
+		item, err = s.closedPlan(ctx, q, caller, userID, planID)
+	}
 	if err != nil {
 		return item, nil, nil, err
 	}
@@ -320,6 +328,56 @@ func (s *Service) find(ctx context.Context, q *dbgen.Queries, userID, planID uui
 		}
 	}
 	return FeedItem{}, nil, caller, ErrNotFound
+}
+
+// ShowClosedFor is how long a closed plan's screen stays available, so a
+// push or link about it explains what happened instead of "not found".
+const ShowClosedFor = 14 * 24 * time.Hour
+
+// closedPlan returns a plan in the caller's city that closed within
+// ShowClosedFor, unranked (Level and Minutes don't matter once closed).
+func (s *Service) closedPlan(ctx context.Context, q *dbgen.Queries, caller Caller, userID, planID uuid.UUID) (FeedItem, error) {
+	r, err := q.GetRecentlyClosedPlan(ctx, dbgen.GetRecentlyClosedPlanParams{
+		ID: planID, CityID: caller.City, UserID: userID,
+		Since: pgtype.Timestamptz{Time: time.Now().Add(-ShowClosedFor), Valid: true},
+	})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return FeedItem{}, ErrNotFound
+	}
+	if err != nil {
+		return FeedItem{}, err
+	}
+	it := FeedItem{
+		Open: Open{
+			ID: r.ID,
+			OpenPlan: matching.OpenPlan{
+				Plan: matching.Plan{
+					Area:      matching.AreaID(r.AreaID),
+					Activity:  matching.ActivityID(r.ActivityID),
+					FollowUp:  matching.ActivityID(deref(r.FollowUpID)),
+					Primary:   r.PrimaryLanguage,
+					Secondary: deref(r.SecondaryLanguage),
+				},
+				Signups: int(r.Signups),
+			},
+			Round:         int(r.Round),
+			Window:        Window{Start: r.WindowStart.Time, Days: int(r.WindowDays), Deadline: r.SignupDeadline.Time},
+			Venue:         deref(r.VenuePlaceID),
+			FollowUpVenue: deref(r.FollowUpVenuePlaceID),
+			Route:         routeFrom(r.RoutePolyline, r.RouteSeconds),
+			MeetingPlace:  deref(r.MeetingPlaceID),
+		},
+		Minutes:      -1,
+		SignedUp:     r.SignedUp,
+		ClosedReason: r.ClosedReason,
+		ClosedAt:     r.ClosedAt.Time,
+	}
+	titles, secondary, err := s.titles(ctx, q, caller.City, caller, []matching.OpenPlan{it.OpenPlan})
+	if err != nil {
+		return FeedItem{}, err
+	}
+	it.Title, it.SecondaryTitle = titles[0], secondary[0]
+	return it, nil
 }
 
 // SignUp signs the caller up for a plan, or replaces the times they gave.
