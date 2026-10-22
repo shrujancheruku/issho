@@ -307,6 +307,7 @@ func cancelGroup(ctx context.Context, q *dbgen.Queries, groupID, planID, eventID
 // SettleReport counts what a settling pass did.
 type SettleReport struct {
 	Confirmed, Cancelled, Finished int
+	ChatMessagesDeleted            int
 }
 
 // Settle decides every group in a city whose confirmation deadline has
@@ -361,5 +362,10 @@ func (r *Runner) Settle(ctx context.Context, cityID string, now time.Time) (Sett
 		return rep, err
 	}
 	rep.Finished = int(finished)
+	chats, err := DeleteOldChats(ctx, q, cityID, now)
+	if err != nil {
+		return rep, err
+	}
+	rep.ChatMessagesDeleted = int(chats)
 	return rep, nil
 }

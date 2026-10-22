@@ -1,4 +1,4 @@
-import { Code, ConnectError } from '@issho/api-client';
+import { Code, ConnectError, EventStatus, InviteResponse } from '@issho/api-client';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -92,6 +92,15 @@ export default function EventScreen() {
             {t('event.confirmedCount', { count: e.confirmed })}
           </ThemedText>
         </View>
+        {/* The chat is for people going; it says itself when it opens. */}
+        {e.response === InviteResponse.CONFIRMED && e.status !== EventStatus.CANCELLED && (
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => router.push({ pathname: '/chat/[id]', params: { id: e.id } })}
+            style={[styles.chatButton, { borderColor: theme.backgroundSelected }]}>
+            <ThemedText type="smallBold">{t('chat.title')} ›</ThemedText>
+          </Pressable>
+        )}
       </>
     );
   }
@@ -155,6 +164,7 @@ const styles = StyleSheet.create({
   banner: { borderLeftWidth: 3, paddingLeft: Spacing.three, paddingVertical: Spacing.one },
   titleBlock: { gap: Spacing.one },
   section: { gap: Spacing.two },
+  chatButton: { borderWidth: 1, borderRadius: 12, padding: Spacing.three, alignItems: 'center' },
   footer: { padding: Spacing.four, gap: Spacing.two },
   secondary: { alignItems: 'center', paddingVertical: Spacing.two },
   error: { color: Brand.red, textAlign: 'center' },

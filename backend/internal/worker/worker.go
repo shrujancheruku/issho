@@ -99,6 +99,7 @@ func (w *matchCityWorker) Work(ctx context.Context, job *river.Job[MatchCityArgs
 	}
 	w.runner.Log.Info("city matched", "city", job.Args.City,
 		"groups_confirmed", settled.Confirmed, "groups_cancelled", settled.Cancelled, "events_done", settled.Finished,
+		"chat_messages_deleted", settled.ChatMessagesDeleted,
 		"checked", rep.Checked, "scheduled", rep.Scheduled, "closed", rep.Closed, "opened", opened)
 	return nil
 }

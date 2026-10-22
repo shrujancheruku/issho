@@ -5,7 +5,9 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
 	"strings"
@@ -19,6 +21,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	"github.com/shrujancheruku/issho/backend/gen/issho/v1/isshov1connect"
 	"github.com/shrujancheruku/issho/backend/internal/catalog"
+	"github.com/shrujancheruku/issho/backend/internal/chatws"
 	"github.com/shrujancheruku/issho/backend/internal/health"
 	"github.com/shrujancheruku/issho/backend/internal/identity"
 	mapsgoogle "github.com/shrujancheruku/issho/backend/internal/maps/google"
@@ -63,6 +66,18 @@ func withCORS(h http.Handler, origins []string) http.Handler {
 		AllowedHeaders:  append(connectcors.AllowedHeaders(), "Authorization"),
 		ExposedHeaders:  connectcors.ExposedHeaders(),
 	}).Handler(h)
+}
+
+// originHosts turns ALLOWED_ORIGINS ("https://admin.example.com") into the
+// host patterns the WebSocket library matches ("admin.example.com").
+func originHosts(origins []string) []string {
+	var out []string
+	for _, o := range origins {
+		if u, err := url.Parse(strings.TrimSpace(o)); err == nil && u.Host != "" {
+			out = append(out, u.Host)
+		}
+	}
+	return out
 }
 
 func run() error {
@@ -131,6 +146,15 @@ func run() error {
 	}
 	mux.Handle(isshov1connect.NewUIServiceHandler(&uistrings.Handler{Catalog: uiCatalog, Translations: translations}, opts))
 
+	// Group chat pushes new messages over WebSocket (internal/chatws); one
+	// LISTEN connection per process wakes the sockets.
+	chatHub := chatws.NewHub()
+	go chatHub.Run(ctx, pool, slog.Default())
+	mux.Handle("/ws/chat", &chatws.Handler{
+		Hub: chatHub, Svc: planSvc, Verifier: verifier, Log: slog.Default(),
+		OriginPatterns: originHosts(cfg.AllowedOrigins),
+	})
+
 	handler := withCORS(mux, cfg.AllowedOrigins)
 
 	// Serve HTTP/1.1 and cleartext HTTP/2; TLS terminates at Caddy/Cloudflare.
@@ -142,6 +166,9 @@ func run() error {
 		Handler:           handler,
 		Protocols:         protocols,
 		ReadHeaderTimeout: 10 * time.Second,
+		// Request contexts end when the process is told to stop. Shutdown
+		// doesn't track WebSockets (hijacked connections); this ends them.
+		BaseContext: func(net.Listener) context.Context { return ctx },
 	}
 
 	errc := make(chan error, 1)
