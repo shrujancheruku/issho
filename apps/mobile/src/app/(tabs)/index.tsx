@@ -6,6 +6,8 @@ import { LanguageSwitch } from '@/components/language-switch';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing, TopTabInset } from '@/constants/theme';
+import { EventCard } from '@/features/events/event-card';
+import { useMyEvents } from '@/features/events/data';
 import { useFeed } from '@/features/plans/data';
 import { usePlanNames } from '@/features/plans/names';
 import { PlanCard } from '@/features/plans/plan-card';
@@ -32,6 +34,7 @@ function ApiStatus() {
 export default function FeedScreen() {
   const { t } = useI18n();
   const feed = useFeed();
+  const events = useMyEvents();
   const names = usePlanNames();
 
   const header = (
@@ -42,6 +45,15 @@ export default function FeedScreen() {
         </ThemedText>
         <LanguageSwitch />
       </View>
+      {/* The person's own events first: they may need an answer. */}
+      {!!events.data?.length && (
+        <View style={styles.events}>
+          <ThemedText type="smallBold">{t('events.title')}</ThemedText>
+          {events.data.map((e) => (
+            <EventCard key={e.id} event={e} names={names} />
+          ))}
+        </View>
+      )}
       <ThemedText type="small" themeColor="textSecondary">
         {t('feed.intro')}
       </ThemedText>
@@ -77,7 +89,12 @@ export default function FeedScreen() {
               </View>
             }
             ListFooterComponent={__DEV__ ? <ApiStatus /> : undefined}
-            refreshControl={<RefreshControl refreshing={feed.isRefetching} onRefresh={() => void feed.refetch()} />}
+            refreshControl={
+              <RefreshControl
+                refreshing={feed.isRefetching || events.isRefetching}
+                onRefresh={() => void Promise.all([feed.refetch(), events.refetch()])}
+              />
+            }
             contentContainerStyle={styles.list}
             style={styles.column}
           />
@@ -94,6 +111,7 @@ const styles = StyleSheet.create({
   column: { width: '100%', maxWidth: MaxContentWidth, alignSelf: 'center' },
   list: { padding: Spacing.four, paddingTop: TopTabInset + Spacing.four, paddingBottom: BottomTabInset + Spacing.four, gap: Spacing.three },
   header: { gap: Spacing.two, marginBottom: Spacing.two },
+  events: { gap: Spacing.two, marginVertical: Spacing.two },
   titleRow: { flexDirection: 'row', alignItems: 'center' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: Spacing.two },
   empty: { gap: Spacing.one, paddingVertical: Spacing.four },

@@ -77,10 +77,15 @@ type matchCityWorker struct {
 	now    func() time.Time
 }
 
-// Work schedules first: plans that are scheduled or close free room under
-// the city's cap for the suggestions that follow.
+// Work settles events whose confirmation deadline passed (people from
+// cancelled groups go back on the waiting list), then schedules (plans that
+// are scheduled or close free room under the city's cap), then suggests.
 func (w *matchCityWorker) Work(ctx context.Context, job *river.Job[MatchCityArgs]) error {
 	now := w.now()
+	settled, err := w.runner.Settle(ctx, job.Args.City, now)
+	if err != nil {
+		return fmt.Errorf("settle %s: %w", job.Args.City, err)
+	}
 	rep, err := w.runner.Schedule(ctx, job.Args.City, now)
 	if err != nil {
 		return fmt.Errorf("schedule %s: %w", job.Args.City, err)
@@ -89,8 +94,9 @@ func (w *matchCityWorker) Work(ctx context.Context, job *river.Job[MatchCityArgs
 	if err != nil {
 		return fmt.Errorf("suggest %s: %w", job.Args.City, err)
 	}
-	w.runner.Log.Info("city matched", "city", job.Args.City, "checked", rep.Checked,
-		"scheduled", rep.Scheduled, "closed", rep.Closed, "opened", opened)
+	w.runner.Log.Info("city matched", "city", job.Args.City,
+		"groups_confirmed", settled.Confirmed, "groups_cancelled", settled.Cancelled, "events_done", settled.Finished,
+		"checked", rep.Checked, "scheduled", rep.Scheduled, "closed", rep.Closed, "opened", opened)
 	return nil
 }
 
