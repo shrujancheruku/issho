@@ -84,6 +84,7 @@ function RootNavigator() {
       <Stack.Protected guard={!!session && onboarded === true}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="profile-edit/[step]" />
+        <Stack.Screen name="plan/[id]" />
       </Stack.Protected>
     </Stack>
   );

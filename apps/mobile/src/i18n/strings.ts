@@ -33,6 +33,25 @@ export function lookup(key: StringKey, catalogs: (Strings | undefined)[], params
   return format(english[key], params);
 }
 
+/**
+ * A fingerprint of this build's English text (FNV-1a over en.json). Cached
+ * translations record the fingerprint they were fetched for, so rewording an
+ * English string (same key, new text) refetches instead of keeping the old
+ * translation forever. Not security-relevant; it only has to change when the
+ * text does.
+ */
+export function fingerprint(catalog: Readonly<Record<string, string>>): string {
+  let h = 0x811c9dc5;
+  const text = JSON.stringify(Object.entries(catalog).sort(([a], [b]) => (a < b ? -1 : 1)));
+  for (let i = 0; i < text.length; i++) {
+    h ^= text.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return (h >>> 0).toString(16);
+}
+
+export const catalogFingerprint = fingerprint(english);
+
 /** True when a cached catalogue has every key this build of the app uses. */
 export function coversApp(strings: Strings): boolean {
   return (Object.keys(english) as StringKey[]).every((k) => !!strings[k]);

@@ -14,7 +14,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file issho/v1/plans.proto.
  */
 export const file_issho_v1_plans: GenFile = /*@__PURE__*/
-  fileDesc("ChRpc3Noby92MS9wbGFucy5wcm90bxIIaXNzaG8udjEiEQoPTGlzdEZlZWRSZXF1ZXN0IjUKEExpc3RGZWVkUmVzcG9uc2USIQoFcGxhbnMYASADKAsyEi5pc3Noby52MS5GZWVkUGxhbiIhCg5HZXRQbGFuUmVxdWVzdBIPCgdwbGFuX2lkGAEgASgJIlUKD0dldFBsYW5SZXNwb25zZRIgCgRwbGFuGAEgASgLMhIuaXNzaG8udjEuRmVlZFBsYW4SIAoGc2lnbnVwGAIgASgLMhAuaXNzaG8udjEuU2lnbnVwIkIKDVNpZ25VcFJlcXVlc3QSDwoHcGxhbl9pZBgBIAEoCRIgCgZzaWdudXAYAiABKAsyEC5pc3Noby52MS5TaWdudXAiMgoOU2lnblVwUmVzcG9uc2USIAoEcGxhbhgBIAEoCzISLmlzc2hvLnYxLkZlZWRQbGFuIiIKD1dpdGhkcmF3UmVxdWVzdBIPCgdwbGFuX2lkGAEgASgJIhIKEFdpdGhkcmF3UmVzcG9uc2Ui0QIKCEZlZWRQbGFuEgoKAmlkGAEgASgJEg8KB2FyZWFfaWQYAiABKAkSEwoLYWN0aXZpdHlfaWQYAyABKAkSHQoVZm9sbG93X3VwX2FjdGl2aXR5X2lkGAQgASgJEhgKEHByaW1hcnlfbGFuZ3VhZ2UYBSABKAkSGgoSc2Vjb25kYXJ5X2xhbmd1YWdlGAYgASgJEg8KB3NpZ251cHMYByABKAUSIgoFbGV2ZWwYCCABKA4yEy5pc3Noby52MS5QbGFuTGV2ZWwSFgoOdHJhdmVsX21pbnV0ZXMYCSABKAUSFAoMd2luZG93X3N0YXJ0GAogASgJEhMKC3dpbmRvd19kYXlzGAsgASgFEjMKD3NpZ251cF9kZWFkbGluZRgMIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASEQoJc2lnbmVkX3VwGA0gASgIImUKBlNpZ251cBIrCgdwYXR0ZXJuGAEgAygLMhouaXNzaG8udjEuQXZhaWxhYmlsaXR5U2xvdBIuCgt1bmF2YWlsYWJsZRgCIAMoCzIZLmlzc2hvLnYxLlVuYXZhaWxhYmxlVGltZSJDCg9VbmF2YWlsYWJsZVRpbWUSDAoEZGF0ZRgBIAEoCRIiCgVibG9jaxgCIAEoDjITLmlzc2hvLnYxLlRpbWVCbG9jayqWAQoJUGxhbkxldmVsEhoKFlBMQU5fTEVWRUxfVU5TUEVDSUZJRUQQABIaChZQTEFOX0xFVkVMX05PVF9GT1JfWU9VEAESEgoOUExBTl9MRVZFTF9MT1cQAhIUChBQTEFOX0xFVkVMX01BWUJFEAMSEwoPUExBTl9MRVZFTF9HT09EEAQSEgoOUExBTl9MRVZFTF9UT1AQBTKYAgoLUGxhblNlcnZpY2USQwoITGlzdEZlZWQSGS5pc3Noby52MS5MaXN0RmVlZFJlcXVlc3QaGi5pc3Noby52MS5MaXN0RmVlZFJlc3BvbnNlIgASQAoHR2V0UGxhbhIYLmlzc2hvLnYxLkdldFBsYW5SZXF1ZXN0GhkuaXNzaG8udjEuR2V0UGxhblJlc3BvbnNlIgASPQoGU2lnblVwEhcuaXNzaG8udjEuU2lnblVwUmVxdWVzdBoYLmlzc2hvLnYxLlNpZ25VcFJlc3BvbnNlIgASQwoIV2l0aGRyYXcSGS5pc3Noby52MS5XaXRoZHJhd1JlcXVlc3QaGi5pc3Noby52MS5XaXRoZHJhd1Jlc3BvbnNlIgBCPlo8Z2l0aHViLmNvbS9zaHJ1amFuY2hlcnVrdS9pc3Noby9iYWNrZW5kL2dlbi9pc3Noby92MTtpc3Nob3YxYgZwcm90bzM", [file_google_protobuf_timestamp, file_issho_v1_profile]);
+  fileDesc("ChRpc3Noby92MS9wbGFucy5wcm90bxIIaXNzaG8udjEiEQoPTGlzdEZlZWRSZXF1ZXN0IjUKEExpc3RGZWVkUmVzcG9uc2USIQoFcGxhbnMYASADKAsyEi5pc3Noby52MS5GZWVkUGxhbiIhCg5HZXRQbGFuUmVxdWVzdBIPCgdwbGFuX2lkGAEgASgJIngKD0dldFBsYW5SZXNwb25zZRIgCgRwbGFuGAEgASgLMhIuaXNzaG8udjEuRmVlZFBsYW4SIAoGc2lnbnVwGAIgASgLMhAuaXNzaG8udjEuU2lnbnVwEiEKBXN0ZXBzGAMgAygLMhIuaXNzaG8udjEuUGxhblN0ZXAilgEKCFBsYW5TdGVwEhMKC2FjdGl2aXR5X2lkGAEgASgJEhIKCnZlbnVlX25hbWUYAiABKAkSHAoUdmVudWVfc2Vjb25kYXJ5X25hbWUYAyABKAkSFQoNdmVudWVfYWRkcmVzcxgEIAEoCRIWCg52ZW51ZV9tYXBzX3VybBgFIAEoCRIUCgx3YWxrX21pbnV0ZXMYBiABKAUiQgoNU2lnblVwUmVxdWVzdBIPCgdwbGFuX2lkGAEgASgJEiAKBnNpZ251cBgCIAEoCzIQLmlzc2hvLnYxLlNpZ251cCIyCg5TaWduVXBSZXNwb25zZRIgCgRwbGFuGAEgASgLMhIuaXNzaG8udjEuRmVlZFBsYW4iIgoPV2l0aGRyYXdSZXF1ZXN0Eg8KB3BsYW5faWQYASABKAkiEgoQV2l0aGRyYXdSZXNwb25zZSL5AgoIRmVlZFBsYW4SCgoCaWQYASABKAkSDwoHYXJlYV9pZBgCIAEoCRITCgthY3Rpdml0eV9pZBgDIAEoCRIdChVmb2xsb3dfdXBfYWN0aXZpdHlfaWQYBCABKAkSGAoQcHJpbWFyeV9sYW5ndWFnZRgFIAEoCRIaChJzZWNvbmRhcnlfbGFuZ3VhZ2UYBiABKAkSDwoHc2lnbnVwcxgHIAEoBRIiCgVsZXZlbBgIIAEoDjITLmlzc2hvLnYxLlBsYW5MZXZlbBIWCg50cmF2ZWxfbWludXRlcxgJIAEoBRIUCgx3aW5kb3dfc3RhcnQYCiABKAkSEwoLd2luZG93X2RheXMYCyABKAUSMwoPc2lnbnVwX2RlYWRsaW5lGAwgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIRCglzaWduZWRfdXAYDSABKAgSDQoFdGl0bGUYDiABKAkSFwoPc2Vjb25kYXJ5X3RpdGxlGA8gASgJImUKBlNpZ251cBIrCgdwYXR0ZXJuGAEgAygLMhouaXNzaG8udjEuQXZhaWxhYmlsaXR5U2xvdBIuCgt1bmF2YWlsYWJsZRgCIAMoCzIZLmlzc2hvLnYxLlVuYXZhaWxhYmxlVGltZSJDCg9VbmF2YWlsYWJsZVRpbWUSDAoEZGF0ZRgBIAEoCRIiCgVibG9jaxgCIAEoDjITLmlzc2hvLnYxLlRpbWVCbG9jayqWAQoJUGxhbkxldmVsEhoKFlBMQU5fTEVWRUxfVU5TUEVDSUZJRUQQABIaChZQTEFOX0xFVkVMX05PVF9GT1JfWU9VEAESEgoOUExBTl9MRVZFTF9MT1cQAhIUChBQTEFOX0xFVkVMX01BWUJFEAMSEwoPUExBTl9MRVZFTF9HT09EEAQSEgoOUExBTl9MRVZFTF9UT1AQBTKYAgoLUGxhblNlcnZpY2USQwoITGlzdEZlZWQSGS5pc3Noby52MS5MaXN0RmVlZFJlcXVlc3QaGi5pc3Noby52MS5MaXN0RmVlZFJlc3BvbnNlIgASQAoHR2V0UGxhbhIYLmlzc2hvLnYxLkdldFBsYW5SZXF1ZXN0GhkuaXNzaG8udjEuR2V0UGxhblJlc3BvbnNlIgASPQoGU2lnblVwEhcuaXNzaG8udjEuU2lnblVwUmVxdWVzdBoYLmlzc2hvLnYxLlNpZ25VcFJlc3BvbnNlIgASQwoIV2l0aGRyYXcSGS5pc3Noby52MS5XaXRoZHJhd1JlcXVlc3QaGi5pc3Noby52MS5XaXRoZHJhd1Jlc3BvbnNlIgBCPlo8Z2l0aHViLmNvbS9zaHJ1amFuY2hlcnVrdS9pc3Noby9iYWNrZW5kL2dlbi9pc3Noby92MTtpc3Nob3YxYgZwcm90bzM", [file_google_protobuf_timestamp, file_issho_v1_profile]);
 
 /**
  * @generated from message issho.v1.ListFeedRequest
@@ -78,6 +78,14 @@ export type GetPlanResponse = Message<"issho.v1.GetPlanResponse"> & {
    * @generated from field: issho.v1.Signup signup = 2;
    */
   signup?: Signup | undefined;
+
+  /**
+   * What the outing is, in order: the activity, then any follow-up, each at
+   * its venue.
+   *
+   * @generated from field: repeated issho.v1.PlanStep steps = 3;
+   */
+  steps: PlanStep[];
 };
 
 /**
@@ -86,6 +94,66 @@ export type GetPlanResponse = Message<"issho.v1.GetPlanResponse"> & {
  */
 export const GetPlanResponseSchema: GenMessage<GetPlanResponse> = /*@__PURE__*/
   messageDesc(file_issho_v1_plans, 3);
+
+/**
+ * One stop of a plan.
+ *
+ * @generated from message issho.v1.PlanStep
+ */
+export type PlanStep = Message<"issho.v1.PlanStep"> & {
+  /**
+   * Activity id (CatalogService.ListActivities): what happens here.
+   *
+   * @generated from field: string activity_id = 1;
+   */
+  activityId: string;
+
+  /**
+   * The venue's name from Google, in the caller's primary and secondary
+   * display languages, fetched live (Maps terms: nothing but the place id is
+   * stored). Empty when the activity needs only a meeting point, no venue
+   * was found, or the server has no GOOGLE_MAPS_API_KEY.
+   *
+   * @generated from field: string venue_name = 2;
+   */
+  venueName: string;
+
+  /**
+   * Empty when the same as venue_name.
+   *
+   * @generated from field: string venue_secondary_name = 3;
+   */
+  venueSecondaryName: string;
+
+  /**
+   * Short address in the primary language.
+   *
+   * @generated from field: string venue_address = 4;
+   */
+  venueAddress: string;
+
+  /**
+   * Opens the venue in Google Maps.
+   *
+   * @generated from field: string venue_maps_url = 5;
+   */
+  venueMapsUrl: string;
+
+  /**
+   * Estimated walk from the previous stop's venue, in minutes; 0 for the
+   * first stop or when either venue is unknown.
+   *
+   * @generated from field: int32 walk_minutes = 6;
+   */
+  walkMinutes: number;
+};
+
+/**
+ * Describes the message issho.v1.PlanStep.
+ * Use `create(PlanStepSchema)` to create a new message.
+ */
+export const PlanStepSchema: GenMessage<PlanStep> = /*@__PURE__*/
+  messageDesc(file_issho_v1_plans, 4);
 
 /**
  * @generated from message issho.v1.SignUpRequest
@@ -107,7 +175,7 @@ export type SignUpRequest = Message<"issho.v1.SignUpRequest"> & {
  * Use `create(SignUpRequestSchema)` to create a new message.
  */
 export const SignUpRequestSchema: GenMessage<SignUpRequest> = /*@__PURE__*/
-  messageDesc(file_issho_v1_plans, 4);
+  messageDesc(file_issho_v1_plans, 5);
 
 /**
  * @generated from message issho.v1.SignUpResponse
@@ -124,7 +192,7 @@ export type SignUpResponse = Message<"issho.v1.SignUpResponse"> & {
  * Use `create(SignUpResponseSchema)` to create a new message.
  */
 export const SignUpResponseSchema: GenMessage<SignUpResponse> = /*@__PURE__*/
-  messageDesc(file_issho_v1_plans, 5);
+  messageDesc(file_issho_v1_plans, 6);
 
 /**
  * @generated from message issho.v1.WithdrawRequest
@@ -141,7 +209,7 @@ export type WithdrawRequest = Message<"issho.v1.WithdrawRequest"> & {
  * Use `create(WithdrawRequestSchema)` to create a new message.
  */
 export const WithdrawRequestSchema: GenMessage<WithdrawRequest> = /*@__PURE__*/
-  messageDesc(file_issho_v1_plans, 6);
+  messageDesc(file_issho_v1_plans, 7);
 
 /**
  * @generated from message issho.v1.WithdrawResponse
@@ -154,7 +222,7 @@ export type WithdrawResponse = Message<"issho.v1.WithdrawResponse"> & {
  * Use `create(WithdrawResponseSchema)` to create a new message.
  */
 export const WithdrawResponseSchema: GenMessage<WithdrawResponse> = /*@__PURE__*/
-  messageDesc(file_issho_v1_plans, 7);
+  messageDesc(file_issho_v1_plans, 8);
 
 /**
  * An open plan as the caller sees it.
@@ -246,6 +314,22 @@ export type FeedPlan = Message<"issho.v1.FeedPlan"> & {
    * @generated from field: bool signed_up = 13;
    */
   signedUp: boolean;
+
+  /**
+   * What the outing is, as one line: "Climbing and bouldering, then lunch
+   * or dinner out". In the caller's primary display language, with the
+   * secondary below it ("" when the same or not chosen). Area names are left
+   * out on purpose: they're proper nouns, never machine-translated, and
+   * shown with area_id's name.
+   *
+   * @generated from field: string title = 14;
+   */
+  title: string;
+
+  /**
+   * @generated from field: string secondary_title = 15;
+   */
+  secondaryTitle: string;
 };
 
 /**
@@ -253,7 +337,7 @@ export type FeedPlan = Message<"issho.v1.FeedPlan"> & {
  * Use `create(FeedPlanSchema)` to create a new message.
  */
 export const FeedPlanSchema: GenMessage<FeedPlan> = /*@__PURE__*/
-  messageDesc(file_issho_v1_plans, 8);
+  messageDesc(file_issho_v1_plans, 9);
 
 /**
  * The times that suit someone for one plan. Pre-fill pattern with the
@@ -282,7 +366,7 @@ export type Signup = Message<"issho.v1.Signup"> & {
  * Use `create(SignupSchema)` to create a new message.
  */
 export const SignupSchema: GenMessage<Signup> = /*@__PURE__*/
-  messageDesc(file_issho_v1_plans, 9);
+  messageDesc(file_issho_v1_plans, 10);
 
 /**
  * @generated from message issho.v1.UnavailableTime
@@ -308,7 +392,7 @@ export type UnavailableTime = Message<"issho.v1.UnavailableTime"> & {
  * Use `create(UnavailableTimeSchema)` to create a new message.
  */
 export const UnavailableTimeSchema: GenMessage<UnavailableTime> = /*@__PURE__*/
-  messageDesc(file_issho_v1_plans, 10);
+  messageDesc(file_issho_v1_plans, 11);
 
 /**
  * How well a plan suits the caller, best last.

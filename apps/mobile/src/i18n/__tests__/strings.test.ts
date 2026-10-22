@@ -1,5 +1,5 @@
 /// <reference types="jest" />
-import { baseLanguage, coversApp, english, format, lookup } from '../strings';
+import { baseLanguage, coversApp, english, fingerprint, format, lookup } from '../strings';
 
 describe('format', () => {
   it('fills placeholders and leaves unknown ones', () => {
@@ -23,6 +23,14 @@ describe('coversApp', () => {
   it('needs every key', () => {
     expect(coversApp(english)).toBe(true);
     expect(coversApp({ 'common.save': 'x' })).toBe(false);
+  });
+});
+
+describe('fingerprint', () => {
+  it('changes when a text changes, not when keys are reordered', () => {
+    const a = fingerprint({ 'common.save': 'Save', 'common.back': 'Back' });
+    expect(fingerprint({ 'common.back': 'Back', 'common.save': 'Save' })).toBe(a);
+    expect(fingerprint({ 'common.save': 'Save it', 'common.back': 'Back' })).not.toBe(a);
   });
 });
 

@@ -7,7 +7,7 @@ import { api } from '@/lib/api';
 
 import { readCached, writeCached, type CachedStrings } from './cache';
 import { deviceLanguages } from './device';
-import { coversApp, english, lookup, type Params, type StringKey } from './strings';
+import { catalogFingerprint, coversApp, english, lookup, type Params, type StringKey } from './strings';
 
 export type Languages = { primary: string; secondary: string };
 
@@ -104,6 +104,10 @@ export function useI18n() {
   return ctx;
 }
 
+function isCurrent(c: CachedStrings | undefined) {
+  return !!c && c.complete && c.appCatalog === catalogFingerprint && coversApp(c.strings);
+}
+
 /**
  * The UI catalogue in one language: from the device cache straight away, then
  * from the server when the cache is missing, incomplete or older than this
@@ -117,18 +121,21 @@ function useUiStrings(lang: string) {
     enabled: needed,
     queryFn: async (): Promise<CachedStrings> => {
       const res = await api.ui.getStrings({ language: lang });
-      const value = { strings: res.strings, complete: res.complete, catalogVersion: res.catalogVersion };
+      const value = {
+        strings: res.strings,
+        complete: res.complete,
+        catalogVersion: res.catalogVersion,
+        appCatalog: catalogFingerprint,
+      };
       writeCached(lang, value);
       return value;
     },
     initialData: () => (needed ? readCached(lang) : undefined),
-    // A complete cache with every key needs no request; anything else is
-    // stale from the start.
-    initialDataUpdatedAt: () => {
-      const cached = needed ? readCached(lang) : undefined;
-      return cached?.complete && coversApp(cached.strings) ? Date.now() : 0;
-    },
-    staleTime: Infinity,
+    // A complete catalogue with every key, fetched for this build's English
+    // text, never needs another request; anything else is shown straight
+    // away but fetched again. (A fixed staleTime: Infinity never refetched
+    // at all: TanStack treats data as fresh forever, whatever its age.)
+    staleTime: (q) => (isCurrent(q.state.data) ? Infinity : 0),
     gcTime: Infinity,
     refetchInterval: (q) => (q.state.data && !q.state.data.complete ? 30_000 : false),
   });

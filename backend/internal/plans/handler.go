@@ -45,11 +45,21 @@ func (h *Handler) GetPlan(ctx context.Context, req *connect.Request[isshov1.GetP
 	if err != nil {
 		return nil, err
 	}
-	item, signup, err := h.Svc.Plan(ctx, userID, planID)
+	item, steps, signup, err := h.Svc.Plan(ctx, userID, planID)
 	if err != nil {
 		return nil, connectError(err)
 	}
 	out := &isshov1.GetPlanResponse{Plan: planToProto(item)}
+	for _, st := range steps {
+		out.Steps = append(out.Steps, &isshov1.PlanStep{
+			ActivityId:         string(st.Activity),
+			VenueName:          st.Venue.Name,
+			VenueSecondaryName: st.SecondaryName,
+			VenueAddress:       st.Venue.Address,
+			VenueMapsUrl:       st.Venue.MapsURL,
+			WalkMinutes:        int32(st.WalkMinutes),
+		})
+	}
 	if signup != nil {
 		out.Signup = signupToProto(*signup)
 	}
@@ -156,6 +166,8 @@ func planToProto(it FeedItem) *isshov1.FeedPlan {
 		WindowDays:         int32(it.Window.Days),
 		SignupDeadline:     timestamppb.New(it.Window.Deadline),
 		SignedUp:           it.SignedUp,
+		Title:              it.Title,
+		SecondaryTitle:     it.SecondaryTitle,
 	}
 }
 

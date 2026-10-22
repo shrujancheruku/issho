@@ -52,8 +52,18 @@ func (c *Client) Post(ctx context.Context, url string, headers map[string]string
 	if err != nil {
 		return err
 	}
+	return c.retry(ctx, func() error { return c.once(ctx, http.MethodPost, url, headers, payload, out) })
+}
+
+// Get fetches url and decodes the JSON response into out, with the same
+// retries as Post.
+func (c *Client) Get(ctx context.Context, url string, headers map[string]string, out any) error {
+	return c.retry(ctx, func() error { return c.once(ctx, http.MethodGet, url, headers, nil, out) })
+}
+
+func (c *Client) retry(ctx context.Context, call func() error) error {
 	for attempt := 0; ; attempt++ {
-		err := c.postOnce(ctx, url, headers, payload, out)
+		err := call()
 		var apiErr *APIError
 		if err == nil || !errors.As(err, &apiErr) || !retryable(apiErr.StatusCode) || attempt >= c.MaxRetries {
 			return err
@@ -66,12 +76,18 @@ func (c *Client) Post(ctx context.Context, url string, headers map[string]string
 	}
 }
 
-func (c *Client) postOnce(ctx context.Context, url string, headers map[string]string, payload []byte, out any) error {
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(payload))
+func (c *Client) once(ctx context.Context, method, url string, headers map[string]string, payload []byte, out any) error {
+	var body io.Reader
+	if payload != nil {
+		body = bytes.NewReader(payload)
+	}
+	req, err := http.NewRequestWithContext(ctx, method, url, body)
 	if err != nil {
 		return err
 	}
-	req.Header.Set("Content-Type", "application/json")
+	if payload != nil {
+		req.Header.Set("Content-Type", "application/json")
+	}
 	// Header rather than ?key= so the key never appears in URLs, which end up in
 	// logs and error messages.
 	req.Header.Set("X-Goog-Api-Key", c.key)

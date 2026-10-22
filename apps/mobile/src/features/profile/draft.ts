@@ -1,5 +1,7 @@
 import { Gender, GroupSize, Interest, TimeBlock, type Profile } from '@issho/api-client';
 
+import { parseSlotKey, slotKey } from '@/lib/slots';
+
 /**
  * The profile as onboarding and settings edit it. Plain data, converted to and
  * from the API's Profile message at the edges, so steps stay simple and the
@@ -39,9 +41,6 @@ export const ConductVersion = 1;
 export const MinActivities = 3;
 export const MinAge = 18;
 export const travelChoices = [15, 30, 45, 60, 90];
-export const blocks = [TimeBlock.MORNING, TimeBlock.AFTERNOON, TimeBlock.EVENING];
-/** Monday first; values are 0 = Sunday as on the server. */
-export const weekdays = [1, 2, 3, 4, 5, 6, 0];
 
 export function emptyDraft(deviceLanguage: string, deviceSecondary = ''): Draft {
   return {
@@ -64,7 +63,6 @@ export function emptyDraft(deviceLanguage: string, deviceSecondary = ''): Draft 
   };
 }
 
-export const slotKey = (weekday: number, block: TimeBlock) => `${weekday}:${block}`;
 
 export function toggleSlot(d: Draft, weekday: number, block: TimeBlock): Draft {
   const key = slotKey(weekday, block);
@@ -214,10 +212,7 @@ export function toProfile(d: Draft, conductVersion: number) {
     spokenLanguages: d.spoken,
     primaryLanguage: d.primaryLanguage,
     secondaryLanguage: d.secondaryLanguage,
-    availability: d.availability.map((k) => {
-      const [weekday, block] = k.split(':').map(Number);
-      return { weekday, block: block as TimeBlock };
-    }),
+    availability: d.availability.map(parseSlotKey),
     activities: Object.entries(d.activities).map(([activityId, interest]) => ({ activityId, interest })),
     groupSize: d.groupSize,
     energy: d.energy,

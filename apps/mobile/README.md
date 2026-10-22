@@ -74,13 +74,14 @@ lib/api.ts ── Authorization: Bearer <access token> ────────�
 
 | Path | Contents |
 |---|---|
-| `src/app/` | **Routes only** (Expo Router). `_layout.tsx` sets up the providers and auth guards; `sign-in.tsx`, `onboarding.tsx`, `(tabs)/` for the main app (home, profile) and `profile-edit/[step].tsx` for editing one profile section. |
+| `src/app/` | **Routes only** (Expo Router). `_layout.tsx` sets up the providers and auth guards; `sign-in.tsx`, `onboarding.tsx`, `(tabs)/` for the main app (the plan feed, profile), `plan/[id].tsx` for one plan and signing up, and `profile-edit/[step].tsx` for editing one profile section. |
 | `src/features/auth/` | `AuthProvider` / `useAuth()`: session state, onboarding status, display languages, sign-out |
 | `src/features/profile/` | Onboarding and settings: `draft.ts` (the profile being edited, step rules; unit-tested), `steps.tsx` (one component per step), `language-picker.tsx`, `data.ts` (cities, activities, languages) |
+| `src/features/plans/` | The feed and signups (`PlanService`): `data.ts` (feed, plan, sign up and withdraw, refreshing both), `names.ts` (plans carry ids; names come from the catalogue the app already loads), `plan-card.tsx`, `level.ts` (level labels and colours, matching the interest tiles), `signup.ts` (the times being edited ↔ the API's `Signup`; unit-tested), `format.ts` (dates) |
 | `src/i18n/` | The app's UI text: `en.json` (the source), `i18n-provider.tsx` (`useI18n()`: `t`, `pair`, the language switch), `cache.ts` (translations kept on the device) |
 | `src/features/account/` | Account actions (sign out, delete account) |
-| `src/lib/` | `supabase.ts` (client), `secure-storage.ts` (session storage), `api.ts` (Go API client) |
-| `src/components/`, `src/hooks/`, `src/constants/` | UI building blocks and theme. `Brand` colours are in `constants/theme.ts`. |
+| `src/lib/` | `supabase.ts` (client), `secure-storage.ts` (session storage), `api.ts` (Go API client), `slots.ts` (weekly slots as strings) |
+| `src/components/`, `src/hooks/`, `src/constants/` | UI building blocks and theme. `Brand` colours are in `constants/theme.ts`. `availability-grid.tsx` is the week grid used by the profile and by signups. |
 | `src/types/expo.d.ts` | Expo's ambient types, committed so fresh clones and CI can typecheck |
 | `assets/images/logo.png` | The logo, rendered from `assets/brand/logo.svg` (`rsvg-convert -w 900 ../../assets/brand/logo.svg -o assets/images/logo.png`) |
 | `app.json` | App config: name, bundle IDs `com.joinissho.app`, scheme `issho`. `expo.version` is managed by release-please. |
@@ -144,6 +145,7 @@ npx expo export -p web               # static build in dist/ (pnpm export:web)
 - Web-only code lives in `*.web.ts(x)` files, which Metro picks over the native ones: `lib/secure-storage.web.ts` (session in `localStorage`; read its comment before any public release), `i18n/cache.web.ts`, `components/app-tabs.web.tsx`, `hooks/use-color-scheme.web.ts`.
 - `app.json` uses `"web": { "output": "single" }`: one `index.html` for every route, with no server rendering. Server rendering would run app code in Node at build time, where the secure store doesn't exist.
 - **Wide screens:** form-like screens (sign-in, onboarding, profile editing, the language picker) keep their header, content and footer in one centred column at most `FormWidth` (560 px, `constants/theme.ts`) wide; the logo is capped too. Phones are narrower, so this only changes tablets and the web. `global.css` sets `color-scheme` so browser scrollbars follow the theme.
+- **The floating tab bar:** on the web the tab bar sits over the top of the screen, so tab screens add `TopTabInset` (`constants/theme.ts`, 0 on phones) to their top padding. The feed uses `MaxContentWidth` (800 px) rather than `FormWidth`.
 - `Alert.alert` does nothing on web, so confirmation dialogs (account deletion) need a web version before release.
 
 ## Builds & releases

@@ -8,6 +8,8 @@ export type CachedStrings = {
   /** False when the server was still translating some strings. */
   complete: boolean;
   catalogVersion: string;
+  /** catalogFingerprint of the app build that fetched it; missing in older caches. */
+  appCatalog?: string;
 };
 
 // Documents, not the cache directory: the sign-in screen should be in the

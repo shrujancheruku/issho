@@ -199,26 +199,28 @@ func (q *Queries) InsertGroupMembers(ctx context.Context, arg InsertGroupMembers
 const insertPlan = `-- name: InsertPlan :one
 insert into app.plans (
   city_id, area_id, activity_id, follow_up_id, primary_language, secondary_language,
-  audience, score, window_start, window_days, signup_deadline
+  audience, score, window_start, window_days, signup_deadline, venue_place_id, follow_up_venue_place_id
 ) values (
   $1, $2, $3, $4, $5, $6,
-  $7, $8, $9, $10, $11
+  $7, $8, $9, $10, $11, $12, $13
 )
 returning id
 `
 
 type InsertPlanParams struct {
-	CityID            string
-	AreaID            string
-	ActivityID        string
-	FollowUpID        *string
-	PrimaryLanguage   string
-	SecondaryLanguage *string
-	Audience          int32
-	Score             float32
-	WindowStart       pgtype.Date
-	WindowDays        int16
-	SignupDeadline    pgtype.Timestamptz
+	CityID               string
+	AreaID               string
+	ActivityID           string
+	FollowUpID           *string
+	PrimaryLanguage      string
+	SecondaryLanguage    *string
+	Audience             int32
+	Score                float32
+	WindowStart          pgtype.Date
+	WindowDays           int16
+	SignupDeadline       pgtype.Timestamptz
+	VenuePlaceID         *string
+	FollowUpVenuePlaceID *string
 }
 
 func (q *Queries) InsertPlan(ctx context.Context, arg InsertPlanParams) (uuid.UUID, error) {
@@ -234,6 +236,8 @@ func (q *Queries) InsertPlan(ctx context.Context, arg InsertPlanParams) (uuid.UU
 		arg.WindowStart,
 		arg.WindowDays,
 		arg.SignupDeadline,
+		arg.VenuePlaceID,
+		arg.FollowUpVenuePlaceID,
 	)
 	var id uuid.UUID
 	err := row.Scan(&id)
@@ -331,7 +335,7 @@ func (q *Queries) ListBusyOccasions(ctx context.Context, arg ListBusyOccasionsPa
 
 const listOpenPlans = `-- name: ListOpenPlans :many
 select p.id, p.area_id, p.activity_id, p.follow_up_id, p.primary_language, p.secondary_language,
-       p.round, p.window_start, p.window_days, p.signup_deadline,
+       p.round, p.window_start, p.window_days, p.signup_deadline, p.venue_place_id, p.follow_up_venue_place_id,
        (select count(*) from app.plan_signups s where s.plan_id = p.id)::int as signups
 from app.plans p
 where p.city_id = $1 and p.status = 'open'
@@ -339,17 +343,19 @@ order by p.created_at, p.id
 `
 
 type ListOpenPlansRow struct {
-	ID                uuid.UUID
-	AreaID            string
-	ActivityID        string
-	FollowUpID        *string
-	PrimaryLanguage   string
-	SecondaryLanguage *string
-	Round             int16
-	WindowStart       pgtype.Date
-	WindowDays        int16
-	SignupDeadline    pgtype.Timestamptz
-	Signups           int32
+	ID                   uuid.UUID
+	AreaID               string
+	ActivityID           string
+	FollowUpID           *string
+	PrimaryLanguage      string
+	SecondaryLanguage    *string
+	Round                int16
+	WindowStart          pgtype.Date
+	WindowDays           int16
+	SignupDeadline       pgtype.Timestamptz
+	VenuePlaceID         *string
+	FollowUpVenuePlaceID *string
+	Signups              int32
 }
 
 // Signup counts come from the same rows the worker schedules from, so the
@@ -374,6 +380,8 @@ func (q *Queries) ListOpenPlans(ctx context.Context, cityID string) ([]ListOpenP
 			&i.WindowStart,
 			&i.WindowDays,
 			&i.SignupDeadline,
+			&i.VenuePlaceID,
+			&i.FollowUpVenuePlaceID,
 			&i.Signups,
 		); err != nil {
 			return nil, err
@@ -603,6 +611,28 @@ func (q *Queries) NextPlanRound(ctx context.Context, arg NextPlanRoundParams) er
 		arg.ID,
 	)
 	return err
+}
+
+const pickVenue = `-- name: PickVenue :one
+select google_place_id from app.venues
+where area_id = $1 and category_id = any($2::text[]) and status <> 'rejected'
+order by (status = 'approved') desc, random()
+limit 1
+`
+
+type PickVenueParams struct {
+	AreaID     string
+	Categories []string
+}
+
+// A venue for an activity in an area: one of its venue categories, never a
+// rejected place, approved ones first (admin curation, M8), otherwise any
+// candidate at random so plans in one area don't all use the same café.
+func (q *Queries) PickVenue(ctx context.Context, arg PickVenueParams) (string, error) {
+	row := q.db.QueryRow(ctx, pickVenue, arg.AreaID, arg.Categories)
+	var google_place_id string
+	err := row.Scan(&google_place_id)
+	return google_place_id, err
 }
 
 const setPlanDescription = `-- name: SetPlanDescription :exec

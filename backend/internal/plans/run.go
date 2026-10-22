@@ -132,8 +132,12 @@ func (r *Runner) Suggest(ctx context.Context, cityID string, now time.Time) (int
 		})
 	}
 	suggestions := matching.Suggest(in, c.Config)
+	acts := make(map[matching.ActivityID]*matching.Activity, len(c.Activities))
+	for i := range c.Activities {
+		acts[c.Activities[i].ID] = &c.Activities[i]
+	}
 	for _, s := range suggestions {
-		if _, err := Create(ctx, q, cityID, s, w); err != nil {
+		if _, err := Create(ctx, q, cityID, s, w, acts); err != nil {
 			return 0, fmt.Errorf("open plan %s in %s: %w", s.Activity, s.Area, err)
 		}
 	}

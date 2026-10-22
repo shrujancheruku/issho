@@ -24,6 +24,10 @@ type Config struct {
 	// suggestions (Gemini). Optional: without it,
 	// CatalogService.SuggestActivities returns FAILED_PRECONDITION.
 	GeminiAPIKey string
+	// GoogleMapsAPIKey enables venue names and addresses on plans (Places
+	// Details, fetched live). Optional: without it, plans show no venue
+	// names.
+	GoogleMapsAPIKey string
 }
 
 func Load() (Config, error) {
@@ -34,6 +38,7 @@ func Load() (Config, error) {
 		SupabaseSecretKey:     os.Getenv("SUPABASE_SECRET_KEY"),
 		GoogleTranslateAPIKey: os.Getenv("GOOGLE_TRANSLATE_API_KEY"),
 		GeminiAPIKey:          os.Getenv("GOOGLE_GEMINI_API_KEY"),
+		GoogleMapsAPIKey:      os.Getenv("GOOGLE_MAPS_API_KEY"),
 	}
 	if v := os.Getenv("ALLOWED_ORIGINS"); v != "" {
 		c.AllowedOrigins = strings.Split(v, ",")

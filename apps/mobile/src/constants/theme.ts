@@ -78,6 +78,11 @@ export const Spacing = {
 } as const;
 
 export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
+/**
+ * On the web the tab bar floats over the top of the screen
+ * (components/app-tabs.web.tsx), so tab screens start below it.
+ */
+export const TopTabInset = Platform.select({ web: 64 }) ?? 0;
 export const MaxContentWidth = 800;
 /**
  * Widest a form-like screen gets (sign-in, onboarding, profile editing):
