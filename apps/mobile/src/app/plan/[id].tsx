@@ -17,6 +17,7 @@ import { levelStyles } from '@/features/plans/level';
 import { usePlanNames } from '@/features/plans/names';
 import { distanceText, pairText, planTitle } from '@/features/plans/plan-card';
 import { Fact, Facts, Heading } from '@/features/plans/fact';
+import { RouteMap } from '@/features/plans/route-map';
 import { Timeline } from '@/features/plans/timeline';
 import { initialTimes, toggle, toSignup, windowDates, type Times } from '@/features/plans/signup';
 import { useProfile } from '@/features/profile/use-profile';
@@ -83,6 +84,7 @@ export default function PlanScreen() {
           <ThemedText type="subtitle">{title.name}</ThemedText>
           {!!title.secondary && <ThemedText themeColor="textSecondary">{title.secondary}</ThemedText>}
         </View>
+        <RouteMap steps={plan.data?.steps ?? []} routePolyline={plan.data?.routePolyline ?? ''} />
         <Timeline steps={plan.data?.steps ?? []} names={names} />
         {/* One labelled row per detail, so they read as separate facts rather than a paragraph. */}
         <Facts>

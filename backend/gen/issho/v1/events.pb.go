@@ -668,7 +668,10 @@ type GetEventResponse struct {
 	Steps []*PlanStep `protobuf:"bytes,2,rep,name=steps,proto3" json:"steps,omitempty"`
 	// First names of the people confirmed in the caller's group, including
 	// the caller. Empty unless the caller confirmed (no profile browsing).
-	Attendees     []string `protobuf:"bytes,3,rep,name=attendees,proto3" json:"attendees,omitempty"`
+	Attendees []string `protobuf:"bytes,3,rep,name=attendees,proto3" json:"attendees,omitempty"`
+	// As GetPlanResponse.route_polyline; "" when the caller's group meets
+	// somewhere other than the plan's venue.
+	RoutePolyline string `protobuf:"bytes,4,opt,name=route_polyline,json=routePolyline,proto3" json:"route_polyline,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -722,6 +725,13 @@ func (x *GetEventResponse) GetAttendees() []string {
 		return x.Attendees
 	}
 	return nil
+}
+
+func (x *GetEventResponse) GetRoutePolyline() string {
+	if x != nil {
+		return x.RoutePolyline
+	}
+	return ""
 }
 
 type RespondToEventRequest struct {
@@ -1063,11 +1073,12 @@ const file_issho_v1_events_proto_rawDesc = "" +
 	"\x14ListMyEventsResponse\x12)\n" +
 	"\x06events\x18\x01 \x03(\v2\x11.issho.v1.MyEventR\x06events\",\n" +
 	"\x0fGetEventRequest\x12\x19\n" +
-	"\bevent_id\x18\x01 \x01(\tR\aeventId\"\x83\x01\n" +
+	"\bevent_id\x18\x01 \x01(\tR\aeventId\"\xaa\x01\n" +
 	"\x10GetEventResponse\x12'\n" +
 	"\x05event\x18\x01 \x01(\v2\x11.issho.v1.MyEventR\x05event\x12(\n" +
 	"\x05steps\x18\x02 \x03(\v2\x12.issho.v1.PlanStepR\x05steps\x12\x1c\n" +
-	"\tattendees\x18\x03 \x03(\tR\tattendees\"a\n" +
+	"\tattendees\x18\x03 \x03(\tR\tattendees\x12%\n" +
+	"\x0eroute_polyline\x18\x04 \x01(\tR\rroutePolyline\"a\n" +
 	"\x15RespondToEventRequest\x12\x19\n" +
 	"\bevent_id\x18\x01 \x01(\tR\aeventId\x12-\n" +
 	"\x06action\x18\x02 \x01(\x0e2\x15.issho.v1.EventActionR\x06action\"A\n" +

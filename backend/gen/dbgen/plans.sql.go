@@ -338,6 +338,7 @@ func (q *Queries) ListBusyOccasions(ctx context.Context, arg ListBusyOccasionsPa
 const listOpenPlans = `-- name: ListOpenPlans :many
 select p.id, p.area_id, p.activity_id, p.follow_up_id, p.primary_language, p.secondary_language,
        p.round, p.window_start, p.window_days, p.signup_deadline, p.venue_place_id, p.follow_up_venue_place_id,
+       p.route_polyline, p.route_seconds,
        (select count(*) from app.plan_signups s where s.plan_id = p.id)::int as signups
 from app.plans p
 where p.city_id = $1 and p.status = 'open'
@@ -357,6 +358,8 @@ type ListOpenPlansRow struct {
 	SignupDeadline       pgtype.Timestamptz
 	VenuePlaceID         *string
 	FollowUpVenuePlaceID *string
+	RoutePolyline        *string
+	RouteSeconds         *int32
 	Signups              int32
 }
 
@@ -384,6 +387,8 @@ func (q *Queries) ListOpenPlans(ctx context.Context, cityID string) ([]ListOpenP
 			&i.SignupDeadline,
 			&i.VenuePlaceID,
 			&i.FollowUpVenuePlaceID,
+			&i.RoutePolyline,
+			&i.RouteSeconds,
 			&i.Signups,
 		); err != nil {
 			return nil, err

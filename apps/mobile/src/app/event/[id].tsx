@@ -15,6 +15,7 @@ import { Fact, Facts, Heading } from '@/features/plans/fact';
 import { formatStart } from '@/features/plans/format';
 import { usePlanNames } from '@/features/plans/names';
 import { pairText } from '@/features/plans/plan-card';
+import { RouteMap } from '@/features/plans/route-map';
 import { Timeline } from '@/features/plans/timeline';
 import { useNow } from '@/hooks/use-now';
 import { useTheme } from '@/hooks/use-theme';
@@ -68,6 +69,7 @@ export default function EventScreen() {
           <ThemedText type="subtitle">{title.name}</ThemedText>
           {!!title.secondary && <ThemedText themeColor="textSecondary">{title.secondary}</ThemedText>}
         </View>
+        <RouteMap steps={event.data?.steps ?? []} routePolyline={event.data?.routePolyline ?? ''} />
         <Timeline steps={event.data?.steps ?? []} names={names} />
         <Facts>
           <Fact label={t('plan.when')} value={formatStart(e.startsAt, lang)} />

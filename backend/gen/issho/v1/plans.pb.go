@@ -217,7 +217,11 @@ type GetPlanResponse struct {
 	Signup *Signup `protobuf:"bytes,2,opt,name=signup,proto3" json:"signup,omitempty"`
 	// What the outing is, in order: the activity, then any follow-up, each at
 	// its venue.
-	Steps         []*PlanStep `protobuf:"bytes,3,rep,name=steps,proto3" json:"steps,omitempty"`
+	Steps []*PlanStep `protobuf:"bytes,3,rep,name=steps,proto3" json:"steps,omitempty"`
+	// The walking route from the first stop's venue to the second's, in
+	// Google's encoded polyline format (precision 5), for the plan's map; ""
+	// when there's no second venue or it isn't computed yet.
+	RoutePolyline string `protobuf:"bytes,4,opt,name=route_polyline,json=routePolyline,proto3" json:"route_polyline,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -273,6 +277,13 @@ func (x *GetPlanResponse) GetSteps() []*PlanStep {
 	return nil
 }
 
+func (x *GetPlanResponse) GetRoutePolyline() string {
+	if x != nil {
+		return x.RoutePolyline
+	}
+	return ""
+}
+
 // One stop of a plan.
 type PlanStep struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -289,9 +300,14 @@ type PlanStep struct {
 	VenueAddress string `protobuf:"bytes,4,opt,name=venue_address,json=venueAddress,proto3" json:"venue_address,omitempty"`
 	// Opens the venue in Google Maps.
 	VenueMapsUrl string `protobuf:"bytes,5,opt,name=venue_maps_url,json=venueMapsUrl,proto3" json:"venue_maps_url,omitempty"`
-	// Estimated walk from the previous stop's venue, in minutes; 0 for the
-	// first stop or when either venue is unknown.
-	WalkMinutes   int32 `protobuf:"varint,6,opt,name=walk_minutes,json=walkMinutes,proto3" json:"walk_minutes,omitempty"`
+	// Walk from the previous stop's venue, in minutes: Google's walking time
+	// when the route is known (GetPlanResponse.route_polyline), otherwise an
+	// estimate; 0 for the first stop or when either venue is unknown.
+	WalkMinutes int32 `protobuf:"varint,6,opt,name=walk_minutes,json=walkMinutes,proto3" json:"walk_minutes,omitempty"`
+	// The venue's location (WGS 84), live from Google like its name, for the
+	// plan's map; both 0 when there's no venue.
+	Lat           float64 `protobuf:"fixed64,7,opt,name=lat,proto3" json:"lat,omitempty"`
+	Lng           float64 `protobuf:"fixed64,8,opt,name=lng,proto3" json:"lng,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -364,6 +380,20 @@ func (x *PlanStep) GetVenueMapsUrl() string {
 func (x *PlanStep) GetWalkMinutes() int32 {
 	if x != nil {
 		return x.WalkMinutes
+	}
+	return 0
+}
+
+func (x *PlanStep) GetLat() float64 {
+	if x != nil {
+		return x.Lat
+	}
+	return 0
+}
+
+func (x *PlanStep) GetLng() float64 {
+	if x != nil {
+		return x.Lng
 	}
 	return 0
 }
@@ -837,11 +867,12 @@ const file_issho_v1_plans_proto_rawDesc = "" +
 	"\x10ListFeedResponse\x12(\n" +
 	"\x05plans\x18\x01 \x03(\v2\x12.issho.v1.FeedPlanR\x05plans\")\n" +
 	"\x0eGetPlanRequest\x12\x17\n" +
-	"\aplan_id\x18\x01 \x01(\tR\x06planId\"\x8d\x01\n" +
+	"\aplan_id\x18\x01 \x01(\tR\x06planId\"\xb4\x01\n" +
 	"\x0fGetPlanResponse\x12&\n" +
 	"\x04plan\x18\x01 \x01(\v2\x12.issho.v1.FeedPlanR\x04plan\x12(\n" +
 	"\x06signup\x18\x02 \x01(\v2\x10.issho.v1.SignupR\x06signup\x12(\n" +
-	"\x05steps\x18\x03 \x03(\v2\x12.issho.v1.PlanStepR\x05steps\"\xea\x01\n" +
+	"\x05steps\x18\x03 \x03(\v2\x12.issho.v1.PlanStepR\x05steps\x12%\n" +
+	"\x0eroute_polyline\x18\x04 \x01(\tR\rroutePolyline\"\x8e\x02\n" +
 	"\bPlanStep\x12\x1f\n" +
 	"\vactivity_id\x18\x01 \x01(\tR\n" +
 	"activityId\x12\x1d\n" +
@@ -850,7 +881,9 @@ const file_issho_v1_plans_proto_rawDesc = "" +
 	"\x14venue_secondary_name\x18\x03 \x01(\tR\x12venueSecondaryName\x12#\n" +
 	"\rvenue_address\x18\x04 \x01(\tR\fvenueAddress\x12$\n" +
 	"\x0evenue_maps_url\x18\x05 \x01(\tR\fvenueMapsUrl\x12!\n" +
-	"\fwalk_minutes\x18\x06 \x01(\x05R\vwalkMinutes\"R\n" +
+	"\fwalk_minutes\x18\x06 \x01(\x05R\vwalkMinutes\x12\x10\n" +
+	"\x03lat\x18\a \x01(\x01R\x03lat\x12\x10\n" +
+	"\x03lng\x18\b \x01(\x01R\x03lng\"R\n" +
 	"\rSignUpRequest\x12\x17\n" +
 	"\aplan_id\x18\x01 \x01(\tR\x06planId\x12(\n" +
 	"\x06signup\x18\x02 \x01(\v2\x10.issho.v1.SignupR\x06signup\"8\n" +

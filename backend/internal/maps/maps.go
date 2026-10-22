@@ -77,6 +77,20 @@ type PlaceDetails struct {
 	Location LatLng
 }
 
+// Route is a walk between two places: its line on a map and how long it
+// takes. Routes content may be cached for at most 30 days (Maps terms).
+type Route struct {
+	// Polyline is Google's encoded polyline format (precision 5).
+	Polyline string
+	Duration time.Duration
+	Meters   int
+}
+
+// RouteFinder finds walking routes between places (by provider place id).
+type RouteFinder interface {
+	WalkingRoute(ctx context.Context, fromPlace, toPlace string) (Route, error)
+}
+
 // WeekTime is a time in the week, in the place's local time.
 type WeekTime struct {
 	Day          time.Weekday

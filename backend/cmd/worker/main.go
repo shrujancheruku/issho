@@ -61,7 +61,7 @@ func run() error {
 	var m worker.Maps
 	if cfg.GoogleMapsAPIKey != "" {
 		g := mapsgoogle.New(cfg.GoogleMapsAPIKey)
-		m = worker.Maps{Router: g, Hours: g}
+		m = worker.Maps{Router: g, Hours: g, Routes: g}
 	} else {
 		slog.Warn("GOOGLE_MAPS_API_KEY not set: travel times past 30 days are deleted, not rebuilt; venue hours not checked")
 	}

@@ -50,6 +50,9 @@ func (h *Handler) GetPlan(ctx context.Context, req *connect.Request[isshov1.GetP
 		return nil, connectError(err)
 	}
 	out := &isshov1.GetPlanResponse{Plan: planToProto(item), Steps: stepsToProto(steps)}
+	if item.Route != nil {
+		out.RoutePolyline = item.Route.Polyline
+	}
 	if signup != nil {
 		out.Signup = signupToProto(*signup)
 	}
@@ -171,6 +174,8 @@ func stepsToProto(steps []Step) []*isshov1.PlanStep {
 			VenueAddress:       st.Venue.Address,
 			VenueMapsUrl:       st.Venue.MapsURL,
 			WalkMinutes:        int32(st.WalkMinutes),
+			Lat:                st.Venue.Location.Lat,
+			Lng:                st.Venue.Location.Lng,
 		}
 	}
 	return out
