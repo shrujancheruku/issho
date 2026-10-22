@@ -22,6 +22,61 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type PlanClosedReason int32
+
+const (
+	PlanClosedReason_PLAN_CLOSED_REASON_UNSPECIFIED PlanClosedReason = 0
+	// The deadline passed and no group could form.
+	PlanClosedReason_PLAN_CLOSED_REASON_NO_GROUP PlanClosedReason = 1
+	// Scheduled, with nobody left waiting.
+	PlanClosedReason_PLAN_CLOSED_REASON_DONE PlanClosedReason = 2
+	// Taken down (its activity or venue is no longer available).
+	PlanClosedReason_PLAN_CLOSED_REASON_WITHDRAWN PlanClosedReason = 3
+)
+
+// Enum value maps for PlanClosedReason.
+var (
+	PlanClosedReason_name = map[int32]string{
+		0: "PLAN_CLOSED_REASON_UNSPECIFIED",
+		1: "PLAN_CLOSED_REASON_NO_GROUP",
+		2: "PLAN_CLOSED_REASON_DONE",
+		3: "PLAN_CLOSED_REASON_WITHDRAWN",
+	}
+	PlanClosedReason_value = map[string]int32{
+		"PLAN_CLOSED_REASON_UNSPECIFIED": 0,
+		"PLAN_CLOSED_REASON_NO_GROUP":    1,
+		"PLAN_CLOSED_REASON_DONE":        2,
+		"PLAN_CLOSED_REASON_WITHDRAWN":   3,
+	}
+)
+
+func (x PlanClosedReason) Enum() *PlanClosedReason {
+	p := new(PlanClosedReason)
+	*p = x
+	return p
+}
+
+func (x PlanClosedReason) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (PlanClosedReason) Descriptor() protoreflect.EnumDescriptor {
+	return file_issho_v1_plans_proto_enumTypes[0].Descriptor()
+}
+
+func (PlanClosedReason) Type() protoreflect.EnumType {
+	return &file_issho_v1_plans_proto_enumTypes[0]
+}
+
+func (x PlanClosedReason) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use PlanClosedReason.Descriptor instead.
+func (PlanClosedReason) EnumDescriptor() ([]byte, []int) {
+	return file_issho_v1_plans_proto_rawDescGZIP(), []int{0}
+}
+
 // How well a plan suits the caller, best last.
 type PlanLevel int32
 
@@ -70,11 +125,11 @@ func (x PlanLevel) String() string {
 }
 
 func (PlanLevel) Descriptor() protoreflect.EnumDescriptor {
-	return file_issho_v1_plans_proto_enumTypes[0].Descriptor()
+	return file_issho_v1_plans_proto_enumTypes[1].Descriptor()
 }
 
 func (PlanLevel) Type() protoreflect.EnumType {
-	return &file_issho_v1_plans_proto_enumTypes[0]
+	return &file_issho_v1_plans_proto_enumTypes[1]
 }
 
 func (x PlanLevel) Number() protoreflect.EnumNumber {
@@ -83,7 +138,7 @@ func (x PlanLevel) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use PlanLevel.Descriptor instead.
 func (PlanLevel) EnumDescriptor() ([]byte, []int) {
-	return file_issho_v1_plans_proto_rawDescGZIP(), []int{0}
+	return file_issho_v1_plans_proto_rawDescGZIP(), []int{1}
 }
 
 type ListFeedRequest struct {
@@ -210,6 +265,8 @@ func (x *GetPlanRequest) GetPlanId() string {
 	return ""
 }
 
+// A plan that closed in the last 14 days is still returned, with
+// closed_reason set; older or other cities' ones are NOT_FOUND.
 type GetPlanResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	Plan  *FeedPlan              `protobuf:"bytes,1,opt,name=plan,proto3" json:"plan,omitempty"`
@@ -619,8 +676,12 @@ type FeedPlan struct {
 	// shown with area_id's name.
 	Title          string `protobuf:"bytes,14,opt,name=title,proto3" json:"title,omitempty"`
 	SecondaryTitle string `protobuf:"bytes,15,opt,name=secondary_title,json=secondaryTitle,proto3" json:"secondary_title,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	// Why the plan closed, for a plan closed in the last 14 days (GetPlan
+	// only; the feed lists open plans). Unspecified while it's open.
+	ClosedReason  PlanClosedReason       `protobuf:"varint,16,opt,name=closed_reason,json=closedReason,proto3,enum=issho.v1.PlanClosedReason" json:"closed_reason,omitempty"`
+	ClosedAt      *timestamppb.Timestamp `protobuf:"bytes,17,opt,name=closed_at,json=closedAt,proto3" json:"closed_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *FeedPlan) Reset() {
@@ -756,6 +817,20 @@ func (x *FeedPlan) GetSecondaryTitle() string {
 		return x.SecondaryTitle
 	}
 	return ""
+}
+
+func (x *FeedPlan) GetClosedReason() PlanClosedReason {
+	if x != nil {
+		return x.ClosedReason
+	}
+	return PlanClosedReason_PLAN_CLOSED_REASON_UNSPECIFIED
+}
+
+func (x *FeedPlan) GetClosedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ClosedAt
+	}
+	return nil
 }
 
 // The times that suit someone for one plan. Pre-fill pattern with the
@@ -902,7 +977,7 @@ const file_issho_v1_plans_proto_rawDesc = "" +
 	"\x04plan\x18\x01 \x01(\v2\x12.issho.v1.FeedPlanR\x04plan\"*\n" +
 	"\x0fWithdrawRequest\x12\x17\n" +
 	"\aplan_id\x18\x01 \x01(\tR\x06planId\"\x12\n" +
-	"\x10WithdrawResponse\"\xb2\x04\n" +
+	"\x10WithdrawResponse\"\xac\x05\n" +
 	"\bFeedPlan\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
 	"\aarea_id\x18\x02 \x01(\tR\x06areaId\x12\x1f\n" +
@@ -921,13 +996,20 @@ const file_issho_v1_plans_proto_rawDesc = "" +
 	"\x0fsignup_deadline\x18\f \x01(\v2\x1a.google.protobuf.TimestampR\x0esignupDeadline\x12\x1b\n" +
 	"\tsigned_up\x18\r \x01(\bR\bsignedUp\x12\x14\n" +
 	"\x05title\x18\x0e \x01(\tR\x05title\x12'\n" +
-	"\x0fsecondary_title\x18\x0f \x01(\tR\x0esecondaryTitle\"{\n" +
+	"\x0fsecondary_title\x18\x0f \x01(\tR\x0esecondaryTitle\x12?\n" +
+	"\rclosed_reason\x18\x10 \x01(\x0e2\x1a.issho.v1.PlanClosedReasonR\fclosedReason\x127\n" +
+	"\tclosed_at\x18\x11 \x01(\v2\x1a.google.protobuf.TimestampR\bclosedAt\"{\n" +
 	"\x06Signup\x124\n" +
 	"\apattern\x18\x01 \x03(\v2\x1a.issho.v1.AvailabilitySlotR\apattern\x12;\n" +
 	"\vunavailable\x18\x02 \x03(\v2\x19.issho.v1.UnavailableTimeR\vunavailable\"P\n" +
 	"\x0fUnavailableTime\x12\x12\n" +
 	"\x04date\x18\x01 \x01(\tR\x04date\x12)\n" +
 	"\x05block\x18\x02 \x01(\x0e2\x13.issho.v1.TimeBlockR\x05block*\x96\x01\n" +
+	"\x10PlanClosedReason\x12\"\n" +
+	"\x1ePLAN_CLOSED_REASON_UNSPECIFIED\x10\x00\x12\x1f\n" +
+	"\x1bPLAN_CLOSED_REASON_NO_GROUP\x10\x01\x12\x1b\n" +
+	"\x17PLAN_CLOSED_REASON_DONE\x10\x02\x12 \n" +
+	"\x1cPLAN_CLOSED_REASON_WITHDRAWN\x10\x03*\x96\x01\n" +
 	"\tPlanLevel\x12\x1a\n" +
 	"\x16PLAN_LEVEL_UNSPECIFIED\x10\x00\x12\x1a\n" +
 	"\x16PLAN_LEVEL_NOT_FOR_YOU\x10\x01\x12\x12\n" +
@@ -953,51 +1035,54 @@ func file_issho_v1_plans_proto_rawDescGZIP() []byte {
 	return file_issho_v1_plans_proto_rawDescData
 }
 
-var file_issho_v1_plans_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_issho_v1_plans_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
 var file_issho_v1_plans_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_issho_v1_plans_proto_goTypes = []any{
-	(PlanLevel)(0),                // 0: issho.v1.PlanLevel
-	(*ListFeedRequest)(nil),       // 1: issho.v1.ListFeedRequest
-	(*ListFeedResponse)(nil),      // 2: issho.v1.ListFeedResponse
-	(*GetPlanRequest)(nil),        // 3: issho.v1.GetPlanRequest
-	(*GetPlanResponse)(nil),       // 4: issho.v1.GetPlanResponse
-	(*PlanStep)(nil),              // 5: issho.v1.PlanStep
-	(*SignUpRequest)(nil),         // 6: issho.v1.SignUpRequest
-	(*SignUpResponse)(nil),        // 7: issho.v1.SignUpResponse
-	(*WithdrawRequest)(nil),       // 8: issho.v1.WithdrawRequest
-	(*WithdrawResponse)(nil),      // 9: issho.v1.WithdrawResponse
-	(*FeedPlan)(nil),              // 10: issho.v1.FeedPlan
-	(*Signup)(nil),                // 11: issho.v1.Signup
-	(*UnavailableTime)(nil),       // 12: issho.v1.UnavailableTime
-	(*timestamppb.Timestamp)(nil), // 13: google.protobuf.Timestamp
-	(*AvailabilitySlot)(nil),      // 14: issho.v1.AvailabilitySlot
-	(TimeBlock)(0),                // 15: issho.v1.TimeBlock
+	(PlanClosedReason)(0),         // 0: issho.v1.PlanClosedReason
+	(PlanLevel)(0),                // 1: issho.v1.PlanLevel
+	(*ListFeedRequest)(nil),       // 2: issho.v1.ListFeedRequest
+	(*ListFeedResponse)(nil),      // 3: issho.v1.ListFeedResponse
+	(*GetPlanRequest)(nil),        // 4: issho.v1.GetPlanRequest
+	(*GetPlanResponse)(nil),       // 5: issho.v1.GetPlanResponse
+	(*PlanStep)(nil),              // 6: issho.v1.PlanStep
+	(*SignUpRequest)(nil),         // 7: issho.v1.SignUpRequest
+	(*SignUpResponse)(nil),        // 8: issho.v1.SignUpResponse
+	(*WithdrawRequest)(nil),       // 9: issho.v1.WithdrawRequest
+	(*WithdrawResponse)(nil),      // 10: issho.v1.WithdrawResponse
+	(*FeedPlan)(nil),              // 11: issho.v1.FeedPlan
+	(*Signup)(nil),                // 12: issho.v1.Signup
+	(*UnavailableTime)(nil),       // 13: issho.v1.UnavailableTime
+	(*timestamppb.Timestamp)(nil), // 14: google.protobuf.Timestamp
+	(*AvailabilitySlot)(nil),      // 15: issho.v1.AvailabilitySlot
+	(TimeBlock)(0),                // 16: issho.v1.TimeBlock
 }
 var file_issho_v1_plans_proto_depIdxs = []int32{
-	10, // 0: issho.v1.ListFeedResponse.plans:type_name -> issho.v1.FeedPlan
-	10, // 1: issho.v1.GetPlanResponse.plan:type_name -> issho.v1.FeedPlan
-	11, // 2: issho.v1.GetPlanResponse.signup:type_name -> issho.v1.Signup
-	5,  // 3: issho.v1.GetPlanResponse.steps:type_name -> issho.v1.PlanStep
-	11, // 4: issho.v1.SignUpRequest.signup:type_name -> issho.v1.Signup
-	10, // 5: issho.v1.SignUpResponse.plan:type_name -> issho.v1.FeedPlan
-	0,  // 6: issho.v1.FeedPlan.level:type_name -> issho.v1.PlanLevel
-	13, // 7: issho.v1.FeedPlan.signup_deadline:type_name -> google.protobuf.Timestamp
-	14, // 8: issho.v1.Signup.pattern:type_name -> issho.v1.AvailabilitySlot
-	12, // 9: issho.v1.Signup.unavailable:type_name -> issho.v1.UnavailableTime
-	15, // 10: issho.v1.UnavailableTime.block:type_name -> issho.v1.TimeBlock
-	1,  // 11: issho.v1.PlanService.ListFeed:input_type -> issho.v1.ListFeedRequest
-	3,  // 12: issho.v1.PlanService.GetPlan:input_type -> issho.v1.GetPlanRequest
-	6,  // 13: issho.v1.PlanService.SignUp:input_type -> issho.v1.SignUpRequest
-	8,  // 14: issho.v1.PlanService.Withdraw:input_type -> issho.v1.WithdrawRequest
-	2,  // 15: issho.v1.PlanService.ListFeed:output_type -> issho.v1.ListFeedResponse
-	4,  // 16: issho.v1.PlanService.GetPlan:output_type -> issho.v1.GetPlanResponse
-	7,  // 17: issho.v1.PlanService.SignUp:output_type -> issho.v1.SignUpResponse
-	9,  // 18: issho.v1.PlanService.Withdraw:output_type -> issho.v1.WithdrawResponse
-	15, // [15:19] is the sub-list for method output_type
-	11, // [11:15] is the sub-list for method input_type
-	11, // [11:11] is the sub-list for extension type_name
-	11, // [11:11] is the sub-list for extension extendee
-	0,  // [0:11] is the sub-list for field type_name
+	11, // 0: issho.v1.ListFeedResponse.plans:type_name -> issho.v1.FeedPlan
+	11, // 1: issho.v1.GetPlanResponse.plan:type_name -> issho.v1.FeedPlan
+	12, // 2: issho.v1.GetPlanResponse.signup:type_name -> issho.v1.Signup
+	6,  // 3: issho.v1.GetPlanResponse.steps:type_name -> issho.v1.PlanStep
+	12, // 4: issho.v1.SignUpRequest.signup:type_name -> issho.v1.Signup
+	11, // 5: issho.v1.SignUpResponse.plan:type_name -> issho.v1.FeedPlan
+	1,  // 6: issho.v1.FeedPlan.level:type_name -> issho.v1.PlanLevel
+	14, // 7: issho.v1.FeedPlan.signup_deadline:type_name -> google.protobuf.Timestamp
+	0,  // 8: issho.v1.FeedPlan.closed_reason:type_name -> issho.v1.PlanClosedReason
+	14, // 9: issho.v1.FeedPlan.closed_at:type_name -> google.protobuf.Timestamp
+	15, // 10: issho.v1.Signup.pattern:type_name -> issho.v1.AvailabilitySlot
+	13, // 11: issho.v1.Signup.unavailable:type_name -> issho.v1.UnavailableTime
+	16, // 12: issho.v1.UnavailableTime.block:type_name -> issho.v1.TimeBlock
+	2,  // 13: issho.v1.PlanService.ListFeed:input_type -> issho.v1.ListFeedRequest
+	4,  // 14: issho.v1.PlanService.GetPlan:input_type -> issho.v1.GetPlanRequest
+	7,  // 15: issho.v1.PlanService.SignUp:input_type -> issho.v1.SignUpRequest
+	9,  // 16: issho.v1.PlanService.Withdraw:input_type -> issho.v1.WithdrawRequest
+	3,  // 17: issho.v1.PlanService.ListFeed:output_type -> issho.v1.ListFeedResponse
+	5,  // 18: issho.v1.PlanService.GetPlan:output_type -> issho.v1.GetPlanResponse
+	8,  // 19: issho.v1.PlanService.SignUp:output_type -> issho.v1.SignUpResponse
+	10, // 20: issho.v1.PlanService.Withdraw:output_type -> issho.v1.WithdrawResponse
+	17, // [17:21] is the sub-list for method output_type
+	13, // [13:17] is the sub-list for method input_type
+	13, // [13:13] is the sub-list for extension type_name
+	13, // [13:13] is the sub-list for extension extendee
+	0,  // [0:13] is the sub-list for field type_name
 }
 
 func init() { file_issho_v1_plans_proto_init() }
@@ -1011,7 +1096,7 @@ func file_issho_v1_plans_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_issho_v1_plans_proto_rawDesc), len(file_issho_v1_plans_proto_rawDesc)),
-			NumEnums:      1,
+			NumEnums:      2,
 			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   1,

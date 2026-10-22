@@ -149,6 +149,79 @@ func (q *Queries) GetPlan(ctx context.Context, id uuid.UUID) (GetPlanRow, error)
 	return i, err
 }
 
+const getRecentlyClosedPlan = `-- name: GetRecentlyClosedPlan :one
+select p.id, p.area_id, p.activity_id, p.follow_up_id, p.primary_language, p.secondary_language,
+       p.round, p.window_start, p.window_days, p.signup_deadline, p.venue_place_id, p.follow_up_venue_place_id,
+       p.route_polyline, p.route_seconds, p.meeting_place_id, p.closed_reason::text as closed_reason, p.closed_at,
+       (select count(*) from app.plan_signups s where s.plan_id = p.id)::int as signups,
+       exists (select 1 from app.plan_signups s where s.plan_id = p.id and s.user_id = $1) as signed_up
+from app.plans p
+where p.id = $2 and p.city_id = $3 and p.status = 'closed' and p.closed_at > $4
+`
+
+type GetRecentlyClosedPlanParams struct {
+	UserID uuid.UUID
+	ID     uuid.UUID
+	CityID string
+	Since  pgtype.Timestamptz
+}
+
+type GetRecentlyClosedPlanRow struct {
+	ID                   uuid.UUID
+	AreaID               string
+	ActivityID           string
+	FollowUpID           *string
+	PrimaryLanguage      string
+	SecondaryLanguage    *string
+	Round                int16
+	WindowStart          pgtype.Date
+	WindowDays           int16
+	SignupDeadline       pgtype.Timestamptz
+	VenuePlaceID         *string
+	FollowUpVenuePlaceID *string
+	RoutePolyline        *string
+	RouteSeconds         *int32
+	MeetingPlaceID       *string
+	ClosedReason         string
+	ClosedAt             pgtype.Timestamptz
+	Signups              int32
+	SignedUp             bool
+}
+
+// A plan in the city that closed after @since, for its screen: people who
+// were waiting (or follow a link) see why it closed instead of "not found".
+func (q *Queries) GetRecentlyClosedPlan(ctx context.Context, arg GetRecentlyClosedPlanParams) (GetRecentlyClosedPlanRow, error) {
+	row := q.db.QueryRow(ctx, getRecentlyClosedPlan,
+		arg.UserID,
+		arg.ID,
+		arg.CityID,
+		arg.Since,
+	)
+	var i GetRecentlyClosedPlanRow
+	err := row.Scan(
+		&i.ID,
+		&i.AreaID,
+		&i.ActivityID,
+		&i.FollowUpID,
+		&i.PrimaryLanguage,
+		&i.SecondaryLanguage,
+		&i.Round,
+		&i.WindowStart,
+		&i.WindowDays,
+		&i.SignupDeadline,
+		&i.VenuePlaceID,
+		&i.FollowUpVenuePlaceID,
+		&i.RoutePolyline,
+		&i.RouteSeconds,
+		&i.MeetingPlaceID,
+		&i.ClosedReason,
+		&i.ClosedAt,
+		&i.Signups,
+		&i.SignedUp,
+	)
+	return i, err
+}
+
 const insertEvent = `-- name: InsertEvent :one
 insert into app.events (plan_id, round, date, block, starts_at, confirm_by, forced)
 values ($1, $2, $3, $4, $5, $6, $7)

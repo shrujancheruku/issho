@@ -46,6 +46,8 @@ message GetPlanRequest {
   string plan_id = 1;
 }
 
+// A plan that closed in the last 14 days is still returned, with
+// closed_reason set; older or other cities' ones are NOT_FOUND.
 message GetPlanResponse {
   FeedPlan plan = 1;
   // The caller's signup; unset when they haven't signed up.
@@ -136,6 +138,20 @@ message FeedPlan {
   // shown with area_id's name.
   string title = 14;
   string secondary_title = 15;
+  // Why the plan closed, for a plan closed in the last 14 days (GetPlan
+  // only; the feed lists open plans). Unspecified while it's open.
+  PlanClosedReason closed_reason = 16;
+  google.protobuf.Timestamp closed_at = 17;
+}
+
+enum PlanClosedReason {
+  PLAN_CLOSED_REASON_UNSPECIFIED = 0;
+  // The deadline passed and no group could form.
+  PLAN_CLOSED_REASON_NO_GROUP = 1;
+  // Scheduled, with nobody left waiting.
+  PLAN_CLOSED_REASON_DONE = 2;
+  // Taken down (its activity or venue is no longer available).
+  PLAN_CLOSED_REASON_WITHDRAWN = 3;
 }
 
 // How well a plan suits the caller, best last.

@@ -141,3 +141,14 @@ where plan_id = $1 and user_id = $2 order by weekday, block;
 -- name: ListUserSignupUnavailable :many
 select date, block from app.plan_signup_unavailable
 where plan_id = $1 and user_id = $2 order by date, block;
+
+-- A plan in the city that closed after @since, for its screen: people who
+-- were waiting (or follow a link) see why it closed instead of "not found".
+-- name: GetRecentlyClosedPlan :one
+select p.id, p.area_id, p.activity_id, p.follow_up_id, p.primary_language, p.secondary_language,
+       p.round, p.window_start, p.window_days, p.signup_deadline, p.venue_place_id, p.follow_up_venue_place_id,
+       p.route_polyline, p.route_seconds, p.meeting_place_id, p.closed_reason::text as closed_reason, p.closed_at,
+       (select count(*) from app.plan_signups s where s.plan_id = p.id)::int as signups,
+       exists (select 1 from app.plan_signups s where s.plan_id = p.id and s.user_id = @user_id) as signed_up
+from app.plans p
+where p.id = @id and p.city_id = @city_id and p.status = 'closed' and p.closed_at > @since;

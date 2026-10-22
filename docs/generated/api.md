@@ -50,6 +50,7 @@
     - [WithdrawRequest](#issho-v1-WithdrawRequest)
     - [WithdrawResponse](#issho-v1-WithdrawResponse)
   
+    - [PlanClosedReason](#issho-v1-PlanClosedReason)
     - [PlanLevel](#issho-v1-PlanLevel)
   
     - [PlanService](#issho-v1-PlanService)
@@ -609,6 +610,8 @@ An open plan as the caller sees it.
 | signed_up | [bool](#bool) |  |  |
 | title | [string](#string) |  | What the outing is, as one line: &#34;Climbing and bouldering, then lunch or dinner out&#34;. In the caller&#39;s primary display language, with the secondary below it (&#34;&#34; when the same or not chosen). Area names are left out on purpose: they&#39;re proper nouns, never machine-translated, and shown with area_id&#39;s name. |
 | secondary_title | [string](#string) |  |  |
+| closed_reason | [PlanClosedReason](#issho-v1-PlanClosedReason) |  | Why the plan closed, for a plan closed in the last 14 days (GetPlan only; the feed lists open plans). Unspecified while it&#39;s open. |
+| closed_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 
 
 
@@ -633,7 +636,8 @@ An open plan as the caller sees it.
 <a name="issho-v1-GetPlanResponse"></a>
 
 ### GetPlanResponse
-
+A plan that closed in the last 14 days is still returned, with
+closed_reason set; older or other cities&#39; ones are NOT_FOUND.
 
 
 | Field | Type | Label | Description |
@@ -785,6 +789,20 @@ profile&#39;s availability; an empty pattern means &#34;my usual availability&#3
 
 
  
+
+
+<a name="issho-v1-PlanClosedReason"></a>
+
+### PlanClosedReason
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| PLAN_CLOSED_REASON_UNSPECIFIED | 0 |  |
+| PLAN_CLOSED_REASON_NO_GROUP | 1 | The deadline passed and no group could form. |
+| PLAN_CLOSED_REASON_DONE | 2 | Scheduled, with nobody left waiting. |
+| PLAN_CLOSED_REASON_WITHDRAWN | 3 | Taken down (its activity or venue is no longer available). |
+
 
 
 <a name="issho-v1-PlanLevel"></a>

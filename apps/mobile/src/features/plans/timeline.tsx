@@ -1,14 +1,14 @@
-import type { PlanStep } from '@issho/api-client';
-import { Linking, Pressable, StyleSheet, View } from 'react-native';
+import type { PlanStep } from "@issho/api-client";
+import { Linking, Pressable, StyleSheet, View } from "react-native";
 
-import { GoogleMapsAttribution } from '@/components/google-maps-attribution';
-import { ThemedText } from '@/components/themed-text';
-import { Brand, Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
-import { useI18n } from '@/i18n/i18n-provider';
+import { GoogleMapsAttribution } from "@/components/google-maps-attribution";
+import { ThemedText } from "@/components/themed-text";
+import { Brand, Spacing } from "@/constants/theme";
+import { useTheme } from "@/hooks/use-theme";
+import { useI18n } from "@/i18n/i18n-provider";
 
-import { withoutExamples } from './format';
-import type { usePlanNames } from './names';
+import { withoutExamples } from "./format";
+import type { usePlanNames } from "./names";
 
 /**
  * The plan's stops in order, as a timeline: a dot per stop on a vertical
@@ -16,7 +16,16 @@ import type { usePlanNames } from './names';
  * then the venue (Google's name in both display languages, fetched live),
  * its address and a link to it in Google Maps.
  */
-export function Timeline({ steps, names }: { steps: PlanStep[]; names: ReturnType<typeof usePlanNames> }) {
+/** `closed` leaves out what only matters for a plan still to happen. */
+export function Timeline({
+  steps,
+  names,
+  closed = false,
+}: {
+  steps: PlanStep[];
+  names: ReturnType<typeof usePlanNames>;
+  closed?: boolean;
+}) {
   const { t, showing } = useI18n();
   const theme = useTheme();
   // Google's terms: Places data shown without a Google map needs attribution.
@@ -28,7 +37,7 @@ export function Timeline({ steps, names }: { steps: PlanStep[]; names: ReturnTyp
         const last = i === steps.length - 1;
         // Venue names come primary first; follow the language switch like the rest.
         const [venue, venueOther] =
-          showing === 'secondary' && step.venueSecondaryName
+          showing === "secondary" && step.venueSecondaryName
             ? [step.venueSecondaryName, step.venueName]
             : [step.venueName, step.venueSecondaryName];
         const next = steps[i + 1];
@@ -36,17 +45,31 @@ export function Timeline({ steps, names }: { steps: PlanStep[]; names: ReturnTyp
           <View key={i} style={styles.stop}>
             <View style={styles.rail}>
               <View style={[styles.dot, { backgroundColor: Brand.red }]} />
-              {!last && <View style={[styles.line, { backgroundColor: theme.backgroundSelected }]} />}
+              {!last && (
+                <View
+                  style={[
+                    styles.line,
+                    { backgroundColor: theme.backgroundSelected },
+                  ]}
+                />
+              )}
             </View>
             <View style={[styles.body, !last && styles.bodyGap]}>
               <ThemedText type="smallBold" style={styles.activity}>
-                {step.meeting ? t('plan.meetHere') : withoutExamples(activity.name)}
+                {step.meeting
+                  ? t("plan.meetHere")
+                  : withoutExamples(activity.name)}
               </ThemedText>
               {venue ? (
                 <>
                   <ThemedText>
                     {venue}
-                    {!!venueOther && <ThemedText themeColor="textSecondary"> · {venueOther}</ThemedText>}
+                    {!!venueOther && (
+                      <ThemedText themeColor="textSecondary">
+                        {" "}
+                        · {venueOther}
+                      </ThemedText>
+                    )}
                   </ThemedText>
                   {!!step.venueAddress && (
                     <ThemedText type="small" themeColor="textSecondary">
@@ -54,23 +77,32 @@ export function Timeline({ steps, names }: { steps: PlanStep[]; names: ReturnTyp
                     </ThemedText>
                   )}
                   {!!step.venueMapsUrl && (
-                    <Pressable accessibilityRole="link" onPress={() => void Linking.openURL(step.venueMapsUrl)} hitSlop={6}>
+                    <Pressable
+                      accessibilityRole="link"
+                      onPress={() => void Linking.openURL(step.venueMapsUrl)}
+                      hitSlop={6}
+                    >
                       <ThemedText type="small" style={styles.link}>
-                        {t('plan.openInMaps')} ↗
+                        {t("plan.openInMaps")} ↗
                       </ThemedText>
                     </Pressable>
                   )}
                 </>
               ) : (
-                i === 0 && (
+                i === 0 &&
+                !closed && (
                   <ThemedText type="small" themeColor="textSecondary">
-                    {t('plan.meetingPointLater')}
+                    {t("plan.meetingPointLater")}
                   </ThemedText>
                 )
               )}
               {!!next?.walkMinutes && (
-                <ThemedText type="small" themeColor="textSecondary" style={styles.walk}>
-                  {t('plan.walk', { minutes: next.walkMinutes })}
+                <ThemedText
+                  type="small"
+                  themeColor="textSecondary"
+                  style={styles.walk}
+                >
+                  {t("plan.walk", { minutes: next.walkMinutes })}
                 </ThemedText>
               )}
             </View>
@@ -85,14 +117,14 @@ export function Timeline({ steps, names }: { steps: PlanStep[]; names: ReturnTyp
 const DOT = 12;
 
 const styles = StyleSheet.create({
-  stop: { flexDirection: 'row', gap: Spacing.three },
+  stop: { flexDirection: "row", gap: Spacing.three },
   // The rail is as tall as the stop: dot at the top, line filling the rest.
-  rail: { width: DOT, alignItems: 'center' },
+  rail: { width: DOT, alignItems: "center" },
   dot: { width: DOT, height: DOT, borderRadius: DOT / 2, marginTop: 4 },
   line: { width: 2, flex: 1, marginTop: Spacing.one },
   body: { flex: 1, gap: Spacing.half },
   bodyGap: { paddingBottom: Spacing.four },
   activity: { fontSize: 16, lineHeight: 22 },
   link: { color: Brand.red, marginTop: Spacing.half },
-  walk: { marginTop: Spacing.three, fontStyle: 'italic' },
+  walk: { marginTop: Spacing.three, fontStyle: "italic" },
 });
