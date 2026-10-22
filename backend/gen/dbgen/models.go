@@ -99,6 +99,16 @@ type AppGroupMember struct {
 	CheckedInAt pgtype.Timestamptz
 }
 
+type AppNotification struct {
+	ID        int64
+	UserID    uuid.UUID
+	Kind      string
+	EventID   uuid.UUID
+	CreatedAt pgtype.Timestamptz
+	SentAt    pgtype.Timestamptz
+	Attempts  int16
+}
+
 type AppPlan struct {
 	ID                   uuid.UUID
 	CityID               string
@@ -159,6 +169,14 @@ type AppProfile struct {
 	SecondaryLanguage *string
 	ConductVersion    int16
 	ConductAcceptedAt pgtype.Timestamptz
+}
+
+type AppPushToken struct {
+	Token      string
+	UserID     uuid.UUID
+	Platform   string
+	CreatedAt  pgtype.Timestamptz
+	LastSeenAt pgtype.Timestamptz
 }
 
 type AppTranslation struct {

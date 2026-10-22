@@ -100,16 +100,47 @@ func (w *matchCityWorker) Work(ctx context.Context, job *river.Job[MatchCityArgs
 	return nil
 }
 
+// NotifyEvery is how often queued push notifications are sent.
+const NotifyEvery = time.Minute
+
+// SendNotificationsArgs sends queued push notifications.
+type SendNotificationsArgs struct{}
+
+func (SendNotificationsArgs) Kind() string { return "send_notifications" }
+
+// One pass at a time: two would send the same notifications twice.
+func (SendNotificationsArgs) InsertOpts() river.InsertOpts {
+	return river.InsertOpts{UniqueOpts: river.UniqueOpts{ByState: []rivertype.JobState{
+		rivertype.JobStateAvailable, rivertype.JobStatePending, rivertype.JobStateRunning,
+		rivertype.JobStateRetryable, rivertype.JobStateScheduled,
+	}}}
+}
+
+type sendNotificationsWorker struct {
+	river.WorkerDefaults[SendNotificationsArgs]
+	notifier *plans.Notifier
+	now      func() time.Time
+}
+
+func (w *sendNotificationsWorker) Work(ctx context.Context, _ *river.Job[SendNotificationsArgs]) error {
+	rep, err := w.notifier.Send(ctx, w.now())
+	if rep != (plans.NotifyReport{}) {
+		w.notifier.Log.Info("notifications", "sent", rep.Sent, "no_device", rep.NoDevice, "failed", rep.Failed, "unregistered", rep.Unregistered)
+	}
+	return err
+}
+
 // NewClient builds the River client with every job and its schedule. The
 // pool must be a direct or session-pooler connection: River needs
 // LISTEN/NOTIFY, which the transaction pooler doesn't support.
-func NewClient(pool *pgxpool.Pool, log *slog.Logger, timing plans.Timing) (*river.Client[pgx.Tx], error) {
+func NewClient(pool *pgxpool.Pool, log *slog.Logger, timing plans.Timing, notifier *plans.Notifier) (*river.Client[pgx.Tx], error) {
 	if err := timing.Validate(); err != nil {
 		return nil, err
 	}
 	workers := river.NewWorkers()
 	river.AddWorker(workers, &matchAllWorker{q: dbgen.New(pool)})
 	river.AddWorker(workers, &matchCityWorker{runner: &plans.Runner{DB: pool, Timing: timing, Log: log}, now: time.Now})
+	river.AddWorker(workers, &sendNotificationsWorker{notifier: notifier, now: time.Now})
 	return river.NewClient(riverpgxv5.New(pool), &river.Config{
 		Schema: db.RiverSchema,
 		Logger: log,
@@ -118,6 +149,9 @@ func NewClient(pool *pgxpool.Pool, log *slog.Logger, timing plans.Timing) (*rive
 			river.NewPeriodicJob(river.PeriodicInterval(MatchEvery),
 				func() (river.JobArgs, *river.InsertOpts) { return MatchAllArgs{}, nil },
 				&river.PeriodicJobOpts{ID: "match_all", RunOnStart: true}),
+			river.NewPeriodicJob(river.PeriodicInterval(NotifyEvery),
+				func() (river.JobArgs, *river.InsertOpts) { return SendNotificationsArgs{}, nil },
+				&river.PeriodicJobOpts{ID: "send_notifications", RunOnStart: true}),
 		},
 		Workers: workers,
 	})

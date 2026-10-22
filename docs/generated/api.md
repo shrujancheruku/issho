@@ -85,6 +85,16 @@
   
     - [IdentityService](#issho-v1-IdentityService)
   
+- [issho/v1/push.proto](#issho_v1_push-proto)
+    - [RegisterPushTokenRequest](#issho-v1-RegisterPushTokenRequest)
+    - [RegisterPushTokenResponse](#issho-v1-RegisterPushTokenResponse)
+    - [UnregisterPushTokenRequest](#issho-v1-UnregisterPushTokenRequest)
+    - [UnregisterPushTokenResponse](#issho-v1-UnregisterPushTokenResponse)
+  
+    - [PushPlatform](#issho-v1-PushPlatform)
+  
+    - [PushService](#issho-v1-PushService)
+  
 - [issho/v1/ui.proto](#issho_v1_ui-proto)
     - [GetStringsRequest](#issho-v1-GetStringsRequest)
     - [GetStringsResponse](#issho-v1-GetStringsResponse)
@@ -1170,6 +1180,105 @@ HTTP: POST /issho.v1.IdentityService/&lt;Method&gt;
 | ----------- | ------------ | ------------- | ------------|
 | GetMe | [GetMeRequest](#issho-v1-GetMeRequest) | [GetMeResponse](#issho-v1-GetMeResponse) | GetMe returns the caller&#39;s account, creating the app-side user row the first time a Supabase user calls the API. |
 | DeleteAccount | [DeleteAccountRequest](#issho-v1-DeleteAccountRequest) | [DeleteAccountResponse](#issho-v1-DeleteAccountResponse) | DeleteAccount permanently deletes the caller&#39;s Supabase auth user and all of their app data (cascaded from auth.users). The client should sign out afterwards; existing access tokens stop working once they expire. Returns FAILED_PRECONDITION if the server has no Supabase secret key configured. |
+
+ 
+
+
+
+<a name="issho_v1_push-proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## issho/v1/push.proto
+
+
+
+<a name="issho-v1-RegisterPushTokenRequest"></a>
+
+### RegisterPushTokenRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| token | [string](#string) |  | From expo-notifications&#39; getExpoPushTokenAsync: &#34;ExponentPushToken[…]&#34;. |
+| platform | [PushPlatform](#issho-v1-PushPlatform) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-RegisterPushTokenResponse"></a>
+
+### RegisterPushTokenResponse
+
+
+
+
+
+
+
+<a name="issho-v1-UnregisterPushTokenRequest"></a>
+
+### UnregisterPushTokenRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| token | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-UnregisterPushTokenResponse"></a>
+
+### UnregisterPushTokenResponse
+
+
+
+
+
+
+ 
+
+
+<a name="issho-v1-PushPlatform"></a>
+
+### PushPlatform
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| PUSH_PLATFORM_UNSPECIFIED | 0 |  |
+| PUSH_PLATFORM_IOS | 1 |  |
+| PUSH_PLATFORM_ANDROID | 2 |  |
+| PUSH_PLATFORM_WEB | 3 |  |
+
+
+ 
+
+ 
+
+
+<a name="issho-v1-PushService"></a>
+
+### PushService
+PushService registers the caller&#39;s devices for push notifications (a
+plan you signed up for has a date; your group is going ahead or
+cancelled). The app calls RegisterPushToken after sign-in and whenever its
+Expo push token changes, and UnregisterPushToken when signing out.
+Requires `Authorization: Bearer &lt;Supabase access token&gt;`, and the account
+must exist (`IdentityService.GetMe` creates it).
+
+HTTP: POST /issho.v1.PushService/&lt;Method&gt;
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| RegisterPushToken | [RegisterPushTokenRequest](#issho-v1-RegisterPushTokenRequest) | [RegisterPushTokenResponse](#issho-v1-RegisterPushTokenResponse) | RegisterPushToken stores the device&#39;s token for the caller. A token registered by another account moves to the caller (the last person to sign in on a device gets its notifications). |
+| UnregisterPushToken | [UnregisterPushTokenRequest](#issho-v1-UnregisterPushTokenRequest) | [UnregisterPushTokenResponse](#issho-v1-UnregisterPushTokenResponse) | UnregisterPushToken stops notifications to the device for the caller. Unknown tokens are ignored. |
 
  
 

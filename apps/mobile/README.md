@@ -142,11 +142,44 @@ npx expo export -p web               # static build in dist/ (pnpm export:web)
 ```
 
 - The API only accepts browser origins in its allowlist: start it with `ALLOWED_ORIGINS=http://localhost:8081` (see the backend README).
-- Web-only code lives in `*.web.ts(x)` files, which Metro picks over the native ones: `lib/secure-storage.web.ts` (session in `localStorage`; read its comment before any public release), `i18n/cache.web.ts`, `components/app-tabs.web.tsx`, `hooks/use-color-scheme.web.ts`.
+- Web-only code lives in `*.web.ts(x)` files, which Metro picks over the native ones: `lib/secure-storage.web.ts` (session in `localStorage`; read its comment before any public release), `i18n/cache.web.ts`, `components/app-tabs.web.tsx`, `hooks/use-color-scheme.web.ts`, `lib/push.web.ts` (no push in browsers; `expo-notifications` throws there).
 - `app.json` uses `"web": { "output": "single" }`: one `index.html` for every route, with no server rendering. Server rendering would run app code in Node at build time, where the secure store doesn't exist.
 - **Wide screens:** form-like screens (sign-in, onboarding, profile editing, the language picker) keep their header, content and footer in one centred column at most `FormWidth` (560 px, `constants/theme.ts`) wide; the logo is capped too. Phones are narrower, so this only changes tablets and the web. `global.css` sets `color-scheme` so browser scrollbars follow the theme.
 - **The floating tab bar:** on the web the tab bar sits over the top of the screen, so tab screens add `TopTabInset` (`constants/theme.ts`, 0 on phones) to their top padding. The feed uses `MaxContentWidth` (800 px) rather than `FormWidth`.
 - `Alert.alert` does nothing on web, so confirmation dialogs (account deletion) need a web version before release.
+
+## Push notifications
+
+The server sends notifications through Expo's push service when a plan someone signed up for gets a date, and when their group goes ahead or is cancelled (backend: `app.notifications`, sent by the worker every minute). `lib/push.ts`:
+
+- registers the device's Expo push token with `PushService` when the main app opens, **only if permission was already given**; it asks for permission right after the person signs up for a plan, when notifications are worth having
+- unregisters it on sign-out, before the session ends
+- opens the event when a notification is tapped (`useNotificationTaps`, also for the one that launched the app)
+- does nothing in Expo Go (no remote push on Android since SDK 53), simulators, the web (`lib/push.web.ts`) or without an EAS project id, so the app works the same without push
+
+**One-time setup for Android** (owner; uploads credentials to Expo, so it's done by hand). Already in the repo: the EAS project (`owner` and `extra.eas.projectId` in `app.json`), `eas.json` (a `development` profile that builds an installable APK with `expo-dev-client`) and `app.config.js`, which points the Android build at `google-services.json` without committing it.
+
+1. **Register the app with Firebase.** In the [Firebase console](https://console.firebase.google.com), open the project → *Add app* → Android. Package name `com.joinissho.app`; the nickname is up to you; skip the SHA-1 (FCM doesn't need it). Download `google-services.json` into `apps/mobile/` (it's gitignored: the repo is public). Skip the "Add Firebase SDK" steps; `expo-notifications` does that.
+2. **Give EAS Build the same file**, as a file environment variable (`app.config.js` reads it):
+   ```sh
+   cd apps/mobile
+   npx eas-cli@latest env:set --name GOOGLE_SERVICES_JSON --type file --value ./google-services.json \
+     --visibility sensitive --environment development --environment preview --environment production
+   ```
+3. **Let Expo send through FCM.** Firebase console → *Project settings* → *Service accounts* → *Generate new private key*. That JSON is a **secret**: keep it out of the repo and delete it once uploaded. Upload it:
+   ```sh
+   npx eas-cli@latest credentials -p android
+   ```
+   Choose the `development` profile → *Google Service Account* → *Manage your Google Service Account Key for Push Notifications (FCM V1)* → *Set up a Google Service Account Key for Push Notifications (FCM V1)* → *Upload a new service account key* → pick the file. (If Firebase says the Cloud Messaging API is disabled, enable *Firebase Cloud Messaging API (V1)* under *Project settings* → *Cloud Messaging*.)
+4. **Build and install a development build** (push doesn't work in Expo Go):
+   ```sh
+   npx eas-cli@latest build --profile development --platform android
+   ```
+   EAS prints a link and QR code to install the APK on the phone. It contains the native code only: the JavaScript still comes from your machine, so start Metro with `pnpm start` (or `npx expo start`) and open the project from the development build instead of Expo Go. Rebuild only when native code changes (a new native package or a config plugin change).
+5. **iOS:** deferred to M9 (needs the paid Apple Developer Program).
+6. **Worker:** `EXPO_ACCESS_TOKEN` only if you turn on *Enhanced security for push notifications* in the Expo project settings.
+
+Test it by signing up for a plan in the development build (allow notifications; the token appears in `app.push_tokens`), then scheduling a round for it: the worker sends the invitation within a minute. To check delivery alone, paste the token into Expo's [push notifications tool](https://expo.dev/notifications).
 
 ## Builds & releases
 

@@ -5,6 +5,7 @@ import { createContext, useContext, useEffect, useState, type PropsWithChildren 
 import { Code, ConnectError } from '@issho/api-client';
 
 import { api } from '@/lib/api';
+import { unregisterPush } from '@/lib/push';
 import { supabase } from '@/lib/supabase';
 
 type AuthState = {
@@ -78,6 +79,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
     accountError: me.error,
     retryAccount: () => void me.refetch(),
     signOut: async () => {
+      // While still signed in: the API needs the session to know whose token it is.
+      await unregisterPush();
       await supabase.auth.signOut();
     },
   };

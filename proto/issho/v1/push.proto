@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+package issho.v1;
+
+option go_package = "github.com/shrujancheruku/issho/backend/gen/issho/v1;isshov1";
+
+// PushService registers the caller's devices for push notifications (a
+// plan you signed up for has a date; your group is going ahead or
+// cancelled). The app calls RegisterPushToken after sign-in and whenever its
+// Expo push token changes, and UnregisterPushToken when signing out.
+// Requires `Authorization: Bearer <Supabase access token>`, and the account
+// must exist (`IdentityService.GetMe` creates it).
+//
+// HTTP: POST /issho.v1.PushService/<Method>
+service PushService {
+  // RegisterPushToken stores the device's token for the caller. A token
+  // registered by another account moves to the caller (the last person to
+  // sign in on a device gets its notifications).
+  rpc RegisterPushToken(RegisterPushTokenRequest) returns (RegisterPushTokenResponse) {}
+
+  // UnregisterPushToken stops notifications to the device for the caller.
+  // Unknown tokens are ignored.
+  rpc UnregisterPushToken(UnregisterPushTokenRequest) returns (UnregisterPushTokenResponse) {}
+}
+
+message RegisterPushTokenRequest {
+  // From expo-notifications' getExpoPushTokenAsync: "ExponentPushToken[…]".
+  string token = 1;
+  PushPlatform platform = 2;
+}
+
+message RegisterPushTokenResponse {}
+
+message UnregisterPushTokenRequest {
+  string token = 1;
+}
+
+message UnregisterPushTokenResponse {}
+
+enum PushPlatform {
+  PUSH_PLATFORM_UNSPECIFIED = 0;
+  PUSH_PLATFORM_IOS = 1;
+  PUSH_PLATFORM_ANDROID = 2;
+  PUSH_PLATFORM_WEB = 3;
+}
