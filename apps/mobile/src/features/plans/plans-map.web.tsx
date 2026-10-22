@@ -19,7 +19,7 @@ const mapId = process.env.EXPO_PUBLIC_GOOGLE_MAPS_WEB_MAP_ID ?? 'DEMO_MAP_ID';
  * @vis.gl/react-google-maps (react-native-maps has no web version). Same
  * pins as on phones.
  */
-export function PlansMap({ pins, selected, onSelect }: PlansMapProps) {
+export function PlansMap({ pins, selected, onSelect, home }: PlansMapProps) {
   const { t } = useI18n();
   const box = bounds(pins);
   if (!apiKey) {
@@ -36,7 +36,10 @@ export function PlansMap({ pins, selected, onSelect }: PlansMapProps) {
       <Map
         style={StyleSheet.absoluteFill as object}
         mapId={mapId}
+        // The pins' box; with none, the home area (never the whole world).
         defaultBounds={box ?? undefined}
+        defaultCenter={box || !home ? undefined : { lat: home.lat, lng: home.lng }}
+        defaultZoom={box || !home ? undefined : 12}
         gestureHandling="greedy"
         disableDefaultUI
         clickableIcons={false}>

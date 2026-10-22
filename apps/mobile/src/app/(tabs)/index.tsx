@@ -97,7 +97,7 @@ export default function FeedScreen() {
           <View style={[styles.fill, styles.column, styles.mapScreen]}>
             <View style={styles.mapHeader}>{titleRow}</View>
             <View style={styles.map}>
-              <PlansMap pins={pins} selected={selected} onSelect={setSelected} />
+              <PlansMap pins={pins} selected={selected} onSelect={setSelected} home={names.home} />
             </View>
             <ScrollView style={styles.fill} contentContainerStyle={styles.panel}>
               {selectedPin ? (

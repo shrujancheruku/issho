@@ -36,6 +36,8 @@ export function usePlanNames() {
       language: (code: string) => languageLabel(langs, code),
       /** Area centres, for the map of plans. */
       coords,
+      /** The person's home area centre: where the map starts when there are no pins. */
+      home: coords.get(profile.data?.profile?.homeAreaId ?? ''),
     };
-  }, [activities.data, cities.data, languages.data, showing]);
+  }, [activities.data, cities.data, languages.data, showing, profile.data]);
 }

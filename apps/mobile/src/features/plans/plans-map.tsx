@@ -1,11 +1,11 @@
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import type MapViewType from 'react-native-maps';
 
 import { ThemedText } from '@/components/themed-text';
 import { useI18n } from '@/i18n/i18n-provider';
 
-import { bounds, type Pin } from './map-data';
+import { bounds, initialRegion, type Pin } from './map-data';
 import { pinColors } from './pin-color';
 
 // react-native-maps is native code: a development build made before it was
@@ -24,6 +24,8 @@ export type PlansMapProps = {
   pins: Pin[];
   selected: string | null;
   onSelect: (areaId: string) => void;
+  /** Where to start when there are no pins: the person's home area. */
+  home?: { lat: number; lng: number };
 };
 
 /**
@@ -46,15 +48,17 @@ export function PlansMap(props: PlansMapProps) {
   return <NativeMap {...props} />;
 }
 
-function NativeMap({ pins, selected, onSelect }: PlansMapProps) {
+function NativeMap({ pins, selected, onSelect, home }: PlansMapProps) {
   const { default: MapView, Marker, PROVIDER_GOOGLE } = maps!;
   const map = useRef<MapViewType>(null);
   const box = bounds(pins);
-  // Frame the pins once they're known (they arrive after the map mounts).
-  const framed = useRef(false);
-  useEffect(() => {
-    if (!box || framed.current) return;
-    framed.current = true;
+  // Start framed on the pins (or the home area). Without an initial region
+  // the map opens on the whole world, and on Android it ignores
+  // fitToCoordinates until it has loaded, so framing has to happen here and
+  // again in onMapReady, not in an effect right after mounting.
+  const region = initialRegion(box, home) ?? undefined;
+  const fit = () => {
+    if (!box) return;
     map.current?.fitToCoordinates(
       [
         { latitude: box.north, longitude: box.west },
@@ -62,10 +66,17 @@ function NativeMap({ pins, selected, onSelect }: PlansMapProps) {
       ],
       { edgePadding: { top: 40, right: 40, bottom: 40, left: 40 }, animated: false },
     );
-  }, [box]);
+  };
 
   return (
-    <MapView ref={map} provider={PROVIDER_GOOGLE} style={StyleSheet.absoluteFill} toolbarEnabled={false} showsPointsOfInterests={false}>
+    <MapView
+      ref={map}
+      provider={PROVIDER_GOOGLE}
+      style={StyleSheet.absoluteFill}
+      initialRegion={region}
+      onMapReady={fit}
+      toolbarEnabled={false}
+      showsPointsOfInterests={false}>
       {pins.map((p) => {
         const c = pinColors(p.level);
         const on = p.areaId === selected;

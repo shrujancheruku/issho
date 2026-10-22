@@ -45,3 +45,30 @@ export function bounds(pins: Pin[]) {
     west: Math.min(...lngs) - pad,
   };
 }
+
+export type Region = { latitude: number; longitude: number; latitudeDelta: number; longitudeDelta: number };
+
+// At least ~5 km across, so one pin (or a tight cluster) isn't shown at
+// street level; ~15 km around the home area when there are no pins.
+const minDelta = 0.05;
+const homeDelta = 0.15;
+
+/**
+ * The map's first view: the pins' box, or the person's home area when
+ * there are none. null only when neither is known (then the map's own
+ * default applies, which is the whole world: avoid it).
+ */
+export function initialRegion(box: ReturnType<typeof bounds>, home?: { lat: number; lng: number }): Region | null {
+  if (box) {
+    return {
+      latitude: (box.north + box.south) / 2,
+      longitude: (box.east + box.west) / 2,
+      latitudeDelta: Math.max(box.north - box.south, minDelta),
+      longitudeDelta: Math.max(box.east - box.west, minDelta),
+    };
+  }
+  if (home && !(home.lat === 0 && home.lng === 0)) {
+    return { latitude: home.lat, longitude: home.lng, latitudeDelta: homeDelta, longitudeDelta: homeDelta };
+  }
+  return null;
+}
