@@ -176,6 +176,7 @@ func stepsToProto(steps []Step) []*isshov1.PlanStep {
 			WalkMinutes:        int32(st.WalkMinutes),
 			Lat:                st.Venue.Location.Lat,
 			Lng:                st.Venue.Location.Lng,
+			Meeting:            st.Meeting,
 		}
 	}
 	return out

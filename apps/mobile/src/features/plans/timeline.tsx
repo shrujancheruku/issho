@@ -40,7 +40,7 @@ export function Timeline({ steps, names }: { steps: PlanStep[]; names: ReturnTyp
             </View>
             <View style={[styles.body, !last && styles.bodyGap]}>
               <ThemedText type="smallBold" style={styles.activity}>
-                {withoutExamples(activity.name)}
+                {step.meeting ? t('plan.meetHere') : withoutExamples(activity.name)}
               </ThemedText>
               {venue ? (
                 <>

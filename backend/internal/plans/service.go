@@ -63,9 +63,11 @@ type FeedItem struct {
 	Title, SecondaryTitle string
 }
 
-// Step is one stop of a plan: an activity at its venue.
+// Step is one stop of a plan: an activity at its venue, or (Meeting) the
+// place people meet when the first activity has no venue.
 type Step struct {
-	Activity matching.ActivityID
+	Meeting  bool
+	Activity matching.ActivityID // "" for the meeting point
 	// Venue in the primary display language; zero when there's none or it
 	// couldn't be fetched. SecondaryName is its name in the secondary one.
 	Venue         maps.PlaceDetails
@@ -214,7 +216,7 @@ func (s *Service) Plan(ctx context.Context, userID, planID uuid.UUID) (FeedItem,
 	if err != nil {
 		return item, nil, nil, err
 	}
-	steps := s.steps(ctx, item.Plan, item.Venue, item.FollowUpVenue, item.Route, caller)
+	steps := s.steps(ctx, item.Plan, item.Venue, item.FollowUpVenue, item.MeetingPlace, item.Route, caller)
 	if !item.SignedUp {
 		return item, steps, nil, nil
 	}
@@ -225,17 +227,29 @@ func (s *Service) Plan(ctx context.Context, userID, planID uuid.UUID) (FeedItem,
 // steps lists the plan's stops with their venues fetched live in both
 // display languages, all at once. A venue that can't be fetched is left
 // out (logged): the plan still shows, just without the place's name.
-func (s *Service) steps(ctx context.Context, p matching.Plan, venue, followUpVenue string, route *Route, caller Caller) []Step {
-	steps := []Step{{Activity: p.Activity}}
-	venues := []string{venue}
+func (s *Service) steps(ctx context.Context, p matching.Plan, venue, followUpVenue, meeting string, route *Route, caller Caller) []Step {
+	var steps []Step
+	var venues []string
+	// A walk (no venue for the first activity) starts at its meeting place.
+	if venue == "" && meeting != "" {
+		steps, venues = append(steps, Step{Meeting: true}), append(venues, meeting)
+	}
+	steps, venues = append(steps, Step{Activity: p.Activity}), append(venues, venue)
 	if p.FollowUp != "" {
-		steps = append(steps, Step{Activity: p.FollowUp})
-		venues = append(venues, followUpVenue)
+		steps, venues = append(steps, Step{Activity: p.FollowUp}), append(venues, followUpVenue)
+	}
+	// The stored route ends at the follow-up's venue. Its time is only
+	// shown when the stop before has a place: after a walk (meeting point →
+	// photo walk → café) the walk itself is the time between, and the
+	// station-to-café minutes would read as an extra walk.
+	routeEnd := -1
+	if last := len(steps) - 1; route != nil && p.FollowUp != "" && venues[last-1] != "" {
+		routeEnd = last
 	}
 	if s.Places == nil {
 		// No venue details, but a stored route still gives the walking time.
-		if route != nil && len(steps) > 1 {
-			steps[1].WalkMinutes = route.Minutes()
+		if routeEnd > 0 {
+			steps[routeEnd].WalkMinutes = route.Minutes()
 		}
 		return steps
 	}
@@ -274,7 +288,7 @@ func (s *Service) steps(ctx context.Context, p matching.Plan, venue, followUpVen
 		if i > 0 {
 			// Google's walking time when the route is known; otherwise an
 			// estimate from the straight line.
-			if route != nil {
+			if i == routeEnd {
 				steps[i].WalkMinutes = route.Minutes()
 			} else {
 				steps[i].WalkMinutes = walkMinutes(steps[i-1].Venue.Location, steps[i].Venue.Location)
