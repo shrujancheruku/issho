@@ -689,6 +689,7 @@ One stop of a plan.
 | walk_minutes | [int32](#int32) |  | Walk from the previous stop&#39;s venue, in minutes: Google&#39;s walking time when the route is known (GetPlanResponse.route_polyline), otherwise an estimate; 0 for the first stop or when either venue is unknown. |
 | lat | [double](#double) |  | The venue&#39;s location (WGS 84), live from Google like its name, for the plan&#39;s map; both 0 when there&#39;s no venue. |
 | lng | [double](#double) |  |  |
+| meeting | [bool](#bool) |  | The meeting point rather than an activity (activity_id &#34;&#34;): where a walk starts when its first activity has no venue. |
 
 
 

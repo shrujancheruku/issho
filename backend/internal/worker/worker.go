@@ -97,8 +97,13 @@ func (w *matchCityWorker) Work(ctx context.Context, job *river.Job[MatchCityArgs
 	if err != nil {
 		return fmt.Errorf("suggest %s: %w", job.Args.City, err)
 	}
-	// Routes for plans just opened, and the 25/30-day refresh (Maps terms).
-	// A failed route is logged; the plan works without one.
+	// Meeting places for walks just opened (before routes: a walk's route
+	// starts there), then routes and their 25/30-day refresh (Maps terms).
+	// Failures are logged; plans work without either.
+	meetings, err := w.runner.RefreshMeetingPlaces(ctx, job.Args.City)
+	if err != nil {
+		w.runner.Log.Warn("meeting places", "city", job.Args.City, "err", err)
+	}
 	routes, routesCleared, err := w.runner.RefreshRoutes(ctx, job.Args.City, now)
 	if err != nil {
 		w.runner.Log.Warn("plan routes", "city", job.Args.City, "err", err)
@@ -107,7 +112,7 @@ func (w *matchCityWorker) Work(ctx context.Context, job *river.Job[MatchCityArgs
 		"groups_confirmed", settled.Confirmed, "groups_cancelled", settled.Cancelled, "events_done", settled.Finished,
 		"chat_messages_deleted", settled.ChatMessagesDeleted,
 		"checked", rep.Checked, "scheduled", rep.Scheduled, "closed", rep.Closed, "opened", opened,
-		"routes", routes, "routes_cleared", routesCleared)
+		"meeting_places", meetings, "routes", routes, "routes_cleared", routesCleared)
 	return nil
 }
 
@@ -188,6 +193,7 @@ type Maps struct {
 	Router maps.Router
 	Hours  maps.HoursLookup
 	Routes maps.RouteFinder
+	Places maps.PlaceSearcher
 }
 
 func NewClient(pool *pgxpool.Pool, log *slog.Logger, timing plans.Timing, notifier *plans.Notifier, m Maps) (*river.Client[pgx.Tx], error) {
@@ -196,7 +202,7 @@ func NewClient(pool *pgxpool.Pool, log *slog.Logger, timing plans.Timing, notifi
 	}
 	workers := river.NewWorkers()
 	river.AddWorker(workers, &matchAllWorker{q: dbgen.New(pool)})
-	river.AddWorker(workers, &matchCityWorker{runner: &plans.Runner{DB: pool, Timing: timing, Log: log, Hours: m.Hours, Routes: m.Routes}, now: time.Now})
+	river.AddWorker(workers, &matchCityWorker{runner: &plans.Runner{DB: pool, Timing: timing, Log: log, Hours: m.Hours, Routes: m.Routes, Places: m.Places}, now: time.Now})
 	river.AddWorker(workers, &refreshMapsWorker{pool: pool, router: m.Router, log: log})
 	river.AddWorker(workers, &sendNotificationsWorker{notifier: notifier, now: time.Now})
 	return river.NewClient(riverpgxv5.New(pool), &river.Config{

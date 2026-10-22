@@ -62,9 +62,12 @@ describe('routeView', () => {
     if (s === 'bad') throw new Error('truncated');
     return [{ lat: 35.7, lng: 139.65 }, { lat: 35.71, lng: 139.66 }];
   };
-  it('numbers stops as in the timeline, skipping ones without a venue, and frames the route', () => {
-    const v = routeView([{ lat: 0, lng: 0 }, { lat: 35.705, lng: 139.649 }], 'x', decode);
-    expect(v.stops).toEqual([{ n: 2, lat: 35.705, lng: 139.649 }]);
+  it('numbers the stops with a place consecutively, and frames the route', () => {
+    const v = routeView([{ lat: 35.7, lng: 139.65 }, { lat: 0, lng: 0 }, { lat: 35.705, lng: 139.649 }], 'x', decode);
+    expect(v.stops).toEqual([
+      { n: 1, lat: 35.7, lng: 139.65 },
+      { n: 2, lat: 35.705, lng: 139.649 },
+    ]);
     expect(v.path).toHaveLength(2);
     expect(v.box?.north).toBeCloseTo(35.712, 6); // the route's northern end, padded about 200 m
   });

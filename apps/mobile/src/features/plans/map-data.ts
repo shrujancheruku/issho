@@ -84,7 +84,11 @@ export type Stop = { n: number; lat: number; lng: number };
  * string is dropped rather than failing the screen.
  */
 export function routeView(steps: { lat: number; lng: number }[], polyline: string, decode: (s: string) => { lat: number; lng: number }[]) {
-  const stops: Stop[] = steps.flatMap((s, i) => (s.lat === 0 && s.lng === 0 ? [] : [{ n: i + 1, lat: s.lat, lng: s.lng }]));
+  // Numbered over the stops with a place, so a walk between them (no
+  // place, no pin) doesn't leave a gap: 1, 2 rather than 1, 3.
+  const stops: Stop[] = steps
+    .filter((s) => !(s.lat === 0 && s.lng === 0))
+    .map((s, i) => ({ n: i + 1, lat: s.lat, lng: s.lng }));
   let path: { lat: number; lng: number }[] = [];
   try {
     path = polyline ? decode(polyline) : [];

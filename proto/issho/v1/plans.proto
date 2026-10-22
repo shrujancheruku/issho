@@ -82,6 +82,9 @@ message PlanStep {
   // plan's map; both 0 when there's no venue.
   double lat = 7;
   double lng = 8;
+  // The meeting point rather than an activity (activity_id ""): where a
+  // walk starts when its first activity has no venue.
+  bool meeting = 9;
 }
 
 message SignUpRequest {

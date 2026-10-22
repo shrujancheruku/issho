@@ -141,6 +141,7 @@ type AppPlan struct {
 	RoutePolyline        *string
 	RouteSeconds         *int32
 	RouteComputedAt      pgtype.Timestamptz
+	MeetingPlaceID       *string
 }
 
 type AppPlanSignup struct {

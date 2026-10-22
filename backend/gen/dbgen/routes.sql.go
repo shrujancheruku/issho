@@ -31,10 +31,53 @@ func (q *Queries) ClearStaleRoutes(ctx context.Context, arg ClearStaleRoutesPara
 	return result.RowsAffected(), nil
 }
 
-const listPlansNeedingRoute = `-- name: ListPlansNeedingRoute :many
-select p.id, p.venue_place_id, p.follow_up_venue_place_id
+const listPlansNeedingMeetingPlace = `-- name: ListPlansNeedingMeetingPlace :many
+select p.id, st_y(a.centroid::geometry)::float8 as lat, st_x(a.centroid::geometry)::float8 as lng
 from app.plans p
-where p.city_id = $1 and p.venue_place_id is not null and p.follow_up_venue_place_id is not null
+join app.areas a on a.id = p.area_id
+where p.city_id = $1 and p.venue_place_id is null and p.meeting_place_id is null
+  and (p.status = 'open' or exists (select 1 from app.events e where e.plan_id = p.id and e.status = 'scheduled'))
+order by p.created_at
+limit $2
+`
+
+type ListPlansNeedingMeetingPlaceParams struct {
+	CityID string
+	Max    int32
+}
+
+type ListPlansNeedingMeetingPlaceRow struct {
+	ID  uuid.UUID
+	Lat float64
+	Lng float64
+}
+
+// Plans in a city whose first activity has no venue and no meeting place
+// yet, still open or with an event to come, with their area's centre.
+func (q *Queries) ListPlansNeedingMeetingPlace(ctx context.Context, arg ListPlansNeedingMeetingPlaceParams) ([]ListPlansNeedingMeetingPlaceRow, error) {
+	rows, err := q.db.Query(ctx, listPlansNeedingMeetingPlace, arg.CityID, arg.Max)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListPlansNeedingMeetingPlaceRow
+	for rows.Next() {
+		var i ListPlansNeedingMeetingPlaceRow
+		if err := rows.Scan(&i.ID, &i.Lat, &i.Lng); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listPlansNeedingRoute = `-- name: ListPlansNeedingRoute :many
+select p.id, coalesce(p.venue_place_id, p.meeting_place_id)::text as from_place, p.follow_up_venue_place_id
+from app.plans p
+where p.city_id = $1 and coalesce(p.venue_place_id, p.meeting_place_id) is not null and p.follow_up_venue_place_id is not null
   and (p.route_computed_at is null or p.route_computed_at < $2)
   and (p.status = 'open' or exists (select 1 from app.events e where e.plan_id = p.id and e.status = 'scheduled'))
 order by p.route_computed_at nulls first, p.id
@@ -49,12 +92,14 @@ type ListPlansNeedingRouteParams struct {
 
 type ListPlansNeedingRouteRow struct {
 	ID                   uuid.UUID
-	VenuePlaceID         *string
+	FromPlace            string
 	FollowUpVenuePlaceID *string
 }
 
 // Plans whose route is still needed (open, or with an event still to
 // happen) and missing or older than the refresh age.
+// The walk starts at the first venue, or the meeting place when the first
+// activity has no venue (a walk ending at a café).
 func (q *Queries) ListPlansNeedingRoute(ctx context.Context, arg ListPlansNeedingRouteParams) ([]ListPlansNeedingRouteRow, error) {
 	rows, err := q.db.Query(ctx, listPlansNeedingRoute, arg.CityID, arg.OlderThan, arg.Max)
 	if err != nil {
@@ -64,7 +109,7 @@ func (q *Queries) ListPlansNeedingRoute(ctx context.Context, arg ListPlansNeedin
 	var items []ListPlansNeedingRouteRow
 	for rows.Next() {
 		var i ListPlansNeedingRouteRow
-		if err := rows.Scan(&i.ID, &i.VenuePlaceID, &i.FollowUpVenuePlaceID); err != nil {
+		if err := rows.Scan(&i.ID, &i.FromPlace, &i.FollowUpVenuePlaceID); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -73,6 +118,20 @@ func (q *Queries) ListPlansNeedingRoute(ctx context.Context, arg ListPlansNeedin
 		return nil, err
 	}
 	return items, nil
+}
+
+const setMeetingPlace = `-- name: SetMeetingPlace :exec
+update app.plans set meeting_place_id = $1 where id = $2
+`
+
+type SetMeetingPlaceParams struct {
+	PlaceID *string
+	ID      uuid.UUID
+}
+
+func (q *Queries) SetMeetingPlace(ctx context.Context, arg SetMeetingPlaceParams) error {
+	_, err := q.db.Exec(ctx, setMeetingPlace, arg.PlaceID, arg.ID)
+	return err
 }
 
 const setPlanRoute = `-- name: SetPlanRoute :exec
