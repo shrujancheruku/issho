@@ -25,6 +25,7 @@ update app.plans set description = @description where id = @id;
 -- name: ListOpenPlans :many
 select p.id, p.area_id, p.activity_id, p.follow_up_id, p.primary_language, p.secondary_language,
        p.round, p.window_start, p.window_days, p.signup_deadline, p.venue_place_id, p.follow_up_venue_place_id,
+       p.route_polyline, p.route_seconds,
        (select count(*) from app.plan_signups s where s.plan_id = p.id)::int as signups
 from app.plans p
 where p.city_id = @city_id and p.status = 'open'

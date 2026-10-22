@@ -52,6 +52,8 @@ type Open struct {
 	// Google place ids of the activity's and the follow-up's venues; "" =
 	// none (a meeting point only, or nothing found when it opened).
 	Venue, FollowUpVenue string
+	// Route is the walk between them; nil until computed (RefreshRoutes).
+	Route *Route
 }
 
 // ListOpen returns a city's open plans with their signup counts, oldest first.
@@ -78,6 +80,7 @@ func ListOpen(ctx context.Context, q *dbgen.Queries, cityID string) ([]Open, err
 			Window:        Window{Start: r.WindowStart.Time, Days: int(r.WindowDays), Deadline: r.SignupDeadline.Time},
 			Venue:         deref(r.VenuePlaceID),
 			FollowUpVenue: deref(r.FollowUpVenuePlaceID),
+			Route:         routeFrom(r.RoutePolyline, r.RouteSeconds),
 		}
 	}
 	return out, nil

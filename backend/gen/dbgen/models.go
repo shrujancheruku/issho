@@ -138,6 +138,9 @@ type AppPlan struct {
 	CreatedAt            pgtype.Timestamptz
 	VenuePlaceID         *string
 	FollowUpVenuePlaceID *string
+	RoutePolyline        *string
+	RouteSeconds         *int32
+	RouteComputedAt      pgtype.Timestamptz
 }
 
 type AppPlanSignup struct {

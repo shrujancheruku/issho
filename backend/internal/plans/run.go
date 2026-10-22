@@ -120,6 +120,9 @@ type Runner struct {
 	// Hours checks venues are open before a round is scheduled; nil skips
 	// the check (no Maps key).
 	Hours maps.HoursLookup
+	// Routes finds the walk between a plan's venues; nil leaves plans
+	// without routes (no Maps key).
+	Routes maps.RouteFinder
 }
 
 // When venues must be open, from an event's start. Activities have no

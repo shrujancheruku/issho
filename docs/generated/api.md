@@ -639,6 +639,7 @@ An open plan as the caller sees it.
 | plan | [FeedPlan](#issho-v1-FeedPlan) |  |  |
 | signup | [Signup](#issho-v1-Signup) |  | The caller&#39;s signup; unset when they haven&#39;t signed up. |
 | steps | [PlanStep](#issho-v1-PlanStep) | repeated | What the outing is, in order: the activity, then any follow-up, each at its venue. |
+| route_polyline | [string](#string) |  | The walking route from the first stop&#39;s venue to the second&#39;s, in Google&#39;s encoded polyline format (precision 5), for the plan&#39;s map; &#34;&#34; when there&#39;s no second venue or it isn&#39;t computed yet. |
 
 
 
@@ -683,7 +684,9 @@ One stop of a plan.
 | venue_secondary_name | [string](#string) |  | Empty when the same as venue_name. |
 | venue_address | [string](#string) |  | Short address in the primary language. |
 | venue_maps_url | [string](#string) |  | Opens the venue in Google Maps. |
-| walk_minutes | [int32](#int32) |  | Estimated walk from the previous stop&#39;s venue, in minutes; 0 for the first stop or when either venue is unknown. |
+| walk_minutes | [int32](#int32) |  | Walk from the previous stop&#39;s venue, in minutes: Google&#39;s walking time when the route is known (GetPlanResponse.route_polyline), otherwise an estimate; 0 for the first stop or when either venue is unknown. |
+| lat | [double](#double) |  | The venue&#39;s location (WGS 84), live from Google like its name, for the plan&#39;s map; both 0 when there&#39;s no venue. |
+| lng | [double](#double) |  |  |
 
 
 
@@ -878,6 +881,7 @@ One message in a group chat.
 | event | [MyEvent](#issho-v1-MyEvent) |  |  |
 | steps | [PlanStep](#issho-v1-PlanStep) | repeated | As in GetPlanResponse.steps; the caller&#39;s group may meet at a different venue from the plan&#39;s. |
 | attendees | [string](#string) | repeated | First names of the people confirmed in the caller&#39;s group, including the caller. Empty unless the caller confirmed (no profile browsing). |
+| route_polyline | [string](#string) |  | As GetPlanResponse.route_polyline; &#34;&#34; when the caller&#39;s group meets somewhere other than the plan&#39;s venue. |
 
 
 

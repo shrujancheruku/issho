@@ -32,12 +32,14 @@ export function pinsFor(plans: FeedPlan[], areas: Map<string, { lat: number; lng
   return [...pins.values()];
 }
 
-/** The smallest box around the pins, padded, for the map's first view. */
-export function bounds(pins: Pin[]) {
+/**
+ * The smallest box around the points, padded so edge pins aren't cut off:
+ * by default about a kilometre (a city's areas); a walking route uses less.
+ */
+export function bounds(pins: { lat: number; lng: number }[], pad = 0.01) {
   if (!pins.length) return null;
   const lats = pins.map((p) => p.lat);
   const lngs = pins.map((p) => p.lng);
-  const pad = 0.01; // about a kilometre, so edge pins aren't cut off
   return {
     north: Math.max(...lats) + pad,
     south: Math.min(...lats) - pad,
@@ -58,13 +60,13 @@ const homeDelta = 0.15;
  * there are none. null only when neither is known (then the map's own
  * default applies, which is the whole world: avoid it).
  */
-export function initialRegion(box: ReturnType<typeof bounds>, home?: { lat: number; lng: number }): Region | null {
+export function initialRegion(box: ReturnType<typeof bounds>, home?: { lat: number; lng: number }, min = minDelta): Region | null {
   if (box) {
     return {
       latitude: (box.north + box.south) / 2,
       longitude: (box.east + box.west) / 2,
-      latitudeDelta: Math.max(box.north - box.south, minDelta),
-      longitudeDelta: Math.max(box.east - box.west, minDelta),
+      latitudeDelta: Math.max(box.north - box.south, min),
+      longitudeDelta: Math.max(box.east - box.west, min),
     };
   }
   if (home && !(home.lat === 0 && home.lng === 0)) {
@@ -72,3 +74,27 @@ export function initialRegion(box: ReturnType<typeof bounds>, home?: { lat: numb
   }
   return null;
 }
+
+/** A stop on a plan's map: its number in the plan (1, 2 …) and position. */
+export type Stop = { n: number; lat: number; lng: number };
+
+/**
+ * What a plan's map draws: its stops that have a venue location, numbered
+ * as in the timeline, and the walking route between them. A broken route
+ * string is dropped rather than failing the screen.
+ */
+export function routeView(steps: { lat: number; lng: number }[], polyline: string, decode: (s: string) => { lat: number; lng: number }[]) {
+  const stops: Stop[] = steps.flatMap((s, i) => (s.lat === 0 && s.lng === 0 ? [] : [{ n: i + 1, lat: s.lat, lng: s.lng }]));
+  let path: { lat: number; lng: number }[] = [];
+  try {
+    path = polyline ? decode(polyline) : [];
+  } catch {
+    path = [];
+  }
+  return { stops, path, box: bounds([...stops, ...path], routePad) };
+}
+
+// A walk between two stops is a kilometre or two: frame it closely (about
+// 200 m of padding), but never closer than about 1 km across.
+const routePad = 0.002;
+export const routeMinDelta = 0.009;

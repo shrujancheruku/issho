@@ -53,6 +53,10 @@ message GetPlanResponse {
   // What the outing is, in order: the activity, then any follow-up, each at
   // its venue.
   repeated PlanStep steps = 3;
+  // The walking route from the first stop's venue to the second's, in
+  // Google's encoded polyline format (precision 5), for the plan's map; ""
+  // when there's no second venue or it isn't computed yet.
+  string route_polyline = 4;
 }
 
 // One stop of a plan.
@@ -70,9 +74,14 @@ message PlanStep {
   string venue_address = 4;
   // Opens the venue in Google Maps.
   string venue_maps_url = 5;
-  // Estimated walk from the previous stop's venue, in minutes; 0 for the
-  // first stop or when either venue is unknown.
+  // Walk from the previous stop's venue, in minutes: Google's walking time
+  // when the route is known (GetPlanResponse.route_polyline), otherwise an
+  // estimate; 0 for the first stop or when either venue is unknown.
   int32 walk_minutes = 6;
+  // The venue's location (WGS 84), live from Google like its name, for the
+  // plan's map; both 0 when there's no venue.
+  double lat = 7;
+  double lng = 8;
 }
 
 message SignUpRequest {

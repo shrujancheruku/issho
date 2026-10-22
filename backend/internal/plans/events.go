@@ -78,6 +78,7 @@ type EventItem struct {
 	ID, PlanID, GroupID uuid.UUID
 	matching.Plan
 	Venue, FollowUpVenue  string
+	Route                 *Route // the plan's; nil when a group meets elsewhere
 	Title, SecondaryTitle string
 	Date                  time.Time // local date in the city, as midnight UTC
 	Block                 matching.Block
@@ -160,7 +161,7 @@ func (s *Service) Event(ctx context.Context, userID, eventID uuid.UUID, now time
 			continue
 		}
 		it.reveal(caller, now)
-		steps := s.steps(ctx, it.Plan, it.Venue, it.FollowUpVenue, caller)
+		steps := s.steps(ctx, it.Plan, it.Venue, it.FollowUpVenue, it.Route, caller)
 		var names []string
 		// Only people who are going see who else is (no profile browsing).
 		if it.Response == Confirmed {
@@ -181,15 +182,17 @@ func eventFromRow(r dbgen.ListUserEventsRow) EventItem {
 			FollowUp: matching.ActivityID(deref(r.FollowUpID)), Primary: r.PrimaryLanguage, Secondary: deref(r.SecondaryLanguage),
 		},
 		Venue: deref(r.VenuePlaceID), FollowUpVenue: deref(r.FollowUpVenuePlaceID),
-		Date: r.Date.Time, Block: matching.Block(r.Block),
+		Route: routeFrom(r.RoutePolyline, r.RouteSeconds),
+		Date:  r.Date.Time, Block: matching.Block(r.Block),
 		StartsAt: r.StartsAt.Time, ConfirmBy: r.ConfirmBy.Time,
 		Status: r.Status, GroupStatus: r.GroupStatus, Response: r.Response,
 		Confirmed: int(r.Confirmed), Quorum: int(r.Quorum), MinAttendance: int(r.MinAttendance),
 		meetingRaw: r.MeetingPoint,
 	}
-	// A group sent somewhere else (a full venue, an admin) meets there.
-	if v := deref(r.GroupVenuePlaceID); v != "" {
-		it.Venue = v
+	// A group sent somewhere else (a full venue, an admin) meets there; the
+	// plan's route doesn't start there.
+	if v := deref(r.GroupVenuePlaceID); v != "" && v != it.Venue {
+		it.Venue, it.Route = v, nil
 	}
 	if !it.StartsAt.IsZero() {
 		it.RevealAt = it.StartsAt.Add(-RevealBefore)

@@ -97,6 +97,9 @@ message GetEventResponse {
   // First names of the people confirmed in the caller's group, including
   // the caller. Empty unless the caller confirmed (no profile browsing).
   repeated string attendees = 3;
+  // As GetPlanResponse.route_polyline; "" when the caller's group meets
+  // somewhere other than the plan's venue.
+  string route_polyline = 4;
 }
 
 message RespondToEventRequest {

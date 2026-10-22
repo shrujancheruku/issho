@@ -214,7 +214,7 @@ func (s *Service) Plan(ctx context.Context, userID, planID uuid.UUID) (FeedItem,
 	if err != nil {
 		return item, nil, nil, err
 	}
-	steps := s.steps(ctx, item.Plan, item.Venue, item.FollowUpVenue, caller)
+	steps := s.steps(ctx, item.Plan, item.Venue, item.FollowUpVenue, item.Route, caller)
 	if !item.SignedUp {
 		return item, steps, nil, nil
 	}
@@ -225,7 +225,7 @@ func (s *Service) Plan(ctx context.Context, userID, planID uuid.UUID) (FeedItem,
 // steps lists the plan's stops with their venues fetched live in both
 // display languages, all at once. A venue that can't be fetched is left
 // out (logged): the plan still shows, just without the place's name.
-func (s *Service) steps(ctx context.Context, p matching.Plan, venue, followUpVenue string, caller Caller) []Step {
+func (s *Service) steps(ctx context.Context, p matching.Plan, venue, followUpVenue string, route *Route, caller Caller) []Step {
 	steps := []Step{{Activity: p.Activity}}
 	venues := []string{venue}
 	if p.FollowUp != "" {
@@ -233,6 +233,10 @@ func (s *Service) steps(ctx context.Context, p matching.Plan, venue, followUpVen
 		venues = append(venues, followUpVenue)
 	}
 	if s.Places == nil {
+		// No venue details, but a stored route still gives the walking time.
+		if route != nil && len(steps) > 1 {
+			steps[1].WalkMinutes = route.Minutes()
+		}
 		return steps
 	}
 	log := s.Log
@@ -268,7 +272,13 @@ func (s *Service) steps(ctx context.Context, p matching.Plan, venue, followUpVen
 			steps[i].SecondaryName = n
 		}
 		if i > 0 {
-			steps[i].WalkMinutes = walkMinutes(steps[i-1].Venue.Location, steps[i].Venue.Location)
+			// Google's walking time when the route is known; otherwise an
+			// estimate from the straight line.
+			if route != nil {
+				steps[i].WalkMinutes = route.Minutes()
+			} else {
+				steps[i].WalkMinutes = walkMinutes(steps[i-1].Venue.Location, steps[i].Venue.Location)
+			}
 		}
 	}
 	return steps

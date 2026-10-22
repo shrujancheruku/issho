@@ -1,7 +1,7 @@
 /// <reference types="jest" />
 import { PlanLevel, type FeedPlan } from '@issho/api-client';
 
-import { bounds, initialRegion, pinsFor } from '../map-data';
+import { bounds, initialRegion, pinsFor, routeView } from '../map-data';
 
 const plan = (id: string, areaId: string, level: PlanLevel) => ({ id, areaId, level }) as FeedPlan;
 const areas = new Map([
@@ -54,5 +54,22 @@ describe('initialRegion', () => {
     expect(initialRegion(null, { lat: 35.703, lng: 139.58 })).toEqual({ latitude: 35.703, longitude: 139.58, latitudeDelta: 0.15, longitudeDelta: 0.15 });
     expect(initialRegion(null, { lat: 0, lng: 0 })).toBeNull();
     expect(initialRegion(null)).toBeNull();
+  });
+});
+
+describe('routeView', () => {
+  const decode = (s: string) => {
+    if (s === 'bad') throw new Error('truncated');
+    return [{ lat: 35.7, lng: 139.65 }, { lat: 35.71, lng: 139.66 }];
+  };
+  it('numbers stops as in the timeline, skipping ones without a venue, and frames the route', () => {
+    const v = routeView([{ lat: 0, lng: 0 }, { lat: 35.705, lng: 139.649 }], 'x', decode);
+    expect(v.stops).toEqual([{ n: 2, lat: 35.705, lng: 139.649 }]);
+    expect(v.path).toHaveLength(2);
+    expect(v.box?.north).toBeCloseTo(35.712, 6); // the route's northern end, padded about 200 m
+  });
+  it('drops a broken route rather than failing', () => {
+    expect(routeView([{ lat: 35.7, lng: 139.6 }], 'bad', decode).path).toEqual([]);
+    expect(routeView([], '', decode).box).toBeNull();
   });
 });

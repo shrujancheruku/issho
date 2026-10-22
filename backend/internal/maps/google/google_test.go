@@ -18,7 +18,7 @@ func newTestClient(t *testing.T, h http.HandlerFunc) *Client {
 	srv := httptest.NewServer(h)
 	t.Cleanup(srv.Close)
 	c := New("test-key")
-	c.RoutesURL, c.PlacesURL, c.DetailsURL = srv.URL, srv.URL, srv.URL
+	c.RoutesURL, c.PlacesURL, c.DetailsURL, c.DirectionsURL = srv.URL, srv.URL, srv.URL, srv.URL
 	c.api.Backoff = time.Millisecond
 	return c
 }
@@ -264,5 +264,27 @@ func TestHours(t *testing.T) {
 	}
 	if h, _ := c.Hours(context.Background(), "park"); h.Known || h.Closed {
 		t.Errorf("no hours = %+v", h)
+	}
+}
+
+func TestWalkingRoute(t *testing.T) {
+	c := newTestClient(t, func(w http.ResponseWriter, r *http.Request) {
+		var body map[string]any
+		_ = json.NewDecoder(r.Body).Decode(&body)
+		if body["travelMode"] != "WALK" || body["origin"].(map[string]any)["placeId"] != "from" || r.Header.Get("X-Goog-FieldMask") == "" {
+			t.Errorf("request %v, mask %q", body, r.Header.Get("X-Goog-FieldMask"))
+		}
+		_, _ = w.Write([]byte(`{"routes":[{"duration":"612s","distanceMeters":780,"polyline":{"encodedPolyline":"_p~iF~ps|U_ulLnnqC"}}]}`))
+	})
+	r, err := c.WalkingRoute(context.Background(), "from", "to")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if r.Polyline != "_p~iF~ps|U_ulLnnqC" || r.Duration != 612*time.Second || r.Meters != 780 {
+		t.Errorf("route = %+v", r)
+	}
+	none := newTestClient(t, func(w http.ResponseWriter, r *http.Request) { _, _ = w.Write([]byte(`{}`)) })
+	if _, err := none.WalkingRoute(context.Background(), "a", "b"); err == nil {
+		t.Error("no error without a route")
 	}
 }

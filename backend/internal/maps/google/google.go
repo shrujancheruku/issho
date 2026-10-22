@@ -21,8 +21,9 @@ import (
 )
 
 const (
-	defaultRoutesURL = "https://routes.googleapis.com/distanceMatrix/v2:computeRouteMatrix"
-	defaultPlacesURL = "https://places.googleapis.com/v1/places:searchNearby"
+	defaultRoutesURL     = "https://routes.googleapis.com/distanceMatrix/v2:computeRouteMatrix"
+	defaultPlacesURL     = "https://places.googleapis.com/v1/places:searchNearby"
+	defaultDirectionsURL = "https://routes.googleapis.com/directions/v2:computeRoutes"
 	// Place Details: GET {defaultDetailsURL}/{place id}.
 	defaultDetailsURL = "https://places.googleapis.com/v1/places"
 
@@ -36,11 +37,11 @@ const (
 type Client struct {
 	api *googleapi.Client
 	// Overridable for tests.
-	RoutesURL, PlacesURL, DetailsURL string
+	RoutesURL, PlacesURL, DetailsURL, DirectionsURL string
 }
 
 func New(apiKey string) *Client {
-	return &Client{api: googleapi.New(apiKey), RoutesURL: defaultRoutesURL, PlacesURL: defaultPlacesURL, DetailsURL: defaultDetailsURL}
+	return &Client{api: googleapi.New(apiKey), RoutesURL: defaultRoutesURL, PlacesURL: defaultPlacesURL, DetailsURL: defaultDetailsURL, DirectionsURL: defaultDirectionsURL}
 }
 
 var (
@@ -48,6 +49,7 @@ var (
 	_ maps.PlaceSearcher = (*Client)(nil)
 	_ maps.PlaceLookup   = (*Client)(nil)
 	_ maps.HoursLookup   = (*Client)(nil)
+	_ maps.RouteFinder   = (*Client)(nil)
 )
 
 // ---- Routes: Compute Route Matrix ----
@@ -163,6 +165,43 @@ func parseDuration(s string) (time.Duration, error) {
 		return 0, fmt.Errorf("bad duration %q", s)
 	}
 	return time.Duration(secs * float64(time.Second)), nil
+}
+
+// ---- Routes: Compute Routes (one walking route) ----
+
+// WalkingRoute asks Routes for the walk between two places, addressed by
+// place id (no coordinates needed). The field mask keeps it to the
+// essentials SKU: duration, distance and the line.
+func (c *Client) WalkingRoute(ctx context.Context, fromPlace, toPlace string) (maps.Route, error) {
+	type place struct {
+		PlaceID string `json:"placeId"`
+	}
+	body := struct {
+		Origin      place  `json:"origin"`
+		Destination place  `json:"destination"`
+		TravelMode  string `json:"travelMode"`
+	}{place{fromPlace}, place{toPlace}, "WALK"}
+	var resp struct {
+		Routes []struct {
+			Duration       string `json:"duration"`
+			DistanceMeters int    `json:"distanceMeters"`
+			Polyline       struct {
+				EncodedPolyline string `json:"encodedPolyline"`
+			} `json:"polyline"`
+		} `json:"routes"`
+	}
+	if err := c.post(ctx, c.DirectionsURL, "routes.duration,routes.distanceMeters,routes.polyline.encodedPolyline", body, &resp); err != nil {
+		return maps.Route{}, err
+	}
+	if len(resp.Routes) == 0 {
+		return maps.Route{}, errors.New("no walking route")
+	}
+	r := resp.Routes[0]
+	d, err := parseDuration(r.Duration)
+	if err != nil {
+		return maps.Route{}, err
+	}
+	return maps.Route{Polyline: r.Polyline.EncodedPolyline, Duration: d, Meters: r.DistanceMeters}, nil
 }
 
 // ---- Places API (New): Nearby Search ----
