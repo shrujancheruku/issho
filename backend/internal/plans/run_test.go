@@ -138,6 +138,22 @@ func TestIntegrationRunner(t *testing.T) {
 	if p, err := f.q.GetPlan(ctx, plan.ID); err != nil || p.ClosedReason == nil || *p.ClosedReason != ClosedNoGroup {
 		t.Fatalf("plan after the deadline: %+v, %v", p, err)
 	}
+	// The one still waiting hears it closed (not the one who withdrew).
+	var told []uuid.UUID
+	rows, err := f.pool.Query(ctx, "select user_id from app.notifications where plan_id = $1 and kind = $2", plan.ID, NotifyNoGroup)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for rows.Next() {
+		var u uuid.UUID
+		if err := rows.Scan(&u); err != nil {
+			t.Fatal(err)
+		}
+		told = append(told, u)
+	}
+	if rows.Err() != nil || len(told) != 1 || told[0].String() != string(signups[1].User) {
+		t.Errorf("told %v, want only %s (%v)", told, signups[1].User, rows.Err())
+	}
 	// It's in its cool-down now, so it isn't suggested again.
 	if opened, err := r.Suggest(ctx, f.city, deadline); err != nil || opened != 0 {
 		t.Errorf("Suggest during the cool-down opened %d, %v", opened, err)

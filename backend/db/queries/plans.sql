@@ -47,6 +47,18 @@ select round from app.plans where id = $1 and status = 'open' for update;
 update app.plans set status = 'closed', closed_reason = @reason::text, closed_at = @closed_at
 where id = @id and status = 'open';
 
+-- Closing a plan no group could form for, and telling whoever was still
+-- waiting, in one statement (nothing is sent if the plan was already
+-- closed). Their signups stay, as the plan's record.
+-- name: ClosePlanNoGroup :exec
+with closed as (
+  update app.plans p set status = 'closed', closed_reason = 'no_group', closed_at = @closed_at
+  where p.id = @id and p.status = 'open'
+  returning p.id
+)
+insert into app.notifications (user_id, kind, plan_id)
+select s.user_id, 'plan_no_group', s.plan_id from app.plan_signups s join closed c on c.id = s.plan_id;
+
 -- name: NextPlanRound :exec
 update app.plans
 set round = round + 1, window_start = @window_start, window_days = @window_days,

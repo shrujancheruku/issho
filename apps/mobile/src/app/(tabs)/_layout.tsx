@@ -11,6 +11,8 @@ export default function TabsLayout() {
   useEffect(() => {
     void registerForPush({ ask: false });
   }, []);
-  useNotificationTaps(useCallback((id: string) => router.push({ pathname: '/event/[id]', params: { id } }), []));
+  useNotificationTaps(
+    useCallback((id: string | null) => (id ? router.push({ pathname: '/event/[id]', params: { id } }) : router.navigate('/')), []),
+  );
   return <AppTabs />;
 }

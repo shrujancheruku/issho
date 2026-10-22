@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	"github.com/shrujancheruku/issho/backend/internal/matching"
@@ -22,6 +23,21 @@ type fakeSender struct {
 	sent []push.Message
 	gone map[string]bool
 	down bool
+	// receipts are the receipts Expo has ready, by ticket id.
+	receipts map[string]push.Receipt
+}
+
+func (f *fakeSender) Receipts(_ context.Context, ids []string) (map[string]push.Receipt, error) {
+	if f.down {
+		return nil, errors.New("expo unreachable")
+	}
+	out := map[string]push.Receipt{}
+	for _, id := range ids {
+		if r, ok := f.receipts[id]; ok {
+			out[id] = r
+		}
+	}
+	return out, nil
 }
 
 func (f *fakeSender) Send(_ context.Context, msgs []push.Message) ([]push.Ticket, error) {
@@ -31,7 +47,8 @@ func (f *fakeSender) Send(_ context.Context, msgs []push.Message) ([]push.Ticket
 	tickets := make([]push.Ticket, len(msgs))
 	for i, m := range msgs {
 		f.sent = append(f.sent, m)
-		tickets[i] = push.Ticket{OK: !f.gone[m.To]}
+		// The ticket id is the token, so tests can set its receipt.
+		tickets[i] = push.Ticket{OK: !f.gone[m.To], ID: m.To}
 		if f.gone[m.To] {
 			tickets[i].Error = "DeviceNotRegistered"
 		}
@@ -123,5 +140,34 @@ func TestIntegrationNotifications(t *testing.T) {
 	if rep, err := n.Send(ctx, day(6)); err != nil || rep.Sent != 1 || len(sender.sent) != 1 ||
 		sender.sent[0].To != "ExponentPushToken[b1]" || sender.sent[0].Data["kind"] != NotifyConfirmed {
 		t.Errorf("after the outage: %+v, %v, %+v", rep, err, sender.sent)
+	}
+
+	// Another plan closes without a group while b waits: b hears, and the
+	// notification is about the plan (the app opens the feed).
+	other, err := Create(ctx, f.q, f.city, matching.Suggestion{Plan: matching.Plan{Area: matching.AreaID(f.area), Activity: matching.ActivityID(f.act), Primary: "ja"}, Audience: 6, Score: 1},
+		Window{Start: day(7), Days: 14, Deadline: day(14)}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := svc.SignUp(ctx, b, other, matching.Signup{}); err != nil {
+		t.Fatal(err)
+	}
+	if err := f.q.ClosePlanNoGroup(ctx, dbgen.ClosePlanNoGroupParams{ID: other, ClosedAt: pgtype.Timestamptz{Time: day(14), Valid: true}}); err != nil {
+		t.Fatal(err)
+	}
+	sender.sent = nil
+	if rep, err := n.Send(ctx, day(14)); err != nil || rep.Sent != 1 || len(sender.sent) != 1 {
+		t.Fatalf("no-group notice: %+v, %v", rep, err)
+	}
+	if m := sender.sent[0]; m.To != "ExponentPushToken[b1]" || m.Data["kind"] != NotifyNoGroup || m.Data["planId"] != other.String() || m.Data["eventId"] != "" ||
+		m.Body != "Not enough people signed up this time, so it is closed. Open Issho to see other plans." {
+		t.Errorf("no-group message = %+v", m)
+	}
+	// Closing again (already closed) tells nobody twice.
+	if err := f.q.ClosePlanNoGroup(ctx, dbgen.ClosePlanNoGroupParams{ID: other, ClosedAt: pgtype.Timestamptz{Time: day(15), Valid: true}}); err != nil {
+		t.Fatal(err)
+	}
+	if rep, _ := n.Send(ctx, day(15)); rep != (NotifyReport{}) {
+		t.Errorf("second close notified again: %+v", rep)
 	}
 }

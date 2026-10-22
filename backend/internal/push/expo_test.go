@@ -46,7 +46,7 @@ func TestExpoSendBatchesAndParsesTickets(t *testing.T) {
 	if len(requests) != 2 || len(requests[0]) != 100 || len(requests[1]) != 50 {
 		t.Errorf("batches: %d requests", len(requests))
 	}
-	if len(tickets) != 150 || !tickets[0].OK || tickets[120].OK || tickets[120].Error != "DeviceNotRegistered" {
+	if len(tickets) != 150 || !tickets[0].OK || tickets[0].ID != "x" || tickets[120].OK || tickets[120].Error != "DeviceNotRegistered" {
 		t.Errorf("tickets: %d, [0]=%+v, [120]=%+v", len(tickets), tickets[0], tickets[120])
 	}
 }
@@ -60,5 +60,31 @@ func TestExpoSendFailsOnHTTPError(t *testing.T) {
 	e.URL = srv.URL
 	if _, err := e.Send(context.Background(), []Message{{To: "ExponentPushToken[a]", Body: "hi"}}); err == nil {
 		t.Error("no error for HTTP 429")
+	}
+}
+
+func TestExpoReceipts(t *testing.T) {
+	var asked []string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var body struct{ IDs []string }
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			t.Fatal(err)
+		}
+		asked = append(asked, body.IDs...)
+		// "late" isn't ready yet, so it's missing from the answer.
+		_ = json.NewEncoder(w).Encode(map[string]any{"data": map[string]any{
+			"a": map[string]any{"status": "ok"},
+			"b": map[string]any{"status": "error", "message": "gone", "details": map[string]string{"error": "DeviceNotRegistered"}},
+		}})
+	}))
+	defer srv.Close()
+	e := NewExpo("")
+	e.ReceiptsURL = srv.URL
+	got, err := e.Receipts(context.Background(), []string{"a", "b", "late"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(asked) != 3 || len(got) != 2 || !got["a"].OK || got["b"].OK || got["b"].Error != "DeviceNotRegistered" {
+		t.Errorf("asked %v, got %+v", asked, got)
 	}
 }
