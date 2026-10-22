@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
@@ -100,5 +101,39 @@ func TestIntegrationStore(t *testing.T) {
 	cats, err := LoadVenueCategories(ctx, q, city, []string{"cafe"})
 	if err != nil || len(cats) != 1 || cats[0].ID != "cafe" {
 		t.Errorf("LoadVenueCategories = %v, %v", cats, err)
+	}
+
+	// Refresh: a fresh matrix is left alone.
+	router := &fakeRouter{}
+	now := time.Now()
+	if rebuilt, _, err := Refresh(ctx, pool, router, city, now); err != nil || rebuilt || router.calls != 0 {
+		t.Errorf("fresh matrix: rebuilt=%v calls=%d err=%v", rebuilt, router.calls, err)
+	}
+	// After RefreshAge it's rebuilt, and a pair the rebuild doesn't return
+	// (a walk to the far area) goes straight away rather than at 30 days.
+	ac := got[2].ID
+	if _, err := pool.Exec(ctx, `insert into app.area_travel_times (from_area_id, to_area_id, mode, minutes) values ($1, $2, 'walk', 99)`, a, ac); err != nil {
+		t.Fatal(err)
+	}
+	age := func(days int) {
+		t.Helper()
+		if _, err := pool.Exec(ctx, "update app.area_travel_times set computed_at = now() - make_interval(days => $2) where from_area_id like $1", city+"%", days); err != nil {
+			t.Fatal(err)
+		}
+	}
+	age(26)
+	rebuilt, deleted, err := Refresh(ctx, pool, router, city, now)
+	if err != nil || !rebuilt || deleted != 1 {
+		t.Errorf("stale matrix: rebuilt=%v deleted=%d err=%v; want rebuilt, the a→far walk deleted", rebuilt, deleted, err)
+	}
+	var rows int
+	// a↔b, plus each area to itself (0 minutes).
+	if err := pool.QueryRow(ctx, "select count(*) from app.area_travel_times where from_area_id like $1", city+"%").Scan(&rows); err != nil || rows != 5 {
+		t.Errorf("after the rebuild: %d rows, %v; want 5", rows, err)
+	}
+	// Without a Maps key nothing can be rebuilt: rows past the limit are deleted.
+	age(31)
+	if rebuilt, deleted, err := Refresh(ctx, pool, nil, city, now); err != nil || rebuilt || deleted != 5 {
+		t.Errorf("no router: rebuilt=%v deleted=%d err=%v; want all 5 deleted", rebuilt, deleted, err)
 	}
 }

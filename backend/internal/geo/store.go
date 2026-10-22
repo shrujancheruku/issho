@@ -62,8 +62,10 @@ func LoadVenueCategories(ctx context.Context, q *dbgen.Queries, cityID string, o
 	return out, nil
 }
 
-// SaveMatrix upserts travel times and then deletes the city's rows older than
-// MaxCacheAge, in one transaction. Returns the number of stale rows deleted.
+// SaveMatrix replaces a city's travel times with a full rebuild, in one
+// transaction: it upserts rows and deletes every row of the city that the
+// rebuild didn't write, so nothing outlives the Maps caching limit and a
+// pair that lost its route goes at once. Returns the number of rows deleted.
 func SaveMatrix(ctx context.Context, pool *pgxpool.Pool, cityID string, rows []TravelTime) (int64, error) {
 	var deleted int64
 	err := pgx.BeginFunc(ctx, pool, func(tx pgx.Tx) error {
@@ -75,9 +77,7 @@ func SaveMatrix(ctx context.Context, pool *pgxpool.Pool, cityID string, rows []T
 				return fmt.Errorf("%s→%s %s: %w", r.From, r.To, r.Mode, err)
 			}
 		}
-		n, err := q.DeleteStaleTravelTimes(ctx, dbgen.DeleteStaleTravelTimesParams{
-			CityID: cityID, Cutoff: pgtype.Timestamptz{Time: time.Now().Add(-MaxCacheAge), Valid: true},
-		})
+		n, err := q.DeleteTravelTimesNotRefreshed(ctx, cityID)
 		deleted = n
 		return err
 	})
@@ -106,4 +106,41 @@ func keys(m map[string]bool) []string {
 		out = append(out, k)
 	}
 	return out
+}
+
+// RefreshAge is when a city's travel times are rebuilt: well inside
+// MaxCacheAge, so a failed run has days to be retried before the limit.
+const RefreshAge = 25 * 24 * time.Hour
+
+// Refresh rebuilds a city's travel-time matrix when its newest row is older
+// than RefreshAge (or it has none), as the Google Maps caching terms
+// require. Without a router (no Maps key) it can't rebuild, so it deletes
+// rows past MaxCacheAge instead: staying within the terms matters more
+// than keeping stale data. It reports whether it rebuilt and how many rows
+// it deleted.
+func Refresh(ctx context.Context, pool *pgxpool.Pool, r maps.Router, cityID string, now time.Time) (rebuilt bool, deleted int64, err error) {
+	q := dbgen.New(pool)
+	if r == nil {
+		deleted, err = q.DeleteStaleTravelTimes(ctx, dbgen.DeleteStaleTravelTimesParams{
+			CityID: cityID, Cutoff: pgtype.Timestamptz{Time: now.Add(-MaxCacheAge), Valid: true},
+		})
+		return false, deleted, err
+	}
+	newest, err := q.NewestTravelTime(ctx, cityID)
+	if err != nil {
+		return false, 0, err
+	}
+	if newest.Valid && now.Sub(newest.Time) < RefreshAge {
+		return false, 0, nil
+	}
+	areas, modes, err := LoadCity(ctx, q, cityID)
+	if err != nil {
+		return false, 0, err
+	}
+	rows, err := BuildMatrix(ctx, r, areas, modes)
+	if err != nil {
+		return false, 0, err
+	}
+	deleted, err = SaveMatrix(ctx, pool, cityID, rows)
+	return err == nil, deleted, err
 }

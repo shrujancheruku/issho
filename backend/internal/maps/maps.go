@@ -77,6 +77,64 @@ type PlaceDetails struct {
 	Location LatLng
 }
 
+// WeekTime is a time in the week, in the place's local time.
+type WeekTime struct {
+	Day          time.Weekday
+	Hour, Minute int
+}
+
+func (w WeekTime) minutes() int { return int(w.Day)*24*60 + w.Hour*60 + w.Minute }
+
+// Period is one opening period. NoClose means open around the clock (the
+// provider's way of saying 24/7).
+type Period struct {
+	Open, Close WeekTime
+	NoClose     bool
+}
+
+// Hours is when a venue is open, fetched live (it may not be stored).
+type Hours struct {
+	// Known is false when the provider has no hours (parks, streets):
+	// treated as always open.
+	Known bool
+	// Closed means closed permanently or until further notice.
+	Closed            bool
+	PermanentlyClosed bool
+	Periods           []Period
+}
+
+const week = 7 * 24 * 60
+
+// OpenAt reports whether the venue is open at t, read as the venue's local
+// time (pass a time in the city's time zone).
+func (h Hours) OpenAt(t time.Time) bool {
+	if h.Closed {
+		return false
+	}
+	if !h.Known {
+		return true
+	}
+	m := WeekTime{t.Weekday(), t.Hour(), t.Minute()}.minutes()
+	for _, p := range h.Periods {
+		if p.NoClose {
+			return true
+		}
+		o, c := p.Open.minutes(), p.Close.minutes()
+		if c <= o {
+			c += week // closes after the week wraps (Saturday night to Sunday)
+		}
+		if (m >= o && m < c) || (m+week >= o && m+week < c) {
+			return true
+		}
+	}
+	return false
+}
+
+// HoursLookup fetches a venue's opening hours.
+type HoursLookup interface {
+	Hours(ctx context.Context, id string) (Hours, error)
+}
+
 type PlaceLookup interface {
 	// Details returns a place in the given language (BCP 47).
 	Details(ctx context.Context, id, language string) (PlaceDetails, error)

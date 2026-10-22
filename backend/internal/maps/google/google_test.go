@@ -230,3 +230,39 @@ func TestDetails(t *testing.T) {
 		t.Error("no error for a path-like id")
 	}
 }
+
+func TestHours(t *testing.T) {
+	c := newTestClient(t, func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("X-Goog-FieldMask") != "businessStatus,regularOpeningHours" {
+			t.Errorf("field mask %q", r.Header.Get("X-Goog-FieldMask"))
+		}
+		switch r.URL.Path {
+		case "/open":
+			// Sunday (day 0) is sent without "day", as protobuf JSON omits zero values.
+			_, _ = w.Write([]byte(`{"businessStatus":"OPERATIONAL","regularOpeningHours":{"periods":[
+				{"open":{"hour":10},"close":{"hour":18}},
+				{"open":{"day":6,"hour":20},"close":{"day":0,"hour":2}}]}}`))
+		case "/gone":
+			_, _ = w.Write([]byte(`{"businessStatus":"CLOSED_PERMANENTLY"}`))
+		case "/park":
+			_, _ = w.Write([]byte(`{"businessStatus":"OPERATIONAL"}`))
+		}
+	})
+	h, err := c.Hours(context.Background(), "open")
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []maps.Period{
+		{Open: maps.WeekTime{Day: time.Sunday, Hour: 10}, Close: maps.WeekTime{Day: time.Sunday, Hour: 18}},
+		{Open: maps.WeekTime{Day: time.Saturday, Hour: 20}, Close: maps.WeekTime{Day: time.Sunday, Hour: 2}},
+	}
+	if !h.Known || h.Closed || len(h.Periods) != 2 || h.Periods[0] != want[0] || h.Periods[1] != want[1] {
+		t.Errorf("hours = %+v", h)
+	}
+	if h, _ := c.Hours(context.Background(), "gone"); !h.PermanentlyClosed || !h.Closed {
+		t.Errorf("permanently closed = %+v", h)
+	}
+	if h, _ := c.Hours(context.Background(), "park"); h.Known || h.Closed {
+		t.Errorf("no hours = %+v", h)
+	}
+}

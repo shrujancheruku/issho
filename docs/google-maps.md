@@ -58,15 +58,19 @@ Always dry-run first: it reads the city from the database and prints exactly wha
 
 **Costs at MVP scale** (check current [pricing](https://developers.google.com/maps/billing-and-pricing/pricing); each SKU has a free monthly usage allowance):
 - `build-matrix`: one billed element per origin/destination pair. Only walking and driving are calculated (Google has no transit routes in Japan). Tokyo (12 areas) = 166 elements, Austin (10 areas) = 102. Same-area pairs are never requested, and walking is only requested between areas less than 4 km apart.
+- **The worker's monthly rebuild** (`refresh_maps`, daily check): the same elements as `build-matrix`, once every 25 days per city.
+- **Venue names on plans** (API, `GetPlan` / `GetEvent`): Place Details with `displayName`, `shortFormattedAddress`, `googleMapsUri`, `location` (the Pro SKU), up to two calls per venue (one per display language) each time a plan or event screen is opened. This is the cost that grows with users: watch it.
+- **Opening hours** (worker, when a round is about to be scheduled): Place Details with `businessStatus`, `regularOpeningHours` (the Enterprise SKU, the dearest), one call per venue per scheduling pass. Not checked on every hourly pass, which would be ~2,400 calls a day at 50 plans.
 - `discover-venues`: one Nearby Search request per area × venue category, except wide-radius categories (≥ 10 km, e.g. beaches, trails), which are searched once per city. The field mask asks only for id, types and location.
 
 ## 5. Terms: what we may store
 
 The Google Maps Platform terms restrict caching of Maps content. How Issho follows them:
 
-- **Place IDs** may be stored indefinitely. `app.venues` stores only the place id plus **our own** data (category, nearest area, curation status, tags). Names, addresses, hours, ratings and photos are **not** stored; they'll be fetched live when shown (M6).
+- **Place IDs** may be stored indefinitely. `app.venues` stores only the place id plus **our own** data (category, nearest area, curation status, tags). Names, addresses, hours, ratings and photos are **not** stored; they're fetched live when shown.
 - **Place locations** are used in memory to assign each venue to its nearest area, and are never written to the database.
-- **Travel times** (Routes content) are cached for at most **30 days**: `build-matrix` deletes the city's rows older than that. Rebuild each city's matrix at least every 30 days. The M6 worker will schedule this; until then, run it by hand.
+- **Travel times** (Routes content) are cached for at most **30 days**. A rebuild (`build-matrix` or the worker) replaces a city's whole matrix and deletes every row it didn't write. The worker's daily `refresh_maps` job rebuilds a city once its matrix is 25 days old; without `GOOGLE_MAPS_API_KEY` it can't, so it deletes rows past 30 days instead (and logs an error), because staying within the terms matters more than keeping stale data.
+- **Opening hours and business status** are fetched when needed and never stored. A venue Google reports as permanently closed gets our own curation status `rejected` (that's our data, not Google's).
 
 Re-check the current [Service Specific Terms](https://cloud.google.com/maps-platform/terms/maps-service-terms) and the [Routes](https://developers.google.com/maps/documentation/routes/policies) and [Places](https://developers.google.com/maps/documentation/places/web-service/policies) policies before launch. Attribution rules apply wherever Google content is displayed in the app.
 
