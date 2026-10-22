@@ -127,8 +127,8 @@ func (q *Queries) GetPlan(ctx context.Context, id uuid.UUID) (GetPlanRow, error)
 }
 
 const insertEvent = `-- name: InsertEvent :one
-insert into app.events (plan_id, round, date, block, confirm_by, forced)
-values ($1, $2, $3, $4, $5, $6)
+insert into app.events (plan_id, round, date, block, starts_at, confirm_by, forced)
+values ($1, $2, $3, $4, $5, $6, $7)
 returning id
 `
 
@@ -137,6 +137,7 @@ type InsertEventParams struct {
 	Round     int16
 	Date      pgtype.Date
 	Block     string
+	StartsAt  pgtype.Timestamptz
 	ConfirmBy pgtype.Timestamptz
 	Forced    bool
 }
@@ -147,6 +148,7 @@ func (q *Queries) InsertEvent(ctx context.Context, arg InsertEventParams) (uuid.
 		arg.Round,
 		arg.Date,
 		arg.Block,
+		arg.StartsAt,
 		arg.ConfirmBy,
 		arg.Forced,
 	)

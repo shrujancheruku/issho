@@ -85,6 +85,7 @@ function RootNavigator() {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="profile-edit/[step]" />
         <Stack.Screen name="plan/[id]" />
+        <Stack.Screen name="event/[id]" />
       </Stack.Protected>
     </Stack>
   );

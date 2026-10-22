@@ -91,8 +91,8 @@ where plan_id = $1 order by user_id, date, block;
 delete from app.plan_signups where plan_id = @plan_id and user_id = any(@user_ids::uuid[]);
 
 -- name: InsertEvent :one
-insert into app.events (plan_id, round, date, block, confirm_by, forced)
-values (@plan_id, @round, @date, @block, @confirm_by, @forced)
+insert into app.events (plan_id, round, date, block, starts_at, confirm_by, forced)
+values (@plan_id, @round, @date, @block, @starts_at, @confirm_by, @forced)
 returning id;
 
 -- name: InsertEventGroup :one

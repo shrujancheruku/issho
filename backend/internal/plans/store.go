@@ -242,6 +242,7 @@ type Event struct {
 	PlanID    uuid.UUID
 	Round     int // the plan's round being scheduled; must still be current
 	Scheduled matching.Scheduled
+	StartsAt  time.Time // zero = not set
 	ConfirmBy time.Time
 	Forced    bool
 	// Next is the plan's next round, for whoever is still waiting; nil
@@ -272,6 +273,7 @@ func SaveEvent(ctx context.Context, pool *pgxpool.Pool, e Event) (uuid.UUID, err
 			Round:     int16(e.Round),
 			Date:      date(o.Date),
 			Block:     string(o.Block),
+			StartsAt:  pgtype.Timestamptz{Time: e.StartsAt, Valid: !e.StartsAt.IsZero()},
 			ConfirmBy: pgtype.Timestamptz{Time: e.ConfirmBy, Valid: true},
 			Forced:    e.Forced,
 		})

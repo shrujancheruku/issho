@@ -49,17 +49,7 @@ func (h *Handler) GetPlan(ctx context.Context, req *connect.Request[isshov1.GetP
 	if err != nil {
 		return nil, connectError(err)
 	}
-	out := &isshov1.GetPlanResponse{Plan: planToProto(item)}
-	for _, st := range steps {
-		out.Steps = append(out.Steps, &isshov1.PlanStep{
-			ActivityId:         string(st.Activity),
-			VenueName:          st.Venue.Name,
-			VenueSecondaryName: st.SecondaryName,
-			VenueAddress:       st.Venue.Address,
-			VenueMapsUrl:       st.Venue.MapsURL,
-			WalkMinutes:        int32(st.WalkMinutes),
-		})
-	}
+	out := &isshov1.GetPlanResponse{Plan: planToProto(item), Steps: stepsToProto(steps)}
 	if signup != nil {
 		out.Signup = signupToProto(*signup)
 	}
@@ -169,6 +159,21 @@ func planToProto(it FeedItem) *isshov1.FeedPlan {
 		Title:              it.Title,
 		SecondaryTitle:     it.SecondaryTitle,
 	}
+}
+
+func stepsToProto(steps []Step) []*isshov1.PlanStep {
+	out := make([]*isshov1.PlanStep, len(steps))
+	for i, st := range steps {
+		out[i] = &isshov1.PlanStep{
+			ActivityId:         string(st.Activity),
+			VenueName:          st.Venue.Name,
+			VenueSecondaryName: st.SecondaryName,
+			VenueAddress:       st.Venue.Address,
+			VenueMapsUrl:       st.Venue.MapsURL,
+			WalkMinutes:        int32(st.WalkMinutes),
+		}
+	}
+	return out
 }
 
 func signupToProto(s matching.Signup) *isshov1.Signup {

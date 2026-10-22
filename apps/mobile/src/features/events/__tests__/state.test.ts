@@ -1,0 +1,46 @@
+/// <reference types="jest" />
+import { EventStatus, GroupStatus, InviteResponse, type MyEvent } from '@issho/api-client';
+
+import { eventState } from '../state';
+
+const at = (iso: string) => ({ seconds: BigInt(Date.parse(iso) / 1000), nanos: 0 });
+const deadline = Date.parse('2030-01-11T00:00:00Z');
+const start = Date.parse('2030-01-12T14:00:00Z');
+
+function event(over: Partial<MyEvent>): MyEvent {
+  return {
+    status: EventStatus.SCHEDULED,
+    groupStatus: GroupStatus.INVITING,
+    response: InviteResponse.INVITED,
+    confirmBy: at('2030-01-11T00:00:00Z'),
+    startsAt: at('2030-01-12T14:00:00Z'),
+    ...over,
+  } as MyEvent;
+}
+
+describe('eventState', () => {
+  it('asks for an answer until the deadline, then says it was missed', () => {
+    expect(eventState(event({}), deadline - 1)).toMatchObject({ message: 'event.state.answer', actions: ['confirm', 'decline'] });
+    expect(eventState(event({}), deadline)).toMatchObject({ message: 'event.state.noAnswer', actions: [] });
+  });
+
+  it('tells a confirmed person whether the group is going ahead; they can cancel until the start', () => {
+    const waiting = event({ response: InviteResponse.CONFIRMED });
+    expect(eventState(waiting, deadline - 1)).toMatchObject({ message: 'event.state.waiting', actions: ['cancel'] });
+    const going = event({ response: InviteResponse.CONFIRMED, groupStatus: GroupStatus.CONFIRMED });
+    expect(eventState(going, start - 1)).toMatchObject({ message: 'event.state.going', tone: 'good', actions: ['cancel'] });
+    expect(eventState(going, start).actions).toEqual([]);
+  });
+
+  it('lets a decline be changed until the deadline', () => {
+    const declined = event({ response: InviteResponse.DECLINED });
+    expect(eventState(declined, deadline - 1).actions).toEqual(['confirm']);
+    expect(eventState(declined, deadline).actions).toEqual([]);
+  });
+
+  it('offers nothing once cancelled or done', () => {
+    expect(eventState(event({ groupStatus: GroupStatus.CANCELLED }), 0).message).toBe('event.state.cancelled');
+    expect(eventState(event({ status: EventStatus.CANCELLED, response: InviteResponse.CONFIRMED }), 0).actions).toEqual([]);
+    expect(eventState(event({ status: EventStatus.DONE, response: InviteResponse.CONFIRMED }), 0).message).toBe('event.state.done');
+  });
+});

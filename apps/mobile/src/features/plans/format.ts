@@ -38,3 +38,15 @@ export function lastSignupDay(ts: FeedPlan['signupDeadline'], lang: string) {
 export function withoutExamples(name: string) {
   return name.replace(/\s*[(（][^()（）]*[)）]\s*$/, '');
 }
+
+/** "Sat, Oct 31, 2:00 PM": an event's start, in the device's time zone. */
+export function formatStart(ts: FeedPlan['signupDeadline'], lang: string) {
+  if (!ts) return '';
+  const at = new Date(Number(ts.seconds) * 1000);
+  const opts: Intl.DateTimeFormatOptions = { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' };
+  try {
+    return new Intl.DateTimeFormat(lang, opts).format(at);
+  } catch {
+    return new Intl.DateTimeFormat('en', opts).format(at);
+  }
+}

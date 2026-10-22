@@ -118,8 +118,16 @@ func (s *Service) feed(ctx context.Context, q *dbgen.Queries, userID uuid.UUID) 
 		byPlan[r.Plan] = byPlan[r.Plan][1:]
 		out[i] = FeedItem{Open: p, Level: r.Level, Minutes: r.Minutes, SignedUp: slices.Contains(mine, p.ID)}
 	}
-	if err := s.addTitles(ctx, q, cityID, caller, out); err != nil {
+	plans = make([]matching.OpenPlan, len(out))
+	for i := range out {
+		plans[i] = out[i].OpenPlan
+	}
+	titles, secondary, err := s.titles(ctx, q, cityID, caller, plans)
+	if err != nil {
 		return nil, nil, caller, err
+	}
+	for i := range out {
+		out[i].Title, out[i].SecondaryTitle = titles[i], secondary[i]
 	}
 	return out, u, caller, nil
 }
@@ -127,22 +135,23 @@ func (s *Service) feed(ctx context.Context, q *dbgen.Queries, userID uuid.UUID) 
 // titleContext tells the translator what the titles are.
 const titleContext = "short title of a small group outing, listing its activities in order"
 
-// addTitles fills each item's title: composed in English from the
+// titles returns each plan's title in the caller's two display languages
+// (secondary "" when the same or not chosen): composed in English from the
 // activities' English names, then translated (and cached) per language.
-func (s *Service) addTitles(ctx context.Context, q *dbgen.Queries, cityID string, caller Caller, items []FeedItem) error {
+func (s *Service) titles(ctx context.Context, q *dbgen.Queries, cityID string, caller Caller, items []matching.OpenPlan) (titles, secondaryTitles []string, err error) {
 	rows, err := q.ListCityActivities(ctx, cityID)
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 	english := make(map[string]string, len(rows))
 	for _, r := range rows {
 		english[r.ID] = i18n.Pick(r.Name, i18n.Authoring)
 	}
-	titles := make([]string, len(items))
+	englishTitles := make([]string, len(items))
 	texts := make([]translate.Text, len(items))
 	for i, it := range items {
-		titles[i] = Title(english[string(it.Activity)], english[string(it.FollowUp)])
-		raw, _ := json.Marshal(map[string]string{i18n.Authoring: titles[i]})
+		englishTitles[i] = Title(english[string(it.Activity)], english[string(it.FollowUp)])
+		raw, _ := json.Marshal(map[string]string{i18n.Authoring: englishTitles[i]})
 		texts[i] = translate.Text{Raw: raw, Context: titleContext}
 	}
 	primary, secondary := make([]string, len(items)), make([]string, len(items))
@@ -152,10 +161,11 @@ func (s *Service) addTitles(ctx context.Context, q *dbgen.Queries, cityID string
 			secondary = s.Translations.Resolve(ctx, caller.Secondary, texts)
 		}
 	}
+	titles, secondaryTitles = make([]string, len(items)), make([]string, len(items))
 	for i := range items {
-		items[i].Title, items[i].SecondaryTitle = i18n.Pair(primary[i], secondary[i], titles[i])
+		titles[i], secondaryTitles[i] = i18n.Pair(primary[i], secondary[i], englishTitles[i])
 	}
-	return nil
+	return titles, secondaryTitles, nil
 }
 
 // Title summarises a plan in English: "Climbing and bouldering, then lunch
@@ -204,7 +214,7 @@ func (s *Service) Plan(ctx context.Context, userID, planID uuid.UUID) (FeedItem,
 	if err != nil {
 		return item, nil, nil, err
 	}
-	steps := s.steps(ctx, item, caller)
+	steps := s.steps(ctx, item.Plan, item.Venue, item.FollowUpVenue, caller)
 	if !item.SignedUp {
 		return item, steps, nil, nil
 	}
@@ -215,12 +225,12 @@ func (s *Service) Plan(ctx context.Context, userID, planID uuid.UUID) (FeedItem,
 // steps lists the plan's stops with their venues fetched live in both
 // display languages, all at once. A venue that can't be fetched is left
 // out (logged): the plan still shows, just without the place's name.
-func (s *Service) steps(ctx context.Context, item FeedItem, caller Caller) []Step {
-	steps := []Step{{Activity: item.Activity}}
-	venues := []string{item.Venue}
-	if item.FollowUp != "" {
-		steps = append(steps, Step{Activity: item.FollowUp})
-		venues = append(venues, item.FollowUpVenue)
+func (s *Service) steps(ctx context.Context, p matching.Plan, venue, followUpVenue string, caller Caller) []Step {
+	steps := []Step{{Activity: p.Activity}}
+	venues := []string{venue}
+	if p.FollowUp != "" {
+		steps = append(steps, Step{Activity: p.FollowUp})
+		venues = append(venues, followUpVenue)
 	}
 	if s.Places == nil {
 		return steps

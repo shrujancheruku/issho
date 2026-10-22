@@ -36,21 +36,6 @@
   
     - [CatalogService](#issho-v1-CatalogService)
   
-- [issho/v1/health.proto](#issho_v1_health-proto)
-    - [CheckRequest](#issho-v1-CheckRequest)
-    - [CheckResponse](#issho-v1-CheckResponse)
-  
-    - [HealthService](#issho-v1-HealthService)
-  
-- [issho/v1/identity.proto](#issho_v1_identity-proto)
-    - [DeleteAccountRequest](#issho-v1-DeleteAccountRequest)
-    - [DeleteAccountResponse](#issho-v1-DeleteAccountResponse)
-    - [GetMeRequest](#issho-v1-GetMeRequest)
-    - [GetMeResponse](#issho-v1-GetMeResponse)
-    - [User](#issho-v1-User)
-  
-    - [IdentityService](#issho-v1-IdentityService)
-  
 - [issho/v1/plans.proto](#issho_v1_plans-proto)
     - [FeedPlan](#issho-v1-FeedPlan)
     - [GetPlanRequest](#issho-v1-GetPlanRequest)
@@ -68,6 +53,37 @@
     - [PlanLevel](#issho-v1-PlanLevel)
   
     - [PlanService](#issho-v1-PlanService)
+  
+- [issho/v1/events.proto](#issho_v1_events-proto)
+    - [GetEventRequest](#issho-v1-GetEventRequest)
+    - [GetEventResponse](#issho-v1-GetEventResponse)
+    - [ListMyEventsRequest](#issho-v1-ListMyEventsRequest)
+    - [ListMyEventsResponse](#issho-v1-ListMyEventsResponse)
+    - [MyEvent](#issho-v1-MyEvent)
+    - [RespondToEventRequest](#issho-v1-RespondToEventRequest)
+    - [RespondToEventResponse](#issho-v1-RespondToEventResponse)
+  
+    - [EventAction](#issho-v1-EventAction)
+    - [EventStatus](#issho-v1-EventStatus)
+    - [GroupStatus](#issho-v1-GroupStatus)
+    - [InviteResponse](#issho-v1-InviteResponse)
+  
+    - [EventService](#issho-v1-EventService)
+  
+- [issho/v1/health.proto](#issho_v1_health-proto)
+    - [CheckRequest](#issho-v1-CheckRequest)
+    - [CheckResponse](#issho-v1-CheckResponse)
+  
+    - [HealthService](#issho-v1-HealthService)
+  
+- [issho/v1/identity.proto](#issho_v1_identity-proto)
+    - [DeleteAccountRequest](#issho-v1-DeleteAccountRequest)
+    - [DeleteAccountResponse](#issho-v1-DeleteAccountResponse)
+    - [GetMeRequest](#issho-v1-GetMeRequest)
+    - [GetMeResponse](#issho-v1-GetMeResponse)
+    - [User](#issho-v1-User)
+  
+    - [IdentityService](#issho-v1-IdentityService)
   
 - [issho/v1/ui.proto](#issho_v1_ui-proto)
     - [GetStringsRequest](#issho-v1-GetStringsRequest)
@@ -544,156 +560,6 @@ HTTP: POST /issho.v1.CatalogService/&lt;Method&gt;
 
 
 
-<a name="issho_v1_health-proto"></a>
-<p align="right"><a href="#top">Top</a></p>
-
-## issho/v1/health.proto
-
-
-
-<a name="issho-v1-CheckRequest"></a>
-
-### CheckRequest
-
-
-
-
-
-
-
-<a name="issho-v1-CheckResponse"></a>
-
-### CheckResponse
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| database_ok | [bool](#bool) |  | True when the API could ping Postgres during this request. |
-| version | [string](#string) |  | Build version of the API binary (&#34;dev&#34; for local builds). |
-
-
-
-
-
- 
-
- 
-
- 
-
-
-<a name="issho-v1-HealthService"></a>
-
-### HealthService
-HealthService reports whether the API and its dependencies are reachable.
-Public: no Authorization header required. Used by load balancers and the app&#39;s status row.
-
-HTTP: POST /issho.v1.HealthService/Check
-
-| Method Name | Request Type | Response Type | Description |
-| ----------- | ------------ | ------------- | ------------|
-| Check | [CheckRequest](#issho-v1-CheckRequest) | [CheckResponse](#issho-v1-CheckResponse) | Check pings the database and returns the running build version. |
-
- 
-
-
-
-<a name="issho_v1_identity-proto"></a>
-<p align="right"><a href="#top">Top</a></p>
-
-## issho/v1/identity.proto
-
-
-
-<a name="issho-v1-DeleteAccountRequest"></a>
-
-### DeleteAccountRequest
-
-
-
-
-
-
-
-<a name="issho-v1-DeleteAccountResponse"></a>
-
-### DeleteAccountResponse
-
-
-
-
-
-
-
-<a name="issho-v1-GetMeRequest"></a>
-
-### GetMeRequest
-
-
-
-
-
-
-
-<a name="issho-v1-GetMeResponse"></a>
-
-### GetMeResponse
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| user | [User](#issho-v1-User) |  |  |
-
-
-
-
-
-
-<a name="issho-v1-User"></a>
-
-### User
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| id | [string](#string) |  | Same UUID as the Supabase auth user (auth.users.id). |
-| email | [string](#string) |  | Email from the Supabase token; empty for providers that hide it. |
-| onboarded | [bool](#bool) |  | True once the user has completed onboarding (has a profile). |
-| primary_language | [string](#string) |  | Display languages from the profile (empty until onboarded), so the app can show itself in the right languages straight after GetMe. |
-| secondary_language | [string](#string) |  |  |
-
-
-
-
-
- 
-
- 
-
- 
-
-
-<a name="issho-v1-IdentityService"></a>
-
-### IdentityService
-IdentityService manages the signed-in user&#39;s app account.
-Authentication itself is handled by Supabase Auth; every call must send
-`Authorization: Bearer &lt;Supabase access token&gt;`.
-
-HTTP: POST /issho.v1.IdentityService/&lt;Method&gt;
-
-| Method Name | Request Type | Response Type | Description |
-| ----------- | ------------ | ------------- | ------------|
-| GetMe | [GetMeRequest](#issho-v1-GetMeRequest) | [GetMeResponse](#issho-v1-GetMeResponse) | GetMe returns the caller&#39;s account, creating the app-side user row the first time a Supabase user calls the API. |
-| DeleteAccount | [DeleteAccountRequest](#issho-v1-DeleteAccountRequest) | [DeleteAccountResponse](#issho-v1-DeleteAccountResponse) | DeleteAccount permanently deletes the caller&#39;s Supabase auth user and all of their app data (cascaded from auth.users). The client should sign out afterwards; existing access tokens stop working once they expire. Returns FAILED_PRECONDITION if the server has no Supabase secret key configured. |
-
- 
-
-
-
 <a name="issho_v1_plans-proto"></a>
 <p align="right"><a href="#top">Top</a></p>
 
@@ -938,6 +804,372 @@ HTTP: POST /issho.v1.PlanService/&lt;Method&gt;
 | GetPlan | [GetPlanRequest](#issho-v1-GetPlanRequest) | [GetPlanResponse](#issho-v1-GetPlanResponse) | GetPlan returns one open plan with the caller&#39;s signup, if any. NOT_FOUND for an unknown or closed plan, or one in another city. |
 | SignUp | [SignUpRequest](#issho-v1-SignUpRequest) | [SignUpResponse](#issho-v1-SignUpResponse) | SignUp signs the caller up for an open plan, or replaces the times they gave. FAILED_PRECONDITION when the plan has closed or they don&#39;t speak its language; INVALID_ARGUMENT for times outside the plan&#39;s window. |
 | Withdraw | [WithdrawRequest](#issho-v1-WithdrawRequest) | [WithdrawResponse](#issho-v1-WithdrawResponse) | Withdraw removes the caller&#39;s signup. Withdrawing twice is fine. |
+
+ 
+
+
+
+<a name="issho_v1_events-proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## issho/v1/events.proto
+
+
+
+<a name="issho-v1-GetEventRequest"></a>
+
+### GetEventRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| event_id | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-GetEventResponse"></a>
+
+### GetEventResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| event | [MyEvent](#issho-v1-MyEvent) |  |  |
+| steps | [PlanStep](#issho-v1-PlanStep) | repeated | As in GetPlanResponse.steps; the caller&#39;s group may meet at a different venue from the plan&#39;s. |
+| attendees | [string](#string) | repeated | First names of the people confirmed in the caller&#39;s group, including the caller. Empty unless the caller confirmed (no profile browsing). |
+
+
+
+
+
+
+<a name="issho-v1-ListMyEventsRequest"></a>
+
+### ListMyEventsRequest
+
+
+
+
+
+
+
+<a name="issho-v1-ListMyEventsResponse"></a>
+
+### ListMyEventsResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| events | [MyEvent](#issho-v1-MyEvent) | repeated |  |
+
+
+
+
+
+
+<a name="issho-v1-MyEvent"></a>
+
+### MyEvent
+One event as the caller sees it.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [string](#string) |  |  |
+| plan_id | [string](#string) |  |  |
+| title | [string](#string) |  | As FeedPlan.title / secondary_title. |
+| secondary_title | [string](#string) |  |  |
+| activity_id | [string](#string) |  |  |
+| follow_up_activity_id | [string](#string) |  |  |
+| area_id | [string](#string) |  |  |
+| primary_language | [string](#string) |  |  |
+| secondary_language | [string](#string) |  |  |
+| date | [string](#string) |  | The date in the city (&#34;2030-01-05&#34;) and part of the day. |
+| block | [TimeBlock](#issho-v1-TimeBlock) |  |  |
+| starts_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | When it starts; unset if not decided. |
+| confirm_by | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | Answer by then. |
+| status | [EventStatus](#issho-v1-EventStatus) |  |  |
+| group_status | [GroupStatus](#issho-v1-GroupStatus) |  |  |
+| response | [InviteResponse](#issho-v1-InviteResponse) |  |  |
+| confirmed | [int32](#int32) |  | How many in the caller&#39;s group have confirmed (a count, never who). |
+| quorum | [int32](#int32) |  | Confirmations that make the group go ahead straight away. |
+| min_attendance | [int32](#int32) |  | The fewest it can go ahead with at confirm_by. |
+| meeting_point | [string](#string) |  | Exactly where to meet, once revealed to someone who confirmed; &#34;&#34; before reveal_at or when no more than the first stop&#39;s venue is needed. |
+| reveal_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | When the meeting point is shown (24 hours before the start). |
+
+
+
+
+
+
+<a name="issho-v1-RespondToEventRequest"></a>
+
+### RespondToEventRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| event_id | [string](#string) |  |  |
+| action | [EventAction](#issho-v1-EventAction) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-RespondToEventResponse"></a>
+
+### RespondToEventResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| event | [MyEvent](#issho-v1-MyEvent) |  |  |
+
+
+
+
+
+ 
+
+
+<a name="issho-v1-EventAction"></a>
+
+### EventAction
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| EVENT_ACTION_UNSPECIFIED | 0 |  |
+| EVENT_ACTION_CONFIRM | 1 | Invited (or declined, changing their mind) → confirmed, until confirm_by. |
+| EVENT_ACTION_DECLINE | 2 | Invited → declined, until confirm_by. |
+| EVENT_ACTION_CANCEL | 3 | Confirmed → cancelled, until the event starts. |
+
+
+
+<a name="issho-v1-EventStatus"></a>
+
+### EventStatus
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| EVENT_STATUS_UNSPECIFIED | 0 |  |
+| EVENT_STATUS_SCHEDULED | 1 |  |
+| EVENT_STATUS_DONE | 2 |  |
+| EVENT_STATUS_CANCELLED | 3 |  |
+
+
+
+<a name="issho-v1-GroupStatus"></a>
+
+### GroupStatus
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| GROUP_STATUS_UNSPECIFIED | 0 |  |
+| GROUP_STATUS_INVITING | 1 | Collecting answers. |
+| GROUP_STATUS_CONFIRMED | 2 | Going ahead. |
+| GROUP_STATUS_CANCELLED | 3 |  |
+
+
+
+<a name="issho-v1-InviteResponse"></a>
+
+### InviteResponse
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| INVITE_RESPONSE_UNSPECIFIED | 0 |  |
+| INVITE_RESPONSE_INVITED | 1 |  |
+| INVITE_RESPONSE_CONFIRMED | 2 |  |
+| INVITE_RESPONSE_DECLINED | 3 |  |
+| INVITE_RESPONSE_DROPPED | 4 | Confirmed, then cancelled. |
+
+
+ 
+
+ 
+
+
+<a name="issho-v1-EventService"></a>
+
+### EventService
+EventService shows the caller the events they&#39;re invited to and records
+their answers. An event is a plan round given a date; the caller is in one
+group of it. A group goes ahead as soon as `quorum` people confirm, or at
+`confirm_by` with at least `min_attendance`; otherwise it&#39;s cancelled and
+the people who confirmed go back to waiting for the plan.
+Requires `Authorization: Bearer &lt;Supabase access token&gt;` and a saved
+profile (FAILED_PRECONDITION otherwise).
+
+HTTP: POST /issho.v1.EventService/&lt;Method&gt;
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| ListMyEvents | [ListMyEventsRequest](#issho-v1-ListMyEventsRequest) | [ListMyEventsResponse](#issho-v1-ListMyEventsResponse) | ListMyEvents returns the caller&#39;s events from yesterday on, soonest first, whatever their answer. |
+| GetEvent | [GetEventRequest](#issho-v1-GetEventRequest) | [GetEventResponse](#issho-v1-GetEventResponse) | GetEvent returns one of the caller&#39;s events with its stops and, if the caller confirmed, who else is going. NOT_FOUND unless the caller is invited to it. |
+| RespondToEvent | [RespondToEventRequest](#issho-v1-RespondToEventRequest) | [RespondToEventResponse](#issho-v1-RespondToEventResponse) | RespondToEvent confirms, declines or cancels the caller&#39;s place. FAILED_PRECONDITION when it&#39;s too late, the event is cancelled or over, or the answer doesn&#39;t apply (e.g. cancelling a place not confirmed). |
+
+ 
+
+
+
+<a name="issho_v1_health-proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## issho/v1/health.proto
+
+
+
+<a name="issho-v1-CheckRequest"></a>
+
+### CheckRequest
+
+
+
+
+
+
+
+<a name="issho-v1-CheckResponse"></a>
+
+### CheckResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| database_ok | [bool](#bool) |  | True when the API could ping Postgres during this request. |
+| version | [string](#string) |  | Build version of the API binary (&#34;dev&#34; for local builds). |
+
+
+
+
+
+ 
+
+ 
+
+ 
+
+
+<a name="issho-v1-HealthService"></a>
+
+### HealthService
+HealthService reports whether the API and its dependencies are reachable.
+Public: no Authorization header required. Used by load balancers and the app&#39;s status row.
+
+HTTP: POST /issho.v1.HealthService/Check
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| Check | [CheckRequest](#issho-v1-CheckRequest) | [CheckResponse](#issho-v1-CheckResponse) | Check pings the database and returns the running build version. |
+
+ 
+
+
+
+<a name="issho_v1_identity-proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## issho/v1/identity.proto
+
+
+
+<a name="issho-v1-DeleteAccountRequest"></a>
+
+### DeleteAccountRequest
+
+
+
+
+
+
+
+<a name="issho-v1-DeleteAccountResponse"></a>
+
+### DeleteAccountResponse
+
+
+
+
+
+
+
+<a name="issho-v1-GetMeRequest"></a>
+
+### GetMeRequest
+
+
+
+
+
+
+
+<a name="issho-v1-GetMeResponse"></a>
+
+### GetMeResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| user | [User](#issho-v1-User) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-User"></a>
+
+### User
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [string](#string) |  | Same UUID as the Supabase auth user (auth.users.id). |
+| email | [string](#string) |  | Email from the Supabase token; empty for providers that hide it. |
+| onboarded | [bool](#bool) |  | True once the user has completed onboarding (has a profile). |
+| primary_language | [string](#string) |  | Display languages from the profile (empty until onboarded), so the app can show itself in the right languages straight after GetMe. |
+| secondary_language | [string](#string) |  |  |
+
+
+
+
+
+ 
+
+ 
+
+ 
+
+
+<a name="issho-v1-IdentityService"></a>
+
+### IdentityService
+IdentityService manages the signed-in user&#39;s app account.
+Authentication itself is handled by Supabase Auth; every call must send
+`Authorization: Bearer &lt;Supabase access token&gt;`.
+
+HTTP: POST /issho.v1.IdentityService/&lt;Method&gt;
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| GetMe | [GetMeRequest](#issho-v1-GetMeRequest) | [GetMeResponse](#issho-v1-GetMeResponse) | GetMe returns the caller&#39;s account, creating the app-side user row the first time a Supabase user calls the API. |
+| DeleteAccount | [DeleteAccountRequest](#issho-v1-DeleteAccountRequest) | [DeleteAccountResponse](#issho-v1-DeleteAccountResponse) | DeleteAccount permanently deletes the caller&#39;s Supabase auth user and all of their app data (cascaded from auth.users). The client should sign out afterwards; existing access tokens stop working once they expire. Returns FAILED_PRECONDITION if the server has no Supabase secret key configured. |
 
  
 

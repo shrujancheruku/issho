@@ -30,12 +30,24 @@ type Timing struct {
 	// Cooldown: a plan that closed without a group isn't suggested again
 	// for this long.
 	Cooldown time.Duration
+	// BlockStarts is when an event starts in each part of the day, local
+	// time since midnight (e.g. 14h for the afternoon). The venue's hours
+	// aren't known in advance, so this is a sensible default people can
+	// plan around; the meeting time can be refined later.
+	BlockStarts map[matching.Block]time.Duration
 }
 
 // DefaultTiming: rounds open for signups for a week, then pick a date in
 // the week after.
 func DefaultTiming() Timing {
-	return Timing{LeadDays: 2, WindowDays: 14, SignupDays: 7, Cooldown: 14 * 24 * time.Hour}
+	return Timing{
+		LeadDays: 2, WindowDays: 14, SignupDays: 7, Cooldown: 14 * 24 * time.Hour,
+		BlockStarts: map[matching.Block]time.Duration{
+			matching.Morning:   10 * time.Hour,
+			matching.Afternoon: 14 * time.Hour,
+			matching.Evening:   18*time.Hour + 30*time.Minute,
+		},
+	}
 }
 
 // Validate reports a timing that would leave no occasion at the deadline.
@@ -43,6 +55,11 @@ func (t Timing) Validate() error {
 	if t.LeadDays < 1 || t.SignupDays < 1 || t.SignupDays+t.LeadDays >= t.WindowDays {
 		return fmt.Errorf("timing: need lead ≥ 1, signup ≥ 1 and signup + lead < window days (got %d, %d, %d)",
 			t.LeadDays, t.SignupDays, t.WindowDays)
+	}
+	for _, b := range matching.Blocks {
+		if d, ok := t.BlockStarts[b]; !ok || d < 0 || d >= 24*time.Hour {
+			return fmt.Errorf("timing: no start time of day for %s", b)
+		}
 	}
 	return nil
 }
@@ -70,6 +87,15 @@ func (t Timing) occasions(w Window, now time.Time, loc *time.Location) []matchin
 		}
 	}
 	return out
+}
+
+// startsAt is when an event on the occasion starts, in the city's time zone.
+// Built from the clock time rather than midnight + duration, so a daylight
+// saving change that day doesn't shift it.
+func (t Timing) startsAt(o matching.Occasion, loc *time.Location) time.Time {
+	d := t.BlockStarts[o.Block]
+	h, m := int(d/time.Hour), int(d%time.Hour/time.Minute)
+	return time.Date(o.Date.Year(), o.Date.Month(), o.Date.Day(), h, m, 0, 0, loc)
 }
 
 // confirmBy is the response deadline for an event: the start of the day
@@ -222,7 +248,11 @@ func (r *Runner) schedulePlan(ctx context.Context, q *dbgen.Queries, c *City, us
 		}
 		return 0, 0, nil
 	}
-	ev := Event{PlanID: p.ID, Round: p.Round, Scheduled: res, ConfirmBy: confirmBy(res.Occasion, c.Location), Forced: force, Now: now}
+	ev := Event{
+		PlanID: p.ID, Round: p.Round, Scheduled: res, Forced: force, Now: now,
+		StartsAt:  r.Timing.startsAt(res.Occasion, c.Location),
+		ConfirmBy: confirmBy(res.Occasion, c.Location),
+	}
 	invited := 0
 	for _, g := range res.Groups {
 		invited += len(g.Invited)

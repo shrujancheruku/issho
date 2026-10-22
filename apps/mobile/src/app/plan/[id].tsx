@@ -16,79 +16,13 @@ import { formatDate, lastSignupDay } from '@/features/plans/format';
 import { levelStyles } from '@/features/plans/level';
 import { usePlanNames } from '@/features/plans/names';
 import { distanceText, pairText, planTitle } from '@/features/plans/plan-card';
+import { Fact, Facts, Heading } from '@/features/plans/fact';
 import { Timeline } from '@/features/plans/timeline';
 import { initialTimes, toggle, toSignup, windowDates, type Times } from '@/features/plans/signup';
 import { useProfile } from '@/features/profile/use-profile';
 import { useTheme } from '@/hooks/use-theme';
 import { useI18n } from '@/i18n/i18n-provider';
 import { slotKey } from '@/lib/slots';
-
-/**
- * One detail of the plan as a light two-column row: the label in a narrow
- * grey column, the value beside it, an optional note under the value.
- * `info` adds a tappable ⓘ after the value that shows `infoText` below it.
- */
-function Fact({
-  label,
-  value,
-  note,
-  info,
-}: {
-  label: string;
-  value: string;
-  note?: string;
-  info?: { label: string; text: string };
-}) {
-  const theme = useTheme();
-  const [open, setOpen] = useState(false);
-  return (
-    <View style={styles.fact}>
-      <ThemedText type="small" themeColor="textSecondary" style={styles.factLabel}>
-        {label}
-      </ThemedText>
-      <View style={styles.factBody}>
-        <View style={styles.factValueRow}>
-          <ThemedText style={styles.factValue}>{value}</ThemedText>
-          {info && (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={info.label}
-              accessibilityState={{ expanded: open }}
-              onPress={() => setOpen(!open)}
-              hitSlop={10}
-              style={[styles.info, { borderColor: open ? theme.text : theme.textSecondary }]}>
-              <ThemedText type="small" style={[styles.infoMark, { color: open ? theme.text : theme.textSecondary }]}>
-                i
-              </ThemedText>
-            </Pressable>
-          )}
-        </View>
-        {!!note && (
-          <ThemedText type="small" themeColor="textSecondary">
-            {note}
-          </ThemedText>
-        )}
-        {info && open && (
-          <ThemedText type="small" themeColor="textSecondary">
-            {info.text}
-          </ThemedText>
-        )}
-      </View>
-    </View>
-  );
-}
-
-/** A section heading with its hint directly underneath, read as one unit. */
-function Heading({ title, hint }: { title: string; hint: string }) {
-  return (
-    <View style={styles.heading}>
-      <ThemedText type="smallBold">{title}</ThemedText>
-      <ThemedText type="small" themeColor="textSecondary">
-        {hint}
-      </ThemedText>
-    </View>
-  );
-}
 
 /** One plan: what it is, how it works, and signing up with the times that suit you. */
 export default function PlanScreen() {
@@ -150,7 +84,7 @@ export default function PlanScreen() {
         </View>
         <Timeline steps={plan.data?.steps ?? []} names={names} />
         {/* One labelled row per detail, so they read as separate facts rather than a paragraph. */}
-        <View style={styles.facts}>
+        <Facts>
           <Fact label={t('plan.where')} value={pairText(names.area(p.areaId))} note={distanceText(t, p.travelMinutes)} />
           <Fact label={t('plan.language')} value={language} />
           <Fact
@@ -162,7 +96,7 @@ export default function PlanScreen() {
           />
           <Fact label={t('plan.signupBy')} value={lastSignupDay(p.signupDeadline, lang)} />
           <Fact label={t('plan.interestedLabel')} value={String(p.signups)} />
-        </View>
+        </Facts>
 
         {notForYou ? (
           <ThemedText>{t('plan.notForYouBody')}</ThemedText>
@@ -255,16 +189,6 @@ const styles = StyleSheet.create({
   content: { padding: Spacing.four, gap: Spacing.four },
   pill: { alignSelf: 'flex-start', borderRadius: 999, paddingVertical: Spacing.half, paddingHorizontal: Spacing.two },
   titleBlock: { gap: Spacing.one },
-  facts: { gap: Spacing.three },
-  fact: { flexDirection: 'row', gap: Spacing.three },
-  // Wide enough for "Number of people interested" to wrap onto two lines, not five.
-  factLabel: { width: 112, paddingTop: 2 },
-  factBody: { flex: 1, gap: Spacing.half },
-  factValueRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two, flexWrap: 'wrap' },
-  factValue: { fontSize: 16, lineHeight: 22 },
-  info: { width: 20, height: 20, borderRadius: 10, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
-  infoMark: { fontSize: 12, lineHeight: 14, fontWeight: 700 },
-  heading: { gap: Spacing.half },
   section: { gap: Spacing.three },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
   footer: { padding: Spacing.four, gap: Spacing.two },

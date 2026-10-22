@@ -1,0 +1,133 @@
+syntax = "proto3";
+
+package issho.v1;
+
+import "google/protobuf/timestamp.proto";
+import "issho/v1/plans.proto";
+import "issho/v1/profile.proto";
+
+option go_package = "github.com/shrujancheruku/issho/backend/gen/issho/v1;isshov1";
+
+// EventService shows the caller the events they're invited to and records
+// their answers. An event is a plan round given a date; the caller is in one
+// group of it. A group goes ahead as soon as `quorum` people confirm, or at
+// `confirm_by` with at least `min_attendance`; otherwise it's cancelled and
+// the people who confirmed go back to waiting for the plan.
+// Requires `Authorization: Bearer <Supabase access token>` and a saved
+// profile (FAILED_PRECONDITION otherwise).
+//
+// HTTP: POST /issho.v1.EventService/<Method>
+service EventService {
+  // ListMyEvents returns the caller's events from yesterday on, soonest
+  // first, whatever their answer.
+  rpc ListMyEvents(ListMyEventsRequest) returns (ListMyEventsResponse) {}
+
+  // GetEvent returns one of the caller's events with its stops and, if the
+  // caller confirmed, who else is going. NOT_FOUND unless the caller is
+  // invited to it.
+  rpc GetEvent(GetEventRequest) returns (GetEventResponse) {}
+
+  // RespondToEvent confirms, declines or cancels the caller's place.
+  // FAILED_PRECONDITION when it's too late, the event is cancelled or over,
+  // or the answer doesn't apply (e.g. cancelling a place not confirmed).
+  rpc RespondToEvent(RespondToEventRequest) returns (RespondToEventResponse) {}
+}
+
+message ListMyEventsRequest {}
+
+message ListMyEventsResponse {
+  repeated MyEvent events = 1;
+}
+
+message GetEventRequest {
+  string event_id = 1;
+}
+
+message GetEventResponse {
+  MyEvent event = 1;
+  // As in GetPlanResponse.steps; the caller's group may meet at a different
+  // venue from the plan's.
+  repeated PlanStep steps = 2;
+  // First names of the people confirmed in the caller's group, including
+  // the caller. Empty unless the caller confirmed (no profile browsing).
+  repeated string attendees = 3;
+}
+
+message RespondToEventRequest {
+  string event_id = 1;
+  EventAction action = 2;
+}
+
+message RespondToEventResponse {
+  MyEvent event = 1;
+}
+
+enum EventAction {
+  EVENT_ACTION_UNSPECIFIED = 0;
+  // Invited (or declined, changing their mind) → confirmed, until confirm_by.
+  EVENT_ACTION_CONFIRM = 1;
+  // Invited → declined, until confirm_by.
+  EVENT_ACTION_DECLINE = 2;
+  // Confirmed → cancelled, until the event starts.
+  EVENT_ACTION_CANCEL = 3;
+}
+
+// One event as the caller sees it.
+message MyEvent {
+  string id = 1;
+  string plan_id = 2;
+  // As FeedPlan.title / secondary_title.
+  string title = 3;
+  string secondary_title = 4;
+  string activity_id = 5;
+  string follow_up_activity_id = 6;
+  string area_id = 7;
+  string primary_language = 8;
+  string secondary_language = 9;
+  // The date in the city ("2030-01-05") and part of the day.
+  string date = 10;
+  TimeBlock block = 11;
+  // When it starts; unset if not decided.
+  google.protobuf.Timestamp starts_at = 12;
+  // Answer by then.
+  google.protobuf.Timestamp confirm_by = 13;
+  EventStatus status = 14;
+  GroupStatus group_status = 15;
+  InviteResponse response = 16;
+  // How many in the caller's group have confirmed (a count, never who).
+  int32 confirmed = 17;
+  // Confirmations that make the group go ahead straight away.
+  int32 quorum = 18;
+  // The fewest it can go ahead with at confirm_by.
+  int32 min_attendance = 19;
+  // Exactly where to meet, once revealed to someone who confirmed; "" before
+  // reveal_at or when no more than the first stop's venue is needed.
+  string meeting_point = 20;
+  // When the meeting point is shown (24 hours before the start).
+  google.protobuf.Timestamp reveal_at = 21;
+}
+
+enum EventStatus {
+  EVENT_STATUS_UNSPECIFIED = 0;
+  EVENT_STATUS_SCHEDULED = 1;
+  EVENT_STATUS_DONE = 2;
+  EVENT_STATUS_CANCELLED = 3;
+}
+
+enum GroupStatus {
+  GROUP_STATUS_UNSPECIFIED = 0;
+  // Collecting answers.
+  GROUP_STATUS_INVITING = 1;
+  // Going ahead.
+  GROUP_STATUS_CONFIRMED = 2;
+  GROUP_STATUS_CANCELLED = 3;
+}
+
+enum InviteResponse {
+  INVITE_RESPONSE_UNSPECIFIED = 0;
+  INVITE_RESPONSE_INVITED = 1;
+  INVITE_RESPONSE_CONFIRMED = 2;
+  INVITE_RESPONSE_DECLINED = 3;
+  // Confirmed, then cancelled.
+  INVITE_RESPONSE_DROPPED = 4;
+}

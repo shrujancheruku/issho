@@ -122,6 +122,7 @@ func run() error {
 		slog.Warn("GOOGLE_MAPS_API_KEY not set: plans show no venue names")
 	}
 	mux.Handle(isshov1connect.NewPlanServiceHandler(&plans.Handler{Svc: planSvc}, opts))
+	mux.Handle(isshov1connect.NewEventServiceHandler(&plans.EventHandler{Svc: planSvc}, opts))
 	uiCatalog, err := uistrings.Load()
 	if err != nil {
 		return err
