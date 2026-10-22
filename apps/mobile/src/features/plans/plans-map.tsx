@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import type MapViewType from 'react-native-maps';
 
@@ -77,38 +77,73 @@ function NativeMap({ pins, selected, onSelect, home }: PlansMapProps) {
       onMapReady={fit}
       toolbarEnabled={false}
       showsPointsOfInterests={false}>
-      {pins.map((p) => {
-        const c = pinColors(p.level);
-        const on = p.areaId === selected;
-        return (
-          <Marker
-            key={p.areaId}
-            coordinate={{ latitude: p.lat, longitude: p.lng }}
-            onPress={() => onSelect(p.areaId)}
-            // Custom views are re-rendered every frame unless told not to.
-            tracksViewChanges={false}>
-            <View style={[styles.pin, { backgroundColor: c.background }, on && styles.selected]}>
-              <Text style={[styles.count, { color: c.text }]}>{p.plans.length}</Text>
-            </View>
-          </Marker>
-        );
-      })}
+      {pins.map((p) => (
+        <PinMarker key={p.areaId} pin={p} on={p.areaId === selected} onPress={() => onSelect(p.areaId)} Marker={Marker} />
+      ))}
     </MapView>
   );
 }
 
+/**
+ * One pin. On Android a custom marker is drawn once into a bitmap the size
+ * of the view's first layout, so: a fixed-size transparent box with room
+ * for the selected size (a scale transform would be cut off, as it's
+ * outside the measured size), and the bitmap redrawn for a moment when the
+ * pin appears or its selection changes, then frozen (tracking every frame
+ * is slow).
+ */
+function PinMarker({
+  pin,
+  on,
+  onPress,
+  Marker,
+}: {
+  pin: Pin;
+  on: boolean;
+  onPress: () => void;
+  Marker: (typeof import('react-native-maps'))['Marker'];
+}) {
+  const c = pinColors(pin.level);
+  // What the bitmap shows; a change means it has to be redrawn.
+  const look = `${on}|${pin.plans.length}|${pin.level}`;
+  const [frozen, setFrozen] = useState<string | null>(null);
+  useEffect(() => {
+    const timer = setTimeout(() => setFrozen(look), 500);
+    return () => clearTimeout(timer);
+  }, [look]);
+  const tracking = frozen !== look;
+  return (
+    <Marker
+      coordinate={{ latitude: pin.lat, longitude: pin.lng }}
+      onPress={onPress}
+      anchor={{ x: 0.5, y: 0.5 }}
+      tracksViewChanges={tracking}>
+      <View style={styles.box} collapsable={false}>
+        <View style={[styles.pin, on && styles.selected, { backgroundColor: c.background }]}>
+          <Text style={[styles.count, { color: c.text }]}>{pin.plans.length}</Text>
+        </View>
+      </View>
+    </Marker>
+  );
+}
+
+const PIN = 30;
+const PIN_SELECTED = 38;
+
 const styles = StyleSheet.create({
+  // The bitmap's bounds: big enough for the selected pin and its border.
+  box: { width: PIN_SELECTED + 6, height: PIN_SELECTED + 6, alignItems: 'center', justifyContent: 'center' },
   missing: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center', padding: 24 },
   pin: {
-    minWidth: 30,
-    height: 30,
-    borderRadius: 15,
-    paddingHorizontal: 8,
+    width: PIN,
+    height: PIN,
+    borderRadius: PIN / 2,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
     borderColor: '#ffffff',
   },
-  selected: { borderColor: '#111111', transform: [{ scale: 1.2 }] },
+  // Bigger rather than scaled, so it stays inside the measured box.
+  selected: { width: PIN_SELECTED, height: PIN_SELECTED, borderRadius: PIN_SELECTED / 2, borderColor: '#111111' },
   count: { fontSize: 13, fontWeight: '700' },
 });
