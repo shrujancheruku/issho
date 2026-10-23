@@ -87,6 +87,16 @@ type AppEvent struct {
 	CreatedAt pgtype.Timestamptz
 }
 
+type AppEventFeedback struct {
+	GroupID     uuid.UUID
+	UserID      uuid.UUID
+	Attended    bool
+	PlanRating  *int16
+	GroupRating *int16
+	CreatedAt   pgtype.Timestamptz
+	UpdatedAt   pgtype.Timestamptz
+}
+
 type AppEventGroup struct {
 	ID            uuid.UUID
 	EventID       uuid.UUID
@@ -106,6 +116,23 @@ type AppGroupMember struct {
 	Response    string
 	RespondedAt pgtype.Timestamptz
 	CheckedInAt pgtype.Timestamptz
+}
+
+type AppMeetAgainPick struct {
+	GroupID   uuid.UUID
+	PickerID  uuid.UUID
+	PickedID  uuid.UUID
+	CreatedAt pgtype.Timestamptz
+}
+
+type AppModerationFlag struct {
+	ID         int64
+	UserID     uuid.UUID
+	Kind       string
+	Details    []byte
+	CreatedAt  pgtype.Timestamptz
+	UpdatedAt  pgtype.Timestamptz
+	ResolvedAt pgtype.Timestamptz
 }
 
 type AppNotification struct {
@@ -208,6 +235,19 @@ type AppPushToken struct {
 	Platform   string
 	CreatedAt  pgtype.Timestamptz
 	LastSeenAt pgtype.Timestamptz
+}
+
+type AppReport struct {
+	ID         uuid.UUID
+	ReporterID pgtype.UUID
+	ReportedID uuid.UUID
+	EventID    pgtype.UUID
+	Reason     string
+	Details    string
+	Status     string
+	CreatedAt  pgtype.Timestamptz
+	UpdatedAt  pgtype.Timestamptz
+	ReviewedAt pgtype.Timestamptz
 }
 
 type AppTranslation struct {

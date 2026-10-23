@@ -27,7 +27,7 @@ type City struct {
 	// for composing their plans.
 	WalkThemes map[matching.ActivityID]string
 	Users      []matching.User
-	// Relations are empty until mutual picks and blocks exist (M7).
+	// Relations: mutual meet-again picks and pairs blocked by a report.
 	Relations matching.Relations
 }
 
@@ -39,6 +39,9 @@ func LoadCity(ctx context.Context, q *dbgen.Queries, cityID string, month time.M
 		return nil, err
 	}
 	if err := loadUsers(ctx, q, c); err != nil {
+		return nil, err
+	}
+	if err := loadRelations(ctx, q, c); err != nil {
 		return nil, err
 	}
 	return c, nil

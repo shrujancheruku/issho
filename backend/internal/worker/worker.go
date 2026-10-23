@@ -118,7 +118,7 @@ func (w *matchCityWorker) Work(ctx context.Context, job *river.Job[MatchCityArgs
 	}
 	w.runner.Log.Info("city matched", "city", job.Args.City,
 		"groups_confirmed", settled.Confirmed, "groups_cancelled", settled.Cancelled, "events_done", settled.Finished,
-		"chat_messages_deleted", settled.ChatMessagesDeleted,
+		"chat_messages_deleted", settled.ChatMessagesDeleted, "feedback_asked", settled.FeedbackAsked,
 		"checked", rep.Checked, "scheduled", rep.Scheduled, "closed", rep.Closed, "opened", opened,
 		"meeting_places", meetings, "routes", routes, "routes_cleared", routesCleared)
 	return nil

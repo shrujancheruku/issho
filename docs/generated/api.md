@@ -61,20 +61,28 @@
     - [CheckInResponse](#issho-v1-CheckInResponse)
     - [GetEventRequest](#issho-v1-GetEventRequest)
     - [GetEventResponse](#issho-v1-GetEventResponse)
+    - [GetFeedbackRequest](#issho-v1-GetFeedbackRequest)
+    - [GetFeedbackResponse](#issho-v1-GetFeedbackResponse)
+    - [GroupMate](#issho-v1-GroupMate)
     - [ListChatMessagesRequest](#issho-v1-ListChatMessagesRequest)
     - [ListChatMessagesResponse](#issho-v1-ListChatMessagesResponse)
     - [ListMyEventsRequest](#issho-v1-ListMyEventsRequest)
     - [ListMyEventsResponse](#issho-v1-ListMyEventsResponse)
     - [MyEvent](#issho-v1-MyEvent)
+    - [ReportPersonRequest](#issho-v1-ReportPersonRequest)
+    - [ReportPersonResponse](#issho-v1-ReportPersonResponse)
     - [RespondToEventRequest](#issho-v1-RespondToEventRequest)
     - [RespondToEventResponse](#issho-v1-RespondToEventResponse)
     - [SendChatMessageRequest](#issho-v1-SendChatMessageRequest)
     - [SendChatMessageResponse](#issho-v1-SendChatMessageResponse)
+    - [SubmitFeedbackRequest](#issho-v1-SubmitFeedbackRequest)
+    - [SubmitFeedbackResponse](#issho-v1-SubmitFeedbackResponse)
   
     - [EventAction](#issho-v1-EventAction)
     - [EventStatus](#issho-v1-EventStatus)
     - [GroupStatus](#issho-v1-GroupStatus)
     - [InviteResponse](#issho-v1-InviteResponse)
+    - [ReportReason](#issho-v1-ReportReason)
   
     - [EventService](#issho-v1-EventService)
   
@@ -947,6 +955,61 @@ One message in a group chat.
 
 
 
+<a name="issho-v1-GetFeedbackRequest"></a>
+
+### GetFeedbackRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| event_id | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-GetFeedbackResponse"></a>
+
+### GetFeedbackResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| mates | [GroupMate](#issho-v1-GroupMate) | repeated | The others in the caller&#39;s group who confirmed (not the caller), including any who cancelled since. |
+| given | [bool](#bool) |  | The caller&#39;s earlier answer, if any. |
+| attended | [bool](#bool) |  |  |
+| plan_rating | [int32](#int32) |  | 1–5, or 0 when not given. |
+| group_rating | [int32](#int32) |  |  |
+| picks | [string](#string) | repeated | GroupMate.id of the people the caller picked. |
+| opens_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | When feedback can be given; unset for someone who can&#39;t give it (they cancelled, or the group didn&#39;t go ahead). |
+| closes_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| open | [bool](#bool) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-GroupMate"></a>
+
+### GroupMate
+Someone else in the caller&#39;s group, for picks and reports.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [string](#string) |  | Opaque; only meaningful in feedback and reports for this event. |
+| name | [string](#string) |  | First name. |
+| cancelled | [bool](#bool) |  | They cancelled their place: they can be reported but not picked. |
+
+
+
+
+
+
 <a name="issho-v1-ListChatMessagesRequest"></a>
 
 ### ListChatMessagesRequest
@@ -1038,6 +1101,37 @@ One event as the caller sees it.
 | checked_in | [bool](#bool) |  | The caller has checked in. |
 | check_in_from | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | When check-in is open (30 minutes before the start to 3 hours after); unset without a start time. |
 | check_in_until | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| feedback_from | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | When the caller can give feedback (see GetFeedback); unset unless they went ahead with their group. |
+| feedback_until | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| feedback_given | [bool](#bool) |  | The caller has given feedback. |
+
+
+
+
+
+
+<a name="issho-v1-ReportPersonRequest"></a>
+
+### ReportPersonRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| event_id | [string](#string) |  |  |
+| mate_id | [string](#string) |  | GroupMate.id. |
+| reason | [ReportReason](#issho-v1-ReportReason) |  |  |
+| details | [string](#string) |  | Optional, up to 1000 characters. |
+
+
+
+
+
+
+<a name="issho-v1-ReportPersonResponse"></a>
+
+### ReportPersonResponse
+
 
 
 
@@ -1105,6 +1199,40 @@ One event as the caller sees it.
 
 
 
+
+<a name="issho-v1-SubmitFeedbackRequest"></a>
+
+### SubmitFeedbackRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| event_id | [string](#string) |  |  |
+| attended | [bool](#bool) |  | Whether the caller went. When false, no ratings or picks are taken. |
+| plan_rating | [int32](#int32) |  | 1–5; required when attended. |
+| group_rating | [int32](#int32) |  |  |
+| picks | [string](#string) | repeated | GroupMate.id of people the caller would meet again (any number, including none; only people who went ahead with the group). |
+
+
+
+
+
+
+<a name="issho-v1-SubmitFeedbackResponse"></a>
+
+### SubmitFeedbackResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| feedback | [GetFeedbackResponse](#issho-v1-GetFeedbackResponse) |  |  |
+
+
+
+
+
  
 
 
@@ -1164,6 +1292,22 @@ One event as the caller sees it.
 | INVITE_RESPONSE_DROPPED | 4 | Confirmed, then cancelled. |
 
 
+
+<a name="issho-v1-ReportReason"></a>
+
+### ReportReason
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| REPORT_REASON_UNSPECIFIED | 0 |  |
+| REPORT_REASON_DATING | 1 | Here for dating rather than friends. |
+| REPORT_REASON_HARASSMENT | 2 | Rude, harassing or made people uncomfortable. |
+| REPORT_REASON_UNSAFE | 3 | Made people feel unsafe. |
+| REPORT_REASON_NO_SHOW | 4 | Confirmed and didn&#39;t come. |
+| REPORT_REASON_OTHER | 5 |  |
+
+
  
 
  
@@ -1184,12 +1328,15 @@ HTTP: POST /issho.v1.EventService/&lt;Method&gt;
 
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
-| ListMyEvents | [ListMyEventsRequest](#issho-v1-ListMyEventsRequest) | [ListMyEventsResponse](#issho-v1-ListMyEventsResponse) | ListMyEvents returns the caller&#39;s events from yesterday on, soonest first, whatever their answer. |
+| ListMyEvents | [ListMyEventsRequest](#issho-v1-ListMyEventsRequest) | [ListMyEventsResponse](#issho-v1-ListMyEventsResponse) | ListMyEvents returns the caller&#39;s events from yesterday on, soonest first, whatever their answer, and older ones still waiting for their feedback. |
 | GetEvent | [GetEventRequest](#issho-v1-GetEventRequest) | [GetEventResponse](#issho-v1-GetEventResponse) | GetEvent returns one of the caller&#39;s events with its stops and, if the caller confirmed, who else is going. NOT_FOUND unless the caller is invited to it. |
 | RespondToEvent | [RespondToEventRequest](#issho-v1-RespondToEventRequest) | [RespondToEventResponse](#issho-v1-RespondToEventResponse) | RespondToEvent confirms, declines or cancels the caller&#39;s place. FAILED_PRECONDITION when it&#39;s too late, the event is cancelled or over, or the answer doesn&#39;t apply (e.g. cancelling a place not confirmed). |
 | ListChatMessages | [ListChatMessagesRequest](#issho-v1-ListChatMessagesRequest) | [ListChatMessagesResponse](#issho-v1-ListChatMessagesResponse) | ListChatMessages returns the caller&#39;s group chat for an event: the latest messages, or those after after_id. Only for people who confirmed (PERMISSION_DENIED otherwise); empty until it opens 48 hours before the start. New messages also arrive over the WebSocket at GET /ws/chat (see the backend README). |
 | SendChatMessage | [SendChatMessageRequest](#issho-v1-SendChatMessageRequest) | [SendChatMessageResponse](#issho-v1-SendChatMessageResponse) | SendChatMessage posts to the caller&#39;s group chat while it&#39;s open (48 hours before the start until 24 hours after; FAILED_PRECONDITION otherwise). 1–1000 characters. |
 | CheckIn | [CheckInRequest](#issho-v1-CheckInRequest) | [CheckInResponse](#issho-v1-CheckInResponse) | CheckIn records that the caller has arrived: only people who confirmed (PERMISSION_DENIED otherwise), from 30 minutes before the start until 3 hours after (FAILED_PRECONDITION otherwise). Checking in again is fine. |
+| GetFeedback | [GetFeedbackRequest](#issho-v1-GetFeedbackRequest) | [GetFeedbackResponse](#issho-v1-GetFeedbackResponse) | GetFeedback returns the caller&#39;s feedback form for an outing: the others in their group (first names), and what the caller already said. For anyone who confirmed, even if they cancelled since (to report someone); PERMISSION_DENIED otherwise. Feedback itself is `open` only to people who went ahead with their group, from 3 hours after the start for 14 days. |
+| SubmitFeedback | [SubmitFeedbackRequest](#issho-v1-SubmitFeedbackRequest) | [SubmitFeedbackResponse](#issho-v1-SubmitFeedbackResponse) | SubmitFeedback records whether the caller went, their ratings and who they&#39;d meet again, replacing anything sent before. Picks are private: nobody is told who picked them; two people who picked each other are more likely to be grouped again. FAILED_PRECONDITION outside the window. |
+| ReportPerson | [ReportPersonRequest](#issho-v1-ReportPersonRequest) | [ReportPersonResponse](#issho-v1-ReportPersonResponse) | ReportPerson reports someone from the caller&#39;s group to the moderators, from the time the caller confirmed until 30 days after the start. The two are never grouped together again. Reporting the same person about the same outing again replaces the report. |
 
  
 

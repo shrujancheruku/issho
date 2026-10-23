@@ -24,6 +24,7 @@ var notificationText = map[string]string{
 	NotifyConfirmed: "push.confirmed",
 	NotifyCancelled: "push.cancelled",
 	NotifyNoGroup:   "push.noGroup",
+	NotifyFeedback:  "push.feedback",
 }
 
 // Notifier sends the notifications queued in app.notifications.

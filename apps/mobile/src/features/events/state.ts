@@ -2,7 +2,7 @@ import { EventStatus, GroupStatus, InviteResponse, type MyEvent } from '@issho/a
 
 import type { StringKey } from '@/i18n/strings';
 
-export type EventAction = 'confirm' | 'decline' | 'cancel' | 'checkIn';
+export type EventAction = 'confirm' | 'decline' | 'cancel' | 'checkIn' | 'feedback';
 
 /** What to tell the person about an event, and what they can do now. */
 export type EventState = {
@@ -18,11 +18,18 @@ const ms = (ts: MyEvent['confirmBy']) => (ts ? Number(ts.seconds) * 1000 : NaN);
  * The event from the person's side, following EventService's rules: answer
  * (confirm or decline, or change a decline) until confirm_by; cancel a
  * confirmed place until it starts; check in from 30 minutes before the
- * start until 3 hours after.
+ * start until 3 hours after; then give feedback (or change it) for two
+ * weeks, if they went ahead with their group.
  */
 export function eventState(e: MyEvent, now: number): EventState {
   const beforeDeadline = now < ms(e.confirmBy);
   const beforeStart = Number.isNaN(ms(e.startsAt)) || now < ms(e.startsAt);
+  // Unset (NaN) unless they went ahead with their group: never open.
+  if (now >= ms(e.feedbackFrom) && now < ms(e.feedbackUntil)) {
+    return e.feedbackGiven
+      ? { message: 'event.state.feedbackGiven', tone: 'muted', actions: ['feedback'] }
+      : { message: 'event.state.feedback', tone: 'action', actions: ['feedback'] };
+  }
   if (e.status === EventStatus.DONE) return { message: 'event.state.done', tone: 'muted', actions: [] };
   if (e.status === EventStatus.CANCELLED || e.groupStatus === GroupStatus.CANCELLED) {
     return { message: 'event.state.cancelled', tone: 'muted', actions: [] };

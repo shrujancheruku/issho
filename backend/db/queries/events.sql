@@ -9,12 +9,18 @@ select e.id, e.date, e.block, e.starts_at, e.confirm_by, e.status,
        p.title, p.description, exists (select 1 from app.plan_stops st where st.plan_id = p.id) as walk,
        g.id as group_id, g.status as group_status, g.quorum, g.min_attendance, g.venue_place_id as group_venue_place_id,
        g.meeting_point, m.response, m.checked_in_at,
-       (select count(*) from app.group_members c where c.group_id = g.id and c.response = 'confirmed')::int as confirmed
+       (select count(*) from app.group_members c where c.group_id = g.id and c.response = 'confirmed')::int as confirmed,
+       exists (select 1 from app.event_feedback f where f.group_id = g.id and f.user_id = m.user_id) as feedback_given
 from app.group_members m
 join app.event_groups g on g.id = m.group_id
 join app.events e on e.id = m.event_id
 join app.plans p on p.id = e.plan_id
-where m.user_id = @user_id and e.date >= @since
+where m.user_id = @user_id
+  -- Recent events, and older ones still waiting for the caller's feedback
+  -- (started after @feedback_since, which may be later than @since).
+  and (e.date >= @since
+       or (e.starts_at > @feedback_since and m.response = 'confirmed' and g.status = 'confirmed' and e.status <> 'cancelled'
+           and not exists (select 1 from app.event_feedback f where f.group_id = g.id and f.user_id = m.user_id)))
 order by e.date, e.block, e.id;
 
 -- People who confirmed for a group, for its attendee list (first names

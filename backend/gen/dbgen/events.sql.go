@@ -193,18 +193,25 @@ select e.id, e.date, e.block, e.starts_at, e.confirm_by, e.status,
        p.title, p.description, exists (select 1 from app.plan_stops st where st.plan_id = p.id) as walk,
        g.id as group_id, g.status as group_status, g.quorum, g.min_attendance, g.venue_place_id as group_venue_place_id,
        g.meeting_point, m.response, m.checked_in_at,
-       (select count(*) from app.group_members c where c.group_id = g.id and c.response = 'confirmed')::int as confirmed
+       (select count(*) from app.group_members c where c.group_id = g.id and c.response = 'confirmed')::int as confirmed,
+       exists (select 1 from app.event_feedback f where f.group_id = g.id and f.user_id = m.user_id) as feedback_given
 from app.group_members m
 join app.event_groups g on g.id = m.group_id
 join app.events e on e.id = m.event_id
 join app.plans p on p.id = e.plan_id
-where m.user_id = $1 and e.date >= $2
+where m.user_id = $1
+  -- Recent events, and older ones still waiting for the caller's feedback
+  -- (started after @feedback_since, which may be later than @since).
+  and (e.date >= $2
+       or (e.starts_at > $3 and m.response = 'confirmed' and g.status = 'confirmed' and e.status <> 'cancelled'
+           and not exists (select 1 from app.event_feedback f where f.group_id = g.id and f.user_id = m.user_id)))
 order by e.date, e.block, e.id
 `
 
 type ListUserEventsParams struct {
-	UserID uuid.UUID
-	Since  pgtype.Date
+	UserID        uuid.UUID
+	Since         pgtype.Date
+	FeedbackSince pgtype.Timestamptz
 }
 
 type ListUserEventsRow struct {
@@ -238,13 +245,14 @@ type ListUserEventsRow struct {
 	Response             string
 	CheckedInAt          pgtype.Timestamptz
 	Confirmed            int32
+	FeedbackGiven        bool
 }
 
 // Scheduled events as their invitees see them, and what the worker and
 // EventService change about them. One row per (event, person): a person is
 // in at most one group per event.
 func (q *Queries) ListUserEvents(ctx context.Context, arg ListUserEventsParams) ([]ListUserEventsRow, error) {
-	rows, err := q.db.Query(ctx, listUserEvents, arg.UserID, arg.Since)
+	rows, err := q.db.Query(ctx, listUserEvents, arg.UserID, arg.Since, arg.FeedbackSince)
 	if err != nil {
 		return nil, err
 	}
@@ -283,6 +291,7 @@ func (q *Queries) ListUserEvents(ctx context.Context, arg ListUserEventsParams) 
 			&i.Response,
 			&i.CheckedInAt,
 			&i.Confirmed,
+			&i.FeedbackGiven,
 		); err != nil {
 			return nil, err
 		}
