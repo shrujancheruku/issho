@@ -13,12 +13,47 @@ import { useCrew, useRespondToCrew } from '@/features/crews/data';
 import { crewName } from '@/features/crews/name';
 import { useChat } from '@/features/events/chat';
 import type { Message } from '@/features/events/chat-messages';
-import { formatStart } from '@/features/plans/format';
+import { usePlan } from '@/features/plans/data';
+import { formatStart, lastSignupDay } from '@/features/plans/format';
 import { usePlanNames } from '@/features/plans/names';
+import { pairText, planTitle } from '@/features/plans/plan-card';
 import { useTheme } from '@/hooks/use-theme';
 import { useI18n } from '@/i18n/i18n-provider';
 
 const MaxMessage = 1000; // as the server (plans.MaxChatMessage)
+
+/**
+ * A plan Issho suggested in the chat: what, where and when signups close,
+ * from GetPlan (the message itself carries only the plan's id).
+ */
+function SuggestedPlan({ planId }: { planId: string }) {
+  const { t, languages, showing } = useI18n();
+  const lang = showing === 'secondary' ? languages.secondary : languages.primary;
+  const theme = useTheme();
+  const names = usePlanNames();
+  const plan = usePlan(planId).data?.plan;
+  return (
+    <Pressable
+      accessibilityRole="button"
+      onPress={() => router.push({ pathname: '/plan/[id]', params: { id: planId } })}
+      style={[styles.suggestion, { backgroundColor: theme.backgroundElement }]}>
+      <ThemedText type="smallBold" style={{ color: Brand.gold }}>
+        {t('crew.suggested')}
+      </ThemedText>
+      {plan && (
+        <>
+          <ThemedText type="subtitle" style={styles.suggestionTitle}>
+            {planTitle(plan, showing).name}
+          </ThemedText>
+          <ThemedText type="small" themeColor="textSecondary">
+            {pairText(names.area(plan.areaId))} · {t('plan.signupBy')}: {lastSignupDay(plan.signupDeadline, lang)}
+          </ThemedText>
+        </>
+      )}
+      <ThemedText type="link">{t('crew.seePlan')} ›</ThemedText>
+    </Pressable>
+  );
+}
 
 /** A crew's chat, with the plans Issho suggests in it. */
 function CrewChat({ id }: { id: string }) {
@@ -57,16 +92,7 @@ function CrewChat({ id }: { id: string }) {
           }
           renderItem={({ item }) =>
             item.planId ? (
-              // A plan Issho suggested: open it to sign up.
-              <Pressable
-                accessibilityRole="button"
-                onPress={() => router.push({ pathname: '/plan/[id]', params: { id: item.planId ?? '' } })}
-                style={[styles.suggestion, { backgroundColor: theme.backgroundElement }]}>
-                <ThemedText type="smallBold" style={{ color: Brand.gold }}>
-                  {t('crew.suggested')}
-                </ThemedText>
-                <ThemedText type="link">{t('crew.seePlan')} ›</ThemedText>
-              </Pressable>
+              <SuggestedPlan planId={item.planId} />
             ) : (
               <View style={[styles.bubble, item.mine ? styles.mine : [styles.theirs, { backgroundColor: theme.backgroundElement }]]}>
                 {!item.mine && (
@@ -242,6 +268,7 @@ const styles = StyleSheet.create({
   theirs: { alignSelf: 'flex-start' },
   mineText: { color: '#ffffff' },
   suggestion: { borderWidth: 2, borderColor: Brand.gold, borderRadius: 16, padding: Spacing.three, gap: Spacing.one },
+  suggestionTitle: { fontSize: 20, lineHeight: 28 },
   center: { textAlign: 'center' },
   error: { color: Brand.red, textAlign: 'center' },
   composer: { flexDirection: 'row', alignItems: 'flex-end', gap: Spacing.two, padding: Spacing.three, borderTopWidth: 1 },

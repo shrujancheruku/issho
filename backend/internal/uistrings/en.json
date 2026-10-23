@@ -141,7 +141,7 @@
   "language.switch": "Switch language",
   "leave.confirm": "Leave",
   "leave.details": "Anything else you would like to tell us (optional)",
-  "leave.hint": "The others are not told why, or that you left. Your answer helps us make crews better.",
+  "leave.hint": "The others are not notified and are not told why. Your answer helps us make crews better.",
   "leave.reason": "Why are you leaving?",
   "leave.reasonInactive": "Not enough happens",
   "leave.reasonNotInterested": "I am not interested any more",
