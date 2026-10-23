@@ -130,6 +130,8 @@ join app.event_feedback fb on fb.group_id = fa.group_id and fb.user_id > fa.user
 join app.profiles p on p.user_id = fa.user_id
 join app.areas a on a.id = p.home_area_id
 where a.city_id = $1 and fa.attended
+  -- Nobody is offered a crew with someone suspended.
+  and not exists (select 1 from app.suspensions s where s.user_id in (fa.user_id, fb.user_id) and s.lifted_at is null)
 order by 1, 2
 `
 

@@ -199,7 +199,10 @@ func (q *Queries) ListPendingNotifications(ctx context.Context, max int32) ([]Li
 }
 
 const listPushTokens = `-- name: ListPushTokens :many
-select user_id, token from app.push_tokens where user_id = any($1::uuid[]) order by user_id, token
+select t.user_id, t.token from app.push_tokens t
+where t.user_id = any($1::uuid[])
+  and not exists (select 1 from app.suspensions s where s.user_id = t.user_id and s.lifted_at is null)
+order by t.user_id, t.token
 `
 
 type ListPushTokensRow struct {
@@ -207,6 +210,8 @@ type ListPushTokensRow struct {
 	Token  string
 }
 
+// Suspended people get no notifications; their tokens are kept for when
+// the suspension is lifted.
 func (q *Queries) ListPushTokens(ctx context.Context, userIds []uuid.UUID) ([]ListPushTokensRow, error) {
 	rows, err := q.db.Query(ctx, listPushTokens, userIds)
 	if err != nil {

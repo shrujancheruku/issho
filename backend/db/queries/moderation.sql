@@ -97,3 +97,89 @@ where source_hash = @source_hash and lang = @lang;
 update app.translations
 set text = @text, reviewed = true, reviewed_by = @reviewed_by, reviewed_at = @at
 where source_hash = @source_hash and lang = @lang;
+
+-- Suspensions (00020). Everyone suspended now: the API's check
+-- (moderation.Suspensions) keeps this set in memory.
+-- name: ListSuspendedIDs :many
+select user_id from app.suspensions where lifted_at is null;
+
+-- Suspending someone already suspended changes nothing.
+-- name: InsertSuspension :execrows
+insert into app.suspensions (user_id, reason, created_by, created_at)
+values (@user_id, @reason, @created_by, @at)
+on conflict (user_id) where lifted_at is null do nothing;
+
+-- name: LiftSuspension :execrows
+update app.suspensions
+set lifted_at = @at, lifted_by = @lifted_by, lift_note = @note
+where user_id = @user_id and lifted_at is null;
+
+-- One person's suspensions, newest first.
+-- name: ListPersonSuspensions :many
+select id, reason, created_by, created_at, lifted_at, lifted_by, lift_note
+from app.suspensions
+where user_id = $1
+order by created_at desc;
+
+-- Everyone suspended now, most recent first.
+-- name: ListOpenSuspensions :many
+select s.user_id, s.reason, s.created_at, s.created_by,
+       coalesce(p.display_name, '')::text as display_name
+from app.suspensions s
+left join app.profiles p on p.user_id = s.user_id
+where s.lifted_at is null
+order by s.created_at desc
+limit @max_rows;
+
+-- One person, for the person view. No profile = not onboarded.
+-- name: GetPerson :one
+select u.id, coalesce(u.email, '')::text as email, u.created_at,
+       coalesce(p.display_name, '')::text as display_name,
+       coalesce(p.gender, '')::text as gender,
+       coalesce(p.birth_year, 0)::int as birth_year,
+       coalesce(a.name->>'en', '')::text as home_area,
+       coalesce(a.city_id, '')::text as city_id,
+       (select count(*) from app.reports r where r.reported_id = u.id)::int as reports_about,
+       (select count(*) from app.reports r where r.reported_id = u.id and r.status = 'open')::int as open_reports_about,
+       (select count(*) from app.reports r where r.reporter_id = u.id)::int as reports_made
+from app.users u
+left join app.profiles p on p.user_id = u.id
+left join app.areas a on a.id = p.home_area_id
+where u.id = $1;
+
+-- People by name or email (contains, any case) or exact id, for finding
+-- someone to look at. Suspended people say so.
+-- name: SearchPeople :many
+select u.id, coalesce(u.email, '')::text as email,
+       coalesce(p.display_name, '')::text as display_name,
+       exists (select 1 from app.suspensions s where s.user_id = u.id and s.lifted_at is null) as suspended
+from app.users u
+left join app.profiles p on p.user_id = u.id
+where u.id::text = @query::text
+   or p.display_name ilike '%' || @query || '%'
+   or u.email ilike '%' || @query || '%'
+order by p.display_name nulls last, u.id
+limit @max_rows;
+
+-- Their outings, newest first: how they answered, and whether they went
+-- (checked in, or said so in their feedback).
+-- name: ListPersonOutings :many
+select e.id as event_id, e.date, e.block, e.status as event_status,
+       coalesce(pl.title->>'en', pa.name->>'en', '')::text as title,
+       m.response, (m.checked_in_at is not null)::boolean as checked_in,
+       f.attended as said_attended
+from app.group_members m
+join app.events e on e.id = m.event_id
+join app.plans pl on pl.id = e.plan_id
+join app.activities pa on pa.id = pl.activity_id
+left join app.event_feedback f on f.group_id = m.group_id and f.user_id = m.user_id
+where m.user_id = $1
+order by e.date desc, e.id
+limit @max_rows;
+
+-- Every flag about one person, open ones first.
+-- name: ListPersonFlags :many
+select id, kind, details, created_at, updated_at, resolved_at, resolved_by, note
+from app.moderation_flags
+where user_id = $1
+order by resolved_at desc nulls first, created_at desc;

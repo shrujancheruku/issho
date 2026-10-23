@@ -12,6 +12,56 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const getPerson = `-- name: GetPerson :one
+select u.id, coalesce(u.email, '')::text as email, u.created_at,
+       coalesce(p.display_name, '')::text as display_name,
+       coalesce(p.gender, '')::text as gender,
+       coalesce(p.birth_year, 0)::int as birth_year,
+       coalesce(a.name->>'en', '')::text as home_area,
+       coalesce(a.city_id, '')::text as city_id,
+       (select count(*) from app.reports r where r.reported_id = u.id)::int as reports_about,
+       (select count(*) from app.reports r where r.reported_id = u.id and r.status = 'open')::int as open_reports_about,
+       (select count(*) from app.reports r where r.reporter_id = u.id)::int as reports_made
+from app.users u
+left join app.profiles p on p.user_id = u.id
+left join app.areas a on a.id = p.home_area_id
+where u.id = $1
+`
+
+type GetPersonRow struct {
+	ID               uuid.UUID
+	Email            string
+	CreatedAt        pgtype.Timestamptz
+	DisplayName      string
+	Gender           string
+	BirthYear        int32
+	HomeArea         string
+	CityID           string
+	ReportsAbout     int32
+	OpenReportsAbout int32
+	ReportsMade      int32
+}
+
+// One person, for the person view. No profile = not onboarded.
+func (q *Queries) GetPerson(ctx context.Context, id uuid.UUID) (GetPersonRow, error) {
+	row := q.db.QueryRow(ctx, getPerson, id)
+	var i GetPersonRow
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.CreatedAt,
+		&i.DisplayName,
+		&i.Gender,
+		&i.BirthYear,
+		&i.HomeArea,
+		&i.CityID,
+		&i.ReportsAbout,
+		&i.OpenReportsAbout,
+		&i.ReportsMade,
+	)
+	return i, err
+}
+
 const getTranslation = `-- name: GetTranslation :one
 select source_hash, lang, source, context, text, model, reviewed, reviewed_at, created_at
 from app.translations
@@ -50,6 +100,59 @@ func (q *Queries) GetTranslation(ctx context.Context, arg GetTranslationParams) 
 		&i.CreatedAt,
 	)
 	return i, err
+}
+
+const insertSuspension = `-- name: InsertSuspension :execrows
+insert into app.suspensions (user_id, reason, created_by, created_at)
+values ($1, $2, $3, $4)
+on conflict (user_id) where lifted_at is null do nothing
+`
+
+type InsertSuspensionParams struct {
+	UserID    uuid.UUID
+	Reason    string
+	CreatedBy uuid.UUID
+	At        pgtype.Timestamptz
+}
+
+// Suspending someone already suspended changes nothing.
+func (q *Queries) InsertSuspension(ctx context.Context, arg InsertSuspensionParams) (int64, error) {
+	result, err := q.db.Exec(ctx, insertSuspension,
+		arg.UserID,
+		arg.Reason,
+		arg.CreatedBy,
+		arg.At,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const liftSuspension = `-- name: LiftSuspension :execrows
+update app.suspensions
+set lifted_at = $1, lifted_by = $2, lift_note = $3
+where user_id = $4 and lifted_at is null
+`
+
+type LiftSuspensionParams struct {
+	At       pgtype.Timestamptz
+	LiftedBy pgtype.UUID
+	Note     string
+	UserID   uuid.UUID
+}
+
+func (q *Queries) LiftSuspension(ctx context.Context, arg LiftSuspensionParams) (int64, error) {
+	result, err := q.db.Exec(ctx, liftSuspension,
+		arg.At,
+		arg.LiftedBy,
+		arg.Note,
+		arg.UserID,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const listCrewLeaves = `-- name: ListCrewLeaves :many
@@ -176,6 +279,207 @@ func (q *Queries) ListModerationFlags(ctx context.Context, arg ListModerationFla
 	return items, nil
 }
 
+const listOpenSuspensions = `-- name: ListOpenSuspensions :many
+select s.user_id, s.reason, s.created_at, s.created_by,
+       coalesce(p.display_name, '')::text as display_name
+from app.suspensions s
+left join app.profiles p on p.user_id = s.user_id
+where s.lifted_at is null
+order by s.created_at desc
+limit $1
+`
+
+type ListOpenSuspensionsRow struct {
+	UserID      uuid.UUID
+	Reason      string
+	CreatedAt   pgtype.Timestamptz
+	CreatedBy   uuid.UUID
+	DisplayName string
+}
+
+// Everyone suspended now, most recent first.
+func (q *Queries) ListOpenSuspensions(ctx context.Context, maxRows int32) ([]ListOpenSuspensionsRow, error) {
+	rows, err := q.db.Query(ctx, listOpenSuspensions, maxRows)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListOpenSuspensionsRow
+	for rows.Next() {
+		var i ListOpenSuspensionsRow
+		if err := rows.Scan(
+			&i.UserID,
+			&i.Reason,
+			&i.CreatedAt,
+			&i.CreatedBy,
+			&i.DisplayName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listPersonFlags = `-- name: ListPersonFlags :many
+select id, kind, details, created_at, updated_at, resolved_at, resolved_by, note
+from app.moderation_flags
+where user_id = $1
+order by resolved_at desc nulls first, created_at desc
+`
+
+type ListPersonFlagsRow struct {
+	ID         int64
+	Kind       string
+	Details    []byte
+	CreatedAt  pgtype.Timestamptz
+	UpdatedAt  pgtype.Timestamptz
+	ResolvedAt pgtype.Timestamptz
+	ResolvedBy pgtype.UUID
+	Note       string
+}
+
+// Every flag about one person, open ones first.
+func (q *Queries) ListPersonFlags(ctx context.Context, userID uuid.UUID) ([]ListPersonFlagsRow, error) {
+	rows, err := q.db.Query(ctx, listPersonFlags, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListPersonFlagsRow
+	for rows.Next() {
+		var i ListPersonFlagsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Kind,
+			&i.Details,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.ResolvedAt,
+			&i.ResolvedBy,
+			&i.Note,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listPersonOutings = `-- name: ListPersonOutings :many
+select e.id as event_id, e.date, e.block, e.status as event_status,
+       coalesce(pl.title->>'en', pa.name->>'en', '')::text as title,
+       m.response, (m.checked_in_at is not null)::boolean as checked_in,
+       f.attended as said_attended
+from app.group_members m
+join app.events e on e.id = m.event_id
+join app.plans pl on pl.id = e.plan_id
+join app.activities pa on pa.id = pl.activity_id
+left join app.event_feedback f on f.group_id = m.group_id and f.user_id = m.user_id
+where m.user_id = $1
+order by e.date desc, e.id
+limit $2
+`
+
+type ListPersonOutingsParams struct {
+	UserID  uuid.UUID
+	MaxRows int32
+}
+
+type ListPersonOutingsRow struct {
+	EventID      uuid.UUID
+	Date         pgtype.Date
+	Block        string
+	EventStatus  string
+	Title        string
+	Response     string
+	CheckedIn    bool
+	SaidAttended *bool
+}
+
+// Their outings, newest first: how they answered, and whether they went
+// (checked in, or said so in their feedback).
+func (q *Queries) ListPersonOutings(ctx context.Context, arg ListPersonOutingsParams) ([]ListPersonOutingsRow, error) {
+	rows, err := q.db.Query(ctx, listPersonOutings, arg.UserID, arg.MaxRows)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListPersonOutingsRow
+	for rows.Next() {
+		var i ListPersonOutingsRow
+		if err := rows.Scan(
+			&i.EventID,
+			&i.Date,
+			&i.Block,
+			&i.EventStatus,
+			&i.Title,
+			&i.Response,
+			&i.CheckedIn,
+			&i.SaidAttended,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listPersonSuspensions = `-- name: ListPersonSuspensions :many
+select id, reason, created_by, created_at, lifted_at, lifted_by, lift_note
+from app.suspensions
+where user_id = $1
+order by created_at desc
+`
+
+type ListPersonSuspensionsRow struct {
+	ID        int64
+	Reason    string
+	CreatedBy uuid.UUID
+	CreatedAt pgtype.Timestamptz
+	LiftedAt  pgtype.Timestamptz
+	LiftedBy  pgtype.UUID
+	LiftNote  string
+}
+
+// One person's suspensions, newest first.
+func (q *Queries) ListPersonSuspensions(ctx context.Context, userID uuid.UUID) ([]ListPersonSuspensionsRow, error) {
+	rows, err := q.db.Query(ctx, listPersonSuspensions, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListPersonSuspensionsRow
+	for rows.Next() {
+		var i ListPersonSuspensionsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Reason,
+			&i.CreatedBy,
+			&i.CreatedAt,
+			&i.LiftedAt,
+			&i.LiftedBy,
+			&i.LiftNote,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listReports = `-- name: ListReports :many
 
 select r.id, r.reporter_id, r.reported_id, r.event_id, r.crew_id, r.reason, r.details,
@@ -273,6 +577,32 @@ func (q *Queries) ListReports(ctx context.Context, arg ListReportsParams) ([]Lis
 			return nil, err
 		}
 		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listSuspendedIDs = `-- name: ListSuspendedIDs :many
+select user_id from app.suspensions where lifted_at is null
+`
+
+// Suspensions (00020). Everyone suspended now: the API's check
+// (moderation.Suspensions) keeps this set in memory.
+func (q *Queries) ListSuspendedIDs(ctx context.Context) ([]uuid.UUID, error) {
+	rows, err := q.db.Query(ctx, listSuspendedIDs)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []uuid.UUID
+	for rows.Next() {
+		var user_id uuid.UUID
+		if err := rows.Scan(&user_id); err != nil {
+			return nil, err
+		}
+		items = append(items, user_id)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -465,4 +795,56 @@ func (q *Queries) ReviewTranslation(ctx context.Context, arg ReviewTranslationPa
 		return 0, err
 	}
 	return result.RowsAffected(), nil
+}
+
+const searchPeople = `-- name: SearchPeople :many
+select u.id, coalesce(u.email, '')::text as email,
+       coalesce(p.display_name, '')::text as display_name,
+       exists (select 1 from app.suspensions s where s.user_id = u.id and s.lifted_at is null) as suspended
+from app.users u
+left join app.profiles p on p.user_id = u.id
+where u.id::text = $1::text
+   or p.display_name ilike '%' || $1 || '%'
+   or u.email ilike '%' || $1 || '%'
+order by p.display_name nulls last, u.id
+limit $2
+`
+
+type SearchPeopleParams struct {
+	Query   string
+	MaxRows int32
+}
+
+type SearchPeopleRow struct {
+	ID          uuid.UUID
+	Email       string
+	DisplayName string
+	Suspended   bool
+}
+
+// People by name or email (contains, any case) or exact id, for finding
+// someone to look at. Suspended people say so.
+func (q *Queries) SearchPeople(ctx context.Context, arg SearchPeopleParams) ([]SearchPeopleRow, error) {
+	rows, err := q.db.Query(ctx, searchPeople, arg.Query, arg.MaxRows)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []SearchPeopleRow
+	for rows.Next() {
+		var i SearchPeopleRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Email,
+			&i.DisplayName,
+			&i.Suspended,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }

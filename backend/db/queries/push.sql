@@ -32,8 +32,13 @@ where n.sent_at is null and n.attempts < 5
 order by n.created_at, n.id
 limit @max;
 
+-- Suspended people get no notifications; their tokens are kept for when
+-- the suspension is lifted.
 -- name: ListPushTokens :many
-select user_id, token from app.push_tokens where user_id = any(@user_ids::uuid[]) order by user_id, token;
+select t.user_id, t.token from app.push_tokens t
+where t.user_id = any(@user_ids::uuid[])
+  and not exists (select 1 from app.suspensions s where s.user_id = t.user_id and s.lifted_at is null)
+order by t.user_id, t.token;
 
 -- name: MarkNotificationsSent :exec
 update app.notifications set sent_at = @at where id = any(@ids::bigint[]);

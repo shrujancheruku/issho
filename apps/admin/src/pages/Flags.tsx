@@ -2,7 +2,7 @@ import { ConnectError, FlagKind, type ModerationFlag } from '@issho/api-client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
-import { formatTime, leanSummary } from '../format';
+import { formatTime, leanSummary, personHref } from '../format';
 import { api } from '../lib';
 
 export function Flags() {
@@ -42,7 +42,7 @@ function FlagCard({ flag: f }: { flag: ModerationFlag }) {
     <article className="card">
       <div className="card-head">
         <span className="badge">{lean ? 'Picks lean to one gender' : 'Flag'}</span>
-        <strong>{f.userName || 'No profile'}</strong>
+        <a href={personHref(f.userId)}><strong>{f.userName || 'No profile'}</strong></a>
         <span className="spacer" />
         <span className="meta">Raised {formatTime(f.createdAt)}{formatTime(f.updatedAt) !== formatTime(f.createdAt) && ` · updated ${formatTime(f.updatedAt)}`}</span>
       </div>

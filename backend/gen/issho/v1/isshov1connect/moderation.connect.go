@@ -60,6 +60,21 @@ const (
 	// ModerationServiceReviewTranslationProcedure is the fully-qualified name of the
 	// ModerationService's ReviewTranslation RPC.
 	ModerationServiceReviewTranslationProcedure = "/issho.v1.ModerationService/ReviewTranslation"
+	// ModerationServiceSearchPeopleProcedure is the fully-qualified name of the ModerationService's
+	// SearchPeople RPC.
+	ModerationServiceSearchPeopleProcedure = "/issho.v1.ModerationService/SearchPeople"
+	// ModerationServiceGetPersonProcedure is the fully-qualified name of the ModerationService's
+	// GetPerson RPC.
+	ModerationServiceGetPersonProcedure = "/issho.v1.ModerationService/GetPerson"
+	// ModerationServiceSuspendPersonProcedure is the fully-qualified name of the ModerationService's
+	// SuspendPerson RPC.
+	ModerationServiceSuspendPersonProcedure = "/issho.v1.ModerationService/SuspendPerson"
+	// ModerationServiceLiftSuspensionProcedure is the fully-qualified name of the ModerationService's
+	// LiftSuspension RPC.
+	ModerationServiceLiftSuspensionProcedure = "/issho.v1.ModerationService/LiftSuspension"
+	// ModerationServiceListSuspendedProcedure is the fully-qualified name of the ModerationService's
+	// ListSuspended RPC.
+	ModerationServiceListSuspendedProcedure = "/issho.v1.ModerationService/ListSuspended"
 )
 
 // ModerationServiceClient is a client for the issho.v1.ModerationService service.
@@ -91,6 +106,28 @@ type ModerationServiceClient interface {
 	// translation is never replaced by a machine one. INVALID_ARGUMENT if
 	// the text drops or adds a {placeholder} of the English source.
 	ReviewTranslation(context.Context, *connect.Request[v1.ReviewTranslationRequest]) (*connect.Response[v1.ReviewTranslationResponse], error)
+	// SearchPeople finds people by name or email (contains, any case) or
+	// exact user id. At most 50.
+	SearchPeople(context.Context, *connect.Request[v1.SearchPeopleRequest]) (*connect.Response[v1.SearchPeopleResponse], error)
+	// GetPerson returns what a moderator needs to decide about someone:
+	// who they are, report counts, flags, suspensions and recent outings.
+	// NOT_FOUND if there's no such account.
+	GetPerson(context.Context, *connect.Request[v1.GetPersonRequest]) (*connect.Response[v1.GetPersonResponse], error)
+	// SuspendPerson keeps someone out of Issho until it's lifted: the API
+	// refuses their calls (GetMe says they're suspended; signing out and
+	// deleting the account still work), the chat socket refuses them,
+	// matching leaves them out and they get no notifications. They're also
+	// taken out of their open signups, outings that haven't started, and
+	// crews. Suspending someone already suspended only repeats that
+	// removal. INVALID_ARGUMENT for the caller's own account.
+	SuspendPerson(context.Context, *connect.Request[v1.SuspendPersonRequest]) (*connect.Response[v1.SuspendPersonResponse], error)
+	// LiftSuspension ends someone's suspension. They can use Issho again,
+	// but aren't put back into what they were taken out of.
+	// FAILED_PRECONDITION if they aren't suspended.
+	LiftSuspension(context.Context, *connect.Request[v1.LiftSuspensionRequest]) (*connect.Response[v1.LiftSuspensionResponse], error)
+	// ListSuspended returns everyone suspended now, most recent first. At
+	// most 200.
+	ListSuspended(context.Context, *connect.Request[v1.ListSuspendedRequest]) (*connect.Response[v1.ListSuspendedResponse], error)
 }
 
 // NewModerationServiceClient constructs a client for the issho.v1.ModerationService service. By
@@ -158,6 +195,36 @@ func NewModerationServiceClient(httpClient connect.HTTPClient, baseURL string, o
 			connect.WithSchema(moderationServiceMethods.ByName("ReviewTranslation")),
 			connect.WithClientOptions(opts...),
 		),
+		searchPeople: connect.NewClient[v1.SearchPeopleRequest, v1.SearchPeopleResponse](
+			httpClient,
+			baseURL+ModerationServiceSearchPeopleProcedure,
+			connect.WithSchema(moderationServiceMethods.ByName("SearchPeople")),
+			connect.WithClientOptions(opts...),
+		),
+		getPerson: connect.NewClient[v1.GetPersonRequest, v1.GetPersonResponse](
+			httpClient,
+			baseURL+ModerationServiceGetPersonProcedure,
+			connect.WithSchema(moderationServiceMethods.ByName("GetPerson")),
+			connect.WithClientOptions(opts...),
+		),
+		suspendPerson: connect.NewClient[v1.SuspendPersonRequest, v1.SuspendPersonResponse](
+			httpClient,
+			baseURL+ModerationServiceSuspendPersonProcedure,
+			connect.WithSchema(moderationServiceMethods.ByName("SuspendPerson")),
+			connect.WithClientOptions(opts...),
+		),
+		liftSuspension: connect.NewClient[v1.LiftSuspensionRequest, v1.LiftSuspensionResponse](
+			httpClient,
+			baseURL+ModerationServiceLiftSuspensionProcedure,
+			connect.WithSchema(moderationServiceMethods.ByName("LiftSuspension")),
+			connect.WithClientOptions(opts...),
+		),
+		listSuspended: connect.NewClient[v1.ListSuspendedRequest, v1.ListSuspendedResponse](
+			httpClient,
+			baseURL+ModerationServiceListSuspendedProcedure,
+			connect.WithSchema(moderationServiceMethods.ByName("ListSuspended")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -172,6 +239,11 @@ type moderationServiceClient struct {
 	listTranslationLanguages *connect.Client[v1.ListTranslationLanguagesRequest, v1.ListTranslationLanguagesResponse]
 	listTranslations         *connect.Client[v1.ListTranslationsRequest, v1.ListTranslationsResponse]
 	reviewTranslation        *connect.Client[v1.ReviewTranslationRequest, v1.ReviewTranslationResponse]
+	searchPeople             *connect.Client[v1.SearchPeopleRequest, v1.SearchPeopleResponse]
+	getPerson                *connect.Client[v1.GetPersonRequest, v1.GetPersonResponse]
+	suspendPerson            *connect.Client[v1.SuspendPersonRequest, v1.SuspendPersonResponse]
+	liftSuspension           *connect.Client[v1.LiftSuspensionRequest, v1.LiftSuspensionResponse]
+	listSuspended            *connect.Client[v1.ListSuspendedRequest, v1.ListSuspendedResponse]
 }
 
 // GetModerator calls issho.v1.ModerationService.GetModerator.
@@ -219,6 +291,31 @@ func (c *moderationServiceClient) ReviewTranslation(ctx context.Context, req *co
 	return c.reviewTranslation.CallUnary(ctx, req)
 }
 
+// SearchPeople calls issho.v1.ModerationService.SearchPeople.
+func (c *moderationServiceClient) SearchPeople(ctx context.Context, req *connect.Request[v1.SearchPeopleRequest]) (*connect.Response[v1.SearchPeopleResponse], error) {
+	return c.searchPeople.CallUnary(ctx, req)
+}
+
+// GetPerson calls issho.v1.ModerationService.GetPerson.
+func (c *moderationServiceClient) GetPerson(ctx context.Context, req *connect.Request[v1.GetPersonRequest]) (*connect.Response[v1.GetPersonResponse], error) {
+	return c.getPerson.CallUnary(ctx, req)
+}
+
+// SuspendPerson calls issho.v1.ModerationService.SuspendPerson.
+func (c *moderationServiceClient) SuspendPerson(ctx context.Context, req *connect.Request[v1.SuspendPersonRequest]) (*connect.Response[v1.SuspendPersonResponse], error) {
+	return c.suspendPerson.CallUnary(ctx, req)
+}
+
+// LiftSuspension calls issho.v1.ModerationService.LiftSuspension.
+func (c *moderationServiceClient) LiftSuspension(ctx context.Context, req *connect.Request[v1.LiftSuspensionRequest]) (*connect.Response[v1.LiftSuspensionResponse], error) {
+	return c.liftSuspension.CallUnary(ctx, req)
+}
+
+// ListSuspended calls issho.v1.ModerationService.ListSuspended.
+func (c *moderationServiceClient) ListSuspended(ctx context.Context, req *connect.Request[v1.ListSuspendedRequest]) (*connect.Response[v1.ListSuspendedResponse], error) {
+	return c.listSuspended.CallUnary(ctx, req)
+}
+
 // ModerationServiceHandler is an implementation of the issho.v1.ModerationService service.
 type ModerationServiceHandler interface {
 	// GetModerator says who the caller is. The admin SPA calls it after
@@ -248,6 +345,28 @@ type ModerationServiceHandler interface {
 	// translation is never replaced by a machine one. INVALID_ARGUMENT if
 	// the text drops or adds a {placeholder} of the English source.
 	ReviewTranslation(context.Context, *connect.Request[v1.ReviewTranslationRequest]) (*connect.Response[v1.ReviewTranslationResponse], error)
+	// SearchPeople finds people by name or email (contains, any case) or
+	// exact user id. At most 50.
+	SearchPeople(context.Context, *connect.Request[v1.SearchPeopleRequest]) (*connect.Response[v1.SearchPeopleResponse], error)
+	// GetPerson returns what a moderator needs to decide about someone:
+	// who they are, report counts, flags, suspensions and recent outings.
+	// NOT_FOUND if there's no such account.
+	GetPerson(context.Context, *connect.Request[v1.GetPersonRequest]) (*connect.Response[v1.GetPersonResponse], error)
+	// SuspendPerson keeps someone out of Issho until it's lifted: the API
+	// refuses their calls (GetMe says they're suspended; signing out and
+	// deleting the account still work), the chat socket refuses them,
+	// matching leaves them out and they get no notifications. They're also
+	// taken out of their open signups, outings that haven't started, and
+	// crews. Suspending someone already suspended only repeats that
+	// removal. INVALID_ARGUMENT for the caller's own account.
+	SuspendPerson(context.Context, *connect.Request[v1.SuspendPersonRequest]) (*connect.Response[v1.SuspendPersonResponse], error)
+	// LiftSuspension ends someone's suspension. They can use Issho again,
+	// but aren't put back into what they were taken out of.
+	// FAILED_PRECONDITION if they aren't suspended.
+	LiftSuspension(context.Context, *connect.Request[v1.LiftSuspensionRequest]) (*connect.Response[v1.LiftSuspensionResponse], error)
+	// ListSuspended returns everyone suspended now, most recent first. At
+	// most 200.
+	ListSuspended(context.Context, *connect.Request[v1.ListSuspendedRequest]) (*connect.Response[v1.ListSuspendedResponse], error)
 }
 
 // NewModerationServiceHandler builds an HTTP handler from the service implementation. It returns
@@ -311,6 +430,36 @@ func NewModerationServiceHandler(svc ModerationServiceHandler, opts ...connect.H
 		connect.WithSchema(moderationServiceMethods.ByName("ReviewTranslation")),
 		connect.WithHandlerOptions(opts...),
 	)
+	moderationServiceSearchPeopleHandler := connect.NewUnaryHandler(
+		ModerationServiceSearchPeopleProcedure,
+		svc.SearchPeople,
+		connect.WithSchema(moderationServiceMethods.ByName("SearchPeople")),
+		connect.WithHandlerOptions(opts...),
+	)
+	moderationServiceGetPersonHandler := connect.NewUnaryHandler(
+		ModerationServiceGetPersonProcedure,
+		svc.GetPerson,
+		connect.WithSchema(moderationServiceMethods.ByName("GetPerson")),
+		connect.WithHandlerOptions(opts...),
+	)
+	moderationServiceSuspendPersonHandler := connect.NewUnaryHandler(
+		ModerationServiceSuspendPersonProcedure,
+		svc.SuspendPerson,
+		connect.WithSchema(moderationServiceMethods.ByName("SuspendPerson")),
+		connect.WithHandlerOptions(opts...),
+	)
+	moderationServiceLiftSuspensionHandler := connect.NewUnaryHandler(
+		ModerationServiceLiftSuspensionProcedure,
+		svc.LiftSuspension,
+		connect.WithSchema(moderationServiceMethods.ByName("LiftSuspension")),
+		connect.WithHandlerOptions(opts...),
+	)
+	moderationServiceListSuspendedHandler := connect.NewUnaryHandler(
+		ModerationServiceListSuspendedProcedure,
+		svc.ListSuspended,
+		connect.WithSchema(moderationServiceMethods.ByName("ListSuspended")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/issho.v1.ModerationService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case ModerationServiceGetModeratorProcedure:
@@ -331,6 +480,16 @@ func NewModerationServiceHandler(svc ModerationServiceHandler, opts ...connect.H
 			moderationServiceListTranslationsHandler.ServeHTTP(w, r)
 		case ModerationServiceReviewTranslationProcedure:
 			moderationServiceReviewTranslationHandler.ServeHTTP(w, r)
+		case ModerationServiceSearchPeopleProcedure:
+			moderationServiceSearchPeopleHandler.ServeHTTP(w, r)
+		case ModerationServiceGetPersonProcedure:
+			moderationServiceGetPersonHandler.ServeHTTP(w, r)
+		case ModerationServiceSuspendPersonProcedure:
+			moderationServiceSuspendPersonHandler.ServeHTTP(w, r)
+		case ModerationServiceLiftSuspensionProcedure:
+			moderationServiceLiftSuspensionHandler.ServeHTTP(w, r)
+		case ModerationServiceListSuspendedProcedure:
+			moderationServiceListSuspendedHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -374,4 +533,24 @@ func (UnimplementedModerationServiceHandler) ListTranslations(context.Context, *
 
 func (UnimplementedModerationServiceHandler) ReviewTranslation(context.Context, *connect.Request[v1.ReviewTranslationRequest]) (*connect.Response[v1.ReviewTranslationResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.ModerationService.ReviewTranslation is not implemented"))
+}
+
+func (UnimplementedModerationServiceHandler) SearchPeople(context.Context, *connect.Request[v1.SearchPeopleRequest]) (*connect.Response[v1.SearchPeopleResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.ModerationService.SearchPeople is not implemented"))
+}
+
+func (UnimplementedModerationServiceHandler) GetPerson(context.Context, *connect.Request[v1.GetPersonRequest]) (*connect.Response[v1.GetPersonResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.ModerationService.GetPerson is not implemented"))
+}
+
+func (UnimplementedModerationServiceHandler) SuspendPerson(context.Context, *connect.Request[v1.SuspendPersonRequest]) (*connect.Response[v1.SuspendPersonResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.ModerationService.SuspendPerson is not implemented"))
+}
+
+func (UnimplementedModerationServiceHandler) LiftSuspension(context.Context, *connect.Request[v1.LiftSuspensionRequest]) (*connect.Response[v1.LiftSuspensionResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.ModerationService.LiftSuspension is not implemented"))
+}
+
+func (UnimplementedModerationServiceHandler) ListSuspended(context.Context, *connect.Request[v1.ListSuspendedRequest]) (*connect.Response[v1.ListSuspendedResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.ModerationService.ListSuspended is not implemented"))
 }

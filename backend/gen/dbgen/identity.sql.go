@@ -39,6 +39,17 @@ func (q *Queries) GetDisplayLanguages(ctx context.Context, userID uuid.UUID) (Ge
 	return i, err
 }
 
+const isSuspended = `-- name: IsSuspended :one
+select exists (select 1 from app.suspensions where user_id = $1 and lifted_at is null)
+`
+
+func (q *Queries) IsSuspended(ctx context.Context, userID uuid.UUID) (bool, error) {
+	row := q.db.QueryRow(ctx, isSuspended, userID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
 const upsertUser = `-- name: UpsertUser :one
 insert into app.users (id, email)
 values ($1, $2)

@@ -2,7 +2,7 @@ import { ConnectError, ReportStatus, type ModerationReport } from '@issho/api-cl
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
-import { formatTime, reportReasons } from '../format';
+import { formatTime, personHref, reportReasons } from '../format';
 import { api } from '../lib';
 
 const filters: { label: string; status: ReportStatus }[] = [
@@ -19,10 +19,11 @@ const statusLabels: Record<ReportStatus, string> = {
   [ReportStatus.DISMISSED]: 'Dismissed',
 };
 
-export function Reports() {
-  const [status, setStatus] = useState(ReportStatus.OPEN);
-  // One person's reports, from "N reports" on a card.
-  const [person, setPerson] = useState<{ id: string; name: string } | null>(null);
+/** about: only reports about this person (from their person view). */
+export function Reports({ about }: { about?: string } = {}) {
+  const [status, setStatus] = useState(about ? ReportStatus.UNSPECIFIED : ReportStatus.OPEN);
+  // One person's reports, from "N reports" on a card or their person view.
+  const [person, setPerson] = useState<{ id: string; name: string } | null>(about ? { id: about, name: '' } : null);
   const reports = useQuery({
     queryKey: ['reports', status, person?.id],
     queryFn: () => api.moderation.listReports({ status, reportedId: person?.id ?? '' }),
@@ -39,7 +40,7 @@ export function Reports() {
         </div>
         {person && (
           <span className="chip">
-            About {person.name || 'someone'} <button className="link" onClick={() => setPerson(null)}>× everyone</button>
+            About {person.name || reports.data?.reports[0]?.reportedName || 'someone'} <button className="link" onClick={() => setPerson(null)}>× everyone</button>
           </span>
         )}
       </div>
@@ -71,7 +72,7 @@ function ReportCard({ report: r, onPerson }: { report: ModerationReport; onPerso
     <article className="card">
       <div className="card-head">
         <span className={`badge reason-${r.reason}`}>{reportReasons[r.reason]}</span>
-        <strong>{r.reportedName || 'No profile'}</strong>
+        <a href={personHref(r.reportedId)}><strong>{r.reportedName || 'No profile'}</strong></a>
         <button className="link" onClick={onPerson}>
           {r.reportsAboutReported} {r.reportsAboutReported === 1 ? 'report' : 'reports'} in all
         </button>
@@ -79,7 +80,7 @@ function ReportCard({ report: r, onPerson }: { report: ModerationReport; onPerso
         <span className={`status status-${statusLabels[r.status].toLowerCase()}`}>{statusLabels[r.status]}</span>
       </div>
       <p className="meta">
-        Reported by {r.reporterId ? r.reporterName || 'someone with no profile' : 'a deleted account'} · {formatTime(r.createdAt)}
+        Reported by {r.reporterId ? <a href={personHref(r.reporterId)}>{r.reporterName || 'someone with no profile'}</a> : 'a deleted account'} · {formatTime(r.createdAt)}
         {r.updatedAt && formatTime(r.updatedAt) !== formatTime(r.createdAt) && ` · last changed ${formatTime(r.updatedAt)}`}
       </p>
       <p className="meta">{where}</p>

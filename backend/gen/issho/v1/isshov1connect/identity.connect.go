@@ -43,7 +43,8 @@ const (
 // IdentityServiceClient is a client for the issho.v1.IdentityService service.
 type IdentityServiceClient interface {
 	// GetMe returns the caller's account, creating the app-side user row the
-	// first time a Supabase user calls the API.
+	// first time a Supabase user calls the API. It works for suspended
+	// accounts too (User.suspended), so the app can say so.
 	GetMe(context.Context, *connect.Request[v1.GetMeRequest]) (*connect.Response[v1.GetMeResponse], error)
 	// DeleteAccount permanently deletes the caller's Supabase auth user and all
 	// of their app data (cascaded from auth.users). The client should sign out
@@ -97,7 +98,8 @@ func (c *identityServiceClient) DeleteAccount(ctx context.Context, req *connect.
 // IdentityServiceHandler is an implementation of the issho.v1.IdentityService service.
 type IdentityServiceHandler interface {
 	// GetMe returns the caller's account, creating the app-side user row the
-	// first time a Supabase user calls the API.
+	// first time a Supabase user calls the API. It works for suspended
+	// accounts too (User.suspended), so the app can say so.
 	GetMe(context.Context, *connect.Request[v1.GetMeRequest]) (*connect.Response[v1.GetMeResponse], error)
 	// DeleteAccount permanently deletes the caller's Supabase auth user and all
 	// of their app data (cascaded from auth.users). The client should sign out

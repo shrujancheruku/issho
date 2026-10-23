@@ -1,6 +1,7 @@
 // Package moderation serves ModerationService, the moderation queue in the
-// admin SPA (M8): reports, flags, crew leave reasons and corrections to
-// machine translations.
+// admin SPA (M8): reports, flags, crew leave reasons, corrections to
+// machine translations, and people (looking someone up, suspending them).
+// It also holds the API's check that refuses suspended people (Gate).
 //
 // Every call is for admins only. cmd/api enforces that for the whole
 // service (auth.AdminOnly); moderator() checks again so a wiring mistake
@@ -22,6 +23,7 @@ import (
 
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
+	"github.com/shrujancheruku/issho/backend/internal/plans"
 	"github.com/shrujancheruku/issho/backend/internal/platform/auth"
 	"github.com/shrujancheruku/issho/backend/internal/uistrings"
 )
@@ -38,8 +40,12 @@ const (
 
 // Handler serves ModerationService.
 type Handler struct {
-	Q   *dbgen.Queries
-	Now func() time.Time // nil = time.Now
+	Q *dbgen.Queries
+	// Plans takes a suspended person out of what they'd joined.
+	Plans *plans.Service
+	// Suspensions is the API's check, told at once when one changes here.
+	Suspensions *Suspensions
+	Now         func() time.Time // nil = time.Now
 }
 
 func (h *Handler) now() time.Time {

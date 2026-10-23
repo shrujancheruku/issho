@@ -69,3 +69,8 @@ export function placeholderProblems(source: string, text: string): string[] {
   }
   return problems;
 }
+
+/** The admin SPA's link to one person's view. */
+export function personHref(userId: string): string {
+  return `#/person/${userId}`;
+}

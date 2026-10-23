@@ -1,5 +1,5 @@
 import { DelaGothicOne_400Regular, useFonts } from '@expo-google-fonts/dela-gothic-one';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { ActivityIndicator, Pressable, StyleSheet, useColorScheme } from 'react-native';
@@ -8,12 +8,20 @@ import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
-import { AuthProvider, useAuth } from '@/features/auth/auth-provider';
+import { AuthProvider, isSuspendedError, useAuth } from '@/features/auth/auth-provider';
 import { I18nProvider, useI18n } from '@/i18n/i18n-provider';
 
 SplashScreen.preventAutoHideAsync();
 
-const queryClient = new QueryClient();
+// Suspended mid-session: every call is refused, so load the account again
+// and the navigator shows the suspended screen.
+const onError = (err: unknown) => {
+  if (isSuspendedError(err)) void queryClient.invalidateQueries({ queryKey: ['me'] });
+};
+const queryClient = new QueryClient({
+  queryCache: new QueryCache({ onError }),
+  mutationCache: new MutationCache({ onError }),
+});
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -48,9 +56,22 @@ export default function RootLayout() {
  * These guards are UX only; the API enforces auth on every request.
  */
 function RootNavigator() {
-  const { ready, session, onboarded, accountError, retryAccount, signOut } = useAuth();
+  const { ready, session, onboarded, suspended, accountError, retryAccount, signOut } = useAuth();
   const { t } = useI18n();
   if (!ready) return null; // the splash screen stays up while SecureStore is read
+
+  // Suspended by a moderator: the API refuses everything else anyway.
+  if (session && suspended) {
+    return (
+      <ThemedView style={styles.center}>
+        <ThemedText type="subtitle">{t('account.suspendedTitle')}</ThemedText>
+        <ThemedText style={styles.message}>{t('account.suspendedBody')}</ThemedText>
+        <Pressable onPress={signOut}>
+          <ThemedText type="link">{t('account.signOut')}</ThemedText>
+        </Pressable>
+      </ThemedView>
+    );
+  }
 
   // Signed in, but the API hasn't told us yet whether the user is onboarded.
   if (session && onboarded === null) {
@@ -98,4 +119,5 @@ function RootNavigator() {
 
 const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: Spacing.three, padding: Spacing.four },
+  message: { textAlign: 'center', maxWidth: 420 },
 });

@@ -15,6 +15,7 @@ import (
 type fakeStore struct {
 	users     map[uuid.UUID]dbgen.AppUser
 	profiles  map[uuid.UUID]dbgen.GetDisplayLanguagesRow
+	suspended map[uuid.UUID]bool
 	deleteErr error
 }
 
@@ -40,6 +41,10 @@ func (f *fakeStore) GetDisplayLanguages(_ context.Context, id uuid.UUID) (dbgen.
 		return p, pgx.ErrNoRows
 	}
 	return p, nil
+}
+
+func (f *fakeStore) IsSuspended(_ context.Context, id uuid.UUID) (bool, error) {
+	return f.suspended[id], nil
 }
 
 func (f *fakeStore) DeleteUser(_ context.Context, id uuid.UUID) error {
@@ -82,6 +87,13 @@ func TestMe(t *testing.T) {
 	store.profiles[c.UserID] = dbgen.GetDisplayLanguagesRow{PrimaryLanguage: "ja", SecondaryLanguage: &es}
 	if acct, _ = svc.Me(ctx, c); !acct.Onboarded || acct.PrimaryLanguage != "ja" || acct.SecondaryLanguage != "es" {
 		t.Fatalf("expected onboarded with languages once a profile exists: %+v", acct)
+	}
+	if acct.Suspended {
+		t.Fatal("suspended without a suspension")
+	}
+	store.suspended = map[uuid.UUID]bool{c.UserID: true}
+	if acct, err = svc.Me(ctx, c); err != nil || !acct.Suspended || !acct.Onboarded {
+		t.Fatalf("a suspended account still loads, saying so: %+v, %v", acct, err)
 	}
 }
 

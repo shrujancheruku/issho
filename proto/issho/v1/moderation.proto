@@ -52,6 +52,33 @@ service ModerationService {
   // translation is never replaced by a machine one. INVALID_ARGUMENT if
   // the text drops or adds a {placeholder} of the English source.
   rpc ReviewTranslation(ReviewTranslationRequest) returns (ReviewTranslationResponse) {}
+
+  // SearchPeople finds people by name or email (contains, any case) or
+  // exact user id. At most 50.
+  rpc SearchPeople(SearchPeopleRequest) returns (SearchPeopleResponse) {}
+
+  // GetPerson returns what a moderator needs to decide about someone:
+  // who they are, report counts, flags, suspensions and recent outings.
+  // NOT_FOUND if there's no such account.
+  rpc GetPerson(GetPersonRequest) returns (GetPersonResponse) {}
+
+  // SuspendPerson keeps someone out of Issho until it's lifted: the API
+  // refuses their calls (GetMe says they're suspended; signing out and
+  // deleting the account still work), the chat socket refuses them,
+  // matching leaves them out and they get no notifications. They're also
+  // taken out of their open signups, outings that haven't started, and
+  // crews. Suspending someone already suspended only repeats that
+  // removal. INVALID_ARGUMENT for the caller's own account.
+  rpc SuspendPerson(SuspendPersonRequest) returns (SuspendPersonResponse) {}
+
+  // LiftSuspension ends someone's suspension. They can use Issho again,
+  // but aren't put back into what they were taken out of.
+  // FAILED_PRECONDITION if they aren't suspended.
+  rpc LiftSuspension(LiftSuspensionRequest) returns (LiftSuspensionResponse) {}
+
+  // ListSuspended returns everyone suspended now, most recent first. At
+  // most 200.
+  rpc ListSuspended(ListSuspendedRequest) returns (ListSuspendedResponse) {}
 }
 
 message GetModeratorRequest {}
@@ -240,4 +267,116 @@ message ReviewTranslationRequest {
 
 message ReviewTranslationResponse {
   Translation translation = 1;
+}
+
+message SearchPeopleRequest {
+  // At least 2 characters.
+  string query = 1;
+}
+
+message SearchPeopleResponse {
+  repeated PersonSummary people = 1;
+}
+
+message PersonSummary {
+  string user_id = 1;
+  // Empty if they haven't finished onboarding.
+  string name = 2;
+  string email = 3;
+  bool suspended = 4;
+}
+
+message GetPersonRequest {
+  string user_id = 1;
+}
+
+message GetPersonResponse {
+  Person person = 1;
+}
+
+message Person {
+  string user_id = 1;
+  // Empty if they haven't finished onboarding (no profile).
+  string name = 2;
+  string email = 3;
+  google.protobuf.Timestamp joined_at = 4;
+  // woman, man, nonbinary or unspecified; empty without a profile.
+  string gender = 5;
+  int32 birth_year = 6;
+  // English name of their home area, and its city.
+  string home_area = 7;
+  string city_id = 8;
+  // Reports about them (in all, and still open) and reports they made.
+  int32 reports_about = 9;
+  int32 open_reports_about = 10;
+  int32 reports_made = 11;
+  bool suspended = 12;
+  // Newest first.
+  repeated Suspension suspensions = 13;
+  // Open ones first.
+  repeated ModerationFlag flags = 14;
+  // Newest first, at most 50.
+  repeated PersonOuting outings = 15;
+}
+
+message Suspension {
+  int64 id = 1;
+  string reason = 2;
+  string created_by = 3;
+  google.protobuf.Timestamp created_at = 4;
+  // Unset while it's in force.
+  google.protobuf.Timestamp lifted_at = 5;
+  string lifted_by = 6;
+  string lift_note = 7;
+}
+
+message PersonOuting {
+  string event_id = 1;
+  string title = 2;
+  // YYYY-MM-DD in the city's time zone, and morning, afternoon or evening.
+  string date = 3;
+  string block = 4;
+  // scheduled, done or cancelled.
+  string event_status = 5;
+  // invited, confirmed, declined or dropped (confirmed, then cancelled).
+  string response = 6;
+  bool checked_in = 7;
+  // Their feedback: SAID_WENT, SAID_DIDNT_GO, or UNSPECIFIED (none).
+  OutingFeedback feedback = 8;
+}
+
+enum OutingFeedback {
+  OUTING_FEEDBACK_UNSPECIFIED = 0;
+  OUTING_FEEDBACK_SAID_WENT = 1;
+  OUTING_FEEDBACK_SAID_DIDNT_GO = 2;
+}
+
+message SuspendPersonRequest {
+  string user_id = 1;
+  // Why, for moderators: 1-2000 characters. The person isn't shown it.
+  string reason = 2;
+}
+
+message SuspendPersonResponse {}
+
+message LiftSuspensionRequest {
+  string user_id = 1;
+  // Up to 2000 characters.
+  string note = 2;
+}
+
+message LiftSuspensionResponse {}
+
+message ListSuspendedRequest {}
+
+message ListSuspendedResponse {
+  repeated SuspendedPerson people = 1;
+}
+
+message SuspendedPerson {
+  string user_id = 1;
+  string name = 2;
+  string reason = 3;
+  google.protobuf.Timestamp since = 4;
+  string suspended_by = 5;
 }

@@ -16,7 +16,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file issho/v1/moderation.proto.
  */
 export const file_issho_v1_moderation: GenFile = /*@__PURE__*/
-  fileDesc("Chlpc3Noby92MS9tb2RlcmF0aW9uLnByb3RvEghpc3Noby52MSIVChNHZXRNb2RlcmF0b3JSZXF1ZXN0IjYKFEdldE1vZGVyYXRvclJlc3BvbnNlEg8KB3VzZXJfaWQYASABKAkSDQoFZW1haWwYAiABKAkiUQoSTGlzdFJlcG9ydHNSZXF1ZXN0EiYKBnN0YXR1cxgBIAEoDjIWLmlzc2hvLnYxLlJlcG9ydFN0YXR1cxITCgtyZXBvcnRlZF9pZBgCIAEoCSJCChNMaXN0UmVwb3J0c1Jlc3BvbnNlEisKB3JlcG9ydHMYASADKAsyGi5pc3Noby52MS5Nb2RlcmF0aW9uUmVwb3J0Ip8EChBNb2RlcmF0aW9uUmVwb3J0EgoKAmlkGAEgASgJEhMKC3JlcG9ydGVyX2lkGAIgASgJEhUKDXJlcG9ydGVyX25hbWUYAyABKAkSEwoLcmVwb3J0ZWRfaWQYBCABKAkSFQoNcmVwb3J0ZWRfbmFtZRgFIAEoCRIeChZyZXBvcnRzX2Fib3V0X3JlcG9ydGVkGAYgASgFEiYKBnJlYXNvbhgHIAEoDjIWLmlzc2hvLnYxLlJlcG9ydFJlYXNvbhIPCgdkZXRhaWxzGAggASgJEiYKBnN0YXR1cxgJIAEoDjIWLmlzc2hvLnYxLlJlcG9ydFN0YXR1cxIMCgRub3RlGAogASgJEhAKCGV2ZW50X2lkGAsgASgJEhMKC2V2ZW50X3RpdGxlGAwgASgJEhIKCmV2ZW50X2RhdGUYDSABKAkSEwoLZXZlbnRfYmxvY2sYDiABKAkSDwoHY3Jld19pZBgPIAEoCRIRCgljcmV3X25hbWUYECABKAkSLgoKY3JlYXRlZF9hdBgRIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLgoKdXBkYXRlZF9hdBgSIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLwoLcmV2aWV3ZWRfYXQYEyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhMKC3Jldmlld2VkX2J5GBQgASgJIl8KFFJlc29sdmVSZXBvcnRSZXF1ZXN0EhEKCXJlcG9ydF9pZBgBIAEoCRImCgZzdGF0dXMYAiABKA4yFi5pc3Noby52MS5SZXBvcnRTdGF0dXMSDAoEbm90ZRgDIAEoCSIXChVSZXNvbHZlUmVwb3J0UmVzcG9uc2UiJAoQTGlzdEZsYWdzUmVxdWVzdBIQCghyZXNvbHZlZBgBIAEoCCI8ChFMaXN0RmxhZ3NSZXNwb25zZRInCgVmbGFncxgBIAMoCzIYLmlzc2hvLnYxLk1vZGVyYXRpb25GbGFnIqwCCg5Nb2RlcmF0aW9uRmxhZxIKCgJpZBgBIAEoAxIPCgd1c2VyX2lkGAIgASgJEhEKCXVzZXJfbmFtZRgDIAEoCRIgCgRraW5kGAQgASgOMhIuaXNzaG8udjEuRmxhZ0tpbmQSFAoMZGV0YWlsc19qc29uGAUgASgJEgwKBG5vdGUYBiABKAkSLgoKY3JlYXRlZF9hdBgHIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLgoKdXBkYXRlZF9hdBgIIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLwoLcmVzb2x2ZWRfYXQYCSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhMKC3Jlc29sdmVkX2J5GAogASgJIjMKElJlc29sdmVGbGFnUmVxdWVzdBIPCgdmbGFnX2lkGAEgASgDEgwKBG5vdGUYAiABKAkiFQoTUmVzb2x2ZUZsYWdSZXNwb25zZSI+ChVMaXN0Q3Jld0xlYXZlc1JlcXVlc3QSJQoGcmVhc29uGAEgASgOMhUuaXNzaG8udjEuTGVhdmVSZWFzb24iPQoWTGlzdENyZXdMZWF2ZXNSZXNwb25zZRIjCgZsZWF2ZXMYASADKAsyEy5pc3Noby52MS5DcmV3TGVhdmUi3AEKCUNyZXdMZWF2ZRIKCgJpZBgBIAEoAxIPCgdjcmV3X2lkGAIgASgJEhEKCWNyZXdfbmFtZRgDIAEoCRITCgtjcmV3X3N0YXR1cxgEIAEoCRIPCgd1c2VyX2lkGAUgASgJEhEKCXVzZXJfbmFtZRgGIAEoCRIlCgZyZWFzb24YByABKA4yFS5pc3Noby52MS5MZWF2ZVJlYXNvbhIPCgdkZXRhaWxzGAggASgJEi4KCmNyZWF0ZWRfYXQYCSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wIiEKH0xpc3RUcmFuc2xhdGlvbkxhbmd1YWdlc1JlcXVlc3QiVAogTGlzdFRyYW5zbGF0aW9uTGFuZ3VhZ2VzUmVzcG9uc2USMAoJbGFuZ3VhZ2VzGAEgAygLMh0uaXNzaG8udjEuVHJhbnNsYXRpb25MYW5ndWFnZSJGChNUcmFuc2xhdGlvbkxhbmd1YWdlEgwKBGxhbmcYASABKAkSDQoFdG90YWwYAiABKAUSEgoKdW5yZXZpZXdlZBgDIAEoBSJgChdMaXN0VHJhbnNsYXRpb25zUmVxdWVzdBIMCgRsYW5nGAEgASgJEhcKD3VucmV2aWV3ZWRfb25seRgCIAEoCBIOCgZzZWFyY2gYAyABKAkSDgoGb2Zmc2V0GAQgASgFIkcKGExpc3RUcmFuc2xhdGlvbnNSZXNwb25zZRIrCgx0cmFuc2xhdGlvbnMYASADKAsyFS5pc3Noby52MS5UcmFuc2xhdGlvbiLhAQoLVHJhbnNsYXRpb24SEwoLc291cmNlX2hhc2gYASABKAkSDAoEbGFuZxgCIAEoCRIOCgZzb3VyY2UYAyABKAkSDwoHY29udGV4dBgEIAEoCRIMCgR0ZXh0GAUgASgJEg0KBW1vZGVsGAYgASgJEhAKCHJldmlld2VkGAcgASgIEi8KC3Jldmlld2VkX2F0GAggASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIuCgpjcmVhdGVkX2F0GAkgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCJLChhSZXZpZXdUcmFuc2xhdGlvblJlcXVlc3QSEwoLc291cmNlX2hhc2gYASABKAkSDAoEbGFuZxgCIAEoCRIMCgR0ZXh0GAMgASgJIkcKGVJldmlld1RyYW5zbGF0aW9uUmVzcG9uc2USKgoLdHJhbnNsYXRpb24YASABKAsyFS5pc3Noby52MS5UcmFuc2xhdGlvbip+CgxSZXBvcnRTdGF0dXMSHQoZUkVQT1JUX1NUQVRVU19VTlNQRUNJRklFRBAAEhYKElJFUE9SVF9TVEFUVVNfT1BFThABEhoKFlJFUE9SVF9TVEFUVVNfQUNUSU9ORUQQAhIbChdSRVBPUlRfU1RBVFVTX0RJU01JU1NFRBADKkUKCEZsYWdLaW5kEhkKFUZMQUdfS0lORF9VTlNQRUNJRklFRBAAEh4KGkZMQUdfS0lORF9QSUNLX0dFTkRFUl9MRUFOEAEypQYKEU1vZGVyYXRpb25TZXJ2aWNlEk8KDEdldE1vZGVyYXRvchIdLmlzc2hvLnYxLkdldE1vZGVyYXRvclJlcXVlc3QaHi5pc3Noby52MS5HZXRNb2RlcmF0b3JSZXNwb25zZSIAEkwKC0xpc3RSZXBvcnRzEhwuaXNzaG8udjEuTGlzdFJlcG9ydHNSZXF1ZXN0Gh0uaXNzaG8udjEuTGlzdFJlcG9ydHNSZXNwb25zZSIAElIKDVJlc29sdmVSZXBvcnQSHi5pc3Noby52MS5SZXNvbHZlUmVwb3J0UmVxdWVzdBofLmlzc2hvLnYxLlJlc29sdmVSZXBvcnRSZXNwb25zZSIAEkYKCUxpc3RGbGFncxIaLmlzc2hvLnYxLkxpc3RGbGFnc1JlcXVlc3QaGy5pc3Noby52MS5MaXN0RmxhZ3NSZXNwb25zZSIAEkwKC1Jlc29sdmVGbGFnEhwuaXNzaG8udjEuUmVzb2x2ZUZsYWdSZXF1ZXN0Gh0uaXNzaG8udjEuUmVzb2x2ZUZsYWdSZXNwb25zZSIAElUKDkxpc3RDcmV3TGVhdmVzEh8uaXNzaG8udjEuTGlzdENyZXdMZWF2ZXNSZXF1ZXN0GiAuaXNzaG8udjEuTGlzdENyZXdMZWF2ZXNSZXNwb25zZSIAEnMKGExpc3RUcmFuc2xhdGlvbkxhbmd1YWdlcxIpLmlzc2hvLnYxLkxpc3RUcmFuc2xhdGlvbkxhbmd1YWdlc1JlcXVlc3QaKi5pc3Noby52MS5MaXN0VHJhbnNsYXRpb25MYW5ndWFnZXNSZXNwb25zZSIAElsKEExpc3RUcmFuc2xhdGlvbnMSIS5pc3Noby52MS5MaXN0VHJhbnNsYXRpb25zUmVxdWVzdBoiLmlzc2hvLnYxLkxpc3RUcmFuc2xhdGlvbnNSZXNwb25zZSIAEl4KEVJldmlld1RyYW5zbGF0aW9uEiIuaXNzaG8udjEuUmV2aWV3VHJhbnNsYXRpb25SZXF1ZXN0GiMuaXNzaG8udjEuUmV2aWV3VHJhbnNsYXRpb25SZXNwb25zZSIAQj5aPGdpdGh1Yi5jb20vc2hydWphbmNoZXJ1a3UvaXNzaG8vYmFja2VuZC9nZW4vaXNzaG8vdjE7aXNzaG92MWIGcHJvdG8z", [file_google_protobuf_timestamp, file_issho_v1_crews, file_issho_v1_events]);
+  fileDesc("Chlpc3Noby92MS9tb2RlcmF0aW9uLnByb3RvEghpc3Noby52MSIVChNHZXRNb2RlcmF0b3JSZXF1ZXN0IjYKFEdldE1vZGVyYXRvclJlc3BvbnNlEg8KB3VzZXJfaWQYASABKAkSDQoFZW1haWwYAiABKAkiUQoSTGlzdFJlcG9ydHNSZXF1ZXN0EiYKBnN0YXR1cxgBIAEoDjIWLmlzc2hvLnYxLlJlcG9ydFN0YXR1cxITCgtyZXBvcnRlZF9pZBgCIAEoCSJCChNMaXN0UmVwb3J0c1Jlc3BvbnNlEisKB3JlcG9ydHMYASADKAsyGi5pc3Noby52MS5Nb2RlcmF0aW9uUmVwb3J0Ip8EChBNb2RlcmF0aW9uUmVwb3J0EgoKAmlkGAEgASgJEhMKC3JlcG9ydGVyX2lkGAIgASgJEhUKDXJlcG9ydGVyX25hbWUYAyABKAkSEwoLcmVwb3J0ZWRfaWQYBCABKAkSFQoNcmVwb3J0ZWRfbmFtZRgFIAEoCRIeChZyZXBvcnRzX2Fib3V0X3JlcG9ydGVkGAYgASgFEiYKBnJlYXNvbhgHIAEoDjIWLmlzc2hvLnYxLlJlcG9ydFJlYXNvbhIPCgdkZXRhaWxzGAggASgJEiYKBnN0YXR1cxgJIAEoDjIWLmlzc2hvLnYxLlJlcG9ydFN0YXR1cxIMCgRub3RlGAogASgJEhAKCGV2ZW50X2lkGAsgASgJEhMKC2V2ZW50X3RpdGxlGAwgASgJEhIKCmV2ZW50X2RhdGUYDSABKAkSEwoLZXZlbnRfYmxvY2sYDiABKAkSDwoHY3Jld19pZBgPIAEoCRIRCgljcmV3X25hbWUYECABKAkSLgoKY3JlYXRlZF9hdBgRIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLgoKdXBkYXRlZF9hdBgSIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLwoLcmV2aWV3ZWRfYXQYEyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhMKC3Jldmlld2VkX2J5GBQgASgJIl8KFFJlc29sdmVSZXBvcnRSZXF1ZXN0EhEKCXJlcG9ydF9pZBgBIAEoCRImCgZzdGF0dXMYAiABKA4yFi5pc3Noby52MS5SZXBvcnRTdGF0dXMSDAoEbm90ZRgDIAEoCSIXChVSZXNvbHZlUmVwb3J0UmVzcG9uc2UiJAoQTGlzdEZsYWdzUmVxdWVzdBIQCghyZXNvbHZlZBgBIAEoCCI8ChFMaXN0RmxhZ3NSZXNwb25zZRInCgVmbGFncxgBIAMoCzIYLmlzc2hvLnYxLk1vZGVyYXRpb25GbGFnIqwCCg5Nb2RlcmF0aW9uRmxhZxIKCgJpZBgBIAEoAxIPCgd1c2VyX2lkGAIgASgJEhEKCXVzZXJfbmFtZRgDIAEoCRIgCgRraW5kGAQgASgOMhIuaXNzaG8udjEuRmxhZ0tpbmQSFAoMZGV0YWlsc19qc29uGAUgASgJEgwKBG5vdGUYBiABKAkSLgoKY3JlYXRlZF9hdBgHIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLgoKdXBkYXRlZF9hdBgIIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLwoLcmVzb2x2ZWRfYXQYCSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhMKC3Jlc29sdmVkX2J5GAogASgJIjMKElJlc29sdmVGbGFnUmVxdWVzdBIPCgdmbGFnX2lkGAEgASgDEgwKBG5vdGUYAiABKAkiFQoTUmVzb2x2ZUZsYWdSZXNwb25zZSI+ChVMaXN0Q3Jld0xlYXZlc1JlcXVlc3QSJQoGcmVhc29uGAEgASgOMhUuaXNzaG8udjEuTGVhdmVSZWFzb24iPQoWTGlzdENyZXdMZWF2ZXNSZXNwb25zZRIjCgZsZWF2ZXMYASADKAsyEy5pc3Noby52MS5DcmV3TGVhdmUi3AEKCUNyZXdMZWF2ZRIKCgJpZBgBIAEoAxIPCgdjcmV3X2lkGAIgASgJEhEKCWNyZXdfbmFtZRgDIAEoCRITCgtjcmV3X3N0YXR1cxgEIAEoCRIPCgd1c2VyX2lkGAUgASgJEhEKCXVzZXJfbmFtZRgGIAEoCRIlCgZyZWFzb24YByABKA4yFS5pc3Noby52MS5MZWF2ZVJlYXNvbhIPCgdkZXRhaWxzGAggASgJEi4KCmNyZWF0ZWRfYXQYCSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wIiEKH0xpc3RUcmFuc2xhdGlvbkxhbmd1YWdlc1JlcXVlc3QiVAogTGlzdFRyYW5zbGF0aW9uTGFuZ3VhZ2VzUmVzcG9uc2USMAoJbGFuZ3VhZ2VzGAEgAygLMh0uaXNzaG8udjEuVHJhbnNsYXRpb25MYW5ndWFnZSJGChNUcmFuc2xhdGlvbkxhbmd1YWdlEgwKBGxhbmcYASABKAkSDQoFdG90YWwYAiABKAUSEgoKdW5yZXZpZXdlZBgDIAEoBSJgChdMaXN0VHJhbnNsYXRpb25zUmVxdWVzdBIMCgRsYW5nGAEgASgJEhcKD3VucmV2aWV3ZWRfb25seRgCIAEoCBIOCgZzZWFyY2gYAyABKAkSDgoGb2Zmc2V0GAQgASgFIkcKGExpc3RUcmFuc2xhdGlvbnNSZXNwb25zZRIrCgx0cmFuc2xhdGlvbnMYASADKAsyFS5pc3Noby52MS5UcmFuc2xhdGlvbiLhAQoLVHJhbnNsYXRpb24SEwoLc291cmNlX2hhc2gYASABKAkSDAoEbGFuZxgCIAEoCRIOCgZzb3VyY2UYAyABKAkSDwoHY29udGV4dBgEIAEoCRIMCgR0ZXh0GAUgASgJEg0KBW1vZGVsGAYgASgJEhAKCHJldmlld2VkGAcgASgIEi8KC3Jldmlld2VkX2F0GAggASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIuCgpjcmVhdGVkX2F0GAkgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCJLChhSZXZpZXdUcmFuc2xhdGlvblJlcXVlc3QSEwoLc291cmNlX2hhc2gYASABKAkSDAoEbGFuZxgCIAEoCRIMCgR0ZXh0GAMgASgJIkcKGVJldmlld1RyYW5zbGF0aW9uUmVzcG9uc2USKgoLdHJhbnNsYXRpb24YASABKAsyFS5pc3Noby52MS5UcmFuc2xhdGlvbiIkChNTZWFyY2hQZW9wbGVSZXF1ZXN0Eg0KBXF1ZXJ5GAEgASgJIj8KFFNlYXJjaFBlb3BsZVJlc3BvbnNlEicKBnBlb3BsZRgBIAMoCzIXLmlzc2hvLnYxLlBlcnNvblN1bW1hcnkiUAoNUGVyc29uU3VtbWFyeRIPCgd1c2VyX2lkGAEgASgJEgwKBG5hbWUYAiABKAkSDQoFZW1haWwYAyABKAkSEQoJc3VzcGVuZGVkGAQgASgIIiMKEEdldFBlcnNvblJlcXVlc3QSDwoHdXNlcl9pZBgBIAEoCSI1ChFHZXRQZXJzb25SZXNwb25zZRIgCgZwZXJzb24YASABKAsyEC5pc3Noby52MS5QZXJzb24ihgMKBlBlcnNvbhIPCgd1c2VyX2lkGAEgASgJEgwKBG5hbWUYAiABKAkSDQoFZW1haWwYAyABKAkSLQoJam9pbmVkX2F0GAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIOCgZnZW5kZXIYBSABKAkSEgoKYmlydGhfeWVhchgGIAEoBRIRCglob21lX2FyZWEYByABKAkSDwoHY2l0eV9pZBgIIAEoCRIVCg1yZXBvcnRzX2Fib3V0GAkgASgFEhoKEm9wZW5fcmVwb3J0c19hYm91dBgKIAEoBRIUCgxyZXBvcnRzX21hZGUYCyABKAUSEQoJc3VzcGVuZGVkGAwgASgIEikKC3N1c3BlbnNpb25zGA0gAygLMhQuaXNzaG8udjEuU3VzcGVuc2lvbhInCgVmbGFncxgOIAMoCzIYLmlzc2hvLnYxLk1vZGVyYXRpb25GbGFnEicKB291dGluZ3MYDyADKAsyFi5pc3Noby52MS5QZXJzb25PdXRpbmciwQEKClN1c3BlbnNpb24SCgoCaWQYASABKAMSDgoGcmVhc29uGAIgASgJEhIKCmNyZWF0ZWRfYnkYAyABKAkSLgoKY3JlYXRlZF9hdBgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLQoJbGlmdGVkX2F0GAUgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIRCglsaWZ0ZWRfYnkYBiABKAkSEQoJbGlmdF9ub3RlGAcgASgJIrQBCgxQZXJzb25PdXRpbmcSEAoIZXZlbnRfaWQYASABKAkSDQoFdGl0bGUYAiABKAkSDAoEZGF0ZRgDIAEoCRINCgVibG9jaxgEIAEoCRIUCgxldmVudF9zdGF0dXMYBSABKAkSEAoIcmVzcG9uc2UYBiABKAkSEgoKY2hlY2tlZF9pbhgHIAEoCBIqCghmZWVkYmFjaxgIIAEoDjIYLmlzc2hvLnYxLk91dGluZ0ZlZWRiYWNrIjcKFFN1c3BlbmRQZXJzb25SZXF1ZXN0Eg8KB3VzZXJfaWQYASABKAkSDgoGcmVhc29uGAIgASgJIhcKFVN1c3BlbmRQZXJzb25SZXNwb25zZSI2ChVMaWZ0U3VzcGVuc2lvblJlcXVlc3QSDwoHdXNlcl9pZBgBIAEoCRIMCgRub3RlGAIgASgJIhgKFkxpZnRTdXNwZW5zaW9uUmVzcG9uc2UiFgoUTGlzdFN1c3BlbmRlZFJlcXVlc3QiQgoVTGlzdFN1c3BlbmRlZFJlc3BvbnNlEikKBnBlb3BsZRgBIAMoCzIZLmlzc2hvLnYxLlN1c3BlbmRlZFBlcnNvbiKBAQoPU3VzcGVuZGVkUGVyc29uEg8KB3VzZXJfaWQYASABKAkSDAoEbmFtZRgCIAEoCRIOCgZyZWFzb24YAyABKAkSKQoFc2luY2UYBCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhQKDHN1c3BlbmRlZF9ieRgFIAEoCSp+CgxSZXBvcnRTdGF0dXMSHQoZUkVQT1JUX1NUQVRVU19VTlNQRUNJRklFRBAAEhYKElJFUE9SVF9TVEFUVVNfT1BFThABEhoKFlJFUE9SVF9TVEFUVVNfQUNUSU9ORUQQAhIbChdSRVBPUlRfU1RBVFVTX0RJU01JU1NFRBADKkUKCEZsYWdLaW5kEhkKFUZMQUdfS0lORF9VTlNQRUNJRklFRBAAEh4KGkZMQUdfS0lORF9QSUNLX0dFTkRFUl9MRUFOEAEqcwoOT3V0aW5nRmVlZGJhY2sSHwobT1VUSU5HX0ZFRURCQUNLX1VOU1BFQ0lGSUVEEAASHQoZT1VUSU5HX0ZFRURCQUNLX1NBSURfV0VOVBABEiEKHU9VVElOR19GRUVEQkFDS19TQUlEX0RJRE5UX0dPEAIyvQkKEU1vZGVyYXRpb25TZXJ2aWNlEk8KDEdldE1vZGVyYXRvchIdLmlzc2hvLnYxLkdldE1vZGVyYXRvclJlcXVlc3QaHi5pc3Noby52MS5HZXRNb2RlcmF0b3JSZXNwb25zZSIAEkwKC0xpc3RSZXBvcnRzEhwuaXNzaG8udjEuTGlzdFJlcG9ydHNSZXF1ZXN0Gh0uaXNzaG8udjEuTGlzdFJlcG9ydHNSZXNwb25zZSIAElIKDVJlc29sdmVSZXBvcnQSHi5pc3Noby52MS5SZXNvbHZlUmVwb3J0UmVxdWVzdBofLmlzc2hvLnYxLlJlc29sdmVSZXBvcnRSZXNwb25zZSIAEkYKCUxpc3RGbGFncxIaLmlzc2hvLnYxLkxpc3RGbGFnc1JlcXVlc3QaGy5pc3Noby52MS5MaXN0RmxhZ3NSZXNwb25zZSIAEkwKC1Jlc29sdmVGbGFnEhwuaXNzaG8udjEuUmVzb2x2ZUZsYWdSZXF1ZXN0Gh0uaXNzaG8udjEuUmVzb2x2ZUZsYWdSZXNwb25zZSIAElUKDkxpc3RDcmV3TGVhdmVzEh8uaXNzaG8udjEuTGlzdENyZXdMZWF2ZXNSZXF1ZXN0GiAuaXNzaG8udjEuTGlzdENyZXdMZWF2ZXNSZXNwb25zZSIAEnMKGExpc3RUcmFuc2xhdGlvbkxhbmd1YWdlcxIpLmlzc2hvLnYxLkxpc3RUcmFuc2xhdGlvbkxhbmd1YWdlc1JlcXVlc3QaKi5pc3Noby52MS5MaXN0VHJhbnNsYXRpb25MYW5ndWFnZXNSZXNwb25zZSIAElsKEExpc3RUcmFuc2xhdGlvbnMSIS5pc3Noby52MS5MaXN0VHJhbnNsYXRpb25zUmVxdWVzdBoiLmlzc2hvLnYxLkxpc3RUcmFuc2xhdGlvbnNSZXNwb25zZSIAEl4KEVJldmlld1RyYW5zbGF0aW9uEiIuaXNzaG8udjEuUmV2aWV3VHJhbnNsYXRpb25SZXF1ZXN0GiMuaXNzaG8udjEuUmV2aWV3VHJhbnNsYXRpb25SZXNwb25zZSIAEk8KDFNlYXJjaFBlb3BsZRIdLmlzc2hvLnYxLlNlYXJjaFBlb3BsZVJlcXVlc3QaHi5pc3Noby52MS5TZWFyY2hQZW9wbGVSZXNwb25zZSIAEkYKCUdldFBlcnNvbhIaLmlzc2hvLnYxLkdldFBlcnNvblJlcXVlc3QaGy5pc3Noby52MS5HZXRQZXJzb25SZXNwb25zZSIAElIKDVN1c3BlbmRQZXJzb24SHi5pc3Noby52MS5TdXNwZW5kUGVyc29uUmVxdWVzdBofLmlzc2hvLnYxLlN1c3BlbmRQZXJzb25SZXNwb25zZSIAElUKDkxpZnRTdXNwZW5zaW9uEh8uaXNzaG8udjEuTGlmdFN1c3BlbnNpb25SZXF1ZXN0GiAuaXNzaG8udjEuTGlmdFN1c3BlbnNpb25SZXNwb25zZSIAElIKDUxpc3RTdXNwZW5kZWQSHi5pc3Noby52MS5MaXN0U3VzcGVuZGVkUmVxdWVzdBofLmlzc2hvLnYxLkxpc3RTdXNwZW5kZWRSZXNwb25zZSIAQj5aPGdpdGh1Yi5jb20vc2hydWphbmNoZXJ1a3UvaXNzaG8vYmFja2VuZC9nZW4vaXNzaG8vdjE7aXNzaG92MWIGcHJvdG8z", [file_google_protobuf_timestamp, file_issho_v1_crews, file_issho_v1_events]);
 
 /**
  * @generated from message issho.v1.GetModeratorRequest
@@ -729,6 +729,461 @@ export const ReviewTranslationResponseSchema: GenMessage<ReviewTranslationRespon
   messageDesc(file_issho_v1_moderation, 22);
 
 /**
+ * @generated from message issho.v1.SearchPeopleRequest
+ */
+export type SearchPeopleRequest = Message<"issho.v1.SearchPeopleRequest"> & {
+  /**
+   * At least 2 characters.
+   *
+   * @generated from field: string query = 1;
+   */
+  query: string;
+};
+
+/**
+ * Describes the message issho.v1.SearchPeopleRequest.
+ * Use `create(SearchPeopleRequestSchema)` to create a new message.
+ */
+export const SearchPeopleRequestSchema: GenMessage<SearchPeopleRequest> = /*@__PURE__*/
+  messageDesc(file_issho_v1_moderation, 23);
+
+/**
+ * @generated from message issho.v1.SearchPeopleResponse
+ */
+export type SearchPeopleResponse = Message<"issho.v1.SearchPeopleResponse"> & {
+  /**
+   * @generated from field: repeated issho.v1.PersonSummary people = 1;
+   */
+  people: PersonSummary[];
+};
+
+/**
+ * Describes the message issho.v1.SearchPeopleResponse.
+ * Use `create(SearchPeopleResponseSchema)` to create a new message.
+ */
+export const SearchPeopleResponseSchema: GenMessage<SearchPeopleResponse> = /*@__PURE__*/
+  messageDesc(file_issho_v1_moderation, 24);
+
+/**
+ * @generated from message issho.v1.PersonSummary
+ */
+export type PersonSummary = Message<"issho.v1.PersonSummary"> & {
+  /**
+   * @generated from field: string user_id = 1;
+   */
+  userId: string;
+
+  /**
+   * Empty if they haven't finished onboarding.
+   *
+   * @generated from field: string name = 2;
+   */
+  name: string;
+
+  /**
+   * @generated from field: string email = 3;
+   */
+  email: string;
+
+  /**
+   * @generated from field: bool suspended = 4;
+   */
+  suspended: boolean;
+};
+
+/**
+ * Describes the message issho.v1.PersonSummary.
+ * Use `create(PersonSummarySchema)` to create a new message.
+ */
+export const PersonSummarySchema: GenMessage<PersonSummary> = /*@__PURE__*/
+  messageDesc(file_issho_v1_moderation, 25);
+
+/**
+ * @generated from message issho.v1.GetPersonRequest
+ */
+export type GetPersonRequest = Message<"issho.v1.GetPersonRequest"> & {
+  /**
+   * @generated from field: string user_id = 1;
+   */
+  userId: string;
+};
+
+/**
+ * Describes the message issho.v1.GetPersonRequest.
+ * Use `create(GetPersonRequestSchema)` to create a new message.
+ */
+export const GetPersonRequestSchema: GenMessage<GetPersonRequest> = /*@__PURE__*/
+  messageDesc(file_issho_v1_moderation, 26);
+
+/**
+ * @generated from message issho.v1.GetPersonResponse
+ */
+export type GetPersonResponse = Message<"issho.v1.GetPersonResponse"> & {
+  /**
+   * @generated from field: issho.v1.Person person = 1;
+   */
+  person?: Person | undefined;
+};
+
+/**
+ * Describes the message issho.v1.GetPersonResponse.
+ * Use `create(GetPersonResponseSchema)` to create a new message.
+ */
+export const GetPersonResponseSchema: GenMessage<GetPersonResponse> = /*@__PURE__*/
+  messageDesc(file_issho_v1_moderation, 27);
+
+/**
+ * @generated from message issho.v1.Person
+ */
+export type Person = Message<"issho.v1.Person"> & {
+  /**
+   * @generated from field: string user_id = 1;
+   */
+  userId: string;
+
+  /**
+   * Empty if they haven't finished onboarding (no profile).
+   *
+   * @generated from field: string name = 2;
+   */
+  name: string;
+
+  /**
+   * @generated from field: string email = 3;
+   */
+  email: string;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp joined_at = 4;
+   */
+  joinedAt?: Timestamp | undefined;
+
+  /**
+   * woman, man, nonbinary or unspecified; empty without a profile.
+   *
+   * @generated from field: string gender = 5;
+   */
+  gender: string;
+
+  /**
+   * @generated from field: int32 birth_year = 6;
+   */
+  birthYear: number;
+
+  /**
+   * English name of their home area, and its city.
+   *
+   * @generated from field: string home_area = 7;
+   */
+  homeArea: string;
+
+  /**
+   * @generated from field: string city_id = 8;
+   */
+  cityId: string;
+
+  /**
+   * Reports about them (in all, and still open) and reports they made.
+   *
+   * @generated from field: int32 reports_about = 9;
+   */
+  reportsAbout: number;
+
+  /**
+   * @generated from field: int32 open_reports_about = 10;
+   */
+  openReportsAbout: number;
+
+  /**
+   * @generated from field: int32 reports_made = 11;
+   */
+  reportsMade: number;
+
+  /**
+   * @generated from field: bool suspended = 12;
+   */
+  suspended: boolean;
+
+  /**
+   * Newest first.
+   *
+   * @generated from field: repeated issho.v1.Suspension suspensions = 13;
+   */
+  suspensions: Suspension[];
+
+  /**
+   * Open ones first.
+   *
+   * @generated from field: repeated issho.v1.ModerationFlag flags = 14;
+   */
+  flags: ModerationFlag[];
+
+  /**
+   * Newest first, at most 50.
+   *
+   * @generated from field: repeated issho.v1.PersonOuting outings = 15;
+   */
+  outings: PersonOuting[];
+};
+
+/**
+ * Describes the message issho.v1.Person.
+ * Use `create(PersonSchema)` to create a new message.
+ */
+export const PersonSchema: GenMessage<Person> = /*@__PURE__*/
+  messageDesc(file_issho_v1_moderation, 28);
+
+/**
+ * @generated from message issho.v1.Suspension
+ */
+export type Suspension = Message<"issho.v1.Suspension"> & {
+  /**
+   * @generated from field: int64 id = 1;
+   */
+  id: bigint;
+
+  /**
+   * @generated from field: string reason = 2;
+   */
+  reason: string;
+
+  /**
+   * @generated from field: string created_by = 3;
+   */
+  createdBy: string;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp created_at = 4;
+   */
+  createdAt?: Timestamp | undefined;
+
+  /**
+   * Unset while it's in force.
+   *
+   * @generated from field: google.protobuf.Timestamp lifted_at = 5;
+   */
+  liftedAt?: Timestamp | undefined;
+
+  /**
+   * @generated from field: string lifted_by = 6;
+   */
+  liftedBy: string;
+
+  /**
+   * @generated from field: string lift_note = 7;
+   */
+  liftNote: string;
+};
+
+/**
+ * Describes the message issho.v1.Suspension.
+ * Use `create(SuspensionSchema)` to create a new message.
+ */
+export const SuspensionSchema: GenMessage<Suspension> = /*@__PURE__*/
+  messageDesc(file_issho_v1_moderation, 29);
+
+/**
+ * @generated from message issho.v1.PersonOuting
+ */
+export type PersonOuting = Message<"issho.v1.PersonOuting"> & {
+  /**
+   * @generated from field: string event_id = 1;
+   */
+  eventId: string;
+
+  /**
+   * @generated from field: string title = 2;
+   */
+  title: string;
+
+  /**
+   * YYYY-MM-DD in the city's time zone, and morning, afternoon or evening.
+   *
+   * @generated from field: string date = 3;
+   */
+  date: string;
+
+  /**
+   * @generated from field: string block = 4;
+   */
+  block: string;
+
+  /**
+   * scheduled, done or cancelled.
+   *
+   * @generated from field: string event_status = 5;
+   */
+  eventStatus: string;
+
+  /**
+   * invited, confirmed, declined or dropped (confirmed, then cancelled).
+   *
+   * @generated from field: string response = 6;
+   */
+  response: string;
+
+  /**
+   * @generated from field: bool checked_in = 7;
+   */
+  checkedIn: boolean;
+
+  /**
+   * Their feedback: SAID_WENT, SAID_DIDNT_GO, or UNSPECIFIED (none).
+   *
+   * @generated from field: issho.v1.OutingFeedback feedback = 8;
+   */
+  feedback: OutingFeedback;
+};
+
+/**
+ * Describes the message issho.v1.PersonOuting.
+ * Use `create(PersonOutingSchema)` to create a new message.
+ */
+export const PersonOutingSchema: GenMessage<PersonOuting> = /*@__PURE__*/
+  messageDesc(file_issho_v1_moderation, 30);
+
+/**
+ * @generated from message issho.v1.SuspendPersonRequest
+ */
+export type SuspendPersonRequest = Message<"issho.v1.SuspendPersonRequest"> & {
+  /**
+   * @generated from field: string user_id = 1;
+   */
+  userId: string;
+
+  /**
+   * Why, for moderators: 1-2000 characters. The person isn't shown it.
+   *
+   * @generated from field: string reason = 2;
+   */
+  reason: string;
+};
+
+/**
+ * Describes the message issho.v1.SuspendPersonRequest.
+ * Use `create(SuspendPersonRequestSchema)` to create a new message.
+ */
+export const SuspendPersonRequestSchema: GenMessage<SuspendPersonRequest> = /*@__PURE__*/
+  messageDesc(file_issho_v1_moderation, 31);
+
+/**
+ * @generated from message issho.v1.SuspendPersonResponse
+ */
+export type SuspendPersonResponse = Message<"issho.v1.SuspendPersonResponse"> & {
+};
+
+/**
+ * Describes the message issho.v1.SuspendPersonResponse.
+ * Use `create(SuspendPersonResponseSchema)` to create a new message.
+ */
+export const SuspendPersonResponseSchema: GenMessage<SuspendPersonResponse> = /*@__PURE__*/
+  messageDesc(file_issho_v1_moderation, 32);
+
+/**
+ * @generated from message issho.v1.LiftSuspensionRequest
+ */
+export type LiftSuspensionRequest = Message<"issho.v1.LiftSuspensionRequest"> & {
+  /**
+   * @generated from field: string user_id = 1;
+   */
+  userId: string;
+
+  /**
+   * Up to 2000 characters.
+   *
+   * @generated from field: string note = 2;
+   */
+  note: string;
+};
+
+/**
+ * Describes the message issho.v1.LiftSuspensionRequest.
+ * Use `create(LiftSuspensionRequestSchema)` to create a new message.
+ */
+export const LiftSuspensionRequestSchema: GenMessage<LiftSuspensionRequest> = /*@__PURE__*/
+  messageDesc(file_issho_v1_moderation, 33);
+
+/**
+ * @generated from message issho.v1.LiftSuspensionResponse
+ */
+export type LiftSuspensionResponse = Message<"issho.v1.LiftSuspensionResponse"> & {
+};
+
+/**
+ * Describes the message issho.v1.LiftSuspensionResponse.
+ * Use `create(LiftSuspensionResponseSchema)` to create a new message.
+ */
+export const LiftSuspensionResponseSchema: GenMessage<LiftSuspensionResponse> = /*@__PURE__*/
+  messageDesc(file_issho_v1_moderation, 34);
+
+/**
+ * @generated from message issho.v1.ListSuspendedRequest
+ */
+export type ListSuspendedRequest = Message<"issho.v1.ListSuspendedRequest"> & {
+};
+
+/**
+ * Describes the message issho.v1.ListSuspendedRequest.
+ * Use `create(ListSuspendedRequestSchema)` to create a new message.
+ */
+export const ListSuspendedRequestSchema: GenMessage<ListSuspendedRequest> = /*@__PURE__*/
+  messageDesc(file_issho_v1_moderation, 35);
+
+/**
+ * @generated from message issho.v1.ListSuspendedResponse
+ */
+export type ListSuspendedResponse = Message<"issho.v1.ListSuspendedResponse"> & {
+  /**
+   * @generated from field: repeated issho.v1.SuspendedPerson people = 1;
+   */
+  people: SuspendedPerson[];
+};
+
+/**
+ * Describes the message issho.v1.ListSuspendedResponse.
+ * Use `create(ListSuspendedResponseSchema)` to create a new message.
+ */
+export const ListSuspendedResponseSchema: GenMessage<ListSuspendedResponse> = /*@__PURE__*/
+  messageDesc(file_issho_v1_moderation, 36);
+
+/**
+ * @generated from message issho.v1.SuspendedPerson
+ */
+export type SuspendedPerson = Message<"issho.v1.SuspendedPerson"> & {
+  /**
+   * @generated from field: string user_id = 1;
+   */
+  userId: string;
+
+  /**
+   * @generated from field: string name = 2;
+   */
+  name: string;
+
+  /**
+   * @generated from field: string reason = 3;
+   */
+  reason: string;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp since = 4;
+   */
+  since?: Timestamp | undefined;
+
+  /**
+   * @generated from field: string suspended_by = 5;
+   */
+  suspendedBy: string;
+};
+
+/**
+ * Describes the message issho.v1.SuspendedPerson.
+ * Use `create(SuspendedPersonSchema)` to create a new message.
+ */
+export const SuspendedPersonSchema: GenMessage<SuspendedPerson> = /*@__PURE__*/
+  messageDesc(file_issho_v1_moderation, 37);
+
+/**
  * @generated from enum issho.v1.ReportStatus
  */
 export enum ReportStatus {
@@ -790,6 +1245,32 @@ export enum FlagKind {
  */
 export const FlagKindSchema: GenEnum<FlagKind> = /*@__PURE__*/
   enumDesc(file_issho_v1_moderation, 1);
+
+/**
+ * @generated from enum issho.v1.OutingFeedback
+ */
+export enum OutingFeedback {
+  /**
+   * @generated from enum value: OUTING_FEEDBACK_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: OUTING_FEEDBACK_SAID_WENT = 1;
+   */
+  SAID_WENT = 1,
+
+  /**
+   * @generated from enum value: OUTING_FEEDBACK_SAID_DIDNT_GO = 2;
+   */
+  SAID_DIDNT_GO = 2,
+}
+
+/**
+ * Describes the enum issho.v1.OutingFeedback.
+ */
+export const OutingFeedbackSchema: GenEnum<OutingFeedback> = /*@__PURE__*/
+  enumDesc(file_issho_v1_moderation, 2);
 
 /**
  * ModerationService: the moderation queue in the admin SPA. Reports about
@@ -902,6 +1383,68 @@ export const ModerationService: GenService<{
     methodKind: "unary";
     input: typeof ReviewTranslationRequestSchema;
     output: typeof ReviewTranslationResponseSchema;
+  },
+  /**
+   * SearchPeople finds people by name or email (contains, any case) or
+   * exact user id. At most 50.
+   *
+   * @generated from rpc issho.v1.ModerationService.SearchPeople
+   */
+  searchPeople: {
+    methodKind: "unary";
+    input: typeof SearchPeopleRequestSchema;
+    output: typeof SearchPeopleResponseSchema;
+  },
+  /**
+   * GetPerson returns what a moderator needs to decide about someone:
+   * who they are, report counts, flags, suspensions and recent outings.
+   * NOT_FOUND if there's no such account.
+   *
+   * @generated from rpc issho.v1.ModerationService.GetPerson
+   */
+  getPerson: {
+    methodKind: "unary";
+    input: typeof GetPersonRequestSchema;
+    output: typeof GetPersonResponseSchema;
+  },
+  /**
+   * SuspendPerson keeps someone out of Issho until it's lifted: the API
+   * refuses their calls (GetMe says they're suspended; signing out and
+   * deleting the account still work), the chat socket refuses them,
+   * matching leaves them out and they get no notifications. They're also
+   * taken out of their open signups, outings that haven't started, and
+   * crews. Suspending someone already suspended only repeats that
+   * removal. INVALID_ARGUMENT for the caller's own account.
+   *
+   * @generated from rpc issho.v1.ModerationService.SuspendPerson
+   */
+  suspendPerson: {
+    methodKind: "unary";
+    input: typeof SuspendPersonRequestSchema;
+    output: typeof SuspendPersonResponseSchema;
+  },
+  /**
+   * LiftSuspension ends someone's suspension. They can use Issho again,
+   * but aren't put back into what they were taken out of.
+   * FAILED_PRECONDITION if they aren't suspended.
+   *
+   * @generated from rpc issho.v1.ModerationService.LiftSuspension
+   */
+  liftSuspension: {
+    methodKind: "unary";
+    input: typeof LiftSuspensionRequestSchema;
+    output: typeof LiftSuspensionResponseSchema;
+  },
+  /**
+   * ListSuspended returns everyone suspended now, most recent first. At
+   * most 200.
+   *
+   * @generated from rpc issho.v1.ModerationService.ListSuspended
+   */
+  listSuspended: {
+    methodKind: "unary";
+    input: typeof ListSuspendedRequestSchema;
+    output: typeof ListSuspendedResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_issho_v1_moderation, 0);

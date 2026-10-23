@@ -620,6 +620,37 @@ func (q *Queries) ListUserCrews(ctx context.Context, userID uuid.UUID) ([]ListUs
 	return items, nil
 }
 
+const listUserOpenCrewMemberships = `-- name: ListUserOpenCrewMemberships :many
+select c.id
+from app.crew_members m
+join app.crews c on c.id = m.crew_id
+where m.user_id = $1
+  and ((m.response = 'accepted' and c.status in ('offered', 'active'))
+       or (m.response = 'offered' and c.status = 'offered'))
+order by c.id
+`
+
+// Crews a suspended person is in or offered (Service.RemoveFromUpcoming).
+func (q *Queries) ListUserOpenCrewMemberships(ctx context.Context, userID uuid.UUID) ([]uuid.UUID, error) {
+	rows, err := q.db.Query(ctx, listUserOpenCrewMemberships, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []uuid.UUID
+	for rows.Next() {
+		var id uuid.UUID
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const lockCrew = `-- name: LockCrew :one
 select status, offer_until from app.crews where id = $1 for update
 `
