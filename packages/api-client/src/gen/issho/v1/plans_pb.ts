@@ -14,7 +14,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file issho/v1/plans.proto.
  */
 export const file_issho_v1_plans: GenFile = /*@__PURE__*/
-  fileDesc("ChRpc3Noby92MS9wbGFucy5wcm90bxIIaXNzaG8udjEiEQoPTGlzdEZlZWRSZXF1ZXN0IjUKEExpc3RGZWVkUmVzcG9uc2USIQoFcGxhbnMYASADKAsyEi5pc3Noby52MS5GZWVkUGxhbiIhCg5HZXRQbGFuUmVxdWVzdBIPCgdwbGFuX2lkGAEgASgJIpABCg9HZXRQbGFuUmVzcG9uc2USIAoEcGxhbhgBIAEoCzISLmlzc2hvLnYxLkZlZWRQbGFuEiAKBnNpZ251cBgCIAEoCzIQLmlzc2hvLnYxLlNpZ251cBIhCgVzdGVwcxgDIAMoCzISLmlzc2hvLnYxLlBsYW5TdGVwEhYKDnJvdXRlX3BvbHlsaW5lGAQgASgJIsEBCghQbGFuU3RlcBITCgthY3Rpdml0eV9pZBgBIAEoCRISCgp2ZW51ZV9uYW1lGAIgASgJEhwKFHZlbnVlX3NlY29uZGFyeV9uYW1lGAMgASgJEhUKDXZlbnVlX2FkZHJlc3MYBCABKAkSFgoOdmVudWVfbWFwc191cmwYBSABKAkSFAoMd2Fsa19taW51dGVzGAYgASgFEgsKA2xhdBgHIAEoARILCgNsbmcYCCABKAESDwoHbWVldGluZxgJIAEoCCJCCg1TaWduVXBSZXF1ZXN0Eg8KB3BsYW5faWQYASABKAkSIAoGc2lnbnVwGAIgASgLMhAuaXNzaG8udjEuU2lnbnVwIjIKDlNpZ25VcFJlc3BvbnNlEiAKBHBsYW4YASABKAsyEi5pc3Noby52MS5GZWVkUGxhbiIiCg9XaXRoZHJhd1JlcXVlc3QSDwoHcGxhbl9pZBgBIAEoCSISChBXaXRoZHJhd1Jlc3BvbnNlItsDCghGZWVkUGxhbhIKCgJpZBgBIAEoCRIPCgdhcmVhX2lkGAIgASgJEhMKC2FjdGl2aXR5X2lkGAMgASgJEh0KFWZvbGxvd191cF9hY3Rpdml0eV9pZBgEIAEoCRIYChBwcmltYXJ5X2xhbmd1YWdlGAUgASgJEhoKEnNlY29uZGFyeV9sYW5ndWFnZRgGIAEoCRIPCgdzaWdudXBzGAcgASgFEiIKBWxldmVsGAggASgOMhMuaXNzaG8udjEuUGxhbkxldmVsEhYKDnRyYXZlbF9taW51dGVzGAkgASgFEhQKDHdpbmRvd19zdGFydBgKIAEoCRITCgt3aW5kb3dfZGF5cxgLIAEoBRIzCg9zaWdudXBfZGVhZGxpbmUYDCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhEKCXNpZ25lZF91cBgNIAEoCBINCgV0aXRsZRgOIAEoCRIXCg9zZWNvbmRhcnlfdGl0bGUYDyABKAkSMQoNY2xvc2VkX3JlYXNvbhgQIAEoDjIaLmlzc2hvLnYxLlBsYW5DbG9zZWRSZWFzb24SLQoJY2xvc2VkX2F0GBEgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCJlCgZTaWdudXASKwoHcGF0dGVybhgBIAMoCzIaLmlzc2hvLnYxLkF2YWlsYWJpbGl0eVNsb3QSLgoLdW5hdmFpbGFibGUYAiADKAsyGS5pc3Noby52MS5VbmF2YWlsYWJsZVRpbWUiQwoPVW5hdmFpbGFibGVUaW1lEgwKBGRhdGUYASABKAkSIgoFYmxvY2sYAiABKA4yEy5pc3Noby52MS5UaW1lQmxvY2sqlgEKEFBsYW5DbG9zZWRSZWFzb24SIgoeUExBTl9DTE9TRURfUkVBU09OX1VOU1BFQ0lGSUVEEAASHwobUExBTl9DTE9TRURfUkVBU09OX05PX0dST1VQEAESGwoXUExBTl9DTE9TRURfUkVBU09OX0RPTkUQAhIgChxQTEFOX0NMT1NFRF9SRUFTT05fV0lUSERSQVdOEAMqlgEKCVBsYW5MZXZlbBIaChZQTEFOX0xFVkVMX1VOU1BFQ0lGSUVEEAASGgoWUExBTl9MRVZFTF9OT1RfRk9SX1lPVRABEhIKDlBMQU5fTEVWRUxfTE9XEAISFAoQUExBTl9MRVZFTF9NQVlCRRADEhMKD1BMQU5fTEVWRUxfR09PRBAEEhIKDlBMQU5fTEVWRUxfVE9QEAUymAIKC1BsYW5TZXJ2aWNlEkMKCExpc3RGZWVkEhkuaXNzaG8udjEuTGlzdEZlZWRSZXF1ZXN0GhouaXNzaG8udjEuTGlzdEZlZWRSZXNwb25zZSIAEkAKB0dldFBsYW4SGC5pc3Noby52MS5HZXRQbGFuUmVxdWVzdBoZLmlzc2hvLnYxLkdldFBsYW5SZXNwb25zZSIAEj0KBlNpZ25VcBIXLmlzc2hvLnYxLlNpZ25VcFJlcXVlc3QaGC5pc3Noby52MS5TaWduVXBSZXNwb25zZSIAEkMKCFdpdGhkcmF3EhkuaXNzaG8udjEuV2l0aGRyYXdSZXF1ZXN0GhouaXNzaG8udjEuV2l0aGRyYXdSZXNwb25zZSIAQj5aPGdpdGh1Yi5jb20vc2hydWphbmNoZXJ1a3UvaXNzaG8vYmFja2VuZC9nZW4vaXNzaG8vdjE7aXNzaG92MWIGcHJvdG8z", [file_google_protobuf_timestamp, file_issho_v1_profile]);
+  fileDesc("ChRpc3Noby92MS9wbGFucy5wcm90bxIIaXNzaG8udjEiEQoPTGlzdEZlZWRSZXF1ZXN0IjUKEExpc3RGZWVkUmVzcG9uc2USIQoFcGxhbnMYASADKAsyEi5pc3Noby52MS5GZWVkUGxhbiIhCg5HZXRQbGFuUmVxdWVzdBIPCgdwbGFuX2lkGAEgASgJIrwBCg9HZXRQbGFuUmVzcG9uc2USIAoEcGxhbhgBIAEoCzISLmlzc2hvLnYxLkZlZWRQbGFuEiAKBnNpZ251cBgCIAEoCzIQLmlzc2hvLnYxLlNpZ251cBIhCgVzdGVwcxgDIAMoCzISLmlzc2hvLnYxLlBsYW5TdGVwEhYKDnJvdXRlX3BvbHlsaW5lGAQgASgJEg8KB3N1bW1hcnkYBSABKAkSGQoRc2Vjb25kYXJ5X3N1bW1hcnkYBiABKAkiiAIKCFBsYW5TdGVwEhMKC2FjdGl2aXR5X2lkGAEgASgJEhIKCnZlbnVlX25hbWUYAiABKAkSHAoUdmVudWVfc2Vjb25kYXJ5X25hbWUYAyABKAkSFQoNdmVudWVfYWRkcmVzcxgEIAEoCRIWCg52ZW51ZV9tYXBzX3VybBgFIAEoCRIUCgx3YWxrX21pbnV0ZXMYBiABKAUSCwoDbGF0GAcgASgBEgsKA2xuZxgIIAEoARIPCgdtZWV0aW5nGAkgASgIEg4KBmZpbmlzaBgKIAEoCBIPCgdtaW51dGVzGAsgASgFEgwKBG5vdGUYDCABKAkSFgoOc2Vjb25kYXJ5X25vdGUYDSABKAkiQgoNU2lnblVwUmVxdWVzdBIPCgdwbGFuX2lkGAEgASgJEiAKBnNpZ251cBgCIAEoCzIQLmlzc2hvLnYxLlNpZ251cCIyCg5TaWduVXBSZXNwb25zZRIgCgRwbGFuGAEgASgLMhIuaXNzaG8udjEuRmVlZFBsYW4iIgoPV2l0aGRyYXdSZXF1ZXN0Eg8KB3BsYW5faWQYASABKAkiEgoQV2l0aGRyYXdSZXNwb25zZSLbAwoIRmVlZFBsYW4SCgoCaWQYASABKAkSDwoHYXJlYV9pZBgCIAEoCRITCgthY3Rpdml0eV9pZBgDIAEoCRIdChVmb2xsb3dfdXBfYWN0aXZpdHlfaWQYBCABKAkSGAoQcHJpbWFyeV9sYW5ndWFnZRgFIAEoCRIaChJzZWNvbmRhcnlfbGFuZ3VhZ2UYBiABKAkSDwoHc2lnbnVwcxgHIAEoBRIiCgVsZXZlbBgIIAEoDjITLmlzc2hvLnYxLlBsYW5MZXZlbBIWCg50cmF2ZWxfbWludXRlcxgJIAEoBRIUCgx3aW5kb3dfc3RhcnQYCiABKAkSEwoLd2luZG93X2RheXMYCyABKAUSMwoPc2lnbnVwX2RlYWRsaW5lGAwgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIRCglzaWduZWRfdXAYDSABKAgSDQoFdGl0bGUYDiABKAkSFwoPc2Vjb25kYXJ5X3RpdGxlGA8gASgJEjEKDWNsb3NlZF9yZWFzb24YECABKA4yGi5pc3Noby52MS5QbGFuQ2xvc2VkUmVhc29uEi0KCWNsb3NlZF9hdBgRIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiZQoGU2lnbnVwEisKB3BhdHRlcm4YASADKAsyGi5pc3Noby52MS5BdmFpbGFiaWxpdHlTbG90Ei4KC3VuYXZhaWxhYmxlGAIgAygLMhkuaXNzaG8udjEuVW5hdmFpbGFibGVUaW1lIkMKD1VuYXZhaWxhYmxlVGltZRIMCgRkYXRlGAEgASgJEiIKBWJsb2NrGAIgASgOMhMuaXNzaG8udjEuVGltZUJsb2NrKpYBChBQbGFuQ2xvc2VkUmVhc29uEiIKHlBMQU5fQ0xPU0VEX1JFQVNPTl9VTlNQRUNJRklFRBAAEh8KG1BMQU5fQ0xPU0VEX1JFQVNPTl9OT19HUk9VUBABEhsKF1BMQU5fQ0xPU0VEX1JFQVNPTl9ET05FEAISIAocUExBTl9DTE9TRURfUkVBU09OX1dJVEhEUkFXThADKpYBCglQbGFuTGV2ZWwSGgoWUExBTl9MRVZFTF9VTlNQRUNJRklFRBAAEhoKFlBMQU5fTEVWRUxfTk9UX0ZPUl9ZT1UQARISCg5QTEFOX0xFVkVMX0xPVxACEhQKEFBMQU5fTEVWRUxfTUFZQkUQAxITCg9QTEFOX0xFVkVMX0dPT0QQBBISCg5QTEFOX0xFVkVMX1RPUBAFMpgCCgtQbGFuU2VydmljZRJDCghMaXN0RmVlZBIZLmlzc2hvLnYxLkxpc3RGZWVkUmVxdWVzdBoaLmlzc2hvLnYxLkxpc3RGZWVkUmVzcG9uc2UiABJACgdHZXRQbGFuEhguaXNzaG8udjEuR2V0UGxhblJlcXVlc3QaGS5pc3Noby52MS5HZXRQbGFuUmVzcG9uc2UiABI9CgZTaWduVXASFy5pc3Noby52MS5TaWduVXBSZXF1ZXN0GhguaXNzaG8udjEuU2lnblVwUmVzcG9uc2UiABJDCghXaXRoZHJhdxIZLmlzc2hvLnYxLldpdGhkcmF3UmVxdWVzdBoaLmlzc2hvLnYxLldpdGhkcmF3UmVzcG9uc2UiAEI+WjxnaXRodWIuY29tL3NocnVqYW5jaGVydWt1L2lzc2hvL2JhY2tlbmQvZ2VuL2lzc2hvL3YxO2lzc2hvdjFiBnByb3RvMw", [file_google_protobuf_timestamp, file_issho_v1_profile]);
 
 /**
  * @generated from message issho.v1.ListFeedRequest
@@ -84,20 +84,36 @@ export type GetPlanResponse = Message<"issho.v1.GetPlanResponse"> & {
 
   /**
    * What the outing is, in order: the activity, then any follow-up, each at
-   * its venue.
+   * its venue; or, for a walk, the meeting place, the stops on its theme and
+   * where it finishes.
    *
    * @generated from field: repeated issho.v1.PlanStep steps = 3;
    */
   steps: PlanStep[];
 
   /**
-   * The walking route from the first stop's venue to the second's, in
-   * Google's encoded polyline format (precision 5), for the plan's map; ""
-   * when there's no second venue or it isn't computed yet.
+   * The walking route through the stops' venues (for a walk, through every
+   * stop; otherwise from the first venue to the second), in Google's encoded
+   * polyline format (precision 5), for the plan's map; "" when there's no
+   * route or it isn't computed yet.
    *
    * @generated from field: string route_polyline = 4;
    */
   routePolyline: string;
+
+  /**
+   * What a walk is like, in a sentence or two, in the caller's primary and
+   * secondary display languages; "" for other plans. secondary_summary is
+   * "" when the same.
+   *
+   * @generated from field: string summary = 5;
+   */
+  summary: string;
+
+  /**
+   * @generated from field: string secondary_summary = 6;
+   */
+  secondarySummary: string;
 };
 
 /**
@@ -114,7 +130,8 @@ export const GetPlanResponseSchema: GenMessage<GetPlanResponse> = /*@__PURE__*/
  */
 export type PlanStep = Message<"issho.v1.PlanStep"> & {
   /**
-   * Activity id (CatalogService.ListActivities): what happens here.
+   * Activity id (CatalogService.ListActivities): what happens here. "" for
+   * the meeting point and a walk's stops, where the place is the stop.
    *
    * @generated from field: string activity_id = 1;
    */
@@ -175,11 +192,40 @@ export type PlanStep = Message<"issho.v1.PlanStep"> & {
 
   /**
    * The meeting point rather than an activity (activity_id ""): where a
-   * walk starts when its first activity has no venue.
+   * walk starts.
    *
    * @generated from field: bool meeting = 9;
    */
   meeting: boolean;
+
+  /**
+   * A walk's last stop: somewhere to sit and talk.
+   *
+   * @generated from field: bool finish = 10;
+   */
+  finish: boolean;
+
+  /**
+   * A walk's planned minutes at this stop; 0 for other plans.
+   *
+   * @generated from field: int32 minutes = 11;
+   */
+  minutes: number;
+
+  /**
+   * For a walk, why the stop is worth it and what to look at (for the
+   * meeting point, where exactly to gather), in the caller's primary and
+   * secondary display languages; "" for other plans. secondary_note is ""
+   * when the same.
+   *
+   * @generated from field: string note = 12;
+   */
+  note: string;
+
+  /**
+   * @generated from field: string secondary_note = 13;
+   */
+  secondaryNote: string;
 };
 
 /**

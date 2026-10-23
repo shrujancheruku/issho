@@ -53,17 +53,25 @@ message GetPlanResponse {
   // The caller's signup; unset when they haven't signed up.
   Signup signup = 2;
   // What the outing is, in order: the activity, then any follow-up, each at
-  // its venue.
+  // its venue; or, for a walk, the meeting place, the stops on its theme and
+  // where it finishes.
   repeated PlanStep steps = 3;
-  // The walking route from the first stop's venue to the second's, in
-  // Google's encoded polyline format (precision 5), for the plan's map; ""
-  // when there's no second venue or it isn't computed yet.
+  // The walking route through the stops' venues (for a walk, through every
+  // stop; otherwise from the first venue to the second), in Google's encoded
+  // polyline format (precision 5), for the plan's map; "" when there's no
+  // route or it isn't computed yet.
   string route_polyline = 4;
+  // What a walk is like, in a sentence or two, in the caller's primary and
+  // secondary display languages; "" for other plans. secondary_summary is
+  // "" when the same.
+  string summary = 5;
+  string secondary_summary = 6;
 }
 
 // One stop of a plan.
 message PlanStep {
-  // Activity id (CatalogService.ListActivities): what happens here.
+  // Activity id (CatalogService.ListActivities): what happens here. "" for
+  // the meeting point and a walk's stops, where the place is the stop.
   string activity_id = 1;
   // The venue's name from Google, in the caller's primary and secondary
   // display languages, fetched live (Maps terms: nothing but the place id is
@@ -85,8 +93,18 @@ message PlanStep {
   double lat = 7;
   double lng = 8;
   // The meeting point rather than an activity (activity_id ""): where a
-  // walk starts when its first activity has no venue.
+  // walk starts.
   bool meeting = 9;
+  // A walk's last stop: somewhere to sit and talk.
+  bool finish = 10;
+  // A walk's planned minutes at this stop; 0 for other plans.
+  int32 minutes = 11;
+  // For a walk, why the stop is worth it and what to look at (for the
+  // meeting point, where exactly to gather), in the caller's primary and
+  // secondary display languages; "" for other plans. secondary_note is ""
+  // when the same.
+  string note = 12;
+  string secondary_note = 13;
 }
 
 message SignUpRequest {

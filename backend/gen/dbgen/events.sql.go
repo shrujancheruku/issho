@@ -190,6 +190,7 @@ const listUserEvents = `-- name: ListUserEvents :many
 select e.id, e.date, e.block, e.starts_at, e.confirm_by, e.status,
        p.id as plan_id, p.city_id, p.area_id, p.activity_id, p.follow_up_id, p.primary_language,
        p.secondary_language, p.venue_place_id, p.follow_up_venue_place_id, p.route_polyline, p.route_seconds, p.meeting_place_id,
+       p.title, p.description, exists (select 1 from app.plan_stops st where st.plan_id = p.id) as walk,
        g.id as group_id, g.status as group_status, g.quorum, g.min_attendance, g.venue_place_id as group_venue_place_id,
        g.meeting_point, m.response, m.checked_in_at,
        (select count(*) from app.group_members c where c.group_id = g.id and c.response = 'confirmed')::int as confirmed
@@ -225,6 +226,9 @@ type ListUserEventsRow struct {
 	RoutePolyline        *string
 	RouteSeconds         *int32
 	MeetingPlaceID       *string
+	Title                []byte
+	Description          []byte
+	Walk                 bool
 	GroupID              uuid.UUID
 	GroupStatus          string
 	Quorum               int16
@@ -267,6 +271,9 @@ func (q *Queries) ListUserEvents(ctx context.Context, arg ListUserEventsParams) 
 			&i.RoutePolyline,
 			&i.RouteSeconds,
 			&i.MeetingPlaceID,
+			&i.Title,
+			&i.Description,
+			&i.Walk,
 			&i.GroupID,
 			&i.GroupStatus,
 			&i.Quorum,

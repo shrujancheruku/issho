@@ -6,6 +6,8 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"slices"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -18,7 +20,7 @@ func newTestClient(t *testing.T, h http.HandlerFunc) *Client {
 	srv := httptest.NewServer(h)
 	t.Cleanup(srv.Close)
 	c := New("test-key")
-	c.RoutesURL, c.PlacesURL, c.DetailsURL, c.DirectionsURL = srv.URL, srv.URL, srv.URL, srv.URL
+	c.RoutesURL, c.PlacesURL, c.DetailsURL, c.DirectionsURL, c.TextSearchURL = srv.URL, srv.URL, srv.URL, srv.URL, srv.URL
 	c.api.Backoff = time.Millisecond
 	return c
 }
@@ -286,5 +288,88 @@ func TestWalkingRoute(t *testing.T) {
 	none := newTestClient(t, func(w http.ResponseWriter, r *http.Request) { _, _ = w.Write([]byte(`{}`)) })
 	if _, err := none.WalkingRoute(context.Background(), "a", "b"); err == nil {
 		t.Error("no error without a route")
+	}
+}
+
+func TestWalkThrough(t *testing.T) {
+	var body map[string]any
+	var mask string
+	c := newTestClient(t, func(w http.ResponseWriter, r *http.Request) {
+		body = nil
+		_ = json.NewDecoder(r.Body).Decode(&body)
+		mask = r.Header.Get("X-Goog-FieldMask")
+		// Google walks the middle places in the order c, b.
+		_, _ = w.Write([]byte(`{"routes":[{"duration":"1500s","distanceMeters":2000,"polyline":{"encodedPolyline":"line"},
+			"legs":[{"duration":"300s","distanceMeters":400},{"duration":"600s","distanceMeters":800},{"duration":"600s","distanceMeters":800}],
+			"optimizedIntermediateWaypointIndex":[1,0]}]}`))
+	})
+	w, err := c.WalkThrough(context.Background(), []string{"a", "b", "c", "d"}, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if body["optimizeWaypointOrder"] != true || body["origin"].(map[string]any)["placeId"] != "a" ||
+		body["destination"].(map[string]any)["placeId"] != "d" || len(body["intermediates"].([]any)) != 2 {
+		t.Errorf("request %v", body)
+	}
+	if mask == "" || !strings.Contains(mask, "routes.legs.duration") || !strings.Contains(mask, "optimizedIntermediateWaypointIndex") {
+		t.Errorf("mask %q", mask)
+	}
+	if w.Polyline != "line" || w.Duration != 1500*time.Second || w.Meters != 2000 || len(w.Legs) != 3 ||
+		w.Legs[1].Duration != 600*time.Second || !slices.Equal(w.Order, []int{0, 2, 1, 3}) {
+		t.Errorf("walk = %+v", w)
+	}
+
+	// Without optimizing, the order is the request's and isn't asked for.
+	if _, err := c.WalkThrough(context.Background(), []string{"a", "b", "c", "d"}, false); err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := body["optimizeWaypointOrder"]; ok || strings.Contains(mask, "optimized") {
+		t.Errorf("unoptimized request %v, mask %q", body, mask)
+	}
+	if _, err := c.WalkThrough(context.Background(), []string{"a"}, false); err == nil {
+		t.Error("one place is not a walk")
+	}
+	short := newTestClient(t, func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(`{"routes":[{"duration":"60s","legs":[{"duration":"60s"}]}]}`))
+	})
+	if _, err := short.WalkThrough(context.Background(), []string{"a", "b", "c"}, false); err == nil {
+		t.Error("a missing leg must fail")
+	}
+}
+
+func TestFind(t *testing.T) {
+	var body map[string]any
+	c := newTestClient(t, func(w http.ResponseWriter, r *http.Request) {
+		_ = json.NewDecoder(r.Body).Decode(&body)
+		if m := r.Header.Get("X-Goog-FieldMask"); !strings.Contains(m, "displayName") || !strings.Contains(m, "businessStatus") {
+			t.Errorf("mask %q", m)
+		}
+		switch body["textQuery"] {
+		case "Kayaba Coffee, Yanaka":
+			_, _ = w.Write([]byte(`{"places":[{"id":"p1","displayName":{"text":"Kayaba Coffee"},"primaryType":"cafe","types":["cafe","food"],"location":{"latitude":35.72,"longitude":139.77},"businessStatus":"OPERATIONAL"}]}`))
+		case "Gone":
+			_, _ = w.Write([]byte(`{"places":[{"id":"p2","businessStatus":"CLOSED_PERMANENTLY"}]}`))
+		default:
+			_, _ = w.Write([]byte(`{}`))
+		}
+	})
+	ctx := context.Background()
+	near := maps.LatLng{Lat: 35.7, Lng: 139.7}
+	f, ok, err := c.Find(ctx, maps.FindRequest{Query: "Kayaba Coffee, Yanaka", Near: near, RadiusM: 3000})
+	if err != nil || !ok || f.ID != "p1" || f.Name != "Kayaba Coffee" || f.PrimaryType != "cafe" || f.Closed || f.Location.Lat != 35.72 {
+		t.Errorf("found %+v %v %v", f, ok, err)
+	}
+	bias := body["locationBias"].(map[string]any)["circle"].(map[string]any)
+	if bias["radius"] != 3000.0 || body["maxResultCount"] != 1.0 || body["languageCode"] != "en" {
+		t.Errorf("request %v", body)
+	}
+	if f, ok, _ := c.Find(ctx, maps.FindRequest{Query: "Gone", Near: near, RadiusM: 1}); !ok || !f.Closed {
+		t.Errorf("closed place = %+v", f)
+	}
+	if _, ok, err := c.Find(ctx, maps.FindRequest{Query: "Nowhere", Near: near, RadiusM: 1}); ok || err != nil {
+		t.Errorf("no match: %v %v", ok, err)
+	}
+	if _, _, err := c.Find(ctx, maps.FindRequest{Query: " "}); err == nil {
+		t.Error("an empty query must fail")
 	}
 }

@@ -13,6 +13,12 @@ type SuggestInput struct {
 	Activities []Activity // enabled and in season for the window
 	Venues     Venues
 	Open       []Plan // plans already open: not suggested again
+	// Skip are activities not to suggest in an area this time, in any
+	// language (a walk that couldn't be composed there): only Area and
+	// Activity are compared. Unlike Open they don't count towards the
+	// city's cap or the spacing between plans, so the next best plan takes
+	// their place.
+	Skip []Plan
 }
 
 // Suggestion is a plan worth opening for signups.
@@ -39,7 +45,9 @@ type Suggestion struct {
 //     concentrate on few enough plans to fill
 //
 // An activity can happen in an area when it has a venue there (or needs
-// only a meeting point). Demand adds up the pool's interest (cfg.PrefValues,
+// only a meeting point). A walk's venue categories, if any, only say the
+// area has places on its theme; whether a good walk exists there is decided
+// when it's composed, and a walk gets no follow-up. Demand adds up the pool's interest (cfg.PrefValues,
 // scaled down for people whose budget is below its cost), counting only
 // people whose profile availability includes a part of the day it suits.
 // Fewer than cfg.VenueChoice venues scale the score down. A plan needs an
@@ -54,6 +62,9 @@ func Suggest(in SuggestInput, cfg Config) []Suggestion {
 	var cands []Suggestion
 	for _, pool := range Pools(in.Users, in.Areas, in.Travel, cfg) {
 		for _, s := range rankActivities(pool, users, in.Activities, in.Venues, cfg) {
+			if slices.ContainsFunc(in.Skip, func(p Plan) bool { return p.Area == s.Area && p.Activity == s.Activity }) {
+				continue
+			}
 			if pool.Bilingual() {
 				s.Score *= cfg.BilingualWeight
 			}
@@ -136,7 +147,7 @@ func rankActivities(pool Pool, users map[UserID]*User, activities []Activity, ve
 			continue
 		}
 		mains = append(mains, s)
-		if a.Conversational && len(a.VenueCategories) > 0 && slices.Contains(cfg.FollowUpCategories, a.Category) {
+		if a.Conversational && !a.Walk && len(a.VenueCategories) > 0 && slices.Contains(cfg.FollowUpCategories, a.Category) {
 			followUps = append(followUps, s)
 		}
 	}
@@ -151,7 +162,7 @@ func rankActivities(pool Pool, users map[UserID]*User, activities []Activity, ve
 			Audience: m.audience,
 			Score:    m.demand * m.feasible,
 		}
-		if !m.act.Conversational {
+		if !m.act.Conversational && !m.act.Walk {
 			for _, f := range followUps {
 				if f.act.ID != m.act.ID {
 					s.FollowUp = f.act.ID

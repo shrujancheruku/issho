@@ -273,14 +273,21 @@ type GetPlanResponse struct {
 	// The caller's signup; unset when they haven't signed up.
 	Signup *Signup `protobuf:"bytes,2,opt,name=signup,proto3" json:"signup,omitempty"`
 	// What the outing is, in order: the activity, then any follow-up, each at
-	// its venue.
+	// its venue; or, for a walk, the meeting place, the stops on its theme and
+	// where it finishes.
 	Steps []*PlanStep `protobuf:"bytes,3,rep,name=steps,proto3" json:"steps,omitempty"`
-	// The walking route from the first stop's venue to the second's, in
-	// Google's encoded polyline format (precision 5), for the plan's map; ""
-	// when there's no second venue or it isn't computed yet.
+	// The walking route through the stops' venues (for a walk, through every
+	// stop; otherwise from the first venue to the second), in Google's encoded
+	// polyline format (precision 5), for the plan's map; "" when there's no
+	// route or it isn't computed yet.
 	RoutePolyline string `protobuf:"bytes,4,opt,name=route_polyline,json=routePolyline,proto3" json:"route_polyline,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	// What a walk is like, in a sentence or two, in the caller's primary and
+	// secondary display languages; "" for other plans. secondary_summary is
+	// "" when the same.
+	Summary          string `protobuf:"bytes,5,opt,name=summary,proto3" json:"summary,omitempty"`
+	SecondarySummary string `protobuf:"bytes,6,opt,name=secondary_summary,json=secondarySummary,proto3" json:"secondary_summary,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *GetPlanResponse) Reset() {
@@ -341,10 +348,25 @@ func (x *GetPlanResponse) GetRoutePolyline() string {
 	return ""
 }
 
+func (x *GetPlanResponse) GetSummary() string {
+	if x != nil {
+		return x.Summary
+	}
+	return ""
+}
+
+func (x *GetPlanResponse) GetSecondarySummary() string {
+	if x != nil {
+		return x.SecondarySummary
+	}
+	return ""
+}
+
 // One stop of a plan.
 type PlanStep struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Activity id (CatalogService.ListActivities): what happens here.
+	// Activity id (CatalogService.ListActivities): what happens here. "" for
+	// the meeting point and a walk's stops, where the place is the stop.
 	ActivityId string `protobuf:"bytes,1,opt,name=activity_id,json=activityId,proto3" json:"activity_id,omitempty"`
 	// The venue's name from Google, in the caller's primary and secondary
 	// display languages, fetched live (Maps terms: nothing but the place id is
@@ -366,8 +388,18 @@ type PlanStep struct {
 	Lat float64 `protobuf:"fixed64,7,opt,name=lat,proto3" json:"lat,omitempty"`
 	Lng float64 `protobuf:"fixed64,8,opt,name=lng,proto3" json:"lng,omitempty"`
 	// The meeting point rather than an activity (activity_id ""): where a
-	// walk starts when its first activity has no venue.
-	Meeting       bool `protobuf:"varint,9,opt,name=meeting,proto3" json:"meeting,omitempty"`
+	// walk starts.
+	Meeting bool `protobuf:"varint,9,opt,name=meeting,proto3" json:"meeting,omitempty"`
+	// A walk's last stop: somewhere to sit and talk.
+	Finish bool `protobuf:"varint,10,opt,name=finish,proto3" json:"finish,omitempty"`
+	// A walk's planned minutes at this stop; 0 for other plans.
+	Minutes int32 `protobuf:"varint,11,opt,name=minutes,proto3" json:"minutes,omitempty"`
+	// For a walk, why the stop is worth it and what to look at (for the
+	// meeting point, where exactly to gather), in the caller's primary and
+	// secondary display languages; "" for other plans. secondary_note is ""
+	// when the same.
+	Note          string `protobuf:"bytes,12,opt,name=note,proto3" json:"note,omitempty"`
+	SecondaryNote string `protobuf:"bytes,13,opt,name=secondary_note,json=secondaryNote,proto3" json:"secondary_note,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -463,6 +495,34 @@ func (x *PlanStep) GetMeeting() bool {
 		return x.Meeting
 	}
 	return false
+}
+
+func (x *PlanStep) GetFinish() bool {
+	if x != nil {
+		return x.Finish
+	}
+	return false
+}
+
+func (x *PlanStep) GetMinutes() int32 {
+	if x != nil {
+		return x.Minutes
+	}
+	return 0
+}
+
+func (x *PlanStep) GetNote() string {
+	if x != nil {
+		return x.Note
+	}
+	return ""
+}
+
+func (x *PlanStep) GetSecondaryNote() string {
+	if x != nil {
+		return x.SecondaryNote
+	}
+	return ""
 }
 
 type SignUpRequest struct {
@@ -952,12 +1012,14 @@ const file_issho_v1_plans_proto_rawDesc = "" +
 	"\x10ListFeedResponse\x12(\n" +
 	"\x05plans\x18\x01 \x03(\v2\x12.issho.v1.FeedPlanR\x05plans\")\n" +
 	"\x0eGetPlanRequest\x12\x17\n" +
-	"\aplan_id\x18\x01 \x01(\tR\x06planId\"\xb4\x01\n" +
+	"\aplan_id\x18\x01 \x01(\tR\x06planId\"\xfb\x01\n" +
 	"\x0fGetPlanResponse\x12&\n" +
 	"\x04plan\x18\x01 \x01(\v2\x12.issho.v1.FeedPlanR\x04plan\x12(\n" +
 	"\x06signup\x18\x02 \x01(\v2\x10.issho.v1.SignupR\x06signup\x12(\n" +
 	"\x05steps\x18\x03 \x03(\v2\x12.issho.v1.PlanStepR\x05steps\x12%\n" +
-	"\x0eroute_polyline\x18\x04 \x01(\tR\rroutePolyline\"\xa8\x02\n" +
+	"\x0eroute_polyline\x18\x04 \x01(\tR\rroutePolyline\x12\x18\n" +
+	"\asummary\x18\x05 \x01(\tR\asummary\x12+\n" +
+	"\x11secondary_summary\x18\x06 \x01(\tR\x10secondarySummary\"\x95\x03\n" +
 	"\bPlanStep\x12\x1f\n" +
 	"\vactivity_id\x18\x01 \x01(\tR\n" +
 	"activityId\x12\x1d\n" +
@@ -969,7 +1031,12 @@ const file_issho_v1_plans_proto_rawDesc = "" +
 	"\fwalk_minutes\x18\x06 \x01(\x05R\vwalkMinutes\x12\x10\n" +
 	"\x03lat\x18\a \x01(\x01R\x03lat\x12\x10\n" +
 	"\x03lng\x18\b \x01(\x01R\x03lng\x12\x18\n" +
-	"\ameeting\x18\t \x01(\bR\ameeting\"R\n" +
+	"\ameeting\x18\t \x01(\bR\ameeting\x12\x16\n" +
+	"\x06finish\x18\n" +
+	" \x01(\bR\x06finish\x12\x18\n" +
+	"\aminutes\x18\v \x01(\x05R\aminutes\x12\x12\n" +
+	"\x04note\x18\f \x01(\tR\x04note\x12%\n" +
+	"\x0esecondary_note\x18\r \x01(\tR\rsecondaryNote\"R\n" +
 	"\rSignUpRequest\x12\x17\n" +
 	"\aplan_id\x18\x01 \x01(\tR\x06planId\x12(\n" +
 	"\x06signup\x18\x02 \x01(\v2\x10.issho.v1.SignupR\x06signup\"8\n" +

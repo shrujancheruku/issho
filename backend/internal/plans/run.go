@@ -15,6 +15,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	"github.com/shrujancheruku/issho/backend/internal/maps"
 	"github.com/shrujancheruku/issho/backend/internal/matching"
+	"github.com/shrujancheruku/issho/backend/internal/walks"
 )
 
 // Timing sets when a round can happen. Dates are the city's local dates.
@@ -126,6 +127,12 @@ type Runner struct {
 	// Places finds meeting places for plans that start without a venue;
 	// nil leaves them without (no Maps key).
 	Places maps.PlaceSearcher
+	// Walks composes walking plans; nil opens none (no Gemini or Maps key):
+	// a walk is only worth opening when it's composed.
+	Walks *walks.Composer
+	// WalkRoutes keeps composed walks' routes within the Maps caching
+	// terms; nil clears them without recomputing (no Maps key).
+	WalkRoutes maps.WalkRouter
 }
 
 // When venues must be open, from an event's start. Activities have no
@@ -152,42 +159,54 @@ func (r *Runner) checkVenues(ctx context.Context, p Open, start time.Time, cache
 	if r.Hours == nil {
 		return venuesOK
 	}
-	check := func(venue string, offsets []time.Duration) venueProblem {
-		if venue == "" {
-			return venuesOK
-		}
-		h, seen := cache[venue]
-		if !seen {
-			got, err := r.Hours.Hours(ctx, venue)
-			if err != nil {
-				r.Log.Warn("venue hours", "plan", p.ID, "place", venue, "err", err)
-			} else {
-				h = &got
-			}
-			cache[venue] = h
-		}
-		if h == nil {
-			return venuesOK
-		}
-		if h.Closed {
-			if h.PermanentlyClosed {
-				if err := dbgen.New(r.DB).RejectVenue(ctx, venue); err != nil {
-					r.Log.Warn("reject closed venue", "place", venue, "err", err)
-				}
-			}
-			return venueGone
-		}
-		for _, o := range offsets {
-			if !h.OpenAt(start.Add(o)) {
-				return venueClosedAt
-			}
-		}
-		return venuesOK
+	if p.Walk {
+		return r.checkWalk(ctx, p, start, cache)
 	}
-	if v := check(p.Venue, activityOpen); v != venuesOK {
+	at := func(offsets []time.Duration) []time.Time {
+		var out []time.Time
+		for _, o := range offsets {
+			out = append(out, start.Add(o))
+		}
+		return out
+	}
+	if v := r.checkPlace(ctx, p, p.Venue, at(activityOpen), cache); v != venuesOK {
 		return v
 	}
-	return check(p.FollowUpVenue, followUpOpen)
+	return r.checkPlace(ctx, p, p.FollowUpVenue, at(followUpOpen), cache)
+}
+
+// checkPlace says whether a venue ("" = none) is open at every given time.
+func (r *Runner) checkPlace(ctx context.Context, p Open, venue string, times []time.Time, cache map[string]*maps.Hours) venueProblem {
+	if venue == "" {
+		return venuesOK
+	}
+	h, seen := cache[venue]
+	if !seen {
+		got, err := r.Hours.Hours(ctx, venue)
+		if err != nil {
+			r.Log.Warn("venue hours", "plan", p.ID, "place", venue, "err", err)
+		} else {
+			h = &got
+		}
+		cache[venue] = h
+	}
+	if h == nil {
+		return venuesOK
+	}
+	if h.Closed {
+		if h.PermanentlyClosed {
+			if err := dbgen.New(r.DB).RejectVenue(ctx, venue); err != nil {
+				r.Log.Warn("reject closed venue", "place", venue, "err", err)
+			}
+		}
+		return venueGone
+	}
+	for _, t := range times {
+		if !h.OpenAt(t) {
+			return venueClosedAt
+		}
+	}
+	return venuesOK
 }
 
 // Suggest opens new plans in a city, up to its cap (matching.Suggest),
@@ -229,17 +248,7 @@ func (r *Runner) Suggest(ctx context.Context, cityID string, now time.Time) (int
 			FollowUp: matching.ActivityID(deref(f.FollowUpID)), Primary: f.PrimaryLanguage, Secondary: deref(f.SecondaryLanguage),
 		})
 	}
-	suggestions := matching.Suggest(in, c.Config)
-	acts := make(map[matching.ActivityID]*matching.Activity, len(c.Activities))
-	for i := range c.Activities {
-		acts[c.Activities[i].ID] = &c.Activities[i]
-	}
-	for _, s := range suggestions {
-		if _, err := Create(ctx, q, cityID, s, w, acts); err != nil {
-			return 0, fmt.Errorf("open plan %s in %s: %w", s.Activity, s.Area, err)
-		}
-	}
-	return len(suggestions), nil
+	return r.suggest(ctx, q, c, in, w, now)
 }
 
 // ScheduleReport counts what a scheduling pass did.

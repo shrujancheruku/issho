@@ -88,17 +88,22 @@ var (
 type EventItem struct {
 	ID, PlanID, GroupID uuid.UUID
 	matching.Plan
-	Venue, FollowUpVenue  string
-	Route                 *Route // the plan's; nil when a group meets elsewhere
-	MeetingPlace          string // a walk's meeting place (Google place id), or ""
-	Title, SecondaryTitle string
-	Date                  time.Time // local date in the city, as midnight UTC
-	Block                 matching.Block
-	StartsAt, ConfirmBy   time.Time // StartsAt zero = not set
-	Status, GroupStatus   string
-	Response              string
-	Confirmed             int // people who confirmed in the caller's group
-	Quorum, MinAttendance int
+	Venue, FollowUpVenue string
+	Route                *Route // the plan's; nil when a group meets elsewhere
+	MeetingPlace         string // a walk's meeting place (Google place id), or ""
+	// Walk is a composed walk, with its title and summary as stored.
+	Walk                   bool
+	WalkTitle, WalkSummary []byte
+	Title, SecondaryTitle  string
+	// A walk's summary; set only for one event (Event).
+	Summary, SecondarySummary string
+	Date                      time.Time // local date in the city, as midnight UTC
+	Block                     matching.Block
+	StartsAt, ConfirmBy       time.Time // StartsAt zero = not set
+	Status, GroupStatus       string
+	Response                  string
+	Confirmed                 int // people who confirmed in the caller's group
+	Quorum, MinAttendance     int
 	// MeetingPoint is the exact place to meet, in the caller's language,
 	// once revealed (RevealAt) to someone who confirmed; "" otherwise.
 	MeetingPoint string
@@ -136,10 +141,10 @@ func (s *Service) events(ctx context.Context, q *dbgen.Queries, userID uuid.UUID
 		return nil, caller, err
 	}
 	items := make([]EventItem, len(rows))
-	plans := make([]matching.OpenPlan, len(rows))
+	plans := make([]titled, len(rows))
 	for i, r := range rows {
 		items[i] = eventFromRow(r)
-		plans[i] = matching.OpenPlan{Plan: items[i].Plan}
+		plans[i] = titled{items[i].Plan, items[i].WalkTitle}
 	}
 	// Titles come from the caller's city: someone who moved still sees their
 	// old events, so use each event's own city.
@@ -148,7 +153,7 @@ func (s *Service) events(ctx context.Context, q *dbgen.Queries, userID uuid.UUID
 		byCity[r.CityID] = append(byCity[r.CityID], i)
 	}
 	for city, idx := range byCity {
-		ps := make([]matching.OpenPlan, len(idx))
+		ps := make([]titled, len(idx))
 		for j, i := range idx {
 			ps[j] = plans[i]
 		}
@@ -177,7 +182,15 @@ func (s *Service) Event(ctx context.Context, userID, eventID uuid.UUID, now time
 			continue
 		}
 		it.reveal(caller, now)
-		steps := s.steps(ctx, it.Plan, it.Venue, it.FollowUpVenue, it.MeetingPlace, it.Route, caller)
+		var steps []Step
+		if it.Walk {
+			it.Summary, it.SecondarySummary = s.text(ctx, it.WalkSummary, summaryContext, caller)
+			if steps, err = s.walkSteps(ctx, q, it.PlanID, caller); err != nil {
+				return EventItem{}, nil, nil, err
+			}
+		} else {
+			steps = s.steps(ctx, it.Plan, it.Venue, it.FollowUpVenue, it.MeetingPlace, it.Route, caller)
+		}
 		var names []string
 		// Only people who are going see who else is (no profile browsing).
 		if it.Response == Confirmed {
@@ -199,6 +212,7 @@ func eventFromRow(r dbgen.ListUserEventsRow) EventItem {
 		},
 		Venue: deref(r.VenuePlaceID), FollowUpVenue: deref(r.FollowUpVenuePlaceID),
 		Route: routeFrom(r.RoutePolyline, r.RouteSeconds), MeetingPlace: deref(r.MeetingPlaceID),
+		Walk: r.Walk, WalkTitle: r.Title, WalkSummary: r.Description,
 		Date: r.Date.Time, Block: matching.Block(r.Block),
 		StartsAt: r.StartsAt.Time, ConfirmBy: r.ConfirmBy.Time,
 		Status: r.Status, GroupStatus: r.GroupStatus, Response: r.Response,

@@ -644,8 +644,10 @@ closed_reason set; older or other cities&#39; ones are NOT_FOUND.
 | ----- | ---- | ----- | ----------- |
 | plan | [FeedPlan](#issho-v1-FeedPlan) |  |  |
 | signup | [Signup](#issho-v1-Signup) |  | The caller&#39;s signup; unset when they haven&#39;t signed up. |
-| steps | [PlanStep](#issho-v1-PlanStep) | repeated | What the outing is, in order: the activity, then any follow-up, each at its venue. |
-| route_polyline | [string](#string) |  | The walking route from the first stop&#39;s venue to the second&#39;s, in Google&#39;s encoded polyline format (precision 5), for the plan&#39;s map; &#34;&#34; when there&#39;s no second venue or it isn&#39;t computed yet. |
+| steps | [PlanStep](#issho-v1-PlanStep) | repeated | What the outing is, in order: the activity, then any follow-up, each at its venue; or, for a walk, the meeting place, the stops on its theme and where it finishes. |
+| route_polyline | [string](#string) |  | The walking route through the stops&#39; venues (for a walk, through every stop; otherwise from the first venue to the second), in Google&#39;s encoded polyline format (precision 5), for the plan&#39;s map; &#34;&#34; when there&#39;s no route or it isn&#39;t computed yet. |
+| summary | [string](#string) |  | What a walk is like, in a sentence or two, in the caller&#39;s primary and secondary display languages; &#34;&#34; for other plans. secondary_summary is &#34;&#34; when the same. |
+| secondary_summary | [string](#string) |  |  |
 
 
 
@@ -685,7 +687,7 @@ One stop of a plan.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| activity_id | [string](#string) |  | Activity id (CatalogService.ListActivities): what happens here. |
+| activity_id | [string](#string) |  | Activity id (CatalogService.ListActivities): what happens here. &#34;&#34; for the meeting point and a walk&#39;s stops, where the place is the stop. |
 | venue_name | [string](#string) |  | The venue&#39;s name from Google, in the caller&#39;s primary and secondary display languages, fetched live (Maps terms: nothing but the place id is stored). Empty when the activity needs only a meeting point, no venue was found, or the server has no GOOGLE_MAPS_API_KEY. |
 | venue_secondary_name | [string](#string) |  | Empty when the same as venue_name. |
 | venue_address | [string](#string) |  | Short address in the primary language. |
@@ -693,7 +695,11 @@ One stop of a plan.
 | walk_minutes | [int32](#int32) |  | Walk from the previous stop&#39;s venue, in minutes: Google&#39;s walking time when the route is known (GetPlanResponse.route_polyline), otherwise an estimate; 0 for the first stop or when either venue is unknown. |
 | lat | [double](#double) |  | The venue&#39;s location (WGS 84), live from Google like its name, for the plan&#39;s map; both 0 when there&#39;s no venue. |
 | lng | [double](#double) |  |  |
-| meeting | [bool](#bool) |  | The meeting point rather than an activity (activity_id &#34;&#34;): where a walk starts when its first activity has no venue. |
+| meeting | [bool](#bool) |  | The meeting point rather than an activity (activity_id &#34;&#34;): where a walk starts. |
+| finish | [bool](#bool) |  | A walk&#39;s last stop: somewhere to sit and talk. |
+| minutes | [int32](#int32) |  | A walk&#39;s planned minutes at this stop; 0 for other plans. |
+| note | [string](#string) |  | For a walk, why the stop is worth it and what to look at (for the meeting point, where exactly to gather), in the caller&#39;s primary and secondary display languages; &#34;&#34; for other plans. secondary_note is &#34;&#34; when the same. |
+| secondary_note | [string](#string) |  |  |
 
 
 
@@ -933,6 +939,8 @@ One message in a group chat.
 | steps | [PlanStep](#issho-v1-PlanStep) | repeated | As in GetPlanResponse.steps; the caller&#39;s group may meet at a different venue from the plan&#39;s. |
 | attendees | [string](#string) | repeated | First names of the people confirmed in the caller&#39;s group, including the caller. Empty unless the caller confirmed (no profile browsing). |
 | route_polyline | [string](#string) |  | As GetPlanResponse.route_polyline; &#34;&#34; when the caller&#39;s group meets somewhere other than the plan&#39;s venue. |
+| summary | [string](#string) |  | As GetPlanResponse.summary. |
+| secondary_summary | [string](#string) |  |  |
 
 
 

@@ -41,6 +41,9 @@ update app.activities set venue_categories = @venue_categories where id = @id;
 -- name: SetActivityBlocks :exec
 update app.activities set blocks = @blocks where id = @id;
 
+-- name: SetActivityWalkTheme :exec
+update app.activities set walk_theme = sqlc.narg(walk_theme) where id = @id;
+
 -- Moves preferences for retired activities to the one that replaces them.
 -- Someone who rated several of them keeps their strongest interest.
 -- name: MergeActivityPrefs :exec

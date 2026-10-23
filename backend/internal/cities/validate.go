@@ -102,6 +102,10 @@ func ValidateCatalog(cats []VenueCategory, acts []Activity) error {
 			}
 			seenBlock[b] = true
 		}
+		// The theme goes into the model's prompt: keep it a short description.
+		if len(a.WalkTheme) > 300 || strings.TrimSpace(a.WalkTheme) != a.WalkTheme {
+			bad("activity %s: walk_theme must be trimmed and at most 300 bytes", a.ID)
+		}
 	}
 	return errors.Join(errs...)
 }

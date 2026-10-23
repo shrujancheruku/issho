@@ -14,7 +14,9 @@ import type { usePlanNames } from "./names";
  * The plan's stops in order, as a timeline: a dot per stop on a vertical
  * line, with the walk between them on the line. Each stop is the activity,
  * then the venue (Google's name in both display languages, fetched live),
- * its address and a link to it in Google Maps.
+ * its address and a link to it in Google Maps. A walk's stops have no
+ * activity: the place is the heading, followed by the time there and a
+ * note on why it's worth the stop.
  */
 /** `closed` leaves out what only matters for a plan still to happen. */
 export function Timeline({
@@ -40,7 +42,30 @@ export function Timeline({
           showing === "secondary" && step.venueSecondaryName
             ? [step.venueSecondaryName, step.venueName]
             : [step.venueName, step.venueSecondaryName];
+        const note =
+          showing === "secondary" && step.secondaryNote
+            ? step.secondaryNote
+            : step.note;
+        // What happens here; a walk's stop is just its place.
+        const label = step.meeting
+          ? t("plan.meetHere")
+          : step.finish
+            ? t("plan.finishHere")
+            : step.activityId
+              ? withoutExamples(activity.name)
+              : "";
         const next = steps[i + 1];
+        // A walk's time and note, shown even if its place couldn't be fetched.
+        const details = (
+          <>
+            {step.minutes > 0 && (
+              <ThemedText type="small" themeColor="textSecondary">
+                {t("plan.stay", { minutes: step.minutes })}
+              </ThemedText>
+            )}
+            {!!note && <ThemedText style={styles.note}>{note}</ThemedText>}
+          </>
+        );
         return (
           <View key={i} style={styles.stop}>
             <View style={styles.rail}>
@@ -55,14 +80,17 @@ export function Timeline({
               )}
             </View>
             <View style={[styles.body, !last && styles.bodyGap]}>
-              <ThemedText type="smallBold" style={styles.activity}>
-                {step.meeting
-                  ? t("plan.meetHere")
-                  : withoutExamples(activity.name)}
-              </ThemedText>
+              {!!label && (
+                <ThemedText type="smallBold" style={styles.activity}>
+                  {label}
+                </ThemedText>
+              )}
               {venue ? (
                 <>
-                  <ThemedText>
+                  <ThemedText
+                    type={label ? "default" : "smallBold"}
+                    style={!label && styles.activity}
+                  >
                     {venue}
                     {!!venueOther && (
                       <ThemedText themeColor="textSecondary">
@@ -76,6 +104,7 @@ export function Timeline({
                       {step.venueAddress}
                     </ThemedText>
                   )}
+                  {details}
                   {!!step.venueMapsUrl && (
                     <Pressable
                       accessibilityRole="link"
@@ -88,6 +117,8 @@ export function Timeline({
                     </Pressable>
                   )}
                 </>
+              ) : note ? (
+                details
               ) : (
                 i === 0 &&
                 !closed && (
@@ -126,5 +157,6 @@ const styles = StyleSheet.create({
   bodyGap: { paddingBottom: Spacing.four },
   activity: { fontSize: 16, lineHeight: 22 },
   link: { color: Brand.red, marginTop: Spacing.half },
+  note: { marginTop: Spacing.one },
   walk: { marginTop: Spacing.three, fontStyle: "italic" },
 });

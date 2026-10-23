@@ -67,6 +67,20 @@ func (q *Queries) SetActivityVenueCategories(ctx context.Context, arg SetActivit
 	return err
 }
 
+const setActivityWalkTheme = `-- name: SetActivityWalkTheme :exec
+update app.activities set walk_theme = $1 where id = $2
+`
+
+type SetActivityWalkThemeParams struct {
+	WalkTheme *string
+	ID        string
+}
+
+func (q *Queries) SetActivityWalkTheme(ctx context.Context, arg SetActivityWalkThemeParams) error {
+	_, err := q.db.Exec(ctx, setActivityWalkTheme, arg.WalkTheme, arg.ID)
+	return err
+}
+
 const upsertActivity = `-- name: UpsertActivity :exec
 insert into app.activities (id, name, category, indoor, energy, cost_level, conversational,
                             skill_dependent, min_group_size, max_group_size)

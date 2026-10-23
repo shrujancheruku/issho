@@ -28,9 +28,12 @@ Load with `make seed` (everything) or `cd backend && go run ./cmd/tool seed ../d
   "max_group_size": 8,
   "venue_categories": [],                   // where it happens (ids from venue-categories.json); [] = meeting point only
   "blocks": ["morning", "afternoon"],       // optional: parts of the day it suits (morning, afternoon, evening); omitted = any
+  "walk_theme": "temples and shrines: …",  // optional: makes it a walk (see below); English, at most 300 bytes
   "replaces": ["waterfall-hike", "birdwatching"] // optional: retired activity ids merged into this one
 }
 ```
+
+**Walks.** An activity with a `walk_theme` is planned as a walk: 2–4 hours from a station or café, through 4–7 stops on the theme, to somewhere to sit and talk (composed by the worker, `internal/walks`). The theme goes into the model's prompt, so it says what the stops should be and what makes them good ("several different ones, with what makes each distinct"). Walks today: city walk, photography, temples and shrines, seasonal sights, food tour, cafés and tea. A walk's `venue_categories` only tell matching the area has such places.
 
 Set `blocks` only for activities tied to a time of day: bars and dinners in the evening, outdoor and museum activities in daylight, brunch in the morning. Matching uses it because venue opening hours can't be stored (Google Maps terms).
 

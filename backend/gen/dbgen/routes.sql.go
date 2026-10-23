@@ -12,9 +12,15 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const clearStaleRoutes = `-- name: ClearStaleRoutes :execrows
-update app.plans set route_polyline = null, route_seconds = null, route_computed_at = null
-where city_id = $1 and route_computed_at < $2
+const clearStaleRoutes = `-- name: ClearStaleRoutes :one
+with cleared as (
+  update app.plans set route_polyline = null, route_seconds = null, route_computed_at = null
+  where city_id = $1 and route_computed_at < $2
+  returning id
+), legs as (
+  update app.plan_stops s set walk_seconds = null from cleared c where s.plan_id = c.id
+)
+select count(*)::int from cleared
 `
 
 type ClearStaleRoutesParams struct {
@@ -22,13 +28,13 @@ type ClearStaleRoutesParams struct {
 	Cutoff pgtype.Timestamptz
 }
 
-// A city's routes past the Maps caching limit, whatever the plan's state.
-func (q *Queries) ClearStaleRoutes(ctx context.Context, arg ClearStaleRoutesParams) (int64, error) {
-	result, err := q.db.Exec(ctx, clearStaleRoutes, arg.CityID, arg.Cutoff)
-	if err != nil {
-		return 0, err
-	}
-	return result.RowsAffected(), nil
+// A city's routes past the Maps caching limit, whatever the plan's state,
+// with a walk's legs: returns how many plans' routes were cleared.
+func (q *Queries) ClearStaleRoutes(ctx context.Context, arg ClearStaleRoutesParams) (int32, error) {
+	row := q.db.QueryRow(ctx, clearStaleRoutes, arg.CityID, arg.Cutoff)
+	var column_1 int32
+	err := row.Scan(&column_1)
+	return column_1, err
 }
 
 const listPlansNeedingMeetingPlace = `-- name: ListPlansNeedingMeetingPlace :many
@@ -36,6 +42,8 @@ select p.id, st_y(a.centroid::geometry)::float8 as lat, st_x(a.centroid::geometr
 from app.plans p
 join app.areas a on a.id = p.area_id
 where p.city_id = $1 and p.venue_place_id is null and p.meeting_place_id is null
+  -- A composed walk starts at its own first stop.
+  and not exists (select 1 from app.plan_stops s where s.plan_id = p.id)
   and (p.status = 'open' or exists (select 1 from app.events e where e.plan_id = p.id and e.status = 'scheduled'))
 order by p.created_at
 limit $2
@@ -53,7 +61,7 @@ type ListPlansNeedingMeetingPlaceRow struct {
 }
 
 // Plans in a city whose first activity has no venue and no meeting place
-// yet, still open or with an event to come, with their area's centre.
+// yet (not composed walks), still open or with an event to come, with their area's centre.
 func (q *Queries) ListPlansNeedingMeetingPlace(ctx context.Context, arg ListPlansNeedingMeetingPlaceParams) ([]ListPlansNeedingMeetingPlaceRow, error) {
 	rows, err := q.db.Query(ctx, listPlansNeedingMeetingPlace, arg.CityID, arg.Max)
 	if err != nil {
@@ -120,6 +128,52 @@ func (q *Queries) ListPlansNeedingRoute(ctx context.Context, arg ListPlansNeedin
 	return items, nil
 }
 
+const listWalksNeedingRoute = `-- name: ListWalksNeedingRoute :many
+select p.id, array_agg(s.place_id order by s.position)::text[] as place_ids
+from app.plans p
+join app.plan_stops s on s.plan_id = p.id
+where p.city_id = $1
+  and (p.route_computed_at is null or p.route_computed_at < $2)
+  and (p.status = 'open' or exists (select 1 from app.events e where e.plan_id = p.id and e.status = 'scheduled'))
+group by p.id, p.route_computed_at
+order by p.route_computed_at nulls first, p.id
+limit $3
+`
+
+type ListWalksNeedingRouteParams struct {
+	CityID    string
+	OlderThan pgtype.Timestamptz
+	Max       int32
+}
+
+type ListWalksNeedingRouteRow struct {
+	ID       uuid.UUID
+	PlaceIds []string
+}
+
+// Composed walks whose route is still needed (open, or with an event to
+// come) and missing or older than the refresh age, with their stops' place
+// ids in walking order.
+func (q *Queries) ListWalksNeedingRoute(ctx context.Context, arg ListWalksNeedingRouteParams) ([]ListWalksNeedingRouteRow, error) {
+	rows, err := q.db.Query(ctx, listWalksNeedingRoute, arg.CityID, arg.OlderThan, arg.Max)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListWalksNeedingRouteRow
+	for rows.Next() {
+		var i ListWalksNeedingRouteRow
+		if err := rows.Scan(&i.ID, &i.PlaceIds); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const setMeetingPlace = `-- name: SetMeetingPlace :exec
 update app.plans set meeting_place_id = $1 where id = $2
 `
@@ -153,5 +207,23 @@ func (q *Queries) SetPlanRoute(ctx context.Context, arg SetPlanRouteParams) erro
 		arg.At,
 		arg.ID,
 	)
+	return err
+}
+
+const setWalkLegs = `-- name: SetWalkLegs :exec
+update app.plan_stops s set walk_seconds = l.seconds
+from (select unnest($2::smallint[]) as position, unnest($3::int[]) as seconds) l
+where s.plan_id = $1 and s.position = l.position
+`
+
+type SetWalkLegsParams struct {
+	PlanID    uuid.UUID
+	Positions []int16
+	Seconds   []int32
+}
+
+// A walk's legs, by stop position (the first stop has none).
+func (q *Queries) SetWalkLegs(ctx context.Context, arg SetWalkLegsParams) error {
+	_, err := q.db.Exec(ctx, setWalkLegs, arg.PlanID, arg.Positions, arg.Seconds)
 	return err
 }

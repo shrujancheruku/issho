@@ -23,6 +23,9 @@ type City struct {
 	Travel     matching.TravelTimes
 	Activities []matching.Activity // enabled and in season
 	Venues     matching.Venues
+	// WalkThemes are the walking activities' themes (activities.walk_theme),
+	// for composing their plans.
+	WalkThemes map[matching.ActivityID]string
 	Users      []matching.User
 	// Relations are empty until mutual picks and blocks exist (M7).
 	Relations matching.Relations
@@ -51,7 +54,7 @@ func loadPlaces(ctx context.Context, q *dbgen.Queries, cityID string, month time
 		}
 		return nil, err
 	}
-	c := &City{ID: cityID, Travel: matching.TravelTimes{}, Venues: matching.Venues{}}
+	c := &City{ID: cityID, Travel: matching.TravelTimes{}, Venues: matching.Venues{}, WalkThemes: map[matching.ActivityID]string{}}
 	if c.Location, err = time.LoadLocation(row.Timezone); err != nil {
 		return nil, fmt.Errorf("city %s: %w", cityID, err)
 	}
@@ -82,6 +85,10 @@ func loadPlaces(ctx context.Context, q *dbgen.Queries, cityID string, month time
 		m := matching.Activity{
 			ID: matching.ActivityID(a.ID), Category: a.Category, CostLevel: int(a.CostLevel),
 			Conversational: a.Conversational, MinSize: int(a.MinGroupSize), MaxSize: int(a.MaxGroupSize),
+			Walk: a.WalkTheme != nil,
+		}
+		if a.WalkTheme != nil {
+			c.WalkThemes[m.ID] = *a.WalkTheme
 		}
 		for _, v := range a.VenueCategories {
 			m.VenueCategories = append(m.VenueCategories, matching.CategoryID(v))

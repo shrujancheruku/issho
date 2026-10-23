@@ -58,6 +58,10 @@ type Activity struct {
 	VenueCategories []string `json:"venue_categories"`
 	// Parts of the day it suits (morning, afternoon, evening); empty = any.
 	Blocks []string `json:"blocks,omitempty"`
+	// WalkTheme makes the activity a walk: its plans are composed as a route
+	// through several stops on this theme (internal/walks), in English, for
+	// the model. Empty = the activity happens at one venue.
+	WalkTheme string `json:"walk_theme,omitempty"`
 	// Ids of retired activities merged into this one. Seeding moves people's
 	// preferences for them here and then deletes them.
 	Replaces []string `json:"replaces,omitempty"`
@@ -149,6 +153,13 @@ func SeedCatalog(ctx context.Context, pool *pgxpool.Pool, venueCategoriesPath, a
 				blocks = AllBlocks
 			}
 			if err := q.SetActivityBlocks(ctx, dbgen.SetActivityBlocksParams{ID: a.ID, Blocks: blocks}); err != nil {
+				return fmt.Errorf("activity %s: %w", a.ID, err)
+			}
+			var theme *string
+			if a.WalkTheme != "" {
+				theme = &a.WalkTheme
+			}
+			if err := q.SetActivityWalkTheme(ctx, dbgen.SetActivityWalkThemeParams{ID: a.ID, WalkTheme: theme}); err != nil {
 				return fmt.Errorf("activity %s: %w", a.ID, err)
 			}
 		}

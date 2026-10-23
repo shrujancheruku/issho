@@ -78,18 +78,18 @@ func (n *Notifier) Send(ctx context.Context, now time.Time) (NotifyReport, error
 	var msgs []push.Message
 	var owner []int // pending index for each message
 	var done []int64
-	titles := map[[3]string]string{} // (language, activity, follow-up) → title
+	titles := map[[4]string]string{} // (language, activity, follow-up, a walk's title) → title
 	for i, p := range pending {
 		if len(tokens[p.UserID]) == 0 {
 			rep.NoDevice++
 			done = append(done, p.ID)
 			continue
 		}
-		key := [3]string{p.PrimaryLanguage, p.ActivityID, deref(p.FollowUpID)}
+		key := [4]string{p.PrimaryLanguage, p.ActivityID, deref(p.FollowUpID), string(p.Title)}
 		title, ok := titles[key]
 		if !ok {
-			plan := matching.OpenPlan{Plan: matching.Plan{Activity: matching.ActivityID(p.ActivityID), FollowUp: matching.ActivityID(deref(p.FollowUpID))}}
-			t, _, err := n.Plans.titles(ctx, q, p.CityID, Caller{Primary: p.PrimaryLanguage}, []matching.OpenPlan{plan})
+			plan := titled{matching.Plan{Activity: matching.ActivityID(p.ActivityID), FollowUp: matching.ActivityID(deref(p.FollowUpID))}, p.Title}
+			t, _, err := n.Plans.titles(ctx, q, p.CityID, Caller{Primary: p.PrimaryLanguage}, []titled{plan})
 			if err != nil {
 				return rep, err
 			}

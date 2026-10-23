@@ -1,0 +1,479 @@
+[
+ {
+  "id": "temple-shrine@koenji",
+  "city": "tokyo",
+  "area": "tokyo-koenji",
+  "activity": "temple-shrine",
+  "month": 11,
+  "tags": [
+   "temple-shrine",
+   "tokyo",
+   "known"
+  ]
+ },
+ {
+  "id": "temple-shrine@shibuya",
+  "city": "tokyo",
+  "area": "tokyo-shibuya",
+  "activity": "temple-shrine",
+  "month": 11,
+  "tags": [
+   "temple-shrine",
+   "tokyo",
+   "mid"
+  ]
+ },
+ {
+  "id": "temple-shrine@ogikubo",
+  "city": "tokyo",
+  "area": "tokyo-ogikubo",
+  "activity": "temple-shrine",
+  "month": 5,
+  "tags": [
+   "temple-shrine",
+   "tokyo",
+   "quiet"
+  ]
+ },
+ {
+  "id": "temple-shrine@nakano",
+  "city": "tokyo",
+  "area": "tokyo-nakano",
+  "activity": "temple-shrine",
+  "month": 1,
+  "tags": [
+   "temple-shrine",
+   "tokyo",
+   "quiet"
+  ]
+ },
+ {
+  "id": "photography@nakameguro",
+  "city": "tokyo",
+  "area": "tokyo-nakameguro",
+  "activity": "photography",
+  "month": 11,
+  "tags": [
+   "photography",
+   "tokyo",
+   "known"
+  ]
+ },
+ {
+  "id": "photography@shimokitazawa",
+  "city": "tokyo",
+  "area": "tokyo-shimokitazawa",
+  "activity": "photography",
+  "month": 6,
+  "tags": [
+   "photography",
+   "tokyo",
+   "known"
+  ]
+ },
+ {
+  "id": "photography@ebisu",
+  "city": "tokyo",
+  "area": "tokyo-ebisu",
+  "activity": "photography",
+  "month": 11,
+  "tags": [
+   "photography",
+   "tokyo",
+   "mid"
+  ],
+  "blocks": [
+   "evening"
+  ]
+ },
+ {
+  "id": "photography@asagaya",
+  "city": "tokyo",
+  "area": "tokyo-asagaya",
+  "activity": "photography",
+  "month": 9,
+  "tags": [
+   "photography",
+   "tokyo",
+   "quiet"
+  ]
+ },
+ {
+  "id": "city-walk@kichijoji",
+  "city": "tokyo",
+  "area": "tokyo-kichijoji",
+  "activity": "city-walk",
+  "month": 11,
+  "tags": [
+   "city-walk",
+   "tokyo",
+   "known"
+  ]
+ },
+ {
+  "id": "city-walk@sangenjaya",
+  "city": "tokyo",
+  "area": "tokyo-sangenjaya",
+  "activity": "city-walk",
+  "month": 3,
+  "tags": [
+   "city-walk",
+   "tokyo",
+   "mid"
+  ]
+ },
+ {
+  "id": "city-walk@jiyugaoka",
+  "city": "tokyo",
+  "area": "tokyo-jiyugaoka",
+  "activity": "city-walk",
+  "month": 6,
+  "tags": [
+   "city-walk",
+   "tokyo",
+   "mid"
+  ]
+ },
+ {
+  "id": "city-walk@nakano",
+  "city": "tokyo",
+  "area": "tokyo-nakano",
+  "activity": "city-walk",
+  "month": 1,
+  "tags": [
+   "city-walk",
+   "tokyo",
+   "mid"
+  ],
+  "blocks": [
+   "evening"
+  ]
+ },
+ {
+  "id": "food-tour@kichijoji",
+  "city": "tokyo",
+  "area": "tokyo-kichijoji",
+  "activity": "food-tour",
+  "month": 11,
+  "tags": [
+   "food-tour",
+   "tokyo",
+   "known"
+  ]
+ },
+ {
+  "id": "food-tour@koenji",
+  "city": "tokyo",
+  "area": "tokyo-koenji",
+  "activity": "food-tour",
+  "month": 6,
+  "tags": [
+   "food-tour",
+   "tokyo",
+   "mid"
+  ],
+  "blocks": [
+   "evening"
+  ]
+ },
+ {
+  "id": "food-tour@ebisu",
+  "city": "tokyo",
+  "area": "tokyo-ebisu",
+  "activity": "food-tour",
+  "month": 3,
+  "tags": [
+   "food-tour",
+   "tokyo",
+   "mid"
+  ]
+ },
+ {
+  "id": "food-tour@shinjuku",
+  "city": "tokyo",
+  "area": "tokyo-shinjuku",
+  "activity": "food-tour",
+  "month": 1,
+  "tags": [
+   "food-tour",
+   "tokyo",
+   "known"
+  ],
+  "blocks": [
+   "evening"
+  ]
+ },
+ {
+  "id": "cafe-hop@sangenjaya",
+  "city": "tokyo",
+  "area": "tokyo-sangenjaya",
+  "activity": "cafe-hop",
+  "month": 11,
+  "tags": [
+   "cafe-hop",
+   "tokyo",
+   "known"
+  ]
+ },
+ {
+  "id": "cafe-hop@shimokitazawa",
+  "city": "tokyo",
+  "area": "tokyo-shimokitazawa",
+  "activity": "cafe-hop",
+  "month": 3,
+  "tags": [
+   "cafe-hop",
+   "tokyo",
+   "known"
+  ]
+ },
+ {
+  "id": "cafe-hop@ogikubo",
+  "city": "tokyo",
+  "area": "tokyo-ogikubo",
+  "activity": "cafe-hop",
+  "month": 6,
+  "tags": [
+   "cafe-hop",
+   "tokyo",
+   "quiet"
+  ]
+ },
+ {
+  "id": "cafe-hop@nakameguro",
+  "city": "tokyo",
+  "area": "tokyo-nakameguro",
+  "activity": "cafe-hop",
+  "month": 1,
+  "tags": [
+   "cafe-hop",
+   "tokyo",
+   "mid"
+  ]
+ },
+ {
+  "id": "seasonal-viewing@nakameguro",
+  "city": "tokyo",
+  "area": "tokyo-nakameguro",
+  "activity": "seasonal-viewing",
+  "month": 3,
+  "tags": [
+   "seasonal-viewing",
+   "tokyo",
+   "known"
+  ]
+ },
+ {
+  "id": "seasonal-viewing@jiyugaoka",
+  "city": "tokyo",
+  "area": "tokyo-jiyugaoka",
+  "activity": "seasonal-viewing",
+  "month": 11,
+  "tags": [
+   "seasonal-viewing",
+   "tokyo",
+   "mid"
+  ]
+ },
+ {
+  "id": "seasonal-viewing@kichijoji",
+  "city": "tokyo",
+  "area": "tokyo-kichijoji",
+  "activity": "seasonal-viewing",
+  "month": 11,
+  "tags": [
+   "seasonal-viewing",
+   "tokyo",
+   "known"
+  ]
+ },
+ {
+  "id": "seasonal-viewing@shinjuku",
+  "city": "tokyo",
+  "area": "tokyo-shinjuku",
+  "activity": "seasonal-viewing",
+  "month": 12,
+  "tags": [
+   "seasonal-viewing",
+   "tokyo",
+   "mid"
+  ],
+  "blocks": [
+   "evening"
+  ]
+ },
+ {
+  "id": "city-walk@austin-south-congress",
+  "city": "austin",
+  "area": "austin-south-congress",
+  "activity": "city-walk",
+  "month": 11,
+  "tags": [
+   "city-walk",
+   "austin",
+   "known"
+  ]
+ },
+ {
+  "id": "city-walk@austin-hyde-park",
+  "city": "austin",
+  "area": "austin-hyde-park",
+  "activity": "city-walk",
+  "month": 3,
+  "tags": [
+   "city-walk",
+   "austin",
+   "mid"
+  ]
+ },
+ {
+  "id": "city-walk@austin-downtown",
+  "city": "austin",
+  "area": "austin-downtown",
+  "activity": "city-walk",
+  "month": 6,
+  "tags": [
+   "city-walk",
+   "austin",
+   "known"
+  ],
+  "blocks": [
+   "evening"
+  ]
+ },
+ {
+  "id": "city-walk@austin-round-rock",
+  "city": "austin",
+  "area": "austin-round-rock",
+  "activity": "city-walk",
+  "month": 11,
+  "tags": [
+   "city-walk",
+   "austin",
+   "hard"
+  ]
+ },
+ {
+  "id": "food-tour@austin-east",
+  "city": "austin",
+  "area": "austin-east",
+  "activity": "food-tour",
+  "month": 11,
+  "tags": [
+   "food-tour",
+   "austin",
+   "known"
+  ]
+ },
+ {
+  "id": "food-tour@austin-south-congress",
+  "city": "austin",
+  "area": "austin-south-congress",
+  "activity": "food-tour",
+  "month": 3,
+  "tags": [
+   "food-tour",
+   "austin",
+   "known"
+  ],
+  "blocks": [
+   "evening"
+  ]
+ },
+ {
+  "id": "food-tour@austin-mueller",
+  "city": "austin",
+  "area": "austin-mueller",
+  "activity": "food-tour",
+  "month": 6,
+  "tags": [
+   "food-tour",
+   "austin",
+   "quiet"
+  ]
+ },
+ {
+  "id": "photography@austin-downtown",
+  "city": "austin",
+  "area": "austin-downtown",
+  "activity": "photography",
+  "month": 11,
+  "tags": [
+   "photography",
+   "austin",
+   "known"
+  ]
+ },
+ {
+  "id": "photography@austin-east",
+  "city": "austin",
+  "area": "austin-east",
+  "activity": "photography",
+  "month": 3,
+  "tags": [
+   "photography",
+   "austin",
+   "mid"
+  ]
+ },
+ {
+  "id": "photography@austin-zilker",
+  "city": "austin",
+  "area": "austin-zilker",
+  "activity": "photography",
+  "month": 6,
+  "tags": [
+   "photography",
+   "austin",
+   "mid"
+  ]
+ },
+ {
+  "id": "cafe-hop@austin-hyde-park",
+  "city": "austin",
+  "area": "austin-hyde-park",
+  "activity": "cafe-hop",
+  "month": 11,
+  "tags": [
+   "cafe-hop",
+   "austin",
+   "mid"
+  ]
+ },
+ {
+  "id": "cafe-hop@austin-east",
+  "city": "austin",
+  "area": "austin-east",
+  "activity": "cafe-hop",
+  "month": 1,
+  "tags": [
+   "cafe-hop",
+   "austin",
+   "known"
+  ]
+ },
+ {
+  "id": "seasonal-viewing@austin-zilker",
+  "city": "austin",
+  "area": "austin-zilker",
+  "activity": "seasonal-viewing",
+  "month": 3,
+  "tags": [
+   "seasonal-viewing",
+   "austin",
+   "mid"
+  ]
+ },
+ {
+  "id": "seasonal-viewing@austin-pflugerville",
+  "city": "austin",
+  "area": "austin-pflugerville",
+  "activity": "seasonal-viewing",
+  "month": 4,
+  "tags": [
+   "seasonal-viewing",
+   "austin",
+   "hard"
+  ]
+ }
+]

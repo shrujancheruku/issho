@@ -54,7 +54,10 @@ func (h *EventHandler) GetEvent(ctx context.Context, req *connect.Request[isshov
 	if err != nil {
 		return nil, eventError(err)
 	}
-	out := &isshov1.GetEventResponse{Event: eventToProto(it), Steps: stepsToProto(steps), Attendees: names}
+	out := &isshov1.GetEventResponse{
+		Event: eventToProto(it), Steps: stepsToProto(steps), Attendees: names,
+		Summary: it.Summary, SecondarySummary: it.SecondarySummary,
+	}
 	if it.Route != nil {
 		out.RoutePolyline = it.Route.Polyline
 	}

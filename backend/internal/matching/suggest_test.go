@@ -50,12 +50,17 @@ func TestSuggest(t *testing.T) {
 	boulder.Conversational = false
 	ramen := act("ramen", 3, 8, "cafe")
 	ramen.Category = "food"
+	photoWalk := act("photo-walk", 3, 8)
+	photoWalk.Conversational, photoWalk.Walk = false, true
+	foodTour := act("food-tour", 3, 8, "cafe")
+	foodTour.Category, foodTour.Walk = "food", true
 
 	tests := []struct {
 		name  string
 		users []User
 		acts  []Activity
 		open  []Plan
+		skip  []Plan
 		want  []string
 	}{
 		{
@@ -96,10 +101,29 @@ func TestSuggest(t *testing.T) {
 			open:  []Plan{{Area: "a", Activity: "walk", Primary: "ja"}},
 			want:  []string{"cafe-hop@a"},
 		},
+		{
+			name:  "a walk gets no follow-up and isn't one",
+			users: fan("x", 4, 3, map[ActivityID]int{"photo-walk": Love, "food-tour": Like}),
+			acts:  []Activity{photoWalk, foodTour},
+			want:  []string{"photo-walk@a", "food-tour@a"},
+		},
+		{
+			name: "skipped plans make way for the next best, even at the cap",
+			// Three people, one plan per three: the skipped walk doesn't use
+			// up the city's one plan.
+			users: fan("x", 3, 3, map[ActivityID]int{"walk": Love, "cafe-hop": Like}),
+			acts:  []Activity{act("cafe-hop", 3, 8, "cafe"), act("walk", 3, 8)},
+			skip:  []Plan{{Area: "a", Activity: "walk"}},
+			want:  []string{"cafe-hop@a"},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := suggestIDs(Suggest(SuggestInput{Users: tt.users, Areas: []AreaID{"a"}, Activities: tt.acts, Venues: testVenues, Open: tt.open}, cfg))
+			cfg := cfg
+			if tt.skip != nil {
+				cfg.UsersPerPlan = 3
+			}
+			got := suggestIDs(Suggest(SuggestInput{Users: tt.users, Areas: []AreaID{"a"}, Activities: tt.acts, Venues: testVenues, Open: tt.open, Skip: tt.skip}, cfg))
 			if !slices.Equal(got, tt.want) {
 				t.Errorf("got %q, want %q", got, tt.want)
 			}

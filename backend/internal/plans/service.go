@@ -66,18 +66,26 @@ type FeedItem struct {
 	// Title in the caller's two display languages (secondary "" when the
 	// same or not chosen).
 	Title, SecondaryTitle string
+	// A walk's summary, likewise; set only for one plan (Plan), "" otherwise.
+	Summary, SecondarySummary string
 }
 
 // Step is one stop of a plan: an activity at its venue, or (Meeting) the
-// place people meet when the first activity has no venue.
+// place people meet when the first activity has no venue. A composed walk's
+// stops have no activity: the place is the stop, with a note on why.
 type Step struct {
 	Meeting  bool
-	Activity matching.ActivityID // "" for the meeting point
+	Finish   bool                // a walk's last stop, to sit and talk
+	Activity matching.ActivityID // "" for the meeting point and a walk's stops
 	// Venue in the primary display language; zero when there's none or it
 	// couldn't be fetched. SecondaryName is its name in the secondary one.
 	Venue         maps.PlaceDetails
 	SecondaryName string
 	WalkMinutes   int // from the previous stop's venue; 0 = first or unknown
+	// A walk's planned minutes at the stop (0 otherwise), and its note in
+	// the caller's display languages.
+	Minutes             int
+	Note, SecondaryNote string
 }
 
 // feed loads the caller and ranks their city's open plans for them.
@@ -125,11 +133,11 @@ func (s *Service) feed(ctx context.Context, q *dbgen.Queries, userID uuid.UUID) 
 		byPlan[r.Plan] = byPlan[r.Plan][1:]
 		out[i] = FeedItem{Open: p, Level: r.Level, Minutes: r.Minutes, SignedUp: slices.Contains(mine, p.ID)}
 	}
-	plans = make([]matching.OpenPlan, len(out))
+	named := make([]titled, len(out))
 	for i := range out {
-		plans[i] = out[i].OpenPlan
+		named[i] = titled{out[i].Plan, out[i].WalkTitle}
 	}
-	titles, secondary, err := s.titles(ctx, q, cityID, caller, plans)
+	titles, secondary, err := s.titles(ctx, q, cityID, caller, named)
 	if err != nil {
 		return nil, nil, caller, err
 	}
@@ -139,13 +147,24 @@ func (s *Service) feed(ctx context.Context, q *dbgen.Queries, userID uuid.UUID) 
 	return out, u, caller, nil
 }
 
-// titleContext tells the translator what the titles are.
-const titleContext = "short title of a small group outing, listing its activities in order"
+// Contexts tell the translator what the text is.
+const (
+	titleContext     = "short title of a small group outing, listing its activities in order"
+	walkTitleContext = "short title of a walking outing for a small group"
+)
+
+// titled is a plan whose title to show: a composed walk has its own
+// (stored, {"en": "..."}); other plans' are made from their activities.
+type titled struct {
+	plan   matching.Plan
+	stored []byte
+}
 
 // titles returns each plan's title in the caller's two display languages
-// (secondary "" when the same or not chosen): composed in English from the
-// activities' English names, then translated (and cached) per language.
-func (s *Service) titles(ctx context.Context, q *dbgen.Queries, cityID string, caller Caller, items []matching.OpenPlan) (titles, secondaryTitles []string, err error) {
+// (secondary "" when the same or not chosen): a walk's own, or composed in
+// English from the activities' English names, then translated (and cached)
+// per language.
+func (s *Service) titles(ctx context.Context, q *dbgen.Queries, cityID string, caller Caller, items []titled) (titles, secondaryTitles []string, err error) {
 	rows, err := q.ListCityActivities(ctx, cityID)
 	if err != nil {
 		return nil, nil, err
@@ -157,7 +176,12 @@ func (s *Service) titles(ctx context.Context, q *dbgen.Queries, cityID string, c
 	englishTitles := make([]string, len(items))
 	texts := make([]translate.Text, len(items))
 	for i, it := range items {
-		englishTitles[i] = Title(english[string(it.Activity)], english[string(it.FollowUp)])
+		if it.stored != nil {
+			englishTitles[i] = i18n.Pick(it.stored, i18n.Authoring)
+			texts[i] = translate.Text{Raw: it.stored, Context: walkTitleContext}
+			continue
+		}
+		englishTitles[i] = Title(english[string(it.plan.Activity)], english[string(it.plan.FollowUp)])
 		raw, _ := json.Marshal(map[string]string{i18n.Authoring: englishTitles[i]})
 		texts[i] = translate.Text{Raw: raw, Context: titleContext}
 	}
@@ -224,7 +248,15 @@ func (s *Service) Plan(ctx context.Context, userID, planID uuid.UUID) (FeedItem,
 	if err != nil {
 		return item, nil, nil, err
 	}
-	steps := s.steps(ctx, item.Plan, item.Venue, item.FollowUpVenue, item.MeetingPlace, item.Route, caller)
+	var steps []Step
+	if item.Walk {
+		item.Summary, item.SecondarySummary = s.text(ctx, item.WalkSummary, summaryContext, caller)
+		if steps, err = s.walkSteps(ctx, q, item.ID, caller); err != nil {
+			return item, nil, nil, err
+		}
+	} else {
+		steps = s.steps(ctx, item.Plan, item.Venue, item.FollowUpVenue, item.MeetingPlace, item.Route, caller)
+	}
 	if !item.SignedUp {
 		return item, steps, nil, nil
 	}
@@ -232,9 +264,8 @@ func (s *Service) Plan(ctx context.Context, userID, planID uuid.UUID) (FeedItem,
 	return item, steps, signup, err
 }
 
-// steps lists the plan's stops with their venues fetched live in both
-// display languages, all at once. A venue that can't be fetched is left
-// out (logged): the plan still shows, just without the place's name.
+// steps lists the plan's stops (activity, follow-up, a meeting place) with
+// their venues fetched live (fillVenues). Composed walks use walkSteps.
 func (s *Service) steps(ctx context.Context, p matching.Plan, venue, followUpVenue, meeting string, route *Route, caller Caller) []Step {
 	var steps []Step
 	var venues []string
@@ -261,6 +292,25 @@ func (s *Service) steps(ctx context.Context, p matching.Plan, venue, followUpVen
 		}
 		return steps
 	}
+	s.fillVenues(ctx, steps, venues, caller)
+	for i := range steps {
+		if i > 0 {
+			// Google's walking time when the route is known; otherwise an
+			// estimate from the straight line.
+			if i == routeEnd {
+				steps[i].WalkMinutes = route.Minutes()
+			} else {
+				steps[i].WalkMinutes = walkMinutes(steps[i-1].Venue.Location, steps[i].Venue.Location)
+			}
+		}
+	}
+	return steps
+}
+
+// fillVenues fetches each step's venue (place id, "" = none) live in both
+// display languages, all at once. A venue that can't be fetched is left
+// out (logged): the plan still shows, just without the place's name.
+func (s *Service) fillVenues(ctx context.Context, steps []Step, venues []string, caller Caller) {
 	log := s.Log
 	if log == nil {
 		log = slog.Default()
@@ -293,17 +343,7 @@ func (s *Service) steps(ctx context.Context, p matching.Plan, venue, followUpVen
 		if n := secondary[i].Name; n != steps[i].Venue.Name {
 			steps[i].SecondaryName = n
 		}
-		if i > 0 {
-			// Google's walking time when the route is known; otherwise an
-			// estimate from the straight line.
-			if i == routeEnd {
-				steps[i].WalkMinutes = route.Minutes()
-			} else {
-				steps[i].WalkMinutes = walkMinutes(steps[i-1].Venue.Location, steps[i].Venue.Location)
-			}
-		}
 	}
-	return steps
 }
 
 // walkMinutes estimates a walk between two venues from the straight-line
@@ -366,13 +406,16 @@ func (s *Service) closedPlan(ctx context.Context, q *dbgen.Queries, caller Calle
 			FollowUpVenue: deref(r.FollowUpVenuePlaceID),
 			Route:         routeFrom(r.RoutePolyline, r.RouteSeconds),
 			MeetingPlace:  deref(r.MeetingPlaceID),
+			Walk:          r.Walk,
+			WalkTitle:     r.Title,
+			WalkSummary:   r.Description,
 		},
 		Minutes:      -1,
 		SignedUp:     r.SignedUp,
 		ClosedReason: r.ClosedReason,
 		ClosedAt:     r.ClosedAt.Time,
 	}
-	titles, secondary, err := s.titles(ctx, q, caller.City, caller, []matching.OpenPlan{it.OpenPlan})
+	titles, secondary, err := s.titles(ctx, q, caller.City, caller, []titled{{it.Plan, it.WalkTitle}})
 	if err != nil {
 		return FeedItem{}, err
 	}

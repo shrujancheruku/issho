@@ -21,6 +21,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/geo"
 	"github.com/shrujancheruku/issho/backend/internal/maps"
 	"github.com/shrujancheruku/issho/backend/internal/plans"
+	"github.com/shrujancheruku/issho/backend/internal/walks"
 )
 
 // MatchEvery is how often every city is matched. Signup deadlines fall at
@@ -79,6 +80,13 @@ type matchCityWorker struct {
 	runner *plans.Runner
 	now    func() time.Time
 }
+
+// MatchCityTimeout bounds a city's pass. River's default is a minute, but
+// composing walks asks a model that can think for minutes (a few walks at
+// once, each retried once).
+const MatchCityTimeout = 20 * time.Minute
+
+func (w *matchCityWorker) Timeout(*river.Job[MatchCityArgs]) time.Duration { return MatchCityTimeout }
 
 // Work settles events whose confirmation deadline passed (people from
 // cancelled groups go back on the waiting list), then schedules (plans that
@@ -197,10 +205,13 @@ func (w *sendNotificationsWorker) Work(ctx context.Context, _ *river.Job[SendNot
 // LISTEN/NOTIFY, which the transaction pooler doesn't support.
 // Maps are the Google Maps lookups the worker uses; all nil without a key.
 type Maps struct {
-	Router maps.Router
-	Hours  maps.HoursLookup
-	Routes maps.RouteFinder
-	Places maps.PlaceSearcher
+	Router     maps.Router
+	Hours      maps.HoursLookup
+	Routes     maps.RouteFinder
+	Places     maps.PlaceSearcher
+	WalkRoutes maps.WalkRouter
+	// Walks composes walking plans (Gemini and Maps); nil opens none.
+	Walks *walks.Composer
 }
 
 func NewClient(pool *pgxpool.Pool, log *slog.Logger, timing plans.Timing, notifier *plans.Notifier, m Maps) (*river.Client[pgx.Tx], error) {
@@ -209,7 +220,9 @@ func NewClient(pool *pgxpool.Pool, log *slog.Logger, timing plans.Timing, notifi
 	}
 	workers := river.NewWorkers()
 	river.AddWorker(workers, &matchAllWorker{q: dbgen.New(pool)})
-	river.AddWorker(workers, &matchCityWorker{runner: &plans.Runner{DB: pool, Timing: timing, Log: log, Hours: m.Hours, Routes: m.Routes, Places: m.Places}, now: time.Now})
+	river.AddWorker(workers, &matchCityWorker{runner: &plans.Runner{
+		DB: pool, Timing: timing, Log: log, Hours: m.Hours, Routes: m.Routes, Places: m.Places, Walks: m.Walks, WalkRoutes: m.WalkRoutes,
+	}, now: time.Now})
 	river.AddWorker(workers, &refreshMapsWorker{pool: pool, router: m.Router, log: log})
 	river.AddWorker(workers, &sendNotificationsWorker{notifier: notifier, now: time.Now})
 	return river.NewClient(riverpgxv5.New(pool), &river.Config{

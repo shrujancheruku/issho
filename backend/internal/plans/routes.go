@@ -40,9 +40,9 @@ func routeFrom(polyline *string, seconds *int32) *Route {
 func (r *Route) Minutes() int { return max(1, int(math.Ceil(float64(r.Seconds)/60))) }
 
 // RefreshRoutes keeps a city's plan routes within the Maps caching terms:
-// it clears the city's routes older than RouteMaxAge, then (with a finder)
-// computes routes that are missing or older than RouteRefreshAge for plans
-// still open or with an event to come. One failed route doesn't stop the
+// it clears the city's routes older than RouteMaxAge (a walk's legs too),
+// then (with a finder) computes routes that are missing or older than
+// RouteRefreshAge for plans still open or with an event to come. One failed route doesn't stop the
 // others.
 func (r *Runner) RefreshRoutes(ctx context.Context, cityID string, now time.Time) (computed, cleared int, err error) {
 	q := dbgen.New(r.DB)
@@ -51,16 +51,23 @@ func (r *Runner) RefreshRoutes(ctx context.Context, cityID string, now time.Time
 		return 0, 0, err
 	}
 	cleared = int(n)
+	var errs []error
+	if r.WalkRoutes != nil {
+		n, err := r.refreshWalkRoutes(ctx, q, cityID, now)
+		computed += n
+		if err != nil {
+			errs = append(errs, err)
+		}
+	}
 	if r.Routes == nil {
-		return 0, cleared, nil
+		return computed, cleared, errors.Join(errs...)
 	}
 	plans, err := q.ListPlansNeedingRoute(ctx, dbgen.ListPlansNeedingRouteParams{
 		CityID: cityID, OlderThan: pgtype.Timestamptz{Time: now.Add(-RouteRefreshAge), Valid: true}, Max: routeBatch,
 	})
 	if err != nil {
-		return 0, cleared, err
+		return computed, cleared, err
 	}
-	var errs []error
 	for _, p := range plans {
 		route, err := r.Routes.WalkingRoute(ctx, p.FromPlace, deref(p.FollowUpVenuePlaceID))
 		if err != nil {

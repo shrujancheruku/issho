@@ -171,7 +171,7 @@ func (q *Queries) ListCityVenueCounts(ctx context.Context, cityID string) ([]Lis
 
 const listMatchingActivities = `-- name: ListMatchingActivities :many
 select a.id, a.category, a.cost_level, a.conversational, a.min_group_size, a.max_group_size,
-       a.venue_categories, a.blocks
+       a.venue_categories, a.blocks, a.walk_theme
 from app.activities a
 left join app.city_activity_overrides o on o.activity_id = a.id and o.city_id = $1
 where coalesce(o.enabled, true)
@@ -193,6 +193,7 @@ type ListMatchingActivitiesRow struct {
 	MaxGroupSize    int16
 	VenueCategories []string
 	Blocks          []string
+	WalkTheme       *string
 }
 
 // Activities enabled in the city and in season in the given month (0 = any).
@@ -214,6 +215,7 @@ func (q *Queries) ListMatchingActivities(ctx context.Context, arg ListMatchingAc
 			&i.MaxGroupSize,
 			&i.VenueCategories,
 			&i.Blocks,
+			&i.WalkTheme,
 		); err != nil {
 			return nil, err
 		}
