@@ -74,3 +74,8 @@ export function placeholderProblems(source: string, text: string): string[] {
 export function personHref(userId: string): string {
   return `#/person/${userId}`;
 }
+
+/** The admin SPA's link to one plan's review page. */
+export function planHref(planId: string): string {
+  return `#/plan/${planId}`;
+}

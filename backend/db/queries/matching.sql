@@ -3,7 +3,7 @@
 -- home area.
 
 -- name: GetCityMatching :one
-select timezone, matching_weights from app.cities where id = $1;
+select timezone, matching_weights, review from app.cities where id = $1;
 
 -- name: ListCityAreaIDs :many
 select id from app.areas where city_id = $1 order by id;
@@ -86,12 +86,13 @@ join app.areas a on a.id = p.home_area_id
 where a.city_id = $1
 order by f.user_id, f.activity_id;
 
--- Plans that closed without a group recently: not suggested again until the
--- cool-down passes, or the same plan would reopen the next morning.
+-- Plans that closed without a group, or drafts an admin rejected,
+-- recently: not suggested again until the cool-down passes, or the same
+-- plan would come back the next morning.
 -- name: ListRecentlyFailedPlans :many
 select area_id, activity_id, follow_up_id, primary_language, secondary_language
 from app.plans
-where city_id = @city_id and closed_reason = 'no_group' and closed_at >= @since;
+where city_id = @city_id and closed_reason in ('no_group', 'rejected') and closed_at >= @since;
 
 -- One person and their city, for their feed.
 -- name: GetMatchingUser :one

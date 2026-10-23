@@ -1,0 +1,219 @@
+syntax = "proto3";
+
+package issho.v1;
+
+import "google/protobuf/timestamp.proto";
+import "issho/v1/plans.proto";
+
+option go_package = "github.com/shrujancheruku/issho/backend/gen/issho/v1;isshov1";
+
+// ReviewService: plan review in the admin SPA (M8), for launching a city
+// by hand. A city can be put under review: its suggested plans (walks
+// included) then wait as drafts, seen by nobody, until an admin approves
+// or rejects them. Admins can also edit a plan's English title and summary,
+// withdraw an open plan, and create plans from scratch in any city.
+// Text is English, as stored; people see it translated on demand.
+// Admins only, like ModerationService: anyone else gets PERMISSION_DENIED.
+//
+// HTTP: POST /issho.v1.ReviewService/<Method>
+service ReviewService {
+  // ListReviewCities returns every city with its review switch and plan
+  // counts.
+  rpc ListReviewCities(ListReviewCitiesRequest) returns (ListReviewCitiesResponse) {}
+
+  // SetCityReview turns review on or off for a city. Turning it off
+  // doesn't open the drafts already waiting: approve or reject them.
+  rpc SetCityReview(SetCityReviewRequest) returns (SetCityReviewResponse) {}
+
+  // ListReviewPlans returns a city's plans in one state: drafts oldest
+  // first, open and closed plans newest first. At most 200.
+  rpc ListReviewPlans(ListReviewPlansRequest) returns (ListReviewPlansResponse) {}
+
+  // GetReviewPlan returns one plan with its stops (venue names from Google,
+  // in English). NOT_FOUND if there's no such plan.
+  rpc GetReviewPlan(GetReviewPlanRequest) returns (GetReviewPlanResponse) {}
+
+  // ApprovePlan opens a draft, with a fresh signup window from today.
+  // FAILED_PRECONDITION if it isn't a draft.
+  rpc ApprovePlan(ApprovePlanRequest) returns (ApprovePlanResponse) {}
+
+  // RejectPlan turns a draft down. The matcher won't suggest the same plan
+  // again until the cool-down passes (two weeks). FAILED_PRECONDITION if it
+  // isn't a draft.
+  rpc RejectPlan(RejectPlanRequest) returns (RejectPlanResponse) {}
+
+  // EditPlan replaces a draft's or open plan's English title and summary.
+  // FAILED_PRECONDITION for a closed plan.
+  rpc EditPlan(EditPlanRequest) returns (EditPlanResponse) {}
+
+  // WithdrawPlan closes an open plan ("withdrawn"). People who signed up
+  // see it closed; nobody is notified. Groups already scheduled go ahead.
+  // FAILED_PRECONDITION if it isn't open.
+  rpc WithdrawPlan(WithdrawPlanRequest) returns (WithdrawPlanResponse) {}
+
+  // ListVenueOptions returns the venues found in an area for an activity's
+  // venue categories (not rejected ones), approved first, with names from
+  // Google in English. At most 20. Empty for activities that need no venue.
+  rpc ListVenueOptions(ListVenueOptionsRequest) returns (ListVenueOptionsResponse) {}
+
+  // CreatePlan opens a plan made by hand, with a signup window from today.
+  // It opens straight away, also in a city under review.
+  // INVALID_ARGUMENT for an unknown area or activity, an area or activity
+  // not in the city, or a venue not found for the activity there.
+  rpc CreatePlan(CreatePlanRequest) returns (CreatePlanResponse) {}
+}
+
+message ListReviewCitiesRequest {}
+
+message ListReviewCitiesResponse {
+  repeated ReviewCity cities = 1;
+}
+
+message ReviewCity {
+  string id = 1;
+  // English name.
+  string name = 2;
+  bool review = 3;
+  int32 drafts = 4;
+  int32 open = 5;
+}
+
+message SetCityReviewRequest {
+  string city_id = 1;
+  bool review = 2;
+}
+
+message SetCityReviewResponse {}
+
+enum ReviewPlanStatus {
+  REVIEW_PLAN_STATUS_UNSPECIFIED = 0;
+  REVIEW_PLAN_STATUS_DRAFT = 1;
+  REVIEW_PLAN_STATUS_OPEN = 2;
+  REVIEW_PLAN_STATUS_CLOSED = 3;
+}
+
+message ListReviewPlansRequest {
+  string city_id = 1;
+  // Required.
+  ReviewPlanStatus status = 2;
+}
+
+message ListReviewPlansResponse {
+  repeated ReviewPlan plans = 1;
+}
+
+message ReviewPlan {
+  string id = 1;
+  string city_id = 2;
+  ReviewPlanStatus status = 3;
+  // done, no_group, withdrawn or rejected, for a closed plan.
+  string closed_reason = 4;
+  // The English title people see: the stored one, or made from the
+  // activities. stored_title is "" when it's made from the activities.
+  string title = 5;
+  string stored_title = 6;
+  // English summary; "" for none.
+  string summary = 7;
+  string area_id = 8;
+  string area_name = 9;
+  string activity_id = 10;
+  string follow_up_id = 11;
+  string primary_language = 12;
+  string secondary_language = 13;
+  // A composed walk (its stops are in GetReviewPlanResponse).
+  bool walk = 14;
+  // From the matcher: how many people it suits, and its score; 0 for a
+  // plan made by hand.
+  int32 audience = 15;
+  float score = 16;
+  int32 signups = 17;
+  // The current round's window (YYYY-MM-DD, local) and signup deadline.
+  string window_start = 18;
+  int32 window_days = 19;
+  google.protobuf.Timestamp signup_deadline = 20;
+  google.protobuf.Timestamp created_at = 21;
+  // The admin who made it by hand; "" = the matcher.
+  string created_by = 22;
+  string reviewed_by = 23;
+  google.protobuf.Timestamp reviewed_at = 24;
+}
+
+message GetReviewPlanRequest {
+  string plan_id = 1;
+}
+
+message GetReviewPlanResponse {
+  ReviewPlan plan = 1;
+  // As people would see them, in English.
+  repeated PlanStep steps = 2;
+}
+
+message ApprovePlanRequest {
+  string plan_id = 1;
+}
+
+message ApprovePlanResponse {}
+
+message RejectPlanRequest {
+  string plan_id = 1;
+}
+
+message RejectPlanResponse {}
+
+message EditPlanRequest {
+  string plan_id = 1;
+  // Up to 80 characters; "" = made from the activities.
+  string title = 2;
+  // Up to 500 characters; "" = none.
+  string summary = 3;
+}
+
+message EditPlanResponse {}
+
+message WithdrawPlanRequest {
+  string plan_id = 1;
+}
+
+message WithdrawPlanResponse {}
+
+message ListVenueOptionsRequest {
+  string area_id = 1;
+  string activity_id = 2;
+}
+
+message ListVenueOptionsResponse {
+  repeated VenueOption venues = 1;
+}
+
+message VenueOption {
+  string place_id = 1;
+  // From Google, in English; "" without GOOGLE_MAPS_API_KEY or if it failed.
+  string name = 2;
+  string address = 3;
+  string maps_url = 4;
+  // Our venue category, and candidate or approved.
+  string category_id = 5;
+  string status = 6;
+}
+
+message CreatePlanRequest {
+  string city_id = 1;
+  string area_id = 2;
+  string activity_id = 3;
+  // Optional: an activity after the first ("then ramen").
+  string follow_up_id = 4;
+  // A place from ListVenueOptions; "" = pick one as the matcher would
+  // (none for activities that need only a meeting point).
+  string venue_place_id = 5;
+  string follow_up_venue_place_id = 6;
+  // ISO 639-1. secondary_language "" = none.
+  string primary_language = 7;
+  string secondary_language = 8;
+  // As in EditPlanRequest.
+  string title = 9;
+  string summary = 10;
+}
+
+message CreatePlanResponse {
+  string plan_id = 1;
+}

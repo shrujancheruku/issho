@@ -29,6 +29,8 @@ type City struct {
 	Users      []matching.User
 	// Relations: mutual meet-again picks and pairs blocked by a report.
 	Relations matching.Relations
+	// Review: admins review the city's plans before they open (00021).
+	Review bool
 }
 
 // LoadCity reads a city for matching, with the activities enabled there and
@@ -57,7 +59,7 @@ func loadPlaces(ctx context.Context, q *dbgen.Queries, cityID string, month time
 		}
 		return nil, err
 	}
-	c := &City{ID: cityID, Travel: matching.TravelTimes{}, Venues: matching.Venues{}, WalkThemes: map[matching.ActivityID]string{}}
+	c := &City{ID: cityID, Travel: matching.TravelTimes{}, Venues: matching.Venues{}, WalkThemes: map[matching.ActivityID]string{}, Review: row.Review}
 	if c.Location, err = time.LoadLocation(row.Timezone); err != nil {
 		return nil, fmt.Errorf("city %s: %w", cityID, err)
 	}

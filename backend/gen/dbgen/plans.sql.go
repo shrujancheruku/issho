@@ -305,11 +305,11 @@ const insertPlan = `-- name: InsertPlan :one
 insert into app.plans (
   city_id, area_id, activity_id, follow_up_id, primary_language, secondary_language,
   audience, score, window_start, window_days, signup_deadline, venue_place_id, follow_up_venue_place_id,
-  title, description
+  title, description, status, created_by
 ) values (
   $1, $2, $3, $4, $5, $6,
   $7, $8, $9, $10, $11, $12, $13,
-  $14, $15
+  $14, $15, $16, $17
 )
 returning id
 `
@@ -330,8 +330,12 @@ type InsertPlanParams struct {
 	FollowUpVenuePlaceID *string
 	Title                []byte
 	Description          []byte
+	Status               string
+	CreatedBy            pgtype.UUID
 }
 
+// status is 'open', or 'draft' in a city under review (00021);
+// created_by is the admin who made it by hand (null: the matcher).
 func (q *Queries) InsertPlan(ctx context.Context, arg InsertPlanParams) (uuid.UUID, error) {
 	row := q.db.QueryRow(ctx, insertPlan,
 		arg.CityID,
@@ -349,6 +353,8 @@ func (q *Queries) InsertPlan(ctx context.Context, arg InsertPlanParams) (uuid.UU
 		arg.FollowUpVenuePlaceID,
 		arg.Title,
 		arg.Description,
+		arg.Status,
+		arg.CreatedBy,
 	)
 	var id uuid.UUID
 	err := row.Scan(&id)
@@ -466,6 +472,48 @@ func (q *Queries) ListBusyOccasions(ctx context.Context, arg ListBusyOccasionsPa
 	for rows.Next() {
 		var i ListBusyOccasionsRow
 		if err := rows.Scan(&i.UserID, &i.Date, &i.Block); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listDraftPlanKeys = `-- name: ListDraftPlanKeys :many
+select area_id, activity_id, follow_up_id, primary_language, secondary_language
+from app.plans
+where city_id = $1 and status = 'draft'
+`
+
+type ListDraftPlanKeysRow struct {
+	AreaID            string
+	ActivityID        string
+	FollowUpID        *string
+	PrimaryLanguage   string
+	SecondaryLanguage *string
+}
+
+// A city's drafts, as plans: Suggest counts them as open, so it neither
+// repeats one nor exceeds the city's cap while they wait for review.
+func (q *Queries) ListDraftPlanKeys(ctx context.Context, cityID string) ([]ListDraftPlanKeysRow, error) {
+	rows, err := q.db.Query(ctx, listDraftPlanKeys, cityID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListDraftPlanKeysRow
+	for rows.Next() {
+		var i ListDraftPlanKeysRow
+		if err := rows.Scan(
+			&i.AreaID,
+			&i.ActivityID,
+			&i.FollowUpID,
+			&i.PrimaryLanguage,
+			&i.SecondaryLanguage,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

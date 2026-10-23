@@ -239,8 +239,20 @@ func (r *Runner) Suggest(ctx context.Context, cityID string, now time.Time) (int
 	for _, p := range open {
 		in.Open = append(in.Open, p.Plan)
 	}
-	// Recently failed plans count as open, so they aren't suggested again
-	// straight away. They also take up room under the city's cap until the
+	// Drafts waiting for review count as open: neither repeated nor beyond
+	// the city's cap.
+	drafts, err := q.ListDraftPlanKeys(ctx, cityID)
+	if err != nil {
+		return 0, err
+	}
+	for _, d := range drafts {
+		in.Open = append(in.Open, matching.Plan{
+			Area: matching.AreaID(d.AreaID), Activity: matching.ActivityID(d.ActivityID),
+			FollowUp: matching.ActivityID(deref(d.FollowUpID)), Primary: d.PrimaryLanguage, Secondary: deref(d.SecondaryLanguage),
+		})
+	}
+	// Recently failed plans (and rejected drafts) count as open, so they
+	// aren't suggested again straight away. They also take up room under the city's cap until the
 	// cool-down ends, which slows reopening plans in a city that's too quiet.
 	for _, f := range failed {
 		in.Open = append(in.Open, matching.Plan{

@@ -6,13 +6,14 @@ The admin SPA (M8): Vite + React, signed in with Supabase Auth (email code, like
 
 | Page | What it does | API |
 |---|---|---|
+| Plans | Per city: the **review switch** (on: the matcher's plans wait as drafts), drafts oldest first, open and closed plans. A plan's page (`#/plan/<id>`) shows it as people would, in English (stops with venue names live from Google, a walk's notes), where it came from (the matcher's audience and score, or by hand) and its round. Drafts: edit the title and summary, **approve** (opens with signups from today) or **reject** (not suggested again for two weeks). Open plans: edit, **withdraw**. **New plan**: area, activity, optional follow-up, venue (picked from those found there, or left to pick), languages, optional title and summary; it opens at once. | `ReviewService` |
 | Reports | Reports about people (`app.reports`): open ones oldest first, with who, where they met and how many reports that person has; mark actioned, dismiss or reopen, with a note. "N reports in all" lists everything about that person. A report changed by the reporter after review is marked. | `ListReports`, `ResolveReport` |
 | Flags | System signals for a person to look at (today: meet-again picks leaning to one gender, in words); resolve with a note | `ListFlags`, `ResolveFlag` |
 | Crew leaves | Why people left crews, newest first, by reason; "made me uncomfortable" stands out | `ListCrewLeaves` |
 | People | Search by name, email or user id; everyone suspended now. A person view (`#/person/<id>`, also linked from names on reports and flags): email, joined, gender and age, home, report counts (with a link to their reports), flags, the last 50 outings (answer, checked in, what their feedback said) and suspension history. **Suspend** with a reason (after a confirm step) or **lift** with a note. | `SearchPeople`, `ListSuspended`, `GetPerson`, `SuspendPerson`, `LiftSuspension` |
 | Translations | Machine translations per language, unchecked first, with search; correct or confirm one ("Looks right"). Placeholders like `{email}` must be kept (checked here and by the API). A checked translation is never replaced by a machine one. | `ListTranslationLanguages`, `ListTranslations`, `ReviewTranslation` |
 
-All of `ModerationService` is admin-only (see below). Report and flag decisions don't change matching (a report already keeps the pair apart); a suspension does: see the backend README.
+`ModerationService` and `ReviewService` are admin-only (see below). Report and flag decisions don't change matching (a report already keeps the pair apart); a suspension does: see the backend README.
 
 ## Admins
 

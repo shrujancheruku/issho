@@ -14,12 +14,13 @@ import (
 
 const getCityMatching = `-- name: GetCityMatching :one
 
-select timezone, matching_weights from app.cities where id = $1
+select timezone, matching_weights, review from app.cities where id = $1
 `
 
 type GetCityMatchingRow struct {
 	Timezone        string
 	MatchingWeights []byte
+	Review          bool
 }
 
 // What internal/matching needs about one city, loaded by internal/plans for
@@ -28,7 +29,7 @@ type GetCityMatchingRow struct {
 func (q *Queries) GetCityMatching(ctx context.Context, id string) (GetCityMatchingRow, error) {
 	row := q.db.QueryRow(ctx, getCityMatching, id)
 	var i GetCityMatchingRow
-	err := row.Scan(&i.Timezone, &i.MatchingWeights)
+	err := row.Scan(&i.Timezone, &i.MatchingWeights, &i.Review)
 	return i, err
 }
 
@@ -399,7 +400,7 @@ func (q *Queries) ListMatchingUsers(ctx context.Context, cityID string) ([]ListM
 const listRecentlyFailedPlans = `-- name: ListRecentlyFailedPlans :many
 select area_id, activity_id, follow_up_id, primary_language, secondary_language
 from app.plans
-where city_id = $1 and closed_reason = 'no_group' and closed_at >= $2
+where city_id = $1 and closed_reason in ('no_group', 'rejected') and closed_at >= $2
 `
 
 type ListRecentlyFailedPlansParams struct {
@@ -415,8 +416,9 @@ type ListRecentlyFailedPlansRow struct {
 	SecondaryLanguage *string
 }
 
-// Plans that closed without a group recently: not suggested again until the
-// cool-down passes, or the same plan would reopen the next morning.
+// Plans that closed without a group, or drafts an admin rejected,
+// recently: not suggested again until the cool-down passes, or the same
+// plan would come back the next morning.
 func (q *Queries) ListRecentlyFailedPlans(ctx context.Context, arg ListRecentlyFailedPlansParams) ([]ListRecentlyFailedPlansRow, error) {
 	rows, err := q.db.Query(ctx, listRecentlyFailedPlans, arg.CityID, arg.Since)
 	if err != nil {

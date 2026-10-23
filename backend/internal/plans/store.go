@@ -102,6 +102,19 @@ func ListOpen(ctx context.Context, q *dbgen.Queries, cityID string) ([]Open, err
 // categories (acts; a missing activity gets none, as do activities that need
 // only a meeting point).
 func Create(ctx context.Context, q *dbgen.Queries, cityID string, s matching.Suggestion, w Window, acts map[matching.ActivityID]*matching.Activity) (uuid.UUID, error) {
+	return create(ctx, q, cityID, s, w, acts, PlanOpen)
+}
+
+// Plan states (app.plans.status).
+const (
+	PlanDraft  = "draft" // waiting for an admin, in a city under review
+	PlanOpen   = "open"
+	PlanClosed = "closed"
+)
+
+// create is Create with the plan's status: open, or a draft in a city
+// under review.
+func create(ctx context.Context, q *dbgen.Queries, cityID string, s matching.Suggestion, w Window, acts map[matching.ActivityID]*matching.Activity, status string) (uuid.UUID, error) {
 	venue, err := pickVenue(ctx, q, s.Area, acts[s.Activity])
 	if err != nil {
 		return uuid.Nil, err
@@ -113,6 +126,7 @@ func Create(ctx context.Context, q *dbgen.Queries, cityID string, s matching.Sug
 		}
 	}
 	return q.InsertPlan(ctx, dbgen.InsertPlanParams{
+		Status:               status,
 		VenuePlaceID:         venue,
 		FollowUpVenuePlaceID: followUpVenue,
 		CityID:               cityID,

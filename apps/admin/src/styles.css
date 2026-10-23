@@ -124,3 +124,19 @@ h2 { font-size: 1.05rem; margin: 1.75rem 0 0.6rem; }
 .decision.danger { border-color: var(--red); }
 a { color: var(--red); }
 .card-head a, td a { color: inherit; }
+
+/* Plans */
+.review-switch { padding: 0.75rem 1rem; }
+.review-switch .hint { margin: 0.35rem 0 0; }
+.small-badge { font-size: 0.72rem; margin-left: 0.4rem; padding: 0.05rem 0.45rem; }
+.badge.status-draft { background: var(--gold); color: var(--ink); }
+.badge.status-open { background: var(--ok); color: #fff; }
+.new-plan .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.75rem; margin-bottom: 0.5rem; }
+.new-plan h2 { margin-top: 0; }
+/* Long venue names mustn't widen the grid's columns. */
+.new-plan .grid label { min-width: 0; }
+.new-plan .grid select { width: 100%; min-width: 0; }
+input:not([type]), input[type='email'], input[type='search'] { min-width: 0; }
+.note input { width: 100%; }
+.stops { padding-left: 1.25rem; }
+.stops li { margin-bottom: 0.6rem; }
