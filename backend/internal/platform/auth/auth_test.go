@@ -5,11 +5,17 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 
+	"connectrpc.com/connect"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
+
+	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
+	"github.com/shrujancheruku/issho/backend/gen/issho/v1/isshov1connect"
 )
 
 const testURL = "https://example.supabase.co"
@@ -69,6 +75,95 @@ func TestVerify(t *testing.T) {
 			}
 			if !tt.wantErr && (c.UserID != id || c.Email != "a@example.com") {
 				t.Fatalf("caller = %+v", c)
+			}
+		})
+	}
+}
+
+func TestVerifyAdmin(t *testing.T) {
+	v, key := newTestVerifier(t)
+	claims := func(extra jwt.MapClaims) jwt.MapClaims {
+		c := jwt.MapClaims{
+			"sub": uuid.NewString(), "aud": "authenticated",
+			"iss": testURL + "/auth/v1", "exp": time.Now().Add(time.Hour).Unix(),
+		}
+		for k, val := range extra {
+			c[k] = val
+		}
+		return c
+	}
+	for _, tt := range []struct {
+		name  string
+		extra jwt.MapClaims
+		want  bool
+	}{
+		{"app_metadata.admin", jwt.MapClaims{"app_metadata": map[string]any{"provider": "email", "admin": true}}, true},
+		{"no app_metadata", nil, false},
+		{"admin false", jwt.MapClaims{"app_metadata": map[string]any{"admin": false}}, false},
+		// Users can edit their own user_metadata: it must never grant admin.
+		{"user_metadata ignored", jwt.MapClaims{"user_metadata": map[string]any{"admin": true}}, false},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			c, err := v.Verify(sign(t, key, claims(tt.extra)))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if c.Admin != tt.want {
+				t.Fatalf("Admin = %v, want %v", c.Admin, tt.want)
+			}
+		})
+	}
+}
+
+func TestAdminOnly(t *testing.T) {
+	// A real Connect server with unimplemented handlers: a call the
+	// interceptor lets through comes back UNIMPLEMENTED.
+	var caller *Caller
+	setCaller := connect.UnaryInterceptorFunc(func(next connect.UnaryFunc) connect.UnaryFunc {
+		return func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
+			if caller != nil {
+				ctx = WithCaller(ctx, *caller)
+			}
+			return next(ctx, req)
+		}
+	})
+	opts := connect.WithInterceptors(setCaller, AdminOnly(isshov1connect.ModerationServiceName))
+	mux := http.NewServeMux()
+	mux.Handle(isshov1connect.NewModerationServiceHandler(isshov1connect.UnimplementedModerationServiceHandler{}, opts))
+	mux.Handle(isshov1connect.NewPushServiceHandler(isshov1connect.UnimplementedPushServiceHandler{}, opts))
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+	moderation := isshov1connect.NewModerationServiceClient(srv.Client(), srv.URL)
+	push := isshov1connect.NewPushServiceClient(srv.Client(), srv.URL)
+
+	user, admin := &Caller{UserID: uuid.New()}, &Caller{UserID: uuid.New(), Admin: true}
+	for _, tt := range []struct {
+		name   string
+		caller *Caller
+		call   func() error
+		want   connect.Code
+	}{
+		{"admin", admin, func() error {
+			_, err := moderation.ListReports(context.Background(), connect.NewRequest(&isshov1.ListReportsRequest{}))
+			return err
+		}, connect.CodeUnimplemented},
+		{"user", user, func() error {
+			_, err := moderation.ListReports(context.Background(), connect.NewRequest(&isshov1.ListReportsRequest{}))
+			return err
+		}, connect.CodePermissionDenied},
+		{"no caller", nil, func() error {
+			_, err := moderation.GetModerator(context.Background(), connect.NewRequest(&isshov1.GetModeratorRequest{}))
+			return err
+		}, connect.CodePermissionDenied},
+		{"other service", user, func() error {
+			_, err := push.RegisterPushToken(context.Background(), connect.NewRequest(&isshov1.RegisterPushTokenRequest{}))
+			return err
+		}, connect.CodeUnimplemented},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			caller = tt.caller
+			if got := connect.CodeOf(tt.call()); got != tt.want {
+				t.Fatalf("code = %v, want %v", got, tt.want)
 			}
 		})
 	}

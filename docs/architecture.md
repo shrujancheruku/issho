@@ -5,7 +5,7 @@
 ```
 ┌──────────────────────┐   ConnectRPC (POST, JSON)   ┌───────────────────────────────┐
 │ apps/mobile (Expo)   │ ──────────────────────────▶ │ backend/cmd/api (Go)          │
-│ admin SPA (planned)  │  Authorization: Bearer JWT  │  ├ auth interceptor (JWKS)    │
+│ apps/admin (Vite)    │  Authorization: Bearer JWT  │  ├ auth interceptor (JWKS)    │
 └─────────┬────────────┘                             │  ├ internal/<domain> handlers │
           │ sign-in (supabase-js)                    │  └ pgx pool ─────────────┐    │
           ▼                                          └──────────────────────────┼────┘
@@ -38,6 +38,7 @@
 3. The **auth interceptor** (`internal/platform/auth`) runs:
    - Public procedures (`HealthService.Check`, and `UIService.GetStrings` because the sign-in screens need their text) skip it.
    - Everything else must have a valid ES256/RS256 token with Supabase's issuer, the `authenticated` audience and an unexpired `exp`. The caller is put on the request context.
+   - Admin-only services (`ModerationService`, for the admin SPA) also need `app_metadata.admin` in the token (`auth.AdminOnly`), else `permission_denied`. Admins are ordinary Supabase users given that role with `tool set-admin`; there's no admin list in our config.
 4. The **handler** (`internal/<domain>/handler.go`) validates input and calls the domain **service**.
 5. The **service** contains the business logic and talks to Postgres through **sqlc** queries (`backend/gen/dbgen`).
 6. Errors come back as Connect error codes (`unauthenticated`, `invalid_argument`, …). The outermost **errs interceptor** replaces any non-Connect error with a generic `internal error`, after logging it, so database and upstream details never reach clients.

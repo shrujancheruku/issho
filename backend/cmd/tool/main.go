@@ -7,6 +7,7 @@
 //	tool discover-venues [-dry-run] [-categories cafe,park] <city>
 //	tool simulate [-users 500] [-seed 1] [-month 5] [-config '{...}'] data/citypacks/tokyo.json ...
 //	tool walk-bench run|judge|review|report [flags]   (compare walk proposers; see walkbench.go)
+//	tool set-admin [-revoke] <email>   (the admin SPA's role; needs SUPABASE_URL and SUPABASE_SECRET_KEY)
 package main
 
 import (
@@ -39,7 +40,7 @@ func main() {
 
 func run(args []string) error {
 	if len(args) == 0 {
-		return fmt.Errorf("usage: tool migrate|seed|build-matrix|discover-venues|email-templates|simulate|walk-bench ...")
+		return fmt.Errorf("usage: tool migrate|seed|build-matrix|discover-venues|email-templates|simulate|walk-bench|set-admin ...")
 	}
 	switch args[0] {
 	case "simulate":
@@ -88,6 +89,8 @@ func run(args []string) error {
 		return discoverVenues(ctx, pool, args[1:])
 	case "email-templates":
 		return emailTemplates(ctx, pool, args[1:])
+	case "set-admin":
+		return setAdmin(ctx, pool, args[1:])
 	default:
 		return fmt.Errorf("unknown command %q", args[0])
 	}
