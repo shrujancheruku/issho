@@ -1,12 +1,14 @@
+-- status is 'open', or 'draft' in a city under review (00021);
+-- created_by is the admin who made it by hand (null: the matcher).
 -- name: InsertPlan :one
 insert into app.plans (
   city_id, area_id, activity_id, follow_up_id, primary_language, secondary_language,
   audience, score, window_start, window_days, signup_deadline, venue_place_id, follow_up_venue_place_id,
-  title, description
+  title, description, status, created_by
 ) values (
   @city_id, @area_id, @activity_id, @follow_up_id, @primary_language, @secondary_language,
   @audience, @score, @window_start, @window_days, @signup_deadline, @venue_place_id, @follow_up_venue_place_id,
-  sqlc.narg(title), sqlc.narg(description)
+  sqlc.narg(title), sqlc.narg(description), @status, sqlc.narg(created_by)
 )
 returning id;
 
@@ -191,3 +193,10 @@ where m.user_id = @user_id and m.response in ('invited', 'confirmed')
   and e.status = 'scheduled' and g.status <> 'cancelled'
   and (e.starts_at is null or e.starts_at > @now)
 order by e.date, m.event_id;
+
+-- A city's drafts, as plans: Suggest counts them as open, so it neither
+-- repeats one nor exceeds the city's cap while they wait for review.
+-- name: ListDraftPlanKeys :many
+select area_id, activity_id, follow_up_id, primary_language, secondary_language
+from app.plans
+where city_id = @city_id and status = 'draft';

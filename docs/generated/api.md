@@ -182,6 +182,35 @@
   
     - [PushService](#issho-v1-PushService)
   
+- [issho/v1/review.proto](#issho_v1_review-proto)
+    - [ApprovePlanRequest](#issho-v1-ApprovePlanRequest)
+    - [ApprovePlanResponse](#issho-v1-ApprovePlanResponse)
+    - [CreatePlanRequest](#issho-v1-CreatePlanRequest)
+    - [CreatePlanResponse](#issho-v1-CreatePlanResponse)
+    - [EditPlanRequest](#issho-v1-EditPlanRequest)
+    - [EditPlanResponse](#issho-v1-EditPlanResponse)
+    - [GetReviewPlanRequest](#issho-v1-GetReviewPlanRequest)
+    - [GetReviewPlanResponse](#issho-v1-GetReviewPlanResponse)
+    - [ListReviewCitiesRequest](#issho-v1-ListReviewCitiesRequest)
+    - [ListReviewCitiesResponse](#issho-v1-ListReviewCitiesResponse)
+    - [ListReviewPlansRequest](#issho-v1-ListReviewPlansRequest)
+    - [ListReviewPlansResponse](#issho-v1-ListReviewPlansResponse)
+    - [ListVenueOptionsRequest](#issho-v1-ListVenueOptionsRequest)
+    - [ListVenueOptionsResponse](#issho-v1-ListVenueOptionsResponse)
+    - [RejectPlanRequest](#issho-v1-RejectPlanRequest)
+    - [RejectPlanResponse](#issho-v1-RejectPlanResponse)
+    - [ReviewCity](#issho-v1-ReviewCity)
+    - [ReviewPlan](#issho-v1-ReviewPlan)
+    - [SetCityReviewRequest](#issho-v1-SetCityReviewRequest)
+    - [SetCityReviewResponse](#issho-v1-SetCityReviewResponse)
+    - [VenueOption](#issho-v1-VenueOption)
+    - [WithdrawPlanRequest](#issho-v1-WithdrawPlanRequest)
+    - [WithdrawPlanResponse](#issho-v1-WithdrawPlanResponse)
+  
+    - [ReviewPlanStatus](#issho-v1-ReviewPlanStatus)
+  
+    - [ReviewService](#issho-v1-ReviewService)
+  
 - [issho/v1/ui.proto](#issho_v1_ui-proto)
     - [GetStringsRequest](#issho-v1-GetStringsRequest)
     - [GetStringsResponse](#issho-v1-GetStringsResponse)
@@ -726,7 +755,7 @@ closed_reason set; older or other cities&#39; ones are NOT_FOUND.
 | signup | [Signup](#issho-v1-Signup) |  | The caller&#39;s signup; unset when they haven&#39;t signed up. |
 | steps | [PlanStep](#issho-v1-PlanStep) | repeated | What the outing is, in order: the activity, then any follow-up, each at its venue; or, for a walk, the meeting place, the stops on its theme and where it finishes. |
 | route_polyline | [string](#string) |  | The walking route through the stops&#39; venues (for a walk, through every stop; otherwise from the first venue to the second), in Google&#39;s encoded polyline format (precision 5), for the plan&#39;s map; &#34;&#34; when there&#39;s no route or it isn&#39;t computed yet. |
-| summary | [string](#string) |  | What a walk is like, in a sentence or two, in the caller&#39;s primary and secondary display languages; &#34;&#34; for other plans. secondary_summary is &#34;&#34; when the same. |
+| summary | [string](#string) |  | What a walk is like, in a sentence or two (or a summary an admin wrote for any plan, ReviewService.EditPlan), in the caller&#39;s primary and secondary display languages; &#34;&#34; when there&#39;s none. secondary_summary is &#34;&#34; when the same. |
 | secondary_summary | [string](#string) |  |  |
 
 
@@ -2719,6 +2748,425 @@ HTTP: POST /issho.v1.PushService/&lt;Method&gt;
 | ----------- | ------------ | ------------- | ------------|
 | RegisterPushToken | [RegisterPushTokenRequest](#issho-v1-RegisterPushTokenRequest) | [RegisterPushTokenResponse](#issho-v1-RegisterPushTokenResponse) | RegisterPushToken stores the device&#39;s token for the caller. A token registered by another account moves to the caller (the last person to sign in on a device gets its notifications). |
 | UnregisterPushToken | [UnregisterPushTokenRequest](#issho-v1-UnregisterPushTokenRequest) | [UnregisterPushTokenResponse](#issho-v1-UnregisterPushTokenResponse) | UnregisterPushToken stops notifications to the device for the caller. Unknown tokens are ignored. |
+
+ 
+
+
+
+<a name="issho_v1_review-proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## issho/v1/review.proto
+
+
+
+<a name="issho-v1-ApprovePlanRequest"></a>
+
+### ApprovePlanRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| plan_id | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-ApprovePlanResponse"></a>
+
+### ApprovePlanResponse
+
+
+
+
+
+
+
+<a name="issho-v1-CreatePlanRequest"></a>
+
+### CreatePlanRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| city_id | [string](#string) |  |  |
+| area_id | [string](#string) |  |  |
+| activity_id | [string](#string) |  |  |
+| follow_up_id | [string](#string) |  | Optional: an activity after the first (&#34;then ramen&#34;). |
+| venue_place_id | [string](#string) |  | A place from ListVenueOptions; &#34;&#34; = pick one as the matcher would (none for activities that need only a meeting point). |
+| follow_up_venue_place_id | [string](#string) |  |  |
+| primary_language | [string](#string) |  | ISO 639-1. secondary_language &#34;&#34; = none. |
+| secondary_language | [string](#string) |  |  |
+| title | [string](#string) |  | As in EditPlanRequest. |
+| summary | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-CreatePlanResponse"></a>
+
+### CreatePlanResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| plan_id | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-EditPlanRequest"></a>
+
+### EditPlanRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| plan_id | [string](#string) |  |  |
+| title | [string](#string) |  | Up to 80 characters; &#34;&#34; = made from the activities. |
+| summary | [string](#string) |  | Up to 500 characters; &#34;&#34; = none. |
+
+
+
+
+
+
+<a name="issho-v1-EditPlanResponse"></a>
+
+### EditPlanResponse
+
+
+
+
+
+
+
+<a name="issho-v1-GetReviewPlanRequest"></a>
+
+### GetReviewPlanRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| plan_id | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-GetReviewPlanResponse"></a>
+
+### GetReviewPlanResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| plan | [ReviewPlan](#issho-v1-ReviewPlan) |  |  |
+| steps | [PlanStep](#issho-v1-PlanStep) | repeated | As people would see them, in English. |
+
+
+
+
+
+
+<a name="issho-v1-ListReviewCitiesRequest"></a>
+
+### ListReviewCitiesRequest
+
+
+
+
+
+
+
+<a name="issho-v1-ListReviewCitiesResponse"></a>
+
+### ListReviewCitiesResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| cities | [ReviewCity](#issho-v1-ReviewCity) | repeated |  |
+
+
+
+
+
+
+<a name="issho-v1-ListReviewPlansRequest"></a>
+
+### ListReviewPlansRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| city_id | [string](#string) |  |  |
+| status | [ReviewPlanStatus](#issho-v1-ReviewPlanStatus) |  | Required. |
+
+
+
+
+
+
+<a name="issho-v1-ListReviewPlansResponse"></a>
+
+### ListReviewPlansResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| plans | [ReviewPlan](#issho-v1-ReviewPlan) | repeated |  |
+
+
+
+
+
+
+<a name="issho-v1-ListVenueOptionsRequest"></a>
+
+### ListVenueOptionsRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| area_id | [string](#string) |  |  |
+| activity_id | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-ListVenueOptionsResponse"></a>
+
+### ListVenueOptionsResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| venues | [VenueOption](#issho-v1-VenueOption) | repeated |  |
+
+
+
+
+
+
+<a name="issho-v1-RejectPlanRequest"></a>
+
+### RejectPlanRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| plan_id | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-RejectPlanResponse"></a>
+
+### RejectPlanResponse
+
+
+
+
+
+
+
+<a name="issho-v1-ReviewCity"></a>
+
+### ReviewCity
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [string](#string) |  |  |
+| name | [string](#string) |  | English name. |
+| review | [bool](#bool) |  |  |
+| drafts | [int32](#int32) |  |  |
+| open | [int32](#int32) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-ReviewPlan"></a>
+
+### ReviewPlan
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [string](#string) |  |  |
+| city_id | [string](#string) |  |  |
+| status | [ReviewPlanStatus](#issho-v1-ReviewPlanStatus) |  |  |
+| closed_reason | [string](#string) |  | done, no_group, withdrawn or rejected, for a closed plan. |
+| title | [string](#string) |  | The English title people see: the stored one, or made from the activities. stored_title is &#34;&#34; when it&#39;s made from the activities. |
+| stored_title | [string](#string) |  |  |
+| summary | [string](#string) |  | English summary; &#34;&#34; for none. |
+| area_id | [string](#string) |  |  |
+| area_name | [string](#string) |  |  |
+| activity_id | [string](#string) |  |  |
+| follow_up_id | [string](#string) |  |  |
+| primary_language | [string](#string) |  |  |
+| secondary_language | [string](#string) |  |  |
+| walk | [bool](#bool) |  | A composed walk (its stops are in GetReviewPlanResponse). |
+| audience | [int32](#int32) |  | From the matcher: how many people it suits, and its score; 0 for a plan made by hand. |
+| score | [float](#float) |  |  |
+| signups | [int32](#int32) |  |  |
+| window_start | [string](#string) |  | The current round&#39;s window (YYYY-MM-DD, local) and signup deadline. |
+| window_days | [int32](#int32) |  |  |
+| signup_deadline | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| created_by | [string](#string) |  | The admin who made it by hand; &#34;&#34; = the matcher. |
+| reviewed_by | [string](#string) |  |  |
+| reviewed_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-SetCityReviewRequest"></a>
+
+### SetCityReviewRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| city_id | [string](#string) |  |  |
+| review | [bool](#bool) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-SetCityReviewResponse"></a>
+
+### SetCityReviewResponse
+
+
+
+
+
+
+
+<a name="issho-v1-VenueOption"></a>
+
+### VenueOption
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| place_id | [string](#string) |  |  |
+| name | [string](#string) |  | From Google, in English; &#34;&#34; without GOOGLE_MAPS_API_KEY or if it failed. |
+| address | [string](#string) |  |  |
+| maps_url | [string](#string) |  |  |
+| category_id | [string](#string) |  | Our venue category, and candidate or approved. |
+| status | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-WithdrawPlanRequest"></a>
+
+### WithdrawPlanRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| plan_id | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-WithdrawPlanResponse"></a>
+
+### WithdrawPlanResponse
+
+
+
+
+
+
+ 
+
+
+<a name="issho-v1-ReviewPlanStatus"></a>
+
+### ReviewPlanStatus
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| REVIEW_PLAN_STATUS_UNSPECIFIED | 0 |  |
+| REVIEW_PLAN_STATUS_DRAFT | 1 |  |
+| REVIEW_PLAN_STATUS_OPEN | 2 |  |
+| REVIEW_PLAN_STATUS_CLOSED | 3 |  |
+
+
+ 
+
+ 
+
+
+<a name="issho-v1-ReviewService"></a>
+
+### ReviewService
+ReviewService: plan review in the admin SPA (M8), for launching a city
+by hand. A city can be put under review: its suggested plans (walks
+included) then wait as drafts, seen by nobody, until an admin approves
+or rejects them. Admins can also edit a plan&#39;s English title and summary,
+withdraw an open plan, and create plans from scratch in any city.
+Text is English, as stored; people see it translated on demand.
+Admins only, like ModerationService: anyone else gets PERMISSION_DENIED.
+
+HTTP: POST /issho.v1.ReviewService/&lt;Method&gt;
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| ListReviewCities | [ListReviewCitiesRequest](#issho-v1-ListReviewCitiesRequest) | [ListReviewCitiesResponse](#issho-v1-ListReviewCitiesResponse) | ListReviewCities returns every city with its review switch and plan counts. |
+| SetCityReview | [SetCityReviewRequest](#issho-v1-SetCityReviewRequest) | [SetCityReviewResponse](#issho-v1-SetCityReviewResponse) | SetCityReview turns review on or off for a city. Turning it off doesn&#39;t open the drafts already waiting: approve or reject them. |
+| ListReviewPlans | [ListReviewPlansRequest](#issho-v1-ListReviewPlansRequest) | [ListReviewPlansResponse](#issho-v1-ListReviewPlansResponse) | ListReviewPlans returns a city&#39;s plans in one state: drafts oldest first, open and closed plans newest first. At most 200. |
+| GetReviewPlan | [GetReviewPlanRequest](#issho-v1-GetReviewPlanRequest) | [GetReviewPlanResponse](#issho-v1-GetReviewPlanResponse) | GetReviewPlan returns one plan with its stops (venue names from Google, in English). NOT_FOUND if there&#39;s no such plan. |
+| ApprovePlan | [ApprovePlanRequest](#issho-v1-ApprovePlanRequest) | [ApprovePlanResponse](#issho-v1-ApprovePlanResponse) | ApprovePlan opens a draft, with a fresh signup window from today. FAILED_PRECONDITION if it isn&#39;t a draft. |
+| RejectPlan | [RejectPlanRequest](#issho-v1-RejectPlanRequest) | [RejectPlanResponse](#issho-v1-RejectPlanResponse) | RejectPlan turns a draft down. The matcher won&#39;t suggest the same plan again until the cool-down passes (two weeks). FAILED_PRECONDITION if it isn&#39;t a draft. |
+| EditPlan | [EditPlanRequest](#issho-v1-EditPlanRequest) | [EditPlanResponse](#issho-v1-EditPlanResponse) | EditPlan replaces a draft&#39;s or open plan&#39;s English title and summary. FAILED_PRECONDITION for a closed plan. |
+| WithdrawPlan | [WithdrawPlanRequest](#issho-v1-WithdrawPlanRequest) | [WithdrawPlanResponse](#issho-v1-WithdrawPlanResponse) | WithdrawPlan closes an open plan (&#34;withdrawn&#34;). People who signed up see it closed; nobody is notified. Groups already scheduled go ahead. FAILED_PRECONDITION if it isn&#39;t open. |
+| ListVenueOptions | [ListVenueOptionsRequest](#issho-v1-ListVenueOptionsRequest) | [ListVenueOptionsResponse](#issho-v1-ListVenueOptionsResponse) | ListVenueOptions returns the venues found in an area for an activity&#39;s venue categories (not rejected ones), approved first, with names from Google in English. At most 20. Empty for activities that need no venue. |
+| CreatePlan | [CreatePlanRequest](#issho-v1-CreatePlanRequest) | [CreatePlanResponse](#issho-v1-CreatePlanResponse) | CreatePlan opens a plan made by hand, with a signup window from today. It opens straight away, also in a city under review. INVALID_ARGUMENT for an unknown area or activity, an area or activity not in the city, or a venue not found for the activity there. |
 
  
 

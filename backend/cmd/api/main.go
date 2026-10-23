@@ -109,7 +109,7 @@ func run() error {
 		// copy of the UI catalogue.
 		auth.Interceptor(verifier, isshov1connect.HealthServiceCheckProcedure, isshov1connect.UIServiceGetStringsProcedure),
 		// The admin SPA's services: only accounts with app_metadata.admin.
-		auth.AdminOnly(isshov1connect.ModerationServiceName),
+		auth.AdminOnly(isshov1connect.ModerationServiceName, isshov1connect.ReviewServiceName),
 		// Suspended people may only see that they are, sign out (which
 		// unregisters push) and delete their account.
 		moderation.Gate(suspensions, isshov1connect.IdentityServiceGetMeProcedure,
@@ -149,6 +149,8 @@ func run() error {
 	mux.Handle(isshov1connect.NewEventServiceHandler(&plans.EventHandler{Svc: planSvc}, opts))
 	mux.Handle(isshov1connect.NewCrewServiceHandler(&plans.CrewHandler{Svc: planSvc}, opts))
 	mux.Handle(isshov1connect.NewPushServiceHandler(&push.Handler{Q: q}, opts))
+	// The worker's timing, so a plan an admin opens gets the same window.
+	mux.Handle(isshov1connect.NewReviewServiceHandler(&plans.ReviewHandler{Svc: planSvc, Timing: plans.DefaultTiming()}, opts))
 	mux.Handle(isshov1connect.NewModerationServiceHandler(&moderation.Handler{Q: q, Plans: planSvc, Suspensions: suspensions}, opts))
 	uiCatalog, err := uistrings.Load()
 	if err != nil {

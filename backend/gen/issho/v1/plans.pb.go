@@ -281,9 +281,10 @@ type GetPlanResponse struct {
 	// polyline format (precision 5), for the plan's map; "" when there's no
 	// route or it isn't computed yet.
 	RoutePolyline string `protobuf:"bytes,4,opt,name=route_polyline,json=routePolyline,proto3" json:"route_polyline,omitempty"`
-	// What a walk is like, in a sentence or two, in the caller's primary and
-	// secondary display languages; "" for other plans. secondary_summary is
-	// "" when the same.
+	// What a walk is like, in a sentence or two (or a summary an admin wrote
+	// for any plan, ReviewService.EditPlan), in the caller's primary and
+	// secondary display languages; "" when there's none. secondary_summary
+	// is "" when the same.
 	Summary          string `protobuf:"bytes,5,opt,name=summary,proto3" json:"summary,omitempty"`
 	SecondarySummary string `protobuf:"bytes,6,opt,name=secondary_summary,json=secondarySummary,proto3" json:"secondary_summary,omitempty"`
 	unknownFields    protoimpl.UnknownFields

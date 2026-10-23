@@ -69,12 +69,13 @@ func english(s string) []byte {
 
 // CreateWalk opens a plan for a suggestion with its composed walk: the
 // plan, its title and summary, its stops and its route, in one transaction.
-func CreateWalk(ctx context.Context, pool *pgxpool.Pool, cityID string, s matching.Suggestion, w Window, walk walks.Walk, now time.Time) (uuid.UUID, error) {
+func CreateWalk(ctx context.Context, pool *pgxpool.Pool, cityID string, s matching.Suggestion, w Window, walk walks.Walk, status string, now time.Time) (uuid.UUID, error) {
 	var id uuid.UUID
 	err := pgx.BeginFunc(ctx, pool, func(tx pgx.Tx) error {
 		q := dbgen.New(tx)
 		var err error
 		id, err = q.InsertPlan(ctx, dbgen.InsertPlanParams{
+			Status:            status,
 			CityID:            cityID,
 			AreaID:            string(s.Area),
 			ActivityID:        string(s.Activity),
@@ -247,16 +248,21 @@ func (r *Runner) suggest(ctx context.Context, q *dbgen.Queries, c *City, in matc
 				continue
 			}
 			var id uuid.UUID
+			// In a city under review the plan waits as a draft (00021).
+			status := PlanOpen
+			if c.Review {
+				status = PlanDraft
+			}
 			if acts[s.Activity] != nil && acts[s.Activity].Walk {
-				id, err = CreateWalk(ctx, r.DB, c.ID, s, w, res.walk, now)
+				id, err = CreateWalk(ctx, r.DB, c.ID, s, w, res.walk, status, now)
 			} else {
-				id, err = Create(ctx, q, c.ID, s, w, acts)
+				id, err = create(ctx, q, c.ID, s, w, acts, status)
 			}
 			if err != nil {
 				return opened, fmt.Errorf("open plan %s in %s: %w", s.Activity, s.Area, err)
 			}
 			if acts[s.Activity] != nil && acts[s.Activity].Walk {
-				r.Log.Info("walk opened", "city", c.ID, "plan", id, "area", s.Area, "activity", s.Activity,
+				r.Log.Info("walk opened", "city", c.ID, "plan", id, "status", status, "area", s.Area, "activity", s.Activity,
 					"title", res.walk.Title, "stops", len(res.walk.Stops), "minutes", res.walk.Minutes())
 			}
 			opened++

@@ -64,6 +64,7 @@ type AppCity struct {
 	MatchingWeights []byte
 	CreatedAt       pgtype.Timestamptz
 	TravelModes     []string
+	Review          bool
 }
 
 type AppCityActivityOverride struct {
@@ -214,6 +215,9 @@ type AppPlan struct {
 	RouteComputedAt      pgtype.Timestamptz
 	MeetingPlaceID       *string
 	Title                []byte
+	CreatedBy            pgtype.UUID
+	ReviewedBy           pgtype.UUID
+	ReviewedAt           pgtype.Timestamptz
 }
 
 type AppPlanSignup struct {

@@ -102,9 +102,10 @@ export type GetPlanResponse = Message<"issho.v1.GetPlanResponse"> & {
   routePolyline: string;
 
   /**
-   * What a walk is like, in a sentence or two, in the caller's primary and
-   * secondary display languages; "" for other plans. secondary_summary is
-   * "" when the same.
+   * What a walk is like, in a sentence or two (or a summary an admin wrote
+   * for any plan, ReviewService.EditPlan), in the caller's primary and
+   * secondary display languages; "" when there's none. secondary_summary
+   * is "" when the same.
    *
    * @generated from field: string summary = 5;
    */

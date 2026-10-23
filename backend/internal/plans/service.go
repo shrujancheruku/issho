@@ -302,8 +302,11 @@ func (s *Service) Plan(ctx context.Context, userID, planID uuid.UUID) (FeedItem,
 		return item, nil, nil, err
 	}
 	var steps []Step
-	if item.Walk {
+	// A walk's summary, or one an admin wrote for any plan (ReviewService).
+	if item.WalkSummary != nil {
 		item.Summary, item.SecondarySummary = s.text(ctx, item.WalkSummary, summaryContext, caller)
+	}
+	if item.Walk {
 		if steps, err = s.walkSteps(ctx, q, item.ID, caller); err != nil {
 			return item, nil, nil, err
 		}

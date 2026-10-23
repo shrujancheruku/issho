@@ -44,7 +44,7 @@ join app.areas a on a.id = p.area_id
 where p.city_id = $1 and p.venue_place_id is null and p.meeting_place_id is null
   -- A composed walk starts at its own first stop.
   and not exists (select 1 from app.plan_stops s where s.plan_id = p.id)
-  and (p.status = 'open' or exists (select 1 from app.events e where e.plan_id = p.id and e.status = 'scheduled'))
+  and (p.status in ('open', 'draft') or exists (select 1 from app.events e where e.plan_id = p.id and e.status = 'scheduled'))
 order by p.created_at
 limit $2
 `
@@ -87,7 +87,7 @@ select p.id, coalesce(p.venue_place_id, p.meeting_place_id)::text as from_place,
 from app.plans p
 where p.city_id = $1 and coalesce(p.venue_place_id, p.meeting_place_id) is not null and p.follow_up_venue_place_id is not null
   and (p.route_computed_at is null or p.route_computed_at < $2)
-  and (p.status = 'open' or exists (select 1 from app.events e where e.plan_id = p.id and e.status = 'scheduled'))
+  and (p.status in ('open', 'draft') or exists (select 1 from app.events e where e.plan_id = p.id and e.status = 'scheduled'))
 order by p.route_computed_at nulls first, p.id
 limit $3
 `
@@ -104,8 +104,8 @@ type ListPlansNeedingRouteRow struct {
 	FollowUpVenuePlaceID *string
 }
 
-// Plans whose route is still needed (open, or with an event still to
-// happen) and missing or older than the refresh age.
+// Plans whose route is still needed (open, a draft an admin will review,
+// or with an event still to happen) and missing or older than the refresh age.
 // The walk starts at the first venue, or the meeting place when the first
 // activity has no venue (a walk ending at a café).
 func (q *Queries) ListPlansNeedingRoute(ctx context.Context, arg ListPlansNeedingRouteParams) ([]ListPlansNeedingRouteRow, error) {
@@ -134,7 +134,7 @@ from app.plans p
 join app.plan_stops s on s.plan_id = p.id
 where p.city_id = $1
   and (p.route_computed_at is null or p.route_computed_at < $2)
-  and (p.status = 'open' or exists (select 1 from app.events e where e.plan_id = p.id and e.status = 'scheduled'))
+  and (p.status in ('open', 'draft') or exists (select 1 from app.events e where e.plan_id = p.id and e.status = 'scheduled'))
 group by p.id, p.route_computed_at
 order by p.route_computed_at nulls first, p.id
 limit $3
