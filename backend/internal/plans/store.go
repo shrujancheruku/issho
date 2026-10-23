@@ -277,7 +277,22 @@ type Event struct {
 	// closes the plan as done, at Now.
 	Next *Window
 	Now  time.Time
+	// Propose saves the round for an admin to review (a city under review,
+	// 00022): the event and its groups, but nobody is invited or told, and
+	// the plan stays in its round with everyone signed up. ApproveProposal
+	// does the rest; Next is ignored.
+	Propose bool
 }
+
+// ProposalRest is how long the scheduler leaves a plan alone after an admin
+// rejects its proposal.
+const ProposalRest = 24 * time.Hour
+
+// Event states (app.events.status).
+const (
+	EventProposed  = "proposed"
+	EventScheduled = "scheduled"
+)
 
 // SaveEvent stores a scheduled round: the event, its groups and their
 // invitations. Everyone invited stops waiting; the rest stay signed up for
@@ -296,6 +311,10 @@ func SaveEvent(ctx context.Context, pool *pgxpool.Pool, e Event) (uuid.UUID, err
 			return err
 		}
 		o := e.Scheduled.Occasion
+		status := EventScheduled
+		if e.Propose {
+			status = EventProposed
+		}
 		eventID, err = q.InsertEvent(ctx, dbgen.InsertEventParams{
 			PlanID:    e.PlanID,
 			Round:     int16(e.Round),
@@ -304,6 +323,7 @@ func SaveEvent(ctx context.Context, pool *pgxpool.Pool, e Event) (uuid.UUID, err
 			StartsAt:  pgtype.Timestamptz{Time: e.StartsAt, Valid: !e.StartsAt.IsZero()},
 			ConfirmBy: pgtype.Timestamptz{Time: e.ConfirmBy, Valid: true},
 			Forced:    e.Forced,
+			Status:    status,
 		})
 		if err != nil {
 			return err
@@ -329,6 +349,9 @@ func SaveEvent(ctx context.Context, pool *pgxpool.Pool, e Event) (uuid.UUID, err
 				return err
 			}
 			invited = append(invited, members...)
+		}
+		if e.Propose {
+			return nil // ApproveProposal invites them and moves the plan on
 		}
 		if err := q.DeleteSignups(ctx, dbgen.DeleteSignupsParams{PlanID: e.PlanID, UserIds: invited}); err != nil {
 			return err

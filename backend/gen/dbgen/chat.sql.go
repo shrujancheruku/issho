@@ -38,7 +38,7 @@ select m.group_id, m.response, g.status as group_status, e.status as event_statu
 from app.group_members m
 join app.event_groups g on g.id = m.group_id
 join app.events e on e.id = m.event_id
-where m.event_id = $1 and m.user_id = $2
+where m.event_id = $1 and m.user_id = $2 and e.status <> 'proposed'
 `
 
 type GetChatAccessParams struct {

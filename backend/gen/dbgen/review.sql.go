@@ -44,6 +44,87 @@ func (q *Queries) ApproveDraft(ctx context.Context, arg ApproveDraftParams) (int
 	return result.RowsAffected(), nil
 }
 
+const approveProposalEvent = `-- name: ApproveProposalEvent :exec
+update app.events set status = 'scheduled', reviewed_by = $1, reviewed_at = $2
+where id = $3
+`
+
+type ApproveProposalEventParams struct {
+	ReviewedBy pgtype.UUID
+	At         pgtype.Timestamptz
+	ID         uuid.UUID
+}
+
+func (q *Queries) ApproveProposalEvent(ctx context.Context, arg ApproveProposalEventParams) error {
+	_, err := q.db.Exec(ctx, approveProposalEvent, arg.ReviewedBy, arg.At, arg.ID)
+	return err
+}
+
+const countPlanSignups = `-- name: CountPlanSignups :one
+select count(*)::int from app.plan_signups where plan_id = $1
+`
+
+func (q *Queries) CountPlanSignups(ctx context.Context, planID uuid.UUID) (int32, error) {
+	row := q.db.QueryRow(ctx, countPlanSignups, planID)
+	var column_1 int32
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
+const deleteEmptyGroups = `-- name: DeleteEmptyGroups :exec
+delete from app.event_groups g
+where g.event_id = $1 and not exists (select 1 from app.group_members m where m.group_id = g.id)
+`
+
+func (q *Queries) DeleteEmptyGroups(ctx context.Context, eventID uuid.UUID) error {
+	_, err := q.db.Exec(ctx, deleteEmptyGroups, eventID)
+	return err
+}
+
+const deleteProposal = `-- name: DeleteProposal :exec
+delete from app.events where id = $1 and status = 'proposed'
+`
+
+func (q *Queries) DeleteProposal(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.Exec(ctx, deleteProposal, id)
+	return err
+}
+
+const deleteProposalMember = `-- name: DeleteProposalMember :execrows
+delete from app.group_members where event_id = $1 and user_id = $2
+`
+
+type DeleteProposalMemberParams struct {
+	EventID uuid.UUID
+	UserID  uuid.UUID
+}
+
+func (q *Queries) DeleteProposalMember(ctx context.Context, arg DeleteProposalMemberParams) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteProposalMember, arg.EventID, arg.UserID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const dropMembersWithoutSignup = `-- name: DropMembersWithoutSignup :exec
+delete from app.group_members m
+where m.event_id = $1
+  and not exists (select 1 from app.plan_signups s where s.plan_id = $2 and s.user_id = m.user_id)
+`
+
+type DropMembersWithoutSignupParams struct {
+	EventID uuid.UUID
+	PlanID  uuid.UUID
+}
+
+// At approval: people who withdrew (or were suspended, which withdraws
+// them) since the proposal aren't invited.
+func (q *Queries) DropMembersWithoutSignup(ctx context.Context, arg DropMembersWithoutSignupParams) error {
+	_, err := q.db.Exec(ctx, dropMembersWithoutSignup, arg.EventID, arg.PlanID)
+	return err
+}
+
 const editPlanText = `-- name: EditPlanText :execrows
 update app.plans set title = $1, description = $2
 where id = $3 and status in ('draft', 'open')
@@ -61,6 +142,91 @@ func (q *Queries) EditPlanText(ctx context.Context, arg EditPlanTextParams) (int
 		return 0, err
 	}
 	return result.RowsAffected(), nil
+}
+
+const getGroupEventStatus = `-- name: GetGroupEventStatus :one
+select e.id as event_id, e.status, p.primary_language, p.secondary_language
+from app.event_groups g
+join app.events e on e.id = g.event_id
+join app.plans p on p.id = e.plan_id
+where g.id = $1
+`
+
+type GetGroupEventStatusRow struct {
+	EventID           uuid.UUID
+	Status            string
+	PrimaryLanguage   string
+	SecondaryLanguage *string
+}
+
+func (q *Queries) GetGroupEventStatus(ctx context.Context, id uuid.UUID) (GetGroupEventStatusRow, error) {
+	row := q.db.QueryRow(ctx, getGroupEventStatus, id)
+	var i GetGroupEventStatusRow
+	err := row.Scan(
+		&i.EventID,
+		&i.Status,
+		&i.PrimaryLanguage,
+		&i.SecondaryLanguage,
+	)
+	return i, err
+}
+
+const getReviewEvent = `-- name: GetReviewEvent :one
+select e.id, e.plan_id, e.status, e.round, e.date, e.block, e.starts_at, e.confirm_by, e.forced, e.created_at,
+       p.city_id, p.title, p.activity_id, p.follow_up_id, p.primary_language, p.secondary_language,
+       coalesce(a.name->>'en', p.area_id)::text as area_name, c.timezone
+from app.events e
+join app.plans p on p.id = e.plan_id
+join app.areas a on a.id = p.area_id
+join app.cities c on c.id = p.city_id
+where e.id = $1
+`
+
+type GetReviewEventRow struct {
+	ID                uuid.UUID
+	PlanID            uuid.UUID
+	Status            string
+	Round             int16
+	Date              pgtype.Date
+	Block             string
+	StartsAt          pgtype.Timestamptz
+	ConfirmBy         pgtype.Timestamptz
+	Forced            bool
+	CreatedAt         pgtype.Timestamptz
+	CityID            string
+	Title             []byte
+	ActivityID        string
+	FollowUpID        *string
+	PrimaryLanguage   string
+	SecondaryLanguage *string
+	AreaName          string
+	Timezone          string
+}
+
+func (q *Queries) GetReviewEvent(ctx context.Context, id uuid.UUID) (GetReviewEventRow, error) {
+	row := q.db.QueryRow(ctx, getReviewEvent, id)
+	var i GetReviewEventRow
+	err := row.Scan(
+		&i.ID,
+		&i.PlanID,
+		&i.Status,
+		&i.Round,
+		&i.Date,
+		&i.Block,
+		&i.StartsAt,
+		&i.ConfirmBy,
+		&i.Forced,
+		&i.CreatedAt,
+		&i.CityID,
+		&i.Title,
+		&i.ActivityID,
+		&i.FollowUpID,
+		&i.PrimaryLanguage,
+		&i.SecondaryLanguage,
+		&i.AreaName,
+		&i.Timezone,
+	)
+	return i, err
 }
 
 const getReviewPlan = `-- name: GetReviewPlan :one
@@ -144,6 +310,30 @@ func (q *Queries) GetReviewPlan(ctx context.Context, id uuid.UUID) (GetReviewPla
 	return i, err
 }
 
+const listEventMemberIDs = `-- name: ListEventMemberIDs :many
+select user_id from app.group_members where event_id = $1 order by user_id
+`
+
+func (q *Queries) ListEventMemberIDs(ctx context.Context, eventID uuid.UUID) ([]uuid.UUID, error) {
+	rows, err := q.db.Query(ctx, listEventMemberIDs, eventID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []uuid.UUID
+	for rows.Next() {
+		var user_id uuid.UUID
+		if err := rows.Scan(&user_id); err != nil {
+			return nil, err
+		}
+		items = append(items, user_id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listReviewCities = `-- name: ListReviewCities :many
 
 select c.id, coalesce(c.name->>'en', c.id)::text as name, c.review,
@@ -178,6 +368,185 @@ func (q *Queries) ListReviewCities(ctx context.Context) ([]ListReviewCitiesRow, 
 			&i.Review,
 			&i.Drafts,
 			&i.Open,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listReviewEventGroups = `-- name: ListReviewEventGroups :many
+select g.id, g.quorum, g.min_attendance, g.score, g.status, g.meeting_point
+from app.event_groups g
+where g.event_id = $1
+order by g.created_at, g.id
+`
+
+type ListReviewEventGroupsRow struct {
+	ID            uuid.UUID
+	Quorum        int16
+	MinAttendance int16
+	Score         float32
+	Status        string
+	MeetingPoint  []byte
+}
+
+func (q *Queries) ListReviewEventGroups(ctx context.Context, eventID uuid.UUID) ([]ListReviewEventGroupsRow, error) {
+	rows, err := q.db.Query(ctx, listReviewEventGroups, eventID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListReviewEventGroupsRow
+	for rows.Next() {
+		var i ListReviewEventGroupsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Quorum,
+			&i.MinAttendance,
+			&i.Score,
+			&i.Status,
+			&i.MeetingPoint,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listReviewEventMembers = `-- name: ListReviewEventMembers :many
+select m.group_id, m.user_id, m.response,
+       coalesce(pr.display_name, '')::text as name, coalesce(pr.gender, '')::text as gender,
+       coalesce(pr.birth_year, 0)::int as birth_year,
+       exists (select 1 from app.plan_signups s join app.events e on e.plan_id = s.plan_id
+               where e.id = m.event_id and s.user_id = m.user_id) as signed_up
+from app.group_members m
+left join app.profiles pr on pr.user_id = m.user_id
+where m.event_id = $1
+order by m.group_id, pr.display_name, m.user_id
+`
+
+type ListReviewEventMembersRow struct {
+	GroupID   uuid.UUID
+	UserID    uuid.UUID
+	Response  string
+	Name      string
+	Gender    string
+	BirthYear int32
+	SignedUp  bool
+}
+
+// Who's in each group, with what an admin balances groups by.
+func (q *Queries) ListReviewEventMembers(ctx context.Context, eventID uuid.UUID) ([]ListReviewEventMembersRow, error) {
+	rows, err := q.db.Query(ctx, listReviewEventMembers, eventID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListReviewEventMembersRow
+	for rows.Next() {
+		var i ListReviewEventMembersRow
+		if err := rows.Scan(
+			&i.GroupID,
+			&i.UserID,
+			&i.Response,
+			&i.Name,
+			&i.Gender,
+			&i.BirthYear,
+			&i.SignedUp,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listReviewEvents = `-- name: ListReviewEvents :many
+select e.id, e.plan_id, e.status, e.date, e.block, e.starts_at, e.confirm_by, e.forced, e.created_at,
+       p.title, p.activity_id, p.follow_up_id, coalesce(a.name->>'en', p.area_id)::text as area_name,
+       (select count(*) from app.event_groups g where g.event_id = e.id and g.status <> 'cancelled')::int as groups,
+       (select count(*) from app.group_members m where m.event_id = e.id and m.response in ('invited', 'confirmed'))::int as people,
+       c.timezone
+from app.events e
+join app.plans p on p.id = e.plan_id
+join app.areas a on a.id = p.area_id
+join app.cities c on c.id = p.city_id
+where p.city_id = $1 and e.status = $2 and (e.status = 'proposed' or e.date >= $3)
+order by e.date, e.block, e.id
+limit $4
+`
+
+type ListReviewEventsParams struct {
+	CityID   string
+	Status   string
+	FromDate pgtype.Date
+	MaxRows  int32
+}
+
+type ListReviewEventsRow struct {
+	ID         uuid.UUID
+	PlanID     uuid.UUID
+	Status     string
+	Date       pgtype.Date
+	Block      string
+	StartsAt   pgtype.Timestamptz
+	ConfirmBy  pgtype.Timestamptz
+	Forced     bool
+	CreatedAt  pgtype.Timestamptz
+	Title      []byte
+	ActivityID string
+	FollowUpID *string
+	AreaName   string
+	Groups     int32
+	People     int32
+	Timezone   string
+}
+
+// Group review (00022): proposals waiting in a city, or its upcoming
+// scheduled events (for meeting points). Soonest first.
+func (q *Queries) ListReviewEvents(ctx context.Context, arg ListReviewEventsParams) ([]ListReviewEventsRow, error) {
+	rows, err := q.db.Query(ctx, listReviewEvents,
+		arg.CityID,
+		arg.Status,
+		arg.FromDate,
+		arg.MaxRows,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListReviewEventsRow
+	for rows.Next() {
+		var i ListReviewEventsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.PlanID,
+			&i.Status,
+			&i.Date,
+			&i.Block,
+			&i.StartsAt,
+			&i.ConfirmBy,
+			&i.Forced,
+			&i.CreatedAt,
+			&i.Title,
+			&i.ActivityID,
+			&i.FollowUpID,
+			&i.AreaName,
+			&i.Groups,
+			&i.People,
+			&i.Timezone,
 		); err != nil {
 			return nil, err
 		}
@@ -325,6 +694,47 @@ func (q *Queries) ListVenueOptions(ctx context.Context, arg ListVenueOptionsPara
 	return items, nil
 }
 
+const lockProposal = `-- name: LockProposal :one
+select e.plan_id, e.round, e.status
+from app.events e
+where e.id = $1
+for update
+`
+
+type LockProposalRow struct {
+	PlanID uuid.UUID
+	Round  int16
+	Status string
+}
+
+func (q *Queries) LockProposal(ctx context.Context, id uuid.UUID) (LockProposalRow, error) {
+	row := q.db.QueryRow(ctx, lockProposal, id)
+	var i LockProposalRow
+	err := row.Scan(&i.PlanID, &i.Round, &i.Status)
+	return i, err
+}
+
+const moveProposalMember = `-- name: MoveProposalMember :execrows
+update app.group_members set group_id = $1
+where event_id = $2 and user_id = $3
+`
+
+type MoveProposalMemberParams struct {
+	GroupID uuid.UUID
+	EventID uuid.UUID
+	UserID  uuid.UUID
+}
+
+// The group must be one of the event's (the foreign key on
+// (group_id, event_id) checks it).
+func (q *Queries) MoveProposalMember(ctx context.Context, arg MoveProposalMemberParams) (int64, error) {
+	result, err := q.db.Exec(ctx, moveProposalMember, arg.GroupID, arg.EventID, arg.UserID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const rejectDraft = `-- name: RejectDraft :execrows
 update app.plans
 set status = 'closed', closed_reason = 'rejected', closed_at = $1, reviewed_by = $2, reviewed_at = $1
@@ -360,6 +770,63 @@ func (q *Queries) SetCityReview(ctx context.Context, arg SetCityReviewParams) (i
 		return 0, err
 	}
 	return result.RowsAffected(), nil
+}
+
+const setGroupMeetingPoint = `-- name: SetGroupMeetingPoint :execrows
+update app.event_groups g set meeting_point = $1
+from app.events e
+where g.id = $2 and e.id = g.event_id and e.status in ('proposed', 'scheduled')
+`
+
+type SetGroupMeetingPointParams struct {
+	MeetingPoint []byte
+	ID           uuid.UUID
+}
+
+func (q *Queries) SetGroupMeetingPoint(ctx context.Context, arg SetGroupMeetingPointParams) (int64, error) {
+	result, err := q.db.Exec(ctx, setGroupMeetingPoint, arg.MeetingPoint, arg.ID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const setProposalRejected = `-- name: SetProposalRejected :exec
+update app.plans set proposal_rejected_at = $1 where id = $2
+`
+
+type SetProposalRejectedParams struct {
+	At pgtype.Timestamptz
+	ID uuid.UUID
+}
+
+func (q *Queries) SetProposalRejected(ctx context.Context, arg SetProposalRejectedParams) error {
+	_, err := q.db.Exec(ctx, setProposalRejected, arg.At, arg.ID)
+	return err
+}
+
+const setProposalStart = `-- name: SetProposalStart :exec
+update app.events set date = $1, block = $2, starts_at = $3, confirm_by = $4
+where id = $5
+`
+
+type SetProposalStartParams struct {
+	Date      pgtype.Date
+	Block     string
+	StartsAt  pgtype.Timestamptz
+	ConfirmBy pgtype.Timestamptz
+	ID        uuid.UUID
+}
+
+func (q *Queries) SetProposalStart(ctx context.Context, arg SetProposalStartParams) error {
+	_, err := q.db.Exec(ctx, setProposalStart,
+		arg.Date,
+		arg.Block,
+		arg.StartsAt,
+		arg.ConfirmBy,
+		arg.ID,
+	)
+	return err
 }
 
 const withdrawPlan = `-- name: WithdrawPlan :execrows

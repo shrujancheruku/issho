@@ -5,7 +5,7 @@ select m.group_id, m.response, g.status as group_status, e.status as event_statu
 from app.group_members m
 join app.event_groups g on g.id = m.group_id
 join app.events e on e.id = m.event_id
-where m.event_id = @event_id and m.user_id = @user_id;
+where m.event_id = @event_id and m.user_id = @user_id and e.status <> 'proposed';
 
 -- name: InsertChatMessage :one
 insert into app.chat_messages (group_id, user_id, body) values (@group_id, @user_id, @body)

@@ -230,8 +230,8 @@ func (q *Queries) GetRecentlyClosedPlan(ctx context.Context, arg GetRecentlyClos
 }
 
 const insertEvent = `-- name: InsertEvent :one
-insert into app.events (plan_id, round, date, block, starts_at, confirm_by, forced)
-values ($1, $2, $3, $4, $5, $6, $7)
+insert into app.events (plan_id, round, date, block, starts_at, confirm_by, forced, status)
+values ($1, $2, $3, $4, $5, $6, $7, $8)
 returning id
 `
 
@@ -243,8 +243,10 @@ type InsertEventParams struct {
 	StartsAt  pgtype.Timestamptz
 	ConfirmBy pgtype.Timestamptz
 	Forced    bool
+	Status    string
 }
 
+// status is 'scheduled', or 'proposed' in a city under review (00022).
 func (q *Queries) InsertEvent(ctx context.Context, arg InsertEventParams) (uuid.UUID, error) {
 	row := q.db.QueryRow(ctx, insertEvent,
 		arg.PlanID,
@@ -254,6 +256,7 @@ func (q *Queries) InsertEvent(ctx context.Context, arg InsertEventParams) (uuid.
 		arg.StartsAt,
 		arg.ConfirmBy,
 		arg.Forced,
+		arg.Status,
 	)
 	var id uuid.UUID
 	err := row.Scan(&id)
@@ -444,7 +447,8 @@ from app.group_members m
 join app.events e on e.id = m.event_id
 where m.user_id = any($1::uuid[])
   and m.response in ('invited', 'confirmed')
-  and e.status = 'scheduled'
+  -- A proposal waiting for review holds its people's time too.
+  and e.status in ('scheduled', 'proposed')
   and e.date >= $2
 order by m.user_id, e.date, e.block
 `
@@ -632,6 +636,40 @@ func (q *Queries) ListPlanStops(ctx context.Context, planID uuid.UUID) ([]ListPl
 			return nil, err
 		}
 		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listPlansOnHold = `-- name: ListPlansOnHold :many
+select p.id from app.plans p
+where p.city_id = $1 and p.status = 'open'
+  and (exists (select 1 from app.events e where e.plan_id = p.id and e.status = 'proposed')
+       or p.proposal_rejected_at > $2)
+`
+
+type ListPlansOnHoldParams struct {
+	CityID        string
+	RejectedSince pgtype.Timestamptz
+}
+
+// Plans the scheduler leaves alone: a proposal is waiting for review, or
+// an admin rejected one since @rejected_since (00022).
+func (q *Queries) ListPlansOnHold(ctx context.Context, arg ListPlansOnHoldParams) ([]uuid.UUID, error) {
+	rows, err := q.db.Query(ctx, listPlansOnHold, arg.CityID, arg.RejectedSince)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []uuid.UUID
+	for rows.Next() {
+		var id uuid.UUID
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err

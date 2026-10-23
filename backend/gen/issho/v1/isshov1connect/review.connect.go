@@ -62,6 +62,30 @@ const (
 	// ReviewServiceCreatePlanProcedure is the fully-qualified name of the ReviewService's CreatePlan
 	// RPC.
 	ReviewServiceCreatePlanProcedure = "/issho.v1.ReviewService/CreatePlan"
+	// ReviewServiceListReviewEventsProcedure is the fully-qualified name of the ReviewService's
+	// ListReviewEvents RPC.
+	ReviewServiceListReviewEventsProcedure = "/issho.v1.ReviewService/ListReviewEvents"
+	// ReviewServiceGetReviewEventProcedure is the fully-qualified name of the ReviewService's
+	// GetReviewEvent RPC.
+	ReviewServiceGetReviewEventProcedure = "/issho.v1.ReviewService/GetReviewEvent"
+	// ReviewServiceMoveProposalMemberProcedure is the fully-qualified name of the ReviewService's
+	// MoveProposalMember RPC.
+	ReviewServiceMoveProposalMemberProcedure = "/issho.v1.ReviewService/MoveProposalMember"
+	// ReviewServiceRemoveProposalMemberProcedure is the fully-qualified name of the ReviewService's
+	// RemoveProposalMember RPC.
+	ReviewServiceRemoveProposalMemberProcedure = "/issho.v1.ReviewService/RemoveProposalMember"
+	// ReviewServiceSetProposalStartProcedure is the fully-qualified name of the ReviewService's
+	// SetProposalStart RPC.
+	ReviewServiceSetProposalStartProcedure = "/issho.v1.ReviewService/SetProposalStart"
+	// ReviewServiceSetGroupMeetingPointProcedure is the fully-qualified name of the ReviewService's
+	// SetGroupMeetingPoint RPC.
+	ReviewServiceSetGroupMeetingPointProcedure = "/issho.v1.ReviewService/SetGroupMeetingPoint"
+	// ReviewServiceApproveProposalProcedure is the fully-qualified name of the ReviewService's
+	// ApproveProposal RPC.
+	ReviewServiceApproveProposalProcedure = "/issho.v1.ReviewService/ApproveProposal"
+	// ReviewServiceRejectProposalProcedure is the fully-qualified name of the ReviewService's
+	// RejectProposal RPC.
+	ReviewServiceRejectProposalProcedure = "/issho.v1.ReviewService/RejectProposal"
 )
 
 // ReviewServiceClient is a client for the issho.v1.ReviewService service.
@@ -101,6 +125,38 @@ type ReviewServiceClient interface {
 	// INVALID_ARGUMENT for an unknown area or activity, an area or activity
 	// not in the city, or a venue not found for the activity there.
 	CreatePlan(context.Context, *connect.Request[v1.CreatePlanRequest]) (*connect.Response[v1.CreatePlanResponse], error)
+	// ListReviewEvents returns a city's proposals, or its upcoming scheduled
+	// events (to set meeting points), soonest first. At most 200.
+	ListReviewEvents(context.Context, *connect.Request[v1.ListReviewEventsRequest]) (*connect.Response[v1.ListReviewEventsResponse], error)
+	// GetReviewEvent returns one with its groups and who's in them.
+	// NOT_FOUND if there's no such event.
+	GetReviewEvent(context.Context, *connect.Request[v1.GetReviewEventRequest]) (*connect.Response[v1.GetReviewEventResponse], error)
+	// MoveProposalMember moves someone to another group of the proposal.
+	// FAILED_PRECONDITION if it's no longer a proposal; NOT_FOUND for a
+	// group not in it or someone not in it.
+	MoveProposalMember(context.Context, *connect.Request[v1.MoveProposalMemberRequest]) (*connect.Response[v1.MoveProposalMemberResponse], error)
+	// RemoveProposalMember takes someone out of the proposal; they stay
+	// signed up for the plan's next round. A group left empty goes.
+	RemoveProposalMember(context.Context, *connect.Request[v1.RemoveProposalMemberRequest]) (*connect.Response[v1.RemoveProposalMemberResponse], error)
+	// SetProposalStart moves the proposal to another local date and time in
+	// the city (its part of the day follows the time). FAILED_PRECONDITION
+	// if the day before has already begun: people need until then to answer.
+	SetProposalStart(context.Context, *connect.Request[v1.SetProposalStartRequest]) (*connect.Response[v1.SetProposalStartResponse], error)
+	// SetGroupMeetingPoint sets where exactly a group meets, in English
+	// ("" clears it), for a proposal or a scheduled event; stored in the
+	// event's languages too when the server can translate. People who
+	// confirmed see it from 24 hours before the start.
+	SetGroupMeetingPoint(context.Context, *connect.Request[v1.SetGroupMeetingPointRequest]) (*connect.Response[v1.SetGroupMeetingPointResponse], error)
+	// ApproveProposal sends the invitations, as if just scheduled: people
+	// who withdrew (or were suspended) since are left out, everyone else is
+	// invited and told, and the plan moves to its next round for whoever is
+	// still waiting, or closes. FAILED_PRECONDITION if the plan moved on,
+	// answering would no longer be possible in time (set a later start), or
+	// a group has fewer people than its minimum.
+	ApproveProposal(context.Context, *connect.Request[v1.ApproveProposalRequest]) (*connect.Response[v1.ApproveProposalResponse], error)
+	// RejectProposal deletes it. Everyone stays signed up, and the plan
+	// isn't scheduled again for a day.
+	RejectProposal(context.Context, *connect.Request[v1.RejectProposalRequest]) (*connect.Response[v1.RejectProposalResponse], error)
 }
 
 // NewReviewServiceClient constructs a client for the issho.v1.ReviewService service. By default, it
@@ -174,21 +230,77 @@ func NewReviewServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 			connect.WithSchema(reviewServiceMethods.ByName("CreatePlan")),
 			connect.WithClientOptions(opts...),
 		),
+		listReviewEvents: connect.NewClient[v1.ListReviewEventsRequest, v1.ListReviewEventsResponse](
+			httpClient,
+			baseURL+ReviewServiceListReviewEventsProcedure,
+			connect.WithSchema(reviewServiceMethods.ByName("ListReviewEvents")),
+			connect.WithClientOptions(opts...),
+		),
+		getReviewEvent: connect.NewClient[v1.GetReviewEventRequest, v1.GetReviewEventResponse](
+			httpClient,
+			baseURL+ReviewServiceGetReviewEventProcedure,
+			connect.WithSchema(reviewServiceMethods.ByName("GetReviewEvent")),
+			connect.WithClientOptions(opts...),
+		),
+		moveProposalMember: connect.NewClient[v1.MoveProposalMemberRequest, v1.MoveProposalMemberResponse](
+			httpClient,
+			baseURL+ReviewServiceMoveProposalMemberProcedure,
+			connect.WithSchema(reviewServiceMethods.ByName("MoveProposalMember")),
+			connect.WithClientOptions(opts...),
+		),
+		removeProposalMember: connect.NewClient[v1.RemoveProposalMemberRequest, v1.RemoveProposalMemberResponse](
+			httpClient,
+			baseURL+ReviewServiceRemoveProposalMemberProcedure,
+			connect.WithSchema(reviewServiceMethods.ByName("RemoveProposalMember")),
+			connect.WithClientOptions(opts...),
+		),
+		setProposalStart: connect.NewClient[v1.SetProposalStartRequest, v1.SetProposalStartResponse](
+			httpClient,
+			baseURL+ReviewServiceSetProposalStartProcedure,
+			connect.WithSchema(reviewServiceMethods.ByName("SetProposalStart")),
+			connect.WithClientOptions(opts...),
+		),
+		setGroupMeetingPoint: connect.NewClient[v1.SetGroupMeetingPointRequest, v1.SetGroupMeetingPointResponse](
+			httpClient,
+			baseURL+ReviewServiceSetGroupMeetingPointProcedure,
+			connect.WithSchema(reviewServiceMethods.ByName("SetGroupMeetingPoint")),
+			connect.WithClientOptions(opts...),
+		),
+		approveProposal: connect.NewClient[v1.ApproveProposalRequest, v1.ApproveProposalResponse](
+			httpClient,
+			baseURL+ReviewServiceApproveProposalProcedure,
+			connect.WithSchema(reviewServiceMethods.ByName("ApproveProposal")),
+			connect.WithClientOptions(opts...),
+		),
+		rejectProposal: connect.NewClient[v1.RejectProposalRequest, v1.RejectProposalResponse](
+			httpClient,
+			baseURL+ReviewServiceRejectProposalProcedure,
+			connect.WithSchema(reviewServiceMethods.ByName("RejectProposal")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // reviewServiceClient implements ReviewServiceClient.
 type reviewServiceClient struct {
-	listReviewCities *connect.Client[v1.ListReviewCitiesRequest, v1.ListReviewCitiesResponse]
-	setCityReview    *connect.Client[v1.SetCityReviewRequest, v1.SetCityReviewResponse]
-	listReviewPlans  *connect.Client[v1.ListReviewPlansRequest, v1.ListReviewPlansResponse]
-	getReviewPlan    *connect.Client[v1.GetReviewPlanRequest, v1.GetReviewPlanResponse]
-	approvePlan      *connect.Client[v1.ApprovePlanRequest, v1.ApprovePlanResponse]
-	rejectPlan       *connect.Client[v1.RejectPlanRequest, v1.RejectPlanResponse]
-	editPlan         *connect.Client[v1.EditPlanRequest, v1.EditPlanResponse]
-	withdrawPlan     *connect.Client[v1.WithdrawPlanRequest, v1.WithdrawPlanResponse]
-	listVenueOptions *connect.Client[v1.ListVenueOptionsRequest, v1.ListVenueOptionsResponse]
-	createPlan       *connect.Client[v1.CreatePlanRequest, v1.CreatePlanResponse]
+	listReviewCities     *connect.Client[v1.ListReviewCitiesRequest, v1.ListReviewCitiesResponse]
+	setCityReview        *connect.Client[v1.SetCityReviewRequest, v1.SetCityReviewResponse]
+	listReviewPlans      *connect.Client[v1.ListReviewPlansRequest, v1.ListReviewPlansResponse]
+	getReviewPlan        *connect.Client[v1.GetReviewPlanRequest, v1.GetReviewPlanResponse]
+	approvePlan          *connect.Client[v1.ApprovePlanRequest, v1.ApprovePlanResponse]
+	rejectPlan           *connect.Client[v1.RejectPlanRequest, v1.RejectPlanResponse]
+	editPlan             *connect.Client[v1.EditPlanRequest, v1.EditPlanResponse]
+	withdrawPlan         *connect.Client[v1.WithdrawPlanRequest, v1.WithdrawPlanResponse]
+	listVenueOptions     *connect.Client[v1.ListVenueOptionsRequest, v1.ListVenueOptionsResponse]
+	createPlan           *connect.Client[v1.CreatePlanRequest, v1.CreatePlanResponse]
+	listReviewEvents     *connect.Client[v1.ListReviewEventsRequest, v1.ListReviewEventsResponse]
+	getReviewEvent       *connect.Client[v1.GetReviewEventRequest, v1.GetReviewEventResponse]
+	moveProposalMember   *connect.Client[v1.MoveProposalMemberRequest, v1.MoveProposalMemberResponse]
+	removeProposalMember *connect.Client[v1.RemoveProposalMemberRequest, v1.RemoveProposalMemberResponse]
+	setProposalStart     *connect.Client[v1.SetProposalStartRequest, v1.SetProposalStartResponse]
+	setGroupMeetingPoint *connect.Client[v1.SetGroupMeetingPointRequest, v1.SetGroupMeetingPointResponse]
+	approveProposal      *connect.Client[v1.ApproveProposalRequest, v1.ApproveProposalResponse]
+	rejectProposal       *connect.Client[v1.RejectProposalRequest, v1.RejectProposalResponse]
 }
 
 // ListReviewCities calls issho.v1.ReviewService.ListReviewCities.
@@ -241,6 +353,46 @@ func (c *reviewServiceClient) CreatePlan(ctx context.Context, req *connect.Reque
 	return c.createPlan.CallUnary(ctx, req)
 }
 
+// ListReviewEvents calls issho.v1.ReviewService.ListReviewEvents.
+func (c *reviewServiceClient) ListReviewEvents(ctx context.Context, req *connect.Request[v1.ListReviewEventsRequest]) (*connect.Response[v1.ListReviewEventsResponse], error) {
+	return c.listReviewEvents.CallUnary(ctx, req)
+}
+
+// GetReviewEvent calls issho.v1.ReviewService.GetReviewEvent.
+func (c *reviewServiceClient) GetReviewEvent(ctx context.Context, req *connect.Request[v1.GetReviewEventRequest]) (*connect.Response[v1.GetReviewEventResponse], error) {
+	return c.getReviewEvent.CallUnary(ctx, req)
+}
+
+// MoveProposalMember calls issho.v1.ReviewService.MoveProposalMember.
+func (c *reviewServiceClient) MoveProposalMember(ctx context.Context, req *connect.Request[v1.MoveProposalMemberRequest]) (*connect.Response[v1.MoveProposalMemberResponse], error) {
+	return c.moveProposalMember.CallUnary(ctx, req)
+}
+
+// RemoveProposalMember calls issho.v1.ReviewService.RemoveProposalMember.
+func (c *reviewServiceClient) RemoveProposalMember(ctx context.Context, req *connect.Request[v1.RemoveProposalMemberRequest]) (*connect.Response[v1.RemoveProposalMemberResponse], error) {
+	return c.removeProposalMember.CallUnary(ctx, req)
+}
+
+// SetProposalStart calls issho.v1.ReviewService.SetProposalStart.
+func (c *reviewServiceClient) SetProposalStart(ctx context.Context, req *connect.Request[v1.SetProposalStartRequest]) (*connect.Response[v1.SetProposalStartResponse], error) {
+	return c.setProposalStart.CallUnary(ctx, req)
+}
+
+// SetGroupMeetingPoint calls issho.v1.ReviewService.SetGroupMeetingPoint.
+func (c *reviewServiceClient) SetGroupMeetingPoint(ctx context.Context, req *connect.Request[v1.SetGroupMeetingPointRequest]) (*connect.Response[v1.SetGroupMeetingPointResponse], error) {
+	return c.setGroupMeetingPoint.CallUnary(ctx, req)
+}
+
+// ApproveProposal calls issho.v1.ReviewService.ApproveProposal.
+func (c *reviewServiceClient) ApproveProposal(ctx context.Context, req *connect.Request[v1.ApproveProposalRequest]) (*connect.Response[v1.ApproveProposalResponse], error) {
+	return c.approveProposal.CallUnary(ctx, req)
+}
+
+// RejectProposal calls issho.v1.ReviewService.RejectProposal.
+func (c *reviewServiceClient) RejectProposal(ctx context.Context, req *connect.Request[v1.RejectProposalRequest]) (*connect.Response[v1.RejectProposalResponse], error) {
+	return c.rejectProposal.CallUnary(ctx, req)
+}
+
 // ReviewServiceHandler is an implementation of the issho.v1.ReviewService service.
 type ReviewServiceHandler interface {
 	// ListReviewCities returns every city with its review switch and plan
@@ -278,6 +430,38 @@ type ReviewServiceHandler interface {
 	// INVALID_ARGUMENT for an unknown area or activity, an area or activity
 	// not in the city, or a venue not found for the activity there.
 	CreatePlan(context.Context, *connect.Request[v1.CreatePlanRequest]) (*connect.Response[v1.CreatePlanResponse], error)
+	// ListReviewEvents returns a city's proposals, or its upcoming scheduled
+	// events (to set meeting points), soonest first. At most 200.
+	ListReviewEvents(context.Context, *connect.Request[v1.ListReviewEventsRequest]) (*connect.Response[v1.ListReviewEventsResponse], error)
+	// GetReviewEvent returns one with its groups and who's in them.
+	// NOT_FOUND if there's no such event.
+	GetReviewEvent(context.Context, *connect.Request[v1.GetReviewEventRequest]) (*connect.Response[v1.GetReviewEventResponse], error)
+	// MoveProposalMember moves someone to another group of the proposal.
+	// FAILED_PRECONDITION if it's no longer a proposal; NOT_FOUND for a
+	// group not in it or someone not in it.
+	MoveProposalMember(context.Context, *connect.Request[v1.MoveProposalMemberRequest]) (*connect.Response[v1.MoveProposalMemberResponse], error)
+	// RemoveProposalMember takes someone out of the proposal; they stay
+	// signed up for the plan's next round. A group left empty goes.
+	RemoveProposalMember(context.Context, *connect.Request[v1.RemoveProposalMemberRequest]) (*connect.Response[v1.RemoveProposalMemberResponse], error)
+	// SetProposalStart moves the proposal to another local date and time in
+	// the city (its part of the day follows the time). FAILED_PRECONDITION
+	// if the day before has already begun: people need until then to answer.
+	SetProposalStart(context.Context, *connect.Request[v1.SetProposalStartRequest]) (*connect.Response[v1.SetProposalStartResponse], error)
+	// SetGroupMeetingPoint sets where exactly a group meets, in English
+	// ("" clears it), for a proposal or a scheduled event; stored in the
+	// event's languages too when the server can translate. People who
+	// confirmed see it from 24 hours before the start.
+	SetGroupMeetingPoint(context.Context, *connect.Request[v1.SetGroupMeetingPointRequest]) (*connect.Response[v1.SetGroupMeetingPointResponse], error)
+	// ApproveProposal sends the invitations, as if just scheduled: people
+	// who withdrew (or were suspended) since are left out, everyone else is
+	// invited and told, and the plan moves to its next round for whoever is
+	// still waiting, or closes. FAILED_PRECONDITION if the plan moved on,
+	// answering would no longer be possible in time (set a later start), or
+	// a group has fewer people than its minimum.
+	ApproveProposal(context.Context, *connect.Request[v1.ApproveProposalRequest]) (*connect.Response[v1.ApproveProposalResponse], error)
+	// RejectProposal deletes it. Everyone stays signed up, and the plan
+	// isn't scheduled again for a day.
+	RejectProposal(context.Context, *connect.Request[v1.RejectProposalRequest]) (*connect.Response[v1.RejectProposalResponse], error)
 }
 
 // NewReviewServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -347,6 +531,54 @@ func NewReviewServiceHandler(svc ReviewServiceHandler, opts ...connect.HandlerOp
 		connect.WithSchema(reviewServiceMethods.ByName("CreatePlan")),
 		connect.WithHandlerOptions(opts...),
 	)
+	reviewServiceListReviewEventsHandler := connect.NewUnaryHandler(
+		ReviewServiceListReviewEventsProcedure,
+		svc.ListReviewEvents,
+		connect.WithSchema(reviewServiceMethods.ByName("ListReviewEvents")),
+		connect.WithHandlerOptions(opts...),
+	)
+	reviewServiceGetReviewEventHandler := connect.NewUnaryHandler(
+		ReviewServiceGetReviewEventProcedure,
+		svc.GetReviewEvent,
+		connect.WithSchema(reviewServiceMethods.ByName("GetReviewEvent")),
+		connect.WithHandlerOptions(opts...),
+	)
+	reviewServiceMoveProposalMemberHandler := connect.NewUnaryHandler(
+		ReviewServiceMoveProposalMemberProcedure,
+		svc.MoveProposalMember,
+		connect.WithSchema(reviewServiceMethods.ByName("MoveProposalMember")),
+		connect.WithHandlerOptions(opts...),
+	)
+	reviewServiceRemoveProposalMemberHandler := connect.NewUnaryHandler(
+		ReviewServiceRemoveProposalMemberProcedure,
+		svc.RemoveProposalMember,
+		connect.WithSchema(reviewServiceMethods.ByName("RemoveProposalMember")),
+		connect.WithHandlerOptions(opts...),
+	)
+	reviewServiceSetProposalStartHandler := connect.NewUnaryHandler(
+		ReviewServiceSetProposalStartProcedure,
+		svc.SetProposalStart,
+		connect.WithSchema(reviewServiceMethods.ByName("SetProposalStart")),
+		connect.WithHandlerOptions(opts...),
+	)
+	reviewServiceSetGroupMeetingPointHandler := connect.NewUnaryHandler(
+		ReviewServiceSetGroupMeetingPointProcedure,
+		svc.SetGroupMeetingPoint,
+		connect.WithSchema(reviewServiceMethods.ByName("SetGroupMeetingPoint")),
+		connect.WithHandlerOptions(opts...),
+	)
+	reviewServiceApproveProposalHandler := connect.NewUnaryHandler(
+		ReviewServiceApproveProposalProcedure,
+		svc.ApproveProposal,
+		connect.WithSchema(reviewServiceMethods.ByName("ApproveProposal")),
+		connect.WithHandlerOptions(opts...),
+	)
+	reviewServiceRejectProposalHandler := connect.NewUnaryHandler(
+		ReviewServiceRejectProposalProcedure,
+		svc.RejectProposal,
+		connect.WithSchema(reviewServiceMethods.ByName("RejectProposal")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/issho.v1.ReviewService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case ReviewServiceListReviewCitiesProcedure:
@@ -369,6 +601,22 @@ func NewReviewServiceHandler(svc ReviewServiceHandler, opts ...connect.HandlerOp
 			reviewServiceListVenueOptionsHandler.ServeHTTP(w, r)
 		case ReviewServiceCreatePlanProcedure:
 			reviewServiceCreatePlanHandler.ServeHTTP(w, r)
+		case ReviewServiceListReviewEventsProcedure:
+			reviewServiceListReviewEventsHandler.ServeHTTP(w, r)
+		case ReviewServiceGetReviewEventProcedure:
+			reviewServiceGetReviewEventHandler.ServeHTTP(w, r)
+		case ReviewServiceMoveProposalMemberProcedure:
+			reviewServiceMoveProposalMemberHandler.ServeHTTP(w, r)
+		case ReviewServiceRemoveProposalMemberProcedure:
+			reviewServiceRemoveProposalMemberHandler.ServeHTTP(w, r)
+		case ReviewServiceSetProposalStartProcedure:
+			reviewServiceSetProposalStartHandler.ServeHTTP(w, r)
+		case ReviewServiceSetGroupMeetingPointProcedure:
+			reviewServiceSetGroupMeetingPointHandler.ServeHTTP(w, r)
+		case ReviewServiceApproveProposalProcedure:
+			reviewServiceApproveProposalHandler.ServeHTTP(w, r)
+		case ReviewServiceRejectProposalProcedure:
+			reviewServiceRejectProposalHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -416,4 +664,36 @@ func (UnimplementedReviewServiceHandler) ListVenueOptions(context.Context, *conn
 
 func (UnimplementedReviewServiceHandler) CreatePlan(context.Context, *connect.Request[v1.CreatePlanRequest]) (*connect.Response[v1.CreatePlanResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.ReviewService.CreatePlan is not implemented"))
+}
+
+func (UnimplementedReviewServiceHandler) ListReviewEvents(context.Context, *connect.Request[v1.ListReviewEventsRequest]) (*connect.Response[v1.ListReviewEventsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.ReviewService.ListReviewEvents is not implemented"))
+}
+
+func (UnimplementedReviewServiceHandler) GetReviewEvent(context.Context, *connect.Request[v1.GetReviewEventRequest]) (*connect.Response[v1.GetReviewEventResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.ReviewService.GetReviewEvent is not implemented"))
+}
+
+func (UnimplementedReviewServiceHandler) MoveProposalMember(context.Context, *connect.Request[v1.MoveProposalMemberRequest]) (*connect.Response[v1.MoveProposalMemberResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.ReviewService.MoveProposalMember is not implemented"))
+}
+
+func (UnimplementedReviewServiceHandler) RemoveProposalMember(context.Context, *connect.Request[v1.RemoveProposalMemberRequest]) (*connect.Response[v1.RemoveProposalMemberResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.ReviewService.RemoveProposalMember is not implemented"))
+}
+
+func (UnimplementedReviewServiceHandler) SetProposalStart(context.Context, *connect.Request[v1.SetProposalStartRequest]) (*connect.Response[v1.SetProposalStartResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.ReviewService.SetProposalStart is not implemented"))
+}
+
+func (UnimplementedReviewServiceHandler) SetGroupMeetingPoint(context.Context, *connect.Request[v1.SetGroupMeetingPointRequest]) (*connect.Response[v1.SetGroupMeetingPointResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.ReviewService.SetGroupMeetingPoint is not implemented"))
+}
+
+func (UnimplementedReviewServiceHandler) ApproveProposal(context.Context, *connect.Request[v1.ApproveProposalRequest]) (*connect.Response[v1.ApproveProposalResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.ReviewService.ApproveProposal is not implemented"))
+}
+
+func (UnimplementedReviewServiceHandler) RejectProposal(context.Context, *connect.Request[v1.RejectProposalRequest]) (*connect.Response[v1.RejectProposalResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.ReviewService.RejectProposal is not implemented"))
 }

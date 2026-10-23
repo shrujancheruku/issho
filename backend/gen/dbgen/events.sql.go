@@ -200,6 +200,8 @@ join app.event_groups g on g.id = m.group_id
 join app.events e on e.id = m.event_id
 join app.plans p on p.id = e.plan_id
 where m.user_id = $1
+  -- A proposal is nobody's business until an admin approves it (00022).
+  and e.status <> 'proposed'
   -- Recent events, and older ones still waiting for the caller's feedback
   -- (started after @feedback_since, which may be later than @since).
   and (e.date >= $2
@@ -337,7 +339,7 @@ select m.group_id, m.response, g.status as group_status, g.quorum, g.min_attenda
 from app.group_members m
 join app.event_groups g on g.id = m.group_id
 join app.events e on e.id = m.event_id
-where m.event_id = $1 and m.user_id = $2
+where m.event_id = $1 and m.user_id = $2 and e.status <> 'proposed'
 for update of m, g, e
 `
 

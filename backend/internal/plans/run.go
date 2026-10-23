@@ -294,6 +294,15 @@ func (r *Runner) Schedule(ctx context.Context, cityID string, now time.Time) (Sc
 	if err != nil {
 		return rep, err
 	}
+	// Plans whose proposal waits for an admin, or was just rejected, are
+	// left alone (00022).
+	held, err := q.ListPlansOnHold(ctx, dbgen.ListPlansOnHoldParams{
+		CityID: cityID, RejectedSince: pgtype.Timestamptz{Time: now.Add(-ProposalRest), Valid: true},
+	})
+	if err != nil {
+		return rep, err
+	}
+	open = slices.DeleteFunc(open, func(p Open) bool { return slices.Contains(held, p.ID) })
 	slices.SortStableFunc(open, func(a, b Open) int { return cmp.Compare(b.Signups, a.Signups) })
 	for _, p := range open {
 		rep.Checked++
@@ -372,6 +381,8 @@ func (r *Runner) schedulePlan(ctx context.Context, q *dbgen.Queries, c *City, us
 	}
 	ev := Event{
 		PlanID: p.ID, Round: p.Round, Scheduled: res, Forced: force, Now: now,
+		// In a city under review the round waits for an admin (00022).
+		Propose:   c.Review,
 		StartsAt:  r.Timing.startsAt(res.Occasion, c.Location),
 		ConfirmBy: confirmBy(res.Occasion, c.Location),
 	}
@@ -390,6 +401,11 @@ func (r *Runner) schedulePlan(ctx context.Context, q *dbgen.Queries, c *City, us
 	}
 	if err != nil {
 		return 0, 0, err
+	}
+	if c.Review {
+		r.Log.Info("round proposed for review", "city", c.ID, "plan", p.ID, "event", id,
+			"date", res.Occasion.Date.Format(time.DateOnly), "block", res.Occasion.Block, "groups", len(res.Groups))
+		return 0, 1, nil
 	}
 	r.Log.Info("plan scheduled", "city", c.ID, "plan", p.ID, "event", id, "date", res.Occasion.Date.Format(time.DateOnly),
 		"block", res.Occasion.Block, "groups", len(res.Groups), "invited", invited, "waiting", len(signups)-invited, "forced", force)

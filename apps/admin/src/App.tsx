@@ -6,6 +6,8 @@ import { useEffect, useState } from 'react';
 import { api, supabase } from './lib';
 import { CrewLeaves } from './pages/CrewLeaves';
 import { Flags } from './pages/Flags';
+import { GroupReview } from './pages/GroupReview';
+import { Groups } from './pages/Groups';
 import { People } from './pages/People';
 import { Person } from './pages/Person';
 import { PlanDetail } from './pages/PlanDetail';
@@ -16,6 +18,7 @@ import { SignIn } from './SignIn';
 
 const pages = {
   plans: { label: 'Plans', component: Plans },
+  groups: { label: 'Groups', component: Groups },
   reports: { label: 'Reports', component: Reports },
   flags: { label: 'Flags', component: Flags },
   leaves: { label: 'Crew leaves', component: CrewLeaves },
@@ -29,10 +32,13 @@ const uuid = '[0-9a-f-]{36}';
 /**
  * "#/reports" → reports; "#/reports?about=<id>" → reports about one person;
  * "#/person/<id>" → that person's view (under People); "#/plan/<id>" → one
- * plan's review (under Plans).
+ * plan's review (under Plans); "#/event/<id>" → a proposed round or
+ * scheduled event (under Groups).
  */
-function routeFromHash(): { page: Page; personId?: string; about?: string; planId?: string } {
+function routeFromHash(): { page: Page; personId?: string; about?: string; planId?: string; eventId?: string } {
   const h = window.location.hash.replace(/^#\/?/, '');
+  const event = new RegExp(`^event/(${uuid})$`, 'i').exec(h);
+  if (event) return { page: 'groups', eventId: event[1] };
   const plan = new RegExp(`^plan/(${uuid})$`, 'i').exec(h);
   if (plan) return { page: 'plans', planId: plan[1] };
   const person = new RegExp(`^person/(${uuid})$`, 'i').exec(h);
@@ -59,7 +65,7 @@ export function App() {
 function Console() {
   const queryClient = useQueryClient();
   const me = useQuery({ queryKey: ['moderator'], queryFn: () => api.moderation.getModerator({}), retry: false });
-  const [{ page, personId, about, planId }, setRoute] = useState(routeFromHash);
+  const [{ page, personId, about, planId, eventId }, setRoute] = useState(routeFromHash);
   useEffect(() => {
     const onHash = () => setRoute(routeFromHash());
     window.addEventListener('hashchange', onHash);
@@ -96,6 +102,7 @@ function Console() {
   const Current = pages[page].component;
   const content = personId ? <Person key={personId} userId={personId} />
     : planId ? <PlanDetail key={planId} planId={planId} />
+    : eventId ? <GroupReview key={eventId} eventId={eventId} />
     : page === 'reports' ? <Reports key={about ?? ''} about={about} />
     : <Current />;
   return (
