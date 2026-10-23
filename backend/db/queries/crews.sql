@@ -174,3 +174,13 @@ select exists (
     and (select count(*) from app.crew_members m
          where m.crew_id = c.id and m.response in ('offered', 'accepted') and m.user_id = any(@user_ids::uuid[])) >= 2
 )::bool;
+
+-- Crews a suspended person is in or offered (Service.RemoveFromUpcoming).
+-- name: ListUserOpenCrewMemberships :many
+select c.id
+from app.crew_members m
+join app.crews c on c.id = m.crew_id
+where m.user_id = @user_id
+  and ((m.response = 'accepted' and c.status in ('offered', 'active'))
+       or (m.response = 'offered' and c.status = 'offered'))
+order by c.id;

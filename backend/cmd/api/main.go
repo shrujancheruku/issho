@@ -100,6 +100,7 @@ func run() error {
 	}
 
 	q := dbgen.New(pool)
+	suspensions := &moderation.Suspensions{Q: q}
 	// errs runs outermost so it also sanitises errors returned by the auth interceptor.
 	opts := connect.WithInterceptors(
 		errs.Interceptor(slog.Default()),
@@ -109,6 +110,10 @@ func run() error {
 		auth.Interceptor(verifier, isshov1connect.HealthServiceCheckProcedure, isshov1connect.UIServiceGetStringsProcedure),
 		// The admin SPA's services: only accounts with app_metadata.admin.
 		auth.AdminOnly(isshov1connect.ModerationServiceName),
+		// Suspended people may only see that they are, sign out (which
+		// unregisters push) and delete their account.
+		moderation.Gate(suspensions, isshov1connect.IdentityServiceGetMeProcedure,
+			isshov1connect.IdentityServiceDeleteAccountProcedure, isshov1connect.PushServiceUnregisterPushTokenProcedure),
 	)
 
 	mux := http.NewServeMux()
@@ -144,7 +149,7 @@ func run() error {
 	mux.Handle(isshov1connect.NewEventServiceHandler(&plans.EventHandler{Svc: planSvc}, opts))
 	mux.Handle(isshov1connect.NewCrewServiceHandler(&plans.CrewHandler{Svc: planSvc}, opts))
 	mux.Handle(isshov1connect.NewPushServiceHandler(&push.Handler{Q: q}, opts))
-	mux.Handle(isshov1connect.NewModerationServiceHandler(&moderation.Handler{Q: q}, opts))
+	mux.Handle(isshov1connect.NewModerationServiceHandler(&moderation.Handler{Q: q, Plans: planSvc, Suspensions: suspensions}, opts))
 	uiCatalog, err := uistrings.Load()
 	if err != nil {
 		return err
@@ -156,7 +161,7 @@ func run() error {
 	chatHub := chatws.NewHub()
 	go chatHub.Run(ctx, pool, slog.Default())
 	mux.Handle("/ws/chat", &chatws.Handler{
-		Hub: chatHub, Svc: planSvc, Verifier: verifier, Log: slog.Default(),
+		Hub: chatHub, Svc: planSvc, Verifier: verifier, Suspended: suspensions.Suspended, Log: slog.Default(),
 		OriginPatterns: originHosts(cfg.AllowedOrigins),
 	})
 

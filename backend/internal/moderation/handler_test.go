@@ -12,6 +12,7 @@ import (
 
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
+	"github.com/shrujancheruku/issho/backend/internal/plans"
 	"github.com/shrujancheruku/issho/backend/internal/platform/auth"
 	"github.com/shrujancheruku/issho/backend/internal/translate"
 )
@@ -86,6 +87,11 @@ func TestIntegrationQueue(t *testing.T) {
 		[]any{`with c as (insert into app.crews (city_id, area_id, offer_until) values ($1, $1, now()) returning id)
 		       insert into app.crew_leaves (crew_id, user_id, reason, details) select id, $2, 'uncomfortable', 'Too pushy' from c`, city, reporter},
 		[]any{"insert into app.translations (source_hash, lang, source, context, text, model) values ($1, 'ja', $2, 'test', '{email} にコードを送信', 'machine')", hash, source},
+		// The reported person has a profile in the city (so matching sees
+		// them) and a phone that gets notifications.
+		[]any{`insert into app.profiles (user_id, display_name, birth_year, gender, home_area_id, max_travel_min, energy, budget, size_pref, primary_language, conduct_version)
+		       values ($1, 'Modtest Ben', 1995, 'man', $2, 30, 1, 1, 'small', 'en', 1)`, reported, city},
+		[]any{"insert into app.push_tokens (token, user_id, platform) values ('ExponentPushToken[moderation-test]', $1, 'android')", reported},
 	)
 	for _, s := range setup {
 		if _, err := pool.Exec(ctx, s[0].(string), s[1:]...); err != nil {
@@ -95,7 +101,8 @@ func TestIntegrationQueue(t *testing.T) {
 
 	q := dbgen.New(pool)
 	now := time.Date(2026, 10, 23, 12, 0, 0, 0, time.UTC)
-	h := &Handler{Q: q, Now: func() time.Time { return now }}
+	suspensions := &Suspensions{Q: q}
+	h := &Handler{Q: q, Plans: &plans.Service{DB: pool}, Suspensions: suspensions, Now: func() time.Time { return now }}
 	ctx = auth.WithCaller(ctx, auth.Caller{UserID: adminID, Email: "admin@example.com", Admin: true})
 
 	// Reports: open, then dismissed with a note.
@@ -195,5 +202,105 @@ func TestIntegrationQueue(t *testing.T) {
 	}
 	if got, _ := q.GetTranslation(context.Background(), dbgen.GetTranslationParams{SourceHash: hash, Lang: "ja"}); got.Text != "{email} にコードを送信しました" {
 		t.Fatalf("machine translation overwrote the review: %q", got.Text)
+	}
+
+	// People: found by name, then their view; suspended (not themselves),
+	// which the API's check, GetMe's query, matching and push all see;
+	// then lifted.
+	people, err := h.SearchPeople(ctx, connect.NewRequest(&isshov1.SearchPeopleRequest{Query: "modtest b"}))
+	if err != nil || len(people.Msg.People) != 1 || people.Msg.People[0].UserId != reported.String() || people.Msg.People[0].Suspended {
+		t.Fatalf("SearchPeople = %v, %v", people.Msg.GetPeople(), err)
+	}
+	if _, err := h.SearchPeople(ctx, connect.NewRequest(&isshov1.SearchPeopleRequest{Query: "b"})); connect.CodeOf(err) != connect.CodeInvalidArgument {
+		t.Fatalf("one-letter search: %v", err)
+	}
+	person := func() *isshov1.Person {
+		t.Helper()
+		res, err := h.GetPerson(ctx, connect.NewRequest(&isshov1.GetPersonRequest{UserId: reported.String()}))
+		if err != nil {
+			t.Fatal(err)
+		}
+		return res.Msg.Person
+	}
+	if p := person(); p.Name != "Modtest Ben" || p.HomeArea != "Testville" || p.ReportsAbout != 1 || p.OpenReportsAbout != 0 || p.Suspended {
+		t.Fatalf("person = %v", p)
+	}
+	if _, err := h.SuspendPerson(ctx, connect.NewRequest(&isshov1.SuspendPersonRequest{UserId: adminID.String(), Reason: "x"})); connect.CodeOf(err) != connect.CodeInvalidArgument {
+		t.Fatalf("suspending yourself: %v", err)
+	}
+	if _, err := h.SuspendPerson(ctx, connect.NewRequest(&isshov1.SuspendPersonRequest{UserId: reported.String(), Reason: " "})); connect.CodeOf(err) != connect.CodeInvalidArgument {
+		t.Fatalf("no reason: %v", err)
+	}
+	if _, err := h.LiftSuspension(ctx, connect.NewRequest(&isshov1.LiftSuspensionRequest{UserId: reported.String()})); connect.CodeOf(err) != connect.CodeFailedPrecondition {
+		t.Fatalf("lifting before suspending: %v", err)
+	}
+	isSuspended := func() bool {
+		t.Helper()
+		got, err := suspensions.Suspended(ctx, reported)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return got
+	}
+	isSuspended() // load the cache: the suspension must invalidate it
+	suspend := &isshov1.SuspendPersonRequest{UserId: reported.String(), Reason: "Repeated dating reports"}
+	for range 2 { // again: no error, still one suspension
+		if _, err := h.SuspendPerson(ctx, connect.NewRequest(suspend)); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if p := person(); !p.Suspended || len(p.Suspensions) != 1 || p.Suspensions[0].Reason != "Repeated dating reports" || p.Suspensions[0].CreatedBy != adminID.String() {
+		t.Fatalf("suspended person = %v", p)
+	}
+	if !isSuspended() {
+		t.Error("the API's check doesn't see the suspension")
+	}
+	if got, err := q.IsSuspended(ctx, reported); err != nil || !got {
+		t.Errorf("IsSuspended (GetMe) = %v, %v", got, err)
+	}
+	inMatching := func() bool {
+		t.Helper()
+		users, err := q.ListMatchingUsers(ctx, city)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, u := range users {
+			if u.UserID == reported {
+				return true
+			}
+		}
+		return false
+	}
+	tokens := func() int {
+		t.Helper()
+		got, err := q.ListPushTokens(ctx, []uuid.UUID{reported})
+		if err != nil {
+			t.Fatal(err)
+		}
+		return len(got)
+	}
+	if inMatching() || tokens() != 0 {
+		t.Errorf("while suspended: in matching %v, push tokens %d", inMatching(), tokens())
+	}
+	listed, err := h.ListSuspended(ctx, connect.NewRequest(&isshov1.ListSuspendedRequest{}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var onList bool
+	for _, p := range listed.Msg.People {
+		onList = onList || (p.UserId == reported.String() && p.Name == "Modtest Ben")
+	}
+	if !onList {
+		t.Errorf("not in ListSuspended: %v", listed.Msg.People)
+	}
+
+	if _, err := h.LiftSuspension(ctx, connect.NewRequest(&isshov1.LiftSuspensionRequest{UserId: reported.String(), Note: "Appeal accepted"})); err != nil {
+		t.Fatal(err)
+	}
+	if p := person(); p.Suspended || p.Suspensions[0].LiftNote != "Appeal accepted" || p.Suspensions[0].LiftedAt == nil {
+		t.Fatalf("after lifting = %v", p)
+	}
+	if isSuspended() || !inMatching() || tokens() != 1 {
+		t.Errorf("after lifting: check %v, in matching %v, push tokens %d", isSuspended(), inMatching(), tokens())
 	}
 }

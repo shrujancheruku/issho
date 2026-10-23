@@ -130,28 +130,44 @@
     - [CrewLeave](#issho-v1-CrewLeave)
     - [GetModeratorRequest](#issho-v1-GetModeratorRequest)
     - [GetModeratorResponse](#issho-v1-GetModeratorResponse)
+    - [GetPersonRequest](#issho-v1-GetPersonRequest)
+    - [GetPersonResponse](#issho-v1-GetPersonResponse)
+    - [LiftSuspensionRequest](#issho-v1-LiftSuspensionRequest)
+    - [LiftSuspensionResponse](#issho-v1-LiftSuspensionResponse)
     - [ListCrewLeavesRequest](#issho-v1-ListCrewLeavesRequest)
     - [ListCrewLeavesResponse](#issho-v1-ListCrewLeavesResponse)
     - [ListFlagsRequest](#issho-v1-ListFlagsRequest)
     - [ListFlagsResponse](#issho-v1-ListFlagsResponse)
     - [ListReportsRequest](#issho-v1-ListReportsRequest)
     - [ListReportsResponse](#issho-v1-ListReportsResponse)
+    - [ListSuspendedRequest](#issho-v1-ListSuspendedRequest)
+    - [ListSuspendedResponse](#issho-v1-ListSuspendedResponse)
     - [ListTranslationLanguagesRequest](#issho-v1-ListTranslationLanguagesRequest)
     - [ListTranslationLanguagesResponse](#issho-v1-ListTranslationLanguagesResponse)
     - [ListTranslationsRequest](#issho-v1-ListTranslationsRequest)
     - [ListTranslationsResponse](#issho-v1-ListTranslationsResponse)
     - [ModerationFlag](#issho-v1-ModerationFlag)
     - [ModerationReport](#issho-v1-ModerationReport)
+    - [Person](#issho-v1-Person)
+    - [PersonOuting](#issho-v1-PersonOuting)
+    - [PersonSummary](#issho-v1-PersonSummary)
     - [ResolveFlagRequest](#issho-v1-ResolveFlagRequest)
     - [ResolveFlagResponse](#issho-v1-ResolveFlagResponse)
     - [ResolveReportRequest](#issho-v1-ResolveReportRequest)
     - [ResolveReportResponse](#issho-v1-ResolveReportResponse)
     - [ReviewTranslationRequest](#issho-v1-ReviewTranslationRequest)
     - [ReviewTranslationResponse](#issho-v1-ReviewTranslationResponse)
+    - [SearchPeopleRequest](#issho-v1-SearchPeopleRequest)
+    - [SearchPeopleResponse](#issho-v1-SearchPeopleResponse)
+    - [SuspendPersonRequest](#issho-v1-SuspendPersonRequest)
+    - [SuspendPersonResponse](#issho-v1-SuspendPersonResponse)
+    - [SuspendedPerson](#issho-v1-SuspendedPerson)
+    - [Suspension](#issho-v1-Suspension)
     - [Translation](#issho-v1-Translation)
     - [TranslationLanguage](#issho-v1-TranslationLanguage)
   
     - [FlagKind](#issho-v1-FlagKind)
+    - [OutingFeedback](#issho-v1-OutingFeedback)
     - [ReportStatus](#issho-v1-ReportStatus)
   
     - [ModerationService](#issho-v1-ModerationService)
@@ -1866,6 +1882,7 @@ HTTP: POST /issho.v1.HealthService/Check
 | onboarded | [bool](#bool) |  | True once the user has completed onboarding (has a profile). |
 | primary_language | [string](#string) |  | Display languages from the profile (empty until onboarded), so the app can show itself in the right languages straight after GetMe. |
 | secondary_language | [string](#string) |  |  |
+| suspended | [bool](#bool) |  | A moderator has suspended the account. Every other call is refused (PERMISSION_DENIED) except signing out and DeleteAccount; the app shows that it&#39;s suspended. |
 
 
 
@@ -1889,7 +1906,7 @@ HTTP: POST /issho.v1.IdentityService/&lt;Method&gt;
 
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
-| GetMe | [GetMeRequest](#issho-v1-GetMeRequest) | [GetMeResponse](#issho-v1-GetMeResponse) | GetMe returns the caller&#39;s account, creating the app-side user row the first time a Supabase user calls the API. |
+| GetMe | [GetMeRequest](#issho-v1-GetMeRequest) | [GetMeResponse](#issho-v1-GetMeResponse) | GetMe returns the caller&#39;s account, creating the app-side user row the first time a Supabase user calls the API. It works for suspended accounts too (User.suspended), so the app can say so. |
 | DeleteAccount | [DeleteAccountRequest](#issho-v1-DeleteAccountRequest) | [DeleteAccountResponse](#issho-v1-DeleteAccountResponse) | DeleteAccount permanently deletes the caller&#39;s Supabase auth user and all of their app data (cascaded from auth.users). The client should sign out afterwards; existing access tokens stop working once they expire. Returns FAILED_PRECONDITION if the server has no Supabase secret key configured. |
 
  
@@ -1946,6 +1963,62 @@ HTTP: POST /issho.v1.IdentityService/&lt;Method&gt;
 | ----- | ---- | ----- | ----------- |
 | user_id | [string](#string) |  |  |
 | email | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-GetPersonRequest"></a>
+
+### GetPersonRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| user_id | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-GetPersonResponse"></a>
+
+### GetPersonResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| person | [Person](#issho-v1-Person) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-LiftSuspensionRequest"></a>
+
+### LiftSuspensionRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| user_id | [string](#string) |  |  |
+| note | [string](#string) |  | Up to 2000 characters. |
+
+
+
+
+
+
+<a name="issho-v1-LiftSuspensionResponse"></a>
+
+### LiftSuspensionResponse
+
 
 
 
@@ -2037,6 +2110,31 @@ HTTP: POST /issho.v1.IdentityService/&lt;Method&gt;
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | reports | [ModerationReport](#issho-v1-ModerationReport) | repeated |  |
+
+
+
+
+
+
+<a name="issho-v1-ListSuspendedRequest"></a>
+
+### ListSuspendedRequest
+
+
+
+
+
+
+
+<a name="issho-v1-ListSuspendedResponse"></a>
+
+### ListSuspendedResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| people | [SuspendedPerson](#issho-v1-SuspendedPerson) | repeated |  |
 
 
 
@@ -2159,6 +2257,75 @@ HTTP: POST /issho.v1.IdentityService/&lt;Method&gt;
 
 
 
+<a name="issho-v1-Person"></a>
+
+### Person
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| user_id | [string](#string) |  |  |
+| name | [string](#string) |  | Empty if they haven&#39;t finished onboarding (no profile). |
+| email | [string](#string) |  |  |
+| joined_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| gender | [string](#string) |  | woman, man, nonbinary or unspecified; empty without a profile. |
+| birth_year | [int32](#int32) |  |  |
+| home_area | [string](#string) |  | English name of their home area, and its city. |
+| city_id | [string](#string) |  |  |
+| reports_about | [int32](#int32) |  | Reports about them (in all, and still open) and reports they made. |
+| open_reports_about | [int32](#int32) |  |  |
+| reports_made | [int32](#int32) |  |  |
+| suspended | [bool](#bool) |  |  |
+| suspensions | [Suspension](#issho-v1-Suspension) | repeated | Newest first. |
+| flags | [ModerationFlag](#issho-v1-ModerationFlag) | repeated | Open ones first. |
+| outings | [PersonOuting](#issho-v1-PersonOuting) | repeated | Newest first, at most 50. |
+
+
+
+
+
+
+<a name="issho-v1-PersonOuting"></a>
+
+### PersonOuting
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| event_id | [string](#string) |  |  |
+| title | [string](#string) |  |  |
+| date | [string](#string) |  | YYYY-MM-DD in the city&#39;s time zone, and morning, afternoon or evening. |
+| block | [string](#string) |  |  |
+| event_status | [string](#string) |  | scheduled, done or cancelled. |
+| response | [string](#string) |  | invited, confirmed, declined or dropped (confirmed, then cancelled). |
+| checked_in | [bool](#bool) |  |  |
+| feedback | [OutingFeedback](#issho-v1-OutingFeedback) |  | Their feedback: SAID_WENT, SAID_DIDNT_GO, or UNSPECIFIED (none). |
+
+
+
+
+
+
+<a name="issho-v1-PersonSummary"></a>
+
+### PersonSummary
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| user_id | [string](#string) |  |  |
+| name | [string](#string) |  | Empty if they haven&#39;t finished onboarding. |
+| email | [string](#string) |  |  |
+| suspended | [bool](#bool) |  |  |
+
+
+
+
+
+
 <a name="issho-v1-ResolveFlagRequest"></a>
 
 ### ResolveFlagRequest
@@ -2244,6 +2411,102 @@ HTTP: POST /issho.v1.IdentityService/&lt;Method&gt;
 
 
 
+<a name="issho-v1-SearchPeopleRequest"></a>
+
+### SearchPeopleRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| query | [string](#string) |  | At least 2 characters. |
+
+
+
+
+
+
+<a name="issho-v1-SearchPeopleResponse"></a>
+
+### SearchPeopleResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| people | [PersonSummary](#issho-v1-PersonSummary) | repeated |  |
+
+
+
+
+
+
+<a name="issho-v1-SuspendPersonRequest"></a>
+
+### SuspendPersonRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| user_id | [string](#string) |  |  |
+| reason | [string](#string) |  | Why, for moderators: 1-2000 characters. The person isn&#39;t shown it. |
+
+
+
+
+
+
+<a name="issho-v1-SuspendPersonResponse"></a>
+
+### SuspendPersonResponse
+
+
+
+
+
+
+
+<a name="issho-v1-SuspendedPerson"></a>
+
+### SuspendedPerson
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| user_id | [string](#string) |  |  |
+| name | [string](#string) |  |  |
+| reason | [string](#string) |  |  |
+| since | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| suspended_by | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-Suspension"></a>
+
+### Suspension
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [int64](#int64) |  |  |
+| reason | [string](#string) |  |  |
+| created_by | [string](#string) |  |  |
+| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| lifted_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | Unset while it&#39;s in force. |
+| lifted_by | [string](#string) |  |  |
+| lift_note | [string](#string) |  |  |
+
+
+
+
+
+
 <a name="issho-v1-Translation"></a>
 
 ### Translation
@@ -2298,6 +2561,19 @@ HTTP: POST /issho.v1.IdentityService/&lt;Method&gt;
 
 
 
+<a name="issho-v1-OutingFeedback"></a>
+
+### OutingFeedback
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| OUTING_FEEDBACK_UNSPECIFIED | 0 |  |
+| OUTING_FEEDBACK_SAID_WENT | 1 |  |
+| OUTING_FEEDBACK_SAID_DIDNT_GO | 2 |  |
+
+
+
 <a name="issho-v1-ReportStatus"></a>
 
 ### ReportStatus
@@ -2339,6 +2615,11 @@ HTTP: POST /issho.v1.ModerationService/&lt;Method&gt;
 | ListTranslationLanguages | [ListTranslationLanguagesRequest](#issho-v1-ListTranslationLanguagesRequest) | [ListTranslationLanguagesResponse](#issho-v1-ListTranslationLanguagesResponse) | ListTranslationLanguages returns the languages with machine translations, with how many still need a look. |
 | ListTranslations | [ListTranslationsRequest](#issho-v1-ListTranslationsRequest) | [ListTranslationsResponse](#issho-v1-ListTranslationsResponse) | ListTranslations returns one language&#39;s translations, unreviewed ones first, 100 at a time. |
 | ReviewTranslation | [ReviewTranslationRequest](#issho-v1-ReviewTranslationRequest) | [ReviewTranslationResponse](#issho-v1-ReviewTranslationResponse) | ReviewTranslation corrects (or confirms) a translation. A reviewed translation is never replaced by a machine one. INVALID_ARGUMENT if the text drops or adds a {placeholder} of the English source. |
+| SearchPeople | [SearchPeopleRequest](#issho-v1-SearchPeopleRequest) | [SearchPeopleResponse](#issho-v1-SearchPeopleResponse) | SearchPeople finds people by name or email (contains, any case) or exact user id. At most 50. |
+| GetPerson | [GetPersonRequest](#issho-v1-GetPersonRequest) | [GetPersonResponse](#issho-v1-GetPersonResponse) | GetPerson returns what a moderator needs to decide about someone: who they are, report counts, flags, suspensions and recent outings. NOT_FOUND if there&#39;s no such account. |
+| SuspendPerson | [SuspendPersonRequest](#issho-v1-SuspendPersonRequest) | [SuspendPersonResponse](#issho-v1-SuspendPersonResponse) | SuspendPerson keeps someone out of Issho until it&#39;s lifted: the API refuses their calls (GetMe says they&#39;re suspended; signing out and deleting the account still work), the chat socket refuses them, matching leaves them out and they get no notifications. They&#39;re also taken out of their open signups, outings that haven&#39;t started, and crews. Suspending someone already suspended only repeats that removal. INVALID_ARGUMENT for the caller&#39;s own account. |
+| LiftSuspension | [LiftSuspensionRequest](#issho-v1-LiftSuspensionRequest) | [LiftSuspensionResponse](#issho-v1-LiftSuspensionResponse) | LiftSuspension ends someone&#39;s suspension. They can use Issho again, but aren&#39;t put back into what they were taken out of. FAILED_PRECONDITION if they aren&#39;t suspended. |
+| ListSuspended | [ListSuspendedRequest](#issho-v1-ListSuspendedRequest) | [ListSuspendedResponse](#issho-v1-ListSuspendedResponse) | ListSuspended returns everyone suspended now, most recent first. At most 200. |
 
  
 

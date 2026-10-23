@@ -6,6 +6,8 @@ import { useEffect, useState } from 'react';
 import { api, supabase } from './lib';
 import { CrewLeaves } from './pages/CrewLeaves';
 import { Flags } from './pages/Flags';
+import { People } from './pages/People';
+import { Person } from './pages/Person';
 import { Reports } from './pages/Reports';
 import { Translations } from './pages/Translations';
 import { SignIn } from './SignIn';
@@ -15,12 +17,23 @@ const pages = {
   flags: { label: 'Flags', component: Flags },
   leaves: { label: 'Crew leaves', component: CrewLeaves },
   translations: { label: 'Translations', component: Translations },
+  people: { label: 'People', component: People },
 } as const;
 type Page = keyof typeof pages;
 
-function pageFromHash(): Page {
+const uuid = '[0-9a-f-]{36}';
+
+/**
+ * "#/reports" → reports; "#/reports?about=<id>" → reports about one person;
+ * "#/person/<id>" → that person's view (under People).
+ */
+function routeFromHash(): { page: Page; personId?: string; about?: string } {
   const h = window.location.hash.replace(/^#\/?/, '');
-  return h in pages ? (h as Page) : 'reports';
+  const person = new RegExp(`^person/(${uuid})$`, 'i').exec(h);
+  if (person) return { page: 'people', personId: person[1] };
+  const about = new RegExp(`^reports\\?about=(${uuid})$`, 'i').exec(h);
+  if (about) return { page: 'reports', about: about[1] };
+  return { page: h in pages ? (h as Page) : 'reports' };
 }
 
 export function App() {
@@ -40,9 +53,9 @@ export function App() {
 function Console() {
   const queryClient = useQueryClient();
   const me = useQuery({ queryKey: ['moderator'], queryFn: () => api.moderation.getModerator({}), retry: false });
-  const [page, setPage] = useState<Page>(pageFromHash);
+  const [{ page, personId, about }, setRoute] = useState(routeFromHash);
   useEffect(() => {
-    const onHash = () => setPage(pageFromHash());
+    const onHash = () => setRoute(routeFromHash());
     window.addEventListener('hashchange', onHash);
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
@@ -75,6 +88,9 @@ function Console() {
   }
 
   const Current = pages[page].component;
+  const content = personId ? <Person key={personId} userId={personId} />
+    : page === 'reports' ? <Reports key={about ?? ''} about={about} />
+    : <Current />;
   return (
     <div className="shell">
       <header className="topbar">
@@ -88,7 +104,7 @@ function Console() {
         <button className="secondary small" onClick={signOut}>Sign out</button>
       </header>
       <main className="content">
-        <Current />
+        {content}
       </main>
     </div>
   );

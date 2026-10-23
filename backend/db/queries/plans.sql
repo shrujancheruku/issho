@@ -178,3 +178,16 @@ select p.id, p.area_id, p.activity_id, p.follow_up_id, p.primary_language, p.sec
        exists (select 1 from app.plan_signups s where s.plan_id = p.id and s.user_id = @user_id) as signed_up
 from app.plans p
 where p.id = @id and p.city_id = @city_id and p.status = 'closed' and p.closed_at > @since;
+
+-- What a suspended person had joined and is taken out of
+-- (Service.RemoveFromUpcoming): outings not yet started where they're
+-- invited or going, in groups still on.
+-- name: ListUpcomingMemberships :many
+select m.event_id
+from app.group_members m
+join app.event_groups g on g.id = m.group_id
+join app.events e on e.id = m.event_id
+where m.user_id = @user_id and m.response in ('invited', 'confirmed')
+  and e.status = 'scheduled' and g.status <> 'cancelled'
+  and (e.starts_at is null or e.starts_at > @now)
+order by e.date, m.event_id;

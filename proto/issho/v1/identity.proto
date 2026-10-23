@@ -11,7 +11,8 @@ option go_package = "github.com/shrujancheruku/issho/backend/gen/issho/v1;isshov
 // HTTP: POST /issho.v1.IdentityService/<Method>
 service IdentityService {
   // GetMe returns the caller's account, creating the app-side user row the
-  // first time a Supabase user calls the API.
+  // first time a Supabase user calls the API. It works for suspended
+  // accounts too (User.suspended), so the app can say so.
   rpc GetMe(GetMeRequest) returns (GetMeResponse) {}
 
   // DeleteAccount permanently deletes the caller's Supabase auth user and all
@@ -42,4 +43,8 @@ message User {
   // can show itself in the right languages straight after GetMe.
   string primary_language = 4;
   string secondary_language = 5;
+  // A moderator has suspended the account. Every other call is refused
+  // (PERMISSION_DENIED) except signing out and DeleteAccount; the app
+  // shows that it's suspended.
+  bool suspended = 6;
 }

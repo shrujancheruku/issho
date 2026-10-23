@@ -343,6 +343,8 @@ from app.profiles p
 join app.areas a on a.id = p.home_area_id
 join app.users u on u.id = p.user_id
 where a.city_id = $1 and u.deleted_at is null
+  -- Suspended people aren't matched (ModerationService.SuspendPerson).
+  and not exists (select 1 from app.suspensions s where s.user_id = u.id and s.lifted_at is null)
 order by p.user_id
 `
 

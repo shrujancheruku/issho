@@ -14,6 +14,8 @@ type AuthState = {
   session: Session | null;
   /** Null while the account is loading (or when signed out). */
   onboarded: boolean | null;
+  /** A moderator suspended the account: the app shows only that. */
+  suspended: boolean;
   /** Display languages from the profile; null until onboarded. */
   languages: { primary: string; secondary: string } | null;
   /** Set when the account couldn't be loaded (e.g. API unreachable). */
@@ -73,6 +75,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
     ready,
     session,
     onboarded: me.data?.user?.onboarded ?? null,
+    suspended: me.data?.user?.suspended ?? false,
     languages: me.data?.user?.onboarded
       ? { primary: me.data.user.primaryLanguage, secondary: me.data.user.secondaryLanguage }
       : null,
@@ -91,6 +94,14 @@ export function useAuth() {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error('useAuth must be used inside <AuthProvider>');
   return ctx;
+}
+
+/**
+ * The API's answer to every call from a suspended account (except GetMe):
+ * when one arrives mid-session, ask GetMe again so the app shows it.
+ */
+export function isSuspendedError(err: unknown) {
+  return err instanceof ConnectError && err.code === Code.PermissionDenied && err.rawMessage === 'account suspended';
 }
 
 function isUnauthenticated(err: unknown) {

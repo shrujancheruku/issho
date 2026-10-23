@@ -114,3 +114,13 @@ tr.attention { background: var(--attention); }
 .translation .target { display: grid; gap: 0.4rem; }
 .translation.reviewed { border-left: 3px solid var(--ok); }
 @media (max-width: 640px) { .translation { grid-template-columns: 1fr; } }
+
+/* People */
+h2 { font-size: 1.05rem; margin: 1.75rem 0 0.6rem; }
+.card h2 { margin-top: 0; }
+.facts { font-size: 0.95rem; color: var(--text); margin: 0.75rem 0 1.25rem; }
+.facts dt { color: var(--muted); }
+.badge.suspended { background: var(--red); color: #fff; }
+.decision.danger { border-color: var(--red); }
+a { color: var(--red); }
+.card-head a, td a { color: inherit; }

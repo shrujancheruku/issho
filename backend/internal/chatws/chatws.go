@@ -141,6 +141,9 @@ type Handler struct {
 	Hub      *Hub
 	Svc      *plans.Service
 	Verifier *auth.Verifier
+	// Suspended refuses suspended people, as the API's Gate does (nil =
+	// nobody is).
+	Suspended func(ctx context.Context, userID uuid.UUID) (bool, error)
 	// OriginPatterns are the browser origins allowed to open sockets (the
 	// API's ALLOWED_ORIGINS); apps send no Origin and aren't affected.
 	OriginPatterns []string
@@ -197,6 +200,14 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		ws.Close(closeUnauthorized, "invalid token")
 		return
+	}
+	// A socket already open when someone is suspended ends when they're
+	// taken out of the group or crew (the access check below, on each read).
+	if h.Suspended != nil {
+		if suspended, err := h.Suspended(ctx, caller.UserID); err != nil || suspended {
+			ws.Close(closeForbidden, "account suspended")
+			return
+		}
 	}
 	// fetch reads the chat after a message; topic is what NOTIFY names.
 	var fetch func(after int64) ([]Message, error)

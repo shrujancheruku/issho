@@ -295,6 +295,17 @@ type AppReport struct {
 	Note       string
 }
 
+type AppSuspension struct {
+	ID        int64
+	UserID    uuid.UUID
+	Reason    string
+	CreatedBy uuid.UUID
+	CreatedAt pgtype.Timestamptz
+	LiftedAt  pgtype.Timestamptz
+	LiftedBy  pgtype.UUID
+	LiftNote  string
+}
+
 type AppTranslation struct {
 	SourceHash string
 	Lang       string

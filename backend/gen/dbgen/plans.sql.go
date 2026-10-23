@@ -714,6 +714,45 @@ func (q *Queries) ListSignups(ctx context.Context, planID uuid.UUID) ([]uuid.UUI
 	return items, nil
 }
 
+const listUpcomingMemberships = `-- name: ListUpcomingMemberships :many
+select m.event_id
+from app.group_members m
+join app.event_groups g on g.id = m.group_id
+join app.events e on e.id = m.event_id
+where m.user_id = $1 and m.response in ('invited', 'confirmed')
+  and e.status = 'scheduled' and g.status <> 'cancelled'
+  and (e.starts_at is null or e.starts_at > $2)
+order by e.date, m.event_id
+`
+
+type ListUpcomingMembershipsParams struct {
+	UserID uuid.UUID
+	Now    pgtype.Timestamptz
+}
+
+// What a suspended person had joined and is taken out of
+// (Service.RemoveFromUpcoming): outings not yet started where they're
+// invited or going, in groups still on.
+func (q *Queries) ListUpcomingMemberships(ctx context.Context, arg ListUpcomingMembershipsParams) ([]uuid.UUID, error) {
+	rows, err := q.db.Query(ctx, listUpcomingMemberships, arg.UserID, arg.Now)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []uuid.UUID
+	for rows.Next() {
+		var event_id uuid.UUID
+		if err := rows.Scan(&event_id); err != nil {
+			return nil, err
+		}
+		items = append(items, event_id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listUserOpenSignups = `-- name: ListUserOpenSignups :many
 select s.plan_id from app.plan_signups s
 join app.plans p on p.id = s.plan_id

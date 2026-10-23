@@ -8,6 +8,8 @@
   "account.deleting": "Deleting…",
   "account.signOut": "Sign out",
   "account.signedInAs": "Signed in as {email}",
+  "account.suspendedBody": "A moderator suspended it after a review. While it's suspended, you can't join plans, outings, crews or chats.",
+  "account.suspendedTitle": "Your account is suspended",
   "category.creative": "Creative",
   "category.culture": "Culture",
   "category.food": "Food and drink",

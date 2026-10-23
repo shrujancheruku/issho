@@ -185,8 +185,12 @@ type User struct {
 	// can show itself in the right languages straight after GetMe.
 	PrimaryLanguage   string `protobuf:"bytes,4,opt,name=primary_language,json=primaryLanguage,proto3" json:"primary_language,omitempty"`
 	SecondaryLanguage string `protobuf:"bytes,5,opt,name=secondary_language,json=secondaryLanguage,proto3" json:"secondary_language,omitempty"`
-	unknownFields     protoimpl.UnknownFields
-	sizeCache         protoimpl.SizeCache
+	// A moderator has suspended the account. Every other call is refused
+	// (PERMISSION_DENIED) except signing out and DeleteAccount; the app
+	// shows that it's suspended.
+	Suspended     bool `protobuf:"varint,6,opt,name=suspended,proto3" json:"suspended,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *User) Reset() {
@@ -254,6 +258,13 @@ func (x *User) GetSecondaryLanguage() string {
 	return ""
 }
 
+func (x *User) GetSuspended() bool {
+	if x != nil {
+		return x.Suspended
+	}
+	return false
+}
+
 var File_issho_v1_identity_proto protoreflect.FileDescriptor
 
 const file_issho_v1_identity_proto_rawDesc = "" +
@@ -263,13 +274,14 @@ const file_issho_v1_identity_proto_rawDesc = "" +
 	"\x15DeleteAccountResponse\"\x0e\n" +
 	"\fGetMeRequest\"3\n" +
 	"\rGetMeResponse\x12\"\n" +
-	"\x04user\x18\x01 \x01(\v2\x0e.issho.v1.UserR\x04user\"\xa4\x01\n" +
+	"\x04user\x18\x01 \x01(\v2\x0e.issho.v1.UserR\x04user\"\xc2\x01\n" +
 	"\x04User\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
 	"\x05email\x18\x02 \x01(\tR\x05email\x12\x1c\n" +
 	"\tonboarded\x18\x03 \x01(\bR\tonboarded\x12)\n" +
 	"\x10primary_language\x18\x04 \x01(\tR\x0fprimaryLanguage\x12-\n" +
-	"\x12secondary_language\x18\x05 \x01(\tR\x11secondaryLanguage2\xa1\x01\n" +
+	"\x12secondary_language\x18\x05 \x01(\tR\x11secondaryLanguage\x12\x1c\n" +
+	"\tsuspended\x18\x06 \x01(\bR\tsuspended2\xa1\x01\n" +
 	"\x0fIdentityService\x12:\n" +
 	"\x05GetMe\x12\x16.issho.v1.GetMeRequest\x1a\x17.issho.v1.GetMeResponse\"\x00\x12R\n" +
 	"\rDeleteAccount\x12\x1e.issho.v1.DeleteAccountRequest\x1a\x1f.issho.v1.DeleteAccountResponse\"\x00B>Z<github.com/shrujancheruku/issho/backend/gen/issho/v1;isshov1b\x06proto3"

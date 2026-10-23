@@ -25,6 +25,7 @@ var (
 type Store interface {
 	UpsertUser(ctx context.Context, arg dbgen.UpsertUserParams) (dbgen.AppUser, error)
 	GetDisplayLanguages(ctx context.Context, userID uuid.UUID) (dbgen.GetDisplayLanguagesRow, error)
+	IsSuspended(ctx context.Context, userID uuid.UUID) (bool, error)
 	DeleteUser(ctx context.Context, id uuid.UUID) error
 }
 
@@ -38,6 +39,8 @@ type Account struct {
 	Onboarded bool
 	// Display languages; empty until onboarded.
 	PrimaryLanguage, SecondaryLanguage string
+	// A moderator suspended the account (app.suspensions).
+	Suspended bool
 }
 
 type Service struct {
@@ -63,6 +66,9 @@ func (s *Service) Me(ctx context.Context, c auth.Caller) (Account, error) {
 		return Account{}, err
 	}
 	acct := Account{User: u}
+	if acct.Suspended, err = s.Store.IsSuspended(ctx, u.ID); err != nil {
+		return Account{}, err
+	}
 	langs, err := s.Store.GetDisplayLanguages(ctx, u.ID)
 	switch {
 	case errors.Is(err, pgx.ErrNoRows): // no profile yet

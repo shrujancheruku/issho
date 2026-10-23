@@ -300,36 +300,44 @@ func (s *Service) Respond(ctx context.Context, userID, eventID uuid.UUID, action
 		default:
 			return fmt.Errorf("unknown action %d", action)
 		}
-		if err := q.SetResponse(ctx, dbgen.SetResponseParams{
-			GroupID: m.GroupID, UserID: userID, Response: next, At: pgtype.Timestamptz{Time: now, Valid: true},
-		}); err != nil {
+		return setResponse(ctx, q, m, userID, eventID, next, now)
+	})
+}
+
+// setResponse records someone's new answer and what it does to their
+// group: enough confirmations confirm it (and tell the others); a
+// cancellation that leaves too few re-opens it while there's time to
+// answer, or else cancels it.
+func setResponse(ctx context.Context, q *dbgen.Queries, m dbgen.LockMembershipRow, userID, eventID uuid.UUID, next string, now time.Time) error {
+	if err := q.SetResponse(ctx, dbgen.SetResponseParams{
+		GroupID: m.GroupID, UserID: userID, Response: next, At: pgtype.Timestamptz{Time: now, Valid: true},
+	}); err != nil {
+		return err
+	}
+	confirmed, err := q.CountConfirmed(ctx, m.GroupID)
+	if err != nil {
+		return err
+	}
+	switch {
+	case next == Confirmed && m.GroupStatus == GroupInviting && confirmed >= int32(m.Quorum):
+		if err := q.SetGroupStatus(ctx, dbgen.SetGroupStatusParams{ID: m.GroupID, Status: GroupConfirmed}); err != nil {
 			return err
 		}
-		confirmed, err := q.CountConfirmed(ctx, m.GroupID)
+		// Everyone who confirmed earlier hears it's on; the person who
+		// just confirmed sees it on screen.
+		users, err := q.ListConfirmedUsers(ctx, m.GroupID)
 		if err != nil {
 			return err
 		}
-		switch {
-		case next == Confirmed && m.GroupStatus == GroupInviting && confirmed >= int32(m.Quorum):
-			if err := q.SetGroupStatus(ctx, dbgen.SetGroupStatusParams{ID: m.GroupID, Status: GroupConfirmed}); err != nil {
-				return err
-			}
-			// Everyone who confirmed earlier hears it's on; the person who
-			// just confirmed sees it on screen.
-			users, err := q.ListConfirmedUsers(ctx, m.GroupID)
-			if err != nil {
-				return err
-			}
-			return notify(ctx, q, NotifyConfirmed, eventID, slices.DeleteFunc(users, func(u uuid.UUID) bool { return u == userID }))
-		case next == Dropped && m.GroupStatus == GroupConfirmed && confirmed < int32(m.MinAttendance):
-			if now.Before(m.ConfirmBy.Time) {
-				// Still time for others to answer.
-				return q.SetGroupStatus(ctx, dbgen.SetGroupStatusParams{ID: m.GroupID, Status: GroupInviting})
-			}
-			return cancelGroup(ctx, q, m.GroupID, m.PlanID, eventID)
+		return notify(ctx, q, NotifyConfirmed, eventID, slices.DeleteFunc(users, func(u uuid.UUID) bool { return u == userID }))
+	case next == Dropped && m.GroupStatus == GroupConfirmed && confirmed < int32(m.MinAttendance):
+		if now.Before(m.ConfirmBy.Time) {
+			// Still time for others to answer.
+			return q.SetGroupStatus(ctx, dbgen.SetGroupStatusParams{ID: m.GroupID, Status: GroupInviting})
 		}
-		return nil
-	})
+		return cancelGroup(ctx, q, m.GroupID, m.PlanID, eventID)
+	}
+	return nil
 }
 
 // CheckIn records that the caller has arrived: only people who confirmed,
