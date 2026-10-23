@@ -195,6 +195,52 @@ func (q *Queries) ListCityPicks(ctx context.Context, cityID string) ([]ListCityP
 	return items, nil
 }
 
+const listFriendPicks = `-- name: ListFriendPicks :many
+with friends as (
+  select k.picked_id as id
+  from app.mate_picks k
+  where k.picker_id = $1 and k.pick = 'again'
+    and exists (select 1 from app.mate_picks r where r.picker_id = k.picked_id and r.picked_id = $1 and r.pick = 'again')
+    and not exists (select 1 from app.mate_picks x
+                    where x.pick = 'avoid' and ((x.picker_id = $1 and x.picked_id = k.picked_id) or (x.picker_id = k.picked_id and x.picked_id = $1)))
+    and not exists (select 1 from app.reports x
+                    where (x.reporter_id = $1 and x.reported_id = k.picked_id) or (x.reporter_id = k.picked_id and x.reported_id = $1))
+)
+select distinct k.picker_id, k.picked_id
+from app.mate_picks k
+where k.pick = 'again' and (k.picker_id = $1 or k.picker_id in (select id from friends))
+order by 1, 2
+`
+
+type ListFriendPicksRow struct {
+	PickerID uuid.UUID
+	PickedID uuid.UUID
+}
+
+// The meet-again picks needed for one person's friendships: theirs, and
+// those of everyone they picked who picked them back (each person's return
+// rate needs all their picks; matching.MutualLinks). Friends either of
+// them has since blocked (a report or "rather not") are left out.
+func (q *Queries) ListFriendPicks(ctx context.Context, userID uuid.UUID) ([]ListFriendPicksRow, error) {
+	rows, err := q.db.Query(ctx, listFriendPicks, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListFriendPicksRow
+	for rows.Next() {
+		var i ListFriendPicksRow
+		if err := rows.Scan(&i.PickerID, &i.PickedID); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listGroupMates = `-- name: ListGroupMates :many
 
 select m.user_id, pr.display_name, m.response
@@ -267,6 +313,45 @@ func (q *Queries) ListMetForPicks(ctx context.Context, userID uuid.UUID) ([]List
 	for rows.Next() {
 		var i ListMetForPicksRow
 		if err := rows.Scan(&i.Gender, &i.Picked); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listOpenSignupsBy = `-- name: ListOpenSignupsBy :many
+select s.plan_id, s.user_id
+from app.plan_signups s
+join app.plans p on p.id = s.plan_id
+where p.city_id = $1 and p.status = 'open' and s.user_id = any($2::uuid[])
+order by s.plan_id, s.user_id
+`
+
+type ListOpenSignupsByParams struct {
+	CityID  string
+	UserIds []uuid.UUID
+}
+
+type ListOpenSignupsByRow struct {
+	PlanID uuid.UUID
+	UserID uuid.UUID
+}
+
+// Which of these people have signed up for the city's open plans.
+func (q *Queries) ListOpenSignupsBy(ctx context.Context, arg ListOpenSignupsByParams) ([]ListOpenSignupsByRow, error) {
+	rows, err := q.db.Query(ctx, listOpenSignupsBy, arg.CityID, arg.UserIds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListOpenSignupsByRow
+	for rows.Next() {
+		var i ListOpenSignupsByRow
+		if err := rows.Scan(&i.PlanID, &i.UserID); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

@@ -645,6 +645,7 @@ An open plan as the caller sees it.
 | secondary_title | [string](#string) |  |  |
 | closed_reason | [PlanClosedReason](#issho-v1-PlanClosedReason) |  | Why the plan closed, for a plan closed in the last 14 days (GetPlan only; the feed lists open plans). Unspecified while it&#39;s open. |
 | closed_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| friends_interested | [int32](#int32) |  | How many people the caller gets on with (they picked each other after an outing) have signed up: a count, never who. Such plans rank higher. |
 
 
 

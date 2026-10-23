@@ -160,6 +160,9 @@ message FeedPlan {
   // only; the feed lists open plans). Unspecified while it's open.
   PlanClosedReason closed_reason = 16;
   google.protobuf.Timestamp closed_at = 17;
+  // How many people the caller gets on with (they picked each other after
+  // an outing) have signed up: a count, never who. Such plans rank higher.
+  int32 friends_interested = 18;
 }
 
 enum PlanClosedReason {

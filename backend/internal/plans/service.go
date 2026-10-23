@@ -59,6 +59,9 @@ type FeedItem struct {
 	Level    matching.Level
 	Minutes  int // from their home area; -1 = no route
 	SignedUp bool
+	// Friends is how many people the caller gets on with (a mutual pick)
+	// have signed up: a count, never who.
+	Friends int
 	// ClosedReason (a Closed* constant) and ClosedAt are set for a plan that
 	// has closed; "" while it's open.
 	ClosedReason string
@@ -118,6 +121,10 @@ func (s *Service) feed(ctx context.Context, q *dbgen.Queries, userID uuid.UUID) 
 	if err != nil {
 		return nil, nil, caller, err
 	}
+	friends, err := s.friendsInterested(ctx, q, userID, cityID, open)
+	if err != nil {
+		return nil, nil, caller, err
+	}
 	plans := make([]matching.OpenPlan, len(open))
 	// matching.Feed returns plans, not ids; Suggest never opens the same
 	// plan twice, but a queue per plan keeps this right regardless.
@@ -126,12 +133,12 @@ func (s *Service) feed(ctx context.Context, q *dbgen.Queries, userID uuid.UUID) 
 		plans[i] = p.OpenPlan
 		byPlan[p.Plan] = append(byPlan[p.Plan], p)
 	}
-	ranked := matching.Feed(u, plans, acts, c.Travel, c.Config)
+	ranked := matching.Feed(u, plans, acts, c.Travel, c.Config, friends)
 	out := make([]FeedItem, len(ranked))
 	for i, r := range ranked {
 		p := byPlan[r.Plan][0]
 		byPlan[r.Plan] = byPlan[r.Plan][1:]
-		out[i] = FeedItem{Open: p, Level: r.Level, Minutes: r.Minutes, SignedUp: slices.Contains(mine, p.ID)}
+		out[i] = FeedItem{Open: p, Level: r.Level, Minutes: r.Minutes, SignedUp: slices.Contains(mine, p.ID), Friends: r.Friends}
 	}
 	named := make([]titled, len(out))
 	for i := range out {
@@ -229,6 +236,52 @@ func lowerFirst(s string) string {
 	}
 	r, size := utf8.DecodeRuneInString(s)
 	return string(unicode.ToLower(r)) + s[size:]
+}
+
+// friendsInterested finds, for each open plan (same order), the caller's
+// mutual friends who signed up for it, with their link strengths.
+func (s *Service) friendsInterested(ctx context.Context, q *dbgen.Queries, userID uuid.UUID, cityID string, open []Open) ([]matching.Friends, error) {
+	rows, err := q.ListFriendPicks(ctx, userID)
+	if err != nil || len(rows) == 0 {
+		return nil, err
+	}
+	picks := make([]matching.Pick, len(rows))
+	for i, r := range rows {
+		picks[i] = matching.Pick{From: matching.UserID(r.PickerID.String()), To: matching.UserID(r.PickedID.String())}
+	}
+	me := matching.UserID(userID.String())
+	strength := map[uuid.UUID]float64{}
+	var ids []uuid.UUID
+	for pair, st := range matching.MutualLinks(picks) {
+		other := pair.A
+		if other == me {
+			other = pair.B
+		} else if pair.B != me {
+			continue // between two friends, not with the caller
+		}
+		id := uuid.MustParse(string(other))
+		strength[id] = st
+		ids = append(ids, id)
+	}
+	if len(ids) == 0 {
+		return nil, nil
+	}
+	signups, err := q.ListOpenSignupsBy(ctx, dbgen.ListOpenSignupsByParams{CityID: cityID, UserIds: ids})
+	if err != nil {
+		return nil, err
+	}
+	byPlan := map[uuid.UUID]matching.Friends{}
+	for _, su := range signups {
+		f := byPlan[su.PlanID]
+		f.Count++
+		f.Strength += strength[su.UserID]
+		byPlan[su.PlanID] = f
+	}
+	out := make([]matching.Friends, len(open))
+	for i, p := range open {
+		out[i] = byPlan[p.ID]
+	}
+	return out, nil
 }
 
 // Feed returns every open plan in the caller's city, best for them first.

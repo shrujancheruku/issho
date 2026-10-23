@@ -51,7 +51,7 @@ func TestViolation(t *testing.T) {
 		{"same-gender only", []*User{&sgo, &w1, &m1, &m3}, "same-gender"},
 		{"same-gender only, all women", []*User{&sgo, &w1, &w2}, ""},
 		{"one known pair is fine", []*User{&w2, &m1, &w1, &m3}, ""},
-		{"three people who know each other", []*User{&w2, &m1, &m2, &w3}, "know each other"},
+		{"any number of friends together is fine", []*User{&w2, &m1, &m2, &w3}, ""},
 	}
 	for _, tt := range tests {
 		err := Violation(tt.members, rel, cfg)
@@ -78,13 +78,53 @@ func TestScorePreferences(t *testing.T) {
 		t.Errorf("pair %.2f should score below trio %.2f", pair, trio)
 	}
 }
+// Friends are encouraged: a close-knit group scores above one with a single
+// pair of friends, which scores above strangers; regulars without
+// newcomers aren't marked down.
+func TestScoreFriendship(t *testing.T) {
+	cfg := DefaultConfig()
+	us := people("f", 4, Woman)
+	for i := range us {
+		us[i].EventsAttended = 3 // all regulars
+	}
+	ms := []*User{&us[0], &us[1], &us[2], &us[3]}
+	walk := act("walk", 3, 8)
+	g := &group{act: &walk, target: 4, interestOf: func(*User) float64 { return 2 }}
+	pair := Relations{Mutual: map[Pair]float64{MakePair("fa", "fb"): 1}}
+	all := Relations{Mutual: map[Pair]float64{}}
+	for i := range ms {
+		for j := i + 1; j < len(ms); j++ {
+			all.Mutual[MakePair(ms[i].ID, ms[j].ID)] = 1
+		}
+	}
+	none, one, cluster := g.score(ms, Relations{}, cfg), g.score(ms, pair, cfg), g.score(ms, all, cfg)
+	if !(none < one && one < cluster) {
+		t.Errorf("strangers %.2f, one pair %.2f, all friends %.2f: want increasing", none, one, cluster)
+	}
+	if got := friendship(ms, all); got != 1 {
+		t.Errorf("all friends = %.2f, want 1", got)
+	}
+	if got := friendship(ms, pair); got != (0.5+1.0/6)/2 {
+		t.Errorf("one pair in four = %.4f, want %.4f", got, (0.5+1.0/6)/2)
+	}
+	// A majority of newcomers still counts against a group; none doesn't.
+	newcomers := people("n", 4, Woman)
+	for i := range newcomers {
+		newcomers[i].EventsAttended = 0
+	}
+	nms := []*User{&newcomers[0], &newcomers[1], &newcomers[2], &newcomers[3]}
+	if g.score(nms, Relations{}, cfg) >= none {
+		t.Error("all newcomers should score below all regulars")
+	}
+}
+
 func TestParseConfig(t *testing.T) {
-	cfg, err := ParseConfig([]byte(`{"weights": {"mutual": 2}, "size_targets": {"small": 3}, "language_pairs": [["ja", "en"]]}`))
+	cfg, err := ParseConfig([]byte(`{"weights": {"mutual": 3}, "size_targets": {"small": 3}, "language_pairs": [["ja", "en"]]}`))
 	if err != nil {
 		t.Fatal(err)
 	}
 	def := DefaultConfig()
-	if cfg.Weights.Mutual != 2 || cfg.Weights.Interest != def.Weights.Interest {
+	if cfg.Weights.Mutual != 3 || cfg.Weights.Interest != def.Weights.Interest {
 		t.Errorf("weights not merged: %+v", cfg.Weights)
 	}
 	if cfg.SizeTargets[Small] != 3 || cfg.SizeTargets[Large] != def.SizeTargets[Large] {

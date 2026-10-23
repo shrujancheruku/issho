@@ -162,6 +162,8 @@
   "plan.closed.others": "See other plans",
   "plan.closed.withdrawn": "This plan was taken down: a place in it is no longer available.",
   "plan.finishHere": "Finish here",
+  "plan.friendsMany": "{count} people you get on with are interested",
+  "plan.friendsOne": "Someone you get on with is interested",
   "plan.interested": "Interested: {count}",
   "plan.interestedLabel": "People interested",
   "plan.language": "Language",

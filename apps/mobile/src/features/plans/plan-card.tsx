@@ -31,6 +31,11 @@ export function distanceText(t: ReturnType<typeof useI18n>['t'], minutes: number
   return minutes === 0 ? t('plan.nearby') : t('plan.minutes', { minutes });
 }
 
+/** "Someone you get on with is interested", or how many. */
+export function friendsText(t: ReturnType<typeof useI18n>['t'], count: number) {
+  return count === 1 ? t('plan.friendsOne') : t('plan.friendsMany', { count });
+}
+
 /** One plan in the feed: what, where, how it suits you, how many are interested. */
 export function PlanCard({ plan, names }: { plan: FeedPlan; names: ReturnType<typeof usePlanNames> }) {
   const { t, showing } = useI18n();
@@ -78,6 +83,12 @@ export function PlanCard({ plan, names }: { plan: FeedPlan; names: ReturnType<ty
         </ThemedText>
         <ThemedText type="smallBold">{t('plan.interested', { count: plan.signups })}</ThemedText>
       </View>
+      {/* A count, never who: people come for friends as much as the activity. */}
+      {plan.friendsInterested > 0 && (
+        <ThemedText type="smallBold" style={{ color: Brand.red }}>
+          {friendsText(t, plan.friendsInterested)}
+        </ThemedText>
+      )}
     </Pressable>
   );
 }

@@ -61,9 +61,6 @@ type Config struct {
 
 	// SizeTargets is the group size each SizePref aims for.
 	SizeTargets map[SizePref]int `json:"size_targets"`
-	// MaxKnown caps how many people in a group may already know each other
-	// (have a mutual pick), so groups stay open to new people. 2 = one pair.
-	MaxKnown int `json:"max_known"`
 	// Weights of the group score's parts.
 	Weights Weights `json:"weights"`
 	// SearchPasses bounds the local search after greedy placement.
@@ -82,9 +79,14 @@ type Weights struct {
 	SizeFit     float64 `json:"size_fit"`    // how close the size is to what members prefer
 	MinSize     float64 `json:"min_size"`    // expected attendance reaches the preferred minimum
 	Balance     float64 `json:"balance"`     // nobody is the only woman or the only man
-	Mutual      float64 `json:"mutual"`      // a pair who picked each other before
-	Newcomers   float64 `json:"newcomers"`   // newcomers mixed in, but not a majority
+	Mutual      float64 `json:"mutual"`      // how much members are already friends (clusters count most)
+	Newcomers   float64 `json:"newcomers"`   // newcomers aren't a majority
 	Reliability float64 `json:"reliability"` // members who turn up
+
+	// Friends is how much people they get on with having signed up lifts a
+	// plan in someone's feed (on the same scale), besides moving it up a
+	// level.
+	Friends float64 `json:"friends"`
 
 	// Momentum is how much a plan's signups so far lift it in someone's
 	// feed (on the same scale as a Like = 1), so plans close to happening
@@ -109,8 +111,7 @@ func DefaultConfig() Config {
 		FollowUpCategories: []string{"food"},
 		FollowUpWeight:     0.3,
 		SizeTargets:        map[SizePref]int{Small: 4, Medium: 6, Large: 8},
-		MaxKnown:           2,
-		Weights:            Weights{Interest: 3, SizeFit: 1, MinSize: 1, Balance: 2, Mutual: 1, Newcomers: 1, Reliability: 1, Momentum: 0.5},
+		Weights:            Weights{Interest: 3, SizeFit: 1, MinSize: 1, Balance: 2, Mutual: 2, Newcomers: 1, Reliability: 1, Momentum: 0.5, Friends: 1.5},
 		SearchPasses:       5,
 		ExtraInvites:       2,
 	}
@@ -155,8 +156,8 @@ func (c Config) Validate() error {
 		bad("over_budget %v: must be within 0..1", c.OverBudget)
 	}
 	if min(c.VenueChoice, c.PlansPerPool, c.UsersPerPlan, c.MinAudience, c.MomentumAt) < 1 ||
-		min(c.SearchPasses, c.ExtraInvites, c.MaxKnown, c.PlanSpacingMin) < 0 {
-		bad("venue_choice, plans_per_pool, users_per_plan, min_audience, momentum_at must be ≥ 1; search_passes, extra_invites, max_known, plan_spacing_min ≥ 0")
+		min(c.SearchPasses, c.ExtraInvites, c.PlanSpacingMin) < 0 {
+		bad("venue_choice, plans_per_pool, users_per_plan, min_audience, momentum_at must be ≥ 1; search_passes, extra_invites, plan_spacing_min ≥ 0")
 	}
 	for _, s := range []SizePref{Small, Medium, Large} {
 		if c.SizeTargets[s] < 2 {
@@ -164,7 +165,7 @@ func (c Config) Validate() error {
 		}
 	}
 	w := c.Weights
-	if min(w.Interest, w.SizeFit, w.MinSize, w.Balance, w.Mutual, w.Newcomers, w.Reliability, w.Momentum) < 0 {
+	if min(w.Interest, w.SizeFit, w.MinSize, w.Balance, w.Mutual, w.Newcomers, w.Reliability, w.Momentum, w.Friends) < 0 {
 		bad("weights must be non-negative")
 	}
 	return errors.Join(errs...)

@@ -112,3 +112,31 @@ where p.city_id = @city_id and e.status <> 'cancelled'
   and e.starts_at <= @opened and e.starts_at > @since
   and not exists (select 1 from app.notifications n where n.event_id = e.id and n.kind = 'event_feedback')
   and not exists (select 1 from app.event_feedback f where f.group_id = g.id and f.user_id = m.user_id);
+
+-- The meet-again picks needed for one person's friendships: theirs, and
+-- those of everyone they picked who picked them back (each person's return
+-- rate needs all their picks; matching.MutualLinks). Friends either of
+-- them has since blocked (a report or "rather not") are left out.
+-- name: ListFriendPicks :many
+with friends as (
+  select k.picked_id as id
+  from app.mate_picks k
+  where k.picker_id = @user_id and k.pick = 'again'
+    and exists (select 1 from app.mate_picks r where r.picker_id = k.picked_id and r.picked_id = @user_id and r.pick = 'again')
+    and not exists (select 1 from app.mate_picks x
+                    where x.pick = 'avoid' and ((x.picker_id = @user_id and x.picked_id = k.picked_id) or (x.picker_id = k.picked_id and x.picked_id = @user_id)))
+    and not exists (select 1 from app.reports x
+                    where (x.reporter_id = @user_id and x.reported_id = k.picked_id) or (x.reporter_id = k.picked_id and x.reported_id = @user_id))
+)
+select distinct k.picker_id, k.picked_id
+from app.mate_picks k
+where k.pick = 'again' and (k.picker_id = @user_id or k.picker_id in (select id from friends))
+order by 1, 2;
+
+-- Which of these people have signed up for the city's open plans.
+-- name: ListOpenSignupsBy :many
+select s.plan_id, s.user_id
+from app.plan_signups s
+join app.plans p on p.id = s.plan_id
+where p.city_id = @city_id and p.status = 'open' and s.user_id = any(@user_ids::uuid[])
+order by s.plan_id, s.user_id;

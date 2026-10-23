@@ -182,6 +182,37 @@ func TestIntegrationFeedback(t *testing.T) {
 	if got := city.Relations.Blocked; len(got) != 1 || !got[matching.MakePair(id(c), id(a))] {
 		t.Errorf("blocked = %v, want a-c", got)
 	}
+	// b, whom a gets on with, signs up for a new plan (with c): a's feed
+	// counts one friend (a count, never who); d, with no mutual pick, none.
+	planID, err := Create(ctx, f.q, f.city, matching.Suggestion{Plan: matching.Plan{Area: matching.AreaID(f.area), Activity: matching.ActivityID(f.act), Primary: "ja"}, Audience: 6, Score: 1},
+		Window{Start: starts.AddDate(0, 0, 3), Days: 14, Deadline: starts.AddDate(0, 0, 10)}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, u := range []uuid.UUID{b, c} {
+		if _, err := f.pool.Exec(ctx, "insert into app.plan_signups (plan_id, user_id) values ($1, $2)", planID, u); err != nil {
+			t.Fatal(err)
+		}
+	}
+	friendsOn := func(u uuid.UUID) int {
+		feed, err := svc.Feed(ctx, u)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, it := range feed {
+			if it.ID == planID {
+				return it.Friends
+			}
+		}
+		t.Fatalf("plan not in the feed")
+		return 0
+	}
+	if got := friendsOn(a); got != 1 {
+		t.Errorf("a's feed: %d friends interested, want 1", got)
+	}
+	if got := friendsOn(d); got != 0 {
+		t.Errorf("d's feed: %d friends interested, want 0", got)
+	}
 	for _, u := range city.Users {
 		want := map[matching.UserID][2]float64{
 			id(a): {1, 1}, id(b): {1, 1}, id(c): {0, 2.0 / 3}, id(d): {0, 1},
