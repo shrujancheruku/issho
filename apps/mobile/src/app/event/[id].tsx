@@ -22,6 +22,8 @@ import { useNow } from '@/hooks/use-now';
 import { useTheme } from '@/hooks/use-theme';
 import { useI18n } from '@/i18n/i18n-provider';
 
+const ReportDays = 30; // as the server (plans.ReportFor)
+
 /**
  * Opens the share sheet with the outing's details. Browsers without the
  * Web Share API (most desktop ones) get an email draft instead.
@@ -135,6 +137,18 @@ export default function EventScreen() {
             <ThemedText type="smallBold">{t('chat.title')} ›</ThemedText>
           </Pressable>
         )}
+        {/* Anyone who confirmed, even if they cancelled since, until 30 days after the start. */}
+        {(e.response === InviteResponse.CONFIRMED || e.response === InviteResponse.DROPPED) &&
+          (!e.startsAt || now <= Number(e.startsAt.seconds) * 1000 + ReportDays * 86_400_000) && (
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => router.push({ pathname: '/report/[id]', params: { id: e.id } })}
+              style={styles.share}>
+              <ThemedText type="link" themeColor="textSecondary">
+                {t('event.report')}
+              </ThemedText>
+            </Pressable>
+          )}
       </>
     );
   }
@@ -144,7 +158,11 @@ export default function EventScreen() {
     decline: t('event.decline'),
     cancel: t('event.cancel'),
     checkIn: t('event.checkIn'),
+    feedback: e?.feedbackGiven ? t('event.feedbackEdit') : t('event.feedback'),
   };
+  // Feedback is its own screen; everything else is an answer sent from here.
+  const act = (a: EventAction) =>
+    a === 'feedback' ? router.push({ pathname: '/feedback/[id]', params: { id } }) : respond.mutate(a);
   const error = respond.error;
 
   return (
@@ -170,13 +188,13 @@ export default function EventScreen() {
               {state.actions.map((a) =>
                 // The first action is the main one (confirm); the others are links.
                 a === state.actions[0] && a !== 'cancel' ? (
-                  <PrimaryButton key={a} label={labels[a]} busy={respond.isPending && respond.variables === a} onPress={() => respond.mutate(a)} />
+                  <PrimaryButton key={a} label={labels[a]} busy={respond.isPending && respond.variables === a} onPress={() => act(a)} />
                 ) : (
                   <Pressable
                     key={a}
                     accessibilityRole="button"
                     disabled={respond.isPending}
-                    onPress={() => respond.mutate(a)}
+                    onPress={() => act(a)}
                     style={styles.secondary}>
                     <ThemedText type="link">{labels[a]}</ThemedText>
                   </Pressable>

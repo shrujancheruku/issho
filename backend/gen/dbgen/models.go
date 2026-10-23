@@ -74,6 +74,44 @@ type AppCityActivityOverride struct {
 	Months     []int16
 }
 
+type AppCrew struct {
+	ID          uuid.UUID
+	CityID      string
+	ActivityID  *string
+	AreaID      *string
+	Status      string
+	OfferUntil  pgtype.Timestamptz
+	SuggestedAt pgtype.Timestamptz
+	CreatedAt   pgtype.Timestamptz
+	FormedAt    pgtype.Timestamptz
+	ClosedAt    pgtype.Timestamptz
+}
+
+type AppCrewLeafe struct {
+	ID        int64
+	CrewID    uuid.UUID
+	UserID    pgtype.UUID
+	Reason    string
+	Details   string
+	CreatedAt pgtype.Timestamptz
+}
+
+type AppCrewMember struct {
+	CrewID      uuid.UUID
+	UserID      uuid.UUID
+	Response    string
+	RespondedAt pgtype.Timestamptz
+}
+
+type AppCrewMessage struct {
+	ID        int64
+	CrewID    uuid.UUID
+	UserID    pgtype.UUID
+	Body      string
+	PlanID    pgtype.UUID
+	CreatedAt pgtype.Timestamptz
+}
+
 type AppEvent struct {
 	ID        uuid.UUID
 	PlanID    uuid.UUID
@@ -85,6 +123,16 @@ type AppEvent struct {
 	Forced    bool
 	Status    string
 	CreatedAt pgtype.Timestamptz
+}
+
+type AppEventFeedback struct {
+	GroupID     uuid.UUID
+	UserID      uuid.UUID
+	Attended    bool
+	PlanRating  *int16
+	GroupRating *int16
+	CreatedAt   pgtype.Timestamptz
+	UpdatedAt   pgtype.Timestamptz
 }
 
 type AppEventGroup struct {
@@ -108,6 +156,24 @@ type AppGroupMember struct {
 	CheckedInAt pgtype.Timestamptz
 }
 
+type AppMatePick struct {
+	GroupID   uuid.UUID
+	PickerID  uuid.UUID
+	PickedID  uuid.UUID
+	Pick      string
+	CreatedAt pgtype.Timestamptz
+}
+
+type AppModerationFlag struct {
+	ID         int64
+	UserID     uuid.UUID
+	Kind       string
+	Details    []byte
+	CreatedAt  pgtype.Timestamptz
+	UpdatedAt  pgtype.Timestamptz
+	ResolvedAt pgtype.Timestamptz
+}
+
 type AppNotification struct {
 	ID        int64
 	UserID    uuid.UUID
@@ -117,6 +183,7 @@ type AppNotification struct {
 	SentAt    pgtype.Timestamptz
 	Attempts  int16
 	PlanID    pgtype.UUID
+	CrewID    pgtype.UUID
 }
 
 type AppPlan struct {
@@ -208,6 +275,20 @@ type AppPushToken struct {
 	Platform   string
 	CreatedAt  pgtype.Timestamptz
 	LastSeenAt pgtype.Timestamptz
+}
+
+type AppReport struct {
+	ID         uuid.UUID
+	ReporterID pgtype.UUID
+	ReportedID uuid.UUID
+	EventID    pgtype.UUID
+	Reason     string
+	Details    string
+	Status     string
+	CreatedAt  pgtype.Timestamptz
+	UpdatedAt  pgtype.Timestamptz
+	ReviewedAt pgtype.Timestamptz
+	CrewID     pgtype.UUID
 }
 
 type AppTranslation struct {

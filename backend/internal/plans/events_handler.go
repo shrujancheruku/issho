@@ -3,6 +3,7 @@ package plans
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"connectrpc.com/connect"
@@ -150,6 +151,110 @@ func (h *EventHandler) CheckIn(ctx context.Context, req *connect.Request[isshov1
 	return connect.NewResponse(&isshov1.CheckInResponse{Event: eventToProto(it)}), nil
 }
 
+func (h *EventHandler) GetFeedback(ctx context.Context, req *connect.Request[isshov1.GetFeedbackRequest]) (*connect.Response[isshov1.GetFeedbackResponse], error) {
+	userID, err := caller(ctx)
+	if err != nil {
+		return nil, err
+	}
+	eventID, err := parseEventID(req.Msg.EventId)
+	if err != nil {
+		return nil, err
+	}
+	f, err := h.Svc.FeedbackForm(ctx, userID, eventID, h.now())
+	if err != nil {
+		return nil, eventError(err)
+	}
+	return connect.NewResponse(feedbackToProto(f)), nil
+}
+
+func (h *EventHandler) SubmitFeedback(ctx context.Context, req *connect.Request[isshov1.SubmitFeedbackRequest]) (*connect.Response[isshov1.SubmitFeedbackResponse], error) {
+	userID, err := caller(ctx)
+	if err != nil {
+		return nil, err
+	}
+	eventID, err := parseEventID(req.Msg.EventId)
+	if err != nil {
+		return nil, err
+	}
+	fb := Feedback{Attended: req.Msg.Attended, PlanRating: int(req.Msg.PlanRating), GroupRating: int(req.Msg.GroupRating)}
+	if fb.Picks, err = parseIDs("picks", req.Msg.Picks); err != nil {
+		return nil, err
+	}
+	if fb.Avoid, err = parseIDs("avoid", req.Msg.Avoid); err != nil {
+		return nil, err
+	}
+	now := h.now()
+	if err := h.Svc.SubmitFeedback(ctx, userID, eventID, fb, now); err != nil {
+		return nil, eventError(err)
+	}
+	f, err := h.Svc.FeedbackForm(ctx, userID, eventID, now)
+	if err != nil {
+		return nil, eventError(err)
+	}
+	return connect.NewResponse(&isshov1.SubmitFeedbackResponse{Feedback: feedbackToProto(f)}), nil
+}
+
+var reportReasons = map[isshov1.ReportReason]string{
+	isshov1.ReportReason_REPORT_REASON_DATING:     ReportDating,
+	isshov1.ReportReason_REPORT_REASON_HARASSMENT: ReportHarassment,
+	isshov1.ReportReason_REPORT_REASON_UNSAFE:     ReportUnsafe,
+	isshov1.ReportReason_REPORT_REASON_NO_SHOW:    ReportNoShow,
+	isshov1.ReportReason_REPORT_REASON_OTHER:      ReportOther,
+}
+
+func (h *EventHandler) ReportPerson(ctx context.Context, req *connect.Request[isshov1.ReportPersonRequest]) (*connect.Response[isshov1.ReportPersonResponse], error) {
+	userID, err := caller(ctx)
+	if err != nil {
+		return nil, err
+	}
+	eventID, err := parseEventID(req.Msg.EventId)
+	if err != nil {
+		return nil, err
+	}
+	mateID, err := uuid.Parse(req.Msg.MateId)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("mate_id: not a group mate id"))
+	}
+	reason, ok := reportReasons[req.Msg.Reason]
+	if !ok {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("reason: required"))
+	}
+	if err := h.Svc.Report(ctx, userID, eventID, mateID, reason, req.Msg.Details, h.now()); err != nil {
+		return nil, eventError(err)
+	}
+	return connect.NewResponse(&isshov1.ReportPersonResponse{}), nil
+}
+
+func feedbackToProto(f FeedbackForm) *isshov1.GetFeedbackResponse {
+	out := &isshov1.GetFeedbackResponse{
+		Given: f.Given, Attended: f.Attended,
+		PlanRating: int32(f.PlanRating), GroupRating: int32(f.GroupRating),
+		OpensAt: timestamp(f.OpensAt), ClosesAt: timestamp(f.ClosesAt), Open: f.Open,
+	}
+	for _, m := range f.Mates {
+		out.Mates = append(out.Mates, &isshov1.GroupMate{Id: m.ID.String(), Name: m.Name, Cancelled: m.Cancelled})
+	}
+	for _, p := range f.Picks {
+		out.Picks = append(out.Picks, p.String())
+	}
+	for _, p := range f.Avoid {
+		out.Avoid = append(out.Avoid, p.String())
+	}
+	return out
+}
+
+func parseIDs(field string, ss []string) ([]uuid.UUID, error) {
+	ids := make([]uuid.UUID, len(ss))
+	for i, s := range ss {
+		id, err := uuid.Parse(s)
+		if err != nil {
+			return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("%s: not a group mate id", field))
+		}
+		ids[i] = id
+	}
+	return ids, nil
+}
+
 func chatToProto(m ChatMessage) *isshov1.ChatMessage {
 	return &isshov1.ChatMessage{Id: m.ID, Name: m.Name, Body: m.Body, At: timestamp(m.At), Mine: m.Mine}
 }
@@ -171,7 +276,7 @@ func eventError(err error) error {
 		return connect.NewError(connect.CodeNotFound, err)
 	case errors.Is(err, ErrNotGoing):
 		return connect.NewError(connect.CodePermissionDenied, err)
-	case errors.Is(err, ErrChatClosed), errors.Is(err, ErrCheckInClosed):
+	case errors.Is(err, ErrChatClosed), errors.Is(err, ErrCheckInClosed), errors.Is(err, ErrFeedbackClosed):
 		return connect.NewError(connect.CodeFailedPrecondition, err)
 	case errors.Is(err, ErrNoProfile), errors.Is(err, ErrEventOver), errors.Is(err, ErrTooLate), errors.Is(err, ErrNotNow):
 		return connect.NewError(connect.CodeFailedPrecondition, err)
@@ -231,5 +336,8 @@ func eventToProto(it EventItem) *isshov1.MyEvent {
 		CheckedIn:          it.CheckedIn,
 		CheckInFrom:        timestamp(it.CheckInFrom),
 		CheckInUntil:       timestamp(it.CheckInUntil),
+		FeedbackFrom:       timestamp(it.FeedbackFrom),
+		FeedbackUntil:      timestamp(it.FeedbackUntil),
+		FeedbackGiven:      it.FeedbackGiven,
 	}
 }

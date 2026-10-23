@@ -19,7 +19,8 @@ option go_package = "github.com/shrujancheruku/issho/backend/gen/issho/v1;isshov
 // HTTP: POST /issho.v1.EventService/<Method>
 service EventService {
   // ListMyEvents returns the caller's events from yesterday on, soonest
-  // first, whatever their answer.
+  // first, whatever their answer, and older ones still waiting for their
+  // feedback.
   rpc ListMyEvents(ListMyEventsRequest) returns (ListMyEventsResponse) {}
 
   // GetEvent returns one of the caller's events with its stops and, if the
@@ -48,6 +49,108 @@ service EventService {
   // (PERMISSION_DENIED otherwise), from 30 minutes before the start until 3
   // hours after (FAILED_PRECONDITION otherwise). Checking in again is fine.
   rpc CheckIn(CheckInRequest) returns (CheckInResponse) {}
+
+  // GetFeedback returns the caller's feedback form for an outing: the
+  // others in their group (first names), and what the caller already said.
+  // For anyone who confirmed, even if they cancelled since (to report
+  // someone); PERMISSION_DENIED otherwise. Feedback itself is `open` only to
+  // people who went ahead with their group, from 3 hours after the start
+  // for 14 days.
+  rpc GetFeedback(GetFeedbackRequest) returns (GetFeedbackResponse) {}
+
+  // SubmitFeedback records whether the caller went, their ratings, who
+  // they'd meet again and who they'd rather not, replacing anything sent
+  // before. Both are private: nobody is told who picked them; two people
+  // who picked each other are more likely to be grouped again (and may be
+  // offered a crew); "rather not" keeps the two apart for good.
+  // FAILED_PRECONDITION outside the window.
+  rpc SubmitFeedback(SubmitFeedbackRequest) returns (SubmitFeedbackResponse) {}
+
+  // ReportPerson reports someone from the caller's group to the moderators,
+  // from the time the caller confirmed until 30 days after the start. The
+  // two are never grouped together again. Reporting the same person about
+  // the same outing again replaces the report.
+  rpc ReportPerson(ReportPersonRequest) returns (ReportPersonResponse) {}
+}
+
+message GetFeedbackRequest {
+  string event_id = 1;
+}
+
+message GetFeedbackResponse {
+  // The others in the caller's group who confirmed (not the caller),
+  // including any who cancelled since.
+  repeated GroupMate mates = 1;
+  // The caller's earlier answer, if any.
+  bool given = 2;
+  bool attended = 3;
+  // 1–5, or 0 when not given.
+  int32 plan_rating = 4;
+  int32 group_rating = 5;
+  // GroupMate.id of the people the caller would meet again.
+  repeated string picks = 6;
+  // When feedback can be given; unset for someone who can't give it (they
+  // cancelled, or the group didn't go ahead).
+  google.protobuf.Timestamp opens_at = 7;
+  google.protobuf.Timestamp closes_at = 8;
+  bool open = 9;
+  // GroupMate.id of the people the caller would rather not be in a group
+  // with again.
+  repeated string avoid = 10;
+}
+
+// Someone else in the caller's group, for picks and reports.
+message GroupMate {
+  // Opaque; only meaningful in feedback and reports for this event.
+  string id = 1;
+  // First name.
+  string name = 2;
+  // They cancelled their place: they can be reported but not picked.
+  bool cancelled = 3;
+}
+
+message SubmitFeedbackRequest {
+  string event_id = 1;
+  // Whether the caller went. When false, no ratings or picks are taken.
+  bool attended = 2;
+  // 1–5; required when attended.
+  int32 plan_rating = 3;
+  int32 group_rating = 4;
+  // GroupMate.id of people the caller would meet again (any number,
+  // including none; only people who went ahead with the group).
+  repeated string picks = 5;
+  // GroupMate.id of people the caller would rather not be in a group with
+  // again: they're never grouped together again, nor offered a crew
+  // together. Private; nobody in both lists.
+  repeated string avoid = 6;
+}
+
+message SubmitFeedbackResponse {
+  GetFeedbackResponse feedback = 1;
+}
+
+message ReportPersonRequest {
+  string event_id = 1;
+  // GroupMate.id.
+  string mate_id = 2;
+  ReportReason reason = 3;
+  // Optional, up to 1000 characters.
+  string details = 4;
+}
+
+message ReportPersonResponse {}
+
+enum ReportReason {
+  REPORT_REASON_UNSPECIFIED = 0;
+  // Here for dating rather than friends.
+  REPORT_REASON_DATING = 1;
+  // Rude, harassing or made people uncomfortable.
+  REPORT_REASON_HARASSMENT = 2;
+  // Made people feel unsafe.
+  REPORT_REASON_UNSAFE = 3;
+  // Confirmed and didn't come.
+  REPORT_REASON_NO_SHOW = 4;
+  REPORT_REASON_OTHER = 5;
 }
 
 message CheckInRequest {
@@ -176,6 +279,12 @@ message MyEvent {
   // unset without a start time.
   google.protobuf.Timestamp check_in_from = 23;
   google.protobuf.Timestamp check_in_until = 24;
+  // When the caller can give feedback (see GetFeedback); unset unless they
+  // went ahead with their group.
+  google.protobuf.Timestamp feedback_from = 25;
+  google.protobuf.Timestamp feedback_until = 26;
+  // The caller has given feedback.
+  bool feedback_given = 27;
 }
 
 enum EventStatus {

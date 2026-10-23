@@ -45,6 +45,24 @@ describe('eventState', () => {
     expect(eventState(event({ response: InviteResponse.CONFIRMED, checkedIn: true }), start)).toMatchObject({ message: 'event.state.checkedIn', actions: [] });
   });
 
+  it('asks for feedback for two weeks after the outing, then lets it be changed', () => {
+    const went = event({
+      response: InviteResponse.CONFIRMED,
+      groupStatus: GroupStatus.CONFIRMED,
+      feedbackFrom: at('2030-01-12T17:00:00Z'),
+      feedbackUntil: at('2030-01-26T14:00:00Z'),
+    } as Partial<MyEvent>);
+    const opens = start + 3 * 3_600_000;
+    expect(eventState(went, opens - 1).actions).toEqual(['checkIn']);
+    expect(eventState(went, opens)).toMatchObject({ message: 'event.state.feedback', tone: 'action', actions: ['feedback'] });
+    // Still asked once the event is marked done.
+    expect(eventState({ ...went, status: EventStatus.DONE }, opens + 86_400_000).actions).toEqual(['feedback']);
+    expect(eventState({ ...went, feedbackGiven: true }, opens)).toMatchObject({ message: 'event.state.feedbackGiven', tone: 'muted', actions: ['feedback'] });
+    expect(eventState({ ...went, status: EventStatus.DONE }, Date.parse('2030-01-26T14:00:00Z'))).toMatchObject({ message: 'event.state.done', actions: [] });
+    // No window (didn't go ahead with the group): never asked.
+    expect(eventState(event({ status: EventStatus.DONE, response: InviteResponse.DROPPED }), opens).actions).toEqual([]);
+  });
+
   it('lets a decline be changed until the deadline', () => {
     const declined = event({ response: InviteResponse.DECLINED });
     expect(eventState(declined, deadline - 1).actions).toEqual(['confirm']);

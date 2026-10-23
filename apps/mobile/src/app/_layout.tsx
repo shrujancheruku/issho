@@ -87,6 +87,10 @@ function RootNavigator() {
         <Stack.Screen name="plan/[id]" />
         <Stack.Screen name="event/[id]" />
         <Stack.Screen name="chat/[id]" />
+        <Stack.Screen name="feedback/[id]" />
+        <Stack.Screen name="report/[id]" />
+        <Stack.Screen name="crew/[id]" />
+        <Stack.Screen name="crew-leave/[id]" />
       </Stack.Protected>
     </Stack>
   );

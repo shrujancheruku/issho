@@ -132,11 +132,14 @@ func (q *Queries) ListDuePushTickets(ctx context.Context, arg ListDuePushTickets
 }
 
 const listPendingNotifications = `-- name: ListPendingNotifications :many
-select n.id, n.user_id, n.kind, n.event_id, n.plan_id, pr.primary_language, p.city_id, p.activity_id, p.follow_up_id, p.title
+select n.id, n.user_id, n.kind, n.event_id, n.plan_id, n.crew_id, pr.primary_language,
+       coalesce(p.city_id, cr.city_id)::text as city_id, coalesce(p.activity_id, cr.activity_id, '')::text as activity_id,
+       p.follow_up_id, p.title, cr.area_id as crew_area_id
 from app.notifications n
 join app.profiles pr on pr.user_id = n.user_id
 left join app.events e on e.id = n.event_id
-join app.plans p on p.id = coalesce(e.plan_id, n.plan_id)
+left join app.plans p on p.id = coalesce(e.plan_id, n.plan_id)
+left join app.crews cr on cr.id = n.crew_id
 where n.sent_at is null and n.attempts < 5
 order by n.created_at, n.id
 limit $1
@@ -148,16 +151,20 @@ type ListPendingNotificationsRow struct {
 	Kind            string
 	EventID         pgtype.UUID
 	PlanID          pgtype.UUID
+	CrewID          pgtype.UUID
 	PrimaryLanguage string
 	CityID          string
 	ActivityID      string
 	FollowUpID      *string
 	Title           []byte
+	CrewAreaID      *string
 }
 
 // Pending notifications with what the message needs: the person's display
 // language and the event's plan. Oldest first; a few attempts at most, so
 // one that keeps failing doesn't block the rest forever.
+// A crew's notification is titled with the crew's name (its activity or
+// area) rather than a plan's.
 func (q *Queries) ListPendingNotifications(ctx context.Context, max int32) ([]ListPendingNotificationsRow, error) {
 	rows, err := q.db.Query(ctx, listPendingNotifications, max)
 	if err != nil {
@@ -173,11 +180,13 @@ func (q *Queries) ListPendingNotifications(ctx context.Context, max int32) ([]Li
 			&i.Kind,
 			&i.EventID,
 			&i.PlanID,
+			&i.CrewID,
 			&i.PrimaryLanguage,
 			&i.CityID,
 			&i.ActivityID,
 			&i.FollowUpID,
 			&i.Title,
+			&i.CrewAreaID,
 		); err != nil {
 			return nil, err
 		}

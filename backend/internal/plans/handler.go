@@ -161,6 +161,7 @@ func planToProto(it FeedItem) *isshov1.FeedPlan {
 		WindowDays:         int32(it.Window.Days),
 		SignupDeadline:     timestamppb.New(it.Window.Deadline),
 		SignedUp:           it.SignedUp,
+		FriendsInterested:  int32(it.Friends),
 		Title:              it.Title,
 		SecondaryTitle:     it.SecondaryTitle,
 		ClosedReason:       closedReasonsPB[it.ClosedReason],

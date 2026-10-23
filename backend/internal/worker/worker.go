@@ -116,11 +116,17 @@ func (w *matchCityWorker) Work(ctx context.Context, job *river.Job[MatchCityArgs
 	if err != nil {
 		w.runner.Log.Warn("plan routes", "city", job.Args.City, "err", err)
 	}
+	// Crews (offers, forming, weekly plan suggestions) don't hold up matching.
+	crews, err := w.runner.Crews(ctx, job.Args.City, now)
+	if err != nil {
+		w.runner.Log.Warn("crews", "city", job.Args.City, "err", err)
+	}
 	w.runner.Log.Info("city matched", "city", job.Args.City,
 		"groups_confirmed", settled.Confirmed, "groups_cancelled", settled.Cancelled, "events_done", settled.Finished,
-		"chat_messages_deleted", settled.ChatMessagesDeleted,
+		"chat_messages_deleted", settled.ChatMessagesDeleted, "feedback_asked", settled.FeedbackAsked,
 		"checked", rep.Checked, "scheduled", rep.Scheduled, "closed", rep.Closed, "opened", opened,
-		"meeting_places", meetings, "routes", routes, "routes_cleared", routesCleared)
+		"meeting_places", meetings, "routes", routes, "routes_cleared", routesCleared,
+		"crews_offered", crews.Offered, "crews_formed", crews.Formed, "crews_lapsed", crews.Lapsed, "crew_suggestions", crews.Suggested)
 	return nil
 }
 

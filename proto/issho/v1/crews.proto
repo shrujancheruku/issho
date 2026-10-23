@@ -1,0 +1,172 @@
+syntax = "proto3";
+
+package issho.v1;
+
+import "google/protobuf/timestamp.proto";
+import "issho/v1/events.proto";
+
+option go_package = "github.com/shrujancheruku/issho/backend/gen/issho/v1;isshov1";
+
+// CrewService: crews are standing group chats for people who got on well
+// at outings. Issho offers one when everyone in it has met everyone else
+// at an outing, nobody minded anyone, each has a mutual meet-again pick in
+// it, and they share an activity they like or the area they live in, which
+// names it. It forms with the people who accept within a week (at least
+// three), and plans that fit are suggested in its chat every week or so.
+// Anyone can leave at any time.
+// Requires `Authorization: Bearer <Supabase access token>`.
+//
+// HTTP: POST /issho.v1.CrewService/<Method>
+service CrewService {
+  // ListMyCrews returns the caller's crews and the offers still open to
+  // them, newest first.
+  rpc ListMyCrews(ListMyCrewsRequest) returns (ListMyCrewsResponse) {}
+
+  // GetCrew returns one of them. NOT_FOUND otherwise.
+  rpc GetCrew(GetCrewRequest) returns (GetCrewResponse) {}
+
+  // RespondToCrew accepts or declines an offer while it's open (the answer
+  // can be changed until then). FAILED_PRECONDITION once it has closed.
+  rpc RespondToCrew(RespondToCrewRequest) returns (RespondToCrewResponse) {}
+
+  // ListCrewMessages returns the crew's chat: the latest messages, or
+  // those after after_id. Members only (PERMISSION_DENIED otherwise). New
+  // messages also arrive over the WebSocket at GET /ws/chat, starting with
+  // {"token", "crewId", "afterId"} (see the backend README).
+  rpc ListCrewMessages(ListCrewMessagesRequest) returns (ListCrewMessagesResponse) {}
+
+  // SendCrewMessage posts 1–1000 characters to the crew's chat.
+  rpc SendCrewMessage(SendCrewMessageRequest) returns (SendCrewMessageResponse) {}
+
+  // LeaveCrew takes the caller out of a crew, with why. The reason is
+  // private: the crew isn't told why, or that they left.
+  rpc LeaveCrew(LeaveCrewRequest) returns (LeaveCrewResponse) {}
+
+  // ReportCrewMember reports someone in (or who was in) the caller's crew
+  // to the moderators, as EventService.ReportPerson does for an outing.
+  rpc ReportCrewMember(ReportCrewMemberRequest) returns (ReportCrewMemberResponse) {}
+}
+
+message ListMyCrewsRequest {}
+
+message ListMyCrewsResponse {
+  repeated Crew crews = 1;
+}
+
+message GetCrewRequest {
+  string crew_id = 1;
+}
+
+message GetCrewResponse {
+  Crew crew = 1;
+}
+
+message RespondToCrewRequest {
+  string crew_id = 1;
+  bool accept = 2;
+}
+
+message RespondToCrewResponse {
+  Crew crew = 1;
+}
+
+message ListCrewMessagesRequest {
+  string crew_id = 1;
+  // 0 = the latest messages.
+  int64 after_id = 2;
+}
+
+message ListCrewMessagesResponse {
+  repeated CrewMessage messages = 1;
+}
+
+message SendCrewMessageRequest {
+  string crew_id = 1;
+  string body = 2;
+}
+
+message SendCrewMessageResponse {
+  CrewMessage message = 1;
+}
+
+message LeaveCrewRequest {
+  string crew_id = 1;
+  LeaveReason reason = 2;
+  // Optional, up to 1000 characters.
+  string details = 3;
+}
+
+message LeaveCrewResponse {}
+
+message ReportCrewMemberRequest {
+  string crew_id = 1;
+  // CrewMember.id.
+  string member_id = 2;
+  ReportReason reason = 3;
+  // Optional, up to 1000 characters.
+  string details = 4;
+}
+
+message ReportCrewMemberResponse {}
+
+// A crew, or an offer of one, as the caller sees it.
+message Crew {
+  string id = 1;
+  CrewStatus status = 2;
+  // What it's named after (exactly one is set): an activity they all like
+  // ("Football crew") or the area they all live in ("Kichijoji crew"). The
+  // app composes the name with CatalogService names.
+  string activity_id = 3;
+  string area_id = 4;
+  // When the offer closes.
+  google.protobuf.Timestamp offer_until = 5;
+  CrewResponse response = 6;
+  // Everyone who accepted, and while it's an offer, everyone deciding.
+  repeated CrewMember members = 7;
+}
+
+message CrewMember {
+  // Opaque; for reports.
+  string id = 1;
+  // First name.
+  string name = 2;
+  bool accepted = 3;
+  // The caller.
+  bool me = 4;
+}
+
+// A message in a crew's chat: someone's text, or a plan Issho suggested
+// (plan_id set; name and body empty).
+message CrewMessage {
+  int64 id = 1;
+  string name = 2;
+  string body = 3;
+  google.protobuf.Timestamp at = 4;
+  bool mine = 5;
+  string plan_id = 6;
+}
+
+enum CrewStatus {
+  CREW_STATUS_UNSPECIFIED = 0;
+  // Offered: waiting for answers.
+  CREW_STATUS_OFFERED = 1;
+  CREW_STATUS_ACTIVE = 2;
+}
+
+enum CrewResponse {
+  CREW_RESPONSE_UNSPECIFIED = 0;
+  CREW_RESPONSE_OFFERED = 1;
+  CREW_RESPONSE_ACCEPTED = 2;
+}
+
+enum LeaveReason {
+  LEAVE_REASON_UNSPECIFIED = 0;
+  // Someone made them uncomfortable.
+  LEAVE_REASON_UNCOMFORTABLE = 1;
+  // Not interested any more.
+  LEAVE_REASON_NOT_INTERESTED = 2;
+  // Not enough happening.
+  LEAVE_REASON_INACTIVE = 3;
+  LEAVE_REASON_TOO_MANY_MESSAGES = 4;
+  LEAVE_REASON_OTHER = 5;
+}

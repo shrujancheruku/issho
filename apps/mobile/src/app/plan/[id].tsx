@@ -26,7 +26,7 @@ import { useSignupActions, usePlan } from "@/features/plans/data";
 import { formatDate, lastSignupDay, walkHours } from "@/features/plans/format";
 import { levelStyles } from "@/features/plans/level";
 import { usePlanNames } from "@/features/plans/names";
-import { distanceText, pairText, planTitle } from "@/features/plans/plan-card";
+import { distanceText, friendsText, pairText, planTitle } from "@/features/plans/plan-card";
 import { Fact, Facts, Heading } from "@/features/plans/fact";
 import { RouteMap } from "@/features/plans/route-map";
 import { Timeline } from "@/features/plans/timeline";
@@ -193,7 +193,11 @@ export default function PlanScreen() {
             />
           )}
           {!closed && (
-            <Fact label={t("plan.interestedLabel")} value={String(p.signups)} />
+            <Fact
+              label={t("plan.interestedLabel")}
+              value={String(p.signups)}
+              note={p.friendsInterested > 0 ? friendsText(t, p.friendsInterested) : undefined}
+            />
           )}
         </Facts>
 

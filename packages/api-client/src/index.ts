@@ -1,6 +1,7 @@
 import { createClient, type Interceptor } from "@connectrpc/connect";
 import { createConnectTransport } from "@connectrpc/connect-web";
 import { CatalogService } from "./gen/issho/v1/catalog_pb";
+import { CrewService } from "./gen/issho/v1/crews_pb";
 import { EventService } from "./gen/issho/v1/events_pb";
 import { HealthService } from "./gen/issho/v1/health_pb";
 import { IdentityService } from "./gen/issho/v1/identity_pb";
@@ -13,6 +14,7 @@ import { UIService } from "./gen/issho/v1/ui_pb";
 // don't need their own dependency on @connectrpc/connect.
 export { Code, ConnectError } from "@connectrpc/connect";
 export * from "./gen/issho/v1/catalog_pb";
+export * from "./gen/issho/v1/crews_pb";
 export * from "./gen/issho/v1/events_pb";
 export * from "./gen/issho/v1/health_pb";
 export * from "./gen/issho/v1/identity_pb";
@@ -37,6 +39,7 @@ export function createApi({ baseUrl, getAccessToken }: ApiClientOptions) {
   const transport = createConnectTransport({ baseUrl, useBinaryFormat: false, interceptors: [auth] });
   return {
     catalog: createClient(CatalogService, transport),
+    crews: createClient(CrewService, transport),
     events: createClient(EventService, transport),
     health: createClient(HealthService, transport),
     identity: createClient(IdentityService, transport),

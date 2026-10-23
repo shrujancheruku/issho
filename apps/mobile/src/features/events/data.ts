@@ -1,4 +1,4 @@
-import { EventAction as Action } from '@issho/api-client';
+import { EventAction as Action, type ReportReason } from '@issho/api-client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { feedKey } from '@/features/plans/data';
@@ -19,7 +19,7 @@ export function useEvent(id: string) {
   return useQuery({ queryKey: eventKey(id), queryFn: () => api.events.getEvent({ eventId: id }), enabled: !!id });
 }
 
-const actions: Record<Exclude<EventAction, 'checkIn'>, Action> = {
+const actions: Record<Exclude<EventAction, 'checkIn' | 'feedback'>, Action> = {
   confirm: Action.CONFIRM,
   decline: Action.DECLINE,
   cancel: Action.CANCEL,
@@ -33,7 +33,7 @@ export function useRespond(id: string) {
   const queryClient = useQueryClient();
   return useMutation({
     // Checking in is its own call; the rest are answers.
-    mutationFn: async (action: EventAction) => {
+    mutationFn: async (action: Exclude<EventAction, 'feedback'>) => {
       if (action === 'checkIn') await api.events.checkIn({ eventId: id });
       else await api.events.respondToEvent({ eventId: id, action: actions[action] });
     },
@@ -44,4 +44,35 @@ export function useRespond(id: string) {
         queryClient.invalidateQueries({ queryKey: feedKey }),
       ]),
   });
+}
+
+const feedbackKey = (id: string) => ['feedback', id] as const;
+
+/** The person's feedback form for an event: their group and earlier answer. */
+export function useFeedback(id: string) {
+  return useQuery({ queryKey: feedbackKey(id), queryFn: () => api.events.getFeedback({ eventId: id }), enabled: !!id });
+}
+
+export type FeedbackAnswer = { attended: boolean; planRating: number; groupRating: number; picks: string[]; avoid: string[] };
+
+/** Sends (or replaces) the person's feedback, then refreshes their events. */
+export function useSubmitFeedback(id: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (answer: FeedbackAnswer) => api.events.submitFeedback({ eventId: id, ...answer }),
+    onSuccess: (res) => {
+      queryClient.setQueryData(feedbackKey(id), res.feedback);
+      return Promise.all([
+        queryClient.invalidateQueries({ queryKey: eventKey(id) }),
+        queryClient.invalidateQueries({ queryKey: eventsKey }),
+      ]);
+    },
+  });
+}
+
+export type ReportAnswer = { mateId: string; reason: ReportReason; details: string };
+
+/** Reports someone from the person's group to the moderators. */
+export function useReport(id: string) {
+  return useMutation({ mutationFn: (r: ReportAnswer) => api.events.reportPerson({ eventId: id, ...r }) });
 }

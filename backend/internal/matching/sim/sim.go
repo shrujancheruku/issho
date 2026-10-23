@@ -312,7 +312,7 @@ func Run(pack cities.Pack, catalogue []cities.Activity, opt Options, cfg matchin
 	for _, i := range r.Perm(len(city.Users)) {
 		u := &city.Users[i]
 		n := 0
-		for _, item := range matching.Feed(u, open, acts, city.Travel, cfg)[:min(scrollDepth, len(open))] {
+		for _, item := range matching.Feed(u, open, acts, city.Travel, cfg, nil)[:min(scrollDepth, len(open))] {
 			if n == maxSignups || r.Float64() >= signupChance[item.Level] {
 				continue
 			}

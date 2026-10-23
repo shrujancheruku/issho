@@ -738,10 +738,13 @@ type FeedPlan struct {
 	SecondaryTitle string `protobuf:"bytes,15,opt,name=secondary_title,json=secondaryTitle,proto3" json:"secondary_title,omitempty"`
 	// Why the plan closed, for a plan closed in the last 14 days (GetPlan
 	// only; the feed lists open plans). Unspecified while it's open.
-	ClosedReason  PlanClosedReason       `protobuf:"varint,16,opt,name=closed_reason,json=closedReason,proto3,enum=issho.v1.PlanClosedReason" json:"closed_reason,omitempty"`
-	ClosedAt      *timestamppb.Timestamp `protobuf:"bytes,17,opt,name=closed_at,json=closedAt,proto3" json:"closed_at,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	ClosedReason PlanClosedReason       `protobuf:"varint,16,opt,name=closed_reason,json=closedReason,proto3,enum=issho.v1.PlanClosedReason" json:"closed_reason,omitempty"`
+	ClosedAt     *timestamppb.Timestamp `protobuf:"bytes,17,opt,name=closed_at,json=closedAt,proto3" json:"closed_at,omitempty"`
+	// How many people the caller gets on with (they picked each other after
+	// an outing) have signed up: a count, never who. Such plans rank higher.
+	FriendsInterested int32 `protobuf:"varint,18,opt,name=friends_interested,json=friendsInterested,proto3" json:"friends_interested,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *FeedPlan) Reset() {
@@ -891,6 +894,13 @@ func (x *FeedPlan) GetClosedAt() *timestamppb.Timestamp {
 		return x.ClosedAt
 	}
 	return nil
+}
+
+func (x *FeedPlan) GetFriendsInterested() int32 {
+	if x != nil {
+		return x.FriendsInterested
+	}
+	return 0
 }
 
 // The times that suit someone for one plan. Pre-fill pattern with the
@@ -1044,7 +1054,7 @@ const file_issho_v1_plans_proto_rawDesc = "" +
 	"\x04plan\x18\x01 \x01(\v2\x12.issho.v1.FeedPlanR\x04plan\"*\n" +
 	"\x0fWithdrawRequest\x12\x17\n" +
 	"\aplan_id\x18\x01 \x01(\tR\x06planId\"\x12\n" +
-	"\x10WithdrawResponse\"\xac\x05\n" +
+	"\x10WithdrawResponse\"\xdb\x05\n" +
 	"\bFeedPlan\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
 	"\aarea_id\x18\x02 \x01(\tR\x06areaId\x12\x1f\n" +
@@ -1065,7 +1075,8 @@ const file_issho_v1_plans_proto_rawDesc = "" +
 	"\x05title\x18\x0e \x01(\tR\x05title\x12'\n" +
 	"\x0fsecondary_title\x18\x0f \x01(\tR\x0esecondaryTitle\x12?\n" +
 	"\rclosed_reason\x18\x10 \x01(\x0e2\x1a.issho.v1.PlanClosedReasonR\fclosedReason\x127\n" +
-	"\tclosed_at\x18\x11 \x01(\v2\x1a.google.protobuf.TimestampR\bclosedAt\"{\n" +
+	"\tclosed_at\x18\x11 \x01(\v2\x1a.google.protobuf.TimestampR\bclosedAt\x12-\n" +
+	"\x12friends_interested\x18\x12 \x01(\x05R\x11friendsInterested\"{\n" +
 	"\x06Signup\x124\n" +
 	"\apattern\x18\x01 \x03(\v2\x1a.issho.v1.AvailabilitySlotR\apattern\x12;\n" +
 	"\vunavailable\x18\x02 \x03(\v2\x19.issho.v1.UnavailableTimeR\vunavailable\"P\n" +

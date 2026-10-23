@@ -8,6 +8,8 @@ import { LanguageSwitch } from '@/components/language-switch';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing, TopTabInset } from '@/constants/theme';
+import { CrewCard } from '@/features/crews/crew-card';
+import { useMyCrews } from '@/features/crews/data';
 import { EventCard } from '@/features/events/event-card';
 import { useMyEvents } from '@/features/events/data';
 import { useFeed } from '@/features/plans/data';
@@ -39,6 +41,7 @@ export default function FeedScreen() {
   const { t } = useI18n();
   const feed = useFeed();
   const events = useMyEvents();
+  const crews = useMyCrews();
   const names = usePlanNames();
   const [view, setView] = useState<'list' | 'map'>('list');
   const [selected, setSelected] = useState<string | null>(null);
@@ -63,7 +66,16 @@ export default function FeedScreen() {
   const header = (
     <View style={styles.header}>
       {titleRow}
-      {/* The person's own events first: they may need an answer. */}
+      {/* Crews and offers first: an offer needs an answer, a crew is where friends are. */}
+      {!!crews.data?.length && (
+        <View style={styles.events}>
+          <ThemedText type="smallBold">{t('crew.yourCrews')}</ThemedText>
+          {crews.data.map((c) => (
+            <CrewCard key={c.id} crew={c} names={names} />
+          ))}
+        </View>
+      )}
+      {/* The person's own events next: they may need an answer. */}
       {!!events.data?.length && (
         <View style={styles.events}>
           <ThemedText type="smallBold">{t('events.title')}</ThemedText>

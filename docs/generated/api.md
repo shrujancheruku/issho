@@ -61,22 +61,55 @@
     - [CheckInResponse](#issho-v1-CheckInResponse)
     - [GetEventRequest](#issho-v1-GetEventRequest)
     - [GetEventResponse](#issho-v1-GetEventResponse)
+    - [GetFeedbackRequest](#issho-v1-GetFeedbackRequest)
+    - [GetFeedbackResponse](#issho-v1-GetFeedbackResponse)
+    - [GroupMate](#issho-v1-GroupMate)
     - [ListChatMessagesRequest](#issho-v1-ListChatMessagesRequest)
     - [ListChatMessagesResponse](#issho-v1-ListChatMessagesResponse)
     - [ListMyEventsRequest](#issho-v1-ListMyEventsRequest)
     - [ListMyEventsResponse](#issho-v1-ListMyEventsResponse)
     - [MyEvent](#issho-v1-MyEvent)
+    - [ReportPersonRequest](#issho-v1-ReportPersonRequest)
+    - [ReportPersonResponse](#issho-v1-ReportPersonResponse)
     - [RespondToEventRequest](#issho-v1-RespondToEventRequest)
     - [RespondToEventResponse](#issho-v1-RespondToEventResponse)
     - [SendChatMessageRequest](#issho-v1-SendChatMessageRequest)
     - [SendChatMessageResponse](#issho-v1-SendChatMessageResponse)
+    - [SubmitFeedbackRequest](#issho-v1-SubmitFeedbackRequest)
+    - [SubmitFeedbackResponse](#issho-v1-SubmitFeedbackResponse)
   
     - [EventAction](#issho-v1-EventAction)
     - [EventStatus](#issho-v1-EventStatus)
     - [GroupStatus](#issho-v1-GroupStatus)
     - [InviteResponse](#issho-v1-InviteResponse)
+    - [ReportReason](#issho-v1-ReportReason)
   
     - [EventService](#issho-v1-EventService)
+  
+- [issho/v1/crews.proto](#issho_v1_crews-proto)
+    - [Crew](#issho-v1-Crew)
+    - [CrewMember](#issho-v1-CrewMember)
+    - [CrewMessage](#issho-v1-CrewMessage)
+    - [GetCrewRequest](#issho-v1-GetCrewRequest)
+    - [GetCrewResponse](#issho-v1-GetCrewResponse)
+    - [LeaveCrewRequest](#issho-v1-LeaveCrewRequest)
+    - [LeaveCrewResponse](#issho-v1-LeaveCrewResponse)
+    - [ListCrewMessagesRequest](#issho-v1-ListCrewMessagesRequest)
+    - [ListCrewMessagesResponse](#issho-v1-ListCrewMessagesResponse)
+    - [ListMyCrewsRequest](#issho-v1-ListMyCrewsRequest)
+    - [ListMyCrewsResponse](#issho-v1-ListMyCrewsResponse)
+    - [ReportCrewMemberRequest](#issho-v1-ReportCrewMemberRequest)
+    - [ReportCrewMemberResponse](#issho-v1-ReportCrewMemberResponse)
+    - [RespondToCrewRequest](#issho-v1-RespondToCrewRequest)
+    - [RespondToCrewResponse](#issho-v1-RespondToCrewResponse)
+    - [SendCrewMessageRequest](#issho-v1-SendCrewMessageRequest)
+    - [SendCrewMessageResponse](#issho-v1-SendCrewMessageResponse)
+  
+    - [CrewResponse](#issho-v1-CrewResponse)
+    - [CrewStatus](#issho-v1-CrewStatus)
+    - [LeaveReason](#issho-v1-LeaveReason)
+  
+    - [CrewService](#issho-v1-CrewService)
   
 - [issho/v1/health.proto](#issho_v1_health-proto)
     - [CheckRequest](#issho-v1-CheckRequest)
@@ -612,6 +645,7 @@ An open plan as the caller sees it.
 | secondary_title | [string](#string) |  |  |
 | closed_reason | [PlanClosedReason](#issho-v1-PlanClosedReason) |  | Why the plan closed, for a plan closed in the last 14 days (GetPlan only; the feed lists open plans). Unspecified while it&#39;s open. |
 | closed_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| friends_interested | [int32](#int32) |  | How many people the caller gets on with (they picked each other after an outing) have signed up: a count, never who. Such plans rank higher. |
 
 
 
@@ -947,6 +981,62 @@ One message in a group chat.
 
 
 
+<a name="issho-v1-GetFeedbackRequest"></a>
+
+### GetFeedbackRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| event_id | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-GetFeedbackResponse"></a>
+
+### GetFeedbackResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| mates | [GroupMate](#issho-v1-GroupMate) | repeated | The others in the caller&#39;s group who confirmed (not the caller), including any who cancelled since. |
+| given | [bool](#bool) |  | The caller&#39;s earlier answer, if any. |
+| attended | [bool](#bool) |  |  |
+| plan_rating | [int32](#int32) |  | 1–5, or 0 when not given. |
+| group_rating | [int32](#int32) |  |  |
+| picks | [string](#string) | repeated | GroupMate.id of the people the caller would meet again. |
+| opens_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | When feedback can be given; unset for someone who can&#39;t give it (they cancelled, or the group didn&#39;t go ahead). |
+| closes_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| open | [bool](#bool) |  |  |
+| avoid | [string](#string) | repeated | GroupMate.id of the people the caller would rather not be in a group with again. |
+
+
+
+
+
+
+<a name="issho-v1-GroupMate"></a>
+
+### GroupMate
+Someone else in the caller&#39;s group, for picks and reports.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [string](#string) |  | Opaque; only meaningful in feedback and reports for this event. |
+| name | [string](#string) |  | First name. |
+| cancelled | [bool](#bool) |  | They cancelled their place: they can be reported but not picked. |
+
+
+
+
+
+
 <a name="issho-v1-ListChatMessagesRequest"></a>
 
 ### ListChatMessagesRequest
@@ -1038,6 +1128,37 @@ One event as the caller sees it.
 | checked_in | [bool](#bool) |  | The caller has checked in. |
 | check_in_from | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | When check-in is open (30 minutes before the start to 3 hours after); unset without a start time. |
 | check_in_until | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| feedback_from | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | When the caller can give feedback (see GetFeedback); unset unless they went ahead with their group. |
+| feedback_until | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| feedback_given | [bool](#bool) |  | The caller has given feedback. |
+
+
+
+
+
+
+<a name="issho-v1-ReportPersonRequest"></a>
+
+### ReportPersonRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| event_id | [string](#string) |  |  |
+| mate_id | [string](#string) |  | GroupMate.id. |
+| reason | [ReportReason](#issho-v1-ReportReason) |  |  |
+| details | [string](#string) |  | Optional, up to 1000 characters. |
+
+
+
+
+
+
+<a name="issho-v1-ReportPersonResponse"></a>
+
+### ReportPersonResponse
+
 
 
 
@@ -1105,6 +1226,41 @@ One event as the caller sees it.
 
 
 
+
+<a name="issho-v1-SubmitFeedbackRequest"></a>
+
+### SubmitFeedbackRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| event_id | [string](#string) |  |  |
+| attended | [bool](#bool) |  | Whether the caller went. When false, no ratings or picks are taken. |
+| plan_rating | [int32](#int32) |  | 1–5; required when attended. |
+| group_rating | [int32](#int32) |  |  |
+| picks | [string](#string) | repeated | GroupMate.id of people the caller would meet again (any number, including none; only people who went ahead with the group). |
+| avoid | [string](#string) | repeated | GroupMate.id of people the caller would rather not be in a group with again: they&#39;re never grouped together again, nor offered a crew together. Private; nobody in both lists. |
+
+
+
+
+
+
+<a name="issho-v1-SubmitFeedbackResponse"></a>
+
+### SubmitFeedbackResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| feedback | [GetFeedbackResponse](#issho-v1-GetFeedbackResponse) |  |  |
+
+
+
+
+
  
 
 
@@ -1164,6 +1320,22 @@ One event as the caller sees it.
 | INVITE_RESPONSE_DROPPED | 4 | Confirmed, then cancelled. |
 
 
+
+<a name="issho-v1-ReportReason"></a>
+
+### ReportReason
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| REPORT_REASON_UNSPECIFIED | 0 |  |
+| REPORT_REASON_DATING | 1 | Here for dating rather than friends. |
+| REPORT_REASON_HARASSMENT | 2 | Rude, harassing or made people uncomfortable. |
+| REPORT_REASON_UNSAFE | 3 | Made people feel unsafe. |
+| REPORT_REASON_NO_SHOW | 4 | Confirmed and didn&#39;t come. |
+| REPORT_REASON_OTHER | 5 |  |
+
+
  
 
  
@@ -1184,12 +1356,361 @@ HTTP: POST /issho.v1.EventService/&lt;Method&gt;
 
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
-| ListMyEvents | [ListMyEventsRequest](#issho-v1-ListMyEventsRequest) | [ListMyEventsResponse](#issho-v1-ListMyEventsResponse) | ListMyEvents returns the caller&#39;s events from yesterday on, soonest first, whatever their answer. |
+| ListMyEvents | [ListMyEventsRequest](#issho-v1-ListMyEventsRequest) | [ListMyEventsResponse](#issho-v1-ListMyEventsResponse) | ListMyEvents returns the caller&#39;s events from yesterday on, soonest first, whatever their answer, and older ones still waiting for their feedback. |
 | GetEvent | [GetEventRequest](#issho-v1-GetEventRequest) | [GetEventResponse](#issho-v1-GetEventResponse) | GetEvent returns one of the caller&#39;s events with its stops and, if the caller confirmed, who else is going. NOT_FOUND unless the caller is invited to it. |
 | RespondToEvent | [RespondToEventRequest](#issho-v1-RespondToEventRequest) | [RespondToEventResponse](#issho-v1-RespondToEventResponse) | RespondToEvent confirms, declines or cancels the caller&#39;s place. FAILED_PRECONDITION when it&#39;s too late, the event is cancelled or over, or the answer doesn&#39;t apply (e.g. cancelling a place not confirmed). |
 | ListChatMessages | [ListChatMessagesRequest](#issho-v1-ListChatMessagesRequest) | [ListChatMessagesResponse](#issho-v1-ListChatMessagesResponse) | ListChatMessages returns the caller&#39;s group chat for an event: the latest messages, or those after after_id. Only for people who confirmed (PERMISSION_DENIED otherwise); empty until it opens 48 hours before the start. New messages also arrive over the WebSocket at GET /ws/chat (see the backend README). |
 | SendChatMessage | [SendChatMessageRequest](#issho-v1-SendChatMessageRequest) | [SendChatMessageResponse](#issho-v1-SendChatMessageResponse) | SendChatMessage posts to the caller&#39;s group chat while it&#39;s open (48 hours before the start until 24 hours after; FAILED_PRECONDITION otherwise). 1–1000 characters. |
 | CheckIn | [CheckInRequest](#issho-v1-CheckInRequest) | [CheckInResponse](#issho-v1-CheckInResponse) | CheckIn records that the caller has arrived: only people who confirmed (PERMISSION_DENIED otherwise), from 30 minutes before the start until 3 hours after (FAILED_PRECONDITION otherwise). Checking in again is fine. |
+| GetFeedback | [GetFeedbackRequest](#issho-v1-GetFeedbackRequest) | [GetFeedbackResponse](#issho-v1-GetFeedbackResponse) | GetFeedback returns the caller&#39;s feedback form for an outing: the others in their group (first names), and what the caller already said. For anyone who confirmed, even if they cancelled since (to report someone); PERMISSION_DENIED otherwise. Feedback itself is `open` only to people who went ahead with their group, from 3 hours after the start for 14 days. |
+| SubmitFeedback | [SubmitFeedbackRequest](#issho-v1-SubmitFeedbackRequest) | [SubmitFeedbackResponse](#issho-v1-SubmitFeedbackResponse) | SubmitFeedback records whether the caller went, their ratings, who they&#39;d meet again and who they&#39;d rather not, replacing anything sent before. Both are private: nobody is told who picked them; two people who picked each other are more likely to be grouped again (and may be offered a crew); &#34;rather not&#34; keeps the two apart for good. FAILED_PRECONDITION outside the window. |
+| ReportPerson | [ReportPersonRequest](#issho-v1-ReportPersonRequest) | [ReportPersonResponse](#issho-v1-ReportPersonResponse) | ReportPerson reports someone from the caller&#39;s group to the moderators, from the time the caller confirmed until 30 days after the start. The two are never grouped together again. Reporting the same person about the same outing again replaces the report. |
+
+ 
+
+
+
+<a name="issho_v1_crews-proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## issho/v1/crews.proto
+
+
+
+<a name="issho-v1-Crew"></a>
+
+### Crew
+A crew, or an offer of one, as the caller sees it.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [string](#string) |  |  |
+| status | [CrewStatus](#issho-v1-CrewStatus) |  |  |
+| activity_id | [string](#string) |  | What it&#39;s named after (exactly one is set): an activity they all like (&#34;Football crew&#34;) or the area they all live in (&#34;Kichijoji crew&#34;). The app composes the name with CatalogService names. |
+| area_id | [string](#string) |  |  |
+| offer_until | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | When the offer closes. |
+| response | [CrewResponse](#issho-v1-CrewResponse) |  |  |
+| members | [CrewMember](#issho-v1-CrewMember) | repeated | Everyone who accepted, and while it&#39;s an offer, everyone deciding. |
+
+
+
+
+
+
+<a name="issho-v1-CrewMember"></a>
+
+### CrewMember
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [string](#string) |  | Opaque; for reports. |
+| name | [string](#string) |  | First name. |
+| accepted | [bool](#bool) |  |  |
+| me | [bool](#bool) |  | The caller. |
+
+
+
+
+
+
+<a name="issho-v1-CrewMessage"></a>
+
+### CrewMessage
+A message in a crew&#39;s chat: someone&#39;s text, or a plan Issho suggested
+(plan_id set; name and body empty).
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [int64](#int64) |  |  |
+| name | [string](#string) |  |  |
+| body | [string](#string) |  |  |
+| at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| mine | [bool](#bool) |  |  |
+| plan_id | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-GetCrewRequest"></a>
+
+### GetCrewRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| crew_id | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-GetCrewResponse"></a>
+
+### GetCrewResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| crew | [Crew](#issho-v1-Crew) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-LeaveCrewRequest"></a>
+
+### LeaveCrewRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| crew_id | [string](#string) |  |  |
+| reason | [LeaveReason](#issho-v1-LeaveReason) |  |  |
+| details | [string](#string) |  | Optional, up to 1000 characters. |
+
+
+
+
+
+
+<a name="issho-v1-LeaveCrewResponse"></a>
+
+### LeaveCrewResponse
+
+
+
+
+
+
+
+<a name="issho-v1-ListCrewMessagesRequest"></a>
+
+### ListCrewMessagesRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| crew_id | [string](#string) |  |  |
+| after_id | [int64](#int64) |  | 0 = the latest messages. |
+
+
+
+
+
+
+<a name="issho-v1-ListCrewMessagesResponse"></a>
+
+### ListCrewMessagesResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [CrewMessage](#issho-v1-CrewMessage) | repeated |  |
+
+
+
+
+
+
+<a name="issho-v1-ListMyCrewsRequest"></a>
+
+### ListMyCrewsRequest
+
+
+
+
+
+
+
+<a name="issho-v1-ListMyCrewsResponse"></a>
+
+### ListMyCrewsResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| crews | [Crew](#issho-v1-Crew) | repeated |  |
+
+
+
+
+
+
+<a name="issho-v1-ReportCrewMemberRequest"></a>
+
+### ReportCrewMemberRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| crew_id | [string](#string) |  |  |
+| member_id | [string](#string) |  | CrewMember.id. |
+| reason | [ReportReason](#issho-v1-ReportReason) |  |  |
+| details | [string](#string) |  | Optional, up to 1000 characters. |
+
+
+
+
+
+
+<a name="issho-v1-ReportCrewMemberResponse"></a>
+
+### ReportCrewMemberResponse
+
+
+
+
+
+
+
+<a name="issho-v1-RespondToCrewRequest"></a>
+
+### RespondToCrewRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| crew_id | [string](#string) |  |  |
+| accept | [bool](#bool) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-RespondToCrewResponse"></a>
+
+### RespondToCrewResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| crew | [Crew](#issho-v1-Crew) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-SendCrewMessageRequest"></a>
+
+### SendCrewMessageRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| crew_id | [string](#string) |  |  |
+| body | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-SendCrewMessageResponse"></a>
+
+### SendCrewMessageResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| message | [CrewMessage](#issho-v1-CrewMessage) |  |  |
+
+
+
+
+
+ 
+
+
+<a name="issho-v1-CrewResponse"></a>
+
+### CrewResponse
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| CREW_RESPONSE_UNSPECIFIED | 0 |  |
+| CREW_RESPONSE_OFFERED | 1 |  |
+| CREW_RESPONSE_ACCEPTED | 2 |  |
+
+
+
+<a name="issho-v1-CrewStatus"></a>
+
+### CrewStatus
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| CREW_STATUS_UNSPECIFIED | 0 |  |
+| CREW_STATUS_OFFERED | 1 | Offered: waiting for answers. |
+| CREW_STATUS_ACTIVE | 2 |  |
+
+
+
+<a name="issho-v1-LeaveReason"></a>
+
+### LeaveReason
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| LEAVE_REASON_UNSPECIFIED | 0 |  |
+| LEAVE_REASON_UNCOMFORTABLE | 1 | Someone made them uncomfortable. |
+| LEAVE_REASON_NOT_INTERESTED | 2 | Not interested any more. |
+| LEAVE_REASON_INACTIVE | 3 | Not enough happening. |
+| LEAVE_REASON_TOO_MANY_MESSAGES | 4 |  |
+| LEAVE_REASON_OTHER | 5 |  |
+
+
+ 
+
+ 
+
+
+<a name="issho-v1-CrewService"></a>
+
+### CrewService
+CrewService: crews are standing group chats for people who got on well
+at outings. Issho offers one when everyone in it has met everyone else
+at an outing, nobody minded anyone, each has a mutual meet-again pick in
+it, and they share an activity they like or the area they live in, which
+names it. It forms with the people who accept within a week (at least
+three), and plans that fit are suggested in its chat every week or so.
+Anyone can leave at any time.
+Requires `Authorization: Bearer &lt;Supabase access token&gt;`.
+
+HTTP: POST /issho.v1.CrewService/&lt;Method&gt;
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| ListMyCrews | [ListMyCrewsRequest](#issho-v1-ListMyCrewsRequest) | [ListMyCrewsResponse](#issho-v1-ListMyCrewsResponse) | ListMyCrews returns the caller&#39;s crews and the offers still open to them, newest first. |
+| GetCrew | [GetCrewRequest](#issho-v1-GetCrewRequest) | [GetCrewResponse](#issho-v1-GetCrewResponse) | GetCrew returns one of them. NOT_FOUND otherwise. |
+| RespondToCrew | [RespondToCrewRequest](#issho-v1-RespondToCrewRequest) | [RespondToCrewResponse](#issho-v1-RespondToCrewResponse) | RespondToCrew accepts or declines an offer while it&#39;s open (the answer can be changed until then). FAILED_PRECONDITION once it has closed. |
+| ListCrewMessages | [ListCrewMessagesRequest](#issho-v1-ListCrewMessagesRequest) | [ListCrewMessagesResponse](#issho-v1-ListCrewMessagesResponse) | ListCrewMessages returns the crew&#39;s chat: the latest messages, or those after after_id. Members only (PERMISSION_DENIED otherwise). New messages also arrive over the WebSocket at GET /ws/chat, starting with {&#34;token&#34;, &#34;crewId&#34;, &#34;afterId&#34;} (see the backend README). |
+| SendCrewMessage | [SendCrewMessageRequest](#issho-v1-SendCrewMessageRequest) | [SendCrewMessageResponse](#issho-v1-SendCrewMessageResponse) | SendCrewMessage posts 1–1000 characters to the crew&#39;s chat. |
+| LeaveCrew | [LeaveCrewRequest](#issho-v1-LeaveCrewRequest) | [LeaveCrewResponse](#issho-v1-LeaveCrewResponse) | LeaveCrew takes the caller out of a crew, with why. The reason is private: the crew isn&#39;t told why, or that they left. |
+| ReportCrewMember | [ReportCrewMemberRequest](#issho-v1-ReportCrewMemberRequest) | [ReportCrewMemberResponse](#issho-v1-ReportCrewMemberResponse) | ReportCrewMember reports someone in (or who was in) the caller&#39;s crew to the moderators, as EventService.ReportPerson does for an outing. |
 
  
 

@@ -46,6 +46,7 @@ const (
 	NotifyConfirmed = "group_confirmed" // your group is going ahead
 	NotifyCancelled = "group_cancelled" // your group is cancelled
 	NotifyNoGroup   = "plan_no_group"   // a plan you waited for closed without a group
+	NotifyFeedback  = "event_feedback"  // how was it? (feedback is open)
 )
 
 // notify queues a notification for each person, in the caller's
@@ -113,11 +114,17 @@ type EventItem struct {
 	// CheckInFrom to CheckInUntil (zero without a start time).
 	CheckedIn                 bool
 	CheckInFrom, CheckInUntil time.Time
+	// Feedback is open from FeedbackFrom to FeedbackUntil for someone who
+	// went ahead with their group (zero otherwise); FeedbackGiven once
+	// they've given it.
+	FeedbackFrom, FeedbackUntil time.Time
+	FeedbackGiven               bool
 }
 
-// Events returns the caller's events from yesterday on, soonest first.
+// Events returns the caller's events from yesterday on, and older ones
+// still waiting for their feedback, soonest first.
 func (s *Service) Events(ctx context.Context, userID uuid.UUID, now time.Time) ([]EventItem, error) {
-	items, caller, err := s.events(ctx, dbgen.New(s.DB), userID, now.UTC().AddDate(0, 0, -1))
+	items, caller, err := s.events(ctx, dbgen.New(s.DB), userID, now.UTC().AddDate(0, 0, -1), now.Add(-FeedbackFor))
 	if err != nil {
 		return nil, err
 	}
@@ -127,8 +134,10 @@ func (s *Service) Events(ctx context.Context, userID uuid.UUID, now time.Time) (
 	return items, nil
 }
 
-// events loads the caller's events on or after since, with titles.
-func (s *Service) events(ctx context.Context, q *dbgen.Queries, userID uuid.UUID, since time.Time) ([]EventItem, Caller, error) {
+// events loads the caller's events on or after since, and those that
+// started after feedbackSince still waiting for their feedback, with
+// titles.
+func (s *Service) events(ctx context.Context, q *dbgen.Queries, userID uuid.UUID, since, feedbackSince time.Time) ([]EventItem, Caller, error) {
 	_, caller, err := LoadUser(ctx, q, userID)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, caller, ErrNoProfile
@@ -136,7 +145,9 @@ func (s *Service) events(ctx context.Context, q *dbgen.Queries, userID uuid.UUID
 	if err != nil {
 		return nil, caller, err
 	}
-	rows, err := q.ListUserEvents(ctx, dbgen.ListUserEventsParams{UserID: userID, Since: date(since)})
+	rows, err := q.ListUserEvents(ctx, dbgen.ListUserEventsParams{
+		UserID: userID, Since: date(since), FeedbackSince: pgtype.Timestamptz{Time: feedbackSince, Valid: true},
+	})
 	if err != nil {
 		return nil, caller, err
 	}
@@ -173,7 +184,7 @@ func (s *Service) events(ctx context.Context, q *dbgen.Queries, userID uuid.UUID
 func (s *Service) Event(ctx context.Context, userID, eventID uuid.UUID, now time.Time) (EventItem, []Step, []string, error) {
 	q := dbgen.New(s.DB)
 	// Any date: a link to a past event still opens it.
-	items, caller, err := s.events(ctx, q, userID, time.Time{})
+	items, caller, err := s.events(ctx, q, userID, time.Time{}, time.Time{})
 	if err != nil {
 		return EventItem{}, nil, nil, err
 	}
@@ -229,6 +240,10 @@ func eventFromRow(r dbgen.ListUserEventsRow) EventItem {
 		it.CheckInFrom, it.CheckInUntil = it.StartsAt.Add(-CheckInBefore), it.StartsAt.Add(CheckInAfter)
 	}
 	it.CheckedIn = r.CheckedInAt.Valid
+	if !it.StartsAt.IsZero() && it.Response == Confirmed && it.GroupStatus == GroupConfirmed && it.Status != "cancelled" {
+		it.FeedbackFrom, it.FeedbackUntil = it.StartsAt.Add(FeedbackAfter), it.StartsAt.Add(FeedbackFor)
+	}
+	it.FeedbackGiven = r.FeedbackGiven
 	return it
 }
 
@@ -322,7 +337,7 @@ func (s *Service) Respond(ctx context.Context, userID, eventID uuid.UUID, action
 // fine and keeps the first time. Check-ins count as attending (newcomer
 // status) and towards reliability.
 func (s *Service) CheckIn(ctx context.Context, userID, eventID uuid.UUID, now time.Time) error {
-	items, _, err := s.events(ctx, dbgen.New(s.DB), userID, time.Time{})
+	items, _, err := s.events(ctx, dbgen.New(s.DB), userID, time.Time{}, time.Time{})
 	if err != nil {
 		return err
 	}
@@ -370,11 +385,13 @@ func cancelGroup(ctx context.Context, q *dbgen.Queries, groupID, planID, eventID
 type SettleReport struct {
 	Confirmed, Cancelled, Finished int
 	ChatMessagesDeleted            int
+	FeedbackAsked                  int // people asked how it was
 }
 
 // Settle decides every group in a city whose confirmation deadline has
 // passed: it goes ahead with at least `min_attendance` confirmations, and
-// is cancelled otherwise. Events that have happened are marked done.
+// is cancelled otherwise. Events that have happened are marked done, and
+// the people who went are asked for feedback once it opens.
 func (r *Runner) Settle(ctx context.Context, cityID string, now time.Time) (SettleReport, error) {
 	var rep SettleReport
 	q := dbgen.New(r.DB)
@@ -429,5 +446,10 @@ func (r *Runner) Settle(ctx context.Context, cityID string, now time.Time) (Sett
 		return rep, err
 	}
 	rep.ChatMessagesDeleted = int(chats)
+	asked, err := askFeedback(ctx, q, cityID, now)
+	if err != nil {
+		return rep, err
+	}
+	rep.FeedbackAsked = int(asked)
 	return rep, nil
 }

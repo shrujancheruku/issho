@@ -1,10 +1,14 @@
-import type { ChatMessage } from '@issho/api-client';
+import type { ChatMessage, CrewMessage } from '@issho/api-client';
 
-/** A chat message in the app: from the API (ChatMessage) or the socket. */
-export type Message = { id: number; name: string; body: string; at: Date; mine: boolean };
+/**
+ * A chat message in the app: from the API (ChatMessage, CrewMessage) or the
+ * socket. `planId`: a plan Issho suggested in a crew's chat.
+ */
+export type Message = { id: number; name: string; body: string; at: Date; mine: boolean; planId?: string };
 
-export function fromApi(m: ChatMessage): Message {
-  return { id: Number(m.id), name: m.name, body: m.body, at: new Date(Number(m.at?.seconds ?? 0) * 1000), mine: m.mine };
+export function fromApi(m: ChatMessage | CrewMessage): Message {
+  const planId = 'planId' in m && m.planId ? m.planId : undefined;
+  return { id: Number(m.id), name: m.name, body: m.body, at: new Date(Number(m.at?.seconds ?? 0) * 1000), mine: m.mine, planId };
 }
 
 /** Adds messages, keeping one per id, oldest first. */

@@ -22,6 +22,68 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type ReportReason int32
+
+const (
+	ReportReason_REPORT_REASON_UNSPECIFIED ReportReason = 0
+	// Here for dating rather than friends.
+	ReportReason_REPORT_REASON_DATING ReportReason = 1
+	// Rude, harassing or made people uncomfortable.
+	ReportReason_REPORT_REASON_HARASSMENT ReportReason = 2
+	// Made people feel unsafe.
+	ReportReason_REPORT_REASON_UNSAFE ReportReason = 3
+	// Confirmed and didn't come.
+	ReportReason_REPORT_REASON_NO_SHOW ReportReason = 4
+	ReportReason_REPORT_REASON_OTHER   ReportReason = 5
+)
+
+// Enum value maps for ReportReason.
+var (
+	ReportReason_name = map[int32]string{
+		0: "REPORT_REASON_UNSPECIFIED",
+		1: "REPORT_REASON_DATING",
+		2: "REPORT_REASON_HARASSMENT",
+		3: "REPORT_REASON_UNSAFE",
+		4: "REPORT_REASON_NO_SHOW",
+		5: "REPORT_REASON_OTHER",
+	}
+	ReportReason_value = map[string]int32{
+		"REPORT_REASON_UNSPECIFIED": 0,
+		"REPORT_REASON_DATING":      1,
+		"REPORT_REASON_HARASSMENT":  2,
+		"REPORT_REASON_UNSAFE":      3,
+		"REPORT_REASON_NO_SHOW":     4,
+		"REPORT_REASON_OTHER":       5,
+	}
+)
+
+func (x ReportReason) Enum() *ReportReason {
+	p := new(ReportReason)
+	*p = x
+	return p
+}
+
+func (x ReportReason) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ReportReason) Descriptor() protoreflect.EnumDescriptor {
+	return file_issho_v1_events_proto_enumTypes[0].Descriptor()
+}
+
+func (ReportReason) Type() protoreflect.EnumType {
+	return &file_issho_v1_events_proto_enumTypes[0]
+}
+
+func (x ReportReason) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ReportReason.Descriptor instead.
+func (ReportReason) EnumDescriptor() ([]byte, []int) {
+	return file_issho_v1_events_proto_rawDescGZIP(), []int{0}
+}
+
 type EventAction int32
 
 const (
@@ -61,11 +123,11 @@ func (x EventAction) String() string {
 }
 
 func (EventAction) Descriptor() protoreflect.EnumDescriptor {
-	return file_issho_v1_events_proto_enumTypes[0].Descriptor()
+	return file_issho_v1_events_proto_enumTypes[1].Descriptor()
 }
 
 func (EventAction) Type() protoreflect.EnumType {
-	return &file_issho_v1_events_proto_enumTypes[0]
+	return &file_issho_v1_events_proto_enumTypes[1]
 }
 
 func (x EventAction) Number() protoreflect.EnumNumber {
@@ -74,7 +136,7 @@ func (x EventAction) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use EventAction.Descriptor instead.
 func (EventAction) EnumDescriptor() ([]byte, []int) {
-	return file_issho_v1_events_proto_rawDescGZIP(), []int{0}
+	return file_issho_v1_events_proto_rawDescGZIP(), []int{1}
 }
 
 type EventStatus int32
@@ -113,11 +175,11 @@ func (x EventStatus) String() string {
 }
 
 func (EventStatus) Descriptor() protoreflect.EnumDescriptor {
-	return file_issho_v1_events_proto_enumTypes[1].Descriptor()
+	return file_issho_v1_events_proto_enumTypes[2].Descriptor()
 }
 
 func (EventStatus) Type() protoreflect.EnumType {
-	return &file_issho_v1_events_proto_enumTypes[1]
+	return &file_issho_v1_events_proto_enumTypes[2]
 }
 
 func (x EventStatus) Number() protoreflect.EnumNumber {
@@ -126,7 +188,7 @@ func (x EventStatus) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use EventStatus.Descriptor instead.
 func (EventStatus) EnumDescriptor() ([]byte, []int) {
-	return file_issho_v1_events_proto_rawDescGZIP(), []int{1}
+	return file_issho_v1_events_proto_rawDescGZIP(), []int{2}
 }
 
 type GroupStatus int32
@@ -167,11 +229,11 @@ func (x GroupStatus) String() string {
 }
 
 func (GroupStatus) Descriptor() protoreflect.EnumDescriptor {
-	return file_issho_v1_events_proto_enumTypes[2].Descriptor()
+	return file_issho_v1_events_proto_enumTypes[3].Descriptor()
 }
 
 func (GroupStatus) Type() protoreflect.EnumType {
-	return &file_issho_v1_events_proto_enumTypes[2]
+	return &file_issho_v1_events_proto_enumTypes[3]
 }
 
 func (x GroupStatus) Number() protoreflect.EnumNumber {
@@ -180,7 +242,7 @@ func (x GroupStatus) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use GroupStatus.Descriptor instead.
 func (GroupStatus) EnumDescriptor() ([]byte, []int) {
-	return file_issho_v1_events_proto_rawDescGZIP(), []int{2}
+	return file_issho_v1_events_proto_rawDescGZIP(), []int{3}
 }
 
 type InviteResponse int32
@@ -223,11 +285,11 @@ func (x InviteResponse) String() string {
 }
 
 func (InviteResponse) Descriptor() protoreflect.EnumDescriptor {
-	return file_issho_v1_events_proto_enumTypes[3].Descriptor()
+	return file_issho_v1_events_proto_enumTypes[4].Descriptor()
 }
 
 func (InviteResponse) Type() protoreflect.EnumType {
-	return &file_issho_v1_events_proto_enumTypes[3]
+	return &file_issho_v1_events_proto_enumTypes[4]
 }
 
 func (x InviteResponse) Number() protoreflect.EnumNumber {
@@ -236,7 +298,481 @@ func (x InviteResponse) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use InviteResponse.Descriptor instead.
 func (InviteResponse) EnumDescriptor() ([]byte, []int) {
+	return file_issho_v1_events_proto_rawDescGZIP(), []int{4}
+}
+
+type GetFeedbackRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	EventId       string                 `protobuf:"bytes,1,opt,name=event_id,json=eventId,proto3" json:"event_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetFeedbackRequest) Reset() {
+	*x = GetFeedbackRequest{}
+	mi := &file_issho_v1_events_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetFeedbackRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetFeedbackRequest) ProtoMessage() {}
+
+func (x *GetFeedbackRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_issho_v1_events_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetFeedbackRequest.ProtoReflect.Descriptor instead.
+func (*GetFeedbackRequest) Descriptor() ([]byte, []int) {
+	return file_issho_v1_events_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *GetFeedbackRequest) GetEventId() string {
+	if x != nil {
+		return x.EventId
+	}
+	return ""
+}
+
+type GetFeedbackResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The others in the caller's group who confirmed (not the caller),
+	// including any who cancelled since.
+	Mates []*GroupMate `protobuf:"bytes,1,rep,name=mates,proto3" json:"mates,omitempty"`
+	// The caller's earlier answer, if any.
+	Given    bool `protobuf:"varint,2,opt,name=given,proto3" json:"given,omitempty"`
+	Attended bool `protobuf:"varint,3,opt,name=attended,proto3" json:"attended,omitempty"`
+	// 1–5, or 0 when not given.
+	PlanRating  int32 `protobuf:"varint,4,opt,name=plan_rating,json=planRating,proto3" json:"plan_rating,omitempty"`
+	GroupRating int32 `protobuf:"varint,5,opt,name=group_rating,json=groupRating,proto3" json:"group_rating,omitempty"`
+	// GroupMate.id of the people the caller would meet again.
+	Picks []string `protobuf:"bytes,6,rep,name=picks,proto3" json:"picks,omitempty"`
+	// When feedback can be given; unset for someone who can't give it (they
+	// cancelled, or the group didn't go ahead).
+	OpensAt  *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=opens_at,json=opensAt,proto3" json:"opens_at,omitempty"`
+	ClosesAt *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=closes_at,json=closesAt,proto3" json:"closes_at,omitempty"`
+	Open     bool                   `protobuf:"varint,9,opt,name=open,proto3" json:"open,omitempty"`
+	// GroupMate.id of the people the caller would rather not be in a group
+	// with again.
+	Avoid         []string `protobuf:"bytes,10,rep,name=avoid,proto3" json:"avoid,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetFeedbackResponse) Reset() {
+	*x = GetFeedbackResponse{}
+	mi := &file_issho_v1_events_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetFeedbackResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetFeedbackResponse) ProtoMessage() {}
+
+func (x *GetFeedbackResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_issho_v1_events_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetFeedbackResponse.ProtoReflect.Descriptor instead.
+func (*GetFeedbackResponse) Descriptor() ([]byte, []int) {
+	return file_issho_v1_events_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *GetFeedbackResponse) GetMates() []*GroupMate {
+	if x != nil {
+		return x.Mates
+	}
+	return nil
+}
+
+func (x *GetFeedbackResponse) GetGiven() bool {
+	if x != nil {
+		return x.Given
+	}
+	return false
+}
+
+func (x *GetFeedbackResponse) GetAttended() bool {
+	if x != nil {
+		return x.Attended
+	}
+	return false
+}
+
+func (x *GetFeedbackResponse) GetPlanRating() int32 {
+	if x != nil {
+		return x.PlanRating
+	}
+	return 0
+}
+
+func (x *GetFeedbackResponse) GetGroupRating() int32 {
+	if x != nil {
+		return x.GroupRating
+	}
+	return 0
+}
+
+func (x *GetFeedbackResponse) GetPicks() []string {
+	if x != nil {
+		return x.Picks
+	}
+	return nil
+}
+
+func (x *GetFeedbackResponse) GetOpensAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.OpensAt
+	}
+	return nil
+}
+
+func (x *GetFeedbackResponse) GetClosesAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ClosesAt
+	}
+	return nil
+}
+
+func (x *GetFeedbackResponse) GetOpen() bool {
+	if x != nil {
+		return x.Open
+	}
+	return false
+}
+
+func (x *GetFeedbackResponse) GetAvoid() []string {
+	if x != nil {
+		return x.Avoid
+	}
+	return nil
+}
+
+// Someone else in the caller's group, for picks and reports.
+type GroupMate struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Opaque; only meaningful in feedback and reports for this event.
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// First name.
+	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	// They cancelled their place: they can be reported but not picked.
+	Cancelled     bool `protobuf:"varint,3,opt,name=cancelled,proto3" json:"cancelled,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GroupMate) Reset() {
+	*x = GroupMate{}
+	mi := &file_issho_v1_events_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GroupMate) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GroupMate) ProtoMessage() {}
+
+func (x *GroupMate) ProtoReflect() protoreflect.Message {
+	mi := &file_issho_v1_events_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GroupMate.ProtoReflect.Descriptor instead.
+func (*GroupMate) Descriptor() ([]byte, []int) {
+	return file_issho_v1_events_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *GroupMate) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *GroupMate) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *GroupMate) GetCancelled() bool {
+	if x != nil {
+		return x.Cancelled
+	}
+	return false
+}
+
+type SubmitFeedbackRequest struct {
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	EventId string                 `protobuf:"bytes,1,opt,name=event_id,json=eventId,proto3" json:"event_id,omitempty"`
+	// Whether the caller went. When false, no ratings or picks are taken.
+	Attended bool `protobuf:"varint,2,opt,name=attended,proto3" json:"attended,omitempty"`
+	// 1–5; required when attended.
+	PlanRating  int32 `protobuf:"varint,3,opt,name=plan_rating,json=planRating,proto3" json:"plan_rating,omitempty"`
+	GroupRating int32 `protobuf:"varint,4,opt,name=group_rating,json=groupRating,proto3" json:"group_rating,omitempty"`
+	// GroupMate.id of people the caller would meet again (any number,
+	// including none; only people who went ahead with the group).
+	Picks []string `protobuf:"bytes,5,rep,name=picks,proto3" json:"picks,omitempty"`
+	// GroupMate.id of people the caller would rather not be in a group with
+	// again: they're never grouped together again, nor offered a crew
+	// together. Private; nobody in both lists.
+	Avoid         []string `protobuf:"bytes,6,rep,name=avoid,proto3" json:"avoid,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SubmitFeedbackRequest) Reset() {
+	*x = SubmitFeedbackRequest{}
+	mi := &file_issho_v1_events_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SubmitFeedbackRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SubmitFeedbackRequest) ProtoMessage() {}
+
+func (x *SubmitFeedbackRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_issho_v1_events_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SubmitFeedbackRequest.ProtoReflect.Descriptor instead.
+func (*SubmitFeedbackRequest) Descriptor() ([]byte, []int) {
 	return file_issho_v1_events_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *SubmitFeedbackRequest) GetEventId() string {
+	if x != nil {
+		return x.EventId
+	}
+	return ""
+}
+
+func (x *SubmitFeedbackRequest) GetAttended() bool {
+	if x != nil {
+		return x.Attended
+	}
+	return false
+}
+
+func (x *SubmitFeedbackRequest) GetPlanRating() int32 {
+	if x != nil {
+		return x.PlanRating
+	}
+	return 0
+}
+
+func (x *SubmitFeedbackRequest) GetGroupRating() int32 {
+	if x != nil {
+		return x.GroupRating
+	}
+	return 0
+}
+
+func (x *SubmitFeedbackRequest) GetPicks() []string {
+	if x != nil {
+		return x.Picks
+	}
+	return nil
+}
+
+func (x *SubmitFeedbackRequest) GetAvoid() []string {
+	if x != nil {
+		return x.Avoid
+	}
+	return nil
+}
+
+type SubmitFeedbackResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Feedback      *GetFeedbackResponse   `protobuf:"bytes,1,opt,name=feedback,proto3" json:"feedback,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SubmitFeedbackResponse) Reset() {
+	*x = SubmitFeedbackResponse{}
+	mi := &file_issho_v1_events_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SubmitFeedbackResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SubmitFeedbackResponse) ProtoMessage() {}
+
+func (x *SubmitFeedbackResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_issho_v1_events_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SubmitFeedbackResponse.ProtoReflect.Descriptor instead.
+func (*SubmitFeedbackResponse) Descriptor() ([]byte, []int) {
+	return file_issho_v1_events_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *SubmitFeedbackResponse) GetFeedback() *GetFeedbackResponse {
+	if x != nil {
+		return x.Feedback
+	}
+	return nil
+}
+
+type ReportPersonRequest struct {
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	EventId string                 `protobuf:"bytes,1,opt,name=event_id,json=eventId,proto3" json:"event_id,omitempty"`
+	// GroupMate.id.
+	MateId string       `protobuf:"bytes,2,opt,name=mate_id,json=mateId,proto3" json:"mate_id,omitempty"`
+	Reason ReportReason `protobuf:"varint,3,opt,name=reason,proto3,enum=issho.v1.ReportReason" json:"reason,omitempty"`
+	// Optional, up to 1000 characters.
+	Details       string `protobuf:"bytes,4,opt,name=details,proto3" json:"details,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReportPersonRequest) Reset() {
+	*x = ReportPersonRequest{}
+	mi := &file_issho_v1_events_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReportPersonRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReportPersonRequest) ProtoMessage() {}
+
+func (x *ReportPersonRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_issho_v1_events_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReportPersonRequest.ProtoReflect.Descriptor instead.
+func (*ReportPersonRequest) Descriptor() ([]byte, []int) {
+	return file_issho_v1_events_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *ReportPersonRequest) GetEventId() string {
+	if x != nil {
+		return x.EventId
+	}
+	return ""
+}
+
+func (x *ReportPersonRequest) GetMateId() string {
+	if x != nil {
+		return x.MateId
+	}
+	return ""
+}
+
+func (x *ReportPersonRequest) GetReason() ReportReason {
+	if x != nil {
+		return x.Reason
+	}
+	return ReportReason_REPORT_REASON_UNSPECIFIED
+}
+
+func (x *ReportPersonRequest) GetDetails() string {
+	if x != nil {
+		return x.Details
+	}
+	return ""
+}
+
+type ReportPersonResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReportPersonResponse) Reset() {
+	*x = ReportPersonResponse{}
+	mi := &file_issho_v1_events_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReportPersonResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReportPersonResponse) ProtoMessage() {}
+
+func (x *ReportPersonResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_issho_v1_events_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReportPersonResponse.ProtoReflect.Descriptor instead.
+func (*ReportPersonResponse) Descriptor() ([]byte, []int) {
+	return file_issho_v1_events_proto_rawDescGZIP(), []int{6}
 }
 
 type CheckInRequest struct {
@@ -248,7 +784,7 @@ type CheckInRequest struct {
 
 func (x *CheckInRequest) Reset() {
 	*x = CheckInRequest{}
-	mi := &file_issho_v1_events_proto_msgTypes[0]
+	mi := &file_issho_v1_events_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -260,7 +796,7 @@ func (x *CheckInRequest) String() string {
 func (*CheckInRequest) ProtoMessage() {}
 
 func (x *CheckInRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_events_proto_msgTypes[0]
+	mi := &file_issho_v1_events_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -273,7 +809,7 @@ func (x *CheckInRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CheckInRequest.ProtoReflect.Descriptor instead.
 func (*CheckInRequest) Descriptor() ([]byte, []int) {
-	return file_issho_v1_events_proto_rawDescGZIP(), []int{0}
+	return file_issho_v1_events_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *CheckInRequest) GetEventId() string {
@@ -292,7 +828,7 @@ type CheckInResponse struct {
 
 func (x *CheckInResponse) Reset() {
 	*x = CheckInResponse{}
-	mi := &file_issho_v1_events_proto_msgTypes[1]
+	mi := &file_issho_v1_events_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -304,7 +840,7 @@ func (x *CheckInResponse) String() string {
 func (*CheckInResponse) ProtoMessage() {}
 
 func (x *CheckInResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_events_proto_msgTypes[1]
+	mi := &file_issho_v1_events_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -317,7 +853,7 @@ func (x *CheckInResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CheckInResponse.ProtoReflect.Descriptor instead.
 func (*CheckInResponse) Descriptor() ([]byte, []int) {
-	return file_issho_v1_events_proto_rawDescGZIP(), []int{1}
+	return file_issho_v1_events_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *CheckInResponse) GetEvent() *MyEvent {
@@ -338,7 +874,7 @@ type ListChatMessagesRequest struct {
 
 func (x *ListChatMessagesRequest) Reset() {
 	*x = ListChatMessagesRequest{}
-	mi := &file_issho_v1_events_proto_msgTypes[2]
+	mi := &file_issho_v1_events_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -350,7 +886,7 @@ func (x *ListChatMessagesRequest) String() string {
 func (*ListChatMessagesRequest) ProtoMessage() {}
 
 func (x *ListChatMessagesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_events_proto_msgTypes[2]
+	mi := &file_issho_v1_events_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -363,7 +899,7 @@ func (x *ListChatMessagesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListChatMessagesRequest.ProtoReflect.Descriptor instead.
 func (*ListChatMessagesRequest) Descriptor() ([]byte, []int) {
-	return file_issho_v1_events_proto_rawDescGZIP(), []int{2}
+	return file_issho_v1_events_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *ListChatMessagesRequest) GetEventId() string {
@@ -393,7 +929,7 @@ type ListChatMessagesResponse struct {
 
 func (x *ListChatMessagesResponse) Reset() {
 	*x = ListChatMessagesResponse{}
-	mi := &file_issho_v1_events_proto_msgTypes[3]
+	mi := &file_issho_v1_events_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -405,7 +941,7 @@ func (x *ListChatMessagesResponse) String() string {
 func (*ListChatMessagesResponse) ProtoMessage() {}
 
 func (x *ListChatMessagesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_events_proto_msgTypes[3]
+	mi := &file_issho_v1_events_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -418,7 +954,7 @@ func (x *ListChatMessagesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListChatMessagesResponse.ProtoReflect.Descriptor instead.
 func (*ListChatMessagesResponse) Descriptor() ([]byte, []int) {
-	return file_issho_v1_events_proto_rawDescGZIP(), []int{3}
+	return file_issho_v1_events_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *ListChatMessagesResponse) GetMessages() []*ChatMessage {
@@ -459,7 +995,7 @@ type SendChatMessageRequest struct {
 
 func (x *SendChatMessageRequest) Reset() {
 	*x = SendChatMessageRequest{}
-	mi := &file_issho_v1_events_proto_msgTypes[4]
+	mi := &file_issho_v1_events_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -471,7 +1007,7 @@ func (x *SendChatMessageRequest) String() string {
 func (*SendChatMessageRequest) ProtoMessage() {}
 
 func (x *SendChatMessageRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_events_proto_msgTypes[4]
+	mi := &file_issho_v1_events_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -484,7 +1020,7 @@ func (x *SendChatMessageRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SendChatMessageRequest.ProtoReflect.Descriptor instead.
 func (*SendChatMessageRequest) Descriptor() ([]byte, []int) {
-	return file_issho_v1_events_proto_rawDescGZIP(), []int{4}
+	return file_issho_v1_events_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *SendChatMessageRequest) GetEventId() string {
@@ -510,7 +1046,7 @@ type SendChatMessageResponse struct {
 
 func (x *SendChatMessageResponse) Reset() {
 	*x = SendChatMessageResponse{}
-	mi := &file_issho_v1_events_proto_msgTypes[5]
+	mi := &file_issho_v1_events_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -522,7 +1058,7 @@ func (x *SendChatMessageResponse) String() string {
 func (*SendChatMessageResponse) ProtoMessage() {}
 
 func (x *SendChatMessageResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_events_proto_msgTypes[5]
+	mi := &file_issho_v1_events_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -535,7 +1071,7 @@ func (x *SendChatMessageResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SendChatMessageResponse.ProtoReflect.Descriptor instead.
 func (*SendChatMessageResponse) Descriptor() ([]byte, []int) {
-	return file_issho_v1_events_proto_rawDescGZIP(), []int{5}
+	return file_issho_v1_events_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *SendChatMessageResponse) GetMessage() *ChatMessage {
@@ -561,7 +1097,7 @@ type ChatMessage struct {
 
 func (x *ChatMessage) Reset() {
 	*x = ChatMessage{}
-	mi := &file_issho_v1_events_proto_msgTypes[6]
+	mi := &file_issho_v1_events_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -573,7 +1109,7 @@ func (x *ChatMessage) String() string {
 func (*ChatMessage) ProtoMessage() {}
 
 func (x *ChatMessage) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_events_proto_msgTypes[6]
+	mi := &file_issho_v1_events_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -586,7 +1122,7 @@ func (x *ChatMessage) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ChatMessage.ProtoReflect.Descriptor instead.
 func (*ChatMessage) Descriptor() ([]byte, []int) {
-	return file_issho_v1_events_proto_rawDescGZIP(), []int{6}
+	return file_issho_v1_events_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *ChatMessage) GetId() int64 {
@@ -632,7 +1168,7 @@ type ListMyEventsRequest struct {
 
 func (x *ListMyEventsRequest) Reset() {
 	*x = ListMyEventsRequest{}
-	mi := &file_issho_v1_events_proto_msgTypes[7]
+	mi := &file_issho_v1_events_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -644,7 +1180,7 @@ func (x *ListMyEventsRequest) String() string {
 func (*ListMyEventsRequest) ProtoMessage() {}
 
 func (x *ListMyEventsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_events_proto_msgTypes[7]
+	mi := &file_issho_v1_events_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -657,7 +1193,7 @@ func (x *ListMyEventsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListMyEventsRequest.ProtoReflect.Descriptor instead.
 func (*ListMyEventsRequest) Descriptor() ([]byte, []int) {
-	return file_issho_v1_events_proto_rawDescGZIP(), []int{7}
+	return file_issho_v1_events_proto_rawDescGZIP(), []int{14}
 }
 
 type ListMyEventsResponse struct {
@@ -669,7 +1205,7 @@ type ListMyEventsResponse struct {
 
 func (x *ListMyEventsResponse) Reset() {
 	*x = ListMyEventsResponse{}
-	mi := &file_issho_v1_events_proto_msgTypes[8]
+	mi := &file_issho_v1_events_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -681,7 +1217,7 @@ func (x *ListMyEventsResponse) String() string {
 func (*ListMyEventsResponse) ProtoMessage() {}
 
 func (x *ListMyEventsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_events_proto_msgTypes[8]
+	mi := &file_issho_v1_events_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -694,7 +1230,7 @@ func (x *ListMyEventsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListMyEventsResponse.ProtoReflect.Descriptor instead.
 func (*ListMyEventsResponse) Descriptor() ([]byte, []int) {
-	return file_issho_v1_events_proto_rawDescGZIP(), []int{8}
+	return file_issho_v1_events_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *ListMyEventsResponse) GetEvents() []*MyEvent {
@@ -713,7 +1249,7 @@ type GetEventRequest struct {
 
 func (x *GetEventRequest) Reset() {
 	*x = GetEventRequest{}
-	mi := &file_issho_v1_events_proto_msgTypes[9]
+	mi := &file_issho_v1_events_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -725,7 +1261,7 @@ func (x *GetEventRequest) String() string {
 func (*GetEventRequest) ProtoMessage() {}
 
 func (x *GetEventRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_events_proto_msgTypes[9]
+	mi := &file_issho_v1_events_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -738,7 +1274,7 @@ func (x *GetEventRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetEventRequest.ProtoReflect.Descriptor instead.
 func (*GetEventRequest) Descriptor() ([]byte, []int) {
-	return file_issho_v1_events_proto_rawDescGZIP(), []int{9}
+	return file_issho_v1_events_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *GetEventRequest) GetEventId() string {
@@ -769,7 +1305,7 @@ type GetEventResponse struct {
 
 func (x *GetEventResponse) Reset() {
 	*x = GetEventResponse{}
-	mi := &file_issho_v1_events_proto_msgTypes[10]
+	mi := &file_issho_v1_events_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -781,7 +1317,7 @@ func (x *GetEventResponse) String() string {
 func (*GetEventResponse) ProtoMessage() {}
 
 func (x *GetEventResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_events_proto_msgTypes[10]
+	mi := &file_issho_v1_events_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -794,7 +1330,7 @@ func (x *GetEventResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetEventResponse.ProtoReflect.Descriptor instead.
 func (*GetEventResponse) Descriptor() ([]byte, []int) {
-	return file_issho_v1_events_proto_rawDescGZIP(), []int{10}
+	return file_issho_v1_events_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *GetEventResponse) GetEvent() *MyEvent {
@@ -849,7 +1385,7 @@ type RespondToEventRequest struct {
 
 func (x *RespondToEventRequest) Reset() {
 	*x = RespondToEventRequest{}
-	mi := &file_issho_v1_events_proto_msgTypes[11]
+	mi := &file_issho_v1_events_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -861,7 +1397,7 @@ func (x *RespondToEventRequest) String() string {
 func (*RespondToEventRequest) ProtoMessage() {}
 
 func (x *RespondToEventRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_events_proto_msgTypes[11]
+	mi := &file_issho_v1_events_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -874,7 +1410,7 @@ func (x *RespondToEventRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RespondToEventRequest.ProtoReflect.Descriptor instead.
 func (*RespondToEventRequest) Descriptor() ([]byte, []int) {
-	return file_issho_v1_events_proto_rawDescGZIP(), []int{11}
+	return file_issho_v1_events_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *RespondToEventRequest) GetEventId() string {
@@ -900,7 +1436,7 @@ type RespondToEventResponse struct {
 
 func (x *RespondToEventResponse) Reset() {
 	*x = RespondToEventResponse{}
-	mi := &file_issho_v1_events_proto_msgTypes[12]
+	mi := &file_issho_v1_events_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -912,7 +1448,7 @@ func (x *RespondToEventResponse) String() string {
 func (*RespondToEventResponse) ProtoMessage() {}
 
 func (x *RespondToEventResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_events_proto_msgTypes[12]
+	mi := &file_issho_v1_events_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -925,7 +1461,7 @@ func (x *RespondToEventResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RespondToEventResponse.ProtoReflect.Descriptor instead.
 func (*RespondToEventResponse) Descriptor() ([]byte, []int) {
-	return file_issho_v1_events_proto_rawDescGZIP(), []int{12}
+	return file_issho_v1_events_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *RespondToEventResponse) GetEvent() *MyEvent {
@@ -973,15 +1509,21 @@ type MyEvent struct {
 	CheckedIn bool `protobuf:"varint,22,opt,name=checked_in,json=checkedIn,proto3" json:"checked_in,omitempty"`
 	// When check-in is open (30 minutes before the start to 3 hours after);
 	// unset without a start time.
-	CheckInFrom   *timestamppb.Timestamp `protobuf:"bytes,23,opt,name=check_in_from,json=checkInFrom,proto3" json:"check_in_from,omitempty"`
-	CheckInUntil  *timestamppb.Timestamp `protobuf:"bytes,24,opt,name=check_in_until,json=checkInUntil,proto3" json:"check_in_until,omitempty"`
+	CheckInFrom  *timestamppb.Timestamp `protobuf:"bytes,23,opt,name=check_in_from,json=checkInFrom,proto3" json:"check_in_from,omitempty"`
+	CheckInUntil *timestamppb.Timestamp `protobuf:"bytes,24,opt,name=check_in_until,json=checkInUntil,proto3" json:"check_in_until,omitempty"`
+	// When the caller can give feedback (see GetFeedback); unset unless they
+	// went ahead with their group.
+	FeedbackFrom  *timestamppb.Timestamp `protobuf:"bytes,25,opt,name=feedback_from,json=feedbackFrom,proto3" json:"feedback_from,omitempty"`
+	FeedbackUntil *timestamppb.Timestamp `protobuf:"bytes,26,opt,name=feedback_until,json=feedbackUntil,proto3" json:"feedback_until,omitempty"`
+	// The caller has given feedback.
+	FeedbackGiven bool `protobuf:"varint,27,opt,name=feedback_given,json=feedbackGiven,proto3" json:"feedback_given,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *MyEvent) Reset() {
 	*x = MyEvent{}
-	mi := &file_issho_v1_events_proto_msgTypes[13]
+	mi := &file_issho_v1_events_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -993,7 +1535,7 @@ func (x *MyEvent) String() string {
 func (*MyEvent) ProtoMessage() {}
 
 func (x *MyEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_events_proto_msgTypes[13]
+	mi := &file_issho_v1_events_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1006,7 +1548,7 @@ func (x *MyEvent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MyEvent.ProtoReflect.Descriptor instead.
 func (*MyEvent) Descriptor() ([]byte, []int) {
-	return file_issho_v1_events_proto_rawDescGZIP(), []int{13}
+	return file_issho_v1_events_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *MyEvent) GetId() string {
@@ -1177,11 +1719,67 @@ func (x *MyEvent) GetCheckInUntil() *timestamppb.Timestamp {
 	return nil
 }
 
+func (x *MyEvent) GetFeedbackFrom() *timestamppb.Timestamp {
+	if x != nil {
+		return x.FeedbackFrom
+	}
+	return nil
+}
+
+func (x *MyEvent) GetFeedbackUntil() *timestamppb.Timestamp {
+	if x != nil {
+		return x.FeedbackUntil
+	}
+	return nil
+}
+
+func (x *MyEvent) GetFeedbackGiven() bool {
+	if x != nil {
+		return x.FeedbackGiven
+	}
+	return false
+}
+
 var File_issho_v1_events_proto protoreflect.FileDescriptor
 
 const file_issho_v1_events_proto_rawDesc = "" +
 	"\n" +
-	"\x15issho/v1/events.proto\x12\bissho.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x14issho/v1/plans.proto\x1a\x16issho/v1/profile.proto\"+\n" +
+	"\x15issho/v1/events.proto\x12\bissho.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x14issho/v1/plans.proto\x1a\x16issho/v1/profile.proto\"/\n" +
+	"\x12GetFeedbackRequest\x12\x19\n" +
+	"\bevent_id\x18\x01 \x01(\tR\aeventId\"\xe6\x02\n" +
+	"\x13GetFeedbackResponse\x12)\n" +
+	"\x05mates\x18\x01 \x03(\v2\x13.issho.v1.GroupMateR\x05mates\x12\x14\n" +
+	"\x05given\x18\x02 \x01(\bR\x05given\x12\x1a\n" +
+	"\battended\x18\x03 \x01(\bR\battended\x12\x1f\n" +
+	"\vplan_rating\x18\x04 \x01(\x05R\n" +
+	"planRating\x12!\n" +
+	"\fgroup_rating\x18\x05 \x01(\x05R\vgroupRating\x12\x14\n" +
+	"\x05picks\x18\x06 \x03(\tR\x05picks\x125\n" +
+	"\bopens_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\aopensAt\x127\n" +
+	"\tcloses_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\bclosesAt\x12\x12\n" +
+	"\x04open\x18\t \x01(\bR\x04open\x12\x14\n" +
+	"\x05avoid\x18\n" +
+	" \x03(\tR\x05avoid\"M\n" +
+	"\tGroupMate\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1c\n" +
+	"\tcancelled\x18\x03 \x01(\bR\tcancelled\"\xbe\x01\n" +
+	"\x15SubmitFeedbackRequest\x12\x19\n" +
+	"\bevent_id\x18\x01 \x01(\tR\aeventId\x12\x1a\n" +
+	"\battended\x18\x02 \x01(\bR\battended\x12\x1f\n" +
+	"\vplan_rating\x18\x03 \x01(\x05R\n" +
+	"planRating\x12!\n" +
+	"\fgroup_rating\x18\x04 \x01(\x05R\vgroupRating\x12\x14\n" +
+	"\x05picks\x18\x05 \x03(\tR\x05picks\x12\x14\n" +
+	"\x05avoid\x18\x06 \x03(\tR\x05avoid\"S\n" +
+	"\x16SubmitFeedbackResponse\x129\n" +
+	"\bfeedback\x18\x01 \x01(\v2\x1d.issho.v1.GetFeedbackResponseR\bfeedback\"\x93\x01\n" +
+	"\x13ReportPersonRequest\x12\x19\n" +
+	"\bevent_id\x18\x01 \x01(\tR\aeventId\x12\x17\n" +
+	"\amate_id\x18\x02 \x01(\tR\x06mateId\x12.\n" +
+	"\x06reason\x18\x03 \x01(\x0e2\x16.issho.v1.ReportReasonR\x06reason\x12\x18\n" +
+	"\adetails\x18\x04 \x01(\tR\adetails\"\x16\n" +
+	"\x14ReportPersonResponse\"+\n" +
 	"\x0eCheckInRequest\x12\x19\n" +
 	"\bevent_id\x18\x01 \x01(\tR\aeventId\":\n" +
 	"\x0fCheckInResponse\x12'\n" +
@@ -1221,7 +1819,7 @@ const file_issho_v1_events_proto_rawDesc = "" +
 	"\bevent_id\x18\x01 \x01(\tR\aeventId\x12-\n" +
 	"\x06action\x18\x02 \x01(\x0e2\x15.issho.v1.EventActionR\x06action\"A\n" +
 	"\x16RespondToEventResponse\x12'\n" +
-	"\x05event\x18\x01 \x01(\v2\x11.issho.v1.MyEventR\x05event\"\xe6\a\n" +
+	"\x05event\x18\x01 \x01(\v2\x11.issho.v1.MyEventR\x05event\"\x91\t\n" +
 	"\aMyEvent\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
 	"\aplan_id\x18\x02 \x01(\tR\x06planId\x12\x14\n" +
@@ -1250,7 +1848,17 @@ const file_issho_v1_events_proto_rawDesc = "" +
 	"\n" +
 	"checked_in\x18\x16 \x01(\bR\tcheckedIn\x12>\n" +
 	"\rcheck_in_from\x18\x17 \x01(\v2\x1a.google.protobuf.TimestampR\vcheckInFrom\x12@\n" +
-	"\x0echeck_in_until\x18\x18 \x01(\v2\x1a.google.protobuf.TimestampR\fcheckInUntil*x\n" +
+	"\x0echeck_in_until\x18\x18 \x01(\v2\x1a.google.protobuf.TimestampR\fcheckInUntil\x12?\n" +
+	"\rfeedback_from\x18\x19 \x01(\v2\x1a.google.protobuf.TimestampR\ffeedbackFrom\x12A\n" +
+	"\x0efeedback_until\x18\x1a \x01(\v2\x1a.google.protobuf.TimestampR\rfeedbackUntil\x12%\n" +
+	"\x0efeedback_given\x18\x1b \x01(\bR\rfeedbackGiven*\xb3\x01\n" +
+	"\fReportReason\x12\x1d\n" +
+	"\x19REPORT_REASON_UNSPECIFIED\x10\x00\x12\x18\n" +
+	"\x14REPORT_REASON_DATING\x10\x01\x12\x1c\n" +
+	"\x18REPORT_REASON_HARASSMENT\x10\x02\x12\x18\n" +
+	"\x14REPORT_REASON_UNSAFE\x10\x03\x12\x19\n" +
+	"\x15REPORT_REASON_NO_SHOW\x10\x04\x12\x17\n" +
+	"\x13REPORT_REASON_OTHER\x10\x05*x\n" +
 	"\vEventAction\x12\x1c\n" +
 	"\x18EVENT_ACTION_UNSPECIFIED\x10\x00\x12\x18\n" +
 	"\x14EVENT_ACTION_CONFIRM\x10\x01\x12\x18\n" +
@@ -1271,14 +1879,17 @@ const file_issho_v1_events_proto_rawDesc = "" +
 	"\x17INVITE_RESPONSE_INVITED\x10\x01\x12\x1d\n" +
 	"\x19INVITE_RESPONSE_CONFIRMED\x10\x02\x12\x1c\n" +
 	"\x18INVITE_RESPONSE_DECLINED\x10\x03\x12\x1b\n" +
-	"\x17INVITE_RESPONSE_DROPPED\x10\x042\xf4\x03\n" +
+	"\x17INVITE_RESPONSE_DROPPED\x10\x042\xea\x05\n" +
 	"\fEventService\x12O\n" +
 	"\fListMyEvents\x12\x1d.issho.v1.ListMyEventsRequest\x1a\x1e.issho.v1.ListMyEventsResponse\"\x00\x12C\n" +
 	"\bGetEvent\x12\x19.issho.v1.GetEventRequest\x1a\x1a.issho.v1.GetEventResponse\"\x00\x12U\n" +
 	"\x0eRespondToEvent\x12\x1f.issho.v1.RespondToEventRequest\x1a .issho.v1.RespondToEventResponse\"\x00\x12[\n" +
 	"\x10ListChatMessages\x12!.issho.v1.ListChatMessagesRequest\x1a\".issho.v1.ListChatMessagesResponse\"\x00\x12X\n" +
 	"\x0fSendChatMessage\x12 .issho.v1.SendChatMessageRequest\x1a!.issho.v1.SendChatMessageResponse\"\x00\x12@\n" +
-	"\aCheckIn\x12\x18.issho.v1.CheckInRequest\x1a\x19.issho.v1.CheckInResponse\"\x00B>Z<github.com/shrujancheruku/issho/backend/gen/issho/v1;isshov1b\x06proto3"
+	"\aCheckIn\x12\x18.issho.v1.CheckInRequest\x1a\x19.issho.v1.CheckInResponse\"\x00\x12L\n" +
+	"\vGetFeedback\x12\x1c.issho.v1.GetFeedbackRequest\x1a\x1d.issho.v1.GetFeedbackResponse\"\x00\x12U\n" +
+	"\x0eSubmitFeedback\x12\x1f.issho.v1.SubmitFeedbackRequest\x1a .issho.v1.SubmitFeedbackResponse\"\x00\x12O\n" +
+	"\fReportPerson\x12\x1d.issho.v1.ReportPersonRequest\x1a\x1e.issho.v1.ReportPersonResponse\"\x00B>Z<github.com/shrujancheruku/issho/backend/gen/issho/v1;isshov1b\x06proto3"
 
 var (
 	file_issho_v1_events_proto_rawDescOnce sync.Once
@@ -1292,69 +1903,90 @@ func file_issho_v1_events_proto_rawDescGZIP() []byte {
 	return file_issho_v1_events_proto_rawDescData
 }
 
-var file_issho_v1_events_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
-var file_issho_v1_events_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
+var file_issho_v1_events_proto_enumTypes = make([]protoimpl.EnumInfo, 5)
+var file_issho_v1_events_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
 var file_issho_v1_events_proto_goTypes = []any{
-	(EventAction)(0),                 // 0: issho.v1.EventAction
-	(EventStatus)(0),                 // 1: issho.v1.EventStatus
-	(GroupStatus)(0),                 // 2: issho.v1.GroupStatus
-	(InviteResponse)(0),              // 3: issho.v1.InviteResponse
-	(*CheckInRequest)(nil),           // 4: issho.v1.CheckInRequest
-	(*CheckInResponse)(nil),          // 5: issho.v1.CheckInResponse
-	(*ListChatMessagesRequest)(nil),  // 6: issho.v1.ListChatMessagesRequest
-	(*ListChatMessagesResponse)(nil), // 7: issho.v1.ListChatMessagesResponse
-	(*SendChatMessageRequest)(nil),   // 8: issho.v1.SendChatMessageRequest
-	(*SendChatMessageResponse)(nil),  // 9: issho.v1.SendChatMessageResponse
-	(*ChatMessage)(nil),              // 10: issho.v1.ChatMessage
-	(*ListMyEventsRequest)(nil),      // 11: issho.v1.ListMyEventsRequest
-	(*ListMyEventsResponse)(nil),     // 12: issho.v1.ListMyEventsResponse
-	(*GetEventRequest)(nil),          // 13: issho.v1.GetEventRequest
-	(*GetEventResponse)(nil),         // 14: issho.v1.GetEventResponse
-	(*RespondToEventRequest)(nil),    // 15: issho.v1.RespondToEventRequest
-	(*RespondToEventResponse)(nil),   // 16: issho.v1.RespondToEventResponse
-	(*MyEvent)(nil),                  // 17: issho.v1.MyEvent
-	(*timestamppb.Timestamp)(nil),    // 18: google.protobuf.Timestamp
-	(*PlanStep)(nil),                 // 19: issho.v1.PlanStep
-	(TimeBlock)(0),                   // 20: issho.v1.TimeBlock
+	(ReportReason)(0),                // 0: issho.v1.ReportReason
+	(EventAction)(0),                 // 1: issho.v1.EventAction
+	(EventStatus)(0),                 // 2: issho.v1.EventStatus
+	(GroupStatus)(0),                 // 3: issho.v1.GroupStatus
+	(InviteResponse)(0),              // 4: issho.v1.InviteResponse
+	(*GetFeedbackRequest)(nil),       // 5: issho.v1.GetFeedbackRequest
+	(*GetFeedbackResponse)(nil),      // 6: issho.v1.GetFeedbackResponse
+	(*GroupMate)(nil),                // 7: issho.v1.GroupMate
+	(*SubmitFeedbackRequest)(nil),    // 8: issho.v1.SubmitFeedbackRequest
+	(*SubmitFeedbackResponse)(nil),   // 9: issho.v1.SubmitFeedbackResponse
+	(*ReportPersonRequest)(nil),      // 10: issho.v1.ReportPersonRequest
+	(*ReportPersonResponse)(nil),     // 11: issho.v1.ReportPersonResponse
+	(*CheckInRequest)(nil),           // 12: issho.v1.CheckInRequest
+	(*CheckInResponse)(nil),          // 13: issho.v1.CheckInResponse
+	(*ListChatMessagesRequest)(nil),  // 14: issho.v1.ListChatMessagesRequest
+	(*ListChatMessagesResponse)(nil), // 15: issho.v1.ListChatMessagesResponse
+	(*SendChatMessageRequest)(nil),   // 16: issho.v1.SendChatMessageRequest
+	(*SendChatMessageResponse)(nil),  // 17: issho.v1.SendChatMessageResponse
+	(*ChatMessage)(nil),              // 18: issho.v1.ChatMessage
+	(*ListMyEventsRequest)(nil),      // 19: issho.v1.ListMyEventsRequest
+	(*ListMyEventsResponse)(nil),     // 20: issho.v1.ListMyEventsResponse
+	(*GetEventRequest)(nil),          // 21: issho.v1.GetEventRequest
+	(*GetEventResponse)(nil),         // 22: issho.v1.GetEventResponse
+	(*RespondToEventRequest)(nil),    // 23: issho.v1.RespondToEventRequest
+	(*RespondToEventResponse)(nil),   // 24: issho.v1.RespondToEventResponse
+	(*MyEvent)(nil),                  // 25: issho.v1.MyEvent
+	(*timestamppb.Timestamp)(nil),    // 26: google.protobuf.Timestamp
+	(*PlanStep)(nil),                 // 27: issho.v1.PlanStep
+	(TimeBlock)(0),                   // 28: issho.v1.TimeBlock
 }
 var file_issho_v1_events_proto_depIdxs = []int32{
-	17, // 0: issho.v1.CheckInResponse.event:type_name -> issho.v1.MyEvent
-	10, // 1: issho.v1.ListChatMessagesResponse.messages:type_name -> issho.v1.ChatMessage
-	18, // 2: issho.v1.ListChatMessagesResponse.opens_at:type_name -> google.protobuf.Timestamp
-	18, // 3: issho.v1.ListChatMessagesResponse.closes_at:type_name -> google.protobuf.Timestamp
-	10, // 4: issho.v1.SendChatMessageResponse.message:type_name -> issho.v1.ChatMessage
-	18, // 5: issho.v1.ChatMessage.at:type_name -> google.protobuf.Timestamp
-	17, // 6: issho.v1.ListMyEventsResponse.events:type_name -> issho.v1.MyEvent
-	17, // 7: issho.v1.GetEventResponse.event:type_name -> issho.v1.MyEvent
-	19, // 8: issho.v1.GetEventResponse.steps:type_name -> issho.v1.PlanStep
-	0,  // 9: issho.v1.RespondToEventRequest.action:type_name -> issho.v1.EventAction
-	17, // 10: issho.v1.RespondToEventResponse.event:type_name -> issho.v1.MyEvent
-	20, // 11: issho.v1.MyEvent.block:type_name -> issho.v1.TimeBlock
-	18, // 12: issho.v1.MyEvent.starts_at:type_name -> google.protobuf.Timestamp
-	18, // 13: issho.v1.MyEvent.confirm_by:type_name -> google.protobuf.Timestamp
-	1,  // 14: issho.v1.MyEvent.status:type_name -> issho.v1.EventStatus
-	2,  // 15: issho.v1.MyEvent.group_status:type_name -> issho.v1.GroupStatus
-	3,  // 16: issho.v1.MyEvent.response:type_name -> issho.v1.InviteResponse
-	18, // 17: issho.v1.MyEvent.reveal_at:type_name -> google.protobuf.Timestamp
-	18, // 18: issho.v1.MyEvent.check_in_from:type_name -> google.protobuf.Timestamp
-	18, // 19: issho.v1.MyEvent.check_in_until:type_name -> google.protobuf.Timestamp
-	11, // 20: issho.v1.EventService.ListMyEvents:input_type -> issho.v1.ListMyEventsRequest
-	13, // 21: issho.v1.EventService.GetEvent:input_type -> issho.v1.GetEventRequest
-	15, // 22: issho.v1.EventService.RespondToEvent:input_type -> issho.v1.RespondToEventRequest
-	6,  // 23: issho.v1.EventService.ListChatMessages:input_type -> issho.v1.ListChatMessagesRequest
-	8,  // 24: issho.v1.EventService.SendChatMessage:input_type -> issho.v1.SendChatMessageRequest
-	4,  // 25: issho.v1.EventService.CheckIn:input_type -> issho.v1.CheckInRequest
-	12, // 26: issho.v1.EventService.ListMyEvents:output_type -> issho.v1.ListMyEventsResponse
-	14, // 27: issho.v1.EventService.GetEvent:output_type -> issho.v1.GetEventResponse
-	16, // 28: issho.v1.EventService.RespondToEvent:output_type -> issho.v1.RespondToEventResponse
-	7,  // 29: issho.v1.EventService.ListChatMessages:output_type -> issho.v1.ListChatMessagesResponse
-	9,  // 30: issho.v1.EventService.SendChatMessage:output_type -> issho.v1.SendChatMessageResponse
-	5,  // 31: issho.v1.EventService.CheckIn:output_type -> issho.v1.CheckInResponse
-	26, // [26:32] is the sub-list for method output_type
-	20, // [20:26] is the sub-list for method input_type
-	20, // [20:20] is the sub-list for extension type_name
-	20, // [20:20] is the sub-list for extension extendee
-	0,  // [0:20] is the sub-list for field type_name
+	7,  // 0: issho.v1.GetFeedbackResponse.mates:type_name -> issho.v1.GroupMate
+	26, // 1: issho.v1.GetFeedbackResponse.opens_at:type_name -> google.protobuf.Timestamp
+	26, // 2: issho.v1.GetFeedbackResponse.closes_at:type_name -> google.protobuf.Timestamp
+	6,  // 3: issho.v1.SubmitFeedbackResponse.feedback:type_name -> issho.v1.GetFeedbackResponse
+	0,  // 4: issho.v1.ReportPersonRequest.reason:type_name -> issho.v1.ReportReason
+	25, // 5: issho.v1.CheckInResponse.event:type_name -> issho.v1.MyEvent
+	18, // 6: issho.v1.ListChatMessagesResponse.messages:type_name -> issho.v1.ChatMessage
+	26, // 7: issho.v1.ListChatMessagesResponse.opens_at:type_name -> google.protobuf.Timestamp
+	26, // 8: issho.v1.ListChatMessagesResponse.closes_at:type_name -> google.protobuf.Timestamp
+	18, // 9: issho.v1.SendChatMessageResponse.message:type_name -> issho.v1.ChatMessage
+	26, // 10: issho.v1.ChatMessage.at:type_name -> google.protobuf.Timestamp
+	25, // 11: issho.v1.ListMyEventsResponse.events:type_name -> issho.v1.MyEvent
+	25, // 12: issho.v1.GetEventResponse.event:type_name -> issho.v1.MyEvent
+	27, // 13: issho.v1.GetEventResponse.steps:type_name -> issho.v1.PlanStep
+	1,  // 14: issho.v1.RespondToEventRequest.action:type_name -> issho.v1.EventAction
+	25, // 15: issho.v1.RespondToEventResponse.event:type_name -> issho.v1.MyEvent
+	28, // 16: issho.v1.MyEvent.block:type_name -> issho.v1.TimeBlock
+	26, // 17: issho.v1.MyEvent.starts_at:type_name -> google.protobuf.Timestamp
+	26, // 18: issho.v1.MyEvent.confirm_by:type_name -> google.protobuf.Timestamp
+	2,  // 19: issho.v1.MyEvent.status:type_name -> issho.v1.EventStatus
+	3,  // 20: issho.v1.MyEvent.group_status:type_name -> issho.v1.GroupStatus
+	4,  // 21: issho.v1.MyEvent.response:type_name -> issho.v1.InviteResponse
+	26, // 22: issho.v1.MyEvent.reveal_at:type_name -> google.protobuf.Timestamp
+	26, // 23: issho.v1.MyEvent.check_in_from:type_name -> google.protobuf.Timestamp
+	26, // 24: issho.v1.MyEvent.check_in_until:type_name -> google.protobuf.Timestamp
+	26, // 25: issho.v1.MyEvent.feedback_from:type_name -> google.protobuf.Timestamp
+	26, // 26: issho.v1.MyEvent.feedback_until:type_name -> google.protobuf.Timestamp
+	19, // 27: issho.v1.EventService.ListMyEvents:input_type -> issho.v1.ListMyEventsRequest
+	21, // 28: issho.v1.EventService.GetEvent:input_type -> issho.v1.GetEventRequest
+	23, // 29: issho.v1.EventService.RespondToEvent:input_type -> issho.v1.RespondToEventRequest
+	14, // 30: issho.v1.EventService.ListChatMessages:input_type -> issho.v1.ListChatMessagesRequest
+	16, // 31: issho.v1.EventService.SendChatMessage:input_type -> issho.v1.SendChatMessageRequest
+	12, // 32: issho.v1.EventService.CheckIn:input_type -> issho.v1.CheckInRequest
+	5,  // 33: issho.v1.EventService.GetFeedback:input_type -> issho.v1.GetFeedbackRequest
+	8,  // 34: issho.v1.EventService.SubmitFeedback:input_type -> issho.v1.SubmitFeedbackRequest
+	10, // 35: issho.v1.EventService.ReportPerson:input_type -> issho.v1.ReportPersonRequest
+	20, // 36: issho.v1.EventService.ListMyEvents:output_type -> issho.v1.ListMyEventsResponse
+	22, // 37: issho.v1.EventService.GetEvent:output_type -> issho.v1.GetEventResponse
+	24, // 38: issho.v1.EventService.RespondToEvent:output_type -> issho.v1.RespondToEventResponse
+	15, // 39: issho.v1.EventService.ListChatMessages:output_type -> issho.v1.ListChatMessagesResponse
+	17, // 40: issho.v1.EventService.SendChatMessage:output_type -> issho.v1.SendChatMessageResponse
+	13, // 41: issho.v1.EventService.CheckIn:output_type -> issho.v1.CheckInResponse
+	6,  // 42: issho.v1.EventService.GetFeedback:output_type -> issho.v1.GetFeedbackResponse
+	9,  // 43: issho.v1.EventService.SubmitFeedback:output_type -> issho.v1.SubmitFeedbackResponse
+	11, // 44: issho.v1.EventService.ReportPerson:output_type -> issho.v1.ReportPersonResponse
+	36, // [36:45] is the sub-list for method output_type
+	27, // [27:36] is the sub-list for method input_type
+	27, // [27:27] is the sub-list for extension type_name
+	27, // [27:27] is the sub-list for extension extendee
+	0,  // [0:27] is the sub-list for field type_name
 }
 
 func init() { file_issho_v1_events_proto_init() }
@@ -1369,8 +2001,8 @@ func file_issho_v1_events_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_issho_v1_events_proto_rawDesc), len(file_issho_v1_events_proto_rawDesc)),
-			NumEnums:      4,
-			NumMessages:   14,
+			NumEnums:      5,
+			NumMessages:   21,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

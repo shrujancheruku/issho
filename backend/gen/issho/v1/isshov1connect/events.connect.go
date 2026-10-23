@@ -49,12 +49,22 @@ const (
 	EventServiceSendChatMessageProcedure = "/issho.v1.EventService/SendChatMessage"
 	// EventServiceCheckInProcedure is the fully-qualified name of the EventService's CheckIn RPC.
 	EventServiceCheckInProcedure = "/issho.v1.EventService/CheckIn"
+	// EventServiceGetFeedbackProcedure is the fully-qualified name of the EventService's GetFeedback
+	// RPC.
+	EventServiceGetFeedbackProcedure = "/issho.v1.EventService/GetFeedback"
+	// EventServiceSubmitFeedbackProcedure is the fully-qualified name of the EventService's
+	// SubmitFeedback RPC.
+	EventServiceSubmitFeedbackProcedure = "/issho.v1.EventService/SubmitFeedback"
+	// EventServiceReportPersonProcedure is the fully-qualified name of the EventService's ReportPerson
+	// RPC.
+	EventServiceReportPersonProcedure = "/issho.v1.EventService/ReportPerson"
 )
 
 // EventServiceClient is a client for the issho.v1.EventService service.
 type EventServiceClient interface {
 	// ListMyEvents returns the caller's events from yesterday on, soonest
-	// first, whatever their answer.
+	// first, whatever their answer, and older ones still waiting for their
+	// feedback.
 	ListMyEvents(context.Context, *connect.Request[v1.ListMyEventsRequest]) (*connect.Response[v1.ListMyEventsResponse], error)
 	// GetEvent returns one of the caller's events with its stops and, if the
 	// caller confirmed, who else is going. NOT_FOUND unless the caller is
@@ -78,6 +88,25 @@ type EventServiceClient interface {
 	// (PERMISSION_DENIED otherwise), from 30 minutes before the start until 3
 	// hours after (FAILED_PRECONDITION otherwise). Checking in again is fine.
 	CheckIn(context.Context, *connect.Request[v1.CheckInRequest]) (*connect.Response[v1.CheckInResponse], error)
+	// GetFeedback returns the caller's feedback form for an outing: the
+	// others in their group (first names), and what the caller already said.
+	// For anyone who confirmed, even if they cancelled since (to report
+	// someone); PERMISSION_DENIED otherwise. Feedback itself is `open` only to
+	// people who went ahead with their group, from 3 hours after the start
+	// for 14 days.
+	GetFeedback(context.Context, *connect.Request[v1.GetFeedbackRequest]) (*connect.Response[v1.GetFeedbackResponse], error)
+	// SubmitFeedback records whether the caller went, their ratings, who
+	// they'd meet again and who they'd rather not, replacing anything sent
+	// before. Both are private: nobody is told who picked them; two people
+	// who picked each other are more likely to be grouped again (and may be
+	// offered a crew); "rather not" keeps the two apart for good.
+	// FAILED_PRECONDITION outside the window.
+	SubmitFeedback(context.Context, *connect.Request[v1.SubmitFeedbackRequest]) (*connect.Response[v1.SubmitFeedbackResponse], error)
+	// ReportPerson reports someone from the caller's group to the moderators,
+	// from the time the caller confirmed until 30 days after the start. The
+	// two are never grouped together again. Reporting the same person about
+	// the same outing again replaces the report.
+	ReportPerson(context.Context, *connect.Request[v1.ReportPersonRequest]) (*connect.Response[v1.ReportPersonResponse], error)
 }
 
 // NewEventServiceClient constructs a client for the issho.v1.EventService service. By default, it
@@ -127,6 +156,24 @@ func NewEventServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 			connect.WithSchema(eventServiceMethods.ByName("CheckIn")),
 			connect.WithClientOptions(opts...),
 		),
+		getFeedback: connect.NewClient[v1.GetFeedbackRequest, v1.GetFeedbackResponse](
+			httpClient,
+			baseURL+EventServiceGetFeedbackProcedure,
+			connect.WithSchema(eventServiceMethods.ByName("GetFeedback")),
+			connect.WithClientOptions(opts...),
+		),
+		submitFeedback: connect.NewClient[v1.SubmitFeedbackRequest, v1.SubmitFeedbackResponse](
+			httpClient,
+			baseURL+EventServiceSubmitFeedbackProcedure,
+			connect.WithSchema(eventServiceMethods.ByName("SubmitFeedback")),
+			connect.WithClientOptions(opts...),
+		),
+		reportPerson: connect.NewClient[v1.ReportPersonRequest, v1.ReportPersonResponse](
+			httpClient,
+			baseURL+EventServiceReportPersonProcedure,
+			connect.WithSchema(eventServiceMethods.ByName("ReportPerson")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -138,6 +185,9 @@ type eventServiceClient struct {
 	listChatMessages *connect.Client[v1.ListChatMessagesRequest, v1.ListChatMessagesResponse]
 	sendChatMessage  *connect.Client[v1.SendChatMessageRequest, v1.SendChatMessageResponse]
 	checkIn          *connect.Client[v1.CheckInRequest, v1.CheckInResponse]
+	getFeedback      *connect.Client[v1.GetFeedbackRequest, v1.GetFeedbackResponse]
+	submitFeedback   *connect.Client[v1.SubmitFeedbackRequest, v1.SubmitFeedbackResponse]
+	reportPerson     *connect.Client[v1.ReportPersonRequest, v1.ReportPersonResponse]
 }
 
 // ListMyEvents calls issho.v1.EventService.ListMyEvents.
@@ -170,10 +220,26 @@ func (c *eventServiceClient) CheckIn(ctx context.Context, req *connect.Request[v
 	return c.checkIn.CallUnary(ctx, req)
 }
 
+// GetFeedback calls issho.v1.EventService.GetFeedback.
+func (c *eventServiceClient) GetFeedback(ctx context.Context, req *connect.Request[v1.GetFeedbackRequest]) (*connect.Response[v1.GetFeedbackResponse], error) {
+	return c.getFeedback.CallUnary(ctx, req)
+}
+
+// SubmitFeedback calls issho.v1.EventService.SubmitFeedback.
+func (c *eventServiceClient) SubmitFeedback(ctx context.Context, req *connect.Request[v1.SubmitFeedbackRequest]) (*connect.Response[v1.SubmitFeedbackResponse], error) {
+	return c.submitFeedback.CallUnary(ctx, req)
+}
+
+// ReportPerson calls issho.v1.EventService.ReportPerson.
+func (c *eventServiceClient) ReportPerson(ctx context.Context, req *connect.Request[v1.ReportPersonRequest]) (*connect.Response[v1.ReportPersonResponse], error) {
+	return c.reportPerson.CallUnary(ctx, req)
+}
+
 // EventServiceHandler is an implementation of the issho.v1.EventService service.
 type EventServiceHandler interface {
 	// ListMyEvents returns the caller's events from yesterday on, soonest
-	// first, whatever their answer.
+	// first, whatever their answer, and older ones still waiting for their
+	// feedback.
 	ListMyEvents(context.Context, *connect.Request[v1.ListMyEventsRequest]) (*connect.Response[v1.ListMyEventsResponse], error)
 	// GetEvent returns one of the caller's events with its stops and, if the
 	// caller confirmed, who else is going. NOT_FOUND unless the caller is
@@ -197,6 +263,25 @@ type EventServiceHandler interface {
 	// (PERMISSION_DENIED otherwise), from 30 minutes before the start until 3
 	// hours after (FAILED_PRECONDITION otherwise). Checking in again is fine.
 	CheckIn(context.Context, *connect.Request[v1.CheckInRequest]) (*connect.Response[v1.CheckInResponse], error)
+	// GetFeedback returns the caller's feedback form for an outing: the
+	// others in their group (first names), and what the caller already said.
+	// For anyone who confirmed, even if they cancelled since (to report
+	// someone); PERMISSION_DENIED otherwise. Feedback itself is `open` only to
+	// people who went ahead with their group, from 3 hours after the start
+	// for 14 days.
+	GetFeedback(context.Context, *connect.Request[v1.GetFeedbackRequest]) (*connect.Response[v1.GetFeedbackResponse], error)
+	// SubmitFeedback records whether the caller went, their ratings, who
+	// they'd meet again and who they'd rather not, replacing anything sent
+	// before. Both are private: nobody is told who picked them; two people
+	// who picked each other are more likely to be grouped again (and may be
+	// offered a crew); "rather not" keeps the two apart for good.
+	// FAILED_PRECONDITION outside the window.
+	SubmitFeedback(context.Context, *connect.Request[v1.SubmitFeedbackRequest]) (*connect.Response[v1.SubmitFeedbackResponse], error)
+	// ReportPerson reports someone from the caller's group to the moderators,
+	// from the time the caller confirmed until 30 days after the start. The
+	// two are never grouped together again. Reporting the same person about
+	// the same outing again replaces the report.
+	ReportPerson(context.Context, *connect.Request[v1.ReportPersonRequest]) (*connect.Response[v1.ReportPersonResponse], error)
 }
 
 // NewEventServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -242,6 +327,24 @@ func NewEventServiceHandler(svc EventServiceHandler, opts ...connect.HandlerOpti
 		connect.WithSchema(eventServiceMethods.ByName("CheckIn")),
 		connect.WithHandlerOptions(opts...),
 	)
+	eventServiceGetFeedbackHandler := connect.NewUnaryHandler(
+		EventServiceGetFeedbackProcedure,
+		svc.GetFeedback,
+		connect.WithSchema(eventServiceMethods.ByName("GetFeedback")),
+		connect.WithHandlerOptions(opts...),
+	)
+	eventServiceSubmitFeedbackHandler := connect.NewUnaryHandler(
+		EventServiceSubmitFeedbackProcedure,
+		svc.SubmitFeedback,
+		connect.WithSchema(eventServiceMethods.ByName("SubmitFeedback")),
+		connect.WithHandlerOptions(opts...),
+	)
+	eventServiceReportPersonHandler := connect.NewUnaryHandler(
+		EventServiceReportPersonProcedure,
+		svc.ReportPerson,
+		connect.WithSchema(eventServiceMethods.ByName("ReportPerson")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/issho.v1.EventService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case EventServiceListMyEventsProcedure:
@@ -256,6 +359,12 @@ func NewEventServiceHandler(svc EventServiceHandler, opts ...connect.HandlerOpti
 			eventServiceSendChatMessageHandler.ServeHTTP(w, r)
 		case EventServiceCheckInProcedure:
 			eventServiceCheckInHandler.ServeHTTP(w, r)
+		case EventServiceGetFeedbackProcedure:
+			eventServiceGetFeedbackHandler.ServeHTTP(w, r)
+		case EventServiceSubmitFeedbackProcedure:
+			eventServiceSubmitFeedbackHandler.ServeHTTP(w, r)
+		case EventServiceReportPersonProcedure:
+			eventServiceReportPersonHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -287,4 +396,16 @@ func (UnimplementedEventServiceHandler) SendChatMessage(context.Context, *connec
 
 func (UnimplementedEventServiceHandler) CheckIn(context.Context, *connect.Request[v1.CheckInRequest]) (*connect.Response[v1.CheckInResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.EventService.CheckIn is not implemented"))
+}
+
+func (UnimplementedEventServiceHandler) GetFeedback(context.Context, *connect.Request[v1.GetFeedbackRequest]) (*connect.Response[v1.GetFeedbackResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.EventService.GetFeedback is not implemented"))
+}
+
+func (UnimplementedEventServiceHandler) SubmitFeedback(context.Context, *connect.Request[v1.SubmitFeedbackRequest]) (*connect.Response[v1.SubmitFeedbackResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.EventService.SubmitFeedback is not implemented"))
+}
+
+func (UnimplementedEventServiceHandler) ReportPerson(context.Context, *connect.Request[v1.ReportPersonRequest]) (*connect.Response[v1.ReportPersonResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.EventService.ReportPerson is not implemented"))
 }

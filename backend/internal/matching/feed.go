@@ -36,6 +36,16 @@ type FeedItem struct {
 	Level   Level
 	Score   float64 // the feed's order within a level
 	Minutes int     // travel time from their home area; -1 = no route
+	// Friends is how many people they get on with (a mutual pick) have
+	// signed up: shown as a count, never who.
+	Friends int
+}
+
+// Friends is, for one open plan, the person's mutual friends who signed up:
+// how many, and the sum of their link strengths (Relations.Mutual).
+type Friends struct {
+	Count    int
+	Strength float64
 }
 
 // Feed ranks every open plan for one person: the ones they'd most likely
@@ -46,9 +56,15 @@ type FeedItem struct {
 // cfg.MomentumAt) and lose when the activity suits no part of the day
 // they're usually free, or costs more than their budget; nearer plans break
 // ties.
-func Feed(u *User, plans []OpenPlan, acts map[ActivityID]*Activity, travel TravelTimes, cfg Config) []FeedItem {
+//
+// Friends (by plan index; nil = none) lift a plan: people go out to see
+// friends as much as for the activity. A plan someone they get on with has
+// signed up for moves up a level (up to Top; not one in a language they
+// don't speak) and gains cfg.Weights.Friends × the friends' link strength
+// (up to 1).
+func Feed(u *User, plans []OpenPlan, acts map[ActivityID]*Activity, travel TravelTimes, cfg Config, friends []Friends) []FeedItem {
 	out := make([]FeedItem, 0, len(plans))
-	for _, p := range plans {
+	for i, p := range plans {
 		a := acts[p.Activity]
 		item := FeedItem{OpenPlan: p, Minutes: -1}
 		if m, ok := travel.Minutes(u.HomeArea, p.Area); ok {
@@ -66,6 +82,11 @@ func Feed(u *User, plans []OpenPlan, acts map[ActivityID]*Activity, travel Trave
 		item.Score = v + cfg.Weights.Momentum*min(1, float64(p.Signups)/float64(cfg.MomentumAt))
 		if !usuallyFree(u, a) {
 			item.Score *= 0.5
+		}
+		if i < len(friends) && friends[i].Count > 0 && item.Level != NotForYou {
+			item.Friends = friends[i].Count
+			item.Level = min(Top, item.Level+1)
+			item.Score += cfg.Weights.Friends * min(1, friends[i].Strength)
 		}
 		out = append(out, item)
 	}

@@ -1,7 +1,6 @@
 package matching
 
 import (
-	"errors"
 	"fmt"
 	"math"
 	"slices"
@@ -324,18 +323,11 @@ func (g *group) score(ms []*User, rel Relations, cfg Config) float64 {
 			newcomers++
 		}
 	}
-	mutual := 0.0
-	for i, a := range ms {
-		for _, b := range ms[i+1:] {
-			mutual += rel.Mutual[MakePair(a.ID, b.ID)]
-		}
-	}
-	// Newcomers: some are good (that's how people join), a majority isn't
-	// (nobody knows how it works yet).
-	mix := 0.0
-	if k := float64(newcomers); k > 0 && 2*k <= n {
-		mix = 1
-	} else if k > 0 {
+	mutual := friendship(ms, rel)
+	// Newcomers: welcome, but a majority isn't good (nobody knows how it
+	// works yet). A group of regulars with no newcomers is just as good.
+	mix := 1.0
+	if k := float64(newcomers); 2*k > n {
 		mix = 2 * (n - k) / n
 	}
 	// Groups below the preferred minimum are allowed, but count less.
@@ -349,22 +341,53 @@ func (g *group) score(ms []*User, rel Relations, cfg Config) float64 {
 		w.SizeFit*fitSum/n +
 		w.MinSize*minSize +
 		w.Balance*balance +
-		w.Mutual*min(1, mutual) +
+		w.Mutual*mutual +
 		w.Newcomers*mix +
 		w.Reliability*reliability/n
+}
+
+// friendship scores how much a group already gets on, from 0 (strangers)
+// to 1 (everyone a close mutual friend of everyone else), so clusters of
+// friends are encouraged rather than capped. It's the average of two
+// parts: how many members have a friend there (each member's link
+// strengths, up to 1), and how close-knit the whole group is (link
+// strengths over all pairs). One pair in a group of five scores 0.25; a
+// group who all picked each other scores 1.
+func friendship(ms []*User, rel Relations) float64 {
+	n := len(ms)
+	if n < 2 {
+		return 0
+	}
+	perMember := make([]float64, n)
+	total := 0.0
+	for i, a := range ms {
+		for j := i + 1; j < n; j++ {
+			s := rel.Mutual[MakePair(a.ID, ms[j].ID)]
+			perMember[i] += s
+			perMember[j] += s
+			total += s
+		}
+	}
+	coverage := 0.0
+	for _, s := range perMember {
+		coverage += min(1, s)
+	}
+	pairs := float64(n * (n - 1) / 2)
+	return (coverage/float64(n) + total/pairs) / 2
 }
 
 // Violation reports the first hard rule a group breaks, or nil.
 //
 //   - nobody is grouped with someone either of them blocked
 //   - someone who asked for same-gender groups only gets exactly that
-//   - at most cfg.MaxKnown people already know each other (a mutual pick)
+//
+// There's no cap on people who already know each other: groups of friends
+// are encouraged (friendship, in the score).
 //
 // Removing people never breaks these rules, so a group that passes still
 // passes after declines. Everything else (size, gender balance) is a
 // preference, in the score.
-func Violation(members []*User, rel Relations, cfg Config) error {
-	known := map[UserID]bool{}
+func Violation(members []*User, rel Relations, _ Config) error {
 	for i, a := range members {
 		for _, b := range members[i+1:] {
 			p := MakePair(a.ID, b.ID)
@@ -374,13 +397,7 @@ func Violation(members []*User, rel Relations, cfg Config) error {
 			if (a.SameGenderOnly || b.SameGenderOnly) && a.Gender != b.Gender {
 				return fmt.Errorf("%s and %s: same-gender only", p.A, p.B)
 			}
-			if rel.Mutual[p] > 0 {
-				known[a.ID], known[b.ID] = true, true
-			}
 		}
-	}
-	if len(known) > cfg.MaxKnown {
-		return errors.New("too many people already know each other")
 	}
 	return nil
 }
