@@ -5,8 +5,12 @@ packages:
 # false = deny). Deny by default; allow only packages that need their script.
 # unrs-resolver (via eslint-config-expo) only downloads fallback binaries;
 # @parcel/watcher (via jest) ships prebuilt platform packages, so its build step is unneeded.
+# esbuild and workerd (via wrangler) also ship their binaries as platform packages;
+# their scripts only check them.
 allowBuilds:
   '@parcel/watcher': false
+  esbuild: false
+  workerd: false
   unrs-resolver: false
 minimumReleaseAgeExclude:
   - '@expo/cli@58.1.13'
