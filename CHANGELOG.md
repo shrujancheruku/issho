@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.7.0](https://github.com/shrujancheruku/issho/compare/v0.6.0...v0.7.0) (2026-10-23)
+
+
+### Features
+
+* **api:** compose walks as itineraries, with a Gemini vs Claude benchmark ([#45](https://github.com/shrujancheruku/issho/issues/45)) ([fecc9fb](https://github.com/shrujancheruku/issho/commit/fecc9fbcad472d24970818a898f5e68d7984b551))
+* **api:** feedback, relationships, friends in matching and crews (M7) ([#47](https://github.com/shrujancheruku/issho/issues/47)) ([cd1f77e](https://github.com/shrujancheruku/issho/commit/cd1f77e3e7e168a10a095e2d29571a6e64ccc94a))
+
+
+### Bug Fixes
+
+* **app:** name the plan on crew suggestions; clearer leave note (M7) ([#48](https://github.com/shrujancheruku/issho/issues/48)) ([c2653bf](https://github.com/shrujancheruku/issho/commit/c2653bf7ce034e2dc2151f877ce1b7cd3c2f0c0d))
+
 ## [0.6.0](https://github.com/shrujancheruku/issho/compare/v0.5.0...v0.6.0) (2026-10-22)
 
 
