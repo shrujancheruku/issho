@@ -103,8 +103,8 @@ export async function unregisterPush() {
   }
 }
 
-/** What a tapped notification is about: an event, or a plan (one that closed). */
-export type NotificationTarget = { eventId: string } | { planId: string };
+/** What a tapped notification is about: an event, a plan (one that closed) or a crew. */
+export type NotificationTarget = { eventId: string } | { planId: string } | { crewId: string };
 
 /**
  * Opens what a tapped notification is about, including the one that
@@ -116,6 +116,7 @@ export function useNotificationTaps(open: (target: NotificationTarget) => void) 
     const data = response?.notification.request.content.data;
     if (typeof data?.eventId === 'string') open({ eventId: data.eventId });
     else if (typeof data?.planId === 'string') open({ planId: data.planId });
+    else if (typeof data?.crewId === 'string') open({ crewId: data.crewId });
     else return;
     // Otherwise the same notification would open the event again next launch.
     void Notifications.clearLastNotificationResponseAsync().catch(() => {});

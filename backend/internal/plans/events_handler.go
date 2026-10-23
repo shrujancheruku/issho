@@ -3,6 +3,7 @@ package plans
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"connectrpc.com/connect"
@@ -176,12 +177,11 @@ func (h *EventHandler) SubmitFeedback(ctx context.Context, req *connect.Request[
 		return nil, err
 	}
 	fb := Feedback{Attended: req.Msg.Attended, PlanRating: int(req.Msg.PlanRating), GroupRating: int(req.Msg.GroupRating)}
-	for _, p := range req.Msg.Picks {
-		id, err := uuid.Parse(p)
-		if err != nil {
-			return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("picks: not a group mate id"))
-		}
-		fb.Picks = append(fb.Picks, id)
+	if fb.Picks, err = parseIDs("picks", req.Msg.Picks); err != nil {
+		return nil, err
+	}
+	if fb.Avoid, err = parseIDs("avoid", req.Msg.Avoid); err != nil {
+		return nil, err
 	}
 	now := h.now()
 	if err := h.Svc.SubmitFeedback(ctx, userID, eventID, fb, now); err != nil {
@@ -237,7 +237,22 @@ func feedbackToProto(f FeedbackForm) *isshov1.GetFeedbackResponse {
 	for _, p := range f.Picks {
 		out.Picks = append(out.Picks, p.String())
 	}
+	for _, p := range f.Avoid {
+		out.Avoid = append(out.Avoid, p.String())
+	}
 	return out
+}
+
+func parseIDs(field string, ss []string) ([]uuid.UUID, error) {
+	ids := make([]uuid.UUID, len(ss))
+	for i, s := range ss {
+		id, err := uuid.Parse(s)
+		if err != nil {
+			return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("%s: not a group mate id", field))
+		}
+		ids[i] = id
+	}
+	return ids, nil
 }
 
 func chatToProto(m ChatMessage) *isshov1.ChatMessage {

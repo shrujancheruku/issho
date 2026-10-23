@@ -13,7 +13,7 @@ import (
 )
 
 const deletePicks = `-- name: DeletePicks :exec
-delete from app.meet_again_picks where group_id = $1 and picker_id = $2
+delete from app.mate_picks where group_id = $1 and picker_id = $2
 `
 
 type DeletePicksParams struct {
@@ -57,14 +57,15 @@ func (q *Queries) GetFeedback(ctx context.Context, arg GetFeedbackParams) (GetFe
 }
 
 const insertPicks = `-- name: InsertPicks :exec
-insert into app.meet_again_picks (group_id, picker_id, picked_id, created_at)
-select $1, $2, unnest($3::uuid[]), $4
+insert into app.mate_picks (group_id, picker_id, picked_id, pick, created_at)
+select $1, $2, unnest($3::uuid[]), $4, $5
 `
 
 type InsertPicksParams struct {
 	GroupID   uuid.UUID
 	PickerID  uuid.UUID
 	PickedIds []uuid.UUID
+	Pick      string
 	At        pgtype.Timestamptz
 }
 
@@ -73,27 +74,35 @@ func (q *Queries) InsertPicks(ctx context.Context, arg InsertPicksParams) error 
 		arg.GroupID,
 		arg.PickerID,
 		arg.PickedIds,
+		arg.Pick,
 		arg.At,
 	)
 	return err
 }
 
 const listCityBlocks = `-- name: ListCityBlocks :many
-select r.reporter_id::uuid as reporter_id, r.reported_id
+select r.reporter_id::uuid as reporter_id, r.reported_id as other_id
 from app.reports r
 join app.profiles p on p.user_id = r.reported_id
 join app.areas a on a.id = p.home_area_id
 where a.city_id = $1 and r.reporter_id is not null
-order by r.reporter_id, r.reported_id
+union
+select k.picker_id, k.picked_id
+from app.mate_picks k
+join app.profiles p on p.user_id = k.picker_id
+join app.areas a on a.id = p.home_area_id
+where a.city_id = $1 and k.pick = 'avoid'
+order by 1, 2
 `
 
 type ListCityBlocksRow struct {
 	ReporterID uuid.UUID
-	ReportedID uuid.UUID
+	OtherID    uuid.UUID
 }
 
-// Pairs never to group again: someone reported the other. Whatever a
-// moderator decides, the reporter shouldn't meet them again.
+// Pairs never to group again: someone reported the other, or said they'd
+// rather not be in a group with them again. Whatever a moderator decides,
+// they shouldn't meet again.
 func (q *Queries) ListCityBlocks(ctx context.Context, cityID string) ([]ListCityBlocksRow, error) {
 	rows, err := q.db.Query(ctx, listCityBlocks, cityID)
 	if err != nil {
@@ -103,7 +112,43 @@ func (q *Queries) ListCityBlocks(ctx context.Context, cityID string) ([]ListCity
 	var items []ListCityBlocksRow
 	for rows.Next() {
 		var i ListCityBlocksRow
-		if err := rows.Scan(&i.ReporterID, &i.ReportedID); err != nil {
+		if err := rows.Scan(&i.ReporterID, &i.OtherID); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listCityMetPairs = `-- name: ListCityMetPairs :many
+select distinct fa.user_id as a_id, fb.user_id as b_id
+from app.event_feedback fa
+join app.event_feedback fb on fb.group_id = fa.group_id and fb.user_id > fa.user_id and fb.attended
+join app.profiles p on p.user_id = fa.user_id
+join app.areas a on a.id = p.home_area_id
+where a.city_id = $1 and fa.attended
+order by 1, 2
+`
+
+type ListCityMetPairsRow struct {
+	AID uuid.UUID
+	BID uuid.UUID
+}
+
+// Pairs in the city who have met: both said they went to the same outing.
+func (q *Queries) ListCityMetPairs(ctx context.Context, cityID string) ([]ListCityMetPairsRow, error) {
+	rows, err := q.db.Query(ctx, listCityMetPairs, cityID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListCityMetPairsRow
+	for rows.Next() {
+		var i ListCityMetPairsRow
+		if err := rows.Scan(&i.AID, &i.BID); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -116,10 +161,10 @@ func (q *Queries) ListCityBlocks(ctx context.Context, cityID string) ([]ListCity
 
 const listCityPicks = `-- name: ListCityPicks :many
 select k.picker_id, k.picked_id
-from app.meet_again_picks k
+from app.mate_picks k
 join app.profiles p on p.user_id = k.picker_id
 join app.areas a on a.id = p.home_area_id
-where a.city_id = $1
+where a.city_id = $1 and k.pick = 'again'
 order by k.picker_id, k.picked_id
 `
 
@@ -197,8 +242,8 @@ func (q *Queries) ListGroupMates(ctx context.Context, arg ListGroupMatesParams) 
 
 const listMetForPicks = `-- name: ListMetForPicks :many
 select pr.gender,
-       exists (select 1 from app.meet_again_picks k
-               where k.group_id = f.group_id and k.picker_id = f.user_id and k.picked_id = m.user_id) as picked
+       exists (select 1 from app.mate_picks k
+               where k.group_id = f.group_id and k.picker_id = f.user_id and k.picked_id = m.user_id and k.pick = 'again') as picked
 from app.event_feedback f
 join app.group_members m on m.group_id = f.group_id and m.user_id <> f.user_id and m.response = 'confirmed'
 join app.profiles pr on pr.user_id = m.user_id
@@ -233,7 +278,7 @@ func (q *Queries) ListMetForPicks(ctx context.Context, userID uuid.UUID) ([]List
 }
 
 const listPicks = `-- name: ListPicks :many
-select picked_id from app.meet_again_picks
+select picked_id, pick from app.mate_picks
 where group_id = $1 and picker_id = $2
 order by picked_id
 `
@@ -243,19 +288,24 @@ type ListPicksParams struct {
 	PickerID uuid.UUID
 }
 
-func (q *Queries) ListPicks(ctx context.Context, arg ListPicksParams) ([]uuid.UUID, error) {
+type ListPicksRow struct {
+	PickedID uuid.UUID
+	Pick     string
+}
+
+func (q *Queries) ListPicks(ctx context.Context, arg ListPicksParams) ([]ListPicksRow, error) {
 	rows, err := q.db.Query(ctx, listPicks, arg.GroupID, arg.PickerID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []uuid.UUID
+	var items []ListPicksRow
 	for rows.Next() {
-		var picked_id uuid.UUID
-		if err := rows.Scan(&picked_id); err != nil {
+		var i ListPicksRow
+		if err := rows.Scan(&i.PickedID, &i.Pick); err != nil {
 			return nil, err
 		}
-		items = append(items, picked_id)
+		items = append(items, i)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -351,7 +401,7 @@ func (q *Queries) UpsertModerationFlag(ctx context.Context, arg UpsertModeration
 const upsertReport = `-- name: UpsertReport :exec
 insert into app.reports (reporter_id, reported_id, event_id, reason, details, created_at, updated_at)
 values ($1, $2, $3, $4, $5, $6, $6)
-on conflict (reporter_id, reported_id, event_id) do update
+on conflict (reporter_id, reported_id, event_id) where event_id is not null do update
 set reason = excluded.reason, details = excluded.details, updated_at = excluded.updated_at
 `
 

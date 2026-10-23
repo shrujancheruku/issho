@@ -16,7 +16,9 @@ export default function TabsLayout() {
       (target: NotificationTarget) =>
         'eventId' in target
           ? router.push({ pathname: '/event/[id]', params: { id: target.eventId } })
-          : router.push({ pathname: '/plan/[id]', params: { id: target.planId } }),
+          : 'crewId' in target
+            ? router.push({ pathname: '/crew/[id]', params: { id: target.crewId } })
+            : router.push({ pathname: '/plan/[id]', params: { id: target.planId } }),
       [],
     ),
   );

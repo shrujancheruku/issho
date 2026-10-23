@@ -9,13 +9,18 @@ import { fromApi, merge, type Message } from './chat-messages';
 // reconnecting can't help.
 const permanent = new Set([4403, 4404]);
 
+/** Whose chat: an event group's (the caller's group) or a crew's. */
+export type ChatTarget = { eventId: string } | { crewId: string };
+
 /**
- * An event's group chat: the latest messages from the API, then new ones
- * pushed over a WebSocket (GET /ws/chat). The socket reconnects with
- * backoff and asks for everything after the last message it has, so
- * nothing is missed while it was down.
+ * A group chat (an event group's or a crew's): the latest messages from the
+ * API, then new ones pushed over a WebSocket (GET /ws/chat). The socket
+ * reconnects with backoff and asks for everything after the last message
+ * it has, so nothing is missed while it was down.
  */
-export function useChat(eventId: string) {
+export function useChat(target: ChatTarget) {
+  const eventId = 'eventId' in target ? target.eventId : '';
+  const crewId = 'crewId' in target ? target.crewId : '';
   const [messages, setMessages] = useState<Message[]>([]);
   const lastId = useRef(0);
   const add = useCallback((ms: Message[]) => {
@@ -27,9 +32,10 @@ export function useChat(eventId: string) {
   }, []);
 
   const history = useQuery({
-    queryKey: ['chat', eventId],
-    queryFn: () => api.events.listChatMessages({ eventId }),
-    enabled: !!eventId,
+    queryKey: ['chat', eventId, crewId],
+    queryFn: async () =>
+      eventId ? api.events.listChatMessages({ eventId }) : { ...(await api.crews.listCrewMessages({ crewId })), opensAt: undefined, closesAt: undefined, open: true },
+    enabled: !!(eventId || crewId),
   });
   useEffect(() => {
     if (history.data) add(history.data.messages.map(fromApi));
@@ -51,7 +57,7 @@ export function useChat(eventId: string) {
       socket.onopen = () => {
         attempt = 0;
         setLive(true);
-        socket?.send(JSON.stringify({ token, eventId, afterId: lastId.current }));
+        socket?.send(JSON.stringify({ token, ...(eventId ? { eventId } : { crewId }), afterId: lastId.current }));
       };
       socket.onmessage = (e) => {
         try {
@@ -74,12 +80,13 @@ export function useChat(eventId: string) {
       clearTimeout(timer);
       socket?.close();
     };
-  }, [readable, eventId, add]);
+  }, [readable, eventId, crewId, add]);
 
   const send = useMutation({
-    mutationFn: (body: string) => api.events.sendChatMessage({ eventId, body }),
+    mutationFn: async (body: string) =>
+      (eventId ? await api.events.sendChatMessage({ eventId, body }) : await api.crews.sendCrewMessage({ crewId, body })).message,
     // Shown at once; the socket brings the same message (same id) again.
-    onSuccess: (res) => res.message && add([fromApi(res.message)]),
+    onSuccess: (message) => message && add([fromApi(message)]),
   });
 
   return { messages, history, live, send };

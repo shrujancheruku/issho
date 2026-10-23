@@ -23,7 +23,7 @@ export default function ChatScreen() {
   const lang = showing === 'secondary' ? languages.secondary : languages.primary;
   const theme = useTheme();
   const now = useNow();
-  const { messages, history, send } = useChat(id);
+  const { messages, history, send } = useChat({ eventId: id });
   const [draft, setDraft] = useState('');
   const list = useRef<FlatList<Message>>(null);
   const leave = () => (router.canGoBack() ? router.back() : router.replace('/'));

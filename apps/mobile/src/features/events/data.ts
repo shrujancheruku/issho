@@ -53,7 +53,7 @@ export function useFeedback(id: string) {
   return useQuery({ queryKey: feedbackKey(id), queryFn: () => api.events.getFeedback({ eventId: id }), enabled: !!id });
 }
 
-export type FeedbackAnswer = { attended: boolean; planRating: number; groupRating: number; picks: string[] };
+export type FeedbackAnswer = { attended: boolean; planRating: number; groupRating: number; picks: string[]; avoid: string[] };
 
 /** Sends (or replaces) the person's feedback, then refreshes their events. */
 export function useSubmitFeedback(id: string) {

@@ -356,13 +356,16 @@ type GetFeedbackResponse struct {
 	// 1–5, or 0 when not given.
 	PlanRating  int32 `protobuf:"varint,4,opt,name=plan_rating,json=planRating,proto3" json:"plan_rating,omitempty"`
 	GroupRating int32 `protobuf:"varint,5,opt,name=group_rating,json=groupRating,proto3" json:"group_rating,omitempty"`
-	// GroupMate.id of the people the caller picked.
+	// GroupMate.id of the people the caller would meet again.
 	Picks []string `protobuf:"bytes,6,rep,name=picks,proto3" json:"picks,omitempty"`
 	// When feedback can be given; unset for someone who can't give it (they
 	// cancelled, or the group didn't go ahead).
-	OpensAt       *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=opens_at,json=opensAt,proto3" json:"opens_at,omitempty"`
-	ClosesAt      *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=closes_at,json=closesAt,proto3" json:"closes_at,omitempty"`
-	Open          bool                   `protobuf:"varint,9,opt,name=open,proto3" json:"open,omitempty"`
+	OpensAt  *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=opens_at,json=opensAt,proto3" json:"opens_at,omitempty"`
+	ClosesAt *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=closes_at,json=closesAt,proto3" json:"closes_at,omitempty"`
+	Open     bool                   `protobuf:"varint,9,opt,name=open,proto3" json:"open,omitempty"`
+	// GroupMate.id of the people the caller would rather not be in a group
+	// with again.
+	Avoid         []string `protobuf:"bytes,10,rep,name=avoid,proto3" json:"avoid,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -460,6 +463,13 @@ func (x *GetFeedbackResponse) GetOpen() bool {
 	return false
 }
 
+func (x *GetFeedbackResponse) GetAvoid() []string {
+	if x != nil {
+		return x.Avoid
+	}
+	return nil
+}
+
 // Someone else in the caller's group, for picks and reports.
 type GroupMate struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -534,7 +544,11 @@ type SubmitFeedbackRequest struct {
 	GroupRating int32 `protobuf:"varint,4,opt,name=group_rating,json=groupRating,proto3" json:"group_rating,omitempty"`
 	// GroupMate.id of people the caller would meet again (any number,
 	// including none; only people who went ahead with the group).
-	Picks         []string `protobuf:"bytes,5,rep,name=picks,proto3" json:"picks,omitempty"`
+	Picks []string `protobuf:"bytes,5,rep,name=picks,proto3" json:"picks,omitempty"`
+	// GroupMate.id of people the caller would rather not be in a group with
+	// again: they're never grouped together again, nor offered a crew
+	// together. Private; nobody in both lists.
+	Avoid         []string `protobuf:"bytes,6,rep,name=avoid,proto3" json:"avoid,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -600,6 +614,13 @@ func (x *SubmitFeedbackRequest) GetGroupRating() int32 {
 func (x *SubmitFeedbackRequest) GetPicks() []string {
 	if x != nil {
 		return x.Picks
+	}
+	return nil
+}
+
+func (x *SubmitFeedbackRequest) GetAvoid() []string {
+	if x != nil {
+		return x.Avoid
 	}
 	return nil
 }
@@ -1725,7 +1746,7 @@ const file_issho_v1_events_proto_rawDesc = "" +
 	"\n" +
 	"\x15issho/v1/events.proto\x12\bissho.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x14issho/v1/plans.proto\x1a\x16issho/v1/profile.proto\"/\n" +
 	"\x12GetFeedbackRequest\x12\x19\n" +
-	"\bevent_id\x18\x01 \x01(\tR\aeventId\"\xd0\x02\n" +
+	"\bevent_id\x18\x01 \x01(\tR\aeventId\"\xe6\x02\n" +
 	"\x13GetFeedbackResponse\x12)\n" +
 	"\x05mates\x18\x01 \x03(\v2\x13.issho.v1.GroupMateR\x05mates\x12\x14\n" +
 	"\x05given\x18\x02 \x01(\bR\x05given\x12\x1a\n" +
@@ -1736,18 +1757,21 @@ const file_issho_v1_events_proto_rawDesc = "" +
 	"\x05picks\x18\x06 \x03(\tR\x05picks\x125\n" +
 	"\bopens_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\aopensAt\x127\n" +
 	"\tcloses_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\bclosesAt\x12\x12\n" +
-	"\x04open\x18\t \x01(\bR\x04open\"M\n" +
+	"\x04open\x18\t \x01(\bR\x04open\x12\x14\n" +
+	"\x05avoid\x18\n" +
+	" \x03(\tR\x05avoid\"M\n" +
 	"\tGroupMate\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1c\n" +
-	"\tcancelled\x18\x03 \x01(\bR\tcancelled\"\xa8\x01\n" +
+	"\tcancelled\x18\x03 \x01(\bR\tcancelled\"\xbe\x01\n" +
 	"\x15SubmitFeedbackRequest\x12\x19\n" +
 	"\bevent_id\x18\x01 \x01(\tR\aeventId\x12\x1a\n" +
 	"\battended\x18\x02 \x01(\bR\battended\x12\x1f\n" +
 	"\vplan_rating\x18\x03 \x01(\x05R\n" +
 	"planRating\x12!\n" +
 	"\fgroup_rating\x18\x04 \x01(\x05R\vgroupRating\x12\x14\n" +
-	"\x05picks\x18\x05 \x03(\tR\x05picks\"S\n" +
+	"\x05picks\x18\x05 \x03(\tR\x05picks\x12\x14\n" +
+	"\x05avoid\x18\x06 \x03(\tR\x05avoid\"S\n" +
 	"\x16SubmitFeedbackResponse\x129\n" +
 	"\bfeedback\x18\x01 \x01(\v2\x1d.issho.v1.GetFeedbackResponseR\bfeedback\"\x93\x01\n" +
 	"\x13ReportPersonRequest\x12\x19\n" +

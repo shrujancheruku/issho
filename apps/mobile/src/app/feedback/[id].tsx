@@ -14,6 +14,7 @@ import { useEvent, useFeedback, useSubmitFeedback, type FeedbackAnswer } from '@
 import { Heading } from '@/features/plans/fact';
 import { formatStart } from '@/features/plans/format';
 import { useNow } from '@/hooks/use-now';
+import { useTheme } from '@/hooks/use-theme';
 import { useI18n } from '@/i18n/i18n-provider';
 import type { StringKey } from '@/i18n/strings';
 
@@ -47,6 +48,7 @@ export default function FeedbackScreen() {
   const { t, languages, showing } = useI18n();
   const lang = showing === 'secondary' ? languages.secondary : languages.primary;
   const now = useNow();
+  const theme = useTheme();
   const form = useFeedback(id);
   const event = useEvent(id);
   const submit = useSubmitFeedback(id);
@@ -58,16 +60,24 @@ export default function FeedbackScreen() {
   const answer: FeedbackAnswer =
     draft ??
     (f?.given
-      ? { attended: f.attended, planRating: f.planRating, groupRating: f.groupRating, picks: f.picks }
-      : { attended: true, planRating: 0, groupRating: 0, picks: [] });
+      ? { attended: f.attended, planRating: f.planRating, groupRating: f.groupRating, picks: f.picks, avoid: f.avoid }
+      : { attended: true, planRating: 0, groupRating: 0, picks: [], avoid: [] });
 
   const e = event.data?.event;
   const title = e ? (showing === 'secondary' && e.secondaryTitle ? e.secondaryTitle : e.title) : '';
   const denied = form.error instanceof ConnectError && form.error.code === Code.PermissionDenied;
   const rated = answer.planRating > 0 && answer.groupRating > 0;
   const mates = f?.mates.filter((m) => !m.cancelled) ?? [];
-  const togglePick = (mate: string) =>
-    setAnswer({ ...answer, picks: answer.picks.includes(mate) ? answer.picks.filter((p) => p !== mate) : [...answer.picks, mate] });
+  // Someone is in at most one of the two lists: choosing one clears the other.
+  const toggle = (list: 'picks' | 'avoid', mate: string) => {
+    const other = list === 'picks' ? 'avoid' : 'picks';
+    const on = answer[list].includes(mate);
+    setAnswer({
+      ...answer,
+      [list]: on ? answer[list].filter((p) => p !== mate) : [...answer[list], mate],
+      [other]: answer[other].filter((p) => p !== mate),
+    });
+  };
 
   let body;
   if (denied) {
@@ -117,7 +127,7 @@ export default function FeedbackScreen() {
               {mates.length ? (
                 <View style={styles.wrap}>
                   {mates.map((m) => (
-                    <Chip key={m.id} label={m.name} selected={answer.picks.includes(m.id)} onPress={() => togglePick(m.id)} />
+                    <Chip key={m.id} label={m.name} selected={answer.picks.includes(m.id)} onPress={() => toggle('picks', m.id)} />
                   ))}
                 </View>
               ) : (
@@ -126,6 +136,23 @@ export default function FeedbackScreen() {
                 </ThemedText>
               )}
             </View>
+            {mates.length > 0 && (
+              <View style={styles.section}>
+                <Heading title={t('feedback.rather')} hint={t('feedback.ratherHint')} />
+                <View style={styles.wrap}>
+                  {mates.map((m) => (
+                    <Chip
+                      key={m.id}
+                      label={m.name}
+                      selected={answer.avoid.includes(m.id)}
+                      // Grey, not red: a quiet "no", not an alarm.
+                      selectedColors={{ background: theme.text, text: theme.background }}
+                      onPress={() => toggle('avoid', m.id)}
+                    />
+                  ))}
+                </View>
+              </View>
+            )}
           </>
         )}
       </>
@@ -178,7 +205,7 @@ export default function FeedbackScreen() {
                 label={t('feedback.send')}
                 disabled={answer.attended && !rated}
                 busy={submit.isPending}
-                onPress={() => submit.mutate(answer.attended ? answer : { attended: false, planRating: 0, groupRating: 0, picks: [] }, { onSuccess: leave })}
+                onPress={() => submit.mutate(answer.attended ? answer : { attended: false, planRating: 0, groupRating: 0, picks: [], avoid: [] }, { onSuccess: leave })}
               />
             </View>
           )}

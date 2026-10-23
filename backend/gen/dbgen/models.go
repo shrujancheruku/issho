@@ -74,6 +74,44 @@ type AppCityActivityOverride struct {
 	Months     []int16
 }
 
+type AppCrew struct {
+	ID          uuid.UUID
+	CityID      string
+	ActivityID  *string
+	AreaID      *string
+	Status      string
+	OfferUntil  pgtype.Timestamptz
+	SuggestedAt pgtype.Timestamptz
+	CreatedAt   pgtype.Timestamptz
+	FormedAt    pgtype.Timestamptz
+	ClosedAt    pgtype.Timestamptz
+}
+
+type AppCrewLeafe struct {
+	ID        int64
+	CrewID    uuid.UUID
+	UserID    pgtype.UUID
+	Reason    string
+	Details   string
+	CreatedAt pgtype.Timestamptz
+}
+
+type AppCrewMember struct {
+	CrewID      uuid.UUID
+	UserID      uuid.UUID
+	Response    string
+	RespondedAt pgtype.Timestamptz
+}
+
+type AppCrewMessage struct {
+	ID        int64
+	CrewID    uuid.UUID
+	UserID    pgtype.UUID
+	Body      string
+	PlanID    pgtype.UUID
+	CreatedAt pgtype.Timestamptz
+}
+
 type AppEvent struct {
 	ID        uuid.UUID
 	PlanID    uuid.UUID
@@ -118,10 +156,11 @@ type AppGroupMember struct {
 	CheckedInAt pgtype.Timestamptz
 }
 
-type AppMeetAgainPick struct {
+type AppMatePick struct {
 	GroupID   uuid.UUID
 	PickerID  uuid.UUID
 	PickedID  uuid.UUID
+	Pick      string
 	CreatedAt pgtype.Timestamptz
 }
 
@@ -144,6 +183,7 @@ type AppNotification struct {
 	SentAt    pgtype.Timestamptz
 	Attempts  int16
 	PlanID    pgtype.UUID
+	CrewID    pgtype.UUID
 }
 
 type AppPlan struct {
@@ -248,6 +288,7 @@ type AppReport struct {
 	CreatedAt  pgtype.Timestamptz
 	UpdatedAt  pgtype.Timestamptz
 	ReviewedAt pgtype.Timestamptz
+	CrewID     pgtype.UUID
 }
 
 type AppTranslation struct {

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -12,6 +13,7 @@ import (
 
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	"github.com/shrujancheruku/issho/backend/internal/matching"
+	"github.com/shrujancheruku/issho/backend/internal/platform/i18n"
 	"github.com/shrujancheruku/issho/backend/internal/push"
 	"github.com/shrujancheruku/issho/backend/internal/uistrings"
 )
@@ -25,6 +27,10 @@ var notificationText = map[string]string{
 	NotifyCancelled: "push.cancelled",
 	NotifyNoGroup:   "push.noGroup",
 	NotifyFeedback:  "push.feedback",
+	// Crews: the title is the crew's name ("crew.name").
+	NotifyCrewOffered:    "push.crewOffered",
+	NotifyCrewFormed:     "push.crewFormed",
+	NotifyCrewSuggestion: "push.crewSuggestion",
 }
 
 // Notifier sends the notifications queued in app.notifications.
@@ -87,8 +93,17 @@ func (n *Notifier) Send(ctx context.Context, now time.Time) (NotifyReport, error
 			continue
 		}
 		key := [4]string{p.PrimaryLanguage, p.ActivityID, deref(p.FollowUpID), string(p.Title)}
+		if p.CrewID.Valid {
+			key[2] = "crew:" + deref(p.CrewAreaID)
+		}
 		title, ok := titles[key]
-		if !ok {
+		if !ok && p.CrewID.Valid {
+			t, err := n.crewTitle(ctx, q, p)
+			if err != nil {
+				return rep, err
+			}
+			title, titles[key] = t, t
+		} else if !ok {
 			plan := titled{matching.Plan{Activity: matching.ActivityID(p.ActivityID), FollowUp: matching.ActivityID(deref(p.FollowUpID))}, p.Title}
 			t, _, err := n.Plans.titles(ctx, q, p.CityID, Caller{Primary: p.PrimaryLanguage}, []titled{plan})
 			if err != nil {
@@ -264,7 +279,32 @@ func notificationData(p dbgen.ListPendingNotificationsRow) map[string]string {
 	if p.PlanID.Valid {
 		d["planId"] = uuid.UUID(p.PlanID.Bytes).String()
 	}
+	if p.CrewID.Valid {
+		d["crewId"] = uuid.UUID(p.CrewID.Bytes).String()
+	}
 	return d
+}
+
+// crewTitle is a crew's name in the person's language: "{name} crew" from
+// the UI catalogue, with the activity's name (translated like plan titles)
+// or the area's stored name (never machine-translated).
+func (n *Notifier) crewTitle(ctx context.Context, q *dbgen.Queries, p dbgen.ListPendingNotificationsRow) (string, error) {
+	var name string
+	if area := deref(p.CrewAreaID); area != "" {
+		raw, err := q.GetAreaName(ctx, area)
+		if err != nil {
+			return "", err
+		}
+		name = i18n.Pick(raw, p.PrimaryLanguage)
+	} else {
+		plan := titled{plan: matching.Plan{Activity: matching.ActivityID(p.ActivityID)}}
+		t, _, err := n.Plans.titles(ctx, q, p.CityID, Caller{Primary: p.PrimaryLanguage}, []titled{plan})
+		if err != nil {
+			return "", err
+		}
+		name = t[0]
+	}
+	return strings.ReplaceAll(n.Catalog.Text(ctx, n.Plans.Translations, p.PrimaryLanguage, "crew.name"), "{name}", name), nil
 }
 
 // allUnregistered reports whether every message for pending notification i

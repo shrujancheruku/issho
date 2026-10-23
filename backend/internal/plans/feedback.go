@@ -54,8 +54,16 @@ type Mate struct {
 type Feedback struct {
 	Attended                bool
 	PlanRating, GroupRating int // 1-5; 0 when they didn't go
-	Picks                   []uuid.UUID
+	// Picks: people they'd meet again. Avoid: people they'd rather not be
+	// in a group with again. Both private; nobody in neither.
+	Picks, Avoid []uuid.UUID
 }
+
+// Pick kinds (app.mate_picks.pick).
+const (
+	PickAgain = "again"
+	PickAvoid = "avoid"
+)
 
 // FeedbackForm is what the caller sees when giving feedback.
 type FeedbackForm struct {
@@ -137,13 +145,21 @@ func (s *Service) FeedbackForm(ctx context.Context, userID, eventID uuid.UUID, n
 	if fb.PlanRating != nil && fb.GroupRating != nil {
 		f.PlanRating, f.GroupRating = int(*fb.PlanRating), int(*fb.GroupRating)
 	}
-	f.Picks, err = q.ListPicks(ctx, dbgen.ListPicksParams{GroupID: r.GroupID, PickerID: userID})
+	picks, err := q.ListPicks(ctx, dbgen.ListPicksParams{GroupID: r.GroupID, PickerID: userID})
+	for _, p := range picks {
+		if p.Pick == PickAvoid {
+			f.Avoid = append(f.Avoid, p.PickedID)
+		} else {
+			f.Picks = append(f.Picks, p.PickedID)
+		}
+	}
 	return f, err
 }
 
 // SubmitFeedback records the caller's feedback, replacing any earlier
 // answer. Someone who didn't go gives no ratings or picks (any sent are
-// ignored). Afterwards their picks so far are checked for a lean towards
+// ignored). "Rather not" keeps the two out of each other's groups and
+// crews for good, like a report, but without involving a moderator. Afterwards their picks so far are checked for a lean towards
 // one gender, which flags them for a moderator.
 func (s *Service) SubmitFeedback(ctx context.Context, userID, eventID uuid.UUID, fb Feedback, now time.Time) error {
 	if fb.Attended {
@@ -171,15 +187,32 @@ func (s *Service) SubmitFeedback(ctx context.Context, userID, eventID uuid.UUID,
 		if err != nil {
 			return err
 		}
-		picks := []uuid.UUID{}
-		for _, id := range fb.Picks {
-			i := slices.IndexFunc(mates, func(m Mate) bool { return m.ID == id })
-			if i < 0 || mates[i].Cancelled {
-				return invalid("picks: only people who went with your group")
+		// Each person at most once, either way.
+		seen := map[uuid.UUID]bool{}
+		check := func(field string, ids []uuid.UUID) ([]uuid.UUID, error) {
+			out := []uuid.UUID{}
+			for _, id := range ids {
+				i := slices.IndexFunc(mates, func(m Mate) bool { return m.ID == id })
+				if i < 0 || mates[i].Cancelled {
+					return nil, invalid("%s: only people who went with your group", field)
+				}
+				if seen[id] && !slices.Contains(out, id) {
+					return nil, invalid("%s: someone is in both picks and avoid", field)
+				}
+				if !seen[id] {
+					seen[id] = true
+					out = append(out, id)
+				}
 			}
-			if !slices.Contains(picks, id) {
-				picks = append(picks, id)
-			}
+			return out, nil
+		}
+		picks, err := check("picks", fb.Picks)
+		if err != nil {
+			return err
+		}
+		avoid, err := check("avoid", fb.Avoid)
+		if err != nil {
+			return err
 		}
 		at := pgtype.Timestamptz{Time: now, Valid: true}
 		var plan, group *int16
@@ -195,8 +228,11 @@ func (s *Service) SubmitFeedback(ctx context.Context, userID, eventID uuid.UUID,
 		if err := q.DeletePicks(ctx, dbgen.DeletePicksParams{GroupID: groupID, PickerID: userID}); err != nil {
 			return err
 		}
-		if len(picks) > 0 {
-			if err := q.InsertPicks(ctx, dbgen.InsertPicksParams{GroupID: groupID, PickerID: userID, PickedIds: picks, At: at}); err != nil {
+		for kind, ids := range map[string][]uuid.UUID{PickAgain: picks, PickAvoid: avoid} {
+			if len(ids) == 0 {
+				continue
+			}
+			if err := q.InsertPicks(ctx, dbgen.InsertPicksParams{GroupID: groupID, PickerID: userID, PickedIds: ids, Pick: kind, At: at}); err != nil {
 				return err
 			}
 		}
@@ -296,7 +332,7 @@ func loadRelations(ctx context.Context, q *dbgen.Queries, c *City) error {
 	}
 	c.Relations.Blocked = make(map[matching.Pair]bool, len(blocks))
 	for _, b := range blocks {
-		c.Relations.Blocked[matching.MakePair(matching.UserID(b.ReporterID.String()), matching.UserID(b.ReportedID.String()))] = true
+		c.Relations.Blocked[matching.MakePair(matching.UserID(b.ReporterID.String()), matching.UserID(b.OtherID.String()))] = true
 	}
 	return nil
 }

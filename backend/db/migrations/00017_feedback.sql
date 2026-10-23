@@ -1,10 +1,12 @@
 -- +goose Up
 
 -- After an outing (M7): each person who confirmed says whether they went,
--- rates the plan and the group, and privately picks who they'd meet again.
--- Only mutual picks count: they become matching links (internal/matching
--- Relations.Mutual), so those two are more likely to be grouped again.
--- Nobody is ever told who picked them.
+-- rates the plan and the group, and privately says who they'd meet again
+-- and who they'd rather not. Only mutual "again" picks count: they become
+-- matching links (internal/matching Relations.Mutual), so those two are
+-- more likely to be grouped again. "Rather not" keeps the two apart for
+-- good (Relations.Blocked) and out of each other's crews. Nobody is ever
+-- told who picked them, either way.
 --
 -- (Numbered 00017: 00016 is the walks migration on its own branch.)
 
@@ -27,12 +29,14 @@ create table app.event_feedback (
 );
 create index event_feedback_user_idx on app.event_feedback(user_id);
 
--- "I'd meet them again", private to the picker. Part of their feedback for
--- that group, and only of someone else in it.
-create table app.meet_again_picks (
+-- "I'd meet them again" or "I'd rather not be in a group with them again",
+-- private to the picker. Part of their feedback for that group, and only
+-- of someone else in it. No row = no view either way.
+create table app.mate_picks (
   group_id   uuid not null,
   picker_id  uuid not null,
   picked_id  uuid not null,
+  pick       text not null check (pick in ('again', 'avoid')),
   created_at timestamptz not null default now(),
   primary key (group_id, picker_id, picked_id),
   foreign key (group_id, picker_id) references app.event_feedback(group_id, user_id) on delete cascade,
@@ -41,8 +45,8 @@ create table app.meet_again_picks (
 );
 -- Matching reads every pick a person made (their return rate) and whether
 -- it was returned.
-create index meet_again_picks_picker_idx on app.meet_again_picks(picker_id, picked_id);
-create index meet_again_picks_picked_idx on app.meet_again_picks(picked_id);
+create index mate_picks_picker_idx on app.mate_picks(picker_id, picked_id);
+create index mate_picks_picked_idx on app.mate_picks(picked_id);
 
 -- Reports about someone met through an outing, for moderation (M8). A report
 -- also keeps the two out of each other's groups from then on.
@@ -91,7 +95,7 @@ alter table app.notifications
 do $$
 begin
   if exists (select 1 from pg_roles where rolname = 'anon') then
-    revoke all on app.event_feedback, app.meet_again_picks, app.reports, app.moderation_flags from anon, authenticated;
+    revoke all on app.event_feedback, app.mate_picks, app.reports, app.moderation_flags from anon, authenticated;
   end if;
 end $$;
 -- +goose StatementEnd
@@ -103,5 +107,5 @@ alter table app.notifications
   add constraint notifications_kind_check check (kind in ('event_invited', 'group_confirmed', 'group_cancelled', 'plan_no_group'));
 drop table app.moderation_flags;
 drop table app.reports;
-drop table app.meet_again_picks;
+drop table app.mate_picks;
 drop table app.event_feedback;

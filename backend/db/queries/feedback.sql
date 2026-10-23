@@ -17,7 +17,7 @@ from app.event_feedback
 where group_id = @group_id and user_id = @user_id;
 
 -- name: ListPicks :many
-select picked_id from app.meet_again_picks
+select picked_id, pick from app.mate_picks
 where group_id = @group_id and picker_id = @picker_id
 order by picked_id;
 
@@ -29,18 +29,18 @@ set attended = excluded.attended, plan_rating = excluded.plan_rating,
     group_rating = excluded.group_rating, updated_at = excluded.updated_at;
 
 -- name: DeletePicks :exec
-delete from app.meet_again_picks where group_id = @group_id and picker_id = @picker_id;
+delete from app.mate_picks where group_id = @group_id and picker_id = @picker_id;
 
 -- name: InsertPicks :exec
-insert into app.meet_again_picks (group_id, picker_id, picked_id, created_at)
-select @group_id, @picker_id, unnest(@picked_ids::uuid[]), @at;
+insert into app.mate_picks (group_id, picker_id, picked_id, pick, created_at)
+select @group_id, @picker_id, unnest(@picked_ids::uuid[]), @pick, @at;
 
 -- Everyone the person met at outings they went to (by their feedback),
 -- with whether they picked them: the input to matching.PickLean.
 -- name: ListMetForPicks :many
 select pr.gender,
-       exists (select 1 from app.meet_again_picks k
-               where k.group_id = f.group_id and k.picker_id = f.user_id and k.picked_id = m.user_id) as picked
+       exists (select 1 from app.mate_picks k
+               where k.group_id = f.group_id and k.picker_id = f.user_id and k.picked_id = m.user_id and k.pick = 'again') as picked
 from app.event_feedback f
 join app.group_members m on m.group_id = f.group_id and m.user_id <> f.user_id and m.response = 'confirmed'
 join app.profiles pr on pr.user_id = m.user_id
@@ -57,28 +57,45 @@ set details = excluded.details, updated_at = excluded.updated_at;
 -- name: UpsertReport :exec
 insert into app.reports (reporter_id, reported_id, event_id, reason, details, created_at, updated_at)
 values (@reporter_id, @reported_id, @event_id, @reason, @details, @at, @at)
-on conflict (reporter_id, reported_id, event_id) do update
+on conflict (reporter_id, reported_id, event_id) where event_id is not null do update
 set reason = excluded.reason, details = excluded.details, updated_at = excluded.updated_at;
 
 -- Every meet-again pick made by someone in the city (matching.MutualLinks):
 -- all of a person's picks, wherever they were, set their return rate.
 -- name: ListCityPicks :many
 select k.picker_id, k.picked_id
-from app.meet_again_picks k
+from app.mate_picks k
 join app.profiles p on p.user_id = k.picker_id
 join app.areas a on a.id = p.home_area_id
-where a.city_id = $1
+where a.city_id = $1 and k.pick = 'again'
 order by k.picker_id, k.picked_id;
 
--- Pairs never to group again: someone reported the other. Whatever a
--- moderator decides, the reporter shouldn't meet them again.
+-- Pairs never to group again: someone reported the other, or said they'd
+-- rather not be in a group with them again. Whatever a moderator decides,
+-- they shouldn't meet again.
 -- name: ListCityBlocks :many
-select r.reporter_id::uuid as reporter_id, r.reported_id
+select r.reporter_id::uuid as reporter_id, r.reported_id as other_id
 from app.reports r
 join app.profiles p on p.user_id = r.reported_id
 join app.areas a on a.id = p.home_area_id
-where a.city_id = $1 and r.reporter_id is not null
-order by r.reporter_id, r.reported_id;
+where a.city_id = @city_id and r.reporter_id is not null
+union
+select k.picker_id, k.picked_id
+from app.mate_picks k
+join app.profiles p on p.user_id = k.picker_id
+join app.areas a on a.id = p.home_area_id
+where a.city_id = @city_id and k.pick = 'avoid'
+order by 1, 2;
+
+-- Pairs in the city who have met: both said they went to the same outing.
+-- name: ListCityMetPairs :many
+select distinct fa.user_id as a_id, fb.user_id as b_id
+from app.event_feedback fa
+join app.event_feedback fb on fb.group_id = fa.group_id and fb.user_id > fa.user_id and fb.attended
+join app.profiles p on p.user_id = fa.user_id
+join app.areas a on a.id = p.home_area_id
+where a.city_id = @city_id and fa.attended
+order by 1, 2;
 
 -- "How was it?" for the people who went ahead with a group, once per
 -- event, from when feedback opens (@opened: start times at or before it)

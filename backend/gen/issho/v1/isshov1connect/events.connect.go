@@ -95,10 +95,12 @@ type EventServiceClient interface {
 	// people who went ahead with their group, from 3 hours after the start
 	// for 14 days.
 	GetFeedback(context.Context, *connect.Request[v1.GetFeedbackRequest]) (*connect.Response[v1.GetFeedbackResponse], error)
-	// SubmitFeedback records whether the caller went, their ratings and who
-	// they'd meet again, replacing anything sent before. Picks are private:
-	// nobody is told who picked them; two people who picked each other are
-	// more likely to be grouped again. FAILED_PRECONDITION outside the window.
+	// SubmitFeedback records whether the caller went, their ratings, who
+	// they'd meet again and who they'd rather not, replacing anything sent
+	// before. Both are private: nobody is told who picked them; two people
+	// who picked each other are more likely to be grouped again (and may be
+	// offered a crew); "rather not" keeps the two apart for good.
+	// FAILED_PRECONDITION outside the window.
 	SubmitFeedback(context.Context, *connect.Request[v1.SubmitFeedbackRequest]) (*connect.Response[v1.SubmitFeedbackResponse], error)
 	// ReportPerson reports someone from the caller's group to the moderators,
 	// from the time the caller confirmed until 30 days after the start. The
@@ -268,10 +270,12 @@ type EventServiceHandler interface {
 	// people who went ahead with their group, from 3 hours after the start
 	// for 14 days.
 	GetFeedback(context.Context, *connect.Request[v1.GetFeedbackRequest]) (*connect.Response[v1.GetFeedbackResponse], error)
-	// SubmitFeedback records whether the caller went, their ratings and who
-	// they'd meet again, replacing anything sent before. Picks are private:
-	// nobody is told who picked them; two people who picked each other are
-	// more likely to be grouped again. FAILED_PRECONDITION outside the window.
+	// SubmitFeedback records whether the caller went, their ratings, who
+	// they'd meet again and who they'd rather not, replacing anything sent
+	// before. Both are private: nobody is told who picked them; two people
+	// who picked each other are more likely to be grouped again (and may be
+	// offered a crew); "rather not" keeps the two apart for good.
+	// FAILED_PRECONDITION outside the window.
 	SubmitFeedback(context.Context, *connect.Request[v1.SubmitFeedbackRequest]) (*connect.Response[v1.SubmitFeedbackResponse], error)
 	// ReportPerson reports someone from the caller's group to the moderators,
 	// from the time the caller confirmed until 30 days after the start. The

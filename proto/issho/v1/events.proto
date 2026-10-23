@@ -58,10 +58,12 @@ service EventService {
   // for 14 days.
   rpc GetFeedback(GetFeedbackRequest) returns (GetFeedbackResponse) {}
 
-  // SubmitFeedback records whether the caller went, their ratings and who
-  // they'd meet again, replacing anything sent before. Picks are private:
-  // nobody is told who picked them; two people who picked each other are
-  // more likely to be grouped again. FAILED_PRECONDITION outside the window.
+  // SubmitFeedback records whether the caller went, their ratings, who
+  // they'd meet again and who they'd rather not, replacing anything sent
+  // before. Both are private: nobody is told who picked them; two people
+  // who picked each other are more likely to be grouped again (and may be
+  // offered a crew); "rather not" keeps the two apart for good.
+  // FAILED_PRECONDITION outside the window.
   rpc SubmitFeedback(SubmitFeedbackRequest) returns (SubmitFeedbackResponse) {}
 
   // ReportPerson reports someone from the caller's group to the moderators,
@@ -85,13 +87,16 @@ message GetFeedbackResponse {
   // 1–5, or 0 when not given.
   int32 plan_rating = 4;
   int32 group_rating = 5;
-  // GroupMate.id of the people the caller picked.
+  // GroupMate.id of the people the caller would meet again.
   repeated string picks = 6;
   // When feedback can be given; unset for someone who can't give it (they
   // cancelled, or the group didn't go ahead).
   google.protobuf.Timestamp opens_at = 7;
   google.protobuf.Timestamp closes_at = 8;
   bool open = 9;
+  // GroupMate.id of the people the caller would rather not be in a group
+  // with again.
+  repeated string avoid = 10;
 }
 
 // Someone else in the caller's group, for picks and reports.
@@ -114,6 +119,10 @@ message SubmitFeedbackRequest {
   // GroupMate.id of people the caller would meet again (any number,
   // including none; only people who went ahead with the group).
   repeated string picks = 5;
+  // GroupMate.id of people the caller would rather not be in a group with
+  // again: they're never grouped together again, nor offered a crew
+  // together. Private; nobody in both lists.
+  repeated string avoid = 6;
 }
 
 message SubmitFeedbackResponse {

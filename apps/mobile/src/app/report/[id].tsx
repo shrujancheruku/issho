@@ -9,6 +9,7 @@ import { PrimaryButton } from '@/components/primary-button';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Brand, FormWidth, Spacing } from '@/constants/theme';
+import { useCrew, useReportCrewMember } from '@/features/crews/data';
 import { useFeedback, useReport } from '@/features/events/data';
 import { useTheme } from '@/hooks/use-theme';
 import { useI18n } from '@/i18n/i18n-provider';
@@ -25,22 +26,31 @@ const reasons: [ReportReason, StringKey][] = [
 ];
 
 /**
- * Reports someone from the person's group to the moderators. Open to anyone
- * who confirmed (even if they cancelled since) until 30 days after the
- * start; the two are never grouped together again.
+ * Reports someone from the person's outing group (id = the event) or crew
+ * (id = the crew, `crew=1`) to the moderators. For an outing: anyone who
+ * confirmed (even if they cancelled since), until 30 days after the start.
+ * The two are never grouped together again.
  */
 export default function ReportScreen() {
-  const { id = '' } = useLocalSearchParams<{ id: string }>();
+  const { id = '', crew: inCrew } = useLocalSearchParams<{ id: string; crew?: string }>();
+  const isCrew = inCrew === '1';
   const { t } = useI18n();
   const theme = useTheme();
-  const form = useFeedback(id);
-  const report = useReport(id);
+  // Only one of each pair is enabled: the other has no id.
+  const feedbackForm = useFeedback(isCrew ? '' : id);
+  const crewQuery = useCrew(isCrew ? id : '');
+  const form = isCrew ? crewQuery : feedbackForm;
+  const outingReport = useReport(id);
+  const crewReport = useReportCrewMember(id);
+  const report = isCrew ? crewReport : outingReport;
   const [mate, setMate] = useState('');
   const [reason, setReason] = useState<ReportReason>(ReportReason.UNSPECIFIED);
   const [details, setDetails] = useState('');
   const leave = () => (router.canGoBack() ? router.back() : router.replace('/'));
 
-  const mates = form.data?.mates ?? [];
+  const mates = isCrew
+    ? (crewQuery.data?.members ?? []).filter((m) => !m.me && m.accepted)
+    : (feedbackForm.data?.mates ?? []);
   let body;
   if (report.isSuccess) {
     body = <ThemedText>{t('report.sent')}</ThemedText>;
