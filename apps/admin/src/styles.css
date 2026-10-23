@@ -140,3 +140,11 @@ input:not([type]), input[type='email'], input[type='search'] { min-width: 0; }
 .note input { width: 100%; }
 .stops { padding-left: 1.25rem; }
 .stops li { margin-bottom: 0.6rem; }
+
+/* Groups */
+.group table { margin: 0.5rem 0; }
+.group.danger { border-color: var(--red); }
+.meeting { align-items: flex-end; }
+.meeting .note { flex: 1; margin: 0; }
+.row label { display: grid; gap: 0.3rem; }
+.group td .link { margin-left: 0.6rem; }

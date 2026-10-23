@@ -26,3 +26,14 @@ describe('placeholderProblems', () => {
     expect(placeholderProblems('Hello', 'Hola')).toEqual([]);
   });
 });
+
+describe('localParts', () => {
+  it('shows a moment in the city, not the browser', async () => {
+    const { localParts } = await import('./format');
+    const { timestampFromDate } = await import('@bufbuild/protobuf/wkt');
+    // 05:30 UTC is 14:30 in Tokyo.
+    const ts = timestampFromDate(new Date(Date.UTC(2030, 0, 12, 5, 30)));
+    expect(localParts(ts, 'Asia/Tokyo')).toEqual({ date: '2030-01-12', time: '14:30' });
+    expect(localParts(undefined, 'Asia/Tokyo')).toEqual({ date: '', time: '' });
+  });
+});

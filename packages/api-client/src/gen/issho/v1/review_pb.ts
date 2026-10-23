@@ -14,7 +14,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file issho/v1/review.proto.
  */
 export const file_issho_v1_review: GenFile = /*@__PURE__*/
-  fileDesc("ChVpc3Noby92MS9yZXZpZXcucHJvdG8SCGlzc2hvLnYxIhkKF0xpc3RSZXZpZXdDaXRpZXNSZXF1ZXN0IkAKGExpc3RSZXZpZXdDaXRpZXNSZXNwb25zZRIkCgZjaXRpZXMYASADKAsyFC5pc3Noby52MS5SZXZpZXdDaXR5IlQKClJldmlld0NpdHkSCgoCaWQYASABKAkSDAoEbmFtZRgCIAEoCRIOCgZyZXZpZXcYAyABKAgSDgoGZHJhZnRzGAQgASgFEgwKBG9wZW4YBSABKAUiNwoUU2V0Q2l0eVJldmlld1JlcXVlc3QSDwoHY2l0eV9pZBgBIAEoCRIOCgZyZXZpZXcYAiABKAgiFwoVU2V0Q2l0eVJldmlld1Jlc3BvbnNlIlUKFkxpc3RSZXZpZXdQbGFuc1JlcXVlc3QSDwoHY2l0eV9pZBgBIAEoCRIqCgZzdGF0dXMYAiABKA4yGi5pc3Noby52MS5SZXZpZXdQbGFuU3RhdHVzIj4KF0xpc3RSZXZpZXdQbGFuc1Jlc3BvbnNlEiMKBXBsYW5zGAEgAygLMhQuaXNzaG8udjEuUmV2aWV3UGxhbiLRBAoKUmV2aWV3UGxhbhIKCgJpZBgBIAEoCRIPCgdjaXR5X2lkGAIgASgJEioKBnN0YXR1cxgDIAEoDjIaLmlzc2hvLnYxLlJldmlld1BsYW5TdGF0dXMSFQoNY2xvc2VkX3JlYXNvbhgEIAEoCRINCgV0aXRsZRgFIAEoCRIUCgxzdG9yZWRfdGl0bGUYBiABKAkSDwoHc3VtbWFyeRgHIAEoCRIPCgdhcmVhX2lkGAggASgJEhEKCWFyZWFfbmFtZRgJIAEoCRITCgthY3Rpdml0eV9pZBgKIAEoCRIUCgxmb2xsb3dfdXBfaWQYCyABKAkSGAoQcHJpbWFyeV9sYW5ndWFnZRgMIAEoCRIaChJzZWNvbmRhcnlfbGFuZ3VhZ2UYDSABKAkSDAoEd2FsaxgOIAEoCBIQCghhdWRpZW5jZRgPIAEoBRINCgVzY29yZRgQIAEoAhIPCgdzaWdudXBzGBEgASgFEhQKDHdpbmRvd19zdGFydBgSIAEoCRITCgt3aW5kb3dfZGF5cxgTIAEoBRIzCg9zaWdudXBfZGVhZGxpbmUYFCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi4KCmNyZWF0ZWRfYXQYFSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhIKCmNyZWF0ZWRfYnkYFiABKAkSEwoLcmV2aWV3ZWRfYnkYFyABKAkSLwoLcmV2aWV3ZWRfYXQYGCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wIicKFEdldFJldmlld1BsYW5SZXF1ZXN0Eg8KB3BsYW5faWQYASABKAkiXgoVR2V0UmV2aWV3UGxhblJlc3BvbnNlEiIKBHBsYW4YASABKAsyFC5pc3Noby52MS5SZXZpZXdQbGFuEiEKBXN0ZXBzGAIgAygLMhIuaXNzaG8udjEuUGxhblN0ZXAiJQoSQXBwcm92ZVBsYW5SZXF1ZXN0Eg8KB3BsYW5faWQYASABKAkiFQoTQXBwcm92ZVBsYW5SZXNwb25zZSIkChFSZWplY3RQbGFuUmVxdWVzdBIPCgdwbGFuX2lkGAEgASgJIhQKElJlamVjdFBsYW5SZXNwb25zZSJCCg9FZGl0UGxhblJlcXVlc3QSDwoHcGxhbl9pZBgBIAEoCRINCgV0aXRsZRgCIAEoCRIPCgdzdW1tYXJ5GAMgASgJIhIKEEVkaXRQbGFuUmVzcG9uc2UiJgoTV2l0aGRyYXdQbGFuUmVxdWVzdBIPCgdwbGFuX2lkGAEgASgJIhYKFFdpdGhkcmF3UGxhblJlc3BvbnNlIj8KF0xpc3RWZW51ZU9wdGlvbnNSZXF1ZXN0Eg8KB2FyZWFfaWQYASABKAkSEwoLYWN0aXZpdHlfaWQYAiABKAkiQQoYTGlzdFZlbnVlT3B0aW9uc1Jlc3BvbnNlEiUKBnZlbnVlcxgBIAMoCzIVLmlzc2hvLnYxLlZlbnVlT3B0aW9uInUKC1ZlbnVlT3B0aW9uEhAKCHBsYWNlX2lkGAEgASgJEgwKBG5hbWUYAiABKAkSDwoHYWRkcmVzcxgDIAEoCRIQCghtYXBzX3VybBgEIAEoCRITCgtjYXRlZ29yeV9pZBgFIAEoCRIOCgZzdGF0dXMYBiABKAki8AEKEUNyZWF0ZVBsYW5SZXF1ZXN0Eg8KB2NpdHlfaWQYASABKAkSDwoHYXJlYV9pZBgCIAEoCRITCgthY3Rpdml0eV9pZBgDIAEoCRIUCgxmb2xsb3dfdXBfaWQYBCABKAkSFgoOdmVudWVfcGxhY2VfaWQYBSABKAkSIAoYZm9sbG93X3VwX3ZlbnVlX3BsYWNlX2lkGAYgASgJEhgKEHByaW1hcnlfbGFuZ3VhZ2UYByABKAkSGgoSc2Vjb25kYXJ5X2xhbmd1YWdlGAggASgJEg0KBXRpdGxlGAkgASgJEg8KB3N1bW1hcnkYCiABKAkiJQoSQ3JlYXRlUGxhblJlc3BvbnNlEg8KB3BsYW5faWQYASABKAkqkAEKEFJldmlld1BsYW5TdGF0dXMSIgoeUkVWSUVXX1BMQU5fU1RBVFVTX1VOU1BFQ0lGSUVEEAASHAoYUkVWSUVXX1BMQU5fU1RBVFVTX0RSQUZUEAESGwoXUkVWSUVXX1BMQU5fU1RBVFVTX09QRU4QAhIdChlSRVZJRVdfUExBTl9TVEFUVVNfQ0xPU0VEEAMyxQYKDVJldmlld1NlcnZpY2USWwoQTGlzdFJldmlld0NpdGllcxIhLmlzc2hvLnYxLkxpc3RSZXZpZXdDaXRpZXNSZXF1ZXN0GiIuaXNzaG8udjEuTGlzdFJldmlld0NpdGllc1Jlc3BvbnNlIgASUgoNU2V0Q2l0eVJldmlldxIeLmlzc2hvLnYxLlNldENpdHlSZXZpZXdSZXF1ZXN0Gh8uaXNzaG8udjEuU2V0Q2l0eVJldmlld1Jlc3BvbnNlIgASWAoPTGlzdFJldmlld1BsYW5zEiAuaXNzaG8udjEuTGlzdFJldmlld1BsYW5zUmVxdWVzdBohLmlzc2hvLnYxLkxpc3RSZXZpZXdQbGFuc1Jlc3BvbnNlIgASUgoNR2V0UmV2aWV3UGxhbhIeLmlzc2hvLnYxLkdldFJldmlld1BsYW5SZXF1ZXN0Gh8uaXNzaG8udjEuR2V0UmV2aWV3UGxhblJlc3BvbnNlIgASTAoLQXBwcm92ZVBsYW4SHC5pc3Noby52MS5BcHByb3ZlUGxhblJlcXVlc3QaHS5pc3Noby52MS5BcHByb3ZlUGxhblJlc3BvbnNlIgASSQoKUmVqZWN0UGxhbhIbLmlzc2hvLnYxLlJlamVjdFBsYW5SZXF1ZXN0GhwuaXNzaG8udjEuUmVqZWN0UGxhblJlc3BvbnNlIgASQwoIRWRpdFBsYW4SGS5pc3Noby52MS5FZGl0UGxhblJlcXVlc3QaGi5pc3Noby52MS5FZGl0UGxhblJlc3BvbnNlIgASTwoMV2l0aGRyYXdQbGFuEh0uaXNzaG8udjEuV2l0aGRyYXdQbGFuUmVxdWVzdBoeLmlzc2hvLnYxLldpdGhkcmF3UGxhblJlc3BvbnNlIgASWwoQTGlzdFZlbnVlT3B0aW9ucxIhLmlzc2hvLnYxLkxpc3RWZW51ZU9wdGlvbnNSZXF1ZXN0GiIuaXNzaG8udjEuTGlzdFZlbnVlT3B0aW9uc1Jlc3BvbnNlIgASSQoKQ3JlYXRlUGxhbhIbLmlzc2hvLnYxLkNyZWF0ZVBsYW5SZXF1ZXN0GhwuaXNzaG8udjEuQ3JlYXRlUGxhblJlc3BvbnNlIgBCPlo8Z2l0aHViLmNvbS9zaHJ1amFuY2hlcnVrdS9pc3Noby9iYWNrZW5kL2dlbi9pc3Noby92MTtpc3Nob3YxYgZwcm90bzM", [file_google_protobuf_timestamp, file_issho_v1_plans]);
+  fileDesc("ChVpc3Noby92MS9yZXZpZXcucHJvdG8SCGlzc2hvLnYxIhkKF0xpc3RSZXZpZXdDaXRpZXNSZXF1ZXN0IkAKGExpc3RSZXZpZXdDaXRpZXNSZXNwb25zZRIkCgZjaXRpZXMYASADKAsyFC5pc3Noby52MS5SZXZpZXdDaXR5IlQKClJldmlld0NpdHkSCgoCaWQYASABKAkSDAoEbmFtZRgCIAEoCRIOCgZyZXZpZXcYAyABKAgSDgoGZHJhZnRzGAQgASgFEgwKBG9wZW4YBSABKAUiNwoUU2V0Q2l0eVJldmlld1JlcXVlc3QSDwoHY2l0eV9pZBgBIAEoCRIOCgZyZXZpZXcYAiABKAgiFwoVU2V0Q2l0eVJldmlld1Jlc3BvbnNlIlUKFkxpc3RSZXZpZXdQbGFuc1JlcXVlc3QSDwoHY2l0eV9pZBgBIAEoCRIqCgZzdGF0dXMYAiABKA4yGi5pc3Noby52MS5SZXZpZXdQbGFuU3RhdHVzIj4KF0xpc3RSZXZpZXdQbGFuc1Jlc3BvbnNlEiMKBXBsYW5zGAEgAygLMhQuaXNzaG8udjEuUmV2aWV3UGxhbiLRBAoKUmV2aWV3UGxhbhIKCgJpZBgBIAEoCRIPCgdjaXR5X2lkGAIgASgJEioKBnN0YXR1cxgDIAEoDjIaLmlzc2hvLnYxLlJldmlld1BsYW5TdGF0dXMSFQoNY2xvc2VkX3JlYXNvbhgEIAEoCRINCgV0aXRsZRgFIAEoCRIUCgxzdG9yZWRfdGl0bGUYBiABKAkSDwoHc3VtbWFyeRgHIAEoCRIPCgdhcmVhX2lkGAggASgJEhEKCWFyZWFfbmFtZRgJIAEoCRITCgthY3Rpdml0eV9pZBgKIAEoCRIUCgxmb2xsb3dfdXBfaWQYCyABKAkSGAoQcHJpbWFyeV9sYW5ndWFnZRgMIAEoCRIaChJzZWNvbmRhcnlfbGFuZ3VhZ2UYDSABKAkSDAoEd2FsaxgOIAEoCBIQCghhdWRpZW5jZRgPIAEoBRINCgVzY29yZRgQIAEoAhIPCgdzaWdudXBzGBEgASgFEhQKDHdpbmRvd19zdGFydBgSIAEoCRITCgt3aW5kb3dfZGF5cxgTIAEoBRIzCg9zaWdudXBfZGVhZGxpbmUYFCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi4KCmNyZWF0ZWRfYXQYFSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhIKCmNyZWF0ZWRfYnkYFiABKAkSEwoLcmV2aWV3ZWRfYnkYFyABKAkSLwoLcmV2aWV3ZWRfYXQYGCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wIicKFEdldFJldmlld1BsYW5SZXF1ZXN0Eg8KB3BsYW5faWQYASABKAkiXgoVR2V0UmV2aWV3UGxhblJlc3BvbnNlEiIKBHBsYW4YASABKAsyFC5pc3Noby52MS5SZXZpZXdQbGFuEiEKBXN0ZXBzGAIgAygLMhIuaXNzaG8udjEuUGxhblN0ZXAiJQoSQXBwcm92ZVBsYW5SZXF1ZXN0Eg8KB3BsYW5faWQYASABKAkiFQoTQXBwcm92ZVBsYW5SZXNwb25zZSIkChFSZWplY3RQbGFuUmVxdWVzdBIPCgdwbGFuX2lkGAEgASgJIhQKElJlamVjdFBsYW5SZXNwb25zZSJCCg9FZGl0UGxhblJlcXVlc3QSDwoHcGxhbl9pZBgBIAEoCRINCgV0aXRsZRgCIAEoCRIPCgdzdW1tYXJ5GAMgASgJIhIKEEVkaXRQbGFuUmVzcG9uc2UiJgoTV2l0aGRyYXdQbGFuUmVxdWVzdBIPCgdwbGFuX2lkGAEgASgJIhYKFFdpdGhkcmF3UGxhblJlc3BvbnNlIj8KF0xpc3RWZW51ZU9wdGlvbnNSZXF1ZXN0Eg8KB2FyZWFfaWQYASABKAkSEwoLYWN0aXZpdHlfaWQYAiABKAkiQQoYTGlzdFZlbnVlT3B0aW9uc1Jlc3BvbnNlEiUKBnZlbnVlcxgBIAMoCzIVLmlzc2hvLnYxLlZlbnVlT3B0aW9uInUKC1ZlbnVlT3B0aW9uEhAKCHBsYWNlX2lkGAEgASgJEgwKBG5hbWUYAiABKAkSDwoHYWRkcmVzcxgDIAEoCRIQCghtYXBzX3VybBgEIAEoCRITCgtjYXRlZ29yeV9pZBgFIAEoCRIOCgZzdGF0dXMYBiABKAki8AEKEUNyZWF0ZVBsYW5SZXF1ZXN0Eg8KB2NpdHlfaWQYASABKAkSDwoHYXJlYV9pZBgCIAEoCRITCgthY3Rpdml0eV9pZBgDIAEoCRIUCgxmb2xsb3dfdXBfaWQYBCABKAkSFgoOdmVudWVfcGxhY2VfaWQYBSABKAkSIAoYZm9sbG93X3VwX3ZlbnVlX3BsYWNlX2lkGAYgASgJEhgKEHByaW1hcnlfbGFuZ3VhZ2UYByABKAkSGgoSc2Vjb25kYXJ5X2xhbmd1YWdlGAggASgJEg0KBXRpdGxlGAkgASgJEg8KB3N1bW1hcnkYCiABKAkiJQoSQ3JlYXRlUGxhblJlc3BvbnNlEg8KB3BsYW5faWQYASABKAkiVwoXTGlzdFJldmlld0V2ZW50c1JlcXVlc3QSDwoHY2l0eV9pZBgBIAEoCRIrCgZzdGF0dXMYAiABKA4yGy5pc3Noby52MS5SZXZpZXdFdmVudFN0YXR1cyJBChhMaXN0UmV2aWV3RXZlbnRzUmVzcG9uc2USJQoGZXZlbnRzGAEgAygLMhUuaXNzaG8udjEuUmV2aWV3RXZlbnQi6AIKC1Jldmlld0V2ZW50EgoKAmlkGAEgASgJEg8KB3BsYW5faWQYAiABKAkSKwoGc3RhdHVzGAMgASgOMhsuaXNzaG8udjEuUmV2aWV3RXZlbnRTdGF0dXMSDQoFdGl0bGUYBCABKAkSEQoJYXJlYV9uYW1lGAUgASgJEgwKBGRhdGUYBiABKAkSDQoFYmxvY2sYByABKAkSLQoJc3RhcnRzX2F0GAggASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIuCgpjb25maXJtX2J5GAkgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIOCgZmb3JjZWQYCiABKAgSDgoGZ3JvdXBzGAsgASgFEg4KBnBlb3BsZRgMIAEoBRIuCgpjcmVhdGVkX2F0GA0gASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIRCgl0aW1lX3pvbmUYDiABKAkiKQoVR2V0UmV2aWV3RXZlbnRSZXF1ZXN0EhAKCGV2ZW50X2lkGAEgASgJImUKFkdldFJldmlld0V2ZW50UmVzcG9uc2USJAoFZXZlbnQYASABKAsyFS5pc3Noby52MS5SZXZpZXdFdmVudBIlCgZncm91cHMYAiADKAsyFS5pc3Noby52MS5SZXZpZXdHcm91cCKgAQoLUmV2aWV3R3JvdXASCgoCaWQYASABKAkSDgoGcXVvcnVtGAIgASgFEhYKDm1pbl9hdHRlbmRhbmNlGAMgASgFEg0KBXNjb3JlGAQgASgCEg4KBnN0YXR1cxgFIAEoCRIVCg1tZWV0aW5nX3BvaW50GAYgASgJEicKB21lbWJlcnMYByADKAsyFi5pc3Noby52MS5SZXZpZXdNZW1iZXIidgoMUmV2aWV3TWVtYmVyEg8KB3VzZXJfaWQYASABKAkSDAoEbmFtZRgCIAEoCRIOCgZnZW5kZXIYAyABKAkSEgoKYmlydGhfeWVhchgEIAEoBRIQCghyZXNwb25zZRgFIAEoCRIRCglzaWduZWRfdXAYBiABKAgiUAoZTW92ZVByb3Bvc2FsTWVtYmVyUmVxdWVzdBIQCghldmVudF9pZBgBIAEoCRIPCgd1c2VyX2lkGAIgASgJEhAKCGdyb3VwX2lkGAMgASgJIhwKGk1vdmVQcm9wb3NhbE1lbWJlclJlc3BvbnNlIkAKG1JlbW92ZVByb3Bvc2FsTWVtYmVyUmVxdWVzdBIQCghldmVudF9pZBgBIAEoCRIPCgd1c2VyX2lkGAIgASgJIh4KHFJlbW92ZVByb3Bvc2FsTWVtYmVyUmVzcG9uc2UiRwoXU2V0UHJvcG9zYWxTdGFydFJlcXVlc3QSEAoIZXZlbnRfaWQYASABKAkSDAoEZGF0ZRgCIAEoCRIMCgR0aW1lGAMgASgJIhoKGFNldFByb3Bvc2FsU3RhcnRSZXNwb25zZSI9ChtTZXRHcm91cE1lZXRpbmdQb2ludFJlcXVlc3QSEAoIZ3JvdXBfaWQYASABKAkSDAoEdGV4dBgCIAEoCSIeChxTZXRHcm91cE1lZXRpbmdQb2ludFJlc3BvbnNlIioKFkFwcHJvdmVQcm9wb3NhbFJlcXVlc3QSEAoIZXZlbnRfaWQYASABKAkiGQoXQXBwcm92ZVByb3Bvc2FsUmVzcG9uc2UiKQoVUmVqZWN0UHJvcG9zYWxSZXF1ZXN0EhAKCGV2ZW50X2lkGAEgASgJIhgKFlJlamVjdFByb3Bvc2FsUmVzcG9uc2UqkAEKEFJldmlld1BsYW5TdGF0dXMSIgoeUkVWSUVXX1BMQU5fU1RBVFVTX1VOU1BFQ0lGSUVEEAASHAoYUkVWSUVXX1BMQU5fU1RBVFVTX0RSQUZUEAESGwoXUkVWSUVXX1BMQU5fU1RBVFVTX09QRU4QAhIdChlSRVZJRVdfUExBTl9TVEFUVVNfQ0xPU0VEEAMqfQoRUmV2aWV3RXZlbnRTdGF0dXMSIwofUkVWSUVXX0VWRU5UX1NUQVRVU19VTlNQRUNJRklFRBAAEiAKHFJFVklFV19FVkVOVF9TVEFUVVNfUFJPUE9TRUQQARIhCh1SRVZJRVdfRVZFTlRfU1RBVFVTX1NDSEVEVUxFRBACMrwMCg1SZXZpZXdTZXJ2aWNlElsKEExpc3RSZXZpZXdDaXRpZXMSIS5pc3Noby52MS5MaXN0UmV2aWV3Q2l0aWVzUmVxdWVzdBoiLmlzc2hvLnYxLkxpc3RSZXZpZXdDaXRpZXNSZXNwb25zZSIAElIKDVNldENpdHlSZXZpZXcSHi5pc3Noby52MS5TZXRDaXR5UmV2aWV3UmVxdWVzdBofLmlzc2hvLnYxLlNldENpdHlSZXZpZXdSZXNwb25zZSIAElgKD0xpc3RSZXZpZXdQbGFucxIgLmlzc2hvLnYxLkxpc3RSZXZpZXdQbGFuc1JlcXVlc3QaIS5pc3Noby52MS5MaXN0UmV2aWV3UGxhbnNSZXNwb25zZSIAElIKDUdldFJldmlld1BsYW4SHi5pc3Noby52MS5HZXRSZXZpZXdQbGFuUmVxdWVzdBofLmlzc2hvLnYxLkdldFJldmlld1BsYW5SZXNwb25zZSIAEkwKC0FwcHJvdmVQbGFuEhwuaXNzaG8udjEuQXBwcm92ZVBsYW5SZXF1ZXN0Gh0uaXNzaG8udjEuQXBwcm92ZVBsYW5SZXNwb25zZSIAEkkKClJlamVjdFBsYW4SGy5pc3Noby52MS5SZWplY3RQbGFuUmVxdWVzdBocLmlzc2hvLnYxLlJlamVjdFBsYW5SZXNwb25zZSIAEkMKCEVkaXRQbGFuEhkuaXNzaG8udjEuRWRpdFBsYW5SZXF1ZXN0GhouaXNzaG8udjEuRWRpdFBsYW5SZXNwb25zZSIAEk8KDFdpdGhkcmF3UGxhbhIdLmlzc2hvLnYxLldpdGhkcmF3UGxhblJlcXVlc3QaHi5pc3Noby52MS5XaXRoZHJhd1BsYW5SZXNwb25zZSIAElsKEExpc3RWZW51ZU9wdGlvbnMSIS5pc3Noby52MS5MaXN0VmVudWVPcHRpb25zUmVxdWVzdBoiLmlzc2hvLnYxLkxpc3RWZW51ZU9wdGlvbnNSZXNwb25zZSIAEkkKCkNyZWF0ZVBsYW4SGy5pc3Noby52MS5DcmVhdGVQbGFuUmVxdWVzdBocLmlzc2hvLnYxLkNyZWF0ZVBsYW5SZXNwb25zZSIAElsKEExpc3RSZXZpZXdFdmVudHMSIS5pc3Noby52MS5MaXN0UmV2aWV3RXZlbnRzUmVxdWVzdBoiLmlzc2hvLnYxLkxpc3RSZXZpZXdFdmVudHNSZXNwb25zZSIAElUKDkdldFJldmlld0V2ZW50Eh8uaXNzaG8udjEuR2V0UmV2aWV3RXZlbnRSZXF1ZXN0GiAuaXNzaG8udjEuR2V0UmV2aWV3RXZlbnRSZXNwb25zZSIAEmEKEk1vdmVQcm9wb3NhbE1lbWJlchIjLmlzc2hvLnYxLk1vdmVQcm9wb3NhbE1lbWJlclJlcXVlc3QaJC5pc3Noby52MS5Nb3ZlUHJvcG9zYWxNZW1iZXJSZXNwb25zZSIAEmcKFFJlbW92ZVByb3Bvc2FsTWVtYmVyEiUuaXNzaG8udjEuUmVtb3ZlUHJvcG9zYWxNZW1iZXJSZXF1ZXN0GiYuaXNzaG8udjEuUmVtb3ZlUHJvcG9zYWxNZW1iZXJSZXNwb25zZSIAElsKEFNldFByb3Bvc2FsU3RhcnQSIS5pc3Noby52MS5TZXRQcm9wb3NhbFN0YXJ0UmVxdWVzdBoiLmlzc2hvLnYxLlNldFByb3Bvc2FsU3RhcnRSZXNwb25zZSIAEmcKFFNldEdyb3VwTWVldGluZ1BvaW50EiUuaXNzaG8udjEuU2V0R3JvdXBNZWV0aW5nUG9pbnRSZXF1ZXN0GiYuaXNzaG8udjEuU2V0R3JvdXBNZWV0aW5nUG9pbnRSZXNwb25zZSIAElgKD0FwcHJvdmVQcm9wb3NhbBIgLmlzc2hvLnYxLkFwcHJvdmVQcm9wb3NhbFJlcXVlc3QaIS5pc3Noby52MS5BcHByb3ZlUHJvcG9zYWxSZXNwb25zZSIAElUKDlJlamVjdFByb3Bvc2FsEh8uaXNzaG8udjEuUmVqZWN0UHJvcG9zYWxSZXF1ZXN0GiAuaXNzaG8udjEuUmVqZWN0UHJvcG9zYWxSZXNwb25zZSIAQj5aPGdpdGh1Yi5jb20vc2hydWphbmNoZXJ1a3UvaXNzaG8vYmFja2VuZC9nZW4vaXNzaG8vdjE7aXNzaG92MWIGcHJvdG8z", [file_google_protobuf_timestamp, file_issho_v1_plans]);
 
 /**
  * @generated from message issho.v1.ListReviewCitiesRequest
@@ -658,6 +658,498 @@ export const CreatePlanResponseSchema: GenMessage<CreatePlanResponse> = /*@__PUR
   messageDesc(file_issho_v1_review, 22);
 
 /**
+ * @generated from message issho.v1.ListReviewEventsRequest
+ */
+export type ListReviewEventsRequest = Message<"issho.v1.ListReviewEventsRequest"> & {
+  /**
+   * @generated from field: string city_id = 1;
+   */
+  cityId: string;
+
+  /**
+   * Required. Scheduled events are listed from today.
+   *
+   * @generated from field: issho.v1.ReviewEventStatus status = 2;
+   */
+  status: ReviewEventStatus;
+};
+
+/**
+ * Describes the message issho.v1.ListReviewEventsRequest.
+ * Use `create(ListReviewEventsRequestSchema)` to create a new message.
+ */
+export const ListReviewEventsRequestSchema: GenMessage<ListReviewEventsRequest> = /*@__PURE__*/
+  messageDesc(file_issho_v1_review, 23);
+
+/**
+ * @generated from message issho.v1.ListReviewEventsResponse
+ */
+export type ListReviewEventsResponse = Message<"issho.v1.ListReviewEventsResponse"> & {
+  /**
+   * @generated from field: repeated issho.v1.ReviewEvent events = 1;
+   */
+  events: ReviewEvent[];
+};
+
+/**
+ * Describes the message issho.v1.ListReviewEventsResponse.
+ * Use `create(ListReviewEventsResponseSchema)` to create a new message.
+ */
+export const ListReviewEventsResponseSchema: GenMessage<ListReviewEventsResponse> = /*@__PURE__*/
+  messageDesc(file_issho_v1_review, 24);
+
+/**
+ * @generated from message issho.v1.ReviewEvent
+ */
+export type ReviewEvent = Message<"issho.v1.ReviewEvent"> & {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * @generated from field: string plan_id = 2;
+   */
+  planId: string;
+
+  /**
+   * @generated from field: issho.v1.ReviewEventStatus status = 3;
+   */
+  status: ReviewEventStatus;
+
+  /**
+   * English: the plan's stored title, or made from its activities.
+   *
+   * @generated from field: string title = 4;
+   */
+  title: string;
+
+  /**
+   * @generated from field: string area_name = 5;
+   */
+  areaName: string;
+
+  /**
+   * Local date (YYYY-MM-DD) and part of the day; the start time.
+   *
+   * @generated from field: string date = 6;
+   */
+  date: string;
+
+  /**
+   * @generated from field: string block = 7;
+   */
+  block: string;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp starts_at = 8;
+   */
+  startsAt?: Timestamp | undefined;
+
+  /**
+   * Invitees answer by then.
+   *
+   * @generated from field: google.protobuf.Timestamp confirm_by = 9;
+   */
+  confirmBy?: Timestamp | undefined;
+
+  /**
+   * Scheduled at the signup deadline with whoever could go, rather than
+   * because a group reached its target size.
+   *
+   * @generated from field: bool forced = 10;
+   */
+  forced: boolean;
+
+  /**
+   * @generated from field: int32 groups = 11;
+   */
+  groups: number;
+
+  /**
+   * Invited or going.
+   *
+   * @generated from field: int32 people = 12;
+   */
+  people: number;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp created_at = 13;
+   */
+  createdAt?: Timestamp | undefined;
+
+  /**
+   * The city's time zone (IANA), for showing and setting local times.
+   *
+   * @generated from field: string time_zone = 14;
+   */
+  timeZone: string;
+};
+
+/**
+ * Describes the message issho.v1.ReviewEvent.
+ * Use `create(ReviewEventSchema)` to create a new message.
+ */
+export const ReviewEventSchema: GenMessage<ReviewEvent> = /*@__PURE__*/
+  messageDesc(file_issho_v1_review, 25);
+
+/**
+ * @generated from message issho.v1.GetReviewEventRequest
+ */
+export type GetReviewEventRequest = Message<"issho.v1.GetReviewEventRequest"> & {
+  /**
+   * @generated from field: string event_id = 1;
+   */
+  eventId: string;
+};
+
+/**
+ * Describes the message issho.v1.GetReviewEventRequest.
+ * Use `create(GetReviewEventRequestSchema)` to create a new message.
+ */
+export const GetReviewEventRequestSchema: GenMessage<GetReviewEventRequest> = /*@__PURE__*/
+  messageDesc(file_issho_v1_review, 26);
+
+/**
+ * @generated from message issho.v1.GetReviewEventResponse
+ */
+export type GetReviewEventResponse = Message<"issho.v1.GetReviewEventResponse"> & {
+  /**
+   * @generated from field: issho.v1.ReviewEvent event = 1;
+   */
+  event?: ReviewEvent | undefined;
+
+  /**
+   * @generated from field: repeated issho.v1.ReviewGroup groups = 2;
+   */
+  groups: ReviewGroup[];
+};
+
+/**
+ * Describes the message issho.v1.GetReviewEventResponse.
+ * Use `create(GetReviewEventResponseSchema)` to create a new message.
+ */
+export const GetReviewEventResponseSchema: GenMessage<GetReviewEventResponse> = /*@__PURE__*/
+  messageDesc(file_issho_v1_review, 27);
+
+/**
+ * @generated from message issho.v1.ReviewGroup
+ */
+export type ReviewGroup = Message<"issho.v1.ReviewGroup"> & {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * Confirmed straight away at quorum; at the deadline it goes ahead with
+   * at least min_attendance.
+   *
+   * @generated from field: int32 quorum = 2;
+   */
+  quorum: number;
+
+  /**
+   * @generated from field: int32 min_attendance = 3;
+   */
+  minAttendance: number;
+
+  /**
+   * @generated from field: float score = 4;
+   */
+  score: number;
+
+  /**
+   * inviting, confirmed or cancelled.
+   *
+   * @generated from field: string status = 5;
+   */
+  status: string;
+
+  /**
+   * English; "" for none.
+   *
+   * @generated from field: string meeting_point = 6;
+   */
+  meetingPoint: string;
+
+  /**
+   * @generated from field: repeated issho.v1.ReviewMember members = 7;
+   */
+  members: ReviewMember[];
+};
+
+/**
+ * Describes the message issho.v1.ReviewGroup.
+ * Use `create(ReviewGroupSchema)` to create a new message.
+ */
+export const ReviewGroupSchema: GenMessage<ReviewGroup> = /*@__PURE__*/
+  messageDesc(file_issho_v1_review, 28);
+
+/**
+ * @generated from message issho.v1.ReviewMember
+ */
+export type ReviewMember = Message<"issho.v1.ReviewMember"> & {
+  /**
+   * @generated from field: string user_id = 1;
+   */
+  userId: string;
+
+  /**
+   * @generated from field: string name = 2;
+   */
+  name: string;
+
+  /**
+   * woman, man, nonbinary or unspecified.
+   *
+   * @generated from field: string gender = 3;
+   */
+  gender: string;
+
+  /**
+   * @generated from field: int32 birth_year = 4;
+   */
+  birthYear: number;
+
+  /**
+   * invited, confirmed, declined or dropped.
+   *
+   * @generated from field: string response = 5;
+   */
+  response: string;
+
+  /**
+   * Still signed up for the plan: in a proposal, someone who withdrew
+   * since (false) is left out when it's approved.
+   *
+   * @generated from field: bool signed_up = 6;
+   */
+  signedUp: boolean;
+};
+
+/**
+ * Describes the message issho.v1.ReviewMember.
+ * Use `create(ReviewMemberSchema)` to create a new message.
+ */
+export const ReviewMemberSchema: GenMessage<ReviewMember> = /*@__PURE__*/
+  messageDesc(file_issho_v1_review, 29);
+
+/**
+ * @generated from message issho.v1.MoveProposalMemberRequest
+ */
+export type MoveProposalMemberRequest = Message<"issho.v1.MoveProposalMemberRequest"> & {
+  /**
+   * @generated from field: string event_id = 1;
+   */
+  eventId: string;
+
+  /**
+   * @generated from field: string user_id = 2;
+   */
+  userId: string;
+
+  /**
+   * @generated from field: string group_id = 3;
+   */
+  groupId: string;
+};
+
+/**
+ * Describes the message issho.v1.MoveProposalMemberRequest.
+ * Use `create(MoveProposalMemberRequestSchema)` to create a new message.
+ */
+export const MoveProposalMemberRequestSchema: GenMessage<MoveProposalMemberRequest> = /*@__PURE__*/
+  messageDesc(file_issho_v1_review, 30);
+
+/**
+ * @generated from message issho.v1.MoveProposalMemberResponse
+ */
+export type MoveProposalMemberResponse = Message<"issho.v1.MoveProposalMemberResponse"> & {
+};
+
+/**
+ * Describes the message issho.v1.MoveProposalMemberResponse.
+ * Use `create(MoveProposalMemberResponseSchema)` to create a new message.
+ */
+export const MoveProposalMemberResponseSchema: GenMessage<MoveProposalMemberResponse> = /*@__PURE__*/
+  messageDesc(file_issho_v1_review, 31);
+
+/**
+ * @generated from message issho.v1.RemoveProposalMemberRequest
+ */
+export type RemoveProposalMemberRequest = Message<"issho.v1.RemoveProposalMemberRequest"> & {
+  /**
+   * @generated from field: string event_id = 1;
+   */
+  eventId: string;
+
+  /**
+   * @generated from field: string user_id = 2;
+   */
+  userId: string;
+};
+
+/**
+ * Describes the message issho.v1.RemoveProposalMemberRequest.
+ * Use `create(RemoveProposalMemberRequestSchema)` to create a new message.
+ */
+export const RemoveProposalMemberRequestSchema: GenMessage<RemoveProposalMemberRequest> = /*@__PURE__*/
+  messageDesc(file_issho_v1_review, 32);
+
+/**
+ * @generated from message issho.v1.RemoveProposalMemberResponse
+ */
+export type RemoveProposalMemberResponse = Message<"issho.v1.RemoveProposalMemberResponse"> & {
+};
+
+/**
+ * Describes the message issho.v1.RemoveProposalMemberResponse.
+ * Use `create(RemoveProposalMemberResponseSchema)` to create a new message.
+ */
+export const RemoveProposalMemberResponseSchema: GenMessage<RemoveProposalMemberResponse> = /*@__PURE__*/
+  messageDesc(file_issho_v1_review, 33);
+
+/**
+ * @generated from message issho.v1.SetProposalStartRequest
+ */
+export type SetProposalStartRequest = Message<"issho.v1.SetProposalStartRequest"> & {
+  /**
+   * @generated from field: string event_id = 1;
+   */
+  eventId: string;
+
+  /**
+   * Local to the city: YYYY-MM-DD and HH:MM.
+   *
+   * @generated from field: string date = 2;
+   */
+  date: string;
+
+  /**
+   * @generated from field: string time = 3;
+   */
+  time: string;
+};
+
+/**
+ * Describes the message issho.v1.SetProposalStartRequest.
+ * Use `create(SetProposalStartRequestSchema)` to create a new message.
+ */
+export const SetProposalStartRequestSchema: GenMessage<SetProposalStartRequest> = /*@__PURE__*/
+  messageDesc(file_issho_v1_review, 34);
+
+/**
+ * @generated from message issho.v1.SetProposalStartResponse
+ */
+export type SetProposalStartResponse = Message<"issho.v1.SetProposalStartResponse"> & {
+};
+
+/**
+ * Describes the message issho.v1.SetProposalStartResponse.
+ * Use `create(SetProposalStartResponseSchema)` to create a new message.
+ */
+export const SetProposalStartResponseSchema: GenMessage<SetProposalStartResponse> = /*@__PURE__*/
+  messageDesc(file_issho_v1_review, 35);
+
+/**
+ * @generated from message issho.v1.SetGroupMeetingPointRequest
+ */
+export type SetGroupMeetingPointRequest = Message<"issho.v1.SetGroupMeetingPointRequest"> & {
+  /**
+   * @generated from field: string group_id = 1;
+   */
+  groupId: string;
+
+  /**
+   * Up to 300 characters; "" clears it.
+   *
+   * @generated from field: string text = 2;
+   */
+  text: string;
+};
+
+/**
+ * Describes the message issho.v1.SetGroupMeetingPointRequest.
+ * Use `create(SetGroupMeetingPointRequestSchema)` to create a new message.
+ */
+export const SetGroupMeetingPointRequestSchema: GenMessage<SetGroupMeetingPointRequest> = /*@__PURE__*/
+  messageDesc(file_issho_v1_review, 36);
+
+/**
+ * @generated from message issho.v1.SetGroupMeetingPointResponse
+ */
+export type SetGroupMeetingPointResponse = Message<"issho.v1.SetGroupMeetingPointResponse"> & {
+};
+
+/**
+ * Describes the message issho.v1.SetGroupMeetingPointResponse.
+ * Use `create(SetGroupMeetingPointResponseSchema)` to create a new message.
+ */
+export const SetGroupMeetingPointResponseSchema: GenMessage<SetGroupMeetingPointResponse> = /*@__PURE__*/
+  messageDesc(file_issho_v1_review, 37);
+
+/**
+ * @generated from message issho.v1.ApproveProposalRequest
+ */
+export type ApproveProposalRequest = Message<"issho.v1.ApproveProposalRequest"> & {
+  /**
+   * @generated from field: string event_id = 1;
+   */
+  eventId: string;
+};
+
+/**
+ * Describes the message issho.v1.ApproveProposalRequest.
+ * Use `create(ApproveProposalRequestSchema)` to create a new message.
+ */
+export const ApproveProposalRequestSchema: GenMessage<ApproveProposalRequest> = /*@__PURE__*/
+  messageDesc(file_issho_v1_review, 38);
+
+/**
+ * @generated from message issho.v1.ApproveProposalResponse
+ */
+export type ApproveProposalResponse = Message<"issho.v1.ApproveProposalResponse"> & {
+};
+
+/**
+ * Describes the message issho.v1.ApproveProposalResponse.
+ * Use `create(ApproveProposalResponseSchema)` to create a new message.
+ */
+export const ApproveProposalResponseSchema: GenMessage<ApproveProposalResponse> = /*@__PURE__*/
+  messageDesc(file_issho_v1_review, 39);
+
+/**
+ * @generated from message issho.v1.RejectProposalRequest
+ */
+export type RejectProposalRequest = Message<"issho.v1.RejectProposalRequest"> & {
+  /**
+   * @generated from field: string event_id = 1;
+   */
+  eventId: string;
+};
+
+/**
+ * Describes the message issho.v1.RejectProposalRequest.
+ * Use `create(RejectProposalRequestSchema)` to create a new message.
+ */
+export const RejectProposalRequestSchema: GenMessage<RejectProposalRequest> = /*@__PURE__*/
+  messageDesc(file_issho_v1_review, 40);
+
+/**
+ * @generated from message issho.v1.RejectProposalResponse
+ */
+export type RejectProposalResponse = Message<"issho.v1.RejectProposalResponse"> & {
+};
+
+/**
+ * Describes the message issho.v1.RejectProposalResponse.
+ * Use `create(RejectProposalResponseSchema)` to create a new message.
+ */
+export const RejectProposalResponseSchema: GenMessage<RejectProposalResponse> = /*@__PURE__*/
+  messageDesc(file_issho_v1_review, 41);
+
+/**
  * @generated from enum issho.v1.ReviewPlanStatus
  */
 export enum ReviewPlanStatus {
@@ -687,6 +1179,36 @@ export enum ReviewPlanStatus {
  */
 export const ReviewPlanStatusSchema: GenEnum<ReviewPlanStatus> = /*@__PURE__*/
   enumDesc(file_issho_v1_review, 0);
+
+/**
+ * @generated from enum issho.v1.ReviewEventStatus
+ */
+export enum ReviewEventStatus {
+  /**
+   * @generated from enum value: REVIEW_EVENT_STATUS_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * Waiting for an admin.
+   *
+   * @generated from enum value: REVIEW_EVENT_STATUS_PROPOSED = 1;
+   */
+  PROPOSED = 1,
+
+  /**
+   * Invitations sent.
+   *
+   * @generated from enum value: REVIEW_EVENT_STATUS_SCHEDULED = 2;
+   */
+  SCHEDULED = 2,
+}
+
+/**
+ * Describes the enum issho.v1.ReviewEventStatus.
+ */
+export const ReviewEventStatusSchema: GenEnum<ReviewEventStatus> = /*@__PURE__*/
+  enumDesc(file_issho_v1_review, 1);
 
 /**
  * ReviewService: plan review in the admin SPA (M8), for launching a city
@@ -816,6 +1338,102 @@ export const ReviewService: GenService<{
     methodKind: "unary";
     input: typeof CreatePlanRequestSchema;
     output: typeof CreatePlanResponseSchema;
+  },
+  /**
+   * ListReviewEvents returns a city's proposals, or its upcoming scheduled
+   * events (to set meeting points), soonest first. At most 200.
+   *
+   * @generated from rpc issho.v1.ReviewService.ListReviewEvents
+   */
+  listReviewEvents: {
+    methodKind: "unary";
+    input: typeof ListReviewEventsRequestSchema;
+    output: typeof ListReviewEventsResponseSchema;
+  },
+  /**
+   * GetReviewEvent returns one with its groups and who's in them.
+   * NOT_FOUND if there's no such event.
+   *
+   * @generated from rpc issho.v1.ReviewService.GetReviewEvent
+   */
+  getReviewEvent: {
+    methodKind: "unary";
+    input: typeof GetReviewEventRequestSchema;
+    output: typeof GetReviewEventResponseSchema;
+  },
+  /**
+   * MoveProposalMember moves someone to another group of the proposal.
+   * FAILED_PRECONDITION if it's no longer a proposal; NOT_FOUND for a
+   * group not in it or someone not in it.
+   *
+   * @generated from rpc issho.v1.ReviewService.MoveProposalMember
+   */
+  moveProposalMember: {
+    methodKind: "unary";
+    input: typeof MoveProposalMemberRequestSchema;
+    output: typeof MoveProposalMemberResponseSchema;
+  },
+  /**
+   * RemoveProposalMember takes someone out of the proposal; they stay
+   * signed up for the plan's next round. A group left empty goes.
+   *
+   * @generated from rpc issho.v1.ReviewService.RemoveProposalMember
+   */
+  removeProposalMember: {
+    methodKind: "unary";
+    input: typeof RemoveProposalMemberRequestSchema;
+    output: typeof RemoveProposalMemberResponseSchema;
+  },
+  /**
+   * SetProposalStart moves the proposal to another local date and time in
+   * the city (its part of the day follows the time). FAILED_PRECONDITION
+   * if the day before has already begun: people need until then to answer.
+   *
+   * @generated from rpc issho.v1.ReviewService.SetProposalStart
+   */
+  setProposalStart: {
+    methodKind: "unary";
+    input: typeof SetProposalStartRequestSchema;
+    output: typeof SetProposalStartResponseSchema;
+  },
+  /**
+   * SetGroupMeetingPoint sets where exactly a group meets, in English
+   * ("" clears it), for a proposal or a scheduled event; stored in the
+   * event's languages too when the server can translate. People who
+   * confirmed see it from 24 hours before the start.
+   *
+   * @generated from rpc issho.v1.ReviewService.SetGroupMeetingPoint
+   */
+  setGroupMeetingPoint: {
+    methodKind: "unary";
+    input: typeof SetGroupMeetingPointRequestSchema;
+    output: typeof SetGroupMeetingPointResponseSchema;
+  },
+  /**
+   * ApproveProposal sends the invitations, as if just scheduled: people
+   * who withdrew (or were suspended) since are left out, everyone else is
+   * invited and told, and the plan moves to its next round for whoever is
+   * still waiting, or closes. FAILED_PRECONDITION if the plan moved on,
+   * answering would no longer be possible in time (set a later start), or
+   * a group has fewer people than its minimum.
+   *
+   * @generated from rpc issho.v1.ReviewService.ApproveProposal
+   */
+  approveProposal: {
+    methodKind: "unary";
+    input: typeof ApproveProposalRequestSchema;
+    output: typeof ApproveProposalResponseSchema;
+  },
+  /**
+   * RejectProposal deletes it. Everyone stays signed up, and the plan
+   * isn't scheduled again for a day.
+   *
+   * @generated from rpc issho.v1.ReviewService.RejectProposal
+   */
+  rejectProposal: {
+    methodKind: "unary";
+    input: typeof RejectProposalRequestSchema;
+    output: typeof RejectProposalResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_issho_v1_review, 0);

@@ -130,9 +130,10 @@ where plan_id = $1 order by user_id, date, block;
 -- People placed in a group stop waiting: their invitation records them now.
 delete from app.plan_signups where plan_id = @plan_id and user_id = any(@user_ids::uuid[]);
 
+-- status is 'scheduled', or 'proposed' in a city under review (00022).
 -- name: InsertEvent :one
-insert into app.events (plan_id, round, date, block, starts_at, confirm_by, forced)
-values (@plan_id, @round, @date, @block, @starts_at, @confirm_by, @forced)
+insert into app.events (plan_id, round, date, block, starts_at, confirm_by, forced, status)
+values (@plan_id, @round, @date, @block, @starts_at, @confirm_by, @forced, @status)
 returning id;
 
 -- name: InsertEventGroup :one
@@ -152,7 +153,8 @@ from app.group_members m
 join app.events e on e.id = m.event_id
 where m.user_id = any(@user_ids::uuid[])
   and m.response in ('invited', 'confirmed')
-  and e.status = 'scheduled'
+  -- A proposal waiting for review holds its people's time too.
+  and e.status in ('scheduled', 'proposed')
   and e.date >= @from_date
 order by m.user_id, e.date, e.block;
 
@@ -200,3 +202,11 @@ order by e.date, m.event_id;
 select area_id, activity_id, follow_up_id, primary_language, secondary_language
 from app.plans
 where city_id = @city_id and status = 'draft';
+
+-- Plans the scheduler leaves alone: a proposal is waiting for review, or
+-- an admin rejected one since @rejected_since (00022).
+-- name: ListPlansOnHold :many
+select p.id from app.plans p
+where p.city_id = @city_id and p.status = 'open'
+  and (exists (select 1 from app.events e where e.plan_id = p.id and e.status = 'proposed')
+       or p.proposal_rejected_at > @rejected_since);

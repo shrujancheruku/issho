@@ -114,16 +114,18 @@ type AppCrewMessage struct {
 }
 
 type AppEvent struct {
-	ID        uuid.UUID
-	PlanID    uuid.UUID
-	Round     int16
-	Date      pgtype.Date
-	Block     string
-	StartsAt  pgtype.Timestamptz
-	ConfirmBy pgtype.Timestamptz
-	Forced    bool
-	Status    string
-	CreatedAt pgtype.Timestamptz
+	ID         uuid.UUID
+	PlanID     uuid.UUID
+	Round      int16
+	Date       pgtype.Date
+	Block      string
+	StartsAt   pgtype.Timestamptz
+	ConfirmBy  pgtype.Timestamptz
+	Forced     bool
+	Status     string
+	CreatedAt  pgtype.Timestamptz
+	ReviewedBy pgtype.UUID
+	ReviewedAt pgtype.Timestamptz
 }
 
 type AppEventFeedback struct {
@@ -218,6 +220,7 @@ type AppPlan struct {
 	CreatedBy            pgtype.UUID
 	ReviewedBy           pgtype.UUID
 	ReviewedAt           pgtype.Timestamptz
+	ProposalRejectedAt   pgtype.Timestamptz
 }
 
 type AppPlanSignup struct {

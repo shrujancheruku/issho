@@ -185,28 +185,48 @@
 - [issho/v1/review.proto](#issho_v1_review-proto)
     - [ApprovePlanRequest](#issho-v1-ApprovePlanRequest)
     - [ApprovePlanResponse](#issho-v1-ApprovePlanResponse)
+    - [ApproveProposalRequest](#issho-v1-ApproveProposalRequest)
+    - [ApproveProposalResponse](#issho-v1-ApproveProposalResponse)
     - [CreatePlanRequest](#issho-v1-CreatePlanRequest)
     - [CreatePlanResponse](#issho-v1-CreatePlanResponse)
     - [EditPlanRequest](#issho-v1-EditPlanRequest)
     - [EditPlanResponse](#issho-v1-EditPlanResponse)
+    - [GetReviewEventRequest](#issho-v1-GetReviewEventRequest)
+    - [GetReviewEventResponse](#issho-v1-GetReviewEventResponse)
     - [GetReviewPlanRequest](#issho-v1-GetReviewPlanRequest)
     - [GetReviewPlanResponse](#issho-v1-GetReviewPlanResponse)
     - [ListReviewCitiesRequest](#issho-v1-ListReviewCitiesRequest)
     - [ListReviewCitiesResponse](#issho-v1-ListReviewCitiesResponse)
+    - [ListReviewEventsRequest](#issho-v1-ListReviewEventsRequest)
+    - [ListReviewEventsResponse](#issho-v1-ListReviewEventsResponse)
     - [ListReviewPlansRequest](#issho-v1-ListReviewPlansRequest)
     - [ListReviewPlansResponse](#issho-v1-ListReviewPlansResponse)
     - [ListVenueOptionsRequest](#issho-v1-ListVenueOptionsRequest)
     - [ListVenueOptionsResponse](#issho-v1-ListVenueOptionsResponse)
+    - [MoveProposalMemberRequest](#issho-v1-MoveProposalMemberRequest)
+    - [MoveProposalMemberResponse](#issho-v1-MoveProposalMemberResponse)
     - [RejectPlanRequest](#issho-v1-RejectPlanRequest)
     - [RejectPlanResponse](#issho-v1-RejectPlanResponse)
+    - [RejectProposalRequest](#issho-v1-RejectProposalRequest)
+    - [RejectProposalResponse](#issho-v1-RejectProposalResponse)
+    - [RemoveProposalMemberRequest](#issho-v1-RemoveProposalMemberRequest)
+    - [RemoveProposalMemberResponse](#issho-v1-RemoveProposalMemberResponse)
     - [ReviewCity](#issho-v1-ReviewCity)
+    - [ReviewEvent](#issho-v1-ReviewEvent)
+    - [ReviewGroup](#issho-v1-ReviewGroup)
+    - [ReviewMember](#issho-v1-ReviewMember)
     - [ReviewPlan](#issho-v1-ReviewPlan)
     - [SetCityReviewRequest](#issho-v1-SetCityReviewRequest)
     - [SetCityReviewResponse](#issho-v1-SetCityReviewResponse)
+    - [SetGroupMeetingPointRequest](#issho-v1-SetGroupMeetingPointRequest)
+    - [SetGroupMeetingPointResponse](#issho-v1-SetGroupMeetingPointResponse)
+    - [SetProposalStartRequest](#issho-v1-SetProposalStartRequest)
+    - [SetProposalStartResponse](#issho-v1-SetProposalStartResponse)
     - [VenueOption](#issho-v1-VenueOption)
     - [WithdrawPlanRequest](#issho-v1-WithdrawPlanRequest)
     - [WithdrawPlanResponse](#issho-v1-WithdrawPlanResponse)
   
+    - [ReviewEventStatus](#issho-v1-ReviewEventStatus)
     - [ReviewPlanStatus](#issho-v1-ReviewPlanStatus)
   
     - [ReviewService](#issho-v1-ReviewService)
@@ -2785,6 +2805,31 @@ HTTP: POST /issho.v1.PushService/&lt;Method&gt;
 
 
 
+<a name="issho-v1-ApproveProposalRequest"></a>
+
+### ApproveProposalRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| event_id | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-ApproveProposalResponse"></a>
+
+### ApproveProposalResponse
+
+
+
+
+
+
+
 <a name="issho-v1-CreatePlanRequest"></a>
 
 ### CreatePlanRequest
@@ -2851,6 +2896,37 @@ HTTP: POST /issho.v1.PushService/&lt;Method&gt;
 
 
 
+<a name="issho-v1-GetReviewEventRequest"></a>
+
+### GetReviewEventRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| event_id | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-GetReviewEventResponse"></a>
+
+### GetReviewEventResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| event | [ReviewEvent](#issho-v1-ReviewEvent) |  |  |
+| groups | [ReviewGroup](#issho-v1-ReviewGroup) | repeated |  |
+
+
+
+
+
+
 <a name="issho-v1-GetReviewPlanRequest"></a>
 
 ### GetReviewPlanRequest
@@ -2901,6 +2977,37 @@ HTTP: POST /issho.v1.PushService/&lt;Method&gt;
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | cities | [ReviewCity](#issho-v1-ReviewCity) | repeated |  |
+
+
+
+
+
+
+<a name="issho-v1-ListReviewEventsRequest"></a>
+
+### ListReviewEventsRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| city_id | [string](#string) |  |  |
+| status | [ReviewEventStatus](#issho-v1-ReviewEventStatus) |  | Required. Scheduled events are listed from today. |
+
+
+
+
+
+
+<a name="issho-v1-ListReviewEventsResponse"></a>
+
+### ListReviewEventsResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| events | [ReviewEvent](#issho-v1-ReviewEvent) | repeated |  |
 
 
 
@@ -2969,6 +3076,33 @@ HTTP: POST /issho.v1.PushService/&lt;Method&gt;
 
 
 
+<a name="issho-v1-MoveProposalMemberRequest"></a>
+
+### MoveProposalMemberRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| event_id | [string](#string) |  |  |
+| user_id | [string](#string) |  |  |
+| group_id | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-MoveProposalMemberResponse"></a>
+
+### MoveProposalMemberResponse
+
+
+
+
+
+
+
 <a name="issho-v1-RejectPlanRequest"></a>
 
 ### RejectPlanRequest
@@ -2994,6 +3128,57 @@ HTTP: POST /issho.v1.PushService/&lt;Method&gt;
 
 
 
+<a name="issho-v1-RejectProposalRequest"></a>
+
+### RejectProposalRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| event_id | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-RejectProposalResponse"></a>
+
+### RejectProposalResponse
+
+
+
+
+
+
+
+<a name="issho-v1-RemoveProposalMemberRequest"></a>
+
+### RemoveProposalMemberRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| event_id | [string](#string) |  |  |
+| user_id | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-RemoveProposalMemberResponse"></a>
+
+### RemoveProposalMemberResponse
+
+
+
+
+
+
+
 <a name="issho-v1-ReviewCity"></a>
 
 ### ReviewCity
@@ -3007,6 +3192,75 @@ HTTP: POST /issho.v1.PushService/&lt;Method&gt;
 | review | [bool](#bool) |  |  |
 | drafts | [int32](#int32) |  |  |
 | open | [int32](#int32) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-ReviewEvent"></a>
+
+### ReviewEvent
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [string](#string) |  |  |
+| plan_id | [string](#string) |  |  |
+| status | [ReviewEventStatus](#issho-v1-ReviewEventStatus) |  |  |
+| title | [string](#string) |  | English: the plan&#39;s stored title, or made from its activities. |
+| area_name | [string](#string) |  |  |
+| date | [string](#string) |  | Local date (YYYY-MM-DD) and part of the day; the start time. |
+| block | [string](#string) |  |  |
+| starts_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| confirm_by | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | Invitees answer by then. |
+| forced | [bool](#bool) |  | Scheduled at the signup deadline with whoever could go, rather than because a group reached its target size. |
+| groups | [int32](#int32) |  |  |
+| people | [int32](#int32) |  | Invited or going. |
+| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| time_zone | [string](#string) |  | The city&#39;s time zone (IANA), for showing and setting local times. |
+
+
+
+
+
+
+<a name="issho-v1-ReviewGroup"></a>
+
+### ReviewGroup
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [string](#string) |  |  |
+| quorum | [int32](#int32) |  | Confirmed straight away at quorum; at the deadline it goes ahead with at least min_attendance. |
+| min_attendance | [int32](#int32) |  |  |
+| score | [float](#float) |  |  |
+| status | [string](#string) |  | inviting, confirmed or cancelled. |
+| meeting_point | [string](#string) |  | English; &#34;&#34; for none. |
+| members | [ReviewMember](#issho-v1-ReviewMember) | repeated |  |
+
+
+
+
+
+
+<a name="issho-v1-ReviewMember"></a>
+
+### ReviewMember
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| user_id | [string](#string) |  |  |
+| name | [string](#string) |  |  |
+| gender | [string](#string) |  | woman, man, nonbinary or unspecified. |
+| birth_year | [int32](#int32) |  |  |
+| response | [string](#string) |  | invited, confirmed, declined or dropped. |
+| signed_up | [bool](#bool) |  | Still signed up for the plan: in a proposal, someone who withdrew since (false) is left out when it&#39;s approved. |
 
 
 
@@ -3077,6 +3331,59 @@ HTTP: POST /issho.v1.PushService/&lt;Method&gt;
 
 
 
+<a name="issho-v1-SetGroupMeetingPointRequest"></a>
+
+### SetGroupMeetingPointRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| group_id | [string](#string) |  |  |
+| text | [string](#string) |  | Up to 300 characters; &#34;&#34; clears it. |
+
+
+
+
+
+
+<a name="issho-v1-SetGroupMeetingPointResponse"></a>
+
+### SetGroupMeetingPointResponse
+
+
+
+
+
+
+
+<a name="issho-v1-SetProposalStartRequest"></a>
+
+### SetProposalStartRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| event_id | [string](#string) |  |  |
+| date | [string](#string) |  | Local to the city: YYYY-MM-DD and HH:MM. |
+| time | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-SetProposalStartResponse"></a>
+
+### SetProposalStartResponse
+
+
+
+
+
+
+
 <a name="issho-v1-VenueOption"></a>
 
 ### VenueOption
@@ -3124,6 +3431,19 @@ HTTP: POST /issho.v1.PushService/&lt;Method&gt;
  
 
 
+<a name="issho-v1-ReviewEventStatus"></a>
+
+### ReviewEventStatus
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| REVIEW_EVENT_STATUS_UNSPECIFIED | 0 |  |
+| REVIEW_EVENT_STATUS_PROPOSED | 1 | Waiting for an admin. |
+| REVIEW_EVENT_STATUS_SCHEDULED | 2 | Invitations sent. |
+
+
+
 <a name="issho-v1-ReviewPlanStatus"></a>
 
 ### ReviewPlanStatus
@@ -3167,6 +3487,14 @@ HTTP: POST /issho.v1.ReviewService/&lt;Method&gt;
 | WithdrawPlan | [WithdrawPlanRequest](#issho-v1-WithdrawPlanRequest) | [WithdrawPlanResponse](#issho-v1-WithdrawPlanResponse) | WithdrawPlan closes an open plan (&#34;withdrawn&#34;). People who signed up see it closed; nobody is notified. Groups already scheduled go ahead. FAILED_PRECONDITION if it isn&#39;t open. |
 | ListVenueOptions | [ListVenueOptionsRequest](#issho-v1-ListVenueOptionsRequest) | [ListVenueOptionsResponse](#issho-v1-ListVenueOptionsResponse) | ListVenueOptions returns the venues found in an area for an activity&#39;s venue categories (not rejected ones), approved first, with names from Google in English. At most 20. Empty for activities that need no venue. |
 | CreatePlan | [CreatePlanRequest](#issho-v1-CreatePlanRequest) | [CreatePlanResponse](#issho-v1-CreatePlanResponse) | CreatePlan opens a plan made by hand, with a signup window from today. It opens straight away, also in a city under review. INVALID_ARGUMENT for an unknown area or activity, an area or activity not in the city, or a venue not found for the activity there. |
+| ListReviewEvents | [ListReviewEventsRequest](#issho-v1-ListReviewEventsRequest) | [ListReviewEventsResponse](#issho-v1-ListReviewEventsResponse) | ListReviewEvents returns a city&#39;s proposals, or its upcoming scheduled events (to set meeting points), soonest first. At most 200. |
+| GetReviewEvent | [GetReviewEventRequest](#issho-v1-GetReviewEventRequest) | [GetReviewEventResponse](#issho-v1-GetReviewEventResponse) | GetReviewEvent returns one with its groups and who&#39;s in them. NOT_FOUND if there&#39;s no such event. |
+| MoveProposalMember | [MoveProposalMemberRequest](#issho-v1-MoveProposalMemberRequest) | [MoveProposalMemberResponse](#issho-v1-MoveProposalMemberResponse) | MoveProposalMember moves someone to another group of the proposal. FAILED_PRECONDITION if it&#39;s no longer a proposal; NOT_FOUND for a group not in it or someone not in it. |
+| RemoveProposalMember | [RemoveProposalMemberRequest](#issho-v1-RemoveProposalMemberRequest) | [RemoveProposalMemberResponse](#issho-v1-RemoveProposalMemberResponse) | RemoveProposalMember takes someone out of the proposal; they stay signed up for the plan&#39;s next round. A group left empty goes. |
+| SetProposalStart | [SetProposalStartRequest](#issho-v1-SetProposalStartRequest) | [SetProposalStartResponse](#issho-v1-SetProposalStartResponse) | SetProposalStart moves the proposal to another local date and time in the city (its part of the day follows the time). FAILED_PRECONDITION if the day before has already begun: people need until then to answer. |
+| SetGroupMeetingPoint | [SetGroupMeetingPointRequest](#issho-v1-SetGroupMeetingPointRequest) | [SetGroupMeetingPointResponse](#issho-v1-SetGroupMeetingPointResponse) | SetGroupMeetingPoint sets where exactly a group meets, in English (&#34;&#34; clears it), for a proposal or a scheduled event; stored in the event&#39;s languages too when the server can translate. People who confirmed see it from 24 hours before the start. |
+| ApproveProposal | [ApproveProposalRequest](#issho-v1-ApproveProposalRequest) | [ApproveProposalResponse](#issho-v1-ApproveProposalResponse) | ApproveProposal sends the invitations, as if just scheduled: people who withdrew (or were suspended) since are left out, everyone else is invited and told, and the plan moves to its next round for whoever is still waiting, or closes. FAILED_PRECONDITION if the plan moved on, answering would no longer be possible in time (set a later start), or a group has fewer people than its minimum. |
+| RejectProposal | [RejectProposalRequest](#issho-v1-RejectProposalRequest) | [RejectProposalResponse](#issho-v1-RejectProposalResponse) | RejectProposal deletes it. Everyone stays signed up, and the plan isn&#39;t scheduled again for a day. |
 
  
 

@@ -74,6 +74,57 @@ func (ReviewPlanStatus) EnumDescriptor() ([]byte, []int) {
 	return file_issho_v1_review_proto_rawDescGZIP(), []int{0}
 }
 
+type ReviewEventStatus int32
+
+const (
+	ReviewEventStatus_REVIEW_EVENT_STATUS_UNSPECIFIED ReviewEventStatus = 0
+	// Waiting for an admin.
+	ReviewEventStatus_REVIEW_EVENT_STATUS_PROPOSED ReviewEventStatus = 1
+	// Invitations sent.
+	ReviewEventStatus_REVIEW_EVENT_STATUS_SCHEDULED ReviewEventStatus = 2
+)
+
+// Enum value maps for ReviewEventStatus.
+var (
+	ReviewEventStatus_name = map[int32]string{
+		0: "REVIEW_EVENT_STATUS_UNSPECIFIED",
+		1: "REVIEW_EVENT_STATUS_PROPOSED",
+		2: "REVIEW_EVENT_STATUS_SCHEDULED",
+	}
+	ReviewEventStatus_value = map[string]int32{
+		"REVIEW_EVENT_STATUS_UNSPECIFIED": 0,
+		"REVIEW_EVENT_STATUS_PROPOSED":    1,
+		"REVIEW_EVENT_STATUS_SCHEDULED":   2,
+	}
+)
+
+func (x ReviewEventStatus) Enum() *ReviewEventStatus {
+	p := new(ReviewEventStatus)
+	*p = x
+	return p
+}
+
+func (x ReviewEventStatus) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ReviewEventStatus) Descriptor() protoreflect.EnumDescriptor {
+	return file_issho_v1_review_proto_enumTypes[1].Descriptor()
+}
+
+func (ReviewEventStatus) Type() protoreflect.EnumType {
+	return &file_issho_v1_review_proto_enumTypes[1]
+}
+
+func (x ReviewEventStatus) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ReviewEventStatus.Descriptor instead.
+func (ReviewEventStatus) EnumDescriptor() ([]byte, []int) {
+	return file_issho_v1_review_proto_rawDescGZIP(), []int{1}
+}
+
 type ListReviewCitiesRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -1435,6 +1486,1068 @@ func (x *CreatePlanResponse) GetPlanId() string {
 	return ""
 }
 
+type ListReviewEventsRequest struct {
+	state  protoimpl.MessageState `protogen:"open.v1"`
+	CityId string                 `protobuf:"bytes,1,opt,name=city_id,json=cityId,proto3" json:"city_id,omitempty"`
+	// Required. Scheduled events are listed from today.
+	Status        ReviewEventStatus `protobuf:"varint,2,opt,name=status,proto3,enum=issho.v1.ReviewEventStatus" json:"status,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListReviewEventsRequest) Reset() {
+	*x = ListReviewEventsRequest{}
+	mi := &file_issho_v1_review_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListReviewEventsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListReviewEventsRequest) ProtoMessage() {}
+
+func (x *ListReviewEventsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_issho_v1_review_proto_msgTypes[23]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListReviewEventsRequest.ProtoReflect.Descriptor instead.
+func (*ListReviewEventsRequest) Descriptor() ([]byte, []int) {
+	return file_issho_v1_review_proto_rawDescGZIP(), []int{23}
+}
+
+func (x *ListReviewEventsRequest) GetCityId() string {
+	if x != nil {
+		return x.CityId
+	}
+	return ""
+}
+
+func (x *ListReviewEventsRequest) GetStatus() ReviewEventStatus {
+	if x != nil {
+		return x.Status
+	}
+	return ReviewEventStatus_REVIEW_EVENT_STATUS_UNSPECIFIED
+}
+
+type ListReviewEventsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Events        []*ReviewEvent         `protobuf:"bytes,1,rep,name=events,proto3" json:"events,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListReviewEventsResponse) Reset() {
+	*x = ListReviewEventsResponse{}
+	mi := &file_issho_v1_review_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListReviewEventsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListReviewEventsResponse) ProtoMessage() {}
+
+func (x *ListReviewEventsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_issho_v1_review_proto_msgTypes[24]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListReviewEventsResponse.ProtoReflect.Descriptor instead.
+func (*ListReviewEventsResponse) Descriptor() ([]byte, []int) {
+	return file_issho_v1_review_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *ListReviewEventsResponse) GetEvents() []*ReviewEvent {
+	if x != nil {
+		return x.Events
+	}
+	return nil
+}
+
+type ReviewEvent struct {
+	state  protoimpl.MessageState `protogen:"open.v1"`
+	Id     string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	PlanId string                 `protobuf:"bytes,2,opt,name=plan_id,json=planId,proto3" json:"plan_id,omitempty"`
+	Status ReviewEventStatus      `protobuf:"varint,3,opt,name=status,proto3,enum=issho.v1.ReviewEventStatus" json:"status,omitempty"`
+	// English: the plan's stored title, or made from its activities.
+	Title    string `protobuf:"bytes,4,opt,name=title,proto3" json:"title,omitempty"`
+	AreaName string `protobuf:"bytes,5,opt,name=area_name,json=areaName,proto3" json:"area_name,omitempty"`
+	// Local date (YYYY-MM-DD) and part of the day; the start time.
+	Date     string                 `protobuf:"bytes,6,opt,name=date,proto3" json:"date,omitempty"`
+	Block    string                 `protobuf:"bytes,7,opt,name=block,proto3" json:"block,omitempty"`
+	StartsAt *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=starts_at,json=startsAt,proto3" json:"starts_at,omitempty"`
+	// Invitees answer by then.
+	ConfirmBy *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=confirm_by,json=confirmBy,proto3" json:"confirm_by,omitempty"`
+	// Scheduled at the signup deadline with whoever could go, rather than
+	// because a group reached its target size.
+	Forced bool  `protobuf:"varint,10,opt,name=forced,proto3" json:"forced,omitempty"`
+	Groups int32 `protobuf:"varint,11,opt,name=groups,proto3" json:"groups,omitempty"`
+	// Invited or going.
+	People    int32                  `protobuf:"varint,12,opt,name=people,proto3" json:"people,omitempty"`
+	CreatedAt *timestamppb.Timestamp `protobuf:"bytes,13,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	// The city's time zone (IANA), for showing and setting local times.
+	TimeZone      string `protobuf:"bytes,14,opt,name=time_zone,json=timeZone,proto3" json:"time_zone,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReviewEvent) Reset() {
+	*x = ReviewEvent{}
+	mi := &file_issho_v1_review_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReviewEvent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReviewEvent) ProtoMessage() {}
+
+func (x *ReviewEvent) ProtoReflect() protoreflect.Message {
+	mi := &file_issho_v1_review_proto_msgTypes[25]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReviewEvent.ProtoReflect.Descriptor instead.
+func (*ReviewEvent) Descriptor() ([]byte, []int) {
+	return file_issho_v1_review_proto_rawDescGZIP(), []int{25}
+}
+
+func (x *ReviewEvent) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *ReviewEvent) GetPlanId() string {
+	if x != nil {
+		return x.PlanId
+	}
+	return ""
+}
+
+func (x *ReviewEvent) GetStatus() ReviewEventStatus {
+	if x != nil {
+		return x.Status
+	}
+	return ReviewEventStatus_REVIEW_EVENT_STATUS_UNSPECIFIED
+}
+
+func (x *ReviewEvent) GetTitle() string {
+	if x != nil {
+		return x.Title
+	}
+	return ""
+}
+
+func (x *ReviewEvent) GetAreaName() string {
+	if x != nil {
+		return x.AreaName
+	}
+	return ""
+}
+
+func (x *ReviewEvent) GetDate() string {
+	if x != nil {
+		return x.Date
+	}
+	return ""
+}
+
+func (x *ReviewEvent) GetBlock() string {
+	if x != nil {
+		return x.Block
+	}
+	return ""
+}
+
+func (x *ReviewEvent) GetStartsAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.StartsAt
+	}
+	return nil
+}
+
+func (x *ReviewEvent) GetConfirmBy() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ConfirmBy
+	}
+	return nil
+}
+
+func (x *ReviewEvent) GetForced() bool {
+	if x != nil {
+		return x.Forced
+	}
+	return false
+}
+
+func (x *ReviewEvent) GetGroups() int32 {
+	if x != nil {
+		return x.Groups
+	}
+	return 0
+}
+
+func (x *ReviewEvent) GetPeople() int32 {
+	if x != nil {
+		return x.People
+	}
+	return 0
+}
+
+func (x *ReviewEvent) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return nil
+}
+
+func (x *ReviewEvent) GetTimeZone() string {
+	if x != nil {
+		return x.TimeZone
+	}
+	return ""
+}
+
+type GetReviewEventRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	EventId       string                 `protobuf:"bytes,1,opt,name=event_id,json=eventId,proto3" json:"event_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetReviewEventRequest) Reset() {
+	*x = GetReviewEventRequest{}
+	mi := &file_issho_v1_review_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetReviewEventRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetReviewEventRequest) ProtoMessage() {}
+
+func (x *GetReviewEventRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_issho_v1_review_proto_msgTypes[26]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetReviewEventRequest.ProtoReflect.Descriptor instead.
+func (*GetReviewEventRequest) Descriptor() ([]byte, []int) {
+	return file_issho_v1_review_proto_rawDescGZIP(), []int{26}
+}
+
+func (x *GetReviewEventRequest) GetEventId() string {
+	if x != nil {
+		return x.EventId
+	}
+	return ""
+}
+
+type GetReviewEventResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Event         *ReviewEvent           `protobuf:"bytes,1,opt,name=event,proto3" json:"event,omitempty"`
+	Groups        []*ReviewGroup         `protobuf:"bytes,2,rep,name=groups,proto3" json:"groups,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetReviewEventResponse) Reset() {
+	*x = GetReviewEventResponse{}
+	mi := &file_issho_v1_review_proto_msgTypes[27]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetReviewEventResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetReviewEventResponse) ProtoMessage() {}
+
+func (x *GetReviewEventResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_issho_v1_review_proto_msgTypes[27]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetReviewEventResponse.ProtoReflect.Descriptor instead.
+func (*GetReviewEventResponse) Descriptor() ([]byte, []int) {
+	return file_issho_v1_review_proto_rawDescGZIP(), []int{27}
+}
+
+func (x *GetReviewEventResponse) GetEvent() *ReviewEvent {
+	if x != nil {
+		return x.Event
+	}
+	return nil
+}
+
+func (x *GetReviewEventResponse) GetGroups() []*ReviewGroup {
+	if x != nil {
+		return x.Groups
+	}
+	return nil
+}
+
+type ReviewGroup struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Id    string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// Confirmed straight away at quorum; at the deadline it goes ahead with
+	// at least min_attendance.
+	Quorum        int32   `protobuf:"varint,2,opt,name=quorum,proto3" json:"quorum,omitempty"`
+	MinAttendance int32   `protobuf:"varint,3,opt,name=min_attendance,json=minAttendance,proto3" json:"min_attendance,omitempty"`
+	Score         float32 `protobuf:"fixed32,4,opt,name=score,proto3" json:"score,omitempty"`
+	// inviting, confirmed or cancelled.
+	Status string `protobuf:"bytes,5,opt,name=status,proto3" json:"status,omitempty"`
+	// English; "" for none.
+	MeetingPoint  string          `protobuf:"bytes,6,opt,name=meeting_point,json=meetingPoint,proto3" json:"meeting_point,omitempty"`
+	Members       []*ReviewMember `protobuf:"bytes,7,rep,name=members,proto3" json:"members,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReviewGroup) Reset() {
+	*x = ReviewGroup{}
+	mi := &file_issho_v1_review_proto_msgTypes[28]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReviewGroup) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReviewGroup) ProtoMessage() {}
+
+func (x *ReviewGroup) ProtoReflect() protoreflect.Message {
+	mi := &file_issho_v1_review_proto_msgTypes[28]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReviewGroup.ProtoReflect.Descriptor instead.
+func (*ReviewGroup) Descriptor() ([]byte, []int) {
+	return file_issho_v1_review_proto_rawDescGZIP(), []int{28}
+}
+
+func (x *ReviewGroup) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *ReviewGroup) GetQuorum() int32 {
+	if x != nil {
+		return x.Quorum
+	}
+	return 0
+}
+
+func (x *ReviewGroup) GetMinAttendance() int32 {
+	if x != nil {
+		return x.MinAttendance
+	}
+	return 0
+}
+
+func (x *ReviewGroup) GetScore() float32 {
+	if x != nil {
+		return x.Score
+	}
+	return 0
+}
+
+func (x *ReviewGroup) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+func (x *ReviewGroup) GetMeetingPoint() string {
+	if x != nil {
+		return x.MeetingPoint
+	}
+	return ""
+}
+
+func (x *ReviewGroup) GetMembers() []*ReviewMember {
+	if x != nil {
+		return x.Members
+	}
+	return nil
+}
+
+type ReviewMember struct {
+	state  protoimpl.MessageState `protogen:"open.v1"`
+	UserId string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Name   string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	// woman, man, nonbinary or unspecified.
+	Gender    string `protobuf:"bytes,3,opt,name=gender,proto3" json:"gender,omitempty"`
+	BirthYear int32  `protobuf:"varint,4,opt,name=birth_year,json=birthYear,proto3" json:"birth_year,omitempty"`
+	// invited, confirmed, declined or dropped.
+	Response string `protobuf:"bytes,5,opt,name=response,proto3" json:"response,omitempty"`
+	// Still signed up for the plan: in a proposal, someone who withdrew
+	// since (false) is left out when it's approved.
+	SignedUp      bool `protobuf:"varint,6,opt,name=signed_up,json=signedUp,proto3" json:"signed_up,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReviewMember) Reset() {
+	*x = ReviewMember{}
+	mi := &file_issho_v1_review_proto_msgTypes[29]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReviewMember) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReviewMember) ProtoMessage() {}
+
+func (x *ReviewMember) ProtoReflect() protoreflect.Message {
+	mi := &file_issho_v1_review_proto_msgTypes[29]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReviewMember.ProtoReflect.Descriptor instead.
+func (*ReviewMember) Descriptor() ([]byte, []int) {
+	return file_issho_v1_review_proto_rawDescGZIP(), []int{29}
+}
+
+func (x *ReviewMember) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *ReviewMember) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *ReviewMember) GetGender() string {
+	if x != nil {
+		return x.Gender
+	}
+	return ""
+}
+
+func (x *ReviewMember) GetBirthYear() int32 {
+	if x != nil {
+		return x.BirthYear
+	}
+	return 0
+}
+
+func (x *ReviewMember) GetResponse() string {
+	if x != nil {
+		return x.Response
+	}
+	return ""
+}
+
+func (x *ReviewMember) GetSignedUp() bool {
+	if x != nil {
+		return x.SignedUp
+	}
+	return false
+}
+
+type MoveProposalMemberRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	EventId       string                 `protobuf:"bytes,1,opt,name=event_id,json=eventId,proto3" json:"event_id,omitempty"`
+	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	GroupId       string                 `protobuf:"bytes,3,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MoveProposalMemberRequest) Reset() {
+	*x = MoveProposalMemberRequest{}
+	mi := &file_issho_v1_review_proto_msgTypes[30]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MoveProposalMemberRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MoveProposalMemberRequest) ProtoMessage() {}
+
+func (x *MoveProposalMemberRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_issho_v1_review_proto_msgTypes[30]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MoveProposalMemberRequest.ProtoReflect.Descriptor instead.
+func (*MoveProposalMemberRequest) Descriptor() ([]byte, []int) {
+	return file_issho_v1_review_proto_rawDescGZIP(), []int{30}
+}
+
+func (x *MoveProposalMemberRequest) GetEventId() string {
+	if x != nil {
+		return x.EventId
+	}
+	return ""
+}
+
+func (x *MoveProposalMemberRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *MoveProposalMemberRequest) GetGroupId() string {
+	if x != nil {
+		return x.GroupId
+	}
+	return ""
+}
+
+type MoveProposalMemberResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MoveProposalMemberResponse) Reset() {
+	*x = MoveProposalMemberResponse{}
+	mi := &file_issho_v1_review_proto_msgTypes[31]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MoveProposalMemberResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MoveProposalMemberResponse) ProtoMessage() {}
+
+func (x *MoveProposalMemberResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_issho_v1_review_proto_msgTypes[31]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MoveProposalMemberResponse.ProtoReflect.Descriptor instead.
+func (*MoveProposalMemberResponse) Descriptor() ([]byte, []int) {
+	return file_issho_v1_review_proto_rawDescGZIP(), []int{31}
+}
+
+type RemoveProposalMemberRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	EventId       string                 `protobuf:"bytes,1,opt,name=event_id,json=eventId,proto3" json:"event_id,omitempty"`
+	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RemoveProposalMemberRequest) Reset() {
+	*x = RemoveProposalMemberRequest{}
+	mi := &file_issho_v1_review_proto_msgTypes[32]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RemoveProposalMemberRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RemoveProposalMemberRequest) ProtoMessage() {}
+
+func (x *RemoveProposalMemberRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_issho_v1_review_proto_msgTypes[32]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RemoveProposalMemberRequest.ProtoReflect.Descriptor instead.
+func (*RemoveProposalMemberRequest) Descriptor() ([]byte, []int) {
+	return file_issho_v1_review_proto_rawDescGZIP(), []int{32}
+}
+
+func (x *RemoveProposalMemberRequest) GetEventId() string {
+	if x != nil {
+		return x.EventId
+	}
+	return ""
+}
+
+func (x *RemoveProposalMemberRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+type RemoveProposalMemberResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RemoveProposalMemberResponse) Reset() {
+	*x = RemoveProposalMemberResponse{}
+	mi := &file_issho_v1_review_proto_msgTypes[33]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RemoveProposalMemberResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RemoveProposalMemberResponse) ProtoMessage() {}
+
+func (x *RemoveProposalMemberResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_issho_v1_review_proto_msgTypes[33]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RemoveProposalMemberResponse.ProtoReflect.Descriptor instead.
+func (*RemoveProposalMemberResponse) Descriptor() ([]byte, []int) {
+	return file_issho_v1_review_proto_rawDescGZIP(), []int{33}
+}
+
+type SetProposalStartRequest struct {
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	EventId string                 `protobuf:"bytes,1,opt,name=event_id,json=eventId,proto3" json:"event_id,omitempty"`
+	// Local to the city: YYYY-MM-DD and HH:MM.
+	Date          string `protobuf:"bytes,2,opt,name=date,proto3" json:"date,omitempty"`
+	Time          string `protobuf:"bytes,3,opt,name=time,proto3" json:"time,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SetProposalStartRequest) Reset() {
+	*x = SetProposalStartRequest{}
+	mi := &file_issho_v1_review_proto_msgTypes[34]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SetProposalStartRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SetProposalStartRequest) ProtoMessage() {}
+
+func (x *SetProposalStartRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_issho_v1_review_proto_msgTypes[34]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SetProposalStartRequest.ProtoReflect.Descriptor instead.
+func (*SetProposalStartRequest) Descriptor() ([]byte, []int) {
+	return file_issho_v1_review_proto_rawDescGZIP(), []int{34}
+}
+
+func (x *SetProposalStartRequest) GetEventId() string {
+	if x != nil {
+		return x.EventId
+	}
+	return ""
+}
+
+func (x *SetProposalStartRequest) GetDate() string {
+	if x != nil {
+		return x.Date
+	}
+	return ""
+}
+
+func (x *SetProposalStartRequest) GetTime() string {
+	if x != nil {
+		return x.Time
+	}
+	return ""
+}
+
+type SetProposalStartResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SetProposalStartResponse) Reset() {
+	*x = SetProposalStartResponse{}
+	mi := &file_issho_v1_review_proto_msgTypes[35]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SetProposalStartResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SetProposalStartResponse) ProtoMessage() {}
+
+func (x *SetProposalStartResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_issho_v1_review_proto_msgTypes[35]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SetProposalStartResponse.ProtoReflect.Descriptor instead.
+func (*SetProposalStartResponse) Descriptor() ([]byte, []int) {
+	return file_issho_v1_review_proto_rawDescGZIP(), []int{35}
+}
+
+type SetGroupMeetingPointRequest struct {
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	GroupId string                 `protobuf:"bytes,1,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
+	// Up to 300 characters; "" clears it.
+	Text          string `protobuf:"bytes,2,opt,name=text,proto3" json:"text,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SetGroupMeetingPointRequest) Reset() {
+	*x = SetGroupMeetingPointRequest{}
+	mi := &file_issho_v1_review_proto_msgTypes[36]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SetGroupMeetingPointRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SetGroupMeetingPointRequest) ProtoMessage() {}
+
+func (x *SetGroupMeetingPointRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_issho_v1_review_proto_msgTypes[36]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SetGroupMeetingPointRequest.ProtoReflect.Descriptor instead.
+func (*SetGroupMeetingPointRequest) Descriptor() ([]byte, []int) {
+	return file_issho_v1_review_proto_rawDescGZIP(), []int{36}
+}
+
+func (x *SetGroupMeetingPointRequest) GetGroupId() string {
+	if x != nil {
+		return x.GroupId
+	}
+	return ""
+}
+
+func (x *SetGroupMeetingPointRequest) GetText() string {
+	if x != nil {
+		return x.Text
+	}
+	return ""
+}
+
+type SetGroupMeetingPointResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SetGroupMeetingPointResponse) Reset() {
+	*x = SetGroupMeetingPointResponse{}
+	mi := &file_issho_v1_review_proto_msgTypes[37]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SetGroupMeetingPointResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SetGroupMeetingPointResponse) ProtoMessage() {}
+
+func (x *SetGroupMeetingPointResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_issho_v1_review_proto_msgTypes[37]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SetGroupMeetingPointResponse.ProtoReflect.Descriptor instead.
+func (*SetGroupMeetingPointResponse) Descriptor() ([]byte, []int) {
+	return file_issho_v1_review_proto_rawDescGZIP(), []int{37}
+}
+
+type ApproveProposalRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	EventId       string                 `protobuf:"bytes,1,opt,name=event_id,json=eventId,proto3" json:"event_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ApproveProposalRequest) Reset() {
+	*x = ApproveProposalRequest{}
+	mi := &file_issho_v1_review_proto_msgTypes[38]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ApproveProposalRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ApproveProposalRequest) ProtoMessage() {}
+
+func (x *ApproveProposalRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_issho_v1_review_proto_msgTypes[38]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ApproveProposalRequest.ProtoReflect.Descriptor instead.
+func (*ApproveProposalRequest) Descriptor() ([]byte, []int) {
+	return file_issho_v1_review_proto_rawDescGZIP(), []int{38}
+}
+
+func (x *ApproveProposalRequest) GetEventId() string {
+	if x != nil {
+		return x.EventId
+	}
+	return ""
+}
+
+type ApproveProposalResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ApproveProposalResponse) Reset() {
+	*x = ApproveProposalResponse{}
+	mi := &file_issho_v1_review_proto_msgTypes[39]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ApproveProposalResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ApproveProposalResponse) ProtoMessage() {}
+
+func (x *ApproveProposalResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_issho_v1_review_proto_msgTypes[39]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ApproveProposalResponse.ProtoReflect.Descriptor instead.
+func (*ApproveProposalResponse) Descriptor() ([]byte, []int) {
+	return file_issho_v1_review_proto_rawDescGZIP(), []int{39}
+}
+
+type RejectProposalRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	EventId       string                 `protobuf:"bytes,1,opt,name=event_id,json=eventId,proto3" json:"event_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RejectProposalRequest) Reset() {
+	*x = RejectProposalRequest{}
+	mi := &file_issho_v1_review_proto_msgTypes[40]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RejectProposalRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RejectProposalRequest) ProtoMessage() {}
+
+func (x *RejectProposalRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_issho_v1_review_proto_msgTypes[40]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RejectProposalRequest.ProtoReflect.Descriptor instead.
+func (*RejectProposalRequest) Descriptor() ([]byte, []int) {
+	return file_issho_v1_review_proto_rawDescGZIP(), []int{40}
+}
+
+func (x *RejectProposalRequest) GetEventId() string {
+	if x != nil {
+		return x.EventId
+	}
+	return ""
+}
+
+type RejectProposalResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RejectProposalResponse) Reset() {
+	*x = RejectProposalResponse{}
+	mi := &file_issho_v1_review_proto_msgTypes[41]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RejectProposalResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RejectProposalResponse) ProtoMessage() {}
+
+func (x *RejectProposalResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_issho_v1_review_proto_msgTypes[41]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RejectProposalResponse.ProtoReflect.Descriptor instead.
+func (*RejectProposalResponse) Descriptor() ([]byte, []int) {
+	return file_issho_v1_review_proto_rawDescGZIP(), []int{41}
+}
+
 var File_issho_v1_review_proto protoreflect.FileDescriptor
 
 const file_issho_v1_review_proto_rawDesc = "" +
@@ -1541,12 +2654,84 @@ const file_issho_v1_review_proto_rawDesc = "" +
 	"\asummary\x18\n" +
 	" \x01(\tR\asummary\"-\n" +
 	"\x12CreatePlanResponse\x12\x17\n" +
-	"\aplan_id\x18\x01 \x01(\tR\x06planId*\x90\x01\n" +
+	"\aplan_id\x18\x01 \x01(\tR\x06planId\"g\n" +
+	"\x17ListReviewEventsRequest\x12\x17\n" +
+	"\acity_id\x18\x01 \x01(\tR\x06cityId\x123\n" +
+	"\x06status\x18\x02 \x01(\x0e2\x1b.issho.v1.ReviewEventStatusR\x06status\"I\n" +
+	"\x18ListReviewEventsResponse\x12-\n" +
+	"\x06events\x18\x01 \x03(\v2\x15.issho.v1.ReviewEventR\x06events\"\xdc\x03\n" +
+	"\vReviewEvent\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
+	"\aplan_id\x18\x02 \x01(\tR\x06planId\x123\n" +
+	"\x06status\x18\x03 \x01(\x0e2\x1b.issho.v1.ReviewEventStatusR\x06status\x12\x14\n" +
+	"\x05title\x18\x04 \x01(\tR\x05title\x12\x1b\n" +
+	"\tarea_name\x18\x05 \x01(\tR\bareaName\x12\x12\n" +
+	"\x04date\x18\x06 \x01(\tR\x04date\x12\x14\n" +
+	"\x05block\x18\a \x01(\tR\x05block\x127\n" +
+	"\tstarts_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\bstartsAt\x129\n" +
+	"\n" +
+	"confirm_by\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tconfirmBy\x12\x16\n" +
+	"\x06forced\x18\n" +
+	" \x01(\bR\x06forced\x12\x16\n" +
+	"\x06groups\x18\v \x01(\x05R\x06groups\x12\x16\n" +
+	"\x06people\x18\f \x01(\x05R\x06people\x129\n" +
+	"\n" +
+	"created_at\x18\r \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x12\x1b\n" +
+	"\ttime_zone\x18\x0e \x01(\tR\btimeZone\"2\n" +
+	"\x15GetReviewEventRequest\x12\x19\n" +
+	"\bevent_id\x18\x01 \x01(\tR\aeventId\"t\n" +
+	"\x16GetReviewEventResponse\x12+\n" +
+	"\x05event\x18\x01 \x01(\v2\x15.issho.v1.ReviewEventR\x05event\x12-\n" +
+	"\x06groups\x18\x02 \x03(\v2\x15.issho.v1.ReviewGroupR\x06groups\"\xe1\x01\n" +
+	"\vReviewGroup\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x16\n" +
+	"\x06quorum\x18\x02 \x01(\x05R\x06quorum\x12%\n" +
+	"\x0emin_attendance\x18\x03 \x01(\x05R\rminAttendance\x12\x14\n" +
+	"\x05score\x18\x04 \x01(\x02R\x05score\x12\x16\n" +
+	"\x06status\x18\x05 \x01(\tR\x06status\x12#\n" +
+	"\rmeeting_point\x18\x06 \x01(\tR\fmeetingPoint\x120\n" +
+	"\amembers\x18\a \x03(\v2\x16.issho.v1.ReviewMemberR\amembers\"\xab\x01\n" +
+	"\fReviewMember\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12\x16\n" +
+	"\x06gender\x18\x03 \x01(\tR\x06gender\x12\x1d\n" +
+	"\n" +
+	"birth_year\x18\x04 \x01(\x05R\tbirthYear\x12\x1a\n" +
+	"\bresponse\x18\x05 \x01(\tR\bresponse\x12\x1b\n" +
+	"\tsigned_up\x18\x06 \x01(\bR\bsignedUp\"j\n" +
+	"\x19MoveProposalMemberRequest\x12\x19\n" +
+	"\bevent_id\x18\x01 \x01(\tR\aeventId\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x19\n" +
+	"\bgroup_id\x18\x03 \x01(\tR\agroupId\"\x1c\n" +
+	"\x1aMoveProposalMemberResponse\"Q\n" +
+	"\x1bRemoveProposalMemberRequest\x12\x19\n" +
+	"\bevent_id\x18\x01 \x01(\tR\aeventId\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\"\x1e\n" +
+	"\x1cRemoveProposalMemberResponse\"\\\n" +
+	"\x17SetProposalStartRequest\x12\x19\n" +
+	"\bevent_id\x18\x01 \x01(\tR\aeventId\x12\x12\n" +
+	"\x04date\x18\x02 \x01(\tR\x04date\x12\x12\n" +
+	"\x04time\x18\x03 \x01(\tR\x04time\"\x1a\n" +
+	"\x18SetProposalStartResponse\"L\n" +
+	"\x1bSetGroupMeetingPointRequest\x12\x19\n" +
+	"\bgroup_id\x18\x01 \x01(\tR\agroupId\x12\x12\n" +
+	"\x04text\x18\x02 \x01(\tR\x04text\"\x1e\n" +
+	"\x1cSetGroupMeetingPointResponse\"3\n" +
+	"\x16ApproveProposalRequest\x12\x19\n" +
+	"\bevent_id\x18\x01 \x01(\tR\aeventId\"\x19\n" +
+	"\x17ApproveProposalResponse\"2\n" +
+	"\x15RejectProposalRequest\x12\x19\n" +
+	"\bevent_id\x18\x01 \x01(\tR\aeventId\"\x18\n" +
+	"\x16RejectProposalResponse*\x90\x01\n" +
 	"\x10ReviewPlanStatus\x12\"\n" +
 	"\x1eREVIEW_PLAN_STATUS_UNSPECIFIED\x10\x00\x12\x1c\n" +
 	"\x18REVIEW_PLAN_STATUS_DRAFT\x10\x01\x12\x1b\n" +
 	"\x17REVIEW_PLAN_STATUS_OPEN\x10\x02\x12\x1d\n" +
-	"\x19REVIEW_PLAN_STATUS_CLOSED\x10\x032\xc5\x06\n" +
+	"\x19REVIEW_PLAN_STATUS_CLOSED\x10\x03*}\n" +
+	"\x11ReviewEventStatus\x12#\n" +
+	"\x1fREVIEW_EVENT_STATUS_UNSPECIFIED\x10\x00\x12 \n" +
+	"\x1cREVIEW_EVENT_STATUS_PROPOSED\x10\x01\x12!\n" +
+	"\x1dREVIEW_EVENT_STATUS_SCHEDULED\x10\x022\xbc\f\n" +
 	"\rReviewService\x12[\n" +
 	"\x10ListReviewCities\x12!.issho.v1.ListReviewCitiesRequest\x1a\".issho.v1.ListReviewCitiesResponse\"\x00\x12R\n" +
 	"\rSetCityReview\x12\x1e.issho.v1.SetCityReviewRequest\x1a\x1f.issho.v1.SetCityReviewResponse\"\x00\x12X\n" +
@@ -1559,7 +2744,15 @@ const file_issho_v1_review_proto_rawDesc = "" +
 	"\fWithdrawPlan\x12\x1d.issho.v1.WithdrawPlanRequest\x1a\x1e.issho.v1.WithdrawPlanResponse\"\x00\x12[\n" +
 	"\x10ListVenueOptions\x12!.issho.v1.ListVenueOptionsRequest\x1a\".issho.v1.ListVenueOptionsResponse\"\x00\x12I\n" +
 	"\n" +
-	"CreatePlan\x12\x1b.issho.v1.CreatePlanRequest\x1a\x1c.issho.v1.CreatePlanResponse\"\x00B>Z<github.com/shrujancheruku/issho/backend/gen/issho/v1;isshov1b\x06proto3"
+	"CreatePlan\x12\x1b.issho.v1.CreatePlanRequest\x1a\x1c.issho.v1.CreatePlanResponse\"\x00\x12[\n" +
+	"\x10ListReviewEvents\x12!.issho.v1.ListReviewEventsRequest\x1a\".issho.v1.ListReviewEventsResponse\"\x00\x12U\n" +
+	"\x0eGetReviewEvent\x12\x1f.issho.v1.GetReviewEventRequest\x1a .issho.v1.GetReviewEventResponse\"\x00\x12a\n" +
+	"\x12MoveProposalMember\x12#.issho.v1.MoveProposalMemberRequest\x1a$.issho.v1.MoveProposalMemberResponse\"\x00\x12g\n" +
+	"\x14RemoveProposalMember\x12%.issho.v1.RemoveProposalMemberRequest\x1a&.issho.v1.RemoveProposalMemberResponse\"\x00\x12[\n" +
+	"\x10SetProposalStart\x12!.issho.v1.SetProposalStartRequest\x1a\".issho.v1.SetProposalStartResponse\"\x00\x12g\n" +
+	"\x14SetGroupMeetingPoint\x12%.issho.v1.SetGroupMeetingPointRequest\x1a&.issho.v1.SetGroupMeetingPointResponse\"\x00\x12X\n" +
+	"\x0fApproveProposal\x12 .issho.v1.ApproveProposalRequest\x1a!.issho.v1.ApproveProposalResponse\"\x00\x12U\n" +
+	"\x0eRejectProposal\x12\x1f.issho.v1.RejectProposalRequest\x1a .issho.v1.RejectProposalResponse\"\x00B>Z<github.com/shrujancheruku/issho/backend/gen/issho/v1;isshov1b\x06proto3"
 
 var (
 	file_issho_v1_review_proto_rawDescOnce sync.Once
@@ -1573,72 +2766,117 @@ func file_issho_v1_review_proto_rawDescGZIP() []byte {
 	return file_issho_v1_review_proto_rawDescData
 }
 
-var file_issho_v1_review_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_issho_v1_review_proto_msgTypes = make([]protoimpl.MessageInfo, 23)
+var file_issho_v1_review_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
+var file_issho_v1_review_proto_msgTypes = make([]protoimpl.MessageInfo, 42)
 var file_issho_v1_review_proto_goTypes = []any{
-	(ReviewPlanStatus)(0),            // 0: issho.v1.ReviewPlanStatus
-	(*ListReviewCitiesRequest)(nil),  // 1: issho.v1.ListReviewCitiesRequest
-	(*ListReviewCitiesResponse)(nil), // 2: issho.v1.ListReviewCitiesResponse
-	(*ReviewCity)(nil),               // 3: issho.v1.ReviewCity
-	(*SetCityReviewRequest)(nil),     // 4: issho.v1.SetCityReviewRequest
-	(*SetCityReviewResponse)(nil),    // 5: issho.v1.SetCityReviewResponse
-	(*ListReviewPlansRequest)(nil),   // 6: issho.v1.ListReviewPlansRequest
-	(*ListReviewPlansResponse)(nil),  // 7: issho.v1.ListReviewPlansResponse
-	(*ReviewPlan)(nil),               // 8: issho.v1.ReviewPlan
-	(*GetReviewPlanRequest)(nil),     // 9: issho.v1.GetReviewPlanRequest
-	(*GetReviewPlanResponse)(nil),    // 10: issho.v1.GetReviewPlanResponse
-	(*ApprovePlanRequest)(nil),       // 11: issho.v1.ApprovePlanRequest
-	(*ApprovePlanResponse)(nil),      // 12: issho.v1.ApprovePlanResponse
-	(*RejectPlanRequest)(nil),        // 13: issho.v1.RejectPlanRequest
-	(*RejectPlanResponse)(nil),       // 14: issho.v1.RejectPlanResponse
-	(*EditPlanRequest)(nil),          // 15: issho.v1.EditPlanRequest
-	(*EditPlanResponse)(nil),         // 16: issho.v1.EditPlanResponse
-	(*WithdrawPlanRequest)(nil),      // 17: issho.v1.WithdrawPlanRequest
-	(*WithdrawPlanResponse)(nil),     // 18: issho.v1.WithdrawPlanResponse
-	(*ListVenueOptionsRequest)(nil),  // 19: issho.v1.ListVenueOptionsRequest
-	(*ListVenueOptionsResponse)(nil), // 20: issho.v1.ListVenueOptionsResponse
-	(*VenueOption)(nil),              // 21: issho.v1.VenueOption
-	(*CreatePlanRequest)(nil),        // 22: issho.v1.CreatePlanRequest
-	(*CreatePlanResponse)(nil),       // 23: issho.v1.CreatePlanResponse
-	(*timestamppb.Timestamp)(nil),    // 24: google.protobuf.Timestamp
-	(*PlanStep)(nil),                 // 25: issho.v1.PlanStep
+	(ReviewPlanStatus)(0),                // 0: issho.v1.ReviewPlanStatus
+	(ReviewEventStatus)(0),               // 1: issho.v1.ReviewEventStatus
+	(*ListReviewCitiesRequest)(nil),      // 2: issho.v1.ListReviewCitiesRequest
+	(*ListReviewCitiesResponse)(nil),     // 3: issho.v1.ListReviewCitiesResponse
+	(*ReviewCity)(nil),                   // 4: issho.v1.ReviewCity
+	(*SetCityReviewRequest)(nil),         // 5: issho.v1.SetCityReviewRequest
+	(*SetCityReviewResponse)(nil),        // 6: issho.v1.SetCityReviewResponse
+	(*ListReviewPlansRequest)(nil),       // 7: issho.v1.ListReviewPlansRequest
+	(*ListReviewPlansResponse)(nil),      // 8: issho.v1.ListReviewPlansResponse
+	(*ReviewPlan)(nil),                   // 9: issho.v1.ReviewPlan
+	(*GetReviewPlanRequest)(nil),         // 10: issho.v1.GetReviewPlanRequest
+	(*GetReviewPlanResponse)(nil),        // 11: issho.v1.GetReviewPlanResponse
+	(*ApprovePlanRequest)(nil),           // 12: issho.v1.ApprovePlanRequest
+	(*ApprovePlanResponse)(nil),          // 13: issho.v1.ApprovePlanResponse
+	(*RejectPlanRequest)(nil),            // 14: issho.v1.RejectPlanRequest
+	(*RejectPlanResponse)(nil),           // 15: issho.v1.RejectPlanResponse
+	(*EditPlanRequest)(nil),              // 16: issho.v1.EditPlanRequest
+	(*EditPlanResponse)(nil),             // 17: issho.v1.EditPlanResponse
+	(*WithdrawPlanRequest)(nil),          // 18: issho.v1.WithdrawPlanRequest
+	(*WithdrawPlanResponse)(nil),         // 19: issho.v1.WithdrawPlanResponse
+	(*ListVenueOptionsRequest)(nil),      // 20: issho.v1.ListVenueOptionsRequest
+	(*ListVenueOptionsResponse)(nil),     // 21: issho.v1.ListVenueOptionsResponse
+	(*VenueOption)(nil),                  // 22: issho.v1.VenueOption
+	(*CreatePlanRequest)(nil),            // 23: issho.v1.CreatePlanRequest
+	(*CreatePlanResponse)(nil),           // 24: issho.v1.CreatePlanResponse
+	(*ListReviewEventsRequest)(nil),      // 25: issho.v1.ListReviewEventsRequest
+	(*ListReviewEventsResponse)(nil),     // 26: issho.v1.ListReviewEventsResponse
+	(*ReviewEvent)(nil),                  // 27: issho.v1.ReviewEvent
+	(*GetReviewEventRequest)(nil),        // 28: issho.v1.GetReviewEventRequest
+	(*GetReviewEventResponse)(nil),       // 29: issho.v1.GetReviewEventResponse
+	(*ReviewGroup)(nil),                  // 30: issho.v1.ReviewGroup
+	(*ReviewMember)(nil),                 // 31: issho.v1.ReviewMember
+	(*MoveProposalMemberRequest)(nil),    // 32: issho.v1.MoveProposalMemberRequest
+	(*MoveProposalMemberResponse)(nil),   // 33: issho.v1.MoveProposalMemberResponse
+	(*RemoveProposalMemberRequest)(nil),  // 34: issho.v1.RemoveProposalMemberRequest
+	(*RemoveProposalMemberResponse)(nil), // 35: issho.v1.RemoveProposalMemberResponse
+	(*SetProposalStartRequest)(nil),      // 36: issho.v1.SetProposalStartRequest
+	(*SetProposalStartResponse)(nil),     // 37: issho.v1.SetProposalStartResponse
+	(*SetGroupMeetingPointRequest)(nil),  // 38: issho.v1.SetGroupMeetingPointRequest
+	(*SetGroupMeetingPointResponse)(nil), // 39: issho.v1.SetGroupMeetingPointResponse
+	(*ApproveProposalRequest)(nil),       // 40: issho.v1.ApproveProposalRequest
+	(*ApproveProposalResponse)(nil),      // 41: issho.v1.ApproveProposalResponse
+	(*RejectProposalRequest)(nil),        // 42: issho.v1.RejectProposalRequest
+	(*RejectProposalResponse)(nil),       // 43: issho.v1.RejectProposalResponse
+	(*timestamppb.Timestamp)(nil),        // 44: google.protobuf.Timestamp
+	(*PlanStep)(nil),                     // 45: issho.v1.PlanStep
 }
 var file_issho_v1_review_proto_depIdxs = []int32{
-	3,  // 0: issho.v1.ListReviewCitiesResponse.cities:type_name -> issho.v1.ReviewCity
+	4,  // 0: issho.v1.ListReviewCitiesResponse.cities:type_name -> issho.v1.ReviewCity
 	0,  // 1: issho.v1.ListReviewPlansRequest.status:type_name -> issho.v1.ReviewPlanStatus
-	8,  // 2: issho.v1.ListReviewPlansResponse.plans:type_name -> issho.v1.ReviewPlan
+	9,  // 2: issho.v1.ListReviewPlansResponse.plans:type_name -> issho.v1.ReviewPlan
 	0,  // 3: issho.v1.ReviewPlan.status:type_name -> issho.v1.ReviewPlanStatus
-	24, // 4: issho.v1.ReviewPlan.signup_deadline:type_name -> google.protobuf.Timestamp
-	24, // 5: issho.v1.ReviewPlan.created_at:type_name -> google.protobuf.Timestamp
-	24, // 6: issho.v1.ReviewPlan.reviewed_at:type_name -> google.protobuf.Timestamp
-	8,  // 7: issho.v1.GetReviewPlanResponse.plan:type_name -> issho.v1.ReviewPlan
-	25, // 8: issho.v1.GetReviewPlanResponse.steps:type_name -> issho.v1.PlanStep
-	21, // 9: issho.v1.ListVenueOptionsResponse.venues:type_name -> issho.v1.VenueOption
-	1,  // 10: issho.v1.ReviewService.ListReviewCities:input_type -> issho.v1.ListReviewCitiesRequest
-	4,  // 11: issho.v1.ReviewService.SetCityReview:input_type -> issho.v1.SetCityReviewRequest
-	6,  // 12: issho.v1.ReviewService.ListReviewPlans:input_type -> issho.v1.ListReviewPlansRequest
-	9,  // 13: issho.v1.ReviewService.GetReviewPlan:input_type -> issho.v1.GetReviewPlanRequest
-	11, // 14: issho.v1.ReviewService.ApprovePlan:input_type -> issho.v1.ApprovePlanRequest
-	13, // 15: issho.v1.ReviewService.RejectPlan:input_type -> issho.v1.RejectPlanRequest
-	15, // 16: issho.v1.ReviewService.EditPlan:input_type -> issho.v1.EditPlanRequest
-	17, // 17: issho.v1.ReviewService.WithdrawPlan:input_type -> issho.v1.WithdrawPlanRequest
-	19, // 18: issho.v1.ReviewService.ListVenueOptions:input_type -> issho.v1.ListVenueOptionsRequest
-	22, // 19: issho.v1.ReviewService.CreatePlan:input_type -> issho.v1.CreatePlanRequest
-	2,  // 20: issho.v1.ReviewService.ListReviewCities:output_type -> issho.v1.ListReviewCitiesResponse
-	5,  // 21: issho.v1.ReviewService.SetCityReview:output_type -> issho.v1.SetCityReviewResponse
-	7,  // 22: issho.v1.ReviewService.ListReviewPlans:output_type -> issho.v1.ListReviewPlansResponse
-	10, // 23: issho.v1.ReviewService.GetReviewPlan:output_type -> issho.v1.GetReviewPlanResponse
-	12, // 24: issho.v1.ReviewService.ApprovePlan:output_type -> issho.v1.ApprovePlanResponse
-	14, // 25: issho.v1.ReviewService.RejectPlan:output_type -> issho.v1.RejectPlanResponse
-	16, // 26: issho.v1.ReviewService.EditPlan:output_type -> issho.v1.EditPlanResponse
-	18, // 27: issho.v1.ReviewService.WithdrawPlan:output_type -> issho.v1.WithdrawPlanResponse
-	20, // 28: issho.v1.ReviewService.ListVenueOptions:output_type -> issho.v1.ListVenueOptionsResponse
-	23, // 29: issho.v1.ReviewService.CreatePlan:output_type -> issho.v1.CreatePlanResponse
-	20, // [20:30] is the sub-list for method output_type
-	10, // [10:20] is the sub-list for method input_type
-	10, // [10:10] is the sub-list for extension type_name
-	10, // [10:10] is the sub-list for extension extendee
-	0,  // [0:10] is the sub-list for field type_name
+	44, // 4: issho.v1.ReviewPlan.signup_deadline:type_name -> google.protobuf.Timestamp
+	44, // 5: issho.v1.ReviewPlan.created_at:type_name -> google.protobuf.Timestamp
+	44, // 6: issho.v1.ReviewPlan.reviewed_at:type_name -> google.protobuf.Timestamp
+	9,  // 7: issho.v1.GetReviewPlanResponse.plan:type_name -> issho.v1.ReviewPlan
+	45, // 8: issho.v1.GetReviewPlanResponse.steps:type_name -> issho.v1.PlanStep
+	22, // 9: issho.v1.ListVenueOptionsResponse.venues:type_name -> issho.v1.VenueOption
+	1,  // 10: issho.v1.ListReviewEventsRequest.status:type_name -> issho.v1.ReviewEventStatus
+	27, // 11: issho.v1.ListReviewEventsResponse.events:type_name -> issho.v1.ReviewEvent
+	1,  // 12: issho.v1.ReviewEvent.status:type_name -> issho.v1.ReviewEventStatus
+	44, // 13: issho.v1.ReviewEvent.starts_at:type_name -> google.protobuf.Timestamp
+	44, // 14: issho.v1.ReviewEvent.confirm_by:type_name -> google.protobuf.Timestamp
+	44, // 15: issho.v1.ReviewEvent.created_at:type_name -> google.protobuf.Timestamp
+	27, // 16: issho.v1.GetReviewEventResponse.event:type_name -> issho.v1.ReviewEvent
+	30, // 17: issho.v1.GetReviewEventResponse.groups:type_name -> issho.v1.ReviewGroup
+	31, // 18: issho.v1.ReviewGroup.members:type_name -> issho.v1.ReviewMember
+	2,  // 19: issho.v1.ReviewService.ListReviewCities:input_type -> issho.v1.ListReviewCitiesRequest
+	5,  // 20: issho.v1.ReviewService.SetCityReview:input_type -> issho.v1.SetCityReviewRequest
+	7,  // 21: issho.v1.ReviewService.ListReviewPlans:input_type -> issho.v1.ListReviewPlansRequest
+	10, // 22: issho.v1.ReviewService.GetReviewPlan:input_type -> issho.v1.GetReviewPlanRequest
+	12, // 23: issho.v1.ReviewService.ApprovePlan:input_type -> issho.v1.ApprovePlanRequest
+	14, // 24: issho.v1.ReviewService.RejectPlan:input_type -> issho.v1.RejectPlanRequest
+	16, // 25: issho.v1.ReviewService.EditPlan:input_type -> issho.v1.EditPlanRequest
+	18, // 26: issho.v1.ReviewService.WithdrawPlan:input_type -> issho.v1.WithdrawPlanRequest
+	20, // 27: issho.v1.ReviewService.ListVenueOptions:input_type -> issho.v1.ListVenueOptionsRequest
+	23, // 28: issho.v1.ReviewService.CreatePlan:input_type -> issho.v1.CreatePlanRequest
+	25, // 29: issho.v1.ReviewService.ListReviewEvents:input_type -> issho.v1.ListReviewEventsRequest
+	28, // 30: issho.v1.ReviewService.GetReviewEvent:input_type -> issho.v1.GetReviewEventRequest
+	32, // 31: issho.v1.ReviewService.MoveProposalMember:input_type -> issho.v1.MoveProposalMemberRequest
+	34, // 32: issho.v1.ReviewService.RemoveProposalMember:input_type -> issho.v1.RemoveProposalMemberRequest
+	36, // 33: issho.v1.ReviewService.SetProposalStart:input_type -> issho.v1.SetProposalStartRequest
+	38, // 34: issho.v1.ReviewService.SetGroupMeetingPoint:input_type -> issho.v1.SetGroupMeetingPointRequest
+	40, // 35: issho.v1.ReviewService.ApproveProposal:input_type -> issho.v1.ApproveProposalRequest
+	42, // 36: issho.v1.ReviewService.RejectProposal:input_type -> issho.v1.RejectProposalRequest
+	3,  // 37: issho.v1.ReviewService.ListReviewCities:output_type -> issho.v1.ListReviewCitiesResponse
+	6,  // 38: issho.v1.ReviewService.SetCityReview:output_type -> issho.v1.SetCityReviewResponse
+	8,  // 39: issho.v1.ReviewService.ListReviewPlans:output_type -> issho.v1.ListReviewPlansResponse
+	11, // 40: issho.v1.ReviewService.GetReviewPlan:output_type -> issho.v1.GetReviewPlanResponse
+	13, // 41: issho.v1.ReviewService.ApprovePlan:output_type -> issho.v1.ApprovePlanResponse
+	15, // 42: issho.v1.ReviewService.RejectPlan:output_type -> issho.v1.RejectPlanResponse
+	17, // 43: issho.v1.ReviewService.EditPlan:output_type -> issho.v1.EditPlanResponse
+	19, // 44: issho.v1.ReviewService.WithdrawPlan:output_type -> issho.v1.WithdrawPlanResponse
+	21, // 45: issho.v1.ReviewService.ListVenueOptions:output_type -> issho.v1.ListVenueOptionsResponse
+	24, // 46: issho.v1.ReviewService.CreatePlan:output_type -> issho.v1.CreatePlanResponse
+	26, // 47: issho.v1.ReviewService.ListReviewEvents:output_type -> issho.v1.ListReviewEventsResponse
+	29, // 48: issho.v1.ReviewService.GetReviewEvent:output_type -> issho.v1.GetReviewEventResponse
+	33, // 49: issho.v1.ReviewService.MoveProposalMember:output_type -> issho.v1.MoveProposalMemberResponse
+	35, // 50: issho.v1.ReviewService.RemoveProposalMember:output_type -> issho.v1.RemoveProposalMemberResponse
+	37, // 51: issho.v1.ReviewService.SetProposalStart:output_type -> issho.v1.SetProposalStartResponse
+	39, // 52: issho.v1.ReviewService.SetGroupMeetingPoint:output_type -> issho.v1.SetGroupMeetingPointResponse
+	41, // 53: issho.v1.ReviewService.ApproveProposal:output_type -> issho.v1.ApproveProposalResponse
+	43, // 54: issho.v1.ReviewService.RejectProposal:output_type -> issho.v1.RejectProposalResponse
+	37, // [37:55] is the sub-list for method output_type
+	19, // [19:37] is the sub-list for method input_type
+	19, // [19:19] is the sub-list for extension type_name
+	19, // [19:19] is the sub-list for extension extendee
+	0,  // [0:19] is the sub-list for field type_name
 }
 
 func init() { file_issho_v1_review_proto_init() }
@@ -1652,8 +2890,8 @@ func file_issho_v1_review_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_issho_v1_review_proto_rawDesc), len(file_issho_v1_review_proto_rawDesc)),
-			NumEnums:      1,
-			NumMessages:   23,
+			NumEnums:      2,
+			NumMessages:   42,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
