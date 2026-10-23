@@ -91,6 +91,48 @@ type RouteFinder interface {
 	WalkingRoute(ctx context.Context, fromPlace, toPlace string) (Route, error)
 }
 
+// WalkRoute is a walking route through several places: the whole line, and each
+// leg between consecutive places. Routes content: cache for 30 days at most.
+type WalkRoute struct {
+	Route
+	Legs []Route // Legs[i] goes from place i to place i+1, in Order
+	// Order lists the request's places in the order walked. With Optimize
+	// the provider reorders the places in between (never the first or
+	// last); otherwise it's the request's order.
+	Order []int
+}
+
+// WalkRouter finds a walk through several places (by provider place id).
+type WalkRouter interface {
+	// WalkThrough walks from places[0] through each place to the last.
+	// optimize lets the provider reorder the places in between for the
+	// shortest walk.
+	WalkThrough(ctx context.Context, places []string, optimize bool) (WalkRoute, error)
+}
+
+// FindRequest looks a place up by text, e.g. "Kayaba Coffee, Yanaka".
+type FindRequest struct {
+	Query   string
+	Near    LatLng  // results are biased towards this circle
+	RadiusM float64 // at most 50 km (Google)
+}
+
+// Found is a place a text search found. Only ID may be stored.
+type Found struct {
+	Place
+	// Name is the provider's name for it (in English where it has one),
+	// for checking the match in memory only: never stored or passed on.
+	Name string
+	// Closed is true for a place closed permanently or temporarily.
+	Closed bool
+}
+
+// PlaceFinder looks places up by text.
+type PlaceFinder interface {
+	// Find returns the best match, or ok false when nothing matched.
+	Find(ctx context.Context, req FindRequest) (place Found, ok bool, err error)
+}
+
 // WeekTime is a time in the week, in the place's local time.
 type WeekTime struct {
 	Day          time.Weekday

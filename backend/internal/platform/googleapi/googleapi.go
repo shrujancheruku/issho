@@ -43,6 +43,10 @@ func (e *APIError) Error() string {
 	return fmt.Sprintf("google api: HTTP %d: %s", e.StatusCode, e.Body)
 }
 
+// SetTimeout bounds each attempt (60 s by default). Model calls that
+// think for a while need longer; interactive ones want less.
+func (c *Client) SetTimeout(d time.Duration) { c.http.Timeout = d }
+
 func retryable(code int) bool { return code == http.StatusTooManyRequests || code >= 500 }
 
 // Post sends body as JSON and decodes the response into out. headers are

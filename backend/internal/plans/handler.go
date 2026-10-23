@@ -49,7 +49,9 @@ func (h *Handler) GetPlan(ctx context.Context, req *connect.Request[isshov1.GetP
 	if err != nil {
 		return nil, connectError(err)
 	}
-	out := &isshov1.GetPlanResponse{Plan: planToProto(item), Steps: stepsToProto(steps)}
+	out := &isshov1.GetPlanResponse{
+		Plan: planToProto(item), Steps: stepsToProto(steps), Summary: item.Summary, SecondarySummary: item.SecondarySummary,
+	}
 	if item.Route != nil {
 		out.RoutePolyline = item.Route.Polyline
 	}
@@ -185,6 +187,10 @@ func stepsToProto(steps []Step) []*isshov1.PlanStep {
 			Lat:                st.Venue.Location.Lat,
 			Lng:                st.Venue.Location.Lng,
 			Meeting:            st.Meeting,
+			Finish:             st.Finish,
+			Minutes:            int32(st.Minutes),
+			Note:               st.Note,
+			SecondaryNote:      st.SecondaryNote,
 		}
 	}
 	return out

@@ -132,7 +132,7 @@ func (q *Queries) ListDuePushTickets(ctx context.Context, arg ListDuePushTickets
 }
 
 const listPendingNotifications = `-- name: ListPendingNotifications :many
-select n.id, n.user_id, n.kind, n.event_id, n.plan_id, pr.primary_language, p.city_id, p.activity_id, p.follow_up_id
+select n.id, n.user_id, n.kind, n.event_id, n.plan_id, pr.primary_language, p.city_id, p.activity_id, p.follow_up_id, p.title
 from app.notifications n
 join app.profiles pr on pr.user_id = n.user_id
 left join app.events e on e.id = n.event_id
@@ -152,6 +152,7 @@ type ListPendingNotificationsRow struct {
 	CityID          string
 	ActivityID      string
 	FollowUpID      *string
+	Title           []byte
 }
 
 // Pending notifications with what the message needs: the person's display
@@ -176,6 +177,7 @@ func (q *Queries) ListPendingNotifications(ctx context.Context, max int32) ([]Li
 			&i.CityID,
 			&i.ActivityID,
 			&i.FollowUpID,
+			&i.Title,
 		); err != nil {
 			return nil, err
 		}

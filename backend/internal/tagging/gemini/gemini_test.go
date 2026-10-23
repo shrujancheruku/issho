@@ -32,8 +32,8 @@ func fake(t *testing.T, status int, body string, got *map[string]any) *Tagger {
 	t.Cleanup(srv.Close)
 	tg := New("test-key")
 	tg.URL = srv.URL + "/v1/publishers/google/models/%s:generateContent"
-	tg.api.MaxRetries = 0
-	tg.api.Backoff = time.Millisecond
+	tg.API.MaxRetries = 0
+	tg.API.Backoff = time.Millisecond
 	return tg
 }
 

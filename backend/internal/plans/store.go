@@ -57,6 +57,10 @@ type Open struct {
 	// MeetingPlace is where a walk starts when the first activity has no
 	// venue (Google place id); "" otherwise or until found.
 	MeetingPlace string
+	// Walk is a composed walk (stops in app.plan_stops, LoadWalk), with its
+	// title and summary as stored ({"en": "..."}); nil for other plans.
+	Walk                   bool
+	WalkTitle, WalkSummary []byte
 }
 
 // ListOpen returns a city's open plans with their signup counts, oldest first.
@@ -85,6 +89,9 @@ func ListOpen(ctx context.Context, q *dbgen.Queries, cityID string) ([]Open, err
 			FollowUpVenue: deref(r.FollowUpVenuePlaceID),
 			Route:         routeFrom(r.RoutePolyline, r.RouteSeconds),
 			MeetingPlace:  deref(r.MeetingPlaceID),
+			Walk:          r.Walk,
+			WalkTitle:     r.Title,
+			WalkSummary:   r.Description,
 		}
 	}
 	return out, nil

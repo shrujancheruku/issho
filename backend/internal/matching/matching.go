@@ -163,6 +163,11 @@ type Activity struct {
 	MaxSize         int
 	VenueCategories []CategoryID // empty = needs only a meeting point
 	Blocks          []Block      // parts of the day it suits; empty = any
+	// Walk means its plans are a walking route through several stops,
+	// composed when the plan opens (internal/walks): it needs no venue
+	// category of its own and gets no follow-up, since the walk ends
+	// somewhere to sit and talk.
+	Walk bool
 }
 
 // preferredMin is the size a group should reach: the activity's own minimum

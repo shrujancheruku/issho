@@ -23,6 +23,7 @@ import (
 const (
 	defaultRoutesURL     = "https://routes.googleapis.com/distanceMatrix/v2:computeRouteMatrix"
 	defaultPlacesURL     = "https://places.googleapis.com/v1/places:searchNearby"
+	defaultTextSearchURL = "https://places.googleapis.com/v1/places:searchText"
 	defaultDirectionsURL = "https://routes.googleapis.com/directions/v2:computeRoutes"
 	// Place Details: GET {defaultDetailsURL}/{place id}.
 	defaultDetailsURL = "https://places.googleapis.com/v1/places"
@@ -37,11 +38,14 @@ const (
 type Client struct {
 	api *googleapi.Client
 	// Overridable for tests.
-	RoutesURL, PlacesURL, DetailsURL, DirectionsURL string
+	RoutesURL, PlacesURL, DetailsURL, DirectionsURL, TextSearchURL string
 }
 
 func New(apiKey string) *Client {
-	return &Client{api: googleapi.New(apiKey), RoutesURL: defaultRoutesURL, PlacesURL: defaultPlacesURL, DetailsURL: defaultDetailsURL, DirectionsURL: defaultDirectionsURL}
+	return &Client{
+		api: googleapi.New(apiKey), RoutesURL: defaultRoutesURL, PlacesURL: defaultPlacesURL, DetailsURL: defaultDetailsURL,
+		DirectionsURL: defaultDirectionsURL, TextSearchURL: defaultTextSearchURL,
+	}
 }
 
 var (
@@ -50,6 +54,8 @@ var (
 	_ maps.PlaceLookup   = (*Client)(nil)
 	_ maps.HoursLookup   = (*Client)(nil)
 	_ maps.RouteFinder   = (*Client)(nil)
+	_ maps.WalkRouter    = (*Client)(nil)
+	_ maps.PlaceFinder   = (*Client)(nil)
 )
 
 // ---- Routes: Compute Route Matrix ----
@@ -202,6 +208,142 @@ func (c *Client) WalkingRoute(ctx context.Context, fromPlace, toPlace string) (m
 		return maps.Route{}, err
 	}
 	return maps.Route{Polyline: r.Polyline.EncodedPolyline, Duration: d, Meters: r.DistanceMeters}, nil
+}
+
+// WalkThrough asks Routes for one walk through several places. With
+// optimize, Google may reorder the places in between (Compute Routes'
+// optimizeWaypointOrder, the Advanced SKU); the field mask is otherwise the
+// same essentials as WalkingRoute, plus each leg.
+func (c *Client) WalkThrough(ctx context.Context, places []string, optimize bool) (maps.WalkRoute, error) {
+	if len(places) < 2 {
+		return maps.WalkRoute{}, errors.New("a walk needs at least two places")
+	}
+	// Google allows 25 places in between; walks have at most a dozen.
+	if len(places) > 27 {
+		return maps.WalkRoute{}, fmt.Errorf("%d places exceed the 25 intermediates Routes allows", len(places))
+	}
+	type place struct {
+		PlaceID string `json:"placeId"`
+	}
+	body := struct {
+		Origin        place   `json:"origin"`
+		Destination   place   `json:"destination"`
+		Intermediates []place `json:"intermediates,omitempty"`
+		TravelMode    string  `json:"travelMode"`
+		Optimize      bool    `json:"optimizeWaypointOrder,omitempty"`
+	}{Origin: place{places[0]}, Destination: place{places[len(places)-1]}, TravelMode: "WALK", Optimize: optimize}
+	for _, p := range places[1 : len(places)-1] {
+		body.Intermediates = append(body.Intermediates, place{p})
+	}
+	type leg struct {
+		Duration       string `json:"duration"`
+		DistanceMeters int    `json:"distanceMeters"`
+	}
+	var resp struct {
+		Routes []struct {
+			leg
+			Polyline struct {
+				EncodedPolyline string `json:"encodedPolyline"`
+			} `json:"polyline"`
+			Legs           []leg `json:"legs"`
+			OptimizedOrder []int `json:"optimizedIntermediateWaypointIndex"`
+		} `json:"routes"`
+	}
+	mask := "routes.duration,routes.distanceMeters,routes.polyline.encodedPolyline,routes.legs.duration,routes.legs.distanceMeters"
+	if optimize {
+		mask += ",routes.optimizedIntermediateWaypointIndex"
+	}
+	if err := c.post(ctx, c.DirectionsURL, mask, body, &resp); err != nil {
+		return maps.WalkRoute{}, err
+	}
+	if len(resp.Routes) == 0 {
+		return maps.WalkRoute{}, errors.New("no walking route")
+	}
+	r := resp.Routes[0]
+	if len(r.Legs) != len(places)-1 {
+		return maps.WalkRoute{}, fmt.Errorf("%d legs for %d places", len(r.Legs), len(places))
+	}
+	total, err := parseDuration(r.Duration)
+	if err != nil {
+		return maps.WalkRoute{}, err
+	}
+	w := maps.WalkRoute{Route: maps.Route{Polyline: r.Polyline.EncodedPolyline, Duration: total, Meters: r.DistanceMeters}}
+	for _, l := range r.Legs {
+		d, err := parseDuration(l.Duration)
+		if err != nil {
+			return maps.WalkRoute{}, err
+		}
+		w.Legs = append(w.Legs, maps.Route{Duration: d, Meters: l.DistanceMeters})
+	}
+	// Google lists the intermediates' original indexes in walking order;
+	// without optimizing (or with nothing in between) it's the same order.
+	w.Order = append(w.Order, 0)
+	if optimize && len(r.OptimizedOrder) == len(places)-2 {
+		for _, i := range r.OptimizedOrder {
+			if i < 0 || i >= len(places)-2 {
+				return maps.WalkRoute{}, fmt.Errorf("optimized order names place %d of %d", i, len(places)-2)
+			}
+			w.Order = append(w.Order, i+1)
+		}
+	} else {
+		for i := 1; i < len(places)-1; i++ {
+			w.Order = append(w.Order, i)
+		}
+	}
+	w.Order = append(w.Order, len(places)-1)
+	return w, nil
+}
+
+// ---- Places API (New): Text Search ----
+
+// Find looks a place up by text with Text Search (New), biased to a circle.
+// The field mask (id, name, types, location, business status) is the Pro
+// SKU. Text Search always returns its nearest match, even for a name that
+// doesn't exist, so the caller checks the name (in English, where Google
+// has one) as well as the type and location; the name is never kept.
+func (c *Client) Find(ctx context.Context, req maps.FindRequest) (maps.Found, bool, error) {
+	if strings.TrimSpace(req.Query) == "" {
+		return maps.Found{}, false, errors.New("text search needs a query")
+	}
+	var body struct {
+		TextQuery      string `json:"textQuery"`
+		LanguageCode   string `json:"languageCode"`
+		MaxResultCount int    `json:"maxResultCount"`
+		LocationBias   struct {
+			Circle struct {
+				Center latLng  `json:"center"`
+				Radius float64 `json:"radius"`
+			} `json:"circle"`
+		} `json:"locationBias"`
+	}
+	body.TextQuery, body.MaxResultCount, body.LanguageCode = req.Query, 1, "en"
+	body.LocationBias.Circle.Center = latLng{req.Near.Lat, req.Near.Lng}
+	body.LocationBias.Circle.Radius = req.RadiusM
+	var resp struct {
+		Places []struct {
+			ID             string   `json:"id"`
+			PrimaryType    string   `json:"primaryType"`
+			Types          []string `json:"types"`
+			Location       latLng   `json:"location"`
+			BusinessStatus string   `json:"businessStatus"`
+			DisplayName    struct {
+				Text string `json:"text"`
+			} `json:"displayName"`
+		} `json:"places"`
+	}
+	if err := c.post(ctx, c.TextSearchURL, "places.id,places.displayName,places.primaryType,places.types,places.location,places.businessStatus", body, &resp); err != nil {
+		return maps.Found{}, false, err
+	}
+	if len(resp.Places) == 0 {
+		return maps.Found{}, false, nil
+	}
+	p := resp.Places[0]
+	return maps.Found{
+		Place: maps.Place{ID: p.ID, PrimaryType: p.PrimaryType, Types: p.Types, Location: maps.LatLng{Lat: p.Location.Latitude, Lng: p.Location.Longitude}},
+		Name:  p.DisplayName.Text,
+		// Streets and areas have no business status: they're "open".
+		Closed: p.BusinessStatus == "CLOSED_PERMANENTLY" || p.BusinessStatus == "CLOSED_TEMPORARILY",
+	}, true, nil
 }
 
 // ---- Places API (New): Nearby Search ----

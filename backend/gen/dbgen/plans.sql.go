@@ -152,7 +152,8 @@ func (q *Queries) GetPlan(ctx context.Context, id uuid.UUID) (GetPlanRow, error)
 const getRecentlyClosedPlan = `-- name: GetRecentlyClosedPlan :one
 select p.id, p.area_id, p.activity_id, p.follow_up_id, p.primary_language, p.secondary_language,
        p.round, p.window_start, p.window_days, p.signup_deadline, p.venue_place_id, p.follow_up_venue_place_id,
-       p.route_polyline, p.route_seconds, p.meeting_place_id, p.closed_reason::text as closed_reason, p.closed_at,
+       p.route_polyline, p.route_seconds, p.meeting_place_id, p.title, p.description, exists (select 1 from app.plan_stops st where st.plan_id = p.id) as walk,
+       p.closed_reason::text as closed_reason, p.closed_at,
        (select count(*) from app.plan_signups s where s.plan_id = p.id)::int as signups,
        exists (select 1 from app.plan_signups s where s.plan_id = p.id and s.user_id = $1) as signed_up
 from app.plans p
@@ -182,6 +183,9 @@ type GetRecentlyClosedPlanRow struct {
 	RoutePolyline        *string
 	RouteSeconds         *int32
 	MeetingPlaceID       *string
+	Title                []byte
+	Description          []byte
+	Walk                 bool
 	ClosedReason         string
 	ClosedAt             pgtype.Timestamptz
 	Signups              int32
@@ -214,6 +218,9 @@ func (q *Queries) GetRecentlyClosedPlan(ctx context.Context, arg GetRecentlyClos
 		&i.RoutePolyline,
 		&i.RouteSeconds,
 		&i.MeetingPlaceID,
+		&i.Title,
+		&i.Description,
+		&i.Walk,
 		&i.ClosedReason,
 		&i.ClosedAt,
 		&i.Signups,
@@ -297,10 +304,12 @@ func (q *Queries) InsertGroupMembers(ctx context.Context, arg InsertGroupMembers
 const insertPlan = `-- name: InsertPlan :one
 insert into app.plans (
   city_id, area_id, activity_id, follow_up_id, primary_language, secondary_language,
-  audience, score, window_start, window_days, signup_deadline, venue_place_id, follow_up_venue_place_id
+  audience, score, window_start, window_days, signup_deadline, venue_place_id, follow_up_venue_place_id,
+  title, description
 ) values (
   $1, $2, $3, $4, $5, $6,
-  $7, $8, $9, $10, $11, $12, $13
+  $7, $8, $9, $10, $11, $12, $13,
+  $14, $15
 )
 returning id
 `
@@ -319,6 +328,8 @@ type InsertPlanParams struct {
 	SignupDeadline       pgtype.Timestamptz
 	VenuePlaceID         *string
 	FollowUpVenuePlaceID *string
+	Title                []byte
+	Description          []byte
 }
 
 func (q *Queries) InsertPlan(ctx context.Context, arg InsertPlanParams) (uuid.UUID, error) {
@@ -336,10 +347,44 @@ func (q *Queries) InsertPlan(ctx context.Context, arg InsertPlanParams) (uuid.UU
 		arg.SignupDeadline,
 		arg.VenuePlaceID,
 		arg.FollowUpVenuePlaceID,
+		arg.Title,
+		arg.Description,
 	)
 	var id uuid.UUID
 	err := row.Scan(&id)
 	return id, err
+}
+
+const insertPlanStops = `-- name: InsertPlanStops :exec
+insert into app.plan_stops (plan_id, position, role, place_id, minutes, note, walk_seconds)
+select $1, unnest($2::smallint[]), unnest($3::text[]), unnest($4::text[]),
+       unnest($5::smallint[]), unnest($6::jsonb[]), nullif(unnest($7::int[]), -1)
+`
+
+type InsertPlanStopsParams struct {
+	PlanID      uuid.UUID
+	Positions   []int16
+	Roles       []string
+	PlaceIds    []string
+	Minutes     []int16
+	Notes       [][]byte
+	WalkSeconds []int32
+}
+
+// A composed walk's stops, in walking order. The arrays are parallel;
+// unnest in the select list zips them (as in profile.sql). walk_seconds
+// -1 = none (the first stop), stored as null.
+func (q *Queries) InsertPlanStops(ctx context.Context, arg InsertPlanStopsParams) error {
+	_, err := q.db.Exec(ctx, insertPlanStops,
+		arg.PlanID,
+		arg.Positions,
+		arg.Roles,
+		arg.PlaceIds,
+		arg.Minutes,
+		arg.Notes,
+		arg.WalkSeconds,
+	)
+	return err
 }
 
 const insertSignupSlots = `-- name: InsertSignupSlots :exec
@@ -434,7 +479,7 @@ func (q *Queries) ListBusyOccasions(ctx context.Context, arg ListBusyOccasionsPa
 const listOpenPlans = `-- name: ListOpenPlans :many
 select p.id, p.area_id, p.activity_id, p.follow_up_id, p.primary_language, p.secondary_language,
        p.round, p.window_start, p.window_days, p.signup_deadline, p.venue_place_id, p.follow_up_venue_place_id,
-       p.route_polyline, p.route_seconds, p.meeting_place_id,
+       p.route_polyline, p.route_seconds, p.meeting_place_id, p.title, p.description, exists (select 1 from app.plan_stops st where st.plan_id = p.id) as walk,
        (select count(*) from app.plan_signups s where s.plan_id = p.id)::int as signups
 from app.plans p
 where p.city_id = $1 and p.status = 'open'
@@ -457,6 +502,9 @@ type ListOpenPlansRow struct {
 	RoutePolyline        *string
 	RouteSeconds         *int32
 	MeetingPlaceID       *string
+	Title                []byte
+	Description          []byte
+	Walk                 bool
 	Signups              int32
 }
 
@@ -487,8 +535,89 @@ func (q *Queries) ListOpenPlans(ctx context.Context, cityID string) ([]ListOpenP
 			&i.RoutePolyline,
 			&i.RouteSeconds,
 			&i.MeetingPlaceID,
+			&i.Title,
+			&i.Description,
+			&i.Walk,
 			&i.Signups,
 		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listPlanStops = `-- name: ListPlanStops :many
+select position, role, place_id, minutes, note, walk_seconds
+from app.plan_stops where plan_id = $1 order by position
+`
+
+type ListPlanStopsRow struct {
+	Position    int16
+	Role        string
+	PlaceID     string
+	Minutes     int16
+	Note        []byte
+	WalkSeconds *int32
+}
+
+func (q *Queries) ListPlanStops(ctx context.Context, planID uuid.UUID) ([]ListPlanStopsRow, error) {
+	rows, err := q.db.Query(ctx, listPlanStops, planID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListPlanStopsRow
+	for rows.Next() {
+		var i ListPlanStopsRow
+		if err := rows.Scan(
+			&i.Position,
+			&i.Role,
+			&i.PlaceID,
+			&i.Minutes,
+			&i.Note,
+			&i.WalkSeconds,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listRecentWalkFailures = `-- name: ListRecentWalkFailures :many
+select f.area_id, f.activity_id
+from app.walk_failures f join app.areas a on a.id = f.area_id
+where a.city_id = $1 and f.failed_at > $2
+`
+
+type ListRecentWalkFailuresParams struct {
+	CityID string
+	Since  pgtype.Timestamptz
+}
+
+type ListRecentWalkFailuresRow struct {
+	AreaID     string
+	ActivityID string
+}
+
+// Areas and activities whose walk couldn't be composed since @since.
+func (q *Queries) ListRecentWalkFailures(ctx context.Context, arg ListRecentWalkFailuresParams) ([]ListRecentWalkFailuresRow, error) {
+	rows, err := q.db.Query(ctx, listRecentWalkFailures, arg.CityID, arg.Since)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListRecentWalkFailuresRow
+	for rows.Next() {
+		var i ListRecentWalkFailuresRow
+		if err := rows.Scan(&i.AreaID, &i.ActivityID); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -766,5 +895,28 @@ type UpsertSignupParams struct {
 
 func (q *Queries) UpsertSignup(ctx context.Context, arg UpsertSignupParams) error {
 	_, err := q.db.Exec(ctx, upsertSignup, arg.PlanID, arg.UserID)
+	return err
+}
+
+const upsertWalkFailure = `-- name: UpsertWalkFailure :exec
+insert into app.walk_failures (area_id, activity_id, failed_at, reason)
+values ($1, $2, $3, $4)
+on conflict (area_id, activity_id) do update set failed_at = excluded.failed_at, reason = excluded.reason
+`
+
+type UpsertWalkFailureParams struct {
+	AreaID     string
+	ActivityID string
+	FailedAt   pgtype.Timestamptz
+	Reason     string
+}
+
+func (q *Queries) UpsertWalkFailure(ctx context.Context, arg UpsertWalkFailureParams) error {
+	_, err := q.db.Exec(ctx, upsertWalkFailure,
+		arg.AreaID,
+		arg.ActivityID,
+		arg.FailedAt,
+		arg.Reason,
+	)
 	return err
 }

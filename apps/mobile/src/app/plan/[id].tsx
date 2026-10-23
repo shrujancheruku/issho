@@ -23,7 +23,7 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Brand, FormWidth, Spacing } from "@/constants/theme";
 import { useSignupActions, usePlan } from "@/features/plans/data";
-import { formatDate, lastSignupDay } from "@/features/plans/format";
+import { formatDate, lastSignupDay, walkHours } from "@/features/plans/format";
 import { levelStyles } from "@/features/plans/level";
 import { usePlanNames } from "@/features/plans/names";
 import { distanceText, pairText, planTitle } from "@/features/plans/plan-card";
@@ -107,6 +107,12 @@ export default function PlanScreen() {
     body = <ActivityIndicator />;
   } else {
     const title = planTitle(p, showing);
+    const steps = plan.data?.steps ?? [];
+    const summary =
+      showing === "secondary" && plan.data?.secondarySummary
+        ? plan.data.secondarySummary
+        : (plan.data?.summary ?? "");
+    const hours = walkHours(steps, lang);
     const dates = windowDates(p.windowStart, p.windowDays);
     const level = levelStyles[p.level];
     const notForYou = p.level === PlanLevel.NOT_FOR_YOU;
@@ -148,6 +154,8 @@ export default function PlanScreen() {
             </ThemedText>
           )}
         </View>
+        {/* A walk says what it's like; the switch shows the other language. */}
+        {!!summary && <ThemedText>{summary}</ThemedText>}
         <RouteMap
           steps={plan.data?.steps ?? []}
           routePolyline={plan.data?.routePolyline ?? ""}
@@ -164,6 +172,12 @@ export default function PlanScreen() {
             value={pairText(names.area(p.areaId))}
             note={closed ? undefined : distanceText(t, p.travelMinutes)}
           />
+          {!!hours && (
+            <Fact
+              label={t("plan.length")}
+              value={t("plan.lengthHours", { hours })}
+            />
+          )}
           <Fact label={t("plan.language")} value={language} />
           <Fact
             label={t("plan.when")}

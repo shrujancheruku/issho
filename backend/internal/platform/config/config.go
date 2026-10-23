@@ -68,6 +68,10 @@ type Worker struct {
 	// without it, stale travel times are deleted instead of rebuilt and
 	// opening hours aren't checked.
 	GoogleMapsAPIKey string
+	// GeminiAPIKey (a Google Cloud Agent Platform key), with
+	// GoogleMapsAPIKey, composes walking plans (internal/walks). Optional:
+	// without both, no walks are opened.
+	GeminiAPIKey string
 }
 
 // LoadWorker reads WORKER_DATABASE_URL, falling back to DATABASE_URL (fine
@@ -78,6 +82,7 @@ func LoadWorker() (Worker, error) {
 		ExpoAccessToken:       os.Getenv("EXPO_ACCESS_TOKEN"),
 		GoogleTranslateAPIKey: os.Getenv("GOOGLE_TRANSLATE_API_KEY"),
 		GoogleMapsAPIKey:      os.Getenv("GOOGLE_MAPS_API_KEY"),
+		GeminiAPIKey:          os.Getenv("GOOGLE_GEMINI_API_KEY"),
 	}
 	if w.DatabaseURL == "" {
 		return w, fmt.Errorf("WORKER_DATABASE_URL or DATABASE_URL is required")

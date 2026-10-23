@@ -18,7 +18,7 @@ select unnest(@user_ids::uuid[]), @kind, @event_id;
 -- language and the event's plan. Oldest first; a few attempts at most, so
 -- one that keeps failing doesn't block the rest forever.
 -- name: ListPendingNotifications :many
-select n.id, n.user_id, n.kind, n.event_id, n.plan_id, pr.primary_language, p.city_id, p.activity_id, p.follow_up_id
+select n.id, n.user_id, n.kind, n.event_id, n.plan_id, pr.primary_language, p.city_id, p.activity_id, p.follow_up_id, p.title
 from app.notifications n
 join app.profiles pr on pr.user_id = n.user_id
 left join app.events e on e.id = n.event_id

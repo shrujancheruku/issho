@@ -31,7 +31,8 @@
       "architecture-tour",
       "observation-deck",
       "dog-walk"
-    ]
+    ],
+    "walk_theme": "the neighbourhood's character: its landmarks, old shopping streets and side lanes, parks, and the small details a local would point out"
   },
   {
     "id": "hike",
@@ -207,7 +208,8 @@
       "autumn-leaves",
       "hydrangea-walk",
       "moon-viewing"
-    ]
+    ],
+    "walk_theme": "the season's sights in the given month: cherry blossoms in spring, hydrangeas in early summer, autumn leaves in autumn, illuminations in winter; places known for them at that time"
   },
   {
     "id": "running",
@@ -708,7 +710,8 @@
       "afternoon-tea",
       "tea-tasting",
       "animal-cafe"
-    ]
+    ],
+    "walk_theme": "independent cafés and tea houses with character: two or three to sit in, with interesting streets, bookshops or small shops between them"
   },
   {
     "id": "brunch",
@@ -793,7 +796,8 @@
       "street-food",
       "food-market",
       "food-festival"
-    ]
+    ],
+    "walk_theme": "local food to share as you walk: street snacks, market stalls, small specialist shops and the dishes the area is known for, each stop a taste rather than a meal"
   },
   {
     "id": "cooking-class",
@@ -1013,7 +1017,8 @@
     "blocks": [
       "morning",
       "afternoon"
-    ]
+    ],
+    "walk_theme": "temples and shrines: several different ones, with what makes each distinct (history, architecture, gardens, festivals or customs)"
   },
   {
     "id": "japanese-arts",
@@ -1308,7 +1313,8 @@
       "photo-walk",
       "photography-class",
       "film-photo-walk"
-    ]
+    ],
+    "walk_theme": "places worth photographing: viewpoints, old streets and alleys, gardens, water, striking architecture and everyday details, with variety in what each stop offers a camera"
   },
   {
     "id": "pottery",

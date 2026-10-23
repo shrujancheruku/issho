@@ -50,3 +50,19 @@ export function formatStart(ts: FeedPlan['signupDeadline'], lang: string) {
     return new Intl.DateTimeFormat('en', opts).format(at);
   }
 }
+
+/**
+ * How long a walk takes in all, in hours rounded to the nearest half
+ * ("3", "2.5" in the language's own numbers), or "" when the plan isn't a
+ * walk (its steps have no minutes).
+ */
+export function walkHours(steps: { minutes: number; walkMinutes: number }[], lang: string) {
+  const total = steps.reduce((n, s) => n + s.minutes + s.walkMinutes, 0);
+  if (!steps.some((s) => s.minutes > 0)) return '';
+  const hours = Math.max(0.5, Math.round(total / 30) / 2);
+  try {
+    return new Intl.NumberFormat(lang).format(hours);
+  } catch {
+    return String(hours);
+  }
+}

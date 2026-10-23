@@ -22,6 +22,7 @@ type AppActivity struct {
 	MaxGroupSize    int16
 	VenueCategories []string
 	Blocks          []string
+	WalkTheme       *string
 }
 
 type AppArea struct {
@@ -143,6 +144,7 @@ type AppPlan struct {
 	RouteSeconds         *int32
 	RouteComputedAt      pgtype.Timestamptz
 	MeetingPlaceID       *string
+	Title                []byte
 }
 
 type AppPlanSignup struct {
@@ -163,6 +165,16 @@ type AppPlanSignupUnavailable struct {
 	UserID uuid.UUID
 	Date   pgtype.Date
 	Block  string
+}
+
+type AppPlanStop struct {
+	PlanID      uuid.UUID
+	Position    int16
+	Role        string
+	PlaceID     string
+	Minutes     int16
+	Note        []byte
+	WalkSeconds *int32
 }
 
 type AppProfile struct {
@@ -246,4 +258,11 @@ type AppVenueCategory struct {
 	Name          []byte
 	GoogleTypes   []string
 	SearchRadiusM int32
+}
+
+type AppWalkFailure struct {
+	AreaID     string
+	ActivityID string
+	FailedAt   pgtype.Timestamptz
+	Reason     string
 }

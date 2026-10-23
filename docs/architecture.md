@@ -60,7 +60,7 @@ backend/
 Rules:
 - **Domains talk to each other only through service types**, never through each other's queries.
 - **`internal/matching` (M4) is pure:** plain structs in, results out, no I/O, no clock, no randomness. This makes it deterministic and easy to simulate (`internal/matching/sim`). It works **plan first, time second**: `Suggest` opens plans without a date, `Feed` ranks them per person, and `Schedule` picks a date and forms groups once a plan's signups are enough. **Every area is a candidate meeting place**: a person joins the pool of each area they can reach. Steps and rules: [backend README](../backend/README.md#matching).
-- **Every external vendor sits behind a Go interface**, so implementations can be swapped. Done: `maps.Router` (travel times) and `maps.PlaceSearcher` (venues), with Google implementations in `internal/maps/google`; `tagging.Tagger` (free-text interests → activities), with a Gemini implementation in `internal/tagging/gemini`. Planned: `Copywriter`, `Verifier`, `Push`, `Storage`.
+- **Every external vendor sits behind a Go interface**, so implementations can be swapped. Done: `maps.Router` (travel times) and `maps.PlaceSearcher` (venues), with Google implementations in `internal/maps/google`; `tagging.Tagger` (free-text interests → activities), with a Gemini implementation in `internal/tagging/gemini`; `walks.Proposer` (a walk from the model's own knowledge) in `internal/walks/gemini`, checked by `maps.PlaceFinder` and `maps.WalkRouter`. Planned: `Copywriter`, `Verifier`, `Push`, `Storage`.
 
 ## Data model
 
@@ -132,6 +132,6 @@ Run `make gen` after editing protos or queries. CI fails if the generated code i
 See the decision log in [ROADMAP.md](ROADMAP.md#4-decision-log). The most important ones:
 - Supabase for the database, auth and storage
 - Google Maps Platform for venues and travel times
-- Gemini on Google Cloud's Agent Platform for interest tagging; Claude for plan text (M6)
+- Gemini on Google Cloud's Agent Platform for interest tagging and for composing walks (titles, summaries and notes included)
 - Kamal 2 on a VPS for deploys
 - Conventional Commits with release-please for versions and changelogs

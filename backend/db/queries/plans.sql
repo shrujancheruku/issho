@@ -1,12 +1,37 @@
 -- name: InsertPlan :one
 insert into app.plans (
   city_id, area_id, activity_id, follow_up_id, primary_language, secondary_language,
-  audience, score, window_start, window_days, signup_deadline, venue_place_id, follow_up_venue_place_id
+  audience, score, window_start, window_days, signup_deadline, venue_place_id, follow_up_venue_place_id,
+  title, description
 ) values (
   @city_id, @area_id, @activity_id, @follow_up_id, @primary_language, @secondary_language,
-  @audience, @score, @window_start, @window_days, @signup_deadline, @venue_place_id, @follow_up_venue_place_id
+  @audience, @score, @window_start, @window_days, @signup_deadline, @venue_place_id, @follow_up_venue_place_id,
+  sqlc.narg(title), sqlc.narg(description)
 )
 returning id;
+
+-- A composed walk's stops, in walking order. The arrays are parallel;
+-- unnest in the select list zips them (as in profile.sql). walk_seconds
+-- -1 = none (the first stop), stored as null.
+-- name: InsertPlanStops :exec
+insert into app.plan_stops (plan_id, position, role, place_id, minutes, note, walk_seconds)
+select @plan_id, unnest(@positions::smallint[]), unnest(@roles::text[]), unnest(@place_ids::text[]),
+       unnest(@minutes::smallint[]), unnest(@notes::jsonb[]), nullif(unnest(@walk_seconds::int[]), -1);
+
+-- name: ListPlanStops :many
+select position, role, place_id, minutes, note, walk_seconds
+from app.plan_stops where plan_id = $1 order by position;
+
+-- Areas and activities whose walk couldn't be composed since @since.
+-- name: ListRecentWalkFailures :many
+select f.area_id, f.activity_id
+from app.walk_failures f join app.areas a on a.id = f.area_id
+where a.city_id = @city_id and f.failed_at > @since;
+
+-- name: UpsertWalkFailure :exec
+insert into app.walk_failures (area_id, activity_id, failed_at, reason)
+values (@area_id, @activity_id, @failed_at, @reason)
+on conflict (area_id, activity_id) do update set failed_at = excluded.failed_at, reason = excluded.reason;
 
 -- A venue for an activity in an area: one of its venue categories, never a
 -- rejected place, approved ones first (admin curation, M8), otherwise any
@@ -25,7 +50,7 @@ update app.plans set description = @description where id = @id;
 -- name: ListOpenPlans :many
 select p.id, p.area_id, p.activity_id, p.follow_up_id, p.primary_language, p.secondary_language,
        p.round, p.window_start, p.window_days, p.signup_deadline, p.venue_place_id, p.follow_up_venue_place_id,
-       p.route_polyline, p.route_seconds, p.meeting_place_id,
+       p.route_polyline, p.route_seconds, p.meeting_place_id, p.title, p.description, exists (select 1 from app.plan_stops st where st.plan_id = p.id) as walk,
        (select count(*) from app.plan_signups s where s.plan_id = p.id)::int as signups
 from app.plans p
 where p.city_id = @city_id and p.status = 'open'
@@ -147,7 +172,8 @@ where plan_id = $1 and user_id = $2 order by date, block;
 -- name: GetRecentlyClosedPlan :one
 select p.id, p.area_id, p.activity_id, p.follow_up_id, p.primary_language, p.secondary_language,
        p.round, p.window_start, p.window_days, p.signup_deadline, p.venue_place_id, p.follow_up_venue_place_id,
-       p.route_polyline, p.route_seconds, p.meeting_place_id, p.closed_reason::text as closed_reason, p.closed_at,
+       p.route_polyline, p.route_seconds, p.meeting_place_id, p.title, p.description, exists (select 1 from app.plan_stops st where st.plan_id = p.id) as walk,
+       p.closed_reason::text as closed_reason, p.closed_at,
        (select count(*) from app.plan_signups s where s.plan_id = p.id)::int as signups,
        exists (select 1 from app.plan_signups s where s.plan_id = p.id and s.user_id = @user_id) as signed_up
 from app.plans p

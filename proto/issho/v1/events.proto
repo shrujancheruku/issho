@@ -113,6 +113,9 @@ message GetEventResponse {
   // As GetPlanResponse.route_polyline; "" when the caller's group meets
   // somewhere other than the plan's venue.
   string route_polyline = 4;
+  // As GetPlanResponse.summary.
+  string summary = 5;
+  string secondary_summary = 6;
 }
 
 message RespondToEventRequest {

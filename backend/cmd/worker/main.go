@@ -19,6 +19,8 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/translate"
 	gtranslate "github.com/shrujancheruku/issho/backend/internal/translate/google"
 	"github.com/shrujancheruku/issho/backend/internal/uistrings"
+	"github.com/shrujancheruku/issho/backend/internal/walks"
+	walksgemini "github.com/shrujancheruku/issho/backend/internal/walks/gemini"
 	"github.com/shrujancheruku/issho/backend/internal/worker"
 )
 
@@ -61,9 +63,14 @@ func run() error {
 	var m worker.Maps
 	if cfg.GoogleMapsAPIKey != "" {
 		g := mapsgoogle.New(cfg.GoogleMapsAPIKey)
-		m = worker.Maps{Router: g, Hours: g, Routes: g, Places: g}
+		m = worker.Maps{Router: g, Hours: g, Routes: g, Places: g, WalkRoutes: g}
+		if cfg.GeminiAPIKey != "" {
+			m.Walks = &walks.Composer{Proposer: walksgemini.New(cfg.GeminiAPIKey), Places: g, Routes: g, Rules: walks.DefaultRules()}
+		} else {
+			slog.Warn("GOOGLE_GEMINI_API_KEY not set: no walking plans are opened")
+		}
 	} else {
-		slog.Warn("GOOGLE_MAPS_API_KEY not set: travel times past 30 days are deleted, not rebuilt; venue hours not checked")
+		slog.Warn("GOOGLE_MAPS_API_KEY not set: travel times past 30 days are deleted, not rebuilt; venue hours not checked; no walking plans are opened")
 	}
 	client, err := worker.NewClient(pool, slog.Default(), plans.DefaultTiming(), notifier, m)
 	if err != nil {

@@ -6,6 +6,7 @@
 //	tool build-matrix [-dry-run] <city>
 //	tool discover-venues [-dry-run] [-categories cafe,park] <city>
 //	tool simulate [-users 500] [-seed 1] [-month 5] [-config '{...}'] data/citypacks/tokyo.json ...
+//	tool walk-bench run|judge|review|report [flags]   (compare walk proposers; see walkbench.go)
 package main
 
 import (
@@ -38,10 +39,13 @@ func main() {
 
 func run(args []string) error {
 	if len(args) == 0 {
-		return fmt.Errorf("usage: tool migrate|seed|build-matrix|discover-venues|email-templates|simulate ...")
+		return fmt.Errorf("usage: tool migrate|seed|build-matrix|discover-venues|email-templates|simulate|walk-bench ...")
 	}
-	if args[0] == "simulate" {
+	switch args[0] {
+	case "simulate":
 		return simulate(args[1:]) // synthetic data only: no database needed
+	case "walk-bench":
+		return walkBench(args[1:]) // Gemini, Claude and Maps only: no database needed
 	}
 	ctx := context.Background()
 	url := os.Getenv("DATABASE_URL")

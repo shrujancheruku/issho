@@ -41,7 +41,9 @@ export function RouteMap({ steps, routePolyline }: RouteMapProps) {
 }
 
 const styles = StyleSheet.create({
-  frame: { height: 220, borderRadius: 16, overflow: 'hidden' },
+  // Tall enough for a walk's stops (a kilometre or two, often north to
+  // south) to show apart rather than stacked at district scale.
+  frame: { height: 320, borderRadius: 16, overflow: 'hidden' },
   pin: {
     width: 30,
     height: 30,

@@ -13,7 +13,7 @@ import { stateText, toneColor } from '@/features/events/event-card';
 import { shareText } from '@/features/events/share';
 import { eventState, type EventAction } from '@/features/events/state';
 import { Fact, Facts, Heading } from '@/features/plans/fact';
-import { formatStart } from '@/features/plans/format';
+import { formatStart, walkHours } from '@/features/plans/format';
 import { usePlanNames } from '@/features/plans/names';
 import { pairText } from '@/features/plans/plan-card';
 import { RouteMap } from '@/features/plans/route-map';
@@ -71,6 +71,9 @@ export default function EventScreen() {
     const title = showing === 'secondary' && e.secondaryTitle ? { name: e.secondaryTitle, secondary: e.title } : { name: e.title, secondary: e.secondaryTitle };
     const language = [e.primaryLanguage, e.secondaryLanguage].filter(Boolean).map(names.language).join(' / ');
     const attendees = event.data?.attendees ?? [];
+    const summary =
+      showing === 'secondary' && event.data?.secondarySummary ? event.data.secondarySummary : (event.data?.summary ?? '');
+    const hours = walkHours(event.data?.steps ?? [], lang);
     body = (
       <>
         <View style={[styles.banner, { borderColor: color }]}>
@@ -82,10 +85,12 @@ export default function EventScreen() {
           <ThemedText type="subtitle">{title.name}</ThemedText>
           {!!title.secondary && <ThemedText themeColor="textSecondary">{title.secondary}</ThemedText>}
         </View>
+        {!!summary && <ThemedText>{summary}</ThemedText>}
         <RouteMap steps={event.data?.steps ?? []} routePolyline={event.data?.routePolyline ?? ''} />
         <Timeline steps={event.data?.steps ?? []} names={names} />
         <Facts>
           <Fact label={t('plan.when')} value={formatStart(e.startsAt, lang)} />
+          {!!hours && <Fact label={t('plan.length')} value={t('plan.lengthHours', { hours })} />}
           <Fact label={t('plan.where')} value={pairText(names.area(e.areaId))} />
           <Fact
             label={t('event.meetingPoint')}
