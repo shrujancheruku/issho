@@ -29,6 +29,7 @@
 | Anthropic API key (`ANTHROPIC_API_KEY`, M6 plan text) | shell env / untracked `.env` | not used (tests use fakes) | Kamal secrets |
 | Apple / Google OAuth secrets (post-MVP; not used) | `supabase/.env` (gitignored), referenced as `env(...)` in `supabase/config.toml` | not used | Supabase dashboard |
 | Expo access token (`EXPO_ACCESS_TOKEN`, worker: push notifications) | only needed if the Expo project turns on enhanced push security; shell env / untracked `.env` | not used (tests use a fake sender) | Kamal secrets |
+| Cloudflare credentials (deploying `issho-admin` and `issho-web`) | `wrangler login` (OAuth, stored by Wrangler in your user settings, never in the repo) | not used yet (a deploy job will need a scoped `CLOUDFLARE_API_TOKEN` secret) | same |
 | Push credentials: APNs key, FCM V1 service account key | not stored locally; uploaded to EAS with `eas credentials` | n/a | EAS (Expo) credential store |
 | Apple `.p8` keys, Android keystores | not stored locally; EAS manages signing credentials | n/a | EAS (Expo) credential store |
 | SMTP relay credentials (M2) | not needed (Mailpit) | n/a | Supabase dashboard (custom SMTP) |

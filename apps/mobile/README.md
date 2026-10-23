@@ -147,6 +147,7 @@ npx expo export -p web               # static build in dist/ (pnpm export:web)
 - **Wide screens:** form-like screens (sign-in, onboarding, profile editing, the language picker) keep their header, content and footer in one centred column at most `FormWidth` (560 px, `constants/theme.ts`) wide; the logo is capped too. Phones are narrower, so this only changes tablets and the web. `global.css` sets `color-scheme` so browser scrollbars follow the theme.
 - **The floating tab bar:** on the web the tab bar sits over the top of the screen, so tab screens add `TopTabInset` (`constants/theme.ts`, 0 on phones) to their top padding. The feed uses `MaxContentWidth` (800 px) rather than `FormWidth`.
 - `Alert.alert` does nothing on web, so confirmation dialogs (account deletion) need a web version before release.
+- **Test deploy:** `scripts/deploy-web.sh <api-url> web` builds it and deploys it as a static-assets-only Cloudflare Worker, `issho-web` (`wrangler.jsonc`), at https://issho-web.shrujancheruku.workers.dev, against `issho-dev`. Unknown paths serve `index.html`. `public/_headers` sets basic security headers only: a full Content-Security-Policy is part of the session-security decision before release. Not linked anywhere and not a release; see [apps/admin/README.md](../admin/README.md#deploy) for running the API behind a tunnel.
 
 ## Push notifications
 
@@ -191,7 +192,7 @@ The feed has a **List | Map** toggle. The map shows one pin per area with open p
 **Keys (owner, one-time):** in the Google Cloud project, enable the **Maps SDK for Android** and the **Maps JavaScript API**, then create two keys:
 
 1. **Android key**, restricted to *Android apps*: package `com.joinissho.app` and the SHA-1 of the signing certificate (`npx eas-cli@latest credentials -p android` shows it, per build profile), API restriction *Maps SDK for Android*. Store it as the `GOOGLE_MAPS_ANDROID_API_KEY` EAS variable (`env:set … --visibility plaintext`; it's in the app anyway, the restriction protects it); `app.config.js` passes it to the `react-native-maps` plugin. Then **build a new development build**, since the plugin and native module changed.
-2. **Browser key**, restricted to *websites* (`http://localhost:8081/*` for development, plus the web app's address later), API restriction *Maps JavaScript API*. Put it in `apps/mobile/.env` as `EXPO_PUBLIC_GOOGLE_MAPS_WEB_API_KEY` (public by design). Optionally create a Map ID (Map management) for `EXPO_PUBLIC_GOOGLE_MAPS_WEB_MAP_ID`; without one the web map uses Google's `DEMO_MAP_ID`, fine for development.
+2. **Browser key**, restricted to *websites* (`http://localhost:8081/*` for development, plus `https://issho-web.shrujancheruku.workers.dev/*` for the test deploy), API restriction *Maps JavaScript API*. Put it in `apps/mobile/.env` as `EXPO_PUBLIC_GOOGLE_MAPS_WEB_API_KEY` (public by design). Optionally create a Map ID (Map management) for `EXPO_PUBLIC_GOOGLE_MAPS_WEB_MAP_ID`; without one the web map uses Google's `DEMO_MAP_ID`, fine for development.
 
 iOS (Maps SDK for iOS key) waits for M9 with the rest of iOS. Mobile map loads are free; web map loads are billed after a monthly free allowance.
 

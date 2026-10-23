@@ -1,0 +1,12 @@
+// The admin SPA as a static-assets-only Worker (no Worker code): Vite builds
+// into dist/, and `pnpm run deploy` uploads it. See README.md.
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "issho-admin",
+  "compatibility_date": "2026-10-23",
+  "assets": {
+    "directory": "./dist",
+    // Unknown paths get index.html, so a reload on any route works.
+    "not_found_handling": "single-page-application"
+  }
+}

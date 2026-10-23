@@ -1,0 +1,7 @@
+# Served by Workers static assets (web build only). No full
+# Content-Security-Policy yet: choosing one is part of the session-security
+# decision before a public web release (docs/ROADMAP.md, Web release).
+/*
+  Content-Security-Policy: frame-ancestors 'none'
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin

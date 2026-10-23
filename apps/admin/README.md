@@ -1,6 +1,6 @@
 # @issho/admin
 
-The admin SPA (M8): Vite + React, signed in with Supabase Auth (email code, like the app), talking to the Go API through [`@issho/api-client`](../../packages/api-client). It never talks to the database. Planned home: Cloudflare Pages (not deployed yet).
+The admin SPA (M8): Vite + React, signed in with Supabase Auth (email code, like the app), talking to the Go API through [`@issho/api-client`](../../packages/api-client). It never talks to the database. Deployed as a static-assets-only Cloudflare Worker (below).
 
 ## Pages
 
@@ -33,6 +33,24 @@ pnpm --filter @issho/admin dev                      # http://localhost:5173
 ```
 
 Local sign-in codes arrive in Mailpit (`supabase status` → `MAILPIT_URL`). `VITE_*` values are bundled into the page and public: only the API URL, Supabase URL and publishable key go there.
+
+## Deploy
+
+`issho-admin` is a Cloudflare Worker with static assets only (`wrangler.jsonc`: `dist/`, unknown paths get `index.html`), at https://issho-admin.shrujancheruku.workers.dev. The app's web build deploys the same way as `issho-web`. Both are built against `issho-dev`.
+
+Until the API is hosted (M9) it runs on a dev machine behind a **Cloudflare quick tunnel**, a temporary `https://….trycloudflare.com` address (no account or domain needed; it changes every time the tunnel starts and only works while that machine runs the API):
+
+```sh
+cloudflared tunnel --url http://localhost:8080      # prints the https://….trycloudflare.com URL
+SUPABASE_URL=<issho-dev URL> \
+ALLOWED_ORIGINS=https://issho-admin.shrujancheruku.workers.dev,https://issho-web.shrujancheruku.workers.dev \
+  make api ENV_FILE=.env.issho-dev
+scripts/deploy-web.sh https://….trycloudflare.com  # both sites; add `admin` or `web` for one
+```
+
+The API URL is baked into each build, so redeploy after restarting the tunnel. `scripts/deploy-web.sh` takes the Supabase URL and publishable key from `apps/mobile/.env` and deploys with your `wrangler login`. `public/_headers` sets a strict Content-Security-Policy (only Supabase and `*.trycloudflare.com` can be called; narrow it to the API's own origin once it's hosted), `noindex` and no framing.
+
+Anyone can open the page; data needs an admin token, which the API checks. Putting Cloudflare Access in front of it (free for up to 50 users) would add a check before the page loads; not set up yet.
 
 ## Checks
 

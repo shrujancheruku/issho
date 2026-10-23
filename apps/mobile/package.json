@@ -45,7 +45,8 @@
     "eslint-config-expo": "~58.0.4",
     "jest": "^30.5.2",
     "jest-expo": "^58.0.11",
-    "typescript": "~6.0.3"
+    "typescript": "~6.0.3",
+    "wrangler": "4.150.0"
   },
   "scripts": {
     "start": "expo start",
@@ -55,7 +56,8 @@
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
     "test": "jest",
-    "export:web": "expo export -p web"
+    "export:web": "expo export -p web",
+    "deploy:web": "expo export -p web && wrangler deploy"
   },
   "private": true,
   "jest": {
