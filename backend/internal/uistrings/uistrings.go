@@ -90,7 +90,7 @@ func (c *Catalog) In(ctx context.Context, tr *translate.Service, lang string) (m
 		switch {
 		case got[i] == "":
 			complete = false
-		case samePlaceholders(c.english[k], got[i]):
+		case SamePlaceholders(c.english[k], got[i]):
 			out[k] = got[i]
 		}
 	}
@@ -107,7 +107,7 @@ func (c *Catalog) Text(ctx context.Context, tr *translate.Service, lang, key str
 	}
 	raw, _ := json.Marshal(map[string]string{i18n.Authoring: english})
 	got := tr.Resolve(ctx, lang, []translate.Text{{Raw: raw, Context: translateContext}})[0]
-	if got == "" || !samePlaceholders(english, got) {
+	if got == "" || !SamePlaceholders(english, got) {
 		return english
 	}
 	return got
@@ -115,11 +115,11 @@ func (c *Catalog) Text(ctx context.Context, tr *translate.Service, lang, key str
 
 var placeholder = regexp.MustCompile(`\{[a-zA-Z]+\}`)
 
-// samePlaceholders reports whether a translation kept every {placeholder} of
+// SamePlaceholders reports whether a translation kept every {placeholder} of
 // the English text, unchanged. Machine translation sometimes translates
 // or drops them; the app then shows English for that string rather than a
 // sentence with a hole in it.
-func samePlaceholders(english, translated string) bool {
+func SamePlaceholders(english, translated string) bool {
 	a, b := placeholder.FindAllString(english, -1), placeholder.FindAllString(translated, -1)
 	slices.Sort(a)
 	slices.Sort(b)

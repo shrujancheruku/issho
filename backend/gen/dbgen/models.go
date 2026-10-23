@@ -172,6 +172,8 @@ type AppModerationFlag struct {
 	CreatedAt  pgtype.Timestamptz
 	UpdatedAt  pgtype.Timestamptz
 	ResolvedAt pgtype.Timestamptz
+	ResolvedBy pgtype.UUID
+	Note       string
 }
 
 type AppNotification struct {
@@ -289,6 +291,8 @@ type AppReport struct {
 	UpdatedAt  pgtype.Timestamptz
 	ReviewedAt pgtype.Timestamptz
 	CrewID     pgtype.UUID
+	ReviewedBy pgtype.UUID
+	Note       string
 }
 
 type AppTranslation struct {
@@ -300,6 +304,8 @@ type AppTranslation struct {
 	Model      string
 	Reviewed   bool
 	CreatedAt  pgtype.Timestamptz
+	ReviewedBy pgtype.UUID
+	ReviewedAt pgtype.Timestamptz
 }
 
 type AppUser struct {

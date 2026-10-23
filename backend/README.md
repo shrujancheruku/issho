@@ -8,7 +8,7 @@ The Go backend for Issho: a modular monolith serving a ConnectRPC API. It uses P
 |---|---|
 | `cmd/api/` | API server: wires config, DB pool, the JWKS verifier and handlers, then serves HTTP/1.1 and h2c on `API_ADDR` |
 | `cmd/worker/` | Background jobs on River (`internal/worker`): starts the River client and stops it gracefully on SIGINT/SIGTERM |
-| `cmd/tool/` | Ops CLI: `migrate <goose command>`, `seed [-catalog file] [-venue-categories file] <citypack.json>...` (also applies catalogue merges: `replaces`), `build-matrix [-dry-run] <city>`, `discover-venues [-dry-run] [-categories ids] <city>`, `email-templates [-source file] [-out dir] [-config file]` (sign-in emails in every language of `supabase/templates/source.json`, machine-translated; needs `GOOGLE_TRANSLATE_API_KEY`), `simulate [-users n] [-seed n] [-month n] [-config json] <citypack.json>...` (no database needed) |
+| `cmd/tool/` | Ops CLI: `migrate <goose command>`, `seed [-catalog file] [-venue-categories file] <citypack.json>...` (also applies catalogue merges: `replaces`), `build-matrix [-dry-run] <city>`, `discover-venues [-dry-run] [-categories ids] <city>`, `email-templates [-source file] [-out dir] [-config file]` (sign-in emails in every language of `supabase/templates/source.json`, machine-translated; needs `GOOGLE_TRANSLATE_API_KEY`), `simulate [-users n] [-seed n] [-month n] [-config json] <citypack.json>...` (no database needed), `set-admin [-revoke] <email>` (the admin SPA's role, below) |
 | `internal/platform/config` | Environment variables → `Config` |
 | `internal/platform/db` | pgx pool and goose migration runner |
 | `internal/platform/auth` | Supabase JWT verification (JWKS) and the Connect auth interceptor |
@@ -17,7 +17,8 @@ The Go backend for Issho: a modular monolith serving a ConnectRPC API. It uses P
 | `internal/translate/google` | `Translator` using Google Cloud Translation Basic (v2): plain-text mode, batches of ≤ 128 strings and ~5,000 characters |
 | `internal/platform/googleapi` | Shared transport for key-based Google APIs (Maps, Translation): key in a header, retries on 429/5xx |
 | `internal/platform/errs` | Connect interceptor: logs unexpected errors and returns a generic `internal error` (no leaked details) |
-| `internal/platform/supabase` | Supabase admin API client (account deletion), using the secret key |
+| `internal/platform/supabase` | Supabase admin API client (account deletion, the admin role), using the secret key |
+| `internal/moderation` | `ModerationService`: the admin SPA's moderation queue (reports, flags, crew leave reasons, translation corrections); admins only |
 | `internal/health` | `HealthService` |
 | `internal/identity` | `IdentityService`: app account on top of Supabase users (get, delete) |
 | `internal/catalog` | `CatalogService`: activity catalogue with city overrides, cities and areas, language names (CLDR via `golang.org/x/text`) |
@@ -107,6 +108,7 @@ The full reference, generated from the proto comments, is in **[../docs/generate
 | `POST /issho.v1.CrewService/LeaveCrew` | bearer | Leave with a reason (`UNCOMFORTABLE`, `NOT_INTERESTED`, `INACTIVE`, `TOO_MANY_MESSAGES`, `OTHER`) and optional details, stored in `app.crew_leaves`; the crew isn't told. A crew left with one member closes. |
 | `POST /issho.v1.CrewService/ReportCrewMember` | bearer | As `ReportPerson`, for someone who is or was in the caller's crew. |
 | `POST /issho.v1.EventService/ReportPerson` | bearer | Reports someone in the caller's group (`DATING`, `HARASSMENT`, `UNSAFE`, `NO_SHOW`, `OTHER`, optional details up to 1000 characters) until 30 days after the start; again about the same person and outing replaces it. The pair is never grouped again (`Relations.Blocked`). Stored in `app.reports` for the moderation queue (M8). |
+| `POST /issho.v1.ModerationService/*` | bearer, **admin** | The admin SPA's moderation queue ([apps/admin](../apps/admin/README.md)); `permission_denied` for anyone without `app_metadata.admin`. `GetModerator` (who the caller is); `ListReports` (open oldest first, then the rest newest first; by status or reported person; with the person's report count, where they met and names) and `ResolveReport` (`ACTIONED`, `DISMISSED` or back to `OPEN`, with a note up to 2000 characters); `ListFlags` (open or resolved) and `ResolveFlag` (`failed_precondition` if already resolved); `ListCrewLeaves` (newest first, by reason); `ListTranslationLanguages`, `ListTranslations` (one language, unreviewed first, search, pages of 100) and `ReviewTranslation` (corrects or confirms one; `invalid_argument` if a `{placeholder}` of the English is lost or added; a reviewed translation is never overwritten). At most 200 rows per list. |
 | `GET /ws/chat` (WebSocket) | token in the first message | Live group chat. First frame `{"token", "eventId", "afterId"}` (or `"crewId"` for a crew's chat) within 10 s (the token is never in the URL); the server sends `{"type":"messages","messages":[{id,name,body,at,mine,planId?}]}` for everything after `afterId`, then each new message. Closes with 4401 (bad token), 4403 (not going, cancelled, not a crew member) or 4404 (no such event or crew), after which the app doesn't reconnect. New messages reach every API instance through Postgres `NOTIFY chat` (payload: the group or crew id), sent in the transaction that stores the message. Browser origins must be in `ALLOWED_ORIGINS`. |
 | `POST /issho.v1.PushService/RegisterPushToken` | bearer | Stores the device's Expo push token (`ExponentPushToken[…]`) for the caller; a token registered by another account moves to the caller. `invalid_argument` for anything that isn't an Expo push token. |
 | `POST /issho.v1.PushService/UnregisterPushToken` | bearer | Stops notifications to that device (only the caller's own token). |
@@ -132,6 +134,7 @@ Errors use Connect codes, e.g. `{"code":"unauthenticated","message":"missing bea
   - have audience `authenticated`
   - have an `exp` claim that hasn't passed
 - **Deny-by-default:** every RPC requires auth unless it's listed as public in `cmd/api/main.go` (`HealthService.Check`, `UIService.GetStrings`).
+- **Admins** are ordinary Supabase users with `app_metadata.admin = true` (only the service role can change `app_metadata`; `user_metadata`, which users can edit, is never read). Grant or remove it with `go run ./cmd/tool set-admin [-revoke] <email>` (needs `DATABASE_URL`, `SUPABASE_URL` and `SUPABASE_SECRET_KEY`; the person must have signed in once). It's carried in the access token, so it takes effect at the next token refresh (at most an hour; signing out and in applies it at once). Admin-only services are listed in `auth.AdminOnly` in `cmd/api/main.go`, so every RPC they have, new ones included, is covered; handlers check again.
 
 ## Migrations
 
@@ -216,11 +219,12 @@ go test ./...          # or `make test` from the root
 
 | Test | Covers |
 |---|---|
-| `internal/platform/auth/auth_test.go` | Valid token; expired, missing `exp`, wrong issuer/audience/key/subject; HS256 rejected |
+| `internal/platform/auth/auth_test.go` | Valid token; expired, missing `exp`, wrong issuer/audience/key/subject; HS256 rejected; the admin flag only from `app_metadata` (never `user_metadata`); `AdminOnly` on a real Connect server (admin passes, users and no caller denied, other services untouched) |
+| `internal/moderation/handler_test.go` | Users refused before any query; **integration:** a report listed, dismissed with a note and reviewer, unknown report `not_found`; a flag resolved once, not twice; crew leaves by reason with the crew's name; a translation correction that drops `{email}` refused, a good one saved and never overwritten by a machine translation |
 | `internal/platform/i18n/i18n_test.go` | Event and app language pairs (JP–ES exchange, single-language events, any language), text pairs (missing primary shows the secondary alone, identical text shown once, last-resort fallback), code validation |
 | `cmd/api/cors_test.go` | CORS allowlist; empty list denies all |
 | `internal/platform/errs/errs_test.go` | Raw errors become generic `internal`; Connect errors pass through |
-| `internal/platform/supabase/admin_test.go` | Admin delete: request shape, 404 treated as already deleted, other errors surfaced |
+| `internal/platform/supabase/admin_test.go` | Admin delete: request shape, 404 treated as already deleted, other errors surfaced; `SetAdmin` sends `{"admin": true}` or `null` (which removes the key) and surfaces errors |
 | `internal/identity/service_test.go` | Account creation keeps an existing email; onboarded and display languages once a profile exists; deletion order (auth first, app data kept if that fails) |
 | `internal/profile/validate_test.go` | Every profile rule (age 18+ this year, a fluent language, ≥ 3 activities, same-gender-only needs a gender, current code of conduct, …), normalisation, proto round trip, unknown enums and duplicates rejected |
 | `internal/profile/service_test.go` | **Integration** (`TEST_DATABASE_URL`): no account → `ErrNoAccount`; save, read back, a second save replaces every list; unknown areas and activities rejected; a failed save changes nothing |

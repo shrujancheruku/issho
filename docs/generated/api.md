@@ -126,6 +126,36 @@
   
     - [IdentityService](#issho-v1-IdentityService)
   
+- [issho/v1/moderation.proto](#issho_v1_moderation-proto)
+    - [CrewLeave](#issho-v1-CrewLeave)
+    - [GetModeratorRequest](#issho-v1-GetModeratorRequest)
+    - [GetModeratorResponse](#issho-v1-GetModeratorResponse)
+    - [ListCrewLeavesRequest](#issho-v1-ListCrewLeavesRequest)
+    - [ListCrewLeavesResponse](#issho-v1-ListCrewLeavesResponse)
+    - [ListFlagsRequest](#issho-v1-ListFlagsRequest)
+    - [ListFlagsResponse](#issho-v1-ListFlagsResponse)
+    - [ListReportsRequest](#issho-v1-ListReportsRequest)
+    - [ListReportsResponse](#issho-v1-ListReportsResponse)
+    - [ListTranslationLanguagesRequest](#issho-v1-ListTranslationLanguagesRequest)
+    - [ListTranslationLanguagesResponse](#issho-v1-ListTranslationLanguagesResponse)
+    - [ListTranslationsRequest](#issho-v1-ListTranslationsRequest)
+    - [ListTranslationsResponse](#issho-v1-ListTranslationsResponse)
+    - [ModerationFlag](#issho-v1-ModerationFlag)
+    - [ModerationReport](#issho-v1-ModerationReport)
+    - [ResolveFlagRequest](#issho-v1-ResolveFlagRequest)
+    - [ResolveFlagResponse](#issho-v1-ResolveFlagResponse)
+    - [ResolveReportRequest](#issho-v1-ResolveReportRequest)
+    - [ResolveReportResponse](#issho-v1-ResolveReportResponse)
+    - [ReviewTranslationRequest](#issho-v1-ReviewTranslationRequest)
+    - [ReviewTranslationResponse](#issho-v1-ReviewTranslationResponse)
+    - [Translation](#issho-v1-Translation)
+    - [TranslationLanguage](#issho-v1-TranslationLanguage)
+  
+    - [FlagKind](#issho-v1-FlagKind)
+    - [ReportStatus](#issho-v1-ReportStatus)
+  
+    - [ModerationService](#issho-v1-ModerationService)
+  
 - [issho/v1/push.proto](#issho_v1_push-proto)
     - [RegisterPushTokenRequest](#issho-v1-RegisterPushTokenRequest)
     - [RegisterPushTokenResponse](#issho-v1-RegisterPushTokenResponse)
@@ -1861,6 +1891,454 @@ HTTP: POST /issho.v1.IdentityService/&lt;Method&gt;
 | ----------- | ------------ | ------------- | ------------|
 | GetMe | [GetMeRequest](#issho-v1-GetMeRequest) | [GetMeResponse](#issho-v1-GetMeResponse) | GetMe returns the caller&#39;s account, creating the app-side user row the first time a Supabase user calls the API. |
 | DeleteAccount | [DeleteAccountRequest](#issho-v1-DeleteAccountRequest) | [DeleteAccountResponse](#issho-v1-DeleteAccountResponse) | DeleteAccount permanently deletes the caller&#39;s Supabase auth user and all of their app data (cascaded from auth.users). The client should sign out afterwards; existing access tokens stop working once they expire. Returns FAILED_PRECONDITION if the server has no Supabase secret key configured. |
+
+ 
+
+
+
+<a name="issho_v1_moderation-proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## issho/v1/moderation.proto
+
+
+
+<a name="issho-v1-CrewLeave"></a>
+
+### CrewLeave
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [int64](#int64) |  |  |
+| crew_id | [string](#string) |  |  |
+| crew_name | [string](#string) |  | &#34;Football&#34; or &#34;Kichijoji&#34;: what the crew shares. |
+| crew_status | [string](#string) |  | offered, active, lapsed or closed. |
+| user_id | [string](#string) |  | Empty if they&#39;ve deleted their account. |
+| user_name | [string](#string) |  |  |
+| reason | [LeaveReason](#issho-v1-LeaveReason) |  |  |
+| details | [string](#string) |  |  |
+| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-GetModeratorRequest"></a>
+
+### GetModeratorRequest
+
+
+
+
+
+
+
+<a name="issho-v1-GetModeratorResponse"></a>
+
+### GetModeratorResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| user_id | [string](#string) |  |  |
+| email | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-ListCrewLeavesRequest"></a>
+
+### ListCrewLeavesRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| reason | [LeaveReason](#issho-v1-LeaveReason) |  | UNSPECIFIED = every reason. |
+
+
+
+
+
+
+<a name="issho-v1-ListCrewLeavesResponse"></a>
+
+### ListCrewLeavesResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| leaves | [CrewLeave](#issho-v1-CrewLeave) | repeated |  |
+
+
+
+
+
+
+<a name="issho-v1-ListFlagsRequest"></a>
+
+### ListFlagsRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| resolved | [bool](#bool) |  | false = open flags; true = resolved ones. |
+
+
+
+
+
+
+<a name="issho-v1-ListFlagsResponse"></a>
+
+### ListFlagsResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| flags | [ModerationFlag](#issho-v1-ModerationFlag) | repeated |  |
+
+
+
+
+
+
+<a name="issho-v1-ListReportsRequest"></a>
+
+### ListReportsRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| status | [ReportStatus](#issho-v1-ReportStatus) |  | UNSPECIFIED = every status. |
+| reported_id | [string](#string) |  | Only reports about this person; empty = everyone. |
+
+
+
+
+
+
+<a name="issho-v1-ListReportsResponse"></a>
+
+### ListReportsResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| reports | [ModerationReport](#issho-v1-ModerationReport) | repeated |  |
+
+
+
+
+
+
+<a name="issho-v1-ListTranslationLanguagesRequest"></a>
+
+### ListTranslationLanguagesRequest
+
+
+
+
+
+
+
+<a name="issho-v1-ListTranslationLanguagesResponse"></a>
+
+### ListTranslationLanguagesResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| languages | [TranslationLanguage](#issho-v1-TranslationLanguage) | repeated |  |
+
+
+
+
+
+
+<a name="issho-v1-ListTranslationsRequest"></a>
+
+### ListTranslationsRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| lang | [string](#string) |  |  |
+| unreviewed_only | [bool](#bool) |  |  |
+| search | [string](#string) |  | Matches the English source or the translation; empty = all. |
+| offset | [int32](#int32) |  | How many to skip (pages of 100). |
+
+
+
+
+
+
+<a name="issho-v1-ListTranslationsResponse"></a>
+
+### ListTranslationsResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| translations | [Translation](#issho-v1-Translation) | repeated |  |
+
+
+
+
+
+
+<a name="issho-v1-ModerationFlag"></a>
+
+### ModerationFlag
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [int64](#int64) |  |  |
+| user_id | [string](#string) |  |  |
+| user_name | [string](#string) |  |  |
+| kind | [FlagKind](#issho-v1-FlagKind) |  |  |
+| details_json | [string](#string) |  | The numbers behind the flag, as JSON (see FlagKind). |
+| note | [string](#string) |  | The note left when it was resolved. |
+| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | The details were last refreshed (the flag is updated while open). |
+| resolved_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| resolved_by | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-ModerationReport"></a>
+
+### ModerationReport
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [string](#string) |  |  |
+| reporter_id | [string](#string) |  | Empty if the reporter has deleted their account. |
+| reporter_name | [string](#string) |  |  |
+| reported_id | [string](#string) |  |  |
+| reported_name | [string](#string) |  |  |
+| reports_about_reported | [int32](#int32) |  | How many reports there are about the reported person in all. |
+| reason | [ReportReason](#issho-v1-ReportReason) |  |  |
+| details | [string](#string) |  |  |
+| status | [ReportStatus](#issho-v1-ReportStatus) |  |  |
+| note | [string](#string) |  | The moderator&#39;s note on the decision. |
+| event_id | [string](#string) |  | Where they met: an outing (event_*) or a crew (crew_*), if still there. |
+| event_title | [string](#string) |  |  |
+| event_date | [string](#string) |  | The outing&#39;s date (YYYY-MM-DD, in the city&#39;s time zone) and part of the day (morning, afternoon, evening). |
+| event_block | [string](#string) |  |  |
+| crew_id | [string](#string) |  |  |
+| crew_name | [string](#string) |  |  |
+| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | Last changed by the reporter (reporting again about the same outing or crew). Later than reviewed_at: changed since the decision. |
+| reviewed_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| reviewed_by | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-ResolveFlagRequest"></a>
+
+### ResolveFlagRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| flag_id | [int64](#int64) |  |  |
+| note | [string](#string) |  | Up to 2000 characters. |
+
+
+
+
+
+
+<a name="issho-v1-ResolveFlagResponse"></a>
+
+### ResolveFlagResponse
+
+
+
+
+
+
+
+<a name="issho-v1-ResolveReportRequest"></a>
+
+### ResolveReportRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| report_id | [string](#string) |  |  |
+| status | [ReportStatus](#issho-v1-ReportStatus) |  | ACTIONED, DISMISSED, or OPEN to reopen it. |
+| note | [string](#string) |  | Up to 2000 characters. |
+
+
+
+
+
+
+<a name="issho-v1-ResolveReportResponse"></a>
+
+### ResolveReportResponse
+
+
+
+
+
+
+
+<a name="issho-v1-ReviewTranslationRequest"></a>
+
+### ReviewTranslationRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| source_hash | [string](#string) |  |  |
+| lang | [string](#string) |  |  |
+| text | [string](#string) |  | The corrected text (or the same text, to confirm it). Not empty. |
+
+
+
+
+
+
+<a name="issho-v1-ReviewTranslationResponse"></a>
+
+### ReviewTranslationResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| translation | [Translation](#issho-v1-Translation) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-Translation"></a>
+
+### Translation
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| source_hash | [string](#string) |  | Identifies the English source and its context, with lang. |
+| lang | [string](#string) |  |  |
+| source | [string](#string) |  |  |
+| context | [string](#string) |  | What the text is (&#34;name of a city&#34;, a UI string), as given to the translator. |
+| text | [string](#string) |  |  |
+| model | [string](#string) |  | Which translator wrote it. |
+| reviewed | [bool](#bool) |  |  |
+| reviewed_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-TranslationLanguage"></a>
+
+### TranslationLanguage
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| lang | [string](#string) |  | ISO 639-1 code, e.g. &#34;ja&#34;. |
+| total | [int32](#int32) |  |  |
+| unreviewed | [int32](#int32) |  |  |
+
+
+
+
+
+ 
+
+
+<a name="issho-v1-FlagKind"></a>
+
+### FlagKind
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| FLAG_KIND_UNSPECIFIED | 0 |  |
+| FLAG_KIND_PICK_GENDER_LEAN | 1 | Their meet-again picks lean heavily towards one gender, compared with who they met. Details: gender, picked (picks of that gender), picks, met (people met), met_share (that gender&#39;s share of the people they met), p_value (how likely if picks ignored gender). |
+
+
+
+<a name="issho-v1-ReportStatus"></a>
+
+### ReportStatus
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| REPORT_STATUS_UNSPECIFIED | 0 |  |
+| REPORT_STATUS_OPEN | 1 | Waiting for a moderator. |
+| REPORT_STATUS_ACTIONED | 2 | A moderator acted on it (see the note). |
+| REPORT_STATUS_DISMISSED | 3 | A moderator looked and took no action. |
+
+
+ 
+
+ 
+
+
+<a name="issho-v1-ModerationService"></a>
+
+### ModerationService
+ModerationService: the moderation queue in the admin SPA. Reports about
+people, flags raised by the system (picks leaning towards one gender),
+why people left crews, and corrections to machine translations.
+Admins only: requires `Authorization: Bearer &lt;Supabase access token&gt;` for
+an account with `app_metadata.admin = true` (set with `tool set-admin`);
+anyone else gets PERMISSION_DENIED.
+
+HTTP: POST /issho.v1.ModerationService/&lt;Method&gt;
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| GetModerator | [GetModeratorRequest](#issho-v1-GetModeratorRequest) | [GetModeratorResponse](#issho-v1-GetModeratorResponse) | GetModerator says who the caller is. The admin SPA calls it after sign-in to find out whether the account is an admin. |
+| ListReports | [ListReportsRequest](#issho-v1-ListReportsRequest) | [ListReportsResponse](#issho-v1-ListReportsResponse) | ListReports returns reports, open ones first (oldest first), then the rest newest first. At most 200. |
+| ResolveReport | [ResolveReportRequest](#issho-v1-ResolveReportRequest) | [ResolveReportResponse](#issho-v1-ResolveReportResponse) | ResolveReport records the decision on a report. It can be changed later (resolve again). The pair stays apart in matching either way. |
+| ListFlags | [ListFlagsRequest](#issho-v1-ListFlagsRequest) | [ListFlagsResponse](#issho-v1-ListFlagsResponse) | ListFlags returns open flags (oldest first) or resolved ones (newest first). At most 200. |
+| ResolveFlag | [ResolveFlagRequest](#issho-v1-ResolveFlagRequest) | [ResolveFlagResponse](#issho-v1-ResolveFlagResponse) | ResolveFlag closes an open flag with a note. FAILED_PRECONDITION if it&#39;s already resolved. A later signal opens a new flag. |
+| ListCrewLeaves | [ListCrewLeavesRequest](#issho-v1-ListCrewLeavesRequest) | [ListCrewLeavesResponse](#issho-v1-ListCrewLeavesResponse) | ListCrewLeaves returns why people left crews, newest first. At most 200. |
+| ListTranslationLanguages | [ListTranslationLanguagesRequest](#issho-v1-ListTranslationLanguagesRequest) | [ListTranslationLanguagesResponse](#issho-v1-ListTranslationLanguagesResponse) | ListTranslationLanguages returns the languages with machine translations, with how many still need a look. |
+| ListTranslations | [ListTranslationsRequest](#issho-v1-ListTranslationsRequest) | [ListTranslationsResponse](#issho-v1-ListTranslationsResponse) | ListTranslations returns one language&#39;s translations, unreviewed ones first, 100 at a time. |
+| ReviewTranslation | [ReviewTranslationRequest](#issho-v1-ReviewTranslationRequest) | [ReviewTranslationResponse](#issho-v1-ReviewTranslationResponse) | ReviewTranslation corrects (or confirms) a translation. A reviewed translation is never replaced by a machine one. INVALID_ARGUMENT if the text drops or adds a {placeholder} of the English source. |
 
  
 

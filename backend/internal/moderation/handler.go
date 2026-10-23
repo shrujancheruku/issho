@@ -1,0 +1,386 @@
+// Package moderation serves ModerationService, the moderation queue in the
+// admin SPA (M8): reports, flags, crew leave reasons and corrections to
+// machine translations.
+//
+// Every call is for admins only. cmd/api enforces that for the whole
+// service (auth.AdminOnly); moderator() checks again so a wiring mistake
+// fails closed.
+package moderation
+
+import (
+	"context"
+	"errors"
+	"strings"
+	"time"
+	"unicode/utf8"
+
+	"connectrpc.com/connect"
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
+	"google.golang.org/protobuf/types/known/timestamppb"
+
+	"github.com/shrujancheruku/issho/backend/gen/dbgen"
+	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
+	"github.com/shrujancheruku/issho/backend/internal/platform/auth"
+	"github.com/shrujancheruku/issho/backend/internal/uistrings"
+)
+
+const (
+	// maxRows bounds each list. The queue is small at launch; paging can
+	// come when it isn't.
+	maxRows = 200
+	// translationPage is one page of translations (there are thousands).
+	translationPage = 100
+	// MaxNote matches the database check on notes.
+	MaxNote = 2000
+)
+
+// Handler serves ModerationService.
+type Handler struct {
+	Q   *dbgen.Queries
+	Now func() time.Time // nil = time.Now
+}
+
+func (h *Handler) now() time.Time {
+	if h.Now != nil {
+		return h.Now()
+	}
+	return time.Now()
+}
+
+func moderator(ctx context.Context) (auth.Caller, error) {
+	c, ok := auth.FromContext(ctx)
+	if !ok {
+		return c, connect.NewError(connect.CodeUnauthenticated, errors.New("no caller"))
+	}
+	if !c.Admin {
+		return c, connect.NewError(connect.CodePermissionDenied, errors.New("admins only"))
+	}
+	return c, nil
+}
+
+func (h *Handler) GetModerator(ctx context.Context, _ *connect.Request[isshov1.GetModeratorRequest]) (*connect.Response[isshov1.GetModeratorResponse], error) {
+	c, err := moderator(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(&isshov1.GetModeratorResponse{UserId: c.UserID.String(), Email: c.Email}), nil
+}
+
+// Report statuses as stored and as sent.
+var reportStatuses = map[isshov1.ReportStatus]string{
+	isshov1.ReportStatus_REPORT_STATUS_OPEN:      "open",
+	isshov1.ReportStatus_REPORT_STATUS_ACTIONED:  "actioned",
+	isshov1.ReportStatus_REPORT_STATUS_DISMISSED: "dismissed",
+}
+
+// The reasons people give, as stored (plans.Report*, plans.Leave*).
+var reportReasons = map[string]isshov1.ReportReason{
+	"dating":     isshov1.ReportReason_REPORT_REASON_DATING,
+	"harassment": isshov1.ReportReason_REPORT_REASON_HARASSMENT,
+	"unsafe":     isshov1.ReportReason_REPORT_REASON_UNSAFE,
+	"no_show":    isshov1.ReportReason_REPORT_REASON_NO_SHOW,
+	"other":      isshov1.ReportReason_REPORT_REASON_OTHER,
+}
+
+var leaveReasons = map[isshov1.LeaveReason]string{
+	isshov1.LeaveReason_LEAVE_REASON_UNCOMFORTABLE:     "uncomfortable",
+	isshov1.LeaveReason_LEAVE_REASON_NOT_INTERESTED:    "not_interested",
+	isshov1.LeaveReason_LEAVE_REASON_INACTIVE:          "inactive",
+	isshov1.LeaveReason_LEAVE_REASON_TOO_MANY_MESSAGES: "too_many_messages",
+	isshov1.LeaveReason_LEAVE_REASON_OTHER:             "other",
+}
+
+var flagKinds = map[string]isshov1.FlagKind{
+	"pick_gender_lean": isshov1.FlagKind_FLAG_KIND_PICK_GENDER_LEAN,
+}
+
+func (h *Handler) ListReports(ctx context.Context, req *connect.Request[isshov1.ListReportsRequest]) (*connect.Response[isshov1.ListReportsResponse], error) {
+	if _, err := moderator(ctx); err != nil {
+		return nil, err
+	}
+	arg := dbgen.ListReportsParams{MaxRows: maxRows}
+	if req.Msg.Status != isshov1.ReportStatus_REPORT_STATUS_UNSPECIFIED {
+		s, ok := reportStatuses[req.Msg.Status]
+		if !ok {
+			return nil, invalid("status: unknown")
+		}
+		arg.Status = s
+	}
+	if req.Msg.ReportedId != "" {
+		id, err := uuid.Parse(req.Msg.ReportedId)
+		if err != nil {
+			return nil, invalid("reported_id: not a user id")
+		}
+		arg.ReportedID = id
+	}
+	rows, err := h.Q.ListReports(ctx, arg)
+	if err != nil {
+		return nil, err
+	}
+	out := &isshov1.ListReportsResponse{Reports: make([]*isshov1.ModerationReport, len(rows))}
+	for i, r := range rows {
+		m := &isshov1.ModerationReport{
+			Id:                   r.ID.String(),
+			ReporterId:           uuidString(r.ReporterID),
+			ReporterName:         r.ReporterName,
+			ReportedId:           r.ReportedID.String(),
+			ReportedName:         r.ReportedName,
+			ReportsAboutReported: r.ReportsAboutReported,
+			Reason:               reportReasons[r.Reason],
+			Details:              r.Details,
+			Note:                 r.Note,
+			EventId:              uuidString(r.EventID),
+			EventTitle:           r.EventTitle,
+			EventBlock:           r.EventBlock,
+			CrewId:               uuidString(r.CrewID),
+			CrewName:             r.CrewName,
+			CreatedAt:            timestamp(r.CreatedAt),
+			UpdatedAt:            timestamp(r.UpdatedAt),
+			ReviewedAt:           timestamp(r.ReviewedAt),
+			ReviewedBy:           uuidString(r.ReviewedBy),
+		}
+		for k, v := range reportStatuses {
+			if v == r.Status {
+				m.Status = k
+			}
+		}
+		if r.EventDate.Valid {
+			m.EventDate = r.EventDate.Time.Format(time.DateOnly)
+		}
+		out.Reports[i] = m
+	}
+	return connect.NewResponse(out), nil
+}
+
+func (h *Handler) ResolveReport(ctx context.Context, req *connect.Request[isshov1.ResolveReportRequest]) (*connect.Response[isshov1.ResolveReportResponse], error) {
+	c, err := moderator(ctx)
+	if err != nil {
+		return nil, err
+	}
+	id, err := uuid.Parse(req.Msg.ReportId)
+	if err != nil {
+		return nil, invalid("report_id: not a report id")
+	}
+	status, ok := reportStatuses[req.Msg.Status]
+	if !ok {
+		return nil, invalid("status: open, actioned or dismissed")
+	}
+	note, err := cleanNote(req.Msg.Note)
+	if err != nil {
+		return nil, err
+	}
+	n, err := h.Q.ResolveReport(ctx, dbgen.ResolveReportParams{
+		ID: id, Status: status, Note: note, ReviewedBy: pgUUID(c.UserID), At: pgTime(h.now()),
+	})
+	if err != nil {
+		return nil, err
+	}
+	if n == 0 {
+		return nil, connect.NewError(connect.CodeNotFound, errors.New("no such report"))
+	}
+	return connect.NewResponse(&isshov1.ResolveReportResponse{}), nil
+}
+
+func (h *Handler) ListFlags(ctx context.Context, req *connect.Request[isshov1.ListFlagsRequest]) (*connect.Response[isshov1.ListFlagsResponse], error) {
+	if _, err := moderator(ctx); err != nil {
+		return nil, err
+	}
+	rows, err := h.Q.ListModerationFlags(ctx, dbgen.ListModerationFlagsParams{Open: !req.Msg.Resolved, MaxRows: maxRows})
+	if err != nil {
+		return nil, err
+	}
+	out := &isshov1.ListFlagsResponse{Flags: make([]*isshov1.ModerationFlag, len(rows))}
+	for i, f := range rows {
+		out.Flags[i] = &isshov1.ModerationFlag{
+			Id:          f.ID,
+			UserId:      f.UserID.String(),
+			UserName:    f.UserName,
+			Kind:        flagKinds[f.Kind],
+			DetailsJson: string(f.Details),
+			Note:        f.Note,
+			CreatedAt:   timestamp(f.CreatedAt),
+			UpdatedAt:   timestamp(f.UpdatedAt),
+			ResolvedAt:  timestamp(f.ResolvedAt),
+			ResolvedBy:  uuidString(f.ResolvedBy),
+		}
+	}
+	return connect.NewResponse(out), nil
+}
+
+func (h *Handler) ResolveFlag(ctx context.Context, req *connect.Request[isshov1.ResolveFlagRequest]) (*connect.Response[isshov1.ResolveFlagResponse], error) {
+	c, err := moderator(ctx)
+	if err != nil {
+		return nil, err
+	}
+	note, err := cleanNote(req.Msg.Note)
+	if err != nil {
+		return nil, err
+	}
+	n, err := h.Q.ResolveModerationFlag(ctx, dbgen.ResolveModerationFlagParams{
+		ID: req.Msg.FlagId, Note: note, ResolvedBy: pgUUID(c.UserID), At: pgTime(h.now()),
+	})
+	if err != nil {
+		return nil, err
+	}
+	if n == 0 {
+		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("no open flag with that id"))
+	}
+	return connect.NewResponse(&isshov1.ResolveFlagResponse{}), nil
+}
+
+func (h *Handler) ListCrewLeaves(ctx context.Context, req *connect.Request[isshov1.ListCrewLeavesRequest]) (*connect.Response[isshov1.ListCrewLeavesResponse], error) {
+	if _, err := moderator(ctx); err != nil {
+		return nil, err
+	}
+	arg := dbgen.ListCrewLeavesParams{MaxRows: maxRows}
+	if req.Msg.Reason != isshov1.LeaveReason_LEAVE_REASON_UNSPECIFIED {
+		r, ok := leaveReasons[req.Msg.Reason]
+		if !ok {
+			return nil, invalid("reason: unknown")
+		}
+		arg.Reason = r
+	}
+	rows, err := h.Q.ListCrewLeaves(ctx, arg)
+	if err != nil {
+		return nil, err
+	}
+	out := &isshov1.ListCrewLeavesResponse{Leaves: make([]*isshov1.CrewLeave, len(rows))}
+	for i, l := range rows {
+		m := &isshov1.CrewLeave{
+			Id:         l.ID,
+			CrewId:     l.CrewID.String(),
+			CrewName:   l.CrewName,
+			CrewStatus: l.CrewStatus,
+			UserId:     uuidString(l.UserID),
+			UserName:   l.UserName,
+			Details:    l.Details,
+			CreatedAt:  timestamp(l.CreatedAt),
+		}
+		for k, v := range leaveReasons {
+			if v == l.Reason {
+				m.Reason = k
+			}
+		}
+		out.Leaves[i] = m
+	}
+	return connect.NewResponse(out), nil
+}
+
+func (h *Handler) ListTranslationLanguages(ctx context.Context, _ *connect.Request[isshov1.ListTranslationLanguagesRequest]) (*connect.Response[isshov1.ListTranslationLanguagesResponse], error) {
+	if _, err := moderator(ctx); err != nil {
+		return nil, err
+	}
+	rows, err := h.Q.ListTranslationLanguages(ctx)
+	if err != nil {
+		return nil, err
+	}
+	out := &isshov1.ListTranslationLanguagesResponse{Languages: make([]*isshov1.TranslationLanguage, len(rows))}
+	for i, r := range rows {
+		out.Languages[i] = &isshov1.TranslationLanguage{Lang: r.Lang, Total: r.Total, Unreviewed: r.Unreviewed}
+	}
+	return connect.NewResponse(out), nil
+}
+
+func (h *Handler) ListTranslations(ctx context.Context, req *connect.Request[isshov1.ListTranslationsRequest]) (*connect.Response[isshov1.ListTranslationsResponse], error) {
+	if _, err := moderator(ctx); err != nil {
+		return nil, err
+	}
+	if req.Msg.Lang == "" {
+		return nil, invalid("lang: required")
+	}
+	if req.Msg.Offset < 0 {
+		return nil, invalid("offset: not negative")
+	}
+	rows, err := h.Q.ListTranslations(ctx, dbgen.ListTranslationsParams{
+		Lang: req.Msg.Lang, UnreviewedOnly: req.Msg.UnreviewedOnly, Search: strings.TrimSpace(req.Msg.Search),
+		SkipRows: req.Msg.Offset, MaxRows: translationPage,
+	})
+	if err != nil {
+		return nil, err
+	}
+	out := &isshov1.ListTranslationsResponse{Translations: make([]*isshov1.Translation, len(rows))}
+	for i, r := range rows {
+		out.Translations[i] = translationToProto(dbgen.GetTranslationRow(r))
+	}
+	return connect.NewResponse(out), nil
+}
+
+func (h *Handler) ReviewTranslation(ctx context.Context, req *connect.Request[isshov1.ReviewTranslationRequest]) (*connect.Response[isshov1.ReviewTranslationResponse], error) {
+	c, err := moderator(ctx)
+	if err != nil {
+		return nil, err
+	}
+	key := dbgen.GetTranslationParams{SourceHash: req.Msg.SourceHash, Lang: req.Msg.Lang}
+	text := strings.TrimSpace(req.Msg.Text)
+	if text == "" {
+		return nil, invalid("text: required")
+	}
+	t, err := h.Q.GetTranslation(ctx, key)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, connect.NewError(connect.CodeNotFound, errors.New("no such translation"))
+	}
+	if err != nil {
+		return nil, err
+	}
+	// UI strings with a lost {placeholder} are thrown away when shown
+	// (uistrings.In); refuse them here instead of saving a correction that
+	// would never appear. Other text has no placeholders, so this holds.
+	if !uistrings.SamePlaceholders(t.Source, text) {
+		return nil, invalid("text: keep every {placeholder} of the English text, unchanged")
+	}
+	if _, err := h.Q.ReviewTranslation(ctx, dbgen.ReviewTranslationParams{
+		SourceHash: key.SourceHash, Lang: key.Lang, Text: text, ReviewedBy: pgUUID(c.UserID), At: pgTime(h.now()),
+	}); err != nil {
+		return nil, err
+	}
+	if t, err = h.Q.GetTranslation(ctx, key); err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(&isshov1.ReviewTranslationResponse{Translation: translationToProto(t)}), nil
+}
+
+func translationToProto(t dbgen.GetTranslationRow) *isshov1.Translation {
+	return &isshov1.Translation{
+		SourceHash: t.SourceHash,
+		Lang:       t.Lang,
+		Source:     t.Source,
+		Context:    t.Context,
+		Text:       t.Text,
+		Model:      t.Model,
+		Reviewed:   t.Reviewed,
+		ReviewedAt: timestamp(t.ReviewedAt),
+		CreatedAt:  timestamp(t.CreatedAt),
+	}
+}
+
+func cleanNote(s string) (string, error) {
+	s = strings.TrimSpace(s)
+	if utf8.RuneCountInString(s) > MaxNote {
+		return "", invalid("note: at most 2000 characters")
+	}
+	return s, nil
+}
+
+func invalid(msg string) error {
+	return connect.NewError(connect.CodeInvalidArgument, errors.New(msg))
+}
+
+func timestamp(t pgtype.Timestamptz) *timestamppb.Timestamp {
+	if !t.Valid {
+		return nil
+	}
+	return timestamppb.New(t.Time)
+}
+
+func uuidString(id pgtype.UUID) string {
+	if !id.Valid {
+		return ""
+	}
+	return uuid.UUID(id.Bytes).String()
+}
+
+func pgUUID(id uuid.UUID) pgtype.UUID { return pgtype.UUID{Bytes: id, Valid: true} }
+
+func pgTime(t time.Time) pgtype.Timestamptz { return pgtype.Timestamptz{Time: t, Valid: true} }

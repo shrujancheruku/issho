@@ -106,8 +106,8 @@ func TestSamePlaceholders(t *testing.T) {
 		{"Code sent to {email}", "Code envoyé à {courriel}", false},
 		{"Code sent to {email}", "Code envoyé", false},
 	} {
-		if got := samePlaceholders(tc.en, tc.tr); got != tc.want {
-			t.Errorf("samePlaceholders(%q, %q) = %v", tc.en, tc.tr, got)
+		if got := SamePlaceholders(tc.en, tc.tr); got != tc.want {
+			t.Errorf("SamePlaceholders(%q, %q) = %v", tc.en, tc.tr, got)
 		}
 	}
 }

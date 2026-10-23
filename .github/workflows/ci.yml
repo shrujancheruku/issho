@@ -129,7 +129,7 @@ jobs:
       - name: DB integration tests and tool dry-runs (no Google calls)
         working-directory: backend
         run: |
-          TEST_DATABASE_URL="$DATABASE_URL" go test ./internal/geo/ ./internal/profile/ ./internal/plans/ ./internal/chatws/ -run Integration -v
+          TEST_DATABASE_URL="$DATABASE_URL" go test ./internal/geo/ ./internal/profile/ ./internal/plans/ ./internal/chatws/ ./internal/moderation/ -run Integration -v
           go run ./cmd/tool build-matrix -dry-run tokyo
           go run ./cmd/tool discover-venues -dry-run austin
       - name: Migration bookkeeping stays out of the public schema
@@ -150,6 +150,8 @@ jobs:
       # One turbo run so the three tasks run in parallel; turbo prefixes each line with its task.
       - name: Typecheck, lint and test
         run: pnpm turbo run typecheck lint test
+      - name: Admin SPA builds
+        run: pnpm --filter @issho/admin build
       # Metro's transform cache (~10 MB; Expo's default location is $TMPDIR/metro-cache).
       # A cold web bundle took ~24s, a warm one ~3s. Entries are keyed by file
       # content, so a stale cache only costs re-transforms. Saved per commit

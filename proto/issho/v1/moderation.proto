@@ -1,0 +1,243 @@
+syntax = "proto3";
+
+package issho.v1;
+
+import "google/protobuf/timestamp.proto";
+import "issho/v1/crews.proto";
+import "issho/v1/events.proto";
+
+option go_package = "github.com/shrujancheruku/issho/backend/gen/issho/v1;isshov1";
+
+// ModerationService: the moderation queue in the admin SPA. Reports about
+// people, flags raised by the system (picks leaning towards one gender),
+// why people left crews, and corrections to machine translations.
+// Admins only: requires `Authorization: Bearer <Supabase access token>` for
+// an account with `app_metadata.admin = true` (set with `tool set-admin`);
+// anyone else gets PERMISSION_DENIED.
+//
+// HTTP: POST /issho.v1.ModerationService/<Method>
+service ModerationService {
+  // GetModerator says who the caller is. The admin SPA calls it after
+  // sign-in to find out whether the account is an admin.
+  rpc GetModerator(GetModeratorRequest) returns (GetModeratorResponse) {}
+
+  // ListReports returns reports, open ones first (oldest first), then the
+  // rest newest first. At most 200.
+  rpc ListReports(ListReportsRequest) returns (ListReportsResponse) {}
+
+  // ResolveReport records the decision on a report. It can be changed
+  // later (resolve again). The pair stays apart in matching either way.
+  rpc ResolveReport(ResolveReportRequest) returns (ResolveReportResponse) {}
+
+  // ListFlags returns open flags (oldest first) or resolved ones (newest
+  // first). At most 200.
+  rpc ListFlags(ListFlagsRequest) returns (ListFlagsResponse) {}
+
+  // ResolveFlag closes an open flag with a note. FAILED_PRECONDITION if
+  // it's already resolved. A later signal opens a new flag.
+  rpc ResolveFlag(ResolveFlagRequest) returns (ResolveFlagResponse) {}
+
+  // ListCrewLeaves returns why people left crews, newest first. At most 200.
+  rpc ListCrewLeaves(ListCrewLeavesRequest) returns (ListCrewLeavesResponse) {}
+
+  // ListTranslationLanguages returns the languages with machine
+  // translations, with how many still need a look.
+  rpc ListTranslationLanguages(ListTranslationLanguagesRequest) returns (ListTranslationLanguagesResponse) {}
+
+  // ListTranslations returns one language's translations, unreviewed ones
+  // first, 100 at a time.
+  rpc ListTranslations(ListTranslationsRequest) returns (ListTranslationsResponse) {}
+
+  // ReviewTranslation corrects (or confirms) a translation. A reviewed
+  // translation is never replaced by a machine one. INVALID_ARGUMENT if
+  // the text drops or adds a {placeholder} of the English source.
+  rpc ReviewTranslation(ReviewTranslationRequest) returns (ReviewTranslationResponse) {}
+}
+
+message GetModeratorRequest {}
+
+message GetModeratorResponse {
+  string user_id = 1;
+  string email = 2;
+}
+
+enum ReportStatus {
+  REPORT_STATUS_UNSPECIFIED = 0;
+  // Waiting for a moderator.
+  REPORT_STATUS_OPEN = 1;
+  // A moderator acted on it (see the note).
+  REPORT_STATUS_ACTIONED = 2;
+  // A moderator looked and took no action.
+  REPORT_STATUS_DISMISSED = 3;
+}
+
+message ListReportsRequest {
+  // UNSPECIFIED = every status.
+  ReportStatus status = 1;
+  // Only reports about this person; empty = everyone.
+  string reported_id = 2;
+}
+
+message ListReportsResponse {
+  repeated ModerationReport reports = 1;
+}
+
+message ModerationReport {
+  string id = 1;
+  // Empty if the reporter has deleted their account.
+  string reporter_id = 2;
+  string reporter_name = 3;
+  string reported_id = 4;
+  string reported_name = 5;
+  // How many reports there are about the reported person in all.
+  int32 reports_about_reported = 6;
+  ReportReason reason = 7;
+  string details = 8;
+  ReportStatus status = 9;
+  // The moderator's note on the decision.
+  string note = 10;
+  // Where they met: an outing (event_*) or a crew (crew_*), if still there.
+  string event_id = 11;
+  string event_title = 12;
+  // The outing's date (YYYY-MM-DD, in the city's time zone) and part of the
+  // day (morning, afternoon, evening).
+  string event_date = 13;
+  string event_block = 14;
+  string crew_id = 15;
+  string crew_name = 16;
+  google.protobuf.Timestamp created_at = 17;
+  // Last changed by the reporter (reporting again about the same outing or
+  // crew). Later than reviewed_at: changed since the decision.
+  google.protobuf.Timestamp updated_at = 18;
+  google.protobuf.Timestamp reviewed_at = 19;
+  string reviewed_by = 20;
+}
+
+message ResolveReportRequest {
+  string report_id = 1;
+  // ACTIONED, DISMISSED, or OPEN to reopen it.
+  ReportStatus status = 2;
+  // Up to 2000 characters.
+  string note = 3;
+}
+
+message ResolveReportResponse {}
+
+enum FlagKind {
+  FLAG_KIND_UNSPECIFIED = 0;
+  // Their meet-again picks lean heavily towards one gender, compared with
+  // who they met. Details: gender, picked (picks of that gender), picks,
+  // met (people met), met_share (that gender's share of the people they
+  // met), p_value (how likely if picks ignored gender).
+  FLAG_KIND_PICK_GENDER_LEAN = 1;
+}
+
+message ListFlagsRequest {
+  // false = open flags; true = resolved ones.
+  bool resolved = 1;
+}
+
+message ListFlagsResponse {
+  repeated ModerationFlag flags = 1;
+}
+
+message ModerationFlag {
+  int64 id = 1;
+  string user_id = 2;
+  string user_name = 3;
+  FlagKind kind = 4;
+  // The numbers behind the flag, as JSON (see FlagKind).
+  string details_json = 5;
+  // The note left when it was resolved.
+  string note = 6;
+  google.protobuf.Timestamp created_at = 7;
+  // The details were last refreshed (the flag is updated while open).
+  google.protobuf.Timestamp updated_at = 8;
+  google.protobuf.Timestamp resolved_at = 9;
+  string resolved_by = 10;
+}
+
+message ResolveFlagRequest {
+  int64 flag_id = 1;
+  // Up to 2000 characters.
+  string note = 2;
+}
+
+message ResolveFlagResponse {}
+
+message ListCrewLeavesRequest {
+  // UNSPECIFIED = every reason.
+  LeaveReason reason = 1;
+}
+
+message ListCrewLeavesResponse {
+  repeated CrewLeave leaves = 1;
+}
+
+message CrewLeave {
+  int64 id = 1;
+  string crew_id = 2;
+  // "Football" or "Kichijoji": what the crew shares.
+  string crew_name = 3;
+  // offered, active, lapsed or closed.
+  string crew_status = 4;
+  // Empty if they've deleted their account.
+  string user_id = 5;
+  string user_name = 6;
+  LeaveReason reason = 7;
+  string details = 8;
+  google.protobuf.Timestamp created_at = 9;
+}
+
+message ListTranslationLanguagesRequest {}
+
+message ListTranslationLanguagesResponse {
+  repeated TranslationLanguage languages = 1;
+}
+
+message TranslationLanguage {
+  // ISO 639-1 code, e.g. "ja".
+  string lang = 1;
+  int32 total = 2;
+  int32 unreviewed = 3;
+}
+
+message ListTranslationsRequest {
+  string lang = 1;
+  bool unreviewed_only = 2;
+  // Matches the English source or the translation; empty = all.
+  string search = 3;
+  // How many to skip (pages of 100).
+  int32 offset = 4;
+}
+
+message ListTranslationsResponse {
+  repeated Translation translations = 1;
+}
+
+message Translation {
+  // Identifies the English source and its context, with lang.
+  string source_hash = 1;
+  string lang = 2;
+  string source = 3;
+  // What the text is ("name of a city", a UI string), as given to the
+  // translator.
+  string context = 4;
+  string text = 5;
+  // Which translator wrote it.
+  string model = 6;
+  bool reviewed = 7;
+  google.protobuf.Timestamp reviewed_at = 8;
+  google.protobuf.Timestamp created_at = 9;
+}
+
+message ReviewTranslationRequest {
+  string source_hash = 1;
+  string lang = 2;
+  // The corrected text (or the same text, to confirm it). Not empty.
+  string text = 3;
+}
+
+message ReviewTranslationResponse {
+  Translation translation = 1;
+}

@@ -25,6 +25,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/health"
 	"github.com/shrujancheruku/issho/backend/internal/identity"
 	mapsgoogle "github.com/shrujancheruku/issho/backend/internal/maps/google"
+	"github.com/shrujancheruku/issho/backend/internal/moderation"
 	"github.com/shrujancheruku/issho/backend/internal/plans"
 	"github.com/shrujancheruku/issho/backend/internal/platform/auth"
 	"github.com/shrujancheruku/issho/backend/internal/platform/config"
@@ -106,6 +107,8 @@ func run() error {
 		// before anyone is signed in; it only translates the server's own
 		// copy of the UI catalogue.
 		auth.Interceptor(verifier, isshov1connect.HealthServiceCheckProcedure, isshov1connect.UIServiceGetStringsProcedure),
+		// The admin SPA's services: only accounts with app_metadata.admin.
+		auth.AdminOnly(isshov1connect.ModerationServiceName),
 	)
 
 	mux := http.NewServeMux()
@@ -141,6 +144,7 @@ func run() error {
 	mux.Handle(isshov1connect.NewEventServiceHandler(&plans.EventHandler{Svc: planSvc}, opts))
 	mux.Handle(isshov1connect.NewCrewServiceHandler(&plans.CrewHandler{Svc: planSvc}, opts))
 	mux.Handle(isshov1connect.NewPushServiceHandler(&push.Handler{Q: q}, opts))
+	mux.Handle(isshov1connect.NewModerationServiceHandler(&moderation.Handler{Q: q}, opts))
 	uiCatalog, err := uistrings.Load()
 	if err != nil {
 		return err

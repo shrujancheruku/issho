@@ -18,10 +18,20 @@ import (
 type Caller struct {
 	UserID uuid.UUID
 	Email  string
+	// Admin is set in Supabase (app_metadata.admin, by `tool set-admin`)
+	// and carried in the access token, so a change takes effect when the
+	// admin's token is next refreshed (within the token lifetime, 1 h).
+	Admin bool
 }
 
 type claims struct {
 	Email string `json:"email"`
+	// Only app_metadata: Supabase lets nobody but the service role change
+	// it. user_metadata is editable by the user and must never grant
+	// anything.
+	AppMetadata struct {
+		Admin bool `json:"admin"`
+	} `json:"app_metadata"`
 	jwt.RegisteredClaims
 }
 
@@ -71,7 +81,7 @@ func (v *Verifier) Verify(token string) (Caller, error) {
 	if err != nil {
 		return Caller{}, fmt.Errorf("invalid subject: %w", err)
 	}
-	return Caller{UserID: id, Email: c.Email}, nil
+	return Caller{UserID: id, Email: c.Email, Admin: c.AppMetadata.Admin}, nil
 }
 
 type ctxKey struct{}
@@ -110,6 +120,30 @@ func Interceptor(v *Verifier, public ...string) connect.UnaryInterceptorFunc {
 				return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("invalid token"))
 			}
 			return next(WithCaller(ctx, caller), req)
+		}
+	}
+}
+
+// AdminOnly rejects calls to the given services (e.g. "issho.v1.ModerationService")
+// unless the caller is an admin. It runs after Interceptor; listing the
+// services where cmd/api builds it keeps every admin RPC covered, new ones
+// included, without each handler having to remember a check.
+func AdminOnly(services ...string) connect.UnaryInterceptorFunc {
+	prefixes := make([]string, len(services))
+	for i, s := range services {
+		prefixes[i] = "/" + s + "/"
+	}
+	return func(next connect.UnaryFunc) connect.UnaryFunc {
+		return func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
+			for _, p := range prefixes {
+				if strings.HasPrefix(req.Spec().Procedure, p) {
+					if c, ok := FromContext(ctx); !ok || !c.Admin {
+						return nil, connect.NewError(connect.CodePermissionDenied, errors.New("admins only"))
+					}
+					break
+				}
+			}
+			return next(ctx, req)
 		}
 	}
 }
