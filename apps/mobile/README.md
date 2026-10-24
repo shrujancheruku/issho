@@ -69,7 +69,7 @@ lib/api.ts ── Authorization: Bearer <access token> ────────�
 - **Route guards** are only for the user experience. The API checks the token on every request.
 - **The cache is cleared** whenever the signed-in user changes, so one user never sees another's data.
 - If the API rejects the session (`unauthenticated`, e.g. the account was deleted on another device), the app signs out automatically.
-- **Suspended accounts:** `GetMe` says `suspended`, and the root layout shows only "Your account is suspended" with a sign-out link. If someone is suspended mid-session, their next call fails with `permission_denied` / `account suspended`; the query client's error handler (`app/_layout.tsx`) then reloads `GetMe`, which brings up the same screen.
+- **Suspended accounts:** `GetMe` says `suspended`, and the root layout shows only "Your account is suspended" with the account controls (`AccountActions`: sign out, delete account), since the API still allows deleting. If someone is suspended mid-session, their next call fails with `permission_denied` / `account suspended`; the query client's error handler (`app/_layout.tsx`) then reloads `GetMe`, which brings up the same screen.
 
 ## Structure
 
