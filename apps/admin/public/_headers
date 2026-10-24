@@ -1,7 +1,6 @@
 # Served by Workers static assets. The page only talks to Supabase Auth and
-# the API: while the API runs behind a Cloudflare quick tunnel it's on
-# *.trycloudflare.com; narrow connect-src to the API's own origin once it's
-# hosted (M9).
+# the API. scripts/deploy-web.sh replaces https://*.trycloudflare.com below
+# with the API's exact origin in the deployed copy (dist/_headers).
 /*
   Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self' https://*.supabase.co https://*.trycloudflare.com; frame-ancestors 'none'; base-uri 'none'; form-action 'self'
   X-Content-Type-Options: nosniff
