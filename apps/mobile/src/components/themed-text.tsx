@@ -1,6 +1,6 @@
-import { Platform, StyleSheet, Text, type TextProps } from 'react-native';
+import { Platform, StyleSheet, Text, type TextProps, type TextStyle } from 'react-native';
 
-import { DisplayFont, Fonts, ThemeColor } from '@/constants/theme';
+import { bodyFontFor, DisplayFont, Fonts, ThemeColor } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 export type ThemedTextProps = TextProps & {
@@ -10,8 +10,16 @@ export type ThemedTextProps = TextProps & {
 
 export function ThemedText({ style, type = 'default', themeColor, ...rest }: ThemedTextProps) {
   const theme = useTheme();
-
-  return <Text style={[{ color: theme[themeColor ?? 'text'] }, styles[type], style]} {...rest} />;
+  const color = theme[themeColor ?? (type === 'linkPrimary' ? 'link' : 'text')];
+  const flat: TextStyle = StyleSheet.flatten([{ color }, styles[type], style]) ?? {};
+  // Text without its own family gets the body face in the weight it asked for.
+  // The weight is then dropped: each weight is a separate family, and keeping
+  // it would make iOS fake a bold and Android fall back to the system font.
+  if (!flat.fontFamily) {
+    const { fontWeight, ...unweighted } = flat;
+    return <Text style={{ ...unweighted, fontFamily: bodyFontFor(fontWeight) }} {...rest} />;
+  }
+  return <Text style={flat} {...rest} />;
 }
 
 const styles = StyleSheet.create({
@@ -45,10 +53,10 @@ const styles = StyleSheet.create({
     lineHeight: 30,
     fontSize: 14,
   },
+  // Coloured theme.link in ThemedText.
   linkPrimary: {
     lineHeight: 30,
     fontSize: 14,
-    color: '#3c87f7',
   },
   code: {
     fontFamily: Fonts.mono,

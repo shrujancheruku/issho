@@ -5,7 +5,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Switch, TextInput, View } fro
 import { AvailabilityGrid } from '@/components/availability-grid';
 import { Chip } from '@/components/chip';
 import { ThemedText } from '@/components/themed-text';
-import { Brand, Spacing } from '@/constants/theme';
+import { BodyFont, Brand, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useI18n } from '@/i18n/i18n-provider';
 import { english, type StringKey } from '@/i18n/strings';
@@ -216,7 +216,7 @@ function AboutStep({ draft, onChange }: StepProps) {
             value={draft.sameGenderOnly}
             disabled={draft.gender === Gender.PREFER_NOT_TO_SAY || draft.gender === Gender.UNSPECIFIED}
             onValueChange={(sameGenderOnly) => onChange({ ...draft, sameGenderOnly })}
-            trackColor={{ true: Brand.red }}
+            trackColor={{ true: theme.accent }}
           />
         </View>
       </Section>
@@ -304,7 +304,7 @@ function ActivitiesStep({ draft, onChange }: StepProps) {
     <>
       <HowToChoose />
       {!!data?.length && <SuggestActivities draft={draft} onChange={onChange} activities={data} />}
-      <ThemedText type="smallBold" style={{ color: picked >= MinActivities ? undefined : Brand.red }}>
+      <ThemedText type="smallBold" themeColor={picked >= MinActivities ? undefined : 'error'}>
         {t('interest.minimum', { count: MinActivities })} {t('profile.activitiesPicked', { count: picked })}
       </ThemedText>
       <LoadState query={activities} />
@@ -339,7 +339,7 @@ function HowToChoose() {
   const theme = useTheme();
 
   return (
-    <View style={[styles.howTo, { borderColor: Brand.gold, backgroundColor: theme.backgroundElement }]}>
+    <View style={[styles.howTo, { borderColor: Brand.gold, backgroundColor: theme.surface }]}>
       <ThemedText type="smallBold">{t('interest.howTitle')}</ThemedText>
       {interestLevels.map((level) => {
         const st = interestStyles[level];
@@ -414,6 +414,7 @@ const conductRules: StringKey[] = [
 // starts with the introduction rather than a second heading.
 function ConductStep({ draft, onChange }: StepProps) {
   const { t } = useI18n();
+  const theme = useTheme();
   return (
     <View style={styles.section}>
       <ThemedText themeColor="textSecondary">{t('conduct.intro')}</ThemedText>
@@ -430,7 +431,7 @@ function ConductStep({ draft, onChange }: StepProps) {
         <Switch
           value={draft.conductAccepted}
           onValueChange={(conductAccepted) => onChange({ ...draft, conductAccepted })}
-          trackColor={{ true: Brand.red }}
+          trackColor={{ true: theme.accent }}
         />
       </View>
     </View>
@@ -440,7 +441,7 @@ function ConductStep({ draft, onChange }: StepProps) {
 const styles = StyleSheet.create({
   section: { gap: Spacing.two },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
-  input: { borderRadius: 12, paddingHorizontal: Spacing.three, paddingVertical: Spacing.three, fontSize: 17 },
+  input: { fontFamily: BodyFont.regular, borderRadius: 12, paddingHorizontal: Spacing.three, paddingVertical: Spacing.three, fontSize: 17 },
   switchRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three, paddingVertical: Spacing.two },
   grow: { flex: 1 },
   spoken: { gap: Spacing.two, paddingVertical: Spacing.two },

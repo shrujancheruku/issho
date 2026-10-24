@@ -26,7 +26,7 @@ export default function ProfileScreen() {
             </ThemedText>
             <LanguageSwitch />
           </View>
-          <View style={[styles.list, { backgroundColor: theme.backgroundElement }]}>
+          <View style={[styles.list, { backgroundColor: theme.surface }]}>
             {steps
               .filter((s) => s !== 'conduct')
               .map((s) => (

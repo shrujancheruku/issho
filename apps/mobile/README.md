@@ -82,7 +82,7 @@ lib/api.ts ── Authorization: Bearer <access token> ────────�
 | `src/i18n/` | The app's UI text: `en.json` (the source), `i18n-provider.tsx` (`useI18n()`: `t`, `pair`, the language switch), `cache.ts` (translations kept on the device) |
 | `src/features/account/` | Account actions (sign out, delete account) |
 | `src/lib/` | `supabase.ts` (client), `secure-storage.ts` (session storage), `api.ts` (Go API client), `slots.ts` (weekly slots as strings) |
-| `src/components/`, `src/hooks/`, `src/constants/` | UI building blocks and theme. `Brand` colours are in `constants/theme.ts`. `availability-grid.tsx` is the week grid used by the profile and by signups. |
+| `src/components/`, `src/hooks/`, `src/constants/` | UI building blocks and theme. Colours (`Colors` per theme, `Brand` fixed) and fonts are in `constants/theme.ts`, following [docs/design-system.md](../../docs/design-system.md): red is the logo's only, gold is the main button and the interest levels, the accent is selection. `availability-grid.tsx` is the week grid used by the profile and by signups. |
 | `src/types/expo.d.ts` | Expo's ambient types, committed so fresh clones and CI can typecheck |
 | `assets/images/logo.png` | The logo, rendered from `assets/brand/logo.svg` (`rsvg-convert -w 900 ../../assets/brand/logo.svg -o assets/images/logo.png`) |
 | `app.json` | App config: name, bundle IDs `com.joinissho.app`, scheme `issho`. `expo.version` is managed by release-please. |
@@ -101,8 +101,8 @@ The app is written in English; every other language comes from the server (`UISe
 ## Typography
 
 - **Standout and hero text** (`ThemedText` types `title` and `subtitle`) uses **Dela Gothic One**, the face of the "ISSHO" wordmark (see `assets/brand`). It covers Latin and Japanese.
-- Everything else (body text, inputs, buttons) uses the system font, for readability.
-- The font comes from `@expo-google-fonts/dela-gothic-one` (OFL) and is loaded at startup with `useFonts` in `app/_layout.tsx`, which also works in Expo Go. The splash screen stays up until it's loaded. If loading fails, the app falls back to the system font.
+- Everything else (body text, buttons) uses **Zen Kaku Gothic New** in 400, 500 and 700. Each weight is its own family (`BodyFont`), because custom fonts ignore `fontWeight` on Android: `ThemedText` picks the family from the style's `fontWeight` (600 and up is bold) and drops the weight. Text outside `ThemedText` sets the family itself; every `TextInput` uses `BodyFont.regular`.
+- The fonts come from `@expo-google-fonts/dela-gothic-one` and `@expo-google-fonts/zen-kaku-gothic-new` (OFL) and are loaded at startup with `useFonts` in `app/_layout.tsx`, which also works in Expo Go. The splash screen stays up until they're loaded. If loading fails, the app falls back to the system font. The three body weights add about 7 MB to the app.
 - Use the `DisplayFont` constant (`constants/theme.ts`) rather than the family name. The face has a single weight, so **never set `fontWeight`** on display text: Android would fall back to the system font.
 
 ## Calling the API

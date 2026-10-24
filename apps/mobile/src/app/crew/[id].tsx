@@ -8,7 +8,7 @@ import { LanguageSwitch } from '@/components/language-switch';
 import { PrimaryButton } from '@/components/primary-button';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Brand, FormWidth, Spacing } from '@/constants/theme';
+import { BodyFont, Brand, FormWidth, Spacing } from '@/constants/theme';
 import { useCrew, useRespondToCrew } from '@/features/crews/data';
 import { crewName } from '@/features/crews/name';
 import { useChat } from '@/features/events/chat';
@@ -36,8 +36,8 @@ function SuggestedPlan({ planId }: { planId: string }) {
     <Pressable
       accessibilityRole="button"
       onPress={() => router.push({ pathname: '/plan/[id]', params: { id: planId } })}
-      style={[styles.suggestion, { backgroundColor: theme.backgroundElement }]}>
-      <ThemedText type="smallBold" style={{ color: Brand.gold }}>
+      style={[styles.suggestion, { backgroundColor: theme.surface }]}>
+      <ThemedText type="smallBold" themeColor="goldText">
         {t('crew.suggested')}
       </ThemedText>
       {plan && (
@@ -94,7 +94,7 @@ function CrewChat({ id }: { id: string }) {
             item.planId ? (
               <SuggestedPlan planId={item.planId} />
             ) : (
-              <View style={[styles.bubble, item.mine ? styles.mine : [styles.theirs, { backgroundColor: theme.backgroundElement }]]}>
+              <View style={[styles.bubble, item.mine ? [styles.mine, { backgroundColor: theme.accent }] : [styles.theirs, { backgroundColor: theme.backgroundElement }]]}>
                 {!item.mine && (
                   <ThemedText type="smallBold" themeColor="textSecondary">
                     {item.name}
@@ -106,7 +106,7 @@ function CrewChat({ id }: { id: string }) {
           }
         />
       )}
-      {send.isError && <ThemedText style={styles.error}>{t('error.network')}</ThemedText>}
+      {send.isError && <ThemedText themeColor="error" style={styles.error}>{t('error.network')}</ThemedText>}
       <View style={[styles.composer, { borderTopColor: theme.backgroundSelected }]}>
         <TextInput
           value={draft}
@@ -184,14 +184,14 @@ export default function CrewScreen() {
             <ThemedText themeColor="textSecondary">{members}</ThemedText>
           </View>
           {accepted && (
-            <ThemedText type="smallBold" style={{ color: Brand.red }}>
+            <ThemedText type="smallBold" themeColor="link">
               {t('crew.accepted', { date: formatStart(c.offerUntil, lang) })}
             </ThemedText>
           )}
         </ScrollView>
         <View style={styles.footer}>
           {respond.isError && (
-            <ThemedText style={styles.error}>
+            <ThemedText themeColor="error" style={styles.error}>
               {respond.error instanceof ConnectError && respond.error.code === Code.FailedPrecondition ? t('event.tooLate') : t('error.network')}
             </ThemedText>
           )}
@@ -264,16 +264,17 @@ const styles = StyleSheet.create({
   link: { alignItems: 'center', paddingVertical: Spacing.two },
   messages: { padding: Spacing.three, gap: Spacing.two },
   bubble: { maxWidth: '80%', borderRadius: 16, paddingVertical: Spacing.two, paddingHorizontal: Spacing.three, gap: Spacing.half },
-  mine: { alignSelf: 'flex-end', backgroundColor: Brand.red },
+  mine: { alignSelf: 'flex-end' },
   theirs: { alignSelf: 'flex-start' },
+  // On theme.accent, which is white-text in both themes (onAccent).
   mineText: { color: '#ffffff' },
   suggestion: { borderWidth: 2, borderColor: Brand.gold, borderRadius: 16, padding: Spacing.three, gap: Spacing.one },
   suggestionTitle: { fontSize: 20, lineHeight: 28 },
   center: { textAlign: 'center' },
-  error: { color: Brand.red, textAlign: 'center' },
+  error: { textAlign: 'center' },
   composer: { flexDirection: 'row', alignItems: 'flex-end', gap: Spacing.two, padding: Spacing.three, borderTopWidth: 1 },
-  input: { flex: 1, borderRadius: 16, paddingHorizontal: Spacing.three, paddingVertical: Spacing.two, maxHeight: 120, fontSize: 16 },
-  send: { backgroundColor: Brand.red, borderRadius: 16, paddingHorizontal: Spacing.three, paddingVertical: Spacing.two },
-  sendText: { color: '#ffffff', fontWeight: '600' },
+  input: { fontFamily: BodyFont.regular, flex: 1, borderRadius: 16, paddingHorizontal: Spacing.three, paddingVertical: Spacing.two, maxHeight: 120, fontSize: 16 },
+  send: { backgroundColor: Brand.gold, borderRadius: 16, paddingHorizontal: Spacing.three, paddingVertical: Spacing.two },
+  sendText: { color: Brand.ink, fontWeight: '600' },
   disabled: { opacity: 0.4 },
 });

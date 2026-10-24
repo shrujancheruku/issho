@@ -24,10 +24,10 @@ export function CrewCard({ crew, names }: { crew: Crew; names: ReturnType<typeof
       onPress={() => router.push({ pathname: '/crew/[id]', params: { id: crew.id } })}
       style={({ pressed }) => [
         styles.card,
-        { backgroundColor: theme.backgroundElement, borderColor: offer ? Brand.gold : 'transparent', opacity: pressed ? 0.8 : 1 },
+        { backgroundColor: theme.surface, borderColor: offer ? Brand.gold : 'transparent', opacity: pressed ? 0.8 : 1 },
       ]}>
       {offer && (
-        <ThemedText type="smallBold" style={{ color: Brand.gold }}>
+        <ThemedText type="smallBold" themeColor="goldText">
           {t('crew.offerCard', { date: formatStart(crew.offerUntil, lang) })}
         </ThemedText>
       )}

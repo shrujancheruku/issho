@@ -8,7 +8,7 @@ import { Chip } from '@/components/chip';
 import { PrimaryButton } from '@/components/primary-button';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Brand, FormWidth, Spacing } from '@/constants/theme';
+import { BodyFont, FormWidth, Spacing } from '@/constants/theme';
 import { useLeaveCrew } from '@/features/crews/data';
 import { useTheme } from '@/hooks/use-theme';
 import { useI18n } from '@/i18n/i18n-provider';
@@ -81,7 +81,7 @@ export default function LeaveCrewScreen() {
             </View>
           </ScrollView>
           <View style={styles.footer}>
-            {leaveCrew.isError && <ThemedText style={styles.error}>{t('error.network')}</ThemedText>}
+            {leaveCrew.isError && <ThemedText themeColor="error" style={styles.error}>{t('error.network')}</ThemedText>}
             <PrimaryButton
               label={t('leave.confirm')}
               disabled={reason === LeaveReason.UNSPECIFIED}
@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
   titleBlock: { gap: Spacing.two },
   section: { gap: Spacing.two },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
-  input: { minHeight: 96, borderRadius: 12, padding: Spacing.three, textAlignVertical: 'top' },
+  input: { fontFamily: BodyFont.regular, minHeight: 96, borderRadius: 12, padding: Spacing.three, textAlignVertical: 'top' },
   footer: { padding: Spacing.four, gap: Spacing.two },
-  error: { color: Brand.red, textAlign: 'center' },
+  error: { textAlign: 'center' },
 });

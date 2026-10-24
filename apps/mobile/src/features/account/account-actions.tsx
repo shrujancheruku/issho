@@ -41,7 +41,8 @@ export function AccountActions() {
         disabled={deleteAccount.isPending}
         onPress={confirmDelete}
         style={styles.button}>
-        <ThemedText style={styles.destructive}>
+        {/* Plain text, not red: red is for errors; the confirmation guards it. */}
+        <ThemedText>
           {deleteAccount.isPending ? t('account.deleting') : t('account.delete')}
         </ThemedText>
       </Pressable>
@@ -52,5 +53,4 @@ export function AccountActions() {
 const styles = StyleSheet.create({
   container: { gap: Spacing.two, alignItems: 'center' },
   button: { paddingVertical: Spacing.two, paddingHorizontal: Spacing.three },
-  destructive: { color: '#BC002D' },
 });

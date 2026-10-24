@@ -8,7 +8,7 @@ import { LanguageSwitch } from '@/components/language-switch';
 import { PrimaryButton } from '@/components/primary-button';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Brand, FormWidth, Spacing } from '@/constants/theme';
+import { FormWidth, Spacing } from '@/constants/theme';
 import { fromProfile, steps, stepValid, toProfile, type Draft, type Step } from '@/features/profile/draft';
 import { saveErrorMessage } from '@/features/profile/save-error';
 import { StepView, stepTitles } from '@/features/profile/steps';
@@ -73,7 +73,7 @@ export default function ProfileEditScreen() {
               <ActivityIndicator />
             )}
           </ScrollView>
-          {save.isError && <ThemedText style={styles.error}>{saveErrorMessage(save.error, t)}</ThemedText>}
+          {save.isError && <ThemedText themeColor="error" style={styles.error}>{saveErrorMessage(save.error, t)}</ThemedText>}
           <View style={styles.footer}>
             <PrimaryButton
               label={t('common.save')}
@@ -95,5 +95,5 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: Spacing.four, paddingTop: Spacing.three },
   content: { padding: Spacing.four, gap: Spacing.four },
   footer: { padding: Spacing.four },
-  error: { color: Brand.red, textAlign: 'center', paddingHorizontal: Spacing.four },
+  error: { textAlign: 'center', paddingHorizontal: Spacing.four },
 });

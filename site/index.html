@@ -10,23 +10,28 @@
 <meta property="og:description" content="Find your people through the things you already love.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
 <!-- Noto Serif JP ExtraBold is the logo's kanji font; subset to the four characters shown in the breakdown -->
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@800&text=%E4%B8%80%E7%B3%B8%E8%80%85%E6%97%A5&display=swap" rel="stylesheet">
 <style>
+  /* The design system's "Ai" dark theme (docs/design-system.md): indigo night,
+     the gold thread, and red only where it is the logo's sun. */
   :root {
     --red: #BC002D;
     --gold: #C9A227;
-    --bg: #0e0e0e;
-    --top: #262626;
-    --mid: #161616;
-    --surface: #1d1d1d;
-    --text: #f4f0e6;
-    --muted: #b3ad9e;
-    --line: #302e29;
+    --gold-hover: #D8B443;
+    --ink: #111111;
+    --bg: #0D1330;
+    --top: #222B52;
+    --mid: #161E40;
+    --surface: #161E40;
+    --text: #F1F3F8;
+    --muted: #A9B1CB;
+    --line: #2C3765;
+    --line-strong: #6C78AA;
     --display: "Dela Gothic One", "Hiragino Kaku Gothic ProN", "Arial Black", sans-serif;
     --kanji: "Noto Serif JP", "Hiragino Mincho ProN", serif;
-    --sans: Inter, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --sans: "Zen Kaku Gothic New", "Hiragino Sans", "Noto Sans JP", -apple-system, "Segoe UI", sans-serif;
     color-scheme: dark;
   }
   * { box-sizing: border-box; }
@@ -68,23 +73,24 @@
   .parts li { background: var(--mid); border: 1px solid var(--line); border-radius: .5rem; padding: 1.25rem; }
   .parts .kanji { font: 400 2.25rem/1 var(--display); }
   .parts .meaning { display: block; margin: .35rem 0 .6rem; font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
-  .parts .role b { font-weight: 600; }
+  .parts .role b { font-weight: 700; }
   .parts .role { margin: 0; color: var(--text); font-size: .98rem; }
   /* Colours follow the logo: gold strokes, black ink outlined in gold, red sun. */
   .parts .kanji { font: 800 2.75rem/1 var(--kanji); }
   .parts .gold .kanji { color: var(--gold); }
   .parts .ink .kanji { color: #111; -webkit-text-stroke: 1px var(--gold); paint-order: stroke fill; }
-  .parts .red .kanji { color: var(--red); }
+  .parts .red .kanji { color: var(--red); -webkit-text-stroke: 1px var(--ink); paint-order: stroke fill; }
 
-  /* The thread: a gold line running through each step, with a red sun at every knot. */
+  /* The thread: a gold line running through each step, with a gold knot at each one.
+     The red sun stays in the logo. */
   .steps { position: relative; margin: 2.25rem 0 0; padding: 0; list-style: none; }
   .steps li { position: relative; padding: 0 0 2rem 3.25rem; }
   .steps li:last-child { padding-bottom: 0; }
-  /* Node: 25px red sun centred on the title's first line (25px tall) */
+  /* Node: a 25px gold knot centred on the title's first line (25px tall) */
   .steps li::before {
     content: ""; position: absolute; left: 0; top: 0; z-index: 1; width: 25px; height: 25px; border-radius: 50%;
     box-sizing: border-box;
-    background: var(--red); border: 3px solid var(--mid); box-shadow: 0 0 0 2px var(--gold);
+    background: var(--gold); border: 3px solid var(--mid); box-shadow: 0 0 0 2px var(--gold);
   }
   /* Thread: runs from this node's centre to the next node's centre (li height + the 12.5px offset) */
   .steps li:not(:last-child)::after {
@@ -98,15 +104,15 @@
   form.signup { display: flex; flex-wrap: wrap; gap: .75rem; justify-content: center; margin: 2rem auto 0; max-width: 40rem; }
   form.signup input {
     flex: 1 1 13rem; min-width: 0; padding: .9rem 1rem; font: inherit; color: var(--text);
-    background: var(--mid); border: 1.5px solid #4a463c; border-radius: .5rem;
+    background: var(--mid); border: 1.5px solid var(--line-strong); border-radius: .5rem;
   }
-  form.signup input::placeholder { color: #8a8478; }
+  form.signup input::placeholder { color: var(--muted); }
   form.signup input:focus-visible, form.signup button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
   form.signup button {
-    flex: 0 0 auto; padding: .9rem 1.5rem; font: 600 1rem var(--sans); color: #fff;
-    background: var(--red); border: 1.5px solid var(--red); border-radius: .5rem; cursor: pointer;
+    flex: 0 0 auto; padding: .9rem 1.5rem; font: 700 1rem var(--sans); color: var(--ink);
+    background: var(--gold); border: 1.5px solid var(--gold); border-radius: .5rem; cursor: pointer;
   }
-  form.signup button:hover { background: #d4003a; border-color: #d4003a; }
+  form.signup button:hover { background: var(--gold-hover); border-color: var(--gold-hover); }
   .fine { margin: .85rem 0 0; font-size: .875rem; color: var(--muted); }
   .join .intro { margin-inline: auto; }
 

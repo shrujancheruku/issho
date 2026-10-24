@@ -38,9 +38,9 @@ export function TabButton({ children, isFocused, ref: _ref, ...props }: TabTrigg
   return (
     <Pressable {...props} style={({ pressed }) => pressed && styles.pressed}>
       <ThemedView
-        type={isFocused ? 'backgroundSelected' : 'backgroundElement'}
+        type={isFocused ? 'accent' : 'surface'}
         style={styles.tabButtonView}>
-        <ThemedText type="small" themeColor={isFocused ? 'text' : 'textSecondary'}>
+        <ThemedText type="small" themeColor={isFocused ? 'onAccent' : 'textSecondary'}>
           {children}
         </ThemedText>
       </ThemedView>
@@ -51,7 +51,7 @@ export function TabButton({ children, isFocused, ref: _ref, ...props }: TabTrigg
 export function CustomTabList(props: TabListProps) {
   return (
     <View {...props} style={styles.tabListContainer}>
-      <ThemedView type="backgroundElement" style={styles.innerContainer}>
+      <ThemedView type="surface" style={styles.innerContainer}>
         <ThemedText type="smallBold" style={styles.brandText}>
           Issho
         </ThemedText>

@@ -1,4 +1,9 @@
 import { DelaGothicOne_400Regular, useFonts } from '@expo-google-fonts/dela-gothic-one';
+import {
+  ZenKakuGothicNew_400Regular,
+  ZenKakuGothicNew_500Medium,
+  ZenKakuGothicNew_700Bold,
+} from '@expo-google-fonts/zen-kaku-gothic-new';
 import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -7,7 +12,7 @@ import { ActivityIndicator, Pressable, StyleSheet, useColorScheme } from 'react-
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Spacing } from '@/constants/theme';
+import { Colors, Spacing } from '@/constants/theme';
 import { AccountActions } from '@/features/account/account-actions';
 import { AuthProvider, isSuspendedError, useAuth } from '@/features/auth/auth-provider';
 import { I18nProvider, useI18n } from '@/i18n/i18n-provider';
@@ -24,11 +29,25 @@ const queryClient = new QueryClient({
   mutationCache: new MutationCache({ onError }),
 });
 
+// React Navigation paints screens, headers and the tab bar from its own theme,
+// so give it the app's grounds; otherwise screens flash white or black.
+const navTheme = (base: typeof DefaultTheme, c: (typeof Colors)['light' | 'dark']) => ({
+  ...base,
+  colors: { ...base.colors, primary: c.accent, background: c.background, card: c.surface, text: c.text, border: c.backgroundSelected },
+});
+const navLight = navTheme(DefaultTheme, Colors.light);
+const navDark = navTheme(DarkTheme, Colors.dark);
+
 export default function RootLayout() {
   const colorScheme = useColorScheme();
-  // The key becomes the font family name (DisplayFont in constants/theme.ts).
-  const [fontsLoaded, fontError] = useFonts({ DelaGothicOne_400Regular });
-  // Keep the splash screen up until the font is ready, so headings never flash in
+  // The keys become the font family names (DisplayFont and BodyFont in constants/theme.ts).
+  const [fontsLoaded, fontError] = useFonts({
+    DelaGothicOne_400Regular,
+    ZenKakuGothicNew_400Regular,
+    ZenKakuGothicNew_500Medium,
+    ZenKakuGothicNew_700Bold,
+  });
+  // Keep the splash screen up until the fonts are ready, so text never flashes in
   // the system font. If loading fails, carry on: text falls back to the system font.
   if (!fontsLoaded && !fontError) return null;
 
@@ -37,7 +56,7 @@ export default function RootLayout() {
       <AuthProvider>
         {/* Inside AuthProvider: the languages come from the account. */}
         <I18nProvider>
-          <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+          <ThemeProvider value={colorScheme === 'dark' ? navDark : navLight}>
             <AnimatedSplashOverlay />
             <RootNavigator />
           </ThemeProvider>

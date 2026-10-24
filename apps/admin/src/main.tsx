@@ -3,6 +3,12 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import { App } from './App';
+// Fonts are bundled rather than loaded from Google: the CSP allows only 'self'.
+// Each CSS file is split by script (unicode-range), so a page loads only the
+// Japanese or Latin files its text needs.
+import '@fontsource/dela-gothic-one/400.css';
+import '@fontsource/zen-kaku-gothic-new/400.css';
+import '@fontsource/zen-kaku-gothic-new/700.css';
 import './styles.css';
 
 const queryClient = new QueryClient({

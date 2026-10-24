@@ -21,7 +21,7 @@ import { LanguageSwitch } from "@/components/language-switch";
 import { PrimaryButton } from "@/components/primary-button";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import { Brand, FormWidth, Spacing } from "@/constants/theme";
+import { FormWidth, Spacing } from "@/constants/theme";
 import { useSignupActions, usePlan } from "@/features/plans/data";
 import { formatDate, lastSignupDay, walkHours } from "@/features/plans/format";
 import { levelStyles } from "@/features/plans/level";
@@ -278,12 +278,12 @@ export default function PlanScreen() {
           {canSave && (
             <View style={styles.footer}>
               {times!.pattern.length === 0 && (
-                <ThemedText style={styles.error}>
+                <ThemedText themeColor="error" style={styles.error}>
                   {t("plan.pickTime")}
                 </ThemedText>
               )}
               {error && (
-                <ThemedText style={styles.error}>
+                <ThemedText themeColor="error" style={styles.error}>
                   {error instanceof ConnectError && error.code === Code.NotFound
                     ? t("plan.notFound")
                     : t("error.network")}
@@ -352,5 +352,5 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
   },
   withdraw: { alignItems: "center", paddingVertical: Spacing.two },
-  error: { color: Brand.red, textAlign: "center" },
+  error: { textAlign: "center" },
 });

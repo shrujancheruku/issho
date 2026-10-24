@@ -26,7 +26,7 @@ export function RouteMap({ steps, routePolyline }: RouteMapProps) {
           gestureHandling="cooperative"
           disableDefaultUI
           clickableIcons={false}>
-          {view.path.length > 1 && <Polyline path={view.path} strokeColor={Brand.red} strokeWeight={4} />}
+          {view.path.length > 1 && <Polyline path={view.path} strokeColor={Brand.goldDeep} strokeWeight={4} />}
           {view.stops.map((s) => (
             <AdvancedMarker key={s.n} position={{ lat: s.lat, lng: s.lng }}>
               <View style={styles.pin}>
@@ -52,7 +52,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 2,
     borderColor: '#ffffff',
-    backgroundColor: Brand.red,
+    // As on phones (route-map.tsx): gold stops, deep gold route.
+    backgroundColor: Brand.gold,
   },
-  label: { fontSize: 13, fontWeight: '700', color: '#ffffff' },
+  label: { fontSize: 13, fontWeight: '700', color: Brand.ink },
 });

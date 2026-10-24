@@ -19,6 +19,10 @@ The admin SPA (M8): Vite + React, signed in with Supabase Auth (email code, like
 
 `ModerationService`, `ReviewService`, `CurationService`, `MetricsService` and `CityPackService` are admin-only (see below). Report and flag decisions don't change matching (a report already keeps the pair apart); a suspension does: see the backend README.
 
+## Look
+
+`src/styles.css` follows [docs/design-system.md](../../docs/design-system.md), with the same values as the app: indigo ground, gold buttons, `--accent` for the active page and tab, `--error` for errors and moderation dangers (suspended, unsafe, open reports). Dela Gothic One (the `ISSHO` mark) and Zen Kaku Gothic New are bundled from `@fontsource` in `src/main.tsx`, because the CSP allows only `'self'`; only 400 and 700 of the body face are loaded, which keeps the CSS at about 195 kB gzipped. The metrics chart keeps its own validated series colours.
+
 ## Admins
 
 Admins are ordinary Supabase users with `app_metadata.admin = true`, carried in their access token and checked by the API (owner's decision: no admin list in our config). From `backend/`:

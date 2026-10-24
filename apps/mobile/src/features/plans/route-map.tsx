@@ -11,8 +11,9 @@ import { decodePolyline } from './polyline';
 
 export type RouteMapProps = { steps: PlanStep[]; routePolyline: string };
 
-// The stops are numbered as in the timeline, in the brand red.
-const stopColors = { background: Brand.red, text: '#ffffff' };
+// The stops are numbered as in the timeline, on the gold of its thread. The
+// route is deep gold: plain gold is too faint on Google's pale map tiles.
+const stopColors = { background: Brand.gold, text: Brand.ink };
 
 /**
  * A plan's (or event's) map on phones: Google Maps with a numbered pin at
@@ -52,7 +53,7 @@ function NativeRouteMap({ view }: { view: ReturnType<typeof routeView> }) {
       {view.path.length > 1 && (
         <Polyline
           coordinates={view.path.map((p) => ({ latitude: p.lat, longitude: p.lng }))}
-          strokeColor={Brand.red}
+          strokeColor={Brand.goldDeep}
           strokeWidth={4}
         />
       )}
