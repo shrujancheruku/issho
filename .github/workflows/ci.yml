@@ -170,15 +170,52 @@ jobs:
   # building, and its binaries start. Not pushed anywhere.
   image:
     runs-on: ubuntu-latest
+    env:
+      # The build record artifact and job summary aren't read by anyone.
+      DOCKER_BUILD_SUMMARY: false
     steps:
       - uses: actions/checkout@v7
       - uses: docker/setup-buildx-action@v4
-      # GitHub's cache keeps the module download and build layers between runs.
+        id: buildx
+        with:
+          # Skips stopping and removing the buildx builder container after the
+          # job (~25s). GitHub-hosted runners are discarded after each job, so
+          # nothing is left behind; on a self-hosted runner, builders would pile up.
+          cleanup: false
+      # GitHub's cache (cache-from/cache-to below) keeps the image layers, so
+      # an unchanged backend skips the Go build. It can't hold the
+      # Dockerfile's cache mounts, so when Go code changes, the modules and
+      # compiled packages come from actions/cache instead: cache-dance copies
+      # them into the builder before the build and back out afterwards.
+      # Keyed on go.sum like the other Go caches: dependencies are the slow
+      # part, and our own packages recompile in seconds. Saved once per go.sum.
+      - uses: actions/cache@v6
+        id: go-cache
+        with:
+          path: |
+            buildkit-cache/go-mod
+            buildkit-cache/go-build
+          key: go-${{ runner.os }}-image-${{ hashFiles('backend/go.sum') }}
+          restore-keys: go-${{ runner.os }}-image-
+      - uses: reproducible-containers/buildkit-cache-dance@v3
+        with:
+          builder: ${{ steps.buildx.outputs.name }}
+          # Paths must match the cache mounts in backend/Dockerfile.
+          cache-map: |
+            {
+              "buildkit-cache/go-mod": "/go/pkg/mod",
+              "buildkit-cache/go-build": "/root/.cache/go-build"
+            }
+          # Copying the caches back out is only worth it when actions/cache
+          # will save them, i.e. on a miss.
+          skip-extraction: ${{ steps.go-cache.outputs.cache-hit }}
+      # No VERSION build arg: the commit SHA changed the Go build step's cache
+      # key on every commit, so even docs-only changes recompiled (~40s). This
+      # image is never shipped; Kamal stamps the version on real builds.
       - uses: docker/build-push-action@v7
         with:
           context: .
           file: backend/Dockerfile
-          build-args: VERSION=${{ github.sha }}
           tags: issho-backend:ci
           load: true
           cache-from: type=gha

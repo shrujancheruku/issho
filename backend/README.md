@@ -88,7 +88,7 @@ docker run --rm -p 8095:8080 -e DATABASE_URL="$DB" -e SUPABASE_URL=http://host.d
 docker run --rm -e DATABASE_URL="$DB" issho-backend worker
 ```
 
-The runtime image is distroless (no shell, non-root); `.dockerignore` keeps everything but `backend/` and `data/` (and any env file) out of the build. CI builds it on every PR.
+The runtime image is distroless (no shell, non-root); `.dockerignore` keeps everything but `backend/` and `data/` (and any env file) out of the build. The Go module and build caches are BuildKit cache mounts, so a rebuild after a code change only recompiles what changed, provided BuildKit's garbage collector keeps them: if every build recompiles from scratch, raise its limit (Docker's `builder.gc` setting; on OrbStack, `~/.orbstack/config/docker.json`). CI builds it on every PR.
 
 ## API endpoints
 

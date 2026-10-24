@@ -6,16 +6,25 @@
 
 # The build stage runs on the builder's own platform and cross-compiles, so
 # an amd64 image builds quickly on an arm64 Mac (no emulation).
-FROM --platform=$BUILDPLATFORM golang:1.27.3-bookworm AS build
+# Alpine: a much smaller pull than the Debian image, and with cgo off the
+# libc doesn't matter.
+FROM --platform=$BUILDPLATFORM golang:1.27.3-alpine AS build
 WORKDIR /src/backend
-# Modules first, so code changes don't re-download them.
-COPY backend/go.mod backend/go.sum ./
-RUN go mod download
-COPY backend/ ./
 ARG VERSION=dev
 ARG TARGETOS TARGETARCH
+# No `go mod download` layer: go.mod's `tool` block (buf, sqlc, …) makes it
+# fetch ~370 modules when the binaries need ~60, which was most of a cold
+# build. `go build` fetches only what it imports. The module and build
+# caches are BuildKit cache mounts, so they outlive the layer: a code change
+# downloads nothing and recompiles only the packages that changed. The
+# source is bind-mounted rather than copied, since only /out is kept. CI
+# fills the same cache mounts (the image job in .github/workflows/ci.yml);
+# keep the paths in step.
 # Static binaries (no cgo), so the runtime image needs no libc.
-RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -trimpath -ldflags "-s -w -X main.version=${VERSION}" -o /out/ ./cmd/api ./cmd/worker ./cmd/tool
+RUN --mount=type=bind,source=backend,target=. \
+    --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+    CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -trimpath -ldflags "-s -w -X main.version=${VERSION}" -o /out/ ./cmd/api ./cmd/worker ./cmd/tool
 
 # distroless: CA certificates and tzdata (time zones for city packs), no
 # shell, runs as a non-root user.
