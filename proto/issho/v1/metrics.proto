@@ -1,0 +1,72 @@
+syntax = "proto3";
+
+package issho.v1;
+
+option go_package = "github.com/shrujancheruku/issho/backend/gen/issho/v1;isshov1";
+
+// MetricsService: domain metrics in the admin SPA (M8), per city and week.
+// The north star is weekly attendees who have been to more than one
+// outing (repeat_attendees). Weeks start on Monday in the city's time
+// zone; an outing counts in the week of its local date. "Attended" is
+// confirmed and checked in, or said so in their feedback, as matching's
+// reliability counts it.
+// Admins only, like ModerationService: anyone else gets PERMISSION_DENIED.
+//
+// HTTP: POST /issho.v1.MetricsService/<Method>
+service MetricsService {
+  // GetCityMetrics returns the last `weeks` weeks (1 to 52; 0 = 12), the
+  // current week last (still in progress), and the city now.
+  // NOT_FOUND for an unknown city.
+  rpc GetCityMetrics(GetCityMetricsRequest) returns (GetCityMetricsResponse) {}
+}
+
+message GetCityMetricsRequest {
+  string city_id = 1;
+  int32 weeks = 2;
+}
+
+message GetCityMetricsResponse {
+  repeated WeekMetrics weeks = 1;
+  CityNow now = 2;
+}
+
+message WeekMetrics {
+  // Monday, YYYY-MM-DD.
+  string week = 1;
+  // People who went to an outing that week.
+  int32 attendees = 2;
+  // The north star: of those, people with at least two outings so far.
+  int32 repeat_attendees = 3;
+  // Of those, people at their first outing.
+  int32 first_timers = 4;
+  // Groups that went ahead.
+  int32 groups = 5;
+  // Places at those groups: invited, said they'd go, went.
+  int32 invited = 6;
+  int32 confirmed = 7;
+  int32 attended = 8;
+  // Average feedback ratings (1 to 5); 0 = no feedback.
+  double plan_rating = 9;
+  double group_rating = 10;
+  // Meet-again picks: "again" out of all picks, and pairs who both said
+  // again.
+  int32 picks_again = 11;
+  int32 picks = 12;
+  int32 mutual_pairs = 13;
+  // Accounts made by people living in the city.
+  int32 new_people = 14;
+  int32 crews_formed = 15;
+  // Reports about people met at the city's outings.
+  int32 reports = 16;
+}
+
+message CityNow {
+  // People living in the city (not deleted or suspended).
+  int32 people = 1;
+  int32 open_plans = 2;
+  // Signups waiting on open plans.
+  int32 waiting = 3;
+  // Scheduled outings still to happen.
+  int32 upcoming_outings = 4;
+  int32 active_crews = 5;
+}

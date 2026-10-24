@@ -21,11 +21,12 @@ import (
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	"github.com/shrujancheruku/issho/backend/gen/issho/v1/isshov1connect"
 	"github.com/shrujancheruku/issho/backend/internal/catalog"
-	"github.com/shrujancheruku/issho/backend/internal/curation"
 	"github.com/shrujancheruku/issho/backend/internal/chatws"
+	"github.com/shrujancheruku/issho/backend/internal/curation"
 	"github.com/shrujancheruku/issho/backend/internal/health"
 	"github.com/shrujancheruku/issho/backend/internal/identity"
 	mapsgoogle "github.com/shrujancheruku/issho/backend/internal/maps/google"
+	"github.com/shrujancheruku/issho/backend/internal/metrics"
 	"github.com/shrujancheruku/issho/backend/internal/moderation"
 	"github.com/shrujancheruku/issho/backend/internal/plans"
 	"github.com/shrujancheruku/issho/backend/internal/platform/auth"
@@ -110,7 +111,8 @@ func run() error {
 		// copy of the UI catalogue.
 		auth.Interceptor(verifier, isshov1connect.HealthServiceCheckProcedure, isshov1connect.UIServiceGetStringsProcedure),
 		// The admin SPA's services: only accounts with app_metadata.admin.
-		auth.AdminOnly(isshov1connect.ModerationServiceName, isshov1connect.ReviewServiceName, isshov1connect.CurationServiceName),
+		auth.AdminOnly(isshov1connect.ModerationServiceName, isshov1connect.ReviewServiceName, isshov1connect.CurationServiceName,
+			isshov1connect.MetricsServiceName),
 		// Suspended people may only see that they are, sign out (which
 		// unregisters push) and delete their account.
 		moderation.Gate(suspensions, isshov1connect.IdentityServiceGetMeProcedure,
@@ -157,6 +159,7 @@ func run() error {
 	mux.Handle(isshov1connect.NewPushServiceHandler(&push.Handler{Q: q}, opts))
 	mux.Handle(isshov1connect.NewReviewServiceHandler(review, opts))
 	mux.Handle(isshov1connect.NewCurationServiceHandler(venues, opts))
+	mux.Handle(isshov1connect.NewMetricsServiceHandler(&metrics.Handler{Q: q}, opts))
 	mux.Handle(isshov1connect.NewModerationServiceHandler(&moderation.Handler{Q: q, Plans: planSvc, Suspensions: suspensions}, opts))
 	uiCatalog, err := uistrings.Load()
 	if err != nil {

@@ -6,6 +6,7 @@ import { CurationService } from "./gen/issho/v1/curation_pb";
 import { EventService } from "./gen/issho/v1/events_pb";
 import { HealthService } from "./gen/issho/v1/health_pb";
 import { IdentityService } from "./gen/issho/v1/identity_pb";
+import { MetricsService } from "./gen/issho/v1/metrics_pb";
 import { ModerationService } from "./gen/issho/v1/moderation_pb";
 import { PlanService } from "./gen/issho/v1/plans_pb";
 import { ProfileService } from "./gen/issho/v1/profile_pb";
@@ -22,6 +23,7 @@ export * from "./gen/issho/v1/curation_pb";
 export * from "./gen/issho/v1/events_pb";
 export * from "./gen/issho/v1/health_pb";
 export * from "./gen/issho/v1/identity_pb";
+export * from "./gen/issho/v1/metrics_pb";
 export * from "./gen/issho/v1/moderation_pb";
 export * from "./gen/issho/v1/plans_pb";
 export * from "./gen/issho/v1/profile_pb";
@@ -51,6 +53,8 @@ export function createApi({ baseUrl, getAccessToken }: ApiClientOptions) {
     events: createClient(EventService, transport),
     health: createClient(HealthService, transport),
     identity: createClient(IdentityService, transport),
+    /** Admins only (the admin SPA). */
+    metrics: createClient(MetricsService, transport),
     /** Admins only (the admin SPA). */
     moderation: createClient(ModerationService, transport),
     plans: createClient(PlanService, transport),

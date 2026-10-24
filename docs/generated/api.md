@@ -149,6 +149,14 @@
   
     - [IdentityService](#issho-v1-IdentityService)
   
+- [issho/v1/metrics.proto](#issho_v1_metrics-proto)
+    - [CityNow](#issho-v1-CityNow)
+    - [GetCityMetricsRequest](#issho-v1-GetCityMetricsRequest)
+    - [GetCityMetricsResponse](#issho-v1-GetCityMetricsResponse)
+    - [WeekMetrics](#issho-v1-WeekMetrics)
+  
+    - [MetricsService](#issho-v1-MetricsService)
+  
 - [issho/v1/moderation.proto](#issho_v1_moderation-proto)
     - [CrewLeave](#issho-v1-CrewLeave)
     - [GetModeratorRequest](#issho-v1-GetModeratorRequest)
@@ -2332,6 +2340,121 @@ HTTP: POST /issho.v1.IdentityService/&lt;Method&gt;
 | ----------- | ------------ | ------------- | ------------|
 | GetMe | [GetMeRequest](#issho-v1-GetMeRequest) | [GetMeResponse](#issho-v1-GetMeResponse) | GetMe returns the caller&#39;s account, creating the app-side user row the first time a Supabase user calls the API. It works for suspended accounts too (User.suspended), so the app can say so. |
 | DeleteAccount | [DeleteAccountRequest](#issho-v1-DeleteAccountRequest) | [DeleteAccountResponse](#issho-v1-DeleteAccountResponse) | DeleteAccount permanently deletes the caller&#39;s Supabase auth user and all of their app data (cascaded from auth.users). The client should sign out afterwards; existing access tokens stop working once they expire. Returns FAILED_PRECONDITION if the server has no Supabase secret key configured. |
+
+ 
+
+
+
+<a name="issho_v1_metrics-proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## issho/v1/metrics.proto
+
+
+
+<a name="issho-v1-CityNow"></a>
+
+### CityNow
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| people | [int32](#int32) |  | People living in the city (not deleted or suspended). |
+| open_plans | [int32](#int32) |  |  |
+| waiting | [int32](#int32) |  | Signups waiting on open plans. |
+| upcoming_outings | [int32](#int32) |  | Scheduled outings still to happen. |
+| active_crews | [int32](#int32) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-GetCityMetricsRequest"></a>
+
+### GetCityMetricsRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| city_id | [string](#string) |  |  |
+| weeks | [int32](#int32) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-GetCityMetricsResponse"></a>
+
+### GetCityMetricsResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| weeks | [WeekMetrics](#issho-v1-WeekMetrics) | repeated |  |
+| now | [CityNow](#issho-v1-CityNow) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-WeekMetrics"></a>
+
+### WeekMetrics
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| week | [string](#string) |  | Monday, YYYY-MM-DD. |
+| attendees | [int32](#int32) |  | People who went to an outing that week. |
+| repeat_attendees | [int32](#int32) |  | The north star: of those, people with at least two outings so far. |
+| first_timers | [int32](#int32) |  | Of those, people at their first outing. |
+| groups | [int32](#int32) |  | Groups that went ahead. |
+| invited | [int32](#int32) |  | Places at those groups: invited, said they&#39;d go, went. |
+| confirmed | [int32](#int32) |  |  |
+| attended | [int32](#int32) |  |  |
+| plan_rating | [double](#double) |  | Average feedback ratings (1 to 5); 0 = no feedback. |
+| group_rating | [double](#double) |  |  |
+| picks_again | [int32](#int32) |  | Meet-again picks: &#34;again&#34; out of all picks, and pairs who both said again. |
+| picks | [int32](#int32) |  |  |
+| mutual_pairs | [int32](#int32) |  |  |
+| new_people | [int32](#int32) |  | Accounts made by people living in the city. |
+| crews_formed | [int32](#int32) |  |  |
+| reports | [int32](#int32) |  | Reports about people met at the city&#39;s outings. |
+
+
+
+
+
+ 
+
+ 
+
+ 
+
+
+<a name="issho-v1-MetricsService"></a>
+
+### MetricsService
+MetricsService: domain metrics in the admin SPA (M8), per city and week.
+The north star is weekly attendees who have been to more than one
+outing (repeat_attendees). Weeks start on Monday in the city&#39;s time
+zone; an outing counts in the week of its local date. &#34;Attended&#34; is
+confirmed and checked in, or said so in their feedback, as matching&#39;s
+reliability counts it.
+Admins only, like ModerationService: anyone else gets PERMISSION_DENIED.
+
+HTTP: POST /issho.v1.MetricsService/&lt;Method&gt;
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| GetCityMetrics | [GetCityMetricsRequest](#issho-v1-GetCityMetricsRequest) | [GetCityMetricsResponse](#issho-v1-GetCityMetricsResponse) | GetCityMetrics returns the last `weeks` weeks (1 to 52; 0 = 12), the current week last (still in progress), and the city now. NOT_FOUND for an unknown city. |
 
  
 
