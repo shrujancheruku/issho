@@ -1,43 +1,68 @@
-/* Brand colours from apps/mobile (assets/brand): red, gold, ink. */
+/* Issho design system (docs/design-system.md), "Ai" ground: the same values
+   as apps/mobile/src/constants/theme.ts. Red is the logo's only; errors and
+   moderation dangers use --error. Text pairs are 4.5:1 or more on --bg,
+   --surface and --sunk in both themes. */
 :root {
-  --red: #bc002d;
   --gold: #c9a227;
+  --gold-text: #7d5e0a;
   --ink: #111111;
-  --bg: #f6f5f2;
+  --bg: #f3f5f9;
   --surface: #ffffff;
+  --sunk: #e7ebf3;
   --text: #111111;
-  --muted: #62605b;
-  --line: #e3e0d9;
+  --muted: #545d73;
+  --line: #d5dbe7;
+  --line-strong: #7a849c;
+  --accent: #24307a;
+  --on-accent: #ffffff;
+  --link: #24307a;
+  --focus: #24307a;
+  --error: #bc002d;
+  --on-error: #ffffff;
   --attention: #fff4e0;
   --ok: #2f6b3d;
+  --on-ok: #ffffff;
+  --font-display: 'Dela Gothic One', 'Hiragino Sans', system-ui, sans-serif;
+  --font-sans: 'Zen Kaku Gothic New', 'Hiragino Sans', 'Noto Sans JP', system-ui, sans-serif;
   color-scheme: light dark;
-  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-family: var(--font-sans);
   font-size: 15px;
   line-height: 1.45;
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #121212;
-    --surface: #1c1c1e;
-    --text: #f2f2f2;
-    --muted: #a3a09a;
-    --line: #34332f;
+    --gold-text: #c9a227;
+    --bg: #0d1330;
+    --surface: #161e40;
+    --sunk: #222b52;
+    --text: #f1f3f8;
+    --muted: #a9b1cb;
+    --line: #2c3765;
+    --line-strong: #6c78aa;
+    --accent: #3a4a9e;
+    --link: #9fb0ff;
+    --focus: #c9a227;
+    --error: #ff7a90;
+    --on-error: #111111;
     --attention: #3a2c12;
     --ok: #7fc28e;
+    --on-ok: #111111;
   }
 }
 
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--text); }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 h1 { font-size: 1.35rem; margin: 0; }
 code { font-size: 0.85em; }
 .muted { color: var(--muted); }
-.error { color: var(--red); }
+.error { color: var(--error); }
 .hint { margin: 0.25rem 0 1rem; max-width: 70ch; }
 .empty { color: var(--muted); padding: 2rem 0; }
 .nowrap { white-space: nowrap; }
 .spacer { flex: 1; }
-.brand { font-weight: 800; letter-spacing: 0.08em; color: var(--red); }
+/* The wordmark's face; it has one weight, so no font-weight. */
+.brand { font-family: var(--font-display); font-weight: 400; letter-spacing: 0.04em; color: var(--text); }
 
 /* Layout */
 .center { min-height: 100vh; display: grid; place-items: center; padding: 1rem; }
@@ -48,8 +73,7 @@ code { font-size: 0.85em; }
 }
 .topbar nav { display: flex; gap: 0.25rem; flex-wrap: wrap; }
 .topbar nav a { padding: 0.35rem 0.7rem; border-radius: 6px; color: var(--text); text-decoration: none; }
-.topbar nav a.active { background: var(--ink); color: #fff; }
-@media (prefers-color-scheme: dark) { .topbar nav a.active { background: var(--text); color: var(--ink); } }
+.topbar nav a.active { background: var(--accent); color: var(--on-accent); }
 .who { margin-left: auto; font-size: 0.9rem; }
 .content { max-width: 960px; margin: 0 auto; padding: 1.25rem 1rem 4rem; }
 .toolbar { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 0.25rem; }
@@ -70,10 +94,10 @@ blockquote { margin: 0.6rem 0; padding: 0.4rem 0.8rem; border-left: 3px solid va
 
 .badge { font-size: 0.8rem; font-weight: 600; padding: 0.15rem 0.55rem; border-radius: 999px; background: var(--line); }
 /* Reasons that may need action soonest stand out (ReportReason values). */
-.badge.reason-3 { background: var(--red); color: #fff; }  /* unsafe */
+.badge.reason-3 { background: var(--error); color: var(--on-error); }  /* unsafe */
 .badge.reason-1, .badge.reason-2 { background: var(--gold); color: var(--ink); }  /* dating, harassment */
 .status { font-size: 0.85rem; color: var(--muted); }
-.status-open { color: var(--red); font-weight: 600; }
+.status-open { color: var(--error); font-weight: 600; }
 .status-actioned { color: var(--ok); }
 .chip { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.2rem 0.6rem; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); font-size: 0.9rem; }
 
@@ -82,23 +106,23 @@ label { display: grid; gap: 0.3rem; font-size: 0.9rem; }
 label.check { display: flex; align-items: center; gap: 0.35rem; }
 label.note { margin: 0.6rem 0; }
 input, textarea, select {
-  font: inherit; color: inherit; background: var(--bg);
-  border: 1px solid var(--line); border-radius: 6px; padding: 0.45rem 0.6rem;
+  font: inherit; color: inherit; background: var(--surface);
+  border: 1px solid var(--line-strong); border-radius: 6px; padding: 0.45rem 0.6rem;
 }
 textarea { width: 100%; resize: vertical; }
 input[type='search'] { min-width: 16rem; }
 button, a.button {
-  font: inherit; cursor: pointer; border: 1px solid var(--red); border-radius: 6px;
-  padding: 0.45rem 0.9rem; background: var(--red); color: #fff;
+  /* Gold with ink, like the app's main button (7.8:1). */
+  font: inherit; cursor: pointer; border: 1px solid var(--gold); border-radius: 6px;
+  padding: 0.45rem 0.9rem; background: var(--gold); color: var(--ink);
 }
-button.secondary, a.button.secondary { background: transparent; color: var(--text); border-color: var(--line); }
+button.secondary, a.button.secondary { background: transparent; color: var(--text); border-color: var(--line-strong); }
 button.small, a.button.small { padding: 0.25rem 0.65rem; font-size: 0.88rem; }
-button.link { background: none; border: none; padding: 0; color: var(--red); text-decoration: underline; font-size: 0.9rem; }
+button.link { background: none; border: none; padding: 0; color: var(--link); text-decoration: underline; font-size: 0.9rem; }
 button:disabled { opacity: 0.45; cursor: default; }
 .tabs { display: flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
 .tab { background: transparent; color: var(--text); border: none; border-radius: 0; padding: 0.35rem 0.8rem; }
-.tab.active { background: var(--ink); color: #fff; }
-@media (prefers-color-scheme: dark) { .tab.active { background: var(--text); color: var(--ink); } }
+.tab.active { background: var(--accent); color: var(--on-accent); }
 
 /* Tables */
 .table-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
@@ -120,9 +144,9 @@ h2 { font-size: 1.05rem; margin: 1.75rem 0 0.6rem; }
 .card h2 { margin-top: 0; }
 .facts { font-size: 0.95rem; color: var(--text); margin: 0.75rem 0 1.25rem; }
 .facts dt { color: var(--muted); }
-.badge.suspended { background: var(--red); color: #fff; }
-.decision.danger { border-color: var(--red); }
-a { color: var(--red); }
+.badge.suspended { background: var(--error); color: var(--on-error); }
+.decision.danger { border-color: var(--error); }
+a { color: var(--link); }
 .card-head a, td a { color: inherit; }
 
 /* Plans */
@@ -130,7 +154,7 @@ a { color: var(--red); }
 .review-switch .hint { margin: 0.35rem 0 0; }
 .small-badge { font-size: 0.72rem; margin-left: 0.4rem; padding: 0.05rem 0.45rem; }
 .badge.status-draft { background: var(--gold); color: var(--ink); }
-.badge.status-open { background: var(--ok); color: #fff; }
+.badge.status-open { background: var(--ok); color: var(--on-ok); }
 .new-plan .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.75rem; margin-bottom: 0.5rem; }
 .new-plan h2 { margin-top: 0; }
 /* Long venue names mustn't widen the grid's columns. */
@@ -143,7 +167,7 @@ input:not([type]), input[type='email'], input[type='search'] { min-width: 0; }
 
 /* Groups */
 .group table { margin: 0.5rem 0; }
-.group.danger { border-color: var(--red); }
+.group.danger { border-color: var(--error); }
 .meeting { align-items: flex-end; }
 .meeting .note { flex: 1; margin: 0; }
 .row label { display: grid; gap: 0.3rem; }

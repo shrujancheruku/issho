@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Brand, FormWidth, Spacing } from '@/constants/theme';
+import { BodyFont, Brand, FormWidth, Spacing } from '@/constants/theme';
 import { useChat } from '@/features/events/chat';
 import type { Message } from '@/features/events/chat-messages';
 import { formatStart } from '@/features/plans/format';
@@ -79,7 +79,7 @@ export default function ChatScreen() {
                 ) : undefined
               }
               renderItem={({ item }) => (
-                <View style={[styles.bubble, item.mine ? styles.mine : [styles.theirs, { backgroundColor: theme.backgroundElement }]]}>
+                <View style={[styles.bubble, item.mine ? [styles.mine, { backgroundColor: theme.accent }] : [styles.theirs, { backgroundColor: theme.backgroundElement }]]}>
                   {!item.mine && (
                     <ThemedText type="smallBold" themeColor="textSecondary">
                       {item.name}
@@ -95,7 +95,7 @@ export default function ChatScreen() {
               {note}
             </ThemedText>
           )}
-          {send.isError && <ThemedText style={styles.error}>{t('error.network')}</ThemedText>}
+          {send.isError && <ThemedText themeColor="error" style={styles.error}>{t('error.network')}</ThemedText>}
           {open && (
             <View style={[styles.composer, { borderTopColor: theme.backgroundSelected }]}>
               <TextInput
@@ -131,15 +131,16 @@ const styles = StyleSheet.create({
   side: { width: 48 },
   messages: { padding: Spacing.three, gap: Spacing.two },
   bubble: { maxWidth: '80%', borderRadius: 16, paddingVertical: Spacing.two, paddingHorizontal: Spacing.three, gap: Spacing.half },
-  mine: { alignSelf: 'flex-end', backgroundColor: Brand.red },
+  mine: { alignSelf: 'flex-end' },
   theirs: { alignSelf: 'flex-start' },
+  // On theme.accent, which is white-text in both themes (onAccent).
   mineText: { color: '#ffffff' },
   center: { textAlign: 'center' },
   note: { padding: Spacing.three },
-  error: { color: Brand.red, textAlign: 'center' },
+  error: { textAlign: 'center' },
   composer: { flexDirection: 'row', alignItems: 'flex-end', gap: Spacing.two, padding: Spacing.three, borderTopWidth: 1 },
-  input: { flex: 1, borderRadius: 16, paddingHorizontal: Spacing.three, paddingVertical: Spacing.two, maxHeight: 120, fontSize: 16 },
-  send: { backgroundColor: Brand.red, borderRadius: 16, paddingHorizontal: Spacing.three, paddingVertical: Spacing.two },
-  sendText: { color: '#ffffff', fontWeight: '600' },
+  input: { fontFamily: BodyFont.regular, flex: 1, borderRadius: 16, paddingHorizontal: Spacing.three, paddingVertical: Spacing.two, maxHeight: 120, fontSize: 16 },
+  send: { backgroundColor: Brand.gold, borderRadius: 16, paddingHorizontal: Spacing.three, paddingVertical: Spacing.two },
+  sendText: { color: Brand.ink, fontWeight: '600' },
   disabled: { opacity: 0.4 },
 });

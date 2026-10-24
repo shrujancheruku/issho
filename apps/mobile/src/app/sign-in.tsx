@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Brand, FormWidth, Spacing } from '@/constants/theme';
+import { BodyFont, FormWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { PrimaryButton } from '@/components/primary-button';
 import { useI18n } from '@/i18n/i18n-provider';
@@ -122,7 +122,7 @@ export default function SignInScreen() {
             </View>
           )}
 
-          {error && <ThemedText style={styles.error}>{error}</ThemedText>}
+          {error && <ThemedText themeColor="error" style={styles.error}>{error}</ThemedText>}
         </KeyboardAvoidingView>
       </SafeAreaView>
     </ThemedView>
@@ -135,8 +135,8 @@ const styles = StyleSheet.create({
   // Capped so the logo stays a logo on wide screens instead of filling them.
   logo: { width: '70%', maxWidth: 280, aspectRatio: 900 / 598, alignSelf: 'center' },
   form: { gap: Spacing.three },
-  input: { borderRadius: 12, paddingHorizontal: Spacing.three, paddingVertical: Spacing.three, fontSize: 17 },
+  input: { fontFamily: BodyFont.regular, borderRadius: 12, paddingHorizontal: Spacing.three, paddingVertical: Spacing.three, fontSize: 17 },
   code: { fontSize: 28, letterSpacing: 12, textAlign: 'center' },
   row: { flexDirection: 'row', justifyContent: 'space-between' },
-  error: { color: Brand.red, textAlign: 'center' },
+  error: { textAlign: 'center' },
 });

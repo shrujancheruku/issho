@@ -2,7 +2,7 @@ import { TimeBlock } from '@issho/api-client';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
-import { Brand, Spacing } from '@/constants/theme';
+import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useI18n } from '@/i18n/i18n-provider';
 import type { StringKey } from '@/i18n/strings';
@@ -65,7 +65,7 @@ export function AvailabilityGrid({
                 accessibilityState={{ checked: on }}
                 accessibilityLabel={`${weekdayName(day, lang)} ${t(blockKeys[b])}`}
                 onPress={() => onToggle(day, b)}
-                style={[styles.cell, { backgroundColor: on ? Brand.red : theme.backgroundElement }]}
+                style={[styles.cell, { backgroundColor: on ? theme.accent : theme.backgroundElement }]}
               />
             );
           })}

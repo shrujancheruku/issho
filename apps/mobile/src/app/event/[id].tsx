@@ -7,7 +7,7 @@ import { LanguageSwitch } from '@/components/language-switch';
 import { PrimaryButton } from '@/components/primary-button';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Brand, FormWidth, Spacing } from '@/constants/theme';
+import { FormWidth, Spacing } from '@/constants/theme';
 import { useEvent, useRespond } from '@/features/events/data';
 import { stateText, toneColor } from '@/features/events/event-card';
 import { shareText } from '@/features/events/share';
@@ -69,7 +69,7 @@ export default function EventScreen() {
   } else if (!e || !state) {
     body = <ActivityIndicator />;
   } else {
-    const color = toneColor(state.tone, theme.textSecondary);
+    const color = toneColor(state.tone, theme);
     const title = showing === 'secondary' && e.secondaryTitle ? { name: e.secondaryTitle, secondary: e.title } : { name: e.title, secondary: e.secondaryTitle };
     const language = [e.primaryLanguage, e.secondaryLanguage].filter(Boolean).map(names.language).join(' / ');
     const attendees = event.data?.attendees ?? [];
@@ -179,7 +179,7 @@ export default function EventScreen() {
           {!!state?.actions.length && (
             <View style={styles.footer}>
               {error && (
-                <ThemedText style={styles.error}>
+                <ThemedText themeColor="error" style={styles.error}>
                   {error instanceof ConnectError && error.code === Code.FailedPrecondition
                     ? t('event.tooLate')
                     : t('error.network')}
@@ -221,5 +221,5 @@ const styles = StyleSheet.create({
   share: { alignItems: 'center', paddingVertical: Spacing.one },
   footer: { padding: Spacing.four, gap: Spacing.two },
   secondary: { alignItems: 'center', paddingVertical: Spacing.two },
-  error: { color: Brand.red, textAlign: 'center' },
+  error: { textAlign: 'center' },
 });

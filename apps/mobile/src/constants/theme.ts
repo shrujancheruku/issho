@@ -1,6 +1,9 @@
 /**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://unistyl.es/), etc.
+ * The app's colours in light and dark mode, from the Issho design system
+ * (docs/design-system.md). The ground and accent are "Ai" (indigo, the dye of
+ * thread); the alternatives in that doc only change background, surface,
+ * backgroundElement, backgroundSelected, textSecondary, accent and link.
+ * Text pairs are at least 4.5:1 on background, surface and backgroundElement.
  */
 
 import '@/global.css';
@@ -9,18 +12,43 @@ import { Platform } from 'react-native';
 
 export const Colors = {
   light: {
-    text: '#000000',
-    background: '#ffffff',
-    backgroundElement: '#F0F0F3',
-    backgroundSelected: '#E0E1E6',
-    textSecondary: '#60646C',
+    text: '#111111',
+    /** Screen background ("ground"). */
+    background: '#F3F5F9',
+    /** Cards and sheets. */
+    surface: '#FFFFFF',
+    /** Inputs, unselected chips, chat bubbles ("surface-sunk"). */
+    backgroundElement: '#E7EBF3',
+    /** Hairlines, pressed rows and empty pills ("line"). */
+    backgroundSelected: '#D5DBE7',
+    /** Input and outlined-control borders: 3:1 or more ("line-strong"). */
+    lineStrong: '#7A849C',
+    textSecondary: '#545D73',
+    /** Selection, active tabs, crew and signed-up marks. Text on it: onAccent. */
+    accent: '#24307A',
+    onAccent: '#FFFFFF',
+    link: '#24307A',
+    /** Gold as text: Brand.gold is only 2.2:1 on light grounds. */
+    goldText: '#7D5E0A',
+    /** Error messages only: the one red on screens. */
+    error: '#BC002D',
+    ok: '#2F6B3D',
   },
   dark: {
-    text: '#ffffff',
-    background: '#000000',
-    backgroundElement: '#212225',
-    backgroundSelected: '#2E3135',
-    textSecondary: '#B0B4BA',
+    text: '#F1F3F8',
+    background: '#0D1330',
+    surface: '#161E40',
+    backgroundElement: '#222B52',
+    backgroundSelected: '#2C3765',
+    lineStrong: '#6C78AA',
+    textSecondary: '#A9B1CB',
+    accent: '#3A4A9E',
+    onAccent: '#FFFFFF',
+    link: '#9FB0FF',
+    goldText: '#C9A227',
+    // Lighter than the brand red, which is 2.75:1 on the dark ground.
+    error: '#FF7A90',
+    ok: '#7FC28E',
   },
 } as const;
 
@@ -33,10 +61,36 @@ export const Colors = {
  */
 export const DisplayFont = 'DelaGothicOne_400Regular';
 
-/** Brand colours from assets/brand (see its README). */
+/**
+ * Body typeface: Zen Kaku Gothic New, which sets Japanese and Latin with the same
+ * rhythm. Each weight is its own family (custom fonts ignore fontWeight on
+ * Android), so ThemedText picks the family from the style's fontWeight.
+ * Loaded with DisplayFont in app/_layout.tsx.
+ */
+export const BodyFont = {
+  regular: 'ZenKakuGothicNew_400Regular',
+  medium: 'ZenKakuGothicNew_500Medium',
+  bold: 'ZenKakuGothicNew_700Bold',
+} as const;
+
+/** The body family for a fontWeight: 600 and up is bold, 500 medium, else regular. */
+export function bodyFontFor(weight: string | number | undefined): string {
+  const w = Number(weight ?? 400);
+  return w >= 600 ? BodyFont.bold : w >= 500 ? BodyFont.medium : BodyFont.regular;
+}
+
+/**
+ * Brand colours from assets/brand (see its README), the same in both themes.
+ * Red is the logo's sun and is never used on screens (errors use Colors.error).
+ * Gold is the thread: the main button, routes and the interest scale, which runs
+ * goldTint (open to try), gold (like), goldDeep (love). Ink text on gold and
+ * goldTint, white on goldDeep.
+ */
 export const Brand = {
   red: '#BC002D',
   gold: '#C9A227',
+  goldTint: '#F2E6BD',
+  goldDeep: '#7D5E0A',
   ink: '#111111',
 } as const;
 

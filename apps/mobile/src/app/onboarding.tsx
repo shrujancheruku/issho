@@ -7,7 +7,7 @@ import { LanguageSwitch } from '@/components/language-switch';
 import { PrimaryButton } from '@/components/primary-button';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Brand, FormWidth, Spacing } from '@/constants/theme';
+import { FormWidth, Spacing } from '@/constants/theme';
 import { useAuth } from '@/features/auth/auth-provider';
 import { ConductVersion, emptyDraft, steps, stepValid, toProfile } from '@/features/profile/draft';
 import { saveErrorMessage } from '@/features/profile/save-error';
@@ -70,7 +70,7 @@ export default function OnboardingScreen() {
               </Pressable>
             )}
           </ScrollView>
-          {save.isError && <ThemedText style={styles.error}>{saveErrorMessage(save.error, t)}</ThemedText>}
+          {save.isError && <ThemedText themeColor="error" style={styles.error}>{saveErrorMessage(save.error, t)}</ThemedText>}
           <View style={styles.footer}>
             {index > 0 && (
               <Pressable accessibilityRole="button" onPress={() => go(index - 1)} style={styles.back} disabled={save.isPending}>
@@ -99,5 +99,5 @@ const styles = StyleSheet.create({
   footer: { flexDirection: 'row', gap: Spacing.three, padding: Spacing.four, alignItems: 'center' },
   back: { paddingVertical: Spacing.three, paddingHorizontal: Spacing.three },
   signOut: { alignSelf: 'center' },
-  error: { color: Brand.red, textAlign: 'center', paddingHorizontal: Spacing.four },
+  error: { textAlign: 'center', paddingHorizontal: Spacing.four },
 });

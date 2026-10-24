@@ -4,7 +4,6 @@ import { Linking, Pressable, StyleSheet, View } from "react-native";
 import { GoogleMapsAttribution } from "@/components/google-maps-attribution";
 import { ThemedText } from "@/components/themed-text";
 import { Brand, Spacing } from "@/constants/theme";
-import { useTheme } from "@/hooks/use-theme";
 import { useI18n } from "@/i18n/i18n-provider";
 
 import { withoutExamples } from "./format";
@@ -29,7 +28,6 @@ export function Timeline({
   closed?: boolean;
 }) {
   const { t, showing } = useI18n();
-  const theme = useTheme();
   // Google's terms: Places data shown without a Google map needs attribution.
   const fromGoogle = steps.some((s) => s.venueName || s.venueAddress);
   return (
@@ -69,12 +67,13 @@ export function Timeline({
         return (
           <View key={i} style={styles.stop}>
             <View style={styles.rail}>
-              <View style={[styles.dot, { backgroundColor: Brand.red }]} />
+              <View style={[styles.dot, { backgroundColor: Brand.gold }]} />
               {!last && (
                 <View
                   style={[
                     styles.line,
-                    { backgroundColor: theme.backgroundSelected },
+                    // The thread between stops.
+                    { backgroundColor: Brand.gold },
                   ]}
                 />
               )}
@@ -111,7 +110,7 @@ export function Timeline({
                       onPress={() => void Linking.openURL(step.venueMapsUrl)}
                       hitSlop={6}
                     >
-                      <ThemedText type="small" style={styles.link}>
+                      <ThemedText type="small" themeColor="link" style={styles.link}>
                         {t("plan.openInMaps")} ↗
                       </ThemedText>
                     </Pressable>
@@ -156,7 +155,7 @@ const styles = StyleSheet.create({
   body: { flex: 1, gap: Spacing.half },
   bodyGap: { paddingBottom: Spacing.four },
   activity: { fontSize: 16, lineHeight: 22 },
-  link: { color: Brand.red, marginTop: Spacing.half },
+  link: { marginTop: Spacing.half },
   note: { marginTop: Spacing.one },
   walk: { marginTop: Spacing.three, fontStyle: "italic" },
 });

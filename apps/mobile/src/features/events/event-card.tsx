@@ -3,7 +3,7 @@ import { router } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
-import { Brand, Spacing } from '@/constants/theme';
+import { Colors, Spacing } from '@/constants/theme';
 import { useNow } from '@/hooks/use-now';
 import { useTheme } from '@/hooks/use-theme';
 import { useI18n } from '@/i18n/i18n-provider';
@@ -13,9 +13,12 @@ import { pairText } from '@/features/plans/plan-card';
 
 import { eventState, type EventState } from './state';
 
-/** Status colours: gold needs an answer, red is going, grey is over or out. */
-export function toneColor(tone: EventState['tone'], muted: string) {
-  return tone === 'action' ? Brand.gold : tone === 'good' ? Brand.red : muted;
+/**
+ * Status colours, readable as text: gold needs an answer, the accent (as text,
+ * so theme.link) is going, grey is over or out.
+ */
+export function toneColor(tone: EventState['tone'], theme: (typeof Colors)['light' | 'dark']) {
+  return tone === 'action' ? theme.goldText : tone === 'good' ? theme.link : theme.textSecondary;
 }
 
 /** The status line for an event, with the answer-by date filled in. */
@@ -31,7 +34,7 @@ export function EventCard({ event, names }: { event: MyEvent; names: ReturnType<
   const theme = useTheme();
   const now = useNow();
   const state = eventState(event, now);
-  const color = toneColor(state.tone, theme.textSecondary);
+  const color = toneColor(state.tone, theme);
   const title = showing === 'secondary' && event.secondaryTitle ? event.secondaryTitle : event.title;
   return (
     <Pressable
@@ -39,7 +42,7 @@ export function EventCard({ event, names }: { event: MyEvent; names: ReturnType<
       onPress={() => router.push({ pathname: '/event/[id]', params: { id: event.id } })}
       style={({ pressed }) => [
         styles.card,
-        { backgroundColor: theme.backgroundElement, borderColor: state.tone === 'muted' ? 'transparent' : color },
+        { backgroundColor: theme.surface, borderColor: state.tone === 'muted' ? 'transparent' : color },
         { opacity: state.tone === 'muted' ? 0.6 : pressed ? 0.8 : 1 },
       ]}>
       <ThemedText type="smallBold" style={{ color }}>

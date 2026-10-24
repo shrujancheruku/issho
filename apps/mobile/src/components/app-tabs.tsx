@@ -9,11 +9,13 @@ export default function AppTabs() {
   const colors = Colors[scheme === 'dark' ? 'dark' : 'light'];
   const { t } = useI18n();
 
+  // The selected tab in the accent; theme.link is the accent readable as text.
   return (
     <NativeTabs
-      backgroundColor={colors.background}
+      backgroundColor={colors.surface}
       indicatorColor={colors.backgroundElement}
-      labelStyle={{ selected: { color: colors.text } }}>
+      iconColor={{ selected: colors.link }}
+      labelStyle={{ selected: { color: colors.link } }}>
       <NativeTabs.Trigger name="index">
         <NativeTabs.Trigger.Label>{t('tabs.home')}</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon

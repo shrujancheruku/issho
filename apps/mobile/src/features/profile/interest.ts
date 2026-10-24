@@ -9,9 +9,9 @@ import type { StringKey } from '@/i18n/strings';
  * the theme's) so each pair stays legible in light and dark mode.
  */
 export const interestStyles: Record<Exclude<Interest, Interest.UNSPECIFIED>, { background: string; text: string; label: StringKey; tap: StringKey }> = {
-  [Interest.OPEN_TO_TRY]: { background: '#F2E6BD', text: Brand.ink, label: 'interest.openToTry', tap: 'interest.tapOnce' },
+  [Interest.OPEN_TO_TRY]: { background: Brand.goldTint, text: Brand.ink, label: 'interest.openToTry', tap: 'interest.tapOnce' },
   [Interest.LIKE]: { background: Brand.gold, text: Brand.ink, label: 'interest.like', tap: 'interest.tapTwice' },
-  [Interest.LOVE]: { background: Brand.red, text: '#ffffff', label: 'interest.love', tap: 'interest.tapThree' },
+  [Interest.LOVE]: { background: Brand.goldDeep, text: '#ffffff', label: 'interest.love', tap: 'interest.tapThree' },
 };
 
 export const interestLevels = [Interest.OPEN_TO_TRY, Interest.LIKE, Interest.LOVE] as const;

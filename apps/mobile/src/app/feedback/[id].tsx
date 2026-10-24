@@ -9,7 +9,7 @@ import { LanguageSwitch } from '@/components/language-switch';
 import { PrimaryButton } from '@/components/primary-button';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Brand, FormWidth, Spacing } from '@/constants/theme';
+import { FormWidth, Spacing } from '@/constants/theme';
 import { useEvent, useFeedback, useSubmitFeedback, type FeedbackAnswer } from '@/features/events/data';
 import { Heading } from '@/features/plans/fact';
 import { formatStart } from '@/features/plans/format';
@@ -188,7 +188,7 @@ export default function FeedbackScreen() {
           {f?.open && (
             <View style={styles.footer}>
               {submit.isError ? (
-                <ThemedText style={styles.error}>
+                <ThemedText themeColor="error" style={styles.error}>
                   {submit.error instanceof ConnectError && submit.error.code === Code.FailedPrecondition
                     ? t('feedback.closed')
                     : t('error.network')}
@@ -226,6 +226,6 @@ const styles = StyleSheet.create({
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
   link: { alignItems: 'center', paddingVertical: Spacing.one },
   footer: { padding: Spacing.four, gap: Spacing.two },
-  error: { color: Brand.red, textAlign: 'center' },
+  error: { textAlign: 'center' },
   center: { textAlign: 'center' },
 });

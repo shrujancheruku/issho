@@ -8,7 +8,7 @@ import { Chip } from '@/components/chip';
 import { PrimaryButton } from '@/components/primary-button';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Brand, FormWidth, Spacing } from '@/constants/theme';
+import { BodyFont, FormWidth, Spacing } from '@/constants/theme';
 import { useCrew, useReportCrewMember } from '@/features/crews/data';
 import { useFeedback, useReport } from '@/features/events/data';
 import { useTheme } from '@/hooks/use-theme';
@@ -120,7 +120,7 @@ export default function ReportScreen() {
           {!report.isSuccess && mates.length > 0 && (
             <View style={styles.footer}>
               {report.isError && (
-                <ThemedText style={styles.error}>
+                <ThemedText themeColor="error" style={styles.error}>
                   {report.error instanceof ConnectError && report.error.code === Code.FailedPrecondition
                     ? t('event.tooLate')
                     : t('error.network')}
@@ -148,7 +148,7 @@ const styles = StyleSheet.create({
   titleBlock: { gap: Spacing.two },
   section: { gap: Spacing.two },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
-  input: { minHeight: 96, borderRadius: 12, padding: Spacing.three, textAlignVertical: 'top' },
+  input: { fontFamily: BodyFont.regular, minHeight: 96, borderRadius: 12, padding: Spacing.three, textAlignVertical: 'top' },
   footer: { padding: Spacing.four, gap: Spacing.two },
-  error: { color: Brand.red, textAlign: 'center' },
+  error: { textAlign: 'center' },
 });

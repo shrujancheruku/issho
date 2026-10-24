@@ -1,12 +1,11 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
-import { Brand, Spacing } from '@/constants/theme';
+import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 export type ChipColors = { background: string; text: string };
 
-const selectedDefault: ChipColors = { background: Brand.red, text: '#ffffff' };
 
 /**
  * A selectable pill. `secondary` is the same label in the second display
@@ -17,7 +16,7 @@ export function Chip({
   label,
   secondary,
   selected,
-  selectedColors = selectedDefault,
+  selectedColors,
   badge,
   onPress,
   disabled,
@@ -31,7 +30,8 @@ export function Chip({
   disabled?: boolean;
 }) {
   const theme = useTheme();
-  const colors = selected ? selectedColors : { background: theme.backgroundElement, text: theme.text };
+  // Plain selection is the accent; gold fills are reserved for interest levels.
+  const colors = selected ? (selectedColors ?? { background: theme.accent, text: theme.onAccent }) : { background: theme.backgroundElement, text: theme.text };
   const muted = selected ? colors.text : theme.textSecondary;
   return (
     <Pressable

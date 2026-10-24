@@ -3,7 +3,7 @@ import { router } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
-import { Brand, Spacing } from '@/constants/theme';
+import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useI18n } from '@/i18n/i18n-provider';
 
@@ -55,8 +55,8 @@ export function PlanCard({ plan, names }: { plan: FeedPlan; names: ReturnType<ty
       onPress={() => router.push({ pathname: '/plan/[id]', params: { id: plan.id } })}
       style={({ pressed }) => [
         styles.card,
-        { backgroundColor: theme.backgroundElement, opacity: greyed ? 0.55 : pressed ? 0.8 : 1 },
-        plan.signedUp && styles.signedUp,
+        { backgroundColor: theme.surface, opacity: greyed ? 0.55 : pressed ? 0.8 : 1 },
+        plan.signedUp && { borderColor: theme.accent },
       ]}>
       <View style={styles.top}>
         <View style={[styles.pill, { backgroundColor: level.background ?? theme.backgroundSelected }]}>
@@ -65,7 +65,7 @@ export function PlanCard({ plan, names }: { plan: FeedPlan; names: ReturnType<ty
           </ThemedText>
         </View>
         {plan.signedUp && (
-          <ThemedText type="smallBold" style={styles.signedUpText}>
+          <ThemedText type="smallBold" themeColor="link">
             ✓ {t('plan.signedUp')}
           </ThemedText>
         )}
@@ -85,7 +85,7 @@ export function PlanCard({ plan, names }: { plan: FeedPlan; names: ReturnType<ty
       </View>
       {/* A count, never who: people come for friends as much as the activity. */}
       {plan.friendsInterested > 0 && (
-        <ThemedText type="smallBold" style={{ color: Brand.red }}>
+        <ThemedText type="smallBold" themeColor="goldText">
           {friendsText(t, plan.friendsInterested)}
         </ThemedText>
       )}
@@ -95,8 +95,6 @@ export function PlanCard({ plan, names }: { plan: FeedPlan; names: ReturnType<ty
 
 const styles = StyleSheet.create({
   card: { borderRadius: 16, padding: Spacing.three, gap: Spacing.one, borderWidth: 2, borderColor: 'transparent' },
-  signedUp: { borderColor: Brand.red },
-  signedUpText: { color: Brand.red },
   top: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.one },
   pill: { borderRadius: 999, paddingVertical: Spacing.half, paddingHorizontal: Spacing.two },
   title: { fontSize: 22, lineHeight: 30 },

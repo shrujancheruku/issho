@@ -4,6 +4,7 @@
   "main": "expo-router/entry",
   "dependencies": {
     "@expo-google-fonts/dela-gothic-one": "^0.4.1",
+    "@expo-google-fonts/zen-kaku-gothic-new": "^0.4.2",
     "@expo/ui": "~58.0.21",
     "@issho/api-client": "workspace:*",
     "@supabase/supabase-js": "^2.118.0",
