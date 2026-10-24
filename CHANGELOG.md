@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.9.0](https://github.com/shrujancheruku/issho/compare/v0.8.0...v0.9.0) (2026-10-24)
+
+
+### Features
+
+* **admin:** city-pack editor that opens pull requests (M8) ([#62](https://github.com/shrujancheruku/issho/issues/62)) ([8c1bbad](https://github.com/shrujancheruku/issho/commit/8c1bbad5dd8a0b00ee55deef8872c2e2074b1f3d))
+* **admin:** domain metrics (M8) ([#61](https://github.com/shrujancheruku/issho/issues/61)) ([a804eea](https://github.com/shrujancheruku/issho/commit/a804eea5d6d3f99e77a6b29b34b01707e077302f))
+* **admin:** edit a plan's stops (M8) ([#59](https://github.com/shrujancheruku/issho/issues/59)) ([5ab5285](https://github.com/shrujancheruku/issho/commit/5ab52854309e80c19b999f511824b822c9c53129))
+* **mobile:** let suspended people delete their account ([#65](https://github.com/shrujancheruku/issho/issues/65)) ([caefeb8](https://github.com/shrujancheruku/issho/commit/caefeb86ce907c6a10b7812989fb59866fdc9bd8))
+
 ## [0.8.0](https://github.com/shrujancheruku/issho/compare/v0.7.0...v0.8.0) (2026-10-24)
 
 
