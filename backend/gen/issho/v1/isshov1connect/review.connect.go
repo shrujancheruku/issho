@@ -62,6 +62,15 @@ const (
 	// ReviewServiceCreatePlanProcedure is the fully-qualified name of the ReviewService's CreatePlan
 	// RPC.
 	ReviewServiceCreatePlanProcedure = "/issho.v1.ReviewService/CreatePlan"
+	// ReviewServiceFindPlanPlacesProcedure is the fully-qualified name of the ReviewService's
+	// FindPlanPlaces RPC.
+	ReviewServiceFindPlanPlacesProcedure = "/issho.v1.ReviewService/FindPlanPlaces"
+	// ReviewServiceSetPlanStopsProcedure is the fully-qualified name of the ReviewService's
+	// SetPlanStops RPC.
+	ReviewServiceSetPlanStopsProcedure = "/issho.v1.ReviewService/SetPlanStops"
+	// ReviewServiceSetPlanVenueProcedure is the fully-qualified name of the ReviewService's
+	// SetPlanVenue RPC.
+	ReviewServiceSetPlanVenueProcedure = "/issho.v1.ReviewService/SetPlanVenue"
 	// ReviewServiceListReviewEventsProcedure is the fully-qualified name of the ReviewService's
 	// ListReviewEvents RPC.
 	ReviewServiceListReviewEventsProcedure = "/issho.v1.ReviewService/ListReviewEvents"
@@ -125,6 +134,25 @@ type ReviewServiceClient interface {
 	// INVALID_ARGUMENT for an unknown area or activity, an area or activity
 	// not in the city, or a venue not found for the activity there.
 	CreatePlan(context.Context, *connect.Request[v1.CreatePlanRequest]) (*connect.Response[v1.CreatePlanResponse], error)
+	// Editing a plan's stops (draft or open plans; an event already
+	// scheduled shows the change to the people going). FindPlanPlaces looks
+	// places up by name with Google within 3 km of the plan's area.
+	// FAILED_PRECONDITION without a Google Maps key.
+	FindPlanPlaces(context.Context, *connect.Request[v1.FindPlanPlacesRequest]) (*connect.Response[v1.FindPlanPlacesResponse], error)
+	// SetPlanStops replaces a walk's stops, in walking order: the first is
+	// where people meet, the last where they sit down at the end. Each place
+	// is checked with Google (it exists, isn't closed, is within 3 km of the
+	// area's centre, appears once) and the walking route is worked out again
+	// in this order. A walk outside the composer's rules (2 to 4 hours, no
+	// walk between stops over 20 minutes, 100 minutes of walking at most) is
+	// saved anyway, with warnings. INVALID_ARGUMENT for a plan that isn't a
+	// walk, fewer than 3 or more than 10 places, or a place that fails.
+	SetPlanStops(context.Context, *connect.Request[v1.SetPlanStopsRequest]) (*connect.Response[v1.SetPlanStopsResponse], error)
+	// SetPlanVenue changes the venue of a plan that isn't a walk, or of its
+	// follow-up: one of the venues found for the activity in the area
+	// (ListVenueOptions), or "" to let the matcher pick. The walk between the
+	// two is worked out again.
+	SetPlanVenue(context.Context, *connect.Request[v1.SetPlanVenueRequest]) (*connect.Response[v1.SetPlanVenueResponse], error)
 	// ListReviewEvents returns a city's proposals, or its upcoming scheduled
 	// events (to set meeting points), soonest first. At most 200.
 	ListReviewEvents(context.Context, *connect.Request[v1.ListReviewEventsRequest]) (*connect.Response[v1.ListReviewEventsResponse], error)
@@ -230,6 +258,24 @@ func NewReviewServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 			connect.WithSchema(reviewServiceMethods.ByName("CreatePlan")),
 			connect.WithClientOptions(opts...),
 		),
+		findPlanPlaces: connect.NewClient[v1.FindPlanPlacesRequest, v1.FindPlanPlacesResponse](
+			httpClient,
+			baseURL+ReviewServiceFindPlanPlacesProcedure,
+			connect.WithSchema(reviewServiceMethods.ByName("FindPlanPlaces")),
+			connect.WithClientOptions(opts...),
+		),
+		setPlanStops: connect.NewClient[v1.SetPlanStopsRequest, v1.SetPlanStopsResponse](
+			httpClient,
+			baseURL+ReviewServiceSetPlanStopsProcedure,
+			connect.WithSchema(reviewServiceMethods.ByName("SetPlanStops")),
+			connect.WithClientOptions(opts...),
+		),
+		setPlanVenue: connect.NewClient[v1.SetPlanVenueRequest, v1.SetPlanVenueResponse](
+			httpClient,
+			baseURL+ReviewServiceSetPlanVenueProcedure,
+			connect.WithSchema(reviewServiceMethods.ByName("SetPlanVenue")),
+			connect.WithClientOptions(opts...),
+		),
 		listReviewEvents: connect.NewClient[v1.ListReviewEventsRequest, v1.ListReviewEventsResponse](
 			httpClient,
 			baseURL+ReviewServiceListReviewEventsProcedure,
@@ -293,6 +339,9 @@ type reviewServiceClient struct {
 	withdrawPlan         *connect.Client[v1.WithdrawPlanRequest, v1.WithdrawPlanResponse]
 	listVenueOptions     *connect.Client[v1.ListVenueOptionsRequest, v1.ListVenueOptionsResponse]
 	createPlan           *connect.Client[v1.CreatePlanRequest, v1.CreatePlanResponse]
+	findPlanPlaces       *connect.Client[v1.FindPlanPlacesRequest, v1.FindPlanPlacesResponse]
+	setPlanStops         *connect.Client[v1.SetPlanStopsRequest, v1.SetPlanStopsResponse]
+	setPlanVenue         *connect.Client[v1.SetPlanVenueRequest, v1.SetPlanVenueResponse]
 	listReviewEvents     *connect.Client[v1.ListReviewEventsRequest, v1.ListReviewEventsResponse]
 	getReviewEvent       *connect.Client[v1.GetReviewEventRequest, v1.GetReviewEventResponse]
 	moveProposalMember   *connect.Client[v1.MoveProposalMemberRequest, v1.MoveProposalMemberResponse]
@@ -351,6 +400,21 @@ func (c *reviewServiceClient) ListVenueOptions(ctx context.Context, req *connect
 // CreatePlan calls issho.v1.ReviewService.CreatePlan.
 func (c *reviewServiceClient) CreatePlan(ctx context.Context, req *connect.Request[v1.CreatePlanRequest]) (*connect.Response[v1.CreatePlanResponse], error) {
 	return c.createPlan.CallUnary(ctx, req)
+}
+
+// FindPlanPlaces calls issho.v1.ReviewService.FindPlanPlaces.
+func (c *reviewServiceClient) FindPlanPlaces(ctx context.Context, req *connect.Request[v1.FindPlanPlacesRequest]) (*connect.Response[v1.FindPlanPlacesResponse], error) {
+	return c.findPlanPlaces.CallUnary(ctx, req)
+}
+
+// SetPlanStops calls issho.v1.ReviewService.SetPlanStops.
+func (c *reviewServiceClient) SetPlanStops(ctx context.Context, req *connect.Request[v1.SetPlanStopsRequest]) (*connect.Response[v1.SetPlanStopsResponse], error) {
+	return c.setPlanStops.CallUnary(ctx, req)
+}
+
+// SetPlanVenue calls issho.v1.ReviewService.SetPlanVenue.
+func (c *reviewServiceClient) SetPlanVenue(ctx context.Context, req *connect.Request[v1.SetPlanVenueRequest]) (*connect.Response[v1.SetPlanVenueResponse], error) {
+	return c.setPlanVenue.CallUnary(ctx, req)
 }
 
 // ListReviewEvents calls issho.v1.ReviewService.ListReviewEvents.
@@ -430,6 +494,25 @@ type ReviewServiceHandler interface {
 	// INVALID_ARGUMENT for an unknown area or activity, an area or activity
 	// not in the city, or a venue not found for the activity there.
 	CreatePlan(context.Context, *connect.Request[v1.CreatePlanRequest]) (*connect.Response[v1.CreatePlanResponse], error)
+	// Editing a plan's stops (draft or open plans; an event already
+	// scheduled shows the change to the people going). FindPlanPlaces looks
+	// places up by name with Google within 3 km of the plan's area.
+	// FAILED_PRECONDITION without a Google Maps key.
+	FindPlanPlaces(context.Context, *connect.Request[v1.FindPlanPlacesRequest]) (*connect.Response[v1.FindPlanPlacesResponse], error)
+	// SetPlanStops replaces a walk's stops, in walking order: the first is
+	// where people meet, the last where they sit down at the end. Each place
+	// is checked with Google (it exists, isn't closed, is within 3 km of the
+	// area's centre, appears once) and the walking route is worked out again
+	// in this order. A walk outside the composer's rules (2 to 4 hours, no
+	// walk between stops over 20 minutes, 100 minutes of walking at most) is
+	// saved anyway, with warnings. INVALID_ARGUMENT for a plan that isn't a
+	// walk, fewer than 3 or more than 10 places, or a place that fails.
+	SetPlanStops(context.Context, *connect.Request[v1.SetPlanStopsRequest]) (*connect.Response[v1.SetPlanStopsResponse], error)
+	// SetPlanVenue changes the venue of a plan that isn't a walk, or of its
+	// follow-up: one of the venues found for the activity in the area
+	// (ListVenueOptions), or "" to let the matcher pick. The walk between the
+	// two is worked out again.
+	SetPlanVenue(context.Context, *connect.Request[v1.SetPlanVenueRequest]) (*connect.Response[v1.SetPlanVenueResponse], error)
 	// ListReviewEvents returns a city's proposals, or its upcoming scheduled
 	// events (to set meeting points), soonest first. At most 200.
 	ListReviewEvents(context.Context, *connect.Request[v1.ListReviewEventsRequest]) (*connect.Response[v1.ListReviewEventsResponse], error)
@@ -531,6 +614,24 @@ func NewReviewServiceHandler(svc ReviewServiceHandler, opts ...connect.HandlerOp
 		connect.WithSchema(reviewServiceMethods.ByName("CreatePlan")),
 		connect.WithHandlerOptions(opts...),
 	)
+	reviewServiceFindPlanPlacesHandler := connect.NewUnaryHandler(
+		ReviewServiceFindPlanPlacesProcedure,
+		svc.FindPlanPlaces,
+		connect.WithSchema(reviewServiceMethods.ByName("FindPlanPlaces")),
+		connect.WithHandlerOptions(opts...),
+	)
+	reviewServiceSetPlanStopsHandler := connect.NewUnaryHandler(
+		ReviewServiceSetPlanStopsProcedure,
+		svc.SetPlanStops,
+		connect.WithSchema(reviewServiceMethods.ByName("SetPlanStops")),
+		connect.WithHandlerOptions(opts...),
+	)
+	reviewServiceSetPlanVenueHandler := connect.NewUnaryHandler(
+		ReviewServiceSetPlanVenueProcedure,
+		svc.SetPlanVenue,
+		connect.WithSchema(reviewServiceMethods.ByName("SetPlanVenue")),
+		connect.WithHandlerOptions(opts...),
+	)
 	reviewServiceListReviewEventsHandler := connect.NewUnaryHandler(
 		ReviewServiceListReviewEventsProcedure,
 		svc.ListReviewEvents,
@@ -601,6 +702,12 @@ func NewReviewServiceHandler(svc ReviewServiceHandler, opts ...connect.HandlerOp
 			reviewServiceListVenueOptionsHandler.ServeHTTP(w, r)
 		case ReviewServiceCreatePlanProcedure:
 			reviewServiceCreatePlanHandler.ServeHTTP(w, r)
+		case ReviewServiceFindPlanPlacesProcedure:
+			reviewServiceFindPlanPlacesHandler.ServeHTTP(w, r)
+		case ReviewServiceSetPlanStopsProcedure:
+			reviewServiceSetPlanStopsHandler.ServeHTTP(w, r)
+		case ReviewServiceSetPlanVenueProcedure:
+			reviewServiceSetPlanVenueHandler.ServeHTTP(w, r)
 		case ReviewServiceListReviewEventsProcedure:
 			reviewServiceListReviewEventsHandler.ServeHTTP(w, r)
 		case ReviewServiceGetReviewEventProcedure:
@@ -664,6 +771,18 @@ func (UnimplementedReviewServiceHandler) ListVenueOptions(context.Context, *conn
 
 func (UnimplementedReviewServiceHandler) CreatePlan(context.Context, *connect.Request[v1.CreatePlanRequest]) (*connect.Response[v1.CreatePlanResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.ReviewService.CreatePlan is not implemented"))
+}
+
+func (UnimplementedReviewServiceHandler) FindPlanPlaces(context.Context, *connect.Request[v1.FindPlanPlacesRequest]) (*connect.Response[v1.FindPlanPlacesResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.ReviewService.FindPlanPlaces is not implemented"))
+}
+
+func (UnimplementedReviewServiceHandler) SetPlanStops(context.Context, *connect.Request[v1.SetPlanStopsRequest]) (*connect.Response[v1.SetPlanStopsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.ReviewService.SetPlanStops is not implemented"))
+}
+
+func (UnimplementedReviewServiceHandler) SetPlanVenue(context.Context, *connect.Request[v1.SetPlanVenueRequest]) (*connect.Response[v1.SetPlanVenueResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.ReviewService.SetPlanVenue is not implemented"))
 }
 
 func (UnimplementedReviewServiceHandler) ListReviewEvents(context.Context, *connect.Request[v1.ListReviewEventsRequest]) (*connect.Response[v1.ListReviewEventsResponse], error) {

@@ -14,7 +14,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file issho/v1/review.proto.
  */
 export const file_issho_v1_review: GenFile = /*@__PURE__*/
-  fileDesc("ChVpc3Noby92MS9yZXZpZXcucHJvdG8SCGlzc2hvLnYxIhkKF0xpc3RSZXZpZXdDaXRpZXNSZXF1ZXN0IkAKGExpc3RSZXZpZXdDaXRpZXNSZXNwb25zZRIkCgZjaXRpZXMYASADKAsyFC5pc3Noby52MS5SZXZpZXdDaXR5IlQKClJldmlld0NpdHkSCgoCaWQYASABKAkSDAoEbmFtZRgCIAEoCRIOCgZyZXZpZXcYAyABKAgSDgoGZHJhZnRzGAQgASgFEgwKBG9wZW4YBSABKAUiNwoUU2V0Q2l0eVJldmlld1JlcXVlc3QSDwoHY2l0eV9pZBgBIAEoCRIOCgZyZXZpZXcYAiABKAgiFwoVU2V0Q2l0eVJldmlld1Jlc3BvbnNlIlUKFkxpc3RSZXZpZXdQbGFuc1JlcXVlc3QSDwoHY2l0eV9pZBgBIAEoCRIqCgZzdGF0dXMYAiABKA4yGi5pc3Noby52MS5SZXZpZXdQbGFuU3RhdHVzIj4KF0xpc3RSZXZpZXdQbGFuc1Jlc3BvbnNlEiMKBXBsYW5zGAEgAygLMhQuaXNzaG8udjEuUmV2aWV3UGxhbiLRBAoKUmV2aWV3UGxhbhIKCgJpZBgBIAEoCRIPCgdjaXR5X2lkGAIgASgJEioKBnN0YXR1cxgDIAEoDjIaLmlzc2hvLnYxLlJldmlld1BsYW5TdGF0dXMSFQoNY2xvc2VkX3JlYXNvbhgEIAEoCRINCgV0aXRsZRgFIAEoCRIUCgxzdG9yZWRfdGl0bGUYBiABKAkSDwoHc3VtbWFyeRgHIAEoCRIPCgdhcmVhX2lkGAggASgJEhEKCWFyZWFfbmFtZRgJIAEoCRITCgthY3Rpdml0eV9pZBgKIAEoCRIUCgxmb2xsb3dfdXBfaWQYCyABKAkSGAoQcHJpbWFyeV9sYW5ndWFnZRgMIAEoCRIaChJzZWNvbmRhcnlfbGFuZ3VhZ2UYDSABKAkSDAoEd2FsaxgOIAEoCBIQCghhdWRpZW5jZRgPIAEoBRINCgVzY29yZRgQIAEoAhIPCgdzaWdudXBzGBEgASgFEhQKDHdpbmRvd19zdGFydBgSIAEoCRITCgt3aW5kb3dfZGF5cxgTIAEoBRIzCg9zaWdudXBfZGVhZGxpbmUYFCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi4KCmNyZWF0ZWRfYXQYFSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhIKCmNyZWF0ZWRfYnkYFiABKAkSEwoLcmV2aWV3ZWRfYnkYFyABKAkSLwoLcmV2aWV3ZWRfYXQYGCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wIicKFEdldFJldmlld1BsYW5SZXF1ZXN0Eg8KB3BsYW5faWQYASABKAkiXgoVR2V0UmV2aWV3UGxhblJlc3BvbnNlEiIKBHBsYW4YASABKAsyFC5pc3Noby52MS5SZXZpZXdQbGFuEiEKBXN0ZXBzGAIgAygLMhIuaXNzaG8udjEuUGxhblN0ZXAiJQoSQXBwcm92ZVBsYW5SZXF1ZXN0Eg8KB3BsYW5faWQYASABKAkiFQoTQXBwcm92ZVBsYW5SZXNwb25zZSIkChFSZWplY3RQbGFuUmVxdWVzdBIPCgdwbGFuX2lkGAEgASgJIhQKElJlamVjdFBsYW5SZXNwb25zZSJCCg9FZGl0UGxhblJlcXVlc3QSDwoHcGxhbl9pZBgBIAEoCRINCgV0aXRsZRgCIAEoCRIPCgdzdW1tYXJ5GAMgASgJIhIKEEVkaXRQbGFuUmVzcG9uc2UiJgoTV2l0aGRyYXdQbGFuUmVxdWVzdBIPCgdwbGFuX2lkGAEgASgJIhYKFFdpdGhkcmF3UGxhblJlc3BvbnNlIj8KF0xpc3RWZW51ZU9wdGlvbnNSZXF1ZXN0Eg8KB2FyZWFfaWQYASABKAkSEwoLYWN0aXZpdHlfaWQYAiABKAkiQQoYTGlzdFZlbnVlT3B0aW9uc1Jlc3BvbnNlEiUKBnZlbnVlcxgBIAMoCzIVLmlzc2hvLnYxLlZlbnVlT3B0aW9uInUKC1ZlbnVlT3B0aW9uEhAKCHBsYWNlX2lkGAEgASgJEgwKBG5hbWUYAiABKAkSDwoHYWRkcmVzcxgDIAEoCRIQCghtYXBzX3VybBgEIAEoCRITCgtjYXRlZ29yeV9pZBgFIAEoCRIOCgZzdGF0dXMYBiABKAki8AEKEUNyZWF0ZVBsYW5SZXF1ZXN0Eg8KB2NpdHlfaWQYASABKAkSDwoHYXJlYV9pZBgCIAEoCRITCgthY3Rpdml0eV9pZBgDIAEoCRIUCgxmb2xsb3dfdXBfaWQYBCABKAkSFgoOdmVudWVfcGxhY2VfaWQYBSABKAkSIAoYZm9sbG93X3VwX3ZlbnVlX3BsYWNlX2lkGAYgASgJEhgKEHByaW1hcnlfbGFuZ3VhZ2UYByABKAkSGgoSc2Vjb25kYXJ5X2xhbmd1YWdlGAggASgJEg0KBXRpdGxlGAkgASgJEg8KB3N1bW1hcnkYCiABKAkiJQoSQ3JlYXRlUGxhblJlc3BvbnNlEg8KB3BsYW5faWQYASABKAkiVwoXTGlzdFJldmlld0V2ZW50c1JlcXVlc3QSDwoHY2l0eV9pZBgBIAEoCRIrCgZzdGF0dXMYAiABKA4yGy5pc3Noby52MS5SZXZpZXdFdmVudFN0YXR1cyJBChhMaXN0UmV2aWV3RXZlbnRzUmVzcG9uc2USJQoGZXZlbnRzGAEgAygLMhUuaXNzaG8udjEuUmV2aWV3RXZlbnQi6AIKC1Jldmlld0V2ZW50EgoKAmlkGAEgASgJEg8KB3BsYW5faWQYAiABKAkSKwoGc3RhdHVzGAMgASgOMhsuaXNzaG8udjEuUmV2aWV3RXZlbnRTdGF0dXMSDQoFdGl0bGUYBCABKAkSEQoJYXJlYV9uYW1lGAUgASgJEgwKBGRhdGUYBiABKAkSDQoFYmxvY2sYByABKAkSLQoJc3RhcnRzX2F0GAggASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIuCgpjb25maXJtX2J5GAkgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIOCgZmb3JjZWQYCiABKAgSDgoGZ3JvdXBzGAsgASgFEg4KBnBlb3BsZRgMIAEoBRIuCgpjcmVhdGVkX2F0GA0gASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIRCgl0aW1lX3pvbmUYDiABKAkiKQoVR2V0UmV2aWV3RXZlbnRSZXF1ZXN0EhAKCGV2ZW50X2lkGAEgASgJImUKFkdldFJldmlld0V2ZW50UmVzcG9uc2USJAoFZXZlbnQYASABKAsyFS5pc3Noby52MS5SZXZpZXdFdmVudBIlCgZncm91cHMYAiADKAsyFS5pc3Noby52MS5SZXZpZXdHcm91cCKgAQoLUmV2aWV3R3JvdXASCgoCaWQYASABKAkSDgoGcXVvcnVtGAIgASgFEhYKDm1pbl9hdHRlbmRhbmNlGAMgASgFEg0KBXNjb3JlGAQgASgCEg4KBnN0YXR1cxgFIAEoCRIVCg1tZWV0aW5nX3BvaW50GAYgASgJEicKB21lbWJlcnMYByADKAsyFi5pc3Noby52MS5SZXZpZXdNZW1iZXIidgoMUmV2aWV3TWVtYmVyEg8KB3VzZXJfaWQYASABKAkSDAoEbmFtZRgCIAEoCRIOCgZnZW5kZXIYAyABKAkSEgoKYmlydGhfeWVhchgEIAEoBRIQCghyZXNwb25zZRgFIAEoCRIRCglzaWduZWRfdXAYBiABKAgiUAoZTW92ZVByb3Bvc2FsTWVtYmVyUmVxdWVzdBIQCghldmVudF9pZBgBIAEoCRIPCgd1c2VyX2lkGAIgASgJEhAKCGdyb3VwX2lkGAMgASgJIhwKGk1vdmVQcm9wb3NhbE1lbWJlclJlc3BvbnNlIkAKG1JlbW92ZVByb3Bvc2FsTWVtYmVyUmVxdWVzdBIQCghldmVudF9pZBgBIAEoCRIPCgd1c2VyX2lkGAIgASgJIh4KHFJlbW92ZVByb3Bvc2FsTWVtYmVyUmVzcG9uc2UiRwoXU2V0UHJvcG9zYWxTdGFydFJlcXVlc3QSEAoIZXZlbnRfaWQYASABKAkSDAoEZGF0ZRgCIAEoCRIMCgR0aW1lGAMgASgJIhoKGFNldFByb3Bvc2FsU3RhcnRSZXNwb25zZSI9ChtTZXRHcm91cE1lZXRpbmdQb2ludFJlcXVlc3QSEAoIZ3JvdXBfaWQYASABKAkSDAoEdGV4dBgCIAEoCSIeChxTZXRHcm91cE1lZXRpbmdQb2ludFJlc3BvbnNlIioKFkFwcHJvdmVQcm9wb3NhbFJlcXVlc3QSEAoIZXZlbnRfaWQYASABKAkiGQoXQXBwcm92ZVByb3Bvc2FsUmVzcG9uc2UiKQoVUmVqZWN0UHJvcG9zYWxSZXF1ZXN0EhAKCGV2ZW50X2lkGAEgASgJIhgKFlJlamVjdFByb3Bvc2FsUmVzcG9uc2UqkAEKEFJldmlld1BsYW5TdGF0dXMSIgoeUkVWSUVXX1BMQU5fU1RBVFVTX1VOU1BFQ0lGSUVEEAASHAoYUkVWSUVXX1BMQU5fU1RBVFVTX0RSQUZUEAESGwoXUkVWSUVXX1BMQU5fU1RBVFVTX09QRU4QAhIdChlSRVZJRVdfUExBTl9TVEFUVVNfQ0xPU0VEEAMqfQoRUmV2aWV3RXZlbnRTdGF0dXMSIwofUkVWSUVXX0VWRU5UX1NUQVRVU19VTlNQRUNJRklFRBAAEiAKHFJFVklFV19FVkVOVF9TVEFUVVNfUFJPUE9TRUQQARIhCh1SRVZJRVdfRVZFTlRfU1RBVFVTX1NDSEVEVUxFRBACMrwMCg1SZXZpZXdTZXJ2aWNlElsKEExpc3RSZXZpZXdDaXRpZXMSIS5pc3Noby52MS5MaXN0UmV2aWV3Q2l0aWVzUmVxdWVzdBoiLmlzc2hvLnYxLkxpc3RSZXZpZXdDaXRpZXNSZXNwb25zZSIAElIKDVNldENpdHlSZXZpZXcSHi5pc3Noby52MS5TZXRDaXR5UmV2aWV3UmVxdWVzdBofLmlzc2hvLnYxLlNldENpdHlSZXZpZXdSZXNwb25zZSIAElgKD0xpc3RSZXZpZXdQbGFucxIgLmlzc2hvLnYxLkxpc3RSZXZpZXdQbGFuc1JlcXVlc3QaIS5pc3Noby52MS5MaXN0UmV2aWV3UGxhbnNSZXNwb25zZSIAElIKDUdldFJldmlld1BsYW4SHi5pc3Noby52MS5HZXRSZXZpZXdQbGFuUmVxdWVzdBofLmlzc2hvLnYxLkdldFJldmlld1BsYW5SZXNwb25zZSIAEkwKC0FwcHJvdmVQbGFuEhwuaXNzaG8udjEuQXBwcm92ZVBsYW5SZXF1ZXN0Gh0uaXNzaG8udjEuQXBwcm92ZVBsYW5SZXNwb25zZSIAEkkKClJlamVjdFBsYW4SGy5pc3Noby52MS5SZWplY3RQbGFuUmVxdWVzdBocLmlzc2hvLnYxLlJlamVjdFBsYW5SZXNwb25zZSIAEkMKCEVkaXRQbGFuEhkuaXNzaG8udjEuRWRpdFBsYW5SZXF1ZXN0GhouaXNzaG8udjEuRWRpdFBsYW5SZXNwb25zZSIAEk8KDFdpdGhkcmF3UGxhbhIdLmlzc2hvLnYxLldpdGhkcmF3UGxhblJlcXVlc3QaHi5pc3Noby52MS5XaXRoZHJhd1BsYW5SZXNwb25zZSIAElsKEExpc3RWZW51ZU9wdGlvbnMSIS5pc3Noby52MS5MaXN0VmVudWVPcHRpb25zUmVxdWVzdBoiLmlzc2hvLnYxLkxpc3RWZW51ZU9wdGlvbnNSZXNwb25zZSIAEkkKCkNyZWF0ZVBsYW4SGy5pc3Noby52MS5DcmVhdGVQbGFuUmVxdWVzdBocLmlzc2hvLnYxLkNyZWF0ZVBsYW5SZXNwb25zZSIAElsKEExpc3RSZXZpZXdFdmVudHMSIS5pc3Noby52MS5MaXN0UmV2aWV3RXZlbnRzUmVxdWVzdBoiLmlzc2hvLnYxLkxpc3RSZXZpZXdFdmVudHNSZXNwb25zZSIAElUKDkdldFJldmlld0V2ZW50Eh8uaXNzaG8udjEuR2V0UmV2aWV3RXZlbnRSZXF1ZXN0GiAuaXNzaG8udjEuR2V0UmV2aWV3RXZlbnRSZXNwb25zZSIAEmEKEk1vdmVQcm9wb3NhbE1lbWJlchIjLmlzc2hvLnYxLk1vdmVQcm9wb3NhbE1lbWJlclJlcXVlc3QaJC5pc3Noby52MS5Nb3ZlUHJvcG9zYWxNZW1iZXJSZXNwb25zZSIAEmcKFFJlbW92ZVByb3Bvc2FsTWVtYmVyEiUuaXNzaG8udjEuUmVtb3ZlUHJvcG9zYWxNZW1iZXJSZXF1ZXN0GiYuaXNzaG8udjEuUmVtb3ZlUHJvcG9zYWxNZW1iZXJSZXNwb25zZSIAElsKEFNldFByb3Bvc2FsU3RhcnQSIS5pc3Noby52MS5TZXRQcm9wb3NhbFN0YXJ0UmVxdWVzdBoiLmlzc2hvLnYxLlNldFByb3Bvc2FsU3RhcnRSZXNwb25zZSIAEmcKFFNldEdyb3VwTWVldGluZ1BvaW50EiUuaXNzaG8udjEuU2V0R3JvdXBNZWV0aW5nUG9pbnRSZXF1ZXN0GiYuaXNzaG8udjEuU2V0R3JvdXBNZWV0aW5nUG9pbnRSZXNwb25zZSIAElgKD0FwcHJvdmVQcm9wb3NhbBIgLmlzc2hvLnYxLkFwcHJvdmVQcm9wb3NhbFJlcXVlc3QaIS5pc3Noby52MS5BcHByb3ZlUHJvcG9zYWxSZXNwb25zZSIAElUKDlJlamVjdFByb3Bvc2FsEh8uaXNzaG8udjEuUmVqZWN0UHJvcG9zYWxSZXF1ZXN0GiAuaXNzaG8udjEuUmVqZWN0UHJvcG9zYWxSZXNwb25zZSIAQj5aPGdpdGh1Yi5jb20vc2hydWphbmNoZXJ1a3UvaXNzaG8vYmFja2VuZC9nZW4vaXNzaG8vdjE7aXNzaG92MWIGcHJvdG8z", [file_google_protobuf_timestamp, file_issho_v1_plans]);
+  fileDesc("ChVpc3Noby92MS9yZXZpZXcucHJvdG8SCGlzc2hvLnYxIhkKF0xpc3RSZXZpZXdDaXRpZXNSZXF1ZXN0IkAKGExpc3RSZXZpZXdDaXRpZXNSZXNwb25zZRIkCgZjaXRpZXMYASADKAsyFC5pc3Noby52MS5SZXZpZXdDaXR5IlQKClJldmlld0NpdHkSCgoCaWQYASABKAkSDAoEbmFtZRgCIAEoCRIOCgZyZXZpZXcYAyABKAgSDgoGZHJhZnRzGAQgASgFEgwKBG9wZW4YBSABKAUiNwoUU2V0Q2l0eVJldmlld1JlcXVlc3QSDwoHY2l0eV9pZBgBIAEoCRIOCgZyZXZpZXcYAiABKAgiFwoVU2V0Q2l0eVJldmlld1Jlc3BvbnNlIlUKFkxpc3RSZXZpZXdQbGFuc1JlcXVlc3QSDwoHY2l0eV9pZBgBIAEoCRIqCgZzdGF0dXMYAiABKA4yGi5pc3Noby52MS5SZXZpZXdQbGFuU3RhdHVzIj4KF0xpc3RSZXZpZXdQbGFuc1Jlc3BvbnNlEiMKBXBsYW5zGAEgAygLMhQuaXNzaG8udjEuUmV2aWV3UGxhbiLRBAoKUmV2aWV3UGxhbhIKCgJpZBgBIAEoCRIPCgdjaXR5X2lkGAIgASgJEioKBnN0YXR1cxgDIAEoDjIaLmlzc2hvLnYxLlJldmlld1BsYW5TdGF0dXMSFQoNY2xvc2VkX3JlYXNvbhgEIAEoCRINCgV0aXRsZRgFIAEoCRIUCgxzdG9yZWRfdGl0bGUYBiABKAkSDwoHc3VtbWFyeRgHIAEoCRIPCgdhcmVhX2lkGAggASgJEhEKCWFyZWFfbmFtZRgJIAEoCRITCgthY3Rpdml0eV9pZBgKIAEoCRIUCgxmb2xsb3dfdXBfaWQYCyABKAkSGAoQcHJpbWFyeV9sYW5ndWFnZRgMIAEoCRIaChJzZWNvbmRhcnlfbGFuZ3VhZ2UYDSABKAkSDAoEd2FsaxgOIAEoCBIQCghhdWRpZW5jZRgPIAEoBRINCgVzY29yZRgQIAEoAhIPCgdzaWdudXBzGBEgASgFEhQKDHdpbmRvd19zdGFydBgSIAEoCRITCgt3aW5kb3dfZGF5cxgTIAEoBRIzCg9zaWdudXBfZGVhZGxpbmUYFCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi4KCmNyZWF0ZWRfYXQYFSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhIKCmNyZWF0ZWRfYnkYFiABKAkSEwoLcmV2aWV3ZWRfYnkYFyABKAkSLwoLcmV2aWV3ZWRfYXQYGCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wIicKFEdldFJldmlld1BsYW5SZXF1ZXN0Eg8KB3BsYW5faWQYASABKAki1gEKFUdldFJldmlld1BsYW5SZXNwb25zZRIiCgRwbGFuGAEgASgLMhQuaXNzaG8udjEuUmV2aWV3UGxhbhIhCgVzdGVwcxgCIAMoCzISLmlzc2hvLnYxLlBsYW5TdGVwEiMKBXN0b3BzGAMgAygLMhQuaXNzaG8udjEuUmV2aWV3U3RvcBIWCg52ZW51ZV9wbGFjZV9pZBgEIAEoCRIgChhmb2xsb3dfdXBfdmVudWVfcGxhY2VfaWQYBSABKAkSFwoPdXBjb21pbmdfZXZlbnRzGAYgASgFIksKClJldmlld1N0b3ASEAoIcGxhY2VfaWQYASABKAkSDAoEcm9sZRgCIAEoCRIPCgdtaW51dGVzGAMgASgFEgwKBG5vdGUYBCABKAkiNwoVRmluZFBsYW5QbGFjZXNSZXF1ZXN0Eg8KB3BsYW5faWQYASABKAkSDQoFcXVlcnkYAiABKAkiPgoWRmluZFBsYW5QbGFjZXNSZXNwb25zZRIkCgZwbGFjZXMYASADKAsyFC5pc3Noby52MS5Gb3VuZFBsYWNlIoUBCgpGb3VuZFBsYWNlEhAKCHBsYWNlX2lkGAEgASgJEgwKBG5hbWUYAiABKAkSDwoHYWRkcmVzcxgDIAEoCRIQCghtYXBzX3VybBgEIAEoCRIUCgxwcmltYXJ5X3R5cGUYBSABKAkSDgoGbWV0ZXJzGAYgASgFEg4KBmNsb3NlZBgHIAEoCCJLChNTZXRQbGFuU3RvcHNSZXF1ZXN0Eg8KB3BsYW5faWQYASABKAkSIwoFc3RvcHMYAiADKAsyFC5pc3Noby52MS5SZXZpZXdTdG9wIjkKFFNldFBsYW5TdG9wc1Jlc3BvbnNlEhAKCHdhcm5pbmdzGAEgAygJEg8KB21pbnV0ZXMYAiABKAUiSwoTU2V0UGxhblZlbnVlUmVxdWVzdBIPCgdwbGFuX2lkGAEgASgJEhEKCWZvbGxvd191cBgCIAEoCBIQCghwbGFjZV9pZBgDIAEoCSIWChRTZXRQbGFuVmVudWVSZXNwb25zZSIlChJBcHByb3ZlUGxhblJlcXVlc3QSDwoHcGxhbl9pZBgBIAEoCSIVChNBcHByb3ZlUGxhblJlc3BvbnNlIiQKEVJlamVjdFBsYW5SZXF1ZXN0Eg8KB3BsYW5faWQYASABKAkiFAoSUmVqZWN0UGxhblJlc3BvbnNlIkIKD0VkaXRQbGFuUmVxdWVzdBIPCgdwbGFuX2lkGAEgASgJEg0KBXRpdGxlGAIgASgJEg8KB3N1bW1hcnkYAyABKAkiEgoQRWRpdFBsYW5SZXNwb25zZSImChNXaXRoZHJhd1BsYW5SZXF1ZXN0Eg8KB3BsYW5faWQYASABKAkiFgoUV2l0aGRyYXdQbGFuUmVzcG9uc2UiPwoXTGlzdFZlbnVlT3B0aW9uc1JlcXVlc3QSDwoHYXJlYV9pZBgBIAEoCRITCgthY3Rpdml0eV9pZBgCIAEoCSJBChhMaXN0VmVudWVPcHRpb25zUmVzcG9uc2USJQoGdmVudWVzGAEgAygLMhUuaXNzaG8udjEuVmVudWVPcHRpb24idQoLVmVudWVPcHRpb24SEAoIcGxhY2VfaWQYASABKAkSDAoEbmFtZRgCIAEoCRIPCgdhZGRyZXNzGAMgASgJEhAKCG1hcHNfdXJsGAQgASgJEhMKC2NhdGVnb3J5X2lkGAUgASgJEg4KBnN0YXR1cxgGIAEoCSLwAQoRQ3JlYXRlUGxhblJlcXVlc3QSDwoHY2l0eV9pZBgBIAEoCRIPCgdhcmVhX2lkGAIgASgJEhMKC2FjdGl2aXR5X2lkGAMgASgJEhQKDGZvbGxvd191cF9pZBgEIAEoCRIWCg52ZW51ZV9wbGFjZV9pZBgFIAEoCRIgChhmb2xsb3dfdXBfdmVudWVfcGxhY2VfaWQYBiABKAkSGAoQcHJpbWFyeV9sYW5ndWFnZRgHIAEoCRIaChJzZWNvbmRhcnlfbGFuZ3VhZ2UYCCABKAkSDQoFdGl0bGUYCSABKAkSDwoHc3VtbWFyeRgKIAEoCSIlChJDcmVhdGVQbGFuUmVzcG9uc2USDwoHcGxhbl9pZBgBIAEoCSJXChdMaXN0UmV2aWV3RXZlbnRzUmVxdWVzdBIPCgdjaXR5X2lkGAEgASgJEisKBnN0YXR1cxgCIAEoDjIbLmlzc2hvLnYxLlJldmlld0V2ZW50U3RhdHVzIkEKGExpc3RSZXZpZXdFdmVudHNSZXNwb25zZRIlCgZldmVudHMYASADKAsyFS5pc3Noby52MS5SZXZpZXdFdmVudCLoAgoLUmV2aWV3RXZlbnQSCgoCaWQYASABKAkSDwoHcGxhbl9pZBgCIAEoCRIrCgZzdGF0dXMYAyABKA4yGy5pc3Noby52MS5SZXZpZXdFdmVudFN0YXR1cxINCgV0aXRsZRgEIAEoCRIRCglhcmVhX25hbWUYBSABKAkSDAoEZGF0ZRgGIAEoCRINCgVibG9jaxgHIAEoCRItCglzdGFydHNfYXQYCCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi4KCmNvbmZpcm1fYnkYCSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEg4KBmZvcmNlZBgKIAEoCBIOCgZncm91cHMYCyABKAUSDgoGcGVvcGxlGAwgASgFEi4KCmNyZWF0ZWRfYXQYDSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhEKCXRpbWVfem9uZRgOIAEoCSIpChVHZXRSZXZpZXdFdmVudFJlcXVlc3QSEAoIZXZlbnRfaWQYASABKAkiZQoWR2V0UmV2aWV3RXZlbnRSZXNwb25zZRIkCgVldmVudBgBIAEoCzIVLmlzc2hvLnYxLlJldmlld0V2ZW50EiUKBmdyb3VwcxgCIAMoCzIVLmlzc2hvLnYxLlJldmlld0dyb3VwIqABCgtSZXZpZXdHcm91cBIKCgJpZBgBIAEoCRIOCgZxdW9ydW0YAiABKAUSFgoObWluX2F0dGVuZGFuY2UYAyABKAUSDQoFc2NvcmUYBCABKAISDgoGc3RhdHVzGAUgASgJEhUKDW1lZXRpbmdfcG9pbnQYBiABKAkSJwoHbWVtYmVycxgHIAMoCzIWLmlzc2hvLnYxLlJldmlld01lbWJlciJ2CgxSZXZpZXdNZW1iZXISDwoHdXNlcl9pZBgBIAEoCRIMCgRuYW1lGAIgASgJEg4KBmdlbmRlchgDIAEoCRISCgpiaXJ0aF95ZWFyGAQgASgFEhAKCHJlc3BvbnNlGAUgASgJEhEKCXNpZ25lZF91cBgGIAEoCCJQChlNb3ZlUHJvcG9zYWxNZW1iZXJSZXF1ZXN0EhAKCGV2ZW50X2lkGAEgASgJEg8KB3VzZXJfaWQYAiABKAkSEAoIZ3JvdXBfaWQYAyABKAkiHAoaTW92ZVByb3Bvc2FsTWVtYmVyUmVzcG9uc2UiQAobUmVtb3ZlUHJvcG9zYWxNZW1iZXJSZXF1ZXN0EhAKCGV2ZW50X2lkGAEgASgJEg8KB3VzZXJfaWQYAiABKAkiHgocUmVtb3ZlUHJvcG9zYWxNZW1iZXJSZXNwb25zZSJHChdTZXRQcm9wb3NhbFN0YXJ0UmVxdWVzdBIQCghldmVudF9pZBgBIAEoCRIMCgRkYXRlGAIgASgJEgwKBHRpbWUYAyABKAkiGgoYU2V0UHJvcG9zYWxTdGFydFJlc3BvbnNlIj0KG1NldEdyb3VwTWVldGluZ1BvaW50UmVxdWVzdBIQCghncm91cF9pZBgBIAEoCRIMCgR0ZXh0GAIgASgJIh4KHFNldEdyb3VwTWVldGluZ1BvaW50UmVzcG9uc2UiKgoWQXBwcm92ZVByb3Bvc2FsUmVxdWVzdBIQCghldmVudF9pZBgBIAEoCSIZChdBcHByb3ZlUHJvcG9zYWxSZXNwb25zZSIpChVSZWplY3RQcm9wb3NhbFJlcXVlc3QSEAoIZXZlbnRfaWQYASABKAkiGAoWUmVqZWN0UHJvcG9zYWxSZXNwb25zZSqQAQoQUmV2aWV3UGxhblN0YXR1cxIiCh5SRVZJRVdfUExBTl9TVEFUVVNfVU5TUEVDSUZJRUQQABIcChhSRVZJRVdfUExBTl9TVEFUVVNfRFJBRlQQARIbChdSRVZJRVdfUExBTl9TVEFUVVNfT1BFThACEh0KGVJFVklFV19QTEFOX1NUQVRVU19DTE9TRUQQAyp9ChFSZXZpZXdFdmVudFN0YXR1cxIjCh9SRVZJRVdfRVZFTlRfU1RBVFVTX1VOU1BFQ0lGSUVEEAASIAocUkVWSUVXX0VWRU5UX1NUQVRVU19QUk9QT1NFRBABEiEKHVJFVklFV19FVkVOVF9TVEFUVVNfU0NIRURVTEVEEAIytQ4KDVJldmlld1NlcnZpY2USWwoQTGlzdFJldmlld0NpdGllcxIhLmlzc2hvLnYxLkxpc3RSZXZpZXdDaXRpZXNSZXF1ZXN0GiIuaXNzaG8udjEuTGlzdFJldmlld0NpdGllc1Jlc3BvbnNlIgASUgoNU2V0Q2l0eVJldmlldxIeLmlzc2hvLnYxLlNldENpdHlSZXZpZXdSZXF1ZXN0Gh8uaXNzaG8udjEuU2V0Q2l0eVJldmlld1Jlc3BvbnNlIgASWAoPTGlzdFJldmlld1BsYW5zEiAuaXNzaG8udjEuTGlzdFJldmlld1BsYW5zUmVxdWVzdBohLmlzc2hvLnYxLkxpc3RSZXZpZXdQbGFuc1Jlc3BvbnNlIgASUgoNR2V0UmV2aWV3UGxhbhIeLmlzc2hvLnYxLkdldFJldmlld1BsYW5SZXF1ZXN0Gh8uaXNzaG8udjEuR2V0UmV2aWV3UGxhblJlc3BvbnNlIgASTAoLQXBwcm92ZVBsYW4SHC5pc3Noby52MS5BcHByb3ZlUGxhblJlcXVlc3QaHS5pc3Noby52MS5BcHByb3ZlUGxhblJlc3BvbnNlIgASSQoKUmVqZWN0UGxhbhIbLmlzc2hvLnYxLlJlamVjdFBsYW5SZXF1ZXN0GhwuaXNzaG8udjEuUmVqZWN0UGxhblJlc3BvbnNlIgASQwoIRWRpdFBsYW4SGS5pc3Noby52MS5FZGl0UGxhblJlcXVlc3QaGi5pc3Noby52MS5FZGl0UGxhblJlc3BvbnNlIgASTwoMV2l0aGRyYXdQbGFuEh0uaXNzaG8udjEuV2l0aGRyYXdQbGFuUmVxdWVzdBoeLmlzc2hvLnYxLldpdGhkcmF3UGxhblJlc3BvbnNlIgASWwoQTGlzdFZlbnVlT3B0aW9ucxIhLmlzc2hvLnYxLkxpc3RWZW51ZU9wdGlvbnNSZXF1ZXN0GiIuaXNzaG8udjEuTGlzdFZlbnVlT3B0aW9uc1Jlc3BvbnNlIgASSQoKQ3JlYXRlUGxhbhIbLmlzc2hvLnYxLkNyZWF0ZVBsYW5SZXF1ZXN0GhwuaXNzaG8udjEuQ3JlYXRlUGxhblJlc3BvbnNlIgASVQoORmluZFBsYW5QbGFjZXMSHy5pc3Noby52MS5GaW5kUGxhblBsYWNlc1JlcXVlc3QaIC5pc3Noby52MS5GaW5kUGxhblBsYWNlc1Jlc3BvbnNlIgASTwoMU2V0UGxhblN0b3BzEh0uaXNzaG8udjEuU2V0UGxhblN0b3BzUmVxdWVzdBoeLmlzc2hvLnYxLlNldFBsYW5TdG9wc1Jlc3BvbnNlIgASTwoMU2V0UGxhblZlbnVlEh0uaXNzaG8udjEuU2V0UGxhblZlbnVlUmVxdWVzdBoeLmlzc2hvLnYxLlNldFBsYW5WZW51ZVJlc3BvbnNlIgASWwoQTGlzdFJldmlld0V2ZW50cxIhLmlzc2hvLnYxLkxpc3RSZXZpZXdFdmVudHNSZXF1ZXN0GiIuaXNzaG8udjEuTGlzdFJldmlld0V2ZW50c1Jlc3BvbnNlIgASVQoOR2V0UmV2aWV3RXZlbnQSHy5pc3Noby52MS5HZXRSZXZpZXdFdmVudFJlcXVlc3QaIC5pc3Noby52MS5HZXRSZXZpZXdFdmVudFJlc3BvbnNlIgASYQoSTW92ZVByb3Bvc2FsTWVtYmVyEiMuaXNzaG8udjEuTW92ZVByb3Bvc2FsTWVtYmVyUmVxdWVzdBokLmlzc2hvLnYxLk1vdmVQcm9wb3NhbE1lbWJlclJlc3BvbnNlIgASZwoUUmVtb3ZlUHJvcG9zYWxNZW1iZXISJS5pc3Noby52MS5SZW1vdmVQcm9wb3NhbE1lbWJlclJlcXVlc3QaJi5pc3Noby52MS5SZW1vdmVQcm9wb3NhbE1lbWJlclJlc3BvbnNlIgASWwoQU2V0UHJvcG9zYWxTdGFydBIhLmlzc2hvLnYxLlNldFByb3Bvc2FsU3RhcnRSZXF1ZXN0GiIuaXNzaG8udjEuU2V0UHJvcG9zYWxTdGFydFJlc3BvbnNlIgASZwoUU2V0R3JvdXBNZWV0aW5nUG9pbnQSJS5pc3Noby52MS5TZXRHcm91cE1lZXRpbmdQb2ludFJlcXVlc3QaJi5pc3Noby52MS5TZXRHcm91cE1lZXRpbmdQb2ludFJlc3BvbnNlIgASWAoPQXBwcm92ZVByb3Bvc2FsEiAuaXNzaG8udjEuQXBwcm92ZVByb3Bvc2FsUmVxdWVzdBohLmlzc2hvLnYxLkFwcHJvdmVQcm9wb3NhbFJlc3BvbnNlIgASVQoOUmVqZWN0UHJvcG9zYWwSHy5pc3Noby52MS5SZWplY3RQcm9wb3NhbFJlcXVlc3QaIC5pc3Noby52MS5SZWplY3RQcm9wb3NhbFJlc3BvbnNlIgBCPlo8Z2l0aHViLmNvbS9zaHJ1amFuY2hlcnVrdS9pc3Noby9iYWNrZW5kL2dlbi9pc3Noby92MTtpc3Nob3YxYgZwcm90bzM", [file_google_protobuf_timestamp, file_issho_v1_plans]);
 
 /**
  * @generated from message issho.v1.ListReviewCitiesRequest
@@ -341,6 +341,33 @@ export type GetReviewPlanResponse = Message<"issho.v1.GetReviewPlanResponse"> & 
    * @generated from field: repeated issho.v1.PlanStep steps = 2;
    */
   steps: PlanStep[];
+
+  /**
+   * A walk's stops as stored, for editing (SetPlanStops); empty for other
+   * plans. Same order as steps.
+   *
+   * @generated from field: repeated issho.v1.ReviewStop stops = 3;
+   */
+  stops: ReviewStop[];
+
+  /**
+   * For other plans, the venues as stored ("" = none).
+   *
+   * @generated from field: string venue_place_id = 4;
+   */
+  venuePlaceId: string;
+
+  /**
+   * @generated from field: string follow_up_venue_place_id = 5;
+   */
+  followUpVenuePlaceId: string;
+
+  /**
+   * Scheduled events of this plan still to come, whose people see edits.
+   *
+   * @generated from field: int32 upcoming_events = 6;
+   */
+  upcomingEvents: number;
 };
 
 /**
@@ -349,6 +376,228 @@ export type GetReviewPlanResponse = Message<"issho.v1.GetReviewPlanResponse"> & 
  */
 export const GetReviewPlanResponseSchema: GenMessage<GetReviewPlanResponse> = /*@__PURE__*/
   messageDesc(file_issho_v1_review, 9);
+
+/**
+ * A walk's stop. The role follows the position: "meet" first, "finish"
+ * last, "stop" between.
+ *
+ * @generated from message issho.v1.ReviewStop
+ */
+export type ReviewStop = Message<"issho.v1.ReviewStop"> & {
+  /**
+   * @generated from field: string place_id = 1;
+   */
+  placeId: string;
+
+  /**
+   * @generated from field: string role = 2;
+   */
+  role: string;
+
+  /**
+   * Time there: 0 to 120.
+   *
+   * @generated from field: int32 minutes = 3;
+   */
+  minutes: number;
+
+  /**
+   * English, at most 300 characters; people see it translated.
+   *
+   * @generated from field: string note = 4;
+   */
+  note: string;
+};
+
+/**
+ * Describes the message issho.v1.ReviewStop.
+ * Use `create(ReviewStopSchema)` to create a new message.
+ */
+export const ReviewStopSchema: GenMessage<ReviewStop> = /*@__PURE__*/
+  messageDesc(file_issho_v1_review, 10);
+
+/**
+ * @generated from message issho.v1.FindPlanPlacesRequest
+ */
+export type FindPlanPlacesRequest = Message<"issho.v1.FindPlanPlacesRequest"> & {
+  /**
+   * @generated from field: string plan_id = 1;
+   */
+  planId: string;
+
+  /**
+   * @generated from field: string query = 2;
+   */
+  query: string;
+};
+
+/**
+ * Describes the message issho.v1.FindPlanPlacesRequest.
+ * Use `create(FindPlanPlacesRequestSchema)` to create a new message.
+ */
+export const FindPlanPlacesRequestSchema: GenMessage<FindPlanPlacesRequest> = /*@__PURE__*/
+  messageDesc(file_issho_v1_review, 11);
+
+/**
+ * @generated from message issho.v1.FindPlanPlacesResponse
+ */
+export type FindPlanPlacesResponse = Message<"issho.v1.FindPlanPlacesResponse"> & {
+  /**
+   * @generated from field: repeated issho.v1.FoundPlace places = 1;
+   */
+  places: FoundPlace[];
+};
+
+/**
+ * Describes the message issho.v1.FindPlanPlacesResponse.
+ * Use `create(FindPlanPlacesResponseSchema)` to create a new message.
+ */
+export const FindPlanPlacesResponseSchema: GenMessage<FindPlanPlacesResponse> = /*@__PURE__*/
+  messageDesc(file_issho_v1_review, 12);
+
+/**
+ * @generated from message issho.v1.FoundPlace
+ */
+export type FoundPlace = Message<"issho.v1.FoundPlace"> & {
+  /**
+   * @generated from field: string place_id = 1;
+   */
+  placeId: string;
+
+  /**
+   * From Google, in English (shown, never stored).
+   *
+   * @generated from field: string name = 2;
+   */
+  name: string;
+
+  /**
+   * @generated from field: string address = 3;
+   */
+  address: string;
+
+  /**
+   * @generated from field: string maps_url = 4;
+   */
+  mapsUrl: string;
+
+  /**
+   * Google's primary type, e.g. "shinto_shrine".
+   *
+   * @generated from field: string primary_type = 5;
+   */
+  primaryType: string;
+
+  /**
+   * From the area's centre.
+   *
+   * @generated from field: int32 meters = 6;
+   */
+  meters: number;
+
+  /**
+   * @generated from field: bool closed = 7;
+   */
+  closed: boolean;
+};
+
+/**
+ * Describes the message issho.v1.FoundPlace.
+ * Use `create(FoundPlaceSchema)` to create a new message.
+ */
+export const FoundPlaceSchema: GenMessage<FoundPlace> = /*@__PURE__*/
+  messageDesc(file_issho_v1_review, 13);
+
+/**
+ * @generated from message issho.v1.SetPlanStopsRequest
+ */
+export type SetPlanStopsRequest = Message<"issho.v1.SetPlanStopsRequest"> & {
+  /**
+   * @generated from field: string plan_id = 1;
+   */
+  planId: string;
+
+  /**
+   * @generated from field: repeated issho.v1.ReviewStop stops = 2;
+   */
+  stops: ReviewStop[];
+};
+
+/**
+ * Describes the message issho.v1.SetPlanStopsRequest.
+ * Use `create(SetPlanStopsRequestSchema)` to create a new message.
+ */
+export const SetPlanStopsRequestSchema: GenMessage<SetPlanStopsRequest> = /*@__PURE__*/
+  messageDesc(file_issho_v1_review, 14);
+
+/**
+ * @generated from message issho.v1.SetPlanStopsResponse
+ */
+export type SetPlanStopsResponse = Message<"issho.v1.SetPlanStopsResponse"> & {
+  /**
+   * Rules the walk breaks, in words; empty when it fits.
+   *
+   * @generated from field: repeated string warnings = 1;
+   */
+  warnings: string[];
+
+  /**
+   * The whole outing in minutes (at the stops and walking); 0 when the
+   * route couldn't be worked out.
+   *
+   * @generated from field: int32 minutes = 2;
+   */
+  minutes: number;
+};
+
+/**
+ * Describes the message issho.v1.SetPlanStopsResponse.
+ * Use `create(SetPlanStopsResponseSchema)` to create a new message.
+ */
+export const SetPlanStopsResponseSchema: GenMessage<SetPlanStopsResponse> = /*@__PURE__*/
+  messageDesc(file_issho_v1_review, 15);
+
+/**
+ * @generated from message issho.v1.SetPlanVenueRequest
+ */
+export type SetPlanVenueRequest = Message<"issho.v1.SetPlanVenueRequest"> & {
+  /**
+   * @generated from field: string plan_id = 1;
+   */
+  planId: string;
+
+  /**
+   * The follow-up's venue rather than the first activity's.
+   *
+   * @generated from field: bool follow_up = 2;
+   */
+  followUp: boolean;
+
+  /**
+   * @generated from field: string place_id = 3;
+   */
+  placeId: string;
+};
+
+/**
+ * Describes the message issho.v1.SetPlanVenueRequest.
+ * Use `create(SetPlanVenueRequestSchema)` to create a new message.
+ */
+export const SetPlanVenueRequestSchema: GenMessage<SetPlanVenueRequest> = /*@__PURE__*/
+  messageDesc(file_issho_v1_review, 16);
+
+/**
+ * @generated from message issho.v1.SetPlanVenueResponse
+ */
+export type SetPlanVenueResponse = Message<"issho.v1.SetPlanVenueResponse"> & {
+};
+
+/**
+ * Describes the message issho.v1.SetPlanVenueResponse.
+ * Use `create(SetPlanVenueResponseSchema)` to create a new message.
+ */
+export const SetPlanVenueResponseSchema: GenMessage<SetPlanVenueResponse> = /*@__PURE__*/
+  messageDesc(file_issho_v1_review, 17);
 
 /**
  * @generated from message issho.v1.ApprovePlanRequest
@@ -365,7 +614,7 @@ export type ApprovePlanRequest = Message<"issho.v1.ApprovePlanRequest"> & {
  * Use `create(ApprovePlanRequestSchema)` to create a new message.
  */
 export const ApprovePlanRequestSchema: GenMessage<ApprovePlanRequest> = /*@__PURE__*/
-  messageDesc(file_issho_v1_review, 10);
+  messageDesc(file_issho_v1_review, 18);
 
 /**
  * @generated from message issho.v1.ApprovePlanResponse
@@ -378,7 +627,7 @@ export type ApprovePlanResponse = Message<"issho.v1.ApprovePlanResponse"> & {
  * Use `create(ApprovePlanResponseSchema)` to create a new message.
  */
 export const ApprovePlanResponseSchema: GenMessage<ApprovePlanResponse> = /*@__PURE__*/
-  messageDesc(file_issho_v1_review, 11);
+  messageDesc(file_issho_v1_review, 19);
 
 /**
  * @generated from message issho.v1.RejectPlanRequest
@@ -395,7 +644,7 @@ export type RejectPlanRequest = Message<"issho.v1.RejectPlanRequest"> & {
  * Use `create(RejectPlanRequestSchema)` to create a new message.
  */
 export const RejectPlanRequestSchema: GenMessage<RejectPlanRequest> = /*@__PURE__*/
-  messageDesc(file_issho_v1_review, 12);
+  messageDesc(file_issho_v1_review, 20);
 
 /**
  * @generated from message issho.v1.RejectPlanResponse
@@ -408,7 +657,7 @@ export type RejectPlanResponse = Message<"issho.v1.RejectPlanResponse"> & {
  * Use `create(RejectPlanResponseSchema)` to create a new message.
  */
 export const RejectPlanResponseSchema: GenMessage<RejectPlanResponse> = /*@__PURE__*/
-  messageDesc(file_issho_v1_review, 13);
+  messageDesc(file_issho_v1_review, 21);
 
 /**
  * @generated from message issho.v1.EditPlanRequest
@@ -439,7 +688,7 @@ export type EditPlanRequest = Message<"issho.v1.EditPlanRequest"> & {
  * Use `create(EditPlanRequestSchema)` to create a new message.
  */
 export const EditPlanRequestSchema: GenMessage<EditPlanRequest> = /*@__PURE__*/
-  messageDesc(file_issho_v1_review, 14);
+  messageDesc(file_issho_v1_review, 22);
 
 /**
  * @generated from message issho.v1.EditPlanResponse
@@ -452,7 +701,7 @@ export type EditPlanResponse = Message<"issho.v1.EditPlanResponse"> & {
  * Use `create(EditPlanResponseSchema)` to create a new message.
  */
 export const EditPlanResponseSchema: GenMessage<EditPlanResponse> = /*@__PURE__*/
-  messageDesc(file_issho_v1_review, 15);
+  messageDesc(file_issho_v1_review, 23);
 
 /**
  * @generated from message issho.v1.WithdrawPlanRequest
@@ -469,7 +718,7 @@ export type WithdrawPlanRequest = Message<"issho.v1.WithdrawPlanRequest"> & {
  * Use `create(WithdrawPlanRequestSchema)` to create a new message.
  */
 export const WithdrawPlanRequestSchema: GenMessage<WithdrawPlanRequest> = /*@__PURE__*/
-  messageDesc(file_issho_v1_review, 16);
+  messageDesc(file_issho_v1_review, 24);
 
 /**
  * @generated from message issho.v1.WithdrawPlanResponse
@@ -482,7 +731,7 @@ export type WithdrawPlanResponse = Message<"issho.v1.WithdrawPlanResponse"> & {
  * Use `create(WithdrawPlanResponseSchema)` to create a new message.
  */
 export const WithdrawPlanResponseSchema: GenMessage<WithdrawPlanResponse> = /*@__PURE__*/
-  messageDesc(file_issho_v1_review, 17);
+  messageDesc(file_issho_v1_review, 25);
 
 /**
  * @generated from message issho.v1.ListVenueOptionsRequest
@@ -504,7 +753,7 @@ export type ListVenueOptionsRequest = Message<"issho.v1.ListVenueOptionsRequest"
  * Use `create(ListVenueOptionsRequestSchema)` to create a new message.
  */
 export const ListVenueOptionsRequestSchema: GenMessage<ListVenueOptionsRequest> = /*@__PURE__*/
-  messageDesc(file_issho_v1_review, 18);
+  messageDesc(file_issho_v1_review, 26);
 
 /**
  * @generated from message issho.v1.ListVenueOptionsResponse
@@ -521,7 +770,7 @@ export type ListVenueOptionsResponse = Message<"issho.v1.ListVenueOptionsRespons
  * Use `create(ListVenueOptionsResponseSchema)` to create a new message.
  */
 export const ListVenueOptionsResponseSchema: GenMessage<ListVenueOptionsResponse> = /*@__PURE__*/
-  messageDesc(file_issho_v1_review, 19);
+  messageDesc(file_issho_v1_review, 27);
 
 /**
  * @generated from message issho.v1.VenueOption
@@ -567,7 +816,7 @@ export type VenueOption = Message<"issho.v1.VenueOption"> & {
  * Use `create(VenueOptionSchema)` to create a new message.
  */
 export const VenueOptionSchema: GenMessage<VenueOption> = /*@__PURE__*/
-  messageDesc(file_issho_v1_review, 20);
+  messageDesc(file_issho_v1_review, 28);
 
 /**
  * @generated from message issho.v1.CreatePlanRequest
@@ -638,7 +887,7 @@ export type CreatePlanRequest = Message<"issho.v1.CreatePlanRequest"> & {
  * Use `create(CreatePlanRequestSchema)` to create a new message.
  */
 export const CreatePlanRequestSchema: GenMessage<CreatePlanRequest> = /*@__PURE__*/
-  messageDesc(file_issho_v1_review, 21);
+  messageDesc(file_issho_v1_review, 29);
 
 /**
  * @generated from message issho.v1.CreatePlanResponse
@@ -655,7 +904,7 @@ export type CreatePlanResponse = Message<"issho.v1.CreatePlanResponse"> & {
  * Use `create(CreatePlanResponseSchema)` to create a new message.
  */
 export const CreatePlanResponseSchema: GenMessage<CreatePlanResponse> = /*@__PURE__*/
-  messageDesc(file_issho_v1_review, 22);
+  messageDesc(file_issho_v1_review, 30);
 
 /**
  * @generated from message issho.v1.ListReviewEventsRequest
@@ -679,7 +928,7 @@ export type ListReviewEventsRequest = Message<"issho.v1.ListReviewEventsRequest"
  * Use `create(ListReviewEventsRequestSchema)` to create a new message.
  */
 export const ListReviewEventsRequestSchema: GenMessage<ListReviewEventsRequest> = /*@__PURE__*/
-  messageDesc(file_issho_v1_review, 23);
+  messageDesc(file_issho_v1_review, 31);
 
 /**
  * @generated from message issho.v1.ListReviewEventsResponse
@@ -696,7 +945,7 @@ export type ListReviewEventsResponse = Message<"issho.v1.ListReviewEventsRespons
  * Use `create(ListReviewEventsResponseSchema)` to create a new message.
  */
 export const ListReviewEventsResponseSchema: GenMessage<ListReviewEventsResponse> = /*@__PURE__*/
-  messageDesc(file_issho_v1_review, 24);
+  messageDesc(file_issho_v1_review, 32);
 
 /**
  * @generated from message issho.v1.ReviewEvent
@@ -791,7 +1040,7 @@ export type ReviewEvent = Message<"issho.v1.ReviewEvent"> & {
  * Use `create(ReviewEventSchema)` to create a new message.
  */
 export const ReviewEventSchema: GenMessage<ReviewEvent> = /*@__PURE__*/
-  messageDesc(file_issho_v1_review, 25);
+  messageDesc(file_issho_v1_review, 33);
 
 /**
  * @generated from message issho.v1.GetReviewEventRequest
@@ -808,7 +1057,7 @@ export type GetReviewEventRequest = Message<"issho.v1.GetReviewEventRequest"> & 
  * Use `create(GetReviewEventRequestSchema)` to create a new message.
  */
 export const GetReviewEventRequestSchema: GenMessage<GetReviewEventRequest> = /*@__PURE__*/
-  messageDesc(file_issho_v1_review, 26);
+  messageDesc(file_issho_v1_review, 34);
 
 /**
  * @generated from message issho.v1.GetReviewEventResponse
@@ -830,7 +1079,7 @@ export type GetReviewEventResponse = Message<"issho.v1.GetReviewEventResponse"> 
  * Use `create(GetReviewEventResponseSchema)` to create a new message.
  */
 export const GetReviewEventResponseSchema: GenMessage<GetReviewEventResponse> = /*@__PURE__*/
-  messageDesc(file_issho_v1_review, 27);
+  messageDesc(file_issho_v1_review, 35);
 
 /**
  * @generated from message issho.v1.ReviewGroup
@@ -884,7 +1133,7 @@ export type ReviewGroup = Message<"issho.v1.ReviewGroup"> & {
  * Use `create(ReviewGroupSchema)` to create a new message.
  */
 export const ReviewGroupSchema: GenMessage<ReviewGroup> = /*@__PURE__*/
-  messageDesc(file_issho_v1_review, 28);
+  messageDesc(file_issho_v1_review, 36);
 
 /**
  * @generated from message issho.v1.ReviewMember
@@ -933,7 +1182,7 @@ export type ReviewMember = Message<"issho.v1.ReviewMember"> & {
  * Use `create(ReviewMemberSchema)` to create a new message.
  */
 export const ReviewMemberSchema: GenMessage<ReviewMember> = /*@__PURE__*/
-  messageDesc(file_issho_v1_review, 29);
+  messageDesc(file_issho_v1_review, 37);
 
 /**
  * @generated from message issho.v1.MoveProposalMemberRequest
@@ -960,7 +1209,7 @@ export type MoveProposalMemberRequest = Message<"issho.v1.MoveProposalMemberRequ
  * Use `create(MoveProposalMemberRequestSchema)` to create a new message.
  */
 export const MoveProposalMemberRequestSchema: GenMessage<MoveProposalMemberRequest> = /*@__PURE__*/
-  messageDesc(file_issho_v1_review, 30);
+  messageDesc(file_issho_v1_review, 38);
 
 /**
  * @generated from message issho.v1.MoveProposalMemberResponse
@@ -973,7 +1222,7 @@ export type MoveProposalMemberResponse = Message<"issho.v1.MoveProposalMemberRes
  * Use `create(MoveProposalMemberResponseSchema)` to create a new message.
  */
 export const MoveProposalMemberResponseSchema: GenMessage<MoveProposalMemberResponse> = /*@__PURE__*/
-  messageDesc(file_issho_v1_review, 31);
+  messageDesc(file_issho_v1_review, 39);
 
 /**
  * @generated from message issho.v1.RemoveProposalMemberRequest
@@ -995,7 +1244,7 @@ export type RemoveProposalMemberRequest = Message<"issho.v1.RemoveProposalMember
  * Use `create(RemoveProposalMemberRequestSchema)` to create a new message.
  */
 export const RemoveProposalMemberRequestSchema: GenMessage<RemoveProposalMemberRequest> = /*@__PURE__*/
-  messageDesc(file_issho_v1_review, 32);
+  messageDesc(file_issho_v1_review, 40);
 
 /**
  * @generated from message issho.v1.RemoveProposalMemberResponse
@@ -1008,7 +1257,7 @@ export type RemoveProposalMemberResponse = Message<"issho.v1.RemoveProposalMembe
  * Use `create(RemoveProposalMemberResponseSchema)` to create a new message.
  */
 export const RemoveProposalMemberResponseSchema: GenMessage<RemoveProposalMemberResponse> = /*@__PURE__*/
-  messageDesc(file_issho_v1_review, 33);
+  messageDesc(file_issho_v1_review, 41);
 
 /**
  * @generated from message issho.v1.SetProposalStartRequest
@@ -1037,7 +1286,7 @@ export type SetProposalStartRequest = Message<"issho.v1.SetProposalStartRequest"
  * Use `create(SetProposalStartRequestSchema)` to create a new message.
  */
 export const SetProposalStartRequestSchema: GenMessage<SetProposalStartRequest> = /*@__PURE__*/
-  messageDesc(file_issho_v1_review, 34);
+  messageDesc(file_issho_v1_review, 42);
 
 /**
  * @generated from message issho.v1.SetProposalStartResponse
@@ -1050,7 +1299,7 @@ export type SetProposalStartResponse = Message<"issho.v1.SetProposalStartRespons
  * Use `create(SetProposalStartResponseSchema)` to create a new message.
  */
 export const SetProposalStartResponseSchema: GenMessage<SetProposalStartResponse> = /*@__PURE__*/
-  messageDesc(file_issho_v1_review, 35);
+  messageDesc(file_issho_v1_review, 43);
 
 /**
  * @generated from message issho.v1.SetGroupMeetingPointRequest
@@ -1074,7 +1323,7 @@ export type SetGroupMeetingPointRequest = Message<"issho.v1.SetGroupMeetingPoint
  * Use `create(SetGroupMeetingPointRequestSchema)` to create a new message.
  */
 export const SetGroupMeetingPointRequestSchema: GenMessage<SetGroupMeetingPointRequest> = /*@__PURE__*/
-  messageDesc(file_issho_v1_review, 36);
+  messageDesc(file_issho_v1_review, 44);
 
 /**
  * @generated from message issho.v1.SetGroupMeetingPointResponse
@@ -1087,7 +1336,7 @@ export type SetGroupMeetingPointResponse = Message<"issho.v1.SetGroupMeetingPoin
  * Use `create(SetGroupMeetingPointResponseSchema)` to create a new message.
  */
 export const SetGroupMeetingPointResponseSchema: GenMessage<SetGroupMeetingPointResponse> = /*@__PURE__*/
-  messageDesc(file_issho_v1_review, 37);
+  messageDesc(file_issho_v1_review, 45);
 
 /**
  * @generated from message issho.v1.ApproveProposalRequest
@@ -1104,7 +1353,7 @@ export type ApproveProposalRequest = Message<"issho.v1.ApproveProposalRequest"> 
  * Use `create(ApproveProposalRequestSchema)` to create a new message.
  */
 export const ApproveProposalRequestSchema: GenMessage<ApproveProposalRequest> = /*@__PURE__*/
-  messageDesc(file_issho_v1_review, 38);
+  messageDesc(file_issho_v1_review, 46);
 
 /**
  * @generated from message issho.v1.ApproveProposalResponse
@@ -1117,7 +1366,7 @@ export type ApproveProposalResponse = Message<"issho.v1.ApproveProposalResponse"
  * Use `create(ApproveProposalResponseSchema)` to create a new message.
  */
 export const ApproveProposalResponseSchema: GenMessage<ApproveProposalResponse> = /*@__PURE__*/
-  messageDesc(file_issho_v1_review, 39);
+  messageDesc(file_issho_v1_review, 47);
 
 /**
  * @generated from message issho.v1.RejectProposalRequest
@@ -1134,7 +1383,7 @@ export type RejectProposalRequest = Message<"issho.v1.RejectProposalRequest"> & 
  * Use `create(RejectProposalRequestSchema)` to create a new message.
  */
 export const RejectProposalRequestSchema: GenMessage<RejectProposalRequest> = /*@__PURE__*/
-  messageDesc(file_issho_v1_review, 40);
+  messageDesc(file_issho_v1_review, 48);
 
 /**
  * @generated from message issho.v1.RejectProposalResponse
@@ -1147,7 +1396,7 @@ export type RejectProposalResponse = Message<"issho.v1.RejectProposalResponse"> 
  * Use `create(RejectProposalResponseSchema)` to create a new message.
  */
 export const RejectProposalResponseSchema: GenMessage<RejectProposalResponse> = /*@__PURE__*/
-  messageDesc(file_issho_v1_review, 41);
+  messageDesc(file_issho_v1_review, 49);
 
 /**
  * @generated from enum issho.v1.ReviewPlanStatus
@@ -1338,6 +1587,49 @@ export const ReviewService: GenService<{
     methodKind: "unary";
     input: typeof CreatePlanRequestSchema;
     output: typeof CreatePlanResponseSchema;
+  },
+  /**
+   * Editing a plan's stops (draft or open plans; an event already
+   * scheduled shows the change to the people going). FindPlanPlaces looks
+   * places up by name with Google within 3 km of the plan's area.
+   * FAILED_PRECONDITION without a Google Maps key.
+   *
+   * @generated from rpc issho.v1.ReviewService.FindPlanPlaces
+   */
+  findPlanPlaces: {
+    methodKind: "unary";
+    input: typeof FindPlanPlacesRequestSchema;
+    output: typeof FindPlanPlacesResponseSchema;
+  },
+  /**
+   * SetPlanStops replaces a walk's stops, in walking order: the first is
+   * where people meet, the last where they sit down at the end. Each place
+   * is checked with Google (it exists, isn't closed, is within 3 km of the
+   * area's centre, appears once) and the walking route is worked out again
+   * in this order. A walk outside the composer's rules (2 to 4 hours, no
+   * walk between stops over 20 minutes, 100 minutes of walking at most) is
+   * saved anyway, with warnings. INVALID_ARGUMENT for a plan that isn't a
+   * walk, fewer than 3 or more than 10 places, or a place that fails.
+   *
+   * @generated from rpc issho.v1.ReviewService.SetPlanStops
+   */
+  setPlanStops: {
+    methodKind: "unary";
+    input: typeof SetPlanStopsRequestSchema;
+    output: typeof SetPlanStopsResponseSchema;
+  },
+  /**
+   * SetPlanVenue changes the venue of a plan that isn't a walk, or of its
+   * follow-up: one of the venues found for the activity in the area
+   * (ListVenueOptions), or "" to let the matcher pick. The walk between the
+   * two is worked out again.
+   *
+   * @generated from rpc issho.v1.ReviewService.SetPlanVenue
+   */
+  setPlanVenue: {
+    methodKind: "unary";
+    input: typeof SetPlanVenueRequestSchema;
+    output: typeof SetPlanVenueResponseSchema;
   },
   /**
    * ListReviewEvents returns a city's proposals, or its upcoming scheduled

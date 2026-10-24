@@ -60,6 +60,15 @@ func (q *Queries) ApproveProposalEvent(ctx context.Context, arg ApproveProposalE
 	return err
 }
 
+const clearPlanRoute = `-- name: ClearPlanRoute :exec
+update app.plans set route_polyline = null, route_seconds = null, route_computed_at = null where id = $1
+`
+
+func (q *Queries) ClearPlanRoute(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.Exec(ctx, clearPlanRoute, id)
+	return err
+}
+
 const countPlanSignups = `-- name: CountPlanSignups :one
 select count(*)::int from app.plan_signups where plan_id = $1
 `
@@ -78,6 +87,16 @@ where g.event_id = $1 and not exists (select 1 from app.group_members m where m.
 
 func (q *Queries) DeleteEmptyGroups(ctx context.Context, eventID uuid.UUID) error {
 	_, err := q.db.Exec(ctx, deleteEmptyGroups, eventID)
+	return err
+}
+
+const deletePlanStops = `-- name: DeletePlanStops :exec
+delete from app.plan_stops where plan_id = $1
+`
+
+// Editing stops (admin): a walk's stops are replaced whole.
+func (q *Queries) DeletePlanStops(ctx context.Context, planID uuid.UUID) error {
+	_, err := q.db.Exec(ctx, deletePlanStops, planID)
 	return err
 }
 
@@ -236,7 +255,10 @@ select p.id, p.city_id, p.status, coalesce(p.closed_reason, '')::text as closed_
        exists (select 1 from app.plan_stops st where st.plan_id = p.id) as walk,
        p.audience, p.score, (select count(*) from app.plan_signups s where s.plan_id = p.id)::int as signups,
        p.window_start, p.window_days, p.signup_deadline, p.created_at, p.created_by, p.reviewed_by, p.reviewed_at,
-       p.venue_place_id, p.follow_up_venue_place_id, p.meeting_place_id, p.route_polyline, p.route_seconds
+       p.venue_place_id, p.follow_up_venue_place_id, p.meeting_place_id, p.route_polyline, p.route_seconds,
+       st_y(a.centroid::geometry)::float8 as area_lat, st_x(a.centroid::geometry)::float8 as area_lng,
+       (select count(*) from app.events e where e.plan_id = p.id and e.status = 'scheduled'
+          and (e.starts_at is null or e.starts_at > now()))::int as upcoming_events
 from app.plans p
 join app.areas a on a.id = p.area_id
 where p.id = $1
@@ -271,6 +293,9 @@ type GetReviewPlanRow struct {
 	MeetingPlaceID       *string
 	RoutePolyline        *string
 	RouteSeconds         *int32
+	AreaLat              float64
+	AreaLng              float64
+	UpcomingEvents       int32
 }
 
 // One plan, with what its stops need.
@@ -306,6 +331,9 @@ func (q *Queries) GetReviewPlan(ctx context.Context, id uuid.UUID) (GetReviewPla
 		&i.MeetingPlaceID,
 		&i.RoutePolyline,
 		&i.RouteSeconds,
+		&i.AreaLat,
+		&i.AreaLng,
+		&i.UpcomingEvents,
 	)
 	return i, err
 }
@@ -694,6 +722,24 @@ func (q *Queries) ListVenueOptions(ctx context.Context, arg ListVenueOptionsPara
 	return items, nil
 }
 
+const lockPlanForEdit = `-- name: LockPlanForEdit :one
+select status, exists (select 1 from app.plan_stops s where s.plan_id = p.id) as walk
+from app.plans p where p.id = $1 for update
+`
+
+type LockPlanForEditRow struct {
+	Status string
+	Walk   bool
+}
+
+// Locks a plan an admin edits, with its state.
+func (q *Queries) LockPlanForEdit(ctx context.Context, id uuid.UUID) (LockPlanForEditRow, error) {
+	row := q.db.QueryRow(ctx, lockPlanForEdit, id)
+	var i LockPlanForEditRow
+	err := row.Scan(&i.Status, &i.Walk)
+	return i, err
+}
+
 const lockProposal = `-- name: LockProposal :one
 select e.plan_id, e.round, e.status
 from app.events e
@@ -789,6 +835,22 @@ func (q *Queries) SetGroupMeetingPoint(ctx context.Context, arg SetGroupMeetingP
 		return 0, err
 	}
 	return result.RowsAffected(), nil
+}
+
+const setPlanVenues = `-- name: SetPlanVenues :exec
+update app.plans set venue_place_id = $1, follow_up_venue_place_id = $2
+where id = $3
+`
+
+type SetPlanVenuesParams struct {
+	VenuePlaceID         *string
+	FollowUpVenuePlaceID *string
+	ID                   uuid.UUID
+}
+
+func (q *Queries) SetPlanVenues(ctx context.Context, arg SetPlanVenuesParams) error {
+	_, err := q.db.Exec(ctx, setPlanVenues, arg.VenuePlaceID, arg.FollowUpVenuePlaceID, arg.ID)
+	return err
 }
 
 const setProposalRejected = `-- name: SetProposalRejected :exec

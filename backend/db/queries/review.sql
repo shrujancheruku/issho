@@ -34,7 +34,10 @@ select p.id, p.city_id, p.status, coalesce(p.closed_reason, '')::text as closed_
        exists (select 1 from app.plan_stops st where st.plan_id = p.id) as walk,
        p.audience, p.score, (select count(*) from app.plan_signups s where s.plan_id = p.id)::int as signups,
        p.window_start, p.window_days, p.signup_deadline, p.created_at, p.created_by, p.reviewed_by, p.reviewed_at,
-       p.venue_place_id, p.follow_up_venue_place_id, p.meeting_place_id, p.route_polyline, p.route_seconds
+       p.venue_place_id, p.follow_up_venue_place_id, p.meeting_place_id, p.route_polyline, p.route_seconds,
+       st_y(a.centroid::geometry)::float8 as area_lat, st_x(a.centroid::geometry)::float8 as area_lng,
+       (select count(*) from app.events e where e.plan_id = p.id and e.status = 'scheduled'
+          and (e.starts_at is null or e.starts_at > now()))::int as upcoming_events
 from app.plans p
 join app.areas a on a.id = p.area_id
 where p.id = $1;
@@ -171,3 +174,19 @@ delete from app.events where id = $1 and status = 'proposed';
 
 -- name: SetProposalRejected :exec
 update app.plans set proposal_rejected_at = @at where id = @id;
+
+-- Editing stops (admin): a walk's stops are replaced whole.
+-- name: DeletePlanStops :exec
+delete from app.plan_stops where plan_id = $1;
+
+-- name: SetPlanVenues :exec
+update app.plans set venue_place_id = sqlc.narg(venue_place_id), follow_up_venue_place_id = sqlc.narg(follow_up_venue_place_id)
+where id = @id;
+
+-- name: ClearPlanRoute :exec
+update app.plans set route_polyline = null, route_seconds = null, route_computed_at = null where id = $1;
+
+-- Locks a plan an admin edits, with its state.
+-- name: LockPlanForEdit :one
+select status, exists (select 1 from app.plan_stops s where s.plan_id = p.id) as walk
+from app.plans p where p.id = $1 for update;

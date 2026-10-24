@@ -153,3 +153,12 @@ input:not([type]), input[type='email'], input[type='search'] { min-width: 0; }
 .address { font-size: 0.82rem; }
 .badge.flag { background: var(--gold); color: var(--ink); }
 tr.flagged td { background: color-mix(in srgb, var(--gold) 12%, transparent); }
+
+/* Editing stops */
+.stops-editor table { margin: 0.5rem 0; }
+.stops-editor textarea { width: 100%; min-width: 14rem; }
+.stops-editor input[type='number'] { width: 4.5rem; }
+.found { list-style: none; padding: 0; }
+.found li { margin-bottom: 0.4rem; }
+.found button { margin-left: 0.5rem; }
+.warnings { border-left: 3px solid var(--gold); padding-left: 0.75rem; }

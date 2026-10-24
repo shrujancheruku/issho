@@ -214,6 +214,9 @@
     - [CreatePlanResponse](#issho-v1-CreatePlanResponse)
     - [EditPlanRequest](#issho-v1-EditPlanRequest)
     - [EditPlanResponse](#issho-v1-EditPlanResponse)
+    - [FindPlanPlacesRequest](#issho-v1-FindPlanPlacesRequest)
+    - [FindPlanPlacesResponse](#issho-v1-FindPlanPlacesResponse)
+    - [FoundPlace](#issho-v1-FoundPlace)
     - [GetReviewEventRequest](#issho-v1-GetReviewEventRequest)
     - [GetReviewEventResponse](#issho-v1-GetReviewEventResponse)
     - [GetReviewPlanRequest](#issho-v1-GetReviewPlanRequest)
@@ -239,10 +242,15 @@
     - [ReviewGroup](#issho-v1-ReviewGroup)
     - [ReviewMember](#issho-v1-ReviewMember)
     - [ReviewPlan](#issho-v1-ReviewPlan)
+    - [ReviewStop](#issho-v1-ReviewStop)
     - [SetCityReviewRequest](#issho-v1-SetCityReviewRequest)
     - [SetCityReviewResponse](#issho-v1-SetCityReviewResponse)
     - [SetGroupMeetingPointRequest](#issho-v1-SetGroupMeetingPointRequest)
     - [SetGroupMeetingPointResponse](#issho-v1-SetGroupMeetingPointResponse)
+    - [SetPlanStopsRequest](#issho-v1-SetPlanStopsRequest)
+    - [SetPlanStopsResponse](#issho-v1-SetPlanStopsResponse)
+    - [SetPlanVenueRequest](#issho-v1-SetPlanVenueRequest)
+    - [SetPlanVenueResponse](#issho-v1-SetPlanVenueResponse)
     - [SetProposalStartRequest](#issho-v1-SetProposalStartRequest)
     - [SetProposalStartResponse](#issho-v1-SetProposalStartResponse)
     - [VenueOption](#issho-v1-VenueOption)
@@ -3263,6 +3271,58 @@ HTTP: POST /issho.v1.PushService/&lt;Method&gt;
 
 
 
+<a name="issho-v1-FindPlanPlacesRequest"></a>
+
+### FindPlanPlacesRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| plan_id | [string](#string) |  |  |
+| query | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-FindPlanPlacesResponse"></a>
+
+### FindPlanPlacesResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| places | [FoundPlace](#issho-v1-FoundPlace) | repeated |  |
+
+
+
+
+
+
+<a name="issho-v1-FoundPlace"></a>
+
+### FoundPlace
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| place_id | [string](#string) |  |  |
+| name | [string](#string) |  | From Google, in English (shown, never stored). |
+| address | [string](#string) |  |  |
+| maps_url | [string](#string) |  |  |
+| primary_type | [string](#string) |  | Google&#39;s primary type, e.g. &#34;shinto_shrine&#34;. |
+| meters | [int32](#int32) |  | From the area&#39;s centre. |
+| closed | [bool](#bool) |  |  |
+
+
+
+
+
+
 <a name="issho-v1-GetReviewEventRequest"></a>
 
 ### GetReviewEventRequest
@@ -3319,6 +3379,10 @@ HTTP: POST /issho.v1.PushService/&lt;Method&gt;
 | ----- | ---- | ----- | ----------- |
 | plan | [ReviewPlan](#issho-v1-ReviewPlan) |  |  |
 | steps | [PlanStep](#issho-v1-PlanStep) | repeated | As people would see them, in English. |
+| stops | [ReviewStop](#issho-v1-ReviewStop) | repeated | A walk&#39;s stops as stored, for editing (SetPlanStops); empty for other plans. Same order as steps. |
+| venue_place_id | [string](#string) |  | For other plans, the venues as stored (&#34;&#34; = none). |
+| follow_up_venue_place_id | [string](#string) |  |  |
+| upcoming_events | [int32](#int32) |  | Scheduled events of this plan still to come, whose people see edits. |
 
 
 
@@ -3672,6 +3736,25 @@ HTTP: POST /issho.v1.PushService/&lt;Method&gt;
 
 
 
+<a name="issho-v1-ReviewStop"></a>
+
+### ReviewStop
+A walk&#39;s stop. The role follows the position: &#34;meet&#34; first, &#34;finish&#34;
+last, &#34;stop&#34; between.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| place_id | [string](#string) |  |  |
+| role | [string](#string) |  |  |
+| minutes | [int32](#int32) |  | Time there: 0 to 120. |
+| note | [string](#string) |  | English, at most 300 characters; people see it translated. |
+
+
+
+
+
+
 <a name="issho-v1-SetCityReviewRequest"></a>
 
 ### SetCityReviewRequest
@@ -3717,6 +3800,65 @@ HTTP: POST /issho.v1.PushService/&lt;Method&gt;
 <a name="issho-v1-SetGroupMeetingPointResponse"></a>
 
 ### SetGroupMeetingPointResponse
+
+
+
+
+
+
+
+<a name="issho-v1-SetPlanStopsRequest"></a>
+
+### SetPlanStopsRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| plan_id | [string](#string) |  |  |
+| stops | [ReviewStop](#issho-v1-ReviewStop) | repeated |  |
+
+
+
+
+
+
+<a name="issho-v1-SetPlanStopsResponse"></a>
+
+### SetPlanStopsResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| warnings | [string](#string) | repeated | Rules the walk breaks, in words; empty when it fits. |
+| minutes | [int32](#int32) |  | The whole outing in minutes (at the stops and walking); 0 when the route couldn&#39;t be worked out. |
+
+
+
+
+
+
+<a name="issho-v1-SetPlanVenueRequest"></a>
+
+### SetPlanVenueRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| plan_id | [string](#string) |  |  |
+| follow_up | [bool](#bool) |  | The follow-up&#39;s venue rather than the first activity&#39;s. |
+| place_id | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-SetPlanVenueResponse"></a>
+
+### SetPlanVenueResponse
 
 
 
@@ -3854,6 +3996,9 @@ HTTP: POST /issho.v1.ReviewService/&lt;Method&gt;
 | WithdrawPlan | [WithdrawPlanRequest](#issho-v1-WithdrawPlanRequest) | [WithdrawPlanResponse](#issho-v1-WithdrawPlanResponse) | WithdrawPlan closes an open plan (&#34;withdrawn&#34;). People who signed up see it closed; nobody is notified. Groups already scheduled go ahead. FAILED_PRECONDITION if it isn&#39;t open. |
 | ListVenueOptions | [ListVenueOptionsRequest](#issho-v1-ListVenueOptionsRequest) | [ListVenueOptionsResponse](#issho-v1-ListVenueOptionsResponse) | ListVenueOptions returns the venues found in an area for an activity&#39;s venue categories (not rejected ones), approved first, with names from Google in English. At most 20. Empty for activities that need no venue. |
 | CreatePlan | [CreatePlanRequest](#issho-v1-CreatePlanRequest) | [CreatePlanResponse](#issho-v1-CreatePlanResponse) | CreatePlan opens a plan made by hand, with a signup window from today. It opens straight away, also in a city under review. INVALID_ARGUMENT for an unknown area or activity, an area or activity not in the city, or a venue not found for the activity there. |
+| FindPlanPlaces | [FindPlanPlacesRequest](#issho-v1-FindPlanPlacesRequest) | [FindPlanPlacesResponse](#issho-v1-FindPlanPlacesResponse) | Editing a plan&#39;s stops (draft or open plans; an event already scheduled shows the change to the people going). FindPlanPlaces looks places up by name with Google within 3 km of the plan&#39;s area. FAILED_PRECONDITION without a Google Maps key. |
+| SetPlanStops | [SetPlanStopsRequest](#issho-v1-SetPlanStopsRequest) | [SetPlanStopsResponse](#issho-v1-SetPlanStopsResponse) | SetPlanStops replaces a walk&#39;s stops, in walking order: the first is where people meet, the last where they sit down at the end. Each place is checked with Google (it exists, isn&#39;t closed, is within 3 km of the area&#39;s centre, appears once) and the walking route is worked out again in this order. A walk outside the composer&#39;s rules (2 to 4 hours, no walk between stops over 20 minutes, 100 minutes of walking at most) is saved anyway, with warnings. INVALID_ARGUMENT for a plan that isn&#39;t a walk, fewer than 3 or more than 10 places, or a place that fails. |
+| SetPlanVenue | [SetPlanVenueRequest](#issho-v1-SetPlanVenueRequest) | [SetPlanVenueResponse](#issho-v1-SetPlanVenueResponse) | SetPlanVenue changes the venue of a plan that isn&#39;t a walk, or of its follow-up: one of the venues found for the activity in the area (ListVenueOptions), or &#34;&#34; to let the matcher pick. The walk between the two is worked out again. |
 | ListReviewEvents | [ListReviewEventsRequest](#issho-v1-ListReviewEventsRequest) | [ListReviewEventsResponse](#issho-v1-ListReviewEventsResponse) | ListReviewEvents returns a city&#39;s proposals, or its upcoming scheduled events (to set meeting points), soonest first. At most 200. |
 | GetReviewEvent | [GetReviewEventRequest](#issho-v1-GetReviewEventRequest) | [GetReviewEventResponse](#issho-v1-GetReviewEventResponse) | GetReviewEvent returns one with its groups and who&#39;s in them. NOT_FOUND if there&#39;s no such event. |
 | MoveProposalMember | [MoveProposalMemberRequest](#issho-v1-MoveProposalMemberRequest) | [MoveProposalMemberResponse](#issho-v1-MoveProposalMemberResponse) | MoveProposalMember moves someone to another group of the proposal. FAILED_PRECONDITION if it&#39;s no longer a proposal; NOT_FOUND for a group not in it or someone not in it. |
