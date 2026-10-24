@@ -17,8 +17,8 @@ import (
 
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
-	"github.com/shrujancheruku/issho/backend/internal/platform/i18n"
 	"github.com/shrujancheruku/issho/backend/internal/maps"
+	"github.com/shrujancheruku/issho/backend/internal/platform/i18n"
 	"github.com/shrujancheruku/issho/backend/internal/walks"
 )
 
