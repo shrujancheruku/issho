@@ -133,6 +133,33 @@ type PlaceFinder interface {
 	Find(ctx context.Context, req FindRequest) (place Found, ok bool, err error)
 }
 
+// SearchRequest looks places up by text inside a box around a point (an
+// area of a city), for admins curating venues.
+type SearchRequest struct {
+	Query    string
+	Near     LatLng
+	RadiusM  float64 // half the box's side
+	Language string  // BCP 47, for the names and addresses returned
+}
+
+// SearchResult is a place a text search found, with what an admin needs to
+// recognise it. Only Place.ID may be stored; the rest is shown live.
+type SearchResult struct {
+	Place
+	Details PlaceDetails
+	Closed  bool // permanently or temporarily
+}
+
+// PlaceSearch is venue curation's use of the provider: searching by name,
+// and checking a place an admin adds.
+type PlaceSearch interface {
+	PlaceLookup
+	// Search returns up to 20 places, best match first.
+	Search(ctx context.Context, req SearchRequest) ([]SearchResult, error)
+	// Locate returns a place's types, location and whether it's closed.
+	Locate(ctx context.Context, id string) (SearchResult, error)
+}
+
 // WeekTime is a time in the week, in the place's local time.
 type WeekTime struct {
 	Day          time.Weekday

@@ -38,10 +38,12 @@ on conflict (area_id, activity_id) do update set failed_at = excluded.failed_at,
 -- A venue for an activity in an area: one of its venue categories, never a
 -- rejected place, approved ones first (admin curation, M8), otherwise any
 -- candidate at random so plans in one area don't all use the same café.
+-- In a city that uses only approved venues (00023), never a candidate.
 -- name: PickVenue :one
-select google_place_id from app.venues
-where area_id = @area_id and category_id = any(@categories::text[]) and status <> 'rejected'
-order by (status = 'approved') desc, random()
+select v.google_place_id from app.venues v join app.cities c on c.id = v.city_id
+where v.area_id = @area_id and v.category_id = any(@categories::text[]) and v.status <> 'rejected'
+  and (v.status = 'approved' or not c.approved_venues_only)
+order by (v.status = 'approved') desc, random()
 limit 1;
 
 -- name: SetPlanDescription :exec

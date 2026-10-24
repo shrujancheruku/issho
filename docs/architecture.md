@@ -38,7 +38,7 @@
 3. The **auth interceptor** (`internal/platform/auth`) runs:
    - Public procedures (`HealthService.Check`, and `UIService.GetStrings` because the sign-in screens need their text) skip it.
    - Everything else must have a valid ES256/RS256 token with Supabase's issuer, the `authenticated` audience and an unexpired `exp`. The caller is put on the request context.
-   - Admin-only services (`ModerationService` and `ReviewService`, for the admin SPA) also need `app_metadata.admin` in the token (`auth.AdminOnly`), else `permission_denied`. Admins are ordinary Supabase users given that role with `tool set-admin`; there's no admin list in our config.
+   - Admin-only services (`ModerationService`, `ReviewService` and `CurationService`, for the admin SPA) also need `app_metadata.admin` in the token (`auth.AdminOnly`), else `permission_denied`. Admins are ordinary Supabase users given that role with `tool set-admin`; there's no admin list in our config.
 4. The **handler** (`internal/<domain>/handler.go`) validates input and calls the domain **service**.
 5. The **service** contains the business logic and talks to Postgres through **sqlc** queries (`backend/gen/dbgen`).
 6. Errors come back as Connect error codes (`unauthenticated`, `invalid_argument`, …). The outermost **errs interceptor** replaces any non-Connect error with a generic `internal error`, after logging it, so database and upstream details never reach clients.
@@ -74,7 +74,7 @@ Defined in `backend/db/migrations/` (`00001_init.sql`, `00002_geo.sql`). All app
 | `area_travel_times` | Area-to-area minutes per mode, from the Routes API (`tool build-matrix`). A cache: rows older than 30 days are deleted. |
 | `activities` | The global catalogue. `name` is JSON keyed by language (`{"en": …, "ja": …}`); `venue_categories` lists where it can happen; `blocks` the parts of the day it suits |
 | `venue_categories` | Our venue kinds (cafe, park, karaoke …) mapped to Google place types, with a search radius |
-| `venues` | Discovered places: `google_place_id` + category, nearest area, curation status, our tags. **No Google content** (names, addresses, locations) is stored; see [google-maps.md](google-maps.md#5-terms-what-we-may-store). |
+| `venues` | Discovered places: `google_place_id` + category, nearest area, curation status (per place, set by admins: who and when, or who added it), our tags. A city's `approved_venues_only` makes the matcher use only approved ones. **No Google content** (names, addresses, locations) is stored; see [google-maps.md](google-maps.md#5-terms-what-we-may-store). |
 | `city_activity_overrides` | A city can rename, disable or set seasonal months for an activity |
 | `users` | App account; `id` = Supabase `auth.users.id` |
 | `profiles` | Matching preferences (home area, travel time, group size, gender rules, …), display languages (`primary_language`, optional `secondary_language`) and the accepted code-of-conduct version. Written only whole, by `ProfileService.SaveProfile` (onboarding and settings) |
