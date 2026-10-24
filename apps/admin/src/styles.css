@@ -148,3 +148,8 @@ input:not([type]), input[type='email'], input[type='search'] { min-width: 0; }
 .meeting .note { flex: 1; margin: 0; }
 .row label { display: grid; gap: 0.3rem; }
 .group td .link { margin-left: 0.6rem; }
+
+/* Venues */
+.address { font-size: 0.82rem; }
+.badge.flag { background: var(--gold); color: var(--ink); }
+tr.flagged td { background: color-mix(in srgb, var(--gold) 12%, transparent); }

@@ -60,11 +60,12 @@ type AppCity struct {
 	Timezone string
 	Currency string
 	// Languages commonly used in the city, most common first (suggestions only)
-	Languages       []string
-	MatchingWeights []byte
-	CreatedAt       pgtype.Timestamptz
-	TravelModes     []string
-	Review          bool
+	Languages          []string
+	MatchingWeights    []byte
+	CreatedAt          pgtype.Timestamptz
+	TravelModes        []string
+	Review             bool
+	ApprovedVenuesOnly bool
 }
 
 type AppCityActivityOverride struct {
@@ -356,6 +357,9 @@ type AppVenue struct {
 	Status        string
 	DiscoveredAt  pgtype.Timestamptz
 	LastSeenAt    pgtype.Timestamptz
+	ReviewedBy    pgtype.UUID
+	ReviewedAt    pgtype.Timestamptz
+	AddedBy       pgtype.UUID
 }
 
 type AppVenueCategory struct {

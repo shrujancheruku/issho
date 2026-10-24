@@ -11,6 +11,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"net/url"
 	"strconv"
 	"strings"
@@ -56,6 +57,7 @@ var (
 	_ maps.RouteFinder   = (*Client)(nil)
 	_ maps.WalkRouter    = (*Client)(nil)
 	_ maps.PlaceFinder   = (*Client)(nil)
+	_ maps.PlaceSearch   = (*Client)(nil)
 )
 
 // ---- Routes: Compute Route Matrix ----
@@ -344,6 +346,92 @@ func (c *Client) Find(ctx context.Context, req maps.FindRequest) (maps.Found, bo
 		// Streets and areas have no business status: they're "open".
 		Closed: p.BusinessStatus == "CLOSED_PERMANENTLY" || p.BusinessStatus == "CLOSED_TEMPORARILY",
 	}, true, nil
+}
+
+// textSearchMax is the most Text Search returns on one page.
+const textSearchMax = 20
+
+// searchPlace is a Text Search or Place Details result with the fields
+// Search and Locate ask for (all Pro SKU).
+type searchPlace struct {
+	ID                    string   `json:"id"`
+	PrimaryType           string   `json:"primaryType"`
+	Types                 []string `json:"types"`
+	Location              latLng   `json:"location"`
+	BusinessStatus        string   `json:"businessStatus"`
+	ShortFormattedAddress string   `json:"shortFormattedAddress"`
+	GoogleMapsURI         string   `json:"googleMapsUri"`
+	DisplayName           struct {
+		Text string `json:"text"`
+	} `json:"displayName"`
+}
+
+func (p searchPlace) result() maps.SearchResult {
+	loc := maps.LatLng{Lat: p.Location.Latitude, Lng: p.Location.Longitude}
+	return maps.SearchResult{
+		Place:   maps.Place{ID: p.ID, PrimaryType: p.PrimaryType, Types: p.Types, Location: loc},
+		Details: maps.PlaceDetails{Name: p.DisplayName.Text, Address: p.ShortFormattedAddress, MapsURL: p.GoogleMapsURI, Location: loc},
+		Closed:  p.BusinessStatus == "CLOSED_PERMANENTLY" || p.BusinessStatus == "CLOSED_TEMPORARILY",
+	}
+}
+
+const searchFields = "id,displayName,primaryType,types,location,businessStatus,shortFormattedAddress,googleMapsUri"
+
+// Search looks places up by text inside a box around req.Near: a
+// restriction, not a bias, so a search for "スナック" in one area doesn't
+// fill up with the next area's. One page (up to 20 places).
+func (c *Client) Search(ctx context.Context, req maps.SearchRequest) ([]maps.SearchResult, error) {
+	if strings.TrimSpace(req.Query) == "" {
+		return nil, errors.New("text search needs a query")
+	}
+	type corner struct {
+		Latitude  float64 `json:"latitude"`
+		Longitude float64 `json:"longitude"`
+	}
+	var body struct {
+		TextQuery           string `json:"textQuery"`
+		LanguageCode        string `json:"languageCode,omitempty"`
+		PageSize            int    `json:"pageSize"`
+		LocationRestriction struct {
+			Rectangle struct {
+				Low  corner `json:"low"`
+				High corner `json:"high"`
+			} `json:"rectangle"`
+		} `json:"locationRestriction"`
+	}
+	body.TextQuery, body.LanguageCode, body.PageSize = req.Query, req.Language, textSearchMax
+	// Metres to degrees: 111,320 m per degree of latitude, fewer per
+	// degree of longitude away from the equator.
+	dLat := req.RadiusM / 111320
+	dLng := req.RadiusM / (111320 * math.Cos(req.Near.Lat*math.Pi/180))
+	body.LocationRestriction.Rectangle.Low = corner{req.Near.Lat - dLat, req.Near.Lng - dLng}
+	body.LocationRestriction.Rectangle.High = corner{req.Near.Lat + dLat, req.Near.Lng + dLng}
+	var resp struct {
+		Places []searchPlace `json:"places"`
+	}
+	mask := "places." + strings.ReplaceAll(searchFields, ",", ",places.")
+	if err := c.post(ctx, c.TextSearchURL, mask, body, &resp); err != nil {
+		return nil, err
+	}
+	out := make([]maps.SearchResult, 0, len(resp.Places))
+	for _, p := range resp.Places {
+		out = append(out, p.result())
+	}
+	return out, nil
+}
+
+// Locate fetches a place's types, location and status (and its English
+// name and address) with Place Details, to check a place an admin adds.
+func (c *Client) Locate(ctx context.Context, id string) (maps.SearchResult, error) {
+	if id == "" || strings.ContainsAny(id, "/?#") {
+		return maps.SearchResult{}, fmt.Errorf("invalid place id %q", id)
+	}
+	var p searchPlace
+	u := c.DetailsURL + "/" + url.PathEscape(id) + "?languageCode=en"
+	if err := c.api.Get(ctx, u, map[string]string{"X-Goog-FieldMask": searchFields}, &p); err != nil {
+		return maps.SearchResult{}, err
+	}
+	return p.result(), nil
 }
 
 // ---- Places API (New): Nearby Search ----

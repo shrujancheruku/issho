@@ -973,9 +973,10 @@ func (q *Queries) NextPlanRound(ctx context.Context, arg NextPlanRoundParams) er
 }
 
 const pickVenue = `-- name: PickVenue :one
-select google_place_id from app.venues
-where area_id = $1 and category_id = any($2::text[]) and status <> 'rejected'
-order by (status = 'approved') desc, random()
+select v.google_place_id from app.venues v join app.cities c on c.id = v.city_id
+where v.area_id = $1 and v.category_id = any($2::text[]) and v.status <> 'rejected'
+  and (v.status = 'approved' or not c.approved_venues_only)
+order by (v.status = 'approved') desc, random()
 limit 1
 `
 
@@ -987,6 +988,7 @@ type PickVenueParams struct {
 // A venue for an activity in an area: one of its venue categories, never a
 // rejected place, approved ones first (admin curation, M8), otherwise any
 // candidate at random so plans in one area don't all use the same café.
+// In a city that uses only approved venues (00023), never a candidate.
 func (q *Queries) PickVenue(ctx context.Context, arg PickVenueParams) (string, error) {
 	row := q.db.QueryRow(ctx, pickVenue, arg.AreaID, arg.Categories)
 	var google_place_id string

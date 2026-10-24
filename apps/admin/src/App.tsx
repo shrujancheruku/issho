@@ -14,11 +14,13 @@ import { PlanDetail } from './pages/PlanDetail';
 import { Plans } from './pages/Plans';
 import { Reports } from './pages/Reports';
 import { Translations } from './pages/Translations';
+import { Venues } from './pages/Venues';
 import { SignIn } from './SignIn';
 
 const pages = {
   plans: { label: 'Plans', component: Plans },
   groups: { label: 'Groups', component: Groups },
+  venues: { label: 'Venues', component: Venues },
   reports: { label: 'Reports', component: Reports },
   flags: { label: 'Flags', component: Flags },
   leaves: { label: 'Crew leaves', component: CrewLeaves },

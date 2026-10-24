@@ -28,12 +28,13 @@ where coalesce(o.enabled, true)
   and (o.months is null or @month::smallint = 0 or @month::smallint = any(o.months))
 order by a.id;
 
--- Venues an admin hasn't rejected, counted per area and category.
+-- Venues an admin hasn't rejected (or has approved, when the city uses
+-- only approved venues), counted per area and category.
 -- name: ListCityVenueCounts :many
-select area_id, category_id, count(*)::int as venues
-from app.venues
-where city_id = $1 and status <> 'rejected'
-group by area_id, category_id;
+select v.area_id, v.category_id, count(*)::int as venues
+from app.venues v join app.cities c on c.id = v.city_id
+where v.city_id = $1 and v.status <> 'rejected' and (v.status = 'approved' or not c.approved_venues_only)
+group by v.area_id, v.category_id;
 
 -- name: ListMatchingUsers :many
 -- Reliability is how often someone turned up when they'd confirmed: outings

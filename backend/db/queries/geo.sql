@@ -38,9 +38,13 @@ where exists (
 order by c.id;
 
 -- name: UpsertVenue :exec
--- Re-discovering a venue only bumps last_seen_at; curation status and tags are kept.
-insert into app.venues (google_place_id, city_id, area_id, category_id)
-values ($1, $2, $3, $4)
+-- Re-discovering a venue only bumps last_seen_at; curation status and tags
+-- are kept. A place found in a new category takes the status an admin (or
+-- a closure) already gave the place: curation is per place (00023).
+insert into app.venues (google_place_id, city_id, area_id, category_id, status)
+values (@google_place_id, @city_id, @area_id, @category_id, coalesce(
+  (select v.status from app.venues v where v.google_place_id = @google_place_id
+   order by v.status = 'rejected' desc, v.status = 'approved' desc limit 1), 'candidate'))
 on conflict (google_place_id, category_id) do update set last_seen_at = now();
 
 -- A full rebuild replaces the city's matrix: rows it didn't write (a pair

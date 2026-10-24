@@ -111,6 +111,29 @@
   
     - [CrewService](#issho-v1-CrewService)
   
+- [issho/v1/curation.proto](#issho_v1_curation-proto)
+    - [AddVenueRequest](#issho-v1-AddVenueRequest)
+    - [AddVenueResponse](#issho-v1-AddVenueResponse)
+    - [FoundVenue](#issho-v1-FoundVenue)
+    - [ListVenueCitiesRequest](#issho-v1-ListVenueCitiesRequest)
+    - [ListVenueCitiesResponse](#issho-v1-ListVenueCitiesResponse)
+    - [ListVenuesRequest](#issho-v1-ListVenuesRequest)
+    - [ListVenuesResponse](#issho-v1-ListVenuesResponse)
+    - [SearchVenuesRequest](#issho-v1-SearchVenuesRequest)
+    - [SearchVenuesResponse](#issho-v1-SearchVenuesResponse)
+    - [SetApprovedVenuesOnlyRequest](#issho-v1-SetApprovedVenuesOnlyRequest)
+    - [SetApprovedVenuesOnlyResponse](#issho-v1-SetApprovedVenuesOnlyResponse)
+    - [SetVenueStatusRequest](#issho-v1-SetVenueStatusRequest)
+    - [SetVenueStatusResponse](#issho-v1-SetVenueStatusResponse)
+    - [Venue](#issho-v1-Venue)
+    - [VenueArea](#issho-v1-VenueArea)
+    - [VenueCategory](#issho-v1-VenueCategory)
+    - [VenueCity](#issho-v1-VenueCity)
+  
+    - [VenueStatus](#issho-v1-VenueStatus)
+  
+    - [CurationService](#issho-v1-CurationService)
+  
 - [issho/v1/health.proto](#issho_v1_health-proto)
     - [CheckRequest](#issho-v1-CheckRequest)
     - [CheckResponse](#issho-v1-CheckResponse)
@@ -1806,6 +1829,350 @@ HTTP: POST /issho.v1.CrewService/&lt;Method&gt;
 | SendCrewMessage | [SendCrewMessageRequest](#issho-v1-SendCrewMessageRequest) | [SendCrewMessageResponse](#issho-v1-SendCrewMessageResponse) | SendCrewMessage posts 1–1000 characters to the crew&#39;s chat. |
 | LeaveCrew | [LeaveCrewRequest](#issho-v1-LeaveCrewRequest) | [LeaveCrewResponse](#issho-v1-LeaveCrewResponse) | LeaveCrew takes the caller out of a crew, with why. The reason is private: the crew isn&#39;t told why, or that they left. |
 | ReportCrewMember | [ReportCrewMemberRequest](#issho-v1-ReportCrewMemberRequest) | [ReportCrewMemberResponse](#issho-v1-ReportCrewMemberResponse) | ReportCrewMember reports someone in (or who was in) the caller&#39;s crew to the moderators, as EventService.ReportPerson does for an outing. |
+
+ 
+
+
+
+<a name="issho_v1_curation-proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## issho/v1/curation.proto
+
+
+
+<a name="issho-v1-AddVenueRequest"></a>
+
+### AddVenueRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| city_id | [string](#string) |  |  |
+| place_id | [string](#string) |  |  |
+| category_id | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-AddVenueResponse"></a>
+
+### AddVenueResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| area_id | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-FoundVenue"></a>
+
+### FoundVenue
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| place_id | [string](#string) |  |  |
+| name | [string](#string) |  | From Google, in English (shown, never stored). |
+| address | [string](#string) |  |  |
+| maps_url | [string](#string) |  |  |
+| area_id | [string](#string) |  | The nearest of the city&#39;s areas. |
+| area_name | [string](#string) |  |  |
+| known | [bool](#bool) |  | Whether the city already has it, and in which categories. |
+| status | [VenueStatus](#issho-v1-VenueStatus) |  |  |
+| category_ids | [string](#string) | repeated |  |
+| addable_category_ids | [string](#string) | repeated | Categories it could be added in (its Google types fit and it&#39;s near enough); empty when it&#39;s known or fits none. |
+| flag | [string](#string) |  |  |
+| closed | [bool](#bool) |  | Closed for good or for now: it can&#39;t be added. |
+
+
+
+
+
+
+<a name="issho-v1-ListVenueCitiesRequest"></a>
+
+### ListVenueCitiesRequest
+
+
+
+
+
+
+
+<a name="issho-v1-ListVenueCitiesResponse"></a>
+
+### ListVenueCitiesResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| cities | [VenueCity](#issho-v1-VenueCity) | repeated |  |
+| categories | [VenueCategory](#issho-v1-VenueCategory) | repeated |  |
+
+
+
+
+
+
+<a name="issho-v1-ListVenuesRequest"></a>
+
+### ListVenuesRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| city_id | [string](#string) |  |  |
+| status | [VenueStatus](#issho-v1-VenueStatus) |  |  |
+| area_id | [string](#string) |  | Optional filters. |
+| category_id | [string](#string) |  |  |
+| offset | [int32](#int32) |  | Places to skip, for the next page. |
+
+
+
+
+
+
+<a name="issho-v1-ListVenuesResponse"></a>
+
+### ListVenuesResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| venues | [Venue](#issho-v1-Venue) | repeated |  |
+| total | [int32](#int32) |  | How many places match, over all pages. |
+
+
+
+
+
+
+<a name="issho-v1-SearchVenuesRequest"></a>
+
+### SearchVenuesRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| city_id | [string](#string) |  |  |
+| area_id | [string](#string) |  | &#34;&#34; = every area of the city. |
+| query | [string](#string) |  | e.g. &#34;スナック&#34; or a place&#39;s name. |
+
+
+
+
+
+
+<a name="issho-v1-SearchVenuesResponse"></a>
+
+### SearchVenuesResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| venues | [FoundVenue](#issho-v1-FoundVenue) | repeated |  |
+| searches | [int32](#int32) |  | Google searches made (one per area). |
+
+
+
+
+
+
+<a name="issho-v1-SetApprovedVenuesOnlyRequest"></a>
+
+### SetApprovedVenuesOnlyRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| city_id | [string](#string) |  |  |
+| approved_venues_only | [bool](#bool) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-SetApprovedVenuesOnlyResponse"></a>
+
+### SetApprovedVenuesOnlyResponse
+
+
+
+
+
+
+
+<a name="issho-v1-SetVenueStatusRequest"></a>
+
+### SetVenueStatusRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| city_id | [string](#string) |  |  |
+| place_ids | [string](#string) | repeated |  |
+| status | [VenueStatus](#issho-v1-VenueStatus) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-SetVenueStatusResponse"></a>
+
+### SetVenueStatusResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| changed | [int32](#int32) |  | Places changed (ids not in the city are skipped). |
+
+
+
+
+
+
+<a name="issho-v1-Venue"></a>
+
+### Venue
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| place_id | [string](#string) |  |  |
+| name | [string](#string) |  | From Google, in English; &#34;&#34; without a Google Maps key or if it failed. |
+| address | [string](#string) |  |  |
+| maps_url | [string](#string) |  |  |
+| area_id | [string](#string) |  |  |
+| area_name | [string](#string) |  |  |
+| category_ids | [string](#string) | repeated |  |
+| status | [VenueStatus](#issho-v1-VenueStatus) |  |  |
+| added | [bool](#bool) |  | An admin added it (it wasn&#39;t discovered). |
+| plans | [int32](#int32) |  | Draft or open plans that use it. |
+| flag | [string](#string) |  | Why the name suggests a closer look, e.g. &#34;snack bar?&#34;; &#34;&#34; if nothing. |
+| reviewed_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-VenueArea"></a>
+
+### VenueArea
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [string](#string) |  |  |
+| name | [string](#string) |  | English name. |
+
+
+
+
+
+
+<a name="issho-v1-VenueCategory"></a>
+
+### VenueCategory
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [string](#string) |  |  |
+| name | [string](#string) |  | English name. |
+
+
+
+
+
+
+<a name="issho-v1-VenueCity"></a>
+
+### VenueCity
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [string](#string) |  |  |
+| name | [string](#string) |  | English name. |
+| approved_venues_only | [bool](#bool) |  |  |
+| candidates | [int32](#int32) |  | Places, not rows: a place in two categories counts once. |
+| approved | [int32](#int32) |  |  |
+| rejected | [int32](#int32) |  |  |
+| areas | [VenueArea](#issho-v1-VenueArea) | repeated |  |
+
+
+
+
+
+ 
+
+
+<a name="issho-v1-VenueStatus"></a>
+
+### VenueStatus
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| VENUE_STATUS_UNSPECIFIED | 0 |  |
+| VENUE_STATUS_CANDIDATE | 1 |  |
+| VENUE_STATUS_APPROVED | 2 |  |
+| VENUE_STATUS_REJECTED | 3 |  |
+
+
+ 
+
+ 
+
+
+<a name="issho-v1-CurationService"></a>
+
+### CurationService
+CurationService: venue curation in the admin SPA (M8). Discovery keeps
+every place whose primary type fits a venue category, which lets through
+some that don&#39;t suit a group outing (Japanese snack bars are typed
+`bar`). Admins approve or reject places, look for places by name (to
+find the snack bars, or a place discovery missed) and add them. A city
+can be set to use only approved venues.
+Curation applies to a place as a whole, in all its categories. Names and
+addresses come live from Google, in English, and are never stored.
+Admins only, like ModerationService: anyone else gets PERMISSION_DENIED.
+
+HTTP: POST /issho.v1.CurationService/&lt;Method&gt;
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| ListVenueCities | [ListVenueCitiesRequest](#issho-v1-ListVenueCitiesRequest) | [ListVenueCitiesResponse](#issho-v1-ListVenueCitiesResponse) | ListVenueCities returns every city with its switch and how many places are in each status, and the venue categories. |
+| SetApprovedVenuesOnly | [SetApprovedVenuesOnlyRequest](#issho-v1-SetApprovedVenuesOnlyRequest) | [SetApprovedVenuesOnlyResponse](#issho-v1-SetApprovedVenuesOnlyResponse) | SetApprovedVenuesOnly turns the switch on or off. On, the matcher uses only approved venues in the city, for new plans and to decide which plans are possible; plans already made keep their venues. |
+| ListVenues | [ListVenuesRequest](#issho-v1-ListVenuesRequest) | [ListVenuesResponse](#issho-v1-ListVenuesResponse) | ListVenues returns a city&#39;s places in one status, 50 at a time. |
+| SetVenueStatus | [SetVenueStatusRequest](#issho-v1-SetVenueStatusRequest) | [SetVenueStatusResponse](#issho-v1-SetVenueStatusResponse) | SetVenueStatus approves, rejects or resets (to candidate) up to 100 places of a city. A rejected place is never picked again; plans that already use it keep it (withdraw them on the Plans page). |
+| SearchVenues | [SearchVenuesRequest](#issho-v1-SearchVenuesRequest) | [SearchVenuesResponse](#issho-v1-SearchVenuesResponse) | SearchVenues looks places up by name with Google, in one area or each area of the city (one search per area), and says which the city already has. FAILED_PRECONDITION without a Google Maps key. |
+| AddVenue | [AddVenueRequest](#issho-v1-AddVenueRequest) | [AddVenueResponse](#issho-v1-AddVenueResponse) | AddVenue adds a place, approved, in one category. Its Google types must include one of the category&#39;s, and it must be within the category&#39;s search radius of one of the city&#39;s areas (it&#39;s put in the nearest). INVALID_ARGUMENT otherwise, or if it&#39;s closed. |
 
  
 

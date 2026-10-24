@@ -137,10 +137,10 @@ func (q *Queries) ListCityTravelTimes(ctx context.Context, cityID string) ([]Lis
 }
 
 const listCityVenueCounts = `-- name: ListCityVenueCounts :many
-select area_id, category_id, count(*)::int as venues
-from app.venues
-where city_id = $1 and status <> 'rejected'
-group by area_id, category_id
+select v.area_id, v.category_id, count(*)::int as venues
+from app.venues v join app.cities c on c.id = v.city_id
+where v.city_id = $1 and v.status <> 'rejected' and (v.status = 'approved' or not c.approved_venues_only)
+group by v.area_id, v.category_id
 `
 
 type ListCityVenueCountsRow struct {
@@ -149,7 +149,8 @@ type ListCityVenueCountsRow struct {
 	Venues     int32
 }
 
-// Venues an admin hasn't rejected, counted per area and category.
+// Venues an admin hasn't rejected (or has approved, when the city uses
+// only approved venues), counted per area and category.
 func (q *Queries) ListCityVenueCounts(ctx context.Context, cityID string) ([]ListCityVenueCountsRow, error) {
 	rows, err := q.db.Query(ctx, listCityVenueCounts, cityID)
 	if err != nil {

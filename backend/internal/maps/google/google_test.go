@@ -373,3 +373,55 @@ func TestFind(t *testing.T) {
 		t.Error("an empty query must fail")
 	}
 }
+
+func TestSearchAndLocate(t *testing.T) {
+	var body map[string]any
+	var path string
+	c := newTestClient(t, func(w http.ResponseWriter, r *http.Request) {
+		path = r.URL.RequestURI()
+		mask := r.Header.Get("X-Goog-FieldMask")
+		if r.Method == http.MethodGet {
+			if mask != searchFields {
+				t.Errorf("details mask %q", mask)
+			}
+			_, _ = w.Write([]byte(`{"id":"p1","displayName":{"text":"Snack Yuki"},"primaryType":"bar","types":["bar","establishment"],"location":{"latitude":35.7,"longitude":139.6},"businessStatus":"CLOSED_TEMPORARILY"}`))
+			return
+		}
+		if !strings.Contains(mask, "places.shortFormattedAddress") || !strings.Contains(mask, "places.googleMapsUri") {
+			t.Errorf("search mask %q", mask)
+		}
+		_ = json.NewDecoder(r.Body).Decode(&body)
+		_, _ = w.Write([]byte(`{"places":[{"id":"p1","displayName":{"text":"Snack Yuki"},"primaryType":"bar","types":["bar"],"location":{"latitude":35.7,"longitude":139.6},"businessStatus":"OPERATIONAL","shortFormattedAddress":"1-2-3 Koenji","googleMapsUri":"https://maps.google.com/?cid=1"}]}`))
+	})
+	ctx := context.Background()
+	got, err := c.Search(ctx, maps.SearchRequest{Query: "スナック", Near: maps.LatLng{Lat: 35, Lng: 139}, RadiusM: 1113.2, Language: "en"})
+	if err != nil || len(got) != 1 {
+		t.Fatalf("Search = %+v, %v", got, err)
+	}
+	if r := got[0]; r.ID != "p1" || r.Details.Name != "Snack Yuki" || r.Details.Address != "1-2-3 Koenji" || r.Details.MapsURL == "" || r.Closed || r.Location.Lng != 139.6 {
+		t.Errorf("result %+v", r)
+	}
+	rect := body["locationRestriction"].(map[string]any)["rectangle"].(map[string]any)
+	low, high := rect["low"].(map[string]any), rect["high"].(map[string]any)
+	// 1,113.2 m is 0.01° of latitude.
+	if d := high["latitude"].(float64) - low["latitude"].(float64); d < 0.0199 || d > 0.0201 {
+		t.Errorf("box %v", rect)
+	}
+	if body["textQuery"] != "スナック" || body["pageSize"] != 20.0 || body["languageCode"] != "en" {
+		t.Errorf("request %v", body)
+	}
+	if _, err := c.Search(ctx, maps.SearchRequest{Query: ""}); err == nil {
+		t.Error("an empty query must fail")
+	}
+
+	r, err := c.Locate(ctx, "p1")
+	if err != nil || r.PrimaryType != "bar" || !r.Closed || !slices.Contains(r.Types, "establishment") {
+		t.Errorf("Locate = %+v, %v", r, err)
+	}
+	if path != "/p1?languageCode=en" {
+		t.Errorf("details path %q", path)
+	}
+	if _, err := c.Locate(ctx, "a/b"); err == nil {
+		t.Error("a bad id must fail")
+	}
+}

@@ -195,8 +195,10 @@ func (q *Queries) UpsertTravelTime(ctx context.Context, arg UpsertTravelTimePara
 }
 
 const upsertVenue = `-- name: UpsertVenue :exec
-insert into app.venues (google_place_id, city_id, area_id, category_id)
-values ($1, $2, $3, $4)
+insert into app.venues (google_place_id, city_id, area_id, category_id, status)
+values ($1, $2, $3, $4, coalesce(
+  (select v.status from app.venues v where v.google_place_id = $1
+   order by v.status = 'rejected' desc, v.status = 'approved' desc limit 1), 'candidate'))
 on conflict (google_place_id, category_id) do update set last_seen_at = now()
 `
 
@@ -207,7 +209,9 @@ type UpsertVenueParams struct {
 	CategoryID    string
 }
 
-// Re-discovering a venue only bumps last_seen_at; curation status and tags are kept.
+// Re-discovering a venue only bumps last_seen_at; curation status and tags
+// are kept. A place found in a new category takes the status an admin (or
+// a closure) already gave the place: curation is per place (00023).
 func (q *Queries) UpsertVenue(ctx context.Context, arg UpsertVenueParams) error {
 	_, err := q.db.Exec(ctx, upsertVenue,
 		arg.GooglePlaceID,
