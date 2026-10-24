@@ -8,6 +8,7 @@ import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
+import { AccountActions } from '@/features/account/account-actions';
 import { AuthProvider, isSuspendedError, useAuth } from '@/features/auth/auth-provider';
 import { I18nProvider, useI18n } from '@/i18n/i18n-provider';
 
@@ -60,15 +61,14 @@ function RootNavigator() {
   const { t } = useI18n();
   if (!ready) return null; // the splash screen stays up while SecureStore is read
 
-  // Suspended by a moderator: the API refuses everything else anyway.
+  // Suspended by a moderator: the API refuses everything else anyway, except
+  // deleting the account, which shouldn't depend on a moderator.
   if (session && suspended) {
     return (
       <ThemedView style={styles.center}>
         <ThemedText type="subtitle">{t('account.suspendedTitle')}</ThemedText>
         <ThemedText style={styles.message}>{t('account.suspendedBody')}</ThemedText>
-        <Pressable onPress={signOut}>
-          <ThemedText type="link">{t('account.signOut')}</ThemedText>
-        </Pressable>
+        <AccountActions />
       </ThemedView>
     );
   }
