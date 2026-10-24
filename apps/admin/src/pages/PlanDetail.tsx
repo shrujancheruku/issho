@@ -4,6 +4,7 @@ import { useState } from 'react';
 
 import { formatTime } from '../format';
 import { api } from '../lib';
+import { StopsEditor } from './StopsEditor';
 
 const statusLabels: Record<ReviewPlanStatus, string> = {
   [ReviewPlanStatus.UNSPECIFIED]: '',
@@ -15,6 +16,7 @@ const statusLabels: Record<ReviewPlanStatus, string> = {
 /** One plan as people would see it (in English), with the review actions. */
 export function PlanDetail({ planId }: { planId: string }) {
   const res = useQuery({ queryKey: ['review-plan', planId], queryFn: () => api.review.getReviewPlan({ planId }) });
+  const [editing, setEditing] = useState(false);
   if (res.isPending) return <p className="muted">Loading…</p>;
   if (res.error) return <p className="error">{ConnectError.from(res.error).message}</p>;
   const p = res.data.plan!;
@@ -39,7 +41,13 @@ export function PlanDetail({ planId }: { planId: string }) {
 
       <Actions plan={p} />
 
-      <h2>Stops</h2>
+      <div className="toolbar">
+        <h2>Stops</h2>
+        {p.status !== ReviewPlanStatus.CLOSED && !editing && (
+          <button className="secondary small" onClick={() => setEditing(true)}>{p.walk ? 'Edit the walk' : 'Change venues'}</button>
+        )}
+      </div>
+      {editing && <StopsEditor data={res.data} onDone={() => setEditing(false)} />}
       {steps.length === 0 ? <p className="muted">No stops: a meeting point is chosen later.</p> : (
         <ol className="stops">
           {steps.map((s, i) => (

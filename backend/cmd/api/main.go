@@ -142,9 +142,12 @@ func run() error {
 	mux.Handle(isshov1connect.NewProfileServiceHandler(&profile.Handler{Svc: &profile.Service{DB: pool}}, opts))
 	planSvc := &plans.Service{DB: pool, Translations: translations}
 	venues := &curation.Handler{DB: pool}
+	// The worker's timing, so a plan an admin opens gets the same window.
+	review := &plans.ReviewHandler{Svc: planSvc, Timing: plans.DefaultTiming()}
 	if cfg.GoogleMapsAPIKey != "" {
 		places := mapsgoogle.New(cfg.GoogleMapsAPIKey)
 		planSvc.Places, venues.Places = places, places
+		review.Places, review.Routes = places, places
 	} else {
 		slog.Warn("GOOGLE_MAPS_API_KEY not set: plans show no venue names")
 	}
@@ -152,8 +155,7 @@ func run() error {
 	mux.Handle(isshov1connect.NewEventServiceHandler(&plans.EventHandler{Svc: planSvc}, opts))
 	mux.Handle(isshov1connect.NewCrewServiceHandler(&plans.CrewHandler{Svc: planSvc}, opts))
 	mux.Handle(isshov1connect.NewPushServiceHandler(&push.Handler{Q: q}, opts))
-	// The worker's timing, so a plan an admin opens gets the same window.
-	mux.Handle(isshov1connect.NewReviewServiceHandler(&plans.ReviewHandler{Svc: planSvc, Timing: plans.DefaultTiming()}, opts))
+	mux.Handle(isshov1connect.NewReviewServiceHandler(review, opts))
 	mux.Handle(isshov1connect.NewCurationServiceHandler(venues, opts))
 	mux.Handle(isshov1connect.NewModerationServiceHandler(&moderation.Handler{Q: q, Plans: planSvc, Suspensions: suspensions}, opts))
 	uiCatalog, err := uistrings.Load()

@@ -62,6 +62,28 @@ service ReviewService {
   // not in the city, or a venue not found for the activity there.
   rpc CreatePlan(CreatePlanRequest) returns (CreatePlanResponse) {}
 
+  // Editing a plan's stops (draft or open plans; an event already
+  // scheduled shows the change to the people going). FindPlanPlaces looks
+  // places up by name with Google within 3 km of the plan's area.
+  // FAILED_PRECONDITION without a Google Maps key.
+  rpc FindPlanPlaces(FindPlanPlacesRequest) returns (FindPlanPlacesResponse) {}
+
+  // SetPlanStops replaces a walk's stops, in walking order: the first is
+  // where people meet, the last where they sit down at the end. Each place
+  // is checked with Google (it exists, isn't closed, is within 3 km of the
+  // area's centre, appears once) and the walking route is worked out again
+  // in this order. A walk outside the composer's rules (2 to 4 hours, no
+  // walk between stops over 20 minutes, 100 minutes of walking at most) is
+  // saved anyway, with warnings. INVALID_ARGUMENT for a plan that isn't a
+  // walk, fewer than 3 or more than 10 places, or a place that fails.
+  rpc SetPlanStops(SetPlanStopsRequest) returns (SetPlanStopsResponse) {}
+
+  // SetPlanVenue changes the venue of a plan that isn't a walk, or of its
+  // follow-up: one of the venues found for the activity in the area
+  // (ListVenueOptions), or "" to let the matcher pick. The walk between the
+  // two is worked out again.
+  rpc SetPlanVenue(SetPlanVenueRequest) returns (SetPlanVenueResponse) {}
+
   // Group review: in a city under review, a round the scheduler is ready
   // to schedule waits as a proposal. Nobody is invited or told, and the
   // plan stays in its round with everyone signed up, until an admin
@@ -191,7 +213,70 @@ message GetReviewPlanResponse {
   ReviewPlan plan = 1;
   // As people would see them, in English.
   repeated PlanStep steps = 2;
+  // A walk's stops as stored, for editing (SetPlanStops); empty for other
+  // plans. Same order as steps.
+  repeated ReviewStop stops = 3;
+  // For other plans, the venues as stored ("" = none).
+  string venue_place_id = 4;
+  string follow_up_venue_place_id = 5;
+  // Scheduled events of this plan still to come, whose people see edits.
+  int32 upcoming_events = 6;
 }
+
+// A walk's stop. The role follows the position: "meet" first, "finish"
+// last, "stop" between.
+message ReviewStop {
+  string place_id = 1;
+  string role = 2;
+  // Time there: 0 to 120.
+  int32 minutes = 3;
+  // English, at most 300 characters; people see it translated.
+  string note = 4;
+}
+
+message FindPlanPlacesRequest {
+  string plan_id = 1;
+  string query = 2;
+}
+
+message FindPlanPlacesResponse {
+  repeated FoundPlace places = 1;
+}
+
+message FoundPlace {
+  string place_id = 1;
+  // From Google, in English (shown, never stored).
+  string name = 2;
+  string address = 3;
+  string maps_url = 4;
+  // Google's primary type, e.g. "shinto_shrine".
+  string primary_type = 5;
+  // From the area's centre.
+  int32 meters = 6;
+  bool closed = 7;
+}
+
+message SetPlanStopsRequest {
+  string plan_id = 1;
+  repeated ReviewStop stops = 2;
+}
+
+message SetPlanStopsResponse {
+  // Rules the walk breaks, in words; empty when it fits.
+  repeated string warnings = 1;
+  // The whole outing in minutes (at the stops and walking); 0 when the
+  // route couldn't be worked out.
+  int32 minutes = 2;
+}
+
+message SetPlanVenueRequest {
+  string plan_id = 1;
+  // The follow-up's venue rather than the first activity's.
+  bool follow_up = 2;
+  string place_id = 3;
+}
+
+message SetPlanVenueResponse {}
 
 message ApprovePlanRequest {
   string plan_id = 1;

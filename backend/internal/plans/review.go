@@ -16,6 +16,7 @@ import (
 
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
+	"github.com/shrujancheruku/issho/backend/internal/maps"
 	"github.com/shrujancheruku/issho/backend/internal/matching"
 	"github.com/shrujancheruku/issho/backend/internal/platform/auth"
 	"github.com/shrujancheruku/issho/backend/internal/platform/i18n"
@@ -38,6 +39,10 @@ type ReviewHandler struct {
 	// hand); the worker's, so both agree.
 	Timing Timing
 	Now    func() time.Time // nil = time.Now
+	// For editing stops (stops.go): finding and checking places, and the
+	// walk through them. nil without GOOGLE_MAPS_API_KEY.
+	Places maps.PlaceSearch
+	Routes maps.WalkRouter
 }
 
 func (h *ReviewHandler) now() time.Time {
@@ -150,11 +155,19 @@ func (h *ReviewHandler) GetReviewPlan(ctx context.Context, req *connect.Request[
 	// The stops as people would see them, in English.
 	caller := Caller{City: r.CityID, Primary: i18n.Authoring}
 	var steps []Step
+	out := &isshov1.GetReviewPlanResponse{
+		VenuePlaceId: deref(r.VenuePlaceID), FollowUpVenuePlaceId: deref(r.FollowUpVenuePlaceID), UpcomingEvents: r.UpcomingEvents,
+	}
 	if r.Walk {
 		steps, err = h.Svc.walkSteps(ctx, q, id, caller)
 		if err != nil {
 			return nil, err
 		}
+		stops, err := LoadWalk(ctx, q, id)
+		if err != nil {
+			return nil, err
+		}
+		out.Stops = reviewStops(stops)
 	} else {
 		plan := matching.Plan{
 			Area: matching.AreaID(r.AreaID), Activity: matching.ActivityID(r.ActivityID), FollowUp: matching.ActivityID(deref(r.FollowUpID)),
@@ -163,7 +176,8 @@ func (h *ReviewHandler) GetReviewPlan(ctx context.Context, req *connect.Request[
 		steps = h.Svc.steps(ctx, plan, deref(r.VenuePlaceID), deref(r.FollowUpVenuePlaceID), deref(r.MeetingPlaceID),
 			routeFrom(r.RoutePolyline, r.RouteSeconds), caller)
 	}
-	return connect.NewResponse(&isshov1.GetReviewPlanResponse{Plan: reviewPlanToProto(r, names), Steps: stepsToProto(steps)}), nil
+	out.Plan, out.Steps = reviewPlanToProto(r, names), stepsToProto(steps)
+	return connect.NewResponse(out), nil
 }
 
 func (h *ReviewHandler) ApprovePlan(ctx context.Context, req *connect.Request[isshov1.ApprovePlanRequest]) (*connect.Response[isshov1.ApprovePlanResponse], error) {
