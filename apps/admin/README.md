@@ -54,7 +54,9 @@ ALLOWED_ORIGINS=https://issho-admin.shrujancheruku.workers.dev,https://issho-web
 scripts/deploy-web.sh https://….trycloudflare.com  # both sites; add `admin` or `web` for one
 ```
 
-The API URL is baked into each build, so redeploy after restarting the tunnel. `scripts/deploy-web.sh` takes the Supabase URL and publishable key from `apps/mobile/.env` and deploys with your `wrangler login`. `public/_headers` sets a strict Content-Security-Policy (only Supabase and `*.trycloudflare.com` can be called; narrow it to the API's own origin once it's hosted), `noindex` and no framing.
+The API URL is baked into each build, so redeploy after restarting the tunnel. `scripts/deploy-web.sh` takes the Supabase URL and publishable key from the environment (`EXPO_PUBLIC_*`) or else `apps/mobile/.env`, and deploys with your `wrangler login` (or `CLOUDFLARE_API_TOKEN`). `public/_headers` sets a strict Content-Security-Policy, `noindex` and no framing. Its `connect-src` allows Supabase and `*.trycloudflare.com`; the script narrows the deployed copy to the one API origin it was given, so the page can't call any other tunnel (checked in Chrome).
+
+**From CI:** `.github/workflows/deploy-web.yml` runs the same script on every push to `main` that touches either site. It's skipped until the repository variable `API_URL` is set, which should wait for the hosted API (M9): a tunnel's address changes too often. The workflow's header lists the other variables and the `CLOUDFLARE_API_TOKEN` secret (an account API token limited to *Workers Scripts: Edit*).
 
 Anyone can open the page; data needs an admin token, which the API checks. Putting Cloudflare Access in front of it (free for up to 50 users) would add a check before the page loads; not set up yet.
 

@@ -30,7 +30,7 @@
 | Anthropic API key (`ANTHROPIC_API_KEY`, M6 plan text) | shell env / untracked `.env` | not used (tests use fakes) | Kamal secrets |
 | Apple / Google OAuth secrets (post-MVP; not used) | `supabase/.env` (gitignored), referenced as `env(...)` in `supabase/config.toml` | not used | Supabase dashboard |
 | Expo access token (`EXPO_ACCESS_TOKEN`, worker: push notifications) | only needed if the Expo project turns on enhanced push security; shell env / untracked `.env` | not used (tests use a fake sender) | Kamal secrets |
-| Cloudflare credentials (deploying `issho-admin` and `issho-web`) | `wrangler login` (OAuth, stored by Wrangler in your user settings, never in the repo) | not used yet (a deploy job will need a scoped `CLOUDFLARE_API_TOKEN` secret) | same |
+| Cloudflare credentials (deploying `issho-admin` and `issho-web`) | `wrangler login` (OAuth, stored by Wrangler in your user settings, never in the repo) | `CLOUDFLARE_API_TOKEN` repository secret for `deploy-web.yml`: an account API token limited to **Workers Scripts: Edit** (not set yet; the job is skipped without `API_URL`) | same |
 | Registry token for deploys (`KAMAL_REGISTRY_PASSWORD`: a GitHub token with `write:packages`) | exported in your shell when deploying | not used | read by `.kamal/secrets` |
 | Cloudflare origin certificate and key (the API's TLS behind Cloudflare) | saved outside the repo (e.g. `~/.config/issho/`), read by `.kamal/secrets` | not used | kamal-proxy, via Kamal secrets ([deploy.md](deploy.md)) |
 | Push credentials: APNs key, FCM V1 service account key | not stored locally; uploaded to EAS with `eas credentials` | n/a | EAS (Expo) credential store |

@@ -1,0 +1,66 @@
+name: deploy-web
+
+# Deploys the admin SPA (issho-admin) and the app's web build (issho-web) to
+# Cloudflare Workers with scripts/deploy-web.sh, when either changes on main.
+#
+# Off until it's configured (Settings → Secrets and variables → Actions):
+#   variable API_URL                 the hosted API's origin (M9; a quick
+#                                    tunnel's address changes too often)
+#   variable CLOUDFLARE_ACCOUNT_ID
+#   variable EXPO_PUBLIC_SUPABASE_URL, EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+#            EXPO_PUBLIC_GOOGLE_MAPS_WEB_API_KEY   (public values)
+#   secret   CLOUDFLARE_API_TOKEN    scoped to Workers Scripts: Edit
+# Without API_URL the job is skipped, not failed.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - apps/admin/**
+      - apps/mobile/**
+      - packages/**
+      - pnpm-lock.yaml
+      - scripts/deploy-web.sh
+      - .github/workflows/deploy-web.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One deploy at a time; a newer push replaces a queued one.
+concurrency:
+  group: deploy-web
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: vars.API_URL != ''
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+      EXPO_PUBLIC_SUPABASE_URL: ${{ vars.EXPO_PUBLIC_SUPABASE_URL }}
+      EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ vars.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+      EXPO_PUBLIC_GOOGLE_MAPS_WEB_API_KEY: ${{ vars.EXPO_PUBLIC_GOOGLE_MAPS_WEB_API_KEY }}
+      API_URL: ${{ vars.API_URL }}
+    steps:
+      - name: Configured
+        run: |
+          missing=""
+          for v in CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID EXPO_PUBLIC_SUPABASE_URL EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY; do
+            [ -n "${!v}" ] || missing="$missing $v"
+          done
+          if [ -n "$missing" ]; then echo "::error::API_URL is set but these aren't:$missing"; exit 1; fi
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Build and deploy both sites
+        run: scripts/deploy-web.sh "$API_URL"
+      - name: Sites answer
+        run: |
+          curl -fsS -o /dev/null https://issho-admin.shrujancheruku.workers.dev/
+          curl -fsS -o /dev/null https://issho-web.shrujancheruku.workers.dev/
