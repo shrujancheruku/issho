@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.8.0](https://github.com/shrujancheruku/issho/compare/v0.7.0...v0.8.0) (2026-10-24)
+
+
+### Features
+
+* **admin:** admin SPA with the moderation queue (M8) ([#51](https://github.com/shrujancheruku/issho/issues/51)) ([14dfe73](https://github.com/shrujancheruku/issho/commit/14dfe73c8719003bf5970e379828fbb752726d06))
+* **admin:** plan review and plans made by hand (M8) ([#56](https://github.com/shrujancheruku/issho/issues/56)) ([b6d9d10](https://github.com/shrujancheruku/issho/commit/b6d9d1092ff31a13d65c27708f32e6ca0ea4cbdb))
+* **admin:** review proposed groups before invitations (M8) ([#57](https://github.com/shrujancheruku/issho/issues/57)) ([7279206](https://github.com/shrujancheruku/issho/commit/7279206a8610efd9e9964229cc440cb055a1c56e))
+* **admin:** suspend accounts and a person view (M8) ([#55](https://github.com/shrujancheruku/issho/issues/55)) ([0856a82](https://github.com/shrujancheruku/issho/commit/0856a822bf510fd177088f989c355825191e55e0))
+* **admin:** venue curation (M8) ([#58](https://github.com/shrujancheruku/issho/issues/58)) ([a40ca98](https://github.com/shrujancheruku/issho/commit/a40ca981face6c456b17a86cb35102b2e09245eb))
+* **web:** host the admin SPA and web build on Cloudflare Workers ([#52](https://github.com/shrujancheruku/issho/issues/52)) ([3cdeeeb](https://github.com/shrujancheruku/issho/commit/3cdeeebf991d26d2a5058d425c81018beaf43444))
+
 ## [0.7.0](https://github.com/shrujancheruku/issho/compare/v0.6.0...v0.7.0) (2026-10-23)
 
 
