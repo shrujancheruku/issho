@@ -7,6 +7,7 @@ import { api, supabase } from './lib';
 import { CrewLeaves } from './pages/CrewLeaves';
 import { Flags } from './pages/Flags';
 import { GroupReview } from './pages/GroupReview';
+import { Metrics } from './pages/Metrics';
 import { Groups } from './pages/Groups';
 import { People } from './pages/People';
 import { Person } from './pages/Person';
@@ -26,6 +27,7 @@ const pages = {
   leaves: { label: 'Crew leaves', component: CrewLeaves },
   translations: { label: 'Translations', component: Translations },
   people: { label: 'People', component: People },
+  metrics: { label: 'Metrics', component: Metrics },
 } as const;
 type Page = keyof typeof pages;
 

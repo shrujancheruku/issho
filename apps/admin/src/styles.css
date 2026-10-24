@@ -162,3 +162,29 @@ tr.flagged td { background: color-mix(in srgb, var(--gold) 12%, transparent); }
 .found li { margin-bottom: 0.4rem; }
 .found button { margin-left: 0.5rem; }
 .warnings { border-left: 3px solid var(--gold); padding-left: 0.75rem; }
+
+/* Metrics. Series colours from the dataviz reference palette (slots 1
+   and 2), validated against these surfaces in light and dark. */
+:root { --series-1: #2a78d6; --series-2: #eb6834; }
+@media (prefers-color-scheme: dark) { :root { --series-1: #3987e5; --series-2: #d95926; } }
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.75rem; margin-bottom: 1rem; }
+.tile { display: grid; gap: 0.15rem; padding: 0.75rem 1rem; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+.tile strong { font-size: 1.6rem; font-variant-numeric: tabular-nums; }
+.tile.hero { grid-column: span 2; }
+.tile.hero strong { font-size: 2.4rem; }
+.chart { position: relative; }
+.chart svg { width: 100%; height: auto; display: block; }
+.chart .grid { stroke: var(--line); stroke-width: 1; }
+.chart .axis { stroke: var(--muted); stroke-width: 1; }
+.chart .tick { fill: var(--muted); font-size: 11px; }
+.chart .bar.back, .swatch.back { fill: var(--series-1); background: var(--series-1); }
+.chart .bar.once, .swatch.once { fill: var(--series-2); background: var(--series-2); }
+.chart .hover-col { fill: var(--text); opacity: 0.06; pointer-events: none; }
+.legend { display: flex; gap: 1rem; font-size: 0.85rem; margin-bottom: 0.4rem; }
+.swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 0.3rem; vertical-align: -1px; }
+.tooltip { position: absolute; top: 2rem; transform: translateX(-50%); display: grid; gap: 0.15rem; padding: 0.5rem 0.7rem;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 8px; font-size: 0.85rem; pointer-events: none; white-space: nowrap;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.15); }
+table.numbers td, table.numbers th { text-align: right; font-variant-numeric: tabular-nums; }
+table.numbers td:first-child, table.numbers th:first-child { text-align: left; }
+@media (max-width: 600px) { .tile.hero { grid-column: span 1; } }
