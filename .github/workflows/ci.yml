@@ -165,3 +165,25 @@ jobs:
       - name: Web build exports (not released yet; keeps it from breaking)
         working-directory: apps/mobile
         run: pnpm export:web --output-dir "$RUNNER_TEMP/web"
+
+  # The deploy image (backend/Dockerfile, shipped by Kamal in M9) keeps
+  # building, and its binaries start. Not pushed anywhere.
+  image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v4
+      # GitHub's cache keeps the module download and build layers between runs.
+      - uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: backend/Dockerfile
+          build-args: VERSION=${{ github.sha }}
+          tags: issho-backend:ci
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Binaries start (and stop on missing config)
+        run: |
+          docker run --rm issho-backend:ci api 2>&1 | tee /dev/stderr | grep -q "DATABASE_URL is required"
+          docker run --rm issho-backend:ci worker 2>&1 | tee /dev/stderr | grep -q "DATABASE_URL is required"

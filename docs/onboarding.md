@@ -114,6 +114,7 @@ Read [contributing.md](contributing.md). In short:
 ## 7. Where to read next
 - [architecture.md](architecture.md): how the pieces fit together
 - [supabase-hosted.md](supabase-hosted.md): configuring a hosted Supabase project (dev/prod)
+- [deploy.md](deploy.md): the backend image and deploying with Kamal
 - [ROADMAP.md](ROADMAP.md): what's built, what's next, and why
 - [generated/api.md](generated/api.md): every API endpoint
 - READMEs in each directory: [backend](../backend/README.md), [mobile](../apps/mobile/README.md), [api-client](../packages/api-client/README.md), [proto](../proto/README.md), [data](../data/README.md), [supabase](../supabase/README.md)

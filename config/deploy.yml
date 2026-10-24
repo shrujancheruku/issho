@@ -1,0 +1,84 @@
+# Kamal 2 deploy of the Go backend (M9): the API behind kamal-proxy and the
+# River worker, both from backend/Dockerfile, on one VPS behind Cloudflare.
+# Supabase stays hosted; nothing else runs on the server.
+#
+# Not used yet: the server, domain and registry account below are
+# placeholders (marked TODO) until they exist. See docs/deploy.md for the
+# one-time setup and the deploy steps.
+
+service: issho
+
+# TODO: the registry account (GitHub Container Registry, under the repo owner).
+image: shrujancheruku/issho-backend
+
+servers:
+  web:
+    hosts:
+      - 203.0.113.10 # TODO: the VPS address (this is a documentation address)
+  # The worker runs on the same server. It has no proxy: it serves no HTTP,
+  # and River's leader election means a second worker would be safe but idle.
+  worker:
+    hosts:
+      - 203.0.113.10 # TODO: same VPS
+    cmd: worker
+    proxy: false
+
+proxy:
+  host: api.example.com # TODO: the API's domain, proxied by Cloudflare
+  app_port: 8080
+  # Cloudflare terminates TLS for clients and connects to the server over
+  # HTTPS with a Cloudflare origin certificate (SSL mode "Full (strict)").
+  # Let's Encrypt isn't used: its HTTP challenge is awkward behind
+  # Cloudflare's proxy, and origin certificates last 15 years.
+  ssl:
+    certificate_pem: CLOUDFLARE_ORIGIN_CERT
+    private_key_pem: CLOUDFLARE_ORIGIN_KEY
+  healthcheck:
+    # Answers 200 only when the database does (internal/health), so a deploy
+    # with a broken DATABASE_URL never replaces a working container.
+    path: /up
+    interval: 2
+    timeout: 5
+  # Composing a walk in the admin's stop editor (Google, Gemini) can take
+  # longer than the 30 s default.
+  response_timeout: 60
+
+registry:
+  server: ghcr.io
+  username: shrujancheruku # TODO: the registry account
+  password:
+    - KAMAL_REGISTRY_PASSWORD
+
+builder:
+  arch: amd64
+  dockerfile: backend/Dockerfile
+  # The repository root: the image needs data/ as well as backend/.
+  # Without `context`, Kamal builds from a clean clone of the current commit,
+  # which is what a deploy should ship; .dockerignore keeps the rest out.
+  args:
+    VERSION: <%= `git rev-parse --short HEAD`.strip %>
+
+env:
+  clear:
+    API_ADDR: ":8080"
+    # TODO: the production Supabase project and the hosted front ends.
+    SUPABASE_URL: https://your-project-ref.supabase.co
+    ALLOWED_ORIGINS: https://issho-admin.shrujancheruku.workers.dev,https://issho-web.shrujancheruku.workers.dev
+  secret:
+    # A session-mode connection (direct or the session pooler), never the
+    # transaction pooler: the API LISTENs for chat and the worker for River.
+    - DATABASE_URL
+    - SUPABASE_SECRET_KEY
+    - GOOGLE_MAPS_API_KEY
+    - GOOGLE_TRANSLATE_API_KEY
+    - GOOGLE_GEMINI_API_KEY
+    - GITHUB_TOKEN
+    - EXPO_ACCESS_TOKEN
+
+aliases:
+  # kamal migrate: apply migrations with the image for the current commit
+  # (after `kamal build push`, before `kamal deploy`; see docs/deploy.md).
+  migrate: app exec --primary "tool migrate up"
+  migrate-status: app exec --primary "tool migrate status"
+  logs-api: app logs --roles web -f
+  logs-worker: app logs --roles worker -f

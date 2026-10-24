@@ -122,7 +122,9 @@ func run() error {
 	)
 
 	mux := http.NewServeMux()
-	mux.Handle(isshov1connect.NewHealthServiceHandler(&health.Handler{Pool: pool, Version: version}, opts))
+	healthH := &health.Handler{Pool: pool, Version: version}
+	mux.Handle(isshov1connect.NewHealthServiceHandler(healthH, opts))
+	mux.HandleFunc("GET /up", healthH.Up)
 	identitySvc := &identity.Service{Store: q}
 	if cfg.SupabaseSecretKey != "" {
 		identitySvc.Admin = supabase.NewAdmin(cfg.SupabaseURL, cfg.SupabaseSecretKey)
@@ -190,7 +192,7 @@ func run() error {
 
 	handler := withCORS(mux, cfg.AllowedOrigins)
 
-	// Serve HTTP/1.1 and cleartext HTTP/2; TLS terminates at Caddy/Cloudflare.
+	// Serve HTTP/1.1 and cleartext HTTP/2; TLS terminates at kamal-proxy/Cloudflare.
 	protocols := new(http.Protocols)
 	protocols.SetHTTP1(true)
 	protocols.SetUnencryptedHTTP2(true)

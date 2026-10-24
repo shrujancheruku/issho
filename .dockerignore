@@ -1,0 +1,8 @@
+# The only image (backend/Dockerfile) needs backend/ and data/. Everything
+# else stays out of the build context, above all env files and secrets.
+*
+!backend/
+!data/
+backend/bin/
+**/.env
+**/.env.*

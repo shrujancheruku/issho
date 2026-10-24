@@ -76,6 +76,20 @@ make worker                    # background jobs (another terminal)
 
 Or from this directory: `go run ./cmd/tool migrate up`, `go run ./cmd/tool seed ../data/citypacks/tokyo.json`, `go run ./cmd/api`.
 
+### Container image
+
+`Dockerfile` builds one image with all three binaries (`api` by default, `worker`, `tool`) and `data/` for seeding; Kamal deploys it ([../docs/deploy.md](../docs/deploy.md)). Build it from the repository root:
+
+```sh
+docker build -f backend/Dockerfile --build-arg VERSION=$(git rev-parse --short HEAD) -t issho-backend .
+DB='postgres://postgres:postgres@host.docker.internal:54322/postgres?sslmode=disable'   # the local stack, from a container
+docker run --rm -e DATABASE_URL="$DB" issho-backend tool migrate status
+docker run --rm -p 8095:8080 -e DATABASE_URL="$DB" -e SUPABASE_URL=http://host.docker.internal:54321 issho-backend
+docker run --rm -e DATABASE_URL="$DB" issho-backend worker
+```
+
+The runtime image is distroless (no shell, non-root); `.dockerignore` keeps everything but `backend/` and `data/` (and any env file) out of the build. CI builds it on every PR.
+
 ## API endpoints
 
 The full reference, generated from the proto comments, is in **[../docs/generated/api.md](../docs/generated/api.md)**. All RPCs are `POST /<package>.<Service>/<Method>` with a JSON body (`Content-Type: application/json`) or binary protobuf.
@@ -83,6 +97,7 @@ The full reference, generated from the proto comments, is in **[../docs/generate
 | Endpoint | Auth | Purpose |
 |---|---|---|
 | `POST /issho.v1.HealthService/Check` | public | Database ping and build version |
+| `GET /up` | public | `200 ok` when the database answers, `503` otherwise. Plain HTTP for kamal-proxy's health check, which only does GETs. |
 | `POST /issho.v1.IdentityService/GetMe` | bearer | Returns (and lazily creates) the caller's account: `onboarded` and, once onboarded, the display languages. `unauthenticated: account deleted` for tokens of deleted users. |
 | `POST /issho.v1.IdentityService/DeleteAccount` | bearer | Permanently deletes the caller (Supabase auth user → cascades to app data). Safe to retry. |
 | `POST /issho.v1.UIService/GetStrings` | public | The app's UI text in `language` (any ISO 639-1 code), machine-translated on demand and cached. Strings still being translated, or whose `{placeholders}` didn't survive, are left out (the app shows English); `complete: false` means ask again later. Public because the sign-in screens need it. |
