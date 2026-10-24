@@ -87,12 +87,12 @@ input, textarea, select {
 }
 textarea { width: 100%; resize: vertical; }
 input[type='search'] { min-width: 16rem; }
-button {
+button, a.button {
   font: inherit; cursor: pointer; border: 1px solid var(--red); border-radius: 6px;
   padding: 0.45rem 0.9rem; background: var(--red); color: #fff;
 }
-button.secondary { background: transparent; color: var(--text); border-color: var(--line); }
-button.small { padding: 0.25rem 0.65rem; font-size: 0.88rem; }
+button.secondary, a.button.secondary { background: transparent; color: var(--text); border-color: var(--line); }
+button.small, a.button.small { padding: 0.25rem 0.65rem; font-size: 0.88rem; }
 button.link { background: none; border: none; padding: 0; color: var(--red); text-decoration: underline; font-size: 0.9rem; }
 button:disabled { opacity: 0.45; cursor: default; }
 .tabs { display: flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
@@ -188,3 +188,13 @@ tr.flagged td { background: color-mix(in srgb, var(--gold) 12%, transparent); }
 table.numbers td, table.numbers th { text-align: right; font-variant-numeric: tabular-nums; }
 table.numbers td:first-child, table.numbers th:first-child { text-align: left; }
 @media (max-width: 600px) { .tile.hero { grid-column: span 1; } }
+a.button { display: inline-block; text-decoration: none; }
+
+/* Cities */
+.city-editor .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.75rem; margin-bottom: 0.5rem; }
+.city-editor input.coord { width: 7.5rem; }
+.city-editor h3 { margin: 1rem 0 0.25rem; text-transform: capitalize; font-size: 0.95rem; }
+.overrides td { vertical-align: top; }
+.months { display: inline-flex; flex-wrap: wrap; gap: 0.2rem 0.5rem; font-size: 0.82rem; }
+pre.error { white-space: pre-wrap; font: inherit; }
+.row label.check { display: flex; }

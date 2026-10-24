@@ -58,9 +58,34 @@ func DiscoverVenues(ctx context.Context, s maps.PlaceSearcher, areas []Area, cat
 	if len(areas) == 0 {
 		return nil, nil
 	}
+	return runVenueJobs(ctx, s, areas, PlanVenues(areas, cats), language)
+}
+
+// PlanAreaVenues lists the Nearby Search calls for one area added to a city
+// (or moved): its own searches, and the city-wide ones only when wide is
+// set (a new city has none yet).
+func PlanAreaVenues(areas []Area, areaID string, cats []VenueCategory, wide bool) []VenueJob {
+	var jobs []VenueJob
+	for _, j := range PlanVenues(areas, cats) {
+		if j.From == areaID || (j.From == "" && wide) {
+			jobs = append(jobs, j)
+		}
+	}
+	return jobs
+}
+
+// DiscoverAreaVenues runs PlanAreaVenues. Places are still assigned to the
+// nearest of all the city's areas.
+func DiscoverAreaVenues(ctx context.Context, s maps.PlaceSearcher, areas []Area, areaID string, cats []VenueCategory, wide bool, language string) ([]Venue, int, error) {
+	jobs := PlanAreaVenues(areas, areaID, cats, wide)
+	v, err := runVenueJobs(ctx, s, areas, jobs, language)
+	return v, len(jobs), err
+}
+
+func runVenueJobs(ctx context.Context, s maps.PlaceSearcher, areas []Area, jobs []VenueJob, language string) ([]Venue, error) {
 	seen := map[[2]string]bool{}
 	var out []Venue
-	for _, j := range PlanVenues(areas, cats) {
+	for _, j := range jobs {
 		places, err := s.Nearby(ctx, maps.NearbyRequest{
 			Center: j.Center, RadiusM: float64(j.Category.RadiusM), Types: j.Category.GoogleTypes, Language: language,
 		})

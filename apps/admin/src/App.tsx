@@ -4,6 +4,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 
 import { api, supabase } from './lib';
+import { Cities } from './pages/Cities';
+import { CityEditor } from './pages/CityEditor';
 import { CrewLeaves } from './pages/CrewLeaves';
 import { Flags } from './pages/Flags';
 import { GroupReview } from './pages/GroupReview';
@@ -28,6 +30,7 @@ const pages = {
   translations: { label: 'Translations', component: Translations },
   people: { label: 'People', component: People },
   metrics: { label: 'Metrics', component: Metrics },
+  cities: { label: 'Cities', component: Cities },
 } as const;
 type Page = keyof typeof pages;
 
@@ -37,10 +40,13 @@ const uuid = '[0-9a-f-]{36}';
  * "#/reports" → reports; "#/reports?about=<id>" → reports about one person;
  * "#/person/<id>" → that person's view (under People); "#/plan/<id>" → one
  * plan's review (under Plans); "#/event/<id>" → a proposed round or
- * scheduled event (under Groups).
+ * scheduled event (under Groups); "#/city/<id>" or "#/city/new" → the
+ * city-pack editor (under Cities).
  */
-function routeFromHash(): { page: Page; personId?: string; about?: string; planId?: string; eventId?: string } {
+function routeFromHash(): { page: Page; personId?: string; about?: string; planId?: string; eventId?: string; cityId?: string } {
   const h = window.location.hash.replace(/^#\/?/, '');
+  const city = /^city\/([a-z0-9-]+)$/.exec(h);
+  if (city) return { page: 'cities', cityId: city[1] };
   const event = new RegExp(`^event/(${uuid})$`, 'i').exec(h);
   if (event) return { page: 'groups', eventId: event[1] };
   const plan = new RegExp(`^plan/(${uuid})$`, 'i').exec(h);
@@ -69,7 +75,7 @@ export function App() {
 function Console() {
   const queryClient = useQueryClient();
   const me = useQuery({ queryKey: ['moderator'], queryFn: () => api.moderation.getModerator({}), retry: false });
-  const [{ page, personId, about, planId, eventId }, setRoute] = useState(routeFromHash);
+  const [{ page, personId, about, planId, eventId, cityId }, setRoute] = useState(routeFromHash);
   useEffect(() => {
     const onHash = () => setRoute(routeFromHash());
     window.addEventListener('hashchange', onHash);
@@ -107,6 +113,7 @@ function Console() {
   const content = personId ? <Person key={personId} userId={personId} />
     : planId ? <PlanDetail key={planId} planId={planId} />
     : eventId ? <GroupReview key={eventId} eventId={eventId} />
+    : cityId ? <CityEditor key={cityId} cityId={cityId} />
     : page === 'reports' ? <Reports key={about ?? ''} about={about} />
     : <Current />;
   return (

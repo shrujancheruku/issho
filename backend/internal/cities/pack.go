@@ -3,6 +3,7 @@
 package cities
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -18,7 +19,10 @@ import (
 type Text map[string]string
 
 type Pack struct {
-	ID                string             `json:"id"`
+	ID string `json:"id"`
+	// A note for people editing the file (e.g. why a test pack exists);
+	// kept when the admin SPA rewrites the file.
+	Comment           string             `json:"_comment,omitempty"`
 	Name              Text               `json:"name"`
 	Timezone          string             `json:"timezone"`
 	Currency          string             `json:"currency"`
@@ -37,7 +41,7 @@ type Area struct {
 
 type ActivityOverride struct {
 	ActivityID string  `json:"activity_id"`
-	Disabled   bool    `json:"disabled"`
+	Disabled   bool    `json:"disabled,omitempty"`
 	Name       Text    `json:"name,omitempty"`
 	Months     []int16 `json:"months,omitempty"`
 }
@@ -194,7 +198,13 @@ func SeedPack(ctx context.Context, pool *pgxpool.Pool, path string) (Pack, error
 	if err := ValidatePack(p, nil); err != nil {
 		return p, fmt.Errorf("%s: %w", path, err)
 	}
-	err := pgx.BeginFunc(ctx, pool, func(tx pgx.Tx) error {
+	return p, SeedPackData(ctx, pool, p)
+}
+
+// SeedPackData seeds a pack already read and validated (the admin SPA reads
+// it from GitHub), as SeedPack does.
+func SeedPackData(ctx context.Context, pool *pgxpool.Pool, p Pack) error {
+	return pgx.BeginFunc(ctx, pool, func(tx pgx.Tx) error {
 		q := dbgen.New(tx)
 		name, _ := json.Marshal(p.Name)
 		if err := q.UpsertCity(ctx, dbgen.UpsertCityParams{
@@ -222,5 +232,18 @@ func SeedPack(ctx context.Context, pool *pgxpool.Pool, path string) (Pack, error
 		}
 		return nil
 	})
-	return p, err
+}
+
+// EncodePack writes a pack the way the files in data/citypacks are
+// formatted (two-space indents, non-ASCII and <>& kept as they are, a final
+// newline), so a rewrite from the admin SPA changes only what was edited.
+func EncodePack(p Pack) ([]byte, error) {
+	var b bytes.Buffer
+	enc := json.NewEncoder(&b)
+	enc.SetEscapeHTML(false)
+	enc.SetIndent("", "  ")
+	if err := enc.Encode(p); err != nil {
+		return nil, err
+	}
+	return b.Bytes(), nil
 }

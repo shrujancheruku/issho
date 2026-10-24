@@ -22,6 +22,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/gen/issho/v1/isshov1connect"
 	"github.com/shrujancheruku/issho/backend/internal/catalog"
 	"github.com/shrujancheruku/issho/backend/internal/chatws"
+	"github.com/shrujancheruku/issho/backend/internal/citypacks"
 	"github.com/shrujancheruku/issho/backend/internal/curation"
 	"github.com/shrujancheruku/issho/backend/internal/health"
 	"github.com/shrujancheruku/issho/backend/internal/identity"
@@ -33,6 +34,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/platform/config"
 	"github.com/shrujancheruku/issho/backend/internal/platform/db"
 	"github.com/shrujancheruku/issho/backend/internal/platform/errs"
+	"github.com/shrujancheruku/issho/backend/internal/platform/github"
 	"github.com/shrujancheruku/issho/backend/internal/platform/supabase"
 	"github.com/shrujancheruku/issho/backend/internal/profile"
 	"github.com/shrujancheruku/issho/backend/internal/push"
@@ -112,7 +114,7 @@ func run() error {
 		auth.Interceptor(verifier, isshov1connect.HealthServiceCheckProcedure, isshov1connect.UIServiceGetStringsProcedure),
 		// The admin SPA's services: only accounts with app_metadata.admin.
 		auth.AdminOnly(isshov1connect.ModerationServiceName, isshov1connect.ReviewServiceName, isshov1connect.CurationServiceName,
-			isshov1connect.MetricsServiceName),
+			isshov1connect.MetricsServiceName, isshov1connect.CityPackServiceName),
 		// Suspended people may only see that they are, sign out (which
 		// unregisters push) and delete their account.
 		moderation.Gate(suspensions, isshov1connect.IdentityServiceGetMeProcedure,
@@ -144,12 +146,21 @@ func run() error {
 	mux.Handle(isshov1connect.NewProfileServiceHandler(&profile.Handler{Svc: &profile.Service{DB: pool}}, opts))
 	planSvc := &plans.Service{DB: pool, Translations: translations}
 	venues := &curation.Handler{DB: pool}
+	packs := &citypacks.Handler{DB: pool, Base: "main"}
+	if cfg.GitHubToken != "" {
+		gh := github.New(cfg.GitHubToken, cfg.GitHubRepo)
+		gh.API = cfg.GitHubAPI
+		packs.GitHub, packs.Base = gh, gh.Base
+	} else {
+		slog.Warn("GITHUB_TOKEN not set: the city-pack editor can't read or propose packs")
+	}
 	// The worker's timing, so a plan an admin opens gets the same window.
 	review := &plans.ReviewHandler{Svc: planSvc, Timing: plans.DefaultTiming()}
 	if cfg.GoogleMapsAPIKey != "" {
 		places := mapsgoogle.New(cfg.GoogleMapsAPIKey)
 		planSvc.Places, venues.Places = places, places
 		review.Places, review.Routes = places, places
+		packs.Router, packs.Places = places, places
 	} else {
 		slog.Warn("GOOGLE_MAPS_API_KEY not set: plans show no venue names")
 	}
@@ -160,6 +171,7 @@ func run() error {
 	mux.Handle(isshov1connect.NewReviewServiceHandler(review, opts))
 	mux.Handle(isshov1connect.NewCurationServiceHandler(venues, opts))
 	mux.Handle(isshov1connect.NewMetricsServiceHandler(&metrics.Handler{Q: q}, opts))
+	mux.Handle(isshov1connect.NewCityPackServiceHandler(packs, opts))
 	mux.Handle(isshov1connect.NewModerationServiceHandler(&moderation.Handler{Q: q, Plans: planSvc, Suspensions: suspensions}, opts))
 	uiCatalog, err := uistrings.Load()
 	if err != nil {

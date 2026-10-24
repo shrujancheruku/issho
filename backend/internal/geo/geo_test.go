@@ -110,3 +110,22 @@ func TestDiscoverVenues(t *testing.T) {
 		}
 	}
 }
+
+func TestDiscoverAreaVenues(t *testing.T) {
+	cats := []VenueCategory{
+		{ID: "cafe", GoogleTypes: []string{"cafe"}, RadiusM: 1500},
+		{ID: "beach", GoogleTypes: []string{"beach"}, RadiusM: 50000},
+	}
+	// One area's own searches; the city-wide ones only for a new city.
+	for wide, want := range map[bool]int{false: 1, true: 2} {
+		s := &fakeSearcher{}
+		got, n, err := DiscoverAreaVenues(context.Background(), s, areas, "x-a", cats, wide, "ja")
+		if err != nil || n != want || len(s.reqs) != want {
+			t.Fatalf("wide %v: %d searches (%d made), %v; want %d", wide, n, len(s.reqs), err, want)
+		}
+		// Searched from x-a, but placed in the nearest area.
+		if s.reqs[0].Center != areas[0].LatLng || got[0].AreaID != "x-b" {
+			t.Errorf("wide %v: searched at %v, venue in %s", wide, s.reqs[0].Center, got[0].AreaID)
+		}
+	}
+}

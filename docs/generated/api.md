@@ -36,6 +36,28 @@
   
     - [CatalogService](#issho-v1-CatalogService)
   
+- [issho/v1/citypacks.proto](#issho_v1_citypacks-proto)
+    - [ApplyCityPackRequest](#issho-v1-ApplyCityPackRequest)
+    - [ApplyCityPackResponse](#issho-v1-ApplyCityPackResponse)
+    - [CityPack](#issho-v1-CityPack)
+    - [CityPack.NameEntry](#issho-v1-CityPack-NameEntry)
+    - [CityPackPullRequest](#issho-v1-CityPackPullRequest)
+    - [CityPackSummary](#issho-v1-CityPackSummary)
+    - [DiscoverAreaVenuesRequest](#issho-v1-DiscoverAreaVenuesRequest)
+    - [DiscoverAreaVenuesResponse](#issho-v1-DiscoverAreaVenuesResponse)
+    - [GetCityPackRequest](#issho-v1-GetCityPackRequest)
+    - [GetCityPackResponse](#issho-v1-GetCityPackResponse)
+    - [ListCityPacksRequest](#issho-v1-ListCityPacksRequest)
+    - [ListCityPacksResponse](#issho-v1-ListCityPacksResponse)
+    - [PackActivity](#issho-v1-PackActivity)
+    - [PackArea](#issho-v1-PackArea)
+    - [PackArea.NameEntry](#issho-v1-PackArea-NameEntry)
+    - [PackOverride](#issho-v1-PackOverride)
+    - [ProposeCityPackRequest](#issho-v1-ProposeCityPackRequest)
+    - [ProposeCityPackResponse](#issho-v1-ProposeCityPackResponse)
+  
+    - [CityPackService](#issho-v1-CityPackService)
+  
 - [issho/v1/plans.proto](#issho_v1_plans-proto)
     - [FeedPlan](#issho-v1-FeedPlan)
     - [GetPlanRequest](#issho-v1-GetPlanRequest)
@@ -742,6 +764,348 @@ HTTP: POST /issho.v1.CatalogService/&lt;Method&gt;
 | ListCities | [ListCitiesRequest](#issho-v1-ListCitiesRequest) | [ListCitiesResponse](#issho-v1-ListCitiesResponse) | ListCities returns every city with its areas (the &#34;home&#34; choices), with names in the requested primary and secondary languages. |
 | ListLanguages | [ListLanguagesRequest](#issho-v1-ListLanguagesRequest) | [ListLanguagesResponse](#issho-v1-ListLanguagesResponse) | ListLanguages returns every language a person can choose to speak or read (ISO 639-1), each named in itself and in the requested language. |
 | SuggestActivities | [SuggestActivitiesRequest](#issho-v1-SuggestActivitiesRequest) | [SuggestActivitiesResponse](#issho-v1-SuggestActivitiesResponse) | SuggestActivities reads what someone writes about their interests, in any language, and suggests activities offered in the city, each with an interest level. Suggestions only: the app shows them and the person confirms each one. Uses Gemini on Google Cloud&#39;s Agent Platform; FAILED_PRECONDITION when the server has no GOOGLE_GEMINI_API_KEY, so the app can hide the feature. An empty list means nothing in the text matched. |
+
+ 
+
+
+
+<a name="issho_v1_citypacks-proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## issho/v1/citypacks.proto
+
+
+
+<a name="issho-v1-ApplyCityPackRequest"></a>
+
+### ApplyCityPackRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| city_id | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-ApplyCityPackResponse"></a>
+
+### ApplyCityPackResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| new_areas | [string](#string) | repeated | Areas new to the database, or whose centre moved more than 100 m: they need venues (DiscoverAreaVenues). |
+| moved_areas | [string](#string) | repeated |  |
+| travel_times_rebuilt | [bool](#bool) |  | Travel times rebuilt (the rows saved); false when no area changed or there&#39;s no Google Maps key. |
+| travel_times | [int32](#int32) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-CityPack"></a>
+
+### CityPack
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [string](#string) |  |  |
+| comment | [string](#string) |  | A note for people editing the file; kept as it is. |
+| name | [CityPack.NameEntry](#issho-v1-CityPack-NameEntry) | repeated | English, plus the city&#39;s own languages for real local names. |
+| timezone | [string](#string) |  | IANA, e.g. Asia/Tokyo. |
+| currency | [string](#string) |  | ISO 4217, e.g. JPY. |
+| languages | [string](#string) | repeated | ISO 639-1, most common first. |
+| travel_modes | [string](#string) | repeated | walk, drive. |
+| areas | [PackArea](#issho-v1-PackArea) | repeated |  |
+| activity_overrides | [PackOverride](#issho-v1-PackOverride) | repeated |  |
+
+
+
+
+
+
+<a name="issho-v1-CityPack-NameEntry"></a>
+
+### CityPack.NameEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-CityPackPullRequest"></a>
+
+### CityPackPullRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| number | [int32](#int32) |  |  |
+| title | [string](#string) |  |  |
+| url | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-CityPackSummary"></a>
+
+### CityPackSummary
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [string](#string) |  |  |
+| name | [string](#string) |  | English name, from the database (or the id when not seeded). |
+| in_repo | [bool](#bool) |  | A file on the default branch, and a city in the database. |
+| seeded | [bool](#bool) |  |  |
+| areas | [int32](#int32) |  |  |
+| areas_without_travel_times | [string](#string) | repeated | Areas in the database with no travel times, or no venues. |
+| areas_without_venues | [string](#string) | repeated |  |
+
+
+
+
+
+
+<a name="issho-v1-DiscoverAreaVenuesRequest"></a>
+
+### DiscoverAreaVenuesRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| city_id | [string](#string) |  |  |
+| area_id | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-DiscoverAreaVenuesResponse"></a>
+
+### DiscoverAreaVenuesResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| searches | [int32](#int32) |  |  |
+| venues | [int32](#int32) |  | Venues found and saved (a place in two categories counts twice). |
+
+
+
+
+
+
+<a name="issho-v1-GetCityPackRequest"></a>
+
+### GetCityPackRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| city_id | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-GetCityPackResponse"></a>
+
+### GetCityPackResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| pack | [CityPack](#issho-v1-CityPack) |  |  |
+| activities | [PackActivity](#issho-v1-PackActivity) | repeated |  |
+
+
+
+
+
+
+<a name="issho-v1-ListCityPacksRequest"></a>
+
+### ListCityPacksRequest
+
+
+
+
+
+
+
+<a name="issho-v1-ListCityPacksResponse"></a>
+
+### ListCityPacksResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| configured | [bool](#bool) |  | GITHUB_TOKEN is set: packs can be read and proposed. |
+| packs | [CityPackSummary](#issho-v1-CityPackSummary) | repeated |  |
+| pull_requests | [CityPackPullRequest](#issho-v1-CityPackPullRequest) | repeated |  |
+
+
+
+
+
+
+<a name="issho-v1-PackActivity"></a>
+
+### PackActivity
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [string](#string) |  |  |
+| name | [string](#string) |  | English. |
+| category | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-PackArea"></a>
+
+### PackArea
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [string](#string) |  | &lt;city&gt;-&lt;slug&gt;; never changed once in the repository. |
+| name | [PackArea.NameEntry](#issho-v1-PackArea-NameEntry) | repeated |  |
+| lat | [double](#double) |  |  |
+| lng | [double](#double) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-PackArea-NameEntry"></a>
+
+### PackArea.NameEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-PackOverride"></a>
+
+### PackOverride
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| activity_id | [string](#string) |  |  |
+| disabled | [bool](#bool) |  | Not offered in the city. |
+| name | [string](#string) |  | A local English name replacing the catalogue&#39;s; &#34;&#34; = the catalogue&#39;s. |
+| months | [int32](#int32) | repeated | Months (1–12) it&#39;s in season; empty = all year. |
+
+
+
+
+
+
+<a name="issho-v1-ProposeCityPackRequest"></a>
+
+### ProposeCityPackRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| pack | [CityPack](#issho-v1-CityPack) |  |  |
+| note | [string](#string) |  | Why, for the pull request&#39;s description (optional). |
+
+
+
+
+
+
+<a name="issho-v1-ProposeCityPackResponse"></a>
+
+### ProposeCityPackResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| pull_request | [CityPackPullRequest](#issho-v1-CityPackPullRequest) |  |  |
+
+
+
+
+
+ 
+
+ 
+
+ 
+
+
+<a name="issho-v1-CityPackService"></a>
+
+### CityPackService
+CityPackService: the city-pack editor in the admin SPA (M8). City packs
+are JSON files in the repository (data/citypacks/&lt;city&gt;.json, validated
+in CI), so an edit is proposed as a GitHub pull request (owner&#39;s
+decision): the editor reads the pack on the default branch, validates the
+change as CI would, and opens a pull request with it. Once it&#39;s merged,
+ApplyCityPack loads the merged pack into the database, rebuilding travel
+times when areas were added or moved; DiscoverAreaVenues then finds an
+area&#39;s venues.
+Needs GITHUB_TOKEN (and GITHUB_REPO) on the API: without them every call
+but ListCityPacks is FAILED_PRECONDITION.
+Admins only, like ModerationService: anyone else gets PERMISSION_DENIED.
+
+HTTP: POST /issho.v1.CityPackService/&lt;Method&gt;
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| ListCityPacks | [ListCityPacksRequest](#issho-v1-ListCityPacksRequest) | [ListCityPacksResponse](#issho-v1-ListCityPacksResponse) | ListCityPacks returns the packs on the default branch, the cities in the database, and open pull requests from the editor. |
+| GetCityPack | [GetCityPackRequest](#issho-v1-GetCityPackRequest) | [GetCityPackResponse](#issho-v1-GetCityPackResponse) | GetCityPack returns a pack from the default branch, with the activity catalogue for its overrides. NOT_FOUND if there&#39;s no such file. |
+| ProposeCityPack | [ProposeCityPackRequest](#issho-v1-ProposeCityPackRequest) | [ProposeCityPackResponse](#issho-v1-ProposeCityPackResponse) | ProposeCityPack opens a pull request with a new or changed pack. INVALID_ARGUMENT if it fails validation (as in CI), removes or renames an area of the pack on the default branch, or changes nothing. |
+| ApplyCityPack | [ApplyCityPackRequest](#issho-v1-ApplyCityPackRequest) | [ApplyCityPackResponse](#issho-v1-ApplyCityPackResponse) | ApplyCityPack seeds the pack on the default branch into the database (as `tool seed` would) and, when areas were added or moved, rebuilds the city&#39;s travel times with Google. Areas removed from the file are kept, as seeding always does. |
+| DiscoverAreaVenues | [DiscoverAreaVenuesRequest](#issho-v1-DiscoverAreaVenuesRequest) | [DiscoverAreaVenuesResponse](#issho-v1-DiscoverAreaVenuesResponse) | DiscoverAreaVenues finds venues for one area with Google (one Nearby Search per venue category the city&#39;s activities use; the city-wide categories too when the city has no venues yet). |
 
  
 

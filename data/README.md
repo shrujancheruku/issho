@@ -8,6 +8,8 @@ Seed data that makes Issho location-agnostic. Code never hard-codes a city, so a
 | `venue-categories.json` | **Venue categories** (48): our kinds of place, mapped to Google place types |
 | `citypacks/<city>.json` | One **city pack** per city: `tokyo.json` (launch city) and `austin.json` (a **synthetic test pack**: a real car-based city that proves a second city needs no code changes; not a launch city) |
 
+City packs can also be edited (or created) in the admin SPA's **Cities** page, which opens a pull request with the change; once merged, the page loads it into the database. Keep hand edits in the same format (`cities.EncodePack`: two-space indents, unescaped non-ASCII; a test checks it) so the editor's pull requests change only what was edited.
+
 Load with `make seed` (everything) or `cd backend && go run ./cmd/tool seed ../data/citypacks/<city>.json`.
 
 **Validation:** `go test ./internal/cities/` (part of `make test` and CI) checks every file here: required fields, ranges, duplicate ids, references between files, and that every Google type is a valid Places API (New) type. Seeding validates too. Seeding runs in a transaction and is idempotent (upserts). **Removing** an entry from the JSON does not delete it from the database; disable it with an override, or merge it into another activity with `replaces` (below).

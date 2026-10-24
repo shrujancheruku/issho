@@ -24,6 +24,7 @@
 | Supabase CLI access token | macOS keychain, via `supabase login --token` with a **scoped** token run in your own terminal (the browser login grants full-account access) | not used | n/a |
 | Supabase secret key (`SUPABASE_SECRET_KEY`) | `SECRET_KEY` from `supabase status`, exported in your shell or a gitignored `.env` (never in `.env.example`) | not used (tests use a fake admin) | Kamal secrets |
 | Google Maps server key (`GOOGLE_MAPS_API_KEY`) | your shell env or `.env.issho-dev` (gitignored), used via `make … ENV_FILE=` | not used (tests use `httptest` fakes; CI only dry-runs) | Kamal secrets |
+| GitHub token for the city-pack editor (`GITHUB_TOKEN`) | `.env.issho-dev` (gitignored). A **fine-grained** personal access token limited to this repository, with **Contents: read and write** and **Pull requests: read and write** only, and an expiry | not used (`httptest` fakes) | Kamal secrets |
 | Google Cloud Translation key (`GOOGLE_TRANSLATE_API_KEY`, API server) | shell env / untracked `.env` | not used (tests use `httptest` fakes) | Kamal secrets |
 | Google Cloud Agent Platform key for Gemini (`GOOGLE_GEMINI_API_KEY`, API server: interest suggestions; starts `AQ.`) | shell env / untracked `.env` | not used (tests use `httptest` fakes) | Kamal secrets |
 | Anthropic API key (`ANTHROPIC_API_KEY`, M6 plan text) | shell env / untracked `.env` | not used (tests use fakes) | Kamal secrets |

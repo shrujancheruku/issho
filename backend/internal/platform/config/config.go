@@ -28,6 +28,15 @@ type Config struct {
 	// Details, fetched live). Optional: without it, plans show no venue
 	// names.
 	GoogleMapsAPIKey string
+	// GitHubToken (a fine-grained token for GitHubRepo with Contents and
+	// Pull requests write) enables the admin SPA's city-pack editor, which
+	// proposes pack changes as pull requests. Optional: without it, the
+	// editor's calls return FAILED_PRECONDITION.
+	GitHubToken string
+	// GitHubRepo is "owner/name" (default shrujancheruku/issho);
+	// GitHubAPI is GitHub's API address (default https://api.github.com;
+	// GitHub Enterprise, or a local fake for checks).
+	GitHubRepo, GitHubAPI string
 }
 
 func Load() (Config, error) {
@@ -39,6 +48,9 @@ func Load() (Config, error) {
 		GoogleTranslateAPIKey: os.Getenv("GOOGLE_TRANSLATE_API_KEY"),
 		GeminiAPIKey:          os.Getenv("GOOGLE_GEMINI_API_KEY"),
 		GoogleMapsAPIKey:      os.Getenv("GOOGLE_MAPS_API_KEY"),
+		GitHubToken:           os.Getenv("GITHUB_TOKEN"),
+		GitHubRepo:            getenv("GITHUB_REPO", "shrujancheruku/issho"),
+		GitHubAPI:             getenv("GITHUB_API_URL", "https://api.github.com"),
 	}
 	if v := os.Getenv("ALLOWED_ORIGINS"); v != "" {
 		c.AllowedOrigins = strings.Split(v, ",")

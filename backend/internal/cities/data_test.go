@@ -1,6 +1,7 @@
 package cities
 
 import (
+	"os"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -50,6 +51,15 @@ func TestDataFiles(t *testing.T) {
 		}
 		if err := ValidatePack(p, ids); err != nil {
 			t.Errorf("%s:\n%v", path, err)
+		}
+		// The admin SPA rewrites packs with EncodePack: it must reproduce
+		// the file exactly, so its pull requests change only what was edited.
+		raw, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if enc, err := EncodePack(p); err != nil || string(enc) != string(raw) {
+			t.Errorf("%s: EncodePack doesn't reproduce the file (%v); keep packs in its format", path, err)
 		}
 	}
 }

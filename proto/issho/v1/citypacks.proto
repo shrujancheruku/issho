@@ -1,0 +1,160 @@
+syntax = "proto3";
+
+package issho.v1;
+
+option go_package = "github.com/shrujancheruku/issho/backend/gen/issho/v1;isshov1";
+
+// CityPackService: the city-pack editor in the admin SPA (M8). City packs
+// are JSON files in the repository (data/citypacks/<city>.json, validated
+// in CI), so an edit is proposed as a GitHub pull request (owner's
+// decision): the editor reads the pack on the default branch, validates the
+// change as CI would, and opens a pull request with it. Once it's merged,
+// ApplyCityPack loads the merged pack into the database, rebuilding travel
+// times when areas were added or moved; DiscoverAreaVenues then finds an
+// area's venues.
+// Needs GITHUB_TOKEN (and GITHUB_REPO) on the API: without them every call
+// but ListCityPacks is FAILED_PRECONDITION.
+// Admins only, like ModerationService: anyone else gets PERMISSION_DENIED.
+//
+// HTTP: POST /issho.v1.CityPackService/<Method>
+service CityPackService {
+  // ListCityPacks returns the packs on the default branch, the cities in
+  // the database, and open pull requests from the editor.
+  rpc ListCityPacks(ListCityPacksRequest) returns (ListCityPacksResponse) {}
+
+  // GetCityPack returns a pack from the default branch, with the activity
+  // catalogue for its overrides. NOT_FOUND if there's no such file.
+  rpc GetCityPack(GetCityPackRequest) returns (GetCityPackResponse) {}
+
+  // ProposeCityPack opens a pull request with a new or changed pack.
+  // INVALID_ARGUMENT if it fails validation (as in CI), removes or renames
+  // an area of the pack on the default branch, or changes nothing.
+  rpc ProposeCityPack(ProposeCityPackRequest) returns (ProposeCityPackResponse) {}
+
+  // ApplyCityPack seeds the pack on the default branch into the database
+  // (as `tool seed` would) and, when areas were added or moved, rebuilds the
+  // city's travel times with Google. Areas removed from the file are kept,
+  // as seeding always does.
+  rpc ApplyCityPack(ApplyCityPackRequest) returns (ApplyCityPackResponse) {}
+
+  // DiscoverAreaVenues finds venues for one area with Google (one Nearby
+  // Search per venue category the city's activities use; the city-wide
+  // categories too when the city has no venues yet).
+  rpc DiscoverAreaVenues(DiscoverAreaVenuesRequest) returns (DiscoverAreaVenuesResponse) {}
+}
+
+message ListCityPacksRequest {}
+
+message ListCityPacksResponse {
+  // GITHUB_TOKEN is set: packs can be read and proposed.
+  bool configured = 1;
+  repeated CityPackSummary packs = 2;
+  repeated CityPackPullRequest pull_requests = 3;
+}
+
+message CityPackSummary {
+  string id = 1;
+  // English name, from the database (or the id when not seeded).
+  string name = 2;
+  // A file on the default branch, and a city in the database.
+  bool in_repo = 3;
+  bool seeded = 4;
+  int32 areas = 5;
+  // Areas in the database with no travel times, or no venues.
+  repeated string areas_without_travel_times = 6;
+  repeated string areas_without_venues = 7;
+}
+
+message CityPackPullRequest {
+  int32 number = 1;
+  string title = 2;
+  string url = 3;
+}
+
+message CityPack {
+  string id = 1;
+  // A note for people editing the file; kept as it is.
+  string comment = 2;
+  // English, plus the city's own languages for real local names.
+  map<string, string> name = 3;
+  // IANA, e.g. Asia/Tokyo.
+  string timezone = 4;
+  // ISO 4217, e.g. JPY.
+  string currency = 5;
+  // ISO 639-1, most common first.
+  repeated string languages = 6;
+  // walk, drive.
+  repeated string travel_modes = 7;
+  repeated PackArea areas = 8;
+  repeated PackOverride activity_overrides = 9;
+}
+
+message PackArea {
+  // <city>-<slug>; never changed once in the repository.
+  string id = 1;
+  map<string, string> name = 2;
+  double lat = 3;
+  double lng = 4;
+}
+
+message PackOverride {
+  string activity_id = 1;
+  // Not offered in the city.
+  bool disabled = 2;
+  // A local English name replacing the catalogue's; "" = the catalogue's.
+  string name = 3;
+  // Months (1–12) it's in season; empty = all year.
+  repeated int32 months = 4;
+}
+
+message GetCityPackRequest {
+  string city_id = 1;
+}
+
+message GetCityPackResponse {
+  CityPack pack = 1;
+  repeated PackActivity activities = 2;
+}
+
+message PackActivity {
+  string id = 1;
+  // English.
+  string name = 2;
+  string category = 3;
+}
+
+message ProposeCityPackRequest {
+  CityPack pack = 1;
+  // Why, for the pull request's description (optional).
+  string note = 2;
+}
+
+message ProposeCityPackResponse {
+  CityPackPullRequest pull_request = 1;
+}
+
+message ApplyCityPackRequest {
+  string city_id = 1;
+}
+
+message ApplyCityPackResponse {
+  // Areas new to the database, or whose centre moved more than 100 m:
+  // they need venues (DiscoverAreaVenues).
+  repeated string new_areas = 1;
+  repeated string moved_areas = 2;
+  // Travel times rebuilt (the rows saved); false when no area changed or
+  // there's no Google Maps key.
+  bool travel_times_rebuilt = 3;
+  int32 travel_times = 4;
+}
+
+message DiscoverAreaVenuesRequest {
+  string city_id = 1;
+  string area_id = 2;
+}
+
+message DiscoverAreaVenuesResponse {
+  int32 searches = 1;
+  // Venues found and saved (a place in two categories counts twice).
+  int32 venues = 2;
+}
