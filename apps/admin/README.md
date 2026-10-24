@@ -58,7 +58,7 @@ The API URL is baked into each build, so redeploy after restarting the tunnel. `
 
 **From CI:** `.github/workflows/deploy-web.yml` runs the same script on every push to `main` that touches either site. It's skipped until the repository variable `API_URL` is set, which should wait for the hosted API (M9): a tunnel's address changes too often. The workflow's header lists the other variables and the `CLOUDFLARE_API_TOKEN` secret (an account API token limited to *Workers Scripts: Edit*).
 
-Anyone can open the page; data needs an admin token, which the API checks. Putting Cloudflare Access in front of it (free for up to 50 users) would add a check before the page loads; not set up yet.
+Anyone can open the page; data needs an admin token, which the API checks on every call. There's deliberately no Cloudflare Access in front (owner's decision, 2026-10-25).
 
 ## Checks
 
