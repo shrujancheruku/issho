@@ -2,7 +2,7 @@
 
 > **This is the source of truth for what's planned, built and pending.** CI (`roadmap` job) fails any push or PR that changes code without updating this file. When you change code, update the status lines below. If the change made a decision, add it to the Decision log.
 
-**Last updated:** 2026-10-24 · **Version:** 0.4.0 (pre-release; [releases](https://github.com/shrujancheruku/issho/releases)) · **Current milestone:** M8 Admin SPA, in progress: the moderation queue, suspensions, plan and group review, venue curation, stop editing, the metrics and the city-pack editor are built, and the admin SPA and the web build are test-deployed on Cloudflare Workers against `issho-dev` (M7 done; plan quality in progress; migrations up to 00018 applied to `issho-dev` and the catalogue re-seeded, 2026-10-23; 00019–00023 applied 2026-10-24)
+**Last updated:** 2026-10-24 · **Version:** 0.4.0 (pre-release; [releases](https://github.com/shrujancheruku/issho/releases)) · **Current milestone:** M8 Admin SPA, in progress: the moderation queue, suspensions, plan and group review, venue curation, stop editing, the metrics and the city-pack editor are built (and the backend image and Kamal config for M9 prepared), and the admin SPA and the web build are test-deployed on Cloudflare Workers against `issho-dev` (M7 done; plan quality in progress; migrations up to 00018 applied to `issho-dev` and the catalogue re-seeded, 2026-10-23; 00019–00023 applied 2026-10-24)
 
 Legend: ✅ done · 🟡 in progress / partial · ⬜ not started · ⏸ deferred (post-MVP)
 
@@ -235,11 +235,11 @@ Order (owner's decision, 2026-10-23): the **moderation queue** first, then **pla
 - ⬜ **SMTP sending domain** (moved from M2): Resend is configured for `issho-dev` (free tier, `onboarding@resend.dev`, delivers only to the owner's address). Before real users, it needs a **verified sending domain**.
 - ⬜ Spot-check machine translations for the launch languages (admin can mark `app.translations.reviewed`; M8).
 - ⬜ Sentry (crashes and errors, mobile and Go) and PostHog (product analytics, feature flags).
-- ⬜ Production deploy:
-  - Dockerfiles for `api`/`worker`
-  - **Kamal 2 (with kamal-proxy for TLS/routing)** to one VPS behind Cloudflare
-  - Supabase upgraded to Pro
-  - nightly `pg_dump` → Cloudflare R2 as an off-site copy
+- 🟡 Production deploy ([deploy.md](deploy.md)):
+  - ✅ **One image for `api`, `worker` and `tool`** (`backend/Dockerfile`, 2026-10-24): distroless and non-root, cross-compiled so an amd64 build is quick on a Mac, `data/` included for seeding, the commit stamped as the version. The API gained `GET /up` (200 only when the database answers) for kamal-proxy's health check. **Checked** against the local stack: migrations and seeding from the image, the API serving (`/up`, `HealthService.Check` with the version, auth on the rest), the worker matching both cities in their time zones, a clean exit on stop, and the amd64 build running under emulation. CI builds it on every PR and checks both binaries start.
+  - 🟡 **Kamal 2 (with kamal-proxy for TLS/routing)** to one VPS behind Cloudflare: `config/deploy.yml` (the API behind the proxy, the worker as a second role without one, Cloudflare origin certificate, `kamal migrate` and log aliases) and `.kamal/secrets.example`, accepted by Kamal 2.12's `kamal config`. ⬜ The server, domain and registry account (placeholders marked `TODO`), then the first deploy and the checks listed in deploy.md.
+  - ⬜ Supabase Pro: **upgrade before real users**, mainly so the project can't be paused for inactivity, and for daily backups. Not needed while it's the owner and testers (the database is 23 MB of Free's 500 MB).
+  - ⬜ nightly `pg_dump` → Cloudflare R2 as an off-site copy (needs a bucket and keys, and where it runs: the VPS)
 - ⬜ EAS Build/Submit → TestFlight and Play internal testing.
 - ⬜ **iOS push notifications** (moved from M6): needs the paid Apple Developer Program, which TestFlight needs anyway. Create and upload the APNs key with `eas credentials`; the server and app code are already done (M6).
 - ⬜ Stripe Identity verification behind a feature flag, for the public launch.
@@ -432,6 +432,10 @@ The app builds for the web and CI keeps it building. Before a public web release
 | 2026-10-24 | **"Route curation" is editing a plan's stops**, not overriding travel times (owner's decision) | Walk stops and venues are what people see; an admin fixing them beats re-running the composer. An edited walk keeps the admin's order (no route optimisation) and is saved even when it breaks the composer's rules, with warnings. |
 | 2026-10-24 | **Venue curation is per place**, not per place and category | A snack bar listed as both `bar` and `karaoke` is unsuitable in both. Rediscovery gives a new category row the place's existing status. |
 | 2026-10-24 | **Admins can add places found by name**, checked with Google (open, one of its types is the category's, within the category's search radius of an area) | Discovery keeps only the 20 most popular places per area and category, so good places are missed. Only the place id is stored, as for discovered venues. |
+| 2026-10-24 | **One backend image** with the API, worker and tool binaries; the role picks the command | One build and one tag per commit; migrations and seeding run from the exact image being deployed (`kamal migrate`). Distroless keeps it small (~94 MB, mostly the three binaries) with no shell to exploit. |
+| 2026-10-24 | **Cloudflare origin certificate** on kamal-proxy, not Let's Encrypt | Cloudflare proxies the API, which gets in the way of Let's Encrypt's HTTP challenge; an origin certificate lasts 15 years and makes "Full (strict)" possible. |
+| 2026-10-24 | **Image registry: GitHub Container Registry** (private package) | Free, next to the code, and the GitHub account already exists; no new vendor. |
+| 2026-10-24 | **Supabase Pro deferred until just before real users** | Free is enough for the owner and testers. Pro's main gains are no pausing and daily backups; the off-site `pg_dump` covers backups meanwhile. |
 
 ## 5. Known gaps & risks
 - **Walks depend on the model knowing the area.** Places checks catch invented or wrong places, but not a dull choice of real ones; Tokyo's well-known areas did well, quieter areas and smaller cities may fail more often (and then simply get fewer walks). Watch `walk not composed` in the worker logs and the eval; manual review (M8) is the fallback.

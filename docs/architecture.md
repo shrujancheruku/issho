@@ -134,5 +134,5 @@ See the decision log in [ROADMAP.md](ROADMAP.md#4-decision-log). The most import
 - Supabase for the database, auth and storage
 - Google Maps Platform for venues and travel times
 - Gemini on Google Cloud's Agent Platform for interest tagging and for composing walks (titles, summaries and notes included)
-- Kamal 2 on a VPS for deploys
+- Kamal 2 on a VPS for deploys ([deploy.md](deploy.md))
 - Conventional Commits with release-please for versions and changelogs
