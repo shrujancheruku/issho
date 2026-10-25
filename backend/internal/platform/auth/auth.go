@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 
 	"connectrpc.com/connect"
@@ -22,6 +23,16 @@ type Caller struct {
 	// and carried in the access token, so a change takes effect when the
 	// admin's token is next refreshed (within the token lifetime, 1 h).
 	Admin bool
+	// TranslatorLangs are the languages a translator may edit in the admin
+	// SPA's translation editor (app_metadata.translator_langs, by `tool
+	// set-translator`), carried in the token like Admin. Admins may edit
+	// every language without it.
+	TranslatorLangs []string
+}
+
+// Translates reports whether the caller may edit lang's translations.
+func (c Caller) Translates(lang string) bool {
+	return c.Admin || slices.Contains(c.TranslatorLangs, lang)
 }
 
 type claims struct {
@@ -30,7 +41,8 @@ type claims struct {
 	// it. user_metadata is editable by the user and must never grant
 	// anything.
 	AppMetadata struct {
-		Admin bool `json:"admin"`
+		Admin           bool     `json:"admin"`
+		TranslatorLangs []string `json:"translator_langs"`
 	} `json:"app_metadata"`
 	jwt.RegisteredClaims
 }
@@ -81,7 +93,7 @@ func (v *Verifier) Verify(token string) (Caller, error) {
 	if err != nil {
 		return Caller{}, fmt.Errorf("invalid subject: %w", err)
 	}
-	return Caller{UserID: id, Email: c.Email, Admin: c.AppMetadata.Admin}, nil
+	return Caller{UserID: id, Email: c.Email, Admin: c.AppMetadata.Admin, TranslatorLangs: c.AppMetadata.TranslatorLangs}, nil
 }
 
 type ctxKey struct{}
@@ -139,6 +151,30 @@ func AdminOnly(services ...string) connect.UnaryInterceptorFunc {
 				if strings.HasPrefix(req.Spec().Procedure, p) {
 					if c, ok := FromContext(ctx); !ok || !c.Admin {
 						return nil, connect.NewError(connect.CodePermissionDenied, errors.New("admins only"))
+					}
+					break
+				}
+			}
+			return next(ctx, req)
+		}
+	}
+}
+
+// TranslatorsOnly rejects calls to the given services unless the caller is
+// an admin or a translator (has at least one language). Which languages a
+// translator may edit is checked by the handler (Caller.Translates); this
+// keeps everyone else out of the whole service, new RPCs included.
+func TranslatorsOnly(services ...string) connect.UnaryInterceptorFunc {
+	prefixes := make([]string, len(services))
+	for i, s := range services {
+		prefixes[i] = "/" + s + "/"
+	}
+	return func(next connect.UnaryFunc) connect.UnaryFunc {
+		return func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
+			for _, p := range prefixes {
+				if strings.HasPrefix(req.Spec().Procedure, p) {
+					if c, ok := FromContext(ctx); !ok || (!c.Admin && len(c.TranslatorLangs) == 0) {
+						return nil, connect.NewError(connect.CodePermissionDenied, errors.New("translators only"))
 					}
 					break
 				}

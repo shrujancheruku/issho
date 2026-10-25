@@ -77,3 +77,62 @@ func TestProposeAndRead(t *testing.T) {
 		t.Errorf("a failing commit: %v", err)
 	}
 }
+
+func TestCommitFiles(t *testing.T) {
+	var tree struct {
+		BaseTree string `json:"base_tree"`
+		Tree     []struct {
+			Path, Mode, Type, Content string
+		} `json:"tree"`
+	}
+	var commit struct {
+		Message string   `json:"message"`
+		Tree    string   `json:"tree"`
+		Parents []string `json:"parents"`
+	}
+	var ref map[string]any
+	moved := false
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method + " " + r.URL.Path {
+		case "GET /repos/o/r/git/ref/heads/translations/ja-1":
+			_, _ = w.Write([]byte(`{"object":{"sha":"tip"}}`))
+		case "GET /repos/o/r/git/commits/tip":
+			_, _ = w.Write([]byte(`{"tree":{"sha":"tree0"}}`))
+		case "POST /repos/o/r/git/trees":
+			_ = json.NewDecoder(r.Body).Decode(&tree)
+			_, _ = w.Write([]byte(`{"sha":"tree1"}`))
+		case "POST /repos/o/r/git/commits":
+			_ = json.NewDecoder(r.Body).Decode(&commit)
+			_, _ = w.Write([]byte(`{"sha":"commit1"}`))
+		case "PATCH /repos/o/r/git/refs/heads/translations/ja-1":
+			_ = json.NewDecoder(r.Body).Decode(&ref)
+			if moved {
+				w.WriteHeader(http.StatusUnprocessableEntity)
+				_, _ = w.Write([]byte(`{"message":"Update is not a fast forward"}`))
+			}
+		default:
+			t.Errorf("unexpected %s %s", r.Method, r.URL.Path)
+			w.WriteHeader(http.StatusTeapot)
+		}
+	}))
+	defer srv.Close()
+	c := New("tok", "o/r")
+	c.API = srv.URL
+	files := map[string][]byte{"b/ja.json": []byte("{}\n"), "a/ja.json": []byte("{}\n")}
+	if err := c.CommitFiles(context.Background(), "translations/ja-1", files, "feat(data): x"); err != nil {
+		t.Fatal(err)
+	}
+	if tree.BaseTree != "tree0" || len(tree.Tree) != 2 || tree.Tree[0].Path != "a/ja.json" || tree.Tree[0].Mode != "100644" || tree.Tree[1].Content != "{}\n" {
+		t.Errorf("tree %+v", tree)
+	}
+	if commit.Tree != "tree1" || len(commit.Parents) != 1 || commit.Parents[0] != "tip" || commit.Message != "feat(data): x" {
+		t.Errorf("commit %+v", commit)
+	}
+	if ref["sha"] != "commit1" || ref["force"] != false {
+		t.Errorf("ref %+v", ref)
+	}
+	moved = true
+	if err := c.CommitFiles(context.Background(), "translations/ja-1", files, "x"); !errors.Is(err, ErrConflict) {
+		t.Errorf("moved branch: %v", err)
+	}
+}

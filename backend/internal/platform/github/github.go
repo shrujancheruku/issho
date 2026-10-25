@@ -1,6 +1,7 @@
 // Package github is the small part of GitHub's REST API the admin SPA's
-// city-pack editor needs: read a file on the default branch, commit a file
-// to a new branch and open a pull request, and list open pull requests.
+// editors need: read files on a branch, commit files to a branch (the
+// city-pack editor's new branch per proposal; the translation editor's
+// rolling branch per language), open pull requests and list open ones.
 // The token is a fine-grained personal access token limited to the one
 // repository, with Contents and Pull requests write access.
 package github
@@ -13,8 +14,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"net/http"
 	"net/url"
+	"slices"
 	"strings"
 	"time"
 )
@@ -189,4 +192,93 @@ func (c *Client) OpenPRs(ctx context.Context, prefix string) ([]PR, error) {
 		}
 	}
 	return out, nil
+}
+
+// ErrConflict means the branch moved while committing (someone else
+// committed first); read again and retry.
+var ErrConflict = errors.New("GitHub: the branch changed meanwhile")
+
+func (c *Client) head(ctx context.Context, branch string) (string, error) {
+	var ref struct {
+		Object struct {
+			SHA string `json:"sha"`
+		} `json:"object"`
+	}
+	if err := c.do(ctx, http.MethodGet, c.repoPath("/git/ref/heads/%s", branch), nil, &ref); err != nil {
+		return "", err
+	}
+	return ref.Object.SHA, nil
+}
+
+// CreateBranch makes branch from the current tip of Base.
+func (c *Client) CreateBranch(ctx context.Context, branch string) error {
+	sha, err := c.head(ctx, c.Base)
+	if err != nil {
+		return fmt.Errorf("base branch: %w", err)
+	}
+	return c.do(ctx, http.MethodPost, c.repoPath("/git/refs"), map[string]string{"ref": "refs/heads/" + branch, "sha": sha}, nil)
+}
+
+// CommitFiles commits several files to branch in one commit (the contents
+// API takes one file per commit), through the Git data API: a tree on top
+// of the branch's, a commit, then a fast-forward of the branch. ErrConflict
+// if the branch moved in between.
+func (c *Client) CommitFiles(ctx context.Context, branch string, files map[string][]byte, message string) error {
+	parent, err := c.head(ctx, branch)
+	if err != nil {
+		return fmt.Errorf("branch: %w", err)
+	}
+	var commit struct {
+		Tree struct {
+			SHA string `json:"sha"`
+		} `json:"tree"`
+	}
+	if err := c.do(ctx, http.MethodGet, c.repoPath("/git/commits/%s", parent), nil, &commit); err != nil {
+		return fmt.Errorf("commit: %w", err)
+	}
+	type entry struct {
+		Path    string `json:"path"`
+		Mode    string `json:"mode"`
+		Type    string `json:"type"`
+		Content string `json:"content"`
+	}
+	tree := struct {
+		BaseTree string  `json:"base_tree"`
+		Tree     []entry `json:"tree"`
+	}{BaseTree: commit.Tree.SHA}
+	for _, p := range slices.Sorted(maps.Keys(files)) {
+		tree.Tree = append(tree.Tree, entry{Path: p, Mode: "100644", Type: "blob", Content: string(files[p])})
+	}
+	var created struct {
+		SHA string `json:"sha"`
+	}
+	if err := c.do(ctx, http.MethodPost, c.repoPath("/git/trees"), tree, &created); err != nil {
+		return fmt.Errorf("tree: %w", err)
+	}
+	newTree := created.SHA
+	if err := c.do(ctx, http.MethodPost, c.repoPath("/git/commits"), map[string]any{
+		"message": message, "tree": newTree, "parents": []string{parent},
+	}, &created); err != nil {
+		return fmt.Errorf("commit: %w", err)
+	}
+	err = c.do(ctx, http.MethodPatch, c.repoPath("/git/refs/heads/%s", branch), map[string]any{"sha": created.SHA, "force": false}, nil)
+	var apiErr *APIError
+	if errors.As(err, &apiErr) && apiErr.StatusCode == http.StatusUnprocessableEntity {
+		return ErrConflict
+	}
+	return err
+}
+
+// OpenPR opens a pull request from branch into Base.
+func (c *Client) OpenPR(ctx context.Context, branch, title, body string) (PR, error) {
+	var pr struct {
+		Number  int    `json:"number"`
+		HTMLURL string `json:"html_url"`
+	}
+	if err := c.do(ctx, http.MethodPost, c.repoPath("/pulls"), map[string]string{
+		"title": title, "head": branch, "base": c.Base, "body": body,
+	}, &pr); err != nil {
+		return PR{}, fmt.Errorf("pull request: %w", err)
+	}
+	return PR{Number: pr.Number, Title: title, URL: pr.HTMLURL, Branch: branch}, nil
 }

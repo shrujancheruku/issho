@@ -8,7 +8,10 @@
 // Human versions (human/<lang>.json, copied the same way; see Human) replace
 // single strings: the owner's livelier English, and translations a person
 // wrote or approved. Machines still translate the plain English, which is
-// also the last resort when nothing else is ready.
+// also the last resort when nothing else is ready. The API starts with the
+// copies built into it and then follows the default branch (Follow), so a
+// merged pull request from the translation editor is served without a
+// deploy.
 package uistrings
 
 import (
@@ -20,11 +23,14 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"log/slog"
 	"maps"
 	"path"
 	"regexp"
 	"slices"
 	"strings"
+	"sync/atomic"
+	"time"
 
 	"connectrpc.com/connect"
 
@@ -49,13 +55,76 @@ var notesRaw []byte
 // the cache key, so UI text never shares a translation with an activity name.
 const translateContext = "text in the user interface of a mobile app for meeting new friends at group outings"
 
+// ContextPrefix starts the context of every UI string in app.translations,
+// so other services can tell UI strings from catalogue text there.
+const ContextPrefix = translateContext
+
+// HumanDir holds the human versions in the repository (the source), and
+// HumanCopyDir the copy `make gen` makes for the API to embed. The
+// translation editor commits both, so CI's check of `make gen` passes.
+const (
+	HumanDir     = "apps/mobile/src/i18n/human"
+	HumanCopyDir = "backend/internal/uistrings/human"
+)
+
+// Human versions by language, then key.
+type humanSet = map[string]map[string]Human
+
 // Catalog is the plain English UI text, key → text, the human versions and
 // the notes for translators.
 type Catalog struct {
 	keys    []string // sorted
 	english map[string]string
-	human   map[string]map[string]Human // lang → key → version
-	notes   map[string]string           // key → note
+	// human is replaced whole when the default branch changes (SetHuman);
+	// readers take one snapshot.
+	human atomic.Pointer[humanSet]
+	notes map[string]string // key → note
+}
+
+// Keys are every UI string's key, sorted.
+func (c *Catalog) Keys() []string { return c.keys }
+
+// English is key's plain English; false when there's no such key.
+func (c *Catalog) English(key string) (string, bool) {
+	s, ok := c.english[key]
+	return s, ok
+}
+
+// HumanVersions is lang's human versions as last loaded (read only).
+func (c *Catalog) HumanVersions(lang string) map[string]Human { return (*c.human.Load())[lang] }
+
+// HumanLanguages are the languages that have a human-version file.
+func (c *Catalog) HumanLanguages() []string { return slices.Sorted(maps.Keys(*c.human.Load())) }
+
+// Current reports whether v can be shown for key: written for today's
+// English, not empty, and with every placeholder kept.
+func (c *Catalog) Current(key string, v Human) bool {
+	english := c.english[key]
+	return english != "" && strings.TrimSpace(v.Text) != "" &&
+		v.Source == SourceHash(english) && SamePlaceholders(english, v.Text)
+}
+
+// SetHuman replaces every language's human versions with files (language →
+// a human/<lang>.json). Nothing changes if one doesn't parse.
+func (c *Catalog) SetHuman(files map[string][]byte) error {
+	h, err := parseHuman(files)
+	if err != nil {
+		return err
+	}
+	c.human.Store(&h)
+	return nil
+}
+
+func parseHuman(files map[string][]byte) (humanSet, error) {
+	h := make(humanSet, len(files))
+	for lang, raw := range files {
+		var v map[string]Human
+		if err := json.Unmarshal(raw, &v); err != nil {
+			return nil, fmt.Errorf("ui strings, human/%s.json: %w", lang, err)
+		}
+		h[lang] = v
+	}
+	return h, nil
 }
 
 // Items is the catalogue as a translator gets it: the plain English of every
@@ -71,6 +140,9 @@ func (c *Catalog) Items() (keys []string, items []translate.Item) {
 
 // Note is key's note for translators, if it has one.
 func (c *Catalog) Note(key string) string { return c.notes[key] }
+
+// Context is what a translator is told about key (see context).
+func (c *Catalog) Context(key string) string { return c.context(key) }
 
 // context is what the translator is told about key: what all UI text is,
 // plus the key's note. Being part of the cache key, a new or reworded note
@@ -96,13 +168,21 @@ func Load() (*Catalog, error) {
 		}
 		human[strings.TrimSuffix(path.Base(f), ".json")] = raw
 	}
-	c, err := parse(source, human)
+	var notes map[string]string
+	if err := json.Unmarshal(notesRaw, &notes); err != nil {
+		return nil, fmt.Errorf("ui strings, notes.json: %w", err)
+	}
+	return New(source, human, notes)
+}
+
+// New builds a catalogue from an en.json, the human files by language and
+// the notes: Load's embedded ones, or a test's.
+func New(english []byte, human map[string][]byte, notes map[string]string) (*Catalog, error) {
+	c, err := parse(english, human)
 	if err != nil {
 		return nil, err
 	}
-	if err := json.Unmarshal(notesRaw, &c.notes); err != nil {
-		return nil, fmt.Errorf("ui strings, notes.json: %w", err)
-	}
+	c.notes = notes
 	return c, nil
 }
 
@@ -112,13 +192,9 @@ func parse(raw []byte, human map[string][]byte) (*Catalog, error) {
 	if err := json.Unmarshal(raw, &m); err != nil {
 		return nil, fmt.Errorf("ui strings: %w", err)
 	}
-	c := &Catalog{keys: slices.Sorted(maps.Keys(m)), english: m, human: make(map[string]map[string]Human, len(human))}
-	for lang, raw := range human {
-		var v map[string]Human
-		if err := json.Unmarshal(raw, &v); err != nil {
-			return nil, fmt.Errorf("ui strings, human/%s.json: %w", lang, err)
-		}
-		c.human[lang] = v
+	c := &Catalog{keys: slices.Sorted(maps.Keys(m)), english: m}
+	if err := c.SetHuman(human); err != nil {
+		return nil, err
 	}
 	return c, nil
 }
@@ -139,10 +215,8 @@ func Version(strs map[string]string) string {
 // today's English that kept every placeholder. A stale one is skipped (see
 // Human.Source): the plain text or a fresh translation is shown instead.
 func (c *Catalog) humanText(lang, key string) (string, bool) {
-	v, ok := c.human[lang][key]
-	english := c.english[key]
-	if !ok || english == "" || strings.TrimSpace(v.Text) == "" ||
-		v.Source != SourceHash(english) || !SamePlaceholders(english, v.Text) {
+	v, ok := c.HumanVersions(lang)[key]
+	if !ok || !c.Current(key, v) {
 		return "", false
 	}
 	return v.Text, true
@@ -246,4 +320,73 @@ func SamePlaceholders(english, translated string) bool {
 	slices.Sort(a)
 	slices.Sort(b)
 	return slices.Equal(a, b)
+}
+
+// Machine is every UI string's machine translation into lang, ignoring
+// human versions: what the translation editor shows next to them. Strings
+// still being translated are missing; complete is false then.
+func (c *Catalog) Machine(ctx context.Context, tr *translate.Service, lang string) (map[string]string, bool) {
+	texts := make([]translate.Text, len(c.keys))
+	for i, k := range c.keys {
+		raw, _ := json.Marshal(map[string]string{i18n.Authoring: c.english[k]})
+		texts[i] = translate.Text{Raw: raw, Context: c.context(k)}
+	}
+	got := tr.Resolve(ctx, lang, texts)
+	out := make(map[string]string, len(c.keys))
+	complete := true
+	for i, k := range c.keys {
+		if got[i] == "" {
+			complete = false
+			continue
+		}
+		out[k] = got[i]
+	}
+	return out, complete
+}
+
+// HumanSource reads the human-version files on a branch (*github.Client).
+type HumanSource interface {
+	Dir(ctx context.Context, path, branch string) ([]string, error)
+	File(ctx context.Context, path, branch string) ([]byte, string, error)
+}
+
+// LoadHuman replaces the human versions with branch's (HumanDir). On any
+// error nothing changes.
+func (c *Catalog) LoadHuman(ctx context.Context, src HumanSource, branch string) error {
+	names, err := src.Dir(ctx, HumanDir, branch)
+	if err != nil {
+		return err
+	}
+	files := map[string][]byte{}
+	for _, name := range names {
+		lang, ok := strings.CutSuffix(name, ".json")
+		if !ok || !i18n.Valid(lang) {
+			continue
+		}
+		raw, _, err := src.File(ctx, HumanDir+"/"+name, branch)
+		if err != nil {
+			return err
+		}
+		files[lang] = raw
+	}
+	return c.SetHuman(files)
+}
+
+// Follow keeps the human versions in step with branch, reading it every
+// interval until ctx ends, so a merged pull request from the translation
+// editor reaches the app (whose check runs hourly) without a deploy. A
+// failed read keeps what's loaded. Versions written for English newer than
+// this build's are stale here (Current) and skipped, so following a branch
+// ahead of the deployed API is safe.
+func (c *Catalog) Follow(ctx context.Context, src HumanSource, branch string, every time.Duration, log *slog.Logger) {
+	for {
+		if err := c.LoadHuman(ctx, src, branch); err != nil && ctx.Err() == nil {
+			log.Warn("ui strings: couldn't read the human versions on "+branch, "err", err)
+		}
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(every):
+		}
+	}
 }

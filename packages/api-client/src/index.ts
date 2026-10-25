@@ -13,6 +13,7 @@ import { PlanService } from "./gen/issho/v1/plans_pb";
 import { ProfileService } from "./gen/issho/v1/profile_pb";
 import { PushService } from "./gen/issho/v1/push_pb";
 import { ReviewService } from "./gen/issho/v1/review_pb";
+import { TranslationService } from "./gen/issho/v1/translation_pb";
 import { UIService } from "./gen/issho/v1/ui_pb";
 
 // Error types for callers (code checks like `err.code === Code.Unauthenticated`), so apps
@@ -31,6 +32,7 @@ export * from "./gen/issho/v1/plans_pb";
 export * from "./gen/issho/v1/profile_pb";
 export * from "./gen/issho/v1/push_pb";
 export * from "./gen/issho/v1/review_pb";
+export * from "./gen/issho/v1/translation_pb";
 export * from "./gen/issho/v1/ui_pb";
 
 export type ApiClientOptions = {
@@ -66,6 +68,8 @@ export function createApi({ baseUrl, getAccessToken }: ApiClientOptions) {
     push: createClient(PushService, transport),
     /** Admins only (the admin SPA). */
     review: createClient(ReviewService, transport),
+    /** Admins and translators (the admin SPA's translation editor). */
+    translation: createClient(TranslationService, transport),
     ui: createClient(UIService, transport),
   };
 }

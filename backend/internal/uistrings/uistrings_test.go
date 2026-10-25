@@ -2,6 +2,10 @@ package uistrings
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"maps"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
@@ -117,10 +121,11 @@ func TestEmbeddedHuman(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, ok := c.human["en"]; !ok {
+	if !slices.Contains(c.HumanLanguages(), "en") {
 		t.Error("human/en.json is missing (make gen copies it)")
 	}
-	for lang, versions := range c.human {
+	for _, lang := range c.HumanLanguages() {
+		versions := c.HumanVersions(lang)
 		if !i18n.Valid(lang) {
 			t.Errorf("human/%s.json: not an ISO 639-1 code", lang)
 		}
@@ -289,5 +294,61 @@ func TestSamePlaceholders(t *testing.T) {
 		if got := SamePlaceholders(tc.en, tc.tr); got != tc.want {
 			t.Errorf("SamePlaceholders(%q, %q) = %v", tc.en, tc.tr, got)
 		}
+	}
+}
+
+// fakeSource serves human files on one branch.
+type fakeSource struct {
+	files map[string]string // file name → content
+	err   error
+}
+
+func (f fakeSource) Dir(_ context.Context, path, branch string) ([]string, error) {
+	if f.err != nil {
+		return nil, f.err
+	}
+	if path != HumanDir || branch != "main" {
+		return nil, fmt.Errorf("unexpected %s on %s", path, branch)
+	}
+	return slices.Sorted(maps.Keys(f.files)), nil
+}
+
+func (f fakeSource) File(_ context.Context, path, _ string) ([]byte, string, error) {
+	return []byte(f.files[strings.TrimPrefix(path, HumanDir+"/")]), "sha", nil
+}
+
+// The API follows the default branch: a merged version is served, and a
+// failed read keeps what was loaded.
+func TestLoadHuman(t *testing.T) {
+	c, err := New([]byte(`{"hi":"Hello"}`), map[string][]byte{"ja": []byte(`{}`)}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx := context.Background()
+	if s := c.Text(ctx, nil, "ja", "hi"); s != "Hello" {
+		t.Fatalf("before: %q", s)
+	}
+	src := fakeSource{files: map[string]string{
+		"ja.json":   `{"hi":{"text":"やあ","source":"` + SourceHash("Hello") + `"}}`,
+		"README.md": "not a language",
+		"zz.json":   `{}`, // not an ISO 639-1 code: skipped
+	}}
+	if err := c.LoadHuman(ctx, src, "main"); err != nil {
+		t.Fatal(err)
+	}
+	if s := c.Text(ctx, nil, "ja", "hi"); s != "やあ" {
+		t.Errorf("after: %q", s)
+	}
+	if got := c.HumanLanguages(); !slices.Equal(got, []string{"ja"}) {
+		t.Errorf("languages %v", got)
+	}
+	if err := c.LoadHuman(ctx, fakeSource{err: errors.New("down")}, "main"); err == nil {
+		t.Error("want the error")
+	}
+	if err := c.LoadHuman(ctx, fakeSource{files: map[string]string{"ja.json": "{broken"}}, "main"); err == nil {
+		t.Error("want a parse error")
+	}
+	if s := c.Text(ctx, nil, "ja", "hi"); s != "やあ" {
+		t.Errorf("a failed read must keep what's loaded: %q", s)
 	}
 }

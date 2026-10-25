@@ -73,3 +73,24 @@ func TestSetAdmin(t *testing.T) {
 		t.Fatal("missing user: want an error")
 	}
 }
+
+func TestSetTranslatorLangs(t *testing.T) {
+	id := uuid.New()
+	for _, tc := range []struct {
+		langs []string
+		want  string
+	}{
+		{[]string{"ja", "es"}, `{"app_metadata":{"translator_langs":["ja","es"]}}`},
+		{nil, `{"app_metadata":{"translator_langs":null}}`},
+	} {
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if body, _ := io.ReadAll(r.Body); string(body) != tc.want {
+				t.Errorf("body = %s, want %s", body, tc.want)
+			}
+		}))
+		if err := NewAdmin(srv.URL, "sb_secret_test").SetTranslatorLangs(context.Background(), id, tc.langs); err != nil {
+			t.Fatal(err)
+		}
+		srv.Close()
+	}
+}

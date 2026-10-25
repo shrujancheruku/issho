@@ -60,7 +60,22 @@ func (a *Admin) SetAdmin(ctx context.Context, id uuid.UUID, admin bool) error {
 	if admin {
 		value = true
 	}
-	body, err := json.Marshal(map[string]any{"app_metadata": map[string]any{"admin": value}})
+	return a.setAppMetadata(ctx, id, "admin", value)
+}
+
+// SetTranslatorLangs sets the languages a translator edits in the admin
+// SPA's translation editor (app_metadata.translator_langs, read as
+// auth.Caller.TranslatorLangs); none removes the role.
+func (a *Admin) SetTranslatorLangs(ctx context.Context, id uuid.UUID, langs []string) error {
+	var value any // null removes the key
+	if len(langs) > 0 {
+		value = langs
+	}
+	return a.setAppMetadata(ctx, id, "translator_langs", value)
+}
+
+func (a *Admin) setAppMetadata(ctx context.Context, id uuid.UUID, key string, value any) error {
+	body, err := json.Marshal(map[string]any{"app_metadata": map[string]any{key: value}})
 	if err != nil {
 		return err
 	}
