@@ -120,6 +120,10 @@ message Area {
 message ListLanguagesRequest {
   // Language to name the languages in, e.g. "ja" gives "スペイン語" for es.
   string locale = 1;
+  // For choosing a display language: also lists zh-Hant (Chinese in
+  // Traditional characters) after zh, which is then Simplified. Spoken
+  // languages leave it false: Chinese is one spoken language.
+  bool display = 2;
 }
 
 message ListLanguagesResponse {
@@ -128,7 +132,7 @@ message ListLanguagesResponse {
 }
 
 message Language {
-  // ISO 639-1 code, e.g. "es".
+  // ISO 639-1 code, e.g. "es"; or zh-Hant when display is set.
   string code = 1;
   // The language's name for itself ("Español"), or its English name where
   // none is known.

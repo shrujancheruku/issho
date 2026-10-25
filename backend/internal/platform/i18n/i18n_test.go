@@ -107,3 +107,18 @@ func TestAppLanguageCodes(t *testing.T) {
 		t.Errorf("app and server language lists differ:\napp:    %v\nserver: %v", app, Codes())
 	}
 }
+
+func TestDisplay(t *testing.T) {
+	for tag, want := range map[string]string{
+		"ja-JP": "ja", "en": "en", " ES_mx ": "es", "zh": "zh", "zh-CN": "zh", "zh-Hans-CN": "zh", "zh-SG": "zh",
+		"zh-TW": "zh-Hant", "zh-HK": "zh-Hant", "zh-MO": "zh-Hant", "zh-Hant": "zh-Hant", "zh-Hant-TW": "zh-Hant",
+		"zh_TW": "zh-Hant", "": "",
+	} {
+		if got := Display(tag); got != want {
+			t.Errorf("Display(%q) = %q, want %q", tag, got, want)
+		}
+	}
+	if !ValidDisplay("zh-Hant") || !ValidDisplay("ja") || ValidDisplay("zh-Hans") || Valid("zh-Hant") {
+		t.Error("ValidDisplay accepts ISO 639-1 codes and zh-Hant only; Valid stays ISO 639-1")
+	}
+}

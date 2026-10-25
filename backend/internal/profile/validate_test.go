@@ -130,3 +130,21 @@ func TestProtoRoundTrip(t *testing.T) {
 		t.Errorf("GENDER_UNSPECIFIED must be rejected, got %v", err)
 	}
 }
+
+// Traditional Chinese is a display language (zh-Hant), from any of its tags;
+// Simplified stays zh.
+func TestTraditionalChinese(t *testing.T) {
+	for in, want := range map[string]string{"zh-Hant": "zh-Hant", "zh-TW": "zh-Hant", "zh-hk": "zh-Hant", "zh-CN": "zh"} {
+		p := valid()
+		p.SecondaryLanguage = in
+		if err := validate(&p, year); err != nil || p.SecondaryLanguage != want {
+			t.Errorf("%s: err = %v, secondary = %q", in, err, p.SecondaryLanguage)
+		}
+	}
+	p := valid()
+	p.PrimaryLanguage = "zh-Hans-XX-junk"
+	p.SecondaryLanguage = "zh"
+	if err := validate(&p, year); err == nil {
+		t.Error("zh twice must be refused")
+	}
+}

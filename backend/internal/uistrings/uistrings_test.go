@@ -126,8 +126,8 @@ func TestEmbeddedHuman(t *testing.T) {
 	}
 	for _, lang := range c.HumanLanguages() {
 		versions := c.HumanVersions(lang)
-		if !i18n.Valid(lang) {
-			t.Errorf("human/%s.json: not an ISO 639-1 code", lang)
+		if !i18n.ValidDisplay(lang) {
+			t.Errorf("human/%s.json: not an ISO 639-1 code or zh-Hant", lang)
 		}
 		for key, v := range versions {
 			english, ok := c.english[key]

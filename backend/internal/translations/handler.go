@@ -109,8 +109,8 @@ func forLang(ctx context.Context, lang string) (auth.Caller, error) {
 	if err != nil {
 		return c, err
 	}
-	if !i18n.Valid(lang) {
-		return c, invalid("lang: an ISO 639-1 code such as \"ja\"")
+	if !i18n.ValidDisplay(lang) {
+		return c, invalid("lang: an ISO 639-1 code such as \"ja\", or zh-Hant")
 	}
 	if !c.Translates(lang) {
 		return c, connect.NewError(connect.CodePermissionDenied, fmt.Errorf("you don't translate %q", lang))
@@ -149,8 +149,10 @@ func (h *Handler) openPRs(ctx context.Context) (map[string]github.PR, error) {
 		return nil, githubError(err)
 	}
 	for _, pr := range prs {
+		// <lang>-<unix time>; the language may contain a dash (zh-Hant).
 		rest := strings.TrimPrefix(pr.Branch, BranchPrefix)
-		if lang, _, ok := strings.Cut(rest, "-"); ok {
+		if i := strings.LastIndex(rest, "-"); i > 0 {
+			lang := rest[:i]
 			if _, seen := out[lang]; !seen {
 				out[lang] = pr
 			}
@@ -219,7 +221,7 @@ func (h *Handler) ListAppLanguages(ctx context.Context, _ *connect.Request[issho
 	}
 	out := &isshov1.ListAppLanguagesResponse{}
 	for _, l := range slices.Sorted(maps.Keys(langs)) {
-		if !i18n.Valid(l) || !c.Translates(l) {
+		if !i18n.ValidDisplay(l) || !c.Translates(l) {
 			continue
 		}
 		al := &isshov1.AppLanguage{Lang: l, Total: int32(len(h.Catalog.Keys()))}

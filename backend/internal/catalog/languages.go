@@ -18,7 +18,11 @@ func (h *Handler) ListLanguages(_ context.Context, req *connect.Request[isshov1.
 	if err != nil {
 		return nil, err
 	}
-	return connect.NewResponse(&isshov1.ListLanguagesResponse{Languages: Languages(locale)}), nil
+	out := Languages(locale)
+	if req.Msg.Display {
+		out = withTraditionalChinese(out, locale)
+	}
+	return connect.NewResponse(&isshov1.ListLanguagesResponse{Languages: out}), nil
 }
 
 // Languages lists every ISO 639-1 language, named in itself and in locale.
@@ -45,6 +49,32 @@ func Languages(locale string) []*isshov1.Language {
 			l.Name = l.Autonym
 		}
 		out = append(out, l)
+	}
+	return out
+}
+
+// withTraditionalChinese adds zh-Hant after zh for display-language choices,
+// with CLDR's names ("繁體中文", "Traditional Chinese"), and names zh as
+// Simplified so the two can be told apart.
+func withTraditionalChinese(langs []*isshov1.Language, locale string) []*isshov1.Language {
+	in := display.Languages(language.Make(locale))
+	english := display.English.Languages()
+	name := func(tag language.Tag) string {
+		if n := in.Name(tag); n != "" {
+			return n
+		}
+		return english.Name(tag)
+	}
+	out := make([]*isshov1.Language, 0, len(langs)+1)
+	for _, l := range langs {
+		if l.Code != "zh" {
+			out = append(out, l)
+			continue
+		}
+		hans, hant := language.Make("zh-Hans"), language.Make(i18n.TraditionalChinese)
+		out = append(out,
+			&isshov1.Language{Code: "zh", Autonym: display.Self.Name(hans), Name: name(hans)},
+			&isshov1.Language{Code: i18n.TraditionalChinese, Autonym: display.Self.Name(hant), Name: name(hant)})
 	}
 	return out
 }

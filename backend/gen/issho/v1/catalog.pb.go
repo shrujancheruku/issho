@@ -523,7 +523,11 @@ func (x *Area) GetLng() float64 {
 type ListLanguagesRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Language to name the languages in, e.g. "ja" gives "スペイン語" for es.
-	Locale        string `protobuf:"bytes,1,opt,name=locale,proto3" json:"locale,omitempty"`
+	Locale string `protobuf:"bytes,1,opt,name=locale,proto3" json:"locale,omitempty"`
+	// For choosing a display language: also lists zh-Hant (Chinese in
+	// Traditional characters) after zh, which is then Simplified. Spoken
+	// languages leave it false: Chinese is one spoken language.
+	Display       bool `protobuf:"varint,2,opt,name=display,proto3" json:"display,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -563,6 +567,13 @@ func (x *ListLanguagesRequest) GetLocale() string {
 		return x.Locale
 	}
 	return ""
+}
+
+func (x *ListLanguagesRequest) GetDisplay() bool {
+	if x != nil {
+		return x.Display
+	}
+	return false
 }
 
 type ListLanguagesResponse struct {
@@ -612,7 +623,7 @@ func (x *ListLanguagesResponse) GetLanguages() []*Language {
 
 type Language struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// ISO 639-1 code, e.g. "es".
+	// ISO 639-1 code, e.g. "es"; or zh-Hant when display is set.
 	Code string `protobuf:"bytes,1,opt,name=code,proto3" json:"code,omitempty"`
 	// The language's name for itself ("Español"), or its English name where
 	// none is known.
@@ -815,9 +826,10 @@ const file_issho_v1_catalog_proto_rawDesc = "" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12%\n" +
 	"\x0esecondary_name\x18\x03 \x01(\tR\rsecondaryName\x12\x10\n" +
 	"\x03lat\x18\x04 \x01(\x01R\x03lat\x12\x10\n" +
-	"\x03lng\x18\x05 \x01(\x01R\x03lng\".\n" +
+	"\x03lng\x18\x05 \x01(\x01R\x03lng\"H\n" +
 	"\x14ListLanguagesRequest\x12\x16\n" +
-	"\x06locale\x18\x01 \x01(\tR\x06locale\"I\n" +
+	"\x06locale\x18\x01 \x01(\tR\x06locale\x12\x18\n" +
+	"\adisplay\x18\x02 \x01(\bR\adisplay\"I\n" +
 	"\x15ListLanguagesResponse\x120\n" +
 	"\tlanguages\x18\x01 \x03(\v2\x12.issho.v1.LanguageR\tlanguages\"L\n" +
 	"\bLanguage\x12\x12\n" +

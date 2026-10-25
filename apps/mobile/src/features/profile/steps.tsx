@@ -93,10 +93,18 @@ function LoadState({ query }: { query: { isPending: boolean; isError: boolean; r
 
 function LanguagesStep({ draft, onChange }: StepProps) {
   const { t } = useI18n();
+  // Display languages are named from the list that tells Simplified and
+  // Traditional Chinese apart; spoken ones from the list with Chinese once.
   const languages = useLanguages();
+  const displayLanguages = useLanguages(true);
   const names = useMemo(() => new Map((languages.data ?? []).map((l) => [l.code, l])), [languages.data]);
+  const displayNames = useMemo(
+    () => new Map((displayLanguages.data ?? []).map((l) => [l.code, l])),
+    [displayLanguages.data],
+  );
   const [picking, setPicking] = useState<null | 'primary' | 'secondary' | 'spoken'>(null);
-  const label = (code: string) => languageLabel(names, code);
+  const label = (code: string) => languageLabel(displayNames, code);
+  const spokenLabel = (code: string) => languageLabel(names, code);
 
   const pick = (code: string) => {
     if (picking === 'primary') onChange(setPrimaryLanguage(draft, code));
@@ -128,7 +136,7 @@ function LanguagesStep({ draft, onChange }: StepProps) {
         {draft.spoken.map((l) => (
           <View key={l.code} style={styles.spoken}>
             <View style={styles.spokenHeader}>
-              <ThemedText style={styles.grow}>{label(l.code)}</ThemedText>
+              <ThemedText style={styles.grow}>{spokenLabel(l.code)}</ThemedText>
               <Pressable accessibilityRole="button" onPress={() => onChange(removeSpoken(draft, l.code))} hitSlop={8}>
                 <ThemedText type="link">{t('language.remove')}</ThemedText>
               </Pressable>
@@ -157,6 +165,7 @@ function LanguagesStep({ draft, onChange }: StepProps) {
       </Section>
       <LanguagePicker
         visible={picking !== null}
+        display={picking !== 'spoken'}
         exclude={
           picking === 'spoken'
             ? draft.spoken.map((l) => l.code)

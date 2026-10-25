@@ -45,7 +45,7 @@ func ReadSource(path string) (Source, error) {
 		}
 	}
 	for _, l := range s.Languages {
-		if !i18n.Valid(l) || l == i18n.Authoring {
+		if !i18n.ValidDisplay(l) || l == i18n.Authoring {
 			return s, fmt.Errorf("%s: %q is not a language to translate into", path, l)
 		}
 	}

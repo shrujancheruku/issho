@@ -35,8 +35,8 @@ func uiStrings(args []string) error {
 	}
 	for _, f := range files {
 		lang := strings.TrimSuffix(filepath.Base(f), ".json")
-		if !i18n.Valid(lang) {
-			return fmt.Errorf("%s: %q isn't an ISO 639-1 language code", f, lang)
+		if !i18n.ValidDisplay(lang) {
+			return fmt.Errorf("%s: %q isn't an ISO 639-1 language code (or zh-Hant)", f, lang)
 		}
 		raw, err := os.ReadFile(f)
 		if err != nil {

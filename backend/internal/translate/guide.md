@@ -33,6 +33,11 @@ Issho is a mobile app that helps people aged 18–40 make friends through small 
 - Simplified Chinese. Short, natural app wording.
 - Crew: 伙伴 (e.g. 攀岩伙伴, 伙伴群聊). Not 帮, 帮派, 团伙 (gang), 圈子 (cliquey) or 小队 (squad).
 
+# zh-Hant
+
+- Traditional Chinese characters, in the wording used in Taiwan. Short, natural app wording.
+- Crew: 夥伴 (e.g. 攀岩夥伴, 夥伴群組). Not 幫, 幫派, 團夥 (gang), 圈子 (cliquey) or 小隊 (squad).
+
 # es
 
 - Tú, not usted. Neutral international Spanish.

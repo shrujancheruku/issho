@@ -35,8 +35,8 @@ func setTranslator(ctx context.Context, pool *pgxpool.Pool, args []string) error
 	var langs []string
 	if !*revoke {
 		for _, l := range strings.Split(fs.Arg(1), ",") {
-			l = strings.ToLower(strings.TrimSpace(l))
-			if !i18n.Valid(l) {
+			l = i18n.Display(l)
+			if !i18n.ValidDisplay(l) {
 				return fmt.Errorf("%q isn't an ISO 639-1 language code", l)
 			}
 			if !slices.Contains(langs, l) {

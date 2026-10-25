@@ -19,6 +19,12 @@
   <p style="font-size: 36px; letter-spacing: 8px; font-weight: 700; margin: 0 0 16px; color: #BC002D;" dir="ltr">{{ .Token }}</p>
   <p style="font-size: 14px; color: #555555; margin: 0;">此验证码将在 10 分钟后失效。 如果你并未请求此验证码，可以直接忽略这封邮件。</p>
 </div>
+{{- else if eq $lang "zh-Hant" }}
+<div lang="zh-Hant" style="font-family: -apple-system, 'Helvetica Neue', 'Hiragino Sans', 'Noto Sans', sans-serif; max-width: 420px; margin: 0 auto; padding: 24px; color: #111111;">
+  <p style="font-size: 18px; margin: 0 0 16px;">你的 Issho 登入碼</p>
+  <p style="font-size: 36px; letter-spacing: 8px; font-weight: 700; margin: 0 0 16px; color: #BC002D;" dir="ltr">{{ .Token }}</p>
+  <p style="font-size: 14px; color: #555555; margin: 0;">此登入碼將在 10 分鐘後失效。 如果你沒有索取此驗證碼，直接忽略這封信即可。</p>
+</div>
 {{- else if eq $lang "ko" }}
 <div lang="ko" style="font-family: -apple-system, 'Helvetica Neue', 'Hiragino Sans', 'Noto Sans', sans-serif; max-width: 420px; margin: 0 auto; padding: 24px; color: #111111;">
   <p style="font-size: 18px; margin: 0 0 16px;">Issho 로그인 코드</p>
