@@ -68,7 +68,11 @@ func (t *Translator) Translate(ctx context.Context, lang string, items []transla
 			chars += n
 			end++
 		}
-		req := request{Target: lang, Source: i18n.Authoring, Format: "text"}
+		target := lang
+		if lang == i18n.TraditionalChinese {
+			target = "zh-TW" // Google's code for Traditional; its "zh" is Simplified
+		}
+		req := request{Target: target, Source: i18n.Authoring, Format: "text"}
 		for _, it := range items[start:end] {
 			req.Q = append(req.Q, it.Text)
 		}

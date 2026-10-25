@@ -14,17 +14,20 @@ import { useLanguages } from './data';
 export function LanguagePicker({
   visible,
   exclude = [],
+  display = false,
   onPick,
   onClose,
 }: {
   visible: boolean;
   exclude?: string[];
+  /** Choosing a display language (offers Traditional Chinese too). */
+  display?: boolean;
   onPick: (code: string) => void;
   onClose: () => void;
 }) {
   const theme = useTheme();
   const { t } = useI18n();
-  const languages = useLanguages();
+  const languages = useLanguages(display);
   const [query, setQuery] = useState('');
 
   const items = useMemo(() => {

@@ -11,6 +11,8 @@ import (
 	"encoding/json"
 	"slices"
 	"strings"
+
+	"golang.org/x/text/language"
 )
 
 // Authoring is the one language every piece of stored text must have. All
@@ -35,6 +37,33 @@ func Valid(lang string) bool { return slices.Contains(iso6391, lang) }
 
 // Codes returns every valid language code, sorted.
 func Codes() []string { return slices.Clone(iso6391) }
+
+// TraditionalChinese is the one display language that isn't an ISO 639-1
+// code: Chinese written in Traditional characters (Taiwan, Hong Kong,
+// Macau). "zh" is Simplified. Spoken languages and matching keep "zh" for
+// both: it's how text is written, not who can talk to whom.
+const TraditionalChinese = "zh-Hant"
+
+// ValidDisplay reports whether lang can be a display language: an ISO 639-1
+// code, or TraditionalChinese.
+func ValidDisplay(lang string) bool { return Valid(lang) || lang == TraditionalChinese }
+
+// Display reduces a BCP 47 tag from a device or client to a display
+// language: its base language ("ja-JP" -> "ja"), except Chinese written in
+// Traditional characters ("zh-TW", "zh-HK", "zh-Hant-TW" -> "zh-Hant"). The
+// result may still be invalid; check it with ValidDisplay.
+func Display(tag string) string {
+	tag = strings.TrimSpace(tag)
+	base, _, _ := strings.Cut(strings.ToLower(strings.ReplaceAll(tag, "_", "-")), "-")
+	if base != "zh" || tag == "zh" {
+		return base
+	}
+	// The script is explicit (zh-Hant) or follows from the region (zh-TW).
+	if script, _ := language.Make(tag).Script(); script.String() == "Hant" {
+		return TraditionalChinese
+	}
+	return base
+}
 
 // ForEvent picks the two languages to show a user for an event.
 //

@@ -5,7 +5,6 @@ package catalog
 import (
 	"context"
 	"errors"
-	"strings"
 
 	"connectrpc.com/connect"
 
@@ -61,9 +60,6 @@ func (h *Handler) ListActivities(ctx context.Context, req *connect.Request[issho
 	return connect.NewResponse(&isshov1.ListActivitiesResponse{Activities: out}), nil
 }
 
-// baseLang reduces a BCP 47 tag to its lowercase base language ("ja-JP" -> "ja"):
-// translations are per language, not per region.
-func baseLang(tag string) string {
-	base, _, _ := strings.Cut(strings.ToLower(strings.TrimSpace(tag)), "-")
-	return base
-}
+// baseLang reduces a BCP 47 tag to a display language ("ja-JP" -> "ja",
+// "zh-TW" -> "zh-Hant"): translations are per language, not per region.
+func baseLang(tag string) string { return i18n.Display(tag) }

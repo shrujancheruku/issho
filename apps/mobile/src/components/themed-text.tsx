@@ -28,7 +28,8 @@ export type ThemedTextProps = TextProps & {
 export function ThemedText({ style, type = 'default', themeColor, lang, ...rest }: ThemedTextProps) {
   const theme = useTheme();
   const shown = useShownLanguage();
-  const language = baseLanguage(lang || shown) || 'en';
+  const tag = lang || shown || 'en';
+  const language = baseLanguage(tag) || 'en';
   const color = theme[themeColor ?? (type === 'linkPrimary' ? 'link' : 'text')];
   let flat: TextStyle = StyleSheet.flatten([{ color }, styles[type], style]) ?? {};
   if (flat.lineHeight && TallScriptLanguages.has(language)) {
@@ -36,7 +37,7 @@ export function ThemedText({ style, type = 'default', themeColor, lang, ...rest 
   }
   // On the web, lang also lets the browser pick the right glyphs (Chinese
   // or Japanese forms of the same character) from the system font.
-  const webLang = Platform.OS === 'web' ? ({ lang: language } as TextProps) : {};
+  const webLang = Platform.OS === 'web' ? ({ lang: tag } as TextProps) : {};
 
   // Standout text in a language the display face can't set: the system font,
   // heavy, so it still stands out.

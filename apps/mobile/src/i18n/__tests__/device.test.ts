@@ -14,7 +14,8 @@ it('skips regional duplicates and unsupported languages', () => {
 
 it('maps codes the server has under another name', () => {
   expect(deviceLanguages(l('fil-PH', 'en-PH'))).toEqual({ primary: 'tl', secondary: 'en' });
-  expect(deviceLanguages(l('yue-Hant-HK'))).toEqual({ primary: 'zh', secondary: '' });
+  // Cantonese is written in Traditional characters.
+  expect(deviceLanguages(l('yue-Hant-HK'))).toEqual({ primary: 'zh-Hant', secondary: '' });
   expect(deviceLanguages(l('iw-IL'))).toEqual({ primary: 'he', secondary: '' });
 });
 
@@ -22,4 +23,11 @@ it('falls back to English', () => {
   expect(deviceLanguages([])).toEqual({ primary: 'en', secondary: '' });
   expect(deviceLanguages(l('haw-US'))).toEqual({ primary: 'en', secondary: '' });
   expect(deviceLanguages([{ languageCode: null, languageTag: 'de-DE' }])).toEqual({ primary: 'de', secondary: '' });
+});
+
+it('tells Traditional Chinese from Simplified', () => {
+  expect(deviceLanguages(l('zh-Hant-TW', 'zh-Hans-CN'))).toEqual({ primary: 'zh-Hant', secondary: 'zh' });
+  expect(deviceLanguages(l('zh-TW'))).toEqual({ primary: 'zh-Hant', secondary: '' });
+  expect(deviceLanguages(l('zh-HK', 'en-HK'))).toEqual({ primary: 'zh-Hant', secondary: 'en' });
+  expect(deviceLanguages(l('zh-CN', 'zh-SG'))).toEqual({ primary: 'zh', secondary: '' });
 });

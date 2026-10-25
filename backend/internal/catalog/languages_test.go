@@ -3,6 +3,7 @@ package catalog
 import (
 	"testing"
 
+	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
 	"github.com/shrujancheruku/issho/backend/internal/platform/i18n"
 )
 
@@ -33,5 +34,28 @@ func TestStored(t *testing.T) {
 	raw := []byte(`{"en":"Kichijoji","ja":"吉祥寺"}`)
 	if stored(raw, "ja") != "吉祥寺" || stored(raw, "es") != "" || stored(raw, "") != "" {
 		t.Error("stored must return only text stored in exactly that language")
+	}
+}
+
+func TestWithTraditionalChinese(t *testing.T) {
+	got := withTraditionalChinese(Languages("en"), "en")
+	var zh, hant *isshov1.Language
+	for i, l := range got {
+		switch l.Code {
+		case "zh":
+			zh = l
+			if i+1 < len(got) {
+				hant = got[i+1]
+			}
+		}
+	}
+	if zh == nil || hant == nil || hant.Code != "zh-Hant" {
+		t.Fatalf("zh-Hant must follow zh: %v %v", zh, hant)
+	}
+	if zh.Name != "Simplified Chinese" || hant.Name != "Traditional Chinese" || hant.Autonym != "繁體中文" {
+		t.Errorf("names: %+v %+v", zh, hant)
+	}
+	if len(got) != len(Languages("en"))+1 {
+		t.Error("exactly one language added")
 	}
 }

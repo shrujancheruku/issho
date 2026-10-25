@@ -59,10 +59,10 @@ func (h *Handler) ListCities(ctx context.Context, req *connect.Request[isshov1.L
 // (optional) display languages and applies the app's language rule.
 func displayLanguages(locale, secondaryLanguage string) (string, string, error) {
 	primary, secondary := baseLang(locale), baseLang(secondaryLanguage)
-	if !i18n.Valid(primary) {
+	if !i18n.ValidDisplay(primary) {
 		return "", "", connect.NewError(connect.CodeInvalidArgument, errors.New("locale must be a language code such as \"ja\""))
 	}
-	if secondary != "" && !i18n.Valid(secondary) {
+	if secondary != "" && !i18n.ValidDisplay(secondary) {
 		return "", "", connect.NewError(connect.CodeInvalidArgument, errors.New("secondary_language must be a language code such as \"es\""))
 	}
 	primary, secondary = i18n.ForApp(primary, secondary)

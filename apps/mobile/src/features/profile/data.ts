@@ -28,11 +28,16 @@ export function useActivities(cityId: string) {
   });
 }
 
-export function useLanguages() {
+/**
+ * Every language, named in the primary display language. With display, for
+ * choosing a display language: Chinese is listed twice, Simplified (zh) and
+ * Traditional (zh-Hant). Spoken languages list Chinese once.
+ */
+export function useLanguages(display = false) {
   const { languages } = useI18n();
   return useQuery({
-    queryKey: ['languages', languages.primary],
-    queryFn: () => api.catalog.listLanguages({ locale: languages.primary }),
+    queryKey: ['languages', languages.primary, display],
+    queryFn: () => api.catalog.listLanguages({ locale: languages.primary, display }),
     select: (r) => r.languages,
     staleTime: Infinity,
   });

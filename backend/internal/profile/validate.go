@@ -142,14 +142,15 @@ func validate(p *Profile, year int) error {
 		return invalid("spoken_languages", "at least one fluent language")
 	}
 
-	p.PrimaryLanguage = strings.ToLower(p.PrimaryLanguage)
-	p.SecondaryLanguage = strings.ToLower(p.SecondaryLanguage)
-	if !i18n.Valid(p.PrimaryLanguage) {
-		return invalid("primary_language", "required (ISO 639-1)")
+	// Display languages: ISO 639-1, or zh-Hant (i18n.Display).
+	p.PrimaryLanguage = i18n.Display(p.PrimaryLanguage)
+	p.SecondaryLanguage = i18n.Display(p.SecondaryLanguage)
+	if !i18n.ValidDisplay(p.PrimaryLanguage) {
+		return invalid("primary_language", "required (ISO 639-1, or zh-Hant)")
 	}
 	if p.SecondaryLanguage != "" {
-		if !i18n.Valid(p.SecondaryLanguage) {
-			return invalid("secondary_language", "not an ISO 639-1 code")
+		if !i18n.ValidDisplay(p.SecondaryLanguage) {
+			return invalid("secondary_language", "not an ISO 639-1 code or zh-Hant")
 		}
 		if p.SecondaryLanguage == p.PrimaryLanguage {
 			return invalid("secondary_language", "same as primary_language")

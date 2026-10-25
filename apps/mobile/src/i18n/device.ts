@@ -14,6 +14,20 @@ tn to tr ts tt tw ty ug uk ur uz ve vi vo wa wo xh yi yo za zh zu`.split(/\s+/),
 );
 
 /**
+ * Chinese in Traditional characters, the one display language that isn't an
+ * ISO 639-1 code (backend i18n.TraditionalChinese); "zh" is Simplified.
+ */
+export const TraditionalChinese = 'zh-Hant';
+
+/** Whether a Chinese tag is written in Traditional characters: zh-Hant-*, or Taiwan, Hong Kong, Macau. */
+function traditional(tag: string | undefined): boolean {
+  const parts = (tag ?? '').split(/[-_]/).slice(1).map((p) => p.toLowerCase());
+  if (parts.includes('hant')) return true;
+  if (parts.includes('hans')) return false;
+  return parts.some((p) => p === 'tw' || p === 'hk' || p === 'mo');
+}
+
+/**
  * Device codes with no ISO 639-1 code of their own, mapped to the closest one
  * the server has. Filipino is standardised Tagalog; Cantonese is written in
  * Chinese characters; iw, in and ji are the old codes some systems still
@@ -35,7 +49,8 @@ export function deviceLanguages(locales: readonly { languageCode?: string | null
   for (const l of locales) {
     let code = baseLanguage(l.languageCode ?? l.languageTag);
     code = aliases[code] ?? code;
-    if (languageCodes.has(code) && !codes.includes(code)) codes.push(code);
+    if (code === 'zh' && traditional(l.languageTag)) code = TraditionalChinese;
+    if ((languageCodes.has(code) || code === TraditionalChinese) && !codes.includes(code)) codes.push(code);
   }
   return { primary: codes[0] ?? 'en', secondary: codes[1] ?? '' };
 }

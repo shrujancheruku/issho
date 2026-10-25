@@ -228,8 +228,8 @@ type Handler struct {
 }
 
 func (h *Handler) GetStrings(ctx context.Context, req *connect.Request[isshov1.GetStringsRequest]) (*connect.Response[isshov1.GetStringsResponse], error) {
-	lang, _, _ := strings.Cut(strings.ToLower(strings.TrimSpace(req.Msg.Language)), "-")
-	if !i18n.Valid(lang) {
+	lang := i18n.Display(req.Msg.Language)
+	if !i18n.ValidDisplay(lang) {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("language must be a language code such as \"ja\""))
 	}
 	strs, complete := h.Catalog.In(ctx, h.Translations, lang)
@@ -360,7 +360,7 @@ func (c *Catalog) LoadHuman(ctx context.Context, src HumanSource, branch string)
 	files := map[string][]byte{}
 	for _, name := range names {
 		lang, ok := strings.CutSuffix(name, ".json")
-		if !ok || !i18n.Valid(lang) {
+		if !ok || !i18n.ValidDisplay(lang) {
 			continue
 		}
 		raw, _, err := src.File(ctx, HumanDir+"/"+name, branch)

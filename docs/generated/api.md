@@ -630,7 +630,7 @@ HTTP: POST /issho.v1.ProfileService/&lt;Method&gt;
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| code | [string](#string) |  | ISO 639-1 code, e.g. &#34;es&#34;. |
+| code | [string](#string) |  | ISO 639-1 code, e.g. &#34;es&#34;; or zh-Hant when display is set. |
 | autonym | [string](#string) |  | The language&#39;s name for itself (&#34;Español&#34;), or its English name where none is known. |
 | name | [string](#string) |  | Its name in the requested locale (&#34;スペイン語&#34;); falls back to English. |
 
@@ -711,6 +711,7 @@ HTTP: POST /issho.v1.ProfileService/&lt;Method&gt;
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | locale | [string](#string) |  | Language to name the languages in, e.g. &#34;ja&#34; gives &#34;スペイン語&#34; for es. |
+| display | [bool](#bool) |  | For choosing a display language: also lists zh-Hant (Chinese in Traditional characters) after zh, which is then Simplified. Spoken languages leave it false: Chinese is one spoken language. |
 
 
 
