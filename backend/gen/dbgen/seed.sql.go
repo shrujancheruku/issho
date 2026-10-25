@@ -83,13 +83,14 @@ func (q *Queries) SetActivityWalkTheme(ctx context.Context, arg SetActivityWalkT
 
 const upsertActivity = `-- name: UpsertActivity :exec
 insert into app.activities (id, name, category, indoor, energy, cost_level, conversational,
-                            skill_dependent, min_group_size, max_group_size)
-values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+                            skill_dependent, min_group_size, max_group_size, hours)
+values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::float8)
 on conflict (id) do update set
   name = excluded.name, category = excluded.category, indoor = excluded.indoor,
   energy = excluded.energy, cost_level = excluded.cost_level,
   conversational = excluded.conversational, skill_dependent = excluded.skill_dependent,
-  min_group_size = excluded.min_group_size, max_group_size = excluded.max_group_size
+  min_group_size = excluded.min_group_size, max_group_size = excluded.max_group_size,
+  hours = excluded.hours
 `
 
 type UpsertActivityParams struct {
@@ -103,6 +104,7 @@ type UpsertActivityParams struct {
 	SkillDependent bool
 	MinGroupSize   int16
 	MaxGroupSize   int16
+	Column11       float64
 }
 
 func (q *Queries) UpsertActivity(ctx context.Context, arg UpsertActivityParams) error {
@@ -117,6 +119,7 @@ func (q *Queries) UpsertActivity(ctx context.Context, arg UpsertActivityParams) 
 		arg.SkillDependent,
 		arg.MinGroupSize,
 		arg.MaxGroupSize,
+		arg.Column11,
 	)
 	return err
 }

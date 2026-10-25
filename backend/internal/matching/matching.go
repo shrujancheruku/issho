@@ -168,6 +168,54 @@ type Activity struct {
 	// category of its own and gets no follow-up, since the walk ends
 	// somewhere to sit and talk.
 	Walk bool
+	// Energy is how active it is (1 calm to 3 active), for ordering two
+	// activities: the more active first.
+	Energy int
+	// Hours is how long it usually takes; 0 = DefaultHours. A plan's
+	// activities together fill an outing (Config.OutingHours).
+	Hours float64
+}
+
+// DefaultHours is an activity's length when the catalogue doesn't say.
+const DefaultHours = 2.0
+
+func (a *Activity) hours() float64 {
+	if a.Hours > 0 {
+		return a.Hours
+	}
+	return DefaultHours
+}
+
+// With is the activity a plan of a followed by b asks of its groups: both
+// group sizes, a part of the day that suits both, and the dearer of the two.
+// For scheduling; b nil = a.
+func (a *Activity) With(b *Activity) *Activity {
+	if b == nil {
+		return a
+	}
+	c := *a
+	c.MinSize = max(a.MinSize, b.MinSize)
+	if b.MaxSize > 0 && (c.MaxSize == 0 || b.MaxSize < c.MaxSize) {
+		c.MaxSize = b.MaxSize
+	}
+	c.CostLevel = max(a.CostLevel, b.CostLevel)
+	c.Conversational = a.Conversational || b.Conversational
+	c.Hours = a.hours() + b.hours()
+	switch {
+	case len(a.Blocks) == 0:
+		c.Blocks = slices.Clone(b.Blocks)
+	case len(b.Blocks) > 0:
+		c.Blocks = nil
+		for _, bl := range a.Blocks {
+			if slices.Contains(b.Blocks, bl) {
+				c.Blocks = append(c.Blocks, bl)
+			}
+		}
+		if len(c.Blocks) == 0 { // no shared part of the day: the first's
+			c.Blocks = slices.Clone(a.Blocks)
+		}
+	}
+	return &c
 }
 
 // preferredMin is the size a group should reach: the activity's own minimum
@@ -240,9 +288,9 @@ type Relations struct {
 type Plan struct {
 	Area     AreaID
 	Activity ActivityID
-	// FollowUp is an optional second activity, such as a meal after
-	// bouldering, so a group whose main activity leaves little room to talk
-	// still gets to know each other. "" = none.
+	// FollowUp is an optional second activity (bouldering, then a meal;
+	// a museum, then a garden), chosen when it makes a fuller outing that
+	// more people want (see rankActivities). "" = none.
 	FollowUp  ActivityID
 	Primary   string // the event's language
 	Secondary string // its second language (Config.LanguagePairs), or ""

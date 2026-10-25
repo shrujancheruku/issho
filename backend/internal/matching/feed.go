@@ -70,14 +70,15 @@ func Feed(u *User, plans []OpenPlan, acts map[ActivityID]*Activity, travel Trave
 		if m, ok := travel.Minutes(u.HomeArea, p.Area); ok {
 			item.Minutes = m
 		}
-		v, hasPref := interest(u, a, cfg)
+		// Two activities: interested in either (planInterest).
+		v, _, pref, hasPref := PlanInterest(u, p.Plan, acts, cfg)
 		switch {
 		case !u.speaks(p.Primary, p.Secondary):
 			item.Level = NotForYou
 		case !travel.reachable(u, p.Area) || !hasPref:
 			item.Level = Low
 		default:
-			item.Level = Maybe + Level(u.Prefs[a.ID])
+			item.Level = Maybe + Level(pref)
 		}
 		item.Score = v + cfg.Weights.Momentum*min(1, float64(p.Signups)/float64(cfg.MomentumAt))
 		if !usuallyFree(u, a) {

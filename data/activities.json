@@ -12,6 +12,7 @@
     "skill_dependent": false,
     "min_group_size": 3,
     "max_group_size": 8,
+    "hours": 3,
     "venue_categories": [
       "temple-shrine",
       "park",
@@ -47,6 +48,7 @@
     "skill_dependent": false,
     "min_group_size": 3,
     "max_group_size": 10,
+    "hours": 4,
     "venue_categories": [
       "nature",
       "park"
@@ -76,6 +78,7 @@
     "skill_dependent": false,
     "min_group_size": 3,
     "max_group_size": 10,
+    "hours": 2.5,
     "venue_categories": [
       "park",
       "picnic-bbq"
@@ -102,6 +105,7 @@
     "skill_dependent": false,
     "min_group_size": 3,
     "max_group_size": 10,
+    "hours": 4,
     "venue_categories": [
       "beach",
       "swimming-pool",
@@ -128,6 +132,7 @@
     "skill_dependent": true,
     "min_group_size": 3,
     "max_group_size": 6,
+    "hours": 2.5,
     "venue_categories": [
       "beach"
     ],
@@ -153,6 +158,7 @@
     "skill_dependent": false,
     "min_group_size": 3,
     "max_group_size": 8,
+    "hours": 6,
     "venue_categories": [
       "bath"
     ],
@@ -176,6 +182,7 @@
     "skill_dependent": false,
     "min_group_size": 3,
     "max_group_size": 8,
+    "hours": 8,
     "venue_categories": [
       "campground",
       "nature"
@@ -197,6 +204,7 @@
     "skill_dependent": false,
     "min_group_size": 3,
     "max_group_size": 12,
+    "hours": 3,
     "venue_categories": [
       "park",
       "temple-shrine",
@@ -224,6 +232,7 @@
     "skill_dependent": false,
     "min_group_size": 3,
     "max_group_size": 15,
+    "hours": 1,
     "venue_categories": [
       "park",
       "nature"
@@ -247,6 +256,7 @@
     "skill_dependent": false,
     "min_group_size": 3,
     "max_group_size": 8,
+    "hours": 2.5,
     "venue_categories": [],
     "replaces": [
       "cycling-tour"
@@ -265,6 +275,7 @@
     "skill_dependent": true,
     "min_group_size": 3,
     "max_group_size": 6,
+    "hours": 1.5,
     "venue_categories": [],
     "replaces": [
       "climbing-gym"
@@ -283,6 +294,7 @@
     "skill_dependent": true,
     "min_group_size": 4,
     "max_group_size": 4,
+    "hours": 1.5,
     "venue_categories": [
       "sports-facility"
     ]
@@ -300,6 +312,7 @@
     "skill_dependent": false,
     "min_group_size": 4,
     "max_group_size": 8,
+    "hours": 1.5,
     "venue_categories": [
       "sports-facility"
     ]
@@ -317,6 +330,7 @@
     "skill_dependent": true,
     "min_group_size": 4,
     "max_group_size": 8,
+    "hours": 1.5,
     "venue_categories": [
       "sports-facility"
     ]
@@ -334,6 +348,7 @@
     "skill_dependent": false,
     "min_group_size": 6,
     "max_group_size": 12,
+    "hours": 1.5,
     "venue_categories": [
       "park",
       "sports-facility"
@@ -355,6 +370,7 @@
     "skill_dependent": true,
     "min_group_size": 6,
     "max_group_size": 10,
+    "hours": 1.5,
     "venue_categories": [
       "sports-facility",
       "park"
@@ -373,6 +389,7 @@
     "skill_dependent": true,
     "min_group_size": 4,
     "max_group_size": 12,
+    "hours": 1.5,
     "venue_categories": [
       "sports-facility",
       "beach"
@@ -394,6 +411,7 @@
     "skill_dependent": false,
     "min_group_size": 3,
     "max_group_size": 18,
+    "hours": 2,
     "venue_categories": [
       "sports-facility",
       "park"
@@ -419,6 +437,7 @@
     "skill_dependent": true,
     "min_group_size": 4,
     "max_group_size": 14,
+    "hours": 1.5,
     "venue_categories": [
       "park",
       "sports-facility"
@@ -444,6 +463,7 @@
     "skill_dependent": false,
     "min_group_size": 3,
     "max_group_size": 8,
+    "hours": 1,
     "venue_categories": [
       "swimming-pool"
     ]
@@ -461,6 +481,7 @@
     "skill_dependent": true,
     "min_group_size": 3,
     "max_group_size": 8,
+    "hours": 1.5,
     "venue_categories": []
   },
   {
@@ -476,6 +497,7 @@
     "skill_dependent": true,
     "min_group_size": 3,
     "max_group_size": 6,
+    "hours": 1.5,
     "venue_categories": []
   },
   {
@@ -491,6 +513,7 @@
     "skill_dependent": false,
     "min_group_size": 3,
     "max_group_size": 6,
+    "hours": 1.5,
     "venue_categories": [
       "golf"
     ]
@@ -508,6 +531,7 @@
     "skill_dependent": false,
     "min_group_size": 2,
     "max_group_size": 4,
+    "hours": 1,
     "venue_categories": [
       "gym"
     ]
@@ -525,6 +549,7 @@
     "skill_dependent": true,
     "min_group_size": 4,
     "max_group_size": 12,
+    "hours": 1.5,
     "venue_categories": [
       "dance"
     ],
@@ -546,6 +571,7 @@
     "skill_dependent": false,
     "min_group_size": 3,
     "max_group_size": 8,
+    "hours": 1.5,
     "venue_categories": [
       "ice-rink",
       "skate-park"
@@ -569,6 +595,7 @@
     "skill_dependent": false,
     "min_group_size": 3,
     "max_group_size": 8,
+    "hours": 6,
     "venue_categories": [],
     "blocks": [
       "morning",
@@ -591,6 +618,7 @@
     "skill_dependent": false,
     "min_group_size": 3,
     "max_group_size": 8,
+    "hours": 3,
     "venue_categories": [
       "stadium",
       "bar"
@@ -609,6 +637,7 @@
     "skill_dependent": false,
     "min_group_size": 3,
     "max_group_size": 12,
+    "hours": 1,
     "venue_categories": [
       "yoga-studio",
       "park"
@@ -633,6 +662,7 @@
     "skill_dependent": false,
     "min_group_size": 2,
     "max_group_size": 4,
+    "hours": 2,
     "venue_categories": [
       "bath"
     ],
@@ -654,6 +684,7 @@
     "skill_dependent": false,
     "min_group_size": 3,
     "max_group_size": 10,
+    "hours": 1,
     "venue_categories": [
       "yoga-studio",
       "temple-shrine"
@@ -675,6 +706,7 @@
     "skill_dependent": false,
     "min_group_size": 4,
     "max_group_size": 12,
+    "hours": 3,
     "venue_categories": [
       "picnic-bbq",
       "community-center"
@@ -696,6 +728,7 @@
     "skill_dependent": false,
     "min_group_size": 3,
     "max_group_size": 6,
+    "hours": 2.5,
     "venue_categories": [
       "cafe",
       "bookshop",
@@ -726,6 +759,7 @@
     "skill_dependent": false,
     "min_group_size": 3,
     "max_group_size": 6,
+    "hours": 1.5,
     "venue_categories": [
       "brunch",
       "cafe"
@@ -750,6 +784,7 @@
     "skill_dependent": false,
     "min_group_size": 3,
     "max_group_size": 8,
+    "hours": 1.5,
     "venue_categories": [
       "restaurant",
       "sushi",
@@ -784,6 +819,7 @@
     "skill_dependent": false,
     "min_group_size": 3,
     "max_group_size": 8,
+    "hours": 3,
     "venue_categories": [
       "ramen",
       "dessert",
@@ -812,6 +848,7 @@
     "skill_dependent": false,
     "min_group_size": 3,
     "max_group_size": 8,
+    "hours": 2.5,
     "venue_categories": [],
     "replaces": [
       "baking"
@@ -830,6 +867,7 @@
     "skill_dependent": false,
     "min_group_size": 3,
     "max_group_size": 8,
+    "hours": 2,
     "venue_categories": [
       "bar",
       "brewery"
@@ -862,6 +900,7 @@
     "skill_dependent": false,
     "min_group_size": 3,
     "max_group_size": 10,
+    "hours": 3,
     "venue_categories": [
       "temple-shrine"
     ],
@@ -887,6 +926,7 @@
     "skill_dependent": false,
     "min_group_size": 3,
     "max_group_size": 8,
+    "hours": 2,
     "venue_categories": [
       "museum",
       "gallery",
@@ -913,6 +953,7 @@
     "skill_dependent": false,
     "min_group_size": 3,
     "max_group_size": 8,
+    "hours": 2.5,
     "venue_categories": [
       "live-music",
       "bar",
@@ -938,6 +979,7 @@
     "skill_dependent": false,
     "min_group_size": 3,
     "max_group_size": 10,
+    "hours": 2,
     "venue_categories": [
       "theatre",
       "bar",
@@ -966,6 +1008,7 @@
     "skill_dependent": false,
     "min_group_size": 3,
     "max_group_size": 10,
+    "hours": 2.5,
     "venue_categories": [
       "cinema",
       "community-center"
@@ -987,6 +1030,7 @@
     "skill_dependent": false,
     "min_group_size": 3,
     "max_group_size": 8,
+    "hours": 2,
     "venue_categories": [
       "cafe",
       "library",
@@ -1011,6 +1055,7 @@
     "skill_dependent": false,
     "min_group_size": 3,
     "max_group_size": 6,
+    "hours": 3,
     "venue_categories": [
       "temple-shrine"
     ],
@@ -1033,6 +1078,7 @@
     "skill_dependent": false,
     "min_group_size": 3,
     "max_group_size": 8,
+    "hours": 2,
     "venue_categories": [
       "art-studio",
       "community-center"
@@ -1056,6 +1102,7 @@
     "skill_dependent": false,
     "min_group_size": 3,
     "max_group_size": 6,
+    "hours": 2.5,
     "venue_categories": [
       "aquarium-zoo"
     ],
@@ -1080,6 +1127,7 @@
     "skill_dependent": false,
     "min_group_size": 3,
     "max_group_size": 6,
+    "hours": 2,
     "venue_categories": [],
     "replaces": [
       "anime-pilgrimage",
@@ -1099,6 +1147,7 @@
     "skill_dependent": false,
     "min_group_size": 3,
     "max_group_size": 6,
+    "hours": 2,
     "venue_categories": [
       "flea-market",
       "thrift",
@@ -1127,6 +1176,7 @@
     "skill_dependent": false,
     "min_group_size": 3,
     "max_group_size": 12,
+    "hours": 2.5,
     "venue_categories": [
       "go-kart",
       "golf",
@@ -1153,6 +1203,7 @@
     "skill_dependent": false,
     "min_group_size": 4,
     "max_group_size": 8,
+    "hours": 2.5,
     "venue_categories": [
       "cafe",
       "community-center"
@@ -1178,6 +1229,7 @@
     "skill_dependent": false,
     "min_group_size": 4,
     "max_group_size": 8,
+    "hours": 2,
     "venue_categories": [
       "karaoke"
     ]
@@ -1195,6 +1247,7 @@
     "skill_dependent": false,
     "min_group_size": 3,
     "max_group_size": 8,
+    "hours": 1.5,
     "venue_categories": [
       "bowling",
       "bar"
@@ -1217,6 +1270,7 @@
     "skill_dependent": false,
     "min_group_size": 3,
     "max_group_size": 8,
+    "hours": 1.5,
     "venue_categories": [],
     "replaces": [
       "murder-mystery",
@@ -1237,6 +1291,7 @@
     "skill_dependent": false,
     "min_group_size": 4,
     "max_group_size": 6,
+    "hours": 2,
     "venue_categories": [
       "bar"
     ],
@@ -1260,6 +1315,7 @@
     "skill_dependent": false,
     "min_group_size": 3,
     "max_group_size": 8,
+    "hours": 2,
     "venue_categories": [
       "arcade",
       "bar"
@@ -1283,6 +1339,7 @@
     "skill_dependent": false,
     "min_group_size": 3,
     "max_group_size": 8,
+    "hours": 2,
     "venue_categories": [
       "park",
       "art-studio"
@@ -1308,6 +1365,7 @@
     "skill_dependent": false,
     "min_group_size": 3,
     "max_group_size": 8,
+    "hours": 3,
     "venue_categories": [],
     "replaces": [
       "photo-walk",
@@ -1329,6 +1387,7 @@
     "skill_dependent": true,
     "min_group_size": 3,
     "max_group_size": 6,
+    "hours": 2,
     "venue_categories": [
       "art-studio"
     ]
@@ -1346,6 +1405,7 @@
     "skill_dependent": false,
     "min_group_size": 3,
     "max_group_size": 8,
+    "hours": 2,
     "venue_categories": [
       "art-studio",
       "cafe",
@@ -1375,6 +1435,7 @@
     "skill_dependent": false,
     "min_group_size": 3,
     "max_group_size": 15,
+    "hours": 2,
     "venue_categories": [
       "community-center"
     ],
@@ -1395,6 +1456,7 @@
     "skill_dependent": false,
     "min_group_size": 5,
     "max_group_size": 12,
+    "hours": 2,
     "venue_categories": [
       "community-center"
     ]
@@ -1412,6 +1474,7 @@
     "skill_dependent": false,
     "min_group_size": 3,
     "max_group_size": 8,
+    "hours": 2,
     "venue_categories": [
       "cafe",
       "bar"
@@ -1434,6 +1497,7 @@
     "skill_dependent": false,
     "min_group_size": 3,
     "max_group_size": 8,
+    "hours": 3,
     "venue_categories": [
       "library",
       "cafe"
@@ -1456,6 +1520,7 @@
     "skill_dependent": false,
     "min_group_size": 3,
     "max_group_size": 12,
+    "hours": 1.5,
     "venue_categories": [
       "community-center",
       "library",
@@ -1483,6 +1548,7 @@
     "skill_dependent": false,
     "min_group_size": 2,
     "max_group_size": 15,
+    "hours": 3,
     "venue_categories": [
       "beach",
       "park",

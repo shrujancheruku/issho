@@ -4,6 +4,7 @@ package cities
 
 import (
 	"bytes"
+	"cmp"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -57,6 +58,9 @@ type Activity struct {
 	SkillDependent bool   `json:"skill_dependent"`
 	MinGroupSize   int16  `json:"min_group_size"`
 	MaxGroupSize   int16  `json:"max_group_size"`
+	// Hours is how long it usually takes a group, for weighing one activity
+	// against two in a plan (matching.Activity.Hours).
+	Hours float64 `json:"hours"`
 	// Venue category ids (venue-categories.json) the activity happens at;
 	// empty when it only needs a meeting point.
 	VenueCategories []string `json:"venue_categories"`
@@ -141,6 +145,7 @@ func SeedCatalog(ctx context.Context, pool *pgxpool.Pool, venueCategoriesPath, a
 				ID: a.ID, Name: name, Category: a.Category, Indoor: a.Indoor, Energy: a.Energy,
 				CostLevel: a.CostLevel, Conversational: a.Conversational, SkillDependent: a.SkillDependent,
 				MinGroupSize: a.MinGroupSize, MaxGroupSize: a.MaxGroupSize,
+				Column11: cmp.Or(a.Hours, 2), // hours (positional $11; 2 when the catalogue doesn't say)
 			}); err != nil {
 				return fmt.Errorf("activity %s: %w", a.ID, err)
 			}

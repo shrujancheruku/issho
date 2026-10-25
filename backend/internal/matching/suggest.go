@@ -96,10 +96,15 @@ func Suggest(in SuggestInput, cfg Config) []Suggestion {
 	return out
 }
 
-// tooClose reports whether two plans are the same activity, share a
-// language and are within cfg.PlanSpacingMin of each other (either way).
+// tooClose reports whether two plans share an activity (in either place:
+// "bouldering, then lunch" and "museum, then lunch" draw on the same
+// people), share a language and are within cfg.PlanSpacingMin of each other
+// (either way).
 func tooClose(a, b Plan, travel TravelTimes, cfg Config) bool {
-	if a.Activity != b.Activity {
+	shares := a.Activity == b.Activity ||
+		(b.FollowUp != "" && (a.Activity == b.FollowUp || a.FollowUp == b.FollowUp)) ||
+		(a.FollowUp != "" && a.FollowUp == b.Activity)
+	if !shares {
 		return false
 	}
 	shared := a.Primary == b.Primary || (b.Secondary != "" && a.Primary == b.Secondary) ||
@@ -112,16 +117,24 @@ func tooClose(a, b Plan, travel TravelTimes, cfg Config) bool {
 	return (ok1 && ab <= cfg.PlanSpacingMin) || (ok2 && ba <= cfg.PlanSpacingMin)
 }
 
-// rankActivities scores every activity that could happen in the pool's
-// area and has enough audience, best first.
+// rankActivities scores the plans that could happen in the pool's area and
+// have enough audience, best first. Every activity is weighed alone and
+// followed by each of the pool's most wanted others (cfg.PairCandidates),
+// and keeps whichever scores higher: two activities aren't required, so a
+// full outing of one (a long walk) can beat two shorter halves.
+//
+// A plan's score is its audience's interest (appeal: for two activities,
+// each person's interest in both, weighted by how long each takes) × how
+// much of an outing it fills (cfg.OutingHours) × how many venues it can
+// choose from, with cfg.PairBonus more for two activities.
 func rankActivities(pool Pool, users map[UserID]*User, activities []Activity, venues Venues, cfg Config) []Suggestion {
-	type scored struct {
+	type option struct {
 		act      *Activity
-		demand   float64
 		feasible float64
-		audience int
+		values   []float64 // per pool member: their interest when usually free for it, else 0
+		demand   float64
 	}
-	var mains, followUps []scored
+	var opts []*option
 	for i := range activities {
 		a := &activities[i]
 		feasible := 1.0
@@ -132,51 +145,139 @@ func rankActivities(pool Pool, users map[UserID]*User, activities []Activity, ve
 			}
 			feasible = min(1, float64(n)/float64(cfg.VenueChoice))
 		}
-		s := scored{act: a, feasible: feasible}
-		for _, id := range pool.Members {
+		o := &option{act: a, feasible: feasible, values: make([]float64, len(pool.Members))}
+		for j, id := range pool.Members {
 			u := users[id]
 			if !usuallyFree(u, a) {
 				continue
 			}
 			if v, ok := interest(u, a, cfg); ok {
-				s.demand += v
-				s.audience++
+				o.values[j] = v
+				o.demand += v
 			}
 		}
-		if s.audience < cfg.MinAudience {
-			continue
-		}
-		mains = append(mains, s)
-		if a.Conversational && !a.Walk && len(a.VenueCategories) > 0 && slices.Contains(cfg.FollowUpCategories, a.Category) {
-			followUps = append(followUps, s)
+		opts = append(opts, o)
+	}
+
+	// Second activities: the most wanted in the pool that need a venue (the
+	// second stop is a place) and aren't walks (a walk is a whole outing).
+	var seconds []*option
+	for _, o := range opts {
+		if !o.act.Walk && len(o.act.VenueCategories) > 0 && o.demand > 0 {
+			seconds = append(seconds, o)
 		}
 	}
-	slices.SortFunc(followUps, func(x, y scored) int {
+	slices.SortFunc(seconds, func(x, y *option) int {
 		return cmp.Or(cmp.Compare(y.demand*y.feasible, x.demand*x.feasible), cmp.Compare(x.act.ID, y.act.ID))
 	})
+	seconds = seconds[:min(len(seconds), cfg.PairCandidates)]
 
-	out := make([]Suggestion, 0, len(mains))
-	for _, m := range mains {
-		s := Suggestion{
-			Plan:     Plan{Area: pool.Area, Activity: m.act.ID, Primary: pool.Primary, Secondary: pool.Secondary},
-			Audience: m.audience,
-			Score:    m.demand * m.feasible,
+	evaluate := func(a, b *option) Suggestion {
+		s := Suggestion{Plan: Plan{Area: pool.Area, Activity: a.act.ID, Primary: pool.Primary, Secondary: pool.Secondary}}
+		var demand float64
+		for j := range pool.Members {
+			v := a.values[j]
+			if b != nil {
+				v = appeal(a.act, b.act, v, b.values[j], cfg)
+			}
+			if v > 0 {
+				demand += v
+				s.Audience++
+			}
 		}
-		if !m.act.Conversational && !m.act.Walk {
-			for _, f := range followUps {
-				if f.act.ID != m.act.ID {
-					s.FollowUp = f.act.ID
-					s.Score += cfg.FollowUpWeight * f.demand * f.feasible
-					break
+		hours, feasible := a.act.hours(), a.feasible
+		if b != nil {
+			s.FollowUp = b.act.ID
+			hours += b.act.hours()
+			feasible *= b.feasible
+			demand *= 1 + cfg.PairBonus
+		}
+		s.Score = demand * feasible * min(1, hours/cfg.OutingHours)
+		return s
+	}
+
+	var out []Suggestion
+	for _, a := range opts {
+		best := evaluate(a, nil)
+		if !a.act.Walk && (!cfg.PairShortOnly || a.act.hours() < cfg.OutingHours) {
+			for _, b := range seconds {
+				if pairs(a.act, b.act, cfg) {
+					if s := evaluate(a, b); s.Score > best.Score {
+						best = s
+					}
 				}
 			}
 		}
-		out = append(out, s)
+		if best.Audience < cfg.MinAudience {
+			continue
+		}
+		out = append(out, best)
 	}
 	slices.SortFunc(out, func(x, y Suggestion) int {
 		return cmp.Or(cmp.Compare(y.Score, x.Score), cmp.Compare(x.Activity, y.Activity))
 	})
 	return out
+}
+
+// appeal is a person's interest in a plan of two activities given their
+// interest in each (0 = no preference): the average, weighted by how long
+// each takes, with cfg.NeutralInterest for one they have no preference for.
+// So two activities appeal most to people who like both, and someone who
+// likes only one finds the pair less appealing than it alone. 0 when they
+// like neither.
+func appeal(a, b *Activity, va, vb float64, cfg Config) float64 {
+	if va == 0 && vb == 0 {
+		return 0
+	}
+	if va == 0 {
+		va = cfg.NeutralInterest
+	}
+	if vb == 0 {
+		vb = cfg.NeutralInterest
+	}
+	ha, hb := a.hours(), b.hours()
+	return (ha*va + hb*vb) / (ha + hb)
+}
+
+// pairs reports whether b can follow a in one outing: different kinds of
+// activity, together no longer than cfg.MaxOutingHours, and in a natural
+// order (a meal last; otherwise the more active first, then the less
+// social, so the group winds down and talks over the second; ties by id, so
+// each pair is one plan).
+func pairs(a, b *Activity, cfg Config) bool {
+	if a.ID == b.ID || a.Walk || b.Walk || a.Category == b.Category || a.hours()+b.hours() > cfg.MaxOutingHours {
+		return false
+	}
+	aFood, bFood := a.Category == "food", b.Category == "food"
+	if aFood != bFood {
+		return bFood
+	}
+	if a.Energy != b.Energy {
+		return a.Energy > b.Energy
+	}
+	if a.Conversational != b.Conversational {
+		return b.Conversational
+	}
+	return a.ID < b.ID
+}
+
+// PlanInterest is a person's interest in a plan (appeal, for two
+// activities), their interest in the activity of it they like most, and
+// their stronger preference; ok is false when they have none for either.
+func PlanInterest(u *User, p Plan, acts map[ActivityID]*Activity, cfg Config) (v, best float64, pref int, ok bool) {
+	a := acts[p.Activity]
+	v, ok = interest(u, a, cfg)
+	best, pref = v, u.Prefs[a.ID]
+	if b := acts[p.FollowUp]; b != nil {
+		vb, okb := interest(u, b, cfg)
+		v = appeal(a, b, v, vb, cfg)
+		best = max(best, vb)
+		if okb && (!ok || u.Prefs[b.ID] > pref) {
+			pref = u.Prefs[b.ID]
+		}
+		ok = ok || okb
+	}
+	return v, best, pref, ok
 }
 
 // usuallyFree reports whether the person's profile availability includes a

@@ -52,12 +52,25 @@ type Config struct {
 	// MomentumAt is the signup count at which a plan's momentum bonus in the
 	// feed is full (see Weights.Momentum).
 	MomentumAt int `json:"momentum_at"`
-	// FollowUpCategories are activity categories that can follow a
-	// non-conversational main activity (bouldering, then ramen), so the
-	// group gets a chance to talk.
-	FollowUpCategories []string `json:"follow_up_categories"`
-	// FollowUpWeight is how much a follow-up's demand adds to a plan's score.
-	FollowUpWeight float64 `json:"follow_up_weight"`
+	// OutingHours is how long an outing feels full: a plan shorter than this
+	// scores in proportion (one 1.5-hour session alone scores 0.6 of its
+	// demand). One long activity and two shorter ones both fill it.
+	OutingHours float64 `json:"outing_hours"`
+	// MaxOutingHours caps two activities' total length.
+	MaxOutingHours float64 `json:"max_outing_hours"`
+	// NeutralInterest is a person's interest in a plan's activity they have
+	// no preference for, when they like its other one (appeal): a meal after
+	// bouldering is fine even if they didn't pick meals.
+	NeutralInterest float64 `json:"neutral_interest"`
+	// PairBonus scores a two-activity plan this much higher than its parts
+	// alone would: a preference for variety, not a rule.
+	PairBonus float64 `json:"pair_bonus"`
+	// PairCandidates is how many of a pool's most wanted activities are tried
+	// as each activity's second.
+	PairCandidates int `json:"pair_candidates"`
+	// PairShortOnly pairs only activities too short to fill an outing alone
+	// (under OutingHours): a long walk or a festival always stands alone.
+	PairShortOnly bool `json:"pair_short_only"`
 
 	// SizeTargets is the group size each SizePref aims for.
 	SizeTargets map[SizePref]int `json:"size_targets"`
@@ -97,23 +110,27 @@ type Weights struct {
 // DefaultConfig returns the settings used when a city doesn't override them.
 func DefaultConfig() Config {
 	return Config{
-		MinGroupSize:       2,
-		PreferredMinSize:   3,
-		BilingualWeight:    0.5,
-		PrefValues:         [3]float64{0.5, 1, 2},
-		OverBudget:         0.3,
-		VenueChoice:        3,
-		PlansPerPool:       5,
-		PlanSpacingMin:     20,
-		UsersPerPlan:       10,
-		MinAudience:        6,
-		MomentumAt:         8,
-		FollowUpCategories: []string{"food"},
-		FollowUpWeight:     0.3,
-		SizeTargets:        map[SizePref]int{Small: 4, Medium: 6, Large: 8},
-		Weights:            Weights{Interest: 3, SizeFit: 1, MinSize: 1, Balance: 2, Mutual: 2, Newcomers: 1, Reliability: 1, Momentum: 0.5, Friends: 1.5},
-		SearchPasses:       5,
-		ExtraInvites:       2,
+		MinGroupSize:     2,
+		PreferredMinSize: 3,
+		BilingualWeight:  0.5,
+		PrefValues:       [3]float64{0.5, 1, 2},
+		OverBudget:       0.3,
+		VenueChoice:      3,
+		PlansPerPool:     5,
+		PlanSpacingMin:   20,
+		UsersPerPlan:     10,
+		MinAudience:      6,
+		MomentumAt:       8,
+		OutingHours:      2,
+		MaxOutingHours:   4,
+		NeutralInterest:  0.25,
+		PairBonus:        0.1,
+		PairCandidates:   10,
+		PairShortOnly:    true,
+		SizeTargets:      map[SizePref]int{Small: 4, Medium: 6, Large: 8},
+		Weights:          Weights{Interest: 3, SizeFit: 1, MinSize: 1, Balance: 2, Mutual: 2, Newcomers: 1, Reliability: 1, Momentum: 0.5, Friends: 1.5},
+		SearchPasses:     5,
+		ExtraInvites:     2,
 	}
 }
 

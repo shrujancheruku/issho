@@ -47,9 +47,9 @@ func TestSuggest(t *testing.T) {
 	pricey := act("omakase", 3, 6, "cafe")
 	pricey.CostLevel = 3
 	boulder := act("bouldering", 3, 8, "gym")
-	boulder.Conversational = false
+	boulder.Conversational, boulder.Hours = false, 1.5
 	ramen := act("ramen", 3, 8, "cafe")
-	ramen.Category = "food"
+	ramen.Category, ramen.Hours = "food", 1.5
 	photoWalk := act("photo-walk", 3, 8)
 	photoWalk.Conversational, photoWalk.Walk = false, true
 	foodTour := act("food-tour", 3, 8, "cafe")
@@ -89,10 +89,13 @@ func TestSuggest(t *testing.T) {
 			want: []string{"walk@a", "omakase@a", "pub@a"},
 		},
 		{
-			name:  "a non-conversational activity gets a food follow-up",
+			// Bouldering alone fills 1.5 of a 2-hour outing: 4 × 2 × 0.75 = 6;
+			// with ramen, (1.5×2 + 1.5×1)/3 = 1.5 each, 4 × 1.5 × 1.1 = 6.6. A
+			// ramen plan of its own would draw on the same people nearby.
+			name:  "a short activity gains a meal when people like both",
 			users: fan("x", 4, 3, map[ActivityID]int{"bouldering": Love, "ramen": Like}),
 			acts:  []Activity{boulder, ramen},
-			want:  []string{"bouldering>ramen@a", "ramen@a"},
+			want:  []string{"bouldering>ramen@a"},
 		},
 		{
 			name:  "plans already open aren't suggested again",
@@ -174,5 +177,76 @@ func TestSuggestSpacingAndCap(t *testing.T) {
 	cfg.UsersPerPlan = 9 // 9 people: one plan
 	if got := Suggest(in, cfg); len(got) != 1 {
 		t.Errorf("cap: got %d plans", len(got))
+	}
+}
+
+func TestPairs(t *testing.T) {
+	cfg := DefaultConfig()
+	cfg.MinAudience, cfg.UsersPerPlan = 3, 1
+	boulder := act("bouldering", 3, 8, "gym")
+	boulder.Category, boulder.Conversational, boulder.Hours, boulder.Energy = "sports", false, 1.5, 3
+	ramen := act("ramen", 3, 6, "cafe")
+	ramen.Category, ramen.Hours, ramen.Energy = "food", 1.5, 1
+	festival := act("festival", 3, 8, "cafe")
+	festival.Category, festival.Hours = "culture", 3
+	museum := act("museum", 3, 8, "cafe")
+	museum.Category, museum.Hours, museum.Energy = "culture", 2, 1
+
+	suggest := func(users []User, acts ...Activity) []string {
+		return suggestIDs(Suggest(SuggestInput{Users: users, Areas: []AreaID{"a"}, Travel: TravelTimes{}, Activities: acts, Venues: testVenues}, cfg))
+	}
+	// Liking only one half makes a pair less appealing than that half alone:
+	// (1.5×2 + 1.5×0.25)/3 × 4 × 1.1 = 4.95 < 4 × 2 × 0.75 = 6.
+	if got := suggest(fan("x", 4, 3, map[ActivityID]int{"bouldering": Love}), boulder, ramen); !slices.Equal(got, []string{"bouldering@a"}) {
+		t.Errorf("liked alone: %v", got)
+	}
+	// An activity that fills an outing stands alone, however liked the meal.
+	if got := suggest(fan("x", 4, 3, map[ActivityID]int{"festival": Love, "ramen": Love}), festival, ramen); !slices.Contains(got, "festival@a") {
+		t.Errorf("a full activity: %v", got)
+	}
+
+	// Order: a meal last; otherwise the more active first.
+	if !pairs(&boulder, &ramen, cfg) || pairs(&ramen, &boulder, cfg) || !pairs(&boulder, &museum, cfg) || pairs(&museum, &boulder, cfg) {
+		t.Error("pair order")
+	}
+	// Not two of a kind, not over MaxOutingHours.
+	museum2 := museum
+	museum2.ID = "gallery"
+	long := boulder
+	long.ID, long.Hours = "long", 3
+	if pairs(&museum, &museum2, cfg) || pairs(&long, &museum, cfg) {
+		t.Error("pair limits")
+	}
+
+	// A pair's groups fit both: the smaller maximum, a shared part of the day.
+	boulder.Blocks, ramen.Blocks = []Block{Afternoon, Evening}, []Block{Evening}
+	w := boulder.With(&ramen)
+	if w.MaxSize != 6 || !slices.Equal(w.Blocks, []Block{Evening}) || w.Hours != 3 || w.ID != boulder.ID || boulder.With(nil) != &boulder {
+		t.Errorf("With: %+v", w)
+	}
+
+	// Two plans sharing either activity nearby compete for the same people.
+	near := TravelTimes{}
+	if !tooClose(Plan{Area: "a", Activity: "museum", FollowUp: "ramen", Primary: "ja"}, Plan{Area: "a", Activity: "bouldering", FollowUp: "ramen", Primary: "ja"}, near, cfg) ||
+		!tooClose(Plan{Area: "a", Activity: "ramen", Primary: "ja"}, Plan{Area: "a", Activity: "bouldering", FollowUp: "ramen", Primary: "ja"}, near, cfg) ||
+		tooClose(Plan{Area: "a", Activity: "museum", Primary: "ja"}, Plan{Area: "a", Activity: "bouldering", FollowUp: "ramen", Primary: "ja"}, near, cfg) {
+		t.Error("spacing by either activity")
+	}
+}
+
+func TestPlanInterest(t *testing.T) {
+	cfg := DefaultConfig()
+	a, b := act("museum", 3, 8), act("ramen", 3, 8)
+	a.Hours, b.Hours = 2, 1
+	acts := map[ActivityID]*Activity{"museum": &a, "ramen": &b}
+	p := Plan{Activity: "museum", FollowUp: "ramen"}
+	u := &User{Budget: 3, Prefs: map[ActivityID]int{"ramen": Love}}
+	// Loves only the meal: (2×0.25 + 1×2)/3; their level follows the meal.
+	v, best, pref, ok := PlanInterest(u, p, acts, cfg)
+	if !ok || pref != Love || best != 2 || v < 0.83 || v > 0.84 {
+		t.Errorf("one liked: %v %v %v %v", v, best, pref, ok)
+	}
+	if _, _, _, ok := PlanInterest(&User{Prefs: map[ActivityID]int{}}, p, acts, cfg); ok {
+		t.Error("neither liked")
 	}
 }
