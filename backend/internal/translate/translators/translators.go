@@ -10,22 +10,22 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/translate/google"
 )
 
-// New returns the translator named by kind: "google" (Cloud Translation
-// Basic, the default) or "gemini" (reads each string's context and the
-// translation guide). It returns nil, with no error, when that translator's
-// key is missing: machine translation is then off.
+// New returns the translator named by kind: "gemini" (the default; reads
+// each string's context and the translation guide) or "google" (Cloud
+// Translation Basic, kept to compare with). It returns nil, with no error,
+// when that translator's key is missing: machine translation is then off.
 func New(kind, googleKey, geminiKey string) (translate.Translator, error) {
 	switch kind {
-	case "", "google":
-		if googleKey == "" {
-			return nil, nil
-		}
-		return google.New(googleKey), nil
-	case "gemini":
+	case "", "gemini":
 		if geminiKey == "" {
 			return nil, nil
 		}
 		return gemini.New(geminiKey), nil
+	case "google":
+		if googleKey == "" {
+			return nil, nil
+		}
+		return google.New(googleKey), nil
 	default:
 		return nil, fmt.Errorf("TRANSLATOR must be google or gemini, not %q", kind)
 	}
