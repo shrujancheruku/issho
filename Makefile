@@ -36,10 +36,15 @@ gen-proto:
 gen-sql:
 	cd backend && go tool sqlc generate
 
-# The app's English UI text is the source; the API embeds a copy and only
-# ever translates strings in it (internal/uistrings).
+# The app's plain English UI text is the source; the API embeds a copy and
+# only ever translates strings in it (internal/uistrings). Human versions
+# (i18n/human/<lang>.json) are checked, stamped with the English they were
+# written for, and copied too.
 gen-strings:
+	cd backend && go run ./cmd/tool ui-strings ../apps/mobile/src/i18n
 	cp apps/mobile/src/i18n/en.json backend/internal/uistrings/en.json
+	rm -rf backend/internal/uistrings/human
+	cp -R apps/mobile/src/i18n/human backend/internal/uistrings/human
 
 lint:
 	$(GOTOOL) buf lint proto

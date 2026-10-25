@@ -8,6 +8,7 @@
 //	tool simulate [-users 500] [-seed 1] [-month 5] [-config '{...}'] data/citypacks/tokyo.json ...
 //	tool walk-bench run|judge|review|report [flags]   (compare walk proposers; see walkbench.go)
 //	tool set-admin [-revoke] <email>   (the admin SPA's role; needs SUPABASE_URL and SUPABASE_SECRET_KEY)
+//	tool ui-strings <apps/mobile/src/i18n>   (checks and stamps the UI text's human versions; run by make gen)
 package main
 
 import (
@@ -40,13 +41,15 @@ func main() {
 
 func run(args []string) error {
 	if len(args) == 0 {
-		return fmt.Errorf("usage: tool migrate|seed|build-matrix|discover-venues|email-templates|simulate|walk-bench|set-admin ...")
+		return fmt.Errorf("usage: tool migrate|seed|build-matrix|discover-venues|email-templates|simulate|walk-bench|set-admin|ui-strings ...")
 	}
 	switch args[0] {
 	case "simulate":
 		return simulate(args[1:]) // synthetic data only: no database needed
 	case "walk-bench":
 		return walkBench(args[1:]) // Gemini, Claude and Maps only: no database needed
+	case "ui-strings":
+		return uiStrings(args[1:]) // files only: no database needed
 	}
 	ctx := context.Background()
 	url := os.Getenv("DATABASE_URL")

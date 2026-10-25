@@ -105,7 +105,7 @@ Examples: a JP–ES exchange in Tokyo shows Japanese + Spanish to everyone; a Ja
 
 **Events** (M6) are stored with English **plus each of their own languages prefilled** (`translate.Service.Prefill`), so a JP–ES exchange exists in en, ja and es from the start; any other viewer's language is translated on demand.
 
-**The app's own UI text** is written in English in `apps/mobile/src/i18n/en.json`. `UIService.GetStrings` translates the whole catalogue into one language through the same cache; the app keeps a copy on the device and asks again while translations are still running. The server only translates its own copy of that file (`make gen` copies it into `backend/internal/uistrings`), so the RPC can be public, for the sign-in screens, without translating arbitrary text. Placeholders (`{email}`) are checked: a translation that loses one is dropped, and the app shows English for that string. Before sign-in the app uses the device language; afterwards, the profile's two languages.
+**The app's own UI text** is written in English in `apps/mobile/src/i18n/en.json`. `UIService.GetStrings` translates the whole catalogue into one language through the same cache; the app keeps a copy on the device and asks again while translations are still running. The server only translates its own copy of that file (`make gen` copies it into `backend/internal/uistrings`), so the RPC can be public, for the sign-in screens, without translating arbitrary text. Placeholders (`{email}`) are checked: a translation that loses one is dropped, and the app shows English for that string. **Human versions** (`apps/mobile/src/i18n/human/<lang>.json`) replace single strings: the owner's livelier English, and later translations a person wrote or approved. Each records a hash of the English it was written for and is skipped once that English changes. Machines always translate the plain English, which is also the last resort. Before sign-in the app uses the device language; afterwards, the profile's two languages.
 
 **Area names are never machine-translated.** They're proper nouns, and translation mangled them ("The Domain" → "El dominio"). Only stored names are shown: English plus a real local name such as 吉祥寺. City names are translated (Tokyo → Tokio).
 
@@ -125,6 +125,7 @@ A city is defined entirely by data in `data/citypacks/<city>.json`: areas with c
 | `proto/**/*.proto` | buf → protoc-gen-es | `packages/api-client/src/gen/…` |
 | `proto/**/*.proto` | buf → protoc-gen-doc | `docs/generated/api.md` |
 | `backend/db/queries/*.sql` + migrations | sqlc | `backend/gen/dbgen` |
+| `apps/mobile/src/i18n/en.json`, `human/*.json` | `tool ui-strings` (stamps new human versions) + copy | `backend/internal/uistrings/` |
 
 Run `make gen` after editing protos or queries. CI fails if the generated code is stale.
 

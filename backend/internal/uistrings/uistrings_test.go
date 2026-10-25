@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
+	"github.com/shrujancheruku/issho/backend/internal/platform/i18n"
 	"github.com/shrujancheruku/issho/backend/internal/translate"
 )
 
@@ -67,7 +68,7 @@ func TestEmbeddedCatalog(t *testing.T) {
 }
 
 func TestIn(t *testing.T) {
-	c, err := parse([]byte(`{"hi":"Hello","who":"Signed in as {email}"}`))
+	c, err := parse([]byte(`{"hi":"Hello","who":"Signed in as {email}"}`), nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -92,6 +93,132 @@ func TestIn(t *testing.T) {
 	}
 	if _, ok := got["who"]; ok {
 		t.Errorf("broken placeholder kept: %q", got["who"])
+	}
+}
+
+// The committed human versions: real languages, real keys, placeholders
+// kept. The owner's English must also be current: a reworded English string
+// fails here until its livelier version is checked (other languages' stale
+// versions don't fail the build, since the owner can't judge them; they're
+// skipped when shown, and the translation editor lists them).
+func TestEmbeddedHuman(t *testing.T) {
+	c, err := Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := c.human["en"]; !ok {
+		t.Error("human/en.json is missing (make gen copies it)")
+	}
+	for lang, versions := range c.human {
+		if !i18n.Valid(lang) {
+			t.Errorf("human/%s.json: not an ISO 639-1 code", lang)
+		}
+		for key, v := range versions {
+			english, ok := c.english[key]
+			switch {
+			case !ok:
+				t.Errorf("human/%s.json: %s isn't in en.json", lang, key)
+			case !SamePlaceholders(english, v.Text):
+				t.Errorf("human/%s.json: %s must keep the placeholders of %q", lang, key, english)
+			case v.Source == "":
+				t.Errorf("human/%s.json: %s has no source; run make gen", lang, key)
+			case lang == i18n.Authoring && v.Source != SourceHash(english):
+				t.Errorf("human/en.json: %s was written for an earlier English text; it's now %q. "+
+					"Check the livelier version still says the same, then delete its \"source\" and run make gen.", key, english)
+			}
+		}
+	}
+}
+
+func TestHumanVersions(t *testing.T) {
+	en := []byte(`{"hi":"Hello","who":"Signed in as {email}","bye":"Goodbye"}`)
+	human := map[string][]byte{
+		"en": []byte(`{"hi":{"text":"Hey there","source":"` + SourceHash("Hello") + `"},` +
+			`"bye":{"text":"See ya","source":"` + SourceHash("Good-bye") + `"}}`), // written for older English: stale
+		"ja": []byte(`{"who":{"text":"{email} でログイン中","source":"` + SourceHash("Signed in as {email}") + `"},` +
+			`"hi":{"text":"やあ","source":"` + SourceHash("Hello") + `"}}`),
+		"fr": []byte(`{"who":{"text":"Connecté","source":"` + SourceHash("Signed in as {email}") + `"}}`), // lost {email}
+	}
+	c, err := parse(en, human)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx := context.Background()
+	store := func() *translate.Service {
+		return &translate.Service{Store: &memStore{rows: map[string]string{}}, Translator: mangler{}}
+	}
+
+	got, complete := c.In(ctx, store(), "en")
+	if !complete || got["hi"] != "Hey there" || got["bye"] != "Goodbye" || got["who"] != "Signed in as {email}" {
+		t.Errorf("English: %v %v", got, complete)
+	}
+
+	// Human versions where current; the machine translates the rest.
+	got, complete = c.In(ctx, store(), "ja")
+	if !complete || got["who"] != "{email} でログイン中" || got["hi"] != "やあ" || got["bye"] != "GOODBYE" {
+		t.Errorf("Japanese: %v %v", got, complete)
+	}
+	// Nothing left for a translator: complete without one.
+	jaOnly, _ := parse([]byte(`{"hi":"Hello"}`), map[string][]byte{"ja": human["ja"]})
+	if got, complete := jaOnly.In(ctx, &translate.Service{Store: &memStore{rows: map[string]string{}}}, "ja"); !complete || got["hi"] != "やあ" {
+		t.Errorf("all human: %v %v", got, complete)
+	}
+	// A human version that lost a placeholder isn't used.
+	if got, _ := c.In(ctx, &translate.Service{Store: &memStore{rows: map[string]string{}}}, "fr"); got["who"] != "" {
+		t.Errorf("broken human version shown: %q", got["who"])
+	}
+
+	if s := c.Text(ctx, nil, "en", "hi"); s != "Hey there" {
+		t.Errorf("Text en: %q", s)
+	}
+	if s := c.Text(ctx, nil, "en", "bye"); s != "Goodbye" {
+		t.Errorf("Text en, stale: %q", s)
+	}
+	if s := c.Text(ctx, nil, "ja", "hi"); s != "やあ" {
+		t.Errorf("Text ja: %q", s)
+	}
+	// The fallback is the plain English, not the livelier one.
+	if s := c.Text(ctx, nil, "de", "hi"); s != "Hello" {
+		t.Errorf("Text fallback: %q", s)
+	}
+
+	plain, _ := parse(en, nil)
+	if plain.version == c.version {
+		t.Error("version ignores human versions")
+	}
+}
+
+func TestStamp(t *testing.T) {
+	en := []byte(`{"hi":"Hello","who":"Signed in as {email}"}`)
+	old := SourceHash("Hi")
+	got, err := Stamp(en, []byte(`{"who":{"text":"You're in as {email} & <ok>"},"hi":{"text":"Hey","source":"`+old+`"}}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	// New entries get today's English; existing sources are kept (refreshing
+	// them would hide a change). One line per string, sorted, unescaped.
+	want := "{\n" +
+		`  "hi": {"text": "Hey", "source": "` + old + `"},` + "\n" +
+		`  "who": {"text": "You're in as {email} & <ok>", "source": "` + SourceHash("Signed in as {email}") + `"}` + "\n" +
+		"}\n"
+	if string(got) != want {
+		t.Errorf("got\n%s\nwant\n%s", got, want)
+	}
+	if again, _ := Stamp(en, got); string(again) != want {
+		t.Errorf("not stable:\n%s", again)
+	}
+	if got, _ := Stamp(en, []byte(`{}`)); string(got) != "{}\n" {
+		t.Errorf("empty: %q", got)
+	}
+	for _, bad := range []string{
+		`{"nope":{"text":"x"}}`,
+		`{"hi":{"text":" "}}`,
+		`{"who":{"text":"You're in"}}`,
+		`{"hi":"Hey"}`,
+	} {
+		if _, err := Stamp(en, []byte(bad)); err == nil {
+			t.Errorf("accepted %s", bad)
+		}
 	}
 }
 
