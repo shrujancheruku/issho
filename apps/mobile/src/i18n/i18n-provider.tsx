@@ -6,6 +6,7 @@ import { AppState } from 'react-native';
 import { useAuth } from '@/features/auth/auth-provider';
 import { api } from '@/lib/api';
 
+import { fromBundle } from './bundle';
 import { readCached, writeCached, type CachedStrings } from './cache';
 import { deviceLanguages } from './device';
 import { catalogFingerprint, displayEnglish, lookup, type Params, type StringKey } from './strings';
@@ -124,7 +125,8 @@ function isCurrent(c: CachedStrings | undefined) {
 const CHECK_EVERY = 60 * 60 * 1000;
 
 /**
- * The UI catalogue in one language: from the device cache straight away, then
+ * The UI catalogue in one language: from the device cache straight away (or,
+ * on a fresh install, the copy bundled for the city packs' languages), then
  * from the server when the cache is missing, incomplete or older than this
  * build's keys. While the server is still translating, it asks again every
  * 30 seconds; a current copy is checked hourly, including when the app comes
@@ -134,7 +136,7 @@ const CHECK_EVERY = 60 * 60 * 1000;
 function useUiStrings(lang: string) {
   const needed = !!lang && lang !== 'en';
   const queryClient = useQueryClient();
-  const cached = useMemo(() => (needed ? readCached(lang) : undefined), [needed, lang]);
+  const cached = useMemo(() => (needed ? (readCached(lang) ?? fromBundle(lang)) : undefined), [needed, lang]);
   const query = useQuery({
     queryKey: ['ui-strings', lang],
     enabled: needed,

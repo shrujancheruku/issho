@@ -21,7 +21,7 @@ if grep -qx 'docs/ROADMAP.md' <<<"$changed"; then
   exit 0
 fi
 
-exempt='^(docs/|data/citypacks/|apps/mobile/src/i18n/human/|backend/internal/uistrings/human/|.*\.md$|CHANGELOG\.md$|version\.txt$|\.release-please-manifest\.json$|package\.json$|apps/mobile/package\.json$|apps/mobile/app\.json$)'
+exempt='^(docs/|data/citypacks/|apps/mobile/src/i18n/human/|apps/mobile/src/i18n/bundled/|backend/internal/uistrings/human/|.*\.md$|CHANGELOG\.md$|version\.txt$|\.release-please-manifest\.json$|package\.json$|apps/mobile/package\.json$|apps/mobile/app\.json$)'
 needs=$(grep -Ev "$exempt" <<<"$changed" || true)
 if [[ -n "$needs" ]]; then
   echo "These changes need a matching update to docs/ROADMAP.md (status, decisions or next steps):"

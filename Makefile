@@ -11,7 +11,7 @@ include $(ENV_FILE)
 export
 endif
 
-.PHONY: setup secrets-scan docs gen gen-proto gen-sql gen-strings email-templates lint test migrate-up migrate-status api worker seed matrix venues sim
+.PHONY: setup secrets-scan docs gen gen-proto gen-sql gen-strings email-templates ui-bundle lint test migrate-up migrate-status api worker seed matrix venues sim
 
 # One-time setup after cloning: install JS deps and enable the secret-scanning pre-commit hook.
 setup:
@@ -91,3 +91,9 @@ sim:
 # Rewrites supabase/templates/*.html and the subjects in supabase/config.toml.
 email-templates:
 	cd backend && go run ./cmd/tool email-templates
+
+# The city packs' languages, as the API at API_URL serves them, bundled into
+# the app so a fresh install shows them before its first fetch. Run against
+# the API the app build will use (production before a release).
+ui-bundle:
+	cd backend && go run ./cmd/tool ui-bundle -api $(API_URL)
