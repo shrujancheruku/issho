@@ -20,6 +20,17 @@ module.exports = defineConfig([
           selector: `CallExpression[callee.property.name='${name}']`,
           message: `${name}() isn't available in Hermes on every device; copy and use the mutating method instead.`,
         })),
+        // Left and right don't mirror in right-to-left languages; start and
+        // end do. (Absolute left/right positions and map padding are allowed.)
+        {
+          selector:
+            'Property[key.name=/^(margin|padding)(Left|Right)$|^border(Left|Right)(Width|Color|Style)$|^border(Top|Bottom)(Left|Right)Radius$/]',
+          message: 'Use the Start/End form of this style so layouts mirror in right-to-left languages.',
+        },
+        {
+          selector: "Property[key.name='textAlign'] Literal[value=/^(left|right)$/]",
+          message: "textAlign left/right doesn't mirror; leave it unset (it follows the writing direction) unless you mean it.",
+        },
       ],
     },
   },

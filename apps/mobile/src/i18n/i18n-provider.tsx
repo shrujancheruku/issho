@@ -9,7 +9,7 @@ import { api } from '@/lib/api';
 import { fromBundle } from './bundle';
 import { readCached, writeCached, type CachedStrings } from './cache';
 import { deviceLanguages } from './device';
-import { catalogFingerprint, displayEnglish, lookup, type Params, type StringKey } from './strings';
+import { catalogFingerprint, displayEnglish, lookup, pseudoEnglish, type Params, type StringKey } from './strings';
 
 export type Languages = { primary: string; secondary: string };
 
@@ -198,6 +198,7 @@ function useUiStrings(lang: string) {
     return () => sub.remove();
   }, [needed, refetch, dataUpdatedAt]);
 
-  if (lang === 'en') return displayEnglish;
+  // Dev builds only: a fake language for layout checks (strings.ts, pseudo).
+  if (lang === 'en') return __DEV__ && process.env.EXPO_PUBLIC_PSEUDO === '1' ? pseudoEnglish : displayEnglish;
   return query.data?.strings;
 }

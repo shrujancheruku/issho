@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
     maxWidth: MaxContentWidth,
   },
   brandText: {
-    marginRight: 'auto',
+    marginEnd: 'auto',
   },
   pressed: {
     opacity: 0.7,

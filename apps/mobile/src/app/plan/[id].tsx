@@ -347,8 +347,8 @@ const styles = StyleSheet.create({
   wrap: { flexDirection: "row", flexWrap: "wrap", gap: Spacing.two },
   footer: { padding: Spacing.four, gap: Spacing.two },
   banner: {
-    borderLeftWidth: 3,
-    paddingLeft: Spacing.three,
+    borderStartWidth: 3,
+    paddingStart: Spacing.three,
     paddingVertical: Spacing.one,
     alignSelf: "flex-start",
   },

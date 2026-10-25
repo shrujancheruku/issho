@@ -79,3 +79,26 @@ export const catalogFingerprint = fingerprint(english);
 export function baseLanguage(tag: string | null | undefined): string {
   return (tag ?? '').trim().toLowerCase().split(/[-_]/)[0];
 }
+
+const accented: Record<string, string> = {
+  a: 'á', e: 'é', i: 'í', o: 'ö', u: 'ü', y: 'ý', c: 'ç', n: 'ñ', s: 'š', z: 'ž',
+  A: 'Å', E: 'É', I: 'Î', O: 'Ø', U: 'Ü', Y: 'Ý', C: 'Ç', N: 'Ñ', S: 'Š', Z: 'Ž',
+};
+
+/**
+ * A fake translation for layout checks (EXPO_PUBLIC_PSEUDO=1 in a dev
+ * build): accented, about 40% longer and bracketed, so clipped or
+ * overflowing text, and text that skipped t(), stand out without a real
+ * language. Placeholders are kept as they are.
+ */
+export function pseudo(text: string): string {
+  const parts = text.split(/(\{[a-zA-Z]+\})/);
+  const body = parts.map((p) => (p.startsWith('{') ? p : p.replace(/[a-zA-Z]/g, (ch) => accented[ch] ?? ch))).join('');
+  const letters = text.replace(/\{[a-zA-Z]+\}/g, '').length;
+  return `[${body}${' ~'.repeat(Math.ceil(letters * 0.2))}]`;
+}
+
+/** English as a pseudo-translation, for layout checks. */
+export const pseudoEnglish: Readonly<Record<StringKey, string>> = Object.fromEntries(
+  Object.entries(displayEnglish).map(([k, v]) => [k, pseudo(v)]),
+) as Record<StringKey, string>;

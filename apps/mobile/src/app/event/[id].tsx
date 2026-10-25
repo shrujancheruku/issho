@@ -215,7 +215,7 @@ const styles = StyleSheet.create({
   column: { width: '100%', maxWidth: FormWidth, alignSelf: 'center' },
   header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: Spacing.four, paddingTop: Spacing.three },
   content: { padding: Spacing.four, gap: Spacing.four },
-  banner: { borderLeftWidth: 3, paddingLeft: Spacing.three, paddingVertical: Spacing.one },
+  banner: { borderStartWidth: 3, paddingStart: Spacing.three, paddingVertical: Spacing.one },
   titleBlock: { gap: Spacing.one },
   section: { gap: Spacing.two },
   chatButton: { borderWidth: 1, borderRadius: 12, padding: Spacing.three, alignItems: 'center' },
