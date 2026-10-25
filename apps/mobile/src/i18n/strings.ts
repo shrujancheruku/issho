@@ -75,11 +75,6 @@ export function fingerprint(catalog: Readonly<Record<string, string>>): string {
 
 export const catalogFingerprint = fingerprint(english);
 
-/** True when a cached catalogue has every key this build of the app uses. */
-export function coversApp(strings: Strings): boolean {
-  return (Object.keys(english) as StringKey[]).every((k) => !!strings[k]);
-}
-
 /** "ja-JP" → "ja": translations are per language, not per region. */
 export function baseLanguage(tag: string | null | undefined): string {
   return (tag ?? '').trim().toLowerCase().split(/[-_]/)[0];

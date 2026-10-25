@@ -1,13 +1,14 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocales } from 'expo-localization';
-import { createContext, useCallback, useContext, useMemo, useState, type PropsWithChildren } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type PropsWithChildren } from 'react';
+import { AppState } from 'react-native';
 
 import { useAuth } from '@/features/auth/auth-provider';
 import { api } from '@/lib/api';
 
 import { readCached, writeCached, type CachedStrings } from './cache';
 import { deviceLanguages } from './device';
-import { catalogFingerprint, coversApp, displayEnglish, lookup, type Params, type StringKey } from './strings';
+import { catalogFingerprint, displayEnglish, lookup, type Params, type StringKey } from './strings';
 
 export type Languages = { primary: string; secondary: string };
 
@@ -104,41 +105,80 @@ export function useI18n() {
   return ctx;
 }
 
+/**
+ * Complete, and fetched for this build's English text. Not "every key
+ * present": a translation that lost a placeholder is left out for good, and
+ * requiring every key made such a language download again at every launch.
+ * Keys the API doesn't have yet (an app newer than the API) arrive with the
+ * hourly check once it's deployed.
+ */
 function isCurrent(c: CachedStrings | undefined) {
-  return !!c && c.complete && c.appCatalog === catalogFingerprint && coversApp(c.strings);
+  return !!c && c.complete && c.appCatalog === catalogFingerprint;
 }
+
+/**
+ * How often a current catalogue is checked with the server: a reviewer's
+ * correction, a new human version or a better translation changes the text
+ * without a new build. A check that finds nothing new costs no strings.
+ */
+const CHECK_EVERY = 60 * 60 * 1000;
 
 /**
  * The UI catalogue in one language: from the device cache straight away, then
  * from the server when the cache is missing, incomplete or older than this
  * build's keys. While the server is still translating, it asks again every
- * 30 seconds. Missing strings fall back (lookup), so this never blocks the UI.
+ * 30 seconds; a current copy is checked hourly, including when the app comes
+ * back to the foreground. Missing strings fall back (lookup), so this never
+ * blocks the UI.
  */
 function useUiStrings(lang: string) {
   const needed = !!lang && lang !== 'en';
+  const queryClient = useQueryClient();
+  const cached = useMemo(() => (needed ? readCached(lang) : undefined), [needed, lang]);
   const query = useQuery({
     queryKey: ['ui-strings', lang],
     enabled: needed,
     queryFn: async (): Promise<CachedStrings> => {
-      const res = await api.ui.getStrings({ language: lang });
-      const value = {
-        strings: res.strings,
-        complete: res.complete,
-        catalogVersion: res.catalogVersion,
-        appCatalog: catalogFingerprint,
-      };
+      // A current copy is sent by version: if it still is, the server says so
+      // rather than sending every string again.
+      const had = queryClient.getQueryData<CachedStrings>(['ui-strings', lang]);
+      const res = await api.ui.getStrings({ language: lang, knownVersion: isCurrent(had) ? had!.catalogVersion : '' });
+      const value: CachedStrings =
+        res.unchanged && had
+          ? { ...had, checkedAt: Date.now() }
+          : {
+              strings: res.strings,
+              complete: res.complete,
+              catalogVersion: res.catalogVersion,
+              appCatalog: catalogFingerprint,
+              checkedAt: Date.now(),
+            };
       writeCached(lang, value);
       return value;
     },
-    initialData: () => (needed ? readCached(lang) : undefined),
+    initialData: cached,
+    // The cached copy is as old as its last check; caches from before checks
+    // existed count as old and are checked straight away.
+    initialDataUpdatedAt: cached?.checkedAt ?? 0,
     // A complete catalogue with every key, fetched for this build's English
-    // text, never needs another request; anything else is shown straight
-    // away but fetched again. (A fixed staleTime: Infinity never refetched
-    // at all: TanStack treats data as fresh forever, whatever its age.)
-    staleTime: (q) => (isCurrent(q.state.data) ? Infinity : 0),
+    // text, is checked hourly; anything else is shown straight away but
+    // fetched again.
+    staleTime: (q) => (isCurrent(q.state.data) ? CHECK_EVERY : 0),
     gcTime: Infinity,
-    refetchInterval: (q) => (q.state.data && !q.state.data.complete ? 30_000 : false),
+    refetchInterval: (q) => (!q.state.data ? false : q.state.data.complete ? CHECK_EVERY : 30_000),
   });
+
+  // Timers don't run while the app is in the background, so check on the way
+  // back to the foreground too, once the copy is an hour old.
+  const { refetch, dataUpdatedAt } = query;
+  useEffect(() => {
+    if (!needed) return;
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active' && Date.now() - dataUpdatedAt > CHECK_EVERY) void refetch();
+    });
+    return () => sub.remove();
+  }, [needed, refetch, dataUpdatedAt]);
+
   if (lang === 'en') return displayEnglish;
   return query.data?.strings;
 }

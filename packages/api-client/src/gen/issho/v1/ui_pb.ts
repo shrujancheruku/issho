@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file issho/v1/ui.proto.
  */
 export const file_issho_v1_ui: GenFile = /*@__PURE__*/
-  fileDesc("ChFpc3Noby92MS91aS5wcm90bxIIaXNzaG8udjEiJQoRR2V0U3RyaW5nc1JlcXVlc3QSEAoIbGFuZ3VhZ2UYASABKAkiqwEKEkdldFN0cmluZ3NSZXNwb25zZRI6CgdzdHJpbmdzGAEgAygLMikuaXNzaG8udjEuR2V0U3RyaW5nc1Jlc3BvbnNlLlN0cmluZ3NFbnRyeRIQCghjb21wbGV0ZRgCIAEoCBIXCg9jYXRhbG9nX3ZlcnNpb24YAyABKAkaLgoMU3RyaW5nc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEyVgoJVUlTZXJ2aWNlEkkKCkdldFN0cmluZ3MSGy5pc3Noby52MS5HZXRTdHJpbmdzUmVxdWVzdBocLmlzc2hvLnYxLkdldFN0cmluZ3NSZXNwb25zZSIAQj5aPGdpdGh1Yi5jb20vc2hydWphbmNoZXJ1a3UvaXNzaG8vYmFja2VuZC9nZW4vaXNzaG8vdjE7aXNzaG92MWIGcHJvdG8z");
+  fileDesc("ChFpc3Noby92MS91aS5wcm90bxIIaXNzaG8udjEiPAoRR2V0U3RyaW5nc1JlcXVlc3QSEAoIbGFuZ3VhZ2UYASABKAkSFQoNa25vd25fdmVyc2lvbhgCIAEoCSK+AQoSR2V0U3RyaW5nc1Jlc3BvbnNlEjoKB3N0cmluZ3MYASADKAsyKS5pc3Noby52MS5HZXRTdHJpbmdzUmVzcG9uc2UuU3RyaW5nc0VudHJ5EhAKCGNvbXBsZXRlGAIgASgIEhcKD2NhdGFsb2dfdmVyc2lvbhgDIAEoCRIRCgl1bmNoYW5nZWQYBCABKAgaLgoMU3RyaW5nc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEyVgoJVUlTZXJ2aWNlEkkKCkdldFN0cmluZ3MSGy5pc3Noby52MS5HZXRTdHJpbmdzUmVxdWVzdBocLmlzc2hvLnYxLkdldFN0cmluZ3NSZXNwb25zZSIAQj5aPGdpdGh1Yi5jb20vc2hydWphbmNoZXJ1a3UvaXNzaG8vYmFja2VuZC9nZW4vaXNzaG8vdjE7aXNzaG92MWIGcHJvdG8z");
 
 /**
  * @generated from message issho.v1.GetStringsRequest
@@ -22,6 +22,14 @@ export type GetStringsRequest = Message<"issho.v1.GetStringsRequest"> & {
    * @generated from field: string language = 1;
    */
   language: string;
+
+  /**
+   * The catalog_version of a complete catalogue the app already has, to
+   * check it cheaply. Empty to always get the strings.
+   *
+   * @generated from field: string known_version = 2;
+   */
+  knownVersion: string;
 };
 
 /**
@@ -37,7 +45,8 @@ export const GetStringsRequestSchema: GenMessage<GetStringsRequest> = /*@__PURE_
 export type GetStringsResponse = Message<"issho.v1.GetStringsResponse"> & {
   /**
    * Key → text. Keys whose translation isn't ready (or came back with broken
-   * {placeholders}) are left out; show the English text for those.
+   * {placeholders}) are left out; show the English text for those. Empty
+   * when unchanged is true.
    *
    * @generated from field: map<string, string> strings = 1;
    */
@@ -52,11 +61,20 @@ export type GetStringsResponse = Message<"issho.v1.GetStringsResponse"> & {
   complete: boolean;
 
   /**
-   * Changes whenever the English catalogue changes.
+   * Identifies the text in this language: it changes whenever any of it does
+   * (the English, a human version, a translation or a reviewer's correction).
    *
    * @generated from field: string catalog_version = 3;
    */
   catalogVersion: string;
+
+  /**
+   * True when known_version is still current and the catalogue is complete:
+   * keep the copy you have.
+   *
+   * @generated from field: bool unchanged = 4;
+   */
+  unchanged: boolean;
 };
 
 /**
@@ -67,10 +85,11 @@ export const GetStringsResponseSchema: GenMessage<GetStringsResponse> = /*@__PUR
   messageDesc(file_issho_v1_ui, 1);
 
 /**
- * UIService translates the app's own UI text. The app is written in English
- * (apps/mobile/src/i18n/en.json, copied into the server by `make gen`); other
- * languages are machine-translated on demand, cached on the server for
- * everyone and on the device.
+ * UIService translates the app's own UI text. The app is written in plain
+ * English (apps/mobile/src/i18n/en.json, copied into the server by `make
+ * gen`); other languages are people's versions of single strings
+ * (i18n/human/<lang>.json) and, for the rest, machine translations made on
+ * demand, cached on the server for everyone and on the device.
  *
  * Public (no token): the sign-in screens need it before anyone is signed in.
  * Only the server's copy of the catalogue is ever translated, so callers can't

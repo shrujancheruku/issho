@@ -7,9 +7,12 @@ export type CachedStrings = {
   strings: Strings;
   /** False when the server was still translating some strings. */
   complete: boolean;
+  /** The server's version of this text (GetStringsResponse.catalog_version). */
   catalogVersion: string;
   /** catalogFingerprint of the app build that fetched it; missing in older caches. */
   appCatalog?: string;
+  /** When the server last sent or confirmed it (ms); missing in older caches. */
+  checkedAt?: number;
 };
 
 // Documents, not the cache directory: the sign-in screen should be in the
