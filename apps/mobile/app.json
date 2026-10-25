@@ -55,6 +55,12 @@
         "projectId": "e302a4e7-1a12-4c73-b13f-30ece4681e37"
       }
     },
-    "owner": "shrujancheruku-team"
+    "owner": "shrujancheruku-team",
+    "runtimeVersion": {
+      "policy": "fingerprint"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/e302a4e7-1a12-4c73-b13f-30ece4681e37"
+    }
   }
 }
