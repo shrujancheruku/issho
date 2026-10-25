@@ -45,6 +45,13 @@ service TranslationService {
   // request, so the machine translation is shown again.
   rpc RemoveAppString(RemoveAppStringRequest) returns (RemoveAppStringResponse) {}
 
+  // DraftAppString asks Gemini for a better version of a string, for the
+  // reviewer to edit before saving; nothing is stored. In English it's a
+  // livelier version of the plain text. FAILED_PRECONDITION without
+  // GOOGLE_GEMINI_API_KEY; UNAVAILABLE if the draft lost a {placeholder}
+  // (ask again).
+  rpc DraftAppString(DraftAppStringRequest) returns (DraftAppStringResponse) {}
+
   // ListCatalogLanguages returns the languages with machine translations
   // of catalogue text the caller may edit, with how many need a look.
   rpc ListCatalogLanguages(ListCatalogLanguagesRequest) returns (ListCatalogLanguagesResponse) {}
@@ -148,6 +155,18 @@ message RemoveAppStringRequest {
 message RemoveAppStringResponse {
   AppString app_string = 1;
   TranslationPullRequest pull_request = 2;
+}
+
+message DraftAppStringRequest {
+  string lang = 1;
+  string key = 2;
+  // What the reviewer has now, if they've started editing; otherwise the
+  // text shown today is used.
+  string current = 3;
+}
+
+message DraftAppStringResponse {
+  string text = 1;
 }
 
 message ListCatalogLanguagesRequest {}

@@ -162,7 +162,13 @@ function AppStringRow({ lang, initial, canPropose, onSaved }: {
   };
   const save = useMutation({ mutationFn: (t: string) => api.translation.saveAppString({ lang, key: s.key, text: t }), onSuccess: done });
   const remove = useMutation({ mutationFn: () => api.translation.removeAppString({ lang, key: s.key }), onSuccess: done });
-  const busy = save.isPending || remove.isPending;
+  // A suggestion only fills the box: the reviewer checks it and saves.
+  const [suggested, setSuggested] = useState(false);
+  const suggest = useMutation({
+    mutationFn: () => api.translation.draftAppString({ lang, key: s.key, current: text.trim() !== current.trim() ? text : '' }),
+    onSuccess: (res) => { setText(res.text); setSuggested(true); },
+  });
+  const busy = save.isPending || remove.isPending || suggest.isPending;
   const edited = text.trim() !== current.trim();
   const isMachine = lang !== 'en' && text.trim() === s.machine.trim();
   // A machine text that's already kept (checked) needs nothing more.
@@ -172,7 +178,7 @@ function AppStringRow({ lang, initial, canPropose, onSaved }: {
   if (s.pending) status = s.pendingText ? 'In the pull request' : 'Removed in the pull request';
   else if (s.humanStale) status = 'The English changed since this was written: check it';
   else if (s.human) status = 'Checked';
-  const error = save.error ?? remove.error;
+  const error = save.error ?? remove.error ?? suggest.error;
 
   return (
     <article className={!s.pending && s.human && !s.humanStale ? 'card translation reviewed' : s.pending ? 'card translation pending' : 'card translation'}>
@@ -187,6 +193,7 @@ function AppStringRow({ lang, initial, canPropose, onSaved }: {
         <textarea rows={rowsFor(text)} lang={lang} dir="auto" value={text} onChange={(e) => setText(e.target.value)} />
         {lang !== 'en' && s.machine && !isMachine && <p className="meta">Machine: {s.machine}</p>}
         {s.humanStale && s.human && <p className="meta">Written for the old English: {s.human}</p>}
+        {suggested && edited && <p className="meta">Suggested by Gemini: check it, change what you like, then save.</p>}
         <div className="row">
           {/* English has no machine text to approve: only a different wording is worth saving. */}
           {edited || (!alreadyKept && lang !== 'en')
@@ -201,7 +208,10 @@ function AppStringRow({ lang, initial, canPropose, onSaved }: {
               {lang === 'en' ? 'Use the plain English' : 'Use the machine text'}
             </button>
           )}
-          {edited && <button className="link" onClick={() => setText(current)}>Undo</button>}
+          <button className="small secondary" disabled={busy} onClick={() => suggest.mutate()}>
+            {suggest.isPending ? 'Thinking…' : lang === 'en' ? 'Suggest a livelier version' : 'Suggest a better version'}
+          </button>
+          {edited && <button className="link" onClick={() => { setText(current); setSuggested(false); }}>Undo</button>}
           {problems.length > 0 && <span className="error">{problems.join(', ')}</span>}
           {error && <span className="error">{ConnectError.from(error).message}</span>}
         </div>

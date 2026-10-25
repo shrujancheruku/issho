@@ -295,6 +295,8 @@
 - [issho/v1/translation.proto](#issho_v1_translation-proto)
     - [AppLanguage](#issho-v1-AppLanguage)
     - [AppString](#issho-v1-AppString)
+    - [DraftAppStringRequest](#issho-v1-DraftAppStringRequest)
+    - [DraftAppStringResponse](#issho-v1-DraftAppStringResponse)
     - [GetTranslatorRequest](#issho-v1-GetTranslatorRequest)
     - [GetTranslatorResponse](#issho-v1-GetTranslatorResponse)
     - [ListAppLanguagesRequest](#issho-v1-ListAppLanguagesRequest)
@@ -4572,6 +4574,38 @@ HTTP: POST /issho.v1.ReviewService/&lt;Method&gt;
 
 
 
+<a name="issho-v1-DraftAppStringRequest"></a>
+
+### DraftAppStringRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| lang | [string](#string) |  |  |
+| key | [string](#string) |  |  |
+| current | [string](#string) |  | What the reviewer has now, if they&#39;ve started editing; otherwise the text shown today is used. |
+
+
+
+
+
+
+<a name="issho-v1-DraftAppStringResponse"></a>
+
+### DraftAppStringResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| text | [string](#string) |  |  |
+
+
+
+
+
+
 <a name="issho-v1-GetTranslatorRequest"></a>
 
 ### GetTranslatorRequest
@@ -4861,6 +4895,7 @@ HTTP: POST /issho.v1.TranslationService/&lt;Method&gt;
 | ListAppStrings | [ListAppStringsRequest](#issho-v1-ListAppStringsRequest) | [ListAppStringsResponse](#issho-v1-ListAppStringsResponse) | ListAppStrings returns every UI string in one language: the English, the machine translation, the human version on the default branch and what the open pull request changes. |
 | SaveAppString | [SaveAppStringRequest](#issho-v1-SaveAppStringRequest) | [SaveAppStringResponse](#issho-v1-SaveAppStringResponse) | SaveAppString sets a string&#39;s human version in the language&#39;s open pull request (opening one if there&#39;s none). Saving the machine translation unchanged approves it. INVALID_ARGUMENT if the text drops or adds a {placeholder} of the English; FAILED_PRECONDITION without GITHUB_TOKEN. |
 | RemoveAppString | [RemoveAppStringRequest](#issho-v1-RemoveAppStringRequest) | [RemoveAppStringResponse](#issho-v1-RemoveAppStringResponse) | RemoveAppString removes a string&#39;s human version in the open pull request, so the machine translation is shown again. |
+| DraftAppString | [DraftAppStringRequest](#issho-v1-DraftAppStringRequest) | [DraftAppStringResponse](#issho-v1-DraftAppStringResponse) | DraftAppString asks Gemini for a better version of a string, for the reviewer to edit before saving; nothing is stored. In English it&#39;s a livelier version of the plain text. FAILED_PRECONDITION without GOOGLE_GEMINI_API_KEY; UNAVAILABLE if the draft lost a {placeholder} (ask again). |
 | ListCatalogLanguages | [ListCatalogLanguagesRequest](#issho-v1-ListCatalogLanguagesRequest) | [ListCatalogLanguagesResponse](#issho-v1-ListCatalogLanguagesResponse) | ListCatalogLanguages returns the languages with machine translations of catalogue text the caller may edit, with how many need a look. |
 | ListCatalogTranslations | [ListCatalogTranslationsRequest](#issho-v1-ListCatalogTranslationsRequest) | [ListCatalogTranslationsResponse](#issho-v1-ListCatalogTranslationsResponse) | ListCatalogTranslations returns one language&#39;s catalogue translations (not UI strings), unreviewed ones first, 100 at a time. |
 | ReviewCatalogTranslation | [ReviewCatalogTranslationRequest](#issho-v1-ReviewCatalogTranslationRequest) | [ReviewCatalogTranslationResponse](#issho-v1-ReviewCatalogTranslationResponse) | ReviewCatalogTranslation corrects (or confirms) a catalogue translation; it&#39;s never replaced by a machine one after that. |

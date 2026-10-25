@@ -41,6 +41,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/tagging"
 	"github.com/shrujancheruku/issho/backend/internal/tagging/gemini"
 	"github.com/shrujancheruku/issho/backend/internal/translate"
+	translategemini "github.com/shrujancheruku/issho/backend/internal/translate/gemini"
 	"github.com/shrujancheruku/issho/backend/internal/translate/translators"
 	translationeditor "github.com/shrujancheruku/issho/backend/internal/translations"
 	"github.com/shrujancheruku/issho/backend/internal/uistrings"
@@ -185,6 +186,9 @@ func run() error {
 	}
 	mux.Handle(isshov1connect.NewUIServiceHandler(&uistrings.Handler{Catalog: uiCatalog, Translations: translations}, opts))
 	translationEditor := &translationeditor.Handler{Q: q, Catalog: uiCatalog, Translations: translations, Base: "main"}
+	if cfg.GeminiAPIKey != "" {
+		translationEditor.Drafter = translategemini.New(cfg.GeminiAPIKey)
+	}
 	if gh != nil {
 		translationEditor.GitHub, translationEditor.Base = gh, gh.Base
 		// Merged human versions are served without a deploy.

@@ -138,3 +138,57 @@ The user message is a JSON array of items, each with an "id", the English "text"
 
 %s`, name, lang, translate.Guide(lang))
 }
+
+// Draft proposes a better version of one UI string for a reviewer to edit
+// (the translation editor's "Suggest"); nothing is stored. For English it
+// drafts the owner's livelier version of the plain text; for any other
+// language, a version that reads naturally to a native speaker, starting
+// from the current text.
+func (t *Translator) Draft(ctx context.Context, lang string, d translate.Draft) (string, error) {
+	user, _ := json.Marshal(d)
+	raw, err := t.Client.Generate(ctx, gemini.Request{
+		System:          draftPrompt(lang),
+		User:            string(user),
+		Schema:          draftSchema,
+		MaxOutputTokens: 4096,
+		Thinking:        "LOW",
+	})
+	if err != nil {
+		return "", err
+	}
+	var a struct {
+		Text string `json:"text"`
+	}
+	if err := json.Unmarshal([]byte(raw), &a); err != nil {
+		return "", fmt.Errorf("gemini draft: %w", err)
+	}
+	if strings.TrimSpace(a.Text) == "" {
+		return "", fmt.Errorf("gemini draft: empty")
+	}
+	return strings.TrimSpace(a.Text), nil
+}
+
+var draftSchema = map[string]any{
+	"type":       "object",
+	"properties": map[string]any{"text": map[string]any{"type": "string"}},
+	"required":   []string{"text"},
+}
+
+func draftPrompt(lang string) string {
+	if lang == "en" {
+		return `You write the English text of the Issho app for native English speakers. The user message is a JSON object with the plain "english" text (written simply so machines translate it well), sometimes a "context" saying what it is and where it appears, and sometimes the "current" livelier version.
+
+Write one livelier, warmer version of it: how a friendly person would say it, not a company. Keep the meaning exact and every {placeholder} unchanged. Keep buttons, labels and anything about safety, rules or someone's account short and clear; liveliness belongs in invitations, confirmations and encouragement. No regional slang, no puns that only work in English writing, no emoji. Answer with the text only.
+
+` + translate.Guide(lang)
+	}
+	name := display.English.Languages().Name(language.Make(lang))
+	if name == "" {
+		name = lang
+	}
+	return fmt.Sprintf(`You are a native %s copywriter improving the Issho app's text in %s (language code %q). The user message is a JSON object with the plain "english" source, sometimes a "context" saying what it is and where it appears, sometimes "voice": the livelier English that English speakers see (a guide to the tone, not to be translated word for word), and "current": the text shown today.
+
+Write one version that a native speaker would find natural and warm in an app like this: idiomatic rather than literal, with the same meaning as the English and every {placeholder} unchanged. Keep buttons and labels short in the usual style of apps in %s. If the current text is already right, you may return it unchanged. Answer with the text only.
+
+%s`, name, name, lang, name, translate.Guide(lang))
+}

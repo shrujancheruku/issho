@@ -51,6 +51,11 @@ type Repo interface {
 	OpenPR(ctx context.Context, branch, title, body string) (github.PR, error)
 }
 
+// Drafter proposes a better version of a string (*gemini.Translator).
+type Drafter interface {
+	Draft(ctx context.Context, lang string, d translate.Draft) (string, error)
+}
+
 // Store is the catalogue translations' part of the database (*dbgen.Queries).
 type Store interface {
 	ListTranslationLanguages(ctx context.Context) ([]dbgen.ListTranslationLanguagesRow, error)
@@ -71,7 +76,9 @@ type Handler struct {
 	// Base is the branch pull requests target.
 	GitHub Repo
 	Base   string
-	Now    func() time.Time // nil = time.Now
+	// Drafter is nil without GOOGLE_GEMINI_API_KEY: no suggestions.
+	Drafter Drafter
+	Now     func() time.Time // nil = time.Now
 
 	// One save at a time: two saves for a language would otherwise race to
 	// open its pull request, or to commit on top of the same tip.
@@ -414,6 +421,43 @@ func (h *Handler) RemoveAppString(ctx context.Context, req *connect.Request[issh
 	return connect.NewResponse(&isshov1.RemoveAppStringResponse{
 		AppString: h.appString(lang, key, h.machineText(ctx, lang, key), branch), PullRequest: prToProto(pr),
 	}), nil
+}
+
+func (h *Handler) DraftAppString(ctx context.Context, req *connect.Request[isshov1.DraftAppStringRequest]) (*connect.Response[isshov1.DraftAppStringResponse], error) {
+	lang, key := req.Msg.Lang, req.Msg.Key
+	if _, err := forLang(ctx, lang); err != nil {
+		return nil, err
+	}
+	english, ok := h.Catalog.English(key)
+	if !ok {
+		return nil, invalid("key: no such UI string")
+	}
+	if h.Drafter == nil {
+		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("suggestions need GOOGLE_GEMINI_API_KEY on the API"))
+	}
+	d := translate.Draft{English: english, Context: h.Catalog.Note(key), Current: strings.TrimSpace(req.Msg.Current)}
+	if v, ok := h.Catalog.HumanVersions(i18n.Authoring)[key]; ok && h.Catalog.Current(key, v) {
+		d.Voice = v.Text
+	}
+	if d.Current == "" {
+		if v, ok := h.Catalog.HumanVersions(lang)[key]; ok && h.Catalog.Current(key, v) {
+			d.Current = v.Text
+		} else if lang != i18n.Authoring {
+			d.Current = h.machineText(ctx, lang, key)
+		}
+	}
+	if lang == i18n.Authoring {
+		d.Voice = "" // the draft is the livelier English itself
+	}
+	text, err := h.Drafter.Draft(ctx, lang, d)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeUnavailable, err)
+	}
+	// A draft that lost a placeholder couldn't be saved anyway.
+	if !uistrings.SamePlaceholders(english, text) {
+		return nil, connect.NewError(connect.CodeUnavailable, errors.New("the suggestion changed a {placeholder}; ask again"))
+	}
+	return connect.NewResponse(&isshov1.DraftAppStringResponse{Text: text}), nil
 }
 
 // machineText is one string's machine translation, normally cached

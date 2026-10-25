@@ -782,6 +782,112 @@ func (x *RemoveAppStringResponse) GetPullRequest() *TranslationPullRequest {
 	return nil
 }
 
+type DraftAppStringRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Lang  string                 `protobuf:"bytes,1,opt,name=lang,proto3" json:"lang,omitempty"`
+	Key   string                 `protobuf:"bytes,2,opt,name=key,proto3" json:"key,omitempty"`
+	// What the reviewer has now, if they've started editing; otherwise the
+	// text shown today is used.
+	Current       string `protobuf:"bytes,3,opt,name=current,proto3" json:"current,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DraftAppStringRequest) Reset() {
+	*x = DraftAppStringRequest{}
+	mi := &file_issho_v1_translation_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DraftAppStringRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DraftAppStringRequest) ProtoMessage() {}
+
+func (x *DraftAppStringRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_issho_v1_translation_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DraftAppStringRequest.ProtoReflect.Descriptor instead.
+func (*DraftAppStringRequest) Descriptor() ([]byte, []int) {
+	return file_issho_v1_translation_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *DraftAppStringRequest) GetLang() string {
+	if x != nil {
+		return x.Lang
+	}
+	return ""
+}
+
+func (x *DraftAppStringRequest) GetKey() string {
+	if x != nil {
+		return x.Key
+	}
+	return ""
+}
+
+func (x *DraftAppStringRequest) GetCurrent() string {
+	if x != nil {
+		return x.Current
+	}
+	return ""
+}
+
+type DraftAppStringResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Text          string                 `protobuf:"bytes,1,opt,name=text,proto3" json:"text,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DraftAppStringResponse) Reset() {
+	*x = DraftAppStringResponse{}
+	mi := &file_issho_v1_translation_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DraftAppStringResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DraftAppStringResponse) ProtoMessage() {}
+
+func (x *DraftAppStringResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_issho_v1_translation_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DraftAppStringResponse.ProtoReflect.Descriptor instead.
+func (*DraftAppStringResponse) Descriptor() ([]byte, []int) {
+	return file_issho_v1_translation_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *DraftAppStringResponse) GetText() string {
+	if x != nil {
+		return x.Text
+	}
+	return ""
+}
+
 type ListCatalogLanguagesRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -790,7 +896,7 @@ type ListCatalogLanguagesRequest struct {
 
 func (x *ListCatalogLanguagesRequest) Reset() {
 	*x = ListCatalogLanguagesRequest{}
-	mi := &file_issho_v1_translation_proto_msgTypes[13]
+	mi := &file_issho_v1_translation_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -802,7 +908,7 @@ func (x *ListCatalogLanguagesRequest) String() string {
 func (*ListCatalogLanguagesRequest) ProtoMessage() {}
 
 func (x *ListCatalogLanguagesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_translation_proto_msgTypes[13]
+	mi := &file_issho_v1_translation_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -815,7 +921,7 @@ func (x *ListCatalogLanguagesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListCatalogLanguagesRequest.ProtoReflect.Descriptor instead.
 func (*ListCatalogLanguagesRequest) Descriptor() ([]byte, []int) {
-	return file_issho_v1_translation_proto_rawDescGZIP(), []int{13}
+	return file_issho_v1_translation_proto_rawDescGZIP(), []int{15}
 }
 
 type ListCatalogLanguagesResponse struct {
@@ -827,7 +933,7 @@ type ListCatalogLanguagesResponse struct {
 
 func (x *ListCatalogLanguagesResponse) Reset() {
 	*x = ListCatalogLanguagesResponse{}
-	mi := &file_issho_v1_translation_proto_msgTypes[14]
+	mi := &file_issho_v1_translation_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -839,7 +945,7 @@ func (x *ListCatalogLanguagesResponse) String() string {
 func (*ListCatalogLanguagesResponse) ProtoMessage() {}
 
 func (x *ListCatalogLanguagesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_translation_proto_msgTypes[14]
+	mi := &file_issho_v1_translation_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -852,7 +958,7 @@ func (x *ListCatalogLanguagesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListCatalogLanguagesResponse.ProtoReflect.Descriptor instead.
 func (*ListCatalogLanguagesResponse) Descriptor() ([]byte, []int) {
-	return file_issho_v1_translation_proto_rawDescGZIP(), []int{14}
+	return file_issho_v1_translation_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *ListCatalogLanguagesResponse) GetLanguages() []*TranslationLanguage {
@@ -876,7 +982,7 @@ type ListCatalogTranslationsRequest struct {
 
 func (x *ListCatalogTranslationsRequest) Reset() {
 	*x = ListCatalogTranslationsRequest{}
-	mi := &file_issho_v1_translation_proto_msgTypes[15]
+	mi := &file_issho_v1_translation_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -888,7 +994,7 @@ func (x *ListCatalogTranslationsRequest) String() string {
 func (*ListCatalogTranslationsRequest) ProtoMessage() {}
 
 func (x *ListCatalogTranslationsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_translation_proto_msgTypes[15]
+	mi := &file_issho_v1_translation_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -901,7 +1007,7 @@ func (x *ListCatalogTranslationsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListCatalogTranslationsRequest.ProtoReflect.Descriptor instead.
 func (*ListCatalogTranslationsRequest) Descriptor() ([]byte, []int) {
-	return file_issho_v1_translation_proto_rawDescGZIP(), []int{15}
+	return file_issho_v1_translation_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *ListCatalogTranslationsRequest) GetLang() string {
@@ -941,7 +1047,7 @@ type ListCatalogTranslationsResponse struct {
 
 func (x *ListCatalogTranslationsResponse) Reset() {
 	*x = ListCatalogTranslationsResponse{}
-	mi := &file_issho_v1_translation_proto_msgTypes[16]
+	mi := &file_issho_v1_translation_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -953,7 +1059,7 @@ func (x *ListCatalogTranslationsResponse) String() string {
 func (*ListCatalogTranslationsResponse) ProtoMessage() {}
 
 func (x *ListCatalogTranslationsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_translation_proto_msgTypes[16]
+	mi := &file_issho_v1_translation_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -966,7 +1072,7 @@ func (x *ListCatalogTranslationsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListCatalogTranslationsResponse.ProtoReflect.Descriptor instead.
 func (*ListCatalogTranslationsResponse) Descriptor() ([]byte, []int) {
-	return file_issho_v1_translation_proto_rawDescGZIP(), []int{16}
+	return file_issho_v1_translation_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *ListCatalogTranslationsResponse) GetTranslations() []*Translation {
@@ -988,7 +1094,7 @@ type ReviewCatalogTranslationRequest struct {
 
 func (x *ReviewCatalogTranslationRequest) Reset() {
 	*x = ReviewCatalogTranslationRequest{}
-	mi := &file_issho_v1_translation_proto_msgTypes[17]
+	mi := &file_issho_v1_translation_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1000,7 +1106,7 @@ func (x *ReviewCatalogTranslationRequest) String() string {
 func (*ReviewCatalogTranslationRequest) ProtoMessage() {}
 
 func (x *ReviewCatalogTranslationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_translation_proto_msgTypes[17]
+	mi := &file_issho_v1_translation_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1013,7 +1119,7 @@ func (x *ReviewCatalogTranslationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReviewCatalogTranslationRequest.ProtoReflect.Descriptor instead.
 func (*ReviewCatalogTranslationRequest) Descriptor() ([]byte, []int) {
-	return file_issho_v1_translation_proto_rawDescGZIP(), []int{17}
+	return file_issho_v1_translation_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *ReviewCatalogTranslationRequest) GetSourceHash() string {
@@ -1046,7 +1152,7 @@ type ReviewCatalogTranslationResponse struct {
 
 func (x *ReviewCatalogTranslationResponse) Reset() {
 	*x = ReviewCatalogTranslationResponse{}
-	mi := &file_issho_v1_translation_proto_msgTypes[18]
+	mi := &file_issho_v1_translation_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1058,7 +1164,7 @@ func (x *ReviewCatalogTranslationResponse) String() string {
 func (*ReviewCatalogTranslationResponse) ProtoMessage() {}
 
 func (x *ReviewCatalogTranslationResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_translation_proto_msgTypes[18]
+	mi := &file_issho_v1_translation_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1071,7 +1177,7 @@ func (x *ReviewCatalogTranslationResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReviewCatalogTranslationResponse.ProtoReflect.Descriptor instead.
 func (*ReviewCatalogTranslationResponse) Descriptor() ([]byte, []int) {
-	return file_issho_v1_translation_proto_rawDescGZIP(), []int{18}
+	return file_issho_v1_translation_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *ReviewCatalogTranslationResponse) GetTranslation() *Translation {
@@ -1136,7 +1242,13 @@ const file_issho_v1_translation_proto_rawDesc = "" +
 	"\x17RemoveAppStringResponse\x122\n" +
 	"\n" +
 	"app_string\x18\x01 \x01(\v2\x13.issho.v1.AppStringR\tappString\x12C\n" +
-	"\fpull_request\x18\x02 \x01(\v2 .issho.v1.TranslationPullRequestR\vpullRequest\"\x1d\n" +
+	"\fpull_request\x18\x02 \x01(\v2 .issho.v1.TranslationPullRequestR\vpullRequest\"W\n" +
+	"\x15DraftAppStringRequest\x12\x12\n" +
+	"\x04lang\x18\x01 \x01(\tR\x04lang\x12\x10\n" +
+	"\x03key\x18\x02 \x01(\tR\x03key\x12\x18\n" +
+	"\acurrent\x18\x03 \x01(\tR\acurrent\",\n" +
+	"\x16DraftAppStringResponse\x12\x12\n" +
+	"\x04text\x18\x01 \x01(\tR\x04text\"\x1d\n" +
 	"\x1bListCatalogLanguagesRequest\"[\n" +
 	"\x1cListCatalogLanguagesResponse\x12;\n" +
 	"\tlanguages\x18\x01 \x03(\v2\x1d.issho.v1.TranslationLanguageR\tlanguages\"\x8d\x01\n" +
@@ -1153,13 +1265,14 @@ const file_issho_v1_translation_proto_rawDesc = "" +
 	"\x04lang\x18\x02 \x01(\tR\x04lang\x12\x12\n" +
 	"\x04text\x18\x03 \x01(\tR\x04text\"[\n" +
 	" ReviewCatalogTranslationResponse\x127\n" +
-	"\vtranslation\x18\x01 \x01(\v2\x15.issho.v1.TranslationR\vtranslation2\x9a\x06\n" +
+	"\vtranslation\x18\x01 \x01(\v2\x15.issho.v1.TranslationR\vtranslation2\xf1\x06\n" +
 	"\x12TranslationService\x12R\n" +
 	"\rGetTranslator\x12\x1e.issho.v1.GetTranslatorRequest\x1a\x1f.issho.v1.GetTranslatorResponse\"\x00\x12[\n" +
 	"\x10ListAppLanguages\x12!.issho.v1.ListAppLanguagesRequest\x1a\".issho.v1.ListAppLanguagesResponse\"\x00\x12U\n" +
 	"\x0eListAppStrings\x12\x1f.issho.v1.ListAppStringsRequest\x1a .issho.v1.ListAppStringsResponse\"\x00\x12R\n" +
 	"\rSaveAppString\x12\x1e.issho.v1.SaveAppStringRequest\x1a\x1f.issho.v1.SaveAppStringResponse\"\x00\x12X\n" +
-	"\x0fRemoveAppString\x12 .issho.v1.RemoveAppStringRequest\x1a!.issho.v1.RemoveAppStringResponse\"\x00\x12g\n" +
+	"\x0fRemoveAppString\x12 .issho.v1.RemoveAppStringRequest\x1a!.issho.v1.RemoveAppStringResponse\"\x00\x12U\n" +
+	"\x0eDraftAppString\x12\x1f.issho.v1.DraftAppStringRequest\x1a .issho.v1.DraftAppStringResponse\"\x00\x12g\n" +
 	"\x14ListCatalogLanguages\x12%.issho.v1.ListCatalogLanguagesRequest\x1a&.issho.v1.ListCatalogLanguagesResponse\"\x00\x12p\n" +
 	"\x17ListCatalogTranslations\x12(.issho.v1.ListCatalogTranslationsRequest\x1a).issho.v1.ListCatalogTranslationsResponse\"\x00\x12s\n" +
 	"\x18ReviewCatalogTranslation\x12).issho.v1.ReviewCatalogTranslationRequest\x1a*.issho.v1.ReviewCatalogTranslationResponse\"\x00B>Z<github.com/shrujancheruku/issho/backend/gen/issho/v1;isshov1b\x06proto3"
@@ -1176,7 +1289,7 @@ func file_issho_v1_translation_proto_rawDescGZIP() []byte {
 	return file_issho_v1_translation_proto_rawDescData
 }
 
-var file_issho_v1_translation_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
+var file_issho_v1_translation_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
 var file_issho_v1_translation_proto_goTypes = []any{
 	(*GetTranslatorRequest)(nil),             // 0: issho.v1.GetTranslatorRequest
 	(*GetTranslatorResponse)(nil),            // 1: issho.v1.GetTranslatorResponse
@@ -1191,14 +1304,16 @@ var file_issho_v1_translation_proto_goTypes = []any{
 	(*SaveAppStringResponse)(nil),            // 10: issho.v1.SaveAppStringResponse
 	(*RemoveAppStringRequest)(nil),           // 11: issho.v1.RemoveAppStringRequest
 	(*RemoveAppStringResponse)(nil),          // 12: issho.v1.RemoveAppStringResponse
-	(*ListCatalogLanguagesRequest)(nil),      // 13: issho.v1.ListCatalogLanguagesRequest
-	(*ListCatalogLanguagesResponse)(nil),     // 14: issho.v1.ListCatalogLanguagesResponse
-	(*ListCatalogTranslationsRequest)(nil),   // 15: issho.v1.ListCatalogTranslationsRequest
-	(*ListCatalogTranslationsResponse)(nil),  // 16: issho.v1.ListCatalogTranslationsResponse
-	(*ReviewCatalogTranslationRequest)(nil),  // 17: issho.v1.ReviewCatalogTranslationRequest
-	(*ReviewCatalogTranslationResponse)(nil), // 18: issho.v1.ReviewCatalogTranslationResponse
-	(*TranslationLanguage)(nil),              // 19: issho.v1.TranslationLanguage
-	(*Translation)(nil),                      // 20: issho.v1.Translation
+	(*DraftAppStringRequest)(nil),            // 13: issho.v1.DraftAppStringRequest
+	(*DraftAppStringResponse)(nil),           // 14: issho.v1.DraftAppStringResponse
+	(*ListCatalogLanguagesRequest)(nil),      // 15: issho.v1.ListCatalogLanguagesRequest
+	(*ListCatalogLanguagesResponse)(nil),     // 16: issho.v1.ListCatalogLanguagesResponse
+	(*ListCatalogTranslationsRequest)(nil),   // 17: issho.v1.ListCatalogTranslationsRequest
+	(*ListCatalogTranslationsResponse)(nil),  // 18: issho.v1.ListCatalogTranslationsResponse
+	(*ReviewCatalogTranslationRequest)(nil),  // 19: issho.v1.ReviewCatalogTranslationRequest
+	(*ReviewCatalogTranslationResponse)(nil), // 20: issho.v1.ReviewCatalogTranslationResponse
+	(*TranslationLanguage)(nil),              // 21: issho.v1.TranslationLanguage
+	(*Translation)(nil),                      // 22: issho.v1.Translation
 }
 var file_issho_v1_translation_proto_depIdxs = []int32{
 	5,  // 0: issho.v1.ListAppLanguagesResponse.languages:type_name -> issho.v1.AppLanguage
@@ -1209,27 +1324,29 @@ var file_issho_v1_translation_proto_depIdxs = []int32{
 	2,  // 5: issho.v1.SaveAppStringResponse.pull_request:type_name -> issho.v1.TranslationPullRequest
 	8,  // 6: issho.v1.RemoveAppStringResponse.app_string:type_name -> issho.v1.AppString
 	2,  // 7: issho.v1.RemoveAppStringResponse.pull_request:type_name -> issho.v1.TranslationPullRequest
-	19, // 8: issho.v1.ListCatalogLanguagesResponse.languages:type_name -> issho.v1.TranslationLanguage
-	20, // 9: issho.v1.ListCatalogTranslationsResponse.translations:type_name -> issho.v1.Translation
-	20, // 10: issho.v1.ReviewCatalogTranslationResponse.translation:type_name -> issho.v1.Translation
+	21, // 8: issho.v1.ListCatalogLanguagesResponse.languages:type_name -> issho.v1.TranslationLanguage
+	22, // 9: issho.v1.ListCatalogTranslationsResponse.translations:type_name -> issho.v1.Translation
+	22, // 10: issho.v1.ReviewCatalogTranslationResponse.translation:type_name -> issho.v1.Translation
 	0,  // 11: issho.v1.TranslationService.GetTranslator:input_type -> issho.v1.GetTranslatorRequest
 	3,  // 12: issho.v1.TranslationService.ListAppLanguages:input_type -> issho.v1.ListAppLanguagesRequest
 	6,  // 13: issho.v1.TranslationService.ListAppStrings:input_type -> issho.v1.ListAppStringsRequest
 	9,  // 14: issho.v1.TranslationService.SaveAppString:input_type -> issho.v1.SaveAppStringRequest
 	11, // 15: issho.v1.TranslationService.RemoveAppString:input_type -> issho.v1.RemoveAppStringRequest
-	13, // 16: issho.v1.TranslationService.ListCatalogLanguages:input_type -> issho.v1.ListCatalogLanguagesRequest
-	15, // 17: issho.v1.TranslationService.ListCatalogTranslations:input_type -> issho.v1.ListCatalogTranslationsRequest
-	17, // 18: issho.v1.TranslationService.ReviewCatalogTranslation:input_type -> issho.v1.ReviewCatalogTranslationRequest
-	1,  // 19: issho.v1.TranslationService.GetTranslator:output_type -> issho.v1.GetTranslatorResponse
-	4,  // 20: issho.v1.TranslationService.ListAppLanguages:output_type -> issho.v1.ListAppLanguagesResponse
-	7,  // 21: issho.v1.TranslationService.ListAppStrings:output_type -> issho.v1.ListAppStringsResponse
-	10, // 22: issho.v1.TranslationService.SaveAppString:output_type -> issho.v1.SaveAppStringResponse
-	12, // 23: issho.v1.TranslationService.RemoveAppString:output_type -> issho.v1.RemoveAppStringResponse
-	14, // 24: issho.v1.TranslationService.ListCatalogLanguages:output_type -> issho.v1.ListCatalogLanguagesResponse
-	16, // 25: issho.v1.TranslationService.ListCatalogTranslations:output_type -> issho.v1.ListCatalogTranslationsResponse
-	18, // 26: issho.v1.TranslationService.ReviewCatalogTranslation:output_type -> issho.v1.ReviewCatalogTranslationResponse
-	19, // [19:27] is the sub-list for method output_type
-	11, // [11:19] is the sub-list for method input_type
+	13, // 16: issho.v1.TranslationService.DraftAppString:input_type -> issho.v1.DraftAppStringRequest
+	15, // 17: issho.v1.TranslationService.ListCatalogLanguages:input_type -> issho.v1.ListCatalogLanguagesRequest
+	17, // 18: issho.v1.TranslationService.ListCatalogTranslations:input_type -> issho.v1.ListCatalogTranslationsRequest
+	19, // 19: issho.v1.TranslationService.ReviewCatalogTranslation:input_type -> issho.v1.ReviewCatalogTranslationRequest
+	1,  // 20: issho.v1.TranslationService.GetTranslator:output_type -> issho.v1.GetTranslatorResponse
+	4,  // 21: issho.v1.TranslationService.ListAppLanguages:output_type -> issho.v1.ListAppLanguagesResponse
+	7,  // 22: issho.v1.TranslationService.ListAppStrings:output_type -> issho.v1.ListAppStringsResponse
+	10, // 23: issho.v1.TranslationService.SaveAppString:output_type -> issho.v1.SaveAppStringResponse
+	12, // 24: issho.v1.TranslationService.RemoveAppString:output_type -> issho.v1.RemoveAppStringResponse
+	14, // 25: issho.v1.TranslationService.DraftAppString:output_type -> issho.v1.DraftAppStringResponse
+	16, // 26: issho.v1.TranslationService.ListCatalogLanguages:output_type -> issho.v1.ListCatalogLanguagesResponse
+	18, // 27: issho.v1.TranslationService.ListCatalogTranslations:output_type -> issho.v1.ListCatalogTranslationsResponse
+	20, // 28: issho.v1.TranslationService.ReviewCatalogTranslation:output_type -> issho.v1.ReviewCatalogTranslationResponse
+	20, // [20:29] is the sub-list for method output_type
+	11, // [11:20] is the sub-list for method input_type
 	11, // [11:11] is the sub-list for extension type_name
 	11, // [11:11] is the sub-list for extension extendee
 	0,  // [0:11] is the sub-list for field type_name
@@ -1247,7 +1364,7 @@ func file_issho_v1_translation_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_issho_v1_translation_proto_rawDesc), len(file_issho_v1_translation_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   19,
+			NumMessages:   21,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

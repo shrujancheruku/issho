@@ -266,3 +266,13 @@ func (s *Service) Prefill(ctx context.Context, english, context string, langs []
 	}
 	return json.Marshal(m)
 }
+
+// Draft is one UI string a reviewer wants a better version of.
+type Draft struct {
+	English string `json:"english"`
+	Context string `json:"context,omitempty"`
+	// Voice is the owner's livelier English, a guide to the tone.
+	Voice string `json:"voice,omitempty"`
+	// Current is what's shown today: the human version or the machine's.
+	Current string `json:"current,omitempty"`
+}
