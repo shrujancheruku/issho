@@ -2780,17 +2780,17 @@ const file_issho_v1_moderation_proto_rawDesc = "" +
 	"\x0eOutingFeedback\x12\x1f\n" +
 	"\x1bOUTING_FEEDBACK_UNSPECIFIED\x10\x00\x12\x1d\n" +
 	"\x19OUTING_FEEDBACK_SAID_WENT\x10\x01\x12!\n" +
-	"\x1dOUTING_FEEDBACK_SAID_DIDNT_GO\x10\x022\xbd\t\n" +
+	"\x1dOUTING_FEEDBACK_SAID_DIDNT_GO\x10\x022\xc6\t\n" +
 	"\x11ModerationService\x12O\n" +
 	"\fGetModerator\x12\x1d.issho.v1.GetModeratorRequest\x1a\x1e.issho.v1.GetModeratorResponse\"\x00\x12L\n" +
 	"\vListReports\x12\x1c.issho.v1.ListReportsRequest\x1a\x1d.issho.v1.ListReportsResponse\"\x00\x12R\n" +
 	"\rResolveReport\x12\x1e.issho.v1.ResolveReportRequest\x1a\x1f.issho.v1.ResolveReportResponse\"\x00\x12F\n" +
 	"\tListFlags\x12\x1a.issho.v1.ListFlagsRequest\x1a\x1b.issho.v1.ListFlagsResponse\"\x00\x12L\n" +
 	"\vResolveFlag\x12\x1c.issho.v1.ResolveFlagRequest\x1a\x1d.issho.v1.ResolveFlagResponse\"\x00\x12U\n" +
-	"\x0eListCrewLeaves\x12\x1f.issho.v1.ListCrewLeavesRequest\x1a .issho.v1.ListCrewLeavesResponse\"\x00\x12s\n" +
-	"\x18ListTranslationLanguages\x12).issho.v1.ListTranslationLanguagesRequest\x1a*.issho.v1.ListTranslationLanguagesResponse\"\x00\x12[\n" +
-	"\x10ListTranslations\x12!.issho.v1.ListTranslationsRequest\x1a\".issho.v1.ListTranslationsResponse\"\x00\x12^\n" +
-	"\x11ReviewTranslation\x12\".issho.v1.ReviewTranslationRequest\x1a#.issho.v1.ReviewTranslationResponse\"\x00\x12O\n" +
+	"\x0eListCrewLeaves\x12\x1f.issho.v1.ListCrewLeavesRequest\x1a .issho.v1.ListCrewLeavesResponse\"\x00\x12v\n" +
+	"\x18ListTranslationLanguages\x12).issho.v1.ListTranslationLanguagesRequest\x1a*.issho.v1.ListTranslationLanguagesResponse\"\x03\x88\x02\x01\x12^\n" +
+	"\x10ListTranslations\x12!.issho.v1.ListTranslationsRequest\x1a\".issho.v1.ListTranslationsResponse\"\x03\x88\x02\x01\x12a\n" +
+	"\x11ReviewTranslation\x12\".issho.v1.ReviewTranslationRequest\x1a#.issho.v1.ReviewTranslationResponse\"\x03\x88\x02\x01\x12O\n" +
 	"\fSearchPeople\x12\x1d.issho.v1.SearchPeopleRequest\x1a\x1e.issho.v1.SearchPeopleResponse\"\x00\x12F\n" +
 	"\tGetPerson\x12\x1a.issho.v1.GetPersonRequest\x1a\x1b.issho.v1.GetPersonResponse\"\x00\x12R\n" +
 	"\rSuspendPerson\x12\x1e.issho.v1.SuspendPersonRequest\x1a\x1f.issho.v1.SuspendPersonResponse\"\x00\x12U\n" +

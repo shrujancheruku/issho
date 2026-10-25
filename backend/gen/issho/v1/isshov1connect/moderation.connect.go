@@ -96,15 +96,21 @@ type ModerationServiceClient interface {
 	ResolveFlag(context.Context, *connect.Request[v1.ResolveFlagRequest]) (*connect.Response[v1.ResolveFlagResponse], error)
 	// ListCrewLeaves returns why people left crews, newest first. At most 200.
 	ListCrewLeaves(context.Context, *connect.Request[v1.ListCrewLeavesRequest]) (*connect.Response[v1.ListCrewLeavesResponse], error)
-	// ListTranslationLanguages returns the languages with machine
-	// translations, with how many still need a look.
+	// Deprecated: moved to TranslationService (ListCatalogLanguages). Kept
+	// because removing an RPC breaks the API's compatibility check; answers
+	// UNIMPLEMENTED.
+	//
+	// Deprecated: do not use.
 	ListTranslationLanguages(context.Context, *connect.Request[v1.ListTranslationLanguagesRequest]) (*connect.Response[v1.ListTranslationLanguagesResponse], error)
-	// ListTranslations returns one language's translations, unreviewed ones
-	// first, 100 at a time.
+	// Deprecated: moved to TranslationService (ListAppStrings,
+	// ListCatalogTranslations). Answers UNIMPLEMENTED.
+	//
+	// Deprecated: do not use.
 	ListTranslations(context.Context, *connect.Request[v1.ListTranslationsRequest]) (*connect.Response[v1.ListTranslationsResponse], error)
-	// ReviewTranslation corrects (or confirms) a translation. A reviewed
-	// translation is never replaced by a machine one. INVALID_ARGUMENT if
-	// the text drops or adds a {placeholder} of the English source.
+	// Deprecated: moved to TranslationService (SaveAppString,
+	// ReviewCatalogTranslation). Answers UNIMPLEMENTED.
+	//
+	// Deprecated: do not use.
 	ReviewTranslation(context.Context, *connect.Request[v1.ReviewTranslationRequest]) (*connect.Response[v1.ReviewTranslationResponse], error)
 	// SearchPeople finds people by name or email (contains, any case) or
 	// exact user id. At most 50.
@@ -277,16 +283,22 @@ func (c *moderationServiceClient) ListCrewLeaves(ctx context.Context, req *conne
 }
 
 // ListTranslationLanguages calls issho.v1.ModerationService.ListTranslationLanguages.
+//
+// Deprecated: do not use.
 func (c *moderationServiceClient) ListTranslationLanguages(ctx context.Context, req *connect.Request[v1.ListTranslationLanguagesRequest]) (*connect.Response[v1.ListTranslationLanguagesResponse], error) {
 	return c.listTranslationLanguages.CallUnary(ctx, req)
 }
 
 // ListTranslations calls issho.v1.ModerationService.ListTranslations.
+//
+// Deprecated: do not use.
 func (c *moderationServiceClient) ListTranslations(ctx context.Context, req *connect.Request[v1.ListTranslationsRequest]) (*connect.Response[v1.ListTranslationsResponse], error) {
 	return c.listTranslations.CallUnary(ctx, req)
 }
 
 // ReviewTranslation calls issho.v1.ModerationService.ReviewTranslation.
+//
+// Deprecated: do not use.
 func (c *moderationServiceClient) ReviewTranslation(ctx context.Context, req *connect.Request[v1.ReviewTranslationRequest]) (*connect.Response[v1.ReviewTranslationResponse], error) {
 	return c.reviewTranslation.CallUnary(ctx, req)
 }
@@ -335,15 +347,21 @@ type ModerationServiceHandler interface {
 	ResolveFlag(context.Context, *connect.Request[v1.ResolveFlagRequest]) (*connect.Response[v1.ResolveFlagResponse], error)
 	// ListCrewLeaves returns why people left crews, newest first. At most 200.
 	ListCrewLeaves(context.Context, *connect.Request[v1.ListCrewLeavesRequest]) (*connect.Response[v1.ListCrewLeavesResponse], error)
-	// ListTranslationLanguages returns the languages with machine
-	// translations, with how many still need a look.
+	// Deprecated: moved to TranslationService (ListCatalogLanguages). Kept
+	// because removing an RPC breaks the API's compatibility check; answers
+	// UNIMPLEMENTED.
+	//
+	// Deprecated: do not use.
 	ListTranslationLanguages(context.Context, *connect.Request[v1.ListTranslationLanguagesRequest]) (*connect.Response[v1.ListTranslationLanguagesResponse], error)
-	// ListTranslations returns one language's translations, unreviewed ones
-	// first, 100 at a time.
+	// Deprecated: moved to TranslationService (ListAppStrings,
+	// ListCatalogTranslations). Answers UNIMPLEMENTED.
+	//
+	// Deprecated: do not use.
 	ListTranslations(context.Context, *connect.Request[v1.ListTranslationsRequest]) (*connect.Response[v1.ListTranslationsResponse], error)
-	// ReviewTranslation corrects (or confirms) a translation. A reviewed
-	// translation is never replaced by a machine one. INVALID_ARGUMENT if
-	// the text drops or adds a {placeholder} of the English source.
+	// Deprecated: moved to TranslationService (SaveAppString,
+	// ReviewCatalogTranslation). Answers UNIMPLEMENTED.
+	//
+	// Deprecated: do not use.
 	ReviewTranslation(context.Context, *connect.Request[v1.ReviewTranslationRequest]) (*connect.Response[v1.ReviewTranslationResponse], error)
 	// SearchPeople finds people by name or email (contains, any case) or
 	// exact user id. At most 50.

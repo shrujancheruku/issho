@@ -21,3 +21,22 @@ where lang = @lang
   and (@search::text = '' or source ilike '%' || @search || '%' or text ilike '%' || @search || '%')
 order by reviewed, source, context
 limit @max_rows offset @skip_rows;
+
+-- Languages with any machine translations, UI strings included (for the
+-- admins' list of languages).
+-- name: ListTranslationLanguages :many
+select lang, count(*)::int as total, (count(*) filter (where not reviewed))::int as unreviewed
+from app.translations
+group by lang
+order by lang;
+
+-- name: GetTranslation :one
+select source_hash, lang, source, context, text, model, reviewed, reviewed_at, created_at
+from app.translations
+where source_hash = @source_hash and lang = @lang;
+
+-- A person corrected (or confirmed) it: it's kept from then on.
+-- name: ReviewTranslation :execrows
+update app.translations
+set text = @text, reviewed = true, reviewed_by = @reviewed_by, reviewed_at = @at
+where source_hash = @source_hash and lang = @lang;

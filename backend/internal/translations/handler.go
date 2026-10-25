@@ -369,6 +369,10 @@ func (h *Handler) SaveAppString(ctx context.Context, req *connect.Request[isshov
 	if text == "" {
 		return nil, invalid("text: required")
 	}
+	// A livelier English identical to the plain one would only duplicate it.
+	if lang == i18n.Authoring && text == english {
+		return nil, invalid("text: the same as the plain English; remove the livelier version instead")
+	}
 	// A lost placeholder would never be shown (uistrings.Catalog.Current).
 	if !uistrings.SamePlaceholders(english, text) {
 		return nil, invalid("text: keep every {placeholder} of the English text, unchanged")

@@ -3531,7 +3531,8 @@ HTTP: POST /issho.v1.MetricsService/&lt;Method&gt;
 ### ModerationService
 ModerationService: the moderation queue in the admin SPA. Reports about
 people, flags raised by the system (picks leaning towards one gender),
-why people left crews, and corrections to machine translations.
+and why people left crews. (Translations are TranslationService&#39;s; the
+three translation RPCs below only answer UNIMPLEMENTED now.)
 Admins only: requires `Authorization: Bearer &lt;Supabase access token&gt;` for
 an account with `app_metadata.admin = true` (set with `tool set-admin`);
 anyone else gets PERMISSION_DENIED.
@@ -3546,9 +3547,9 @@ HTTP: POST /issho.v1.ModerationService/&lt;Method&gt;
 | ListFlags | [ListFlagsRequest](#issho-v1-ListFlagsRequest) | [ListFlagsResponse](#issho-v1-ListFlagsResponse) | ListFlags returns open flags (oldest first) or resolved ones (newest first). At most 200. |
 | ResolveFlag | [ResolveFlagRequest](#issho-v1-ResolveFlagRequest) | [ResolveFlagResponse](#issho-v1-ResolveFlagResponse) | ResolveFlag closes an open flag with a note. FAILED_PRECONDITION if it&#39;s already resolved. A later signal opens a new flag. |
 | ListCrewLeaves | [ListCrewLeavesRequest](#issho-v1-ListCrewLeavesRequest) | [ListCrewLeavesResponse](#issho-v1-ListCrewLeavesResponse) | ListCrewLeaves returns why people left crews, newest first. At most 200. |
-| ListTranslationLanguages | [ListTranslationLanguagesRequest](#issho-v1-ListTranslationLanguagesRequest) | [ListTranslationLanguagesResponse](#issho-v1-ListTranslationLanguagesResponse) | ListTranslationLanguages returns the languages with machine translations, with how many still need a look. |
-| ListTranslations | [ListTranslationsRequest](#issho-v1-ListTranslationsRequest) | [ListTranslationsResponse](#issho-v1-ListTranslationsResponse) | ListTranslations returns one language&#39;s translations, unreviewed ones first, 100 at a time. |
-| ReviewTranslation | [ReviewTranslationRequest](#issho-v1-ReviewTranslationRequest) | [ReviewTranslationResponse](#issho-v1-ReviewTranslationResponse) | ReviewTranslation corrects (or confirms) a translation. A reviewed translation is never replaced by a machine one. INVALID_ARGUMENT if the text drops or adds a {placeholder} of the English source. |
+| ListTranslationLanguages | [ListTranslationLanguagesRequest](#issho-v1-ListTranslationLanguagesRequest) | [ListTranslationLanguagesResponse](#issho-v1-ListTranslationLanguagesResponse) | Deprecated: moved to TranslationService (ListCatalogLanguages). Kept because removing an RPC breaks the API&#39;s compatibility check; answers UNIMPLEMENTED. |
+| ListTranslations | [ListTranslationsRequest](#issho-v1-ListTranslationsRequest) | [ListTranslationsResponse](#issho-v1-ListTranslationsResponse) | Deprecated: moved to TranslationService (ListAppStrings, ListCatalogTranslations). Answers UNIMPLEMENTED. |
+| ReviewTranslation | [ReviewTranslationRequest](#issho-v1-ReviewTranslationRequest) | [ReviewTranslationResponse](#issho-v1-ReviewTranslationResponse) | Deprecated: moved to TranslationService (SaveAppString, ReviewCatalogTranslation). Answers UNIMPLEMENTED. |
 | SearchPeople | [SearchPeopleRequest](#issho-v1-SearchPeopleRequest) | [SearchPeopleResponse](#issho-v1-SearchPeopleResponse) | SearchPeople finds people by name or email (contains, any case) or exact user id. At most 50. |
 | GetPerson | [GetPersonRequest](#issho-v1-GetPersonRequest) | [GetPersonResponse](#issho-v1-GetPersonResponse) | GetPerson returns what a moderator needs to decide about someone: who they are, report counts, flags, suspensions and recent outings. NOT_FOUND if there&#39;s no such account. |
 | SuspendPerson | [SuspendPersonRequest](#issho-v1-SuspendPersonRequest) | [SuspendPersonResponse](#issho-v1-SuspendPersonResponse) | SuspendPerson keeps someone out of Issho until it&#39;s lifted: the API refuses their calls (GetMe says they&#39;re suspended; signing out and deleting the account still work), the chat socket refuses them, matching leaves them out and they get no notifications. They&#39;re also taken out of their open signups, outings that haven&#39;t started, and crews. Suspending someone already suspended only repeats that removal. INVALID_ARGUMENT for the caller&#39;s own account. |

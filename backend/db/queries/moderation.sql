@@ -69,35 +69,6 @@ where (@reason::text = '' or l.reason = @reason)
 order by l.created_at desc, l.id desc
 limit @max_rows;
 
--- Languages with machine translations, and how many are still unreviewed.
--- name: ListTranslationLanguages :many
-select lang, count(*)::int as total, (count(*) filter (where not reviewed))::int as unreviewed
-from app.translations
-group by lang
-order by lang;
-
--- One language's translations, unreviewed ones first, matching @search in
--- the English source or the translation ('' = all).
--- name: ListTranslations :many
-select source_hash, lang, source, context, text, model, reviewed, reviewed_at, created_at
-from app.translations
-where lang = @lang
-  and (@unreviewed_only::boolean = false or not reviewed)
-  and (@search::text = '' or source ilike '%' || @search || '%' or text ilike '%' || @search || '%')
-order by reviewed, source, context
-limit @max_rows offset @skip_rows;
-
--- name: GetTranslation :one
-select source_hash, lang, source, context, text, model, reviewed, reviewed_at, created_at
-from app.translations
-where source_hash = @source_hash and lang = @lang;
-
--- A person corrected (or confirmed) it: it's kept from then on.
--- name: ReviewTranslation :execrows
-update app.translations
-set text = @text, reviewed = true, reviewed_by = @reviewed_by, reviewed_at = @at
-where source_hash = @source_hash and lang = @lang;
-
 -- Suspensions (00020). Everyone suspended now: the API's check
 -- (moderation.Suspensions) keeps this set in memory.
 -- name: ListSuspendedIDs :many

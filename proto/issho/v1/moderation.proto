@@ -10,7 +10,8 @@ option go_package = "github.com/shrujancheruku/issho/backend/gen/issho/v1;isshov
 
 // ModerationService: the moderation queue in the admin SPA. Reports about
 // people, flags raised by the system (picks leaning towards one gender),
-// why people left crews, and corrections to machine translations.
+// and why people left crews. (Translations are TranslationService's; the
+// three translation RPCs below only answer UNIMPLEMENTED now.)
 // Admins only: requires `Authorization: Bearer <Supabase access token>` for
 // an account with `app_metadata.admin = true` (set with `tool set-admin`);
 // anyone else gets PERMISSION_DENIED.
@@ -40,18 +41,24 @@ service ModerationService {
   // ListCrewLeaves returns why people left crews, newest first. At most 200.
   rpc ListCrewLeaves(ListCrewLeavesRequest) returns (ListCrewLeavesResponse) {}
 
-  // ListTranslationLanguages returns the languages with machine
-  // translations, with how many still need a look.
-  rpc ListTranslationLanguages(ListTranslationLanguagesRequest) returns (ListTranslationLanguagesResponse) {}
+  // Deprecated: moved to TranslationService (ListCatalogLanguages). Kept
+  // because removing an RPC breaks the API's compatibility check; answers
+  // UNIMPLEMENTED.
+  rpc ListTranslationLanguages(ListTranslationLanguagesRequest) returns (ListTranslationLanguagesResponse) {
+    option deprecated = true;
+  }
 
-  // ListTranslations returns one language's translations, unreviewed ones
-  // first, 100 at a time.
-  rpc ListTranslations(ListTranslationsRequest) returns (ListTranslationsResponse) {}
+  // Deprecated: moved to TranslationService (ListAppStrings,
+  // ListCatalogTranslations). Answers UNIMPLEMENTED.
+  rpc ListTranslations(ListTranslationsRequest) returns (ListTranslationsResponse) {
+    option deprecated = true;
+  }
 
-  // ReviewTranslation corrects (or confirms) a translation. A reviewed
-  // translation is never replaced by a machine one. INVALID_ARGUMENT if
-  // the text drops or adds a {placeholder} of the English source.
-  rpc ReviewTranslation(ReviewTranslationRequest) returns (ReviewTranslationResponse) {}
+  // Deprecated: moved to TranslationService (SaveAppString,
+  // ReviewCatalogTranslation). Answers UNIMPLEMENTED.
+  rpc ReviewTranslation(ReviewTranslationRequest) returns (ReviewTranslationResponse) {
+    option deprecated = true;
+  }
 
   // SearchPeople finds people by name or email (contains, any case) or
   // exact user id. At most 50.

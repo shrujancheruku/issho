@@ -362,6 +362,10 @@ func TestEnglish(t *testing.T) {
 	if got["hi"].Machine != "" || got["hi"].Human != "Hey there" || got["hi"].EnglishVoice != "Hey there" {
 		t.Errorf("en hi: %+v", got["hi"])
 	}
+	_, err := h.SaveAppString(as(admin), connect.NewRequest(&isshov1.SaveAppStringRequest{Lang: "en", Key: "bye", Text: "Goodbye"}))
+	if connect.CodeOf(err) != connect.CodeInvalidArgument {
+		t.Errorf("livelier English identical to the plain one: %v", err)
+	}
 }
 
 func TestCatalog(t *testing.T) {
