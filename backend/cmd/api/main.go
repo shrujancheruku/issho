@@ -41,7 +41,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/tagging"
 	"github.com/shrujancheruku/issho/backend/internal/tagging/gemini"
 	"github.com/shrujancheruku/issho/backend/internal/translate"
-	gtranslate "github.com/shrujancheruku/issho/backend/internal/translate/google"
+	"github.com/shrujancheruku/issho/backend/internal/translate/translators"
 	"github.com/shrujancheruku/issho/backend/internal/uistrings"
 )
 
@@ -133,10 +133,10 @@ func run() error {
 	}
 	mux.Handle(isshov1connect.NewIdentityServiceHandler(&identity.Handler{Svc: identitySvc}, opts))
 	translations := &translate.Service{Store: q}
-	if cfg.GoogleTranslateAPIKey != "" {
-		translations.Translator = gtranslate.New(cfg.GoogleTranslateAPIKey)
-	} else {
-		slog.Warn("GOOGLE_TRANSLATE_API_KEY not set: machine translation off, text shown in stored languages only")
+	if translations.Translator, err = translators.New(cfg.Translator, cfg.GoogleTranslateAPIKey, cfg.GeminiAPIKey); err != nil {
+		return err
+	} else if translations.Translator == nil {
+		slog.Warn("no key for the translator (GOOGLE_TRANSLATE_API_KEY, or GOOGLE_GEMINI_API_KEY with TRANSLATOR=gemini): machine translation off, text shown in stored languages only")
 	}
 	suggestions := &tagging.Service{Store: q}
 	if cfg.GeminiAPIKey != "" {

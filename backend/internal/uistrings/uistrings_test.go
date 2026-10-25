@@ -58,6 +58,14 @@ func TestEmbeddedCatalog(t *testing.T) {
 	if len(c.keys) == 0 {
 		t.Fatalf("empty catalogue: %+v", c)
 	}
+	for k := range c.notes {
+		if _, ok := c.english[k]; !ok {
+			t.Errorf("notes.json: %s isn't in en.json", k)
+		}
+	}
+	if !strings.Contains(c.context("common.save"), "not saving money") || c.context("account.delete") != translateContext {
+		t.Errorf("context: %q / %q", c.context("common.save"), c.context("account.delete"))
+	}
 	for k, v := range c.english {
 		if strings.TrimSpace(v) == "" {
 			t.Errorf("%s: empty text", k)

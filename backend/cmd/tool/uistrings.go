@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"os"
@@ -23,6 +24,9 @@ func uiStrings(args []string) error {
 	dir := args[0]
 	english, err := os.ReadFile(filepath.Join(dir, "en.json"))
 	if err != nil {
+		return err
+	}
+	if err := checkNotes(english, filepath.Join(dir, "notes.json")); err != nil {
 		return err
 	}
 	files, err := filepath.Glob(filepath.Join(dir, "human", "*.json"))
@@ -49,6 +53,31 @@ func uiStrings(args []string) error {
 			return err
 		}
 		slog.Info("stamped human versions", "file", f)
+	}
+	return nil
+}
+
+// checkNotes makes sure every note in notes.json belongs to a string in
+// en.json, so a renamed key doesn't silently lose its note.
+func checkNotes(englishRaw []byte, path string) error {
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		return err
+	}
+	var english, notes map[string]string
+	if err := json.Unmarshal(englishRaw, &english); err != nil {
+		return fmt.Errorf("en.json: %w", err)
+	}
+	if err := json.Unmarshal(raw, &notes); err != nil {
+		return fmt.Errorf("%s: %w", path, err)
+	}
+	for key, note := range notes {
+		if _, ok := english[key]; !ok {
+			return fmt.Errorf("%s: %s isn't in en.json", path, key)
+		}
+		if strings.TrimSpace(note) == "" {
+			return fmt.Errorf("%s: %s has an empty note", path, key)
+		}
 	}
 	return nil
 }

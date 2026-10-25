@@ -39,15 +39,47 @@ var source []byte
 //go:embed human/*.json
 var humanFiles embed.FS
 
+// notes.json (copied by `make gen`): what an ambiguous string is, for the
+// translator ("Save" is a button that stores changes, not saving money).
+//
+//go:embed notes.json
+var notesRaw []byte
+
 // translateContext is what the translator is told the text is. It's part of
 // the cache key, so UI text never shares a translation with an activity name.
 const translateContext = "text in the user interface of a mobile app for meeting new friends at group outings"
 
-// Catalog is the plain English UI text, key → text, and the human versions.
+// Catalog is the plain English UI text, key → text, the human versions and
+// the notes for translators.
 type Catalog struct {
 	keys    []string // sorted
 	english map[string]string
 	human   map[string]map[string]Human // lang → key → version
+	notes   map[string]string           // key → note
+}
+
+// Items is the catalogue as a translator gets it: the plain English of every
+// key, in key order, with its context. For comparing translators (tool
+// translate-compare), without the cache in between.
+func (c *Catalog) Items() (keys []string, items []translate.Item) {
+	for _, k := range c.keys {
+		keys = append(keys, k)
+		items = append(items, translate.Item{Text: c.english[k], Context: c.context(k)})
+	}
+	return keys, items
+}
+
+// Note is key's note for translators, if it has one.
+func (c *Catalog) Note(key string) string { return c.notes[key] }
+
+// context is what the translator is told about key: what all UI text is,
+// plus the key's note. Being part of the cache key, a new or reworded note
+// gets that string translated again.
+func (c *Catalog) context(key string) string {
+	if n := c.notes[key]; n != "" {
+		return translateContext + ". " + n
+	}
+	return translateContext
 }
 
 // Load parses the embedded catalogue and human versions.
@@ -64,7 +96,14 @@ func Load() (*Catalog, error) {
 		}
 		human[strings.TrimSuffix(path.Base(f), ".json")] = raw
 	}
-	return parse(source, human)
+	c, err := parse(source, human)
+	if err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal(notesRaw, &c.notes); err != nil {
+		return nil, fmt.Errorf("ui strings, notes.json: %w", err)
+	}
+	return c, nil
 }
 
 // parse takes en.json and the human files by language.
@@ -160,7 +199,7 @@ func (c *Catalog) In(ctx context.Context, tr *translate.Service, lang string) (m
 	texts := make([]translate.Text, len(todo))
 	for i, k := range todo {
 		raw, _ := json.Marshal(map[string]string{i18n.Authoring: c.english[k]})
-		texts[i] = translate.Text{Raw: raw, Context: translateContext}
+		texts[i] = translate.Text{Raw: raw, Context: c.context(k)}
 	}
 	got := tr.Resolve(ctx, lang, texts)
 	complete := true
@@ -189,7 +228,7 @@ func (c *Catalog) Text(ctx context.Context, tr *translate.Service, lang, key str
 		return english
 	}
 	raw, _ := json.Marshal(map[string]string{i18n.Authoring: english})
-	got := tr.Resolve(ctx, lang, []translate.Text{{Raw: raw, Context: translateContext}})[0]
+	got := tr.Resolve(ctx, lang, []translate.Text{{Raw: raw, Context: c.context(key)}})[0]
 	if got == "" || !SamePlaceholders(english, got) {
 		return english
 	}

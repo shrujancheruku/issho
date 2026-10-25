@@ -9,6 +9,7 @@
 //	tool walk-bench run|judge|review|report [flags]   (compare walk proposers; see walkbench.go)
 //	tool set-admin [-revoke] <email>   (the admin SPA's role; needs SUPABASE_URL and SUPABASE_SECRET_KEY)
 //	tool ui-strings <apps/mobile/src/i18n>   (checks and stamps the UI text's human versions; run by make gen)
+//	tool translate-compare [-langs ja,es,pl,zh] [-out file.json]   (Google vs Gemini on the UI text, for review; stores nothing)
 package main
 
 import (
@@ -41,7 +42,7 @@ func main() {
 
 func run(args []string) error {
 	if len(args) == 0 {
-		return fmt.Errorf("usage: tool migrate|seed|build-matrix|discover-venues|email-templates|simulate|walk-bench|set-admin|ui-strings ...")
+		return fmt.Errorf("usage: tool migrate|seed|build-matrix|discover-venues|email-templates|simulate|walk-bench|set-admin|ui-strings|translate-compare ...")
 	}
 	switch args[0] {
 	case "simulate":
@@ -50,6 +51,8 @@ func run(args []string) error {
 		return walkBench(args[1:]) // Gemini, Claude and Maps only: no database needed
 	case "ui-strings":
 		return uiStrings(args[1:]) // files only: no database needed
+	case "translate-compare":
+		return translateCompare(args[1:]) // the translators only: no database needed
 	}
 	ctx := context.Background()
 	url := os.Getenv("DATABASE_URL")

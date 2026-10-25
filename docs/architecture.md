@@ -125,7 +125,7 @@ A city is defined entirely by data in `data/citypacks/<city>.json`: areas with c
 | `proto/**/*.proto` | buf → protoc-gen-es | `packages/api-client/src/gen/…` |
 | `proto/**/*.proto` | buf → protoc-gen-doc | `docs/generated/api.md` |
 | `backend/db/queries/*.sql` + migrations | sqlc | `backend/gen/dbgen` |
-| `apps/mobile/src/i18n/en.json`, `human/*.json` | `tool ui-strings` (stamps new human versions) + copy | `backend/internal/uistrings/` |
+| `apps/mobile/src/i18n/en.json`, `notes.json`, `human/*.json` | `tool ui-strings` (stamps new human versions, checks notes) + copy | `backend/internal/uistrings/` |
 
 Run `make gen` after editing protos or queries. CI fails if the generated code is stale.
 
