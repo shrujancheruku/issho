@@ -269,6 +269,7 @@ Order (owner's decision, 2026-10-23): the **moderation queue** first, then **pla
   - ⬜ **The API's permanent address** (moved from M8): the domain on Cloudflare, then point the sites (`API_URL` variable, which switches on `deploy-web.yml`) and the app (`EXPO_PUBLIC_API_URL`) at it.
   - ⬜ Supabase Pro: **upgrade before real users**, mainly so the project can't be paused for inactivity, and for daily backups. Not needed while it's the owner and testers (the database is 23 MB of Free's 500 MB).
   - ⬜ nightly `pg_dump` → Cloudflare R2 as an off-site copy (needs a bucket and keys, and where it runs: the VPS)
+- ✅ **Expo SDK 58 patch updates** (2026-10-26): 14 packages to the versions `expo install --check` expects (e.g. expo 58.0.19, expo-router 58.0.26, expo-notifications 58.1.6, now old enough for pnpm's release-age rule, so its exact pin is gone); `expo-doctor` 20/20, lint and tests pass. Needs a new dev client build before the next device check.
 - ⬜ EAS Build/Submit → TestFlight and Play internal testing. Before each build: `make ui-bundle API_URL=<production API>`, so the bundled launch languages match what the API serves.
 - ⬜ **iOS push notifications** (moved from M6): needs the paid Apple Developer Program, which TestFlight needs anyway. Create and upload the APNs key with `eas credentials`; the server and app code are already done (M6).
 - ⬜ Stripe Identity verification behind a feature flag, for the public launch.
