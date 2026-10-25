@@ -8,10 +8,10 @@ func TestNew(t *testing.T) {
 		want                 string // Name(), "" for none
 		err                  bool
 	}{
-		{"", "g", "m", "google-translate-v2", false},
-		{"google", "g", "", "google-translate-v2", false},
+		{"", "g", "m", "gemini-3.8-flash", false},
+		{"", "g", "", "", false}, // its key missing: translation off, not Google
 		{"gemini", "g", "m", "gemini-3.8-flash", false},
-		{"gemini", "g", "", "", false}, // its key missing: translation off, not Google
+		{"google", "g", "", "google-translate-v2", false},
 		{"google", "", "m", "", false},
 		{"deepl", "g", "m", "", true},
 	} {

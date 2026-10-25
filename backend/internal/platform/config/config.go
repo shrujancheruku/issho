@@ -20,8 +20,8 @@ type Config struct {
 	// Translation). Optional: without it, text is shown in the languages
 	// already stored.
 	GoogleTranslateAPIKey string
-	// Translator picks the machine translator (TRANSLATOR): "google", the
-	// default, or "gemini", which uses GeminiAPIKey (internal/translate/translators).
+	// Translator picks the machine translator (TRANSLATOR): "gemini", the
+	// default, which uses GeminiAPIKey, or "google" (internal/translate/translators).
 	Translator string
 	// GeminiAPIKey (a Google Cloud Agent Platform key) enables interest
 	// suggestions (Gemini). Optional: without it,

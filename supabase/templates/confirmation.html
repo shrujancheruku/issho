@@ -3,49 +3,49 @@
 {{- $lang := "" -}}{{- with .Data -}}{{- with .lang -}}{{- $lang = printf "%v" . -}}{{- end -}}{{- end -}}
 {{- if eq $lang "ja" }}
 <div lang="ja" style="font-family: -apple-system, 'Helvetica Neue', 'Hiragino Sans', 'Noto Sans', sans-serif; max-width: 420px; margin: 0 auto; padding: 24px; color: #111111;">
-  <p style="font-size: 18px; margin: 0 0 16px;">Isshoのサインインコード</p>
+  <p style="font-size: 18px; margin: 0 0 16px;">Isshoのログインコード</p>
   <p style="font-size: 36px; letter-spacing: 8px; font-weight: 700; margin: 0 0 16px; color: #BC002D;" dir="ltr">{{ .Token }}</p>
-  <p style="font-size: 14px; color: #555555; margin: 0;">このサインインコードは10分後に期限切れになります。 このコードを要求していない場合は、このメールは無視してください。</p>
+  <p style="font-size: 14px; color: #555555; margin: 0;">このログインコードの有効期限は10分です。 このコードをリクエストしていない場合は、このメールを無視していただいてかまいません。</p>
 </div>
 {{- else if eq $lang "es" }}
 <div lang="es" style="font-family: -apple-system, 'Helvetica Neue', 'Hiragino Sans', 'Noto Sans', sans-serif; max-width: 420px; margin: 0 auto; padding: 24px; color: #111111;">
   <p style="font-size: 18px; margin: 0 0 16px;">Tu código de inicio de sesión de Issho</p>
   <p style="font-size: 36px; letter-spacing: 8px; font-weight: 700; margin: 0 0 16px; color: #BC002D;" dir="ltr">{{ .Token }}</p>
-  <p style="font-size: 14px; color: #555555; margin: 0;">Este código de acceso caduca en 10 minutos. Si no solicitaste este código, puedes ignorar este correo electrónico.</p>
+  <p style="font-size: 14px; color: #555555; margin: 0;">Este código de inicio de sesión caduca en 10 minutos. Si no has pedido este código, puedes ignorar este correo.</p>
 </div>
 {{- else if eq $lang "zh" }}
 <div lang="zh" style="font-family: -apple-system, 'Helvetica Neue', 'Hiragino Sans', 'Noto Sans', sans-serif; max-width: 420px; margin: 0 auto; padding: 24px; color: #111111;">
-  <p style="font-size: 18px; margin: 0 0 16px;">您的 Issho 登录代码</p>
+  <p style="font-size: 18px; margin: 0 0 16px;">你的 Issho 登录验证码</p>
   <p style="font-size: 36px; letter-spacing: 8px; font-weight: 700; margin: 0 0 16px; color: #BC002D;" dir="ltr">{{ .Token }}</p>
-  <p style="font-size: 14px; color: #555555; margin: 0;">此登录码将在 10 分钟后过期。 如果您没有申请过此验证码，则可以忽略此邮件。</p>
+  <p style="font-size: 14px; color: #555555; margin: 0;">此验证码将在 10 分钟后失效。 如果你并未请求此验证码，可以直接忽略这封邮件。</p>
 </div>
 {{- else if eq $lang "ko" }}
 <div lang="ko" style="font-family: -apple-system, 'Helvetica Neue', 'Hiragino Sans', 'Noto Sans', sans-serif; max-width: 420px; margin: 0 auto; padding: 24px; color: #111111;">
   <p style="font-size: 18px; margin: 0 0 16px;">Issho 로그인 코드</p>
   <p style="font-size: 36px; letter-spacing: 8px; font-weight: 700; margin: 0 0 16px; color: #BC002D;" dir="ltr">{{ .Token }}</p>
-  <p style="font-size: 14px; color: #555555; margin: 0;">이 로그인 코드는 10분 후에 만료됩니다. 이 코드를 요청하지 않으셨다면 이 이메일을 무시하셔도 됩니다.</p>
+  <p style="font-size: 14px; color: #555555; margin: 0;">이 로그인 코드는 10분 후에 만료돼요. 직접 코드를 요청하지 않았다면 이 이메일을 무시하셔도 돼요.</p>
 </div>
 {{- else if eq $lang "fr" }}
 <div lang="fr" style="font-family: -apple-system, 'Helvetica Neue', 'Hiragino Sans', 'Noto Sans', sans-serif; max-width: 420px; margin: 0 auto; padding: 24px; color: #111111;">
-  <p style="font-size: 18px; margin: 0 0 16px;">Votre code de connexion Issho</p>
+  <p style="font-size: 18px; margin: 0 0 16px;">Ton code de connexion Issho</p>
   <p style="font-size: 36px; letter-spacing: 8px; font-weight: 700; margin: 0 0 16px; color: #BC002D;" dir="ltr">{{ .Token }}</p>
-  <p style="font-size: 14px; color: #555555; margin: 0;">Ce code de connexion expire dans 10 minutes. Si vous n&#39;avez pas demandé ce code, vous pouvez ignorer ce courriel.</p>
+  <p style="font-size: 14px; color: #555555; margin: 0;">Ce code de connexion expire dans 10 minutes. Si tu n&#39;as pas demandé ce code, tu peux ignorer cet e-mail.</p>
 </div>
 {{- else if eq $lang "de" }}
 <div lang="de" style="font-family: -apple-system, 'Helvetica Neue', 'Hiragino Sans', 'Noto Sans', sans-serif; max-width: 420px; margin: 0 auto; padding: 24px; color: #111111;">
-  <p style="font-size: 18px; margin: 0 0 16px;">Ihr Issho-Anmeldecode</p>
+  <p style="font-size: 18px; margin: 0 0 16px;">Dein Issho-Anmeldecode</p>
   <p style="font-size: 36px; letter-spacing: 8px; font-weight: 700; margin: 0 0 16px; color: #BC002D;" dir="ltr">{{ .Token }}</p>
-  <p style="font-size: 14px; color: #555555; margin: 0;">Dieser Anmeldecode ist 10 Minuten gültig. Wenn Sie diesen Code nicht angefordert haben, können Sie diese E-Mail ignorieren.</p>
+  <p style="font-size: 14px; color: #555555; margin: 0;">Dieser Anmeldecode läuft in 10 Minuten ab. Wenn du diesen Code nicht angefordert hast, kannst du diese E-Mail ignorieren.</p>
 </div>
 {{- else if eq $lang "pt" }}
 <div lang="pt" style="font-family: -apple-system, 'Helvetica Neue', 'Hiragino Sans', 'Noto Sans', sans-serif; max-width: 420px; margin: 0 auto; padding: 24px; color: #111111;">
-  <p style="font-size: 18px; margin: 0 0 16px;">Seu código de login do Issho</p>
+  <p style="font-size: 18px; margin: 0 0 16px;">Seu código de acesso da Issho</p>
   <p style="font-size: 36px; letter-spacing: 8px; font-weight: 700; margin: 0 0 16px; color: #BC002D;" dir="ltr">{{ .Token }}</p>
-  <p style="font-size: 14px; color: #555555; margin: 0;">Este código de acesso expira em 10 minutos. Se você não solicitou este código, pode ignorar este e-mail.</p>
+  <p style="font-size: 14px; color: #555555; margin: 0;">Este código de acesso expira em 10 minutos. Se você não pediu este código, pode ignorar este e-mail.</p>
 </div>
 {{- else if eq $lang "it" }}
 <div lang="it" style="font-family: -apple-system, 'Helvetica Neue', 'Hiragino Sans', 'Noto Sans', sans-serif; max-width: 420px; margin: 0 auto; padding: 24px; color: #111111;">
-  <p style="font-size: 18px; margin: 0 0 16px;">Il tuo codice di accesso Issho</p>
+  <p style="font-size: 18px; margin: 0 0 16px;">Il tuo codice di accesso per Issho</p>
   <p style="font-size: 36px; letter-spacing: 8px; font-weight: 700; margin: 0 0 16px; color: #BC002D;" dir="ltr">{{ .Token }}</p>
   <p style="font-size: 14px; color: #555555; margin: 0;">Questo codice di accesso scade tra 10 minuti. Se non hai richiesto questo codice, puoi ignorare questa email.</p>
 </div>
@@ -59,13 +59,13 @@
 <div lang="th" style="font-family: -apple-system, 'Helvetica Neue', 'Hiragino Sans', 'Noto Sans', sans-serif; max-width: 420px; margin: 0 auto; padding: 24px; color: #111111;">
   <p style="font-size: 18px; margin: 0 0 16px;">รหัสเข้าสู่ระบบ Issho ของคุณ</p>
   <p style="font-size: 36px; letter-spacing: 8px; font-weight: 700; margin: 0 0 16px; color: #BC002D;" dir="ltr">{{ .Token }}</p>
-  <p style="font-size: 14px; color: #555555; margin: 0;">รหัสเข้าสู่ระบบนี้จะหมดอายุใน 10 นาที หากคุณไม่ได้ขอรับรหัสนี้ คุณสามารถเพิกเฉยต่ออีเมลนี้ได้</p>
+  <p style="font-size: 14px; color: #555555; margin: 0;">รหัสเข้าสู่ระบบนี้จะหมดอายุภายใน 10 นาที หากคุณไม่ได้ขอรหัสนี้ สามารถละเว้นอีเมลนี้ได้เลย</p>
 </div>
 {{- else if eq $lang "id" }}
 <div lang="id" style="font-family: -apple-system, 'Helvetica Neue', 'Hiragino Sans', 'Noto Sans', sans-serif; max-width: 420px; margin: 0 auto; padding: 24px; color: #111111;">
-  <p style="font-size: 18px; margin: 0 0 16px;">Kode masuk Issho Anda</p>
+  <p style="font-size: 18px; margin: 0 0 16px;">Kode masuk Issho kamu</p>
   <p style="font-size: 36px; letter-spacing: 8px; font-weight: 700; margin: 0 0 16px; color: #BC002D;" dir="ltr">{{ .Token }}</p>
-  <p style="font-size: 14px; color: #555555; margin: 0;">Kode masuk ini akan kedaluwarsa dalam 10 menit. Jika Anda tidak meminta kode ini, Anda dapat mengabaikan email ini.</p>
+  <p style="font-size: 14px; color: #555555; margin: 0;">Kode masuk ini akan kedaluwarsa dalam 10 menit. Jika kamu tidak meminta kode ini, abaikan saja email ini.</p>
 </div>
 {{- else if eq $lang "tl" }}
 <div lang="tl" style="font-family: -apple-system, 'Helvetica Neue', 'Hiragino Sans', 'Noto Sans', sans-serif; max-width: 420px; margin: 0 auto; padding: 24px; color: #111111;">
@@ -77,43 +77,43 @@
 <div lang="hi" style="font-family: -apple-system, 'Helvetica Neue', 'Hiragino Sans', 'Noto Sans', sans-serif; max-width: 420px; margin: 0 auto; padding: 24px; color: #111111;">
   <p style="font-size: 18px; margin: 0 0 16px;">आपका Issho साइन-इन कोड</p>
   <p style="font-size: 36px; letter-spacing: 8px; font-weight: 700; margin: 0 0 16px; color: #BC002D;" dir="ltr">{{ .Token }}</p>
-  <p style="font-size: 14px; color: #555555; margin: 0;">यह साइन-इन कोड 10 मिनट में समाप्त हो जाएगा। यदि आपने इस कोड का अनुरोध नहीं किया है, तो आप इस ईमेल को अनदेखा कर सकते हैं।</p>
+  <p style="font-size: 14px; color: #555555; margin: 0;">यह साइन-इन कोड 10 मिनट में एक्सपायर हो जाएगा। अगर आपने यह कोड नहीं मांगा था, तो आप इस ईमेल को अनदेखा कर सकते हैं।</p>
 </div>
 {{- else if eq $lang "ar" }}
 <div lang="ar" dir="rtl" style="font-family: -apple-system, 'Helvetica Neue', 'Hiragino Sans', 'Noto Sans', sans-serif; max-width: 420px; margin: 0 auto; padding: 24px; color: #111111;">
-  <p style="font-size: 18px; margin: 0 0 16px;">رمز تسجيل الدخول الخاص بك في Issho</p>
+  <p style="font-size: 18px; margin: 0 0 16px;">رمز تسجيل الدخول إلى Issho الخاص بك</p>
   <p style="font-size: 36px; letter-spacing: 8px; font-weight: 700; margin: 0 0 16px; color: #BC002D;" dir="ltr">{{ .Token }}</p>
-  <p style="font-size: 14px; color: #555555; margin: 0;">ينتهي صلاحية رمز تسجيل الدخول هذا خلال 10 دقائق. إذا لم تطلب هذا الرمز، يمكنك تجاهل هذه الرسالة الإلكترونية.</p>
+  <p style="font-size: 14px; color: #555555; margin: 0;">تنتهي صلاحية رمز تسجيل الدخول هذا خلال 10 دقائق. إذا لم تطلب هذا الرمز، يمكنك تجاهل هذا البريد الإلكتروني.</p>
 </div>
 {{- else if eq $lang "ru" }}
 <div lang="ru" style="font-family: -apple-system, 'Helvetica Neue', 'Hiragino Sans', 'Noto Sans', sans-serif; max-width: 420px; margin: 0 auto; padding: 24px; color: #111111;">
-  <p style="font-size: 18px; margin: 0 0 16px;">Ваш код входа в Issho</p>
+  <p style="font-size: 18px; margin: 0 0 16px;">Твой код для входа в Issho</p>
   <p style="font-size: 36px; letter-spacing: 8px; font-weight: 700; margin: 0 0 16px; color: #BC002D;" dir="ltr">{{ .Token }}</p>
-  <p style="font-size: 14px; color: #555555; margin: 0;">Срок действия этого кода авторизации истекает через 10 минут. Если вы не запрашивали этот код, можете проигнорировать это письмо.</p>
+  <p style="font-size: 14px; color: #555555; margin: 0;">Срок действия этого кода истекает через 10 минут. Если ты не запрашивал этот код, просто проигнорируй это письмо.</p>
 </div>
 {{- else if eq $lang "uk" }}
 <div lang="uk" style="font-family: -apple-system, 'Helvetica Neue', 'Hiragino Sans', 'Noto Sans', sans-serif; max-width: 420px; margin: 0 auto; padding: 24px; color: #111111;">
-  <p style="font-size: 18px; margin: 0 0 16px;">Ваш код входу Issho</p>
+  <p style="font-size: 18px; margin: 0 0 16px;">Твій код для входу в Issho</p>
   <p style="font-size: 36px; letter-spacing: 8px; font-weight: 700; margin: 0 0 16px; color: #BC002D;" dir="ltr">{{ .Token }}</p>
-  <p style="font-size: 14px; color: #555555; margin: 0;">Термін дії цього коду входу закінчується через 10 хвилин. Якщо ви не запитували цей код, можете проігнорувати цей електронний лист.</p>
+  <p style="font-size: 14px; color: #555555; margin: 0;">Цей код для входу дійсний протягом 10 хвилин. Якщо ти не запитував(-ла) цей код, просто проігноруй цей лист.</p>
 </div>
 {{- else if eq $lang "pl" }}
 <div lang="pl" style="font-family: -apple-system, 'Helvetica Neue', 'Hiragino Sans', 'Noto Sans', sans-serif; max-width: 420px; margin: 0 auto; padding: 24px; color: #111111;">
-  <p style="font-size: 18px; margin: 0 0 16px;">Twój kod logowania Issho</p>
+  <p style="font-size: 18px; margin: 0 0 16px;">Twój kod do logowania w Issho</p>
   <p style="font-size: 36px; letter-spacing: 8px; font-weight: 700; margin: 0 0 16px; color: #BC002D;" dir="ltr">{{ .Token }}</p>
-  <p style="font-size: 14px; color: #555555; margin: 0;">Ten kod logowania wygaśnie za 10 minut. Jeśli nie prosiłeś o ten kod, możesz zignorować tę wiadomość e-mail.</p>
+  <p style="font-size: 14px; color: #555555; margin: 0;">Ten kod wygasa za 10 minut. Jeśli nie prosisz o ten kod, możesz zignorować tę wiadomość.</p>
 </div>
 {{- else if eq $lang "nl" }}
 <div lang="nl" style="font-family: -apple-system, 'Helvetica Neue', 'Hiragino Sans', 'Noto Sans', sans-serif; max-width: 420px; margin: 0 auto; padding: 24px; color: #111111;">
-  <p style="font-size: 18px; margin: 0 0 16px;">Uw Issho-inlogcode</p>
+  <p style="font-size: 18px; margin: 0 0 16px;">Je inlogcode voor Issho</p>
   <p style="font-size: 36px; letter-spacing: 8px; font-weight: 700; margin: 0 0 16px; color: #BC002D;" dir="ltr">{{ .Token }}</p>
-  <p style="font-size: 14px; color: #555555; margin: 0;">Deze inlogcode is 10 minuten geldig. Als u deze code niet hebt aangevraagd, kunt u deze e-mail negeren.</p>
+  <p style="font-size: 14px; color: #555555; margin: 0;">Deze inlogcode verloopt over 10 minuten. Als je deze code niet hebt aangevraagd, kun je deze e-mail negeren.</p>
 </div>
 {{- else if eq $lang "tr" }}
 <div lang="tr" style="font-family: -apple-system, 'Helvetica Neue', 'Hiragino Sans', 'Noto Sans', sans-serif; max-width: 420px; margin: 0 auto; padding: 24px; color: #111111;">
-  <p style="font-size: 18px; margin: 0 0 16px;">Issho giriş kodunuz</p>
+  <p style="font-size: 18px; margin: 0 0 16px;">Issho giriş kodun</p>
   <p style="font-size: 36px; letter-spacing: 8px; font-weight: 700; margin: 0 0 16px; color: #BC002D;" dir="ltr">{{ .Token }}</p>
-  <p style="font-size: 14px; color: #555555; margin: 0;">Bu giriş kodu 10 dakika sonra geçerliliğini yitirecektir. Bu kodu talep etmediyseniz, bu e-postayı dikkate almayın.</p>
+  <p style="font-size: 14px; color: #555555; margin: 0;">Bu giriş kodunun süresi 10 dakika içinde dolacak. Bu kodu sen istemediysen bu e-postayı görmezden gelebilirsin.</p>
 </div>
 {{- else }}
 <div lang="en" style="font-family: -apple-system, 'Helvetica Neue', 'Hiragino Sans', 'Noto Sans', sans-serif; max-width: 420px; margin: 0 auto; padding: 24px; color: #111111;">
