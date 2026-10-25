@@ -48,7 +48,6 @@ type Catalog struct {
 	keys    []string // sorted
 	english map[string]string
 	human   map[string]map[string]Human // lang → key → version
-	version string
 }
 
 // Load parses the embedded catalogue and human versions.
@@ -75,20 +74,26 @@ func parse(raw []byte, human map[string][]byte) (*Catalog, error) {
 		return nil, fmt.Errorf("ui strings: %w", err)
 	}
 	c := &Catalog{keys: slices.Sorted(maps.Keys(m)), english: m, human: make(map[string]map[string]Human, len(human))}
-	// The version covers the human versions too: they change what's shown.
-	h := sha256.New()
-	h.Write(raw)
-	for _, lang := range slices.Sorted(maps.Keys(human)) {
+	for lang, raw := range human {
 		var v map[string]Human
-		if err := json.Unmarshal(human[lang], &v); err != nil {
+		if err := json.Unmarshal(raw, &v); err != nil {
 			return nil, fmt.Errorf("ui strings, human/%s.json: %w", lang, err)
 		}
 		c.human[lang] = v
-		h.Write([]byte("\x00" + lang + "\x00"))
-		h.Write(human[lang])
 	}
-	c.version = hex.EncodeToString(h.Sum(nil)[:6])
 	return c, nil
+}
+
+// Version identifies a catalogue's text, so the app can ask whether its copy
+// is still current (GetStringsRequest.known_version). It's a hash of what's
+// shown rather than of the files, because a reviewer's correction or a new
+// machine translation changes the text without a new build.
+func Version(strs map[string]string) string {
+	h := sha256.New()
+	for _, k := range slices.Sorted(maps.Keys(strs)) {
+		h.Write([]byte(k + "\x00" + strs[k] + "\x00"))
+	}
+	return hex.EncodeToString(h.Sum(nil)[:6])
 }
 
 // humanText is key's human version in lang, if it has one written for
@@ -115,10 +120,16 @@ func (h *Handler) GetStrings(ctx context.Context, req *connect.Request[isshov1.G
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("language must be a language code such as \"ja\""))
 	}
 	strs, complete := h.Catalog.In(ctx, h.Translations, lang)
+	version := Version(strs)
+	// The app checks a complete copy every so often; most checks find it
+	// current, and then there's no need to send ~300 strings again.
+	if complete && req.Msg.KnownVersion == version {
+		return connect.NewResponse(&isshov1.GetStringsResponse{Complete: true, CatalogVersion: version, Unchanged: true}), nil
+	}
 	return connect.NewResponse(&isshov1.GetStringsResponse{
 		Strings:        strs,
 		Complete:       complete,
-		CatalogVersion: h.Catalog.version,
+		CatalogVersion: version,
 	}), nil
 }
 

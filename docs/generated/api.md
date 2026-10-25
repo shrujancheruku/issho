@@ -4515,6 +4515,7 @@ HTTP: POST /issho.v1.ReviewService/&lt;Method&gt;
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | language | [string](#string) |  | ISO 639-1 code; a region (&#34;pt-BR&#34;) is ignored. Required. |
+| known_version | [string](#string) |  | The catalog_version of a complete catalogue the app already has, to check it cheaply. Empty to always get the strings. |
 
 
 
@@ -4529,9 +4530,10 @@ HTTP: POST /issho.v1.ReviewService/&lt;Method&gt;
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| strings | [GetStringsResponse.StringsEntry](#issho-v1-GetStringsResponse-StringsEntry) | repeated | Key → text. Keys whose translation isn&#39;t ready (or came back with broken {placeholders}) are left out; show the English text for those. |
+| strings | [GetStringsResponse.StringsEntry](#issho-v1-GetStringsResponse-StringsEntry) | repeated | Key → text. Keys whose translation isn&#39;t ready (or came back with broken {placeholders}) are left out; show the English text for those. Empty when unchanged is true. |
 | complete | [bool](#bool) |  | False while some translations are still running: cache what came back, but ask again later. |
-| catalog_version | [string](#string) |  | Changes whenever the English catalogue changes. |
+| catalog_version | [string](#string) |  | Identifies the text in this language: it changes whenever any of it does (the English, a human version, a translation or a reviewer&#39;s correction). |
+| unchanged | [bool](#bool) |  | True when known_version is still current and the catalogue is complete: keep the copy you have. |
 
 
 
@@ -4563,10 +4565,11 @@ HTTP: POST /issho.v1.ReviewService/&lt;Method&gt;
 <a name="issho-v1-UIService"></a>
 
 ### UIService
-UIService translates the app&#39;s own UI text. The app is written in English
-(apps/mobile/src/i18n/en.json, copied into the server by `make gen`); other
-languages are machine-translated on demand, cached on the server for
-everyone and on the device.
+UIService translates the app&#39;s own UI text. The app is written in plain
+English (apps/mobile/src/i18n/en.json, copied into the server by `make
+gen`); other languages are people&#39;s versions of single strings
+(i18n/human/&lt;lang&gt;.json) and, for the rest, machine translations made on
+demand, cached on the server for everyone and on the device.
 
 Public (no token): the sign-in screens need it before anyone is signed in.
 Only the server&#39;s copy of the catalogue is ever translated, so callers can&#39;t

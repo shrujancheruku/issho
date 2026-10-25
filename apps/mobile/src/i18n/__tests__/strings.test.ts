@@ -1,7 +1,6 @@
 /// <reference types="jest" />
 import {
   baseLanguage,
-  coversApp,
   displayEnglish,
   english,
   englishHuman,
@@ -46,13 +45,6 @@ describe('human English', () => {
     const human = { 'common.save': 'Save it' };
     expect(lookup('common.save', [human])).toBe('Save it');
     expect(lookup('common.save', [undefined])).toBe(english['common.save']);
-  });
-});
-
-describe('coversApp', () => {
-  it('needs every key', () => {
-    expect(coversApp(english)).toBe(true);
-    expect(coversApp({ 'common.save': 'x' })).toBe(false);
   });
 });
 

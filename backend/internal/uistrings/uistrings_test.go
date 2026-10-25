@@ -6,7 +6,10 @@ import (
 	"sync"
 	"testing"
 
+	"connectrpc.com/connect"
+
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
+	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
 	"github.com/shrujancheruku/issho/backend/internal/platform/i18n"
 	"github.com/shrujancheruku/issho/backend/internal/translate"
 )
@@ -52,7 +55,7 @@ func TestEmbeddedCatalog(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(c.keys) == 0 || c.version == "" {
+	if len(c.keys) == 0 {
 		t.Fatalf("empty catalogue: %+v", c)
 	}
 	for k, v := range c.english {
@@ -181,10 +184,52 @@ func TestHumanVersions(t *testing.T) {
 	if s := c.Text(ctx, nil, "de", "hi"); s != "Hello" {
 		t.Errorf("Text fallback: %q", s)
 	}
+}
 
-	plain, _ := parse(en, nil)
-	if plain.version == c.version {
-		t.Error("version ignores human versions")
+// The app checks its copy with the version it has: unchanged text costs no
+// strings, and any change (here a reviewer's correction) sends them again.
+func TestGetStringsKnownVersion(t *testing.T) {
+	c, err := parse([]byte(`{"hi":"Hello","bye":"Goodbye"}`), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	store := &memStore{rows: map[string]string{}}
+	h := &Handler{Catalog: c, Translations: &translate.Service{Store: store, Translator: mangler{}}}
+	get := func(known string) *isshov1.GetStringsResponse {
+		t.Helper()
+		res, err := h.GetStrings(context.Background(), connect.NewRequest(&isshov1.GetStringsRequest{Language: "ja", KnownVersion: known}))
+		if err != nil {
+			t.Fatal(err)
+		}
+		return res.Msg
+	}
+
+	first := get("")
+	if !first.Complete || first.Unchanged || first.Strings["hi"] != "HELLO" || first.CatalogVersion == "" {
+		t.Fatalf("first: %+v", first)
+	}
+	if again := get(first.CatalogVersion); !again.Unchanged || len(again.Strings) != 0 || again.CatalogVersion != first.CatalogVersion {
+		t.Errorf("unchanged: %+v", again)
+	}
+	if old := get("0123456789ab"); old.Unchanged || old.Strings["hi"] != "HELLO" {
+		t.Errorf("old version: %+v", old)
+	}
+
+	// A correction in the cache (as ReviewTranslation makes) changes the version.
+	for k := range store.rows {
+		if store.rows[k] == "HELLO" {
+			store.rows[k] = "やあ"
+		}
+	}
+	if fixed := get(first.CatalogVersion); fixed.Unchanged || fixed.Strings["hi"] != "やあ" || fixed.CatalogVersion == first.CatalogVersion {
+		t.Errorf("after a correction: %+v", fixed)
+	}
+
+	// An incomplete catalogue is never "unchanged": the app keeps asking.
+	slow := &Handler{Catalog: c, Translations: &translate.Service{Store: &memStore{rows: map[string]string{}}}}
+	res, err := slow.GetStrings(context.Background(), connect.NewRequest(&isshov1.GetStringsRequest{Language: "ja", KnownVersion: Version(map[string]string{})}))
+	if err != nil || res.Msg.Unchanged || res.Msg.Complete {
+		t.Errorf("incomplete: %+v %v", res.Msg, err)
 	}
 }
 

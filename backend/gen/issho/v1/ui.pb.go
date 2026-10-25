@@ -24,7 +24,10 @@ const (
 type GetStringsRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// ISO 639-1 code; a region ("pt-BR") is ignored. Required.
-	Language      string `protobuf:"bytes,1,opt,name=language,proto3" json:"language,omitempty"`
+	Language string `protobuf:"bytes,1,opt,name=language,proto3" json:"language,omitempty"`
+	// The catalog_version of a complete catalogue the app already has, to
+	// check it cheaply. Empty to always get the strings.
+	KnownVersion  string `protobuf:"bytes,2,opt,name=known_version,json=knownVersion,proto3" json:"known_version,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -66,18 +69,30 @@ func (x *GetStringsRequest) GetLanguage() string {
 	return ""
 }
 
+func (x *GetStringsRequest) GetKnownVersion() string {
+	if x != nil {
+		return x.KnownVersion
+	}
+	return ""
+}
+
 type GetStringsResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Key → text. Keys whose translation isn't ready (or came back with broken
-	// {placeholders}) are left out; show the English text for those.
+	// {placeholders}) are left out; show the English text for those. Empty
+	// when unchanged is true.
 	Strings map[string]string `protobuf:"bytes,1,rep,name=strings,proto3" json:"strings,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	// False while some translations are still running: cache what came back,
 	// but ask again later.
 	Complete bool `protobuf:"varint,2,opt,name=complete,proto3" json:"complete,omitempty"`
-	// Changes whenever the English catalogue changes.
+	// Identifies the text in this language: it changes whenever any of it does
+	// (the English, a human version, a translation or a reviewer's correction).
 	CatalogVersion string `protobuf:"bytes,3,opt,name=catalog_version,json=catalogVersion,proto3" json:"catalog_version,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	// True when known_version is still current and the catalogue is complete:
+	// keep the copy you have.
+	Unchanged     bool `protobuf:"varint,4,opt,name=unchanged,proto3" json:"unchanged,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *GetStringsResponse) Reset() {
@@ -131,17 +146,26 @@ func (x *GetStringsResponse) GetCatalogVersion() string {
 	return ""
 }
 
+func (x *GetStringsResponse) GetUnchanged() bool {
+	if x != nil {
+		return x.Unchanged
+	}
+	return false
+}
+
 var File_issho_v1_ui_proto protoreflect.FileDescriptor
 
 const file_issho_v1_ui_proto_rawDesc = "" +
 	"\n" +
-	"\x11issho/v1/ui.proto\x12\bissho.v1\"/\n" +
+	"\x11issho/v1/ui.proto\x12\bissho.v1\"T\n" +
 	"\x11GetStringsRequest\x12\x1a\n" +
-	"\blanguage\x18\x01 \x01(\tR\blanguage\"\xda\x01\n" +
+	"\blanguage\x18\x01 \x01(\tR\blanguage\x12#\n" +
+	"\rknown_version\x18\x02 \x01(\tR\fknownVersion\"\xf8\x01\n" +
 	"\x12GetStringsResponse\x12C\n" +
 	"\astrings\x18\x01 \x03(\v2).issho.v1.GetStringsResponse.StringsEntryR\astrings\x12\x1a\n" +
 	"\bcomplete\x18\x02 \x01(\bR\bcomplete\x12'\n" +
-	"\x0fcatalog_version\x18\x03 \x01(\tR\x0ecatalogVersion\x1a:\n" +
+	"\x0fcatalog_version\x18\x03 \x01(\tR\x0ecatalogVersion\x12\x1c\n" +
+	"\tunchanged\x18\x04 \x01(\bR\tunchanged\x1a:\n" +
 	"\fStringsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x012V\n" +

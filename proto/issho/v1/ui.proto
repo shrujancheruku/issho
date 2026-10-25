@@ -4,10 +4,11 @@ package issho.v1;
 
 option go_package = "github.com/shrujancheruku/issho/backend/gen/issho/v1;isshov1";
 
-// UIService translates the app's own UI text. The app is written in English
-// (apps/mobile/src/i18n/en.json, copied into the server by `make gen`); other
-// languages are machine-translated on demand, cached on the server for
-// everyone and on the device.
+// UIService translates the app's own UI text. The app is written in plain
+// English (apps/mobile/src/i18n/en.json, copied into the server by `make
+// gen`); other languages are people's versions of single strings
+// (i18n/human/<lang>.json) and, for the rest, machine translations made on
+// demand, cached on the server for everyone and on the device.
 //
 // Public (no token): the sign-in screens need it before anyone is signed in.
 // Only the server's copy of the catalogue is ever translated, so callers can't
@@ -22,15 +23,23 @@ service UIService {
 message GetStringsRequest {
   // ISO 639-1 code; a region ("pt-BR") is ignored. Required.
   string language = 1;
+  // The catalog_version of a complete catalogue the app already has, to
+  // check it cheaply. Empty to always get the strings.
+  string known_version = 2;
 }
 
 message GetStringsResponse {
   // Key → text. Keys whose translation isn't ready (or came back with broken
-  // {placeholders}) are left out; show the English text for those.
+  // {placeholders}) are left out; show the English text for those. Empty
+  // when unchanged is true.
   map<string, string> strings = 1;
   // False while some translations are still running: cache what came back,
   // but ask again later.
   bool complete = 2;
-  // Changes whenever the English catalogue changes.
+  // Identifies the text in this language: it changes whenever any of it does
+  // (the English, a human version, a translation or a reviewer's correction).
   string catalog_version = 3;
+  // True when known_version is still current and the catalogue is complete:
+  // keep the copy you have.
+  bool unchanged = 4;
 }
