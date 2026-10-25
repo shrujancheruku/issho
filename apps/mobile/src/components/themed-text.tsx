@@ -11,6 +11,7 @@ import {
   ThemeColor,
 } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { isRightToLeft } from '@/i18n/direction';
 import { useShownLanguage } from '@/i18n/i18n-provider';
 import { baseLanguage } from '@/i18n/strings';
 
@@ -37,7 +38,12 @@ export function ThemedText({ style, type = 'default', themeColor, lang, ...rest 
   }
   // On the web, lang also lets the browser pick the right glyphs (Chinese
   // or Japanese forms of the same character) from the system font.
-  const webLang = Platform.OS === 'web' ? ({ lang: tag } as TextProps) : {};
+  // Text keeps its own direction inside a layout of the other one (English
+  // beside Arabic): dir on the web, writingDirection on iOS (Android follows
+  // the text's first letters by itself).
+  const rtl = isRightToLeft(tag);
+  const webLang = Platform.OS === 'web' ? ({ lang: tag, dir: rtl ? 'rtl' : 'ltr' } as TextProps) : {};
+  if (Platform.OS === 'ios') flat = { ...flat, writingDirection: rtl ? 'rtl' : 'ltr' };
 
   // Standout text in a language the display face can't set: the system font,
   // heavy, so it still stands out.
