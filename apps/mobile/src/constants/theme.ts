@@ -73,6 +73,33 @@ export const BodyFont = {
   bold: 'ZenKakuGothicNew_700Bold',
 } as const;
 
+/**
+ * Languages each brand face fully covers (every letter of the alphabet,
+ * upper and lower case, plus common punctuation), measured with fontTools
+ * on 2026-10-26. Text in any other language is set in the platform's own
+ * font for the whole string: a face missing some letters falls back one
+ * glyph at a time, mixing two typefaces inside a word (Polish "ł", Turkish
+ * "ğ"), and our Japanese face draws the characters Chinese shares with
+ * Japanese in their Japanese forms. Re-measure when a face changes.
+ */
+export const BodyFontLanguages: ReadonlySet<string> = new Set(
+  'af bg ca cy da de en es eu fi fr ga gl id is it ja ms nb nl nn no pt ru sq sv sw tl'.split(' '),
+);
+export const DisplayFontLanguages: ReadonlySet<string> = new Set(
+  ('af bg ca cs cy da de el en es et eu fi fr ga gl hr hu id is it ja lt lv mk ms mt nb nl nn no pl pt ro ru sk sl ' +
+    'sq sr sv sw tl tr uk vi').split(' '),
+);
+
+/**
+ * Scripts whose marks stack above or below the letters (Thai, Devanagari
+ * and its relatives, Arabic, Vietnamese tones, Burmese, Khmer, Tibetan):
+ * their lines need more height, or the marks are clipped.
+ */
+export const TallScriptLanguages: ReadonlySet<string> = new Set(
+  'ar fa ur ps th lo km my hi mr ne bn pa gu or ta te kn ml si vi bo dz'.split(' '),
+);
+export const TallLineScale = 1.3;
+
 /** The body family for a fontWeight: 600 and up is bold, 500 medium, else regular. */
 export function bodyFontFor(weight: string | number | undefined): string {
   const w = Number(weight ?? 400);

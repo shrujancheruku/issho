@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useI18n } from '@/i18n/i18n-provider';
 
 export type ChipColors = { background: string; text: string };
 
@@ -30,6 +31,11 @@ export function Chip({
   disabled?: boolean;
 }) {
   const theme = useTheme();
+  // With a second name, the chip shows a catalogue name: the label is in the
+  // primary language and the second name in the secondary one, whichever is
+  // being shown (see features/profile/data.ts).
+  const { languages } = useI18n();
+  const labelLang = secondary ? languages.primary : undefined;
   // Plain selection is the accent; gold fills are reserved for interest levels.
   const colors = selected ? (selectedColors ?? { background: theme.accent, text: theme.onAccent }) : { background: theme.backgroundElement, text: theme.text };
   const muted = selected ? colors.text : theme.textSecondary;
@@ -46,11 +52,11 @@ export function Chip({
       ]}>
       {/* flexShrink lets long labels wrap inside the chip instead of overflowing the row. */}
       <View style={styles.label}>
-        <ThemedText type="small" style={{ color: colors.text }}>
+        <ThemedText type="small" style={{ color: colors.text }} lang={labelLang}>
           {label}
         </ThemedText>
         {!!secondary && (
-          <ThemedText type="small" style={[styles.secondary, { color: muted }]}>
+          <ThemedText type="small" style={[styles.secondary, { color: muted }]} lang={languages.secondary}>
             {secondary}
           </ThemedText>
         )}
