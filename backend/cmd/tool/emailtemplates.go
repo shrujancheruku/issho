@@ -17,7 +17,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/emailtemplates"
 	"github.com/shrujancheruku/issho/backend/internal/platform/i18n"
 	"github.com/shrujancheruku/issho/backend/internal/translate"
-	gtranslate "github.com/shrujancheruku/issho/backend/internal/translate/google"
+	"github.com/shrujancheruku/issho/backend/internal/translate/translators"
 )
 
 // emailTemplates regenerates the sign-in email templates in every language
@@ -34,12 +34,15 @@ func emailTemplates(ctx context.Context, pool *pgxpool.Pool, args []string) erro
 	if err != nil {
 		return err
 	}
-	key := os.Getenv("GOOGLE_TRANSLATE_API_KEY")
-	if key == "" {
-		return errors.New("GOOGLE_TRANSLATE_API_KEY is required: the templates are machine-translated (see docs/google-maps.md)")
+	translator, err := translators.New(os.Getenv("TRANSLATOR"), os.Getenv("GOOGLE_TRANSLATE_API_KEY"), os.Getenv("GOOGLE_GEMINI_API_KEY"))
+	if err != nil {
+		return err
+	}
+	if translator == nil {
+		return errors.New("GOOGLE_TRANSLATE_API_KEY (or GOOGLE_GEMINI_API_KEY with TRANSLATOR=gemini) is required: the templates are machine-translated (see docs/google-maps.md)")
 	}
 	// A tool can wait for slow first translations; requests can't.
-	svc := &translate.Service{Store: dbgen.New(pool), Translator: gtranslate.New(key), Wait: 2 * time.Minute}
+	svc := &translate.Service{Store: dbgen.New(pool), Translator: translator, Wait: 2 * time.Minute}
 
 	texts := make([]translate.Text, len(emailtemplates.Keys))
 	for i, k := range emailtemplates.Keys {

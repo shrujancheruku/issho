@@ -20,6 +20,9 @@ type Config struct {
 	// Translation). Optional: without it, text is shown in the languages
 	// already stored.
 	GoogleTranslateAPIKey string
+	// Translator picks the machine translator (TRANSLATOR): "google", the
+	// default, or "gemini", which uses GeminiAPIKey (internal/translate/translators).
+	Translator string
 	// GeminiAPIKey (a Google Cloud Agent Platform key) enables interest
 	// suggestions (Gemini). Optional: without it,
 	// CatalogService.SuggestActivities returns FAILED_PRECONDITION.
@@ -46,6 +49,7 @@ func Load() (Config, error) {
 		APIAddr:               getenv("API_ADDR", ":8080"),
 		SupabaseSecretKey:     os.Getenv("SUPABASE_SECRET_KEY"),
 		GoogleTranslateAPIKey: os.Getenv("GOOGLE_TRANSLATE_API_KEY"),
+		Translator:            os.Getenv("TRANSLATOR"),
 		GeminiAPIKey:          os.Getenv("GOOGLE_GEMINI_API_KEY"),
 		GoogleMapsAPIKey:      os.Getenv("GOOGLE_MAPS_API_KEY"),
 		GitHubToken:           os.Getenv("GITHUB_TOKEN"),
@@ -75,6 +79,8 @@ type Worker struct {
 	// GoogleTranslateAPIKey translates notification text and plan titles
 	// into each person's language. Optional: without it they're English.
 	GoogleTranslateAPIKey string
+	// Translator is as in Config.
+	Translator string
 	// GoogleMapsAPIKey rebuilds travel-time matrices before the Maps
 	// caching limit and checks venues are open before scheduling. Optional:
 	// without it, stale travel times are deleted instead of rebuilt and
@@ -93,6 +99,7 @@ func LoadWorker() (Worker, error) {
 		DatabaseURL:           getenv("WORKER_DATABASE_URL", os.Getenv("DATABASE_URL")),
 		ExpoAccessToken:       os.Getenv("EXPO_ACCESS_TOKEN"),
 		GoogleTranslateAPIKey: os.Getenv("GOOGLE_TRANSLATE_API_KEY"),
+		Translator:            os.Getenv("TRANSLATOR"),
 		GoogleMapsAPIKey:      os.Getenv("GOOGLE_MAPS_API_KEY"),
 		GeminiAPIKey:          os.Getenv("GOOGLE_GEMINI_API_KEY"),
 	}

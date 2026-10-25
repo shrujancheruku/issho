@@ -17,7 +17,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/platform/db"
 	"github.com/shrujancheruku/issho/backend/internal/push"
 	"github.com/shrujancheruku/issho/backend/internal/translate"
-	gtranslate "github.com/shrujancheruku/issho/backend/internal/translate/google"
+	"github.com/shrujancheruku/issho/backend/internal/translate/translators"
 	"github.com/shrujancheruku/issho/backend/internal/uistrings"
 	"github.com/shrujancheruku/issho/backend/internal/walks"
 	walksgemini "github.com/shrujancheruku/issho/backend/internal/walks/gemini"
@@ -45,10 +45,10 @@ func run() error {
 	}
 	defer pool.Close()
 	translations := &translate.Service{Store: dbgen.New(pool)}
-	if cfg.GoogleTranslateAPIKey != "" {
-		translations.Translator = gtranslate.New(cfg.GoogleTranslateAPIKey)
-	} else {
-		slog.Warn("GOOGLE_TRANSLATE_API_KEY not set: notifications in English only")
+	if translations.Translator, err = translators.New(cfg.Translator, cfg.GoogleTranslateAPIKey, cfg.GeminiAPIKey); err != nil {
+		return err
+	} else if translations.Translator == nil {
+		slog.Warn("no key for the translator (GOOGLE_TRANSLATE_API_KEY, or GOOGLE_GEMINI_API_KEY with TRANSLATOR=gemini): notifications in English only")
 	}
 	catalog, err := uistrings.Load()
 	if err != nil {
