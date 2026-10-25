@@ -7,6 +7,7 @@ import (
 	"crypto/rand"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"testing"
 	"time"
 
@@ -170,12 +171,69 @@ func TestAdminOnly(t *testing.T) {
 }
 
 func TestContextRoundTrip(t *testing.T) {
-	want := Caller{UserID: uuid.New()}
+	want := Caller{UserID: uuid.New(), TranslatorLangs: []string{"ja"}}
 	got, ok := FromContext(WithCaller(context.Background(), want))
-	if !ok || got != want {
+	if !ok || !reflect.DeepEqual(got, want) {
 		t.Fatalf("got %+v, %v", got, ok)
 	}
 	if _, ok := FromContext(context.Background()); ok {
 		t.Fatal("expected no caller")
+	}
+}
+
+func TestVerifyTranslator(t *testing.T) {
+	v, key := newTestVerifier(t)
+	base := jwt.MapClaims{
+		"sub": uuid.NewString(), "aud": "authenticated",
+		"iss": testURL + "/auth/v1", "exp": time.Now().Add(time.Hour).Unix(),
+		"app_metadata": map[string]any{"translator_langs": []string{"ja", "es"}},
+		// Never from user_metadata, which people can edit themselves.
+		"user_metadata": map[string]any{"translator_langs": []string{"fr"}},
+	}
+	c, err := v.Verify(sign(t, key, base))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.Admin || !c.Translates("ja") || !c.Translates("es") || c.Translates("fr") {
+		t.Errorf("caller %+v", c)
+	}
+	if !(Caller{Admin: true}).Translates("fr") {
+		t.Error("admins translate every language")
+	}
+}
+
+func TestTranslatorsOnly(t *testing.T) {
+	var caller *Caller
+	setCaller := connect.UnaryInterceptorFunc(func(next connect.UnaryFunc) connect.UnaryFunc {
+		return func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
+			if caller != nil {
+				ctx = WithCaller(ctx, *caller)
+			}
+			return next(ctx, req)
+		}
+	})
+	opts := connect.WithInterceptors(setCaller, TranslatorsOnly(isshov1connect.TranslationServiceName))
+	mux := http.NewServeMux()
+	mux.Handle(isshov1connect.NewTranslationServiceHandler(isshov1connect.UnimplementedTranslationServiceHandler{}, opts))
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+	client := isshov1connect.NewTranslationServiceClient(srv.Client(), srv.URL)
+	for _, tt := range []struct {
+		name   string
+		caller *Caller
+		want   connect.Code
+	}{
+		{"admin", &Caller{Admin: true}, connect.CodeUnimplemented},
+		{"translator", &Caller{TranslatorLangs: []string{"ja"}}, connect.CodeUnimplemented},
+		{"user", &Caller{UserID: uuid.New()}, connect.CodePermissionDenied},
+		{"no caller", nil, connect.CodePermissionDenied},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			caller = tt.caller
+			_, err := client.ListAppLanguages(context.Background(), connect.NewRequest(&isshov1.ListAppLanguagesRequest{}))
+			if got := connect.CodeOf(err); got != tt.want {
+				t.Fatalf("code = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }

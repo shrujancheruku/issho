@@ -2,8 +2,8 @@
 # Fails when a change touches code/config but not docs/ROADMAP.md, so the
 # build-plan status stays current with every push. Usage: check-roadmap.sh <base-ref>
 #
-# Exempt paths (documentation-only, city packs proposed from the admin SPA, and
-# release-please bookkeeping) don't require a roadmap update on their own.
+# Exempt paths (documentation-only, city packs and translations proposed from
+# the admin SPA, and release-please bookkeeping) don't require a roadmap update on their own.
 set -euo pipefail
 
 base="${1:?usage: check-roadmap.sh <base-ref>}"
@@ -21,7 +21,7 @@ if grep -qx 'docs/ROADMAP.md' <<<"$changed"; then
   exit 0
 fi
 
-exempt='^(docs/|data/citypacks/|.*\.md$|CHANGELOG\.md$|version\.txt$|\.release-please-manifest\.json$|package\.json$|apps/mobile/package\.json$|apps/mobile/app\.json$)'
+exempt='^(docs/|data/citypacks/|apps/mobile/src/i18n/human/|backend/internal/uistrings/human/|.*\.md$|CHANGELOG\.md$|version\.txt$|\.release-please-manifest\.json$|package\.json$|apps/mobile/package\.json$|apps/mobile/app\.json$)'
 needs=$(grep -Ev "$exempt" <<<"$changed" || true)
 if [[ -n "$needs" ]]; then
   echo "These changes need a matching update to docs/ROADMAP.md (status, decisions or next steps):"

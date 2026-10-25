@@ -42,6 +42,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/tagging/gemini"
 	"github.com/shrujancheruku/issho/backend/internal/translate"
 	"github.com/shrujancheruku/issho/backend/internal/translate/translators"
+	translationeditor "github.com/shrujancheruku/issho/backend/internal/translations"
 	"github.com/shrujancheruku/issho/backend/internal/uistrings"
 )
 
@@ -115,6 +116,8 @@ func run() error {
 		// The admin SPA's services: only accounts with app_metadata.admin.
 		auth.AdminOnly(isshov1connect.ModerationServiceName, isshov1connect.ReviewServiceName, isshov1connect.CurationServiceName,
 			isshov1connect.MetricsServiceName, isshov1connect.CityPackServiceName),
+		// The translation editor: admins, and translators for their languages.
+		auth.TranslatorsOnly(isshov1connect.TranslationServiceName),
 		// Suspended people may only see that they are, sign out (which
 		// unregisters push) and delete their account.
 		moderation.Gate(suspensions, isshov1connect.IdentityServiceGetMeProcedure,
@@ -149,12 +152,13 @@ func run() error {
 	planSvc := &plans.Service{DB: pool, Translations: translations}
 	venues := &curation.Handler{DB: pool}
 	packs := &citypacks.Handler{DB: pool, Base: "main"}
+	var gh *github.Client
 	if cfg.GitHubToken != "" {
-		gh := github.New(cfg.GitHubToken, cfg.GitHubRepo)
+		gh = github.New(cfg.GitHubToken, cfg.GitHubRepo)
 		gh.API = cfg.GitHubAPI
 		packs.GitHub, packs.Base = gh, gh.Base
 	} else {
-		slog.Warn("GITHUB_TOKEN not set: the city-pack editor can't read or propose packs")
+		slog.Warn("GITHUB_TOKEN not set: the city-pack editor can't read or propose packs, and the translation editor can't save")
 	}
 	// The worker's timing, so a plan an admin opens gets the same window.
 	review := &plans.ReviewHandler{Svc: planSvc, Timing: plans.DefaultTiming()}
@@ -180,6 +184,13 @@ func run() error {
 		return err
 	}
 	mux.Handle(isshov1connect.NewUIServiceHandler(&uistrings.Handler{Catalog: uiCatalog, Translations: translations}, opts))
+	translationEditor := &translationeditor.Handler{Q: q, Catalog: uiCatalog, Translations: translations, Base: "main"}
+	if gh != nil {
+		translationEditor.GitHub, translationEditor.Base = gh, gh.Base
+		// Merged human versions are served without a deploy.
+		go uiCatalog.Follow(ctx, gh, gh.Base, 5*time.Minute, slog.Default())
+	}
+	mux.Handle(isshov1connect.NewTranslationServiceHandler(translationEditor, opts))
 
 	// Group chat pushes new messages over WebSocket (internal/chatws); one
 	// LISTEN connection per process wakes the sockets.

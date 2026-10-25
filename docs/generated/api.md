@@ -292,6 +292,29 @@
   
     - [ReviewService](#issho-v1-ReviewService)
   
+- [issho/v1/translation.proto](#issho_v1_translation-proto)
+    - [AppLanguage](#issho-v1-AppLanguage)
+    - [AppString](#issho-v1-AppString)
+    - [GetTranslatorRequest](#issho-v1-GetTranslatorRequest)
+    - [GetTranslatorResponse](#issho-v1-GetTranslatorResponse)
+    - [ListAppLanguagesRequest](#issho-v1-ListAppLanguagesRequest)
+    - [ListAppLanguagesResponse](#issho-v1-ListAppLanguagesResponse)
+    - [ListAppStringsRequest](#issho-v1-ListAppStringsRequest)
+    - [ListAppStringsResponse](#issho-v1-ListAppStringsResponse)
+    - [ListCatalogLanguagesRequest](#issho-v1-ListCatalogLanguagesRequest)
+    - [ListCatalogLanguagesResponse](#issho-v1-ListCatalogLanguagesResponse)
+    - [ListCatalogTranslationsRequest](#issho-v1-ListCatalogTranslationsRequest)
+    - [ListCatalogTranslationsResponse](#issho-v1-ListCatalogTranslationsResponse)
+    - [RemoveAppStringRequest](#issho-v1-RemoveAppStringRequest)
+    - [RemoveAppStringResponse](#issho-v1-RemoveAppStringResponse)
+    - [ReviewCatalogTranslationRequest](#issho-v1-ReviewCatalogTranslationRequest)
+    - [ReviewCatalogTranslationResponse](#issho-v1-ReviewCatalogTranslationResponse)
+    - [SaveAppStringRequest](#issho-v1-SaveAppStringRequest)
+    - [SaveAppStringResponse](#issho-v1-SaveAppStringResponse)
+    - [TranslationPullRequest](#issho-v1-TranslationPullRequest)
+  
+    - [TranslationService](#issho-v1-TranslationService)
+  
 - [issho/v1/ui.proto](#issho_v1_ui-proto)
     - [GetStringsRequest](#issho-v1-GetStringsRequest)
     - [GetStringsResponse](#issho-v1-GetStringsResponse)
@@ -4494,6 +4517,352 @@ HTTP: POST /issho.v1.ReviewService/&lt;Method&gt;
 | SetGroupMeetingPoint | [SetGroupMeetingPointRequest](#issho-v1-SetGroupMeetingPointRequest) | [SetGroupMeetingPointResponse](#issho-v1-SetGroupMeetingPointResponse) | SetGroupMeetingPoint sets where exactly a group meets, in English (&#34;&#34; clears it), for a proposal or a scheduled event; stored in the event&#39;s languages too when the server can translate. People who confirmed see it from 24 hours before the start. |
 | ApproveProposal | [ApproveProposalRequest](#issho-v1-ApproveProposalRequest) | [ApproveProposalResponse](#issho-v1-ApproveProposalResponse) | ApproveProposal sends the invitations, as if just scheduled: people who withdrew (or were suspended) since are left out, everyone else is invited and told, and the plan moves to its next round for whoever is still waiting, or closes. FAILED_PRECONDITION if the plan moved on, answering would no longer be possible in time (set a later start), or a group has fewer people than its minimum. |
 | RejectProposal | [RejectProposalRequest](#issho-v1-RejectProposalRequest) | [RejectProposalResponse](#issho-v1-RejectProposalResponse) | RejectProposal deletes it. Everyone stays signed up, and the plan isn&#39;t scheduled again for a day. |
+
+ 
+
+
+
+<a name="issho_v1_translation-proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## issho/v1/translation.proto
+
+
+
+<a name="issho-v1-AppLanguage"></a>
+
+### AppLanguage
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| lang | [string](#string) |  | ISO 639-1 code, e.g. &#34;ja&#34;. |
+| human | [int32](#int32) |  | UI strings with a current human version on the default branch. |
+| stale | [int32](#int32) |  | Human versions written for older English, so not shown. |
+| total | [int32](#int32) |  | All UI strings. |
+| pull_request | [TranslationPullRequest](#issho-v1-TranslationPullRequest) |  | Unset when there&#39;s no open pull request. |
+
+
+
+
+
+
+<a name="issho-v1-AppString"></a>
+
+### AppString
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| english | [string](#string) |  | The plain English, which machines translate. |
+| english_voice | [string](#string) |  | The owner&#39;s livelier English, if there is one (what English users see). |
+| note | [string](#string) |  | The note for translators: what the string is and where it appears. |
+| machine | [string](#string) |  | The machine translation of the plain English; empty for English and while it&#39;s still being made. |
+| human | [string](#string) |  | The human version on the default branch; empty if none. |
+| human_stale | [bool](#bool) |  | The human version was written for older English and isn&#39;t shown. |
+| pending | [bool](#bool) |  | The open pull request changes this string: to pending_text, or removes its human version when pending_text is empty. |
+| pending_text | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-GetTranslatorRequest"></a>
+
+### GetTranslatorRequest
+
+
+
+
+
+
+
+<a name="issho-v1-GetTranslatorResponse"></a>
+
+### GetTranslatorResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| user_id | [string](#string) |  |  |
+| admin | [bool](#bool) |  | Admins may edit every language. |
+| languages | [string](#string) | repeated | A translator&#39;s languages (ISO 639-1); empty for admins without any. |
+| can_propose | [bool](#bool) |  | False without GITHUB_TOKEN on the API: UI strings can be read, not saved. |
+
+
+
+
+
+
+<a name="issho-v1-ListAppLanguagesRequest"></a>
+
+### ListAppLanguagesRequest
+
+
+
+
+
+
+
+<a name="issho-v1-ListAppLanguagesResponse"></a>
+
+### ListAppLanguagesResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| languages | [AppLanguage](#issho-v1-AppLanguage) | repeated |  |
+
+
+
+
+
+
+<a name="issho-v1-ListAppStringsRequest"></a>
+
+### ListAppStringsRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| lang | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-ListAppStringsResponse"></a>
+
+### ListAppStringsResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| strings | [AppString](#issho-v1-AppString) | repeated |  |
+| pull_request | [TranslationPullRequest](#issho-v1-TranslationPullRequest) |  | Unset when there&#39;s no open pull request. |
+| complete | [bool](#bool) |  | False while some machine translations are still being made: ask again. |
+
+
+
+
+
+
+<a name="issho-v1-ListCatalogLanguagesRequest"></a>
+
+### ListCatalogLanguagesRequest
+
+
+
+
+
+
+
+<a name="issho-v1-ListCatalogLanguagesResponse"></a>
+
+### ListCatalogLanguagesResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| languages | [TranslationLanguage](#issho-v1-TranslationLanguage) | repeated |  |
+
+
+
+
+
+
+<a name="issho-v1-ListCatalogTranslationsRequest"></a>
+
+### ListCatalogTranslationsRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| lang | [string](#string) |  |  |
+| unreviewed_only | [bool](#bool) |  |  |
+| search | [string](#string) |  | Matches the English source or the translation; empty = all. |
+| offset | [int32](#int32) |  | How many to skip (pages of 100). |
+
+
+
+
+
+
+<a name="issho-v1-ListCatalogTranslationsResponse"></a>
+
+### ListCatalogTranslationsResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| translations | [Translation](#issho-v1-Translation) | repeated |  |
+
+
+
+
+
+
+<a name="issho-v1-RemoveAppStringRequest"></a>
+
+### RemoveAppStringRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| lang | [string](#string) |  |  |
+| key | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-RemoveAppStringResponse"></a>
+
+### RemoveAppStringResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| app_string | [AppString](#issho-v1-AppString) |  |  |
+| pull_request | [TranslationPullRequest](#issho-v1-TranslationPullRequest) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-ReviewCatalogTranslationRequest"></a>
+
+### ReviewCatalogTranslationRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| source_hash | [string](#string) |  |  |
+| lang | [string](#string) |  |  |
+| text | [string](#string) |  | The corrected text (or the same text, to confirm it). Not empty. |
+
+
+
+
+
+
+<a name="issho-v1-ReviewCatalogTranslationResponse"></a>
+
+### ReviewCatalogTranslationResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| translation | [Translation](#issho-v1-Translation) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-SaveAppStringRequest"></a>
+
+### SaveAppStringRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| lang | [string](#string) |  |  |
+| key | [string](#string) |  |  |
+| text | [string](#string) |  | Not empty. |
+
+
+
+
+
+
+<a name="issho-v1-SaveAppStringResponse"></a>
+
+### SaveAppStringResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| app_string | [AppString](#issho-v1-AppString) |  |  |
+| pull_request | [TranslationPullRequest](#issho-v1-TranslationPullRequest) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-TranslationPullRequest"></a>
+
+### TranslationPullRequest
+A language&#39;s open pull request from the editor.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| number | [int32](#int32) |  |  |
+| url | [string](#string) |  |  |
+
+
+
+
+
+ 
+
+ 
+
+ 
+
+
+<a name="issho-v1-TranslationService"></a>
+
+### TranslationService
+TranslationService: the admin SPA&#39;s translation editor.
+
+The app&#39;s own text (UI strings) is edited as **human versions** in the
+repository (apps/mobile/src/i18n/human/&lt;lang&gt;.json): each save is a commit
+to one open pull request per language, which the owner merges. Once
+merged, the API serves it within minutes, without a deploy. Catalogue text
+(activity and city names) has no file in the repository; its machine
+translations are corrected in the database.
+
+Admins and translators only: requires `Authorization: Bearer &lt;Supabase
+access token&gt;` for an account with `app_metadata.admin = true` or
+`app_metadata.translator_langs` (set with `tool set-translator`); anyone
+else gets PERMISSION_DENIED. A translator may only read and edit their own
+languages (PERMISSION_DENIED for others).
+
+HTTP: POST /issho.v1.TranslationService/&lt;Method&gt;
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| GetTranslator | [GetTranslatorRequest](#issho-v1-GetTranslatorRequest) | [GetTranslatorResponse](#issho-v1-GetTranslatorResponse) | GetTranslator says who the caller is and which languages they edit. |
+| ListAppLanguages | [ListAppLanguagesRequest](#issho-v1-ListAppLanguagesRequest) | [ListAppLanguagesResponse](#issho-v1-ListAppLanguagesResponse) | ListAppLanguages returns the languages the caller may edit, with how many UI strings have human versions and the open pull request, if any. |
+| ListAppStrings | [ListAppStringsRequest](#issho-v1-ListAppStringsRequest) | [ListAppStringsResponse](#issho-v1-ListAppStringsResponse) | ListAppStrings returns every UI string in one language: the English, the machine translation, the human version on the default branch and what the open pull request changes. |
+| SaveAppString | [SaveAppStringRequest](#issho-v1-SaveAppStringRequest) | [SaveAppStringResponse](#issho-v1-SaveAppStringResponse) | SaveAppString sets a string&#39;s human version in the language&#39;s open pull request (opening one if there&#39;s none). Saving the machine translation unchanged approves it. INVALID_ARGUMENT if the text drops or adds a {placeholder} of the English; FAILED_PRECONDITION without GITHUB_TOKEN. |
+| RemoveAppString | [RemoveAppStringRequest](#issho-v1-RemoveAppStringRequest) | [RemoveAppStringResponse](#issho-v1-RemoveAppStringResponse) | RemoveAppString removes a string&#39;s human version in the open pull request, so the machine translation is shown again. |
+| ListCatalogLanguages | [ListCatalogLanguagesRequest](#issho-v1-ListCatalogLanguagesRequest) | [ListCatalogLanguagesResponse](#issho-v1-ListCatalogLanguagesResponse) | ListCatalogLanguages returns the languages with machine translations of catalogue text the caller may edit, with how many need a look. |
+| ListCatalogTranslations | [ListCatalogTranslationsRequest](#issho-v1-ListCatalogTranslationsRequest) | [ListCatalogTranslationsResponse](#issho-v1-ListCatalogTranslationsResponse) | ListCatalogTranslations returns one language&#39;s catalogue translations (not UI strings), unreviewed ones first, 100 at a time. |
+| ReviewCatalogTranslation | [ReviewCatalogTranslationRequest](#issho-v1-ReviewCatalogTranslationRequest) | [ReviewCatalogTranslationResponse](#issho-v1-ReviewCatalogTranslationResponse) | ReviewCatalogTranslation corrects (or confirms) a catalogue translation; it&#39;s never replaced by a machine one after that. |
 
  
 

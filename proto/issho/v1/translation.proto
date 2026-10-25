@@ -1,0 +1,181 @@
+syntax = "proto3";
+
+package issho.v1;
+
+import "issho/v1/moderation.proto";
+
+option go_package = "github.com/shrujancheruku/issho/backend/gen/issho/v1;isshov1";
+
+// TranslationService: the admin SPA's translation editor.
+//
+// The app's own text (UI strings) is edited as **human versions** in the
+// repository (apps/mobile/src/i18n/human/<lang>.json): each save is a commit
+// to one open pull request per language, which the owner merges. Once
+// merged, the API serves it within minutes, without a deploy. Catalogue text
+// (activity and city names) has no file in the repository; its machine
+// translations are corrected in the database.
+//
+// Admins and translators only: requires `Authorization: Bearer <Supabase
+// access token>` for an account with `app_metadata.admin = true` or
+// `app_metadata.translator_langs` (set with `tool set-translator`); anyone
+// else gets PERMISSION_DENIED. A translator may only read and edit their own
+// languages (PERMISSION_DENIED for others).
+//
+// HTTP: POST /issho.v1.TranslationService/<Method>
+service TranslationService {
+  // GetTranslator says who the caller is and which languages they edit.
+  rpc GetTranslator(GetTranslatorRequest) returns (GetTranslatorResponse) {}
+
+  // ListAppLanguages returns the languages the caller may edit, with how
+  // many UI strings have human versions and the open pull request, if any.
+  rpc ListAppLanguages(ListAppLanguagesRequest) returns (ListAppLanguagesResponse) {}
+
+  // ListAppStrings returns every UI string in one language: the English,
+  // the machine translation, the human version on the default branch and
+  // what the open pull request changes.
+  rpc ListAppStrings(ListAppStringsRequest) returns (ListAppStringsResponse) {}
+
+  // SaveAppString sets a string's human version in the language's open pull
+  // request (opening one if there's none). Saving the machine translation
+  // unchanged approves it. INVALID_ARGUMENT if the text drops or adds a
+  // {placeholder} of the English; FAILED_PRECONDITION without GITHUB_TOKEN.
+  rpc SaveAppString(SaveAppStringRequest) returns (SaveAppStringResponse) {}
+
+  // RemoveAppString removes a string's human version in the open pull
+  // request, so the machine translation is shown again.
+  rpc RemoveAppString(RemoveAppStringRequest) returns (RemoveAppStringResponse) {}
+
+  // ListCatalogLanguages returns the languages with machine translations
+  // of catalogue text the caller may edit, with how many need a look.
+  rpc ListCatalogLanguages(ListCatalogLanguagesRequest) returns (ListCatalogLanguagesResponse) {}
+
+  // ListCatalogTranslations returns one language's catalogue translations
+  // (not UI strings), unreviewed ones first, 100 at a time.
+  rpc ListCatalogTranslations(ListCatalogTranslationsRequest) returns (ListCatalogTranslationsResponse) {}
+
+  // ReviewCatalogTranslation corrects (or confirms) a catalogue
+  // translation; it's never replaced by a machine one after that.
+  rpc ReviewCatalogTranslation(ReviewCatalogTranslationRequest) returns (ReviewCatalogTranslationResponse) {}
+}
+
+message GetTranslatorRequest {}
+
+message GetTranslatorResponse {
+  string user_id = 1;
+  // Admins may edit every language.
+  bool admin = 2;
+  // A translator's languages (ISO 639-1); empty for admins without any.
+  repeated string languages = 3;
+  // False without GITHUB_TOKEN on the API: UI strings can be read, not saved.
+  bool can_propose = 4;
+}
+
+// A language's open pull request from the editor.
+message TranslationPullRequest {
+  int32 number = 1;
+  string url = 2;
+}
+
+message ListAppLanguagesRequest {}
+
+message ListAppLanguagesResponse {
+  repeated AppLanguage languages = 1;
+}
+
+message AppLanguage {
+  // ISO 639-1 code, e.g. "ja".
+  string lang = 1;
+  // UI strings with a current human version on the default branch.
+  int32 human = 2;
+  // Human versions written for older English, so not shown.
+  int32 stale = 3;
+  // All UI strings.
+  int32 total = 4;
+  // Unset when there's no open pull request.
+  TranslationPullRequest pull_request = 5;
+}
+
+message ListAppStringsRequest {
+  string lang = 1;
+}
+
+message ListAppStringsResponse {
+  repeated AppString strings = 1;
+  // Unset when there's no open pull request.
+  TranslationPullRequest pull_request = 2;
+  // False while some machine translations are still being made: ask again.
+  bool complete = 3;
+}
+
+message AppString {
+  string key = 1;
+  // The plain English, which machines translate.
+  string english = 2;
+  // The owner's livelier English, if there is one (what English users see).
+  string english_voice = 3;
+  // The note for translators: what the string is and where it appears.
+  string note = 4;
+  // The machine translation of the plain English; empty for English and
+  // while it's still being made.
+  string machine = 5;
+  // The human version on the default branch; empty if none.
+  string human = 6;
+  // The human version was written for older English and isn't shown.
+  bool human_stale = 7;
+  // The open pull request changes this string: to pending_text, or removes
+  // its human version when pending_text is empty.
+  bool pending = 8;
+  string pending_text = 9;
+}
+
+message SaveAppStringRequest {
+  string lang = 1;
+  string key = 2;
+  // Not empty.
+  string text = 3;
+}
+
+message SaveAppStringResponse {
+  AppString app_string = 1;
+  TranslationPullRequest pull_request = 2;
+}
+
+message RemoveAppStringRequest {
+  string lang = 1;
+  string key = 2;
+}
+
+message RemoveAppStringResponse {
+  AppString app_string = 1;
+  TranslationPullRequest pull_request = 2;
+}
+
+message ListCatalogLanguagesRequest {}
+
+message ListCatalogLanguagesResponse {
+  repeated TranslationLanguage languages = 1;
+}
+
+message ListCatalogTranslationsRequest {
+  string lang = 1;
+  bool unreviewed_only = 2;
+  // Matches the English source or the translation; empty = all.
+  string search = 3;
+  // How many to skip (pages of 100).
+  int32 offset = 4;
+}
+
+message ListCatalogTranslationsResponse {
+  repeated Translation translations = 1;
+}
+
+message ReviewCatalogTranslationRequest {
+  string source_hash = 1;
+  string lang = 2;
+  // The corrected text (or the same text, to confirm it). Not empty.
+  string text = 3;
+}
+
+message ReviewCatalogTranslationResponse {
+  Translation translation = 1;
+}
