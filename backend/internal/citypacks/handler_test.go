@@ -191,7 +191,7 @@ func TestIntegrationCityPacks(t *testing.T) {
 	}
 	parts := strings.Split(repo.proposed[0], "|")
 	if parts[0] != "citypack/zz-packs-1900000000" || parts[1] != "data/citypacks/zz-packs.json" || parts[2] != "feat(data): add the Packs city pack" ||
-		!strings.Contains(parts[3], "admin@example.com") || !strings.Contains(parts[3], "Launching soon.") || !strings.Contains(parts[3], "New city Packs") {
+		strings.Contains(parts[3], "admin@example.com") || !strings.Contains(parts[3], "Launching soon.") || !strings.Contains(parts[3], "New city Packs") {
 		t.Errorf("proposal = %q", parts)
 	}
 	var written cities.Pack

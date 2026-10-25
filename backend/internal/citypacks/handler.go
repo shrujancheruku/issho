@@ -239,8 +239,7 @@ func (h *Handler) check(ctx context.Context, p cities.Pack) error {
 }
 
 func (h *Handler) ProposeCityPack(ctx context.Context, req *connect.Request[isshov1.ProposeCityPackRequest]) (*connect.Response[isshov1.ProposeCityPackResponse], error) {
-	c, err := admin(ctx)
-	if err != nil {
+	if _, err := admin(ctx); err != nil {
 		return nil, err
 	}
 	if req.Msg.Pack == nil {
@@ -283,7 +282,9 @@ func (h *Handler) ProposeCityPack(ctx context.Context, req *connect.Request[issh
 		title = fmt.Sprintf("feat(data): add the %s city pack", name)
 	}
 	var body strings.Builder
-	fmt.Fprintf(&body, "Proposed from the admin SPA's city-pack editor by %s.\n\n", c.Email)
+	// The repository is public: the pull request says what changed, never
+	// who proposed it.
+	body.WriteString("Proposed from the admin SPA's city-pack editor.\n\n")
 	if note := strings.TrimSpace(req.Msg.Note); note != "" {
 		fmt.Fprintf(&body, "%s\n\n", note)
 	}
