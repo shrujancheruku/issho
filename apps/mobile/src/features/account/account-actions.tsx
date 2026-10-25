@@ -1,11 +1,12 @@
 import { useMutation } from '@tanstack/react-query';
-import { Alert, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useAuth } from '@/features/auth/auth-provider';
 import { useI18n } from '@/i18n/i18n-provider';
 import { api } from '@/lib/api';
+import { confirm, notify } from '@/lib/dialogs';
 
 /** Sign-out and account-deletion controls, shown wherever account settings live. */
 export function AccountActions() {
@@ -15,18 +16,17 @@ export function AccountActions() {
     mutationFn: () => api.identity.deleteAccount({}),
     // The server has deleted the auth user; clear the local session too.
     onSuccess: () => signOut(),
-    onError: () => Alert.alert(t('account.deleteFailed'), t('account.deleteFailedBody')),
+    onError: () => notify(t('account.deleteFailed'), t('account.deleteFailedBody')),
   });
 
   const confirmDelete = () =>
-    Alert.alert(
-      t('account.deleteTitle'),
-      t('account.deleteBody'),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        { text: t('account.deleteConfirm'), style: 'destructive', onPress: () => deleteAccount.mutate() },
-      ],
-    );
+    confirm({
+      title: t('account.deleteTitle'),
+      body: t('account.deleteBody'),
+      confirm: t('account.deleteConfirm'),
+      cancel: t('common.cancel'),
+      onConfirm: () => deleteAccount.mutate(),
+    });
 
   return (
     <View style={styles.container}>

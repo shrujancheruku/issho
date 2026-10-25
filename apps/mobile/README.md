@@ -151,7 +151,7 @@ npx expo export -p web               # static build in dist/ (pnpm export:web)
 - `app.json` uses `"web": { "output": "single" }`: one `index.html` for every route, with no server rendering. Server rendering would run app code in Node at build time, where the secure store doesn't exist.
 - **Wide screens:** form-like screens (sign-in, onboarding, profile editing, the language picker) keep their header, content and footer in one centred column at most `FormWidth` (560 px, `constants/theme.ts`) wide; the logo is capped too. Phones are narrower, so this only changes tablets and the web. `global.css` sets `color-scheme` so browser scrollbars follow the theme.
 - **The floating tab bar:** on the web the tab bar sits over the top of the screen, so tab screens add `TopTabInset` (`constants/theme.ts`, 0 on phones) to their top padding. The feed uses `MaxContentWidth` (800 px) rather than `FormWidth`.
-- `Alert.alert` does nothing on web, so confirmation dialogs (account deletion) need a web version before release.
+- `Alert.alert` does nothing on web: use `lib/dialogs.ts` (`confirm`, `notify`), which uses the browser's dialogs there.
 - **Test deploy:** `scripts/deploy-web.sh <api-url> web` builds it and deploys it as a static-assets-only Cloudflare Worker, `issho-web` (`wrangler.jsonc`), at https://issho-web.shrujancheruku.workers.dev, against `issho-dev`. Unknown paths serve `index.html`. `public/_headers` sets basic security headers only: a full Content-Security-Policy is part of the session-security decision before release. Not linked anywhere and not a release; see [apps/admin/README.md](../admin/README.md#deploy) for running the API behind a tunnel.
 
 ## Push notifications
