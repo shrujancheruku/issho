@@ -5,7 +5,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { useI18n } from '@/i18n/i18n-provider';
+import { useI18n, useOtherLanguage } from '@/i18n/i18n-provider';
 
 import { levelStyles } from './level';
 import type { usePlanNames } from './names';
@@ -39,6 +39,7 @@ export function friendsText(t: ReturnType<typeof useI18n>['t'], count: number) {
 /** One plan in the feed: what, where, how it suits you, how many are interested. */
 export function PlanCard({ plan, names }: { plan: FeedPlan; names: ReturnType<typeof usePlanNames> }) {
   const { t, showing } = useI18n();
+  const otherLanguage = useOtherLanguage();
   const theme = useTheme();
   const level = levelStyles[plan.level];
   const greyed = plan.level === PlanLevel.NOT_FOR_YOU;
@@ -73,7 +74,7 @@ export function PlanCard({ plan, names }: { plan: FeedPlan; names: ReturnType<ty
       <ThemedText type="subtitle" style={styles.title}>
         {title.name}
       </ThemedText>
-      {!!title.secondary && <ThemedText themeColor="textSecondary">{title.secondary}</ThemedText>}
+      {!!title.secondary && <ThemedText themeColor="textSecondary" lang={otherLanguage}>{title.secondary}</ThemedText>}
       <ThemedText type="small" themeColor="textSecondary">
         {pairText(area)} · {distance}
       </ThemedText>

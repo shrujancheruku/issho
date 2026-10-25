@@ -73,7 +73,7 @@ export function LanguagePicker({
                     onPick(item.code);
                   }}
                   style={({ pressed }) => [styles.row, pressed && { backgroundColor: theme.backgroundSelected }]}>
-                  <ThemedText>{item.autonym}</ThemedText>
+                  <ThemedText lang={item.code}>{item.autonym}</ThemedText>
                   {item.name !== item.autonym && (
                     <ThemedText type="small" themeColor="textSecondary">
                       {item.name}

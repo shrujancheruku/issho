@@ -18,7 +18,7 @@ import { formatStart, lastSignupDay } from '@/features/plans/format';
 import { usePlanNames } from '@/features/plans/names';
 import { pairText, planTitle } from '@/features/plans/plan-card';
 import { useTheme } from '@/hooks/use-theme';
-import { useI18n } from '@/i18n/i18n-provider';
+import { useI18n, useOtherLanguage } from '@/i18n/i18n-provider';
 
 const MaxMessage = 1000; // as the server (plans.MaxChatMessage)
 
@@ -137,6 +137,7 @@ function CrewChat({ id }: { id: string }) {
 export default function CrewScreen() {
   const { id = '' } = useLocalSearchParams<{ id: string }>();
   const { t, languages, showing } = useI18n();
+  const otherLanguage = useOtherLanguage();
   const lang = showing === 'secondary' ? languages.secondary : languages.primary;
   const crew = useCrew(id);
   const names = usePlanNames();
@@ -175,7 +176,7 @@ export default function CrewScreen() {
         <ScrollView contentContainerStyle={styles.content}>
           <View style={styles.titleBlock}>
             <ThemedText type="subtitle">{name.name}</ThemedText>
-            {!!name.secondary && <ThemedText themeColor="textSecondary">{name.secondary}</ThemedText>}
+            {!!name.secondary && <ThemedText themeColor="textSecondary" lang={otherLanguage}>{name.secondary}</ThemedText>}
           </View>
           <ThemedText type="smallBold">{t('crew.offerTitle')}</ThemedText>
           <ThemedText>{t('crew.offerBody', { date: formatStart(c.offerUntil, lang) })}</ThemedText>

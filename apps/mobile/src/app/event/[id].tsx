@@ -20,7 +20,7 @@ import { RouteMap } from '@/features/plans/route-map';
 import { Timeline } from '@/features/plans/timeline';
 import { useNow } from '@/hooks/use-now';
 import { useTheme } from '@/hooks/use-theme';
-import { useI18n } from '@/i18n/i18n-provider';
+import { useI18n, useOtherLanguage } from '@/i18n/i18n-provider';
 
 const ReportDays = 30; // as the server (plans.ReportFor)
 
@@ -44,6 +44,7 @@ async function shareOuting(message: string, title: string) {
 export default function EventScreen() {
   const { id = '' } = useLocalSearchParams<{ id: string }>();
   const { t, languages, showing } = useI18n();
+  const otherLanguage = useOtherLanguage();
   const lang = showing === 'secondary' ? languages.secondary : languages.primary;
   const theme = useTheme();
   const event = useEvent(id);
@@ -85,7 +86,7 @@ export default function EventScreen() {
         </View>
         <View style={styles.titleBlock}>
           <ThemedText type="subtitle">{title.name}</ThemedText>
-          {!!title.secondary && <ThemedText themeColor="textSecondary">{title.secondary}</ThemedText>}
+          {!!title.secondary && <ThemedText themeColor="textSecondary" lang={otherLanguage}>{title.secondary}</ThemedText>}
         </View>
         {!!summary && <ThemedText>{summary}</ThemedText>}
         <RouteMap steps={event.data?.steps ?? []} routePolyline={event.data?.routePolyline ?? ''} />

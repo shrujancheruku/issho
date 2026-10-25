@@ -100,6 +100,23 @@ export function I18nProvider({ children }: PropsWithChildren) {
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
 }
 
+/**
+ * The language text is being shown in, for ThemedText's typeface; English
+ * outside the provider (it never throws, unlike useI18n).
+ */
+export function useShownLanguage(): string {
+  const ctx = useContext(I18nContext);
+  if (!ctx) return 'en';
+  return ctx.showing === 'secondary' && ctx.languages.secondary ? ctx.languages.secondary : ctx.languages.primary;
+}
+
+/** The other display language (what side-by-side secondary text is in), or ''. */
+export function useOtherLanguage(): string {
+  const ctx = useContext(I18nContext);
+  if (!ctx || !ctx.languages.secondary) return '';
+  return ctx.showing === 'secondary' ? ctx.languages.primary : ctx.languages.secondary;
+}
+
 export function useI18n() {
   const ctx = useContext(I18nContext);
   if (!ctx) throw new Error('useI18n must be used inside <I18nProvider>');

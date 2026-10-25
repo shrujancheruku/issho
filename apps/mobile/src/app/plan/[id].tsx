@@ -39,7 +39,7 @@ import {
 } from "@/features/plans/signup";
 import { useProfile } from "@/features/profile/use-profile";
 import { useTheme } from "@/hooks/use-theme";
-import { useI18n } from "@/i18n/i18n-provider";
+import { useI18n, useOtherLanguage } from "@/i18n/i18n-provider";
 import type { StringKey } from "@/i18n/strings";
 import { registerForPush } from "@/lib/push";
 import { slotKey } from "@/lib/slots";
@@ -55,6 +55,7 @@ const closedText: Partial<Record<PlanClosedReason, StringKey>> = {
 export default function PlanScreen() {
   const { id = "" } = useLocalSearchParams<{ id: string }>();
   const { t, languages, showing } = useI18n();
+  const otherLanguage = useOtherLanguage();
   const lang =
     showing === "secondary" ? languages.secondary : languages.primary;
   const theme = useTheme();
@@ -149,7 +150,7 @@ export default function PlanScreen() {
         <View style={styles.titleBlock}>
           <ThemedText type="subtitle">{title.name}</ThemedText>
           {!!title.secondary && (
-            <ThemedText themeColor="textSecondary">
+            <ThemedText themeColor="textSecondary" lang={otherLanguage}>
               {title.secondary}
             </ThemedText>
           )}
