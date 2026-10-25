@@ -45,6 +45,8 @@ supabase config diff        # always review first: every line should be intended
 supabase config push --yes
 ```
 
+`config diff` doesn't compare email template bodies, and with CLI 2.121 it sometimes doesn't show changed subjects either; `config push` prints every change (subjects, and which bodies differ) before applying, so read its output too.
+
 What the `[remotes.issho-dev]` overrides keep different from the local stack, and why:
 
 | Setting | Local | Hosted | Why |
