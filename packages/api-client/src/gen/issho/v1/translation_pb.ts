@@ -12,7 +12,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file issho/v1/translation.proto.
  */
 export const file_issho_v1_translation: GenFile = /*@__PURE__*/
-  fileDesc("Chppc3Noby92MS90cmFuc2xhdGlvbi5wcm90bxIIaXNzaG8udjEiFgoUR2V0VHJhbnNsYXRvclJlcXVlc3QiXwoVR2V0VHJhbnNsYXRvclJlc3BvbnNlEg8KB3VzZXJfaWQYASABKAkSDQoFYWRtaW4YAiABKAgSEQoJbGFuZ3VhZ2VzGAMgAygJEhMKC2Nhbl9wcm9wb3NlGAQgASgIIjUKFlRyYW5zbGF0aW9uUHVsbFJlcXVlc3QSDgoGbnVtYmVyGAEgASgFEgsKA3VybBgCIAEoCSIZChdMaXN0QXBwTGFuZ3VhZ2VzUmVxdWVzdCJEChhMaXN0QXBwTGFuZ3VhZ2VzUmVzcG9uc2USKAoJbGFuZ3VhZ2VzGAEgAygLMhUuaXNzaG8udjEuQXBwTGFuZ3VhZ2UigAEKC0FwcExhbmd1YWdlEgwKBGxhbmcYASABKAkSDQoFaHVtYW4YAiABKAUSDQoFc3RhbGUYAyABKAUSDQoFdG90YWwYBCABKAUSNgoMcHVsbF9yZXF1ZXN0GAUgASgLMiAuaXNzaG8udjEuVHJhbnNsYXRpb25QdWxsUmVxdWVzdCIlChVMaXN0QXBwU3RyaW5nc1JlcXVlc3QSDAoEbGFuZxgBIAEoCSKIAQoWTGlzdEFwcFN0cmluZ3NSZXNwb25zZRIkCgdzdHJpbmdzGAEgAygLMhMuaXNzaG8udjEuQXBwU3RyaW5nEjYKDHB1bGxfcmVxdWVzdBgCIAEoCzIgLmlzc2hvLnYxLlRyYW5zbGF0aW9uUHVsbFJlcXVlc3QSEAoIY29tcGxldGUYAyABKAgiqgEKCUFwcFN0cmluZxILCgNrZXkYASABKAkSDwoHZW5nbGlzaBgCIAEoCRIVCg1lbmdsaXNoX3ZvaWNlGAMgASgJEgwKBG5vdGUYBCABKAkSDwoHbWFjaGluZRgFIAEoCRINCgVodW1hbhgGIAEoCRITCgtodW1hbl9zdGFsZRgHIAEoCBIPCgdwZW5kaW5nGAggASgIEhQKDHBlbmRpbmdfdGV4dBgJIAEoCSI/ChRTYXZlQXBwU3RyaW5nUmVxdWVzdBIMCgRsYW5nGAEgASgJEgsKA2tleRgCIAEoCRIMCgR0ZXh0GAMgASgJIngKFVNhdmVBcHBTdHJpbmdSZXNwb25zZRInCgphcHBfc3RyaW5nGAEgASgLMhMuaXNzaG8udjEuQXBwU3RyaW5nEjYKDHB1bGxfcmVxdWVzdBgCIAEoCzIgLmlzc2hvLnYxLlRyYW5zbGF0aW9uUHVsbFJlcXVlc3QiMwoWUmVtb3ZlQXBwU3RyaW5nUmVxdWVzdBIMCgRsYW5nGAEgASgJEgsKA2tleRgCIAEoCSJ6ChdSZW1vdmVBcHBTdHJpbmdSZXNwb25zZRInCgphcHBfc3RyaW5nGAEgASgLMhMuaXNzaG8udjEuQXBwU3RyaW5nEjYKDHB1bGxfcmVxdWVzdBgCIAEoCzIgLmlzc2hvLnYxLlRyYW5zbGF0aW9uUHVsbFJlcXVlc3QiHQobTGlzdENhdGFsb2dMYW5ndWFnZXNSZXF1ZXN0IlAKHExpc3RDYXRhbG9nTGFuZ3VhZ2VzUmVzcG9uc2USMAoJbGFuZ3VhZ2VzGAEgAygLMh0uaXNzaG8udjEuVHJhbnNsYXRpb25MYW5ndWFnZSJnCh5MaXN0Q2F0YWxvZ1RyYW5zbGF0aW9uc1JlcXVlc3QSDAoEbGFuZxgBIAEoCRIXCg91bnJldmlld2VkX29ubHkYAiABKAgSDgoGc2VhcmNoGAMgASgJEg4KBm9mZnNldBgEIAEoBSJOCh9MaXN0Q2F0YWxvZ1RyYW5zbGF0aW9uc1Jlc3BvbnNlEisKDHRyYW5zbGF0aW9ucxgBIAMoCzIVLmlzc2hvLnYxLlRyYW5zbGF0aW9uIlIKH1Jldmlld0NhdGFsb2dUcmFuc2xhdGlvblJlcXVlc3QSEwoLc291cmNlX2hhc2gYASABKAkSDAoEbGFuZxgCIAEoCRIMCgR0ZXh0GAMgASgJIk4KIFJldmlld0NhdGFsb2dUcmFuc2xhdGlvblJlc3BvbnNlEioKC3RyYW5zbGF0aW9uGAEgASgLMhUuaXNzaG8udjEuVHJhbnNsYXRpb24ymgYKElRyYW5zbGF0aW9uU2VydmljZRJSCg1HZXRUcmFuc2xhdG9yEh4uaXNzaG8udjEuR2V0VHJhbnNsYXRvclJlcXVlc3QaHy5pc3Noby52MS5HZXRUcmFuc2xhdG9yUmVzcG9uc2UiABJbChBMaXN0QXBwTGFuZ3VhZ2VzEiEuaXNzaG8udjEuTGlzdEFwcExhbmd1YWdlc1JlcXVlc3QaIi5pc3Noby52MS5MaXN0QXBwTGFuZ3VhZ2VzUmVzcG9uc2UiABJVCg5MaXN0QXBwU3RyaW5ncxIfLmlzc2hvLnYxLkxpc3RBcHBTdHJpbmdzUmVxdWVzdBogLmlzc2hvLnYxLkxpc3RBcHBTdHJpbmdzUmVzcG9uc2UiABJSCg1TYXZlQXBwU3RyaW5nEh4uaXNzaG8udjEuU2F2ZUFwcFN0cmluZ1JlcXVlc3QaHy5pc3Noby52MS5TYXZlQXBwU3RyaW5nUmVzcG9uc2UiABJYCg9SZW1vdmVBcHBTdHJpbmcSIC5pc3Noby52MS5SZW1vdmVBcHBTdHJpbmdSZXF1ZXN0GiEuaXNzaG8udjEuUmVtb3ZlQXBwU3RyaW5nUmVzcG9uc2UiABJnChRMaXN0Q2F0YWxvZ0xhbmd1YWdlcxIlLmlzc2hvLnYxLkxpc3RDYXRhbG9nTGFuZ3VhZ2VzUmVxdWVzdBomLmlzc2hvLnYxLkxpc3RDYXRhbG9nTGFuZ3VhZ2VzUmVzcG9uc2UiABJwChdMaXN0Q2F0YWxvZ1RyYW5zbGF0aW9ucxIoLmlzc2hvLnYxLkxpc3RDYXRhbG9nVHJhbnNsYXRpb25zUmVxdWVzdBopLmlzc2hvLnYxLkxpc3RDYXRhbG9nVHJhbnNsYXRpb25zUmVzcG9uc2UiABJzChhSZXZpZXdDYXRhbG9nVHJhbnNsYXRpb24SKS5pc3Noby52MS5SZXZpZXdDYXRhbG9nVHJhbnNsYXRpb25SZXF1ZXN0GiouaXNzaG8udjEuUmV2aWV3Q2F0YWxvZ1RyYW5zbGF0aW9uUmVzcG9uc2UiAEI+WjxnaXRodWIuY29tL3NocnVqYW5jaGVydWt1L2lzc2hvL2JhY2tlbmQvZ2VuL2lzc2hvL3YxO2lzc2hvdjFiBnByb3RvMw", [file_issho_v1_moderation]);
+  fileDesc("Chppc3Noby92MS90cmFuc2xhdGlvbi5wcm90bxIIaXNzaG8udjEiFgoUR2V0VHJhbnNsYXRvclJlcXVlc3QiXwoVR2V0VHJhbnNsYXRvclJlc3BvbnNlEg8KB3VzZXJfaWQYASABKAkSDQoFYWRtaW4YAiABKAgSEQoJbGFuZ3VhZ2VzGAMgAygJEhMKC2Nhbl9wcm9wb3NlGAQgASgIIjUKFlRyYW5zbGF0aW9uUHVsbFJlcXVlc3QSDgoGbnVtYmVyGAEgASgFEgsKA3VybBgCIAEoCSIZChdMaXN0QXBwTGFuZ3VhZ2VzUmVxdWVzdCJEChhMaXN0QXBwTGFuZ3VhZ2VzUmVzcG9uc2USKAoJbGFuZ3VhZ2VzGAEgAygLMhUuaXNzaG8udjEuQXBwTGFuZ3VhZ2UigAEKC0FwcExhbmd1YWdlEgwKBGxhbmcYASABKAkSDQoFaHVtYW4YAiABKAUSDQoFc3RhbGUYAyABKAUSDQoFdG90YWwYBCABKAUSNgoMcHVsbF9yZXF1ZXN0GAUgASgLMiAuaXNzaG8udjEuVHJhbnNsYXRpb25QdWxsUmVxdWVzdCIlChVMaXN0QXBwU3RyaW5nc1JlcXVlc3QSDAoEbGFuZxgBIAEoCSKIAQoWTGlzdEFwcFN0cmluZ3NSZXNwb25zZRIkCgdzdHJpbmdzGAEgAygLMhMuaXNzaG8udjEuQXBwU3RyaW5nEjYKDHB1bGxfcmVxdWVzdBgCIAEoCzIgLmlzc2hvLnYxLlRyYW5zbGF0aW9uUHVsbFJlcXVlc3QSEAoIY29tcGxldGUYAyABKAgiqgEKCUFwcFN0cmluZxILCgNrZXkYASABKAkSDwoHZW5nbGlzaBgCIAEoCRIVCg1lbmdsaXNoX3ZvaWNlGAMgASgJEgwKBG5vdGUYBCABKAkSDwoHbWFjaGluZRgFIAEoCRINCgVodW1hbhgGIAEoCRITCgtodW1hbl9zdGFsZRgHIAEoCBIPCgdwZW5kaW5nGAggASgIEhQKDHBlbmRpbmdfdGV4dBgJIAEoCSI/ChRTYXZlQXBwU3RyaW5nUmVxdWVzdBIMCgRsYW5nGAEgASgJEgsKA2tleRgCIAEoCRIMCgR0ZXh0GAMgASgJIngKFVNhdmVBcHBTdHJpbmdSZXNwb25zZRInCgphcHBfc3RyaW5nGAEgASgLMhMuaXNzaG8udjEuQXBwU3RyaW5nEjYKDHB1bGxfcmVxdWVzdBgCIAEoCzIgLmlzc2hvLnYxLlRyYW5zbGF0aW9uUHVsbFJlcXVlc3QiMwoWUmVtb3ZlQXBwU3RyaW5nUmVxdWVzdBIMCgRsYW5nGAEgASgJEgsKA2tleRgCIAEoCSJ6ChdSZW1vdmVBcHBTdHJpbmdSZXNwb25zZRInCgphcHBfc3RyaW5nGAEgASgLMhMuaXNzaG8udjEuQXBwU3RyaW5nEjYKDHB1bGxfcmVxdWVzdBgCIAEoCzIgLmlzc2hvLnYxLlRyYW5zbGF0aW9uUHVsbFJlcXVlc3QiQwoVRHJhZnRBcHBTdHJpbmdSZXF1ZXN0EgwKBGxhbmcYASABKAkSCwoDa2V5GAIgASgJEg8KB2N1cnJlbnQYAyABKAkiJgoWRHJhZnRBcHBTdHJpbmdSZXNwb25zZRIMCgR0ZXh0GAEgASgJIh0KG0xpc3RDYXRhbG9nTGFuZ3VhZ2VzUmVxdWVzdCJQChxMaXN0Q2F0YWxvZ0xhbmd1YWdlc1Jlc3BvbnNlEjAKCWxhbmd1YWdlcxgBIAMoCzIdLmlzc2hvLnYxLlRyYW5zbGF0aW9uTGFuZ3VhZ2UiZwoeTGlzdENhdGFsb2dUcmFuc2xhdGlvbnNSZXF1ZXN0EgwKBGxhbmcYASABKAkSFwoPdW5yZXZpZXdlZF9vbmx5GAIgASgIEg4KBnNlYXJjaBgDIAEoCRIOCgZvZmZzZXQYBCABKAUiTgofTGlzdENhdGFsb2dUcmFuc2xhdGlvbnNSZXNwb25zZRIrCgx0cmFuc2xhdGlvbnMYASADKAsyFS5pc3Noby52MS5UcmFuc2xhdGlvbiJSCh9SZXZpZXdDYXRhbG9nVHJhbnNsYXRpb25SZXF1ZXN0EhMKC3NvdXJjZV9oYXNoGAEgASgJEgwKBGxhbmcYAiABKAkSDAoEdGV4dBgDIAEoCSJOCiBSZXZpZXdDYXRhbG9nVHJhbnNsYXRpb25SZXNwb25zZRIqCgt0cmFuc2xhdGlvbhgBIAEoCzIVLmlzc2hvLnYxLlRyYW5zbGF0aW9uMvEGChJUcmFuc2xhdGlvblNlcnZpY2USUgoNR2V0VHJhbnNsYXRvchIeLmlzc2hvLnYxLkdldFRyYW5zbGF0b3JSZXF1ZXN0Gh8uaXNzaG8udjEuR2V0VHJhbnNsYXRvclJlc3BvbnNlIgASWwoQTGlzdEFwcExhbmd1YWdlcxIhLmlzc2hvLnYxLkxpc3RBcHBMYW5ndWFnZXNSZXF1ZXN0GiIuaXNzaG8udjEuTGlzdEFwcExhbmd1YWdlc1Jlc3BvbnNlIgASVQoOTGlzdEFwcFN0cmluZ3MSHy5pc3Noby52MS5MaXN0QXBwU3RyaW5nc1JlcXVlc3QaIC5pc3Noby52MS5MaXN0QXBwU3RyaW5nc1Jlc3BvbnNlIgASUgoNU2F2ZUFwcFN0cmluZxIeLmlzc2hvLnYxLlNhdmVBcHBTdHJpbmdSZXF1ZXN0Gh8uaXNzaG8udjEuU2F2ZUFwcFN0cmluZ1Jlc3BvbnNlIgASWAoPUmVtb3ZlQXBwU3RyaW5nEiAuaXNzaG8udjEuUmVtb3ZlQXBwU3RyaW5nUmVxdWVzdBohLmlzc2hvLnYxLlJlbW92ZUFwcFN0cmluZ1Jlc3BvbnNlIgASVQoORHJhZnRBcHBTdHJpbmcSHy5pc3Noby52MS5EcmFmdEFwcFN0cmluZ1JlcXVlc3QaIC5pc3Noby52MS5EcmFmdEFwcFN0cmluZ1Jlc3BvbnNlIgASZwoUTGlzdENhdGFsb2dMYW5ndWFnZXMSJS5pc3Noby52MS5MaXN0Q2F0YWxvZ0xhbmd1YWdlc1JlcXVlc3QaJi5pc3Noby52MS5MaXN0Q2F0YWxvZ0xhbmd1YWdlc1Jlc3BvbnNlIgAScAoXTGlzdENhdGFsb2dUcmFuc2xhdGlvbnMSKC5pc3Noby52MS5MaXN0Q2F0YWxvZ1RyYW5zbGF0aW9uc1JlcXVlc3QaKS5pc3Noby52MS5MaXN0Q2F0YWxvZ1RyYW5zbGF0aW9uc1Jlc3BvbnNlIgAScwoYUmV2aWV3Q2F0YWxvZ1RyYW5zbGF0aW9uEikuaXNzaG8udjEuUmV2aWV3Q2F0YWxvZ1RyYW5zbGF0aW9uUmVxdWVzdBoqLmlzc2hvLnYxLlJldmlld0NhdGFsb2dUcmFuc2xhdGlvblJlc3BvbnNlIgBCPlo8Z2l0aHViLmNvbS9zaHJ1amFuY2hlcnVrdS9pc3Noby9iYWNrZW5kL2dlbi9pc3Noby92MTtpc3Nob3YxYgZwcm90bzM", [file_issho_v1_moderation]);
 
 /**
  * @generated from message issho.v1.GetTranslatorRequest
@@ -383,6 +383,53 @@ export const RemoveAppStringResponseSchema: GenMessage<RemoveAppStringResponse> 
   messageDesc(file_issho_v1_translation, 12);
 
 /**
+ * @generated from message issho.v1.DraftAppStringRequest
+ */
+export type DraftAppStringRequest = Message<"issho.v1.DraftAppStringRequest"> & {
+  /**
+   * @generated from field: string lang = 1;
+   */
+  lang: string;
+
+  /**
+   * @generated from field: string key = 2;
+   */
+  key: string;
+
+  /**
+   * What the reviewer has now, if they've started editing; otherwise the
+   * text shown today is used.
+   *
+   * @generated from field: string current = 3;
+   */
+  current: string;
+};
+
+/**
+ * Describes the message issho.v1.DraftAppStringRequest.
+ * Use `create(DraftAppStringRequestSchema)` to create a new message.
+ */
+export const DraftAppStringRequestSchema: GenMessage<DraftAppStringRequest> = /*@__PURE__*/
+  messageDesc(file_issho_v1_translation, 13);
+
+/**
+ * @generated from message issho.v1.DraftAppStringResponse
+ */
+export type DraftAppStringResponse = Message<"issho.v1.DraftAppStringResponse"> & {
+  /**
+   * @generated from field: string text = 1;
+   */
+  text: string;
+};
+
+/**
+ * Describes the message issho.v1.DraftAppStringResponse.
+ * Use `create(DraftAppStringResponseSchema)` to create a new message.
+ */
+export const DraftAppStringResponseSchema: GenMessage<DraftAppStringResponse> = /*@__PURE__*/
+  messageDesc(file_issho_v1_translation, 14);
+
+/**
  * @generated from message issho.v1.ListCatalogLanguagesRequest
  */
 export type ListCatalogLanguagesRequest = Message<"issho.v1.ListCatalogLanguagesRequest"> & {
@@ -393,7 +440,7 @@ export type ListCatalogLanguagesRequest = Message<"issho.v1.ListCatalogLanguages
  * Use `create(ListCatalogLanguagesRequestSchema)` to create a new message.
  */
 export const ListCatalogLanguagesRequestSchema: GenMessage<ListCatalogLanguagesRequest> = /*@__PURE__*/
-  messageDesc(file_issho_v1_translation, 13);
+  messageDesc(file_issho_v1_translation, 15);
 
 /**
  * @generated from message issho.v1.ListCatalogLanguagesResponse
@@ -410,7 +457,7 @@ export type ListCatalogLanguagesResponse = Message<"issho.v1.ListCatalogLanguage
  * Use `create(ListCatalogLanguagesResponseSchema)` to create a new message.
  */
 export const ListCatalogLanguagesResponseSchema: GenMessage<ListCatalogLanguagesResponse> = /*@__PURE__*/
-  messageDesc(file_issho_v1_translation, 14);
+  messageDesc(file_issho_v1_translation, 16);
 
 /**
  * @generated from message issho.v1.ListCatalogTranslationsRequest
@@ -446,7 +493,7 @@ export type ListCatalogTranslationsRequest = Message<"issho.v1.ListCatalogTransl
  * Use `create(ListCatalogTranslationsRequestSchema)` to create a new message.
  */
 export const ListCatalogTranslationsRequestSchema: GenMessage<ListCatalogTranslationsRequest> = /*@__PURE__*/
-  messageDesc(file_issho_v1_translation, 15);
+  messageDesc(file_issho_v1_translation, 17);
 
 /**
  * @generated from message issho.v1.ListCatalogTranslationsResponse
@@ -463,7 +510,7 @@ export type ListCatalogTranslationsResponse = Message<"issho.v1.ListCatalogTrans
  * Use `create(ListCatalogTranslationsResponseSchema)` to create a new message.
  */
 export const ListCatalogTranslationsResponseSchema: GenMessage<ListCatalogTranslationsResponse> = /*@__PURE__*/
-  messageDesc(file_issho_v1_translation, 16);
+  messageDesc(file_issho_v1_translation, 18);
 
 /**
  * @generated from message issho.v1.ReviewCatalogTranslationRequest
@@ -492,7 +539,7 @@ export type ReviewCatalogTranslationRequest = Message<"issho.v1.ReviewCatalogTra
  * Use `create(ReviewCatalogTranslationRequestSchema)` to create a new message.
  */
 export const ReviewCatalogTranslationRequestSchema: GenMessage<ReviewCatalogTranslationRequest> = /*@__PURE__*/
-  messageDesc(file_issho_v1_translation, 17);
+  messageDesc(file_issho_v1_translation, 19);
 
 /**
  * @generated from message issho.v1.ReviewCatalogTranslationResponse
@@ -509,7 +556,7 @@ export type ReviewCatalogTranslationResponse = Message<"issho.v1.ReviewCatalogTr
  * Use `create(ReviewCatalogTranslationResponseSchema)` to create a new message.
  */
 export const ReviewCatalogTranslationResponseSchema: GenMessage<ReviewCatalogTranslationResponse> = /*@__PURE__*/
-  messageDesc(file_issho_v1_translation, 18);
+  messageDesc(file_issho_v1_translation, 20);
 
 /**
  * TranslationService: the admin SPA's translation editor.
@@ -588,6 +635,20 @@ export const TranslationService: GenService<{
     methodKind: "unary";
     input: typeof RemoveAppStringRequestSchema;
     output: typeof RemoveAppStringResponseSchema;
+  },
+  /**
+   * DraftAppString asks Gemini for a better version of a string, for the
+   * reviewer to edit before saving; nothing is stored. In English it's a
+   * livelier version of the plain text. FAILED_PRECONDITION without
+   * GOOGLE_GEMINI_API_KEY; UNAVAILABLE if the draft lost a {placeholder}
+   * (ask again).
+   *
+   * @generated from rpc issho.v1.TranslationService.DraftAppString
+   */
+  draftAppString: {
+    methodKind: "unary";
+    input: typeof DraftAppStringRequestSchema;
+    output: typeof DraftAppStringResponseSchema;
   },
   /**
    * ListCatalogLanguages returns the languages with machine translations

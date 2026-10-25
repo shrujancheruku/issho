@@ -106,3 +106,37 @@ func TestGuide(t *testing.T) {
 		t.Errorf("sw guide:\n%s", sw)
 	}
 }
+
+func TestDraft(t *testing.T) {
+	var system, user string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			SystemInstruction struct {
+				Parts []struct{ Text string } `json:"parts"`
+			} `json:"systemInstruction"`
+			Contents []struct {
+				Parts []struct{ Text string } `json:"parts"`
+			} `json:"contents"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		system, user = req.SystemInstruction.Parts[0].Text, req.Contents[0].Parts[0].Text
+		body, _ := json.Marshal(map[string]any{"candidates": []map[string]any{{
+			"content":      map[string]any{"role": "model", "parts": []map[string]any{{"text": `{"text":" やっほー "}`}}},
+			"finishReason": "STOP",
+		}}})
+		_, _ = w.Write(body)
+	}))
+	defer srv.Close()
+	tr := New("test-key")
+	tr.Client.URL = srv.URL + "/v1/publishers/google/models/%s:generateContent"
+	got, err := tr.Draft(context.Background(), "ja", translate.Draft{English: "Hello", Voice: "Hey there", Current: "こんにちは"})
+	if err != nil || got != "やっほー" {
+		t.Fatalf("draft %q %v", got, err)
+	}
+	if !strings.Contains(system, "native Japanese copywriter") || !strings.Contains(system, "です/ます") || !strings.Contains(user, `"voice":"Hey there"`) {
+		t.Errorf("prompt:\n%s\n%s", system, user)
+	}
+	if _, err := tr.Draft(context.Background(), "en", translate.Draft{English: "Hello"}); err != nil || !strings.Contains(system, "livelier, warmer version") {
+		t.Errorf("english prompt: %v\n%s", err, system)
+	}
+}

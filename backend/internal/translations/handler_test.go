@@ -387,3 +387,56 @@ func TestCatalog(t *testing.T) {
 		t.Errorf("review: %+v %v", res, err)
 	}
 }
+
+// drafter returns its answer and records what it was given.
+type drafter struct {
+	answer string
+	got    translate.Draft
+	lang   string
+}
+
+func (d *drafter) Draft(_ context.Context, lang string, in translate.Draft) (string, error) {
+	d.lang, d.got = lang, in
+	return d.answer, nil
+}
+
+func TestDraftAppString(t *testing.T) {
+	h, _ := setup(t, mainJaFile)
+	draft := func(c auth.Caller, lang, key, current string) (*connect.Response[isshov1.DraftAppStringResponse], error) {
+		return h.DraftAppString(as(c), connect.NewRequest(&isshov1.DraftAppStringRequest{Lang: lang, Key: key, Current: current}))
+	}
+	if _, err := draft(japanese, "ja", "hi", ""); connect.CodeOf(err) != connect.CodeFailedPrecondition {
+		t.Errorf("without a drafter: %v", err)
+	}
+	d := &drafter{answer: "やっほー"}
+	h.Drafter = d
+	res, err := draft(japanese, "ja", "hi", "")
+	if err != nil || res.Msg.Text != "やっほー" {
+		t.Fatalf("draft: %+v %v", res, err)
+	}
+	// It gets the plain English, the note, the livelier English as the tone
+	// and, with no human version, the machine text as the current one.
+	if d.lang != "ja" || d.got != (translate.Draft{English: "Hello", Context: "A greeting.", Voice: "Hey there", Current: "[ja] Hello"}) {
+		t.Errorf("input: %s %+v", d.lang, d.got)
+	}
+	// What the reviewer is editing wins; a current human version otherwise.
+	d.answer = "{email} さん、ログイン中"
+	if _, err := draft(japanese, "ja", "who", "編集中 {email}"); err != nil || d.got.Current != "編集中 {email}" {
+		t.Errorf("editing: %+v %v", d.got, err)
+	}
+	if _, err := draft(japanese, "ja", "who", ""); err != nil || d.got.Current != "{email} でログイン中" {
+		t.Errorf("human current: %+v %v", d.got, err)
+	}
+	// English drafts the livelier version itself: no voice to copy.
+	d.answer = "Hiya"
+	if _, err := draft(admin, "en", "hi", ""); err != nil || d.got.Voice != "" || d.got.Current != "Hey there" {
+		t.Errorf("english: %+v %v", d.got, err)
+	}
+	if _, err := draft(japanese, "es", "hi", ""); connect.CodeOf(err) != connect.CodePermissionDenied {
+		t.Errorf("another language: %v", err)
+	}
+	d.answer = "ログイン中" // lost {email}
+	if _, err := draft(japanese, "ja", "who", ""); connect.CodeOf(err) != connect.CodeUnavailable {
+		t.Errorf("lost placeholder: %v", err)
+	}
+}

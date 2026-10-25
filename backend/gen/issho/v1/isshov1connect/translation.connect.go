@@ -48,6 +48,9 @@ const (
 	// TranslationServiceRemoveAppStringProcedure is the fully-qualified name of the
 	// TranslationService's RemoveAppString RPC.
 	TranslationServiceRemoveAppStringProcedure = "/issho.v1.TranslationService/RemoveAppString"
+	// TranslationServiceDraftAppStringProcedure is the fully-qualified name of the TranslationService's
+	// DraftAppString RPC.
+	TranslationServiceDraftAppStringProcedure = "/issho.v1.TranslationService/DraftAppString"
 	// TranslationServiceListCatalogLanguagesProcedure is the fully-qualified name of the
 	// TranslationService's ListCatalogLanguages RPC.
 	TranslationServiceListCatalogLanguagesProcedure = "/issho.v1.TranslationService/ListCatalogLanguages"
@@ -78,6 +81,12 @@ type TranslationServiceClient interface {
 	// RemoveAppString removes a string's human version in the open pull
 	// request, so the machine translation is shown again.
 	RemoveAppString(context.Context, *connect.Request[v1.RemoveAppStringRequest]) (*connect.Response[v1.RemoveAppStringResponse], error)
+	// DraftAppString asks Gemini for a better version of a string, for the
+	// reviewer to edit before saving; nothing is stored. In English it's a
+	// livelier version of the plain text. FAILED_PRECONDITION without
+	// GOOGLE_GEMINI_API_KEY; UNAVAILABLE if the draft lost a {placeholder}
+	// (ask again).
+	DraftAppString(context.Context, *connect.Request[v1.DraftAppStringRequest]) (*connect.Response[v1.DraftAppStringResponse], error)
 	// ListCatalogLanguages returns the languages with machine translations
 	// of catalogue text the caller may edit, with how many need a look.
 	ListCatalogLanguages(context.Context, *connect.Request[v1.ListCatalogLanguagesRequest]) (*connect.Response[v1.ListCatalogLanguagesResponse], error)
@@ -130,6 +139,12 @@ func NewTranslationServiceClient(httpClient connect.HTTPClient, baseURL string, 
 			connect.WithSchema(translationServiceMethods.ByName("RemoveAppString")),
 			connect.WithClientOptions(opts...),
 		),
+		draftAppString: connect.NewClient[v1.DraftAppStringRequest, v1.DraftAppStringResponse](
+			httpClient,
+			baseURL+TranslationServiceDraftAppStringProcedure,
+			connect.WithSchema(translationServiceMethods.ByName("DraftAppString")),
+			connect.WithClientOptions(opts...),
+		),
 		listCatalogLanguages: connect.NewClient[v1.ListCatalogLanguagesRequest, v1.ListCatalogLanguagesResponse](
 			httpClient,
 			baseURL+TranslationServiceListCatalogLanguagesProcedure,
@@ -158,6 +173,7 @@ type translationServiceClient struct {
 	listAppStrings           *connect.Client[v1.ListAppStringsRequest, v1.ListAppStringsResponse]
 	saveAppString            *connect.Client[v1.SaveAppStringRequest, v1.SaveAppStringResponse]
 	removeAppString          *connect.Client[v1.RemoveAppStringRequest, v1.RemoveAppStringResponse]
+	draftAppString           *connect.Client[v1.DraftAppStringRequest, v1.DraftAppStringResponse]
 	listCatalogLanguages     *connect.Client[v1.ListCatalogLanguagesRequest, v1.ListCatalogLanguagesResponse]
 	listCatalogTranslations  *connect.Client[v1.ListCatalogTranslationsRequest, v1.ListCatalogTranslationsResponse]
 	reviewCatalogTranslation *connect.Client[v1.ReviewCatalogTranslationRequest, v1.ReviewCatalogTranslationResponse]
@@ -186,6 +202,11 @@ func (c *translationServiceClient) SaveAppString(ctx context.Context, req *conne
 // RemoveAppString calls issho.v1.TranslationService.RemoveAppString.
 func (c *translationServiceClient) RemoveAppString(ctx context.Context, req *connect.Request[v1.RemoveAppStringRequest]) (*connect.Response[v1.RemoveAppStringResponse], error) {
 	return c.removeAppString.CallUnary(ctx, req)
+}
+
+// DraftAppString calls issho.v1.TranslationService.DraftAppString.
+func (c *translationServiceClient) DraftAppString(ctx context.Context, req *connect.Request[v1.DraftAppStringRequest]) (*connect.Response[v1.DraftAppStringResponse], error) {
+	return c.draftAppString.CallUnary(ctx, req)
 }
 
 // ListCatalogLanguages calls issho.v1.TranslationService.ListCatalogLanguages.
@@ -222,6 +243,12 @@ type TranslationServiceHandler interface {
 	// RemoveAppString removes a string's human version in the open pull
 	// request, so the machine translation is shown again.
 	RemoveAppString(context.Context, *connect.Request[v1.RemoveAppStringRequest]) (*connect.Response[v1.RemoveAppStringResponse], error)
+	// DraftAppString asks Gemini for a better version of a string, for the
+	// reviewer to edit before saving; nothing is stored. In English it's a
+	// livelier version of the plain text. FAILED_PRECONDITION without
+	// GOOGLE_GEMINI_API_KEY; UNAVAILABLE if the draft lost a {placeholder}
+	// (ask again).
+	DraftAppString(context.Context, *connect.Request[v1.DraftAppStringRequest]) (*connect.Response[v1.DraftAppStringResponse], error)
 	// ListCatalogLanguages returns the languages with machine translations
 	// of catalogue text the caller may edit, with how many need a look.
 	ListCatalogLanguages(context.Context, *connect.Request[v1.ListCatalogLanguagesRequest]) (*connect.Response[v1.ListCatalogLanguagesResponse], error)
@@ -270,6 +297,12 @@ func NewTranslationServiceHandler(svc TranslationServiceHandler, opts ...connect
 		connect.WithSchema(translationServiceMethods.ByName("RemoveAppString")),
 		connect.WithHandlerOptions(opts...),
 	)
+	translationServiceDraftAppStringHandler := connect.NewUnaryHandler(
+		TranslationServiceDraftAppStringProcedure,
+		svc.DraftAppString,
+		connect.WithSchema(translationServiceMethods.ByName("DraftAppString")),
+		connect.WithHandlerOptions(opts...),
+	)
 	translationServiceListCatalogLanguagesHandler := connect.NewUnaryHandler(
 		TranslationServiceListCatalogLanguagesProcedure,
 		svc.ListCatalogLanguages,
@@ -300,6 +333,8 @@ func NewTranslationServiceHandler(svc TranslationServiceHandler, opts ...connect
 			translationServiceSaveAppStringHandler.ServeHTTP(w, r)
 		case TranslationServiceRemoveAppStringProcedure:
 			translationServiceRemoveAppStringHandler.ServeHTTP(w, r)
+		case TranslationServiceDraftAppStringProcedure:
+			translationServiceDraftAppStringHandler.ServeHTTP(w, r)
 		case TranslationServiceListCatalogLanguagesProcedure:
 			translationServiceListCatalogLanguagesHandler.ServeHTTP(w, r)
 		case TranslationServiceListCatalogTranslationsProcedure:
@@ -333,6 +368,10 @@ func (UnimplementedTranslationServiceHandler) SaveAppString(context.Context, *co
 
 func (UnimplementedTranslationServiceHandler) RemoveAppString(context.Context, *connect.Request[v1.RemoveAppStringRequest]) (*connect.Response[v1.RemoveAppStringResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.TranslationService.RemoveAppString is not implemented"))
+}
+
+func (UnimplementedTranslationServiceHandler) DraftAppString(context.Context, *connect.Request[v1.DraftAppStringRequest]) (*connect.Response[v1.DraftAppStringResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.TranslationService.DraftAppString is not implemented"))
 }
 
 func (UnimplementedTranslationServiceHandler) ListCatalogLanguages(context.Context, *connect.Request[v1.ListCatalogLanguagesRequest]) (*connect.Response[v1.ListCatalogLanguagesResponse], error) {
