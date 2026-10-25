@@ -33,7 +33,7 @@ export function distanceText(t: ReturnType<typeof useI18n>['t'], minutes: number
 
 /** "Someone you get on with is interested", or how many. */
 export function friendsText(t: ReturnType<typeof useI18n>['t'], count: number) {
-  return count === 1 ? t('plan.friendsOne') : t('plan.friendsMany', { count });
+  return t('plan.friends', { count });
 }
 
 /** One plan in the feed: what, where, how it suits you, how many are interested. */

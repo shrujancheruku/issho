@@ -18,6 +18,13 @@ describe('leanSummary', () => {
 });
 
 describe('placeholderProblems', () => {
+  it('reads plural blocks as their count', () => {
+    const en = '{count, plural, one {Someone} other {# people}} near {place}';
+    expect(placeholderProblems(en, '{place}の近くに{count, plural, other {#人}}')).toEqual([]);
+    expect(placeholderProblems(en, '{place}の近くに#人')).toEqual(['missing {count}']);
+    expect(placeholderProblems(en, '{count, plural, other {#人}')).toEqual(["braces { } that don't match up"]);
+  });
+
   it('accepts reordered placeholders', () => {
     expect(placeholderProblems('{a} and {b}', '{b} y {a}')).toEqual([]);
   });

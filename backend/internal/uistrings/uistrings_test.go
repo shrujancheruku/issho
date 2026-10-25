@@ -74,10 +74,11 @@ func TestEmbeddedCatalog(t *testing.T) {
 		if strings.TrimSpace(v) == "" {
 			t.Errorf("%s: empty text", k)
 		}
-		// Only {lowerCamel} placeholders survive the check in In; anything
-		// else (e.g. "{{name}}", "%s") would reach users untranslated.
-		if strings.Count(v, "{") != len(placeholder.FindAllString(v, -1)) {
-			t.Errorf("%s: placeholders must look like {name}: %q", k, v)
+		// Only {lowerCamel} placeholders and plural blocks survive the check
+		// in In; anything else (e.g. "{{name}}", "%s") would reach users
+		// untranslated.
+		if _, ok := Arguments(v); !ok {
+			t.Errorf("%s: placeholders must look like {name} or {count, plural, …}: %q", k, v)
 		}
 	}
 }
@@ -350,5 +351,34 @@ func TestLoadHuman(t *testing.T) {
 	}
 	if s := c.Text(ctx, nil, "ja", "hi"); s != "やあ" {
 		t.Errorf("a failed read must keep what's loaded: %q", s)
+	}
+}
+
+func TestArguments(t *testing.T) {
+	for _, tc := range []struct {
+		text string
+		want []string
+		ok   bool
+	}{
+		{"Hello", nil, true},
+		{"{b} and {a}", []string{"a", "b"}, true},
+		{"{count, plural, one {Someone is in} other {# people are in}} near {place}", []string{"count", "place"}, true},
+		{"{count, plural, one {# osoba} few {# osoby} many {# osób} other {# osoby}}", []string{"count"}, true},
+		{"{count, plural, one {x}", nil, false},
+		{"{{name}}", nil, false},
+		{"{Name}", nil, false},
+		{"{count, select, a {x}}", nil, false},
+		{"stray }", nil, false},
+	} {
+		got, ok := Arguments(tc.text)
+		if ok != tc.ok || !slices.Equal(got, tc.want) {
+			t.Errorf("Arguments(%q) = %v, %v", tc.text, got, ok)
+		}
+	}
+	if !SamePlaceholders("{count, plural, one {Someone} other {# people}}", "{count, plural, other {#人}}") {
+		t.Error("a plural block may have the target language's own forms")
+	}
+	if SamePlaceholders("{count, plural, one {Someone} other {# people}}", "#人") {
+		t.Error("a dropped plural block must fail")
 	}
 }

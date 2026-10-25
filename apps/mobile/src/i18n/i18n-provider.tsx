@@ -71,16 +71,18 @@ export function I18nProvider({ children }: PropsWithChildren) {
 
   const t = useCallback(
     (key: StringKey, params?: Params) =>
-      lookup(key, shown === 'primary' ? [primary, secondary] : [secondary, primary], params),
-    [shown, primary, secondary],
+      shown === 'primary'
+        ? lookup(key, [primary, secondary], params, [languages.primary, languages.secondary])
+        : lookup(key, [secondary, primary], params, [languages.secondary, languages.primary]),
+    [shown, primary, secondary, languages.primary, languages.secondary],
   );
   const pair = useCallback(
     (key: StringKey, params?: Params) => {
-      const p = lookup(key, [primary, secondary], params);
-      const s = languages.secondary ? lookup(key, [secondary], params) : '';
+      const p = lookup(key, [primary, secondary], params, [languages.primary, languages.secondary]);
+      const s = languages.secondary ? lookup(key, [secondary], params, [languages.secondary]) : '';
       return { primary: p, secondary: s === p ? '' : s };
     },
-    [primary, secondary, languages.secondary],
+    [primary, secondary, languages.primary, languages.secondary],
   );
 
   const value = useMemo<I18nState>(

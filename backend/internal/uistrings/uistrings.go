@@ -309,17 +309,62 @@ func (c *Catalog) Text(ctx context.Context, tr *translate.Service, lang, key str
 	return got
 }
 
-var placeholder = regexp.MustCompile(`\{[a-zA-Z]+\}`)
+// Arguments lists the arguments of a UI string, sorted: "{name}" gives
+// "name", and an ICU plural block "{count, plural, one {…} other {# …}}"
+// gives "count" (the forms inside may differ by language: Polish has four,
+// Japanese one). ok is false when the braces don't parse: unbalanced, an
+// argument that isn't {lowerCamel}, or a block other than plural.
+func Arguments(text string) (args []string, ok bool) {
+	for i := 0; i < len(text); i++ {
+		switch text[i] {
+		case '}':
+			return nil, false
+		case '{':
+			m := argument.FindStringSubmatchIndex(text[i:])
+			if m == nil {
+				return nil, false
+			}
+			name := text[i+m[2] : i+m[3]]
+			if m[4] < 0 { // {name}
+				args = append(args, name)
+				i += m[1] - 1
+				continue
+			}
+			// {name, plural, ...}: skip to the matching brace.
+			depth, j := 0, i
+			for ; j < len(text); j++ {
+				if text[j] == '{' {
+					depth++
+				} else if text[j] == '}' {
+					depth--
+					if depth == 0 {
+						break
+					}
+				}
+			}
+			if j == len(text) {
+				return nil, false
+			}
+			args = append(args, name)
+			i = j
+		}
+	}
+	slices.Sort(args)
+	return args, true
+}
 
-// SamePlaceholders reports whether a translation kept every {placeholder} of
-// the English text, unchanged. Machine translation sometimes translates
-// or drops them; the app then shows English for that string rather than a
-// sentence with a hole in it.
+// argument is the start of one: {name} or {name, plural,
+var argument = regexp.MustCompile(`^\{([a-z][a-zA-Z]*)(?:\}|(\s*,\s*plural\s*,))`)
+
+// SamePlaceholders reports whether a translation kept every argument of the
+// English text ({placeholder}s and plural blocks), unchanged in name and
+// parseable. Machine translation sometimes translates or drops them; the app
+// then shows English for that string rather than a sentence with a hole in
+// it.
 func SamePlaceholders(english, translated string) bool {
-	a, b := placeholder.FindAllString(english, -1), placeholder.FindAllString(translated, -1)
-	slices.Sort(a)
-	slices.Sort(b)
-	return slices.Equal(a, b)
+	a, okA := Arguments(english)
+	b, okB := Arguments(translated)
+	return okA && okB && slices.Equal(a, b)
 }
 
 // Machine is every UI string's machine translation into lang, ignoring

@@ -50,15 +50,40 @@ function formatP(p: number): string {
   return p < 0.001 ? '< 0.001' : p.toFixed(3);
 }
 
-const placeholder = /\{[a-zA-Z]+\}/g;
+/**
+ * A text's arguments as the API reads them (uistrings.Arguments): "{name}"
+ * gives "{name}", a plural block "{count, plural, one {…} other {# …}}"
+ * gives "{count}" (its forms may differ by language). undefined when the
+ * braces don't parse.
+ */
+function argumentsOf(text: string): string[] | undefined {
+  const out: string[] = [];
+  for (let i = 0; i < text.length; i++) {
+    if (text[i] === '}') return undefined;
+    if (text[i] !== '{') continue;
+    const m = /^\{([a-z][a-zA-Z]*)(\}|\s*,\s*plural\s*,)/.exec(text.slice(i));
+    if (!m) return undefined;
+    let depth = 0;
+    let j = i;
+    for (; j < text.length; j++) {
+      if (text[j] === '{') depth++;
+      else if (text[j] === '}' && --depth === 0) break;
+    }
+    if (j === text.length) return undefined;
+    out.push(`{${m[1]}}`);
+    i = j;
+  }
+  return out.sort();
+}
 
 /**
  * The {placeholders} a correction must keep, as the API checks
  * (uistrings.SamePlaceholders): returns those missing or added, empty if fine.
  */
 export function placeholderProblems(source: string, text: string): string[] {
-  const want = (source.match(placeholder) ?? []).sort();
-  const got = (text.match(placeholder) ?? []).sort();
+  const want = argumentsOf(source) ?? [];
+  const got = argumentsOf(text);
+  if (!got) return ['braces { } that don\'t match up'];
   const problems: string[] = [];
   for (const p of new Set(want)) {
     const diff = want.filter((x) => x === p).length - got.filter((x) => x === p).length;

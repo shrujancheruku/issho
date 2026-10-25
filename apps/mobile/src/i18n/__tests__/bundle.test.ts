@@ -1,9 +1,9 @@
 /// <reference types="jest" />
 import { fromBundle } from '../bundle';
 import { bundled } from '../bundled';
-import { english } from '../strings';
+import { argumentNames, english } from '../strings';
 
-const placeholders = (s: string) => (s.match(/\{[a-zA-Z]+\}/g) ?? []).sort();
+const placeholders = (s: string) => argumentNames(s);
 
 describe('bundled languages', () => {
   it('only has strings the app still uses, with their placeholders', () => {
