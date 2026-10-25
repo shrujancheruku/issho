@@ -7,6 +7,7 @@ import {
   fingerprint,
   format,
   lookup,
+  argumentNames,
   pseudo,
   pseudoEnglish,
   type StringKey,
@@ -34,7 +35,7 @@ describe('human English', () => {
   it('replaces only real keys and keeps their placeholders', () => {
     // The Go tests check the same file in depth (staleness included); this
     // guards what the app bundles.
-    const placeholders = (s: string) => (s.match(/\{[a-zA-Z]+\}/g) ?? []).sort();
+    const placeholders = (s: string) => argumentNames(s);
     for (const [key, v] of Object.entries(englishHuman)) {
       expect(key in english).toBe(true);
       expect([key, placeholders(v!.text)]).toEqual([key, placeholders(english[key as StringKey])]);
@@ -59,10 +60,28 @@ describe('fingerprint', () => {
 });
 
 describe('catalogue', () => {
-  it('uses only {name} placeholders, which survive the server check', () => {
+  it('uses only {name} placeholders and plural blocks, which survive the server check', () => {
     for (const [key, text] of Object.entries(english)) {
-      expect([key, (text.match(/\{/g) ?? []).length]).toEqual([key, (text.match(/\{[a-zA-Z]+\}/g) ?? []).length]);
+      expect([key, argumentNames(text) !== undefined]).toEqual([key, true]);
     }
+  });
+});
+
+describe('plurals', () => {
+  const friends = english['plan.friends'];
+  it('picks the form by the language’s rules', () => {
+    expect(format(friends, { count: 1 })).toBe('Someone you get on with is interested');
+    expect(format(friends, { count: 3 })).toBe('3 people you get on with are interested');
+    const pl = '{count, plural, one {# osoba} few {# osoby} many {# osób} other {# osoby}}';
+    expect([1, 3, 5, 22].map((n) => format(pl, { count: n }, 'pl'))).toEqual(['1 osoba', '3 osoby', '5 osób', '22 osoby']);
+    expect(format('{count, plural, =0 {Nobody} other {#人}}', { count: 0 }, 'ja')).toBe('Nobody');
+    expect(format('{count, plural, other {#人} } and {name}', { count: 2, name: 'A' }, 'ja')).toBe('2人 and A');
+  });
+  it('parses arguments like the API', () => {
+    expect(argumentNames('{b} and {a}')).toEqual(['a', 'b']);
+    expect(argumentNames(friends)).toEqual(['count']);
+    expect(argumentNames('{count, plural, one {x}')).toBeUndefined();
+    expect(argumentNames('{{name}}')).toBeUndefined();
   });
 });
 

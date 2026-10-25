@@ -1,5 +1,5 @@
 {
-  "catalogVersion": "90ba76cd1ea5",
+  "catalogVersion": "e7f7739a5965",
   "strings": {
     "account.delete": "アカウントを削除",
     "account.deleteBody": "アカウント、設定、履歴が完全に削除されます。この操作は取り消せません。",
@@ -166,8 +166,7 @@
     "plan.closed.others": "他のプランを見る",
     "plan.closed.withdrawn": "訪問予定の場所が利用できなくなったため、このプランは取り下げられました。",
     "plan.finishHere": "解散場所",
-    "plan.friendsMany": "気の合う人{count}人が興味を持っています",
-    "plan.friendsOne": "気の合う人が興味を持っています",
+    "plan.friends": "{count, plural, other {気の合う仲間#人が興味を持っています}}",
     "plan.interested": "参加希望：{count}人",
     "plan.interestedLabel": "興味を持っている人",
     "plan.language": "言語",

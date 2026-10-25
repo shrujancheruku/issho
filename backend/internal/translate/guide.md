@@ -4,6 +4,7 @@ Issho is a mobile app that helps people aged 18–40 make friends through small 
 
 - **Issho** is the product's name. Always write it exactly as "Issho" in Latin letters; never translate or transliterate it.
 - Keep every `{placeholder}` exactly as written (same braces, same name). Move it wherever the sentence needs it.
+- A plural block such as `{count, plural, one {Someone is interested} other {# people are interested}}` keeps its first part (`{count, plural,`) exactly, but its forms follow the target language: translate each form, and use that language's own categories from CLDR (`zero`, `one`, `two`, `few`, `many`, `other`; Polish needs one, few, many and other, Japanese only other). Always include `other`. `#` stands for the number.
 - Keep the source's punctuation style for the target language (full stops, question marks, the ellipsis "…").
 - Buttons and labels: short, in the usual style of apps in that language (imperative verbs, or the noun the platform normally uses). Don't turn a button into a full sentence.
 - Terms, used the same way everywhere:

@@ -1,5 +1,5 @@
 {
-  "catalogVersion": "0f18035b7259",
+  "catalogVersion": "df7be40da12d",
   "strings": {
     "account.delete": "Eliminar cuenta",
     "account.deleteBody": "Esto eliminará de forma permanente tu cuenta, tus preferencias y tu historial. No se puede deshacer.",
@@ -166,8 +166,7 @@
     "plan.closed.others": "Ver otros planes",
     "plan.closed.withdrawn": "Este plan se canceló: uno de los lugares ya no está disponible.",
     "plan.finishHere": "Fin del recorrido",
-    "plan.friendsMany": "Hay interés de {count} personas con las que conectas",
-    "plan.friendsOne": "Alguien con quien conectas tiene interés",
+    "plan.friends": "{count, plural, one {Le interesa a alguien con quien conectaste} other {Le interesa a # personas con las que conectaste}}",
     "plan.interested": "Personas interesadas: {count}",
     "plan.interestedLabel": "Personas interesadas",
     "plan.language": "Idioma",
