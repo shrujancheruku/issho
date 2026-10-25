@@ -7,6 +7,8 @@ import {
   fingerprint,
   format,
   lookup,
+  pseudo,
+  pseudoEnglish,
   type StringKey,
 } from '../strings';
 
@@ -68,4 +70,14 @@ it('reduces tags to the base language', () => {
   expect(baseLanguage('ja-JP')).toBe('ja');
   expect(baseLanguage('zh_Hant_TW')).toBe('zh');
   expect(baseLanguage(null)).toBe('');
+});
+
+describe('pseudo', () => {
+  it('accents, lengthens and brackets text but keeps placeholders', () => {
+    const p = pseudo('Signed in as {email}');
+    expect(p.startsWith('[Šígñéd íñ áš {email}')).toBe(true);
+    expect(p.endsWith(']')).toBe(true);
+    expect(p.length).toBeGreaterThan('Signed in as {email}'.length * 1.3);
+    expect(pseudoEnglish['common.save']).toMatch(/^\[Šávé ~\]$/);
+  });
 });
