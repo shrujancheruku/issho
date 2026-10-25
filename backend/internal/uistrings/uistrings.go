@@ -1,20 +1,27 @@
-// Package uistrings translates the app's own UI text on demand.
+// Package uistrings serves the app's own UI text in any language.
 //
-// The app is written in English: apps/mobile/src/i18n/en.json is the source,
-// and `make gen` copies it here (en.json, embedded). Only strings in this
-// copy are ever translated, so the public GetStrings RPC can't be used to
-// make the server pay for arbitrary text.
+// The app is written in plain English: apps/mobile/src/i18n/en.json is the
+// source, and `make gen` copies it here (en.json, embedded). Only strings in
+// this copy are ever translated, so the public GetStrings RPC can't be used
+// to make the server pay for arbitrary text.
+//
+// Human versions (human/<lang>.json, copied the same way; see Human) replace
+// single strings: the owner's livelier English, and translations a person
+// wrote or approved. Machines still translate the plain English, which is
+// also the last resort when nothing else is ready.
 package uistrings
 
 import (
 	"context"
 	"crypto/sha256"
-	_ "embed"
+	"embed"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/fs"
 	"maps"
+	"path"
 	"regexp"
 	"slices"
 	"strings"
@@ -29,27 +36,72 @@ import (
 //go:embed en.json
 var source []byte
 
+//go:embed human/*.json
+var humanFiles embed.FS
+
 // translateContext is what the translator is told the text is. It's part of
 // the cache key, so UI text never shares a translation with an activity name.
 const translateContext = "text in the user interface of a mobile app for meeting new friends at group outings"
 
-// Catalog is the English UI text, key → text.
+// Catalog is the plain English UI text, key → text, and the human versions.
 type Catalog struct {
 	keys    []string // sorted
 	english map[string]string
+	human   map[string]map[string]Human // lang → key → version
 	version string
 }
 
-// Load parses the embedded catalogue.
-func Load() (*Catalog, error) { return parse(source) }
+// Load parses the embedded catalogue and human versions.
+func Load() (*Catalog, error) {
+	files, err := fs.Glob(humanFiles, "human/*.json")
+	if err != nil {
+		return nil, err
+	}
+	human := make(map[string][]byte, len(files))
+	for _, f := range files {
+		raw, err := humanFiles.ReadFile(f)
+		if err != nil {
+			return nil, err
+		}
+		human[strings.TrimSuffix(path.Base(f), ".json")] = raw
+	}
+	return parse(source, human)
+}
 
-func parse(raw []byte) (*Catalog, error) {
+// parse takes en.json and the human files by language.
+func parse(raw []byte, human map[string][]byte) (*Catalog, error) {
 	var m map[string]string
 	if err := json.Unmarshal(raw, &m); err != nil {
 		return nil, fmt.Errorf("ui strings: %w", err)
 	}
-	h := sha256.Sum256(raw)
-	return &Catalog{keys: slices.Sorted(maps.Keys(m)), english: m, version: hex.EncodeToString(h[:6])}, nil
+	c := &Catalog{keys: slices.Sorted(maps.Keys(m)), english: m, human: make(map[string]map[string]Human, len(human))}
+	// The version covers the human versions too: they change what's shown.
+	h := sha256.New()
+	h.Write(raw)
+	for _, lang := range slices.Sorted(maps.Keys(human)) {
+		var v map[string]Human
+		if err := json.Unmarshal(human[lang], &v); err != nil {
+			return nil, fmt.Errorf("ui strings, human/%s.json: %w", lang, err)
+		}
+		c.human[lang] = v
+		h.Write([]byte("\x00" + lang + "\x00"))
+		h.Write(human[lang])
+	}
+	c.version = hex.EncodeToString(h.Sum(nil)[:6])
+	return c, nil
+}
+
+// humanText is key's human version in lang, if it has one written for
+// today's English that kept every placeholder. A stale one is skipped (see
+// Human.Source): the plain text or a fresh translation is shown instead.
+func (c *Catalog) humanText(lang, key string) (string, bool) {
+	v, ok := c.human[lang][key]
+	english := c.english[key]
+	if !ok || english == "" || strings.TrimSpace(v.Text) == "" ||
+		v.Source != SourceHash(english) || !SamePlaceholders(english, v.Text) {
+		return "", false
+	}
+	return v.Text, true
 }
 
 type Handler struct {
@@ -70,23 +122,38 @@ func (h *Handler) GetStrings(ctx context.Context, req *connect.Request[isshov1.G
 	}), nil
 }
 
-// In returns the catalogue in lang, leaving out strings that aren't
-// translated yet or whose translation lost a placeholder. complete is false
-// while some are still to come; a broken translation is cached, so asking
-// again wouldn't fix it.
+// In returns the catalogue in lang: human versions where there are any,
+// machine translations of the plain English for the rest, leaving out strings
+// that aren't translated yet or whose translation lost a placeholder.
+// complete is false while some are still to come; a broken translation is
+// cached, so asking again wouldn't fix it.
 func (c *Catalog) In(ctx context.Context, tr *translate.Service, lang string) (map[string]string, bool) {
-	if lang == i18n.Authoring {
-		return maps.Clone(c.english), true
+	out := make(map[string]string, len(c.keys))
+	var todo []string // strings without a human version
+	for _, k := range c.keys {
+		if text, ok := c.humanText(lang, k); ok {
+			out[k] = text
+		} else {
+			todo = append(todo, k)
+		}
 	}
-	texts := make([]translate.Text, len(c.keys))
-	for i, k := range c.keys {
+	if lang == i18n.Authoring {
+		for _, k := range todo {
+			out[k] = c.english[k]
+		}
+		return out, true
+	}
+	if len(todo) == 0 {
+		return out, true
+	}
+	texts := make([]translate.Text, len(todo))
+	for i, k := range todo {
 		raw, _ := json.Marshal(map[string]string{i18n.Authoring: c.english[k]})
 		texts[i] = translate.Text{Raw: raw, Context: translateContext}
 	}
 	got := tr.Resolve(ctx, lang, texts)
-	out := make(map[string]string, len(c.keys))
 	complete := true
-	for i, k := range c.keys {
+	for i, k := range todo {
 		switch {
 		case got[i] == "":
 			complete = false
@@ -97,10 +164,15 @@ func (c *Catalog) In(ctx context.Context, tr *translate.Service, lang string) (m
 	return out, complete
 }
 
-// Text returns one string in lang, or its English text when the
-// translation isn't ready or lost a placeholder. For text the server sends
-// itself, such as push notifications.
+// Text returns one string in lang: its human version, else its machine
+// translation, else the plain English when the translation isn't ready or
+// lost a placeholder (plain, not the livelier English: whoever gets the
+// fallback may not read English well). For text the server sends itself,
+// such as push notifications.
 func (c *Catalog) Text(ctx context.Context, tr *translate.Service, lang, key string) string {
+	if text, ok := c.humanText(lang, key); ok {
+		return text
+	}
 	english := c.english[key]
 	if lang == i18n.Authoring || tr == nil || english == "" {
 		return english

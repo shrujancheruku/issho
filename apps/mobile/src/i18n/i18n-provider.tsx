@@ -7,7 +7,7 @@ import { api } from '@/lib/api';
 
 import { readCached, writeCached, type CachedStrings } from './cache';
 import { deviceLanguages } from './device';
-import { catalogFingerprint, coversApp, english, lookup, type Params, type StringKey } from './strings';
+import { catalogFingerprint, coversApp, displayEnglish, lookup, type Params, type StringKey } from './strings';
 
 export type Languages = { primary: string; secondary: string };
 
@@ -139,6 +139,6 @@ function useUiStrings(lang: string) {
     gcTime: Infinity,
     refetchInterval: (q) => (q.state.data && !q.state.data.complete ? 30_000 : false),
   });
-  if (lang === 'en') return english;
+  if (lang === 'en') return displayEnglish;
   return query.data?.strings;
 }

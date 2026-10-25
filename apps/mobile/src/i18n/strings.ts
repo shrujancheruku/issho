@@ -1,15 +1,38 @@
 import en from './en.json';
+import enHuman from './human/en.json';
 
 /**
- * The app's UI text is written in English in en.json. Every other language is
- * machine-translated on the server (UIService.GetStrings), cached there for
- * everyone and on the device (cache.ts). en.json is also copied into the API
- * by `make gen`: the server only translates strings it knows.
+ * The app's UI text is written in plain English in en.json. Every other
+ * language is machine-translated from it on the server (UIService.GetStrings),
+ * cached there for everyone and on the device (cache.ts). en.json is also
+ * copied into the API by `make gen`: the server only translates strings it
+ * knows.
  */
 export const english: Readonly<Record<StringKey, string>> = en;
 export type StringKey = keyof typeof en;
 export type Strings = Partial<Record<string, string>>;
 export type Params = Record<string, string | number>;
+
+/** A person's version of one string (see backend/internal/uistrings/human.go). */
+type Human = { text: string; source: string };
+
+/**
+ * human/en.json: livelier English for some strings, shown to people who use
+ * the app in English. Machines still translate the plain text, and the plain
+ * text stays the last resort in lookup (whoever gets it may not read English
+ * well). CI fails while an entry was written for older English text, so the
+ * bundled versions are always current. Other languages' human versions come
+ * merged from the server.
+ */
+export const englishHuman: Readonly<Partial<Record<string, Human>>> = enHuman;
+
+/** English as shown: the human version where there is one. */
+export const displayEnglish: Readonly<Record<StringKey, string>> = {
+  ...english,
+  ...Object.fromEntries(
+    Object.entries(englishHuman).flatMap(([key, v]) => (key in english && v?.text ? [[key, v.text]] : [])),
+  ),
+};
 
 /** Fills {name} placeholders. Unknown placeholders are left as they are. */
 export function format(text: string, params?: Params): string {
@@ -23,7 +46,7 @@ export function format(text: string, params?: Params): string {
  * Text for key, in the first of the given catalogues that has it. Callers
  * pass the language being shown first, then the other display language, so a
  * missing translation falls back to a language the person reads before
- * English.
+ * English, and then to plain English.
  */
 export function lookup(key: StringKey, catalogs: (Strings | undefined)[], params?: Params): string {
   for (const c of catalogs) {

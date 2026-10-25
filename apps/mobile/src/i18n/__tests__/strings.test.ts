@@ -1,5 +1,15 @@
 /// <reference types="jest" />
-import { baseLanguage, coversApp, english, fingerprint, format, lookup } from '../strings';
+import {
+  baseLanguage,
+  coversApp,
+  displayEnglish,
+  english,
+  englishHuman,
+  fingerprint,
+  format,
+  lookup,
+  type StringKey,
+} from '../strings';
 
 describe('format', () => {
   it('fills placeholders and leaves unknown ones', () => {
@@ -16,6 +26,26 @@ describe('lookup', () => {
     expect(lookup('common.back', [ja, es])).toBe('Atrás');
     expect(lookup('common.cancel', [ja, es])).toBe('Cancel');
     expect(lookup('account.signedInAs', [undefined], { email: 'a@b.c' })).toBe('Signed in as a@b.c');
+  });
+});
+
+describe('human English', () => {
+  it('replaces only real keys and keeps their placeholders', () => {
+    // The Go tests check the same file in depth (staleness included); this
+    // guards what the app bundles.
+    const placeholders = (s: string) => (s.match(/\{[a-zA-Z]+\}/g) ?? []).sort();
+    for (const [key, v] of Object.entries(englishHuman)) {
+      expect(key in english).toBe(true);
+      expect([key, placeholders(v!.text)]).toEqual([key, placeholders(english[key as StringKey])]);
+      expect(displayEnglish[key as StringKey]).toBe(v!.text);
+    }
+    expect(Object.keys(displayEnglish).sort()).toEqual(Object.keys(english).sort());
+  });
+
+  it('is shown for English but never as the last resort', () => {
+    const human = { 'common.save': 'Save it' };
+    expect(lookup('common.save', [human])).toBe('Save it');
+    expect(lookup('common.save', [undefined])).toBe(english['common.save']);
   });
 });
 
