@@ -17,7 +17,6 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -25,15 +24,12 @@ import (
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
 	"github.com/shrujancheruku/issho/backend/internal/plans"
 	"github.com/shrujancheruku/issho/backend/internal/platform/auth"
-	"github.com/shrujancheruku/issho/backend/internal/uistrings"
 )
 
 const (
 	// maxRows bounds each list. The queue is small at launch; paging can
 	// come when it isn't.
 	maxRows = 200
-	// translationPage is one page of translations (there are thousands).
-	translationPage = 100
 	// MaxNote matches the database check on notes.
 	MaxNote = 2000
 )
@@ -274,93 +270,6 @@ func (h *Handler) ListCrewLeaves(ctx context.Context, req *connect.Request[issho
 	return connect.NewResponse(out), nil
 }
 
-func (h *Handler) ListTranslationLanguages(ctx context.Context, _ *connect.Request[isshov1.ListTranslationLanguagesRequest]) (*connect.Response[isshov1.ListTranslationLanguagesResponse], error) {
-	if _, err := moderator(ctx); err != nil {
-		return nil, err
-	}
-	rows, err := h.Q.ListTranslationLanguages(ctx)
-	if err != nil {
-		return nil, err
-	}
-	out := &isshov1.ListTranslationLanguagesResponse{Languages: make([]*isshov1.TranslationLanguage, len(rows))}
-	for i, r := range rows {
-		out.Languages[i] = &isshov1.TranslationLanguage{Lang: r.Lang, Total: r.Total, Unreviewed: r.Unreviewed}
-	}
-	return connect.NewResponse(out), nil
-}
-
-func (h *Handler) ListTranslations(ctx context.Context, req *connect.Request[isshov1.ListTranslationsRequest]) (*connect.Response[isshov1.ListTranslationsResponse], error) {
-	if _, err := moderator(ctx); err != nil {
-		return nil, err
-	}
-	if req.Msg.Lang == "" {
-		return nil, invalid("lang: required")
-	}
-	if req.Msg.Offset < 0 {
-		return nil, invalid("offset: not negative")
-	}
-	rows, err := h.Q.ListTranslations(ctx, dbgen.ListTranslationsParams{
-		Lang: req.Msg.Lang, UnreviewedOnly: req.Msg.UnreviewedOnly, Search: strings.TrimSpace(req.Msg.Search),
-		SkipRows: req.Msg.Offset, MaxRows: translationPage,
-	})
-	if err != nil {
-		return nil, err
-	}
-	out := &isshov1.ListTranslationsResponse{Translations: make([]*isshov1.Translation, len(rows))}
-	for i, r := range rows {
-		out.Translations[i] = translationToProto(dbgen.GetTranslationRow(r))
-	}
-	return connect.NewResponse(out), nil
-}
-
-func (h *Handler) ReviewTranslation(ctx context.Context, req *connect.Request[isshov1.ReviewTranslationRequest]) (*connect.Response[isshov1.ReviewTranslationResponse], error) {
-	c, err := moderator(ctx)
-	if err != nil {
-		return nil, err
-	}
-	key := dbgen.GetTranslationParams{SourceHash: req.Msg.SourceHash, Lang: req.Msg.Lang}
-	text := strings.TrimSpace(req.Msg.Text)
-	if text == "" {
-		return nil, invalid("text: required")
-	}
-	t, err := h.Q.GetTranslation(ctx, key)
-	if errors.Is(err, pgx.ErrNoRows) {
-		return nil, connect.NewError(connect.CodeNotFound, errors.New("no such translation"))
-	}
-	if err != nil {
-		return nil, err
-	}
-	// UI strings with a lost {placeholder} are thrown away when shown
-	// (uistrings.In); refuse them here instead of saving a correction that
-	// would never appear. Other text has no placeholders, so this holds.
-	if !uistrings.SamePlaceholders(t.Source, text) {
-		return nil, invalid("text: keep every {placeholder} of the English text, unchanged")
-	}
-	if _, err := h.Q.ReviewTranslation(ctx, dbgen.ReviewTranslationParams{
-		SourceHash: key.SourceHash, Lang: key.Lang, Text: text, ReviewedBy: pgUUID(c.UserID), At: pgTime(h.now()),
-	}); err != nil {
-		return nil, err
-	}
-	if t, err = h.Q.GetTranslation(ctx, key); err != nil {
-		return nil, err
-	}
-	return connect.NewResponse(&isshov1.ReviewTranslationResponse{Translation: translationToProto(t)}), nil
-}
-
-func translationToProto(t dbgen.GetTranslationRow) *isshov1.Translation {
-	return &isshov1.Translation{
-		SourceHash: t.SourceHash,
-		Lang:       t.Lang,
-		Source:     t.Source,
-		Context:    t.Context,
-		Text:       t.Text,
-		Model:      t.Model,
-		Reviewed:   t.Reviewed,
-		ReviewedAt: timestamp(t.ReviewedAt),
-		CreatedAt:  timestamp(t.CreatedAt),
-	}
-}
-
 func cleanNote(s string) (string, error) {
 	s = strings.TrimSpace(s)
 	if utf8.RuneCountInString(s) > MaxNote {
@@ -390,3 +299,22 @@ func uuidString(id pgtype.UUID) string {
 func pgUUID(id uuid.UUID) pgtype.UUID { return pgtype.UUID{Bytes: id, Valid: true} }
 
 func pgTime(t time.Time) pgtype.Timestamptz { return pgtype.Timestamptz{Time: t, Valid: true} }
+
+// moved answers the translation RPCs that moved to TranslationService
+// (internal/translations). They stay in the proto because removing an RPC
+// breaks the API's compatibility check.
+func moved(to string) error {
+	return connect.NewError(connect.CodeUnimplemented, errors.New("moved to TranslationService."+to))
+}
+
+func (h *Handler) ListTranslationLanguages(context.Context, *connect.Request[isshov1.ListTranslationLanguagesRequest]) (*connect.Response[isshov1.ListTranslationLanguagesResponse], error) {
+	return nil, moved("ListCatalogLanguages")
+}
+
+func (h *Handler) ListTranslations(context.Context, *connect.Request[isshov1.ListTranslationsRequest]) (*connect.Response[isshov1.ListTranslationsResponse], error) {
+	return nil, moved("ListCatalogTranslations")
+}
+
+func (h *Handler) ReviewTranslation(context.Context, *connect.Request[isshov1.ReviewTranslationRequest]) (*connect.Response[isshov1.ReviewTranslationResponse], error) {
+	return nil, moved("ReviewCatalogTranslation")
+}

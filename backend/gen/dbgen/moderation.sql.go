@@ -62,46 +62,6 @@ func (q *Queries) GetPerson(ctx context.Context, id uuid.UUID) (GetPersonRow, er
 	return i, err
 }
 
-const getTranslation = `-- name: GetTranslation :one
-select source_hash, lang, source, context, text, model, reviewed, reviewed_at, created_at
-from app.translations
-where source_hash = $1 and lang = $2
-`
-
-type GetTranslationParams struct {
-	SourceHash string
-	Lang       string
-}
-
-type GetTranslationRow struct {
-	SourceHash string
-	Lang       string
-	Source     string
-	Context    string
-	Text       string
-	Model      string
-	Reviewed   bool
-	ReviewedAt pgtype.Timestamptz
-	CreatedAt  pgtype.Timestamptz
-}
-
-func (q *Queries) GetTranslation(ctx context.Context, arg GetTranslationParams) (GetTranslationRow, error) {
-	row := q.db.QueryRow(ctx, getTranslation, arg.SourceHash, arg.Lang)
-	var i GetTranslationRow
-	err := row.Scan(
-		&i.SourceHash,
-		&i.Lang,
-		&i.Source,
-		&i.Context,
-		&i.Text,
-		&i.Model,
-		&i.Reviewed,
-		&i.ReviewedAt,
-		&i.CreatedAt,
-	)
-	return i, err
-}
-
 const insertSuspension = `-- name: InsertSuspension :execrows
 insert into app.suspensions (user_id, reason, created_by, created_at)
 values ($1, $2, $3, $4)
@@ -610,108 +570,6 @@ func (q *Queries) ListSuspendedIDs(ctx context.Context) ([]uuid.UUID, error) {
 	return items, nil
 }
 
-const listTranslationLanguages = `-- name: ListTranslationLanguages :many
-select lang, count(*)::int as total, (count(*) filter (where not reviewed))::int as unreviewed
-from app.translations
-group by lang
-order by lang
-`
-
-type ListTranslationLanguagesRow struct {
-	Lang       string
-	Total      int32
-	Unreviewed int32
-}
-
-// Languages with machine translations, and how many are still unreviewed.
-func (q *Queries) ListTranslationLanguages(ctx context.Context) ([]ListTranslationLanguagesRow, error) {
-	rows, err := q.db.Query(ctx, listTranslationLanguages)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []ListTranslationLanguagesRow
-	for rows.Next() {
-		var i ListTranslationLanguagesRow
-		if err := rows.Scan(&i.Lang, &i.Total, &i.Unreviewed); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listTranslations = `-- name: ListTranslations :many
-select source_hash, lang, source, context, text, model, reviewed, reviewed_at, created_at
-from app.translations
-where lang = $1
-  and ($2::boolean = false or not reviewed)
-  and ($3::text = '' or source ilike '%' || $3 || '%' or text ilike '%' || $3 || '%')
-order by reviewed, source, context
-limit $5 offset $4
-`
-
-type ListTranslationsParams struct {
-	Lang           string
-	UnreviewedOnly bool
-	Search         string
-	SkipRows       int32
-	MaxRows        int32
-}
-
-type ListTranslationsRow struct {
-	SourceHash string
-	Lang       string
-	Source     string
-	Context    string
-	Text       string
-	Model      string
-	Reviewed   bool
-	ReviewedAt pgtype.Timestamptz
-	CreatedAt  pgtype.Timestamptz
-}
-
-// One language's translations, unreviewed ones first, matching @search in
-// the English source or the translation (” = all).
-func (q *Queries) ListTranslations(ctx context.Context, arg ListTranslationsParams) ([]ListTranslationsRow, error) {
-	rows, err := q.db.Query(ctx, listTranslations,
-		arg.Lang,
-		arg.UnreviewedOnly,
-		arg.Search,
-		arg.SkipRows,
-		arg.MaxRows,
-	)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []ListTranslationsRow
-	for rows.Next() {
-		var i ListTranslationsRow
-		if err := rows.Scan(
-			&i.SourceHash,
-			&i.Lang,
-			&i.Source,
-			&i.Context,
-			&i.Text,
-			&i.Model,
-			&i.Reviewed,
-			&i.ReviewedAt,
-			&i.CreatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const resolveModerationFlag = `-- name: ResolveModerationFlag :execrows
 update app.moderation_flags
 set resolved_at = $1, resolved_by = $2, note = $3, updated_at = $1
@@ -761,35 +619,6 @@ func (q *Queries) ResolveReport(ctx context.Context, arg ResolveReportParams) (i
 		arg.ReviewedBy,
 		arg.At,
 		arg.ID,
-	)
-	if err != nil {
-		return 0, err
-	}
-	return result.RowsAffected(), nil
-}
-
-const reviewTranslation = `-- name: ReviewTranslation :execrows
-update app.translations
-set text = $1, reviewed = true, reviewed_by = $2, reviewed_at = $3
-where source_hash = $4 and lang = $5
-`
-
-type ReviewTranslationParams struct {
-	Text       string
-	ReviewedBy pgtype.UUID
-	At         pgtype.Timestamptz
-	SourceHash string
-	Lang       string
-}
-
-// A person corrected (or confirmed) it: it's kept from then on.
-func (q *Queries) ReviewTranslation(ctx context.Context, arg ReviewTranslationParams) (int64, error) {
-	result, err := q.db.Exec(ctx, reviewTranslation,
-		arg.Text,
-		arg.ReviewedBy,
-		arg.At,
-		arg.SourceHash,
-		arg.Lang,
 	)
 	if err != nil {
 		return 0, err

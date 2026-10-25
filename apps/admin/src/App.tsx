@@ -69,12 +69,17 @@ export function App() {
 
   if (session === undefined) return null;
   if (!session) return <SignIn />;
-  return <Console />;
+  return <Console email={session.user.email ?? ''} />;
 }
 
-function Console() {
+/**
+ * Admins get every page; translators (tool set-translator) only the
+ * translation editor, for their languages. The API enforces both; this
+ * only decides what to show.
+ */
+function Console({ email }: { email: string }) {
   const queryClient = useQueryClient();
-  const me = useQuery({ queryKey: ['moderator'], queryFn: () => api.moderation.getModerator({}), retry: false });
+  const me = useQuery({ queryKey: ['translator'], queryFn: () => api.translation.getTranslator({}), retry: false });
   const [{ page, personId, about, planId, eventId, cityId }, setRoute] = useState(routeFromHash);
   useEffect(() => {
     const onHash = () => setRoute(routeFromHash());
@@ -93,10 +98,10 @@ function Console() {
     return (
       <main className="center">
         <div className="card narrow">
-          <h1>{denied ? 'Not an admin' : 'Something went wrong'}</h1>
+          <h1>{denied ? 'No access' : 'Something went wrong'}</h1>
           <p className="muted">
             {denied
-              ? 'This account has no admin role. An admin can grant it with `tool set-admin`; then check again.'
+              ? 'This account isn\'t an admin or a translator. An admin can grant a role with `tool set-admin` or `tool set-translator`; then check again.'
               : ConnectError.from(me.error).message}
           </p>
           <div className="row">
@@ -109,8 +114,11 @@ function Console() {
     );
   }
 
-  const Current = pages[page].component;
-  const content = personId ? <Person key={personId} userId={personId} />
+  const admin = me.data.admin;
+  const shownPages = admin ? (Object.keys(pages) as Page[]) : (['translations'] as Page[]);
+  const Current = admin ? pages[page].component : Translations;
+  const content = !admin ? <Translations />
+    : personId ? <Person key={personId} userId={personId} />
     : planId ? <PlanDetail key={planId} planId={planId} />
     : eventId ? <GroupReview key={eventId} eventId={eventId} />
     : cityId ? <CityEditor key={cityId} cityId={cityId} />
@@ -121,11 +129,11 @@ function Console() {
       <header className="topbar">
         <span className="brand">ISSHO <span className="muted">admin</span></span>
         <nav>
-          {(Object.keys(pages) as Page[]).map((p) => (
-            <a key={p} href={`#/${p}`} className={p === page ? 'active' : undefined}>{pages[p].label}</a>
+          {shownPages.map((p) => (
+            <a key={p} href={`#/${p}`} className={p === page || !admin ? 'active' : undefined}>{pages[p].label}</a>
           ))}
         </nav>
-        <span className="who muted">{me.data.email}</span>
+        <span className="who muted">{email}{admin ? '' : ` · translator (${me.data.languages.join(', ')})`}</span>
         <button className="secondary small" onClick={signOut}>Sign out</button>
       </header>
       <main className="content">

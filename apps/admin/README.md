@@ -15,7 +15,7 @@ The admin SPA (M8): Vite + React, signed in with Supabase Auth (email code, like
 | Flags | System signals for a person to look at (today: meet-again picks leaning to one gender, in words); resolve with a note | `ListFlags`, `ResolveFlag` |
 | Crew leaves | Why people left crews, newest first, by reason; "made me uncomfortable" stands out | `ListCrewLeaves` |
 | People | Search by name, email or user id; everyone suspended now. A person view (`#/person/<id>`, also linked from names on reports and flags): email, joined, gender and age, home, report counts (with a link to their reports), flags, the last 50 outings (answer, checked in, what their feedback said) and suspension history. **Suspend** with a reason (after a confirm step) or **lift** with a note. | `SearchPeople`, `ListSuspended`, `GetPerson`, `SuspendPerson`, `LiftSuspension` |
-| Translations | Machine translations per language, unchecked first, with search; correct or confirm one ("Looks right"). Placeholders like `{email}` must be kept (checked here and by the API). A checked translation is never replaced by a machine one. | `ListTranslationLanguages`, `ListTranslations`, `ReviewTranslation` |
+| Translations | The translation editor, for admins and translators. **App text:** every UI string of a language with its plain English, the owner's livelier English, the note, the machine translation and any human version; filters *To check*, *English changed* (stale), *In pull request* and *All*. **Looks right** keeps the machine text as checked, **Save** keeps an edited one, **Use the machine text** removes a human version; each is a commit to the language's one open pull request (linked at the top), which the owner merges. Opening a language starts its machine translations, so it opens on one with an open pull request, then one with human versions, then English. **Activities, places and emails:** machine translations corrected in the database, as before. Placeholders like `{email}` must be kept (checked here and by the API). | `TranslationService` |
 
 `ModerationService`, `ReviewService`, `CurationService`, `MetricsService` and `CityPackService` are admin-only (see below). Report and flag decisions don't change matching (a report already keeps the pair apart); a suspension does: see the backend README.
 
@@ -32,7 +32,14 @@ go run ./cmd/tool set-admin someone@example.com          # grant
 go run ./cmd/tool set-admin -revoke someone@example.com  # remove
 ```
 
-It needs `DATABASE_URL`, `SUPABASE_URL` and `SUPABASE_SECRET_KEY` for the target project (e.g. `make`-style `ENV_FILE`, or exported in your shell; never printed). The account must exist: sign in to the app once (this page never creates accounts: it signs in with `shouldCreateUser: false`). A change applies at the next token refresh; the "Not an admin" screen's **Check again** refreshes at once.
+**Translators** see only the Translations page, for their languages (`app_metadata.translator_langs`):
+
+```sh
+go run ./cmd/tool set-translator someone@example.com ja,es   # grant (replaces their languages)
+go run ./cmd/tool set-translator -revoke someone@example.com # remove
+```
+
+Both need `DATABASE_URL`, `SUPABASE_URL` and `SUPABASE_SECRET_KEY` for the target project (e.g. `make`-style `ENV_FILE`, or exported in your shell; never printed). The account must exist: sign in to the app once (this page never creates accounts: it signs in with `shouldCreateUser: false`). A change applies at the next token refresh; the "No access" screen's **Check again** refreshes at once. The console asks `TranslationService.GetTranslator` who the caller is.
 
 ## Run locally
 

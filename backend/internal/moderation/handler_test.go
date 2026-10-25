@@ -14,7 +14,6 @@ import (
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
 	"github.com/shrujancheruku/issho/backend/internal/plans"
 	"github.com/shrujancheruku/issho/backend/internal/platform/auth"
-	"github.com/shrujancheruku/issho/backend/internal/translate"
 )
 
 func TestNonAdminRefused(t *testing.T) {
@@ -47,8 +46,7 @@ func TestIntegrationQueue(t *testing.T) {
 	reporter := uuid.NewSHA1(uuid.NameSpaceURL, []byte("issho-test:moderation/reporter"))
 	reported := uuid.NewSHA1(uuid.NameSpaceURL, []byte("issho-test:moderation/reported"))
 	adminID := uuid.NewSHA1(uuid.NameSpaceURL, []byte("issho-test:moderation/admin"))
-	const city, source = "moderation-test", "Moderation test: code sent to {email}"
-	hash := translate.Key(source, "test")
+	const city = "moderation-test"
 	users := []uuid.UUID{reporter, reported}
 	var supabase bool
 	if err := pool.QueryRow(ctx, "select exists (select 1 from pg_namespace where nspname = 'auth')").Scan(&supabase); err != nil {
@@ -58,7 +56,6 @@ func TestIntegrationQueue(t *testing.T) {
 		stmts := [][]any{
 			{"delete from app.users where id = any($1)", users},
 			{"delete from app.cities where id = $1", city},
-			{"delete from app.translations where source_hash = $1", hash},
 		}
 		if supabase {
 			stmts = append(stmts, []any{"delete from auth.users where id = any($1)", users})
@@ -86,7 +83,6 @@ func TestIntegrationQueue(t *testing.T) {
 		[]any{`insert into app.moderation_flags (user_id, kind, details) values ($1, 'pick_gender_lean', '{"gender":"woman"}')`, reporter},
 		[]any{`with c as (insert into app.crews (city_id, area_id, offer_until) values ($1, $1, now()) returning id)
 		       insert into app.crew_leaves (crew_id, user_id, reason, details) select id, $2, 'uncomfortable', 'Too pushy' from c`, city, reporter},
-		[]any{"insert into app.translations (source_hash, lang, source, context, text, model) values ($1, 'ja', $2, 'test', '{email} にコードを送信', 'machine')", hash, source},
 		// The reported person has a profile in the city (so matching sees
 		// them) and a phone that gets notifications.
 		[]any{`insert into app.profiles (user_id, display_name, birth_year, gender, home_area_id, max_travel_min, energy, budget, size_pref, primary_language, conduct_version)
@@ -174,34 +170,6 @@ func TestIntegrationQueue(t *testing.T) {
 	}
 	if !found {
 		t.Fatalf("crew leave not listed: %v", leaves.Msg.Leaves)
-	}
-
-	// Translations: a correction must keep {email}; a reviewed one is never
-	// overwritten by a machine translation.
-	list, err := h.ListTranslations(ctx, connect.NewRequest(&isshov1.ListTranslationsRequest{Lang: "ja", UnreviewedOnly: true, Search: "moderation test"}))
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(list.Msg.Translations) != 1 || list.Msg.Translations[0].SourceHash != hash {
-		t.Fatalf("translations = %v", list.Msg.Translations)
-	}
-	if _, err := h.ReviewTranslation(ctx, connect.NewRequest(&isshov1.ReviewTranslationRequest{SourceHash: hash, Lang: "ja", Text: "コードを送信しました"})); connect.CodeOf(err) != connect.CodeInvalidArgument {
-		t.Fatalf("lost placeholder: %v", err)
-	}
-	res, err := h.ReviewTranslation(ctx, connect.NewRequest(&isshov1.ReviewTranslationRequest{SourceHash: hash, Lang: "ja", Text: "{email} にコードを送信しました"}))
-	if err != nil {
-		t.Fatal(err)
-	}
-	if tr := res.Msg.Translation; !tr.Reviewed || tr.Text != "{email} にコードを送信しました" {
-		t.Fatalf("reviewed = %v", tr)
-	}
-	if err := q.InsertTranslation(context.Background(), dbgen.InsertTranslationParams{
-		SourceHash: hash, Lang: "ja", Source: source, Context: "test", Text: "machine again", Model: "machine",
-	}); err != nil {
-		t.Fatal(err)
-	}
-	if got, _ := q.GetTranslation(context.Background(), dbgen.GetTranslationParams{SourceHash: hash, Lang: "ja"}); got.Text != "{email} にコードを送信しました" {
-		t.Fatalf("machine translation overwrote the review: %q", got.Text)
 	}
 
 	// People: found by name, then their view; suspended (not themselves),

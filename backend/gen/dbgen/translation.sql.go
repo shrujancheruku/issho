@@ -11,6 +11,46 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const getTranslation = `-- name: GetTranslation :one
+select source_hash, lang, source, context, text, model, reviewed, reviewed_at, created_at
+from app.translations
+where source_hash = $1 and lang = $2
+`
+
+type GetTranslationParams struct {
+	SourceHash string
+	Lang       string
+}
+
+type GetTranslationRow struct {
+	SourceHash string
+	Lang       string
+	Source     string
+	Context    string
+	Text       string
+	Model      string
+	Reviewed   bool
+	ReviewedAt pgtype.Timestamptz
+	CreatedAt  pgtype.Timestamptz
+}
+
+func (q *Queries) GetTranslation(ctx context.Context, arg GetTranslationParams) (GetTranslationRow, error) {
+	row := q.db.QueryRow(ctx, getTranslation, arg.SourceHash, arg.Lang)
+	var i GetTranslationRow
+	err := row.Scan(
+		&i.SourceHash,
+		&i.Lang,
+		&i.Source,
+		&i.Context,
+		&i.Text,
+		&i.Model,
+		&i.Reviewed,
+		&i.ReviewedAt,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const listCatalogLanguages = `-- name: ListCatalogLanguages :many
 
 select lang, count(*)::int as total, (count(*) filter (where not reviewed))::int as unreviewed
@@ -119,4 +159,68 @@ func (q *Queries) ListCatalogTranslations(ctx context.Context, arg ListCatalogTr
 		return nil, err
 	}
 	return items, nil
+}
+
+const listTranslationLanguages = `-- name: ListTranslationLanguages :many
+select lang, count(*)::int as total, (count(*) filter (where not reviewed))::int as unreviewed
+from app.translations
+group by lang
+order by lang
+`
+
+type ListTranslationLanguagesRow struct {
+	Lang       string
+	Total      int32
+	Unreviewed int32
+}
+
+// Languages with any machine translations, UI strings included (for the
+// admins' list of languages).
+func (q *Queries) ListTranslationLanguages(ctx context.Context) ([]ListTranslationLanguagesRow, error) {
+	rows, err := q.db.Query(ctx, listTranslationLanguages)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListTranslationLanguagesRow
+	for rows.Next() {
+		var i ListTranslationLanguagesRow
+		if err := rows.Scan(&i.Lang, &i.Total, &i.Unreviewed); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const reviewTranslation = `-- name: ReviewTranslation :execrows
+update app.translations
+set text = $1, reviewed = true, reviewed_by = $2, reviewed_at = $3
+where source_hash = $4 and lang = $5
+`
+
+type ReviewTranslationParams struct {
+	Text       string
+	ReviewedBy pgtype.UUID
+	At         pgtype.Timestamptz
+	SourceHash string
+	Lang       string
+}
+
+// A person corrected (or confirmed) it: it's kept from then on.
+func (q *Queries) ReviewTranslation(ctx context.Context, arg ReviewTranslationParams) (int64, error) {
+	result, err := q.db.Exec(ctx, reviewTranslation,
+		arg.Text,
+		arg.ReviewedBy,
+		arg.At,
+		arg.SourceHash,
+		arg.Lang,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }

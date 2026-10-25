@@ -137,6 +137,7 @@ tr.attention { background: var(--attention); }
 .translation .source p { margin: 0; }
 .translation .target { display: grid; gap: 0.4rem; }
 .translation.reviewed { border-left: 3px solid var(--ok); }
+.translation.pending { border-left: 3px solid var(--gold); }
 @media (max-width: 640px) { .translation { grid-template-columns: 1fr; } }
 
 /* People */
