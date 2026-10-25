@@ -326,8 +326,10 @@ func (r *Runner) schedulePlan(ctx context.Context, q *dbgen.Queries, c *City, us
 		}
 		return 1, 0, Close(ctx, q, p.ID, reason, now)
 	}
-	act := acts[p.Activity]
-	if act == nil {
+	// A plan of two activities asks its groups for both (sizes, part of the
+	// day): Activity.With.
+	act := acts[p.Activity].With(acts[p.FollowUp])
+	if acts[p.Activity] == nil {
 		// Disabled in the city since the plan opened.
 		return closeAs(ClosedWithdrawn)
 	}

@@ -90,7 +90,7 @@ func loadPlaces(ctx context.Context, q *dbgen.Queries, cityID string, month time
 		m := matching.Activity{
 			ID: matching.ActivityID(a.ID), Category: a.Category, CostLevel: int(a.CostLevel),
 			Conversational: a.Conversational, MinSize: int(a.MinGroupSize), MaxSize: int(a.MaxGroupSize),
-			Walk: a.WalkTheme != nil,
+			Walk: a.WalkTheme != nil, Energy: int(a.Energy), Hours: a.Hours,
 		}
 		if a.WalkTheme != nil {
 			c.WalkThemes[m.ID] = *a.WalkTheme

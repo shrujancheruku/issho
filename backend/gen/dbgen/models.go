@@ -23,6 +23,7 @@ type AppActivity struct {
 	VenueCategories []string
 	Blocks          []string
 	WalkTheme       *string
+	Hours           pgtype.Numeric
 }
 
 type AppArea struct {

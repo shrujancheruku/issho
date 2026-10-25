@@ -218,6 +218,10 @@ func simulate(args []string) error {
 	seed := fs.Uint64("seed", 1, "random seed; the same seed generates the same city")
 	month := fs.Int("month", int(time.Now().Month()), "month for seasonal activities (1-12, 0 = ignore seasons)")
 	config := fs.String("config", "{}", "matching config overrides as JSON, e.g. '{\"language_pairs\":[[\"ja\",\"en\"]]}'")
+	thin := fs.Float64("thin", 0, "signup behaviour: how much less people sign up for a plan that fills less of an outing (0-1)")
+	variety := fs.Float64("variety", 0, "signup behaviour: how much more people sign up for two activities")
+	neutral := fs.Float64("neutral", 0, "signup behaviour: how much people enjoy the half of a two-activity plan they had no preference for (0 = 0.25)")
+	seeds := fs.Int("seeds", 1, "with more than 1, run that many cities (seed, seed+1, …) and print averages only")
 	_ = fs.Parse(args)
 	if fs.NArg() == 0 {
 		return fmt.Errorf("usage: tool simulate [flags] <citypack.json>...")
@@ -235,7 +239,31 @@ func simulate(args []string) error {
 		if err != nil {
 			return err
 		}
-		st := sim.Run(pack, acts, sim.Options{Users: *users, Seed: *seed, Month: time.Month(*month)}, cfg)
+		opt := sim.Options{Users: *users, Seed: *seed, Month: time.Month(*month), ThinPenalty: *thin, VarietyBonus: *variety, Neutral: *neutral}
+		if *seeds > 1 {
+			// Averages: scheduled plans (when ready + at the deadline), of
+			// them with two activities, people invited, plans suggested.
+			var sched, ready, two, invited, signedUp, suggested, users float64
+			for i := range *seeds {
+				opt.Seed = *seed + uint64(i)
+				st := sim.Run(pack, acts, opt, cfg)
+				if len(st.Violations) > 0 {
+					return fmt.Errorf("%s seed %d: %d rule violations", pack.ID, opt.Seed, len(st.Violations))
+				}
+				sched += float64(st.Ready + st.Forced)
+				ready += float64(st.Ready)
+				users += float64(st.Users)
+				two += float64(st.TwoScheduled)
+				invited += float64(st.Invited)
+				signedUp += float64(st.SignedUp)
+				suggested += float64(st.Suggestions)
+			}
+			n := float64(*seeds)
+			fmt.Printf("%s\tsuggested %.1f\tfilled before the deadline %.1f\tscheduled %.1f\ttwo-activity %.1f\tpeople with an outing %.1f%% (%.1f of %.1f signed up)\n",
+				pack.ID, suggested/n, ready/n, sched/n, two/n, 100*invited/users, invited/n, signedUp/n)
+			continue
+		}
+		st := sim.Run(pack, acts, opt, cfg)
 		fmt.Printf("== %s\n%s\n", pack.ID, st)
 		if len(st.Violations) > 0 {
 			return fmt.Errorf("%s: %d rule violations", pack.ID, len(st.Violations))

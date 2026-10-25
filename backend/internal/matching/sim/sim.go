@@ -27,6 +27,14 @@ type Options struct {
 	Month time.Month // for seasonal activities; 0 = ignore seasons
 	Start time.Time  // first day of the plans' window (midnight UTC); zero = 2026-11-02
 	Days  int        // length of the window; 0 = 14
+	// How people respond to a plan's shape, a guess to test choices
+	// against: ThinPenalty lowers the chance of signing up for a plan that
+	// fills less of an outing (0.5: half the chance for a plan that fills
+	// none), VarietyBonus raises it for two activities. Neutral is how
+	// much people actually enjoy the half of a two-activity plan they had no
+	// preference for (the engine's own guess is Config.NeutralInterest);
+	// 0 = 0.25.
+	ThinPenalty, VarietyBonus, Neutral float64
 }
 
 // City is a generated city: the engine's inputs.
@@ -182,6 +190,7 @@ func activities(pack cities.Pack, catalogue []cities.Activity, month time.Month)
 		m := matching.Activity{
 			ID: matching.ActivityID(a.ID), Category: a.Category, CostLevel: int(a.CostLevel),
 			Conversational: a.Conversational, MinSize: int(a.MinGroupSize), MaxSize: int(a.MaxGroupSize),
+			Walk: a.WalkTheme != "", Hours: a.Hours, Energy: int(a.Energy),
 		}
 		for _, c := range a.VenueCategories {
 			m.VenueCategories = append(m.VenueCategories, matching.CategoryID(c))
@@ -258,15 +267,17 @@ var (
 // Stats summarise one run.
 type Stats struct {
 	Users, Suggestions, Signups, SignedUp int // SignedUp: people with at least one signup
-	SignupsBy                             map[matching.Level]int
-	Ready, Forced, Unscheduled            int               // plans: scheduled when ready, at the deadline, not at all
-	Groups, Invited                       int               // Invited: distinct people
-	Sizes                                 map[int]int       // people invited → groups
-	Pairs, LoneGender                     int               // groups of 2; groups with an only woman or only man
-	InvitedBy                             map[string][2]int // "gender:woman", "lang:ja" → invited, signed up
-	TopActivities                         []string
-	Violations                            []string // should always be empty
-	Duration                              time.Duration
+	// Suggested and scheduled plans with two activities.
+	TwoSuggested, TwoScheduled int
+	SignupsBy                  map[matching.Level]int
+	Ready, Forced, Unscheduled int               // plans: scheduled when ready, at the deadline, not at all
+	Groups, Invited            int               // Invited: distinct people
+	Sizes                      map[int]int       // people invited → groups
+	Pairs, LoneGender          int               // groups of 2; groups with an only woman or only man
+	InvitedBy                  map[string][2]int // "gender:woman", "lang:ja" → invited, signed up
+	TopActivities              []string
+	Violations                 []string // should always be empty
+	Duration                   time.Duration
 }
 
 // Run generates a city and runs suggest → signups → schedule on it. Plans
@@ -299,24 +310,47 @@ func Run(pack cities.Pack, catalogue []cities.Activity, opt Options, cfg matchin
 	}, cfg)
 	open := make([]matching.OpenPlan, len(suggestions))
 	index := map[matching.Plan]int{}
+	// What a plan asks of its groups, and how much it attracts people
+	// (Options.ThinPenalty, VarietyBonus).
+	shape := make([]*matching.Activity, len(suggestions))
+	pull := make([]float64, len(suggestions))
 	for i, s := range suggestions {
 		open[i] = matching.OpenPlan{Plan: s.Plan}
 		index[s.Plan] = i
+		shape[i] = acts[s.Activity].With(acts[s.FollowUp])
+		fill := min(1, shape[i].Hours/cfg.OutingHours)
+		if shape[i].Hours == 0 {
+			fill = min(1, matching.DefaultHours/cfg.OutingHours)
+		}
+		pull[i] = 1 - opt.ThinPenalty*(1-fill)
+		if s.FollowUp != "" {
+			pull[i] *= 1 + opt.VarietyBonus
+		}
 	}
 
 	st := Stats{Users: len(city.Users), Suggestions: len(open), SignupsBy: map[matching.Level]int{},
-		Sizes: map[int]int{}, InvitedBy: map[string][2]int{}}
+		TwoSuggested: count(suggestions, func(s matching.Suggestion) bool { return s.FollowUp != "" }),
+		Sizes:        map[int]int{}, InvitedBy: map[string][2]int{}}
 	signups := make([][]matching.Signup, len(open))
+	// People's own taste, apart from what the engine assumes.
+	people := cfg
+	people.NeutralInterest = cmp.Or(opt.Neutral, 0.25)
 	// People arrive one by one, so later arrivals see earlier signups as
 	// momentum.
 	for _, i := range r.Perm(len(city.Users)) {
 		u := &city.Users[i]
 		n := 0
 		for _, item := range matching.Feed(u, open, acts, city.Travel, cfg, nil)[:min(scrollDepth, len(open))] {
-			if n == maxSignups || r.Float64() >= signupChance[item.Level] {
+			p := index[item.Plan]
+			// Liking only one of two activities makes a plan less tempting:
+			// in proportion to its appeal against the part liked most.
+			mood := 1.0
+			if v, best, _, ok := matching.PlanInterest(u, item.Plan, acts, people); ok && best > 0 {
+				mood = v / best
+			}
+			if n == maxSignups || r.Float64() >= signupChance[item.Level]*pull[p]*mood {
 				continue
 			}
-			p := index[item.Plan]
 			signups[p] = append(signups[p], signup(r, u, window))
 			open[p].Signups++
 			st.SignupsBy[item.Level]++
@@ -348,7 +382,7 @@ func Run(pack cities.Pack, catalogue []cities.Activity, opt Options, cfg matchin
 				ss[i] = s
 			}
 			got, ok := matching.Schedule(matching.ScheduleInput{
-				Plan: open[p].Plan, Activity: acts[open[p].Activity], Signups: ss, Users: users,
+				Plan: open[p].Plan, Activity: shape[p], Signups: ss, Users: users,
 				Relations: city.Relations, Window: window,
 			}, cfg, force)
 			if !ok {
@@ -361,6 +395,10 @@ func Run(pack cities.Pack, catalogue []cities.Activity, opt Options, cfg matchin
 				st.Ready++
 			}
 			acted[string(open[p].Activity)]++
+			if open[p].FollowUp != "" {
+				st.TwoScheduled++
+				acted[string(open[p].Activity)+"+"+string(open[p].FollowUp)]++
+			}
 			st.check(got, ss, users, city.Relations, cfg)
 			for _, g := range got.Groups {
 				for _, id := range g.Invited {
@@ -487,7 +525,8 @@ func (s Stats) String() string {
 		s.Users, s.Suggestions, s.Signups, rate(s.SignedUp, s.Users),
 		s.SignupsBy[matching.Top], s.SignupsBy[matching.Good], s.SignupsBy[matching.Maybe], s.SignupsBy[matching.Low],
 		s.Duration.Round(time.Millisecond))
-	fmt.Fprintf(&b, "plans scheduled when ready %d, at the deadline %d, not at all %d\n", s.Ready, s.Forced, s.Unscheduled)
+	fmt.Fprintf(&b, "plans scheduled when ready %d, at the deadline %d, not at all %d · two activities: %d suggested, %d scheduled\n",
+		s.Ready, s.Forced, s.Unscheduled, s.TwoSuggested, s.TwoScheduled)
 	fmt.Fprintf(&b, "groups %d · invited %s of people who signed up · pairs %d · with an only woman or only man %d\n",
 		s.Groups, rate(s.Invited, s.SignedUp), s.Pairs, s.LoneGender)
 	var sizes []string
@@ -505,4 +544,14 @@ func (s Stats) String() string {
 		fmt.Fprintf(&b, "  %s\n", v)
 	}
 	return b.String()
+}
+
+func count[T any](xs []T, f func(T) bool) int {
+	n := 0
+	for _, x := range xs {
+		if f(x) {
+			n++
+		}
+	}
+	return n
 }

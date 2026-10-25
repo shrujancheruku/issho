@@ -14,13 +14,14 @@ on conflict (id) do update set
 
 -- name: UpsertActivity :exec
 insert into app.activities (id, name, category, indoor, energy, cost_level, conversational,
-                            skill_dependent, min_group_size, max_group_size)
-values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+                            skill_dependent, min_group_size, max_group_size, hours)
+values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::float8)
 on conflict (id) do update set
   name = excluded.name, category = excluded.category, indoor = excluded.indoor,
   energy = excluded.energy, cost_level = excluded.cost_level,
   conversational = excluded.conversational, skill_dependent = excluded.skill_dependent,
-  min_group_size = excluded.min_group_size, max_group_size = excluded.max_group_size;
+  min_group_size = excluded.min_group_size, max_group_size = excluded.max_group_size,
+  hours = excluded.hours;
 
 -- name: UpsertCityActivityOverride :exec
 insert into app.city_activity_overrides (city_id, activity_id, enabled, name, months)
