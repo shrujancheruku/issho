@@ -7,6 +7,7 @@ import { useAuth } from '@/features/auth/auth-provider';
 import { api } from '@/lib/api';
 
 import { fromBundle } from './bundle';
+import { applyDirection } from './direction';
 import { readCached, writeCached, type CachedStrings } from './cache';
 import { deviceLanguages } from './device';
 import { catalogFingerprint, displayEnglish, lookup, pseudoEnglish, type Params, type StringKey } from './strings';
@@ -65,6 +66,8 @@ export function I18nProvider({ children }: PropsWithChildren) {
   const languages: Languages = session
     ? (previewing ?? account ?? { primary: devicePrimary, secondary: '' })
     : { primary: devicePrimary, secondary: '' };
+  // The layout follows the primary language's direction (direction.ts).
+  useEffect(() => applyDirection(languages.primary), [languages.primary]);
   const primary = useUiStrings(languages.primary);
   const secondary = useUiStrings(languages.secondary);
   const shown = showing === 'secondary' && languages.secondary ? 'secondary' : 'primary';
