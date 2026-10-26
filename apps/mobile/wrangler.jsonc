@@ -6,6 +6,9 @@
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "issho-web",
   "compatibility_date": "2026-10-23",
+  // app.joinissho.com (Cloudflare creates its DNS record); the workers.dev
+  // address keeps working too.
+  "routes": [{ "pattern": "app.joinissho.com", "custom_domain": true }],
   "assets": {
     "directory": "./dist",
     // Expo Router routes are client-side: unknown paths get index.html.
