@@ -15,3 +15,5 @@ Preview locally: `python3 -m http.server -d site 8000`.
 - The community steps are a gold thread with a gold knot at each step, drawn in CSS (no images).
 - The kanji cards colour each part like the logo: gold strokes (一, 糸), black ink outlined in gold (者), red sun (日).
 - Kanji in the breakdown use Noto Serif JP ExtraBold (800), the same font and weight as the logo, loaded as a four-character subset from Google Fonts.
+
+**Hosting:** a static-assets Worker (`issho-site`, `wrangler.jsonc`) at `joinissho.com` and `www.joinissho.com`; `npx wrangler deploy` in this folder publishes it (`.assetsignore` keeps this README and the config out).

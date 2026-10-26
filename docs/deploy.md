@@ -9,10 +9,25 @@ app / admin SPA ──HTTPS──▶ Cloudflare ──HTTPS (origin certificate)
 
 **Status:** prepared, not deployed. `config/deploy.yml` is checked by Kamal (2.12) and the image is built and run in CI, but the server, domain and registry account are placeholders marked `TODO` until they exist (ROADMAP M9). Until then, the API runs on a dev machine behind a quick tunnel.
 
+## Domain: joinissho.com
+
+Registered at Porkbun (2026-10-26); its DNS is moved to Cloudflare, which also serves the sites.
+
+| Host | What | Where |
+|---|---|---|
+| `joinissho.com`, `www.joinissho.com` | marketing page (`site/`) | Worker `issho-site` |
+| `app.joinissho.com` | the app's web build | Worker `issho-web` |
+| `admin.joinissho.com` | admin SPA | Worker `issho-admin` |
+| `api.joinissho.com` | Go API | the VPS, through Cloudflare (proxied) |
+
+The Workers' `wrangler.jsonc` files claim their host names as custom domains, so a deploy creates their DNS records. The `workers.dev` addresses keep working.
+
+**Moving DNS to Cloudflare (owner, once):** in Cloudflare, *Add a domain* → `joinissho.com`, Free plan; delete the imported Porkbun parking records; at Porkbun, *Domain → Authoritative nameservers* → Cloudflare's two (and switch off Porkbun's DNSSEC first, if on). The zone is active once Cloudflare sees the change (usually under an hour). Then SSL/TLS mode **Full (strict)**.
+
 ## One-time setup
 
 1. **A VPS** with a recent Ubuntu or Debian, amd64, reachable over SSH with your key as `root` (Kamal installs Docker on first setup). 2 GB of memory is plenty. Allow only ports 22, 80 and 443; ideally 80 and 443 only from [Cloudflare's addresses](https://www.cloudflare.com/ips/).
-2. **The API's domain on Cloudflare:** an `A` record for the API's host name (e.g. `api.<domain>`) pointing at the VPS, **proxied** (orange cloud). SSL/TLS mode **Full (strict)**.
+2. **The API's domain on Cloudflare:** an `A` record for `api.joinissho.com` pointing at the VPS, **proxied** (orange cloud). SSL/TLS mode **Full (strict)**.
 3. **A Cloudflare origin certificate** for that host (SSL/TLS → Origin Server → Create certificate). Save the certificate and key outside the repository, e.g. `~/.config/issho/origin-cert.pem` and `origin-key.pem`.
 4. **A registry token:** a GitHub personal access token (classic) with `write:packages`, exported as `KAMAL_REGISTRY_PASSWORD` when deploying. The image is pushed to `ghcr.io/<owner>/issho-backend`; keep the package private.
 5. **A production Supabase project**, configured as in [supabase-hosted.md](supabase-hosted.md), and its values in a gitignored `.env.issho-prod` (same names as `.env.issho-dev`). `DATABASE_URL` must be a **session-mode** connection (direct, or the session pooler): the API listens for chat messages and the worker for River jobs.

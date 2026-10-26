@@ -4,6 +4,9 @@
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "issho-admin",
   "compatibility_date": "2026-10-23",
+  // admin.joinissho.com (Cloudflare creates its DNS record); the workers.dev
+  // address keeps working too.
+  "routes": [{ "pattern": "admin.joinissho.com", "custom_domain": true }],
   "assets": {
     "directory": "./dist",
     // Unknown paths get index.html, so a reload on any route works.

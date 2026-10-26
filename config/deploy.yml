@@ -2,13 +2,13 @@
 # River worker, both from backend/Dockerfile, on one VPS behind Cloudflare.
 # Supabase stays hosted; nothing else runs on the server.
 #
-# Not used yet: the server, domain and registry account below are
-# placeholders (marked TODO) until they exist. See docs/deploy.md for the
+# The domain is joinissho.com (api.joinissho.com for the API). Still a
+# placeholder (marked TODO): the server's address. See docs/deploy.md for the
 # one-time setup and the deploy steps.
 
 service: issho
 
-# TODO: the registry account (GitHub Container Registry, under the repo owner).
+# GitHub Container Registry, under the repository's owner (private package).
 image: shrujancheruku/issho-backend
 
 servers:
@@ -24,7 +24,7 @@ servers:
     proxy: false
 
 proxy:
-  host: api.example.com # TODO: the API's domain, proxied by Cloudflare
+  host: api.joinissho.com # proxied by Cloudflare
   app_port: 8080
   # Cloudflare terminates TLS for clients and connects to the server over
   # HTTPS with a Cloudflare origin certificate (SSL mode "Full (strict)").
@@ -45,7 +45,7 @@ proxy:
 
 registry:
   server: ghcr.io
-  username: shrujancheruku # TODO: the registry account
+  username: shrujancheruku
   password:
     - KAMAL_REGISTRY_PASSWORD
 
@@ -63,7 +63,8 @@ env:
     API_ADDR: ":8080"
     # TODO: the production Supabase project and the hosted front ends.
     SUPABASE_URL: https://your-project-ref.supabase.co
-    ALLOWED_ORIGINS: https://issho-admin.shrujancheruku.workers.dev,https://issho-web.shrujancheruku.workers.dev
+    # The sites on joinissho.com, plus their workers.dev addresses while both work.
+    ALLOWED_ORIGINS: https://admin.joinissho.com,https://app.joinissho.com,https://issho-admin.shrujancheruku.workers.dev,https://issho-web.shrujancheruku.workers.dev
     SENTRY_ENVIRONMENT: production
   secret:
     # A session-mode connection (direct or the session pooler), never the
