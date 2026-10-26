@@ -56,6 +56,8 @@ curl -X POST -H 'Content-Type: application/json' -d '{}' https://<api host>/issh
 kamal logs-api          # or logs-worker
 ```
 
+**Checking Sentry:** `kamal app exec --primary "tool sentry-test"` sends one test error to the `issho-api` project (Sentry organisation `shrujan`, EU region), as the API and worker would.
+
 **Seeding and Google tools** run the same way, inside the image: `kamal app exec --primary "tool seed /data/citypacks/tokyo.json"` (the catalogue is seeded too).
 
 **Rolling back:** `kamal rollback <version>` (versions are commit hashes; `kamal app containers` lists them). Migrations aren't rolled back.
