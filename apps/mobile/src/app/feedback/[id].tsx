@@ -1,14 +1,18 @@
 import { Code, ConnectError } from '@issho/api-client';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { Avatar } from '@/components/avatar';
 import { Chip } from '@/components/chip';
 import { LanguageSwitch } from '@/components/language-switch';
+import { PressableScale } from '@/components/pressable-scale';
 import { PrimaryButton } from '@/components/primary-button';
+import { BackLink, TextLink } from '@/components/text-link';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { Thread } from '@/components/thread';
 import { FormWidth, Spacing } from '@/constants/theme';
 import { useEvent, useFeedback, useSubmitFeedback, type FeedbackAnswer } from '@/features/events/data';
 import { Heading } from '@/features/plans/fact';
@@ -17,6 +21,7 @@ import { useNow } from '@/hooks/use-now';
 import { useTheme } from '@/hooks/use-theme';
 import { useI18n } from '@/i18n/i18n-provider';
 import type { StringKey } from '@/i18n/strings';
+import { haptics } from '@/lib/haptics';
 
 const ratings: [number, StringKey][] = [
   [1, 'feedback.rating1'],
@@ -35,6 +40,31 @@ function Rating({ value, onChange }: { value: number; onChange: (v: number) => v
         <Chip key={v} label={t(key)} selected={value === v} onPress={() => onChange(v)} />
       ))}
     </View>
+  );
+}
+
+/**
+ * Someone from the group, as a pick: their initial, ringed in gold once
+ * picked. Picking is private, so the only feedback is the ring and a tick of
+ * haptics.
+ */
+function Pick({ name, on, onPress }: { name: string; on: boolean; onPress: () => void }) {
+  const theme = useTheme();
+  return (
+    <PressableScale
+      accessibilityRole="checkbox"
+      accessibilityState={{ checked: on }}
+      accessibilityLabel={name}
+      onPress={() => {
+        haptics.selection();
+        onPress();
+      }}
+      style={[styles.pick, { backgroundColor: on ? theme.backgroundSelected : theme.backgroundElement }]}>
+      <Avatar name={name} size={44} ring={on ? 'gold' : undefined} fill={{ background: theme.surface, text: theme.text }} />
+      <ThemedText type="small" numberOfLines={1} style={on && styles.bold}>
+        {name}
+      </ThemedText>
+    </PressableScale>
   );
 }
 
@@ -84,10 +114,10 @@ export default function FeedbackScreen() {
     body = <ThemedText themeColor="textSecondary">{t('feedback.notOpen')}</ThemedText>;
   } else if (form.isError) {
     body = (
-      <Pressable onPress={() => void form.refetch()}>
+      <View>
         <ThemedText themeColor="textSecondary">{t('common.loadFailed')}</ThemedText>
-        <ThemedText type="link">{t('common.retry')}</ThemedText>
-      </Pressable>
+        <TextLink label={t('common.retry')} onPress={() => void form.refetch()} />
+      </View>
     );
   } else if (!f) {
     body = <ActivityIndicator />;
@@ -127,7 +157,7 @@ export default function FeedbackScreen() {
               {mates.length ? (
                 <View style={styles.wrap}>
                   {mates.map((m) => (
-                    <Chip key={m.id} label={m.name} selected={answer.picks.includes(m.id)} onPress={() => toggle('picks', m.id)} />
+                    <Pick key={m.id} name={m.name} on={answer.picks.includes(m.id)} onPress={() => toggle('picks', m.id)} />
                   ))}
                 </View>
               ) : (
@@ -164,25 +194,21 @@ export default function FeedbackScreen() {
       <SafeAreaView style={styles.fill}>
         <View style={[styles.fill, styles.column]}>
           <View style={styles.header}>
-            <Pressable accessibilityRole="button" onPress={leave} hitSlop={8} style={styles.grow}>
-              <ThemedText type="link">‹ {t('common.back')}</ThemedText>
-            </Pressable>
+            <BackLink label={t('common.back')} onPress={leave} />
             <LanguageSwitch />
           </View>
           <ScrollView contentContainerStyle={styles.content}>
             <View style={styles.titleBlock}>
-              <ThemedText type="subtitle">{t('feedback.title')}</ThemedText>
+              <ThemedText type="subtitle" accessibilityRole="header">
+                {t('feedback.title')}
+              </ThemedText>
               {!!title && <ThemedText themeColor="textSecondary">{title}</ThemedText>}
             </View>
+            <Thread stage={4} id={`event:${id}`} live={false} />
             {body}
             {/* Reporting is its own screen: also open to people who cancelled. */}
             {!!f?.mates.length && (
-              <Pressable
-                accessibilityRole="button"
-                onPress={() => router.push({ pathname: '/report/[id]', params: { id } })}
-                style={styles.link}>
-                <ThemedText type="link">{t('event.report')}</ThemedText>
-              </Pressable>
+              <TextLink label={t('event.report')} muted center onPress={() => router.push({ pathname: '/report/[id]', params: { id } })} />
             )}
           </ScrollView>
           {f?.open && (
@@ -205,7 +231,13 @@ export default function FeedbackScreen() {
                 label={t('feedback.send')}
                 disabled={answer.attended && !rated}
                 busy={submit.isPending}
-                onPress={() => submit.mutate(answer.attended ? answer : { attended: false, planRating: 0, groupRating: 0, picks: [], avoid: [] }, { onSuccess: leave })}
+                onPress={() => submit.mutate(answer.attended ? answer : { attended: false, planRating: 0, groupRating: 0, picks: [], avoid: [] }, {
+                    onSuccess: () => {
+                      haptics.success();
+                      leave();
+                    },
+                  })
+                }
               />
             </View>
           )}
@@ -217,15 +249,16 @@ export default function FeedbackScreen() {
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },
-  grow: { flex: 1 },
+  bold: { fontWeight: 700 },
+  // Four to a row even on a 375 pt phone (4 × 78 + 3 gaps in 343).
+  pick: { width: 78, alignItems: 'center', gap: Spacing.one, paddingVertical: Spacing.two, paddingHorizontal: Spacing.one, borderRadius: 14 },
   column: { width: '100%', maxWidth: FormWidth, alignSelf: 'center' },
-  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: Spacing.four, paddingTop: Spacing.three },
-  content: { padding: Spacing.four, gap: Spacing.four },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.three },
+  content: { padding: Spacing.three, paddingTop: Spacing.two, gap: Spacing.four },
   titleBlock: { gap: Spacing.one },
   section: { gap: Spacing.two },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
-  link: { alignItems: 'center', paddingVertical: Spacing.one },
-  footer: { padding: Spacing.four, gap: Spacing.two },
+  footer: { padding: Spacing.three, gap: Spacing.two },
   error: { textAlign: 'center' },
   center: { textAlign: 'center' },
 });

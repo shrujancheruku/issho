@@ -78,6 +78,7 @@ export default function OnboardingScreen() {
               </Pressable>
             )}
             <PrimaryButton
+              grow
               label={last ? t('onboarding.finish') : t('common.continue')}
               disabled={!valid}
               busy={save.isPending}

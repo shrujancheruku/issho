@@ -1,21 +1,34 @@
 import { PlanLevel } from '@issho/api-client';
 
-import { Brand } from '@/constants/theme';
+import { Brand, type Palette } from '@/constants/theme';
 import type { StringKey } from '@/i18n/strings';
 
 /**
- * How a plan suits the person, for the feed's labels (and the map's colours
- * later). The three interest levels reuse the activity tiles' colours from
- * onboarding (features/profile/interest.ts), so "love" looks the same
- * everywhere, and so do their labels: "An activity you love" and "...you like"
- * came out identical in Japanese, while the tiles' "I love it" / "I like it"
- * stay distinct. null background = the theme's neutral element colour.
+ * How a plan suits the person, for labels, Plans' sections and map pins.
+ * The three interest levels reuse the activity tiles' colours and labels
+ * (features/profile/interest.ts), so "I love it" looks and reads the same
+ * everywhere: "An activity you love" and "...you like" came out identical
+ * in Japanese, while the tiles' "I love it" / "I like it" stay distinct.
  */
-export const levelStyles: Record<PlanLevel, { background: string | null; text: string | null; label: StringKey }> = {
-  [PlanLevel.TOP]: { background: Brand.goldDeep, text: '#ffffff', label: 'interest.love' },
-  [PlanLevel.GOOD]: { background: Brand.gold, text: Brand.ink, label: 'interest.like' },
-  [PlanLevel.MAYBE]: { background: Brand.goldTint, text: Brand.ink, label: 'interest.openToTry' },
-  [PlanLevel.LOW]: { background: null, text: null, label: 'plan.level.low' },
-  [PlanLevel.NOT_FOR_YOU]: { background: null, text: null, label: 'plan.level.notForYou' },
-  [PlanLevel.UNSPECIFIED]: { background: null, text: null, label: 'plan.level.low' },
+export const levelLabels: Record<PlanLevel, StringKey> = {
+  [PlanLevel.TOP]: 'interest.love',
+  [PlanLevel.GOOD]: 'interest.like',
+  [PlanLevel.MAYBE]: 'interest.openToTry',
+  [PlanLevel.LOW]: 'plan.level.low',
+  [PlanLevel.NOT_FOR_YOU]: 'plan.level.notForYou',
+  [PlanLevel.UNSPECIFIED]: 'plan.level.low',
 };
+
+/** A level's fill and text: vermilion love, gold like, pale gold open to try; null for the rest. */
+export function levelColors(level: PlanLevel, theme: Palette): { background: string; text: string } | null {
+  switch (level) {
+    case PlanLevel.TOP:
+      return { background: theme.love, text: theme.onLove };
+    case PlanLevel.GOOD:
+      return { background: Brand.gold, text: Brand.ink };
+    case PlanLevel.MAYBE:
+      return { background: Brand.goldTint, text: Brand.ink };
+    default:
+      return null;
+  }
+}

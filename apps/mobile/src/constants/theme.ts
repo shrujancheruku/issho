@@ -4,6 +4,8 @@
  * thread); the alternatives in that doc only change background, surface,
  * backgroundElement, backgroundSelected, textSecondary, accent and link.
  * Text pairs are at least 4.5:1 on background, surface and backgroundElement.
+ * The person chooses light, dark or their phone's setting in You
+ * (features/appearance).
  */
 
 import '@/global.css';
@@ -12,7 +14,8 @@ import { Platform } from 'react-native';
 
 export const Colors = {
   light: {
-    text: '#111111',
+    /** Ai-black ink: indigo so dark it reads as black, kin to the ground. */
+    text: '#131B40',
     /** Screen background ("ground"). */
     background: '#F3F5F9',
     /** Cards and sheets. */
@@ -28,11 +31,23 @@ export const Colors = {
     accent: '#24307A',
     onAccent: '#FFFFFF',
     link: '#24307A',
-    /** Gold as text: Brand.gold is only 2.2:1 on light grounds. */
-    goldText: '#7D5E0A',
-    /** Error messages only: the one red on screens. */
+    /** Gold as text, and the thread on light grounds: Brand.gold is 2.1:1 there. */
+    goldText: '#885716',
+    /**
+     * "I love it", and nothing else: vermilion, kin to the logo's sun. Chips,
+     * map pins and the Plans section mark. Urgency and deadlines stay gold.
+     */
+    love: '#CC3719',
+    onLove: '#FFFFFF',
+    /** Error messages only. */
     error: '#BC002D',
     ok: '#2F6B3D',
+    /** Keyboard focus rings. */
+    focus: '#24307A',
+    /** Pins for plans that aren't one of your activities, or not in your language. */
+    pinLow: '#C8CBD0',
+    pinLowText: '#5E5E5E',
+    pinNone: '#8A8F98',
   },
   dark: {
     text: '#F1F3F8',
@@ -45,12 +60,21 @@ export const Colors = {
     accent: '#3A4A9E',
     onAccent: '#FFFFFF',
     link: '#9FB0FF',
-    goldText: '#C9A227',
-    // Lighter than the brand red, which is 2.75:1 on the dark ground.
+    // Gold itself reads as text on the night ground.
+    goldText: '#DEA92C',
+    love: '#EB603A',
+    onLove: '#131B40',
+    // Lighter than the light theme's red, which is 2.75:1 on the dark ground.
     error: '#FF7A90',
     ok: '#7FC28E',
+    focus: '#DEA92C',
+    pinLow: '#C8CBD0',
+    pinLowText: '#5E5E5E',
+    pinNone: '#8A8F98',
   },
 } as const;
+
+export type Palette = (typeof Colors)['light' | 'dark'];
 
 /**
  * Display typeface for standout and hero text (the same face as the "ISSHO" wordmark).
@@ -107,18 +131,18 @@ export function bodyFontFor(weight: string | number | undefined): string {
 }
 
 /**
- * Brand colours from assets/brand (see its README), the same in both themes.
- * Red is the logo's sun and is never used on screens (errors use Colors.error).
- * Gold is the thread: the main button, routes and the interest scale, which runs
- * goldTint (open to try), gold (like), goldDeep (love). Ink text on gold and
- * goldTint, white on goldDeep.
+ * Brand colours (Kogane gold, shu sun, Ai-black ink; chosen 2026-10-26), the
+ * same in both themes. The shu sun is the logo's and is never used on screens.
+ * Gold is the thread: the main button, routes and the interest scale, which
+ * runs goldTint (open to try), gold (like) and Colors.love (love). Ink text
+ * on gold and goldTint (8:1 and 13:1).
  */
 export const Brand = {
-  red: '#BC002D',
-  gold: '#C9A227',
-  goldTint: '#F2E6BD',
-  goldDeep: '#7D5E0A',
-  ink: '#111111',
+  red: '#DA4528',
+  gold: '#DEA92C',
+  goldTint: '#F2E2B2',
+  goldDeep: '#885716',
+  ink: '#131B40',
 } as const;
 
 export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
@@ -158,12 +182,8 @@ export const Spacing = {
   six: 64,
 } as const;
 
-export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
-/**
- * On the web the tab bar floats over the top of the screen
- * (components/app-tabs.web.tsx), so tab screens start below it.
- */
-export const TopTabInset = Platform.select({ web: 64 }) ?? 0;
+/** Room under tab screens' content for the tab bar (on the web, components/app-tabs.web.tsx). */
+export const BottomTabInset = Platform.select({ ios: 50, android: 80, web: 72 }) ?? 0;
 export const MaxContentWidth = 800;
 /**
  * Widest a form-like screen gets (sign-in, onboarding, profile editing):

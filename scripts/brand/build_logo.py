@@ -2,7 +2,7 @@
 
 Concept: 一緒 ("together"). 一 ("one") is drawn as a single gold thread. In 緒,
 the thread radical 糸 is gold, and the 日 ("sun") at the bottom of 者 ("person")
-is replaced by the red hinomaru disc. The mark reads: one thread joining people
+is replaced by the red sun disc (shu, 朱). The mark reads: one thread joining people
 under one sun.
 
 The kanji use Noto Serif JP; the "ISSHO" wordmark uses Dela Gothic One.
@@ -23,7 +23,7 @@ from fontTools.pens.svgPathPen import SVGPathPen
 from fontTools.ttLib import TTFont
 from fontTools.varLib.instancer import instantiateVariableFont
 
-RED, GOLD, INK = "#BC002D", "#C9A227", "#111111"  # hinomaru red, gold, ink black
+RED, GOLD, INK = "#DA4528", "#DEA92C", "#131B40"  # shu sun, Kogane gold, Ai-black ink
 
 # Every shape gets an outline in a contrasting brand colour: gold for black parts,
 # black for gold and red parts. This keeps one version of the logo readable on
@@ -40,7 +40,7 @@ WORDMARK_SIZE = 0.34
 # contour in its own colour. If the font version changes, check these indices again.
 THREAD_IDX = range(7, 15)  # 糸 radical
 PERSON_IDX = range(0, 4)   # 土 + ノ of 者
-SUN_IDX = (4, 5, 6)        # 日 of 者 → drawn as the hinomaru disc
+SUN_IDX = (4, 5, 6)        # 日 of 者 → drawn as the sun disc
 
 
 def load(path, wght=None):

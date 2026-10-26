@@ -2,8 +2,11 @@ import { AdvancedMarker, APIProvider, Map } from '@vis.gl/react-google-maps';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
+import { Brand } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 import { useI18n } from '@/i18n/i18n-provider';
 
+import { dropDelay, DropIn } from './drop-in';
 import { bounds } from './map-data';
 import { pinColors } from './pin-color';
 import type { PlansMapProps } from './plans-map';
@@ -17,10 +20,11 @@ const mapId = process.env.EXPO_PUBLIC_GOOGLE_MAPS_WEB_MAP_ID ?? 'DEMO_MAP_ID';
 /**
  * The map of plans in the browser: Google's Maps JavaScript API through
  * @vis.gl/react-google-maps (react-native-maps has no web version). Same
- * pins as on phones.
+ * pins as on phones, dropping in the same way.
  */
-export function PlansMap({ pins, selected, onSelect, home }: PlansMapProps) {
+export function PlansMap({ pins, selected, onSelect, home, bottomInset = 0 }: PlansMapProps) {
   const { t } = useI18n();
+  const theme = useTheme();
   const box = bounds(pins);
   if (!apiKey) {
     return (
@@ -37,20 +41,22 @@ export function PlansMap({ pins, selected, onSelect, home }: PlansMapProps) {
         style={StyleSheet.absoluteFill as object}
         mapId={mapId}
         // The pins' box; with none, the home area (never the whole world).
-        defaultBounds={box ?? undefined}
+        defaultBounds={box ? { ...box, padding: { top: 40, right: 40, bottom: 40 + bottomInset, left: 40 } } : undefined}
         defaultCenter={box || !home ? undefined : { lat: home.lat, lng: home.lng }}
         defaultZoom={box || !home ? undefined : 12}
         gestureHandling="greedy"
         disableDefaultUI
         clickableIcons={false}>
-        {pins.map((p) => {
-          const c = pinColors(p.level);
+        {pins.map((p, i) => {
+          const c = pinColors(p.level, theme);
           const on = p.areaId === selected;
           return (
             <AdvancedMarker key={p.areaId} position={{ lat: p.lat, lng: p.lng }} onClick={() => onSelect(p.areaId)}>
-              <View style={[styles.pin, { backgroundColor: c.background }, on && styles.selected]}>
-                <Text style={[styles.count, { color: c.text }]}>{p.plans.length}</Text>
-              </View>
+              <DropIn id={`area:${p.areaId}`} delay={dropDelay(i)}>
+                <View style={[styles.pin, { backgroundColor: c.background }, on && styles.selected]}>
+                  <Text style={[styles.count, { color: c.text }]}>{p.plans.length}</Text>
+                </View>
+              </DropIn>
             </AdvancedMarker>
           );
         })}
@@ -71,6 +77,6 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#ffffff',
   },
-  selected: { borderColor: '#111111', transform: [{ scale: 1.2 }] },
+  selected: { borderColor: Brand.ink, transform: [{ scale: 1.2 }] },
   count: { fontSize: 13, fontWeight: '700' },
 });

@@ -278,8 +278,6 @@
     "suggest.placeholder": "例：ハイキングやボードゲームが好きで、陶芸にも挑戦してみたい。",
     "suggest.results": "あなたへのおすすめです。タップして変更してから追加できます。",
     "suggest.title": "または、好きなことを入力してください",
-    "suggest.unavailable": "現在、おすすめを表示できません。下のリストから選んでください。",
-    "tabs.home": "ホーム",
-    "tabs.profile": "プロフィール"
+    "suggest.unavailable": "現在、おすすめを表示できません。下のリストから選んでください。"
   }
 }

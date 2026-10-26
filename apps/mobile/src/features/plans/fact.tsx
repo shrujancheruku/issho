@@ -5,9 +5,10 @@ import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
-/** A list of Fact rows, spaced so each reads as its own detail. */
+/** A list of Fact rows between hairlines, so each reads as its own detail. */
 export function Facts({ children }: { children: ReactNode }) {
-  return <View style={styles.facts}>{children}</View>;
+  const theme = useTheme();
+  return <View style={[styles.facts, { borderColor: theme.backgroundSelected }]}>{children}</View>;
 }
 
 /**
@@ -29,7 +30,7 @@ export function Fact({
   const theme = useTheme();
   const [open, setOpen] = useState(false);
   return (
-    <View style={styles.fact}>
+    <View style={[styles.fact, { borderColor: theme.backgroundSelected }]}>
       <ThemedText type="small" themeColor="textSecondary" style={styles.factLabel}>
         {label}
       </ThemedText>
@@ -78,10 +79,10 @@ export function Heading({ title, hint }: { title: string; hint: string }) {
 }
 
 const styles = StyleSheet.create({
-  facts: { gap: Spacing.three },
-  fact: { flexDirection: 'row', gap: Spacing.three },
-  // Wide enough for "Number of people interested" to wrap onto two lines, not five.
-  factLabel: { width: 112, paddingTop: 2 },
+  facts: { borderBottomWidth: 1 },
+  fact: { flexDirection: 'row', gap: Spacing.three - 4, paddingVertical: Spacing.two + 2, borderTopWidth: 1 },
+  // Wide enough for "Last day to sign up" on one line and longer labels on two, not five.
+  factLabel: { width: 124, paddingTop: 1 },
   factBody: { flex: 1, gap: Spacing.half },
   factValueRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two, flexWrap: 'wrap' },
   factValue: { fontSize: 16, lineHeight: 22 },
