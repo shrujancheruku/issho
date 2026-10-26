@@ -110,7 +110,9 @@ accessories:
 aliases:
   # kamal migrate: apply migrations with the image for the current commit
   # (after `kamal build push`, before `kamal deploy`; see docs/deploy.md).
-  migrate: app exec --primary "tool migrate up"
-  migrate-status: app exec --primary "tool migrate status"
+  # --roles=web: both roles share the host, so --primary alone runs it once
+  # per role, and two goose runs at once race on the same CREATE INDEX.
+  migrate: app exec --primary --roles=web "tool migrate up"
+  migrate-status: app exec --primary --roles=web "tool migrate status"
   logs-api: app logs --roles web -f
   logs-worker: app logs --roles worker -f

@@ -42,7 +42,7 @@ From a clean checkout of the commit to ship (Kamal builds from a fresh clone of 
 
 ```sh
 kamal build push        # build the amd64 image (cross-compiled, fast on a Mac) and push it
-kamal migrate           # apply new migrations with that image (alias for `app exec --primary "tool migrate up"`)
+kamal migrate           # apply new migrations with that image (alias for `app exec --primary --roles=web "tool migrate up"`, so it runs once)
 kamal deploy --skip-push
 ```
 
