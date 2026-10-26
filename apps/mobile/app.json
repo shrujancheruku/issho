@@ -45,6 +45,14 @@
           "color": "#BC002D",
           "defaultChannel": "default"
         }
+      ],
+      [
+        "@sentry/react-native/expo",
+        {
+          "url": "https://sentry.io/",
+          "organization": "shrujan",
+          "project": "issho-app"
+        }
       ]
     ],
     "experiments": {
