@@ -26,6 +26,7 @@
 | Google Maps server key (`GOOGLE_MAPS_API_KEY`) | your shell env or `.env.issho-dev` (gitignored), used via `make … ENV_FILE=` | not used (tests use `httptest` fakes; CI only dry-runs) | Kamal secrets |
 | GitHub token for the city-pack and translation editors (`GITHUB_TOKEN`) | `.env.issho-dev` (gitignored). A **fine-grained** personal access token limited to this repository, with **Contents: read and write** and **Pull requests: read and write** only, and an expiry | not used (`httptest` fakes) | Kamal secrets |
 | Sentry DSN (`SENTRY_DSN` for the API and worker; `EXPO_PUBLIC_SENTRY_DSN` for the app) | `.env.issho-*` (gitignored) | not used | Kamal secrets; EAS environment variable |
+| Sentry auth token (`SENTRY_AUTH_TOKEN`: an organisation token for the `shrujan` org, release and source-map upload only) | only to upload an EAS Update's maps by hand (`npx sentry-expo-upload-sourcemaps dist`); shell env | not used | secret EAS variable (`preview`, `production`), used by the build's source-map upload |
 | Google Cloud Translation key (`GOOGLE_TRANSLATE_API_KEY`, API server) | shell env / untracked `.env` | not used (tests use `httptest` fakes) | Kamal secrets |
 | Google Cloud Agent Platform key for Gemini (`GOOGLE_GEMINI_API_KEY`, API server: interest suggestions; starts `AQ.`) | shell env / untracked `.env` | not used (tests use `httptest` fakes) | Kamal secrets |
 | Anthropic API key (`ANTHROPIC_API_KEY`, M6 plan text) | shell env / untracked `.env` | not used (tests use fakes) | Kamal secrets |

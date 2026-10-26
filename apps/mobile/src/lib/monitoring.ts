@@ -1,5 +1,4 @@
 import * as Sentry from '@sentry/react-native';
-import Constants from 'expo-constants';
 
 // Crash and error reporting, on only when EXPO_PUBLIC_SENTRY_DSN is set at
 // build time (a DSN is public: it can only send reports). Without it,
@@ -14,7 +13,6 @@ if (dsn) {
     dsn,
     sendDefaultPii: false,
     environment: process.env.EXPO_PUBLIC_SENTRY_ENVIRONMENT ?? (__DEV__ ? 'development' : 'production'),
-    release: Constants.expoConfig?.version,
     // Errors only, no performance tracing or session replay for now.
     tracesSampleRate: 0,
   });
