@@ -63,7 +63,7 @@ Each directory has its own README:
 | [`data/`](data/README.md) | Activity catalogue and city packs |
 | [`supabase/`](supabase/README.md) | Local Supabase stack config |
 | [`assets/brand/`](assets/brand/README.md) | Logo and mark, plain and in round blue and white versions, as SVG and PNG; brand colours and the story behind the kanji |
-| `scripts/` | CI and deploy helpers, and the brand generators (`brand/`: the logo, its round versions, the app icons) |
+| `scripts/` | CI and deploy helpers, the brand generators (`brand/`: the logo, its round versions, the app icons) and the site's map (`site/build_map.py`) |
 | [`CLAUDE.md`](CLAUDE.md), `.claude/skills/` | Instructions for AI coding agents, and the official Supabase agent skills |
 | `.githooks/` | Git hooks: secret scan (pre-commit) and commit-message lint (commit-msg). Enable with `make setup`. |
 
