@@ -35,7 +35,9 @@ Look closely: the word tells the whole story.
 | 日 | **Sun/Day** | The warmth of a day spent out together. |
 
 See you out there.
+
 一緒に行こうか。
+
 [joinissho.com](https://joinissho.com)
 
 > 🚧 **Pre-release.** We're building it now: see the [roadmap & status](docs/ROADMAP.md).
