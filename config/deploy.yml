@@ -88,26 +88,24 @@ env:
     - SENTRY_DSN
     - EXPO_ACCESS_TOKEN
 
-# Off until the R2 bucket exists: `kamal setup` boots every accessory, and
-# this one stops without its bucket. Uncomment, then `kamal accessory boot backup`.
-# accessories:
-#   # Nightly pg_dump to Cloudflare R2, an off-site copy (config/backup/backup.sh;
-#   # docs/deploy.md). The Postgres image matches the database's major version.
-#   backup:
-#     image: postgres:17-alpine
-#     host: 35.243.76.67
-#     cmd: sh /backup/backup.sh
-#     files:
-#       - config/backup/backup.sh:/backup/backup.sh
-#     env:
-#       clear:
-#         R2_ENDPOINT: https://ACCOUNT_ID.r2.cloudflarestorage.com # TODO: the Cloudflare account id
-#         R2_BUCKET: issho-backups # TODO: the bucket
-#         BACKUP_AT: "3" # UTC hour
-#       secret:
-#         - DATABASE_URL
-#         - R2_ACCESS_KEY_ID
-#         - R2_SECRET_ACCESS_KEY
+accessories:
+  # Nightly pg_dump to Cloudflare R2, an off-site copy (config/backup/backup.sh;
+  # docs/deploy.md). The Postgres image matches the database's major version.
+  backup:
+    image: postgres:17-alpine
+    host: 35.243.76.67
+    cmd: sh /backup/backup.sh
+    files:
+      - config/backup/backup.sh:/backup/backup.sh
+    env:
+      clear:
+        R2_ENDPOINT: https://b6f3e52f2491d38421018e275ef7896b.r2.cloudflarestorage.com
+        R2_BUCKET: issho-backups # 30-day lifecycle rule
+        BACKUP_AT: "18" # UTC hour: 03:00 in Tokyo, the quietest time for the main city
+      secret:
+        - DATABASE_URL
+        - R2_ACCESS_KEY_ID
+        - R2_SECRET_ACCESS_KEY
 
 aliases:
   # kamal migrate: apply migrations with the image for the current commit

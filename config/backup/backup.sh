@@ -24,12 +24,13 @@ backup() {
   # holds everyone's sign-in identity. Supabase's other schemas (storage,
   # realtime…) hold nothing of ours. Live sessions and one-time tokens
   # aren't kept: a leaked dump mustn't open anyone's account, and after a
-  # restore people sign in again.
+  # restore people sign in again. mfa_amr_claims goes too: its rows belong to
+  # sessions, and without them the restore fails their foreign key.
   pg_dump --format=custom --no-owner --no-privileges \
     --schema=app --schema=goose --schema=river --schema=auth \
     --exclude-table-data=auth.sessions --exclude-table-data=auth.refresh_tokens \
     --exclude-table-data=auth.one_time_tokens --exclude-table-data=auth.flow_state \
-    --exclude-table-data=auth.mfa_challenges \
+    --exclude-table-data=auth.mfa_challenges --exclude-table-data=auth.mfa_amr_claims \
     --file="$file" "$DATABASE_URL"
   curl --fail --silent --show-error --aws-sigv4 "aws:amz:auto:s3" \
     --user "$R2_ACCESS_KEY_ID:$R2_SECRET_ACCESS_KEY" \
