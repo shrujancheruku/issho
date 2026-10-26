@@ -18,7 +18,7 @@ and the fragment's stops agree with the place:
 
 The map is inline SVG so it takes the page's light and dark colours (the
 --map-* variables) and the route can draw itself with a walker on it.
-Map data © OpenStreetMap contributors (ODbL); the figure credits it.
+Map data © OpenStreetMap contributors (ODbL).
 """
 
 from __future__ import annotations

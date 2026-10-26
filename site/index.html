@@ -296,10 +296,18 @@
   .digits { display: flex; flex-direction: column; transform: translateY(calc(var(--n) * -1.3em)); }
   .digits i { font-style: normal; }
   .seat { position: absolute; left: var(--x); top: var(--y); translate: -50% -50%; }
-  .seat b { position: relative; display: grid; place-items: center; width: 2.75rem; height: 2.75rem; border-radius: 50%; background: var(--surface); color: var(--text); border: 2.5px dashed var(--line-strong); font-size: .95rem; }
+  .seat b { position: relative; display: grid; place-items: center; width: 2.75rem; height: 2.75rem; border-radius: 50%; background: var(--surface); color: var(--text); border: 2.5px solid transparent; font-size: .95rem; }
+  /* The deciding ring's dashes, here and on the crew card. A dashed border
+     spaces its dashes unevenly and leaves a seam at 12 o'clock at some zoom
+     levels, so the ring is a conic gradient instead: 12 equal dashes (18deg on,
+     12deg off), the first centred on 12 o'clock, masked to the border's width.
+     It fades out on a yes, when the solid gold border takes over. */
+  .seat b::before, .member b::before { content: ""; position: absolute; inset: -2.5px; border-radius: 50%; background: repeating-conic-gradient(from -9deg, var(--dash, var(--line-strong)) 0 18deg, transparent 18deg 30deg); -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2.5px)); mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2.5px)); transition: opacity .18s; }
+  .seat.in b::before { opacity: 0; }
   .seat b > i { grid-area: 1 / 1; font-style: normal; }
   .seat.in b { border-style: solid; border-color: var(--gold); background: var(--raised); }
-  .seat.me b { border-color: var(--gold); color: var(--when); font-size: .78rem; }
+  /* Your seat's ring is gold even while you decide. */
+  .seat.me b { --dash: var(--gold); color: var(--when); font-size: .78rem; }
   .seat.me.in b { background: var(--gold); color: var(--ink); }
   .seat .hid { width: .38rem; height: .72rem; border: solid var(--when); border-width: 0 2.5px 2.5px 0; transform: translateY(-12%) rotate(45deg); }
   .seat:not(.in) i, .invite:not(.known) .who, .invite.known .hid { visibility: hidden; }
@@ -375,7 +383,8 @@
   .members .track.fill { background: var(--gold); transform-origin: left; transform: scaleX(calc(min(var(--yes), 3) / 3)); transition: transform .45s cubic-bezier(.4, 0, .2, 1); }
   .member { position: relative; display: flex; flex-direction: column; align-items: center; gap: .3rem; }
   .member .av { display: block; }
-  .member b { display: grid; place-items: center; width: 2.9rem; height: 2.9rem; border-radius: 50%; background: var(--surface); color: var(--text); border: 2.5px dashed var(--line-strong); font-size: 1rem; transition: background-color .18s, color .18s, border-color .18s; }
+  .member b { position: relative; display: grid; place-items: center; width: 2.9rem; height: 2.9rem; border-radius: 50%; background: var(--surface); color: var(--text); border: 2.5px solid transparent; font-size: 1rem; transition: background-color .18s, color .18s, border-color .18s; }
+  .member.yes b::before { opacity: 0; }
   .member.me b { font-size: .8rem; }
   .member.yes b { border: 2.5px solid var(--gold); }
   .member.me.yes b { background: var(--gold); color: var(--ink); }
@@ -391,6 +400,7 @@
   .bars { display: inline-flex; gap: .3rem; }
   .bars i { width: 18px; height: 6px; border-radius: 3px; background: var(--raised); transition: background-color .18s; }
   .bars i.on { background: var(--gold); }
+  .counter.signups { margin-top: 1rem; }
   .crew-body .lead { margin-top: .8rem; font-weight: 700; }
   /* Only the started line is in the display face, so the swap keeps its height. */
   .crew-body .lead .done { color: var(--when); font: 400 1.15rem/1.45 var(--display); }
@@ -513,8 +523,6 @@
   .map .route { stroke: var(--gold); stroke-width: 7; }
   .map .stop { fill: var(--surface); stroke: var(--gold); stroke-width: 4.5; transform-box: fill-box; transform-origin: center; }
   .map .walker-dot { fill: var(--gold); stroke: var(--surface); stroke-width: 3.5; opacity: 0; }
-  .credit { margin-top: .35rem; font-size: .72rem; color: var(--muted); }
-  .credit a { color: inherit; }
   /* The route draws itself (routeDraw, 1.6 s) with each stop popping in as the
      line reaches it; then the walker strolls it (script, below). */
   .thread-anim .map .route, .thread-anim .map .route-track { stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset 1.6s cubic-bezier(.4, 0, .4, 1); }
@@ -643,7 +651,6 @@
           <circle class="walker-dot" r="8"/>
         </svg>
         <!-- map:end -->
-        <p class="credit">Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors</p>
         </div>
         <div class="route">
         <ol class="stops">
@@ -652,7 +659,7 @@
           <li>A caf&eacute; on Nanaibashi-dori<small>Coffee and comparing shots</small></li>
         </ol>
         </div>
-        <div class="row"><span class="fake-btn primary">Sign me up</span></div>
+        <p class="counter signups"><b>4 of 5 going</b><span class="bars" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span></p>
       </figure>
     </section>
 
