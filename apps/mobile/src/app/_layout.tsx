@@ -7,7 +7,8 @@ import {
 import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { ActivityIndicator, Pressable, StyleSheet, useColorScheme } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { ThemedText } from '@/components/themed-text';
@@ -15,6 +16,7 @@ import { ThemedView } from '@/components/themed-view';
 import { Colors, Spacing } from '@/constants/theme';
 import { AccountActions } from '@/features/account/account-actions';
 import { AuthProvider, isSuspendedError, useAuth } from '@/features/auth/auth-provider';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { I18nProvider, useI18n } from '@/i18n/i18n-provider';
 import { withMonitoring } from '@/lib/monitoring';
 
@@ -53,17 +55,20 @@ function RootLayout() {
   if (!fontsLoaded && !fontError) return null;
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        {/* Inside AuthProvider: the languages come from the account. */}
-        <I18nProvider>
-          <ThemeProvider value={colorScheme === 'dark' ? navDark : navLight}>
-            <AnimatedSplashOverlay />
-            <RootNavigator />
-          </ThemeProvider>
-        </I18nProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+    // Gesture Handler needs a root for its detectors (the plans sheet, the week grid).
+    <GestureHandlerRootView style={styles.root}>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          {/* Inside AuthProvider: the languages come from the account. */}
+          <I18nProvider>
+            <ThemeProvider value={colorScheme === 'dark' ? navDark : navLight}>
+              <AnimatedSplashOverlay />
+              <RootNavigator />
+            </ThemeProvider>
+          </I18nProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </GestureHandlerRootView>
   );
 }
 
@@ -126,6 +131,11 @@ function RootNavigator() {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="profile-edit/[step]" />
         <Stack.Screen name="plan/[id]" />
+        {/* Choosing times slides up over the plan, as a sheet on phones. */}
+        <Stack.Screen
+          name="signup/[id]"
+          options={{ presentation: 'formSheet', sheetAllowedDetents: [0.92], sheetGrabberVisible: true, sheetCornerRadius: 20 }}
+        />
         <Stack.Screen name="event/[id]" />
         <Stack.Screen name="chat/[id]" />
         <Stack.Screen name="feedback/[id]" />
@@ -138,6 +148,7 @@ function RootNavigator() {
 }
 
 const styles = StyleSheet.create({
+  root: { flex: 1 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: Spacing.three, padding: Spacing.four },
   message: { textAlign: 'center', maxWidth: 420 },
 });

@@ -25,7 +25,7 @@ import {
   type Draft,
   type Step,
 } from './draft';
-import { categoryOrder, interestLevels, interestStyles } from './interest';
+import { categoryOrder, interestLevels, interestStyle } from './interest';
 import { LanguagePicker } from './language-picker';
 import { SuggestActivities } from './suggest-activities';
 
@@ -299,6 +299,7 @@ function AvailabilityStep({ draft, onChange }: StepProps) {
 
 function ActivitiesStep({ draft, onChange }: StepProps) {
   const { t } = useI18n();
+  const theme = useTheme();
   const activities = useActivities(draft.cityId);
   const data = activities.data;
   const byCategory = useMemo(() => {
@@ -322,7 +323,7 @@ function ActivitiesStep({ draft, onChange }: StepProps) {
           <Wrap>
             {items.map((a) => {
               const interest = draft.activities[a.id];
-              const style = interest ? interestStyles[interest as keyof typeof interestStyles] : undefined;
+              const style = interest ? interestStyle(interest, theme) : undefined;
               return (
                 <Chip
                   key={a.id}
@@ -351,7 +352,7 @@ function HowToChoose() {
     <View style={[styles.howTo, { borderColor: Brand.gold, backgroundColor: theme.surface }]}>
       <ThemedText type="smallBold">{t('interest.howTitle')}</ThemedText>
       {interestLevels.map((level) => {
-        const st = interestStyles[level];
+        const st = interestStyle(level, theme)!;
         return (
           <View key={level} style={styles.legendRow}>
             <ThemedText style={styles.legendTap}>{t(st.tap)}</ThemedText>

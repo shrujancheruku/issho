@@ -24,6 +24,7 @@ export function usePlanNames() {
     const order = (n: Names): Names =>
       showing === 'secondary' && n.secondary ? { name: n.secondary, secondary: n.name } : n;
     const acts = new Map((activities.data ?? []).map((a) => [a.id, { name: a.name, secondary: a.secondaryName }]));
+    const categories = new Map((activities.data ?? []).map((a) => [a.id, a.category]));
     const areas = new Map(
       (cities.data ?? []).flatMap((c) => c.areas).map((a) => [a.id, { name: a.name, secondary: a.secondaryName }]),
     );
@@ -33,6 +34,8 @@ export function usePlanNames() {
       ready: !!activities.data && !!cities.data,
       activity: (id: string): Names => order(acts.get(id) ?? { name: id, secondary: '' }),
       area: (id: string): Names => order(areas.get(id) ?? { name: id, secondary: '' }),
+      /** The activity's category ("food", "outdoors"), for Plans' filters; "" if unknown. */
+      category: (id: string) => categories.get(id) ?? '',
       language: (code: string) => languageLabel(langs, code),
       /** Area centres, for the map of plans. */
       coords,

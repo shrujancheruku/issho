@@ -15,7 +15,7 @@ The logo is the word **一緒** (*issho*, "together"), with each part of the kan
 | 一 | "one" | A single **gold** stroke, the thread that starts it all |
 | 糸 (left side of 緒) | "thread" | **Gold**, continuing the thread from 一 |
 | 土 + ノ (top of 者) | part of 者, "person" | **Black** ink. The sun and thread sit on top of it. |
-| 日 (bottom of 者) | "sun" | Replaced by the **red hinomaru** disc from the Japanese flag |
+| 日 (bottom of 者) | "sun" | Replaced by a **red sun** disc in shu (朱), the vermilion of torii gates and seals |
 
 Read together, it says: *one thread joining people under one sun*. Small groups, tied together, out in the world.
 
@@ -45,9 +45,11 @@ Both are drawn as vector outlines, so no font needs to be installed to show the 
 
 | Name | Hex | Use |
 |---|---|---|
-| Hinomaru red | `#BC002D` | The sun. Use sparingly, as the single focal point. |
-| Gold | `#C9A227` | The thread (一 and 糸), and the outline around black |
-| Ink black | `#111111` | Kanji strokes and wordmark, and the outline around gold and red |
+| Shu sun | `#DA4528` | The sun. Use sparingly, as the single focal point. |
+| Kogane gold | `#DEA92C` | The thread (一 and 糸), and the outline around black |
+| Ai-black ink | `#131B40` | Kanji strokes and wordmark, and the outline around gold and red: indigo so dark it reads as black |
+
+Recoloured on 2026-10-26 from hinomaru red `#BC002D`, gold `#C9A227` and ink `#111111`, with the app's Kogane palette ([docs/design-system.md](../../docs/design-system.md)). The concept and shapes are unchanged.
 
 ## Usage
 

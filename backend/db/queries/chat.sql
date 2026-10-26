@@ -17,6 +17,16 @@ returning id, created_at;
 -- name: NotifyChat :exec
 select pg_notify('chat', @group_id::text);
 
+-- Someone in a chat is typing: the API instances' listeners pass it to the
+-- other sockets open on that chat (internal/chatws). Payload: JSON with the
+-- chat (group or crew id), who and their first name. Not stored anywhere.
+-- name: NotifyTyping :exec
+select pg_notify('chat_typing', @payload::text);
+
+-- The first name shown when someone is typing.
+-- name: GetDisplayName :one
+select display_name from app.profiles where user_id = $1;
+
 -- Messages after a given one, oldest first, with the sender's first name.
 -- name: ListChatMessages :many
 select c.id, c.user_id, pr.display_name, c.body, c.created_at

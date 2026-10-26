@@ -69,6 +69,18 @@ func (q *Queries) GetChatAccess(ctx context.Context, arg GetChatAccessParams) (G
 	return i, err
 }
 
+const getDisplayName = `-- name: GetDisplayName :one
+select display_name from app.profiles where user_id = $1
+`
+
+// The first name shown when someone is typing.
+func (q *Queries) GetDisplayName(ctx context.Context, userID uuid.UUID) (string, error) {
+	row := q.db.QueryRow(ctx, getDisplayName, userID)
+	var display_name string
+	err := row.Scan(&display_name)
+	return display_name, err
+}
+
 const insertChatMessage = `-- name: InsertChatMessage :one
 insert into app.chat_messages (group_id, user_id, body) values ($1, $2, $3)
 returning id, created_at
@@ -202,5 +214,17 @@ select pg_notify('chat', $1::text)
 // transaction as the insert, so it's delivered only once it's committed.
 func (q *Queries) NotifyChat(ctx context.Context, groupID string) error {
 	_, err := q.db.Exec(ctx, notifyChat, groupID)
+	return err
+}
+
+const notifyTyping = `-- name: NotifyTyping :exec
+select pg_notify('chat_typing', $1::text)
+`
+
+// Someone in a chat is typing: the API instances' listeners pass it to the
+// other sockets open on that chat (internal/chatws). Payload: JSON with the
+// chat (group or crew id), who and their first name. Not stored anywhere.
+func (q *Queries) NotifyTyping(ctx context.Context, payload string) error {
+	_, err := q.db.Exec(ctx, notifyTyping, payload)
 	return err
 }

@@ -12,7 +12,7 @@ import { useI18n } from '@/i18n/i18n-provider';
 import { api } from '@/lib/api';
 
 import { addSuggestions, cycleSuggestion, type Draft } from './draft';
-import { interestStyles } from './interest';
+import { interestStyle } from './interest';
 
 type Suggestion = { activityId: string; interest: Interest };
 
@@ -96,7 +96,7 @@ export function SuggestActivities({
           <View style={styles.wrap}>
             {suggestions.map((s) => {
               const a = byId.get(s.activityId)!;
-              const st = interestStyles[s.interest as keyof typeof interestStyles];
+              const st = interestStyle(s.interest, theme)!;
               return (
                 <Chip
                   key={s.activityId}
@@ -114,7 +114,7 @@ export function SuggestActivities({
             <Pressable accessibilityRole="button" onPress={() => setSuggestions(null)} hitSlop={8}>
               <ThemedText type="link">{t('suggest.dismiss')}</ThemedText>
             </Pressable>
-            <PrimaryButton label={t('suggest.add')} onPress={add} />
+            <PrimaryButton grow label={t('suggest.add')} onPress={add} />
           </View>
         </View>
       )}

@@ -27,8 +27,9 @@ import (
 const testIssuer = "http://test.local"
 
 // TestIntegrationSocket opens a chat socket as someone going, receives the
-// earlier messages, then a message another person sends (through NOTIFY);
-// a bad token and someone not going are turned away with their close codes.
+// earlier messages, then a message another person sends (through NOTIFY),
+// then that person typing on their own socket; a bad token and someone not
+// going are turned away with their close codes.
 func TestIntegrationSocket(t *testing.T) {
 	url := os.Getenv("TEST_DATABASE_URL")
 	if url == "" {
@@ -80,19 +81,32 @@ func TestIntegrationSocket(t *testing.T) {
 	if err := conn.Write(ctx, websocket.MessageText, hello); err != nil {
 		t.Fatal(err)
 	}
-	read := func() batch {
-		t.Helper()
+	// A frame: messages, the ready notice or someone typing. Not t.Fatal:
+	// it also runs on other goroutines.
+	type frame struct {
+		batch
+		Typing bool   `json:"typing"`
+		Name   string `json:"name"`
+	}
+	readFrom := func(c *websocket.Conn) (frame, error) {
 		rctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 		defer cancel()
-		_, raw, err := conn.Read(rctx)
+		var f frame
+		_, raw, err := c.Read(rctx)
+		if err == nil {
+			err = json.Unmarshal(raw, &f)
+		}
+		return f, err
+	}
+	read := func() batch {
+		f, err := readFrom(conn)
 		if err != nil {
-			t.Fatal(err)
+			t.Error(err)
 		}
-		var b batch
-		if err := json.Unmarshal(raw, &b); err != nil {
-			t.Fatal(err)
-		}
-		return b
+		return f.batch
+	}
+	if f, err := readFrom(conn); err != nil || f.Type != "ready" || !f.Typing {
+		t.Fatalf("first frame = %+v, %v; want ready", f, err)
 	}
 	if b := read(); b.Type != "messages" || len(b.Messages) != 1 || b.Messages[0].Body != "first" || b.Messages[0].Mine || b.Messages[0].Name != "Other" {
 		t.Errorf("history = %+v", b)
@@ -118,6 +132,40 @@ func TestIntegrationSocket(t *testing.T) {
 	}
 	if len(pushed.Messages) == 0 || pushed.Messages[len(pushed.Messages)-1].Body != "second" {
 		t.Errorf("pushed = %+v", pushed)
+	}
+
+	// The other person types on their own socket: going is told who, and
+	// the other person isn't told about themselves.
+	otherConn, _, err := websocket.Dial(ctx, wsURL, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer otherConn.CloseNow()
+	last := pushed.Messages[len(pushed.Messages)-1].ID
+	otherHello, _ := json.Marshal(map[string]any{"token": token(other), "eventId": eventID.String(), "afterId": last})
+	if err := otherConn.Write(ctx, websocket.MessageText, otherHello); err != nil {
+		t.Fatal(err)
+	}
+	if f, err := readFrom(otherConn); err != nil || f.Type != "ready" {
+		t.Fatalf("other's first frame = %+v, %v", f, err)
+	}
+	typingFrame, _ := json.Marshal(map[string]string{"type": "typing"})
+	if err := otherConn.Write(ctx, websocket.MessageText, typingFrame); err != nil {
+		t.Fatal(err)
+	}
+	otherGot := make(chan frame, 1)
+	go func() {
+		if f, err := readFrom(otherConn); err == nil {
+			otherGot <- f
+		}
+	}()
+	if f, err := readFrom(conn); err != nil || f.Type != "typing" || f.Name != "Other" {
+		t.Errorf("typing = %+v, %v; want Other typing", f, err)
+	}
+	select {
+	case f := <-otherGot:
+		t.Errorf("the typer was sent %+v", f)
+	case <-time.After(300 * time.Millisecond):
 	}
 
 	// Turned away: a bad token, and someone only invited.

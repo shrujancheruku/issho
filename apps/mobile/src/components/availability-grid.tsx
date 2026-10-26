@@ -6,6 +6,7 @@ import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useI18n } from '@/i18n/i18n-provider';
 import type { StringKey } from '@/i18n/strings';
+import { haptics } from '@/lib/haptics';
 import { blocks, slotKey, weekdays } from '@/lib/slots';
 
 export const blockKeys: Record<TimeBlock, StringKey> = {
@@ -64,7 +65,10 @@ export function AvailabilityGrid({
                 accessibilityRole="checkbox"
                 accessibilityState={{ checked: on }}
                 accessibilityLabel={`${weekdayName(day, lang)} ${t(blockKeys[b])}`}
-                onPress={() => onToggle(day, b)}
+                onPress={() => {
+                  haptics.selection();
+                  onToggle(day, b);
+                }}
                 style={[styles.cell, { backgroundColor: on ? theme.accent : theme.backgroundElement }]}
               />
             );
@@ -80,5 +84,5 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
   head: { flex: 1, textAlign: 'center' },
   day: { width: 56 },
-  cell: { flex: 1, height: 40, borderRadius: 8 },
+  cell: { flex: 1, height: 44, borderRadius: 8 },
 });

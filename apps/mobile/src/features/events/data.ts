@@ -28,21 +28,27 @@ const actions: Record<Exclude<EventAction, 'checkIn' | 'feedback'>, Action> = {
 /**
  * Answers an invitation, then refreshes the event, the list of events and
  * the feed (a cancelled group puts people back on a plan's waiting list).
+ * `refreshAfter` (ms) succeeds at once and refreshes later, so a button can
+ * show its result before the refreshed list moves the item away.
  */
-export function useRespond(id: string) {
+export function useRespond(id: string, { refreshAfter = 0 }: { refreshAfter?: number } = {}) {
   const queryClient = useQueryClient();
+  const refresh = () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: eventKey(id) }),
+      queryClient.invalidateQueries({ queryKey: eventsKey }),
+      queryClient.invalidateQueries({ queryKey: feedKey }),
+    ]);
   return useMutation({
     // Checking in is its own call; the rest are answers.
     mutationFn: async (action: Exclude<EventAction, 'feedback'>) => {
       if (action === 'checkIn') await api.events.checkIn({ eventId: id });
       else await api.events.respondToEvent({ eventId: id, action: actions[action] });
     },
-    onSuccess: () =>
-      Promise.all([
-        queryClient.invalidateQueries({ queryKey: eventKey(id) }),
-        queryClient.invalidateQueries({ queryKey: eventsKey }),
-        queryClient.invalidateQueries({ queryKey: feedKey }),
-      ]),
+    onSuccess: () => {
+      if (!refreshAfter) return refresh();
+      setTimeout(() => void refresh(), refreshAfter);
+    },
   });
 }
 

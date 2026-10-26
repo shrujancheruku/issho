@@ -1,15 +1,16 @@
-/* Issho design system (docs/design-system.md), "Ai" ground: the same values
-   as apps/mobile/src/constants/theme.ts. Red is the logo's only; errors and
-   moderation dangers use --error. Text pairs are 4.5:1 or more on --bg,
+/* Issho design system (docs/design-system.md), "Ai" ground with Kogane gold:
+   the same values as apps/mobile/src/constants/theme.ts. Red is the logo's
+   only; errors and moderation dangers use --error. Text pairs are 4.5:1 or more on --bg,
    --surface and --sunk in both themes. */
 :root {
-  --gold: #c9a227;
-  --gold-text: #7d5e0a;
-  --ink: #111111;
+  --gold: #dea92c;
+  --gold-tint: #f2e2b2;
+  --gold-text: #885716;
+  --ink: #131b40;
   --bg: #f3f5f9;
   --surface: #ffffff;
   --sunk: #e7ebf3;
-  --text: #111111;
+  --text: #131b40;
   --muted: #545d73;
   --line: #d5dbe7;
   --line-strong: #7a849c;
@@ -31,7 +32,7 @@
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --gold-text: #c9a227;
+    --gold-text: #dea92c;
     --bg: #0d1330;
     --surface: #161e40;
     --sunk: #222b52;
@@ -41,12 +42,12 @@
     --line-strong: #6c78aa;
     --accent: #3a4a9e;
     --link: #9fb0ff;
-    --focus: #c9a227;
+    --focus: #dea92c;
     --error: #ff7a90;
-    --on-error: #111111;
+    --on-error: #131b40;
     --attention: #3a2c12;
     --ok: #7fc28e;
-    --on-ok: #111111;
+    --on-ok: #131b40;
   }
 }
 

@@ -278,8 +278,6 @@
     "suggest.placeholder": "Por ejemplo: Me encanta el senderismo y los juegos de mesa, y me gustaría probar cerámica.",
     "suggest.results": "Sugerencias para ti. Toca una para cambiarla y luego añádelas.",
     "suggest.title": "O describe lo que te gusta",
-    "suggest.unavailable": "Las sugerencias no están disponibles ahora. Elige de la lista abajo.",
-    "tabs.home": "Inicio",
-    "tabs.profile": "Perfil"
+    "suggest.unavailable": "Las sugerencias no están disponibles ahora. Elige de la lista abajo."
   }
 }
