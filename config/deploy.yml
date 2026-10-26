@@ -2,9 +2,9 @@
 # River worker, both from backend/Dockerfile, on one VPS behind Cloudflare.
 # Supabase stays hosted; nothing else runs on the server.
 #
-# The domain is joinissho.com (api.joinissho.com for the API). Still a
-# placeholder (marked TODO): the server's address. See docs/deploy.md for the
-# one-time setup and the deploy steps.
+# The domain is joinissho.com (api.joinissho.com for the API); the server is
+# a Google Compute Engine VM in Tokyo (issho-api, project issho-dev-512213).
+# See docs/deploy.md for the one-time setup and the deploy steps.
 
 service: issho
 
@@ -14,12 +14,12 @@ image: shrujancheruku/issho-backend
 servers:
   web:
     hosts:
-      - 203.0.113.10 # TODO: the VPS address (this is a documentation address)
+      - 35.243.76.67 # GCE issho-api, asia-northeast1-b (static address)
   # The worker runs on the same server. It has no proxy: it serves no HTTP,
   # and River's leader election means a second worker would be safe but idle.
   worker:
     hosts:
-      - 203.0.113.10 # TODO: same VPS
+      - 35.243.76.67
     cmd: worker
     proxy: false
 
@@ -43,6 +43,11 @@ proxy:
   # longer than the 30 s default.
   response_timeout: 60
 
+# Compute Engine logs in as an ordinary user, not root: kamal, in the docker
+# group (set up on first boot, docs/deploy.md).
+ssh:
+  user: kamal
+
 registry:
   server: ghcr.io
   username: shrujancheruku
@@ -61,8 +66,9 @@ builder:
 env:
   clear:
     API_ADDR: ":8080"
-    # TODO: the production Supabase project and the hosted front ends.
-    SUPABASE_URL: https://your-project-ref.supabase.co
+    # issho-dev for now (owner's decision, 2026-10-26: pre-release, only the
+    # owner and testers); a production project in Tokyo before real users.
+    SUPABASE_URL: https://yjnzrhusfxilktbjrzsw.supabase.co
     # The sites on joinissho.com, plus their workers.dev addresses while both work.
     ALLOWED_ORIGINS: https://admin.joinissho.com,https://app.joinissho.com,https://issho-admin.shrujancheruku.workers.dev,https://issho-web.shrujancheruku.workers.dev
     SENTRY_ENVIRONMENT: production
@@ -79,24 +85,26 @@ env:
     - SENTRY_DSN
     - EXPO_ACCESS_TOKEN
 
-accessories:
-  # Nightly pg_dump to Cloudflare R2, an off-site copy (config/backup/backup.sh;
-  # docs/deploy.md). The Postgres image matches the database's major version.
-  backup:
-    image: postgres:17-alpine
-    host: 203.0.113.10 # TODO: the VPS
-    cmd: sh /backup/backup.sh
-    files:
-      - config/backup/backup.sh:/backup/backup.sh
-    env:
-      clear:
-        R2_ENDPOINT: https://ACCOUNT_ID.r2.cloudflarestorage.com # TODO: the Cloudflare account id
-        R2_BUCKET: issho-backups # TODO: the bucket
-        BACKUP_AT: "3" # UTC hour
-      secret:
-        - DATABASE_URL
-        - R2_ACCESS_KEY_ID
-        - R2_SECRET_ACCESS_KEY
+# Off until the R2 bucket exists: `kamal setup` boots every accessory, and
+# this one stops without its bucket. Uncomment, then `kamal accessory boot backup`.
+# accessories:
+#   # Nightly pg_dump to Cloudflare R2, an off-site copy (config/backup/backup.sh;
+#   # docs/deploy.md). The Postgres image matches the database's major version.
+#   backup:
+#     image: postgres:17-alpine
+#     host: 35.243.76.67
+#     cmd: sh /backup/backup.sh
+#     files:
+#       - config/backup/backup.sh:/backup/backup.sh
+#     env:
+#       clear:
+#         R2_ENDPOINT: https://ACCOUNT_ID.r2.cloudflarestorage.com # TODO: the Cloudflare account id
+#         R2_BUCKET: issho-backups # TODO: the bucket
+#         BACKUP_AT: "3" # UTC hour
+#       secret:
+#         - DATABASE_URL
+#         - R2_ACCESS_KEY_ID
+#         - R2_SECRET_ACCESS_KEY
 
 aliases:
   # kamal migrate: apply migrations with the image for the current commit
