@@ -15,7 +15,7 @@ import { isRightToLeft } from '@/i18n/direction';
 import { useShownLanguage } from '@/i18n/i18n-provider';
 import { baseLanguage } from '@/i18n/strings';
 
-export type ThemedTextProps = TextProps & {
+type ThemedTextProps = TextProps & {
   type?: 'default' | 'title' | 'small' | 'smallBold' | 'subtitle' | 'link' | 'linkPrimary' | 'code';
   themeColor?: ThemeColor;
   /**

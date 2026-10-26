@@ -6,7 +6,7 @@ import type { StringKey } from '@/i18n/strings';
 type Level = Exclude<Interest, Interest.UNSPECIFIED>;
 
 /** Each interest level's label and how many taps it takes, for the tiles and their legend. */
-export const interestLabels: Record<Level, { label: StringKey; tap: StringKey }> = {
+const interestLabels: Record<Level, { label: StringKey; tap: StringKey }> = {
   [Interest.OPEN_TO_TRY]: { label: 'interest.openToTry', tap: 'interest.tapOnce' },
   [Interest.LIKE]: { label: 'interest.like', tap: 'interest.tapTwice' },
   [Interest.LOVE]: { label: 'interest.love', tap: 'interest.tapThree' },
@@ -18,7 +18,7 @@ export const interestLabels: Record<Level, { label: StringKey; tap: StringKey }>
  * vermilion for love (the theme's, lighter on the night ground). Ink text
  * on the golds in both themes.
  */
-export function interestColors(level: Level, theme: Palette): { background: string; text: string } {
+function interestColors(level: Level, theme: Palette): { background: string; text: string } {
   switch (level) {
     case Interest.OPEN_TO_TRY:
       return { background: Brand.goldTint, text: Brand.ink };

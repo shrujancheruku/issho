@@ -3,6 +3,6 @@
 import es from './es.json';
 import ja from './ja.json';
 
-export type BundledCatalog = { catalogVersion: string; strings: Record<string, string> };
+type BundledCatalog = { catalogVersion: string; strings: Record<string, string> };
 
 export const bundled: Readonly<Record<string, BundledCatalog>> = { es, ja };

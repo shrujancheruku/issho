@@ -73,4 +73,4 @@ Anyone can open the page; data needs an admin token, which the API checks on eve
 
 ## Checks
 
-`pnpm --filter @issho/admin typecheck`, `test` (Vitest: flag wording, placeholder check) and `build`. CI runs all three.
+`pnpm --filter @issho/admin typecheck`, `lint` (ESLint with typescript-eslint and the React hooks rules, `eslint.config.mjs`), `test` (Vitest: flag wording, placeholder check) and `build`. CI runs all four.

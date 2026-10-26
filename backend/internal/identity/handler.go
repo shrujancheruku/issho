@@ -15,9 +15,9 @@ type Handler struct {
 }
 
 func (h *Handler) GetMe(ctx context.Context, _ *connect.Request[isshov1.GetMeRequest]) (*connect.Response[isshov1.GetMeResponse], error) {
-	c, ok := auth.FromContext(ctx)
-	if !ok {
-		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("no caller"))
+	c, err := auth.Require(ctx)
+	if err != nil {
+		return nil, err
 	}
 	acct, err := h.Svc.Me(ctx, c)
 	if err != nil {
@@ -41,9 +41,9 @@ func (h *Handler) GetMe(ctx context.Context, _ *connect.Request[isshov1.GetMeReq
 }
 
 func (h *Handler) DeleteAccount(ctx context.Context, _ *connect.Request[isshov1.DeleteAccountRequest]) (*connect.Response[isshov1.DeleteAccountResponse], error) {
-	c, ok := auth.FromContext(ctx)
-	if !ok {
-		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("no caller"))
+	c, err := auth.Require(ctx)
+	if err != nil {
+		return nil, err
 	}
 	if err := h.Svc.DeleteAccount(ctx, c); err != nil {
 		if errors.Is(err, ErrDeletionUnavailable) {

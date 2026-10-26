@@ -265,20 +265,30 @@ func checkPickLean(ctx context.Context, q *dbgen.Queries, userID uuid.UUID, now 
 	})
 }
 
+// CheckReport checks a report's reason and returns its details trimmed,
+// for reports about an outing (Report) and about a crew (crews).
+func CheckReport(reason, details string) (string, error) {
+	switch reason {
+	case ReportDating, ReportHarassment, ReportUnsafe, ReportNoShow, ReportOther:
+	default:
+		return "", invalid("reason: dating, harassment, unsafe, no_show or other")
+	}
+	details = strings.TrimSpace(details)
+	if utf8.RuneCountInString(details) > MaxReportDetails {
+		return "", invalid("details: at most %d characters", MaxReportDetails)
+	}
+	return details, nil
+}
+
 // Report records the caller's report about someone in their group, for the
 // moderators. Anyone who confirmed (even if they later cancelled) can
 // report someone else who did, until ReportFor after the start; reporting
 // the same person about the same outing again replaces the report. The two
 // are never grouped together again (matching's Blocked).
 func (s *Service) Report(ctx context.Context, userID, eventID, mateID uuid.UUID, reason, details string, now time.Time) error {
-	switch reason {
-	case ReportDating, ReportHarassment, ReportUnsafe, ReportNoShow, ReportOther:
-	default:
-		return invalid("reason: dating, harassment, unsafe, no_show or other")
-	}
-	details = strings.TrimSpace(details)
-	if utf8.RuneCountInString(details) > MaxReportDetails {
-		return invalid("details: at most %d characters", MaxReportDetails)
+	details, err := CheckReport(reason, details)
+	if err != nil {
+		return err
 	}
 	q := dbgen.New(s.DB)
 	r, err := membership(ctx, q, userID, eventID)

@@ -19,6 +19,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/maps"
 	"github.com/shrujancheruku/issho/backend/internal/matching"
 	"github.com/shrujancheruku/issho/backend/internal/platform/auth"
+	"github.com/shrujancheruku/issho/backend/internal/platform/errs"
 	"github.com/shrujancheruku/issho/backend/internal/platform/i18n"
 )
 
@@ -52,21 +53,6 @@ func (h *ReviewHandler) now() time.Time {
 	return time.Now()
 }
 
-func admin(ctx context.Context) (auth.Caller, error) {
-	c, ok := auth.FromContext(ctx)
-	if !ok {
-		return c, connect.NewError(connect.CodeUnauthenticated, errors.New("no caller"))
-	}
-	if !c.Admin {
-		return c, connect.NewError(connect.CodePermissionDenied, errors.New("admins only"))
-	}
-	return c, nil
-}
-
-func reviewInvalid(msg string) error {
-	return connect.NewError(connect.CodeInvalidArgument, errors.New(msg))
-}
-
 var reviewStatuses = map[isshov1.ReviewPlanStatus]string{
 	isshov1.ReviewPlanStatus_REVIEW_PLAN_STATUS_DRAFT:  PlanDraft,
 	isshov1.ReviewPlanStatus_REVIEW_PLAN_STATUS_OPEN:   PlanOpen,
@@ -74,7 +60,7 @@ var reviewStatuses = map[isshov1.ReviewPlanStatus]string{
 }
 
 func (h *ReviewHandler) ListReviewCities(ctx context.Context, _ *connect.Request[isshov1.ListReviewCitiesRequest]) (*connect.Response[isshov1.ListReviewCitiesResponse], error) {
-	if _, err := admin(ctx); err != nil {
+	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
 	rows, err := dbgen.New(h.Svc.DB).ListReviewCities(ctx)
@@ -89,7 +75,7 @@ func (h *ReviewHandler) ListReviewCities(ctx context.Context, _ *connect.Request
 }
 
 func (h *ReviewHandler) SetCityReview(ctx context.Context, req *connect.Request[isshov1.SetCityReviewRequest]) (*connect.Response[isshov1.SetCityReviewResponse], error) {
-	if _, err := admin(ctx); err != nil {
+	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
 	n, err := dbgen.New(h.Svc.DB).SetCityReview(ctx, dbgen.SetCityReviewParams{ID: req.Msg.CityId, Review: req.Msg.Review})
@@ -103,12 +89,12 @@ func (h *ReviewHandler) SetCityReview(ctx context.Context, req *connect.Request[
 }
 
 func (h *ReviewHandler) ListReviewPlans(ctx context.Context, req *connect.Request[isshov1.ListReviewPlansRequest]) (*connect.Response[isshov1.ListReviewPlansResponse], error) {
-	if _, err := admin(ctx); err != nil {
+	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
 	status, ok := reviewStatuses[req.Msg.Status]
 	if !ok {
-		return nil, reviewInvalid("status: draft, open or closed")
+		return nil, errs.Invalid("status: draft, open or closed")
 	}
 	q := dbgen.New(h.Svc.DB)
 	rows, err := q.ListReviewPlans(ctx, dbgen.ListReviewPlansParams{CityID: req.Msg.CityId, Status: status, MaxRows: reviewRows})
@@ -133,7 +119,7 @@ func (h *ReviewHandler) ListReviewPlans(ctx context.Context, req *connect.Reques
 }
 
 func (h *ReviewHandler) GetReviewPlan(ctx context.Context, req *connect.Request[isshov1.GetReviewPlanRequest]) (*connect.Response[isshov1.GetReviewPlanResponse], error) {
-	if _, err := admin(ctx); err != nil {
+	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
 	id, err := parsePlanID(req.Msg.PlanId)
@@ -181,7 +167,7 @@ func (h *ReviewHandler) GetReviewPlan(ctx context.Context, req *connect.Request[
 }
 
 func (h *ReviewHandler) ApprovePlan(ctx context.Context, req *connect.Request[isshov1.ApprovePlanRequest]) (*connect.Response[isshov1.ApprovePlanResponse], error) {
-	c, err := admin(ctx)
+	c, err := auth.RequireAdmin(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -220,7 +206,7 @@ func (h *ReviewHandler) ApprovePlan(ctx context.Context, req *connect.Request[is
 }
 
 func (h *ReviewHandler) RejectPlan(ctx context.Context, req *connect.Request[isshov1.RejectPlanRequest]) (*connect.Response[isshov1.RejectPlanResponse], error) {
-	c, err := admin(ctx)
+	c, err := auth.RequireAdmin(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -241,7 +227,7 @@ func (h *ReviewHandler) RejectPlan(ctx context.Context, req *connect.Request[iss
 }
 
 func (h *ReviewHandler) EditPlan(ctx context.Context, req *connect.Request[isshov1.EditPlanRequest]) (*connect.Response[isshov1.EditPlanResponse], error) {
-	if _, err := admin(ctx); err != nil {
+	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
 	id, err := parsePlanID(req.Msg.PlanId)
@@ -263,7 +249,7 @@ func (h *ReviewHandler) EditPlan(ctx context.Context, req *connect.Request[issho
 }
 
 func (h *ReviewHandler) WithdrawPlan(ctx context.Context, req *connect.Request[isshov1.WithdrawPlanRequest]) (*connect.Response[isshov1.WithdrawPlanResponse], error) {
-	if _, err := admin(ctx); err != nil {
+	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
 	id, err := parsePlanID(req.Msg.PlanId)
@@ -281,7 +267,7 @@ func (h *ReviewHandler) WithdrawPlan(ctx context.Context, req *connect.Request[i
 }
 
 func (h *ReviewHandler) ListVenueOptions(ctx context.Context, req *connect.Request[isshov1.ListVenueOptionsRequest]) (*connect.Response[isshov1.ListVenueOptionsResponse], error) {
-	if _, err := admin(ctx); err != nil {
+	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
 	q := dbgen.New(h.Svc.DB)
@@ -312,7 +298,7 @@ func (h *ReviewHandler) ListVenueOptions(ctx context.Context, req *connect.Reque
 }
 
 func (h *ReviewHandler) CreatePlan(ctx context.Context, req *connect.Request[isshov1.CreatePlanRequest]) (*connect.Response[isshov1.CreatePlanResponse], error) {
-	c, err := admin(ctx)
+	c, err := auth.RequireAdmin(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -323,16 +309,16 @@ func (h *ReviewHandler) CreatePlan(ctx context.Context, req *connect.Request[iss
 		return nil, err
 	}
 	if city.ID != m.CityId {
-		return nil, reviewInvalid("area_id: not in that city")
+		return nil, errs.Invalid("area_id: not in that city")
 	}
 	var followUp *matching.Activity
 	if m.FollowUpId != "" {
 		if followUp = city.activity(matching.ActivityID(m.FollowUpId)); followUp == nil || followUp.ID == act.ID {
-			return nil, reviewInvalid("follow_up_id: not another activity in the city")
+			return nil, errs.Invalid("follow_up_id: not another activity in the city")
 		}
 	}
 	if !i18n.Valid(m.PrimaryLanguage) || (m.SecondaryLanguage != "" && (!i18n.Valid(m.SecondaryLanguage) || m.SecondaryLanguage == m.PrimaryLanguage)) {
-		return nil, reviewInvalid("languages: ISO 639-1 codes, the second different from the first")
+		return nil, errs.Invalid("languages: ISO 639-1 codes, the second different from the first")
 	}
 	title, summary, err := planText(m.Title, m.Summary)
 	if err != nil {
@@ -348,7 +334,7 @@ func (h *ReviewHandler) CreatePlan(ctx context.Context, req *connect.Request[iss
 			return nil, err
 		}
 	} else if m.FollowUpVenuePlaceId != "" {
-		return nil, reviewInvalid("follow_up_venue_place_id: no follow-up activity")
+		return nil, errs.Invalid("follow_up_venue_place_id: no follow-up activity")
 	}
 	now := h.now()
 	w := h.Timing.Round(now, city.Location)
@@ -379,7 +365,7 @@ func (h *ReviewHandler) CreatePlan(ctx context.Context, req *connect.Request[iss
 func cityActivity(ctx context.Context, q *dbgen.Queries, areaID, activityID string) (*City, *matching.Activity, error) {
 	cityID, err := q.GetAreaCity(ctx, areaID)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return nil, nil, reviewInvalid("area_id: no such area")
+		return nil, nil, errs.Invalid("area_id: no such area")
 	}
 	if err != nil {
 		return nil, nil, err
@@ -391,7 +377,7 @@ func cityActivity(ctx context.Context, q *dbgen.Queries, areaID, activityID stri
 	}
 	act := city.activity(matching.ActivityID(activityID))
 	if act == nil {
-		return nil, nil, reviewInvalid("activity_id: not an activity enabled in the city")
+		return nil, nil, errs.Invalid("activity_id: not an activity enabled in the city")
 	}
 	return city, act, nil
 }
@@ -431,7 +417,7 @@ func chooseVenue(ctx context.Context, q *dbgen.Queries, areaID string, act *matc
 			return &placeID, nil
 		}
 	}
-	return nil, reviewInvalid("venue: not a venue found for " + string(act.ID) + " in that area")
+	return nil, errs.Invalid("venue: not a venue found for %s in that area", act.ID)
 }
 
 // planText checks an admin's English title and summary and stores them as
@@ -439,10 +425,10 @@ func chooseVenue(ctx context.Context, q *dbgen.Queries, areaID string, act *matc
 func planText(title, summary string) (t, s []byte, err error) {
 	title, summary = strings.TrimSpace(title), strings.TrimSpace(summary)
 	if utf8.RuneCountInString(title) > MaxTitle {
-		return nil, nil, reviewInvalid("title: at most 80 characters")
+		return nil, nil, errs.Invalid("title: at most 80 characters")
 	}
 	if utf8.RuneCountInString(summary) > MaxSummary {
-		return nil, nil, reviewInvalid("summary: at most 500 characters")
+		return nil, nil, errs.Invalid("summary: at most 500 characters")
 	}
 	if title != "" {
 		t = english(title)

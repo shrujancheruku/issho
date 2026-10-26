@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/shrujancheruku/issho/backend/internal/chat"
 	"github.com/shrujancheruku/issho/backend/internal/matching"
 )
 
@@ -49,11 +50,11 @@ func TestIntegrationChat(t *testing.T) {
 	}
 
 	// Closed until 48 h before.
-	early := starts.Add(-ChatOpensBefore - time.Minute)
+	early := starts.Add(-chat.OpensBefore - time.Minute)
 	if _, err := svc.SendChat(ctx, a, eventID, "hi", early); !errors.Is(err, ErrChatClosed) {
 		t.Errorf("before it opens: %v, want ErrChatClosed", err)
 	}
-	if msgs, st, err := svc.ChatMessages(ctx, a, eventID, 0, early); err != nil || len(msgs) != 0 || st.Open || !st.OpensAt.Equal(starts.Add(-ChatOpensBefore)) {
+	if msgs, st, err := svc.ChatMessages(ctx, a, eventID, 0, early); err != nil || len(msgs) != 0 || st.Open || !st.OpensAt.Equal(starts.Add(-chat.OpensBefore)) {
 		t.Errorf("reading before it opens: %v, %+v, %v", msgs, st, err)
 	}
 
@@ -69,14 +70,14 @@ func TestIntegrationChat(t *testing.T) {
 	if err != nil || !st.Open || len(msgs) != 1 || msgs[0].Mine || msgs[0].Name != "Test" || msgs[0].Body != first.Body {
 		t.Errorf("b reads = %+v, %+v, %v", msgs, st, err)
 	}
-	for name, body := range map[string]string{"empty": "   ", "too long": strings.Repeat("あ", MaxChatMessage+1)} {
+	for name, body := range map[string]string{"empty": "   ", "too long": strings.Repeat("あ", chat.MaxMessage+1)} {
 		var inv *InvalidError
 		if _, err := svc.SendChat(ctx, a, eventID, body, open); !errors.As(err, &inv) {
 			t.Errorf("%s message: %v, want InvalidError", name, err)
 		}
 	}
-	if _, err := svc.SendChat(ctx, a, eventID, strings.Repeat("あ", MaxChatMessage), open); err != nil {
-		t.Errorf("a message of exactly %d characters: %v", MaxChatMessage, err)
+	if _, err := svc.SendChat(ctx, a, eventID, strings.Repeat("あ", chat.MaxMessage), open); err != nil {
+		t.Errorf("a message of exactly %d characters: %v", chat.MaxMessage, err)
 	}
 	// Only people going.
 	if _, _, err := svc.ChatMessages(ctx, c, eventID, 0, open); !errors.Is(err, ErrNotGoing) {
@@ -94,7 +95,7 @@ func TestIntegrationChat(t *testing.T) {
 	}
 
 	// After 24 h past the start: readable, not writable.
-	late := starts.Add(ChatClosesAfter)
+	late := starts.Add(chat.ClosesAfter)
 	if _, err := svc.SendChat(ctx, a, eventID, "thanks!", late); !errors.Is(err, ErrChatClosed) {
 		t.Errorf("after it closes: %v, want ErrChatClosed", err)
 	}
@@ -103,10 +104,10 @@ func TestIntegrationChat(t *testing.T) {
 	}
 
 	// Deleted 30 days after the event, not before.
-	if n, err := DeleteOldChats(ctx, f.q, f.city, day(12).Add(ChatKeep)); err != nil || n != 0 {
+	if n, err := chat.DeleteOld(ctx, f.q, f.city, day(12).Add(chat.Keep)); err != nil || n != 0 {
 		t.Errorf("at 30 days: deleted %d, %v; want 0", n, err)
 	}
-	if n, err := DeleteOldChats(ctx, f.q, f.city, day(13).Add(ChatKeep)); err != nil || n != 3 {
+	if n, err := chat.DeleteOld(ctx, f.q, f.city, day(13).Add(chat.Keep)); err != nil || n != 3 {
 		t.Errorf("after 30 days: deleted %d, %v; want 3", n, err)
 	}
 }

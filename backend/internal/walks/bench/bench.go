@@ -35,6 +35,7 @@ import (
 
 	"github.com/shrujancheruku/issho/backend/internal/cities"
 	"github.com/shrujancheruku/issho/backend/internal/maps"
+	"github.com/shrujancheruku/issho/backend/internal/plans"
 	"github.com/shrujancheruku/issho/backend/internal/walks"
 )
 
@@ -114,7 +115,7 @@ func Requests(cs []Case, dataDir, activities string) (map[string]walks.Request, 
 		}
 		r := walks.Request{
 			City: p.Name["en"], Area: ar.Name["en"], Center: maps.LatLng{Lat: ar.Lat, Lng: ar.Lng},
-			Activity: withoutExamples(name), Theme: a.WalkTheme, Month: time.Month(c.Month),
+			Activity: plans.WithoutExamples(name), Theme: a.WalkTheme, Month: time.Month(c.Month),
 			Blocks: c.Blocks,
 		}
 		if len(r.Blocks) == 0 {
@@ -123,15 +124,6 @@ func Requests(cs []Case, dataDir, activities string) (map[string]walks.Request, 
 		out[c.ID] = r
 	}
 	return out, nil
-}
-
-// withoutExamples drops a trailing "(…)" from a catalogue name, as plan
-// titles do.
-func withoutExamples(name string) string {
-	if i := strings.LastIndex(name, " ("); i > 0 && strings.HasSuffix(name, ")") {
-		return name[:i]
-	}
-	return name
 }
 
 // Variant is a proposer configuration: "provider:model[:effort]", e.g.

@@ -23,6 +23,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/catalog"
 	"github.com/shrujancheruku/issho/backend/internal/chatws"
 	"github.com/shrujancheruku/issho/backend/internal/citypacks"
+	"github.com/shrujancheruku/issho/backend/internal/crews"
 	"github.com/shrujancheruku/issho/backend/internal/curation"
 	"github.com/shrujancheruku/issho/backend/internal/health"
 	"github.com/shrujancheruku/issho/backend/internal/identity"
@@ -179,13 +180,14 @@ func run() error {
 	}
 	mux.Handle(isshov1connect.NewPlanServiceHandler(&plans.Handler{Svc: planSvc}, opts))
 	mux.Handle(isshov1connect.NewEventServiceHandler(&plans.EventHandler{Svc: planSvc}, opts))
-	mux.Handle(isshov1connect.NewCrewServiceHandler(&plans.CrewHandler{Svc: planSvc}, opts))
+	crewSvc := &crews.Service{DB: pool}
+	mux.Handle(isshov1connect.NewCrewServiceHandler(&crews.Handler{Svc: crewSvc}, opts))
 	mux.Handle(isshov1connect.NewPushServiceHandler(&push.Handler{Q: q}, opts))
 	mux.Handle(isshov1connect.NewReviewServiceHandler(review, opts))
 	mux.Handle(isshov1connect.NewCurationServiceHandler(venues, opts))
 	mux.Handle(isshov1connect.NewMetricsServiceHandler(&metrics.Handler{Q: q}, opts))
 	mux.Handle(isshov1connect.NewCityPackServiceHandler(packs, opts))
-	mux.Handle(isshov1connect.NewModerationServiceHandler(&moderation.Handler{Q: q, Plans: planSvc, Suspensions: suspensions}, opts))
+	mux.Handle(isshov1connect.NewModerationServiceHandler(&moderation.Handler{Q: q, Plans: planSvc, Crews: crewSvc, Suspensions: suspensions}, opts))
 	uiCatalog, err := uistrings.Load()
 	if err != nil {
 		return err
@@ -207,7 +209,7 @@ func run() error {
 	chatHub := chatws.NewHub()
 	go chatHub.Run(ctx, pool, slog.Default())
 	mux.Handle("/ws/chat", &chatws.Handler{
-		Hub: chatHub, Svc: planSvc, Verifier: verifier, Suspended: suspensions.Suspended, Log: slog.Default(),
+		Hub: chatHub, Plans: planSvc, Crews: crewSvc, Verifier: verifier, Suspended: suspensions.Suspended, Log: slog.Default(),
 		OriginPatterns: originHosts(cfg.AllowedOrigins),
 	})
 

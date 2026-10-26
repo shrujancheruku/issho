@@ -68,19 +68,17 @@ function AppText() {
   const queryClient = useQueryClient();
   const me = useQuery({ queryKey: ['translator'], queryFn: () => api.translation.getTranslator({}) });
   const languages = useQuery({ queryKey: ['app-languages'], queryFn: () => api.translation.listAppLanguages({}) });
-  const [lang, setLang] = useState('');
+  const [chosenLang, setLang] = useState('');
   const [filter, setFilter] = useState<Filter>('check');
   const [search, setSearch] = useState('');
 
   // Opening a language starts its machine translations (a cost), so start
   // where there's work: an open pull request, then human versions, then
   // English, which needs no machine.
-  useEffect(() => {
-    const all = languages.data?.languages ?? [];
-    const first = all.find((l) => l.pullRequest) ?? all.find((l) => l.lang !== 'en' && l.human + l.stale > 0)
-      ?? all.find((l) => l.lang === 'en') ?? all[0];
-    if (!lang && first) setLang(first.lang);
-  }, [lang, languages.data]);
+  const all = languages.data?.languages ?? [];
+  const first = all.find((l) => l.pullRequest) ?? all.find((l) => l.lang !== 'en' && l.human + l.stale > 0)
+    ?? all.find((l) => l.lang === 'en') ?? all[0];
+  const lang = chosenLang || (first?.lang ?? '');
 
   const list = useQuery({
     queryKey: ['app-strings', lang],
@@ -89,17 +87,18 @@ function AppText() {
     // The first look at a language starts its machine translations.
     refetchInterval: (q) => (q.state.data && !q.state.data.complete ? 5000 : false),
   });
-  const [pr, setPr] = useState<TranslationPullRequest | undefined>();
-  useEffect(() => setPr(list.data?.pullRequest), [list.data]);
+  const pr = list.data?.pullRequest;
 
   const onSaved = (saved?: AppString, next?: TranslationPullRequest) => {
-    if (next) setPr(next);
-    // The filters read the list: put the saved row in it, so it moves to
-    // "In pull request" without fetching every string again.
-    if (saved) {
-      queryClient.setQueryData<ListAppStringsResponse>(['app-strings', lang], (old) =>
-        old && { ...old, strings: old.strings.map((s) => (s.key === saved.key ? saved : s)) });
-    }
+    // The filters and the pull request link read the list: put the saved
+    // row and the pull request in it, so the row moves to "In pull
+    // request" without fetching every string again.
+    queryClient.setQueryData<ListAppStringsResponse>(['app-strings', lang], (old) =>
+      old && {
+        ...old,
+        pullRequest: next ?? old.pullRequest,
+        strings: saved ? old.strings.map((s) => (s.key === saved.key ? saved : s)) : old.strings,
+      });
     queryClient.invalidateQueries({ queryKey: ['app-languages'] });
   };
 
@@ -144,12 +143,14 @@ function AppText() {
 function AppStringRow({ lang, initial, canPropose, onSaved }: {
   lang: string; initial: AppString; canPropose: boolean; onSaved: (saved?: AppString, pr?: TranslationPullRequest) => void;
 }) {
-  const [s, setS] = useState(initial);
+  const [saved, setS] = useState(initial);
   // Machine translations can arrive after the row first renders.
-  useEffect(() => setS((cur) => (cur.machine ? cur : { ...cur, machine: initial.machine })), [initial.machine]);
+  const s = saved.machine ? saved : { ...saved, machine: initial.machine };
   const current = s.pending ? (s.pendingText || (lang === 'en' ? s.english : s.machine)) : shown(s, lang);
-  const [text, setText] = useState(current);
-  useEffect(() => setText((t) => t || current), [current]);
+  // Until it's edited, the box shows the current text (which fills in as
+  // the machine translation arrives).
+  const [typed, setText] = useState<string | undefined>();
+  const text = typed ?? current;
   const problems = placeholderProblems(s.english, text);
   const hasHuman = s.pending ? s.pendingText !== '' : s.human !== '';
 
@@ -223,15 +224,13 @@ function AppStringRow({ lang, initial, canPropose, onSaved }: {
 /** Activity and city names and the sign-in email: machine translations corrected in the database. */
 function Catalogue() {
   const languages = useQuery({ queryKey: ['catalogue-languages'], queryFn: () => api.translation.listCatalogLanguages({}) });
-  const [lang, setLang] = useState('');
+  const [chosenLang, setLang] = useState('');
+  const lang = chosenLang || (languages.data?.languages[0]?.lang ?? '');
   const [search, setSearch] = useState('');
   const [query, setQuery] = useState(''); // search, applied after a pause in typing
   const [unreviewedOnly, setUnreviewedOnly] = useState(true);
   const [offset, setOffset] = useState(0);
 
-  useEffect(() => {
-    if (!lang && languages.data?.languages.length) setLang(languages.data.languages[0].lang);
-  }, [lang, languages.data]);
   useEffect(() => {
     const t = setTimeout(() => { setQuery(search.trim()); setOffset(0); }, 300);
     return () => clearTimeout(t);

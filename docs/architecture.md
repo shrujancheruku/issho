@@ -39,7 +39,7 @@
    - Public procedures (`HealthService.Check`, and `UIService.GetStrings` because the sign-in screens need their text) skip it.
    - Everything else must have a valid ES256/RS256 token with Supabase's issuer, the `authenticated` audience and an unexpired `exp`. The caller is put on the request context.
    - Admin-only services (`ModerationService`, `ReviewService`, `CurationService`, `MetricsService` and `CityPackService`, for the admin SPA) also need `app_metadata.admin` in the token (`auth.AdminOnly`), else `permission_denied`. Admins are ordinary Supabase users given that role with `tool set-admin`; there's no admin list in our config.
-4. The **handler** (`internal/<domain>/handler.go`) validates input and calls the domain **service**.
+4. The **handler** (`internal/<domain>/handler.go`) validates input and calls the domain **service**. Handlers with no logic of their own (reads and plain updates in `catalog`, `push` and the admin SPA's `moderation`, `curation`, `metrics`, `citypacks` and `translations`) may call **sqlc** queries directly instead.
 5. The **service** contains the business logic and talks to Postgres through **sqlc** queries (`backend/gen/dbgen`).
 6. Errors come back as Connect error codes (`unauthenticated`, `invalid_argument`, …). The outermost **errs interceptor** replaces any non-Connect error with a generic `internal error`, after logging it, so database and upstream details never reach clients.
 
@@ -51,21 +51,25 @@ backend/
   cmd/tool     operational CLI: migrations and seeding
   cmd/worker   (M6) River background jobs
   internal/
-    platform/  cross-cutting: config, db, auth, i18n (no business logic)
+    platform/  cross-cutting: config, db, auth, i18n, errs (no business logic)
     <domain>/  identity, catalog, cities, … each has handler.go (transport) and service.go (logic)
+    plans/     plans, signups, scheduling and events (with their chats' access rules)
+    crews/     crews: the weekly pass that offers them, answers, chat, leaving
+    chat/      chat storage shared by events and crews (limits, cleaning, posting with NOTIFY)
+    testfixture/  a throwaway city with people, for integration tests across packages
   db/migrations  goose SQL (embedded into binaries)
   db/queries     sqlc input SQL
   gen/           generated: protobuf/Connect (gen/issho) and sqlc (gen/dbgen). Never edit.
 ```
 
 Rules:
-- **Domains talk to each other only through service types**, never through each other's queries.
+- **Domains talk to each other only through service types**, never through each other's queries. Dependencies point one way: `crews` uses `plans` (cities, reports), never the reverse.
 - **`internal/matching` (M4) is pure:** plain structs in, results out, no I/O, no clock, no randomness. This makes it deterministic and easy to simulate (`internal/matching/sim`). It works **plan first, time second**: `Suggest` opens plans without a date, `Feed` ranks them per person, and `Schedule` picks a date and forms groups once a plan's signups are enough. **Every area is a candidate meeting place**: a person joins the pool of each area they can reach. Steps and rules: [backend README](../backend/README.md#matching).
-- **Every external vendor sits behind a Go interface**, so implementations can be swapped. Done: `maps.Router` (travel times) and `maps.PlaceSearcher` (venues), with Google implementations in `internal/maps/google`; `tagging.Tagger` (free-text interests → activities), with a Gemini implementation in `internal/tagging/gemini`; `walks.Proposer` (a walk from the model's own knowledge) in `internal/walks/gemini`, checked by `maps.PlaceFinder` and `maps.WalkRouter`. Planned: `Copywriter`, `Verifier`, `Push`, `Storage`.
+- **Every external vendor sits behind a Go interface**, so implementations can be swapped. Done: `maps.Router` (travel times) and `maps.PlaceSearcher` (venues), with Google implementations in `internal/maps/google`; `tagging.Tagger` (free-text interests → activities), with a Gemini implementation in `internal/tagging/gemini`; `walks.Proposer` (a walk from the model's own knowledge) in `internal/walks/gemini`, checked by `maps.PlaceFinder` and `maps.WalkRouter`; `translate.Translator` (Google Cloud Translation); `push.Sender` (Expo's push service). Planned: `Copywriter`, `Verifier`, `Storage`.
 
 ## Data model
 
-Defined in `backend/db/migrations/` (`00001_init.sql`, `00002_geo.sql`). All app tables live in the `app` schema.
+Defined in `backend/db/migrations/`. All app tables live in the `app` schema. The core tables (`00001_init.sql`, `00002_geo.sql`):
 
 | Table | Purpose |
 |---|---|
@@ -82,18 +86,19 @@ Defined in `backend/db/migrations/` (`00001_init.sql`, `00002_geo.sql`). All app
 | `availability_slots` | Weekday × morning/afternoon/evening |
 | `user_activity_prefs` | Weight per activity: 0 = open to try, 1 = like, 2 = love |
 
+Later migrations add the rest, each described in its file: plans (`plans`, `plan_stops`, `plan_signups` and their slots), events (`events`, `event_groups`, `group_members`, `chat_messages`, `event_feedback`, `mate_picks`), crews (`crews`, `crew_members`, `crew_messages`, `crew_leaves`), moderation (`reports`, `moderation_flags`, `suspensions`), notifications (`notifications`, `push_tokens`, `push_tickets`), `translations` (the cache) and `walk_failures`. Every foreign key is indexed (`00026`), so the cascades from deleting an account, and joins on those keys, use an index rather than a table scan.
+
 ### Languages
 
 Languages are **symmetric**: no language is the default, and people who don't speak English are fully supported. People can speak any language, and events can be held in any language. Everything is shown in a **primary** language plus an optional **secondary** one:
 
 | Where | Primary | Secondary |
 |---|---|---|
-| An event | The event's language | The event's second language if it has one (e.g. a JP–ES exchange). Otherwise the user's primary language, if different; failing that, the user's secondary choice. |
-| The rest of the app | The user's primary language | The user's secondary choice, if any |
+| Everywhere, events included | The user's primary language | The user's secondary choice, if any |
 
-Examples: a JP–ES exchange in Tokyo shows Japanese + Spanish to everyone; a Japanese-only event shows Japanese + the viewer's own language (Spanish for a Spanish speaker).
+Events used to lead with their own language; since plans got titles (2026-10-22) they're shown in the reader's languages like everything else, and a plan's own languages decide who it suits, not how it's written.
 
-`i18n.ForEvent` and `i18n.ForApp` implement these rules; nothing else should re-implement them. Short text (names, titles) is shown **side by side** ("陶芸 · Cerámica"); longer text (descriptions, UI copy) uses a **switch** between the two languages.
+`i18n.ForApp` implements this; nothing else should re-implement it. Short text (names, titles) is shown **side by side** ("陶芸 · Cerámica"); longer text (descriptions, UI copy) uses a **switch** between the two languages.
 
 **Storage: English always, everything else on demand.** Localised text is stored as JSON objects (`{"en": …, "ja": …}`). English is the only language that must always be present; our own content (activity catalogue, venue categories) is stored in English only. Other languages come from `internal/translate`:
 

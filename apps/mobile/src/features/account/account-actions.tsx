@@ -8,9 +8,12 @@ import { useI18n } from '@/i18n/i18n-provider';
 import { api } from '@/lib/api';
 import { confirm, notify } from '@/lib/dialogs';
 
-/** Sign-out and account-deletion controls, shown wherever account settings live. */
-export function AccountActions() {
-  const { session, signOut } = useAuth();
+/**
+ * Deleting the account: confirmDelete asks first, then deletes it and signs
+ * out, or says it failed. deleting is true while it runs.
+ */
+export function useDeleteAccount() {
+  const { signOut } = useAuth();
   const { t } = useI18n();
   const deleteAccount = useMutation({
     mutationFn: () => api.identity.deleteAccount({}),
@@ -18,7 +21,6 @@ export function AccountActions() {
     onSuccess: () => signOut(),
     onError: () => notify(t('account.deleteFailed'), t('account.deleteFailedBody')),
   });
-
   const confirmDelete = () =>
     confirm({
       title: t('account.deleteTitle'),
@@ -27,6 +29,14 @@ export function AccountActions() {
       cancel: t('common.cancel'),
       onConfirm: () => deleteAccount.mutate(),
     });
+  return { deleting: deleteAccount.isPending, confirmDelete };
+}
+
+/** Sign-out and account-deletion controls, for the suspended screen. */
+export function AccountActions() {
+  const { session, signOut } = useAuth();
+  const { t } = useI18n();
+  const { deleting, confirmDelete } = useDeleteAccount();
 
   return (
     <View style={styles.container}>
@@ -38,12 +48,12 @@ export function AccountActions() {
       </Pressable>
       <Pressable
         accessibilityRole="button"
-        disabled={deleteAccount.isPending}
+        disabled={deleting}
         onPress={confirmDelete}
         style={styles.button}>
         {/* Plain text, not red: red is for errors; the confirmation guards it. */}
         <ThemedText>
-          {deleteAccount.isPending ? t('account.deleting') : t('account.delete')}
+          {deleting ? t('account.deleting') : t('account.delete')}
         </ThemedText>
       </Pressable>
     </View>

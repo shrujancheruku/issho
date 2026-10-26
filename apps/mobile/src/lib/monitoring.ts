@@ -15,7 +15,7 @@ const apiUrl = process.env.EXPO_PUBLIC_API_URL;
 // people join, through the EAS environment, without a code change.
 const tracesSampleRate = Number(process.env.EXPO_PUBLIC_SENTRY_TRACES_SAMPLE_RATE ?? 1);
 
-export const monitoring = !!dsn;
+const monitoring = !!dsn;
 
 if (dsn) {
   Sentry.init({

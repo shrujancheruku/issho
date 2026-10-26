@@ -141,6 +141,20 @@ func Interceptor(v *Verifier, public ...string) connect.UnaryInterceptorFunc {
 // services where cmd/api builds it keeps every admin RPC covered, new ones
 // included, without each handler having to remember a check.
 func AdminOnly(services ...string) connect.UnaryInterceptorFunc {
+	return guard(services, "admins only", func(c Caller) bool { return c.Admin })
+}
+
+// TranslatorsOnly rejects calls to the given services unless the caller is
+// an admin or a translator (has at least one language). Which languages a
+// translator may edit is checked by the handler (Caller.Translates); this
+// keeps everyone else out of the whole service, new RPCs included.
+func TranslatorsOnly(services ...string) connect.UnaryInterceptorFunc {
+	return guard(services, "translators only", func(c Caller) bool { return c.Admin || len(c.TranslatorLangs) > 0 })
+}
+
+// guard refuses calls to the services unless there's a caller that allowed
+// accepts.
+func guard(services []string, refusal string, allowed func(Caller) bool) connect.UnaryInterceptorFunc {
 	prefixes := make([]string, len(services))
 	for i, s := range services {
 		prefixes[i] = "/" + s + "/"
@@ -149,8 +163,8 @@ func AdminOnly(services ...string) connect.UnaryInterceptorFunc {
 		return func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
 			for _, p := range prefixes {
 				if strings.HasPrefix(req.Spec().Procedure, p) {
-					if c, ok := FromContext(ctx); !ok || !c.Admin {
-						return nil, connect.NewError(connect.CodePermissionDenied, errors.New("admins only"))
+					if c, ok := FromContext(ctx); !ok || !allowed(c) {
+						return nil, connect.NewError(connect.CodePermissionDenied, errors.New(refusal))
 					}
 					break
 				}
@@ -160,26 +174,26 @@ func AdminOnly(services ...string) connect.UnaryInterceptorFunc {
 	}
 }
 
-// TranslatorsOnly rejects calls to the given services unless the caller is
-// an admin or a translator (has at least one language). Which languages a
-// translator may edit is checked by the handler (Caller.Translates); this
-// keeps everyone else out of the whole service, new RPCs included.
-func TranslatorsOnly(services ...string) connect.UnaryInterceptorFunc {
-	prefixes := make([]string, len(services))
-	for i, s := range services {
-		prefixes[i] = "/" + s + "/"
+// Require returns the signed-in caller, for handlers of non-public
+// procedures (Interceptor has already checked the token).
+func Require(ctx context.Context) (Caller, error) {
+	c, ok := FromContext(ctx)
+	if !ok {
+		return c, connect.NewError(connect.CodeUnauthenticated, errors.New("no caller"))
 	}
-	return func(next connect.UnaryFunc) connect.UnaryFunc {
-		return func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
-			for _, p := range prefixes {
-				if strings.HasPrefix(req.Spec().Procedure, p) {
-					if c, ok := FromContext(ctx); !ok || (!c.Admin && len(c.TranslatorLangs) == 0) {
-						return nil, connect.NewError(connect.CodePermissionDenied, errors.New("translators only"))
-					}
-					break
-				}
-			}
-			return next(ctx, req)
-		}
+	return c, nil
+}
+
+// RequireAdmin returns the caller if they're an admin. Admin handlers call
+// it although AdminOnly already guards their service, so a wiring mistake
+// in cmd/api fails closed.
+func RequireAdmin(ctx context.Context) (Caller, error) {
+	c, err := Require(ctx)
+	if err != nil {
+		return c, err
 	}
+	if !c.Admin {
+		return c, connect.NewError(connect.CodePermissionDenied, errors.New("admins only"))
+	}
+	return c, nil
 }

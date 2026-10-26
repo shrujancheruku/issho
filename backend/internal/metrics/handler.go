@@ -34,9 +34,9 @@ type Handler struct {
 }
 
 func (h *Handler) GetCityMetrics(ctx context.Context, req *connect.Request[isshov1.GetCityMetricsRequest]) (*connect.Response[isshov1.GetCityMetricsResponse], error) {
-	c, ok := auth.FromContext(ctx)
-	if !ok {
-		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("no caller"))
+	c, err := auth.Require(ctx)
+	if err != nil {
+		return nil, err
 	}
 	if !c.Admin {
 		return nil, connect.NewError(connect.CodePermissionDenied, errors.New("admins only"))

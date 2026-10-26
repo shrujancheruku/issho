@@ -12,7 +12,7 @@ import { readCached, writeCached, type CachedStrings } from './cache';
 import { deviceLanguages } from './device';
 import { catalogFingerprint, displayEnglish, lookup, pseudoEnglish, type Params, type StringKey } from './strings';
 
-export type Languages = { primary: string; secondary: string };
+type Languages = { primary: string; secondary: string };
 
 type I18nState = {
   /** The display languages in effect ('' = no secondary). */

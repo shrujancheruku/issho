@@ -35,12 +35,16 @@ var (
 	ErrNotForYou = errors.New("you don't speak this plan's language")
 )
 
-// InvalidError is a signup the caller has to correct.
+// InvalidError is input the caller has to correct. Handlers send it as
+// CodeInvalidArgument.
 type InvalidError struct{ msg string }
 
 func (e *InvalidError) Error() string { return e.msg }
 
-func invalid(format string, a ...any) error { return &InvalidError{fmt.Sprintf(format, a...)} }
+// Invalid is an InvalidError, for packages built on this one (crews).
+func Invalid(format string, a ...any) error { return &InvalidError{fmt.Sprintf(format, a...)} }
+
+func invalid(format string, a ...any) error { return Invalid(format, a...) }
 
 // Service is what PlanService does for one caller.
 type Service struct {
@@ -210,15 +214,16 @@ func (s *Service) titles(ctx context.Context, q *dbgen.Queries, cityID string, c
 // in brackets, which help on the onboarding tiles ("Food tour (ramen,
 // desserts, markets …)"), are dropped.
 func Title(activity, followUp string) string {
-	activity = withoutExamples(activity)
+	activity = WithoutExamples(activity)
 	if followUp == "" {
 		return activity
 	}
-	return activity + ", then " + lowerFirst(withoutExamples(followUp))
+	return activity + ", then " + lowerFirst(WithoutExamples(followUp))
 }
 
-// withoutExamples drops a trailing "(…)" from a name.
-func withoutExamples(name string) string {
+// WithoutExamples drops a trailing "(…)" from a catalogue name, as plan
+// titles do (the walk bench names activities the same way).
+func WithoutExamples(name string) string {
 	if i := strings.LastIndex(name, " ("); i > 0 && strings.HasSuffix(name, ")") {
 		return name[:i]
 	}
@@ -432,7 +437,7 @@ const ShowClosedFor = 14 * 24 * time.Hour
 // ShowClosedFor, unranked (Level and Minutes don't matter once closed).
 func (s *Service) closedPlan(ctx context.Context, q *dbgen.Queries, caller Caller, userID, planID uuid.UUID) (FeedItem, error) {
 	r, err := q.GetRecentlyClosedPlan(ctx, dbgen.GetRecentlyClosedPlanParams{
-		ID: planID, CityID: caller.City, UserID: userID,
+		ID: planID, CityID: caller.City,
 		Since: pgtype.Timestamptz{Time: time.Now().Add(-ShowClosedFor), Valid: true},
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -441,33 +446,16 @@ func (s *Service) closedPlan(ctx context.Context, q *dbgen.Queries, caller Calle
 	if err != nil {
 		return FeedItem{}, err
 	}
+	c, err := q.GetPlanClosure(ctx, dbgen.GetPlanClosureParams{ID: planID, UserID: userID})
+	if err != nil {
+		return FeedItem{}, err
+	}
 	it := FeedItem{
-		Open: Open{
-			ID: r.ID,
-			OpenPlan: matching.OpenPlan{
-				Plan: matching.Plan{
-					Area:      matching.AreaID(r.AreaID),
-					Activity:  matching.ActivityID(r.ActivityID),
-					FollowUp:  matching.ActivityID(deref(r.FollowUpID)),
-					Primary:   r.PrimaryLanguage,
-					Secondary: deref(r.SecondaryLanguage),
-				},
-				Signups: int(r.Signups),
-			},
-			Round:         int(r.Round),
-			Window:        Window{Start: r.WindowStart.Time, Days: int(r.WindowDays), Deadline: r.SignupDeadline.Time},
-			Venue:         deref(r.VenuePlaceID),
-			FollowUpVenue: deref(r.FollowUpVenuePlaceID),
-			Route:         routeFrom(r.RoutePolyline, r.RouteSeconds),
-			MeetingPlace:  deref(r.MeetingPlaceID),
-			Walk:          r.Walk,
-			WalkTitle:     r.Title,
-			WalkSummary:   r.Description,
-		},
+		Open:         openFromRow(dbgen.ListOpenPlansRow(r)),
 		Minutes:      -1,
-		SignedUp:     r.SignedUp,
-		ClosedReason: r.ClosedReason,
-		ClosedAt:     r.ClosedAt.Time,
+		SignedUp:     c.SignedUp,
+		ClosedReason: c.ClosedReason,
+		ClosedAt:     c.ClosedAt.Time,
 	}
 	titles, secondary, err := s.titles(ctx, q, caller.City, caller, []titled{{it.Plan, it.WalkTitle}})
 	if err != nil {

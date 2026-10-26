@@ -5,7 +5,7 @@ import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useI18n } from '@/i18n/i18n-provider';
 
-export type ChipColors = { background: string; text: string };
+type ChipColors = { background: string; text: string };
 
 
 /**

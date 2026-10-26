@@ -2,9 +2,9 @@
 //
 // Languages are symmetric: no language is privileged. People can speak any
 // language and events can be held in any language. Everything shown to a
-// person is in up to two languages, a primary and an optional secondary,
-// chosen per context by ForEvent and ForApp. Localised text is stored as JSON
-// objects keyed by language code: {"en": "...", "ja": "...", "es": "..."}.
+// person is in up to two languages: their primary and an optional secondary
+// (ForApp), events included. Localised text is stored as JSON objects keyed
+// by language code: {"en": "...", "ja": "...", "es": "..."}.
 package i18n
 
 import (
@@ -65,28 +65,8 @@ func Display(tag string) string {
 	return base
 }
 
-// ForEvent picks the two languages to show a user for an event.
-//
-//   - Primary is the event's language: what they'll hear when they get there.
-//   - Secondary is the event's second language if it has one (e.g. a JP–ES
-//     language exchange shows Japanese and Spanish).
-//   - Otherwise it's the user's primary language, so they can understand an
-//     event held in a language they're still learning; failing that (the
-//     event is in their primary language), the user's own secondary choice.
-//
-// secondary is "" when it would repeat primary.
-func ForEvent(eventPrimary, eventSecondary, userPrimary, userSecondary string) (primary, secondary string) {
-	primary = eventPrimary
-	for _, l := range []string{eventSecondary, userPrimary, userSecondary} {
-		if l != "" && l != primary {
-			return primary, l
-		}
-	}
-	return primary, ""
-}
-
-// ForApp picks the two languages for everything outside an event: the user's
-// primary language and their optional secondary choice.
+// ForApp picks the two languages a person reads everything in, events
+// included: their primary language and their optional secondary choice.
 func ForApp(userPrimary, userSecondary string) (primary, secondary string) {
 	if userSecondary == userPrimary {
 		userSecondary = ""

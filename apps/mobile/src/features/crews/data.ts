@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { api } from '@/lib/api';
 
-export const crewsKey = ['crews'] as const;
+const crewsKey = ['crews'] as const;
 const crewKey = (id: string) => ['crew', id] as const;
 
 /** The person's crews and open crew offers, newest first. */

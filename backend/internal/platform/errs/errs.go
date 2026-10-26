@@ -4,6 +4,7 @@ package errs
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 
 	"connectrpc.com/connect"
@@ -34,4 +35,10 @@ func Interceptor(log *slog.Logger) connect.UnaryInterceptorFunc {
 			return nil, connect.NewError(connect.CodeInternal, errors.New("internal error"))
 		}
 	}
+}
+
+// Invalid is the error for a request a handler refuses: CodeInvalidArgument
+// with a message for the caller, conventionally "field: what's allowed".
+func Invalid(format string, a ...any) error {
+	return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf(format, a...))
 }

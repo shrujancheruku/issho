@@ -75,22 +75,6 @@ func (q *Queries) FinishPastEvents(ctx context.Context, arg FinishPastEventsPara
 	return result.RowsAffected(), nil
 }
 
-const getCheckIn = `-- name: GetCheckIn :one
-select checked_in_at from app.group_members where event_id = $1 and user_id = $2
-`
-
-type GetCheckInParams struct {
-	EventID uuid.UUID
-	UserID  uuid.UUID
-}
-
-func (q *Queries) GetCheckIn(ctx context.Context, arg GetCheckInParams) (pgtype.Timestamptz, error) {
-	row := q.db.QueryRow(ctx, getCheckIn, arg.EventID, arg.UserID)
-	var checked_in_at pgtype.Timestamptz
-	err := row.Scan(&checked_in_at)
-	return checked_in_at, err
-}
-
 const listConfirmedNames = `-- name: ListConfirmedNames :many
 select pr.display_name
 from app.group_members m
@@ -202,16 +186,21 @@ join app.plans p on p.id = e.plan_id
 where m.user_id = $1
   -- A proposal is nobody's business until an admin approves it (00022).
   and e.status <> 'proposed'
-  -- Recent events, and older ones still waiting for the caller's feedback
-  -- (started after @feedback_since, which may be later than @since).
-  and (e.date >= $2
-       or (e.starts_at > $3 and m.response = 'confirmed' and g.status = 'confirmed' and e.status <> 'cancelled'
-           and not exists (select 1 from app.event_feedback f where f.group_id = g.id and f.user_id = m.user_id)))
+  -- One event, from any date (GetEvent, CheckIn: a link to a past event
+  -- still opens it); or recent events, and older ones still waiting for
+  -- the caller's feedback (started after @feedback_since, which may be
+  -- later than @since).
+  and case when $2::uuid is not null then e.id = $2
+      else e.date >= $3
+        or (e.starts_at > $4 and m.response = 'confirmed' and g.status = 'confirmed' and e.status <> 'cancelled'
+            and not exists (select 1 from app.event_feedback f where f.group_id = g.id and f.user_id = m.user_id))
+      end
 order by e.date, e.block, e.id
 `
 
 type ListUserEventsParams struct {
 	UserID        uuid.UUID
+	EventID       pgtype.UUID
 	Since         pgtype.Date
 	FeedbackSince pgtype.Timestamptz
 }
@@ -254,7 +243,12 @@ type ListUserEventsRow struct {
 // EventService change about them. One row per (event, person): a person is
 // in at most one group per event.
 func (q *Queries) ListUserEvents(ctx context.Context, arg ListUserEventsParams) ([]ListUserEventsRow, error) {
-	rows, err := q.db.Query(ctx, listUserEvents, arg.UserID, arg.Since, arg.FeedbackSince)
+	rows, err := q.db.Query(ctx, listUserEvents,
+		arg.UserID,
+		arg.EventID,
+		arg.Since,
+		arg.FeedbackSince,
+	)
 	if err != nil {
 		return nil, err
 	}

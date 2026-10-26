@@ -6,7 +6,7 @@ import { api } from '@/lib/api';
 
 import type { EventAction } from './state';
 
-export const eventsKey = ['events'] as const;
+const eventsKey = ['events'] as const;
 const eventKey = (id: string) => ['event', id] as const;
 
 /** The person's events from yesterday on, soonest first. */
@@ -76,7 +76,7 @@ export function useSubmitFeedback(id: string) {
   });
 }
 
-export type ReportAnswer = { mateId: string; reason: ReportReason; details: string };
+type ReportAnswer = { mateId: string; reason: ReportReason; details: string };
 
 /** Reports someone from the person's group to the moderators. */
 export function useReport(id: string) {

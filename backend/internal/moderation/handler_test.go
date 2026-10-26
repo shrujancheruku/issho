@@ -12,12 +12,13 @@ import (
 
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
+	"github.com/shrujancheruku/issho/backend/internal/crews"
 	"github.com/shrujancheruku/issho/backend/internal/plans"
 	"github.com/shrujancheruku/issho/backend/internal/platform/auth"
 )
 
 func TestNonAdminRefused(t *testing.T) {
-	// moderator() runs before any query, so no database is needed.
+	// auth.RequireAdmin runs before any query, so no database is needed.
 	h := &Handler{}
 	ctx := auth.WithCaller(context.Background(), auth.Caller{UserID: uuid.New()})
 	if _, err := h.ListReports(ctx, connect.NewRequest(&isshov1.ListReportsRequest{})); connect.CodeOf(err) != connect.CodePermissionDenied {
@@ -98,7 +99,7 @@ func TestIntegrationQueue(t *testing.T) {
 	q := dbgen.New(pool)
 	now := time.Date(2026, 10, 23, 12, 0, 0, 0, time.UTC)
 	suspensions := &Suspensions{Q: q}
-	h := &Handler{Q: q, Plans: &plans.Service{DB: pool}, Suspensions: suspensions, Now: func() time.Time { return now }}
+	h := &Handler{Q: q, Plans: &plans.Service{DB: pool}, Crews: &crews.Service{DB: pool}, Suspensions: suspensions, Now: func() time.Time { return now }}
 	ctx = auth.WithCaller(ctx, auth.Caller{UserID: adminID, Email: "admin@example.com", Admin: true})
 
 	// Reports: open, then dismissed with a note.

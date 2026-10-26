@@ -18,6 +18,7 @@ import (
 
 	"github.com/shrujancheruku/issho/backend/db"
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
+	"github.com/shrujancheruku/issho/backend/internal/crews"
 	"github.com/shrujancheruku/issho/backend/internal/geo"
 	"github.com/shrujancheruku/issho/backend/internal/maps"
 	"github.com/shrujancheruku/issho/backend/internal/plans"
@@ -79,6 +80,7 @@ func (w *matchAllWorker) Work(ctx context.Context, job *river.Job[MatchAllArgs])
 type matchCityWorker struct {
 	river.WorkerDefaults[MatchCityArgs]
 	runner *plans.Runner
+	crews  *crews.Runner
 	now    func() time.Time
 }
 
@@ -118,7 +120,7 @@ func (w *matchCityWorker) Work(ctx context.Context, job *river.Job[MatchCityArgs
 		w.runner.Log.Warn("plan routes", "city", job.Args.City, "err", err)
 	}
 	// Crews (offers, forming, weekly plan suggestions) don't hold up matching.
-	crews, err := w.runner.Crews(ctx, job.Args.City, now)
+	crewPass, err := w.crews.Pass(ctx, job.Args.City, now)
 	if err != nil {
 		w.runner.Log.Warn("crews", "city", job.Args.City, "err", err)
 	}
@@ -127,7 +129,7 @@ func (w *matchCityWorker) Work(ctx context.Context, job *river.Job[MatchCityArgs
 		"chat_messages_deleted", settled.ChatMessagesDeleted, "feedback_asked", settled.FeedbackAsked,
 		"checked", rep.Checked, "scheduled", rep.Scheduled, "closed", rep.Closed, "opened", opened,
 		"meeting_places", meetings, "routes", routes, "routes_cleared", routesCleared,
-		"crews_offered", crews.Offered, "crews_formed", crews.Formed, "crews_lapsed", crews.Lapsed, "crew_suggestions", crews.Suggested)
+		"crews_offered", crewPass.Offered, "crews_formed", crewPass.Formed, "crews_lapsed", crewPass.Lapsed, "crew_suggestions", crewPass.Suggested)
 	return nil
 }
 
@@ -229,7 +231,7 @@ func NewClient(pool *pgxpool.Pool, log *slog.Logger, timing plans.Timing, notifi
 	river.AddWorker(workers, &matchAllWorker{q: dbgen.New(pool)})
 	river.AddWorker(workers, &matchCityWorker{runner: &plans.Runner{
 		DB: pool, Timing: timing, Log: log, Hours: m.Hours, Routes: m.Routes, Places: m.Places, Walks: m.Walks, WalkRoutes: m.WalkRoutes,
-	}, now: time.Now})
+	}, crews: &crews.Runner{DB: pool, Log: log}, now: time.Now})
 	river.AddWorker(workers, &refreshMapsWorker{pool: pool, router: m.Router, log: log})
 	river.AddWorker(workers, &sendNotificationsWorker{notifier: notifier, now: time.Now})
 	return river.NewClient(riverpgxv5.New(pool), &river.Config{

@@ -1,5 +1,7 @@
 import { EventStatus, GroupStatus, InviteResponse, type MyEvent } from '@issho/api-client';
 
+import { lastSignupDay } from '@/features/plans/format';
+import type { useI18n } from '@/i18n/i18n-provider';
 import type { StringKey } from '@/i18n/strings';
 
 export type EventAction = 'confirm' | 'decline' | 'cancel' | 'checkIn' | 'feedback';
@@ -57,4 +59,10 @@ export function eventState(e: MyEvent, now: number): EventState {
     default:
       return { message: 'event.state.cancelled', tone: 'muted', actions: [] };
   }
+}
+
+/** The status line for an event, with the answer-by date filled in. */
+export function stateText(t: ReturnType<typeof useI18n>['t'], state: EventState, e: MyEvent, lang: string) {
+  // Answer by the day before confirm_by (local midnight), as for signups.
+  return t(state.message, { date: lastSignupDay(e.confirmBy, lang) });
 }

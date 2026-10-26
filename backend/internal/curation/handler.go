@@ -25,6 +25,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/geo"
 	"github.com/shrujancheruku/issho/backend/internal/maps"
 	"github.com/shrujancheruku/issho/backend/internal/platform/auth"
+	"github.com/shrujancheruku/issho/backend/internal/platform/errs"
 )
 
 const (
@@ -57,21 +58,6 @@ func (h *Handler) now() time.Time {
 		return h.Now()
 	}
 	return time.Now()
-}
-
-func admin(ctx context.Context) (auth.Caller, error) {
-	c, ok := auth.FromContext(ctx)
-	if !ok {
-		return c, connect.NewError(connect.CodeUnauthenticated, errors.New("no caller"))
-	}
-	if !c.Admin {
-		return c, connect.NewError(connect.CodePermissionDenied, errors.New("admins only"))
-	}
-	return c, nil
-}
-
-func invalid(msg string) error {
-	return connect.NewError(connect.CodeInvalidArgument, errors.New(msg))
 }
 
 var statuses = map[isshov1.VenueStatus]string{
@@ -128,7 +114,7 @@ func nearest(areas []area, p maps.LatLng) area {
 }
 
 func (h *Handler) ListVenueCities(ctx context.Context, _ *connect.Request[isshov1.ListVenueCitiesRequest]) (*connect.Response[isshov1.ListVenueCitiesResponse], error) {
-	if _, err := admin(ctx); err != nil {
+	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
 	q := dbgen.New(h.DB)
@@ -164,7 +150,7 @@ func (h *Handler) ListVenueCities(ctx context.Context, _ *connect.Request[isshov
 }
 
 func (h *Handler) SetApprovedVenuesOnly(ctx context.Context, req *connect.Request[isshov1.SetApprovedVenuesOnlyRequest]) (*connect.Response[isshov1.SetApprovedVenuesOnlyResponse], error) {
-	if _, err := admin(ctx); err != nil {
+	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
 	n, err := dbgen.New(h.DB).SetApprovedVenuesOnly(ctx, dbgen.SetApprovedVenuesOnlyParams{ID: req.Msg.CityId, ApprovedVenuesOnly: req.Msg.ApprovedVenuesOnly})
@@ -178,16 +164,16 @@ func (h *Handler) SetApprovedVenuesOnly(ctx context.Context, req *connect.Reques
 }
 
 func (h *Handler) ListVenues(ctx context.Context, req *connect.Request[isshov1.ListVenuesRequest]) (*connect.Response[isshov1.ListVenuesResponse], error) {
-	if _, err := admin(ctx); err != nil {
+	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
 	m := req.Msg
 	status, ok := statuses[m.Status]
 	if !ok {
-		return nil, invalid("status: candidate, approved or rejected")
+		return nil, errs.Invalid("status: candidate, approved or rejected")
 	}
 	if m.Offset < 0 {
-		return nil, invalid("offset: not negative")
+		return nil, errs.Invalid("offset: not negative")
 	}
 	rows, err := dbgen.New(h.DB).ListCurationVenues(ctx, dbgen.ListCurationVenuesParams{
 		CityID: m.CityId, AreaID: m.AreaId, CategoryID: m.CategoryId, Status: status,
@@ -242,17 +228,17 @@ func (h *Handler) details(ctx context.Context, ids []string, set func(int, maps.
 }
 
 func (h *Handler) SetVenueStatus(ctx context.Context, req *connect.Request[isshov1.SetVenueStatusRequest]) (*connect.Response[isshov1.SetVenueStatusResponse], error) {
-	c, err := admin(ctx)
+	c, err := auth.RequireAdmin(ctx)
 	if err != nil {
 		return nil, err
 	}
 	m := req.Msg
 	status, ok := statuses[m.Status]
 	if !ok {
-		return nil, invalid("status: candidate, approved or rejected")
+		return nil, errs.Invalid("status: candidate, approved or rejected")
 	}
 	if len(m.PlaceIds) == 0 || len(m.PlaceIds) > MaxBatch {
-		return nil, invalid("place_ids: 1 to 100")
+		return nil, errs.Invalid("place_ids: 1 to 100")
 	}
 	if _, err := cityAreas(ctx, dbgen.New(h.DB), m.CityId); err != nil {
 		return nil, err
@@ -277,13 +263,13 @@ func (h *Handler) SetVenueStatus(ctx context.Context, req *connect.Request[issho
 }
 
 func (h *Handler) SearchVenues(ctx context.Context, req *connect.Request[isshov1.SearchVenuesRequest]) (*connect.Response[isshov1.SearchVenuesResponse], error) {
-	if _, err := admin(ctx); err != nil {
+	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
 	m := req.Msg
 	query := strings.TrimSpace(m.Query)
 	if query == "" || utf8.RuneCountInString(query) > MaxQuery {
-		return nil, invalid("query: 1 to 100 characters")
+		return nil, errs.Invalid("query: 1 to 100 characters")
 	}
 	if h.Places == nil {
 		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("searching needs GOOGLE_MAPS_API_KEY"))
@@ -302,7 +288,7 @@ func (h *Handler) SearchVenues(ctx context.Context, req *connect.Request[isshov1
 			}
 		}
 		if search == nil {
-			return nil, invalid("area_id: not in that city")
+			return nil, errs.Invalid("area_id: not in that city")
 		}
 	}
 
@@ -393,7 +379,7 @@ func fits(c dbgen.ListAllVenueCategoriesRow, p maps.Place, near area) bool {
 }
 
 func (h *Handler) AddVenue(ctx context.Context, req *connect.Request[isshov1.AddVenueRequest]) (*connect.Response[isshov1.AddVenueResponse], error) {
-	c, err := admin(ctx)
+	c, err := auth.RequireAdmin(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -402,7 +388,7 @@ func (h *Handler) AddVenue(ctx context.Context, req *connect.Request[isshov1.Add
 		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("adding needs GOOGLE_MAPS_API_KEY"))
 	}
 	if m.PlaceId == "" || strings.ContainsAny(m.PlaceId, "/?#") {
-		return nil, invalid("place_id: a Google place id")
+		return nil, errs.Invalid("place_id: a Google place id")
 	}
 	q := dbgen.New(h.DB)
 	areas, err := cityAreas(ctx, q, m.CityId)
@@ -415,19 +401,19 @@ func (h *Handler) AddVenue(ctx context.Context, req *connect.Request[isshov1.Add
 	}
 	i := slices.IndexFunc(cats, func(c dbgen.ListAllVenueCategoriesRow) bool { return c.ID == m.CategoryId })
 	if i < 0 {
-		return nil, invalid("category_id: no such category")
+		return nil, errs.Invalid("category_id: no such category")
 	}
 	// Checked with Google, not taken from the search the admin saw.
 	p, err := h.Places.Locate(ctx, m.PlaceId)
 	if err != nil {
-		return nil, invalid("place_id: Google doesn't know it")
+		return nil, errs.Invalid("place_id: Google doesn't know it")
 	}
 	if p.Closed {
-		return nil, invalid("Google says it's closed")
+		return nil, errs.Invalid("Google says it's closed")
 	}
 	near := nearest(areas, p.Location)
 	if !fits(cats[i], p.Place, near) {
-		return nil, invalid("it isn't that kind of place by Google's types, or it's too far from the city's areas")
+		return nil, errs.Invalid("it isn't that kind of place by Google's types, or it's too far from the city's areas")
 	}
 	now := pgtype.Timestamptz{Time: h.now(), Valid: true}
 	by := pgtype.UUID{Bytes: c.UserID, Valid: true}

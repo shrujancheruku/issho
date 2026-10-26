@@ -30,6 +30,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
 	"github.com/shrujancheruku/issho/backend/internal/platform/auth"
+	"github.com/shrujancheruku/issho/backend/internal/platform/errs"
 	"github.com/shrujancheruku/issho/backend/internal/platform/github"
 	"github.com/shrujancheruku/issho/backend/internal/platform/i18n"
 	"github.com/shrujancheruku/issho/backend/internal/translate"
@@ -93,9 +94,9 @@ func (h *Handler) now() time.Time {
 }
 
 func caller(ctx context.Context) (auth.Caller, error) {
-	c, ok := auth.FromContext(ctx)
-	if !ok {
-		return c, connect.NewError(connect.CodeUnauthenticated, errors.New("no caller"))
+	c, err := auth.Require(ctx)
+	if err != nil {
+		return c, err
 	}
 	if !c.Admin && len(c.TranslatorLangs) == 0 {
 		return c, connect.NewError(connect.CodePermissionDenied, errors.New("translators only"))
@@ -110,16 +111,12 @@ func forLang(ctx context.Context, lang string) (auth.Caller, error) {
 		return c, err
 	}
 	if !i18n.ValidDisplay(lang) {
-		return c, invalid("lang: an ISO 639-1 code such as \"ja\", or zh-Hant")
+		return c, errs.Invalid("lang: an ISO 639-1 code such as \"ja\", or zh-Hant")
 	}
 	if !c.Translates(lang) {
 		return c, connect.NewError(connect.CodePermissionDenied, fmt.Errorf("you don't translate %q", lang))
 	}
 	return c, nil
-}
-
-func invalid(format string, a ...any) error {
-	return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf(format, a...))
 }
 
 func githubError(err error) error { return connect.NewError(connect.CodeUnavailable, err) }
@@ -372,19 +369,19 @@ func (h *Handler) SaveAppString(ctx context.Context, req *connect.Request[isshov
 	}
 	english, ok := h.Catalog.English(key)
 	if !ok {
-		return nil, invalid("key: no such UI string")
+		return nil, errs.Invalid("key: no such UI string")
 	}
 	text := strings.TrimSpace(req.Msg.Text)
 	if text == "" {
-		return nil, invalid("text: required")
+		return nil, errs.Invalid("text: required")
 	}
 	// A livelier English identical to the plain one would only duplicate it.
 	if lang == i18n.Authoring && text == english {
-		return nil, invalid("text: the same as the plain English; remove the livelier version instead")
+		return nil, errs.Invalid("text: the same as the plain English; remove the livelier version instead")
 	}
 	// A lost placeholder would never be shown (uistrings.Catalog.Current).
 	if !uistrings.SamePlaceholders(english, text) {
-		return nil, invalid("text: keep every {placeholder} of the English text, unchanged")
+		return nil, errs.Invalid("text: keep every {placeholder} of the English text, unchanged")
 	}
 	v := uistrings.Human{Text: text, Source: uistrings.SourceHash(english)}
 	pr, branch, err := h.change(ctx, lang, fmt.Sprintf("feat(data): set the %s text of %s", lang, key), func(m map[string]uistrings.Human) bool {
@@ -408,7 +405,7 @@ func (h *Handler) RemoveAppString(ctx context.Context, req *connect.Request[issh
 		return nil, err
 	}
 	if _, ok := h.Catalog.English(key); !ok {
-		return nil, invalid("key: no such UI string")
+		return nil, errs.Invalid("key: no such UI string")
 	}
 	pr, branch, err := h.change(ctx, lang, fmt.Sprintf("feat(data): remove the %s human version of %s", lang, key), func(m map[string]uistrings.Human) bool {
 		if _, ok := m[key]; !ok {
@@ -432,7 +429,7 @@ func (h *Handler) DraftAppString(ctx context.Context, req *connect.Request[issho
 	}
 	english, ok := h.Catalog.English(key)
 	if !ok {
-		return nil, invalid("key: no such UI string")
+		return nil, errs.Invalid("key: no such UI string")
 	}
 	if h.Drafter == nil {
 		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("suggestions need GOOGLE_GEMINI_API_KEY on the API"))
@@ -498,7 +495,7 @@ func (h *Handler) ListCatalogTranslations(ctx context.Context, req *connect.Requ
 		return nil, err
 	}
 	if req.Msg.Offset < 0 {
-		return nil, invalid("offset: not negative")
+		return nil, errs.Invalid("offset: not negative")
 	}
 	rows, err := h.Q.ListCatalogTranslations(ctx, dbgen.ListCatalogTranslationsParams{
 		Lang: req.Msg.Lang, UiContext: uistrings.ContextPrefix, UnreviewedOnly: req.Msg.UnreviewedOnly,
@@ -522,7 +519,7 @@ func (h *Handler) ReviewCatalogTranslation(ctx context.Context, req *connect.Req
 	key := dbgen.GetTranslationParams{SourceHash: req.Msg.SourceHash, Lang: req.Msg.Lang}
 	text := strings.TrimSpace(req.Msg.Text)
 	if text == "" {
-		return nil, invalid("text: required")
+		return nil, errs.Invalid("text: required")
 	}
 	t, err := h.Q.GetTranslation(ctx, key)
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -534,10 +531,10 @@ func (h *Handler) ReviewCatalogTranslation(ctx context.Context, req *connect.Req
 	// UI strings are edited as human versions (SaveAppString): a correction
 	// here would be hidden by them and lost when machines redo the cache.
 	if strings.HasPrefix(t.Context, uistrings.ContextPrefix) {
-		return nil, invalid("this is a UI string: edit it with SaveAppString")
+		return nil, errs.Invalid("this is a UI string: edit it with SaveAppString")
 	}
 	if !uistrings.SamePlaceholders(t.Source, text) {
-		return nil, invalid("text: keep every {placeholder} of the English text, unchanged")
+		return nil, errs.Invalid("text: keep every {placeholder} of the English text, unchanged")
 	}
 	if _, err := h.Q.ReviewTranslation(ctx, dbgen.ReviewTranslationParams{
 		SourceHash: key.SourceHash, Lang: key.Lang, Text: text,

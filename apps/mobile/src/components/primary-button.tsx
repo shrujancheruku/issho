@@ -33,7 +33,7 @@ export function PrimaryButton({
   );
 }
 
-export const buttonStyles = StyleSheet.create({
+const buttonStyles = StyleSheet.create({
   // Gold, the thread: joining a plan picks it up. Ink on gold is 8:1.
   button: {
     backgroundColor: Brand.gold,

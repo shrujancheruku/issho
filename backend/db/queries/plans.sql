@@ -46,9 +46,6 @@ where v.area_id = @area_id and v.category_id = any(@categories::text[]) and v.st
 order by (v.status = 'approved') desc, random()
 limit 1;
 
--- name: SetPlanDescription :exec
-update app.plans set description = @description where id = @id;
-
 -- Signup counts come from the same rows the worker schedules from, so the
 -- feed's "7 interested" always matches.
 -- name: ListOpenPlans :many
@@ -175,15 +172,21 @@ where plan_id = $1 and user_id = $2 order by date, block;
 
 -- A plan in the city that closed after @since, for its screen: people who
 -- were waiting (or follow a link) see why it closed instead of "not found".
+-- The same columns as ListOpenPlans, so the rows convert (plans.openFromRow);
+-- GetPlanClosure adds why and when.
 -- name: GetRecentlyClosedPlan :one
 select p.id, p.area_id, p.activity_id, p.follow_up_id, p.primary_language, p.secondary_language,
        p.round, p.window_start, p.window_days, p.signup_deadline, p.venue_place_id, p.follow_up_venue_place_id,
        p.route_polyline, p.route_seconds, p.meeting_place_id, p.title, p.description, exists (select 1 from app.plan_stops st where st.plan_id = p.id) as walk,
-       p.closed_reason::text as closed_reason, p.closed_at,
-       (select count(*) from app.plan_signups s where s.plan_id = p.id)::int as signups,
-       exists (select 1 from app.plan_signups s where s.plan_id = p.id and s.user_id = @user_id) as signed_up
+       (select count(*) from app.plan_signups s where s.plan_id = p.id)::int as signups
 from app.plans p
 where p.id = @id and p.city_id = @city_id and p.status = 'closed' and p.closed_at > @since;
+
+-- name: GetPlanClosure :one
+select p.closed_reason::text as closed_reason, p.closed_at,
+       exists (select 1 from app.plan_signups s where s.plan_id = p.id and s.user_id = @user_id) as signed_up
+from app.plans p
+where p.id = @id;
 
 -- What a suspended person had joined and is taken out of
 -- (Service.RemoveFromUpcoming): outings not yet started where they're

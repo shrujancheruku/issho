@@ -17,9 +17,9 @@ type Handler struct {
 }
 
 func (h *Handler) GetProfile(ctx context.Context, _ *connect.Request[isshov1.GetProfileRequest]) (*connect.Response[isshov1.GetProfileResponse], error) {
-	c, ok := auth.FromContext(ctx)
-	if !ok {
-		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("no caller"))
+	c, err := auth.Require(ctx)
+	if err != nil {
+		return nil, err
 	}
 	p, err := h.Svc.Get(ctx, c.UserID)
 	if errors.Is(err, ErrNotFound) {
@@ -32,9 +32,9 @@ func (h *Handler) GetProfile(ctx context.Context, _ *connect.Request[isshov1.Get
 }
 
 func (h *Handler) SaveProfile(ctx context.Context, req *connect.Request[isshov1.SaveProfileRequest]) (*connect.Response[isshov1.SaveProfileResponse], error) {
-	c, ok := auth.FromContext(ctx)
-	if !ok {
-		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("no caller"))
+	c, err := auth.Require(ctx)
+	if err != nil {
+		return nil, err
 	}
 	if req.Msg.Profile == nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("profile: required"))

@@ -4,7 +4,7 @@ import { DevSettings, I18nManager, Platform } from 'react-native';
 import { baseLanguage } from './strings';
 
 /** Languages written right to left (ISO 639-1 codes the app accepts). */
-export const RightToLeftLanguages: ReadonlySet<string> = new Set(['ar', 'dv', 'fa', 'he', 'ps', 'sd', 'ug', 'ur', 'yi']);
+const RightToLeftLanguages: ReadonlySet<string> = new Set(['ar', 'dv', 'fa', 'he', 'ps', 'sd', 'ug', 'ur', 'yi']);
 
 export function isRightToLeft(lang: string): boolean {
   return RightToLeftLanguages.has(baseLanguage(lang));

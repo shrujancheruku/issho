@@ -97,9 +97,9 @@ func (h *Handler) Withdraw(ctx context.Context, req *connect.Request[isshov1.Wit
 }
 
 func caller(ctx context.Context) (uuid.UUID, error) {
-	c, ok := auth.FromContext(ctx)
-	if !ok {
-		return uuid.Nil, connect.NewError(connect.CodeUnauthenticated, errors.New("no caller"))
+	c, err := auth.Require(ctx)
+	if err != nil {
+		return uuid.Nil, err
 	}
 	return c.UserID, nil
 }

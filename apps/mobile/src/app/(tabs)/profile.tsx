@@ -1,5 +1,4 @@
 import { CrewStatus, GroupSize, Interest } from '@issho/api-client';
-import { useMutation } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -11,6 +10,7 @@ import { TextLink } from '@/components/text-link';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, FormWidth, Spacing } from '@/constants/theme';
+import { useDeleteAccount } from '@/features/account/account-actions';
 import { setAppearance, useAppearance, type AppearancePreference } from '@/features/appearance/preference';
 import { useAuth } from '@/features/auth/auth-provider';
 import { useMyCrews } from '@/features/crews/data';
@@ -21,8 +21,6 @@ import { useProfile } from '@/features/profile/use-profile';
 import { useTheme } from '@/hooks/use-theme';
 import { useI18n } from '@/i18n/i18n-provider';
 import type { StringKey } from '@/i18n/strings';
-import { api } from '@/lib/api';
-import { confirm, notify } from '@/lib/dialogs';
 
 const groupSizes: Partial<Record<GroupSize, StringKey>> = {
   [GroupSize.SMALL]: 'profile.groupSize.small',
@@ -155,20 +153,7 @@ function AppearanceSetting() {
 function Account() {
   const { t } = useI18n();
   const { session, signOut } = useAuth();
-  const deleteAccount = useMutation({
-    mutationFn: () => api.identity.deleteAccount({}),
-    // The server has deleted the auth user; clear the local session too.
-    onSuccess: () => signOut(),
-    onError: () => notify(t('account.deleteFailed'), t('account.deleteFailedBody')),
-  });
-  const confirmDelete = () =>
-    confirm({
-      title: t('account.deleteTitle'),
-      body: t('account.deleteBody'),
-      confirm: t('account.deleteConfirm'),
-      cancel: t('common.cancel'),
-      onConfirm: () => deleteAccount.mutate(),
-    });
+  const { deleting, confirmDelete } = useDeleteAccount();
   return (
     <View style={styles.section}>
       <SectionTitle>{t('you.account')}</SectionTitle>
@@ -176,8 +161,8 @@ function Account() {
         <ListRow onPress={signOut} chevron={false}>
           <ThemedText style={styles.rowText}>{t('account.signOut')}</ThemedText>
         </ListRow>
-        <ListRow onPress={deleteAccount.isPending ? undefined : confirmDelete} chevron={false}>
-          <ThemedText style={styles.rowText}>{deleteAccount.isPending ? t('account.deleting') : t('account.delete')}</ThemedText>
+        <ListRow onPress={deleting ? undefined : confirmDelete} chevron={false}>
+          <ThemedText style={styles.rowText}>{deleting ? t('account.deleting') : t('account.delete')}</ThemedText>
         </ListRow>
       </ListGroup>
       <ThemedText type="small" themeColor="textSecondary">

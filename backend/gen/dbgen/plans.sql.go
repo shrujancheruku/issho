@@ -149,19 +149,41 @@ func (q *Queries) GetPlan(ctx context.Context, id uuid.UUID) (GetPlanRow, error)
 	return i, err
 }
 
+const getPlanClosure = `-- name: GetPlanClosure :one
+select p.closed_reason::text as closed_reason, p.closed_at,
+       exists (select 1 from app.plan_signups s where s.plan_id = p.id and s.user_id = $1) as signed_up
+from app.plans p
+where p.id = $2
+`
+
+type GetPlanClosureParams struct {
+	UserID uuid.UUID
+	ID     uuid.UUID
+}
+
+type GetPlanClosureRow struct {
+	ClosedReason string
+	ClosedAt     pgtype.Timestamptz
+	SignedUp     bool
+}
+
+func (q *Queries) GetPlanClosure(ctx context.Context, arg GetPlanClosureParams) (GetPlanClosureRow, error) {
+	row := q.db.QueryRow(ctx, getPlanClosure, arg.UserID, arg.ID)
+	var i GetPlanClosureRow
+	err := row.Scan(&i.ClosedReason, &i.ClosedAt, &i.SignedUp)
+	return i, err
+}
+
 const getRecentlyClosedPlan = `-- name: GetRecentlyClosedPlan :one
 select p.id, p.area_id, p.activity_id, p.follow_up_id, p.primary_language, p.secondary_language,
        p.round, p.window_start, p.window_days, p.signup_deadline, p.venue_place_id, p.follow_up_venue_place_id,
        p.route_polyline, p.route_seconds, p.meeting_place_id, p.title, p.description, exists (select 1 from app.plan_stops st where st.plan_id = p.id) as walk,
-       p.closed_reason::text as closed_reason, p.closed_at,
-       (select count(*) from app.plan_signups s where s.plan_id = p.id)::int as signups,
-       exists (select 1 from app.plan_signups s where s.plan_id = p.id and s.user_id = $1) as signed_up
+       (select count(*) from app.plan_signups s where s.plan_id = p.id)::int as signups
 from app.plans p
-where p.id = $2 and p.city_id = $3 and p.status = 'closed' and p.closed_at > $4
+where p.id = $1 and p.city_id = $2 and p.status = 'closed' and p.closed_at > $3
 `
 
 type GetRecentlyClosedPlanParams struct {
-	UserID uuid.UUID
 	ID     uuid.UUID
 	CityID string
 	Since  pgtype.Timestamptz
@@ -186,21 +208,15 @@ type GetRecentlyClosedPlanRow struct {
 	Title                []byte
 	Description          []byte
 	Walk                 bool
-	ClosedReason         string
-	ClosedAt             pgtype.Timestamptz
 	Signups              int32
-	SignedUp             bool
 }
 
 // A plan in the city that closed after @since, for its screen: people who
 // were waiting (or follow a link) see why it closed instead of "not found".
+// The same columns as ListOpenPlans, so the rows convert (plans.openFromRow);
+// GetPlanClosure adds why and when.
 func (q *Queries) GetRecentlyClosedPlan(ctx context.Context, arg GetRecentlyClosedPlanParams) (GetRecentlyClosedPlanRow, error) {
-	row := q.db.QueryRow(ctx, getRecentlyClosedPlan,
-		arg.UserID,
-		arg.ID,
-		arg.CityID,
-		arg.Since,
-	)
+	row := q.db.QueryRow(ctx, getRecentlyClosedPlan, arg.ID, arg.CityID, arg.Since)
 	var i GetRecentlyClosedPlanRow
 	err := row.Scan(
 		&i.ID,
@@ -221,10 +237,7 @@ func (q *Queries) GetRecentlyClosedPlan(ctx context.Context, arg GetRecentlyClos
 		&i.Title,
 		&i.Description,
 		&i.Walk,
-		&i.ClosedReason,
-		&i.ClosedAt,
 		&i.Signups,
-		&i.SignedUp,
 	)
 	return i, err
 }
@@ -994,20 +1007,6 @@ func (q *Queries) PickVenue(ctx context.Context, arg PickVenueParams) (string, e
 	var google_place_id string
 	err := row.Scan(&google_place_id)
 	return google_place_id, err
-}
-
-const setPlanDescription = `-- name: SetPlanDescription :exec
-update app.plans set description = $1 where id = $2
-`
-
-type SetPlanDescriptionParams struct {
-	Description []byte
-	ID          uuid.UUID
-}
-
-func (q *Queries) SetPlanDescription(ctx context.Context, arg SetPlanDescriptionParams) error {
-	_, err := q.db.Exec(ctx, setPlanDescription, arg.Description, arg.ID)
-	return err
 }
 
 const upsertSignup = `-- name: UpsertSignup :exec

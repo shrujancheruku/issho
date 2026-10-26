@@ -18,11 +18,15 @@ join app.plans p on p.id = e.plan_id
 where m.user_id = @user_id
   -- A proposal is nobody's business until an admin approves it (00022).
   and e.status <> 'proposed'
-  -- Recent events, and older ones still waiting for the caller's feedback
-  -- (started after @feedback_since, which may be later than @since).
-  and (e.date >= @since
-       or (e.starts_at > @feedback_since and m.response = 'confirmed' and g.status = 'confirmed' and e.status <> 'cancelled'
-           and not exists (select 1 from app.event_feedback f where f.group_id = g.id and f.user_id = m.user_id)))
+  -- One event, from any date (GetEvent, CheckIn: a link to a past event
+  -- still opens it); or recent events, and older ones still waiting for
+  -- the caller's feedback (started after @feedback_since, which may be
+  -- later than @since).
+  and case when sqlc.narg(event_id)::uuid is not null then e.id = sqlc.narg(event_id)
+      else e.date >= @since
+        or (e.starts_at > @feedback_since and m.response = 'confirmed' and g.status = 'confirmed' and e.status <> 'cancelled'
+            and not exists (select 1 from app.event_feedback f where f.group_id = g.id and f.user_id = m.user_id))
+      end
 order by e.date, e.block, e.id;
 
 -- People who confirmed for a group, for its attendee list (first names
@@ -101,5 +105,3 @@ where p.id = e.plan_id and p.city_id = @city_id and e.status = 'scheduled' and e
 update app.group_members set checked_in_at = @at
 where event_id = @event_id and user_id = @user_id and response = 'confirmed' and checked_in_at is null;
 
--- name: GetCheckIn :one
-select checked_in_at from app.group_members where event_id = @event_id and user_id = @user_id;

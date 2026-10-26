@@ -48,7 +48,7 @@ export function bounds(pins: { lat: number; lng: number }[], pad = 0.01) {
   };
 }
 
-export type Region = { latitude: number; longitude: number; latitudeDelta: number; longitudeDelta: number };
+type Region = { latitude: number; longitude: number; latitudeDelta: number; longitudeDelta: number };
 
 // At least ~5 km across, so one pin (or a tight cluster) isn't shown at
 // street level; ~15 km around the home area when there are no pins.
@@ -76,7 +76,7 @@ export function initialRegion(box: ReturnType<typeof bounds>, home?: { lat: numb
 }
 
 /** A stop on a plan's map: its number in the plan (1, 2 …) and position. */
-export type Stop = { n: number; lat: number; lng: number };
+type Stop = { n: number; lat: number; lng: number };
 
 /**
  * What a plan's map draws: its stops that have a venue location, numbered

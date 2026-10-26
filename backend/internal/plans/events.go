@@ -12,6 +12,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
+	"github.com/shrujancheruku/issho/backend/internal/chat"
 	"github.com/shrujancheruku/issho/backend/internal/matching"
 	"github.com/shrujancheruku/issho/backend/internal/platform/i18n"
 )
@@ -88,6 +89,7 @@ var (
 // EventItem is a scheduled event as one invitee sees it.
 type EventItem struct {
 	ID, PlanID, GroupID uuid.UUID
+	City                string // the plan's city, which titles come from
 	matching.Plan
 	Venue, FollowUpVenue string
 	Route                *Route // the plan's; nil when a group meets elsewhere
@@ -124,8 +126,14 @@ type EventItem struct {
 // Events returns the caller's events from yesterday on, and older ones
 // still waiting for their feedback, soonest first.
 func (s *Service) Events(ctx context.Context, userID uuid.UUID, now time.Time) ([]EventItem, error) {
-	items, caller, err := s.events(ctx, dbgen.New(s.DB), userID, now.UTC().AddDate(0, 0, -1), now.Add(-FeedbackFor))
+	q := dbgen.New(s.DB)
+	items, caller, err := s.events(ctx, q, userID, dbgen.ListUserEventsParams{
+		Since: date(now.UTC().AddDate(0, 0, -1)), FeedbackSince: pgtype.Timestamptz{Time: now.Add(-FeedbackFor), Valid: true},
+	})
 	if err != nil {
+		return nil, err
+	}
+	if err := s.titleEvents(ctx, q, caller, items); err != nil {
 		return nil, err
 	}
 	for i := range items {
@@ -134,89 +142,98 @@ func (s *Service) Events(ctx context.Context, userID uuid.UUID, now time.Time) (
 	return items, nil
 }
 
-// events loads the caller's events on or after since, and those that
-// started after feedbackSince still waiting for their feedback, with
-// titles.
-func (s *Service) events(ctx context.Context, q *dbgen.Queries, userID uuid.UUID, since, feedbackSince time.Time) ([]EventItem, Caller, error) {
-	_, caller, err := LoadUser(ctx, q, userID)
-	if errors.Is(err, pgx.ErrNoRows) {
-		return nil, caller, ErrNoProfile
-	}
+// events loads the caller's events matching p (UserID is filled in), without
+// titles, and who's asking.
+func (s *Service) events(ctx context.Context, q *dbgen.Queries, userID uuid.UUID, p dbgen.ListUserEventsParams) ([]EventItem, Caller, error) {
+	caller, err := loadCaller(ctx, q, userID)
 	if err != nil {
 		return nil, caller, err
 	}
-	rows, err := q.ListUserEvents(ctx, dbgen.ListUserEventsParams{
-		UserID: userID, Since: date(since), FeedbackSince: pgtype.Timestamptz{Time: feedbackSince, Valid: true},
-	})
+	p.UserID = userID
+	rows, err := q.ListUserEvents(ctx, p)
 	if err != nil {
 		return nil, caller, err
 	}
 	items := make([]EventItem, len(rows))
-	plans := make([]titled, len(rows))
 	for i, r := range rows {
 		items[i] = eventFromRow(r)
-		plans[i] = titled{items[i].Plan, items[i].WalkTitle}
 	}
-	// Titles come from the caller's city: someone who moved still sees their
-	// old events, so use each event's own city.
+	return items, caller, nil
+}
+
+// event loads one of the caller's events, from any date (a link to a past
+// event still opens it), without its title.
+func (s *Service) event(ctx context.Context, q *dbgen.Queries, userID, eventID uuid.UUID) (EventItem, Caller, error) {
+	items, caller, err := s.events(ctx, q, userID, dbgen.ListUserEventsParams{EventID: pgtype.UUID{Bytes: eventID, Valid: true}})
+	if err != nil {
+		return EventItem{}, caller, err
+	}
+	if len(items) == 0 {
+		return EventItem{}, caller, ErrNoEvent
+	}
+	return items[0], caller, nil
+}
+
+// titleEvents fills the events' titles in the caller's languages.
+func (s *Service) titleEvents(ctx context.Context, q *dbgen.Queries, caller Caller, items []EventItem) error {
+	// Titles come from each event's own city: someone who moved still sees
+	// their old events.
 	byCity := map[string][]int{}
-	for i, r := range rows {
-		byCity[r.CityID] = append(byCity[r.CityID], i)
+	for i, it := range items {
+		byCity[it.City] = append(byCity[it.City], i)
 	}
 	for city, idx := range byCity {
 		ps := make([]titled, len(idx))
 		for j, i := range idx {
-			ps[j] = plans[i]
+			ps[j] = titled{items[i].Plan, items[i].WalkTitle}
 		}
 		titles, secondary, err := s.titles(ctx, q, city, caller, ps)
 		if err != nil {
-			return nil, caller, err
+			return err
 		}
 		for j, i := range idx {
 			items[i].Title, items[i].SecondaryTitle = titles[j], secondary[j]
 		}
 	}
-	return items, caller, nil
+	return nil
 }
 
 // Event returns one of the caller's events with its stops and, if the
 // caller confirmed, the first names of everyone confirmed in their group.
 func (s *Service) Event(ctx context.Context, userID, eventID uuid.UUID, now time.Time) (EventItem, []Step, []string, error) {
 	q := dbgen.New(s.DB)
-	// Any date: a link to a past event still opens it.
-	items, caller, err := s.events(ctx, q, userID, time.Time{}, time.Time{})
+	it, caller, err := s.event(ctx, q, userID, eventID)
 	if err != nil {
 		return EventItem{}, nil, nil, err
 	}
-	for _, it := range items {
-		if it.ID != eventID {
-			continue
-		}
-		it.reveal(caller, now)
-		var steps []Step
-		if it.Walk {
-			it.Summary, it.SecondarySummary = s.text(ctx, it.WalkSummary, summaryContext, caller)
-			if steps, err = s.walkSteps(ctx, q, it.PlanID, caller); err != nil {
-				return EventItem{}, nil, nil, err
-			}
-		} else {
-			steps = s.steps(ctx, it.Plan, it.Venue, it.FollowUpVenue, it.MeetingPlace, it.Route, caller)
-		}
-		var names []string
-		// Only people who are going see who else is (no profile browsing).
-		if it.Response == Confirmed {
-			if names, err = q.ListConfirmedNames(ctx, it.GroupID); err != nil {
-				return EventItem{}, nil, nil, err
-			}
-		}
-		return it, steps, names, nil
+	one := []EventItem{it}
+	if err := s.titleEvents(ctx, q, caller, one); err != nil {
+		return EventItem{}, nil, nil, err
 	}
-	return EventItem{}, nil, nil, ErrNoEvent
+	it = one[0]
+	it.reveal(caller, now)
+	var steps []Step
+	if it.Walk {
+		it.Summary, it.SecondarySummary = s.text(ctx, it.WalkSummary, summaryContext, caller)
+		if steps, err = s.walkSteps(ctx, q, it.PlanID, caller); err != nil {
+			return EventItem{}, nil, nil, err
+		}
+	} else {
+		steps = s.steps(ctx, it.Plan, it.Venue, it.FollowUpVenue, it.MeetingPlace, it.Route, caller)
+	}
+	var names []string
+	// Only people who are going see who else is (no profile browsing).
+	if it.Response == Confirmed {
+		if names, err = q.ListConfirmedNames(ctx, it.GroupID); err != nil {
+			return EventItem{}, nil, nil, err
+		}
+	}
+	return it, steps, names, nil
 }
 
 func eventFromRow(r dbgen.ListUserEventsRow) EventItem {
 	it := EventItem{
-		ID: r.ID, PlanID: r.PlanID, GroupID: r.GroupID,
+		ID: r.ID, PlanID: r.PlanID, GroupID: r.GroupID, City: r.CityID,
 		Plan: matching.Plan{
 			Area: matching.AreaID(r.AreaID), Activity: matching.ActivityID(r.ActivityID),
 			FollowUp: matching.ActivityID(deref(r.FollowUpID)), Primary: r.PrimaryLanguage, Secondary: deref(r.SecondaryLanguage),
@@ -345,26 +362,21 @@ func setResponse(ctx context.Context, q *dbgen.Queries, m dbgen.LockMembershipRo
 // fine and keeps the first time. Check-ins count as attending (newcomer
 // status) and towards reliability.
 func (s *Service) CheckIn(ctx context.Context, userID, eventID uuid.UUID, now time.Time) error {
-	items, _, err := s.events(ctx, dbgen.New(s.DB), userID, time.Time{}, time.Time{})
+	q := dbgen.New(s.DB)
+	it, _, err := s.event(ctx, q, userID, eventID)
 	if err != nil {
 		return err
 	}
-	for _, it := range items {
-		if it.ID != eventID {
-			continue
-		}
-		switch {
-		case it.Response != Confirmed:
-			return ErrNotGoing
-		case it.Status == "cancelled" || it.GroupStatus == GroupCancelled:
-			return ErrEventOver
-		case it.CheckInFrom.IsZero() || now.Before(it.CheckInFrom) || now.After(it.CheckInUntil):
-			return ErrCheckInClosed
-		}
-		_, err := dbgen.New(s.DB).CheckIn(ctx, dbgen.CheckInParams{EventID: eventID, UserID: userID, At: pgtype.Timestamptz{Time: now, Valid: true}})
-		return err
+	switch {
+	case it.Response != Confirmed:
+		return ErrNotGoing
+	case it.Status == "cancelled" || it.GroupStatus == GroupCancelled:
+		return ErrEventOver
+	case it.CheckInFrom.IsZero() || now.Before(it.CheckInFrom) || now.After(it.CheckInUntil):
+		return ErrCheckInClosed
 	}
-	return ErrNoEvent
+	_, err = q.CheckIn(ctx, dbgen.CheckInParams{EventID: eventID, UserID: userID, At: pgtype.Timestamptz{Time: now, Valid: true}})
+	return err
 }
 
 // cancelGroup cancels a group, puts the people who had confirmed back on
@@ -449,7 +461,7 @@ func (r *Runner) Settle(ctx context.Context, cityID string, now time.Time) (Sett
 		return rep, err
 	}
 	rep.Finished = int(finished)
-	chats, err := DeleteOldChats(ctx, q, cityID, now)
+	chats, err := chat.DeleteOld(ctx, q, cityID, now)
 	if err != nil {
 		return rep, err
 	}

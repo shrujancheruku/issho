@@ -52,6 +52,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
+	"github.com/shrujancheruku/issho/backend/internal/crews"
 	"github.com/shrujancheruku/issho/backend/internal/plans"
 	"github.com/shrujancheruku/issho/backend/internal/platform/auth"
 )
@@ -191,7 +192,8 @@ func (h *Hub) listen(ctx context.Context, pool *pgxpool.Pool) error {
 // Handler serves GET /ws/chat.
 type Handler struct {
 	Hub      *Hub
-	Svc      *plans.Service
+	Plans    *plans.Service // event group chats
+	Crews    *crews.Service // crew chats
 	Verifier *auth.Verifier
 	// Suspended refuses suspended people, as the API's Gate does (nil =
 	// nobody is).
@@ -275,7 +277,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		topic = crewID
 		fetch = func(after int64) ([]Message, error) {
-			ms, err := h.Svc.CrewMessages(ctx, caller.UserID, crewID, after)
+			ms, err := h.Crews.Messages(ctx, caller.UserID, crewID, after)
 			out := make([]Message, len(ms))
 			for i, m := range ms {
 				out[i] = Message{ID: m.ID, Name: m.Name, Body: m.Body, At: m.At, Mine: m.Mine}
@@ -292,7 +294,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		fetch = func(after int64) ([]Message, error) {
-			ms, st, err := h.Svc.ChatMessages(ctx, caller.UserID, eventID, after, h.now())
+			ms, st, err := h.Plans.ChatMessages(ctx, caller.UserID, eventID, after, h.now())
 			topic, writable = st.GroupID, st.Open
 			out := make([]Message, len(ms))
 			for i, m := range ms {
@@ -303,11 +305,11 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	msgs, err := fetch(first.AfterID)
 	switch {
-	case errors.Is(err, plans.ErrNoEvent), errors.Is(err, plans.ErrNoCrew):
+	case errors.Is(err, plans.ErrNoEvent), errors.Is(err, crews.ErrNoCrew):
 		ws.Close(closeNotFound, "no such chat")
 		return
 	case errors.Is(err, plans.ErrNotGoing), errors.Is(err, plans.ErrEventOver), errors.Is(err, plans.ErrNoProfile),
-		errors.Is(err, plans.ErrNotInCrew), errors.Is(err, plans.ErrCrewOver):
+		errors.Is(err, crews.ErrNotMember), errors.Is(err, crews.ErrOver):
 		ws.Close(closeForbidden, "not going")
 		return
 	case err != nil:
@@ -316,7 +318,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	q := dbgen.New(h.Svc.DB)
+	q := dbgen.New(h.Plans.DB)
 	name, err := q.GetDisplayName(ctx, caller.UserID)
 	if err != nil {
 		h.Log.Error("chat socket", "err", err)

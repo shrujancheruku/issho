@@ -9,14 +9,14 @@ import { useMotion } from '@/hooks/use-motion';
 import { useTheme } from '@/hooks/use-theme';
 
 /** How much of the sheet shows when it's down: the grabber and its title row. */
-export const SheetPeek = 92;
+const SheetPeek = 92;
 
 /**
  * Where the sheet's top edge can rest, from the top of the space it's in:
  * nearly full, half, or down to its title row (above `bottom`, the room
  * a tab bar takes over the content).
  */
-export function sheetStops(height: number, bottom = 0) {
+function sheetStops(height: number, bottom = 0) {
   return { top: Math.max(24, height * 0.08), mid: height * 0.5, low: height - bottom - SheetPeek };
 }
 

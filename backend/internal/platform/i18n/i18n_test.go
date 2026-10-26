@@ -30,27 +30,6 @@ func TestPick(t *testing.T) {
 	}
 }
 
-func TestForEvent(t *testing.T) {
-	tests := []struct {
-		name                                  string
-		evPrimary, evSecondary, user, userSec string
-		wantPrimary, wantSecondary            string
-	}{
-		{"JP–ES exchange: both event languages", "ja", "es", "fr", "", "ja", "es"},
-		{"JP-only event: the user's primary language", "ja", "", "es", "", "ja", "es"},
-		{"event in the user's language: their secondary choice", "ja", "", "ja", "en", "ja", "en"},
-		{"event in the user's language, no choice: one language", "ja", "", "ja", "", "ja", ""},
-		{"any language works", "ko", "", "pt", "", "ko", "pt"},
-		{"never repeats the primary", "es", "es", "es", "es", "es", ""},
-	}
-	for _, tt := range tests {
-		p, s := ForEvent(tt.evPrimary, tt.evSecondary, tt.user, tt.userSec)
-		if p != tt.wantPrimary || s != tt.wantSecondary {
-			t.Errorf("%s: got %q, %q; want %q, %q", tt.name, p, s, tt.wantPrimary, tt.wantSecondary)
-		}
-	}
-}
-
 func TestForApp(t *testing.T) {
 	if p, s := ForApp("ja", "fr"); p != "ja" || s != "fr" {
 		t.Errorf("got %q, %q", p, s)
