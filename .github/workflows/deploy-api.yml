@@ -44,8 +44,11 @@ jobs:
         env:
           KAMAL_REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
         # Kamal from its image, as on a dev machine (docs/deploy.md). It
-        # builds from a clean clone of this commit.
+        # builds from a clean clone of this commit. Kamal reads the registry
+        # password only through a secrets file: one that points at the
+        # environment, holding no value itself.
         run: |
+          printf '%s\n' 'KAMAL_REGISTRY_PASSWORD=$KAMAL_REGISTRY_PASSWORD' > .kamal/secrets
           docker run --rm -v "$PWD:/workdir" -v /var/run/docker.sock:/var/run/docker.sock \
             -e KAMAL_REGISTRY_PASSWORD \
             -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0='*' \
