@@ -20,6 +20,8 @@ npx expo start           # i = iOS Simulator (needs Xcode), a = Android emulator
 | `EXPO_PUBLIC_SUPABASE_URL` | `http://127.0.0.1:54321` | `API_URL` from `supabase status` |
 | `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | `sb_publishable_…` | `PUBLISHABLE_KEY` from `supabase status`; public by design |
 
+**EAS builds** don't see `.env` (it's gitignored): the `preview` and `production` environments on expo.dev hold `EXPO_PUBLIC_API_URL` (`https://api.joinissho.com`), `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (issho-dev's, for now) as plain-text variables.
+
 **Every `EXPO_PUBLIC_*` value is bundled into the app and is public.** Never put secrets here (see [../../docs/secrets.md](../../docs/secrets.md)).
 
 **On a physical phone**, `localhost` and `127.0.0.1` refer to the phone itself. Replace both hosts with your Mac's LAN IP (e.g. `http://192.168.1.20:8080` and `http://192.168.1.20:54321`). The phone and the Mac must be on the same network.

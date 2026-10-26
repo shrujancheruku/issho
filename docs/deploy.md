@@ -7,7 +7,7 @@ app / admin SPA ──HTTPS──▶ Cloudflare ──HTTPS (origin certificate)
                                                                                       worker container ─┴──▶ Supabase Postgres
 ```
 
-**Status:** prepared, not deployed. `config/deploy.yml` is checked by Kamal (2.12) and the image is built and run in CI, but the server, domain and registry account are placeholders marked `TODO` until they exist (ROADMAP M9). Until then, the API runs on a dev machine behind a quick tunnel.
+**Status:** live since 2026-10-26 at `https://api.joinissho.com` (first `kamal setup` from a dev machine), against the `issho-dev` Supabase project. Deploys are manual (`kamal deploy`); the backup accessory is off until its R2 bucket exists. The origin certificate (15 years, `api.joinissho.com` only) is in `~/.config/issho/` on the deploying machine. Mind that a PEM pasted from the dashboard has no blank lines inside it, or Kamal's proxy can't read the key.
 
 ## Domain: joinissho.com
 

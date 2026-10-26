@@ -447,15 +447,15 @@ max_frequency = "1m0s"
 
 [remotes.issho-dev.auth.email.smtp]
 # Resend relay. Supabase's built-in email can't carry custom templates on the Free tier,
-# and only reaches organisation members. Without a verified domain, Resend only delivers
-# from onboarding@resend.dev to the Resend account owner's address (fine for dev).
+# and only reaches organisation members. joinissho.com is verified in Resend
+# (2026-10-26), so codes reach any address.
 # The password is the Resend API key, read from the gitignored supabase/.env at push time.
 enabled = true
 host = "smtp.resend.com"
 port = 465
 user = "resend"
 pass = "env(SUPABASE_SMTP_PASS)"
-admin_email = "onboarding@resend.dev"
+admin_email = "hello@joinissho.com"
 sender_name = "Issho"
 
 [remotes.issho-dev.auth.rate_limit]
