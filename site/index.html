@@ -276,9 +276,48 @@
   .slots .n3 { background: var(--slot3); }
   .slots .pick { background: var(--gold); color: var(--ink); font-weight: 700; }
 
-  .people { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: 1rem; }
-  .people span { width: 2.6rem; height: 2.6rem; border-radius: 50%; display: grid; place-items: center; background: var(--raised); border: 1.5px solid var(--line-strong); font-weight: 700; font-size: .9rem; }
-  .people span.you { border-color: var(--gold); color: var(--gold); }
+  /* Can you go: the group's five seats round a table, the gold thread as its
+     rim. A dashed seat is still deciding; a solid gold one said yes. Who said
+     yes stays hidden (a tick) until you confirm (.known), as in the app. This
+     is the finished state; the script plays it from the start. */
+  .invite .ask-by { color: var(--when); font-weight: 700; font-size: .875rem; }
+  .invite .title { margin-top: .15rem; }
+  .table { position: relative; width: min(100%, 17.5rem); aspect-ratio: 1; margin: 1rem auto .3rem; }
+  .rim { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  .rim circle, .rim path { fill: none; stroke-linecap: round; }
+  .rim-track { stroke: var(--line-strong); stroke-width: .8; stroke-dasharray: 1.4 2.4; opacity: .7; }
+  /* The gap is twice the path's length so an undrawn stretch has no round cap left showing at its end. */
+  .arc path { stroke: var(--gold); stroke-width: 2; stroke-dasharray: 1 2; stroke-dashoffset: 1; }
+  .arc.in path { stroke-dashoffset: 0; }
+  .glint { stroke: var(--gold-tint); stroke-width: 3.2; stroke-dasharray: 14 86; opacity: 0; filter: drop-shadow(0 0 1.5px var(--gold)); }
+  /* The table top holds the count, which rolls like the app's RollingText. */
+  .board { position: absolute; inset: 27%; border-radius: 50%; background: var(--raised); display: grid; place-content: center; justify-items: center; text-align: center; }
+  .board small { color: var(--muted); font-size: .72rem; line-height: 1.2; max-width: 5.5rem; }
+  .tally { display: block; height: 1.3em; overflow: hidden; font: 400 2.4rem/1.3 var(--display); color: var(--when); }
+  .digits { display: flex; flex-direction: column; transform: translateY(calc(var(--n) * -1.3em)); }
+  .digits i { font-style: normal; }
+  .seat { position: absolute; left: var(--x); top: var(--y); translate: -50% -50%; }
+  .seat b { position: relative; display: grid; place-items: center; width: 2.75rem; height: 2.75rem; border-radius: 50%; background: var(--surface); color: var(--text); border: 2.5px dashed var(--line-strong); font-size: .95rem; }
+  .seat b > i { grid-area: 1 / 1; font-style: normal; }
+  .seat.in b { border-style: solid; border-color: var(--gold); background: var(--raised); }
+  .seat.me b { border-color: var(--gold); color: var(--when); font-size: .78rem; }
+  .seat.me.in b { background: var(--gold); color: var(--ink); }
+  .seat .hid { width: .38rem; height: .72rem; border: solid var(--when); border-width: 0 2.5px 2.5px 0; transform: translateY(-12%) rotate(45deg); }
+  .seat:not(.in) i, .invite:not(.known) .who, .invite.known .hid { visibility: hidden; }
+  .seat b::after { content: ""; position: absolute; inset: -6px; border-radius: 50%; border: 2px solid var(--gold); opacity: 0; pointer-events: none; }
+  .status { display: grid; justify-items: center; min-height: 2.75rem; color: var(--muted); font-size: .875rem; line-height: 1.45; text-align: center; }
+  .status > span { grid-area: 1 / 1; max-width: 19rem; }
+  /* The button becomes its result, as the app's ResultButton; the decline
+     link's place becomes what happens next. Swapped text shares a grid cell,
+     so nothing jumps. */
+  .invite .row { margin-top: .8rem; }
+  .invite .result { flex: 1; display: grid; justify-items: center; position: relative; transition: transform .1s; }
+  .result > span, .then > span { grid-area: 1 / 1; }
+  .result .done { display: inline-flex; align-items: center; gap: .4rem; }
+  .check { width: 1rem; height: 1rem; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+  .then { display: grid; margin-top: .7rem; color: var(--muted); font-size: .875rem; text-align: center; }
+  .then .ask { text-decoration: underline; }
+  .invite:not(.going) .done, .invite.going .ask { visibility: hidden; }
 
   .picks { list-style: none; margin: 1rem 0 0; padding: 0; }
   .picks li { display: flex; align-items: center; justify-content: space-between; padding: .6rem 0; border-top: 1px solid var(--line); }
@@ -500,31 +539,39 @@
     100% { transform: none; }
   }
 
-  /* Going: the group gathers, then "I can go" becomes its result. */
-  .thread-anim .people span { transform: scale(0); opacity: 0; transition: transform .5s cubic-bezier(.3, 1.6, .5, 1), opacity .18s; }
-  .thread-anim .reached .people span { transform: none; opacity: 1; }
-  .thread-anim .reached .people span:nth-child(2) { transition-delay: .06s; }
-  .thread-anim .reached .people span:nth-child(3) { transition-delay: .12s; }
-  .thread-anim .reached .people span:nth-child(4) { transition-delay: .18s; }
-  .thread-anim .reached .people span:nth-child(5) { transition-delay: .24s; }
-  .thread-anim .reached .people span:nth-child(6) { transition-delay: .30s; }
-  .result { display: inline-grid; }
-  .result > span { grid-area: 1 / 1; }
-  .result .done, .count .after { visibility: hidden; }
-  .thread-anim .result > span, .thread-anim .count > span, .thread-anim .decline { transition: opacity .18s 1.4s, transform .28s 1.4s, visibility 0s 1.4s; }
-  .thread-anim .reached .result .ask { opacity: 0; visibility: hidden; }
-  .thread-anim .reached .result .done { visibility: visible; }
-  .thread-anim .reached .decline { opacity: 0; visibility: hidden; }
-  /* The count rolls up from 4 to 5. */
-  .count { display: inline-grid; overflow: hidden; vertical-align: bottom; }
-  .count > span { grid-area: 1 / 1; }
-  .thread-anim .count .after { transform: translateY(100%); }
-  .thread-anim .reached .count .before { transform: translateY(-100%); visibility: hidden; }
-  .thread-anim .reached .count .after { transform: none; visibility: visible; }
-  /* Without the script, the fragment shows the moment after you said yes. */
-  html:not(.thread-anim) .result .ask, html:not(.thread-anim) .count .before, html:not(.thread-anim) .decline { visibility: hidden; }
-  html:not(.thread-anim) .decline { display: none; }
-  html:not(.thread-anim) .result .done, html:not(.thread-anim) .count .after { visibility: visible; }
+  /* Can you go: one more yes (Kenji's) while you look, then yours. Each yes
+     ties its seat with a small spring and a ring easing out, and draws its
+     stretch of the rim (draw, 450 ms) while the count rolls. Your seat
+     breathes until you answer. Confirming presses the button (press), it
+     becomes "You are going." with its tick drawing, and the hidden yeses flip
+     over to show who they are. The last yes closes the rim: a glint runs
+     round it from your seat and each seat bumps as it passes. */
+  .thread-anim .arc.in path { transition: stroke-dashoffset .45s cubic-bezier(.4, 0, .2, 1); }
+  .thread-anim .digits { transition: transform .5s cubic-bezier(.3, 1.3, .5, 1); }
+  .thread-anim .seat b { transition: background-color .18s, color .18s, border-color .18s; }
+  .thread-anim .seat.popped b { animation: tie .5s cubic-bezier(.3, 1.6, .5, 1); }
+  .thread-anim .seat.popped b::after { animation: breathe .7s ease-out; }
+  .thread-anim .live .seat.me:not(.in) b::after { animation: breathe 2.4s .6s infinite ease-out; }
+  /* Turning over: each hidden yes is edge-on (scaleX 0) at the moment its tick becomes a name. */
+  .thread-anim .reveal .seat:not(.me) b { animation: flip .4s calc(var(--k) * 90ms) ease-in-out; }
+  .thread-anim .reveal .seat i { transition: visibility 0s calc(var(--k) * 90ms + .2s); }
+  @keyframes flip { 50% { transform: scaleX(0); } }
+  .thread-anim .status > span { animation: rise .28s cubic-bezier(.2, .8, .2, 1); }
+  .thread-anim .status > .out { animation: leave .18s forwards; }
+  @keyframes leave { to { opacity: 0; transform: translateY(-.4rem); } }
+  .invite.press .result { transform: scale(.97); }
+  /* The tap: a gold ring easing out from the button (fading its opacity, not its colour, so it never greys). */
+  .invite .result::after { content: ""; position: absolute; inset: -1.5px; border-radius: inherit; box-shadow: 0 0 0 0 var(--gold); opacity: 0; pointer-events: none; }
+  .thread-anim .invite.tapped .result::after { animation: tap .6s ease-out; }
+  @keyframes tap { from { opacity: .7; } to { box-shadow: 0 0 0 .7rem var(--gold); opacity: 0; } }
+  .thread-anim .check path { stroke-dasharray: 1; stroke-dashoffset: 1; }
+  .thread-anim .going .check path { stroke-dashoffset: 0; transition: stroke-dashoffset .45s .1s ease-out; }
+  .thread-anim .going .result .done { animation: fade .18s; }
+  .thread-anim .going .then .done { animation: rise .28s .25s backwards cubic-bezier(.2, .8, .2, 1); }
+  .thread-anim .closing .glint { animation: glint 1.3s cubic-bezier(.45, 0, .55, 1); }
+  @keyframes glint { 0% { stroke-dashoffset: 7; opacity: 0; } 12%, 85% { opacity: 1; } 100% { stroke-dashoffset: -93; opacity: 0; } }
+  .thread-anim .closing .seat b { animation: bump .5s calc(var(--i) * 260ms) cubic-bezier(.3, 1.6, .5, 1); }
+  @keyframes bump { 40% { transform: scale(1.14); } }
 
   /* How was it: the picks tick themselves, one after another. */
   .thread-anim .tick.on { background: transparent; border-color: var(--line-strong); transition: background-color .18s, border-color .18s; }
@@ -638,11 +685,37 @@
         <h2>A few people, not a crowd.</h2>
         <p>Your invite lands in Together, under &ldquo;Needs you&rdquo;. Confirm your place and see who&rsquo;s coming. Photos are only shared with your group. Groups stay small, so everyone gets a word in and you&rsquo;ll remember every name.</p>
       </div>
-      <figure class="app" aria-label="Confirming a place in a group">
-        <p class="title">Can you go? Please answer by Thu, Nov 13.</p>
-        <div class="people" aria-hidden="true"><span class="you">You</span><span>A</span><span>K</span><span>M</span><span>S</span><span>R</span></div>
-        <p class="hint">Confirmed so far: <span class="count"><span class="before">4</span><span class="after">5</span></span>. Spoken in this group: Japanese and English.</p>
-        <div class="row"><span class="fake-btn primary result"><span class="ask">I can go</span><span class="done">You are going.</span></span><span class="fake-btn decline">I cannot go</span></div>
+      <!-- The group's five seats round a table, the gold thread as its rim. Each
+           yes takes a seat and ties its stretch of thread; as in the app, who
+           said yes stays hidden until you confirm. The markup is the end (all
+           five in, the thread closed); the script plays it from two yeses:
+           Kenji says yes, then you do and see who's coming, then Sam closes it. -->
+      <figure class="app invite going known" aria-label="Confirming a place in a group of five">
+        <p class="ask-by">Can you go? Please answer by Thu, Nov 13.</p>
+        <p class="title">Sat, Nov 15, 2:00 PM</p>
+        <p class="sub">Kichijoji &middot; <span lang="ja">吉祥寺</span></p>
+        <div class="table" aria-hidden="true">
+          <svg class="rim" viewBox="0 0 100 100">
+            <circle class="rim-track" cx="50" cy="50" r="38"/>
+            <!-- Each seat's stretch: from the seat halfway to each neighbour, so neighbours' stretches meet. -->
+            <g class="arc in" data-seat="you"><path pathLength="1" d="M50.00 88.00A38 38 0 0 1 27.66 80.74"/><path pathLength="1" d="M50.00 88.00A38 38 0 0 0 72.34 80.74"/></g>
+            <g class="arc in" data-seat="aoi"><path pathLength="1" d="M13.86 61.74A38 38 0 0 1 13.86 38.26"/><path pathLength="1" d="M13.86 61.74A38 38 0 0 0 27.66 80.74"/></g>
+            <g class="arc in" data-seat="kenji"><path pathLength="1" d="M27.66 19.26A38 38 0 0 1 50.00 12.00"/><path pathLength="1" d="M27.66 19.26A38 38 0 0 0 13.86 38.26"/></g>
+            <g class="arc in" data-seat="maya"><path pathLength="1" d="M72.34 19.26A38 38 0 0 1 86.14 38.26"/><path pathLength="1" d="M72.34 19.26A38 38 0 0 0 50.00 12.00"/></g>
+            <g class="arc in" data-seat="sam"><path pathLength="1" d="M86.14 61.74A38 38 0 0 1 72.34 80.74"/><path pathLength="1" d="M86.14 61.74A38 38 0 0 0 86.14 38.26"/></g>
+            <!-- Once the thread closes, a glint runs round it, starting from your seat. -->
+            <circle class="glint" cx="50" cy="50" r="38" pathLength="100" transform="rotate(90 50 50)"/>
+          </svg>
+          <div class="board"><span class="tally" style="--n: 5"><span class="digits"><i>0</i><i>1</i><i>2</i><i>3</i><i>4</i><i>5</i></span></span><small>confirmed so far</small></div>
+          <span class="seat me in" data-seat="you" style="--x: 50%; --y: 88%; --i: 0; --k: 0"><b>You</b></span>
+          <span class="seat in" data-seat="aoi" style="--x: 13.9%; --y: 61.7%; --i: 1; --k: 0"><b><i class="who">A</i><i class="hid"></i></b></span>
+          <span class="seat in" data-seat="kenji" style="--x: 27.7%; --y: 19.3%; --i: 2; --k: 1"><b><i class="who">K</i><i class="hid"></i></b></span>
+          <span class="seat in" data-seat="maya" style="--x: 72.3%; --y: 19.3%; --i: 3; --k: 2"><b><i class="who">M</i><i class="hid"></i></b></span>
+          <span class="seat in" data-seat="sam" style="--x: 86.1%; --y: 61.7%; --i: 4; --k: 3"><b><i class="who">S</i><i class="hid"></i></b></span>
+        </div>
+        <p class="status"><span>Enough people confirmed, so it is going ahead.</span></p>
+        <div class="row"><span class="fake-btn primary result"><span class="ask">I can go</span><span class="done"><svg class="check" viewBox="0 0 16 16"><path pathLength="1" d="M3 8.5l3.2 3L13 4.5"/></svg>You are going.</span></span></div>
+        <p class="then"><span class="ask">I cannot go</span><span class="done">You&rsquo;ll join the group chat a few days before, and see where to meet.</span></p>
       </figure>
     </section>
 
@@ -908,6 +981,47 @@
           });
         })();
       });
+    });
+
+    // Can you go: from Aoi's and Maya's yeses (still hidden), Kenji says yes,
+    // then you do (press 100 ms) and see who's coming; then Sam's yes closes
+    // the rim, and a glint runs round it.
+    var invite = document.querySelector(".invite");
+    var status = invite.querySelector(".status");
+    function seatOf(name) { return invite.querySelectorAll('[data-seat="' + name + '"]'); }
+    function seated(name, yes) { seatOf(name).forEach(function (el) { el.classList.toggle("in", yes); }); }
+    function tally(n) { invite.querySelector(".tally").style.setProperty("--n", n); }
+    // The old line lifts away as the new one rises into the same place.
+    function say(text) {
+      var old = status.lastElementChild, line = document.createElement("span");
+      line.textContent = text;
+      if (old) { old.classList.add("out"); later(180, function () { old.remove(); }); }
+      status.appendChild(line);
+    }
+    function sitDown(name, n) {
+      var seat = invite.querySelector('.seat[data-seat="' + name + '"]');
+      seated(name, true);
+      seat.classList.add("popped");
+      later(700, function () { seat.classList.remove("popped"); });
+      tally(n);
+    }
+    invite.classList.remove("going", "known");
+    ["kenji", "sam", "you"].forEach(function (name) { seated(name, false); });
+    tally(2);
+    status.textContent = "";
+    say("Two of your group have said yes.");
+    scene(invite, function () {
+      later(900, function () { sitDown("kenji", 3); say("Someone else just said yes."); });
+      later(2600, function () { invite.classList.add("press", "tapped"); });
+      later(2700, function () { invite.classList.remove("press"); invite.classList.add("going"); sitDown("you", 4); });
+      later(3200, function () {
+        invite.classList.remove("tapped");
+        invite.classList.add("known", "reveal");
+        say("Who is going: Aoi, Kenji, Maya and you.");
+      });
+      later(4000, function () { invite.classList.remove("reveal"); });
+      later(5400, function () { sitDown("sam", 5); say("Enough people confirmed, so it is going ahead."); });
+      later(6200, function () { invite.classList.add("closing"); });
     });
 
     // The crew: from one yes, Maya says yes, then you do; the third yes
