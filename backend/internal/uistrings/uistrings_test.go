@@ -35,10 +35,12 @@ func (m *memStore) GetTranslations(_ context.Context, arg dbgen.GetTranslationsP
 	return out, nil
 }
 
-func (m *memStore) InsertTranslation(_ context.Context, arg dbgen.InsertTranslationParams) error {
+func (m *memStore) InsertTranslations(_ context.Context, arg dbgen.InsertTranslationsParams) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	m.rows[arg.Lang+"/"+arg.SourceHash] = arg.Text
+	for i, h := range arg.SourceHashes {
+		m.rows[arg.Lang+"/"+h] = arg.Texts[i]
+	}
 	return nil
 }
 

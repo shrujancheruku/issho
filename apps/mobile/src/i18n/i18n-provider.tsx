@@ -189,7 +189,16 @@ function useUiStrings(lang: string) {
     // fetched again.
     staleTime: (q) => (isCurrent(q.state.data) ? CHECK_EVERY : 0),
     gcTime: Infinity,
-    refetchInterval: (q) => (!q.state.data ? false : q.state.data.complete ? CHECK_EVERY : 30_000),
+    // Incomplete text (the server stopped waiting for its translations) is
+    // asked for again soon, so a new language fills in within seconds; the
+    // gap doubles while it stays incomplete (5 s, 10 s … at most a minute),
+    // in case translation is failing.
+    refetchInterval: (q) =>
+      !q.state.data
+        ? false
+        : q.state.data.complete
+          ? CHECK_EVERY
+          : Math.min(5_000 * 2 ** Math.max(0, q.state.dataUpdateCount - 1), 60_000),
   });
 
   // Timers don't run while the app is in the background, so check on the way

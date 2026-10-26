@@ -40,13 +40,14 @@ func TestIntegrationCatalogReview(t *testing.T) {
 	}
 	cleanup()
 	t.Cleanup(cleanup)
-	for _, row := range []dbgen.InsertTranslationParams{
-		{SourceHash: hash, Lang: "ja", Source: source, Context: "test", Text: "{email} にコードを送信", Model: "machine"},
-		{SourceHash: uiHash, Lang: "ja", Source: uiSource, Context: uistrings.ContextPrefix, Text: "節約", Model: "machine"},
-	} {
-		if err := q.InsertTranslation(ctx, row); err != nil {
-			t.Fatal(err)
-		}
+	if err := q.InsertTranslations(ctx, dbgen.InsertTranslationsParams{
+		Lang: "ja", Model: "machine",
+		SourceHashes: []string{hash, uiHash},
+		Sources:      []string{source, uiSource},
+		Contexts:     []string{"test", uistrings.ContextPrefix},
+		Texts:        []string{"{email} にコードを送信", "節約"},
+	}); err != nil {
+		t.Fatal(err)
 	}
 
 	h := &Handler{Q: q}
@@ -74,8 +75,9 @@ func TestIntegrationCatalogReview(t *testing.T) {
 	if tr := res.Msg.Translation; !tr.Reviewed || tr.Text != "{email} にコードを送信しました" || tr.ReviewedAt == nil {
 		t.Fatalf("reviewed = %v", tr)
 	}
-	if err := q.InsertTranslation(ctx, dbgen.InsertTranslationParams{
-		SourceHash: hash, Lang: "ja", Source: source, Context: "test", Text: "machine again", Model: "machine",
+	if err := q.InsertTranslations(ctx, dbgen.InsertTranslationsParams{
+		Lang: "ja", Model: "machine",
+		SourceHashes: []string{hash}, Sources: []string{source}, Contexts: []string{"test"}, Texts: []string{"machine again"},
 	}); err != nil {
 		t.Fatal(err)
 	}

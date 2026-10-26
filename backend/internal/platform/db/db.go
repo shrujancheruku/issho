@@ -5,6 +5,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/stdlib"
@@ -13,8 +14,27 @@ import (
 	"github.com/shrujancheruku/issho/backend/db"
 )
 
+// The database is currently a round trip of ~37 ms away from the API (Tokyo to
+// Seoul), and a new connection (TLS through Supabase's pooler) ~280 ms, so
+// the pool keeps a few connections open and pings less than pgx's default.
+const (
+	minConns = 2
+	// pgx pings a connection idle for more than a second before handing it
+	// out: one extra round trip on nearly every request at low traffic. A
+	// connection used within the last minute is trusted as is.
+	pingAfterIdle = time.Minute
+)
+
 func Open(ctx context.Context, url string) (*pgxpool.Pool, error) {
-	pool, err := pgxpool.New(ctx, url)
+	cfg, err := pgxpool.ParseConfig(url)
+	if err != nil {
+		return nil, fmt.Errorf("parse database url: %w", err)
+	}
+	cfg.MinConns = minConns
+	cfg.ShouldPing = func(_ context.Context, p pgxpool.ShouldPingParams) bool {
+		return p.IdleDuration > pingAfterIdle
+	}
+	pool, err := pgxpool.NewWithConfig(ctx, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("open pool: %w", err)
 	}

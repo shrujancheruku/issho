@@ -14,8 +14,9 @@ import (
 )
 
 type memStore struct {
-	mu   sync.Mutex
-	rows map[string]string // lang/hash -> text
+	mu      sync.Mutex
+	rows    map[string]string // lang/hash -> text
+	inserts int               // InsertTranslations calls
 }
 
 func (m *memStore) GetTranslations(_ context.Context, arg dbgen.GetTranslationsParams) ([]dbgen.GetTranslationsRow, error) {
@@ -30,14 +31,17 @@ func (m *memStore) GetTranslations(_ context.Context, arg dbgen.GetTranslationsP
 	return out, nil
 }
 
-func (m *memStore) InsertTranslation(_ context.Context, arg dbgen.InsertTranslationParams) error {
+func (m *memStore) InsertTranslations(_ context.Context, arg dbgen.InsertTranslationsParams) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if m.rows == nil {
 		m.rows = map[string]string{}
 	}
-	if _, ok := m.rows[arg.Lang+"/"+arg.SourceHash]; !ok {
-		m.rows[arg.Lang+"/"+arg.SourceHash] = arg.Text
+	m.inserts++
+	for i, h := range arg.SourceHashes {
+		if _, ok := m.rows[arg.Lang+"/"+h]; !ok {
+			m.rows[arg.Lang+"/"+h] = arg.Texts[i]
+		}
 	}
 	return nil
 }
@@ -89,7 +93,7 @@ func TestResolveOrder(t *testing.T) {
 	store, tr := &memStore{}, &fakeTranslator{}
 	s := &Service{Store: store, Translator: tr}
 	// Pre-cache "Bowling" in ja.
-	_ = store.InsertTranslation(context.Background(), dbgen.InsertTranslationParams{SourceHash: Key("Bowling", "test"), Lang: "ja", Text: "ボウリング"})
+	_ = store.InsertTranslations(context.Background(), dbgen.InsertTranslationsParams{SourceHashes: []string{Key("Bowling", "test")}, Lang: "ja", Sources: []string{"Bowling"}, Contexts: []string{"test"}, Texts: []string{"ボウリング"}})
 
 	got := s.Resolve(context.Background(), "ja", texts(
 		`{"en":"Kichijoji","ja":"吉祥寺"}`, // stored in ja: used as is
@@ -190,7 +194,8 @@ func TestConcurrentRequestsTranslateOnce(t *testing.T) {
 
 func TestBatches(t *testing.T) {
 	tr := &fakeTranslator{}
-	s := &Service{Store: &memStore{}, Translator: tr}
+	store := &memStore{}
+	s := &Service{Store: store, Translator: tr}
 	var names []string
 	for i := range 230 {
 		names = append(names, fmt.Sprintf(`{"en":"Activity %d"}`, i))
@@ -201,6 +206,10 @@ func TestBatches(t *testing.T) {
 	}
 	if got[229] != "es:Activity 229" {
 		t.Errorf("last item %q: batches must keep positions", got[229])
+	}
+	// One cache write per batch, not per text: each write is a round trip.
+	if store.inserts != 3 || store.count() != 230 {
+		t.Errorf("%d cache writes for %d texts, want 3 for 230", store.inserts, store.count())
 	}
 }
 
