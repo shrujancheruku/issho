@@ -12,6 +12,7 @@
 //	tool ui-strings <apps/mobile/src/i18n>   (checks and stamps the UI text's human versions; run by make gen)
 //	tool translate-compare [-langs ja,es,pl,zh] [-out file.json]   (Google vs Gemini on the UI text, for review; stores nothing)
 //	tool ui-bundle -api <url>   (the city packs' languages, as that API serves them, bundled into the app)
+//	tool sentry-test   (sends one test error to SENTRY_DSN)
 package main
 
 import (
@@ -35,6 +36,9 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/platform/db"
 )
 
+// version is the commit, stamped at build time (backend/Dockerfile).
+var version = "dev"
+
 func main() {
 	if err := run(os.Args[1:]); err != nil {
 		slog.Error("tool failed", "err", err)
@@ -44,7 +48,7 @@ func main() {
 
 func run(args []string) error {
 	if len(args) == 0 {
-		return fmt.Errorf("usage: tool migrate|seed|build-matrix|discover-venues|email-templates|simulate|walk-bench|set-admin|set-translator|ui-strings|translate-compare|ui-bundle ...")
+		return fmt.Errorf("usage: tool migrate|seed|build-matrix|discover-venues|email-templates|simulate|walk-bench|set-admin|set-translator|ui-strings|translate-compare|ui-bundle|sentry-test ...")
 	}
 	switch args[0] {
 	case "simulate":
@@ -57,6 +61,8 @@ func run(args []string) error {
 		return translateCompare(args[1:]) // the translators only: no database needed
 	case "ui-bundle":
 		return uiBundle(args[1:]) // an API only: no database needed
+	case "sentry-test":
+		return sentryTest() // Sentry only: no database needed
 	}
 	ctx := context.Background()
 	url := os.Getenv("DATABASE_URL")
