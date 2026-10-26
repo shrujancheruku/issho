@@ -34,7 +34,7 @@ export const Colors = {
     /** Gold as text, and the thread on light grounds: Brand.gold is 2.1:1 there. */
     goldText: '#885716',
     /**
-     * "I love it", and nothing else: vermilion, kin to the logo's sun. Chips,
+     * "Love it", and nothing else: vermilion, kin to the logo's sun. Chips,
      * map pins and the Plans section mark. Urgency and deadlines stay gold.
      */
     love: '#CC3719',

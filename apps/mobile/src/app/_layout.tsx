@@ -10,7 +10,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { ActivityIndicator, Pressable, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
-import { AnimatedSplashOverlay } from '@/components/animated-icon';
+import { SplashOverlay } from '@/components/splash-overlay';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Colors, Spacing } from '@/constants/theme';
@@ -67,7 +67,7 @@ function RootLayout() {
           {/* Inside AuthProvider: the languages come from the account. */}
           <I18nProvider>
             <ThemeProvider value={colorScheme === 'dark' ? navDark : navLight}>
-              <AnimatedSplashOverlay />
+              <SplashOverlay />
               <RootNavigator />
             </ThemeProvider>
           </I18nProvider>

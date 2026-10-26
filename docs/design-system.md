@@ -6,7 +6,7 @@ The logo spells 一緒 as one gold thread joining people under one red sun. The 
 
 - **Indigo cloth** ("Ai", 藍, the traditional dye for thread) as the ground.
 - **The gold thread** (Kogane, 黄金) joins things and marks the one thing to do. Every outing shows it as five knots: signed up, date set, going, on the day, how was it.
-- **The red sun lives only in the logo.** Screens never use red for fills, icons or decoration; the exceptions are error text and the vermilion "I love it" mark (below).
+- **The red sun lives only in the logo.** Screens never use red for fills, icons or decoration; the exceptions are error text and the vermilion "Love it" mark (below).
 
 ## Where the values live
 
@@ -32,7 +32,7 @@ Keep the three in step when a value changes.
 | accent | `#24307A` | `#3A4A9E` | Selection, the active tab, signed-up marks, your chat bubbles; white text on it |
 | link | `#24307A` | `#9FB0FF` | Links, and the accent wherever it is text |
 | gold-text | `#885716` | `#DEA92C` | Gold as text (gold itself is 2.1:1 on light grounds) |
-| love | `#CC3719` | `#EB603A` | "I love it" only: interest chips, map pins, the Plans section mark. White text on it in light, ink in dark |
+| love | `#CC3719` | `#EB603A` | "Love it" only: interest chips, map pins, the Plans section mark. White text on it in light, ink in dark |
 | error | `#BC002D` | `#FF7A90` | Error messages, and dangers in the admin |
 | ok | `#2F6B3D` | `#7FC28E` | Success, always with a word |
 

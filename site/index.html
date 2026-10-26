@@ -4,196 +4,511 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Issho - Find your people through the things you already love</title>
-<meta name="description" content="Issho gathers a handful of locals around something you'd be doing anyway, so friendships grow the way they always have: by showing up.">
+<meta name="description" content="Tell Issho what you love. We find a few people nearby who love it too, and a time and place to do it together.">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#F3F5F9" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0D1330" media="(prefers-color-scheme: dark)">
 <meta property="og:title" content="Issho">
 <meta property="og:description" content="Find your people through the things you already love.">
+<meta property="og:image" content="https://joinissho.com/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
-<!-- Noto Serif JP ExtraBold is the logo's kanji font; subset to the four characters shown in the breakdown -->
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@800&text=%E4%B8%80%E7%B3%B8%E8%80%85%E6%97%A5&display=swap" rel="stylesheet">
+<!-- Noto Serif JP ExtraBold is the logo's kanji font; subset to the characters set in it -->
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@800&text=%E4%B8%80%E7%B7%92%E7%B3%B8%E8%80%85%E6%97%A5&display=swap" rel="stylesheet">
+<script>
+  try { var t = localStorage.getItem("issho-theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch (e) {}
+</script>
 <style>
-  /* The design system's "Ai" dark theme (docs/design-system.md): indigo night,
-     the gold thread, and red only where it is the logo's sun. */
+  /* The app's two canvases (docs/design-system.md), following the system
+     setting as the app does: Ai night, and the light Kogane canvas. Gold is
+     the thread and the one button; vermilion only marks "Love it"; shu red
+     only appears as the logo's sun. */
   :root {
-    --red: #BC002D;
-    --gold: #C9A227;
-    --gold-hover: #D8B443;
-    --ink: #111111;
     --bg: #0D1330;
-    --top: #222B52;
-    --mid: #161E40;
     --surface: #161E40;
-    --text: #F1F3F8;
-    --muted: #A9B1CB;
+    --raised: #1E2850;
     --line: #2C3765;
     --line-strong: #6C78AA;
+    --text: #F1F3F8;
+    --muted: #A9B1CB;
+    --heading: #F2E2B2;
+    --thread: #DEA92C;
+    --when: #DEA92C;
+    --gold: #DEA92C;
+    --gold-hover: #E9BA4A;
+    --gold-tint: #F2E2B2;
+    --love: #EB603A;
+    --on-love: #131B40;
+    --sun: #DA4528;
+    --ink: #131B40;
+    --slot1: #222B52;
+    --slot2: #2F3A6B;
+    --slot3: #47558F;
     --display: "Dela Gothic One", "Hiragino Kaku Gothic ProN", "Arial Black", sans-serif;
     --kanji: "Noto Serif JP", "Hiragino Mincho ProN", serif;
     --sans: "Zen Kaku Gothic New", "Hiragino Sans", "Noto Sans JP", -apple-system, "Segoe UI", sans-serif;
+    /* The thread's x position; content is indented past it. */
+    --spine: 1.5rem;
+    --indent: 4rem;
     color-scheme: dark;
   }
+  @media (min-width: 48rem) { :root { --spine: 2.5rem; --indent: 6.5rem; } }
+  /* Light follows the system unless the switch says otherwise; the switch sets
+     data-theme on <html> (and remembers it), so both rules carry the tokens. */
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg: #F3F5F9;
+      --surface: #FFFFFF;
+      --raised: #E7EBF3;
+      --line: #D5DBE7;
+      --line-strong: #7A849C;
+      --text: #131B40;
+      --muted: #545D73;
+      --heading: #131B40;
+      /* Gold on the light canvas is for fills; as a line or text it's the deep gold. */
+      --when: #885716;
+      --love: #CC3719;
+      --on-love: #FFFFFF;
+      --slot1: #E7EBF3;
+      --slot2: #D5DBE7;
+      --slot3: #AEB8CF;
+      color-scheme: light;
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #F3F5F9;
+    --surface: #FFFFFF;
+    --raised: #E7EBF3;
+    --line: #D5DBE7;
+    --line-strong: #7A849C;
+    --text: #131B40;
+    --muted: #545D73;
+    --heading: #131B40;
+    /* Gold on the light canvas is for fills; as a line or text it's the deep gold. */
+    --when: #885716;
+    --love: #CC3719;
+    --on-love: #FFFFFF;
+    --slot1: #E7EBF3;
+    --slot2: #D5DBE7;
+    --slot3: #AEB8CF;
+    color-scheme: light;
+  }
+
+  /* Switching themes cross-fades the colours instead of flipping them. The class
+     is only on for the switch itself, so nothing else on the page animates
+     colour, and reduced motion gets an instant change. */
+  html.theming, html.theming *, html.theming *::before, html.theming *::after {
+    transition: background-color .45s ease, color .45s ease, border-color .45s ease, box-shadow .45s ease, -webkit-text-stroke-color .45s ease !important;
+  }
+
   * { box-sizing: border-box; }
   html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
   body {
     margin: 0; background: var(--bg); color: var(--text);
-    font: 400 1.0625rem/1.65 var(--sans);
+    font: 400 1.0625rem/1.7 var(--sans);
     -webkit-font-smoothing: antialiased;
   }
-  .wrap { max-width: 64rem; margin: 0 auto; padding-inline: 1.25rem; }
-  h1, h2, .display { font-family: var(--display); font-weight: 400; }
+  .wrap { max-width: 70rem; margin: 0 auto; padding-inline: 1rem; }
+  p, .glyphs .m { margin: 0; text-wrap: pretty; }
+  h1, h2 { text-wrap: balance; }
+  :focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
 
-  /* Hero: the logo is the focal point, so it gets most of the first screen. */
-  .hero { background: var(--top); text-align: center; padding-block: clamp(2.5rem, 7vw, 5rem) clamp(2.5rem, 6vw, 4.5rem); }
-  .hero img.logo { display: block; width: min(92vw, 44rem); height: auto; margin: 0 auto; }
+  /* Top bar: the logo is small here; the page's thread is the brand moment. */
+  .bar { display: flex; align-items: center; justify-content: space-between; padding-block: 1.25rem; }
+  .bar img { display: block; width: 7.5rem; height: auto; }
+  /* Light/dark switch: a track with the sun and moon at either end and a knob
+     that slides over the one in use. */
+  .theme-switch {
+    position: relative; display: inline-flex; align-items: center; justify-content: space-between;
+    width: 4.25rem; height: 2.25rem; padding: 0 .55rem; border-radius: 999px; cursor: pointer;
+    background: var(--surface); border: 1.5px solid var(--line-strong); color: var(--muted);
+  }
+  .theme-switch svg { width: 1rem; height: 1rem; position: relative; z-index: 1; }
+  .theme-switch .knob {
+    position: absolute; top: .2rem; left: .2rem; width: 1.6rem; height: 1.6rem; border-radius: 50%;
+    background: var(--gold); transition: transform .45s cubic-bezier(.3, 1.4, .5, 1);
+  }
+  .theme-switch[aria-checked="true"] .knob { transform: translateX(2rem); }
+  /* The icon under the knob reads in ink on gold. */
+  .theme-switch[aria-checked="false"] .sun, .theme-switch[aria-checked="true"] .moon { color: var(--ink); transition: color .45s; }
+  @media (prefers-reduced-motion: reduce) { .theme-switch .knob { transition: none; } }
+
+  /* Hero: the thread starts here, fading in just below the header logo, and runs the length of the page. */
+  .hero { position: relative; display: grid; grid-template-columns: var(--indent) 1fr; padding-block: clamp(2rem, 7vw, 5rem) 0; }
+  /* The column is twice the spine wide, so its centre line is the spine. It spans the hero's
+     top padding too, so the thread reaches up to the logo. */
+  .hero .spine-top { width: calc(var(--spine) * 2); margin-top: calc(-1 * clamp(2rem, 7vw, 5rem)); display: flex; justify-content: center; }
+  .hero .spine-top::before { content: ""; width: 3px; background: linear-gradient(transparent, var(--gold) 3rem); }
   .hero h1 {
-    font-size: clamp(1.6rem, 4.2vw, 2.75rem); line-height: 1.2;
-    margin: clamp(1.5rem, 4vw, 2.5rem) auto 0; max-width: 22ch;
+    font: 400 clamp(2.1rem, 6.4vw, 4.6rem)/1.08 var(--display); margin: 0;
+    color: var(--heading); max-width: 13ch; letter-spacing: -.005em;
   }
-  .hero p.lede { max-width: 36rem; margin: 1.1rem auto 0; color: var(--muted); font-size: 1.1875rem; }
+  .hero .ja { margin-top: 1rem; font-size: clamp(1.05rem, 2vw, 1.3rem); font-weight: 500; color: var(--text); }
+  .hero .lede { margin-top: 1.5rem; max-width: 34rem; color: var(--muted); font-size: 1.1875rem; }
+  .hero .cta { margin-top: 2rem; }
 
-  .community { background: var(--mid); }
-  /* Seigaiha (wave) band between sections: the pattern fades out at both edges into the
-     colour of the section on each side. */
-  .divider { background: linear-gradient(var(--from) 50%, var(--to) 50%); height: 42px; line-height: 0; overflow: hidden; }
-  .divider svg { display: block; width: 100%; height: 100%;
-    -webkit-mask-image: linear-gradient(to bottom, transparent, #000 35%, #000 65%, transparent);
-    mask-image: linear-gradient(to bottom, transparent, #000 35%, #000 65%, transparent); }
-  section { padding-block: clamp(2.5rem, 6vw, 4.5rem); }
-  h2 { font-size: clamp(1.5rem, 3.4vw, 2.2rem); line-height: 1.25; margin: 0 0 1rem; }
-  .intro { max-width: 40rem; color: var(--muted); margin: 0; }
-  .accent { color: var(--gold); }
-
-  /* Thread/sun section */
-  .thread { background: var(--bg); }
-  .statement { font: 400 clamp(1.1rem, 2.2vw, 1.3rem)/1.55 var(--sans); color: var(--muted); max-width: 40rem; margin: 0; }
-  .statement span { display: block; }
-  .parts { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); margin: 2rem 0 0; padding: 0; list-style: none; }
-  .parts li { background: var(--mid); border: 1px solid var(--line); border-radius: .5rem; padding: 1.25rem; }
-  .parts .kanji { font: 400 2.25rem/1 var(--display); }
-  .parts .meaning { display: block; margin: .35rem 0 .6rem; font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
-  .parts .role b { font-weight: 700; }
-  .parts .role { margin: 0; color: var(--text); font-size: .98rem; }
-  /* Colours follow the logo: gold strokes, black ink outlined in gold, red sun. */
-  .parts .kanji { font: 800 2.75rem/1 var(--kanji); }
-  .parts .gold .kanji { color: var(--gold); }
-  .parts .ink .kanji { color: #111; -webkit-text-stroke: 1px var(--gold); paint-order: stroke fill; }
-  .parts .red .kanji { color: var(--red); -webkit-text-stroke: 1px var(--ink); paint-order: stroke fill; }
-
-  /* The thread: a gold line running through each step, with a gold knot at each one.
-     The red sun stays in the logo. */
-  .steps { position: relative; margin: 2.25rem 0 0; padding: 0; list-style: none; }
-  .steps li { position: relative; padding: 0 0 2rem 3.25rem; }
-  .steps li:last-child { padding-bottom: 0; }
-  /* Node: a 25px gold knot centred on the title's first line (25px tall) */
-  .steps li::before {
-    content: ""; position: absolute; left: 0; top: 0; z-index: 1; width: 25px; height: 25px; border-radius: 50%;
-    box-sizing: border-box;
-    background: var(--gold); border: 3px solid var(--mid); box-shadow: 0 0 0 2px var(--gold);
+  .button {
+    display: inline-block; padding: .9rem 1.5rem; font: 700 1rem/1.2 var(--sans); color: var(--ink);
+    background: var(--gold); border: 0; border-radius: .5rem; cursor: pointer; text-decoration: none;
   }
-  /* Thread: runs from this node's centre to the next node's centre (li height + the 12.5px offset) */
-  .steps li:not(:last-child)::after {
-    content: ""; position: absolute; left: 11px; top: 12.5px; height: 100%; width: 3px; background: var(--gold);
-  }
-  .steps b { display: block; font: 400 1.2rem/1.3 var(--display); }
-  .steps span { display: block; color: var(--muted); margin-top: .35rem; max-width: 36rem; }
+  .button:hover { background: var(--gold-hover); }
 
-  /* Waitlist, last on the page */
-  .join { text-align: center; background: var(--bg); }
-  form.signup { display: flex; flex-wrap: wrap; gap: .75rem; justify-content: center; margin: 2rem auto 0; max-width: 40rem; }
+  /* The thread. A dim track always shows the whole length; the gold fill is drawn by
+     the script at the end of the page as you scroll. Without the script, or with reduced
+     motion, the fill is simply full and every knot is tied. */
+  .story { position: relative; padding-block: clamp(3rem, 8vw, 6rem) 0; }
+  .story::before, .story .fill {
+    content: ""; position: absolute; top: 0; bottom: 0; left: calc(var(--spine) - 1.5px); width: 3px;
+  }
+  .story::before { background: var(--line); }
+  .story .fill { background: var(--gold); transform-origin: top; }
+
+  .stage { position: relative; display: grid; gap: 1.5rem; padding: 0 0 clamp(4rem, 10vw, 7rem) var(--indent); }
+  @media (min-width: 56rem) {
+    .stage { grid-template-columns: minmax(0, 1fr) minmax(0, 25rem); gap: 3.5rem; align-items: start; }
+  }
+  /* Knot: centred on the spine and on the first line of the heading. */
+  .knot {
+    position: absolute; left: calc(var(--spine) - 13px); top: .2rem; width: 26px; height: 26px; border-radius: 50%;
+    background: var(--gold); box-shadow: 0 0 0 4px var(--bg), 0 0 0 6px var(--gold); z-index: 1;
+  }
+  .stage .when { color: var(--when); font-weight: 700; font-size: 1rem; }
+  .stage h2 { font: 400 clamp(1.55rem, 3.4vw, 2.3rem)/1.2 var(--display); margin: .25rem 0 1rem; max-width: 18ch; }
+  .stage .text p { color: var(--muted); max-width: 34rem; }
+  .stage .text p + p { margin-top: .9rem; }
+
+  /* While the script runs, knots stay hollow until the fill reaches them. */
+  .thread-anim .knot:not(.tied) { background: var(--bg); box-shadow: 0 0 0 4px var(--bg), 0 0 0 6px var(--line-strong); }
+  .thread-anim .stage.crew .knot:not(.tied) { box-shadow: inset 0 0 0 2px var(--line-strong); }
+  .thread-anim .knot { transition: background .2s, box-shadow .2s; }
+
+  /* App fragments: pieces of the real screens, in the app's own wording.
+     They are pictures of the app, so nothing in them is interactive. */
+  .app { margin: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 1rem; padding: 1.25rem; font-size: .975rem; line-height: 1.5; }
+  .app .title { font-weight: 700; font-size: 1.075rem; }
+  /* Plan and crew names are in the display face, as on the app's cards. */
+  .app .title.display { font: 400 1.25rem/1.45 var(--display); }
+  .app .sub { color: var(--muted); font-size: .9rem; margin-top: .15rem; }
+  .app .hint { color: var(--muted); font-size: .875rem; margin-top: .9rem; }
+  .app .row { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1rem; }
+  .chip { display: inline-block; padding: .35rem .8rem; border-radius: 999px; border: 1.5px solid var(--line-strong); font-size: .875rem; font-weight: 500; }
+  /* The three interest levels, filled as in the app: vermilion, gold, pale gold. */
+  .chip.love { background: var(--love); border-color: var(--love); color: var(--on-love); }
+  .chip.like { background: var(--gold); border-color: var(--gold); color: var(--ink); }
+  .chip.open { background: var(--gold-tint); border-color: var(--gold-tint); color: var(--ink); }
+  .app .tag { margin: 0 0 .6rem; }
+  /* In running text, small enough to keep the line spacing. */
+  .text .chip { padding: 0 .5rem; font-size: .85em; line-height: 1.5; border-width: 0; }
+  .typing { display: flex; align-items: center; gap: .5rem; color: var(--muted); font-size: .875rem; margin-top: .4rem; }
+  .typing i { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); animation: dot 1.2s infinite ease-in-out; }
+  .typing i:nth-child(2) { animation-delay: .15s; }
+  .typing i:nth-child(3) { animation-delay: .3s; }
+  .typing .dots { display: inline-flex; gap: 3px; }
+  @keyframes dot { 0%, 60%, 100% { transform: none; opacity: .5; } 30% { transform: translateY(-3px); opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { .typing i { animation: none; } }
+  .fake-btn { display: inline-block; padding: .6rem 1rem; border-radius: .5rem; font-weight: 700; font-size: .925rem; border: 1.5px solid var(--line-strong); }
+  .fake-btn.primary { background: var(--gold); border-color: var(--gold); color: var(--ink); }
+
+  /* Plan stops: the dot and the line are both centred on x = 5px (pseudo-elements don't
+     inherit the * box-sizing, so set it here), and the line runs dot centre to dot centre. */
+  .stops { list-style: none; margin: 1rem 0 0; padding: 0; }
+  .stops li { position: relative; padding: 0 0 .7rem 1.5rem; }
+  .stops li:last-child { padding-bottom: 0; }
+  .stops li::before, .stops li::after { content: ""; position: absolute; left: 5px; transform: translateX(-50%); box-sizing: border-box; }
+  .stops li::before { top: .4em; width: 11px; height: 11px; border-radius: 50%; border: 2px solid var(--gold); background: var(--surface); z-index: 1; }
+  .stops li:not(:last-child)::after { top: calc(.4em + 5.5px); bottom: calc(-.4em - 5.5px); width: 2px; background: var(--line-strong); }
+  .stops small { display: block; color: var(--muted); font-size: .85rem; }
+
+  /* Availability: how many signed-up people can make each slot. */
+  .slots { display: grid; grid-template-columns: auto repeat(3, 1fr); gap: 4px; margin-top: 1rem; font-size: .8rem; }
+  .slots span { padding: .45rem .25rem; text-align: center; border-radius: .3rem; }
+  .slots .h { color: var(--muted); padding-block: .2rem; }
+  .slots .d { color: var(--muted); text-align: left; padding-left: 0; }
+  .slots .n1 { background: var(--slot1); }
+  .slots .n2 { background: var(--slot2); }
+  .slots .n3 { background: var(--slot3); }
+  .slots .pick { background: var(--gold); color: var(--ink); font-weight: 700; }
+
+  .people { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: 1rem; }
+  .people span { width: 2.6rem; height: 2.6rem; border-radius: 50%; display: grid; place-items: center; background: var(--raised); border: 1.5px solid var(--line-strong); font-weight: 700; font-size: .9rem; }
+  .people span.you { border-color: var(--gold); color: var(--gold); }
+
+  .picks { list-style: none; margin: 1rem 0 0; padding: 0; }
+  .picks li { display: flex; align-items: center; justify-content: space-between; padding: .6rem 0; border-top: 1px solid var(--line); }
+  .picks li:first-child { border-top: 0; padding-top: 0; }
+  .tick { width: 1.4rem; height: 1.4rem; border-radius: .35rem; border: 1.5px solid var(--line-strong); }
+  .tick.on { background: var(--gold); border-color: var(--gold); position: relative; }
+  .tick.on::after { content: ""; position: absolute; left: .42rem; top: .18rem; width: .35rem; height: .7rem; border: solid var(--ink); border-width: 0 2.5px 2.5px 0; transform: rotate(45deg); }
+
+  /* The crew is where the thread ends, so its knot is a closed loop rather than a bead.
+     It sits just after .story, so the thread (which ends at .story's bottom) runs into it. */
+  .stage.crew { padding-bottom: clamp(3rem, 8vw, 5rem); }
+  .stage.crew .knot { width: 34px; height: 34px; left: calc(var(--spine) - 17px); top: 0; background: var(--bg); box-shadow: inset 0 0 0 6px var(--gold); }
+  .thread-anim .stage.crew .knot.tied { background: var(--bg); }
+
+  /* The name */
+  .name { padding-block: clamp(3rem, 8vw, 5rem); padding-left: var(--indent); border-top: 1px solid var(--line); }
+  .name h2 { font: 400 clamp(1.4rem, 3vw, 1.9rem)/1.25 var(--display); margin: 0 0 .75rem; }
+  .name > p { color: var(--muted); max-width: 36rem; }
+  .glyphs { display: grid; grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr)); gap: 1.75rem 2rem; list-style: none; margin: 2rem 0 0; padding: 0; }
+  /* Gold and red outlined in ink, as in the logo, so they hold up on the light canvas. */
+  .glyphs .k { display: block; font: 800 3rem/1 var(--kanji); color: var(--gold); -webkit-text-stroke: 1.5px var(--ink); paint-order: stroke fill; }
+  /* 者 is black ink outlined in gold, 日 the red sun, as in the logo. */
+  .glyphs .k.ink { color: var(--ink); -webkit-text-stroke: 1.5px var(--gold); paint-order: stroke fill; }
+  .glyphs .k.sun { color: var(--sun); }
+  .glyphs b { display: block; margin-top: .6rem; font-weight: 700; }
+  .glyphs span.m { display: block; color: var(--muted); font-size: .95rem; }
+
+  /* Waitlist */
+  .join { padding-block: clamp(3rem, 8vw, 5rem); padding-left: var(--indent); border-top: 1px solid var(--line); }
+  .join h2 { font: 400 clamp(1.7rem, 4vw, 2.6rem)/1.15 var(--display); margin: 0 0 .9rem; color: var(--heading); max-width: 16ch; }
+  .join > p { color: var(--muted); max-width: 34rem; }
+  form.signup { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1.75rem; max-width: 40rem; }
+  form.signup label { flex: 1 1 13rem; display: grid; gap: .35rem; font-size: .9rem; color: var(--muted); }
   form.signup input {
-    flex: 1 1 13rem; min-width: 0; padding: .9rem 1rem; font: inherit; color: var(--text);
-    background: var(--mid); border: 1.5px solid var(--line-strong); border-radius: .5rem;
+    min-width: 0; padding: .85rem 1rem; font: inherit; font-size: 1rem; color: var(--text);
+    background: var(--surface); border: 1.5px solid var(--line-strong); border-radius: .5rem;
   }
-  form.signup input::placeholder { color: var(--muted); }
-  form.signup input:focus-visible, form.signup button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
-  form.signup button {
-    flex: 0 0 auto; padding: .9rem 1.5rem; font: 700 1rem var(--sans); color: var(--ink);
-    background: var(--gold); border: 1.5px solid var(--gold); border-radius: .5rem; cursor: pointer;
-  }
-  form.signup button:hover { background: var(--gold-hover); border-color: var(--gold-hover); }
-  .fine { margin: .85rem 0 0; font-size: .875rem; color: var(--muted); }
-  .join .intro { margin-inline: auto; }
+  form.signup input:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+  form.signup .button { flex: 0 0 auto; align-self: end; }
+  .fine { margin-top: .9rem; font-size: .875rem; color: var(--muted); }
 
-  footer { padding-block: 2rem; text-align: center; color: var(--muted); font-size: .9rem; }
-  footer img { width: 2.5rem; height: 2.5rem; display: block; margin: 0 auto .5rem; }
+  footer.wrap { padding-block: 2rem 2.5rem; padding-left: calc(var(--indent) + 1rem); color: var(--muted); font-size: .9rem; border-top: 1px solid var(--line); }
+
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 </style>
 </head>
 <body>
-<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="seigaiha" viewBox="0 0 1232 56" preserveAspectRatio="xMidYMin slice"><g fill-opacity="1" stroke="#C9A227" stroke-opacity=".45" stroke-width="1.2"><g transform="translate(-56 0)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(0 0)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(56 0)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(112 0)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(168 0)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(224 0)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(280 0)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(336 0)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(392 0)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(448 0)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(504 0)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(560 0)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(616 0)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(672 0)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(728 0)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(784 0)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(840 0)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(896 0)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(952 0)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(1008 0)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(1064 0)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(1120 0)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(1176 0)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(1232 0)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(1288 0)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(-28 14)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(28 14)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(84 14)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(140 14)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(196 14)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(252 14)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(308 14)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(364 14)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(420 14)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(476 14)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(532 14)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(588 14)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(644 14)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(700 14)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(756 14)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(812 14)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(868 14)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(924 14)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(980 14)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(1036 14)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(1092 14)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(1148 14)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(1204 14)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(1260 14)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(1316 14)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(-56 28)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(0 28)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(56 28)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(112 28)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(168 28)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(224 28)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(280 28)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(336 28)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(392 28)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(448 28)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(504 28)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(560 28)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(616 28)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(672 28)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(728 28)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(784 28)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(840 28)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(896 28)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(952 28)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(1008 28)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(1064 28)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(1120 28)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(1176 28)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(1232 28)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(1288 28)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(-28 42)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(28 42)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(84 42)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(140 42)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(196 42)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(252 42)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(308 42)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(364 42)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(420 42)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(476 42)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(532 42)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(588 42)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(644 42)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(700 42)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(756 42)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(812 42)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(868 42)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(924 42)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(980 42)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(1036 42)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(1092 42)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(1148 42)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(1204 42)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(1260 42)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(1316 42)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(-56 56)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(0 56)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(56 56)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(112 56)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(168 56)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(224 56)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(280 56)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(336 56)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(392 56)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(448 56)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(504 56)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(560 56)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(616 56)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(672 56)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(728 56)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(784 56)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(840 56)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(896 56)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(952 56)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(1008 56)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(1064 56)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(1120 56)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(1176 56)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(1232 56)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(1288 56)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(-28 70)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(28 70)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(84 70)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(140 70)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(196 70)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(252 70)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(308 70)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(364 70)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(420 70)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(476 70)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(532 70)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(588 70)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(644 70)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(700 70)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(756 70)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(812 70)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(868 70)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(924 70)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(980 70)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(1036 70)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(1092 70)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(1148 70)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(1204 70)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(1260 70)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g><g transform="translate(1316 70)"><circle r="28" fill="var(--to)"/><circle r="20" fill="var(--from)"/><circle r="12" fill="var(--to)"/></g></g></symbol></svg>
-<header class="hero">
-  <div class="wrap">
-    <img class="logo" src="logo.svg" alt="Issho (一緒)">
-    <h1>Find your people through the things you already love.</h1>
-    <p class="lede">Remember when friends just happened? Same team, same class, same corner caf&eacute;. Issho brings that back: a handful of locals, one plan, and something you&rsquo;d be doing anyway.</p>
+<div class="wrap">
+  <header class="bar">
+    <img src="logo.svg" alt="Issho (一緒)">
+    <!-- Checked = dark. The script below wires it up; without it, the page follows the system. -->
+    <button class="theme-switch" type="button" role="switch" aria-checked="true" aria-label="Dark mode" hidden>
+      <span class="knob" aria-hidden="true"></span>
+      <svg class="sun" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg>
+      <svg class="moon" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M20.5 14.6A8.5 8.5 0 0 1 9.4 3.5a8.5 8.5 0 1 0 11.1 11.1Z"/></svg>
+    </button>
+  </header>
+
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="spine-top" aria-hidden="true"></div>
+    <div>
+      <h1 id="hero-title">Find your people through the things you already love.</h1>
+      <p class="ja" lang="ja">好きなことから、仲間に出会う。</p>
+      <p class="lede">Remember when friends just happened? Same team, same class, same corner caf&eacute;. Issho brings that back. Tell us what you love. We&rsquo;ll find a few people nearby who love it too, and a time and place to do it together.</p>
+      <p class="cta"><a class="button" href="#join">Join the waitlist</a></p>
+    </div>
+  </section>
+
+  <main aria-label="How one outing works">
+  <div class="story">
+    <div class="fill" aria-hidden="true"></div>
+
+    <section class="stage">
+      <span class="knot" aria-hidden="true"></span>
+      <div class="text">
+        <p class="when">It starts with a plan</p>
+        <h2>Pick something you&rsquo;d do anyway.</h2>
+        <p>Photo walks, bouldering, ramen crawls, board-game caf&eacute;s. Tag each activity <span class="chip love">Love it</span>, <span class="chip like">Like it</span> or <span class="chip open">Open to try</span>, and Plans shows what&rsquo;s on near you, best matches first. The activity breaks the ice, so you don&rsquo;t have to.</p>
+        <p>Sign up for any that grab you and tell us when you&rsquo;re free. No date yet, no pressure.</p>
+      </div>
+      <figure class="app" aria-label="A plan in the app">
+        <p class="tag"><span class="chip love">Love it</span></p>
+        <p class="title display">Photo walk from Kichijoji station, ending at a caf&eacute;</p>
+        <p class="sub">Kichijoji &middot; <span lang="ja">吉祥寺</span>. About 2.5 hours</p>
+        <ol class="stops">
+          <li>Kichijoji Station, park exit<small>Meet here</small></li>
+          <li>Inokashira Park<small>About 90 minutes of photos</small></li>
+          <li>A caf&eacute; on Nanaibashi-dori<small>Coffee and comparing shots</small></li>
+        </ol>
+        <div class="row"><span class="fake-btn primary">Sign me up</span></div>
+      </figure>
+    </section>
+
+    <section class="stage">
+      <span class="knot" aria-hidden="true"></span>
+      <div class="text">
+        <p class="when">Date set</p>
+        <h2>Enough of you said yes. It&rsquo;s on.</h2>
+        <p>When enough people can make the same time, we lock in a date and split everyone into small groups, matched on what you love, a language you share and the group size you like.</p>
+      </div>
+      <figure class="app" aria-label="When people who signed up can go">
+        <p class="title">When people can go</p>
+        <p class="sub">The lighter the slot, the more people are free.</p>
+        <div class="slots" aria-hidden="true">
+          <span class="h"></span><span class="h">Morning</span><span class="h">Afternoon</span><span class="h">Evening</span>
+          <span class="d">Fri</span><span class="n1"></span><span class="n1"></span><span class="n2"></span>
+          <span class="d">Sat</span><span class="n2"></span><span class="pick">2 PM</span><span class="n2"></span>
+          <span class="d">Sun</span><span class="n3"></span><span class="n2"></span><span class="n1"></span>
+        </div>
+        <p class="hint">Sat, Nov 15, 2:00 PM</p>
+      </figure>
+    </section>
+
+    <section class="stage">
+      <span class="knot" aria-hidden="true"></span>
+      <div class="text">
+        <p class="when">Going</p>
+        <h2>A few people, not a crowd.</h2>
+        <p>Your invite lands in Together, under &ldquo;Needs you&rdquo;. Confirm your place and see who&rsquo;s coming. Photos are only shared with your group. No profiles to swipe, no one-to-one messages: Issho is for making friends.</p>
+      </div>
+      <figure class="app" aria-label="Confirming a place in a group">
+        <p class="title">Can you go? Please answer by Thu, Nov 13.</p>
+        <div class="people" aria-hidden="true"><span class="you">You</span><span>A</span><span>K</span><span>M</span><span>S</span><span>R</span></div>
+        <p class="hint">Confirmed so far: 4. Spoken in this group: Japanese and English.</p>
+        <div class="row"><span class="fake-btn primary">I can go</span><span class="fake-btn">I cannot go</span></div>
+      </figure>
+    </section>
+
+    <section class="stage">
+      <span class="knot" aria-hidden="true"></span>
+      <div class="text">
+        <p class="when">On the day</p>
+        <h2>Show up. The activity does the talking.</h2>
+        <p>The group chat opens ahead of time, so you can say hi and spot each other at the gates. Tap &ldquo;I&rsquo;m here&rdquo; when you arrive, and share the outing with someone you trust.</p>
+      </div>
+      <figure class="app" aria-label="The outing on the day">
+        <p class="title">It&rsquo;s today: check in when you arrive</p>
+        <p class="sub">Kichijoji Station, park exit. Sat, Nov 15, 2:00 PM</p>
+        <p class="hint">Maya: I&rsquo;m by the ticket gates, green jacket.</p>
+        <p class="typing" aria-hidden="true"><span class="dots"><i></i><i></i><i></i></span>Kenji is typing</p>
+        <div class="row"><span class="fake-btn primary">I&rsquo;m here</span><span class="fake-btn">Group chat</span></div>
+      </figure>
+    </section>
+
+    <section class="stage">
+      <span class="knot" aria-hidden="true"></span>
+      <div class="text">
+        <p class="when">How was it?</p>
+        <h2>Pick who you&rsquo;d meet again. Privately.</h2>
+        <p>Nobody sees your picks. Pick each other, and you&rsquo;re more likely to share a group again. Anyone you&rsquo;d rather not see again, you won&rsquo;t.</p>
+      </div>
+      <figure class="app" aria-label="Choosing who to meet again">
+        <p class="title">Who would you meet again?</p>
+        <ul class="picks" aria-hidden="true">
+          <li>Aoi <span class="tick on"></span></li>
+          <li>Kenji <span class="tick"></span></li>
+          <li>Maya <span class="tick on"></span></li>
+          <li>Sam <span class="tick on"></span></li>
+        </ul>
+        <p class="hint">Private: nobody sees who you pick.</p>
+      </figure>
+    </section>
+
   </div>
-</header>
-<div class="divider" style="--from:var(--top);--to:var(--bg)" aria-hidden="true"><svg viewBox="0 0 1232 42" preserveAspectRatio="xMidYMid slice"><use href="#seigaiha" y="-7" width="1232" height="56"/></svg></div>
 
-<main>
-  <section class="thread">
-    <div class="wrap">
-      <h2>One thread, <span class="accent">one sun</span>.</h2>
-      <p class="statement">Issho (一緒) means &ldquo;together&rdquo;.<span>Look closely and the characters show you how.</span></p>
-      <ul class="parts">
-        <li class="gold">
-          <span class="kanji">一</span><span class="meaning">&ldquo;one&rdquo;</span>
-          <p class="role"><b>Togetherness.</b> It starts small: one plan, one table, one afternoon.</p>
-        </li>
-        <li class="gold">
-          <span class="kanji">糸</span><span class="meaning">&ldquo;thread&rdquo;</span>
-          <p class="role"><b>Connection.</b> The line that runs between strangers and slowly pulls them closer.</p>
-        </li>
-        <li class="ink">
-          <span class="kanji">者</span><span class="meaning">&ldquo;person&rdquo;</span>
-          <p class="role"><b>Community.</b> Everyone that thread gathers in.</p>
-        </li>
-        <li class="red">
-          <span class="kanji">日</span><span class="meaning">&ldquo;sun&rdquo; &middot; inside 者</span>
-          <p class="role"><b>Belonging.</b> And at the heart of each person, a little warmth.</p>
-        </li>
-      </ul>
-    </div>
+    <section class="stage crew">
+      <span class="knot" aria-hidden="true"></span>
+      <div class="text">
+        <p class="when">A crew</p>
+        <h2>Strangers on Saturday, regulars by spring.</h2>
+        <p>Clicked with your group? We&rsquo;ll offer you a crew: your own group chat, with a fresh plan picked for you every week or so. It starts once at least three of you say yes, and you can leave any time.</p>
+      </div>
+      <figure class="app" aria-label="A crew offer">
+        <p class="sub">A crew for you</p>
+        <p class="title display">You got on well. Keep meeting as a crew?</p>
+        <p class="sub">Aoi, Maya, Sam and you</p>
+        <div class="row"><span class="fake-btn primary">Yes, join the crew</span><span class="fake-btn">No, thanks</span></div>
+      </figure>
+    </section>
+  </main>
+
+  <section class="name" aria-labelledby="name-title">
+    <h2 id="name-title">Issho (一緒) means &ldquo;together&rdquo;.</h2>
+    <p>Look closely: the word tells the whole story.</p>
+    <ul class="glyphs">
+      <li><span class="k" lang="ja">一</span><b>One</b><span class="m">Every friendship starts with one yes.</span></li>
+      <li><span class="k" lang="ja">糸</span><b>Thread</b><span class="m">Each outing ties another knot between you.</span></li>
+      <li><span class="k ink" lang="ja">者</span><b>Person</b><span class="m">Real people in real places, not profiles on a screen.</span></li>
+      <li><span class="k sun" lang="ja">日</span><b>Sun/Day</b><span class="m">The warmth of a day spent out together.</span></li>
+    </ul>
   </section>
-<div class="divider" style="--from:var(--bg);--to:var(--mid)" aria-hidden="true"><svg viewBox="0 0 1232 42" preserveAspectRatio="xMidYMid slice"><use href="#seigaiha" y="-7" width="1232" height="56"/></svg></div>
 
-  <section class="community">
-    <div class="wrap">
-      <h2>Community, without the awkward part.</h2>
-      <p class="intro">Making friends as an adult isn&rsquo;t hard because people are unfriendly. It&rsquo;s hard because nobody makes the plan. So we make it. Tell us what you&rsquo;re into and when you&rsquo;re free, and we&rsquo;ll hand you a time, a place and a few people worth meeting.</p>
-      <ol class="steps">
-        <li><b>Say what you&rsquo;re into</b><span>Photo walks, board games, climbing, ramen crawls. The activity does the icebreaking, so you don&rsquo;t have to.</span></li>
-        <li><b>Turn up</b><span>We find a handful of people close by who said yes to the same thing, and pick a time and place that suits everyone.</span></li>
-        <li><b>Keep the ones you click with</b><span>Afterwards, quietly pick who you&rsquo;d like to see again. When it&rsquo;s mutual, strangers become your regular crew.</span></li>
-      </ol>
-    </div>
+  <section class="join" id="join" aria-labelledby="join-title">
+    <h2 id="join-title">Tokyo first, then your city.</h2>
+    <p>We&rsquo;re opening one city at a time. Leave your email and we&rsquo;ll tell you the moment Issho lands in yours.</p>
+    <!-- Placeholder: submission is intentionally not wired up yet. -->
+    <form class="signup" id="signup">
+      <label>Email<input type="email" name="email" autocomplete="email" required></label>
+      <label>City<input type="text" name="city" autocomplete="address-level2" required></label>
+      <button class="button" type="submit">Join the waitlist</button>
+    </form>
+    <p class="fine">We only use your email to tell you when Issho opens near you.</p>
   </section>
-<div class="divider" style="--from:var(--mid);--to:var(--bg)" aria-hidden="true"><svg viewBox="0 0 1232 42" preserveAspectRatio="xMidYMid slice"><use href="#seigaiha" y="-7" width="1232" height="56"/></svg></div>
+</div>
 
-  <section class="join" id="join">
-    <div class="wrap">
-      <h2>Be there <span class="accent">from the start</span>.</h2>
-      <p class="intro">We&rsquo;re opening one city at a time. Leave your email and we&rsquo;ll tell you the moment Issho reaches yours.</p>
-      <!-- Placeholder: submission is intentionally not wired up yet. -->
-      <form class="signup" id="signup" aria-label="Join the waitlist">
-        <input type="email" name="email" placeholder="Email address" autocomplete="email" aria-label="Email address" required>
-        <input type="text" name="city" placeholder="Your city" autocomplete="address-level2" aria-label="City" required>
-        <button type="submit">Count me in</button>
-      </form>
-    </div>
-  </section>
-</main>
-
-<footer>
-  <img src="favicon.svg" alt="">
-  <div>&copy; <span id="year">2026</span> Issho</div>
-</footer>
+<footer class="wrap">&copy; <span id="year">2026</span> Issho</footer>
 
 <script>
   // The signup form is a placeholder for now: it captures nothing and sends nothing.
   document.getElementById("signup").addEventListener("submit", function (e) { e.preventDefault(); });
   document.getElementById("year").textContent = new Date().getFullYear();
+
+  // Light/dark switch. It starts from the remembered choice or the system's,
+  // follows the system while the person hasn't chosen, and cross-fades on change.
+  (function () {
+    var root = document.documentElement;
+    var button = document.querySelector(".theme-switch");
+    var system = matchMedia("(prefers-color-scheme: dark)");
+    var still = matchMedia("(prefers-reduced-motion: reduce)");
+    var metas = document.querySelectorAll('meta[name="theme-color"]');
+    function isDark() { return root.dataset.theme ? root.dataset.theme === "dark" : system.matches; }
+    function show() {
+      var dark = isDark();
+      button.setAttribute("aria-checked", String(dark));
+      // The browser's own bar follows the page, not just the system.
+      for (var i = 0; i < metas.length; i++) metas[i].setAttribute("content", dark ? "#0D1330" : "#F3F5F9");
+    }
+    var fading;
+    button.addEventListener("click", function () {
+      if (!still.matches) {
+        root.classList.add("theming");
+        clearTimeout(fading);
+        fading = setTimeout(function () { root.classList.remove("theming"); }, 500);
+      }
+      root.dataset.theme = isDark() ? "light" : "dark";
+      try { localStorage.setItem("issho-theme", root.dataset.theme); } catch (e) {}
+      show();
+    });
+    system.addEventListener("change", show);
+    button.hidden = false;
+    show();
+  })();
+
+  // Draw the thread as the page scrolls: the fill ends at the middle of the screen, and
+  // each knot is tied once the fill reaches it. Done in script rather than with CSS
+  // scroll-driven animations so it works the same in every browser.
+  (function () {
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    var story = document.querySelector(".story");
+    var fill = story.querySelector(".fill");
+    var knots = document.querySelectorAll(".knot");
+    var queued = false;
+    function update() {
+      queued = false;
+      var mid = window.innerHeight / 2;
+      var box = story.getBoundingClientRect();
+      // At the very bottom of the page, finish the thread even if it hasn't reached mid-screen.
+      var atEnd = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2;
+      var progress = atEnd ? 1 : Math.min(1, Math.max(0, (mid - box.top) / box.height));
+      fill.style.transform = "scaleY(" + progress + ")";
+      for (var i = 0; i < knots.length; i++) {
+        var k = knots[i].getBoundingClientRect();
+        knots[i].classList.toggle("tied", atEnd || k.top + k.height / 2 <= mid);
+      }
+    }
+    function queue() { if (!queued) { queued = true; requestAnimationFrame(update); } }
+    document.documentElement.classList.add("thread-anim");
+    update();
+    addEventListener("scroll", queue, { passive: true });
+    addEventListener("resize", queue);
+  })();
 </script>
 </body>
 </html>

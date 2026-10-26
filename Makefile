@@ -108,6 +108,8 @@ app-build:
 	$(MAKE) ui-bundle API_URL=https://api.joinissho.com
 	cd apps/mobile && npx eas-cli build --profile $(PROFILE) --platform $(PLATFORM)
 
-# The app's icons and splash image, from assets/brand/mark.svg.
+# The logo's round versions and PNGs, the site's copies, and the app's icons
+# and splash image, from assets/brand/logo.svg and mark.svg.
 app-icons:
+	python3 scripts/brand/build_variants.py
 	python3 scripts/brand/build_app_icons.py
