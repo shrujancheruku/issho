@@ -3,37 +3,38 @@
 </p>
 
 <h3 align="center">Find your people through the things you already love.</h3>
+<p align="center">好きなことから、仲間に出会う。</p>
 
-Issho is a new way to build community, rooted in the way we always have. We bring small groups of like-minded people together for real-world activities, so friendships grow from time spent doing what you enjoy.
+Remember when friends just happened? Same team, same class, same corner café. Issho brings that back. Tell us what you love. We'll find a few people nearby who love it too, and a time and place to do it together.
 
-### Community, without the awkward part
+*Tokyo* · **Photo walk** from Kichijoji station, once around Inokashira Pond, ending at a **café** to compare shots.\
+*London* · **Flower market** dash on Columbia Road before the stalls sell out, then a **Sunday roast** at the pub.\
+*Mexico City* · **Bike ride** down car-free Reforma on a Sunday morning, then **tacos al pastor** in Roma.\
+*Melbourne* · **Coffee crawl** through the CBD laneways, three flat whites in, ending at **Queen Victoria Market**.\
+*Buenos Aires* · **Antique hunting** at the San Telmo fair, haggling over old maps, then **empanadas** on Plaza Dorrego.\
+*Cape Town* · **Sunrise hike** up Lion's Head with headlamps on, then **breakfast** together in Sea Point.
 
-Making friends as an adult is hard because no one is organising it. Issho does the organising. Tell us what you enjoy and when you're free, and we'll suggest plans near you with people who share your interests:
+### How it works
 
-*Tokyo* · **Photo walk** from Kichijoji station, ending at a **café** we've already picked.\
-*London* · **Flower market** wander on Columbia Road, then a **Sunday roast** at the pub.\
-*Mexico City* · **Bike ride** down car-free Reforma, then **tacos al pastor** in Roma.\
-*Melbourne* · **Coffee crawl** through the CBD laneways, ending at **Queen Victoria Market**.\
-*Buenos Aires* · **Antique hunting** at the San Telmo fair, then **empanadas** on Plaza Dorrego.\
-*Cape Town* · **Sunrise hike** up Lion's Head, then **breakfast** together in Sea Point.
+1. **It starts with a plan. Pick something you'd do anyway.** Photo walks, bouldering, ramen crawls, board-game cafés. Tag each activity *Love it*, *Like it* or *Open to try*, and **Plans** shows what's on near you, best matches first. The activity breaks the ice, so you don't have to. Like the look of one? Sign up and mark the times you're free. Nothing's booked until a time works for enough of you.
+2. **Date set. Enough of you said yes. It's on.** When enough people can make the same time, we lock in a date and split everyone into small groups, matched on what you love, a language you share and the group size you like.
+3. **Going. A few people, not a crowd.** Your invite lands in **Together**, under "Needs you". Confirm your place and see who's coming. Photos are only shared with your group. Groups stay small, so everyone gets a word in and you'll remember every name.
+4. **On the day. Show up. The activity does the talking.** The group chat opens ahead of time, so you can say hi and spot each other at the gates. Tap "I'm here" when you arrive, and share the outing with someone you trust.
+5. **How was it? Pick who you'd meet again. Privately.** Nobody sees your picks. Pick each other, and you're more likely to share a group again. Anyone you'd rather not see again, you won't.
+6. **A crew. Strangers on Saturday, regulars by spring.** Clicked with your group? We'll offer you a crew: your own group chat, with a fresh plan picked for you every week or so. It starts once at least three of you say yes, and you can leave any time.
 
-1. **Pick what you enjoy.** Photo walks, board games, climbing, ramen crawls. Mark each activity *Love it*, *Like it* or *Open to try*, and say when you're usually free.
-2. **Sign up for a plan.** **Plans** shows what's on near you, on a list or a map, best matches first. Sign up for the ones you'd go to: there's no date yet.
-3. **Get a date and meet your group.** When enough people can make the same time, we pick the date and split everyone into small groups. **Together** shows what needs you: confirm your place, chat with your group before, and check in on the day.
-4. **Keep the ones you click with.** Afterwards, privately choose who you'd meet again. Groups that click are offered a **crew**: their own chat, with a new plan every week or so.
+### Issho (一緒) means "together"
 
-It's built for friendship: no profiles to browse, no one-to-one messages, and safety designed in from the start. Every language is welcome, and every city is just data. We're starting in Tokyo.
-
-### One thread, one sun
-
-Issho (一緒) means "together" in Japanese, and the character tells the story:
+Look closely: the word tells the whole story.
 
 | | | |
 |---|---|---|
-| 一 | *one* | **Togetherness.** It all starts with being one. |
-| 糸 | *thread* | **Connection.** The thread that ties us to each other. |
-| 者 | *person* | **Community.** People who are tied together. |
-| 日 | *sun*, inside 者 | **Belonging.** We are all under the same sky. |
+| 一 | **One** | Every friendship starts with one yes. |
+| 糸 | **Thread** | Each outing ties another knot between you. |
+| 者 | **Person** | Real people in real places, not profiles on a screen. |
+| 日 | **Sun/Day** | The warmth of a day spent out together. |
+
+See you out there. 一緒に行こうか。 [joinissho.com](https://joinissho.com)
 
 > 🚧 **Pre-release.** We're building it now: see the [roadmap & status](docs/ROADMAP.md).
 

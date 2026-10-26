@@ -374,6 +374,8 @@
   /* The name */
   .name { padding-block: clamp(3rem, 8vw, 5rem); padding-left: var(--indent); border-top: 1px solid var(--line); }
   .name h2 { font: 400 clamp(1.4rem, 3vw, 1.9rem)/1.25 var(--display); margin: 0 0 .75rem; }
+  /* Dela Gothic One draws “ 0.16em lower than ” (Japanese-style low opening quote), so lift it level. */
+  .oq { position: relative; top: -.16em; }
   .name > p { color: var(--muted); max-width: 36rem; }
   .glyphs { display: grid; grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr)); gap: 1.75rem 2rem; list-style: none; margin: 2rem 0 0; padding: 0; }
   /* Gold and red outlined in ink, as in the logo, so they hold up on the light canvas. */
@@ -725,7 +727,7 @@
   </main>
 
   <section class="name" id="name" aria-labelledby="name-title">
-    <h2 id="name-title">Issho (一緒) means &ldquo;together&rdquo;.</h2>
+    <h2 id="name-title">Issho (一緒) means <span class="oq">&ldquo;</span>together&rdquo;.</h2>
     <p>Look closely: the word tells the whole story.</p>
     <ul class="glyphs">
       <li><span class="k" lang="ja">一</span><b>One</b><span class="m">Every friendship starts with one yes.</span></li>
