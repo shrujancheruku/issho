@@ -208,3 +208,7 @@ M9 is planned to use EAS Build/Submit (TestFlight and Play internal testing). `i
 ## Over-the-air updates
 
 `expo-updates` is configured for EAS Update: `runtimeVersion` uses the fingerprint policy (an update only reaches builds with the same native code) and each build profile in `eas.json` has its own channel (`development`, `preview`, `production`). Nothing is published automatically. To ship JavaScript-only changes to a channel: `eas update --channel preview --message "…"` (and run `make ui-bundle` first if the UI text changed). The app also uses it to reload after a right-to-left switch.
+
+## Error reporting
+
+Sentry (`@sentry/react-native`, `src/lib/monitoring.ts`) is on only when `EXPO_PUBLIC_SENTRY_DSN` is set at build time (a DSN is public: it can only send reports); `EXPO_PUBLIC_SENTRY_ENVIRONMENT` names the build. It reports errors and render crashes, with no personal data and no performance tracing. Without the variable (development, tests, the web build today) nothing is sent. Source maps aren't uploaded yet: that needs the Sentry project and an auth token for EAS builds.

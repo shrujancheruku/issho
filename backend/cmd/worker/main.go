@@ -15,6 +15,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/plans"
 	"github.com/shrujancheruku/issho/backend/internal/platform/config"
 	"github.com/shrujancheruku/issho/backend/internal/platform/db"
+	"github.com/shrujancheruku/issho/backend/internal/platform/sentry"
 	"github.com/shrujancheruku/issho/backend/internal/push"
 	"github.com/shrujancheruku/issho/backend/internal/translate"
 	"github.com/shrujancheruku/issho/backend/internal/translate/translators"
@@ -23,6 +24,9 @@ import (
 	walksgemini "github.com/shrujancheruku/issho/backend/internal/walks/gemini"
 	"github.com/shrujancheruku/issho/backend/internal/worker"
 )
+
+// version is the commit, stamped by the image build (-X main.version).
+var version = "dev"
 
 func main() {
 	if err := run(); err != nil {
@@ -39,6 +43,11 @@ func run() error {
 	if err != nil {
 		return err
 	}
+	flush, err := sentry.Init(cfg.SentryDSN, version, cfg.SentryEnvironment, "worker")
+	if err != nil {
+		return err
+	}
+	defer flush()
 	pool, err := db.Open(ctx, cfg.DatabaseURL)
 	if err != nil {
 		return err

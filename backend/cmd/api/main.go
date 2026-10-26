@@ -35,6 +35,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/platform/db"
 	"github.com/shrujancheruku/issho/backend/internal/platform/errs"
 	"github.com/shrujancheruku/issho/backend/internal/platform/github"
+	"github.com/shrujancheruku/issho/backend/internal/platform/sentry"
 	"github.com/shrujancheruku/issho/backend/internal/platform/supabase"
 	"github.com/shrujancheruku/issho/backend/internal/profile"
 	"github.com/shrujancheruku/issho/backend/internal/push"
@@ -95,6 +96,11 @@ func run() error {
 	if err != nil {
 		return err
 	}
+	flush, err := sentry.Init(cfg.SentryDSN, version, cfg.SentryEnvironment, "api")
+	if err != nil {
+		return err
+	}
+	defer flush()
 	pool, err := db.Open(ctx, cfg.DatabaseURL)
 	if err != nil {
 		return err
@@ -205,7 +211,7 @@ func run() error {
 		OriginPatterns: originHosts(cfg.AllowedOrigins),
 	})
 
-	handler := withCORS(mux, cfg.AllowedOrigins)
+	handler := sentry.Handler(withCORS(mux, cfg.AllowedOrigins))
 
 	// Serve HTTP/1.1 and cleartext HTTP/2; TLS terminates at kamal-proxy/Cloudflare.
 	protocols := new(http.Protocols)

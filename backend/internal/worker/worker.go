@@ -21,6 +21,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/geo"
 	"github.com/shrujancheruku/issho/backend/internal/maps"
 	"github.com/shrujancheruku/issho/backend/internal/plans"
+	"github.com/shrujancheruku/issho/backend/internal/platform/sentry"
 	"github.com/shrujancheruku/issho/backend/internal/walks"
 )
 
@@ -234,7 +235,9 @@ func NewClient(pool *pgxpool.Pool, log *slog.Logger, timing plans.Timing, notifi
 	return river.NewClient(riverpgxv5.New(pool), &river.Config{
 		Schema: db.RiverSchema,
 		Logger: log,
-		Queues: map[string]river.QueueConfig{river.QueueDefault: {MaxWorkers: 4}},
+		// Failed and panicking jobs are reported (no-op without SENTRY_DSN).
+		ErrorHandler: sentry.JobErrors{},
+		Queues:       map[string]river.QueueConfig{river.QueueDefault: {MaxWorkers: 4}},
 		PeriodicJobs: []*river.PeriodicJob{
 			river.NewPeriodicJob(river.PeriodicInterval(MatchEvery),
 				func() (river.JobArgs, *river.InsertOpts) { return MatchAllArgs{}, nil },
