@@ -1,0 +1,72 @@
+name: deploy-api
+
+# Deploys the API and worker to the server when the backend changes on main
+# (docs/deploy.md, "Automatic deploys"): builds and pushes the image with
+# Kamal, then asks the server to deploy that commit. The server runs Kamal
+# itself with the production secrets it holds; GitHub holds only a deploy key
+# that can run nothing but config/server/deploy.sh.
+#
+# Configured in Settings → Secrets and variables → Actions:
+#   variable DEPLOY_HOST       the server's address
+#   variable DEPLOY_HOST_KEY   its SSH host key (a known_hosts line)
+#   secret   DEPLOY_SSH_KEY    the deploy user's private key
+# Without DEPLOY_HOST the job is skipped, not failed.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - backend/**
+      - data/**
+      - config/deploy.yml
+      - config/server/**
+      - .github/workflows/deploy-api.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  # Push the image to GHCR with this job's own token, which the server also
+  # uses to pull it; it expires when the job ends.
+  packages: write
+
+# One deploy at a time, in order.
+concurrency:
+  group: deploy-api
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: vars.DEPLOY_HOST != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build and push the image
+        env:
+          KAMAL_REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+        # Kamal from its image, as on a dev machine (docs/deploy.md). It
+        # builds from a clean clone of this commit.
+        run: |
+          docker run --rm -v "$PWD:/workdir" -v /var/run/docker.sock:/var/run/docker.sock \
+            -e KAMAL_REGISTRY_PASSWORD \
+            -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0='*' \
+            ghcr.io/basecamp/kamal:v2.12.0 build push
+      - name: Deploy on the server
+        env:
+          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+          DEPLOY_HOST_KEY: ${{ vars.DEPLOY_HOST_KEY }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy && chmod 600 ~/.ssh/deploy
+          printf '%s\n' "$DEPLOY_HOST_KEY" > ~/.ssh/known_hosts
+          # The key's forced command reads "<commit> <token>" from stdin.
+          printf '%s %s\n' "$GITHUB_SHA" "$GITHUB_TOKEN" |
+            ssh -i ~/.ssh/deploy -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes "deploy@$DEPLOY_HOST"
+      - name: The API serves this commit
+        run: |
+          want="${GITHUB_SHA::7}"
+          got="$(curl -fsS -X POST -H 'Content-Type: application/json' -d '{}' \
+            https://api.joinissho.com/issho.v1.HealthService/Check | jq -r .version)"
+          echo "serving $got"
+          [ "$got" = "$want" ]
