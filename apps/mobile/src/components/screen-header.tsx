@@ -31,7 +31,9 @@ export function SectionTitle({ children, accessory }: { children: string; access
 
 const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.three },
-  title: { flex: 1, fontSize: 34, lineHeight: 44 },
+  // Dela Gothic's ascent and descent add up to about 1.45 em: a tighter
+  // line cuts off descenders (the g of "Together") on Android.
+  title: { flex: 1, fontSize: 34, lineHeight: 50 },
   section: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
   sectionText: { fontWeight: 700 },
 });

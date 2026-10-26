@@ -32,6 +32,7 @@ func (h *Handler) GetMe(ctx context.Context, _ *connect.Request[isshov1.GetMeReq
 		PrimaryLanguage:   acct.PrimaryLanguage,
 		SecondaryLanguage: acct.SecondaryLanguage,
 		Suspended:         acct.Suspended,
+		CityId:            acct.CityID,
 	}
 	if acct.User.Email != nil {
 		u.Email = *acct.User.Email

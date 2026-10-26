@@ -43,7 +43,7 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	flush, err := sentry.Init(cfg.SentryDSN, version, cfg.SentryEnvironment, "worker")
+	flush, err := sentry.Init(cfg.SentryDSN, version, cfg.SentryEnvironment, "worker", 0)
 	if err != nil {
 		return err
 	}

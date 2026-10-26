@@ -2705,6 +2705,7 @@ HTTP: POST /issho.v1.HealthService/Check
 | primary_language | [string](#string) |  | Display languages from the profile (empty until onboarded), so the app can show itself in the right languages straight after GetMe. |
 | secondary_language | [string](#string) |  |  |
 | suspended | [bool](#bool) |  | A moderator has suspended the account. Every other call is refused (PERMISSION_DENIED) except signing out and DeleteAccount; the app shows that it&#39;s suspended. |
+| city_id | [string](#string) |  | The home area&#39;s city (empty until onboarded), so the app can load the city&#39;s activities straight after GetMe. |
 
 
 

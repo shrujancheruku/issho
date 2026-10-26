@@ -19,7 +19,7 @@ func sentryTest() error {
 	if dsn == "" {
 		return errors.New("SENTRY_DSN is not set")
 	}
-	flush, err := sentry.Init(dsn, version, os.Getenv("SENTRY_ENVIRONMENT"), "tool")
+	flush, err := sentry.Init(dsn, version, os.Getenv("SENTRY_ENVIRONMENT"), "tool", 0)
 	if err != nil {
 		return err
 	}

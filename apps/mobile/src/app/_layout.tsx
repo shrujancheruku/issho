@@ -30,6 +30,11 @@ const onError = (err: unknown) => {
 const queryClient = new QueryClient({
   queryCache: new QueryCache({ onError }),
   mutationCache: new MutationCache({ onError }),
+  // Data counts as fresh for 30 s: going back and forth between tabs and
+  // screens reuses it instead of asking the API again on every visit (each
+  // request is a few hundred ms from a phone). Changes the person makes
+  // invalidate what they affect, and pull to refresh still refetches.
+  defaultOptions: { queries: { staleTime: 30_000 } },
 });
 
 // React Navigation paints screens, headers and the tab bar from its own theme,

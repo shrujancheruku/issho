@@ -424,7 +424,7 @@ const styles = StyleSheet.create({
   content: { padding: Spacing.three, paddingTop: Spacing.two, gap: Spacing.four - 4, paddingBottom: Spacing.five },
   titleBlock: { gap: Spacing.half },
   card: { borderRadius: 16, padding: Spacing.three, gap: Spacing.one },
-  cardTitle: { fontSize: 24, lineHeight: 32 },
+  cardTitle: { fontSize: 24, lineHeight: 35 },
   gapBelow: { marginBottom: Spacing.two },
   gapAbove: { marginTop: Spacing.two, gap: Spacing.two },
   section: { gap: Spacing.two },

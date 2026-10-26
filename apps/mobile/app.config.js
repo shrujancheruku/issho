@@ -23,6 +23,10 @@ module.exports = ({ config }) => {
   return {
     ...config,
     android: { ...config.android, ...(googleServicesFile && { googleServicesFile }) },
+    // Whether this build has a maps key: without one, Google Maps throws a
+    // native exception that takes the whole app down, so the app shows
+    // "map not available" instead (features/plans/native-maps.tsx).
+    extra: { ...config.extra, androidMapsKey: !!androidGoogleMapsApiKey },
     plugins: [...(config.plugins ?? []), ['react-native-maps', { ...(androidGoogleMapsApiKey && { androidGoogleMapsApiKey }) }]],
   };
 };

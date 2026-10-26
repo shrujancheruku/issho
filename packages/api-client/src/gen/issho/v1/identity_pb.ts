@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file issho/v1/identity.proto.
  */
 export const file_issho_v1_identity: GenFile = /*@__PURE__*/
-  fileDesc("Chdpc3Noby92MS9pZGVudGl0eS5wcm90bxIIaXNzaG8udjEiFgoURGVsZXRlQWNjb3VudFJlcXVlc3QiFwoVRGVsZXRlQWNjb3VudFJlc3BvbnNlIg4KDEdldE1lUmVxdWVzdCItCg1HZXRNZVJlc3BvbnNlEhwKBHVzZXIYASABKAsyDi5pc3Noby52MS5Vc2VyIn0KBFVzZXISCgoCaWQYASABKAkSDQoFZW1haWwYAiABKAkSEQoJb25ib2FyZGVkGAMgASgIEhgKEHByaW1hcnlfbGFuZ3VhZ2UYBCABKAkSGgoSc2Vjb25kYXJ5X2xhbmd1YWdlGAUgASgJEhEKCXN1c3BlbmRlZBgGIAEoCDKhAQoPSWRlbnRpdHlTZXJ2aWNlEjoKBUdldE1lEhYuaXNzaG8udjEuR2V0TWVSZXF1ZXN0GhcuaXNzaG8udjEuR2V0TWVSZXNwb25zZSIAElIKDURlbGV0ZUFjY291bnQSHi5pc3Noby52MS5EZWxldGVBY2NvdW50UmVxdWVzdBofLmlzc2hvLnYxLkRlbGV0ZUFjY291bnRSZXNwb25zZSIAQj5aPGdpdGh1Yi5jb20vc2hydWphbmNoZXJ1a3UvaXNzaG8vYmFja2VuZC9nZW4vaXNzaG8vdjE7aXNzaG92MWIGcHJvdG8z");
+  fileDesc("Chdpc3Noby92MS9pZGVudGl0eS5wcm90bxIIaXNzaG8udjEiFgoURGVsZXRlQWNjb3VudFJlcXVlc3QiFwoVRGVsZXRlQWNjb3VudFJlc3BvbnNlIg4KDEdldE1lUmVxdWVzdCItCg1HZXRNZVJlc3BvbnNlEhwKBHVzZXIYASABKAsyDi5pc3Noby52MS5Vc2VyIo4BCgRVc2VyEgoKAmlkGAEgASgJEg0KBWVtYWlsGAIgASgJEhEKCW9uYm9hcmRlZBgDIAEoCBIYChBwcmltYXJ5X2xhbmd1YWdlGAQgASgJEhoKEnNlY29uZGFyeV9sYW5ndWFnZRgFIAEoCRIRCglzdXNwZW5kZWQYBiABKAgSDwoHY2l0eV9pZBgHIAEoCTKhAQoPSWRlbnRpdHlTZXJ2aWNlEjoKBUdldE1lEhYuaXNzaG8udjEuR2V0TWVSZXF1ZXN0GhcuaXNzaG8udjEuR2V0TWVSZXNwb25zZSIAElIKDURlbGV0ZUFjY291bnQSHi5pc3Noby52MS5EZWxldGVBY2NvdW50UmVxdWVzdBofLmlzc2hvLnYxLkRlbGV0ZUFjY291bnRSZXNwb25zZSIAQj5aPGdpdGh1Yi5jb20vc2hydWphbmNoZXJ1a3UvaXNzaG8vYmFja2VuZC9nZW4vaXNzaG8vdjE7aXNzaG92MWIGcHJvdG8z");
 
 /**
  * @generated from message issho.v1.DeleteAccountRequest
@@ -114,6 +114,14 @@ export type User = Message<"issho.v1.User"> & {
    * @generated from field: bool suspended = 6;
    */
   suspended: boolean;
+
+  /**
+   * The home area's city (empty until onboarded), so the app can load the
+   * city's activities straight after GetMe.
+   *
+   * @generated from field: string city_id = 7;
+   */
+  cityId: string;
 };
 
 /**

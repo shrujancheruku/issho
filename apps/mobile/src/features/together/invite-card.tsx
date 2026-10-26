@@ -72,7 +72,7 @@ export function InviteCard({ event, names }: { event: MyEvent; names: ReturnType
 
 const styles = StyleSheet.create({
   card: { borderRadius: 16, padding: Spacing.three, gap: Spacing.one },
-  title: { fontSize: 22, lineHeight: 30, marginTop: Spacing.one },
+  title: { fontSize: 22, lineHeight: 32, marginTop: Spacing.one },
   when: { marginTop: Spacing.two },
   count: { marginBottom: Spacing.two },
   links: { flexDirection: 'row', justifyContent: 'space-between' },

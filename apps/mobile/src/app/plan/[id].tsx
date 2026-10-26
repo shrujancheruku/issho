@@ -70,7 +70,7 @@ export default function PlanScreen() {
   } else if (p.signedUp && !closed) {
     body = <SignedUp data={plan.data} times={saved} names={names} />;
   } else {
-    body = <Before data={plan.data} names={names} closed={closed} />;
+    body = <Before data={plan.data} names={names} closed={closed} loading={plan.isPlaceholderData} />;
     if (closed) {
       footer = <PrimaryButton label={t('plan.closed.others')} onPress={() => router.navigate('/plans')} />;
     } else if (p.level !== PlanLevel.NOT_FOR_YOU) {
@@ -131,7 +131,7 @@ function TitleBlock({ data, size = 'large' }: { data: GetPlanResponse; size?: 'l
 }
 
 /** The plan before signing up (or closed, or not in a language the person speaks). */
-function Before({ data, names, closed }: { data: GetPlanResponse; names: Names; closed?: StringKey }) {
+function Before({ data, names, closed, loading }: { data: GetPlanResponse; names: Names; closed?: StringKey; loading?: boolean }) {
   const { t, showing } = useI18n();
   const theme = useTheme();
   const lang = useLang();
@@ -181,7 +181,8 @@ function Before({ data, names, closed }: { data: GetPlanResponse; names: Names; 
         {!closed && <Fact label={t('plan.interestedLabel')} value={String(p.signups)} />}
       </Facts>
       {p.level === PlanLevel.NOT_FOR_YOU && !closed && <ThemedText>{t('plan.notForYouBody')}</ThemedText>}
-      <PlanStops steps={data.steps} routePolyline={data.routePolyline} names={names} closed={!!closed} />
+      {/* While the feed's copy stands in, the stops and map are still on their way. */}
+      {loading ? <ActivityIndicator /> : <PlanStops steps={data.steps} routePolyline={data.routePolyline} names={names} closed={!!closed} />}
     </>
   );
 }
@@ -256,9 +257,9 @@ const styles = StyleSheet.create({
   tagText: { fontSize: 12, lineHeight: 16, fontWeight: 500 },
   intro: { gap: Spacing.two },
   titleBlock: { gap: Spacing.half },
-  titleLarge: { fontSize: 28, lineHeight: 38 },
+  titleLarge: { fontSize: 28, lineHeight: 41 },
   summary: { lineHeight: 26 },
   card: { borderRadius: 16, padding: Spacing.three, gap: Spacing.one + 2 },
-  cardTitle: { fontSize: 22, lineHeight: 30 },
+  cardTitle: { fontSize: 22, lineHeight: 32 },
   cardFacts: { marginTop: Spacing.two },
 });

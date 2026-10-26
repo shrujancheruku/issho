@@ -18,6 +18,8 @@ type AuthState = {
   suspended: boolean;
   /** Display languages from the profile; null until onboarded. */
   languages: { primary: string; secondary: string } | null;
+  /** The home city, from GetMe; "" until onboarded (or from an API before it sent one). */
+  cityId: string;
   /** Set when the account couldn't be loaded (e.g. API unreachable). */
   accountError: Error | null;
   retryAccount: () => void;
@@ -76,6 +78,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
     session,
     onboarded: me.data?.user?.onboarded ?? null,
     suspended: me.data?.user?.suspended ?? false,
+    cityId: me.data?.user?.cityId ?? '',
     languages: me.data?.user?.onboarded
       ? { primary: me.data.user.primaryLanguage, secondary: me.data.user.secondaryLanguage }
       : null,

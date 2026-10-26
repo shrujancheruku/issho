@@ -199,7 +199,7 @@ const styles = StyleSheet.create({
   who: { fontSize: 12, lineHeight: 16 },
   body: { fontSize: 16, lineHeight: 22 },
   suggestion: { borderWidth: 2, borderColor: Brand.gold, borderRadius: 16, padding: Spacing.three, gap: Spacing.half },
-  suggestionTitle: { fontSize: 20, lineHeight: 28 },
+  suggestionTitle: { fontSize: 20, lineHeight: 29 },
   center: { textAlign: 'center' },
   note: { padding: Spacing.three },
   composer: { flexDirection: 'row', alignItems: 'flex-end', gap: Spacing.two, padding: Spacing.three, borderTopWidth: 1 },

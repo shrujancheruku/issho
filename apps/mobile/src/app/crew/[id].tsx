@@ -369,7 +369,7 @@ const styles = StyleSheet.create({
   offerScroll: { flexGrow: 1 },
   offerHead: { paddingHorizontal: Spacing.three, paddingBottom: Spacing.four + 4 },
   offerTitle: { gap: Spacing.half, marginTop: Spacing.two, marginBottom: Spacing.four },
-  crewName: { fontSize: 36, lineHeight: 46 },
+  crewName: { fontSize: 36, lineHeight: 52 },
   people: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: Spacing.two },
   // From the first avatar's centre to the last one's (52 wide, 8 in).
   peopleTrack: { position: 'absolute', start: 34, end: 34, top: 25, height: 3 },
@@ -380,7 +380,7 @@ const styles = StyleSheet.create({
   counter: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
   bars: { flexDirection: 'row', gap: Spacing.one },
   bar: { width: 18, height: 6, borderRadius: 3 },
-  started: { fontSize: 22, lineHeight: 30 },
+  started: { fontSize: 22, lineHeight: 32 },
   lead: { fontWeight: 700 },
   facts: { gap: Spacing.half },
   factGap: { marginTop: Spacing.two },

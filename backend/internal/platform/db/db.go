@@ -12,6 +12,7 @@ import (
 	"github.com/pressly/goose/v3"
 
 	"github.com/shrujancheruku/issho/backend/db"
+	"github.com/shrujancheruku/issho/backend/internal/platform/sentry"
 )
 
 // The database is currently a round trip of ~37 ms away from the API (Tokyo to
@@ -31,6 +32,8 @@ func Open(ctx context.Context, url string) (*pgxpool.Pool, error) {
 		return nil, fmt.Errorf("parse database url: %w", err)
 	}
 	cfg.MinConns = minConns
+	// Spans for queries and connection waits in traced requests; nothing otherwise.
+	cfg.ConnConfig.Tracer = sentry.DBTracer{}
 	cfg.ShouldPing = func(_ context.Context, p pgxpool.ShouldPingParams) bool {
 		return p.IdleDuration > pingAfterIdle
 	}

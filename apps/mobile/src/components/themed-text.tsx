@@ -83,12 +83,14 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: DisplayFont,
     fontSize: 44,
-    lineHeight: 56,
+    // Display lines are at least 1.45 em: Dela Gothic's ascent and descent
+    // need it, or Android cuts off descenders.
+    lineHeight: 64,
   },
   subtitle: {
     fontFamily: DisplayFont,
     fontSize: 26,
-    lineHeight: 36,
+    lineHeight: 38,
   },
   link: {
     lineHeight: 30,

@@ -84,9 +84,9 @@ func TestMe(t *testing.T) {
 		t.Fatalf("email lost: %+v", acct.User)
 	}
 	es := "es"
-	store.profiles[c.UserID] = dbgen.GetDisplayLanguagesRow{PrimaryLanguage: "ja", SecondaryLanguage: &es}
-	if acct, _ = svc.Me(ctx, c); !acct.Onboarded || acct.PrimaryLanguage != "ja" || acct.SecondaryLanguage != "es" {
-		t.Fatalf("expected onboarded with languages once a profile exists: %+v", acct)
+	store.profiles[c.UserID] = dbgen.GetDisplayLanguagesRow{PrimaryLanguage: "ja", SecondaryLanguage: &es, CityID: "tokyo"}
+	if acct, _ = svc.Me(ctx, c); !acct.Onboarded || acct.PrimaryLanguage != "ja" || acct.SecondaryLanguage != "es" || acct.CityID != "tokyo" {
+		t.Fatalf("expected onboarded with languages and city once a profile exists: %+v", acct)
 	}
 	if acct.Suspended {
 		t.Fatal("suspended without a suspension")

@@ -62,7 +62,7 @@ export function EventCard({ event, names }: { event: MyEvent; names: ReturnType<
 
 const styles = StyleSheet.create({
   card: { borderRadius: 16, padding: Spacing.three, gap: Spacing.one, borderWidth: 2 },
-  title: { fontSize: 20, lineHeight: 28 },
+  title: { fontSize: 20, lineHeight: 29 },
   row: { flexDirection: 'row', alignItems: 'center' },
   grow: { flex: 1 },
 });
