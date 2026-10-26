@@ -45,6 +45,26 @@ kamal logs-api          # or logs-worker
 
 **Rolling back:** `kamal rollback <version>` (versions are commit hashes; `kamal app containers` lists them). Migrations aren't rolled back.
 
+## Off-site backups
+
+A Kamal accessory, `backup` (`config/deploy.yml`), runs `config/backup/backup.sh` in the `postgres:17-alpine` image (the database's major version). Every night at `BACKUP_AT` (UTC hour, default 3) it `pg_dump`s the `app`, `goose`, `river` and `auth` schemas in the custom format and uploads the file to a Cloudflare R2 bucket, signed with `curl --aws-sigv4`. Live sessions and one-time tokens are left out, so a leaked dump can't open anyone's account. A failed night is logged and retried the next night.
+
+**One-time setup** (needs the Cloudflare account):
+
+1. Create an R2 bucket (e.g. `issho-backups`) and an **R2 API token** with *Object Read & Write* on that bucket only. Put its key pair in `.env.issho-prod` as `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` (`.kamal/secrets` reads them), and the account id and bucket in `config/deploy.yml` (`TODO`s).
+2. In the bucket's settings, add a **lifecycle rule** deleting objects after 30 days: that's the retention.
+3. `kamal accessory boot backup`, then check the setup once: `kamal accessory exec backup "env BACKUP_ONCE=1 sh /backup/backup.sh"`, which should print `backup: uploaded issho-….dump`. `kamal accessory logs backup` shows each night.
+
+**Restoring** (not yet rehearsed against a hosted project; do a drill into a scratch Supabase project before real users): download a dump from R2, then into an empty project with the same migrations applied:
+
+```sh
+pg_restore --list issho-….dump                       # what it holds
+pg_restore --no-owner --no-privileges --data-only --schema=auth --table=users --table=identities -d "$NEW_DATABASE_URL" issho-….dump
+pg_restore --no-owner --no-privileges --data-only --schema=app -d "$NEW_DATABASE_URL" issho-….dump
+```
+
+Supabase creates `auth` itself, so only its data comes back (people's accounts; they sign in again). `goose` and `river` hold bookkeeping that the new project's own migrations recreate.
+
 ## To check on the first real deploy
 
 - Group chat's WebSocket (`/ws/chat`) through Cloudflare and kamal-proxy: open a group chat in the app and send a message from another account.
