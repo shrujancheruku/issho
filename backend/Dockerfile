@@ -29,6 +29,9 @@ RUN --mount=type=bind,source=backend,target=. \
 # distroless: CA certificates and tzdata (time zones for city packs), no
 # shell, runs as a non-root user.
 FROM gcr.io/distroless/static-debian12:nonroot
+# Links the GHCR package to the repository, so the deploy workflow's own
+# token can push it (.github/workflows/deploy-api.yml).
+LABEL org.opencontainers.image.source=https://github.com/shrujancheruku/issho
 # The tool's seed defaults are ../data/…, relative to /app.
 WORKDIR /app
 COPY --from=build /out/ /usr/local/bin/

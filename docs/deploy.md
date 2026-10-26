@@ -7,7 +7,7 @@ app / admin SPA ──HTTPS──▶ Cloudflare ──HTTPS (origin certificate)
                                                                                       worker container ─┴──▶ Supabase Postgres
 ```
 
-**Status:** live since 2026-10-26 at `https://api.joinissho.com` (first `kamal setup` from a dev machine), against the `issho-dev` Supabase project. Deploys are manual (`kamal deploy`); the backup accessory is off until its R2 bucket exists. The origin certificate (15 years, `api.joinissho.com` only) is in `~/.config/issho/` on the deploying machine. Mind that a PEM pasted from the dashboard has no blank lines inside it, or Kamal's proxy can't read the key.
+**Status:** live since 2026-10-26 at `https://api.joinissho.com` (first `kamal setup` from a dev machine), against the `issho-dev` Supabase project. Deploys are automatic on merge (see *Automatic deploys*); the backup accessory is off until its R2 bucket exists. The origin certificate (15 years, `api.joinissho.com` only) is in `~/.config/issho/` on the deploying machine. Mind that a PEM pasted from the dashboard has no blank lines inside it, or Kamal's proxy can't read the key.
 
 ## Domain: joinissho.com
 
@@ -59,6 +59,19 @@ kamal logs-api          # or logs-worker
 **Seeding and Google tools** run the same way, inside the image: `kamal app exec --primary "tool seed /data/citypacks/tokyo.json"` (the catalogue is seeded too).
 
 **Rolling back:** `kamal rollback <version>` (versions are commit hashes; `kamal app containers` lists them). Migrations aren't rolled back.
+
+## Automatic deploys
+
+`.github/workflows/deploy-api.yml` deploys every change to `backend/`, `data/`, `config/deploy.yml` or `config/server/` on main (or on demand), without production secrets in GitHub:
+
+1. The job builds and pushes the image with Kamal, using its own short-lived `GITHUB_TOKEN` (the package is linked to the repository by the image's `org.opencontainers.image.source` label).
+2. It connects as `deploy@<server>` with the `DEPLOY_SSH_KEY` secret (host key pinned by the `DEPLOY_HOST_KEY` variable) and writes `<commit> <token>` to it. That key's `authorized_keys` line is `restrict,command="sudo -n -u kamal /opt/issho/deploy.sh"`, and `/etc/sudoers.d/issho-deploy` allows exactly that, so the key can do nothing else.
+3. [`config/server/deploy.sh`](../config/server/deploy.sh) (installed root-owned at `/opt/issho/deploy.sh`) refuses a commit that isn't on `origin/main`, checks it out in `/opt/issho/repo`, and runs Kamal from its image against this server (`kamal` connects to itself with `~kamal/.ssh/id_self`, registered in the instance's SSH-key metadata): `registry login`, `migrate`, `deploy --skip-push`, then logs out of the registry.
+4. The job checks that `HealthService.Check` reports the new commit.
+
+**Changing a production secret:** edit `.env.issho-prod` (or the certificate), then copy it to the server, which deploys with its own copy: `grep -v '^CLOUDFLARE_DNS_TOKEN=' .env.issho-prod | ssh kamal@<server> 'cat > /opt/issho/env'` (and `.kamal/secrets` to `/opt/issho/kamal-secrets`, the certificate files to `/opt/issho/certs/`), then rerun the workflow. **Changing `deploy.sh`:** it runs from `/opt/issho/deploy.sh`, not the checkout, so reinstall it after merging: `scp config/server/deploy.sh kamal@<server>:/tmp/ && ssh kamal@<server> 'sudo install -o root -m 755 /tmp/deploy.sh /opt/issho/ && rm /tmp/deploy.sh'`.
+
+**Manual deploys** from a dev machine still work as above; Kamal then leaves your registry login on the server, so log it out afterwards (`ssh kamal@<server> docker logout ghcr.io`).
 
 ## Off-site backups
 
