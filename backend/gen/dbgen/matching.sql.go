@@ -35,7 +35,14 @@ func (q *Queries) GetCityMatching(ctx context.Context, id string) (GetCityMatchi
 
 const getMatchingUser = `-- name: GetMatchingUser :one
 select p.user_id, a.city_id, p.home_area_id, p.max_travel_min, p.gender, p.same_gender_only, p.size_pref,
-       p.budget, p.reliability, p.primary_language, p.secondary_language
+       p.budget, p.reliability, p.primary_language, p.secondary_language,
+       array(select l.lang from app.user_languages l where l.user_id = p.user_id order by l.fluent desc, l.lang)::text[] as lang_codes,
+       array(select l.fluent from app.user_languages l where l.user_id = p.user_id order by l.fluent desc, l.lang)::bool[] as lang_fluent,
+       array(select coalesce(l.level, 0) from app.user_languages l where l.user_id = p.user_id order by l.fluent desc, l.lang)::int2[] as lang_levels,
+       array(select s.weekday from app.availability_slots s where s.user_id = p.user_id order by s.weekday, s.block)::int2[] as slot_weekdays,
+       array(select s.block from app.availability_slots s where s.user_id = p.user_id order by s.weekday, s.block)::text[] as slot_blocks,
+       array(select ap.activity_id from app.user_activity_prefs ap where ap.user_id = p.user_id order by ap.activity_id)::text[] as pref_activities,
+       array(select ap.weight from app.user_activity_prefs ap where ap.user_id = p.user_id order by ap.activity_id)::int2[] as pref_weights
 from app.profiles p
 join app.areas a on a.id = p.home_area_id
 where p.user_id = $1
@@ -53,9 +60,19 @@ type GetMatchingUserRow struct {
 	Reliability       float32
 	PrimaryLanguage   string
 	SecondaryLanguage *string
+	LangCodes         []string
+	LangFluent        []bool
+	LangLevels        []int16
+	SlotWeekdays      []int16
+	SlotBlocks        []string
+	PrefActivities    []string
+	PrefWeights       []int16
 }
 
 // One person and their city, for their feed.
+// One person for matching, with their languages, availability and activity
+// preferences as parallel arrays: one round trip instead of four (the
+// database is a long way from the API). Each list's arrays share an order.
 func (q *Queries) GetMatchingUser(ctx context.Context, userID uuid.UUID) (GetMatchingUserRow, error) {
 	row := q.db.QueryRow(ctx, getMatchingUser, userID)
 	var i GetMatchingUserRow
@@ -71,6 +88,13 @@ func (q *Queries) GetMatchingUser(ctx context.Context, userID uuid.UUID) (GetMat
 		&i.Reliability,
 		&i.PrimaryLanguage,
 		&i.SecondaryLanguage,
+		&i.LangCodes,
+		&i.LangFluent,
+		&i.LangLevels,
+		&i.SlotWeekdays,
+		&i.SlotBlocks,
+		&i.PrefActivities,
+		&i.PrefWeights,
 	)
 	return i, err
 }
