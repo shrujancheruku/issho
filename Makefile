@@ -11,7 +11,7 @@ include $(ENV_FILE)
 export
 endif
 
-.PHONY: setup secrets-scan docs gen gen-proto gen-sql gen-strings email-templates ui-bundle lint test migrate-up migrate-status api worker seed matrix venues sim
+.PHONY: setup secrets-scan docs gen gen-proto gen-sql gen-strings email-templates ui-bundle app-build app-icons lint test migrate-up migrate-status api worker seed matrix venues sim
 
 # One-time setup after cloning: install JS deps and enable the secret-scanning pre-commit hook.
 setup:
@@ -97,3 +97,17 @@ email-templates:
 # the API the app build will use (production before a release).
 ui-bundle:
 	cd backend && go run ./cmd/tool ui-bundle -api $(API_URL)
+
+# An EAS build of the app (PROFILE: development, preview or production;
+# PLATFORM: android, ios or all). The launch languages are bundled from the
+# live API first, so the app ships the text the API serves; the build uploads
+# the working tree, so they don't need committing first (but do commit them).
+PROFILE ?= preview
+PLATFORM ?= android
+app-build:
+	$(MAKE) ui-bundle API_URL=https://api.joinissho.com
+	cd apps/mobile && npx eas-cli build --profile $(PROFILE) --platform $(PLATFORM)
+
+# The app's icons and splash image, from assets/brand/mark.svg.
+app-icons:
+	python3 scripts/brand/build_app_icons.py
