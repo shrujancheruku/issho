@@ -78,6 +78,25 @@ env:
     - SENTRY_DSN
     - EXPO_ACCESS_TOKEN
 
+accessories:
+  # Nightly pg_dump to Cloudflare R2, an off-site copy (config/backup/backup.sh;
+  # docs/deploy.md). The Postgres image matches the database's major version.
+  backup:
+    image: postgres:17-alpine
+    host: 203.0.113.10 # TODO: the VPS
+    cmd: sh /backup/backup.sh
+    files:
+      - config/backup/backup.sh:/backup/backup.sh
+    env:
+      clear:
+        R2_ENDPOINT: https://ACCOUNT_ID.r2.cloudflarestorage.com # TODO: the Cloudflare account id
+        R2_BUCKET: issho-backups # TODO: the bucket
+        BACKUP_AT: "3" # UTC hour
+      secret:
+        - DATABASE_URL
+        - R2_ACCESS_KEY_ID
+        - R2_SECRET_ACCESS_KEY
+
 aliases:
   # kamal migrate: apply migrations with the image for the current commit
   # (after `kamal build push`, before `kamal deploy`; see docs/deploy.md).
