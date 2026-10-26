@@ -51,6 +51,8 @@ type Service struct {
 	// Venue names and addresses, fetched live; nil leaves them out.
 	Places maps.PlaceLookup
 	Log    *slog.Logger // nil = slog.Default()
+
+	cities cityCache
 }
 
 // FeedItem is an open plan as one person sees it.
@@ -102,7 +104,7 @@ func (s *Service) feed(ctx context.Context, q *dbgen.Queries, userID uuid.UUID) 
 	}
 	cityID := caller.City
 	// Any month: a plan that's open stays shown whatever the season.
-	c, err := loadPlaces(ctx, q, cityID, 0)
+	c, err := s.places(ctx, q, cityID)
 	if err != nil {
 		return nil, nil, caller, err
 	}
@@ -172,13 +174,9 @@ type titled struct {
 // English from the activities' English names, then translated (and cached)
 // per language.
 func (s *Service) titles(ctx context.Context, q *dbgen.Queries, cityID string, caller Caller, items []titled) (titles, secondaryTitles []string, err error) {
-	rows, err := q.ListCityActivities(ctx, cityID)
+	english, err := s.activityNames(ctx, q, cityID)
 	if err != nil {
 		return nil, nil, err
-	}
-	english := make(map[string]string, len(rows))
-	for _, r := range rows {
-		english[r.ID] = i18n.Pick(r.Name, i18n.Authoring)
 	}
 	englishTitles := make([]string, len(items))
 	texts := make([]translate.Text, len(items))

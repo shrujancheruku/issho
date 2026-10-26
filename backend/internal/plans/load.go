@@ -145,30 +145,14 @@ func LoadUser(ctx context.Context, q *dbgen.Queries, userID uuid.UUID) (*matchin
 		Prefs:          map[matching.ActivityID]int{},
 		Reliability:    float64(r.Reliability),
 	}
-	langs, err := q.ListUserLanguages(ctx, userID)
-	if err != nil {
-		return nil, Caller{}, err
+	for i, code := range r.LangCodes {
+		u.Languages = append(u.Languages, matching.Language{Code: code, Fluent: r.LangFluent[i], Level: int(r.LangLevels[i])})
 	}
-	for _, l := range langs {
-		level := 0
-		if l.Level != nil {
-			level = int(*l.Level)
-		}
-		u.Languages = append(u.Languages, matching.Language{Code: l.Lang, Fluent: l.Fluent, Level: level})
+	for i, w := range r.SlotWeekdays {
+		u.Availability = append(u.Availability, matching.Slot{Weekday: time.Weekday(w), Block: matching.Block(r.SlotBlocks[i])})
 	}
-	slots, err := q.ListAvailability(ctx, userID)
-	if err != nil {
-		return nil, Caller{}, err
-	}
-	for _, s := range slots {
-		u.Availability = append(u.Availability, matching.Slot{Weekday: time.Weekday(s.Weekday), Block: matching.Block(s.Block)})
-	}
-	prefs, err := q.ListActivityPrefs(ctx, userID)
-	if err != nil {
-		return nil, Caller{}, err
-	}
-	for _, p := range prefs {
-		u.Prefs[matching.ActivityID(p.ActivityID)] = int(p.Weight)
+	for i, a := range r.PrefActivities {
+		u.Prefs[matching.ActivityID(a)] = int(r.PrefWeights[i])
 	}
 	return u, caller, nil
 }

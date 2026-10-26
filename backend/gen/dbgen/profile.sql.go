@@ -12,33 +12,6 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const deleteActivityPrefs = `-- name: DeleteActivityPrefs :exec
-delete from app.user_activity_prefs where user_id = $1
-`
-
-func (q *Queries) DeleteActivityPrefs(ctx context.Context, userID uuid.UUID) error {
-	_, err := q.db.Exec(ctx, deleteActivityPrefs, userID)
-	return err
-}
-
-const deleteAvailability = `-- name: DeleteAvailability :exec
-delete from app.availability_slots where user_id = $1
-`
-
-func (q *Queries) DeleteAvailability(ctx context.Context, userID uuid.UUID) error {
-	_, err := q.db.Exec(ctx, deleteAvailability, userID)
-	return err
-}
-
-const deleteUserLanguages = `-- name: DeleteUserLanguages :exec
-delete from app.user_languages where user_id = $1
-`
-
-func (q *Queries) DeleteUserLanguages(ctx context.Context, userID uuid.UUID) error {
-	_, err := q.db.Exec(ctx, deleteUserLanguages, userID)
-	return err
-}
-
 const getAreaCity = `-- name: GetAreaCity :one
 select city_id from app.areas where id = $1
 `
@@ -50,10 +23,47 @@ func (q *Queries) GetAreaCity(ctx context.Context, id string) (string, error) {
 	return city_id, err
 }
 
+const getAreaEnabledActivities = `-- name: GetAreaEnabledActivities :one
+select ar.city_id,
+       array(select a.id
+             from app.activities a
+             left join app.city_activity_overrides o on o.activity_id = a.id and o.city_id = ar.city_id
+             where a.id = any($1::text[]) and coalesce(o.enabled, true))::text[] as enabled
+from app.areas ar
+where ar.id = $2
+`
+
+type GetAreaEnabledActivitiesParams struct {
+	Ids    []string
+	AreaID string
+}
+
+type GetAreaEnabledActivitiesRow struct {
+	CityID  string
+	Enabled []string
+}
+
+// An area's city and which of the given activities that city offers
+// (enabled globally or by its override), so a profile can't hold
+// preferences for hidden activities. No row: no such area.
+func (q *Queries) GetAreaEnabledActivities(ctx context.Context, arg GetAreaEnabledActivitiesParams) (GetAreaEnabledActivitiesRow, error) {
+	row := q.db.QueryRow(ctx, getAreaEnabledActivities, arg.Ids, arg.AreaID)
+	var i GetAreaEnabledActivitiesRow
+	err := row.Scan(&i.CityID, &i.Enabled)
+	return i, err
+}
+
 const getProfile = `-- name: GetProfile :one
 select p.user_id, p.display_name, p.birth_year, p.gender, p.same_gender_only, p.home_area_id,
        a.city_id, p.max_travel_min, p.energy, p.budget, p.size_pref, p.primary_language,
-       p.secondary_language, p.conduct_version, p.conduct_accepted_at, p.updated_at
+       p.secondary_language, p.conduct_version, p.conduct_accepted_at, p.updated_at,
+       array(select l.lang from app.user_languages l where l.user_id = p.user_id order by l.fluent desc, l.lang)::text[] as lang_codes,
+       array(select l.fluent from app.user_languages l where l.user_id = p.user_id order by l.fluent desc, l.lang)::bool[] as lang_fluent,
+       array(select coalesce(l.level, 0) from app.user_languages l where l.user_id = p.user_id order by l.fluent desc, l.lang)::int2[] as lang_levels,
+       array(select s.weekday from app.availability_slots s where s.user_id = p.user_id order by s.weekday, s.block)::int2[] as slot_weekdays,
+       array(select s.block from app.availability_slots s where s.user_id = p.user_id order by s.weekday, s.block)::text[] as slot_blocks,
+       array(select ap.activity_id from app.user_activity_prefs ap where ap.user_id = p.user_id order by ap.activity_id)::text[] as pref_activities,
+       array(select ap.weight from app.user_activity_prefs ap where ap.user_id = p.user_id order by ap.activity_id)::int2[] as pref_weights
 from app.profiles p
 join app.areas a on a.id = p.home_area_id
 where p.user_id = $1
@@ -76,8 +86,18 @@ type GetProfileRow struct {
 	ConductVersion    int16
 	ConductAcceptedAt pgtype.Timestamptz
 	UpdatedAt         pgtype.Timestamptz
+	LangCodes         []string
+	LangFluent        []bool
+	LangLevels        []int16
+	SlotWeekdays      []int16
+	SlotBlocks        []string
+	PrefActivities    []string
+	PrefWeights       []int16
 }
 
+// A profile with its languages, availability and activity preferences as
+// parallel arrays (each list's share an order): one round trip instead of
+// four (the database is a long way from the API). Languages: level 0 = none.
 func (q *Queries) GetProfile(ctx context.Context, userID uuid.UUID) (GetProfileRow, error) {
 	row := q.db.QueryRow(ctx, getProfile, userID)
 	var i GetProfileRow
@@ -98,188 +118,74 @@ func (q *Queries) GetProfile(ctx context.Context, userID uuid.UUID) (GetProfileR
 		&i.ConductVersion,
 		&i.ConductAcceptedAt,
 		&i.UpdatedAt,
+		&i.LangCodes,
+		&i.LangFluent,
+		&i.LangLevels,
+		&i.SlotWeekdays,
+		&i.SlotBlocks,
+		&i.PrefActivities,
+		&i.PrefWeights,
 	)
 	return i, err
 }
 
-const insertActivityPrefs = `-- name: InsertActivityPrefs :exec
+const replaceProfileLists = `-- name: ReplaceProfileLists :exec
+with drop_langs as (
+  delete from app.user_languages
+  where user_id = $1 and lang <> all($4::text[])
+), put_langs as (
+  insert into app.user_languages (user_id, lang, fluent, level)
+  select $1, unnest($4::text[]), unnest($5::boolean[]), nullif(unnest($6::smallint[]), 0)
+  on conflict (user_id, lang) do update set fluent = excluded.fluent, level = excluded.level
+), drop_slots as (
+  delete from app.availability_slots
+  where user_id = $1
+    and (weekday, block) not in (select unnest($7::smallint[]), unnest($8::text[]))
+), put_slots as (
+  insert into app.availability_slots (user_id, weekday, block)
+  select $1, unnest($7::smallint[]), unnest($8::text[])
+  on conflict do nothing
+), drop_prefs as (
+  delete from app.user_activity_prefs
+  where user_id = $1 and activity_id <> all($2::text[])
+)
 insert into app.user_activity_prefs (user_id, activity_id, weight)
 select $1, unnest($2::text[]), unnest($3::smallint[])
+on conflict (user_id, activity_id) do update set weight = excluded.weight
 `
 
-type InsertActivityPrefsParams struct {
+type ReplaceProfileListsParams struct {
 	UserID      uuid.UUID
 	ActivityIds []string
 	Weights     []int16
+	Langs       []string
+	Fluent      []bool
+	Levels      []int16
+	Weekdays    []int16
+	Blocks      []string
 }
 
-func (q *Queries) InsertActivityPrefs(ctx context.Context, arg InsertActivityPrefsParams) error {
-	_, err := q.db.Exec(ctx, insertActivityPrefs, arg.UserID, arg.ActivityIds, arg.Weights)
-	return err
-}
-
-const insertAvailability = `-- name: InsertAvailability :exec
-insert into app.availability_slots (user_id, weekday, block)
-select $1, unnest($2::smallint[]), unnest($3::text[])
-`
-
-type InsertAvailabilityParams struct {
-	UserID   uuid.UUID
-	Weekdays []int16
-	Blocks   []string
-}
-
-func (q *Queries) InsertAvailability(ctx context.Context, arg InsertAvailabilityParams) error {
-	_, err := q.db.Exec(ctx, insertAvailability, arg.UserID, arg.Weekdays, arg.Blocks)
-	return err
-}
-
-const insertUserLanguages = `-- name: InsertUserLanguages :exec
-insert into app.user_languages (user_id, lang, fluent, level)
-select $1, unnest($2::text[]), unnest($3::boolean[]), nullif(unnest($4::smallint[]), 0)
-`
-
-type InsertUserLanguagesParams struct {
-	UserID uuid.UUID
-	Langs  []string
-	Fluent []bool
-	Levels []int16
-}
-
-// The arrays are parallel (one element per language); unnest in the select
-// list zips them. sqlc doesn't know multi-argument unnest in from.
-// Levels use 0 for "none" because sqlc can't pass arrays with nulls; it's
-// turned back into null here (fluent languages have no level).
-func (q *Queries) InsertUserLanguages(ctx context.Context, arg InsertUserLanguagesParams) error {
-	_, err := q.db.Exec(ctx, insertUserLanguages,
+// Replaces a person's languages, availability and activity preferences
+// with the given lists in one statement (one round trip; the app always
+// sends the full lists). Per list, rows no longer given are deleted and the
+// given ones upserted: the two touch different rows, which data-modifying
+// CTEs need (they all see the table as it was before the statement).
+// Each list's arrays are parallel; unnest in the select list zips them
+// (sqlc doesn't know multi-argument unnest in from). Levels use 0 for
+// "none" because sqlc can't pass arrays with nulls; it's turned back into
+// null here (fluent languages have no level).
+func (q *Queries) ReplaceProfileLists(ctx context.Context, arg ReplaceProfileListsParams) error {
+	_, err := q.db.Exec(ctx, replaceProfileLists,
 		arg.UserID,
+		arg.ActivityIds,
+		arg.Weights,
 		arg.Langs,
 		arg.Fluent,
 		arg.Levels,
+		arg.Weekdays,
+		arg.Blocks,
 	)
 	return err
-}
-
-const listActivityPrefs = `-- name: ListActivityPrefs :many
-select activity_id, weight from app.user_activity_prefs where user_id = $1 order by activity_id
-`
-
-type ListActivityPrefsRow struct {
-	ActivityID string
-	Weight     int16
-}
-
-func (q *Queries) ListActivityPrefs(ctx context.Context, userID uuid.UUID) ([]ListActivityPrefsRow, error) {
-	rows, err := q.db.Query(ctx, listActivityPrefs, userID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []ListActivityPrefsRow
-	for rows.Next() {
-		var i ListActivityPrefsRow
-		if err := rows.Scan(&i.ActivityID, &i.Weight); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listAvailability = `-- name: ListAvailability :many
-select weekday, block from app.availability_slots where user_id = $1 order by weekday, block
-`
-
-type ListAvailabilityRow struct {
-	Weekday int16
-	Block   string
-}
-
-func (q *Queries) ListAvailability(ctx context.Context, userID uuid.UUID) ([]ListAvailabilityRow, error) {
-	rows, err := q.db.Query(ctx, listAvailability, userID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []ListAvailabilityRow
-	for rows.Next() {
-		var i ListAvailabilityRow
-		if err := rows.Scan(&i.Weekday, &i.Block); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listEnabledActivityIDs = `-- name: ListEnabledActivityIDs :many
-select a.id
-from app.activities a
-left join app.city_activity_overrides o on o.activity_id = a.id and o.city_id = $1
-where a.id = any($2::text[]) and coalesce(o.enabled, true)
-`
-
-type ListEnabledActivityIDsParams struct {
-	CityID string
-	Ids    []string
-}
-
-// Which of the given activities a city offers (enabled globally or by its
-// override), so a profile can't hold preferences for hidden activities.
-func (q *Queries) ListEnabledActivityIDs(ctx context.Context, arg ListEnabledActivityIDsParams) ([]string, error) {
-	rows, err := q.db.Query(ctx, listEnabledActivityIDs, arg.CityID, arg.Ids)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []string
-	for rows.Next() {
-		var id string
-		if err := rows.Scan(&id); err != nil {
-			return nil, err
-		}
-		items = append(items, id)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listUserLanguages = `-- name: ListUserLanguages :many
-select lang, fluent, level from app.user_languages where user_id = $1 order by fluent desc, lang
-`
-
-type ListUserLanguagesRow struct {
-	Lang   string
-	Fluent bool
-	Level  *int16
-}
-
-func (q *Queries) ListUserLanguages(ctx context.Context, userID uuid.UUID) ([]ListUserLanguagesRow, error) {
-	rows, err := q.db.Query(ctx, listUserLanguages, userID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []ListUserLanguagesRow
-	for rows.Next() {
-		var i ListUserLanguagesRow
-		if err := rows.Scan(&i.Lang, &i.Fluent, &i.Level); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
 }
 
 const upsertProfile = `-- name: UpsertProfile :exec

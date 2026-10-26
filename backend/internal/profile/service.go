@@ -70,30 +70,14 @@ func get(ctx context.Context, q *dbgen.Queries, userID uuid.UUID) (Profile, erro
 	if row.SecondaryLanguage != nil {
 		p.SecondaryLanguage = *row.SecondaryLanguage
 	}
-	langs, err := q.ListUserLanguages(ctx, userID)
-	if err != nil {
-		return Profile{}, err
+	for i, code := range row.LangCodes {
+		p.Languages = append(p.Languages, Language{Code: code, Fluent: row.LangFluent[i], Level: int(row.LangLevels[i])})
 	}
-	for _, l := range langs {
-		lang := Language{Code: l.Lang, Fluent: l.Fluent}
-		if l.Level != nil {
-			lang.Level = int(*l.Level)
-		}
-		p.Languages = append(p.Languages, lang)
+	for i, w := range row.SlotWeekdays {
+		p.Availability = append(p.Availability, Slot{Weekday: int(w), Block: row.SlotBlocks[i]})
 	}
-	slots, err := q.ListAvailability(ctx, userID)
-	if err != nil {
-		return Profile{}, err
-	}
-	for _, sl := range slots {
-		p.Availability = append(p.Availability, Slot{Weekday: int(sl.Weekday), Block: sl.Block})
-	}
-	prefs, err := q.ListActivityPrefs(ctx, userID)
-	if err != nil {
-		return Profile{}, err
-	}
-	for _, pr := range prefs {
-		p.Prefs[pr.ActivityID] = int(pr.Weight)
+	for i, a := range row.PrefActivities {
+		p.Prefs[a] = int(row.PrefWeights[i])
 	}
 	return p, nil
 }
@@ -108,21 +92,17 @@ func (s *Service) Save(ctx context.Context, userID uuid.UUID, p Profile) (Profil
 	var saved Profile
 	err := pgx.BeginFunc(ctx, s.DB, func(tx pgx.Tx) error {
 		q := dbgen.New(tx)
-		city, err := q.GetAreaCity(ctx, p.HomeAreaID)
+		ids := slices.Sorted(maps.Keys(p.Prefs))
+		area, err := q.GetAreaEnabledActivities(ctx, dbgen.GetAreaEnabledActivitiesParams{AreaID: p.HomeAreaID, Ids: ids})
 		if errors.Is(err, pgx.ErrNoRows) {
 			return invalid("home_area_id", "unknown area")
 		}
 		if err != nil {
 			return err
 		}
-		ids := slices.Sorted(maps.Keys(p.Prefs))
-		enabled, err := q.ListEnabledActivityIDs(ctx, dbgen.ListEnabledActivityIDsParams{CityID: city, Ids: ids})
-		if err != nil {
-			return err
-		}
 		for _, id := range ids {
-			if !slices.Contains(enabled, id) {
-				return invalid("activities", "%q isn't offered in %s", id, city)
+			if !slices.Contains(area.Enabled, id) {
+				return invalid("activities", "%q isn't offered in %s", id, area.CityID)
 			}
 		}
 
@@ -154,33 +134,22 @@ func (s *Service) Save(ctx context.Context, userID uuid.UUID, p Profile) (Profil
 		}
 
 		// Replace the child rows wholesale: the app always sends the full lists.
-		langs := dbgen.InsertUserLanguagesParams{UserID: userID}
+		lists := dbgen.ReplaceProfileListsParams{UserID: userID}
 		for _, l := range p.Languages {
-			langs.Langs = append(langs.Langs, l.Code)
-			langs.Fluent = append(langs.Fluent, l.Fluent)
-			langs.Levels = append(langs.Levels, int16(l.Level))
+			lists.Langs = append(lists.Langs, l.Code)
+			lists.Fluent = append(lists.Fluent, l.Fluent)
+			lists.Levels = append(lists.Levels, int16(l.Level))
 		}
-		slots := dbgen.InsertAvailabilityParams{UserID: userID}
 		for _, sl := range p.Availability {
-			slots.Weekdays = append(slots.Weekdays, int16(sl.Weekday))
-			slots.Blocks = append(slots.Blocks, sl.Block)
+			lists.Weekdays = append(lists.Weekdays, int16(sl.Weekday))
+			lists.Blocks = append(lists.Blocks, sl.Block)
 		}
-		prefs := dbgen.InsertActivityPrefsParams{UserID: userID}
 		for _, id := range ids {
-			prefs.ActivityIds = append(prefs.ActivityIds, id)
-			prefs.Weights = append(prefs.Weights, int16(p.Prefs[id]))
+			lists.ActivityIds = append(lists.ActivityIds, id)
+			lists.Weights = append(lists.Weights, int16(p.Prefs[id]))
 		}
-		for _, step := range []func() error{
-			func() error { return q.DeleteUserLanguages(ctx, userID) },
-			func() error { return q.InsertUserLanguages(ctx, langs) },
-			func() error { return q.DeleteAvailability(ctx, userID) },
-			func() error { return q.InsertAvailability(ctx, slots) },
-			func() error { return q.DeleteActivityPrefs(ctx, userID) },
-			func() error { return q.InsertActivityPrefs(ctx, prefs) },
-		} {
-			if err := step(); err != nil {
-				return err
-			}
+		if err := q.ReplaceProfileLists(ctx, lists); err != nil {
+			return err
 		}
 		saved, err = get(ctx, q, userID)
 		return err
