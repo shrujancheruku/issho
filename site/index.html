@@ -398,7 +398,20 @@
   form.signup .button { flex: 0 0 auto; align-self: end; }
   .fine { margin-top: .9rem; font-size: .875rem; color: var(--muted); }
 
-  footer.wrap { padding-block: 2rem 2.5rem; padding-left: calc(var(--indent) + 1rem); color: var(--muted); font-size: .9rem; border-top: 1px solid var(--line); }
+  /* Footer: a sign-off rather than just the copyright. The round mark sits on
+     the spine, like the hero's thread, with the content at the page's indent. */
+  .site-footer {
+    display: grid; grid-template-columns: var(--indent) 1fr; align-items: start;
+    padding-block: clamp(2.5rem, 6vw, 4rem) 2.5rem; border-top: 1px solid var(--line);
+  }
+  /* Ringed like the story's knots, so it reads as the thread's last knot on either canvas. */
+  .site-footer .mark { width: 2.5rem; height: 2.5rem; margin-left: calc(var(--spine) - 1.25rem); border-radius: 50%; box-shadow: 0 0 0 4px var(--bg), 0 0 0 6px var(--gold); }
+  .site-footer .bye { font: 400 clamp(1.4rem, 3vw, 1.9rem)/1.2 var(--display); color: var(--heading); }
+  .site-footer .ja { margin-top: .35rem; font-weight: 500; }
+  .site-footer nav { display: flex; flex-wrap: wrap; gap: .5rem 1.75rem; margin-top: 1.5rem; }
+  .site-footer nav a { color: var(--text); font-weight: 500; text-decoration: underline; text-decoration-color: var(--gold); text-decoration-thickness: 2px; text-underline-offset: .3em; }
+  .site-footer nav a:hover { color: var(--when); }
+  .site-footer .small { margin-top: 1.5rem; color: var(--muted); font-size: .875rem; }
 
   /* Motion, with the app's tokens (apps/mobile/src/constants/motion.ts):
      press 100 ms at 0.97, change 180 ms, draw 450 ms, gather = a small
@@ -549,7 +562,7 @@
     </div>
   </section>
 
-  <main aria-label="How one outing works">
+  <main id="how" aria-label="How one outing works">
   <div class="story">
     <div class="fill" aria-hidden="true"></div>
 
@@ -559,7 +572,7 @@
         <p class="when">It starts with a plan</p>
         <h2>Pick something you&rsquo;d do anyway.</h2>
         <p>Photo walks, bouldering, ramen crawls, board-game caf&eacute;s. Tag each activity <span class="chip love">Love it</span>, <span class="chip like">Like it</span> or <span class="chip open">Open to try</span>, and Plans shows what&rsquo;s on near you, best matches first. The activity breaks the ice, so you don&rsquo;t have to.</p>
-        <p>Sign up for any that grab you and tell us when you&rsquo;re free. No date yet, no pressure.</p>
+        <p>Like the look of one? Sign up and mark the times you&rsquo;re free. Nothing&rsquo;s booked until a time works for enough of you.</p>
       </div>
       <figure class="app" aria-label="A plan in the app">
         <p class="tag"><span class="chip love">Love it</span></p>
@@ -621,7 +634,7 @@
       <div class="text">
         <p class="when">Going</p>
         <h2>A few people, not a crowd.</h2>
-        <p>Your invite lands in Together, under &ldquo;Needs you&rdquo;. Confirm your place and see who&rsquo;s coming. Photos are only shared with your group. No profiles to swipe, no one-to-one messages: Issho is for making friends.</p>
+        <p>Your invite lands in Together, under &ldquo;Needs you&rdquo;. Confirm your place and see who&rsquo;s coming. Photos are only shared with your group. Groups stay small, so everyone gets a word in and you&rsquo;ll remember every name.</p>
       </div>
       <figure class="app" aria-label="Confirming a place in a group">
         <p class="title">Can you go? Please answer by Thu, Nov 13.</p>
@@ -711,7 +724,7 @@
     </section>
   </main>
 
-  <section class="name" aria-labelledby="name-title">
+  <section class="name" id="name" aria-labelledby="name-title">
     <h2 id="name-title">Issho (一緒) means &ldquo;together&rdquo;.</h2>
     <p>Look closely: the word tells the whole story.</p>
     <ul class="glyphs">
@@ -735,7 +748,20 @@
   </section>
 </div>
 
-<footer class="wrap">&copy; <span id="year">2026</span> Issho</footer>
+<!-- The thread ties off at the round mark, on the same spine as the hero. -->
+<footer class="wrap site-footer">
+  <img class="mark" src="favicon.svg" alt="" width="40" height="40">
+  <div>
+    <p class="bye">See you out there.</p>
+    <p class="ja" lang="ja">一緒に行こう。</p>
+    <nav aria-label="Footer">
+      <a href="#how">How it works</a>
+      <a href="#name">Why &ldquo;Issho&rdquo;</a>
+      <a href="#join">Join the waitlist</a>
+    </nav>
+    <p class="small">&copy; <span id="year">2026</span> Issho. Built with &#x2764;&#xFE0F; in &#x1F1EF;&#x1F1F5;</p>
+  </div>
+</footer>
 
 <script>
   // The signup form is a placeholder for now: it captures nothing and sends nothing.

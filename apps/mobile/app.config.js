@@ -19,6 +19,10 @@ module.exports = ({ config }) => {
   // mobile Maps key; the restriction is what protects it. Set it as the
   // GOOGLE_MAPS_ANDROID_API_KEY EAS variable (or locally). Expo Go uses its
   // own key. iOS waits for M9.
+  // The variable must be sensitive or plaintext, not secret: the key is part
+  // of the config the fingerprint runtime version hashes, and eas-cli can't
+  // read secret variables locally, so the local and EAS runtime versions
+  // would differ and EAS Build fails at "Configure expo-updates".
   const androidGoogleMapsApiKey = process.env.GOOGLE_MAPS_ANDROID_API_KEY;
   return {
     ...config,
