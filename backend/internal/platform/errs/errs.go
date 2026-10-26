@@ -7,6 +7,8 @@ import (
 	"log/slog"
 
 	"connectrpc.com/connect"
+
+	"github.com/shrujancheruku/issho/backend/internal/platform/sentry"
 )
 
 // Interceptor turns any error that isn't already a *connect.Error into a
@@ -28,6 +30,7 @@ func Interceptor(log *slog.Logger) connect.UnaryInterceptorFunc {
 				return resp, err
 			}
 			log.ErrorContext(ctx, "unhandled error", "procedure", req.Spec().Procedure, "err", err)
+			sentry.Report(ctx, err, map[string]string{"procedure": req.Spec().Procedure})
 			return nil, connect.NewError(connect.CodeInternal, errors.New("internal error"))
 		}
 	}

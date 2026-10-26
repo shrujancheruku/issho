@@ -40,6 +40,9 @@ type Config struct {
 	// GitHubAPI is GitHub's API address (default https://api.github.com;
 	// GitHub Enterprise, or a local fake for checks).
 	GitHubRepo, GitHubAPI string
+	// SentryDSN turns on error reporting (internal/platform/sentry);
+	// SentryEnvironment names the deployment (default "development").
+	SentryDSN, SentryEnvironment string
 }
 
 func Load() (Config, error) {
@@ -55,6 +58,8 @@ func Load() (Config, error) {
 		GitHubToken:           os.Getenv("GITHUB_TOKEN"),
 		GitHubRepo:            getenv("GITHUB_REPO", "shrujancheruku/issho"),
 		GitHubAPI:             getenv("GITHUB_API_URL", "https://api.github.com"),
+		SentryDSN:             os.Getenv("SENTRY_DSN"),
+		SentryEnvironment:     getenv("SENTRY_ENVIRONMENT", "development"),
 	}
 	if v := os.Getenv("ALLOWED_ORIGINS"); v != "" {
 		c.AllowedOrigins = strings.Split(v, ",")
@@ -89,7 +94,8 @@ type Worker struct {
 	// GeminiAPIKey (a Google Cloud Agent Platform key), with
 	// GoogleMapsAPIKey, composes walking plans (internal/walks). Optional:
 	// without both, no walks are opened.
-	GeminiAPIKey string
+	GeminiAPIKey                 string // SentryDSN and SentryEnvironment are as in Config.
+	SentryDSN, SentryEnvironment string
 }
 
 // LoadWorker reads WORKER_DATABASE_URL, falling back to DATABASE_URL (fine
@@ -102,6 +108,8 @@ func LoadWorker() (Worker, error) {
 		Translator:            os.Getenv("TRANSLATOR"),
 		GoogleMapsAPIKey:      os.Getenv("GOOGLE_MAPS_API_KEY"),
 		GeminiAPIKey:          os.Getenv("GOOGLE_GEMINI_API_KEY"),
+		SentryDSN:             os.Getenv("SENTRY_DSN"),
+		SentryEnvironment:     getenv("SENTRY_ENVIRONMENT", "development"),
 	}
 	if w.DatabaseURL == "" {
 		return w, fmt.Errorf("WORKER_DATABASE_URL or DATABASE_URL is required")

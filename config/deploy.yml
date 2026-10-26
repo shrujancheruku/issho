@@ -64,6 +64,7 @@ env:
     # TODO: the production Supabase project and the hosted front ends.
     SUPABASE_URL: https://your-project-ref.supabase.co
     ALLOWED_ORIGINS: https://issho-admin.shrujancheruku.workers.dev,https://issho-web.shrujancheruku.workers.dev
+    SENTRY_ENVIRONMENT: production
   secret:
     # A session-mode connection (direct or the session pooler), never the
     # transaction pooler: the API LISTENs for chat and the worker for River.
@@ -73,6 +74,8 @@ env:
     - GOOGLE_TRANSLATE_API_KEY
     - GOOGLE_GEMINI_API_KEY
     - GITHUB_TOKEN
+    # Empty = no error reporting (internal/platform/sentry).
+    - SENTRY_DSN
     - EXPO_ACCESS_TOKEN
 
 aliases:

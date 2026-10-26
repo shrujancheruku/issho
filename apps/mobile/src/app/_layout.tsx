@@ -16,6 +16,7 @@ import { Colors, Spacing } from '@/constants/theme';
 import { AccountActions } from '@/features/account/account-actions';
 import { AuthProvider, isSuspendedError, useAuth } from '@/features/auth/auth-provider';
 import { I18nProvider, useI18n } from '@/i18n/i18n-provider';
+import { withMonitoring } from '@/lib/monitoring';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -38,7 +39,7 @@ const navTheme = (base: typeof DefaultTheme, c: (typeof Colors)['light' | 'dark'
 const navLight = navTheme(DefaultTheme, Colors.light);
 const navDark = navTheme(DarkTheme, Colors.dark);
 
-export default function RootLayout() {
+function RootLayout() {
   const colorScheme = useColorScheme();
   // The keys become the font family names (DisplayFont and BodyFont in constants/theme.ts).
   const [fontsLoaded, fontError] = useFonts({
@@ -140,3 +141,6 @@ const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: Spacing.three, padding: Spacing.four },
   message: { textAlign: 'center', maxWidth: 420 },
 });
+
+// Reports render crashes when Sentry is on (lib/monitoring.ts).
+export default withMonitoring(RootLayout);
