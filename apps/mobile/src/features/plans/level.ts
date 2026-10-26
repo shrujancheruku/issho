@@ -6,9 +6,9 @@ import type { StringKey } from '@/i18n/strings';
 /**
  * How a plan suits the person, for labels, Plans' sections and map pins.
  * The three interest levels reuse the activity tiles' colours and labels
- * (features/profile/interest.ts), so "I love it" looks and reads the same
+ * (features/profile/interest.ts), so "Love it" looks and reads the same
  * everywhere: "An activity you love" and "...you like" came out identical
- * in Japanese, while the tiles' "I love it" / "I like it" stay distinct.
+ * in Japanese, while the tiles' labels stay distinct.
  */
 export const levelLabels: Record<PlanLevel, StringKey> = {
   [PlanLevel.TOP]: 'interest.love',

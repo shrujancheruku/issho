@@ -14,7 +14,8 @@ commit the PNGs it writes to apps/mobile/assets/images/:
                                  and the notification icon
     splash-icon.png              1024, transparent (app.json sets the size and
                                  the light and dark background colours)
-    favicon.png                  48, as icon.png
+    favicon.png                  48, the round blue mark (mark-round-blue.svg,
+                                 from build_variants.py), for the web build
 
 The mark is used as is (assets/brand/README.md): its outlines let it sit on
 any background, so only the background and the margin change here.
@@ -29,6 +30,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 MARK = ROOT / "assets/brand/mark.svg"
+ROUND_MARK = ROOT / "assets/brand/mark-round-blue.svg"
 OUT = ROOT / "apps/mobile/assets/images"
 
 # Ai night, the app's dark background (apps/mobile/src/constants/theme.ts).
@@ -67,7 +69,8 @@ def main() -> None:
     render(framed(mark, 0.46), 1024, "android-icon-foreground.png")
     render(framed(mark, 0.46, silhouette=True), 1024, "android-icon-monochrome.png")
     render(framed(mark, 1.0), 1024, "splash-icon.png")
-    render(framed(mark, 0.8, AI_NIGHT), 48, "favicon.png")
+    # Round, like the site's and the admin's favicons: one shape in browser tabs.
+    render(ROUND_MARK.read_text(encoding="utf-8"), 48, "favicon.png")
 
 
 if __name__ == "__main__":

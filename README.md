@@ -17,9 +17,10 @@ Making friends as an adult is hard because no one is organising it. Issho does t
 *Buenos Aires* · **Antique hunting** at the San Telmo fair, then **empanadas** on Plaza Dorrego.\
 *Cape Town* · **Sunrise hike** up Lion's Head, then **breakfast** together in Sea Point.
 
-1. **Pick what you enjoy.** Photo walks, board games, climbing, ramen crawls. Start from activities you already like.
-2. **Meet a small group.** Join the plans that appeal to you. Once enough nearby people are in, we match you into a small group and find a time and place that works for everyone.
-3. **Keep the ones you click with.** Afterwards, privately choose who you'd like to meet again. Matches become a regular **crew**.
+1. **Pick what you enjoy.** Photo walks, board games, climbing, ramen crawls. Mark each activity *Love it*, *Like it* or *Open to try*, and say when you're usually free.
+2. **Sign up for a plan.** **Plans** shows what's on near you, on a list or a map, best matches first. Sign up for the ones you'd go to: there's no date yet.
+3. **Get a date and meet your group.** When enough people can make the same time, we pick the date and split everyone into small groups. **Together** shows what needs you: confirm your place, chat with your group before, and check in on the day.
+4. **Keep the ones you click with.** Afterwards, privately choose who you'd meet again. Groups that click are offered a **crew**: their own chat, with a new plan every week or so.
 
 It's built for friendship: no profiles to browse, no one-to-one messages, and safety designed in from the start. Every language is welcome, and every city is just data. We're starting in Tokyo.
 
@@ -54,13 +55,15 @@ Each directory has its own README:
 | Path | What |
 |---|---|
 | [`backend/`](backend/README.md) | Go API (ConnectRPC), migrations, seeding tool, tests |
-| [`apps/mobile/`](apps/mobile/README.md) | Expo (SDK 58) iOS/Android app |
+| [`apps/mobile/`](apps/mobile/README.md) | Expo (SDK 58) app for iOS, Android and the web: Together, Plans and You, in light and dark |
+| [`apps/admin/`](apps/admin/README.md) | Admin web app: moderation, plan review, venue curation, metrics, city packs |
+| [`site/`](site/README.md) | The marketing site at [joinissho.com](https://joinissho.com) |
 | [`packages/api-client/`](packages/api-client/README.md) | Generated TypeScript API client |
 | [`proto/`](proto/README.md) | API contract (protobuf), source of truth for types and docs |
 | [`data/`](data/README.md) | Activity catalogue and city packs |
 | [`supabase/`](supabase/README.md) | Local Supabase stack config |
-| [`assets/brand/`](assets/brand/README.md) | Logo, mark and brand colours (with the story behind the kanji) |
-| `scripts/` | CI helpers (`check-roadmap.sh`) and the logo generator (`brand/build_logo.py`) |
+| [`assets/brand/`](assets/brand/README.md) | Logo and mark, plain and in round blue and white versions, as SVG and PNG; brand colours and the story behind the kanji |
+| `scripts/` | CI and deploy helpers, and the brand generators (`brand/`: the logo, its round versions, the app icons) |
 | [`CLAUDE.md`](CLAUDE.md), `.claude/skills/` | Instructions for AI coding agents, and the official Supabase agent skills |
 | `.githooks/` | Git hooks: secret scan (pre-commit) and commit-message lint (commit-msg). Enable with `make setup`. |
 
@@ -83,4 +86,4 @@ cd apps/mobile && cp .env.example .env && npx expo start
 
 ## Stack
 
-Expo / React Native · Go (ConnectRPC, pgx, sqlc, goose, River) · Supabase (Postgres + PostGIS, Auth, Storage) · Google Maps Platform · Claude · GitHub Actions · release-please. The reasons for each choice are in the [decision log](docs/ROADMAP.md#4-decision-log).
+Expo / React Native · Go (ConnectRPC, pgx, sqlc, goose, River) · Supabase (Postgres + PostGIS, Auth, Storage) · Google Maps Platform · Cloudflare Workers · Sentry · Claude · GitHub Actions · release-please. The reasons for each choice are in the [decision log](docs/ROADMAP.md#4-decision-log).
