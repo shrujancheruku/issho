@@ -1,7 +1,9 @@
 name: deploy-web
 
-# Deploys the admin SPA (issho-admin) and the app's web build (issho-web) to
-# Cloudflare Workers with scripts/deploy-web.sh, when either changes on main.
+# Deploys the Cloudflare Workers when they change on main: the admin SPA
+# (issho-admin) and the app's web build (issho-web) with scripts/deploy-web.sh,
+# and the marketing site (issho-site, site/wrangler.jsonc, joinissho.com).
+# Each job only runs when its own files changed.
 #
 # Configured 2026-10-26 (Settings → Secrets and variables → Actions):
 #   variable API_URL                 https://api.joinissho.com
@@ -9,12 +11,13 @@ name: deploy-web
 #   variable EXPO_PUBLIC_SUPABASE_URL, EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
 #            EXPO_PUBLIC_GOOGLE_MAPS_WEB_API_KEY   (public values)
 #   secret   CLOUDFLARE_API_TOKEN    scoped to Workers Scripts: Edit
-# Without API_URL the job is skipped, not failed.
+# Without API_URL the apps job is skipped, not failed.
 
 on:
   push:
     branches: [main]
     paths:
+      - site/**
       - apps/admin/**
       - apps/mobile/**
       - packages/**
@@ -32,8 +35,48 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # What changed, so a site-only push doesn't rebuild the apps and vice versa.
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      site: ${{ steps.filter.outputs.site }}
+      apps: ${{ steps.filter.outputs.apps }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+      - id: filter
+        run: |
+          # A manual run deploys everything.
+          if [ "${{ github.event_name }}" = workflow_dispatch ]; then
+            echo "site=true" >> "$GITHUB_OUTPUT"; echo "apps=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          files=$(git diff --name-only "${{ github.event.before }}" "${{ github.sha }}" 2>/dev/null || git diff --name-only HEAD~1 HEAD)
+          echo "site=$(echo "$files" | grep -qE '^(site/|\.github/workflows/deploy-web\.yml$)' && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          echo "apps=$(echo "$files" | grep -qE '^(apps/admin/|apps/mobile/|packages/|pnpm-lock\.yaml$|scripts/deploy-web\.sh$|\.github/workflows/deploy-web\.yml$)' && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
+  site:
+    needs: changes
+    if: needs.changes.outputs.site == 'true'
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      # The site is plain files: no install or build, just publish the folder.
+      - name: Deploy the marketing site
+        working-directory: site
+        run: npx --yes wrangler@4.150.0 deploy  # the admin's version (apps/admin/package.json)
+      - name: Site answers
+        run: curl -fsS -o /dev/null https://joinissho.com/
+
   deploy:
-    if: vars.API_URL != ''
+    needs: changes
+    if: needs.changes.outputs.apps == 'true' && vars.API_URL != ''
     runs-on: ubuntu-latest
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
