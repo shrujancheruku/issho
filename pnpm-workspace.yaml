@@ -7,8 +7,11 @@ packages:
 # @parcel/watcher (via jest) ships prebuilt platform packages, so its build step is unneeded.
 # esbuild and workerd (via wrangler) also ship their binaries as platform packages;
 # their scripts only check them.
+# @sentry/cli (via @sentry/react-native) downloads its binary, only needed to
+# upload source maps, which the app doesn't do yet: allow it when it does.
 allowBuilds:
   '@parcel/watcher': false
+  '@sentry/cli': false
   esbuild: false
   workerd: false
   unrs-resolver: false
