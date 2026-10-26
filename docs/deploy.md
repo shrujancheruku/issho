@@ -79,13 +79,17 @@ kamal logs-api          # or logs-worker
 
 A Kamal accessory, `backup` (`config/deploy.yml`), runs `config/backup/backup.sh` in the `postgres:17-alpine` image (the database's major version). Every night at `BACKUP_AT` (UTC hour, default 3) it `pg_dump`s the `app`, `goose`, `river` and `auth` schemas in the custom format and uploads the file to a Cloudflare R2 bucket, signed with `curl --aws-sigv4`. Live sessions and one-time tokens are left out, so a leaked dump can't open anyone's account. A failed night is logged and retried the next night.
 
+**Live since 2026-10-26:** bucket `issho-backups` (30-day lifecycle rule) in the Cloudflare account, `BACKUP_AT` 18 (03:00 in Tokyo). The server's copy of the env holds the R2 keys. `config/deploy.yml` changes to the accessory, or to `backup.sh`, need `kamal accessory reboot backup`; the deploy workflow doesn't touch accessories.
+
 **One-time setup** (needs the Cloudflare account):
 
 1. Create an R2 bucket (e.g. `issho-backups`) and an **R2 API token** with *Object Read & Write* on that bucket only. Put its key pair in `.env.issho-prod` as `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` (`.kamal/secrets` reads them), and the account id and bucket in `config/deploy.yml` (`TODO`s).
 2. In the bucket's settings, add a **lifecycle rule** deleting objects after 30 days: that's the retention.
 3. `kamal accessory boot backup`, then check the setup once: `kamal accessory exec backup "env BACKUP_ONCE=1 sh /backup/backup.sh"`, which should print `backup: uploaded issho-….dump`. `kamal accessory logs backup` shows each night.
 
-**Restoring** (not yet rehearsed against a hosted project; do a drill into a scratch Supabase project before real users): download a dump from R2, then into an empty project with the same migrations applied:
+**Restore drill** (2026-10-26): the first dump (380 KB) was downloaded from R2 and restored in full into a throwaway `postgis/postgis:17-3.5` container (amd64 only: `--platform linux/amd64` on a Mac). It needs the extensions first: `create schema extensions; create extension postgis schema extensions; create extension pgcrypto schema extensions;`, then `pg_restore --no-owner --no-privileges -d postgres issho-….dump`. All 68 tables in `app`, `goose`, `river` and `auth` came back with the live row counts (7,139 rows), except the session tables, which are left out on purpose, and one River job queued after the dump. The drill found `auth.mfa_amr_claims` failing its foreign key without the sessions, so it's now left out too. Delete the dump afterwards: it holds people's data.
+
+**Restoring into a new Supabase project** (not yet rehearsed): download a dump from R2, then into an empty project with the same migrations applied:
 
 ```sh
 pg_restore --list issho-….dump                       # what it holds
