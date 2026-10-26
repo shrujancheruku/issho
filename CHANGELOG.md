@@ -1,5 +1,52 @@
 # Changelog
 
+## [0.9.0](https://github.com/shrujancheruku/issho/compare/v0.8.0...v0.9.0) (2026-10-26)
+
+
+### Features
+
+* **admin:** city-pack editor that opens pull requests (M8) ([#62](https://github.com/shrujancheruku/issho/issues/62)) ([8c1bbad](https://github.com/shrujancheruku/issho/commit/8c1bbad5dd8a0b00ee55deef8872c2e2074b1f3d))
+* **admin:** domain metrics (M8) ([#61](https://github.com/shrujancheruku/issho/issues/61)) ([a804eea](https://github.com/shrujancheruku/issho/commit/a804eea5d6d3f99e77a6b29b34b01707e077302f))
+* **admin:** edit a plan's stops (M8) ([#59](https://github.com/shrujancheruku/issho/issues/59)) ([5ab5285](https://github.com/shrujancheruku/issho/commit/5ab52854309e80c19b999f511824b822c9c53129))
+* **admin:** suggest better translations with Gemini in the editor ([#78](https://github.com/shrujancheruku/issho/issues/78)) ([a5533d5](https://github.com/shrujancheruku/issho/commit/a5533d529e134aee36cc53944836fe87bf008309))
+* **admin:** translation editor page and a translators-only view ([#77](https://github.com/shrujancheruku/issho/issues/77)) ([48e3754](https://github.com/shrujancheruku/issho/commit/48e3754418b9867a5a004a028209c578b801d2a4))
+* **api:** add Traditional Chinese as a display language ([#83](https://github.com/shrujancheruku/issho/issues/83)) ([d12b748](https://github.com/shrujancheruku/issho/commit/d12b7488e9c040a625fe47ee6538ba53d8436851))
+* **api:** check cached UI strings by version so corrections reach phones ([#72](https://github.com/shrujancheruku/issho/issues/72)) ([adcb33a](https://github.com/shrujancheruku/issho/commit/adcb33ae8084a36c4ed776cb4985aa4ad3c249fb))
+* **api:** translation editor service with a translator role ([#76](https://github.com/shrujancheruku/issho/issues/76)) ([05072fe](https://github.com/shrujancheruku/issho/commit/05072fe51570c120f6c12848af3b43e8dcfc4cd0))
+* apply the Issho design system to the app, admin and site ([#70](https://github.com/shrujancheruku/issho/issues/70)) ([af41c77](https://github.com/shrujancheruku/issho/commit/af41c778bd6575119f3e7a376c0d81f9eb37b15b))
+* **backend:** add a Gemini translator with per-key notes and a translation guide ([#73](https://github.com/shrujancheruku/issho/issues/73)) ([e0f0978](https://github.com/shrujancheruku/issho/commit/e0f097853693a8a7448c6eeec8a21a7463028073))
+* **backend:** make Gemini the default translator and describe crew per language ([#74](https://github.com/shrujancheruku/issho/issues/74)) ([75c438b](https://github.com/shrujancheruku/issho/commit/75c438b7919bb6d76f522c85c5b1253819b64867))
+* **backend:** tool sentry-test sends one test error ([#101](https://github.com/shrujancheruku/issho/issues/101)) ([b4bb2e5](https://github.com/shrujancheruku/issho/commit/b4bb2e5f42fb40b1beccaeccc6c7d052f7c46c62))
+* human versions of UI strings over a plain English source ([#71](https://github.com/shrujancheruku/issho/issues/71)) ([4c3844c](https://github.com/shrujancheruku/issho/commit/4c3844cd956f5e4823cece2e9a70d59edde0133c))
+* **infra:** go live on joinissho.com ([#95](https://github.com/shrujancheruku/issho/issues/95)) ([d0dea0e](https://github.com/shrujancheruku/issho/commit/d0dea0e373c15031ef5de8be0839db74b66c00ad))
+* **infra:** host the sites and API under joinissho.com ([#93](https://github.com/shrujancheruku/issho/issues/93)) ([32dc012](https://github.com/shrujancheruku/issho/commit/32dc0122fb7c970ef49666418b54cd44dd685da7))
+* **infra:** nightly off-site database backup to Cloudflare R2 ([#92](https://github.com/shrujancheruku/issho/issues/92)) ([2f2a264](https://github.com/shrujancheruku/issho/commit/2f2a264c70e2c4984624b9d0d5db57ef570fb6a7))
+* **infra:** point the Kamal deploy at the Tokyo server ([#94](https://github.com/shrujancheruku/issho/issues/94)) ([df0b2b4](https://github.com/shrujancheruku/issho/commit/df0b2b4bb0c56371a81c5c1fc2d8b23ea5b6d9e3))
+* **infra:** switch on the nightly backup to R2 ([#102](https://github.com/shrujancheruku/issho/issues/102)) ([c962d06](https://github.com/shrujancheruku/issho/commit/c962d063712e617f064829285919028e9440ac97))
+* **infra:** wire Sentry error reporting, off until a DSN is set ([#91](https://github.com/shrujancheruku/issho/issues/91)) ([6fbcefb](https://github.com/shrujancheruku/issho/commit/6fbcefb2f13d9cc0d1b74936433f13e451680278))
+* **matching:** weigh one activity against two in every plan ([#89](https://github.com/shrujancheruku/issho/issues/89)) ([3d29f55](https://github.com/shrujancheruku/issho/commit/3d29f55f5dce5891a5ab49db0680b635aee494fd))
+* **mobile:** add expo-updates for over-the-air updates ([#88](https://github.com/shrujancheruku/issho/issues/88)) ([4acc98e](https://github.com/shrujancheruku/issho/commit/4acc98eaaa301da7b082c8d5a66208bca99aef4e))
+* **mobile:** app icon and splash from the brand mark ([#98](https://github.com/shrujancheruku/issho/issues/98)) ([d9917b5](https://github.com/shrujancheruku/issho/commit/d9917b5df8642d670ce5dbbf5516b473908b0410))
+* **mobile:** bundle the city packs' languages for a fresh install ([#79](https://github.com/shrujancheruku/issho/issues/79)) ([f06b15e](https://github.com/shrujancheruku/issho/commit/f06b15e6c2ef47552ede76ca321ba58e580c17e9))
+* **mobile:** confirm account deletion on the web too ([#90](https://github.com/shrujancheruku/issho/issues/90)) ([7151cc7](https://github.com/shrujancheruku/issho/commit/7151cc779d116336690794c0bfad6e6734afb473))
+* **mobile:** lay out right to left for Arabic, Hebrew and others ([#85](https://github.com/shrujancheruku/issho/issues/85)) ([5341513](https://github.com/shrujancheruku/issho/commit/534151359c23345bbf38cf60e9723b6effbb5418))
+* **mobile:** let suspended people delete their account ([#65](https://github.com/shrujancheruku/issho/issues/65)) ([caefeb8](https://github.com/shrujancheruku/issho/commit/caefeb86ce907c6a10b7812989fb59866fdc9bd8))
+* **mobile:** mirror-safe styles and a fake language for layout checks ([#82](https://github.com/shrujancheruku/issho/issues/82)) ([0c454a5](https://github.com/shrujancheruku/issho/commit/0c454a54a7d5c794958da0dc7bf8317eb1c2735a))
+* **mobile:** pick the typeface by the text's language ([#80](https://github.com/shrujancheruku/issho/issues/80)) ([6d1a8ba](https://github.com/shrujancheruku/issho/commit/6d1a8ba9c11cf324158f95323b9438c3bf088d47))
+* **mobile:** plural forms per language in UI text ([#84](https://github.com/shrujancheruku/issho/issues/84)) ([f1a98d9](https://github.com/shrujancheruku/issho/commit/f1a98d9105b58b02aaaf4453e0d9a3713fe1c86e))
+* **mobile:** upload the app's source maps to Sentry from EAS builds ([#104](https://github.com/shrujancheruku/issho/issues/104)) ([31cdc98](https://github.com/shrujancheruku/issho/commit/31cdc98239502c9b1e83b95ee412552ff4f874bf))
+
+
+### Bug Fixes
+
+* **backend:** keep the admin's email out of city-pack pull requests ([#81](https://github.com/shrujancheruku/issho/issues/81)) ([ca62ccd](https://github.com/shrujancheruku/issho/commit/ca62ccdab0e290fb43490214ca57709008ee7551))
+
+
+### Performance Improvements
+
+* **backend:** cache translations in one write and ping idle connections less ([#106](https://github.com/shrujancheruku/issho/issues/106)) ([f3bd012](https://github.com/shrujancheruku/issho/commit/f3bd0129b9d4ba9a8ab9929906ba565269b6f17a))
+* **backend:** load profiles in one query and cache city data for the feed ([#107](https://github.com/shrujancheruku/issho/issues/107)) ([ad775c9](https://github.com/shrujancheruku/issho/commit/ad775c9ad3afcc23fb1114568c883fb7ac3d281c))
+
 ## [0.8.0](https://github.com/shrujancheruku/issho/compare/v0.7.0...v0.8.0) (2026-10-24)
 
 
