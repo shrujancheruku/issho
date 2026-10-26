@@ -1,7 +1,8 @@
 import { ConnectError, type WeekMetrics } from '@issho/api-client';
 import { useQuery } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
+import { useRememberedCity } from '../city';
 import { api } from '../lib';
 
 const weekOptions = [8, 12, 26, 52];
@@ -13,15 +14,8 @@ const shortWeek = (w: string) => new Date(`${w}T00:00:00Z`).toLocaleDateString(u
 /** Per-city domain metrics, led by the north star: weekly attendees who've been to more than one outing. */
 export function Metrics() {
   const cities = useQuery({ queryKey: ['review-cities'], queryFn: () => api.review.listReviewCities({}) });
-  const [cityId, setCityId] = useState(() => localStorage.getItem('metrics.city') ?? '');
+  const [cityId, setCityId] = useRememberedCity('metrics.city', cities.data?.cities);
   const [weeks, setWeeks] = useState(12);
-  useEffect(() => {
-    const list = cities.data?.cities ?? [];
-    if (list.length && !list.some((c) => c.id === cityId)) setCityId(list[0].id);
-  }, [cities.data, cityId]);
-  useEffect(() => {
-    if (cityId) localStorage.setItem('metrics.city', cityId);
-  }, [cityId]);
   const metrics = useQuery({
     queryKey: ['metrics', cityId, weeks],
     queryFn: () => api.metrics.getCityMetrics({ cityId, weeks }),

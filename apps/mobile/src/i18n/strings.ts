@@ -39,7 +39,7 @@ export const displayEnglish: Readonly<Record<StringKey, string>> = {
  * rules where the engine has them; otherwise English's, which at least gets
  * 1 right.
  */
-export function pluralCategory(lang: string, n: number): string {
+function pluralCategory(lang: string, n: number): string {
   try {
     return new Intl.PluralRules(lang).select(n);
   } catch {

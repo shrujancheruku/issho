@@ -7,7 +7,7 @@ import { useNow } from '@/hooks/use-now';
 
 import { sortTogether } from './sort';
 
-export type { Group, NeedsYou, Together } from './sort';
+export type { NeedsYou } from './sort';
 
 /** Together's sections, with the queries behind them for loading and refreshing. */
 export function useTogether() {

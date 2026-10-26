@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package issho.v1;
 
-import "issho/v1/moderation.proto";
+import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/shrujancheruku/issho/backend/gen/issho/v1;isshov1";
 
@@ -197,4 +197,27 @@ message ReviewCatalogTranslationRequest {
 
 message ReviewCatalogTranslationResponse {
   Translation translation = 1;
+}
+
+message TranslationLanguage {
+  // ISO 639-1 code, e.g. "ja".
+  string lang = 1;
+  int32 total = 2;
+  int32 unreviewed = 3;
+}
+
+message Translation {
+  // Identifies the English source and its context, with lang.
+  string source_hash = 1;
+  string lang = 2;
+  string source = 3;
+  // What the text is ("name of a city", a UI string), as given to the
+  // translator.
+  string context = 4;
+  string text = 5;
+  // Which translator wrote it.
+  string model = 6;
+  bool reviewed = 7;
+  google.protobuf.Timestamp reviewed_at = 8;
+  google.protobuf.Timestamp created_at = 9;
 }

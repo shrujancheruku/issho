@@ -22,8 +22,10 @@ import (
 
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
+	"github.com/shrujancheruku/issho/backend/internal/crews"
 	"github.com/shrujancheruku/issho/backend/internal/plans"
 	"github.com/shrujancheruku/issho/backend/internal/platform/auth"
+	"github.com/shrujancheruku/issho/backend/internal/platform/errs"
 )
 
 const (
@@ -37,8 +39,9 @@ const (
 // Handler serves ModerationService.
 type Handler struct {
 	Q *dbgen.Queries
-	// Plans takes a suspended person out of what they'd joined.
+	// Plans and Crews take a suspended person out of what they'd joined.
 	Plans *plans.Service
+	Crews *crews.Service
 	// Suspensions is the API's check, told at once when one changes here.
 	Suspensions *Suspensions
 	Now         func() time.Time // nil = time.Now
@@ -49,25 +52,6 @@ func (h *Handler) now() time.Time {
 		return h.Now()
 	}
 	return time.Now()
-}
-
-func moderator(ctx context.Context) (auth.Caller, error) {
-	c, ok := auth.FromContext(ctx)
-	if !ok {
-		return c, connect.NewError(connect.CodeUnauthenticated, errors.New("no caller"))
-	}
-	if !c.Admin {
-		return c, connect.NewError(connect.CodePermissionDenied, errors.New("admins only"))
-	}
-	return c, nil
-}
-
-func (h *Handler) GetModerator(ctx context.Context, _ *connect.Request[isshov1.GetModeratorRequest]) (*connect.Response[isshov1.GetModeratorResponse], error) {
-	c, err := moderator(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return connect.NewResponse(&isshov1.GetModeratorResponse{UserId: c.UserID.String(), Email: c.Email}), nil
 }
 
 // Report statuses as stored and as sent.
@@ -99,21 +83,21 @@ var flagKinds = map[string]isshov1.FlagKind{
 }
 
 func (h *Handler) ListReports(ctx context.Context, req *connect.Request[isshov1.ListReportsRequest]) (*connect.Response[isshov1.ListReportsResponse], error) {
-	if _, err := moderator(ctx); err != nil {
+	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
 	arg := dbgen.ListReportsParams{MaxRows: maxRows}
 	if req.Msg.Status != isshov1.ReportStatus_REPORT_STATUS_UNSPECIFIED {
 		s, ok := reportStatuses[req.Msg.Status]
 		if !ok {
-			return nil, invalid("status: unknown")
+			return nil, errs.Invalid("status: unknown")
 		}
 		arg.Status = s
 	}
 	if req.Msg.ReportedId != "" {
 		id, err := uuid.Parse(req.Msg.ReportedId)
 		if err != nil {
-			return nil, invalid("reported_id: not a user id")
+			return nil, errs.Invalid("reported_id: not a user id")
 		}
 		arg.ReportedID = id
 	}
@@ -157,17 +141,17 @@ func (h *Handler) ListReports(ctx context.Context, req *connect.Request[isshov1.
 }
 
 func (h *Handler) ResolveReport(ctx context.Context, req *connect.Request[isshov1.ResolveReportRequest]) (*connect.Response[isshov1.ResolveReportResponse], error) {
-	c, err := moderator(ctx)
+	c, err := auth.RequireAdmin(ctx)
 	if err != nil {
 		return nil, err
 	}
 	id, err := uuid.Parse(req.Msg.ReportId)
 	if err != nil {
-		return nil, invalid("report_id: not a report id")
+		return nil, errs.Invalid("report_id: not a report id")
 	}
 	status, ok := reportStatuses[req.Msg.Status]
 	if !ok {
-		return nil, invalid("status: open, actioned or dismissed")
+		return nil, errs.Invalid("status: open, actioned or dismissed")
 	}
 	note, err := cleanNote(req.Msg.Note)
 	if err != nil {
@@ -186,7 +170,7 @@ func (h *Handler) ResolveReport(ctx context.Context, req *connect.Request[isshov
 }
 
 func (h *Handler) ListFlags(ctx context.Context, req *connect.Request[isshov1.ListFlagsRequest]) (*connect.Response[isshov1.ListFlagsResponse], error) {
-	if _, err := moderator(ctx); err != nil {
+	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
 	rows, err := h.Q.ListModerationFlags(ctx, dbgen.ListModerationFlagsParams{Open: !req.Msg.Resolved, MaxRows: maxRows})
@@ -212,7 +196,7 @@ func (h *Handler) ListFlags(ctx context.Context, req *connect.Request[isshov1.Li
 }
 
 func (h *Handler) ResolveFlag(ctx context.Context, req *connect.Request[isshov1.ResolveFlagRequest]) (*connect.Response[isshov1.ResolveFlagResponse], error) {
-	c, err := moderator(ctx)
+	c, err := auth.RequireAdmin(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -233,14 +217,14 @@ func (h *Handler) ResolveFlag(ctx context.Context, req *connect.Request[isshov1.
 }
 
 func (h *Handler) ListCrewLeaves(ctx context.Context, req *connect.Request[isshov1.ListCrewLeavesRequest]) (*connect.Response[isshov1.ListCrewLeavesResponse], error) {
-	if _, err := moderator(ctx); err != nil {
+	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
 	arg := dbgen.ListCrewLeavesParams{MaxRows: maxRows}
 	if req.Msg.Reason != isshov1.LeaveReason_LEAVE_REASON_UNSPECIFIED {
 		r, ok := leaveReasons[req.Msg.Reason]
 		if !ok {
-			return nil, invalid("reason: unknown")
+			return nil, errs.Invalid("reason: unknown")
 		}
 		arg.Reason = r
 	}
@@ -273,13 +257,9 @@ func (h *Handler) ListCrewLeaves(ctx context.Context, req *connect.Request[issho
 func cleanNote(s string) (string, error) {
 	s = strings.TrimSpace(s)
 	if utf8.RuneCountInString(s) > MaxNote {
-		return "", invalid("note: at most 2000 characters")
+		return "", errs.Invalid("note: at most 2000 characters")
 	}
 	return s, nil
-}
-
-func invalid(msg string) error {
-	return connect.NewError(connect.CodeInvalidArgument, errors.New(msg))
 }
 
 func timestamp(t pgtype.Timestamptz) *timestamppb.Timestamp {
@@ -299,22 +279,3 @@ func uuidString(id pgtype.UUID) string {
 func pgUUID(id uuid.UUID) pgtype.UUID { return pgtype.UUID{Bytes: id, Valid: true} }
 
 func pgTime(t time.Time) pgtype.Timestamptz { return pgtype.Timestamptz{Time: t, Valid: true} }
-
-// moved answers the translation RPCs that moved to TranslationService
-// (internal/translations). They stay in the proto because removing an RPC
-// breaks the API's compatibility check.
-func moved(to string) error {
-	return connect.NewError(connect.CodeUnimplemented, errors.New("moved to TranslationService."+to))
-}
-
-func (h *Handler) ListTranslationLanguages(context.Context, *connect.Request[isshov1.ListTranslationLanguagesRequest]) (*connect.Response[isshov1.ListTranslationLanguagesResponse], error) {
-	return nil, moved("ListCatalogLanguages")
-}
-
-func (h *Handler) ListTranslations(context.Context, *connect.Request[isshov1.ListTranslationsRequest]) (*connect.Response[isshov1.ListTranslationsResponse], error) {
-	return nil, moved("ListCatalogTranslations")
-}
-
-func (h *Handler) ReviewTranslation(context.Context, *connect.Request[isshov1.ReviewTranslationRequest]) (*connect.Response[isshov1.ReviewTranslationResponse], error) {
-	return nil, moved("ReviewCatalogTranslation")
-}

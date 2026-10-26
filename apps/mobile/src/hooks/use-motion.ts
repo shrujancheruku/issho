@@ -32,5 +32,3 @@ function kit(reduced: boolean) {
     settle: (to: number) => (reduced ? withTiming(to, { duration: Motion.change }) : withSpring(to, Motion.settle)),
   };
 }
-
-export type MotionKit = ReturnType<typeof kit>;

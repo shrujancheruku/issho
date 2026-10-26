@@ -1,8 +1,9 @@
 import { ConnectError, ReviewEventStatus, type ReviewEvent } from '@issho/api-client';
 import { useQuery } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import { eventHref, localTime } from '../format';
+import { useRememberedCity } from '../city';
 import { api } from '../lib';
 
 const tabs: { label: string; status: ReviewEventStatus }[] = [
@@ -13,15 +14,8 @@ const tabs: { label: string; status: ReviewEventStatus }[] = [
 /** A city's proposed rounds to review, and upcoming events (for meeting points). */
 export function Groups() {
   const cities = useQuery({ queryKey: ['review-cities'], queryFn: () => api.review.listReviewCities({}) });
-  const [cityId, setCityId] = useState(() => localStorage.getItem('plans.city') ?? '');
+  const [cityId, setCityId] = useRememberedCity('plans.city', cities.data?.cities);
   const [status, setStatus] = useState(ReviewEventStatus.PROPOSED);
-  useEffect(() => {
-    const list = cities.data?.cities ?? [];
-    if (list.length && !list.some((c) => c.id === cityId)) setCityId(list[0].id);
-  }, [cities.data, cityId]);
-  useEffect(() => {
-    if (cityId) localStorage.setItem('plans.city', cityId);
-  }, [cityId]);
   const city = cities.data?.cities.find((c) => c.id === cityId);
   const events = useQuery({
     queryKey: ['review-events', cityId, status],

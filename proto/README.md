@@ -2,7 +2,7 @@
 
 The API contract. **These files are the source of truth** for the Go server, the TypeScript client and the [API reference](../docs/generated/api.md).
 
-- Package `issho.v1`, one file per service: `health.proto`, `identity.proto`, `catalog.proto`, `profile.proto`, `ui.proto`.
+- Package `issho.v1`, one file per service (`identity.proto` is `IdentityService`, and so on).
 - buf module config: `buf.yaml` (lint: `STANDARD`, breaking: `FILE`). Generation config: `../buf.gen.yaml`.
 
 ## Workflow

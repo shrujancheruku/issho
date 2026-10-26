@@ -31,9 +31,9 @@ var platforms = map[isshov1.PushPlatform]string{
 }
 
 func (h *Handler) RegisterPushToken(ctx context.Context, req *connect.Request[isshov1.RegisterPushTokenRequest]) (*connect.Response[isshov1.RegisterPushTokenResponse], error) {
-	c, ok := auth.FromContext(ctx)
-	if !ok {
-		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("no caller"))
+	c, err := auth.Require(ctx)
+	if err != nil {
+		return nil, err
 	}
 	if !expoToken.MatchString(req.Msg.Token) {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("token: not an Expo push token"))
@@ -42,7 +42,7 @@ func (h *Handler) RegisterPushToken(ctx context.Context, req *connect.Request[is
 	if !ok {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("platform: ios, android or web"))
 	}
-	err := h.Q.UpsertPushToken(ctx, dbgen.UpsertPushTokenParams{Token: req.Msg.Token, UserID: c.UserID, Platform: platform})
+	err = h.Q.UpsertPushToken(ctx, dbgen.UpsertPushTokenParams{Token: req.Msg.Token, UserID: c.UserID, Platform: platform})
 	var pgErr *pgconn.PgError
 	if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.ForeignKeyViolation {
 		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("no account: call IdentityService.GetMe first"))
@@ -54,9 +54,9 @@ func (h *Handler) RegisterPushToken(ctx context.Context, req *connect.Request[is
 }
 
 func (h *Handler) UnregisterPushToken(ctx context.Context, req *connect.Request[isshov1.UnregisterPushTokenRequest]) (*connect.Response[isshov1.UnregisterPushTokenResponse], error) {
-	c, ok := auth.FromContext(ctx)
-	if !ok {
-		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("no caller"))
+	c, err := auth.Require(ctx)
+	if err != nil {
+		return nil, err
 	}
 	if err := h.Q.DeletePushToken(ctx, dbgen.DeletePushTokenParams{Token: req.Msg.Token, UserID: c.UserID}); err != nil {
 		return nil, err

@@ -4,7 +4,7 @@
 //
 // Only unexpected failures are reported: errors handlers return on purpose
 // (connect errors with a code: not found, invalid argument…) are the
-// caller's, not ours. Personal data isn't sent (SendDefaultPII off: no IP
+// caller's, not ours. Personal data isn't sent (the SDK's default: no IP
 // addresses, headers or cookies).
 package sentry
 
@@ -32,17 +32,14 @@ func Init(dsn, release, environment, service string, tracesRate float64) (flush 
 	}
 	if err := sentrygo.Init(sentrygo.ClientOptions{
 		Dsn: dsn, Release: release, Environment: environment, ServerName: service,
-		SendDefaultPII: false, AttachStacktrace: true,
-		EnableTracing: tracesRate > 0, TracesSampler: sampler(tracesRate),
+		AttachStacktrace: true,
+		EnableTracing:    tracesRate > 0, TracesSampler: sampler(tracesRate),
 	}); err != nil {
 		return nil, fmt.Errorf("sentry: %w", err)
 	}
 	enabled = true
 	return func() { sentrygo.Flush(2 * time.Second) }, nil
 }
-
-// Enabled reports whether reports are being sent.
-func Enabled() bool { return enabled }
 
 // Report sends one error with tags (the RPC, the job kind).
 func Report(ctx context.Context, err error, tags map[string]string) {

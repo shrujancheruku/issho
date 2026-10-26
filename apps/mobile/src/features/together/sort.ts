@@ -10,9 +10,9 @@ export type NeedsYou =
   | { kind: 'feedback'; event: MyEvent };
 
 /** A group chat the person is in: a crew, or an outing they're going on. */
-export type Group = { kind: 'crew'; crew: Crew } | { kind: 'outing'; event: MyEvent };
+type Group = { kind: 'crew'; crew: Crew } | { kind: 'outing'; event: MyEvent };
 
-export type Together = {
+type Together = {
   needsYou: NeedsYou[];
   groups: Group[];
   /** Plans they signed up for that don't have a date yet. */

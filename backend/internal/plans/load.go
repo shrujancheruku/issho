@@ -125,6 +125,20 @@ type Caller struct {
 	Primary, Secondary string
 }
 
+// loadCaller reads who's asking (their city and display languages) without
+// their matching profile. ErrNoProfile means they have no profile.
+func loadCaller(ctx context.Context, q *dbgen.Queries, userID uuid.UUID) (Caller, error) {
+	r, err := q.GetDisplayLanguages(ctx, userID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return Caller{}, ErrNoProfile
+	}
+	if err != nil {
+		return Caller{}, err
+	}
+	primary, secondary := i18n.ForApp(r.PrimaryLanguage, deref(r.SecondaryLanguage))
+	return Caller{City: r.CityID, Primary: primary, Secondary: secondary}, nil
+}
+
 // LoadUser reads one person for matching, with their city and display
 // languages. pgx.ErrNoRows means they have no profile.
 func LoadUser(ctx context.Context, q *dbgen.Queries, userID uuid.UUID) (*matching.User, Caller, error) {

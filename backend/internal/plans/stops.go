@@ -18,6 +18,8 @@ import (
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
 	"github.com/shrujancheruku/issho/backend/internal/maps"
+	"github.com/shrujancheruku/issho/backend/internal/platform/auth"
+	"github.com/shrujancheruku/issho/backend/internal/platform/errs"
 	"github.com/shrujancheruku/issho/backend/internal/platform/i18n"
 	"github.com/shrujancheruku/issho/backend/internal/walks"
 )
@@ -68,12 +70,12 @@ func lockEditable(ctx context.Context, q *dbgen.Queries, id uuid.UUID, walk bool
 }
 
 func (h *ReviewHandler) FindPlanPlaces(ctx context.Context, req *connect.Request[isshov1.FindPlanPlacesRequest]) (*connect.Response[isshov1.FindPlanPlacesResponse], error) {
-	if _, err := admin(ctx); err != nil {
+	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
 	query := strings.TrimSpace(req.Msg.Query)
 	if query == "" || utf8.RuneCountInString(query) > maxPlaceQuery {
-		return nil, reviewInvalid("query: 1 to 100 characters")
+		return nil, errs.Invalid("query: 1 to 100 characters")
 	}
 	if h.Places == nil {
 		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("searching needs GOOGLE_MAPS_API_KEY"))
@@ -98,30 +100,30 @@ func (h *ReviewHandler) FindPlanPlaces(ctx context.Context, req *connect.Request
 }
 
 func (h *ReviewHandler) SetPlanStops(ctx context.Context, req *connect.Request[isshov1.SetPlanStopsRequest]) (*connect.Response[isshov1.SetPlanStopsResponse], error) {
-	if _, err := admin(ctx); err != nil {
+	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
 	in := req.Msg.Stops
 	if len(in) < MinWalkPlaces || len(in) > MaxWalkPlaces {
-		return nil, reviewInvalid(fmt.Sprintf("stops: %d to %d places, where to meet first and where to finish last", MinWalkPlaces, MaxWalkPlaces))
+		return nil, errs.Invalid("stops: %d to %d places, where to meet first and where to finish last", MinWalkPlaces, MaxWalkPlaces)
 	}
 	stops := make([]WalkStop, len(in))
 	seen := map[string]bool{}
 	for i, s := range in {
 		n := i + 1
 		if s.PlaceId == "" || strings.ContainsAny(s.PlaceId, "/?#") {
-			return nil, reviewInvalid(fmt.Sprintf("stop %d: a Google place id", n))
+			return nil, errs.Invalid("stop %d: a Google place id", n)
 		}
 		if seen[s.PlaceId] {
-			return nil, reviewInvalid(fmt.Sprintf("stop %d: the same place as an earlier stop", n))
+			return nil, errs.Invalid("stop %d: the same place as an earlier stop", n)
 		}
 		seen[s.PlaceId] = true
 		if s.Minutes < 0 || s.Minutes > 120 {
-			return nil, reviewInvalid(fmt.Sprintf("stop %d: 0 to 120 minutes there", n))
+			return nil, errs.Invalid("stop %d: 0 to 120 minutes there", n)
 		}
 		note := strings.TrimSpace(s.Note)
 		if utf8.RuneCountInString(note) > MaxStopNote {
-			return nil, reviewInvalid(fmt.Sprintf("stop %d: a note of at most 300 characters", n))
+			return nil, errs.Invalid("stop %d: a note of at most 300 characters", n)
 		}
 		// The role follows the position, as the composer saves it.
 		role := walks.Stop
@@ -142,7 +144,7 @@ func (h *ReviewHandler) SetPlanStops(ctx context.Context, req *connect.Request[i
 		return nil, err
 	}
 	if !r.Walk {
-		return nil, reviewInvalid("not a walk: change its venues instead")
+		return nil, errs.Invalid("not a walk: change its venues instead")
 	}
 	if err := h.checkPlaces(ctx, stops, maps.LatLng{Lat: r.AreaLat, Lng: r.AreaLng}); err != nil {
 		return nil, err
@@ -235,7 +237,7 @@ func (h *ReviewHandler) checkPlaces(ctx context.Context, stops []WalkStop, centr
 	wg.Wait()
 	for i, p := range problems {
 		if p != "" {
-			return reviewInvalid(fmt.Sprintf("stop %d: %s", i+1, p))
+			return errs.Invalid("stop %d: %s", i+1, p)
 		}
 	}
 	return nil
@@ -273,7 +275,7 @@ func walkWarnings(stops []WalkStop, walking time.Duration) []string {
 }
 
 func (h *ReviewHandler) SetPlanVenue(ctx context.Context, req *connect.Request[isshov1.SetPlanVenueRequest]) (*connect.Response[isshov1.SetPlanVenueResponse], error) {
-	if _, err := admin(ctx); err != nil {
+	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
 	m := req.Msg
@@ -283,12 +285,12 @@ func (h *ReviewHandler) SetPlanVenue(ctx context.Context, req *connect.Request[i
 		return nil, err
 	}
 	if r.Walk {
-		return nil, reviewInvalid("a walk: edit its stops instead")
+		return nil, errs.Invalid("a walk: edit its stops instead")
 	}
 	activity := r.ActivityID
 	if m.FollowUp {
 		if r.FollowUpID == nil {
-			return nil, reviewInvalid("follow_up: the plan has nothing after")
+			return nil, errs.Invalid("follow_up: the plan has nothing after")
 		}
 		activity = *r.FollowUpID
 	}

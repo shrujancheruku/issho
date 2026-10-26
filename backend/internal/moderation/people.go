@@ -13,6 +13,8 @@ import (
 
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
+	"github.com/shrujancheruku/issho/backend/internal/platform/auth"
+	"github.com/shrujancheruku/issho/backend/internal/platform/errs"
 )
 
 const (
@@ -22,12 +24,12 @@ const (
 )
 
 func (h *Handler) SearchPeople(ctx context.Context, req *connect.Request[isshov1.SearchPeopleRequest]) (*connect.Response[isshov1.SearchPeopleResponse], error) {
-	if _, err := moderator(ctx); err != nil {
+	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
 	query := strings.TrimSpace(req.Msg.Query)
 	if utf8.RuneCountInString(query) < 2 {
-		return nil, invalid("query: at least 2 characters")
+		return nil, errs.Invalid("query: at least 2 characters")
 	}
 	rows, err := h.Q.SearchPeople(ctx, dbgen.SearchPeopleParams{Query: query, MaxRows: searchRows})
 	if err != nil {
@@ -41,7 +43,7 @@ func (h *Handler) SearchPeople(ctx context.Context, req *connect.Request[isshov1
 }
 
 func (h *Handler) GetPerson(ctx context.Context, req *connect.Request[isshov1.GetPersonRequest]) (*connect.Response[isshov1.GetPersonResponse], error) {
-	if _, err := moderator(ctx); err != nil {
+	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
 	id, err := parseUser(req.Msg.UserId)
@@ -116,7 +118,7 @@ func (h *Handler) GetPerson(ctx context.Context, req *connect.Request[isshov1.Ge
 }
 
 func (h *Handler) SuspendPerson(ctx context.Context, req *connect.Request[isshov1.SuspendPersonRequest]) (*connect.Response[isshov1.SuspendPersonResponse], error) {
-	c, err := moderator(ctx)
+	c, err := auth.RequireAdmin(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -125,11 +127,11 @@ func (h *Handler) SuspendPerson(ctx context.Context, req *connect.Request[isshov
 		return nil, err
 	}
 	if id == c.UserID {
-		return nil, invalid("user_id: you can't suspend yourself")
+		return nil, errs.Invalid("user_id: you can't suspend yourself")
 	}
 	reason := strings.TrimSpace(req.Msg.Reason)
 	if reason == "" || utf8.RuneCountInString(reason) > MaxNote {
-		return nil, invalid("reason: 1-2000 characters")
+		return nil, errs.Invalid("reason: 1-2000 characters")
 	}
 	if _, err := h.Q.GetPerson(ctx, id); errors.Is(err, pgx.ErrNoRows) {
 		return nil, connect.NewError(connect.CodeNotFound, errors.New("no such person"))
@@ -150,11 +152,14 @@ func (h *Handler) SuspendPerson(ctx context.Context, req *connect.Request[isshov
 	if err := h.Plans.RemoveFromUpcoming(ctx, id, now); err != nil {
 		return nil, err
 	}
+	if err := h.Crews.RemoveFromAll(ctx, id, now); err != nil {
+		return nil, err
+	}
 	return connect.NewResponse(&isshov1.SuspendPersonResponse{}), nil
 }
 
 func (h *Handler) LiftSuspension(ctx context.Context, req *connect.Request[isshov1.LiftSuspensionRequest]) (*connect.Response[isshov1.LiftSuspensionResponse], error) {
-	c, err := moderator(ctx)
+	c, err := auth.RequireAdmin(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -178,7 +183,7 @@ func (h *Handler) LiftSuspension(ctx context.Context, req *connect.Request[issho
 }
 
 func (h *Handler) ListSuspended(ctx context.Context, _ *connect.Request[isshov1.ListSuspendedRequest]) (*connect.Response[isshov1.ListSuspendedResponse], error) {
-	if _, err := moderator(ctx); err != nil {
+	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
 	rows, err := h.Q.ListOpenSuspensions(ctx, maxRows)
@@ -198,7 +203,7 @@ func (h *Handler) ListSuspended(ctx context.Context, _ *connect.Request[isshov1.
 func parseUser(s string) (uuid.UUID, error) {
 	id, err := uuid.Parse(s)
 	if err != nil {
-		return uuid.Nil, invalid("user_id: not a user id")
+		return uuid.Nil, errs.Invalid("user_id: not a user id")
 	}
 	return id, nil
 }

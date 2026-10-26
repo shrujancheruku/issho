@@ -6,7 +6,7 @@ import { parseSlotKey, slotKey } from '@/lib/slots';
 export type Unavailable = { date: string; block: TimeBlock };
 
 /** The fields of the API's Signup that the plan screen uses. */
-export type SavedSignup = { pattern: { weekday: number; block: TimeBlock }[]; unavailable: Unavailable[] };
+type SavedSignup = { pattern: { weekday: number; block: TimeBlock }[]; unavailable: Unavailable[] };
 
 /**
  * A signup as the plan screen edits it: weekly slots (slotKey) and whole

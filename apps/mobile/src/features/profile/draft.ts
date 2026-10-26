@@ -39,7 +39,7 @@ export const ConductVersion = 1;
 
 /** Must match the server (internal/profile). */
 export const MinActivities = 3;
-export const MinAge = 18;
+const MinAge = 18;
 export const travelChoices = [15, 30, 45, 60, 90];
 
 export function emptyDraft(deviceLanguage: string, deviceSecondary = ''): Draft {

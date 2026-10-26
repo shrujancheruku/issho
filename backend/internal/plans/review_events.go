@@ -12,6 +12,8 @@ import (
 
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
+	"github.com/shrujancheruku/issho/backend/internal/platform/auth"
+	"github.com/shrujancheruku/issho/backend/internal/platform/errs"
 	"github.com/shrujancheruku/issho/backend/internal/platform/i18n"
 )
 
@@ -23,12 +25,12 @@ var reviewEventStatuses = map[isshov1.ReviewEventStatus]string{
 }
 
 func (h *ReviewHandler) ListReviewEvents(ctx context.Context, req *connect.Request[isshov1.ListReviewEventsRequest]) (*connect.Response[isshov1.ListReviewEventsResponse], error) {
-	if _, err := admin(ctx); err != nil {
+	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
 	status, ok := reviewEventStatuses[req.Msg.Status]
 	if !ok {
-		return nil, reviewInvalid("status: proposed or scheduled")
+		return nil, errs.Invalid("status: proposed or scheduled")
 	}
 	q := dbgen.New(h.Svc.DB)
 	rows, err := q.ListReviewEvents(ctx, dbgen.ListReviewEventsParams{
@@ -54,7 +56,7 @@ func (h *ReviewHandler) ListReviewEvents(ctx context.Context, req *connect.Reque
 }
 
 func (h *ReviewHandler) GetReviewEvent(ctx context.Context, req *connect.Request[isshov1.GetReviewEventRequest]) (*connect.Response[isshov1.GetReviewEventResponse], error) {
-	if _, err := admin(ctx); err != nil {
+	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
 	id, err := parseEventID(req.Msg.EventId)
@@ -105,7 +107,7 @@ func (h *ReviewHandler) GetReviewEvent(ctx context.Context, req *connect.Request
 }
 
 func (h *ReviewHandler) MoveProposalMember(ctx context.Context, req *connect.Request[isshov1.MoveProposalMemberRequest]) (*connect.Response[isshov1.MoveProposalMemberResponse], error) {
-	if _, err := admin(ctx); err != nil {
+	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
 	eventID, userID, err := eventAndUser(req.Msg.EventId, req.Msg.UserId)
@@ -114,7 +116,7 @@ func (h *ReviewHandler) MoveProposalMember(ctx context.Context, req *connect.Req
 	}
 	groupID, err := uuid.Parse(req.Msg.GroupId)
 	if err != nil {
-		return nil, reviewInvalid("group_id: not a group id")
+		return nil, errs.Invalid("group_id: not a group id")
 	}
 	if err := h.Svc.MoveProposalMember(ctx, eventID, userID, groupID); err != nil {
 		return nil, proposalError(err)
@@ -123,7 +125,7 @@ func (h *ReviewHandler) MoveProposalMember(ctx context.Context, req *connect.Req
 }
 
 func (h *ReviewHandler) RemoveProposalMember(ctx context.Context, req *connect.Request[isshov1.RemoveProposalMemberRequest]) (*connect.Response[isshov1.RemoveProposalMemberResponse], error) {
-	if _, err := admin(ctx); err != nil {
+	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
 	eventID, userID, err := eventAndUser(req.Msg.EventId, req.Msg.UserId)
@@ -137,7 +139,7 @@ func (h *ReviewHandler) RemoveProposalMember(ctx context.Context, req *connect.R
 }
 
 func (h *ReviewHandler) SetProposalStart(ctx context.Context, req *connect.Request[isshov1.SetProposalStartRequest]) (*connect.Response[isshov1.SetProposalStartResponse], error) {
-	if _, err := admin(ctx); err != nil {
+	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
 	id, err := parseEventID(req.Msg.EventId)
@@ -151,12 +153,12 @@ func (h *ReviewHandler) SetProposalStart(ctx context.Context, req *connect.Reque
 }
 
 func (h *ReviewHandler) SetGroupMeetingPoint(ctx context.Context, req *connect.Request[isshov1.SetGroupMeetingPointRequest]) (*connect.Response[isshov1.SetGroupMeetingPointResponse], error) {
-	if _, err := admin(ctx); err != nil {
+	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
 	id, err := uuid.Parse(req.Msg.GroupId)
 	if err != nil {
-		return nil, reviewInvalid("group_id: not a group id")
+		return nil, errs.Invalid("group_id: not a group id")
 	}
 	if err := h.Svc.SetMeetingPoint(ctx, id, req.Msg.Text); err != nil {
 		return nil, proposalError(err)
@@ -165,7 +167,7 @@ func (h *ReviewHandler) SetGroupMeetingPoint(ctx context.Context, req *connect.R
 }
 
 func (h *ReviewHandler) ApproveProposal(ctx context.Context, req *connect.Request[isshov1.ApproveProposalRequest]) (*connect.Response[isshov1.ApproveProposalResponse], error) {
-	c, err := admin(ctx)
+	c, err := auth.RequireAdmin(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -180,7 +182,7 @@ func (h *ReviewHandler) ApproveProposal(ctx context.Context, req *connect.Reques
 }
 
 func (h *ReviewHandler) RejectProposal(ctx context.Context, req *connect.Request[isshov1.RejectProposalRequest]) (*connect.Response[isshov1.RejectProposalResponse], error) {
-	if _, err := admin(ctx); err != nil {
+	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
 	id, err := parseEventID(req.Msg.EventId)
@@ -200,7 +202,7 @@ func eventAndUser(event, user string) (uuid.UUID, uuid.UUID, error) {
 	}
 	userID, err := uuid.Parse(user)
 	if err != nil {
-		return uuid.Nil, uuid.Nil, reviewInvalid("user_id: not a user id")
+		return uuid.Nil, uuid.Nil, errs.Invalid("user_id: not a user id")
 	}
 	return eventID, userID, nil
 }

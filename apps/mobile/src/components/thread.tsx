@@ -14,7 +14,7 @@ import type { StringKey } from '@/i18n/strings';
 import { haptics } from '@/lib/haptics';
 
 /** An outing's five stages, in order. */
-export const stageKeys: readonly StringKey[] = [
+const stageKeys: readonly StringKey[] = [
   'thread.signedUp',
   'thread.dateSet',
   'thread.going',

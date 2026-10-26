@@ -11,6 +11,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
+	"github.com/shrujancheruku/issho/backend/internal/chat"
 )
 
 // EventHandler serves EventService.
@@ -194,7 +195,9 @@ func (h *EventHandler) SubmitFeedback(ctx context.Context, req *connect.Request[
 	return connect.NewResponse(&isshov1.SubmitFeedbackResponse{Feedback: feedbackToProto(f)}), nil
 }
 
-var reportReasons = map[isshov1.ReportReason]string{
+// ReportReasons maps the API's report reasons to stored ones (also used by
+// CrewService).
+var ReportReasons = map[isshov1.ReportReason]string{
 	isshov1.ReportReason_REPORT_REASON_DATING:     ReportDating,
 	isshov1.ReportReason_REPORT_REASON_HARASSMENT: ReportHarassment,
 	isshov1.ReportReason_REPORT_REASON_UNSAFE:     ReportUnsafe,
@@ -215,7 +218,7 @@ func (h *EventHandler) ReportPerson(ctx context.Context, req *connect.Request[is
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("mate_id: not a group mate id"))
 	}
-	reason, ok := reportReasons[req.Msg.Reason]
+	reason, ok := ReportReasons[req.Msg.Reason]
 	if !ok {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("reason: required"))
 	}
@@ -255,7 +258,7 @@ func parseIDs(field string, ss []string) ([]uuid.UUID, error) {
 	return ids, nil
 }
 
-func chatToProto(m ChatMessage) *isshov1.ChatMessage {
+func chatToProto(m chat.Message) *isshov1.ChatMessage {
 	return &isshov1.ChatMessage{Id: m.ID, Name: m.Name, Body: m.Body, At: timestamp(m.At), Mine: m.Mine}
 }
 

@@ -94,8 +94,9 @@ func TestIntegrationFeedback(t *testing.T) {
 	for _, bad := range []Feedback{
 		{Attended: true, PlanRating: 0, GroupRating: 3},
 		{Attended: true, PlanRating: 3, GroupRating: 6},
-		{Attended: true, PlanRating: 3, GroupRating: 3, Picks: []uuid.UUID{d}}, // declined
-		{Attended: true, PlanRating: 3, GroupRating: 3, Picks: []uuid.UUID{a}}, // themself
+		{Attended: true, PlanRating: 3, GroupRating: 3, Picks: []uuid.UUID{d}},                        // declined
+		{Attended: true, PlanRating: 3, GroupRating: 3, Picks: []uuid.UUID{a}},                        // themself
+		{Attended: true, PlanRating: 3, GroupRating: 3, Picks: []uuid.UUID{b}, Avoid: []uuid.UUID{b}}, // both lists
 	} {
 		var inv *InvalidError
 		if err := svc.SubmitFeedback(ctx, a, eventID, bad, now); !errors.As(err, &inv) {

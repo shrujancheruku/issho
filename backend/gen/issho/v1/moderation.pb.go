@@ -176,94 +176,6 @@ func (OutingFeedback) EnumDescriptor() ([]byte, []int) {
 	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{2}
 }
 
-type GetModeratorRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetModeratorRequest) Reset() {
-	*x = GetModeratorRequest{}
-	mi := &file_issho_v1_moderation_proto_msgTypes[0]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetModeratorRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetModeratorRequest) ProtoMessage() {}
-
-func (x *GetModeratorRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_moderation_proto_msgTypes[0]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetModeratorRequest.ProtoReflect.Descriptor instead.
-func (*GetModeratorRequest) Descriptor() ([]byte, []int) {
-	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{0}
-}
-
-type GetModeratorResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	Email         string                 `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetModeratorResponse) Reset() {
-	*x = GetModeratorResponse{}
-	mi := &file_issho_v1_moderation_proto_msgTypes[1]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetModeratorResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetModeratorResponse) ProtoMessage() {}
-
-func (x *GetModeratorResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_moderation_proto_msgTypes[1]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetModeratorResponse.ProtoReflect.Descriptor instead.
-func (*GetModeratorResponse) Descriptor() ([]byte, []int) {
-	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{1}
-}
-
-func (x *GetModeratorResponse) GetUserId() string {
-	if x != nil {
-		return x.UserId
-	}
-	return ""
-}
-
-func (x *GetModeratorResponse) GetEmail() string {
-	if x != nil {
-		return x.Email
-	}
-	return ""
-}
-
 type ListReportsRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// UNSPECIFIED = every status.
@@ -276,7 +188,7 @@ type ListReportsRequest struct {
 
 func (x *ListReportsRequest) Reset() {
 	*x = ListReportsRequest{}
-	mi := &file_issho_v1_moderation_proto_msgTypes[2]
+	mi := &file_issho_v1_moderation_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -288,7 +200,7 @@ func (x *ListReportsRequest) String() string {
 func (*ListReportsRequest) ProtoMessage() {}
 
 func (x *ListReportsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_moderation_proto_msgTypes[2]
+	mi := &file_issho_v1_moderation_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -301,7 +213,7 @@ func (x *ListReportsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListReportsRequest.ProtoReflect.Descriptor instead.
 func (*ListReportsRequest) Descriptor() ([]byte, []int) {
-	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{2}
+	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *ListReportsRequest) GetStatus() ReportStatus {
@@ -327,7 +239,7 @@ type ListReportsResponse struct {
 
 func (x *ListReportsResponse) Reset() {
 	*x = ListReportsResponse{}
-	mi := &file_issho_v1_moderation_proto_msgTypes[3]
+	mi := &file_issho_v1_moderation_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -339,7 +251,7 @@ func (x *ListReportsResponse) String() string {
 func (*ListReportsResponse) ProtoMessage() {}
 
 func (x *ListReportsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_moderation_proto_msgTypes[3]
+	mi := &file_issho_v1_moderation_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -352,7 +264,7 @@ func (x *ListReportsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListReportsResponse.ProtoReflect.Descriptor instead.
 func (*ListReportsResponse) Descriptor() ([]byte, []int) {
-	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{3}
+	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *ListReportsResponse) GetReports() []*ModerationReport {
@@ -398,7 +310,7 @@ type ModerationReport struct {
 
 func (x *ModerationReport) Reset() {
 	*x = ModerationReport{}
-	mi := &file_issho_v1_moderation_proto_msgTypes[4]
+	mi := &file_issho_v1_moderation_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -410,7 +322,7 @@ func (x *ModerationReport) String() string {
 func (*ModerationReport) ProtoMessage() {}
 
 func (x *ModerationReport) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_moderation_proto_msgTypes[4]
+	mi := &file_issho_v1_moderation_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -423,7 +335,7 @@ func (x *ModerationReport) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ModerationReport.ProtoReflect.Descriptor instead.
 func (*ModerationReport) Descriptor() ([]byte, []int) {
-	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{4}
+	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *ModerationReport) GetId() string {
@@ -579,7 +491,7 @@ type ResolveReportRequest struct {
 
 func (x *ResolveReportRequest) Reset() {
 	*x = ResolveReportRequest{}
-	mi := &file_issho_v1_moderation_proto_msgTypes[5]
+	mi := &file_issho_v1_moderation_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -591,7 +503,7 @@ func (x *ResolveReportRequest) String() string {
 func (*ResolveReportRequest) ProtoMessage() {}
 
 func (x *ResolveReportRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_moderation_proto_msgTypes[5]
+	mi := &file_issho_v1_moderation_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -604,7 +516,7 @@ func (x *ResolveReportRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResolveReportRequest.ProtoReflect.Descriptor instead.
 func (*ResolveReportRequest) Descriptor() ([]byte, []int) {
-	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{5}
+	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *ResolveReportRequest) GetReportId() string {
@@ -636,7 +548,7 @@ type ResolveReportResponse struct {
 
 func (x *ResolveReportResponse) Reset() {
 	*x = ResolveReportResponse{}
-	mi := &file_issho_v1_moderation_proto_msgTypes[6]
+	mi := &file_issho_v1_moderation_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -648,7 +560,7 @@ func (x *ResolveReportResponse) String() string {
 func (*ResolveReportResponse) ProtoMessage() {}
 
 func (x *ResolveReportResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_moderation_proto_msgTypes[6]
+	mi := &file_issho_v1_moderation_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -661,7 +573,7 @@ func (x *ResolveReportResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResolveReportResponse.ProtoReflect.Descriptor instead.
 func (*ResolveReportResponse) Descriptor() ([]byte, []int) {
-	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{6}
+	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{4}
 }
 
 type ListFlagsRequest struct {
@@ -674,7 +586,7 @@ type ListFlagsRequest struct {
 
 func (x *ListFlagsRequest) Reset() {
 	*x = ListFlagsRequest{}
-	mi := &file_issho_v1_moderation_proto_msgTypes[7]
+	mi := &file_issho_v1_moderation_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -686,7 +598,7 @@ func (x *ListFlagsRequest) String() string {
 func (*ListFlagsRequest) ProtoMessage() {}
 
 func (x *ListFlagsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_moderation_proto_msgTypes[7]
+	mi := &file_issho_v1_moderation_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -699,7 +611,7 @@ func (x *ListFlagsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListFlagsRequest.ProtoReflect.Descriptor instead.
 func (*ListFlagsRequest) Descriptor() ([]byte, []int) {
-	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{7}
+	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *ListFlagsRequest) GetResolved() bool {
@@ -718,7 +630,7 @@ type ListFlagsResponse struct {
 
 func (x *ListFlagsResponse) Reset() {
 	*x = ListFlagsResponse{}
-	mi := &file_issho_v1_moderation_proto_msgTypes[8]
+	mi := &file_issho_v1_moderation_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -730,7 +642,7 @@ func (x *ListFlagsResponse) String() string {
 func (*ListFlagsResponse) ProtoMessage() {}
 
 func (x *ListFlagsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_moderation_proto_msgTypes[8]
+	mi := &file_issho_v1_moderation_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -743,7 +655,7 @@ func (x *ListFlagsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListFlagsResponse.ProtoReflect.Descriptor instead.
 func (*ListFlagsResponse) Descriptor() ([]byte, []int) {
-	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{8}
+	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *ListFlagsResponse) GetFlags() []*ModerationFlag {
@@ -774,7 +686,7 @@ type ModerationFlag struct {
 
 func (x *ModerationFlag) Reset() {
 	*x = ModerationFlag{}
-	mi := &file_issho_v1_moderation_proto_msgTypes[9]
+	mi := &file_issho_v1_moderation_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -786,7 +698,7 @@ func (x *ModerationFlag) String() string {
 func (*ModerationFlag) ProtoMessage() {}
 
 func (x *ModerationFlag) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_moderation_proto_msgTypes[9]
+	mi := &file_issho_v1_moderation_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -799,7 +711,7 @@ func (x *ModerationFlag) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ModerationFlag.ProtoReflect.Descriptor instead.
 func (*ModerationFlag) Descriptor() ([]byte, []int) {
-	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{9}
+	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *ModerationFlag) GetId() int64 {
@@ -883,7 +795,7 @@ type ResolveFlagRequest struct {
 
 func (x *ResolveFlagRequest) Reset() {
 	*x = ResolveFlagRequest{}
-	mi := &file_issho_v1_moderation_proto_msgTypes[10]
+	mi := &file_issho_v1_moderation_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -895,7 +807,7 @@ func (x *ResolveFlagRequest) String() string {
 func (*ResolveFlagRequest) ProtoMessage() {}
 
 func (x *ResolveFlagRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_moderation_proto_msgTypes[10]
+	mi := &file_issho_v1_moderation_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -908,7 +820,7 @@ func (x *ResolveFlagRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResolveFlagRequest.ProtoReflect.Descriptor instead.
 func (*ResolveFlagRequest) Descriptor() ([]byte, []int) {
-	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{10}
+	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *ResolveFlagRequest) GetFlagId() int64 {
@@ -933,7 +845,7 @@ type ResolveFlagResponse struct {
 
 func (x *ResolveFlagResponse) Reset() {
 	*x = ResolveFlagResponse{}
-	mi := &file_issho_v1_moderation_proto_msgTypes[11]
+	mi := &file_issho_v1_moderation_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -945,7 +857,7 @@ func (x *ResolveFlagResponse) String() string {
 func (*ResolveFlagResponse) ProtoMessage() {}
 
 func (x *ResolveFlagResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_moderation_proto_msgTypes[11]
+	mi := &file_issho_v1_moderation_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -958,7 +870,7 @@ func (x *ResolveFlagResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResolveFlagResponse.ProtoReflect.Descriptor instead.
 func (*ResolveFlagResponse) Descriptor() ([]byte, []int) {
-	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{11}
+	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{9}
 }
 
 type ListCrewLeavesRequest struct {
@@ -971,7 +883,7 @@ type ListCrewLeavesRequest struct {
 
 func (x *ListCrewLeavesRequest) Reset() {
 	*x = ListCrewLeavesRequest{}
-	mi := &file_issho_v1_moderation_proto_msgTypes[12]
+	mi := &file_issho_v1_moderation_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -983,7 +895,7 @@ func (x *ListCrewLeavesRequest) String() string {
 func (*ListCrewLeavesRequest) ProtoMessage() {}
 
 func (x *ListCrewLeavesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_moderation_proto_msgTypes[12]
+	mi := &file_issho_v1_moderation_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -996,7 +908,7 @@ func (x *ListCrewLeavesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListCrewLeavesRequest.ProtoReflect.Descriptor instead.
 func (*ListCrewLeavesRequest) Descriptor() ([]byte, []int) {
-	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{12}
+	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *ListCrewLeavesRequest) GetReason() LeaveReason {
@@ -1015,7 +927,7 @@ type ListCrewLeavesResponse struct {
 
 func (x *ListCrewLeavesResponse) Reset() {
 	*x = ListCrewLeavesResponse{}
-	mi := &file_issho_v1_moderation_proto_msgTypes[13]
+	mi := &file_issho_v1_moderation_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1027,7 +939,7 @@ func (x *ListCrewLeavesResponse) String() string {
 func (*ListCrewLeavesResponse) ProtoMessage() {}
 
 func (x *ListCrewLeavesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_moderation_proto_msgTypes[13]
+	mi := &file_issho_v1_moderation_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1040,7 +952,7 @@ func (x *ListCrewLeavesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListCrewLeavesResponse.ProtoReflect.Descriptor instead.
 func (*ListCrewLeavesResponse) Descriptor() ([]byte, []int) {
-	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{13}
+	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *ListCrewLeavesResponse) GetLeaves() []*CrewLeave {
@@ -1070,7 +982,7 @@ type CrewLeave struct {
 
 func (x *CrewLeave) Reset() {
 	*x = CrewLeave{}
-	mi := &file_issho_v1_moderation_proto_msgTypes[14]
+	mi := &file_issho_v1_moderation_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1082,7 +994,7 @@ func (x *CrewLeave) String() string {
 func (*CrewLeave) ProtoMessage() {}
 
 func (x *CrewLeave) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_moderation_proto_msgTypes[14]
+	mi := &file_issho_v1_moderation_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1095,7 +1007,7 @@ func (x *CrewLeave) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CrewLeave.ProtoReflect.Descriptor instead.
 func (*CrewLeave) Descriptor() ([]byte, []int) {
-	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{14}
+	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *CrewLeave) GetId() int64 {
@@ -1161,478 +1073,6 @@ func (x *CrewLeave) GetCreatedAt() *timestamppb.Timestamp {
 	return nil
 }
 
-type ListTranslationLanguagesRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ListTranslationLanguagesRequest) Reset() {
-	*x = ListTranslationLanguagesRequest{}
-	mi := &file_issho_v1_moderation_proto_msgTypes[15]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ListTranslationLanguagesRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ListTranslationLanguagesRequest) ProtoMessage() {}
-
-func (x *ListTranslationLanguagesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_moderation_proto_msgTypes[15]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ListTranslationLanguagesRequest.ProtoReflect.Descriptor instead.
-func (*ListTranslationLanguagesRequest) Descriptor() ([]byte, []int) {
-	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{15}
-}
-
-type ListTranslationLanguagesResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Languages     []*TranslationLanguage `protobuf:"bytes,1,rep,name=languages,proto3" json:"languages,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ListTranslationLanguagesResponse) Reset() {
-	*x = ListTranslationLanguagesResponse{}
-	mi := &file_issho_v1_moderation_proto_msgTypes[16]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ListTranslationLanguagesResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ListTranslationLanguagesResponse) ProtoMessage() {}
-
-func (x *ListTranslationLanguagesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_moderation_proto_msgTypes[16]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ListTranslationLanguagesResponse.ProtoReflect.Descriptor instead.
-func (*ListTranslationLanguagesResponse) Descriptor() ([]byte, []int) {
-	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{16}
-}
-
-func (x *ListTranslationLanguagesResponse) GetLanguages() []*TranslationLanguage {
-	if x != nil {
-		return x.Languages
-	}
-	return nil
-}
-
-type TranslationLanguage struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// ISO 639-1 code, e.g. "ja".
-	Lang          string `protobuf:"bytes,1,opt,name=lang,proto3" json:"lang,omitempty"`
-	Total         int32  `protobuf:"varint,2,opt,name=total,proto3" json:"total,omitempty"`
-	Unreviewed    int32  `protobuf:"varint,3,opt,name=unreviewed,proto3" json:"unreviewed,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *TranslationLanguage) Reset() {
-	*x = TranslationLanguage{}
-	mi := &file_issho_v1_moderation_proto_msgTypes[17]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *TranslationLanguage) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*TranslationLanguage) ProtoMessage() {}
-
-func (x *TranslationLanguage) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_moderation_proto_msgTypes[17]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use TranslationLanguage.ProtoReflect.Descriptor instead.
-func (*TranslationLanguage) Descriptor() ([]byte, []int) {
-	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{17}
-}
-
-func (x *TranslationLanguage) GetLang() string {
-	if x != nil {
-		return x.Lang
-	}
-	return ""
-}
-
-func (x *TranslationLanguage) GetTotal() int32 {
-	if x != nil {
-		return x.Total
-	}
-	return 0
-}
-
-func (x *TranslationLanguage) GetUnreviewed() int32 {
-	if x != nil {
-		return x.Unreviewed
-	}
-	return 0
-}
-
-type ListTranslationsRequest struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	Lang           string                 `protobuf:"bytes,1,opt,name=lang,proto3" json:"lang,omitempty"`
-	UnreviewedOnly bool                   `protobuf:"varint,2,opt,name=unreviewed_only,json=unreviewedOnly,proto3" json:"unreviewed_only,omitempty"`
-	// Matches the English source or the translation; empty = all.
-	Search string `protobuf:"bytes,3,opt,name=search,proto3" json:"search,omitempty"`
-	// How many to skip (pages of 100).
-	Offset        int32 `protobuf:"varint,4,opt,name=offset,proto3" json:"offset,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ListTranslationsRequest) Reset() {
-	*x = ListTranslationsRequest{}
-	mi := &file_issho_v1_moderation_proto_msgTypes[18]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ListTranslationsRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ListTranslationsRequest) ProtoMessage() {}
-
-func (x *ListTranslationsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_moderation_proto_msgTypes[18]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ListTranslationsRequest.ProtoReflect.Descriptor instead.
-func (*ListTranslationsRequest) Descriptor() ([]byte, []int) {
-	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{18}
-}
-
-func (x *ListTranslationsRequest) GetLang() string {
-	if x != nil {
-		return x.Lang
-	}
-	return ""
-}
-
-func (x *ListTranslationsRequest) GetUnreviewedOnly() bool {
-	if x != nil {
-		return x.UnreviewedOnly
-	}
-	return false
-}
-
-func (x *ListTranslationsRequest) GetSearch() string {
-	if x != nil {
-		return x.Search
-	}
-	return ""
-}
-
-func (x *ListTranslationsRequest) GetOffset() int32 {
-	if x != nil {
-		return x.Offset
-	}
-	return 0
-}
-
-type ListTranslationsResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Translations  []*Translation         `protobuf:"bytes,1,rep,name=translations,proto3" json:"translations,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ListTranslationsResponse) Reset() {
-	*x = ListTranslationsResponse{}
-	mi := &file_issho_v1_moderation_proto_msgTypes[19]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ListTranslationsResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ListTranslationsResponse) ProtoMessage() {}
-
-func (x *ListTranslationsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_moderation_proto_msgTypes[19]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ListTranslationsResponse.ProtoReflect.Descriptor instead.
-func (*ListTranslationsResponse) Descriptor() ([]byte, []int) {
-	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{19}
-}
-
-func (x *ListTranslationsResponse) GetTranslations() []*Translation {
-	if x != nil {
-		return x.Translations
-	}
-	return nil
-}
-
-type Translation struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Identifies the English source and its context, with lang.
-	SourceHash string `protobuf:"bytes,1,opt,name=source_hash,json=sourceHash,proto3" json:"source_hash,omitempty"`
-	Lang       string `protobuf:"bytes,2,opt,name=lang,proto3" json:"lang,omitempty"`
-	Source     string `protobuf:"bytes,3,opt,name=source,proto3" json:"source,omitempty"`
-	// What the text is ("name of a city", a UI string), as given to the
-	// translator.
-	Context string `protobuf:"bytes,4,opt,name=context,proto3" json:"context,omitempty"`
-	Text    string `protobuf:"bytes,5,opt,name=text,proto3" json:"text,omitempty"`
-	// Which translator wrote it.
-	Model         string                 `protobuf:"bytes,6,opt,name=model,proto3" json:"model,omitempty"`
-	Reviewed      bool                   `protobuf:"varint,7,opt,name=reviewed,proto3" json:"reviewed,omitempty"`
-	ReviewedAt    *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=reviewed_at,json=reviewedAt,proto3" json:"reviewed_at,omitempty"`
-	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *Translation) Reset() {
-	*x = Translation{}
-	mi := &file_issho_v1_moderation_proto_msgTypes[20]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *Translation) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Translation) ProtoMessage() {}
-
-func (x *Translation) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_moderation_proto_msgTypes[20]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use Translation.ProtoReflect.Descriptor instead.
-func (*Translation) Descriptor() ([]byte, []int) {
-	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{20}
-}
-
-func (x *Translation) GetSourceHash() string {
-	if x != nil {
-		return x.SourceHash
-	}
-	return ""
-}
-
-func (x *Translation) GetLang() string {
-	if x != nil {
-		return x.Lang
-	}
-	return ""
-}
-
-func (x *Translation) GetSource() string {
-	if x != nil {
-		return x.Source
-	}
-	return ""
-}
-
-func (x *Translation) GetContext() string {
-	if x != nil {
-		return x.Context
-	}
-	return ""
-}
-
-func (x *Translation) GetText() string {
-	if x != nil {
-		return x.Text
-	}
-	return ""
-}
-
-func (x *Translation) GetModel() string {
-	if x != nil {
-		return x.Model
-	}
-	return ""
-}
-
-func (x *Translation) GetReviewed() bool {
-	if x != nil {
-		return x.Reviewed
-	}
-	return false
-}
-
-func (x *Translation) GetReviewedAt() *timestamppb.Timestamp {
-	if x != nil {
-		return x.ReviewedAt
-	}
-	return nil
-}
-
-func (x *Translation) GetCreatedAt() *timestamppb.Timestamp {
-	if x != nil {
-		return x.CreatedAt
-	}
-	return nil
-}
-
-type ReviewTranslationRequest struct {
-	state      protoimpl.MessageState `protogen:"open.v1"`
-	SourceHash string                 `protobuf:"bytes,1,opt,name=source_hash,json=sourceHash,proto3" json:"source_hash,omitempty"`
-	Lang       string                 `protobuf:"bytes,2,opt,name=lang,proto3" json:"lang,omitempty"`
-	// The corrected text (or the same text, to confirm it). Not empty.
-	Text          string `protobuf:"bytes,3,opt,name=text,proto3" json:"text,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ReviewTranslationRequest) Reset() {
-	*x = ReviewTranslationRequest{}
-	mi := &file_issho_v1_moderation_proto_msgTypes[21]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ReviewTranslationRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ReviewTranslationRequest) ProtoMessage() {}
-
-func (x *ReviewTranslationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_moderation_proto_msgTypes[21]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ReviewTranslationRequest.ProtoReflect.Descriptor instead.
-func (*ReviewTranslationRequest) Descriptor() ([]byte, []int) {
-	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{21}
-}
-
-func (x *ReviewTranslationRequest) GetSourceHash() string {
-	if x != nil {
-		return x.SourceHash
-	}
-	return ""
-}
-
-func (x *ReviewTranslationRequest) GetLang() string {
-	if x != nil {
-		return x.Lang
-	}
-	return ""
-}
-
-func (x *ReviewTranslationRequest) GetText() string {
-	if x != nil {
-		return x.Text
-	}
-	return ""
-}
-
-type ReviewTranslationResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Translation   *Translation           `protobuf:"bytes,1,opt,name=translation,proto3" json:"translation,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ReviewTranslationResponse) Reset() {
-	*x = ReviewTranslationResponse{}
-	mi := &file_issho_v1_moderation_proto_msgTypes[22]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ReviewTranslationResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ReviewTranslationResponse) ProtoMessage() {}
-
-func (x *ReviewTranslationResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_moderation_proto_msgTypes[22]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ReviewTranslationResponse.ProtoReflect.Descriptor instead.
-func (*ReviewTranslationResponse) Descriptor() ([]byte, []int) {
-	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{22}
-}
-
-func (x *ReviewTranslationResponse) GetTranslation() *Translation {
-	if x != nil {
-		return x.Translation
-	}
-	return nil
-}
-
 type SearchPeopleRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// At least 2 characters.
@@ -1643,7 +1083,7 @@ type SearchPeopleRequest struct {
 
 func (x *SearchPeopleRequest) Reset() {
 	*x = SearchPeopleRequest{}
-	mi := &file_issho_v1_moderation_proto_msgTypes[23]
+	mi := &file_issho_v1_moderation_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1655,7 +1095,7 @@ func (x *SearchPeopleRequest) String() string {
 func (*SearchPeopleRequest) ProtoMessage() {}
 
 func (x *SearchPeopleRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_moderation_proto_msgTypes[23]
+	mi := &file_issho_v1_moderation_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1668,7 +1108,7 @@ func (x *SearchPeopleRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SearchPeopleRequest.ProtoReflect.Descriptor instead.
 func (*SearchPeopleRequest) Descriptor() ([]byte, []int) {
-	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{23}
+	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *SearchPeopleRequest) GetQuery() string {
@@ -1687,7 +1127,7 @@ type SearchPeopleResponse struct {
 
 func (x *SearchPeopleResponse) Reset() {
 	*x = SearchPeopleResponse{}
-	mi := &file_issho_v1_moderation_proto_msgTypes[24]
+	mi := &file_issho_v1_moderation_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1699,7 +1139,7 @@ func (x *SearchPeopleResponse) String() string {
 func (*SearchPeopleResponse) ProtoMessage() {}
 
 func (x *SearchPeopleResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_moderation_proto_msgTypes[24]
+	mi := &file_issho_v1_moderation_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1712,7 +1152,7 @@ func (x *SearchPeopleResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SearchPeopleResponse.ProtoReflect.Descriptor instead.
 func (*SearchPeopleResponse) Descriptor() ([]byte, []int) {
-	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{24}
+	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *SearchPeopleResponse) GetPeople() []*PersonSummary {
@@ -1735,7 +1175,7 @@ type PersonSummary struct {
 
 func (x *PersonSummary) Reset() {
 	*x = PersonSummary{}
-	mi := &file_issho_v1_moderation_proto_msgTypes[25]
+	mi := &file_issho_v1_moderation_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1747,7 +1187,7 @@ func (x *PersonSummary) String() string {
 func (*PersonSummary) ProtoMessage() {}
 
 func (x *PersonSummary) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_moderation_proto_msgTypes[25]
+	mi := &file_issho_v1_moderation_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1760,7 +1200,7 @@ func (x *PersonSummary) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PersonSummary.ProtoReflect.Descriptor instead.
 func (*PersonSummary) Descriptor() ([]byte, []int) {
-	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{25}
+	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *PersonSummary) GetUserId() string {
@@ -1800,7 +1240,7 @@ type GetPersonRequest struct {
 
 func (x *GetPersonRequest) Reset() {
 	*x = GetPersonRequest{}
-	mi := &file_issho_v1_moderation_proto_msgTypes[26]
+	mi := &file_issho_v1_moderation_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1812,7 +1252,7 @@ func (x *GetPersonRequest) String() string {
 func (*GetPersonRequest) ProtoMessage() {}
 
 func (x *GetPersonRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_moderation_proto_msgTypes[26]
+	mi := &file_issho_v1_moderation_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1825,7 +1265,7 @@ func (x *GetPersonRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPersonRequest.ProtoReflect.Descriptor instead.
 func (*GetPersonRequest) Descriptor() ([]byte, []int) {
-	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{26}
+	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *GetPersonRequest) GetUserId() string {
@@ -1844,7 +1284,7 @@ type GetPersonResponse struct {
 
 func (x *GetPersonResponse) Reset() {
 	*x = GetPersonResponse{}
-	mi := &file_issho_v1_moderation_proto_msgTypes[27]
+	mi := &file_issho_v1_moderation_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1856,7 +1296,7 @@ func (x *GetPersonResponse) String() string {
 func (*GetPersonResponse) ProtoMessage() {}
 
 func (x *GetPersonResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_moderation_proto_msgTypes[27]
+	mi := &file_issho_v1_moderation_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1869,7 +1309,7 @@ func (x *GetPersonResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPersonResponse.ProtoReflect.Descriptor instead.
 func (*GetPersonResponse) Descriptor() ([]byte, []int) {
-	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{27}
+	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *GetPersonResponse) GetPerson() *Person {
@@ -1909,7 +1349,7 @@ type Person struct {
 
 func (x *Person) Reset() {
 	*x = Person{}
-	mi := &file_issho_v1_moderation_proto_msgTypes[28]
+	mi := &file_issho_v1_moderation_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1921,7 +1361,7 @@ func (x *Person) String() string {
 func (*Person) ProtoMessage() {}
 
 func (x *Person) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_moderation_proto_msgTypes[28]
+	mi := &file_issho_v1_moderation_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1934,7 +1374,7 @@ func (x *Person) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Person.ProtoReflect.Descriptor instead.
 func (*Person) Descriptor() ([]byte, []int) {
-	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{28}
+	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *Person) GetUserId() string {
@@ -2058,7 +1498,7 @@ type Suspension struct {
 
 func (x *Suspension) Reset() {
 	*x = Suspension{}
-	mi := &file_issho_v1_moderation_proto_msgTypes[29]
+	mi := &file_issho_v1_moderation_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2070,7 +1510,7 @@ func (x *Suspension) String() string {
 func (*Suspension) ProtoMessage() {}
 
 func (x *Suspension) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_moderation_proto_msgTypes[29]
+	mi := &file_issho_v1_moderation_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2083,7 +1523,7 @@ func (x *Suspension) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Suspension.ProtoReflect.Descriptor instead.
 func (*Suspension) Descriptor() ([]byte, []int) {
-	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{29}
+	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *Suspension) GetId() int64 {
@@ -2155,7 +1595,7 @@ type PersonOuting struct {
 
 func (x *PersonOuting) Reset() {
 	*x = PersonOuting{}
-	mi := &file_issho_v1_moderation_proto_msgTypes[30]
+	mi := &file_issho_v1_moderation_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2167,7 +1607,7 @@ func (x *PersonOuting) String() string {
 func (*PersonOuting) ProtoMessage() {}
 
 func (x *PersonOuting) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_moderation_proto_msgTypes[30]
+	mi := &file_issho_v1_moderation_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2180,7 +1620,7 @@ func (x *PersonOuting) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PersonOuting.ProtoReflect.Descriptor instead.
 func (*PersonOuting) Descriptor() ([]byte, []int) {
-	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{30}
+	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *PersonOuting) GetEventId() string {
@@ -2250,7 +1690,7 @@ type SuspendPersonRequest struct {
 
 func (x *SuspendPersonRequest) Reset() {
 	*x = SuspendPersonRequest{}
-	mi := &file_issho_v1_moderation_proto_msgTypes[31]
+	mi := &file_issho_v1_moderation_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2262,7 +1702,7 @@ func (x *SuspendPersonRequest) String() string {
 func (*SuspendPersonRequest) ProtoMessage() {}
 
 func (x *SuspendPersonRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_moderation_proto_msgTypes[31]
+	mi := &file_issho_v1_moderation_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2275,7 +1715,7 @@ func (x *SuspendPersonRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SuspendPersonRequest.ProtoReflect.Descriptor instead.
 func (*SuspendPersonRequest) Descriptor() ([]byte, []int) {
-	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{31}
+	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *SuspendPersonRequest) GetUserId() string {
@@ -2300,7 +1740,7 @@ type SuspendPersonResponse struct {
 
 func (x *SuspendPersonResponse) Reset() {
 	*x = SuspendPersonResponse{}
-	mi := &file_issho_v1_moderation_proto_msgTypes[32]
+	mi := &file_issho_v1_moderation_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2312,7 +1752,7 @@ func (x *SuspendPersonResponse) String() string {
 func (*SuspendPersonResponse) ProtoMessage() {}
 
 func (x *SuspendPersonResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_moderation_proto_msgTypes[32]
+	mi := &file_issho_v1_moderation_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2325,7 +1765,7 @@ func (x *SuspendPersonResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SuspendPersonResponse.ProtoReflect.Descriptor instead.
 func (*SuspendPersonResponse) Descriptor() ([]byte, []int) {
-	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{32}
+	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{22}
 }
 
 type LiftSuspensionRequest struct {
@@ -2339,7 +1779,7 @@ type LiftSuspensionRequest struct {
 
 func (x *LiftSuspensionRequest) Reset() {
 	*x = LiftSuspensionRequest{}
-	mi := &file_issho_v1_moderation_proto_msgTypes[33]
+	mi := &file_issho_v1_moderation_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2351,7 +1791,7 @@ func (x *LiftSuspensionRequest) String() string {
 func (*LiftSuspensionRequest) ProtoMessage() {}
 
 func (x *LiftSuspensionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_moderation_proto_msgTypes[33]
+	mi := &file_issho_v1_moderation_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2364,7 +1804,7 @@ func (x *LiftSuspensionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LiftSuspensionRequest.ProtoReflect.Descriptor instead.
 func (*LiftSuspensionRequest) Descriptor() ([]byte, []int) {
-	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{33}
+	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *LiftSuspensionRequest) GetUserId() string {
@@ -2389,7 +1829,7 @@ type LiftSuspensionResponse struct {
 
 func (x *LiftSuspensionResponse) Reset() {
 	*x = LiftSuspensionResponse{}
-	mi := &file_issho_v1_moderation_proto_msgTypes[34]
+	mi := &file_issho_v1_moderation_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2401,7 +1841,7 @@ func (x *LiftSuspensionResponse) String() string {
 func (*LiftSuspensionResponse) ProtoMessage() {}
 
 func (x *LiftSuspensionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_moderation_proto_msgTypes[34]
+	mi := &file_issho_v1_moderation_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2414,7 +1854,7 @@ func (x *LiftSuspensionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LiftSuspensionResponse.ProtoReflect.Descriptor instead.
 func (*LiftSuspensionResponse) Descriptor() ([]byte, []int) {
-	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{34}
+	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{24}
 }
 
 type ListSuspendedRequest struct {
@@ -2425,7 +1865,7 @@ type ListSuspendedRequest struct {
 
 func (x *ListSuspendedRequest) Reset() {
 	*x = ListSuspendedRequest{}
-	mi := &file_issho_v1_moderation_proto_msgTypes[35]
+	mi := &file_issho_v1_moderation_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2437,7 +1877,7 @@ func (x *ListSuspendedRequest) String() string {
 func (*ListSuspendedRequest) ProtoMessage() {}
 
 func (x *ListSuspendedRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_moderation_proto_msgTypes[35]
+	mi := &file_issho_v1_moderation_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2450,7 +1890,7 @@ func (x *ListSuspendedRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListSuspendedRequest.ProtoReflect.Descriptor instead.
 func (*ListSuspendedRequest) Descriptor() ([]byte, []int) {
-	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{35}
+	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{25}
 }
 
 type ListSuspendedResponse struct {
@@ -2462,7 +1902,7 @@ type ListSuspendedResponse struct {
 
 func (x *ListSuspendedResponse) Reset() {
 	*x = ListSuspendedResponse{}
-	mi := &file_issho_v1_moderation_proto_msgTypes[36]
+	mi := &file_issho_v1_moderation_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2474,7 +1914,7 @@ func (x *ListSuspendedResponse) String() string {
 func (*ListSuspendedResponse) ProtoMessage() {}
 
 func (x *ListSuspendedResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_moderation_proto_msgTypes[36]
+	mi := &file_issho_v1_moderation_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2487,7 +1927,7 @@ func (x *ListSuspendedResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListSuspendedResponse.ProtoReflect.Descriptor instead.
 func (*ListSuspendedResponse) Descriptor() ([]byte, []int) {
-	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{36}
+	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *ListSuspendedResponse) GetPeople() []*SuspendedPerson {
@@ -2510,7 +1950,7 @@ type SuspendedPerson struct {
 
 func (x *SuspendedPerson) Reset() {
 	*x = SuspendedPerson{}
-	mi := &file_issho_v1_moderation_proto_msgTypes[37]
+	mi := &file_issho_v1_moderation_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2522,7 +1962,7 @@ func (x *SuspendedPerson) String() string {
 func (*SuspendedPerson) ProtoMessage() {}
 
 func (x *SuspendedPerson) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_moderation_proto_msgTypes[37]
+	mi := &file_issho_v1_moderation_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2535,7 +1975,7 @@ func (x *SuspendedPerson) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SuspendedPerson.ProtoReflect.Descriptor instead.
 func (*SuspendedPerson) Descriptor() ([]byte, []int) {
-	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{37}
+	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *SuspendedPerson) GetUserId() string {
@@ -2577,11 +2017,7 @@ var File_issho_v1_moderation_proto protoreflect.FileDescriptor
 
 const file_issho_v1_moderation_proto_rawDesc = "" +
 	"\n" +
-	"\x19issho/v1/moderation.proto\x12\bissho.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x14issho/v1/crews.proto\x1a\x15issho/v1/events.proto\"\x15\n" +
-	"\x13GetModeratorRequest\"E\n" +
-	"\x14GetModeratorResponse\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x14\n" +
-	"\x05email\x18\x02 \x01(\tR\x05email\"e\n" +
+	"\x19issho/v1/moderation.proto\x12\bissho.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x14issho/v1/crews.proto\x1a\x15issho/v1/events.proto\"e\n" +
 	"\x12ListReportsRequest\x12.\n" +
 	"\x06status\x18\x01 \x01(\x0e2\x16.issho.v1.ReportStatusR\x06status\x12\x1f\n" +
 	"\vreported_id\x18\x02 \x01(\tR\n" +
@@ -2663,43 +2099,7 @@ const file_issho_v1_moderation_proto_rawDesc = "" +
 	"\x06reason\x18\a \x01(\x0e2\x15.issho.v1.LeaveReasonR\x06reason\x12\x18\n" +
 	"\adetails\x18\b \x01(\tR\adetails\x129\n" +
 	"\n" +
-	"created_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"!\n" +
-	"\x1fListTranslationLanguagesRequest\"_\n" +
-	" ListTranslationLanguagesResponse\x12;\n" +
-	"\tlanguages\x18\x01 \x03(\v2\x1d.issho.v1.TranslationLanguageR\tlanguages\"_\n" +
-	"\x13TranslationLanguage\x12\x12\n" +
-	"\x04lang\x18\x01 \x01(\tR\x04lang\x12\x14\n" +
-	"\x05total\x18\x02 \x01(\x05R\x05total\x12\x1e\n" +
-	"\n" +
-	"unreviewed\x18\x03 \x01(\x05R\n" +
-	"unreviewed\"\x86\x01\n" +
-	"\x17ListTranslationsRequest\x12\x12\n" +
-	"\x04lang\x18\x01 \x01(\tR\x04lang\x12'\n" +
-	"\x0funreviewed_only\x18\x02 \x01(\bR\x0eunreviewedOnly\x12\x16\n" +
-	"\x06search\x18\x03 \x01(\tR\x06search\x12\x16\n" +
-	"\x06offset\x18\x04 \x01(\x05R\x06offset\"U\n" +
-	"\x18ListTranslationsResponse\x129\n" +
-	"\ftranslations\x18\x01 \x03(\v2\x15.issho.v1.TranslationR\ftranslations\"\xb2\x02\n" +
-	"\vTranslation\x12\x1f\n" +
-	"\vsource_hash\x18\x01 \x01(\tR\n" +
-	"sourceHash\x12\x12\n" +
-	"\x04lang\x18\x02 \x01(\tR\x04lang\x12\x16\n" +
-	"\x06source\x18\x03 \x01(\tR\x06source\x12\x18\n" +
-	"\acontext\x18\x04 \x01(\tR\acontext\x12\x12\n" +
-	"\x04text\x18\x05 \x01(\tR\x04text\x12\x14\n" +
-	"\x05model\x18\x06 \x01(\tR\x05model\x12\x1a\n" +
-	"\breviewed\x18\a \x01(\bR\breviewed\x12;\n" +
-	"\vreviewed_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"reviewedAt\x129\n" +
-	"\n" +
-	"created_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"c\n" +
-	"\x18ReviewTranslationRequest\x12\x1f\n" +
-	"\vsource_hash\x18\x01 \x01(\tR\n" +
-	"sourceHash\x12\x12\n" +
-	"\x04lang\x18\x02 \x01(\tR\x04lang\x12\x12\n" +
-	"\x04text\x18\x03 \x01(\tR\x04text\"T\n" +
-	"\x19ReviewTranslationResponse\x127\n" +
-	"\vtranslation\x18\x01 \x01(\v2\x15.issho.v1.TranslationR\vtranslation\"+\n" +
+	"created_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"+\n" +
 	"\x13SearchPeopleRequest\x12\x14\n" +
 	"\x05query\x18\x01 \x01(\tR\x05query\"G\n" +
 	"\x14SearchPeopleResponse\x12/\n" +
@@ -2780,17 +2180,13 @@ const file_issho_v1_moderation_proto_rawDesc = "" +
 	"\x0eOutingFeedback\x12\x1f\n" +
 	"\x1bOUTING_FEEDBACK_UNSPECIFIED\x10\x00\x12\x1d\n" +
 	"\x19OUTING_FEEDBACK_SAID_WENT\x10\x01\x12!\n" +
-	"\x1dOUTING_FEEDBACK_SAID_DIDNT_GO\x10\x022\xc6\t\n" +
-	"\x11ModerationService\x12O\n" +
-	"\fGetModerator\x12\x1d.issho.v1.GetModeratorRequest\x1a\x1e.issho.v1.GetModeratorResponse\"\x00\x12L\n" +
+	"\x1dOUTING_FEEDBACK_SAID_DIDNT_GO\x10\x022\xba\x06\n" +
+	"\x11ModerationService\x12L\n" +
 	"\vListReports\x12\x1c.issho.v1.ListReportsRequest\x1a\x1d.issho.v1.ListReportsResponse\"\x00\x12R\n" +
 	"\rResolveReport\x12\x1e.issho.v1.ResolveReportRequest\x1a\x1f.issho.v1.ResolveReportResponse\"\x00\x12F\n" +
 	"\tListFlags\x12\x1a.issho.v1.ListFlagsRequest\x1a\x1b.issho.v1.ListFlagsResponse\"\x00\x12L\n" +
 	"\vResolveFlag\x12\x1c.issho.v1.ResolveFlagRequest\x1a\x1d.issho.v1.ResolveFlagResponse\"\x00\x12U\n" +
-	"\x0eListCrewLeaves\x12\x1f.issho.v1.ListCrewLeavesRequest\x1a .issho.v1.ListCrewLeavesResponse\"\x00\x12v\n" +
-	"\x18ListTranslationLanguages\x12).issho.v1.ListTranslationLanguagesRequest\x1a*.issho.v1.ListTranslationLanguagesResponse\"\x03\x88\x02\x01\x12^\n" +
-	"\x10ListTranslations\x12!.issho.v1.ListTranslationsRequest\x1a\".issho.v1.ListTranslationsResponse\"\x03\x88\x02\x01\x12a\n" +
-	"\x11ReviewTranslation\x12\".issho.v1.ReviewTranslationRequest\x1a#.issho.v1.ReviewTranslationResponse\"\x03\x88\x02\x01\x12O\n" +
+	"\x0eListCrewLeaves\x12\x1f.issho.v1.ListCrewLeavesRequest\x1a .issho.v1.ListCrewLeavesResponse\"\x00\x12O\n" +
 	"\fSearchPeople\x12\x1d.issho.v1.SearchPeopleRequest\x1a\x1e.issho.v1.SearchPeopleResponse\"\x00\x12F\n" +
 	"\tGetPerson\x12\x1a.issho.v1.GetPersonRequest\x1a\x1b.issho.v1.GetPersonResponse\"\x00\x12R\n" +
 	"\rSuspendPerson\x12\x1e.issho.v1.SuspendPersonRequest\x1a\x1f.issho.v1.SuspendPersonResponse\"\x00\x12U\n" +
@@ -2810,120 +2206,97 @@ func file_issho_v1_moderation_proto_rawDescGZIP() []byte {
 }
 
 var file_issho_v1_moderation_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_issho_v1_moderation_proto_msgTypes = make([]protoimpl.MessageInfo, 38)
+var file_issho_v1_moderation_proto_msgTypes = make([]protoimpl.MessageInfo, 28)
 var file_issho_v1_moderation_proto_goTypes = []any{
-	(ReportStatus)(0),                        // 0: issho.v1.ReportStatus
-	(FlagKind)(0),                            // 1: issho.v1.FlagKind
-	(OutingFeedback)(0),                      // 2: issho.v1.OutingFeedback
-	(*GetModeratorRequest)(nil),              // 3: issho.v1.GetModeratorRequest
-	(*GetModeratorResponse)(nil),             // 4: issho.v1.GetModeratorResponse
-	(*ListReportsRequest)(nil),               // 5: issho.v1.ListReportsRequest
-	(*ListReportsResponse)(nil),              // 6: issho.v1.ListReportsResponse
-	(*ModerationReport)(nil),                 // 7: issho.v1.ModerationReport
-	(*ResolveReportRequest)(nil),             // 8: issho.v1.ResolveReportRequest
-	(*ResolveReportResponse)(nil),            // 9: issho.v1.ResolveReportResponse
-	(*ListFlagsRequest)(nil),                 // 10: issho.v1.ListFlagsRequest
-	(*ListFlagsResponse)(nil),                // 11: issho.v1.ListFlagsResponse
-	(*ModerationFlag)(nil),                   // 12: issho.v1.ModerationFlag
-	(*ResolveFlagRequest)(nil),               // 13: issho.v1.ResolveFlagRequest
-	(*ResolveFlagResponse)(nil),              // 14: issho.v1.ResolveFlagResponse
-	(*ListCrewLeavesRequest)(nil),            // 15: issho.v1.ListCrewLeavesRequest
-	(*ListCrewLeavesResponse)(nil),           // 16: issho.v1.ListCrewLeavesResponse
-	(*CrewLeave)(nil),                        // 17: issho.v1.CrewLeave
-	(*ListTranslationLanguagesRequest)(nil),  // 18: issho.v1.ListTranslationLanguagesRequest
-	(*ListTranslationLanguagesResponse)(nil), // 19: issho.v1.ListTranslationLanguagesResponse
-	(*TranslationLanguage)(nil),              // 20: issho.v1.TranslationLanguage
-	(*ListTranslationsRequest)(nil),          // 21: issho.v1.ListTranslationsRequest
-	(*ListTranslationsResponse)(nil),         // 22: issho.v1.ListTranslationsResponse
-	(*Translation)(nil),                      // 23: issho.v1.Translation
-	(*ReviewTranslationRequest)(nil),         // 24: issho.v1.ReviewTranslationRequest
-	(*ReviewTranslationResponse)(nil),        // 25: issho.v1.ReviewTranslationResponse
-	(*SearchPeopleRequest)(nil),              // 26: issho.v1.SearchPeopleRequest
-	(*SearchPeopleResponse)(nil),             // 27: issho.v1.SearchPeopleResponse
-	(*PersonSummary)(nil),                    // 28: issho.v1.PersonSummary
-	(*GetPersonRequest)(nil),                 // 29: issho.v1.GetPersonRequest
-	(*GetPersonResponse)(nil),                // 30: issho.v1.GetPersonResponse
-	(*Person)(nil),                           // 31: issho.v1.Person
-	(*Suspension)(nil),                       // 32: issho.v1.Suspension
-	(*PersonOuting)(nil),                     // 33: issho.v1.PersonOuting
-	(*SuspendPersonRequest)(nil),             // 34: issho.v1.SuspendPersonRequest
-	(*SuspendPersonResponse)(nil),            // 35: issho.v1.SuspendPersonResponse
-	(*LiftSuspensionRequest)(nil),            // 36: issho.v1.LiftSuspensionRequest
-	(*LiftSuspensionResponse)(nil),           // 37: issho.v1.LiftSuspensionResponse
-	(*ListSuspendedRequest)(nil),             // 38: issho.v1.ListSuspendedRequest
-	(*ListSuspendedResponse)(nil),            // 39: issho.v1.ListSuspendedResponse
-	(*SuspendedPerson)(nil),                  // 40: issho.v1.SuspendedPerson
-	(ReportReason)(0),                        // 41: issho.v1.ReportReason
-	(*timestamppb.Timestamp)(nil),            // 42: google.protobuf.Timestamp
-	(LeaveReason)(0),                         // 43: issho.v1.LeaveReason
+	(ReportStatus)(0),              // 0: issho.v1.ReportStatus
+	(FlagKind)(0),                  // 1: issho.v1.FlagKind
+	(OutingFeedback)(0),            // 2: issho.v1.OutingFeedback
+	(*ListReportsRequest)(nil),     // 3: issho.v1.ListReportsRequest
+	(*ListReportsResponse)(nil),    // 4: issho.v1.ListReportsResponse
+	(*ModerationReport)(nil),       // 5: issho.v1.ModerationReport
+	(*ResolveReportRequest)(nil),   // 6: issho.v1.ResolveReportRequest
+	(*ResolveReportResponse)(nil),  // 7: issho.v1.ResolveReportResponse
+	(*ListFlagsRequest)(nil),       // 8: issho.v1.ListFlagsRequest
+	(*ListFlagsResponse)(nil),      // 9: issho.v1.ListFlagsResponse
+	(*ModerationFlag)(nil),         // 10: issho.v1.ModerationFlag
+	(*ResolveFlagRequest)(nil),     // 11: issho.v1.ResolveFlagRequest
+	(*ResolveFlagResponse)(nil),    // 12: issho.v1.ResolveFlagResponse
+	(*ListCrewLeavesRequest)(nil),  // 13: issho.v1.ListCrewLeavesRequest
+	(*ListCrewLeavesResponse)(nil), // 14: issho.v1.ListCrewLeavesResponse
+	(*CrewLeave)(nil),              // 15: issho.v1.CrewLeave
+	(*SearchPeopleRequest)(nil),    // 16: issho.v1.SearchPeopleRequest
+	(*SearchPeopleResponse)(nil),   // 17: issho.v1.SearchPeopleResponse
+	(*PersonSummary)(nil),          // 18: issho.v1.PersonSummary
+	(*GetPersonRequest)(nil),       // 19: issho.v1.GetPersonRequest
+	(*GetPersonResponse)(nil),      // 20: issho.v1.GetPersonResponse
+	(*Person)(nil),                 // 21: issho.v1.Person
+	(*Suspension)(nil),             // 22: issho.v1.Suspension
+	(*PersonOuting)(nil),           // 23: issho.v1.PersonOuting
+	(*SuspendPersonRequest)(nil),   // 24: issho.v1.SuspendPersonRequest
+	(*SuspendPersonResponse)(nil),  // 25: issho.v1.SuspendPersonResponse
+	(*LiftSuspensionRequest)(nil),  // 26: issho.v1.LiftSuspensionRequest
+	(*LiftSuspensionResponse)(nil), // 27: issho.v1.LiftSuspensionResponse
+	(*ListSuspendedRequest)(nil),   // 28: issho.v1.ListSuspendedRequest
+	(*ListSuspendedResponse)(nil),  // 29: issho.v1.ListSuspendedResponse
+	(*SuspendedPerson)(nil),        // 30: issho.v1.SuspendedPerson
+	(ReportReason)(0),              // 31: issho.v1.ReportReason
+	(*timestamppb.Timestamp)(nil),  // 32: google.protobuf.Timestamp
+	(LeaveReason)(0),               // 33: issho.v1.LeaveReason
 }
 var file_issho_v1_moderation_proto_depIdxs = []int32{
 	0,  // 0: issho.v1.ListReportsRequest.status:type_name -> issho.v1.ReportStatus
-	7,  // 1: issho.v1.ListReportsResponse.reports:type_name -> issho.v1.ModerationReport
-	41, // 2: issho.v1.ModerationReport.reason:type_name -> issho.v1.ReportReason
+	5,  // 1: issho.v1.ListReportsResponse.reports:type_name -> issho.v1.ModerationReport
+	31, // 2: issho.v1.ModerationReport.reason:type_name -> issho.v1.ReportReason
 	0,  // 3: issho.v1.ModerationReport.status:type_name -> issho.v1.ReportStatus
-	42, // 4: issho.v1.ModerationReport.created_at:type_name -> google.protobuf.Timestamp
-	42, // 5: issho.v1.ModerationReport.updated_at:type_name -> google.protobuf.Timestamp
-	42, // 6: issho.v1.ModerationReport.reviewed_at:type_name -> google.protobuf.Timestamp
+	32, // 4: issho.v1.ModerationReport.created_at:type_name -> google.protobuf.Timestamp
+	32, // 5: issho.v1.ModerationReport.updated_at:type_name -> google.protobuf.Timestamp
+	32, // 6: issho.v1.ModerationReport.reviewed_at:type_name -> google.protobuf.Timestamp
 	0,  // 7: issho.v1.ResolveReportRequest.status:type_name -> issho.v1.ReportStatus
-	12, // 8: issho.v1.ListFlagsResponse.flags:type_name -> issho.v1.ModerationFlag
+	10, // 8: issho.v1.ListFlagsResponse.flags:type_name -> issho.v1.ModerationFlag
 	1,  // 9: issho.v1.ModerationFlag.kind:type_name -> issho.v1.FlagKind
-	42, // 10: issho.v1.ModerationFlag.created_at:type_name -> google.protobuf.Timestamp
-	42, // 11: issho.v1.ModerationFlag.updated_at:type_name -> google.protobuf.Timestamp
-	42, // 12: issho.v1.ModerationFlag.resolved_at:type_name -> google.protobuf.Timestamp
-	43, // 13: issho.v1.ListCrewLeavesRequest.reason:type_name -> issho.v1.LeaveReason
-	17, // 14: issho.v1.ListCrewLeavesResponse.leaves:type_name -> issho.v1.CrewLeave
-	43, // 15: issho.v1.CrewLeave.reason:type_name -> issho.v1.LeaveReason
-	42, // 16: issho.v1.CrewLeave.created_at:type_name -> google.protobuf.Timestamp
-	20, // 17: issho.v1.ListTranslationLanguagesResponse.languages:type_name -> issho.v1.TranslationLanguage
-	23, // 18: issho.v1.ListTranslationsResponse.translations:type_name -> issho.v1.Translation
-	42, // 19: issho.v1.Translation.reviewed_at:type_name -> google.protobuf.Timestamp
-	42, // 20: issho.v1.Translation.created_at:type_name -> google.protobuf.Timestamp
-	23, // 21: issho.v1.ReviewTranslationResponse.translation:type_name -> issho.v1.Translation
-	28, // 22: issho.v1.SearchPeopleResponse.people:type_name -> issho.v1.PersonSummary
-	31, // 23: issho.v1.GetPersonResponse.person:type_name -> issho.v1.Person
-	42, // 24: issho.v1.Person.joined_at:type_name -> google.protobuf.Timestamp
-	32, // 25: issho.v1.Person.suspensions:type_name -> issho.v1.Suspension
-	12, // 26: issho.v1.Person.flags:type_name -> issho.v1.ModerationFlag
-	33, // 27: issho.v1.Person.outings:type_name -> issho.v1.PersonOuting
-	42, // 28: issho.v1.Suspension.created_at:type_name -> google.protobuf.Timestamp
-	42, // 29: issho.v1.Suspension.lifted_at:type_name -> google.protobuf.Timestamp
-	2,  // 30: issho.v1.PersonOuting.feedback:type_name -> issho.v1.OutingFeedback
-	40, // 31: issho.v1.ListSuspendedResponse.people:type_name -> issho.v1.SuspendedPerson
-	42, // 32: issho.v1.SuspendedPerson.since:type_name -> google.protobuf.Timestamp
-	3,  // 33: issho.v1.ModerationService.GetModerator:input_type -> issho.v1.GetModeratorRequest
-	5,  // 34: issho.v1.ModerationService.ListReports:input_type -> issho.v1.ListReportsRequest
-	8,  // 35: issho.v1.ModerationService.ResolveReport:input_type -> issho.v1.ResolveReportRequest
-	10, // 36: issho.v1.ModerationService.ListFlags:input_type -> issho.v1.ListFlagsRequest
-	13, // 37: issho.v1.ModerationService.ResolveFlag:input_type -> issho.v1.ResolveFlagRequest
-	15, // 38: issho.v1.ModerationService.ListCrewLeaves:input_type -> issho.v1.ListCrewLeavesRequest
-	18, // 39: issho.v1.ModerationService.ListTranslationLanguages:input_type -> issho.v1.ListTranslationLanguagesRequest
-	21, // 40: issho.v1.ModerationService.ListTranslations:input_type -> issho.v1.ListTranslationsRequest
-	24, // 41: issho.v1.ModerationService.ReviewTranslation:input_type -> issho.v1.ReviewTranslationRequest
-	26, // 42: issho.v1.ModerationService.SearchPeople:input_type -> issho.v1.SearchPeopleRequest
-	29, // 43: issho.v1.ModerationService.GetPerson:input_type -> issho.v1.GetPersonRequest
-	34, // 44: issho.v1.ModerationService.SuspendPerson:input_type -> issho.v1.SuspendPersonRequest
-	36, // 45: issho.v1.ModerationService.LiftSuspension:input_type -> issho.v1.LiftSuspensionRequest
-	38, // 46: issho.v1.ModerationService.ListSuspended:input_type -> issho.v1.ListSuspendedRequest
-	4,  // 47: issho.v1.ModerationService.GetModerator:output_type -> issho.v1.GetModeratorResponse
-	6,  // 48: issho.v1.ModerationService.ListReports:output_type -> issho.v1.ListReportsResponse
-	9,  // 49: issho.v1.ModerationService.ResolveReport:output_type -> issho.v1.ResolveReportResponse
-	11, // 50: issho.v1.ModerationService.ListFlags:output_type -> issho.v1.ListFlagsResponse
-	14, // 51: issho.v1.ModerationService.ResolveFlag:output_type -> issho.v1.ResolveFlagResponse
-	16, // 52: issho.v1.ModerationService.ListCrewLeaves:output_type -> issho.v1.ListCrewLeavesResponse
-	19, // 53: issho.v1.ModerationService.ListTranslationLanguages:output_type -> issho.v1.ListTranslationLanguagesResponse
-	22, // 54: issho.v1.ModerationService.ListTranslations:output_type -> issho.v1.ListTranslationsResponse
-	25, // 55: issho.v1.ModerationService.ReviewTranslation:output_type -> issho.v1.ReviewTranslationResponse
-	27, // 56: issho.v1.ModerationService.SearchPeople:output_type -> issho.v1.SearchPeopleResponse
-	30, // 57: issho.v1.ModerationService.GetPerson:output_type -> issho.v1.GetPersonResponse
-	35, // 58: issho.v1.ModerationService.SuspendPerson:output_type -> issho.v1.SuspendPersonResponse
-	37, // 59: issho.v1.ModerationService.LiftSuspension:output_type -> issho.v1.LiftSuspensionResponse
-	39, // 60: issho.v1.ModerationService.ListSuspended:output_type -> issho.v1.ListSuspendedResponse
-	47, // [47:61] is the sub-list for method output_type
-	33, // [33:47] is the sub-list for method input_type
-	33, // [33:33] is the sub-list for extension type_name
-	33, // [33:33] is the sub-list for extension extendee
-	0,  // [0:33] is the sub-list for field type_name
+	32, // 10: issho.v1.ModerationFlag.created_at:type_name -> google.protobuf.Timestamp
+	32, // 11: issho.v1.ModerationFlag.updated_at:type_name -> google.protobuf.Timestamp
+	32, // 12: issho.v1.ModerationFlag.resolved_at:type_name -> google.protobuf.Timestamp
+	33, // 13: issho.v1.ListCrewLeavesRequest.reason:type_name -> issho.v1.LeaveReason
+	15, // 14: issho.v1.ListCrewLeavesResponse.leaves:type_name -> issho.v1.CrewLeave
+	33, // 15: issho.v1.CrewLeave.reason:type_name -> issho.v1.LeaveReason
+	32, // 16: issho.v1.CrewLeave.created_at:type_name -> google.protobuf.Timestamp
+	18, // 17: issho.v1.SearchPeopleResponse.people:type_name -> issho.v1.PersonSummary
+	21, // 18: issho.v1.GetPersonResponse.person:type_name -> issho.v1.Person
+	32, // 19: issho.v1.Person.joined_at:type_name -> google.protobuf.Timestamp
+	22, // 20: issho.v1.Person.suspensions:type_name -> issho.v1.Suspension
+	10, // 21: issho.v1.Person.flags:type_name -> issho.v1.ModerationFlag
+	23, // 22: issho.v1.Person.outings:type_name -> issho.v1.PersonOuting
+	32, // 23: issho.v1.Suspension.created_at:type_name -> google.protobuf.Timestamp
+	32, // 24: issho.v1.Suspension.lifted_at:type_name -> google.protobuf.Timestamp
+	2,  // 25: issho.v1.PersonOuting.feedback:type_name -> issho.v1.OutingFeedback
+	30, // 26: issho.v1.ListSuspendedResponse.people:type_name -> issho.v1.SuspendedPerson
+	32, // 27: issho.v1.SuspendedPerson.since:type_name -> google.protobuf.Timestamp
+	3,  // 28: issho.v1.ModerationService.ListReports:input_type -> issho.v1.ListReportsRequest
+	6,  // 29: issho.v1.ModerationService.ResolveReport:input_type -> issho.v1.ResolveReportRequest
+	8,  // 30: issho.v1.ModerationService.ListFlags:input_type -> issho.v1.ListFlagsRequest
+	11, // 31: issho.v1.ModerationService.ResolveFlag:input_type -> issho.v1.ResolveFlagRequest
+	13, // 32: issho.v1.ModerationService.ListCrewLeaves:input_type -> issho.v1.ListCrewLeavesRequest
+	16, // 33: issho.v1.ModerationService.SearchPeople:input_type -> issho.v1.SearchPeopleRequest
+	19, // 34: issho.v1.ModerationService.GetPerson:input_type -> issho.v1.GetPersonRequest
+	24, // 35: issho.v1.ModerationService.SuspendPerson:input_type -> issho.v1.SuspendPersonRequest
+	26, // 36: issho.v1.ModerationService.LiftSuspension:input_type -> issho.v1.LiftSuspensionRequest
+	28, // 37: issho.v1.ModerationService.ListSuspended:input_type -> issho.v1.ListSuspendedRequest
+	4,  // 38: issho.v1.ModerationService.ListReports:output_type -> issho.v1.ListReportsResponse
+	7,  // 39: issho.v1.ModerationService.ResolveReport:output_type -> issho.v1.ResolveReportResponse
+	9,  // 40: issho.v1.ModerationService.ListFlags:output_type -> issho.v1.ListFlagsResponse
+	12, // 41: issho.v1.ModerationService.ResolveFlag:output_type -> issho.v1.ResolveFlagResponse
+	14, // 42: issho.v1.ModerationService.ListCrewLeaves:output_type -> issho.v1.ListCrewLeavesResponse
+	17, // 43: issho.v1.ModerationService.SearchPeople:output_type -> issho.v1.SearchPeopleResponse
+	20, // 44: issho.v1.ModerationService.GetPerson:output_type -> issho.v1.GetPersonResponse
+	25, // 45: issho.v1.ModerationService.SuspendPerson:output_type -> issho.v1.SuspendPersonResponse
+	27, // 46: issho.v1.ModerationService.LiftSuspension:output_type -> issho.v1.LiftSuspensionResponse
+	29, // 47: issho.v1.ModerationService.ListSuspended:output_type -> issho.v1.ListSuspendedResponse
+	38, // [38:48] is the sub-list for method output_type
+	28, // [28:38] is the sub-list for method input_type
+	28, // [28:28] is the sub-list for extension type_name
+	28, // [28:28] is the sub-list for extension extendee
+	0,  // [0:28] is the sub-list for field type_name
 }
 
 func init() { file_issho_v1_moderation_proto_init() }
@@ -2939,7 +2312,7 @@ func file_issho_v1_moderation_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_issho_v1_moderation_proto_rawDesc), len(file_issho_v1_moderation_proto_rawDesc)),
 			NumEnums:      3,
-			NumMessages:   38,
+			NumMessages:   28,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

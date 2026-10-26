@@ -10,8 +10,8 @@ import (
 // Without a DSN nothing is set up or sent: development, tests and CI.
 func TestOffWithoutDSN(t *testing.T) {
 	flush, err := Init("", "dev", "development", "api", 0)
-	if err != nil || Enabled() {
-		t.Fatalf("Init(\"\") = %v, enabled %v", err, Enabled())
+	if err != nil || enabled {
+		t.Fatalf("Init(\"\") = %v, enabled %v", err, enabled)
 	}
 	flush()
 	h := http.NotFoundHandler()

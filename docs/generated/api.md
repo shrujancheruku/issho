@@ -181,8 +181,6 @@
   
 - [issho/v1/moderation.proto](#issho_v1_moderation-proto)
     - [CrewLeave](#issho-v1-CrewLeave)
-    - [GetModeratorRequest](#issho-v1-GetModeratorRequest)
-    - [GetModeratorResponse](#issho-v1-GetModeratorResponse)
     - [GetPersonRequest](#issho-v1-GetPersonRequest)
     - [GetPersonResponse](#issho-v1-GetPersonResponse)
     - [LiftSuspensionRequest](#issho-v1-LiftSuspensionRequest)
@@ -195,10 +193,6 @@
     - [ListReportsResponse](#issho-v1-ListReportsResponse)
     - [ListSuspendedRequest](#issho-v1-ListSuspendedRequest)
     - [ListSuspendedResponse](#issho-v1-ListSuspendedResponse)
-    - [ListTranslationLanguagesRequest](#issho-v1-ListTranslationLanguagesRequest)
-    - [ListTranslationLanguagesResponse](#issho-v1-ListTranslationLanguagesResponse)
-    - [ListTranslationsRequest](#issho-v1-ListTranslationsRequest)
-    - [ListTranslationsResponse](#issho-v1-ListTranslationsResponse)
     - [ModerationFlag](#issho-v1-ModerationFlag)
     - [ModerationReport](#issho-v1-ModerationReport)
     - [Person](#issho-v1-Person)
@@ -208,16 +202,12 @@
     - [ResolveFlagResponse](#issho-v1-ResolveFlagResponse)
     - [ResolveReportRequest](#issho-v1-ResolveReportRequest)
     - [ResolveReportResponse](#issho-v1-ResolveReportResponse)
-    - [ReviewTranslationRequest](#issho-v1-ReviewTranslationRequest)
-    - [ReviewTranslationResponse](#issho-v1-ReviewTranslationResponse)
     - [SearchPeopleRequest](#issho-v1-SearchPeopleRequest)
     - [SearchPeopleResponse](#issho-v1-SearchPeopleResponse)
     - [SuspendPersonRequest](#issho-v1-SuspendPersonRequest)
     - [SuspendPersonResponse](#issho-v1-SuspendPersonResponse)
     - [SuspendedPerson](#issho-v1-SuspendedPerson)
     - [Suspension](#issho-v1-Suspension)
-    - [Translation](#issho-v1-Translation)
-    - [TranslationLanguage](#issho-v1-TranslationLanguage)
   
     - [FlagKind](#issho-v1-FlagKind)
     - [OutingFeedback](#issho-v1-OutingFeedback)
@@ -313,6 +303,8 @@
     - [ReviewCatalogTranslationResponse](#issho-v1-ReviewCatalogTranslationResponse)
     - [SaveAppStringRequest](#issho-v1-SaveAppStringRequest)
     - [SaveAppStringResponse](#issho-v1-SaveAppStringResponse)
+    - [Translation](#issho-v1-Translation)
+    - [TranslationLanguage](#issho-v1-TranslationLanguage)
     - [TranslationPullRequest](#issho-v1-TranslationPullRequest)
   
     - [TranslationService](#issho-v1-TranslationService)
@@ -2881,32 +2873,6 @@ HTTP: POST /issho.v1.MetricsService/&lt;Method&gt;
 
 
 
-<a name="issho-v1-GetModeratorRequest"></a>
-
-### GetModeratorRequest
-
-
-
-
-
-
-
-<a name="issho-v1-GetModeratorResponse"></a>
-
-### GetModeratorResponse
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| user_id | [string](#string) |  |  |
-| email | [string](#string) |  |  |
-
-
-
-
-
-
 <a name="issho-v1-GetPersonRequest"></a>
 
 ### GetPersonRequest
@@ -3073,64 +3039,6 @@ HTTP: POST /issho.v1.MetricsService/&lt;Method&gt;
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | people | [SuspendedPerson](#issho-v1-SuspendedPerson) | repeated |  |
-
-
-
-
-
-
-<a name="issho-v1-ListTranslationLanguagesRequest"></a>
-
-### ListTranslationLanguagesRequest
-
-
-
-
-
-
-
-<a name="issho-v1-ListTranslationLanguagesResponse"></a>
-
-### ListTranslationLanguagesResponse
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| languages | [TranslationLanguage](#issho-v1-TranslationLanguage) | repeated |  |
-
-
-
-
-
-
-<a name="issho-v1-ListTranslationsRequest"></a>
-
-### ListTranslationsRequest
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| lang | [string](#string) |  |  |
-| unreviewed_only | [bool](#bool) |  |  |
-| search | [string](#string) |  | Matches the English source or the translation; empty = all. |
-| offset | [int32](#int32) |  | How many to skip (pages of 100). |
-
-
-
-
-
-
-<a name="issho-v1-ListTranslationsResponse"></a>
-
-### ListTranslationsResponse
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| translations | [Translation](#issho-v1-Translation) | repeated |  |
 
 
 
@@ -3317,38 +3225,6 @@ HTTP: POST /issho.v1.MetricsService/&lt;Method&gt;
 
 
 
-<a name="issho-v1-ReviewTranslationRequest"></a>
-
-### ReviewTranslationRequest
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| source_hash | [string](#string) |  |  |
-| lang | [string](#string) |  |  |
-| text | [string](#string) |  | The corrected text (or the same text, to confirm it). Not empty. |
-
-
-
-
-
-
-<a name="issho-v1-ReviewTranslationResponse"></a>
-
-### ReviewTranslationResponse
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| translation | [Translation](#issho-v1-Translation) |  |  |
-
-
-
-
-
-
 <a name="issho-v1-SearchPeopleRequest"></a>
 
 ### SearchPeopleRequest
@@ -3444,46 +3320,6 @@ HTTP: POST /issho.v1.MetricsService/&lt;Method&gt;
 
 
 
-
-<a name="issho-v1-Translation"></a>
-
-### Translation
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| source_hash | [string](#string) |  | Identifies the English source and its context, with lang. |
-| lang | [string](#string) |  |  |
-| source | [string](#string) |  |  |
-| context | [string](#string) |  | What the text is (&#34;name of a city&#34;, a UI string), as given to the translator. |
-| text | [string](#string) |  |  |
-| model | [string](#string) |  | Which translator wrote it. |
-| reviewed | [bool](#bool) |  |  |
-| reviewed_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
-| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
-
-
-
-
-
-
-<a name="issho-v1-TranslationLanguage"></a>
-
-### TranslationLanguage
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| lang | [string](#string) |  | ISO 639-1 code, e.g. &#34;ja&#34;. |
-| total | [int32](#int32) |  |  |
-| unreviewed | [int32](#int32) |  |  |
-
-
-
-
-
  
 
 
@@ -3535,8 +3371,7 @@ HTTP: POST /issho.v1.MetricsService/&lt;Method&gt;
 ### ModerationService
 ModerationService: the moderation queue in the admin SPA. Reports about
 people, flags raised by the system (picks leaning towards one gender),
-and why people left crews. (Translations are TranslationService&#39;s; the
-three translation RPCs below only answer UNIMPLEMENTED now.)
+and why people left crews. (Translations are TranslationService&#39;s.)
 Admins only: requires `Authorization: Bearer &lt;Supabase access token&gt;` for
 an account with `app_metadata.admin = true` (set with `tool set-admin`);
 anyone else gets PERMISSION_DENIED.
@@ -3545,15 +3380,11 @@ HTTP: POST /issho.v1.ModerationService/&lt;Method&gt;
 
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
-| GetModerator | [GetModeratorRequest](#issho-v1-GetModeratorRequest) | [GetModeratorResponse](#issho-v1-GetModeratorResponse) | GetModerator says who the caller is. The admin SPA calls it after sign-in to find out whether the account is an admin. |
 | ListReports | [ListReportsRequest](#issho-v1-ListReportsRequest) | [ListReportsResponse](#issho-v1-ListReportsResponse) | ListReports returns reports, open ones first (oldest first), then the rest newest first. At most 200. |
 | ResolveReport | [ResolveReportRequest](#issho-v1-ResolveReportRequest) | [ResolveReportResponse](#issho-v1-ResolveReportResponse) | ResolveReport records the decision on a report. It can be changed later (resolve again). The pair stays apart in matching either way. |
 | ListFlags | [ListFlagsRequest](#issho-v1-ListFlagsRequest) | [ListFlagsResponse](#issho-v1-ListFlagsResponse) | ListFlags returns open flags (oldest first) or resolved ones (newest first). At most 200. |
 | ResolveFlag | [ResolveFlagRequest](#issho-v1-ResolveFlagRequest) | [ResolveFlagResponse](#issho-v1-ResolveFlagResponse) | ResolveFlag closes an open flag with a note. FAILED_PRECONDITION if it&#39;s already resolved. A later signal opens a new flag. |
 | ListCrewLeaves | [ListCrewLeavesRequest](#issho-v1-ListCrewLeavesRequest) | [ListCrewLeavesResponse](#issho-v1-ListCrewLeavesResponse) | ListCrewLeaves returns why people left crews, newest first. At most 200. |
-| ListTranslationLanguages | [ListTranslationLanguagesRequest](#issho-v1-ListTranslationLanguagesRequest) | [ListTranslationLanguagesResponse](#issho-v1-ListTranslationLanguagesResponse) | Deprecated: moved to TranslationService (ListCatalogLanguages). Kept because removing an RPC breaks the API&#39;s compatibility check; answers UNIMPLEMENTED. |
-| ListTranslations | [ListTranslationsRequest](#issho-v1-ListTranslationsRequest) | [ListTranslationsResponse](#issho-v1-ListTranslationsResponse) | Deprecated: moved to TranslationService (ListAppStrings, ListCatalogTranslations). Answers UNIMPLEMENTED. |
-| ReviewTranslation | [ReviewTranslationRequest](#issho-v1-ReviewTranslationRequest) | [ReviewTranslationResponse](#issho-v1-ReviewTranslationResponse) | Deprecated: moved to TranslationService (SaveAppString, ReviewCatalogTranslation). Answers UNIMPLEMENTED. |
 | SearchPeople | [SearchPeopleRequest](#issho-v1-SearchPeopleRequest) | [SearchPeopleResponse](#issho-v1-SearchPeopleResponse) | SearchPeople finds people by name or email (contains, any case) or exact user id. At most 50. |
 | GetPerson | [GetPersonRequest](#issho-v1-GetPersonRequest) | [GetPersonResponse](#issho-v1-GetPersonResponse) | GetPerson returns what a moderator needs to decide about someone: who they are, report counts, flags, suspensions and recent outings. NOT_FOUND if there&#39;s no such account. |
 | SuspendPerson | [SuspendPersonRequest](#issho-v1-SuspendPersonRequest) | [SuspendPersonResponse](#issho-v1-SuspendPersonResponse) | SuspendPerson keeps someone out of Issho until it&#39;s lifted: the API refuses their calls (GetMe says they&#39;re suspended; signing out and deleting the account still work), the chat socket refuses them, matching leaves them out and they get no notifications. They&#39;re also taken out of their open signups, outings that haven&#39;t started, and crews. Suspending someone already suspended only repeats that removal. INVALID_ARGUMENT for the caller&#39;s own account. |
@@ -4842,6 +4673,46 @@ HTTP: POST /issho.v1.ReviewService/&lt;Method&gt;
 | ----- | ---- | ----- | ----------- |
 | app_string | [AppString](#issho-v1-AppString) |  |  |
 | pull_request | [TranslationPullRequest](#issho-v1-TranslationPullRequest) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-Translation"></a>
+
+### Translation
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| source_hash | [string](#string) |  | Identifies the English source and its context, with lang. |
+| lang | [string](#string) |  |  |
+| source | [string](#string) |  |  |
+| context | [string](#string) |  | What the text is (&#34;name of a city&#34;, a UI string), as given to the translator. |
+| text | [string](#string) |  |  |
+| model | [string](#string) |  | Which translator wrote it. |
+| reviewed | [bool](#bool) |  |  |
+| reviewed_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-TranslationLanguage"></a>
+
+### TranslationLanguage
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| lang | [string](#string) |  | ISO 639-1 code, e.g. &#34;ja&#34;. |
+| total | [int32](#int32) |  |  |
+| unreviewed | [int32](#int32) |  |  |
 
 
 

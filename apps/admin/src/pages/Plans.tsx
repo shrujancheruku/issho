@@ -1,8 +1,9 @@
 import { ConnectError, ReviewPlanStatus, type ReviewPlan } from '@issho/api-client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import { formatTime, planHref } from '../format';
+import { useRememberedCity } from '../city';
 import { api } from '../lib';
 import { NewPlan } from './NewPlan';
 
@@ -16,16 +17,9 @@ const tabs: { label: string; status: ReviewPlanStatus }[] = [
 export function Plans() {
   const queryClient = useQueryClient();
   const cities = useQuery({ queryKey: ['review-cities'], queryFn: () => api.review.listReviewCities({}) });
-  const [cityId, setCityId] = useState(() => localStorage.getItem('plans.city') ?? '');
+  const [cityId, setCityId] = useRememberedCity('plans.city', cities.data?.cities);
   const [status, setStatus] = useState(ReviewPlanStatus.DRAFT);
   const [creating, setCreating] = useState(false);
-  useEffect(() => {
-    const list = cities.data?.cities ?? [];
-    if (list.length && !list.some((c) => c.id === cityId)) setCityId(list[0].id);
-  }, [cities.data, cityId]);
-  useEffect(() => {
-    if (cityId) localStorage.setItem('plans.city', cityId);
-  }, [cityId]);
   const city = cities.data?.cities.find((c) => c.id === cityId);
   const plans = useQuery({
     queryKey: ['review-plans', cityId, status],

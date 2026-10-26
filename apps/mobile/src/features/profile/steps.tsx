@@ -29,7 +29,7 @@ import { categoryOrder, interestLevels, interestStyle } from './interest';
 import { LanguagePicker } from './language-picker';
 import { SuggestActivities } from './suggest-activities';
 
-export type StepProps = { draft: Draft; onChange: (d: Draft) => void };
+type StepProps = { draft: Draft; onChange: (d: Draft) => void };
 
 export const stepTitles: Record<Step, StringKey> = {
   languages: 'profile.languages',

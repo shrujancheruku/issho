@@ -20,6 +20,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"github.com/shrujancheruku/issho/backend/internal/crews"
 	"github.com/shrujancheruku/issho/backend/internal/plans"
 	"github.com/shrujancheruku/issho/backend/internal/platform/auth"
 )
@@ -65,7 +66,7 @@ func TestIntegrationSocket(t *testing.T) {
 	svc := &plans.Service{DB: pool}
 	hub := NewHub()
 	go hub.Run(ctx, pool, log)
-	srv := httptest.NewServer(&Handler{Hub: hub, Svc: svc, Verifier: verifier, Log: log})
+	srv := httptest.NewServer(&Handler{Hub: hub, Plans: svc, Crews: &crews.Service{DB: pool}, Verifier: verifier, Log: log})
 	defer srv.Close()
 	wsURL := "ws" + strings.TrimPrefix(srv.URL, "http")
 

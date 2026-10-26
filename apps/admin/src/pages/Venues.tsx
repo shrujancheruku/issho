@@ -1,8 +1,9 @@
 import { ConnectError, VenueStatus, type FoundVenue, type Venue, type VenueCity } from '@issho/api-client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useState, type FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 
 import { formatTime } from '../format';
+import { useRememberedCity } from '../city';
 import { api } from '../lib';
 
 const PAGE = 50;
@@ -24,24 +25,18 @@ const statusLabel: Record<VenueStatus, string> = {
 export function Venues() {
   const queryClient = useQueryClient();
   const cities = useQuery({ queryKey: ['venue-cities'], queryFn: () => api.curation.listVenueCities({}) });
-  const [cityId, setCityId] = useState(() => localStorage.getItem('venues.city') ?? '');
+  const [cityId, setCityId] = useRememberedCity('venues.city', cities.data?.cities);
   const [status, setStatus] = useState(VenueStatus.CANDIDATE);
   const [areaId, setAreaId] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [offset, setOffset] = useState(0);
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  useEffect(() => {
-    const list = cities.data?.cities ?? [];
-    if (list.length && !list.some((c) => c.id === cityId)) setCityId(list[0].id);
-  }, [cities.data, cityId]);
-  useEffect(() => {
-    if (cityId) localStorage.setItem('venues.city', cityId);
-  }, [cityId]);
   // A new filter starts from the first page with nothing selected.
-  useEffect(() => {
+  const refilter = <T,>(set: (value: T) => void) => (value: T) => {
+    set(value);
     setOffset(0);
     setSelected(new Set());
-  }, [cityId, status, areaId, categoryId]);
+  };
   const city = cities.data?.cities.find((c) => c.id === cityId);
   const categories = cities.data?.categories ?? [];
   const categoryName = (id: string) => categories.find((c) => c.id === id)?.name ?? id;
@@ -80,21 +75,21 @@ export function Venues() {
     <section>
       <div className="toolbar">
         <h1>Venues</h1>
-        <select value={cityId} onChange={(e) => { setCityId(e.target.value); setAreaId(''); }}>
+        <select value={cityId} onChange={(e) => { refilter(setCityId)(e.target.value); setAreaId(''); }}>
           {cities.data?.cities.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
         <div className="tabs">
           {tabs.map((t) => (
-            <button key={t.label} className={t.status === status ? 'tab active' : 'tab'} onClick={() => setStatus(t.status)}>
+            <button key={t.label} className={t.status === status ? 'tab active' : 'tab'} onClick={() => refilter(setStatus)(t.status)}>
               {t.label}{city ? ` (${t.count(city)})` : ''}
             </button>
           ))}
         </div>
-        <select value={areaId} onChange={(e) => setAreaId(e.target.value)}>
+        <select value={areaId} onChange={(e) => refilter(setAreaId)(e.target.value)}>
           <option value="">All areas</option>
           {city?.areas.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
         </select>
-        <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
+        <select value={categoryId} onChange={(e) => refilter(setCategoryId)(e.target.value)}>
           <option value="">All kinds</option>
           {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>

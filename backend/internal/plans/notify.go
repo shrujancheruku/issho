@@ -18,6 +18,13 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/uistrings"
 )
 
+// Crew notifications (app.notifications.kind), queued by internal/crews.
+const (
+	NotifyCrewOffered    = "crew_offered"    // you got on well: keep meeting as a crew?
+	NotifyCrewFormed     = "crew_formed"     // enough people accepted
+	NotifyCrewSuggestion = "crew_suggestion" // a plan suggested in the crew's chat
+)
+
 // notificationText is the UI catalogue key for each kind's message. The
 // plan's title is the notification's title; dates are left to the app,
 // which formats them in the person's language (Go can't).

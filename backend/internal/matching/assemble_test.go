@@ -78,6 +78,7 @@ func TestScorePreferences(t *testing.T) {
 		t.Errorf("pair %.2f should score below trio %.2f", pair, trio)
 	}
 }
+
 // Friends are encouraged: a close-knit group scores above one with a single
 // pair of friends, which scores above strangers; regulars without
 // newcomers aren't marked down.

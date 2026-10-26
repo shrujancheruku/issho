@@ -4,15 +4,15 @@
 
 import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
-import type { Translation, TranslationLanguage } from "./moderation_pb";
-import { file_issho_v1_moderation } from "./moderation_pb";
+import type { Timestamp } from "@bufbuild/protobuf/wkt";
+import { file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
 import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file issho/v1/translation.proto.
  */
 export const file_issho_v1_translation: GenFile = /*@__PURE__*/
-  fileDesc("Chppc3Noby92MS90cmFuc2xhdGlvbi5wcm90bxIIaXNzaG8udjEiFgoUR2V0VHJhbnNsYXRvclJlcXVlc3QiXwoVR2V0VHJhbnNsYXRvclJlc3BvbnNlEg8KB3VzZXJfaWQYASABKAkSDQoFYWRtaW4YAiABKAgSEQoJbGFuZ3VhZ2VzGAMgAygJEhMKC2Nhbl9wcm9wb3NlGAQgASgIIjUKFlRyYW5zbGF0aW9uUHVsbFJlcXVlc3QSDgoGbnVtYmVyGAEgASgFEgsKA3VybBgCIAEoCSIZChdMaXN0QXBwTGFuZ3VhZ2VzUmVxdWVzdCJEChhMaXN0QXBwTGFuZ3VhZ2VzUmVzcG9uc2USKAoJbGFuZ3VhZ2VzGAEgAygLMhUuaXNzaG8udjEuQXBwTGFuZ3VhZ2UigAEKC0FwcExhbmd1YWdlEgwKBGxhbmcYASABKAkSDQoFaHVtYW4YAiABKAUSDQoFc3RhbGUYAyABKAUSDQoFdG90YWwYBCABKAUSNgoMcHVsbF9yZXF1ZXN0GAUgASgLMiAuaXNzaG8udjEuVHJhbnNsYXRpb25QdWxsUmVxdWVzdCIlChVMaXN0QXBwU3RyaW5nc1JlcXVlc3QSDAoEbGFuZxgBIAEoCSKIAQoWTGlzdEFwcFN0cmluZ3NSZXNwb25zZRIkCgdzdHJpbmdzGAEgAygLMhMuaXNzaG8udjEuQXBwU3RyaW5nEjYKDHB1bGxfcmVxdWVzdBgCIAEoCzIgLmlzc2hvLnYxLlRyYW5zbGF0aW9uUHVsbFJlcXVlc3QSEAoIY29tcGxldGUYAyABKAgiqgEKCUFwcFN0cmluZxILCgNrZXkYASABKAkSDwoHZW5nbGlzaBgCIAEoCRIVCg1lbmdsaXNoX3ZvaWNlGAMgASgJEgwKBG5vdGUYBCABKAkSDwoHbWFjaGluZRgFIAEoCRINCgVodW1hbhgGIAEoCRITCgtodW1hbl9zdGFsZRgHIAEoCBIPCgdwZW5kaW5nGAggASgIEhQKDHBlbmRpbmdfdGV4dBgJIAEoCSI/ChRTYXZlQXBwU3RyaW5nUmVxdWVzdBIMCgRsYW5nGAEgASgJEgsKA2tleRgCIAEoCRIMCgR0ZXh0GAMgASgJIngKFVNhdmVBcHBTdHJpbmdSZXNwb25zZRInCgphcHBfc3RyaW5nGAEgASgLMhMuaXNzaG8udjEuQXBwU3RyaW5nEjYKDHB1bGxfcmVxdWVzdBgCIAEoCzIgLmlzc2hvLnYxLlRyYW5zbGF0aW9uUHVsbFJlcXVlc3QiMwoWUmVtb3ZlQXBwU3RyaW5nUmVxdWVzdBIMCgRsYW5nGAEgASgJEgsKA2tleRgCIAEoCSJ6ChdSZW1vdmVBcHBTdHJpbmdSZXNwb25zZRInCgphcHBfc3RyaW5nGAEgASgLMhMuaXNzaG8udjEuQXBwU3RyaW5nEjYKDHB1bGxfcmVxdWVzdBgCIAEoCzIgLmlzc2hvLnYxLlRyYW5zbGF0aW9uUHVsbFJlcXVlc3QiQwoVRHJhZnRBcHBTdHJpbmdSZXF1ZXN0EgwKBGxhbmcYASABKAkSCwoDa2V5GAIgASgJEg8KB2N1cnJlbnQYAyABKAkiJgoWRHJhZnRBcHBTdHJpbmdSZXNwb25zZRIMCgR0ZXh0GAEgASgJIh0KG0xpc3RDYXRhbG9nTGFuZ3VhZ2VzUmVxdWVzdCJQChxMaXN0Q2F0YWxvZ0xhbmd1YWdlc1Jlc3BvbnNlEjAKCWxhbmd1YWdlcxgBIAMoCzIdLmlzc2hvLnYxLlRyYW5zbGF0aW9uTGFuZ3VhZ2UiZwoeTGlzdENhdGFsb2dUcmFuc2xhdGlvbnNSZXF1ZXN0EgwKBGxhbmcYASABKAkSFwoPdW5yZXZpZXdlZF9vbmx5GAIgASgIEg4KBnNlYXJjaBgDIAEoCRIOCgZvZmZzZXQYBCABKAUiTgofTGlzdENhdGFsb2dUcmFuc2xhdGlvbnNSZXNwb25zZRIrCgx0cmFuc2xhdGlvbnMYASADKAsyFS5pc3Noby52MS5UcmFuc2xhdGlvbiJSCh9SZXZpZXdDYXRhbG9nVHJhbnNsYXRpb25SZXF1ZXN0EhMKC3NvdXJjZV9oYXNoGAEgASgJEgwKBGxhbmcYAiABKAkSDAoEdGV4dBgDIAEoCSJOCiBSZXZpZXdDYXRhbG9nVHJhbnNsYXRpb25SZXNwb25zZRIqCgt0cmFuc2xhdGlvbhgBIAEoCzIVLmlzc2hvLnYxLlRyYW5zbGF0aW9uMvEGChJUcmFuc2xhdGlvblNlcnZpY2USUgoNR2V0VHJhbnNsYXRvchIeLmlzc2hvLnYxLkdldFRyYW5zbGF0b3JSZXF1ZXN0Gh8uaXNzaG8udjEuR2V0VHJhbnNsYXRvclJlc3BvbnNlIgASWwoQTGlzdEFwcExhbmd1YWdlcxIhLmlzc2hvLnYxLkxpc3RBcHBMYW5ndWFnZXNSZXF1ZXN0GiIuaXNzaG8udjEuTGlzdEFwcExhbmd1YWdlc1Jlc3BvbnNlIgASVQoOTGlzdEFwcFN0cmluZ3MSHy5pc3Noby52MS5MaXN0QXBwU3RyaW5nc1JlcXVlc3QaIC5pc3Noby52MS5MaXN0QXBwU3RyaW5nc1Jlc3BvbnNlIgASUgoNU2F2ZUFwcFN0cmluZxIeLmlzc2hvLnYxLlNhdmVBcHBTdHJpbmdSZXF1ZXN0Gh8uaXNzaG8udjEuU2F2ZUFwcFN0cmluZ1Jlc3BvbnNlIgASWAoPUmVtb3ZlQXBwU3RyaW5nEiAuaXNzaG8udjEuUmVtb3ZlQXBwU3RyaW5nUmVxdWVzdBohLmlzc2hvLnYxLlJlbW92ZUFwcFN0cmluZ1Jlc3BvbnNlIgASVQoORHJhZnRBcHBTdHJpbmcSHy5pc3Noby52MS5EcmFmdEFwcFN0cmluZ1JlcXVlc3QaIC5pc3Noby52MS5EcmFmdEFwcFN0cmluZ1Jlc3BvbnNlIgASZwoUTGlzdENhdGFsb2dMYW5ndWFnZXMSJS5pc3Noby52MS5MaXN0Q2F0YWxvZ0xhbmd1YWdlc1JlcXVlc3QaJi5pc3Noby52MS5MaXN0Q2F0YWxvZ0xhbmd1YWdlc1Jlc3BvbnNlIgAScAoXTGlzdENhdGFsb2dUcmFuc2xhdGlvbnMSKC5pc3Noby52MS5MaXN0Q2F0YWxvZ1RyYW5zbGF0aW9uc1JlcXVlc3QaKS5pc3Noby52MS5MaXN0Q2F0YWxvZ1RyYW5zbGF0aW9uc1Jlc3BvbnNlIgAScwoYUmV2aWV3Q2F0YWxvZ1RyYW5zbGF0aW9uEikuaXNzaG8udjEuUmV2aWV3Q2F0YWxvZ1RyYW5zbGF0aW9uUmVxdWVzdBoqLmlzc2hvLnYxLlJldmlld0NhdGFsb2dUcmFuc2xhdGlvblJlc3BvbnNlIgBCPlo8Z2l0aHViLmNvbS9zaHJ1amFuY2hlcnVrdS9pc3Noby9iYWNrZW5kL2dlbi9pc3Noby92MTtpc3Nob3YxYgZwcm90bzM", [file_issho_v1_moderation]);
+  fileDesc("Chppc3Noby92MS90cmFuc2xhdGlvbi5wcm90bxIIaXNzaG8udjEiFgoUR2V0VHJhbnNsYXRvclJlcXVlc3QiXwoVR2V0VHJhbnNsYXRvclJlc3BvbnNlEg8KB3VzZXJfaWQYASABKAkSDQoFYWRtaW4YAiABKAgSEQoJbGFuZ3VhZ2VzGAMgAygJEhMKC2Nhbl9wcm9wb3NlGAQgASgIIjUKFlRyYW5zbGF0aW9uUHVsbFJlcXVlc3QSDgoGbnVtYmVyGAEgASgFEgsKA3VybBgCIAEoCSIZChdMaXN0QXBwTGFuZ3VhZ2VzUmVxdWVzdCJEChhMaXN0QXBwTGFuZ3VhZ2VzUmVzcG9uc2USKAoJbGFuZ3VhZ2VzGAEgAygLMhUuaXNzaG8udjEuQXBwTGFuZ3VhZ2UigAEKC0FwcExhbmd1YWdlEgwKBGxhbmcYASABKAkSDQoFaHVtYW4YAiABKAUSDQoFc3RhbGUYAyABKAUSDQoFdG90YWwYBCABKAUSNgoMcHVsbF9yZXF1ZXN0GAUgASgLMiAuaXNzaG8udjEuVHJhbnNsYXRpb25QdWxsUmVxdWVzdCIlChVMaXN0QXBwU3RyaW5nc1JlcXVlc3QSDAoEbGFuZxgBIAEoCSKIAQoWTGlzdEFwcFN0cmluZ3NSZXNwb25zZRIkCgdzdHJpbmdzGAEgAygLMhMuaXNzaG8udjEuQXBwU3RyaW5nEjYKDHB1bGxfcmVxdWVzdBgCIAEoCzIgLmlzc2hvLnYxLlRyYW5zbGF0aW9uUHVsbFJlcXVlc3QSEAoIY29tcGxldGUYAyABKAgiqgEKCUFwcFN0cmluZxILCgNrZXkYASABKAkSDwoHZW5nbGlzaBgCIAEoCRIVCg1lbmdsaXNoX3ZvaWNlGAMgASgJEgwKBG5vdGUYBCABKAkSDwoHbWFjaGluZRgFIAEoCRINCgVodW1hbhgGIAEoCRITCgtodW1hbl9zdGFsZRgHIAEoCBIPCgdwZW5kaW5nGAggASgIEhQKDHBlbmRpbmdfdGV4dBgJIAEoCSI/ChRTYXZlQXBwU3RyaW5nUmVxdWVzdBIMCgRsYW5nGAEgASgJEgsKA2tleRgCIAEoCRIMCgR0ZXh0GAMgASgJIngKFVNhdmVBcHBTdHJpbmdSZXNwb25zZRInCgphcHBfc3RyaW5nGAEgASgLMhMuaXNzaG8udjEuQXBwU3RyaW5nEjYKDHB1bGxfcmVxdWVzdBgCIAEoCzIgLmlzc2hvLnYxLlRyYW5zbGF0aW9uUHVsbFJlcXVlc3QiMwoWUmVtb3ZlQXBwU3RyaW5nUmVxdWVzdBIMCgRsYW5nGAEgASgJEgsKA2tleRgCIAEoCSJ6ChdSZW1vdmVBcHBTdHJpbmdSZXNwb25zZRInCgphcHBfc3RyaW5nGAEgASgLMhMuaXNzaG8udjEuQXBwU3RyaW5nEjYKDHB1bGxfcmVxdWVzdBgCIAEoCzIgLmlzc2hvLnYxLlRyYW5zbGF0aW9uUHVsbFJlcXVlc3QiQwoVRHJhZnRBcHBTdHJpbmdSZXF1ZXN0EgwKBGxhbmcYASABKAkSCwoDa2V5GAIgASgJEg8KB2N1cnJlbnQYAyABKAkiJgoWRHJhZnRBcHBTdHJpbmdSZXNwb25zZRIMCgR0ZXh0GAEgASgJIh0KG0xpc3RDYXRhbG9nTGFuZ3VhZ2VzUmVxdWVzdCJQChxMaXN0Q2F0YWxvZ0xhbmd1YWdlc1Jlc3BvbnNlEjAKCWxhbmd1YWdlcxgBIAMoCzIdLmlzc2hvLnYxLlRyYW5zbGF0aW9uTGFuZ3VhZ2UiZwoeTGlzdENhdGFsb2dUcmFuc2xhdGlvbnNSZXF1ZXN0EgwKBGxhbmcYASABKAkSFwoPdW5yZXZpZXdlZF9vbmx5GAIgASgIEg4KBnNlYXJjaBgDIAEoCRIOCgZvZmZzZXQYBCABKAUiTgofTGlzdENhdGFsb2dUcmFuc2xhdGlvbnNSZXNwb25zZRIrCgx0cmFuc2xhdGlvbnMYASADKAsyFS5pc3Noby52MS5UcmFuc2xhdGlvbiJSCh9SZXZpZXdDYXRhbG9nVHJhbnNsYXRpb25SZXF1ZXN0EhMKC3NvdXJjZV9oYXNoGAEgASgJEgwKBGxhbmcYAiABKAkSDAoEdGV4dBgDIAEoCSJOCiBSZXZpZXdDYXRhbG9nVHJhbnNsYXRpb25SZXNwb25zZRIqCgt0cmFuc2xhdGlvbhgBIAEoCzIVLmlzc2hvLnYxLlRyYW5zbGF0aW9uIkYKE1RyYW5zbGF0aW9uTGFuZ3VhZ2USDAoEbGFuZxgBIAEoCRINCgV0b3RhbBgCIAEoBRISCgp1bnJldmlld2VkGAMgASgFIuEBCgtUcmFuc2xhdGlvbhITCgtzb3VyY2VfaGFzaBgBIAEoCRIMCgRsYW5nGAIgASgJEg4KBnNvdXJjZRgDIAEoCRIPCgdjb250ZXh0GAQgASgJEgwKBHRleHQYBSABKAkSDQoFbW9kZWwYBiABKAkSEAoIcmV2aWV3ZWQYByABKAgSLwoLcmV2aWV3ZWRfYXQYCCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi4KCmNyZWF0ZWRfYXQYCSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wMvEGChJUcmFuc2xhdGlvblNlcnZpY2USUgoNR2V0VHJhbnNsYXRvchIeLmlzc2hvLnYxLkdldFRyYW5zbGF0b3JSZXF1ZXN0Gh8uaXNzaG8udjEuR2V0VHJhbnNsYXRvclJlc3BvbnNlIgASWwoQTGlzdEFwcExhbmd1YWdlcxIhLmlzc2hvLnYxLkxpc3RBcHBMYW5ndWFnZXNSZXF1ZXN0GiIuaXNzaG8udjEuTGlzdEFwcExhbmd1YWdlc1Jlc3BvbnNlIgASVQoOTGlzdEFwcFN0cmluZ3MSHy5pc3Noby52MS5MaXN0QXBwU3RyaW5nc1JlcXVlc3QaIC5pc3Noby52MS5MaXN0QXBwU3RyaW5nc1Jlc3BvbnNlIgASUgoNU2F2ZUFwcFN0cmluZxIeLmlzc2hvLnYxLlNhdmVBcHBTdHJpbmdSZXF1ZXN0Gh8uaXNzaG8udjEuU2F2ZUFwcFN0cmluZ1Jlc3BvbnNlIgASWAoPUmVtb3ZlQXBwU3RyaW5nEiAuaXNzaG8udjEuUmVtb3ZlQXBwU3RyaW5nUmVxdWVzdBohLmlzc2hvLnYxLlJlbW92ZUFwcFN0cmluZ1Jlc3BvbnNlIgASVQoORHJhZnRBcHBTdHJpbmcSHy5pc3Noby52MS5EcmFmdEFwcFN0cmluZ1JlcXVlc3QaIC5pc3Noby52MS5EcmFmdEFwcFN0cmluZ1Jlc3BvbnNlIgASZwoUTGlzdENhdGFsb2dMYW5ndWFnZXMSJS5pc3Noby52MS5MaXN0Q2F0YWxvZ0xhbmd1YWdlc1JlcXVlc3QaJi5pc3Noby52MS5MaXN0Q2F0YWxvZ0xhbmd1YWdlc1Jlc3BvbnNlIgAScAoXTGlzdENhdGFsb2dUcmFuc2xhdGlvbnMSKC5pc3Noby52MS5MaXN0Q2F0YWxvZ1RyYW5zbGF0aW9uc1JlcXVlc3QaKS5pc3Noby52MS5MaXN0Q2F0YWxvZ1RyYW5zbGF0aW9uc1Jlc3BvbnNlIgAScwoYUmV2aWV3Q2F0YWxvZ1RyYW5zbGF0aW9uEikuaXNzaG8udjEuUmV2aWV3Q2F0YWxvZ1RyYW5zbGF0aW9uUmVxdWVzdBoqLmlzc2hvLnYxLlJldmlld0NhdGFsb2dUcmFuc2xhdGlvblJlc3BvbnNlIgBCPlo8Z2l0aHViLmNvbS9zaHJ1amFuY2hlcnVrdS9pc3Noby9iYWNrZW5kL2dlbi9pc3Noby92MTtpc3Nob3YxYgZwcm90bzM", [file_google_protobuf_timestamp]);
 
 /**
  * @generated from message issho.v1.GetTranslatorRequest
@@ -557,6 +557,99 @@ export type ReviewCatalogTranslationResponse = Message<"issho.v1.ReviewCatalogTr
  */
 export const ReviewCatalogTranslationResponseSchema: GenMessage<ReviewCatalogTranslationResponse> = /*@__PURE__*/
   messageDesc(file_issho_v1_translation, 20);
+
+/**
+ * @generated from message issho.v1.TranslationLanguage
+ */
+export type TranslationLanguage = Message<"issho.v1.TranslationLanguage"> & {
+  /**
+   * ISO 639-1 code, e.g. "ja".
+   *
+   * @generated from field: string lang = 1;
+   */
+  lang: string;
+
+  /**
+   * @generated from field: int32 total = 2;
+   */
+  total: number;
+
+  /**
+   * @generated from field: int32 unreviewed = 3;
+   */
+  unreviewed: number;
+};
+
+/**
+ * Describes the message issho.v1.TranslationLanguage.
+ * Use `create(TranslationLanguageSchema)` to create a new message.
+ */
+export const TranslationLanguageSchema: GenMessage<TranslationLanguage> = /*@__PURE__*/
+  messageDesc(file_issho_v1_translation, 21);
+
+/**
+ * @generated from message issho.v1.Translation
+ */
+export type Translation = Message<"issho.v1.Translation"> & {
+  /**
+   * Identifies the English source and its context, with lang.
+   *
+   * @generated from field: string source_hash = 1;
+   */
+  sourceHash: string;
+
+  /**
+   * @generated from field: string lang = 2;
+   */
+  lang: string;
+
+  /**
+   * @generated from field: string source = 3;
+   */
+  source: string;
+
+  /**
+   * What the text is ("name of a city", a UI string), as given to the
+   * translator.
+   *
+   * @generated from field: string context = 4;
+   */
+  context: string;
+
+  /**
+   * @generated from field: string text = 5;
+   */
+  text: string;
+
+  /**
+   * Which translator wrote it.
+   *
+   * @generated from field: string model = 6;
+   */
+  model: string;
+
+  /**
+   * @generated from field: bool reviewed = 7;
+   */
+  reviewed: boolean;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp reviewed_at = 8;
+   */
+  reviewedAt?: Timestamp | undefined;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp created_at = 9;
+   */
+  createdAt?: Timestamp | undefined;
+};
+
+/**
+ * Describes the message issho.v1.Translation.
+ * Use `create(TranslationSchema)` to create a new message.
+ */
+export const TranslationSchema: GenMessage<Translation> = /*@__PURE__*/
+  messageDesc(file_issho_v1_translation, 22);
 
 /**
  * TranslationService: the admin SPA's translation editor.

@@ -48,7 +48,7 @@ func main() {
 
 func run(args []string) error {
 	if len(args) == 0 {
-		return fmt.Errorf("usage: tool migrate|seed|build-matrix|discover-venues|email-templates|simulate|walk-bench|set-admin|set-translator|ui-strings|translate-compare|ui-bundle|sentry-test ...")
+		return errors.New("usage: tool migrate|seed|build-matrix|discover-venues|email-templates|simulate|walk-bench|set-admin|set-translator|ui-strings|translate-compare|ui-bundle|sentry-test [args]")
 	}
 	switch args[0] {
 	case "simulate":
@@ -78,7 +78,7 @@ func run(args []string) error {
 	switch args[0] {
 	case "migrate":
 		if len(args) < 2 {
-			return fmt.Errorf("usage: tool migrate up|down|status|...")
+			return errors.New("usage: tool migrate up|down|status|[goose command]")
 		}
 		return db.Migrate(ctx, pool, args[1], args[2:]...)
 	case "seed":
@@ -230,7 +230,7 @@ func simulate(args []string) error {
 	seeds := fs.Int("seeds", 1, "with more than 1, run that many cities (seed, seed+1, …) and print averages only")
 	_ = fs.Parse(args)
 	if fs.NArg() == 0 {
-		return fmt.Errorf("usage: tool simulate [flags] <citypack.json>...")
+		return errors.New("usage: tool simulate [flags] <citypack.json> [more packs]")
 	}
 	cfg, err := matching.ParseConfig([]byte(*config))
 	if err != nil {

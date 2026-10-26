@@ -71,30 +71,36 @@ func ListOpen(ctx context.Context, q *dbgen.Queries, cityID string) ([]Open, err
 	}
 	out := make([]Open, len(rows))
 	for i, r := range rows {
-		out[i] = Open{
-			ID: r.ID,
-			OpenPlan: matching.OpenPlan{
-				Plan: matching.Plan{
-					Area:      matching.AreaID(r.AreaID),
-					Activity:  matching.ActivityID(r.ActivityID),
-					FollowUp:  matching.ActivityID(deref(r.FollowUpID)),
-					Primary:   r.PrimaryLanguage,
-					Secondary: deref(r.SecondaryLanguage),
-				},
-				Signups: int(r.Signups),
-			},
-			Round:         int(r.Round),
-			Window:        Window{Start: r.WindowStart.Time, Days: int(r.WindowDays), Deadline: r.SignupDeadline.Time},
-			Venue:         deref(r.VenuePlaceID),
-			FollowUpVenue: deref(r.FollowUpVenuePlaceID),
-			Route:         routeFrom(r.RoutePolyline, r.RouteSeconds),
-			MeetingPlace:  deref(r.MeetingPlaceID),
-			Walk:          r.Walk,
-			WalkTitle:     r.Title,
-			WalkSummary:   r.Description,
-		}
+		out[i] = openFromRow(r)
 	}
 	return out, nil
+}
+
+// openFromRow is a plan as ListOpenPlans (and GetRecentlyClosedPlan, whose
+// rows convert) returns it.
+func openFromRow(r dbgen.ListOpenPlansRow) Open {
+	return Open{
+		ID: r.ID,
+		OpenPlan: matching.OpenPlan{
+			Plan: matching.Plan{
+				Area:      matching.AreaID(r.AreaID),
+				Activity:  matching.ActivityID(r.ActivityID),
+				FollowUp:  matching.ActivityID(deref(r.FollowUpID)),
+				Primary:   r.PrimaryLanguage,
+				Secondary: deref(r.SecondaryLanguage),
+			},
+			Signups: int(r.Signups),
+		},
+		Round:         int(r.Round),
+		Window:        Window{Start: r.WindowStart.Time, Days: int(r.WindowDays), Deadline: r.SignupDeadline.Time},
+		Venue:         deref(r.VenuePlaceID),
+		FollowUpVenue: deref(r.FollowUpVenuePlaceID),
+		Route:         routeFrom(r.RoutePolyline, r.RouteSeconds),
+		MeetingPlace:  deref(r.MeetingPlaceID),
+		Walk:          r.Walk,
+		WalkTitle:     r.Title,
+		WalkSummary:   r.Description,
+	}
 }
 
 // Create opens a plan for a suggestion and returns its id. It picks a venue

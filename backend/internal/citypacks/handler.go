@@ -25,6 +25,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/geo"
 	gmaps "github.com/shrujancheruku/issho/backend/internal/maps"
 	"github.com/shrujancheruku/issho/backend/internal/platform/auth"
+	"github.com/shrujancheruku/issho/backend/internal/platform/errs"
 	"github.com/shrujancheruku/issho/backend/internal/platform/github"
 )
 
@@ -66,21 +67,6 @@ func (h *Handler) now() time.Time {
 	return time.Now()
 }
 
-func admin(ctx context.Context) (auth.Caller, error) {
-	c, ok := auth.FromContext(ctx)
-	if !ok {
-		return c, connect.NewError(connect.CodeUnauthenticated, errors.New("no caller"))
-	}
-	if !c.Admin {
-		return c, connect.NewError(connect.CodePermissionDenied, errors.New("admins only"))
-	}
-	return c, nil
-}
-
-func invalid(format string, a ...any) error {
-	return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf(format, a...))
-}
-
 func (h *Handler) repo() (Repo, error) {
 	if h.GitHub == nil {
 		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("the city-pack editor needs GITHUB_TOKEN on the API"))
@@ -120,7 +106,7 @@ func (h *Handler) basePack(ctx context.Context, id string) (p cities.Pack, sha s
 }
 
 func (h *Handler) ListCityPacks(ctx context.Context, _ *connect.Request[isshov1.ListCityPacksRequest]) (*connect.Response[isshov1.ListCityPacksResponse], error) {
-	if _, err := admin(ctx); err != nil {
+	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
 	q := dbgen.New(h.DB)
@@ -185,7 +171,7 @@ func (h *Handler) ListCityPacks(ctx context.Context, _ *connect.Request[isshov1.
 }
 
 func (h *Handler) GetCityPack(ctx context.Context, req *connect.Request[isshov1.GetCityPackRequest]) (*connect.Response[isshov1.GetCityPackResponse], error) {
-	if _, err := admin(ctx); err != nil {
+	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
 	out := &isshov1.GetCityPackResponse{}
@@ -216,7 +202,7 @@ func (h *Handler) GetCityPack(ctx context.Context, req *connect.Request[isshov1.
 // loads and the currency looks like one.
 func (h *Handler) check(ctx context.Context, p cities.Pack) error {
 	if !cityID.MatchString(p.ID) {
-		return invalid("id: lowercase letters, digits and dashes, starting with a letter")
+		return errs.Invalid("id: lowercase letters, digits and dashes, starting with a letter")
 	}
 	acts, err := dbgen.New(h.DB).ListCatalogActivities(ctx)
 	if err != nil {
@@ -227,23 +213,23 @@ func (h *Handler) check(ctx context.Context, p cities.Pack) error {
 		ids[a.ID] = true
 	}
 	if err := cities.ValidatePack(p, ids); err != nil {
-		return invalid("%v", err)
+		return errs.Invalid("%v", err)
 	}
 	if _, err := time.LoadLocation(p.Timezone); err != nil || !strings.Contains(p.Timezone, "/") {
-		return invalid("timezone %q: an IANA name like Asia/Tokyo", p.Timezone)
+		return errs.Invalid("timezone %q: an IANA name like Asia/Tokyo", p.Timezone)
 	}
 	if !regexp.MustCompile(`^[A-Z]{3}$`).MatchString(p.Currency) {
-		return invalid("currency %q: an ISO 4217 code like JPY", p.Currency)
+		return errs.Invalid("currency %q: an ISO 4217 code like JPY", p.Currency)
 	}
 	return nil
 }
 
 func (h *Handler) ProposeCityPack(ctx context.Context, req *connect.Request[isshov1.ProposeCityPackRequest]) (*connect.Response[isshov1.ProposeCityPackResponse], error) {
-	if _, err := admin(ctx); err != nil {
+	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
 	if req.Msg.Pack == nil {
-		return nil, invalid("pack: required")
+		return nil, errs.Invalid("pack: required")
 	}
 	repo, err := h.repo()
 	if err != nil {
@@ -264,13 +250,13 @@ func (h *Handler) ProposeCityPack(ctx context.Context, req *connect.Request[issh
 		// can be renamed or moved, never removed (seeding keeps it anyway).
 		for _, a := range base.Areas {
 			if !slices.ContainsFunc(p.Areas, func(b cities.Area) bool { return b.ID == a.ID }) {
-				return nil, invalid("area %s: areas can't be removed or have their id changed", a.ID)
+				return nil, errs.Invalid("area %s: areas can't be removed or have their id changed", a.ID)
 			}
 		}
 	}
 	changes := Changes(old, p)
 	if len(changes) == 0 {
-		return nil, invalid("nothing changed")
+		return nil, errs.Invalid("nothing changed")
 	}
 	content, err := cities.EncodePack(p)
 	if err != nil {
@@ -304,7 +290,7 @@ func (h *Handler) ProposeCityPack(ctx context.Context, req *connect.Request[issh
 }
 
 func (h *Handler) ApplyCityPack(ctx context.Context, req *connect.Request[isshov1.ApplyCityPackRequest]) (*connect.Response[isshov1.ApplyCityPackResponse], error) {
-	if _, err := admin(ctx); err != nil {
+	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
 	p, _, ok, err := h.basePack(ctx, req.Msg.CityId)
@@ -357,7 +343,7 @@ func (h *Handler) ApplyCityPack(ctx context.Context, req *connect.Request[isshov
 }
 
 func (h *Handler) DiscoverAreaVenues(ctx context.Context, req *connect.Request[isshov1.DiscoverAreaVenuesRequest]) (*connect.Response[isshov1.DiscoverAreaVenuesResponse], error) {
-	if _, err := admin(ctx); err != nil {
+	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
 	if h.Places == nil {
@@ -370,7 +356,7 @@ func (h *Handler) DiscoverAreaVenues(ctx context.Context, req *connect.Request[i
 		return nil, connect.NewError(connect.CodeNotFound, errors.New("no such city"))
 	}
 	if !slices.ContainsFunc(areas, func(a geo.Area) bool { return a.ID == m.AreaId }) {
-		return nil, invalid("area_id: not in that city")
+		return nil, errs.Invalid("area_id: not in that city")
 	}
 	cats, err := geo.LoadVenueCategories(ctx, q, m.CityId, nil)
 	if err != nil {
@@ -388,7 +374,7 @@ func (h *Handler) DiscoverAreaVenues(ctx context.Context, req *connect.Request[i
 	// with its first area.
 	venues, searches, err := geo.DiscoverAreaVenues(ctx, h.Places, areas, m.AreaId, cats, n == 0, langs[0])
 	if err != nil {
-		return nil, connect.NewError(connect.CodeUnavailable, fmt.Errorf("Google search failed: %w", err))
+		return nil, connect.NewError(connect.CodeUnavailable, fmt.Errorf("google search failed: %w", err))
 	}
 	if err := geo.SaveVenues(ctx, h.DB, m.CityId, venues); err != nil {
 		return nil, err

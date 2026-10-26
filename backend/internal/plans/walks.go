@@ -161,7 +161,7 @@ func loadWalkPlaces(ctx context.Context, q *dbgen.Queries, cityID string) (*walk
 		return nil, err
 	}
 	for _, a := range acts {
-		wp.activities[matching.ActivityID(a.ID)] = withoutExamples(i18n.Pick(a.Name, i18n.Authoring))
+		wp.activities[matching.ActivityID(a.ID)] = WithoutExamples(i18n.Pick(a.Name, i18n.Authoring))
 	}
 	return wp, nil
 }

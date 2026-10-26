@@ -13,7 +13,7 @@ export type PlanSection = {
 };
 
 /** Trips of up to this long count as near ("Within 30 min"). */
-export const NearbyMinutes = 30;
+const NearbyMinutes = 30;
 
 type Lookup = {
   activity: (id: string) => { name: string; secondary: string };

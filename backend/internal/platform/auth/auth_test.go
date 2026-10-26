@@ -153,7 +153,7 @@ func TestAdminOnly(t *testing.T) {
 			return err
 		}, connect.CodePermissionDenied},
 		{"no caller", nil, func() error {
-			_, err := moderation.GetModerator(context.Background(), connect.NewRequest(&isshov1.GetModeratorRequest{}))
+			_, err := moderation.ListFlags(context.Background(), connect.NewRequest(&isshov1.ListFlagsRequest{}))
 			return err
 		}, connect.CodePermissionDenied},
 		{"other service", user, func() error {
