@@ -10,18 +10,13 @@ option go_package = "github.com/shrujancheruku/issho/backend/gen/issho/v1;isshov
 
 // ModerationService: the moderation queue in the admin SPA. Reports about
 // people, flags raised by the system (picks leaning towards one gender),
-// and why people left crews. (Translations are TranslationService's; the
-// three translation RPCs below only answer UNIMPLEMENTED now.)
+// and why people left crews. (Translations are TranslationService's.)
 // Admins only: requires `Authorization: Bearer <Supabase access token>` for
 // an account with `app_metadata.admin = true` (set with `tool set-admin`);
 // anyone else gets PERMISSION_DENIED.
 //
 // HTTP: POST /issho.v1.ModerationService/<Method>
 service ModerationService {
-  // GetModerator says who the caller is. The admin SPA calls it after
-  // sign-in to find out whether the account is an admin.
-  rpc GetModerator(GetModeratorRequest) returns (GetModeratorResponse) {}
-
   // ListReports returns reports, open ones first (oldest first), then the
   // rest newest first. At most 200.
   rpc ListReports(ListReportsRequest) returns (ListReportsResponse) {}
@@ -40,25 +35,6 @@ service ModerationService {
 
   // ListCrewLeaves returns why people left crews, newest first. At most 200.
   rpc ListCrewLeaves(ListCrewLeavesRequest) returns (ListCrewLeavesResponse) {}
-
-  // Deprecated: moved to TranslationService (ListCatalogLanguages). Kept
-  // because removing an RPC breaks the API's compatibility check; answers
-  // UNIMPLEMENTED.
-  rpc ListTranslationLanguages(ListTranslationLanguagesRequest) returns (ListTranslationLanguagesResponse) {
-    option deprecated = true;
-  }
-
-  // Deprecated: moved to TranslationService (ListAppStrings,
-  // ListCatalogTranslations). Answers UNIMPLEMENTED.
-  rpc ListTranslations(ListTranslationsRequest) returns (ListTranslationsResponse) {
-    option deprecated = true;
-  }
-
-  // Deprecated: moved to TranslationService (SaveAppString,
-  // ReviewCatalogTranslation). Answers UNIMPLEMENTED.
-  rpc ReviewTranslation(ReviewTranslationRequest) returns (ReviewTranslationResponse) {
-    option deprecated = true;
-  }
 
   // SearchPeople finds people by name or email (contains, any case) or
   // exact user id. At most 50.
@@ -86,13 +62,6 @@ service ModerationService {
   // ListSuspended returns everyone suspended now, most recent first. At
   // most 200.
   rpc ListSuspended(ListSuspendedRequest) returns (ListSuspendedResponse) {}
-}
-
-message GetModeratorRequest {}
-
-message GetModeratorResponse {
-  string user_id = 1;
-  string email = 2;
 }
 
 enum ReportStatus {
@@ -221,59 +190,6 @@ message CrewLeave {
   LeaveReason reason = 7;
   string details = 8;
   google.protobuf.Timestamp created_at = 9;
-}
-
-message ListTranslationLanguagesRequest {}
-
-message ListTranslationLanguagesResponse {
-  repeated TranslationLanguage languages = 1;
-}
-
-message TranslationLanguage {
-  // ISO 639-1 code, e.g. "ja".
-  string lang = 1;
-  int32 total = 2;
-  int32 unreviewed = 3;
-}
-
-message ListTranslationsRequest {
-  string lang = 1;
-  bool unreviewed_only = 2;
-  // Matches the English source or the translation; empty = all.
-  string search = 3;
-  // How many to skip (pages of 100).
-  int32 offset = 4;
-}
-
-message ListTranslationsResponse {
-  repeated Translation translations = 1;
-}
-
-message Translation {
-  // Identifies the English source and its context, with lang.
-  string source_hash = 1;
-  string lang = 2;
-  string source = 3;
-  // What the text is ("name of a city", a UI string), as given to the
-  // translator.
-  string context = 4;
-  string text = 5;
-  // Which translator wrote it.
-  string model = 6;
-  bool reviewed = 7;
-  google.protobuf.Timestamp reviewed_at = 8;
-  google.protobuf.Timestamp created_at = 9;
-}
-
-message ReviewTranslationRequest {
-  string source_hash = 1;
-  string lang = 2;
-  // The corrected text (or the same text, to confirm it). Not empty.
-  string text = 3;
-}
-
-message ReviewTranslationResponse {
-  Translation translation = 1;
 }
 
 message SearchPeopleRequest {

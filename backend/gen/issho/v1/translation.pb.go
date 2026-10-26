@@ -9,6 +9,7 @@ package isshov1
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -1187,11 +1188,184 @@ func (x *ReviewCatalogTranslationResponse) GetTranslation() *Translation {
 	return nil
 }
 
+type TranslationLanguage struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// ISO 639-1 code, e.g. "ja".
+	Lang          string `protobuf:"bytes,1,opt,name=lang,proto3" json:"lang,omitempty"`
+	Total         int32  `protobuf:"varint,2,opt,name=total,proto3" json:"total,omitempty"`
+	Unreviewed    int32  `protobuf:"varint,3,opt,name=unreviewed,proto3" json:"unreviewed,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TranslationLanguage) Reset() {
+	*x = TranslationLanguage{}
+	mi := &file_issho_v1_translation_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TranslationLanguage) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TranslationLanguage) ProtoMessage() {}
+
+func (x *TranslationLanguage) ProtoReflect() protoreflect.Message {
+	mi := &file_issho_v1_translation_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TranslationLanguage.ProtoReflect.Descriptor instead.
+func (*TranslationLanguage) Descriptor() ([]byte, []int) {
+	return file_issho_v1_translation_proto_rawDescGZIP(), []int{21}
+}
+
+func (x *TranslationLanguage) GetLang() string {
+	if x != nil {
+		return x.Lang
+	}
+	return ""
+}
+
+func (x *TranslationLanguage) GetTotal() int32 {
+	if x != nil {
+		return x.Total
+	}
+	return 0
+}
+
+func (x *TranslationLanguage) GetUnreviewed() int32 {
+	if x != nil {
+		return x.Unreviewed
+	}
+	return 0
+}
+
+type Translation struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Identifies the English source and its context, with lang.
+	SourceHash string `protobuf:"bytes,1,opt,name=source_hash,json=sourceHash,proto3" json:"source_hash,omitempty"`
+	Lang       string `protobuf:"bytes,2,opt,name=lang,proto3" json:"lang,omitempty"`
+	Source     string `protobuf:"bytes,3,opt,name=source,proto3" json:"source,omitempty"`
+	// What the text is ("name of a city", a UI string), as given to the
+	// translator.
+	Context string `protobuf:"bytes,4,opt,name=context,proto3" json:"context,omitempty"`
+	Text    string `protobuf:"bytes,5,opt,name=text,proto3" json:"text,omitempty"`
+	// Which translator wrote it.
+	Model         string                 `protobuf:"bytes,6,opt,name=model,proto3" json:"model,omitempty"`
+	Reviewed      bool                   `protobuf:"varint,7,opt,name=reviewed,proto3" json:"reviewed,omitempty"`
+	ReviewedAt    *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=reviewed_at,json=reviewedAt,proto3" json:"reviewed_at,omitempty"`
+	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Translation) Reset() {
+	*x = Translation{}
+	mi := &file_issho_v1_translation_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Translation) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Translation) ProtoMessage() {}
+
+func (x *Translation) ProtoReflect() protoreflect.Message {
+	mi := &file_issho_v1_translation_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Translation.ProtoReflect.Descriptor instead.
+func (*Translation) Descriptor() ([]byte, []int) {
+	return file_issho_v1_translation_proto_rawDescGZIP(), []int{22}
+}
+
+func (x *Translation) GetSourceHash() string {
+	if x != nil {
+		return x.SourceHash
+	}
+	return ""
+}
+
+func (x *Translation) GetLang() string {
+	if x != nil {
+		return x.Lang
+	}
+	return ""
+}
+
+func (x *Translation) GetSource() string {
+	if x != nil {
+		return x.Source
+	}
+	return ""
+}
+
+func (x *Translation) GetContext() string {
+	if x != nil {
+		return x.Context
+	}
+	return ""
+}
+
+func (x *Translation) GetText() string {
+	if x != nil {
+		return x.Text
+	}
+	return ""
+}
+
+func (x *Translation) GetModel() string {
+	if x != nil {
+		return x.Model
+	}
+	return ""
+}
+
+func (x *Translation) GetReviewed() bool {
+	if x != nil {
+		return x.Reviewed
+	}
+	return false
+}
+
+func (x *Translation) GetReviewedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ReviewedAt
+	}
+	return nil
+}
+
+func (x *Translation) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return nil
+}
+
 var File_issho_v1_translation_proto protoreflect.FileDescriptor
 
 const file_issho_v1_translation_proto_rawDesc = "" +
 	"\n" +
-	"\x1aissho/v1/translation.proto\x12\bissho.v1\x1a\x19issho/v1/moderation.proto\"\x16\n" +
+	"\x1aissho/v1/translation.proto\x12\bissho.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\x16\n" +
 	"\x14GetTranslatorRequest\"\x85\x01\n" +
 	"\x15GetTranslatorResponse\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x14\n" +
@@ -1265,7 +1439,26 @@ const file_issho_v1_translation_proto_rawDesc = "" +
 	"\x04lang\x18\x02 \x01(\tR\x04lang\x12\x12\n" +
 	"\x04text\x18\x03 \x01(\tR\x04text\"[\n" +
 	" ReviewCatalogTranslationResponse\x127\n" +
-	"\vtranslation\x18\x01 \x01(\v2\x15.issho.v1.TranslationR\vtranslation2\xf1\x06\n" +
+	"\vtranslation\x18\x01 \x01(\v2\x15.issho.v1.TranslationR\vtranslation\"_\n" +
+	"\x13TranslationLanguage\x12\x12\n" +
+	"\x04lang\x18\x01 \x01(\tR\x04lang\x12\x14\n" +
+	"\x05total\x18\x02 \x01(\x05R\x05total\x12\x1e\n" +
+	"\n" +
+	"unreviewed\x18\x03 \x01(\x05R\n" +
+	"unreviewed\"\xb2\x02\n" +
+	"\vTranslation\x12\x1f\n" +
+	"\vsource_hash\x18\x01 \x01(\tR\n" +
+	"sourceHash\x12\x12\n" +
+	"\x04lang\x18\x02 \x01(\tR\x04lang\x12\x16\n" +
+	"\x06source\x18\x03 \x01(\tR\x06source\x12\x18\n" +
+	"\acontext\x18\x04 \x01(\tR\acontext\x12\x12\n" +
+	"\x04text\x18\x05 \x01(\tR\x04text\x12\x14\n" +
+	"\x05model\x18\x06 \x01(\tR\x05model\x12\x1a\n" +
+	"\breviewed\x18\a \x01(\bR\breviewed\x12;\n" +
+	"\vreviewed_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"reviewedAt\x129\n" +
+	"\n" +
+	"created_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt2\xf1\x06\n" +
 	"\x12TranslationService\x12R\n" +
 	"\rGetTranslator\x12\x1e.issho.v1.GetTranslatorRequest\x1a\x1f.issho.v1.GetTranslatorResponse\"\x00\x12[\n" +
 	"\x10ListAppLanguages\x12!.issho.v1.ListAppLanguagesRequest\x1a\".issho.v1.ListAppLanguagesResponse\"\x00\x12U\n" +
@@ -1289,7 +1482,7 @@ func file_issho_v1_translation_proto_rawDescGZIP() []byte {
 	return file_issho_v1_translation_proto_rawDescData
 }
 
-var file_issho_v1_translation_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
+var file_issho_v1_translation_proto_msgTypes = make([]protoimpl.MessageInfo, 23)
 var file_issho_v1_translation_proto_goTypes = []any{
 	(*GetTranslatorRequest)(nil),             // 0: issho.v1.GetTranslatorRequest
 	(*GetTranslatorResponse)(nil),            // 1: issho.v1.GetTranslatorResponse
@@ -1314,6 +1507,7 @@ var file_issho_v1_translation_proto_goTypes = []any{
 	(*ReviewCatalogTranslationResponse)(nil), // 20: issho.v1.ReviewCatalogTranslationResponse
 	(*TranslationLanguage)(nil),              // 21: issho.v1.TranslationLanguage
 	(*Translation)(nil),                      // 22: issho.v1.Translation
+	(*timestamppb.Timestamp)(nil),            // 23: google.protobuf.Timestamp
 }
 var file_issho_v1_translation_proto_depIdxs = []int32{
 	5,  // 0: issho.v1.ListAppLanguagesResponse.languages:type_name -> issho.v1.AppLanguage
@@ -1327,29 +1521,31 @@ var file_issho_v1_translation_proto_depIdxs = []int32{
 	21, // 8: issho.v1.ListCatalogLanguagesResponse.languages:type_name -> issho.v1.TranslationLanguage
 	22, // 9: issho.v1.ListCatalogTranslationsResponse.translations:type_name -> issho.v1.Translation
 	22, // 10: issho.v1.ReviewCatalogTranslationResponse.translation:type_name -> issho.v1.Translation
-	0,  // 11: issho.v1.TranslationService.GetTranslator:input_type -> issho.v1.GetTranslatorRequest
-	3,  // 12: issho.v1.TranslationService.ListAppLanguages:input_type -> issho.v1.ListAppLanguagesRequest
-	6,  // 13: issho.v1.TranslationService.ListAppStrings:input_type -> issho.v1.ListAppStringsRequest
-	9,  // 14: issho.v1.TranslationService.SaveAppString:input_type -> issho.v1.SaveAppStringRequest
-	11, // 15: issho.v1.TranslationService.RemoveAppString:input_type -> issho.v1.RemoveAppStringRequest
-	13, // 16: issho.v1.TranslationService.DraftAppString:input_type -> issho.v1.DraftAppStringRequest
-	15, // 17: issho.v1.TranslationService.ListCatalogLanguages:input_type -> issho.v1.ListCatalogLanguagesRequest
-	17, // 18: issho.v1.TranslationService.ListCatalogTranslations:input_type -> issho.v1.ListCatalogTranslationsRequest
-	19, // 19: issho.v1.TranslationService.ReviewCatalogTranslation:input_type -> issho.v1.ReviewCatalogTranslationRequest
-	1,  // 20: issho.v1.TranslationService.GetTranslator:output_type -> issho.v1.GetTranslatorResponse
-	4,  // 21: issho.v1.TranslationService.ListAppLanguages:output_type -> issho.v1.ListAppLanguagesResponse
-	7,  // 22: issho.v1.TranslationService.ListAppStrings:output_type -> issho.v1.ListAppStringsResponse
-	10, // 23: issho.v1.TranslationService.SaveAppString:output_type -> issho.v1.SaveAppStringResponse
-	12, // 24: issho.v1.TranslationService.RemoveAppString:output_type -> issho.v1.RemoveAppStringResponse
-	14, // 25: issho.v1.TranslationService.DraftAppString:output_type -> issho.v1.DraftAppStringResponse
-	16, // 26: issho.v1.TranslationService.ListCatalogLanguages:output_type -> issho.v1.ListCatalogLanguagesResponse
-	18, // 27: issho.v1.TranslationService.ListCatalogTranslations:output_type -> issho.v1.ListCatalogTranslationsResponse
-	20, // 28: issho.v1.TranslationService.ReviewCatalogTranslation:output_type -> issho.v1.ReviewCatalogTranslationResponse
-	20, // [20:29] is the sub-list for method output_type
-	11, // [11:20] is the sub-list for method input_type
-	11, // [11:11] is the sub-list for extension type_name
-	11, // [11:11] is the sub-list for extension extendee
-	0,  // [0:11] is the sub-list for field type_name
+	23, // 11: issho.v1.Translation.reviewed_at:type_name -> google.protobuf.Timestamp
+	23, // 12: issho.v1.Translation.created_at:type_name -> google.protobuf.Timestamp
+	0,  // 13: issho.v1.TranslationService.GetTranslator:input_type -> issho.v1.GetTranslatorRequest
+	3,  // 14: issho.v1.TranslationService.ListAppLanguages:input_type -> issho.v1.ListAppLanguagesRequest
+	6,  // 15: issho.v1.TranslationService.ListAppStrings:input_type -> issho.v1.ListAppStringsRequest
+	9,  // 16: issho.v1.TranslationService.SaveAppString:input_type -> issho.v1.SaveAppStringRequest
+	11, // 17: issho.v1.TranslationService.RemoveAppString:input_type -> issho.v1.RemoveAppStringRequest
+	13, // 18: issho.v1.TranslationService.DraftAppString:input_type -> issho.v1.DraftAppStringRequest
+	15, // 19: issho.v1.TranslationService.ListCatalogLanguages:input_type -> issho.v1.ListCatalogLanguagesRequest
+	17, // 20: issho.v1.TranslationService.ListCatalogTranslations:input_type -> issho.v1.ListCatalogTranslationsRequest
+	19, // 21: issho.v1.TranslationService.ReviewCatalogTranslation:input_type -> issho.v1.ReviewCatalogTranslationRequest
+	1,  // 22: issho.v1.TranslationService.GetTranslator:output_type -> issho.v1.GetTranslatorResponse
+	4,  // 23: issho.v1.TranslationService.ListAppLanguages:output_type -> issho.v1.ListAppLanguagesResponse
+	7,  // 24: issho.v1.TranslationService.ListAppStrings:output_type -> issho.v1.ListAppStringsResponse
+	10, // 25: issho.v1.TranslationService.SaveAppString:output_type -> issho.v1.SaveAppStringResponse
+	12, // 26: issho.v1.TranslationService.RemoveAppString:output_type -> issho.v1.RemoveAppStringResponse
+	14, // 27: issho.v1.TranslationService.DraftAppString:output_type -> issho.v1.DraftAppStringResponse
+	16, // 28: issho.v1.TranslationService.ListCatalogLanguages:output_type -> issho.v1.ListCatalogLanguagesResponse
+	18, // 29: issho.v1.TranslationService.ListCatalogTranslations:output_type -> issho.v1.ListCatalogTranslationsResponse
+	20, // 30: issho.v1.TranslationService.ReviewCatalogTranslation:output_type -> issho.v1.ReviewCatalogTranslationResponse
+	22, // [22:31] is the sub-list for method output_type
+	13, // [13:22] is the sub-list for method input_type
+	13, // [13:13] is the sub-list for extension type_name
+	13, // [13:13] is the sub-list for extension extendee
+	0,  // [0:13] is the sub-list for field type_name
 }
 
 func init() { file_issho_v1_translation_proto_init() }
@@ -1357,14 +1553,13 @@ func file_issho_v1_translation_proto_init() {
 	if File_issho_v1_translation_proto != nil {
 		return
 	}
-	file_issho_v1_moderation_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_issho_v1_translation_proto_rawDesc), len(file_issho_v1_translation_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   21,
+			NumMessages:   23,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

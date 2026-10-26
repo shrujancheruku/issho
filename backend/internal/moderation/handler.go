@@ -54,14 +54,6 @@ func (h *Handler) now() time.Time {
 	return time.Now()
 }
 
-func (h *Handler) GetModerator(ctx context.Context, _ *connect.Request[isshov1.GetModeratorRequest]) (*connect.Response[isshov1.GetModeratorResponse], error) {
-	c, err := auth.RequireAdmin(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return connect.NewResponse(&isshov1.GetModeratorResponse{UserId: c.UserID.String(), Email: c.Email}), nil
-}
-
 // Report statuses as stored and as sent.
 var reportStatuses = map[isshov1.ReportStatus]string{
 	isshov1.ReportStatus_REPORT_STATUS_OPEN:      "open",
@@ -287,22 +279,3 @@ func uuidString(id pgtype.UUID) string {
 func pgUUID(id uuid.UUID) pgtype.UUID { return pgtype.UUID{Bytes: id, Valid: true} }
 
 func pgTime(t time.Time) pgtype.Timestamptz { return pgtype.Timestamptz{Time: t, Valid: true} }
-
-// moved answers the translation RPCs that moved to TranslationService
-// (internal/translations). They stay in the proto because removing an RPC
-// breaks the API's compatibility check.
-func moved(to string) error {
-	return connect.NewError(connect.CodeUnimplemented, errors.New("moved to TranslationService."+to))
-}
-
-func (h *Handler) ListTranslationLanguages(context.Context, *connect.Request[isshov1.ListTranslationLanguagesRequest]) (*connect.Response[isshov1.ListTranslationLanguagesResponse], error) {
-	return nil, moved("ListCatalogLanguages")
-}
-
-func (h *Handler) ListTranslations(context.Context, *connect.Request[isshov1.ListTranslationsRequest]) (*connect.Response[isshov1.ListTranslationsResponse], error) {
-	return nil, moved("ListCatalogTranslations")
-}
-
-func (h *Handler) ReviewTranslation(context.Context, *connect.Request[isshov1.ReviewTranslationRequest]) (*connect.Response[isshov1.ReviewTranslationResponse], error) {
-	return nil, moved("ReviewCatalogTranslation")
-}

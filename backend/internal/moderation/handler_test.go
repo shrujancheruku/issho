@@ -24,8 +24,8 @@ func TestNonAdminRefused(t *testing.T) {
 	if _, err := h.ListReports(ctx, connect.NewRequest(&isshov1.ListReportsRequest{})); connect.CodeOf(err) != connect.CodePermissionDenied {
 		t.Fatalf("ListReports as a user: %v", err)
 	}
-	if _, err := h.GetModerator(context.Background(), connect.NewRequest(&isshov1.GetModeratorRequest{})); connect.CodeOf(err) != connect.CodeUnauthenticated {
-		t.Fatalf("GetModerator without a caller: %v", err)
+	if _, err := h.ListReports(context.Background(), connect.NewRequest(&isshov1.ListReportsRequest{})); connect.CodeOf(err) != connect.CodeUnauthenticated {
+		t.Fatalf("ListReports without a caller: %v", err)
 	}
 }
 

@@ -16,42 +16,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file issho/v1/moderation.proto.
  */
 export const file_issho_v1_moderation: GenFile = /*@__PURE__*/
-  fileDesc("Chlpc3Noby92MS9tb2RlcmF0aW9uLnByb3RvEghpc3Noby52MSIVChNHZXRNb2RlcmF0b3JSZXF1ZXN0IjYKFEdldE1vZGVyYXRvclJlc3BvbnNlEg8KB3VzZXJfaWQYASABKAkSDQoFZW1haWwYAiABKAkiUQoSTGlzdFJlcG9ydHNSZXF1ZXN0EiYKBnN0YXR1cxgBIAEoDjIWLmlzc2hvLnYxLlJlcG9ydFN0YXR1cxITCgtyZXBvcnRlZF9pZBgCIAEoCSJCChNMaXN0UmVwb3J0c1Jlc3BvbnNlEisKB3JlcG9ydHMYASADKAsyGi5pc3Noby52MS5Nb2RlcmF0aW9uUmVwb3J0Ip8EChBNb2RlcmF0aW9uUmVwb3J0EgoKAmlkGAEgASgJEhMKC3JlcG9ydGVyX2lkGAIgASgJEhUKDXJlcG9ydGVyX25hbWUYAyABKAkSEwoLcmVwb3J0ZWRfaWQYBCABKAkSFQoNcmVwb3J0ZWRfbmFtZRgFIAEoCRIeChZyZXBvcnRzX2Fib3V0X3JlcG9ydGVkGAYgASgFEiYKBnJlYXNvbhgHIAEoDjIWLmlzc2hvLnYxLlJlcG9ydFJlYXNvbhIPCgdkZXRhaWxzGAggASgJEiYKBnN0YXR1cxgJIAEoDjIWLmlzc2hvLnYxLlJlcG9ydFN0YXR1cxIMCgRub3RlGAogASgJEhAKCGV2ZW50X2lkGAsgASgJEhMKC2V2ZW50X3RpdGxlGAwgASgJEhIKCmV2ZW50X2RhdGUYDSABKAkSEwoLZXZlbnRfYmxvY2sYDiABKAkSDwoHY3Jld19pZBgPIAEoCRIRCgljcmV3X25hbWUYECABKAkSLgoKY3JlYXRlZF9hdBgRIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLgoKdXBkYXRlZF9hdBgSIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLwoLcmV2aWV3ZWRfYXQYEyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhMKC3Jldmlld2VkX2J5GBQgASgJIl8KFFJlc29sdmVSZXBvcnRSZXF1ZXN0EhEKCXJlcG9ydF9pZBgBIAEoCRImCgZzdGF0dXMYAiABKA4yFi5pc3Noby52MS5SZXBvcnRTdGF0dXMSDAoEbm90ZRgDIAEoCSIXChVSZXNvbHZlUmVwb3J0UmVzcG9uc2UiJAoQTGlzdEZsYWdzUmVxdWVzdBIQCghyZXNvbHZlZBgBIAEoCCI8ChFMaXN0RmxhZ3NSZXNwb25zZRInCgVmbGFncxgBIAMoCzIYLmlzc2hvLnYxLk1vZGVyYXRpb25GbGFnIqwCCg5Nb2RlcmF0aW9uRmxhZxIKCgJpZBgBIAEoAxIPCgd1c2VyX2lkGAIgASgJEhEKCXVzZXJfbmFtZRgDIAEoCRIgCgRraW5kGAQgASgOMhIuaXNzaG8udjEuRmxhZ0tpbmQSFAoMZGV0YWlsc19qc29uGAUgASgJEgwKBG5vdGUYBiABKAkSLgoKY3JlYXRlZF9hdBgHIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLgoKdXBkYXRlZF9hdBgIIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLwoLcmVzb2x2ZWRfYXQYCSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhMKC3Jlc29sdmVkX2J5GAogASgJIjMKElJlc29sdmVGbGFnUmVxdWVzdBIPCgdmbGFnX2lkGAEgASgDEgwKBG5vdGUYAiABKAkiFQoTUmVzb2x2ZUZsYWdSZXNwb25zZSI+ChVMaXN0Q3Jld0xlYXZlc1JlcXVlc3QSJQoGcmVhc29uGAEgASgOMhUuaXNzaG8udjEuTGVhdmVSZWFzb24iPQoWTGlzdENyZXdMZWF2ZXNSZXNwb25zZRIjCgZsZWF2ZXMYASADKAsyEy5pc3Noby52MS5DcmV3TGVhdmUi3AEKCUNyZXdMZWF2ZRIKCgJpZBgBIAEoAxIPCgdjcmV3X2lkGAIgASgJEhEKCWNyZXdfbmFtZRgDIAEoCRITCgtjcmV3X3N0YXR1cxgEIAEoCRIPCgd1c2VyX2lkGAUgASgJEhEKCXVzZXJfbmFtZRgGIAEoCRIlCgZyZWFzb24YByABKA4yFS5pc3Noby52MS5MZWF2ZVJlYXNvbhIPCgdkZXRhaWxzGAggASgJEi4KCmNyZWF0ZWRfYXQYCSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wIiEKH0xpc3RUcmFuc2xhdGlvbkxhbmd1YWdlc1JlcXVlc3QiVAogTGlzdFRyYW5zbGF0aW9uTGFuZ3VhZ2VzUmVzcG9uc2USMAoJbGFuZ3VhZ2VzGAEgAygLMh0uaXNzaG8udjEuVHJhbnNsYXRpb25MYW5ndWFnZSJGChNUcmFuc2xhdGlvbkxhbmd1YWdlEgwKBGxhbmcYASABKAkSDQoFdG90YWwYAiABKAUSEgoKdW5yZXZpZXdlZBgDIAEoBSJgChdMaXN0VHJhbnNsYXRpb25zUmVxdWVzdBIMCgRsYW5nGAEgASgJEhcKD3VucmV2aWV3ZWRfb25seRgCIAEoCBIOCgZzZWFyY2gYAyABKAkSDgoGb2Zmc2V0GAQgASgFIkcKGExpc3RUcmFuc2xhdGlvbnNSZXNwb25zZRIrCgx0cmFuc2xhdGlvbnMYASADKAsyFS5pc3Noby52MS5UcmFuc2xhdGlvbiLhAQoLVHJhbnNsYXRpb24SEwoLc291cmNlX2hhc2gYASABKAkSDAoEbGFuZxgCIAEoCRIOCgZzb3VyY2UYAyABKAkSDwoHY29udGV4dBgEIAEoCRIMCgR0ZXh0GAUgASgJEg0KBW1vZGVsGAYgASgJEhAKCHJldmlld2VkGAcgASgIEi8KC3Jldmlld2VkX2F0GAggASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIuCgpjcmVhdGVkX2F0GAkgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCJLChhSZXZpZXdUcmFuc2xhdGlvblJlcXVlc3QSEwoLc291cmNlX2hhc2gYASABKAkSDAoEbGFuZxgCIAEoCRIMCgR0ZXh0GAMgASgJIkcKGVJldmlld1RyYW5zbGF0aW9uUmVzcG9uc2USKgoLdHJhbnNsYXRpb24YASABKAsyFS5pc3Noby52MS5UcmFuc2xhdGlvbiIkChNTZWFyY2hQZW9wbGVSZXF1ZXN0Eg0KBXF1ZXJ5GAEgASgJIj8KFFNlYXJjaFBlb3BsZVJlc3BvbnNlEicKBnBlb3BsZRgBIAMoCzIXLmlzc2hvLnYxLlBlcnNvblN1bW1hcnkiUAoNUGVyc29uU3VtbWFyeRIPCgd1c2VyX2lkGAEgASgJEgwKBG5hbWUYAiABKAkSDQoFZW1haWwYAyABKAkSEQoJc3VzcGVuZGVkGAQgASgIIiMKEEdldFBlcnNvblJlcXVlc3QSDwoHdXNlcl9pZBgBIAEoCSI1ChFHZXRQZXJzb25SZXNwb25zZRIgCgZwZXJzb24YASABKAsyEC5pc3Noby52MS5QZXJzb24ihgMKBlBlcnNvbhIPCgd1c2VyX2lkGAEgASgJEgwKBG5hbWUYAiABKAkSDQoFZW1haWwYAyABKAkSLQoJam9pbmVkX2F0GAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIOCgZnZW5kZXIYBSABKAkSEgoKYmlydGhfeWVhchgGIAEoBRIRCglob21lX2FyZWEYByABKAkSDwoHY2l0eV9pZBgIIAEoCRIVCg1yZXBvcnRzX2Fib3V0GAkgASgFEhoKEm9wZW5fcmVwb3J0c19hYm91dBgKIAEoBRIUCgxyZXBvcnRzX21hZGUYCyABKAUSEQoJc3VzcGVuZGVkGAwgASgIEikKC3N1c3BlbnNpb25zGA0gAygLMhQuaXNzaG8udjEuU3VzcGVuc2lvbhInCgVmbGFncxgOIAMoCzIYLmlzc2hvLnYxLk1vZGVyYXRpb25GbGFnEicKB291dGluZ3MYDyADKAsyFi5pc3Noby52MS5QZXJzb25PdXRpbmciwQEKClN1c3BlbnNpb24SCgoCaWQYASABKAMSDgoGcmVhc29uGAIgASgJEhIKCmNyZWF0ZWRfYnkYAyABKAkSLgoKY3JlYXRlZF9hdBgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLQoJbGlmdGVkX2F0GAUgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIRCglsaWZ0ZWRfYnkYBiABKAkSEQoJbGlmdF9ub3RlGAcgASgJIrQBCgxQZXJzb25PdXRpbmcSEAoIZXZlbnRfaWQYASABKAkSDQoFdGl0bGUYAiABKAkSDAoEZGF0ZRgDIAEoCRINCgVibG9jaxgEIAEoCRIUCgxldmVudF9zdGF0dXMYBSABKAkSEAoIcmVzcG9uc2UYBiABKAkSEgoKY2hlY2tlZF9pbhgHIAEoCBIqCghmZWVkYmFjaxgIIAEoDjIYLmlzc2hvLnYxLk91dGluZ0ZlZWRiYWNrIjcKFFN1c3BlbmRQZXJzb25SZXF1ZXN0Eg8KB3VzZXJfaWQYASABKAkSDgoGcmVhc29uGAIgASgJIhcKFVN1c3BlbmRQZXJzb25SZXNwb25zZSI2ChVMaWZ0U3VzcGVuc2lvblJlcXVlc3QSDwoHdXNlcl9pZBgBIAEoCRIMCgRub3RlGAIgASgJIhgKFkxpZnRTdXNwZW5zaW9uUmVzcG9uc2UiFgoUTGlzdFN1c3BlbmRlZFJlcXVlc3QiQgoVTGlzdFN1c3BlbmRlZFJlc3BvbnNlEikKBnBlb3BsZRgBIAMoCzIZLmlzc2hvLnYxLlN1c3BlbmRlZFBlcnNvbiKBAQoPU3VzcGVuZGVkUGVyc29uEg8KB3VzZXJfaWQYASABKAkSDAoEbmFtZRgCIAEoCRIOCgZyZWFzb24YAyABKAkSKQoFc2luY2UYBCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhQKDHN1c3BlbmRlZF9ieRgFIAEoCSp+CgxSZXBvcnRTdGF0dXMSHQoZUkVQT1JUX1NUQVRVU19VTlNQRUNJRklFRBAAEhYKElJFUE9SVF9TVEFUVVNfT1BFThABEhoKFlJFUE9SVF9TVEFUVVNfQUNUSU9ORUQQAhIbChdSRVBPUlRfU1RBVFVTX0RJU01JU1NFRBADKkUKCEZsYWdLaW5kEhkKFUZMQUdfS0lORF9VTlNQRUNJRklFRBAAEh4KGkZMQUdfS0lORF9QSUNLX0dFTkRFUl9MRUFOEAEqcwoOT3V0aW5nRmVlZGJhY2sSHwobT1VUSU5HX0ZFRURCQUNLX1VOU1BFQ0lGSUVEEAASHQoZT1VUSU5HX0ZFRURCQUNLX1NBSURfV0VOVBABEiEKHU9VVElOR19GRUVEQkFDS19TQUlEX0RJRE5UX0dPEAIyxgkKEU1vZGVyYXRpb25TZXJ2aWNlEk8KDEdldE1vZGVyYXRvchIdLmlzc2hvLnYxLkdldE1vZGVyYXRvclJlcXVlc3QaHi5pc3Noby52MS5HZXRNb2RlcmF0b3JSZXNwb25zZSIAEkwKC0xpc3RSZXBvcnRzEhwuaXNzaG8udjEuTGlzdFJlcG9ydHNSZXF1ZXN0Gh0uaXNzaG8udjEuTGlzdFJlcG9ydHNSZXNwb25zZSIAElIKDVJlc29sdmVSZXBvcnQSHi5pc3Noby52MS5SZXNvbHZlUmVwb3J0UmVxdWVzdBofLmlzc2hvLnYxLlJlc29sdmVSZXBvcnRSZXNwb25zZSIAEkYKCUxpc3RGbGFncxIaLmlzc2hvLnYxLkxpc3RGbGFnc1JlcXVlc3QaGy5pc3Noby52MS5MaXN0RmxhZ3NSZXNwb25zZSIAEkwKC1Jlc29sdmVGbGFnEhwuaXNzaG8udjEuUmVzb2x2ZUZsYWdSZXF1ZXN0Gh0uaXNzaG8udjEuUmVzb2x2ZUZsYWdSZXNwb25zZSIAElUKDkxpc3RDcmV3TGVhdmVzEh8uaXNzaG8udjEuTGlzdENyZXdMZWF2ZXNSZXF1ZXN0GiAuaXNzaG8udjEuTGlzdENyZXdMZWF2ZXNSZXNwb25zZSIAEnYKGExpc3RUcmFuc2xhdGlvbkxhbmd1YWdlcxIpLmlzc2hvLnYxLkxpc3RUcmFuc2xhdGlvbkxhbmd1YWdlc1JlcXVlc3QaKi5pc3Noby52MS5MaXN0VHJhbnNsYXRpb25MYW5ndWFnZXNSZXNwb25zZSIDiAIBEl4KEExpc3RUcmFuc2xhdGlvbnMSIS5pc3Noby52MS5MaXN0VHJhbnNsYXRpb25zUmVxdWVzdBoiLmlzc2hvLnYxLkxpc3RUcmFuc2xhdGlvbnNSZXNwb25zZSIDiAIBEmEKEVJldmlld1RyYW5zbGF0aW9uEiIuaXNzaG8udjEuUmV2aWV3VHJhbnNsYXRpb25SZXF1ZXN0GiMuaXNzaG8udjEuUmV2aWV3VHJhbnNsYXRpb25SZXNwb25zZSIDiAIBEk8KDFNlYXJjaFBlb3BsZRIdLmlzc2hvLnYxLlNlYXJjaFBlb3BsZVJlcXVlc3QaHi5pc3Noby52MS5TZWFyY2hQZW9wbGVSZXNwb25zZSIAEkYKCUdldFBlcnNvbhIaLmlzc2hvLnYxLkdldFBlcnNvblJlcXVlc3QaGy5pc3Noby52MS5HZXRQZXJzb25SZXNwb25zZSIAElIKDVN1c3BlbmRQZXJzb24SHi5pc3Noby52MS5TdXNwZW5kUGVyc29uUmVxdWVzdBofLmlzc2hvLnYxLlN1c3BlbmRQZXJzb25SZXNwb25zZSIAElUKDkxpZnRTdXNwZW5zaW9uEh8uaXNzaG8udjEuTGlmdFN1c3BlbnNpb25SZXF1ZXN0GiAuaXNzaG8udjEuTGlmdFN1c3BlbnNpb25SZXNwb25zZSIAElIKDUxpc3RTdXNwZW5kZWQSHi5pc3Noby52MS5MaXN0U3VzcGVuZGVkUmVxdWVzdBofLmlzc2hvLnYxLkxpc3RTdXNwZW5kZWRSZXNwb25zZSIAQj5aPGdpdGh1Yi5jb20vc2hydWphbmNoZXJ1a3UvaXNzaG8vYmFja2VuZC9nZW4vaXNzaG8vdjE7aXNzaG92MWIGcHJvdG8z", [file_google_protobuf_timestamp, file_issho_v1_crews, file_issho_v1_events]);
-
-/**
- * @generated from message issho.v1.GetModeratorRequest
- */
-export type GetModeratorRequest = Message<"issho.v1.GetModeratorRequest"> & {
-};
-
-/**
- * Describes the message issho.v1.GetModeratorRequest.
- * Use `create(GetModeratorRequestSchema)` to create a new message.
- */
-export const GetModeratorRequestSchema: GenMessage<GetModeratorRequest> = /*@__PURE__*/
-  messageDesc(file_issho_v1_moderation, 0);
-
-/**
- * @generated from message issho.v1.GetModeratorResponse
- */
-export type GetModeratorResponse = Message<"issho.v1.GetModeratorResponse"> & {
-  /**
-   * @generated from field: string user_id = 1;
-   */
-  userId: string;
-
-  /**
-   * @generated from field: string email = 2;
-   */
-  email: string;
-};
-
-/**
- * Describes the message issho.v1.GetModeratorResponse.
- * Use `create(GetModeratorResponseSchema)` to create a new message.
- */
-export const GetModeratorResponseSchema: GenMessage<GetModeratorResponse> = /*@__PURE__*/
-  messageDesc(file_issho_v1_moderation, 1);
+  fileDesc("Chlpc3Noby92MS9tb2RlcmF0aW9uLnByb3RvEghpc3Noby52MSJRChJMaXN0UmVwb3J0c1JlcXVlc3QSJgoGc3RhdHVzGAEgASgOMhYuaXNzaG8udjEuUmVwb3J0U3RhdHVzEhMKC3JlcG9ydGVkX2lkGAIgASgJIkIKE0xpc3RSZXBvcnRzUmVzcG9uc2USKwoHcmVwb3J0cxgBIAMoCzIaLmlzc2hvLnYxLk1vZGVyYXRpb25SZXBvcnQinwQKEE1vZGVyYXRpb25SZXBvcnQSCgoCaWQYASABKAkSEwoLcmVwb3J0ZXJfaWQYAiABKAkSFQoNcmVwb3J0ZXJfbmFtZRgDIAEoCRITCgtyZXBvcnRlZF9pZBgEIAEoCRIVCg1yZXBvcnRlZF9uYW1lGAUgASgJEh4KFnJlcG9ydHNfYWJvdXRfcmVwb3J0ZWQYBiABKAUSJgoGcmVhc29uGAcgASgOMhYuaXNzaG8udjEuUmVwb3J0UmVhc29uEg8KB2RldGFpbHMYCCABKAkSJgoGc3RhdHVzGAkgASgOMhYuaXNzaG8udjEuUmVwb3J0U3RhdHVzEgwKBG5vdGUYCiABKAkSEAoIZXZlbnRfaWQYCyABKAkSEwoLZXZlbnRfdGl0bGUYDCABKAkSEgoKZXZlbnRfZGF0ZRgNIAEoCRITCgtldmVudF9ibG9jaxgOIAEoCRIPCgdjcmV3X2lkGA8gASgJEhEKCWNyZXdfbmFtZRgQIAEoCRIuCgpjcmVhdGVkX2F0GBEgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIuCgp1cGRhdGVkX2F0GBIgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIvCgtyZXZpZXdlZF9hdBgTIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASEwoLcmV2aWV3ZWRfYnkYFCABKAkiXwoUUmVzb2x2ZVJlcG9ydFJlcXVlc3QSEQoJcmVwb3J0X2lkGAEgASgJEiYKBnN0YXR1cxgCIAEoDjIWLmlzc2hvLnYxLlJlcG9ydFN0YXR1cxIMCgRub3RlGAMgASgJIhcKFVJlc29sdmVSZXBvcnRSZXNwb25zZSIkChBMaXN0RmxhZ3NSZXF1ZXN0EhAKCHJlc29sdmVkGAEgASgIIjwKEUxpc3RGbGFnc1Jlc3BvbnNlEicKBWZsYWdzGAEgAygLMhguaXNzaG8udjEuTW9kZXJhdGlvbkZsYWcirAIKDk1vZGVyYXRpb25GbGFnEgoKAmlkGAEgASgDEg8KB3VzZXJfaWQYAiABKAkSEQoJdXNlcl9uYW1lGAMgASgJEiAKBGtpbmQYBCABKA4yEi5pc3Noby52MS5GbGFnS2luZBIUCgxkZXRhaWxzX2pzb24YBSABKAkSDAoEbm90ZRgGIAEoCRIuCgpjcmVhdGVkX2F0GAcgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIuCgp1cGRhdGVkX2F0GAggASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIvCgtyZXNvbHZlZF9hdBgJIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASEwoLcmVzb2x2ZWRfYnkYCiABKAkiMwoSUmVzb2x2ZUZsYWdSZXF1ZXN0Eg8KB2ZsYWdfaWQYASABKAMSDAoEbm90ZRgCIAEoCSIVChNSZXNvbHZlRmxhZ1Jlc3BvbnNlIj4KFUxpc3RDcmV3TGVhdmVzUmVxdWVzdBIlCgZyZWFzb24YASABKA4yFS5pc3Noby52MS5MZWF2ZVJlYXNvbiI9ChZMaXN0Q3Jld0xlYXZlc1Jlc3BvbnNlEiMKBmxlYXZlcxgBIAMoCzITLmlzc2hvLnYxLkNyZXdMZWF2ZSLcAQoJQ3Jld0xlYXZlEgoKAmlkGAEgASgDEg8KB2NyZXdfaWQYAiABKAkSEQoJY3Jld19uYW1lGAMgASgJEhMKC2NyZXdfc3RhdHVzGAQgASgJEg8KB3VzZXJfaWQYBSABKAkSEQoJdXNlcl9uYW1lGAYgASgJEiUKBnJlYXNvbhgHIAEoDjIVLmlzc2hvLnYxLkxlYXZlUmVhc29uEg8KB2RldGFpbHMYCCABKAkSLgoKY3JlYXRlZF9hdBgJIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiJAoTU2VhcmNoUGVvcGxlUmVxdWVzdBINCgVxdWVyeRgBIAEoCSI/ChRTZWFyY2hQZW9wbGVSZXNwb25zZRInCgZwZW9wbGUYASADKAsyFy5pc3Noby52MS5QZXJzb25TdW1tYXJ5IlAKDVBlcnNvblN1bW1hcnkSDwoHdXNlcl9pZBgBIAEoCRIMCgRuYW1lGAIgASgJEg0KBWVtYWlsGAMgASgJEhEKCXN1c3BlbmRlZBgEIAEoCCIjChBHZXRQZXJzb25SZXF1ZXN0Eg8KB3VzZXJfaWQYASABKAkiNQoRR2V0UGVyc29uUmVzcG9uc2USIAoGcGVyc29uGAEgASgLMhAuaXNzaG8udjEuUGVyc29uIoYDCgZQZXJzb24SDwoHdXNlcl9pZBgBIAEoCRIMCgRuYW1lGAIgASgJEg0KBWVtYWlsGAMgASgJEi0KCWpvaW5lZF9hdBgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASDgoGZ2VuZGVyGAUgASgJEhIKCmJpcnRoX3llYXIYBiABKAUSEQoJaG9tZV9hcmVhGAcgASgJEg8KB2NpdHlfaWQYCCABKAkSFQoNcmVwb3J0c19hYm91dBgJIAEoBRIaChJvcGVuX3JlcG9ydHNfYWJvdXQYCiABKAUSFAoMcmVwb3J0c19tYWRlGAsgASgFEhEKCXN1c3BlbmRlZBgMIAEoCBIpCgtzdXNwZW5zaW9ucxgNIAMoCzIULmlzc2hvLnYxLlN1c3BlbnNpb24SJwoFZmxhZ3MYDiADKAsyGC5pc3Noby52MS5Nb2RlcmF0aW9uRmxhZxInCgdvdXRpbmdzGA8gAygLMhYuaXNzaG8udjEuUGVyc29uT3V0aW5nIsEBCgpTdXNwZW5zaW9uEgoKAmlkGAEgASgDEg4KBnJlYXNvbhgCIAEoCRISCgpjcmVhdGVkX2J5GAMgASgJEi4KCmNyZWF0ZWRfYXQYBCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi0KCWxpZnRlZF9hdBgFIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASEQoJbGlmdGVkX2J5GAYgASgJEhEKCWxpZnRfbm90ZRgHIAEoCSK0AQoMUGVyc29uT3V0aW5nEhAKCGV2ZW50X2lkGAEgASgJEg0KBXRpdGxlGAIgASgJEgwKBGRhdGUYAyABKAkSDQoFYmxvY2sYBCABKAkSFAoMZXZlbnRfc3RhdHVzGAUgASgJEhAKCHJlc3BvbnNlGAYgASgJEhIKCmNoZWNrZWRfaW4YByABKAgSKgoIZmVlZGJhY2sYCCABKA4yGC5pc3Noby52MS5PdXRpbmdGZWVkYmFjayI3ChRTdXNwZW5kUGVyc29uUmVxdWVzdBIPCgd1c2VyX2lkGAEgASgJEg4KBnJlYXNvbhgCIAEoCSIXChVTdXNwZW5kUGVyc29uUmVzcG9uc2UiNgoVTGlmdFN1c3BlbnNpb25SZXF1ZXN0Eg8KB3VzZXJfaWQYASABKAkSDAoEbm90ZRgCIAEoCSIYChZMaWZ0U3VzcGVuc2lvblJlc3BvbnNlIhYKFExpc3RTdXNwZW5kZWRSZXF1ZXN0IkIKFUxpc3RTdXNwZW5kZWRSZXNwb25zZRIpCgZwZW9wbGUYASADKAsyGS5pc3Noby52MS5TdXNwZW5kZWRQZXJzb24igQEKD1N1c3BlbmRlZFBlcnNvbhIPCgd1c2VyX2lkGAEgASgJEgwKBG5hbWUYAiABKAkSDgoGcmVhc29uGAMgASgJEikKBXNpbmNlGAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIUCgxzdXNwZW5kZWRfYnkYBSABKAkqfgoMUmVwb3J0U3RhdHVzEh0KGVJFUE9SVF9TVEFUVVNfVU5TUEVDSUZJRUQQABIWChJSRVBPUlRfU1RBVFVTX09QRU4QARIaChZSRVBPUlRfU1RBVFVTX0FDVElPTkVEEAISGwoXUkVQT1JUX1NUQVRVU19ESVNNSVNTRUQQAypFCghGbGFnS2luZBIZChVGTEFHX0tJTkRfVU5TUEVDSUZJRUQQABIeChpGTEFHX0tJTkRfUElDS19HRU5ERVJfTEVBThABKnMKDk91dGluZ0ZlZWRiYWNrEh8KG09VVElOR19GRUVEQkFDS19VTlNQRUNJRklFRBAAEh0KGU9VVElOR19GRUVEQkFDS19TQUlEX1dFTlQQARIhCh1PVVRJTkdfRkVFREJBQ0tfU0FJRF9ESUROVF9HTxACMroGChFNb2RlcmF0aW9uU2VydmljZRJMCgtMaXN0UmVwb3J0cxIcLmlzc2hvLnYxLkxpc3RSZXBvcnRzUmVxdWVzdBodLmlzc2hvLnYxLkxpc3RSZXBvcnRzUmVzcG9uc2UiABJSCg1SZXNvbHZlUmVwb3J0Eh4uaXNzaG8udjEuUmVzb2x2ZVJlcG9ydFJlcXVlc3QaHy5pc3Noby52MS5SZXNvbHZlUmVwb3J0UmVzcG9uc2UiABJGCglMaXN0RmxhZ3MSGi5pc3Noby52MS5MaXN0RmxhZ3NSZXF1ZXN0GhsuaXNzaG8udjEuTGlzdEZsYWdzUmVzcG9uc2UiABJMCgtSZXNvbHZlRmxhZxIcLmlzc2hvLnYxLlJlc29sdmVGbGFnUmVxdWVzdBodLmlzc2hvLnYxLlJlc29sdmVGbGFnUmVzcG9uc2UiABJVCg5MaXN0Q3Jld0xlYXZlcxIfLmlzc2hvLnYxLkxpc3RDcmV3TGVhdmVzUmVxdWVzdBogLmlzc2hvLnYxLkxpc3RDcmV3TGVhdmVzUmVzcG9uc2UiABJPCgxTZWFyY2hQZW9wbGUSHS5pc3Noby52MS5TZWFyY2hQZW9wbGVSZXF1ZXN0Gh4uaXNzaG8udjEuU2VhcmNoUGVvcGxlUmVzcG9uc2UiABJGCglHZXRQZXJzb24SGi5pc3Noby52MS5HZXRQZXJzb25SZXF1ZXN0GhsuaXNzaG8udjEuR2V0UGVyc29uUmVzcG9uc2UiABJSCg1TdXNwZW5kUGVyc29uEh4uaXNzaG8udjEuU3VzcGVuZFBlcnNvblJlcXVlc3QaHy5pc3Noby52MS5TdXNwZW5kUGVyc29uUmVzcG9uc2UiABJVCg5MaWZ0U3VzcGVuc2lvbhIfLmlzc2hvLnYxLkxpZnRTdXNwZW5zaW9uUmVxdWVzdBogLmlzc2hvLnYxLkxpZnRTdXNwZW5zaW9uUmVzcG9uc2UiABJSCg1MaXN0U3VzcGVuZGVkEh4uaXNzaG8udjEuTGlzdFN1c3BlbmRlZFJlcXVlc3QaHy5pc3Noby52MS5MaXN0U3VzcGVuZGVkUmVzcG9uc2UiAEI+WjxnaXRodWIuY29tL3NocnVqYW5jaGVydWt1L2lzc2hvL2JhY2tlbmQvZ2VuL2lzc2hvL3YxO2lzc2hvdjFiBnByb3RvMw", [file_google_protobuf_timestamp, file_issho_v1_crews, file_issho_v1_events]);
 
 /**
  * @generated from message issho.v1.ListReportsRequest
@@ -77,7 +42,7 @@ export type ListReportsRequest = Message<"issho.v1.ListReportsRequest"> & {
  * Use `create(ListReportsRequestSchema)` to create a new message.
  */
 export const ListReportsRequestSchema: GenMessage<ListReportsRequest> = /*@__PURE__*/
-  messageDesc(file_issho_v1_moderation, 2);
+  messageDesc(file_issho_v1_moderation, 0);
 
 /**
  * @generated from message issho.v1.ListReportsResponse
@@ -94,7 +59,7 @@ export type ListReportsResponse = Message<"issho.v1.ListReportsResponse"> & {
  * Use `create(ListReportsResponseSchema)` to create a new message.
  */
 export const ListReportsResponseSchema: GenMessage<ListReportsResponse> = /*@__PURE__*/
-  messageDesc(file_issho_v1_moderation, 3);
+  messageDesc(file_issho_v1_moderation, 1);
 
 /**
  * @generated from message issho.v1.ModerationReport
@@ -220,7 +185,7 @@ export type ModerationReport = Message<"issho.v1.ModerationReport"> & {
  * Use `create(ModerationReportSchema)` to create a new message.
  */
 export const ModerationReportSchema: GenMessage<ModerationReport> = /*@__PURE__*/
-  messageDesc(file_issho_v1_moderation, 4);
+  messageDesc(file_issho_v1_moderation, 2);
 
 /**
  * @generated from message issho.v1.ResolveReportRequest
@@ -251,7 +216,7 @@ export type ResolveReportRequest = Message<"issho.v1.ResolveReportRequest"> & {
  * Use `create(ResolveReportRequestSchema)` to create a new message.
  */
 export const ResolveReportRequestSchema: GenMessage<ResolveReportRequest> = /*@__PURE__*/
-  messageDesc(file_issho_v1_moderation, 5);
+  messageDesc(file_issho_v1_moderation, 3);
 
 /**
  * @generated from message issho.v1.ResolveReportResponse
@@ -264,7 +229,7 @@ export type ResolveReportResponse = Message<"issho.v1.ResolveReportResponse"> & 
  * Use `create(ResolveReportResponseSchema)` to create a new message.
  */
 export const ResolveReportResponseSchema: GenMessage<ResolveReportResponse> = /*@__PURE__*/
-  messageDesc(file_issho_v1_moderation, 6);
+  messageDesc(file_issho_v1_moderation, 4);
 
 /**
  * @generated from message issho.v1.ListFlagsRequest
@@ -283,7 +248,7 @@ export type ListFlagsRequest = Message<"issho.v1.ListFlagsRequest"> & {
  * Use `create(ListFlagsRequestSchema)` to create a new message.
  */
 export const ListFlagsRequestSchema: GenMessage<ListFlagsRequest> = /*@__PURE__*/
-  messageDesc(file_issho_v1_moderation, 7);
+  messageDesc(file_issho_v1_moderation, 5);
 
 /**
  * @generated from message issho.v1.ListFlagsResponse
@@ -300,7 +265,7 @@ export type ListFlagsResponse = Message<"issho.v1.ListFlagsResponse"> & {
  * Use `create(ListFlagsResponseSchema)` to create a new message.
  */
 export const ListFlagsResponseSchema: GenMessage<ListFlagsResponse> = /*@__PURE__*/
-  messageDesc(file_issho_v1_moderation, 8);
+  messageDesc(file_issho_v1_moderation, 6);
 
 /**
  * @generated from message issho.v1.ModerationFlag
@@ -368,7 +333,7 @@ export type ModerationFlag = Message<"issho.v1.ModerationFlag"> & {
  * Use `create(ModerationFlagSchema)` to create a new message.
  */
 export const ModerationFlagSchema: GenMessage<ModerationFlag> = /*@__PURE__*/
-  messageDesc(file_issho_v1_moderation, 9);
+  messageDesc(file_issho_v1_moderation, 7);
 
 /**
  * @generated from message issho.v1.ResolveFlagRequest
@@ -392,7 +357,7 @@ export type ResolveFlagRequest = Message<"issho.v1.ResolveFlagRequest"> & {
  * Use `create(ResolveFlagRequestSchema)` to create a new message.
  */
 export const ResolveFlagRequestSchema: GenMessage<ResolveFlagRequest> = /*@__PURE__*/
-  messageDesc(file_issho_v1_moderation, 10);
+  messageDesc(file_issho_v1_moderation, 8);
 
 /**
  * @generated from message issho.v1.ResolveFlagResponse
@@ -405,7 +370,7 @@ export type ResolveFlagResponse = Message<"issho.v1.ResolveFlagResponse"> & {
  * Use `create(ResolveFlagResponseSchema)` to create a new message.
  */
 export const ResolveFlagResponseSchema: GenMessage<ResolveFlagResponse> = /*@__PURE__*/
-  messageDesc(file_issho_v1_moderation, 11);
+  messageDesc(file_issho_v1_moderation, 9);
 
 /**
  * @generated from message issho.v1.ListCrewLeavesRequest
@@ -424,7 +389,7 @@ export type ListCrewLeavesRequest = Message<"issho.v1.ListCrewLeavesRequest"> & 
  * Use `create(ListCrewLeavesRequestSchema)` to create a new message.
  */
 export const ListCrewLeavesRequestSchema: GenMessage<ListCrewLeavesRequest> = /*@__PURE__*/
-  messageDesc(file_issho_v1_moderation, 12);
+  messageDesc(file_issho_v1_moderation, 10);
 
 /**
  * @generated from message issho.v1.ListCrewLeavesResponse
@@ -441,7 +406,7 @@ export type ListCrewLeavesResponse = Message<"issho.v1.ListCrewLeavesResponse"> 
  * Use `create(ListCrewLeavesResponseSchema)` to create a new message.
  */
 export const ListCrewLeavesResponseSchema: GenMessage<ListCrewLeavesResponse> = /*@__PURE__*/
-  messageDesc(file_issho_v1_moderation, 13);
+  messageDesc(file_issho_v1_moderation, 11);
 
 /**
  * @generated from message issho.v1.CrewLeave
@@ -504,229 +469,7 @@ export type CrewLeave = Message<"issho.v1.CrewLeave"> & {
  * Use `create(CrewLeaveSchema)` to create a new message.
  */
 export const CrewLeaveSchema: GenMessage<CrewLeave> = /*@__PURE__*/
-  messageDesc(file_issho_v1_moderation, 14);
-
-/**
- * @generated from message issho.v1.ListTranslationLanguagesRequest
- */
-export type ListTranslationLanguagesRequest = Message<"issho.v1.ListTranslationLanguagesRequest"> & {
-};
-
-/**
- * Describes the message issho.v1.ListTranslationLanguagesRequest.
- * Use `create(ListTranslationLanguagesRequestSchema)` to create a new message.
- */
-export const ListTranslationLanguagesRequestSchema: GenMessage<ListTranslationLanguagesRequest> = /*@__PURE__*/
-  messageDesc(file_issho_v1_moderation, 15);
-
-/**
- * @generated from message issho.v1.ListTranslationLanguagesResponse
- */
-export type ListTranslationLanguagesResponse = Message<"issho.v1.ListTranslationLanguagesResponse"> & {
-  /**
-   * @generated from field: repeated issho.v1.TranslationLanguage languages = 1;
-   */
-  languages: TranslationLanguage[];
-};
-
-/**
- * Describes the message issho.v1.ListTranslationLanguagesResponse.
- * Use `create(ListTranslationLanguagesResponseSchema)` to create a new message.
- */
-export const ListTranslationLanguagesResponseSchema: GenMessage<ListTranslationLanguagesResponse> = /*@__PURE__*/
-  messageDesc(file_issho_v1_moderation, 16);
-
-/**
- * @generated from message issho.v1.TranslationLanguage
- */
-export type TranslationLanguage = Message<"issho.v1.TranslationLanguage"> & {
-  /**
-   * ISO 639-1 code, e.g. "ja".
-   *
-   * @generated from field: string lang = 1;
-   */
-  lang: string;
-
-  /**
-   * @generated from field: int32 total = 2;
-   */
-  total: number;
-
-  /**
-   * @generated from field: int32 unreviewed = 3;
-   */
-  unreviewed: number;
-};
-
-/**
- * Describes the message issho.v1.TranslationLanguage.
- * Use `create(TranslationLanguageSchema)` to create a new message.
- */
-export const TranslationLanguageSchema: GenMessage<TranslationLanguage> = /*@__PURE__*/
-  messageDesc(file_issho_v1_moderation, 17);
-
-/**
- * @generated from message issho.v1.ListTranslationsRequest
- */
-export type ListTranslationsRequest = Message<"issho.v1.ListTranslationsRequest"> & {
-  /**
-   * @generated from field: string lang = 1;
-   */
-  lang: string;
-
-  /**
-   * @generated from field: bool unreviewed_only = 2;
-   */
-  unreviewedOnly: boolean;
-
-  /**
-   * Matches the English source or the translation; empty = all.
-   *
-   * @generated from field: string search = 3;
-   */
-  search: string;
-
-  /**
-   * How many to skip (pages of 100).
-   *
-   * @generated from field: int32 offset = 4;
-   */
-  offset: number;
-};
-
-/**
- * Describes the message issho.v1.ListTranslationsRequest.
- * Use `create(ListTranslationsRequestSchema)` to create a new message.
- */
-export const ListTranslationsRequestSchema: GenMessage<ListTranslationsRequest> = /*@__PURE__*/
-  messageDesc(file_issho_v1_moderation, 18);
-
-/**
- * @generated from message issho.v1.ListTranslationsResponse
- */
-export type ListTranslationsResponse = Message<"issho.v1.ListTranslationsResponse"> & {
-  /**
-   * @generated from field: repeated issho.v1.Translation translations = 1;
-   */
-  translations: Translation[];
-};
-
-/**
- * Describes the message issho.v1.ListTranslationsResponse.
- * Use `create(ListTranslationsResponseSchema)` to create a new message.
- */
-export const ListTranslationsResponseSchema: GenMessage<ListTranslationsResponse> = /*@__PURE__*/
-  messageDesc(file_issho_v1_moderation, 19);
-
-/**
- * @generated from message issho.v1.Translation
- */
-export type Translation = Message<"issho.v1.Translation"> & {
-  /**
-   * Identifies the English source and its context, with lang.
-   *
-   * @generated from field: string source_hash = 1;
-   */
-  sourceHash: string;
-
-  /**
-   * @generated from field: string lang = 2;
-   */
-  lang: string;
-
-  /**
-   * @generated from field: string source = 3;
-   */
-  source: string;
-
-  /**
-   * What the text is ("name of a city", a UI string), as given to the
-   * translator.
-   *
-   * @generated from field: string context = 4;
-   */
-  context: string;
-
-  /**
-   * @generated from field: string text = 5;
-   */
-  text: string;
-
-  /**
-   * Which translator wrote it.
-   *
-   * @generated from field: string model = 6;
-   */
-  model: string;
-
-  /**
-   * @generated from field: bool reviewed = 7;
-   */
-  reviewed: boolean;
-
-  /**
-   * @generated from field: google.protobuf.Timestamp reviewed_at = 8;
-   */
-  reviewedAt?: Timestamp | undefined;
-
-  /**
-   * @generated from field: google.protobuf.Timestamp created_at = 9;
-   */
-  createdAt?: Timestamp | undefined;
-};
-
-/**
- * Describes the message issho.v1.Translation.
- * Use `create(TranslationSchema)` to create a new message.
- */
-export const TranslationSchema: GenMessage<Translation> = /*@__PURE__*/
-  messageDesc(file_issho_v1_moderation, 20);
-
-/**
- * @generated from message issho.v1.ReviewTranslationRequest
- */
-export type ReviewTranslationRequest = Message<"issho.v1.ReviewTranslationRequest"> & {
-  /**
-   * @generated from field: string source_hash = 1;
-   */
-  sourceHash: string;
-
-  /**
-   * @generated from field: string lang = 2;
-   */
-  lang: string;
-
-  /**
-   * The corrected text (or the same text, to confirm it). Not empty.
-   *
-   * @generated from field: string text = 3;
-   */
-  text: string;
-};
-
-/**
- * Describes the message issho.v1.ReviewTranslationRequest.
- * Use `create(ReviewTranslationRequestSchema)` to create a new message.
- */
-export const ReviewTranslationRequestSchema: GenMessage<ReviewTranslationRequest> = /*@__PURE__*/
-  messageDesc(file_issho_v1_moderation, 21);
-
-/**
- * @generated from message issho.v1.ReviewTranslationResponse
- */
-export type ReviewTranslationResponse = Message<"issho.v1.ReviewTranslationResponse"> & {
-  /**
-   * @generated from field: issho.v1.Translation translation = 1;
-   */
-  translation?: Translation | undefined;
-};
-
-/**
- * Describes the message issho.v1.ReviewTranslationResponse.
- * Use `create(ReviewTranslationResponseSchema)` to create a new message.
- */
-export const ReviewTranslationResponseSchema: GenMessage<ReviewTranslationResponse> = /*@__PURE__*/
-  messageDesc(file_issho_v1_moderation, 22);
+  messageDesc(file_issho_v1_moderation, 12);
 
 /**
  * @generated from message issho.v1.SearchPeopleRequest
@@ -745,7 +488,7 @@ export type SearchPeopleRequest = Message<"issho.v1.SearchPeopleRequest"> & {
  * Use `create(SearchPeopleRequestSchema)` to create a new message.
  */
 export const SearchPeopleRequestSchema: GenMessage<SearchPeopleRequest> = /*@__PURE__*/
-  messageDesc(file_issho_v1_moderation, 23);
+  messageDesc(file_issho_v1_moderation, 13);
 
 /**
  * @generated from message issho.v1.SearchPeopleResponse
@@ -762,7 +505,7 @@ export type SearchPeopleResponse = Message<"issho.v1.SearchPeopleResponse"> & {
  * Use `create(SearchPeopleResponseSchema)` to create a new message.
  */
 export const SearchPeopleResponseSchema: GenMessage<SearchPeopleResponse> = /*@__PURE__*/
-  messageDesc(file_issho_v1_moderation, 24);
+  messageDesc(file_issho_v1_moderation, 14);
 
 /**
  * @generated from message issho.v1.PersonSummary
@@ -796,7 +539,7 @@ export type PersonSummary = Message<"issho.v1.PersonSummary"> & {
  * Use `create(PersonSummarySchema)` to create a new message.
  */
 export const PersonSummarySchema: GenMessage<PersonSummary> = /*@__PURE__*/
-  messageDesc(file_issho_v1_moderation, 25);
+  messageDesc(file_issho_v1_moderation, 15);
 
 /**
  * @generated from message issho.v1.GetPersonRequest
@@ -813,7 +556,7 @@ export type GetPersonRequest = Message<"issho.v1.GetPersonRequest"> & {
  * Use `create(GetPersonRequestSchema)` to create a new message.
  */
 export const GetPersonRequestSchema: GenMessage<GetPersonRequest> = /*@__PURE__*/
-  messageDesc(file_issho_v1_moderation, 26);
+  messageDesc(file_issho_v1_moderation, 16);
 
 /**
  * @generated from message issho.v1.GetPersonResponse
@@ -830,7 +573,7 @@ export type GetPersonResponse = Message<"issho.v1.GetPersonResponse"> & {
  * Use `create(GetPersonResponseSchema)` to create a new message.
  */
 export const GetPersonResponseSchema: GenMessage<GetPersonResponse> = /*@__PURE__*/
-  messageDesc(file_issho_v1_moderation, 27);
+  messageDesc(file_issho_v1_moderation, 17);
 
 /**
  * @generated from message issho.v1.Person
@@ -931,7 +674,7 @@ export type Person = Message<"issho.v1.Person"> & {
  * Use `create(PersonSchema)` to create a new message.
  */
 export const PersonSchema: GenMessage<Person> = /*@__PURE__*/
-  messageDesc(file_issho_v1_moderation, 28);
+  messageDesc(file_issho_v1_moderation, 18);
 
 /**
  * @generated from message issho.v1.Suspension
@@ -980,7 +723,7 @@ export type Suspension = Message<"issho.v1.Suspension"> & {
  * Use `create(SuspensionSchema)` to create a new message.
  */
 export const SuspensionSchema: GenMessage<Suspension> = /*@__PURE__*/
-  messageDesc(file_issho_v1_moderation, 29);
+  messageDesc(file_issho_v1_moderation, 19);
 
 /**
  * @generated from message issho.v1.PersonOuting
@@ -1040,7 +783,7 @@ export type PersonOuting = Message<"issho.v1.PersonOuting"> & {
  * Use `create(PersonOutingSchema)` to create a new message.
  */
 export const PersonOutingSchema: GenMessage<PersonOuting> = /*@__PURE__*/
-  messageDesc(file_issho_v1_moderation, 30);
+  messageDesc(file_issho_v1_moderation, 20);
 
 /**
  * @generated from message issho.v1.SuspendPersonRequest
@@ -1064,7 +807,7 @@ export type SuspendPersonRequest = Message<"issho.v1.SuspendPersonRequest"> & {
  * Use `create(SuspendPersonRequestSchema)` to create a new message.
  */
 export const SuspendPersonRequestSchema: GenMessage<SuspendPersonRequest> = /*@__PURE__*/
-  messageDesc(file_issho_v1_moderation, 31);
+  messageDesc(file_issho_v1_moderation, 21);
 
 /**
  * @generated from message issho.v1.SuspendPersonResponse
@@ -1077,7 +820,7 @@ export type SuspendPersonResponse = Message<"issho.v1.SuspendPersonResponse"> & 
  * Use `create(SuspendPersonResponseSchema)` to create a new message.
  */
 export const SuspendPersonResponseSchema: GenMessage<SuspendPersonResponse> = /*@__PURE__*/
-  messageDesc(file_issho_v1_moderation, 32);
+  messageDesc(file_issho_v1_moderation, 22);
 
 /**
  * @generated from message issho.v1.LiftSuspensionRequest
@@ -1101,7 +844,7 @@ export type LiftSuspensionRequest = Message<"issho.v1.LiftSuspensionRequest"> & 
  * Use `create(LiftSuspensionRequestSchema)` to create a new message.
  */
 export const LiftSuspensionRequestSchema: GenMessage<LiftSuspensionRequest> = /*@__PURE__*/
-  messageDesc(file_issho_v1_moderation, 33);
+  messageDesc(file_issho_v1_moderation, 23);
 
 /**
  * @generated from message issho.v1.LiftSuspensionResponse
@@ -1114,7 +857,7 @@ export type LiftSuspensionResponse = Message<"issho.v1.LiftSuspensionResponse"> 
  * Use `create(LiftSuspensionResponseSchema)` to create a new message.
  */
 export const LiftSuspensionResponseSchema: GenMessage<LiftSuspensionResponse> = /*@__PURE__*/
-  messageDesc(file_issho_v1_moderation, 34);
+  messageDesc(file_issho_v1_moderation, 24);
 
 /**
  * @generated from message issho.v1.ListSuspendedRequest
@@ -1127,7 +870,7 @@ export type ListSuspendedRequest = Message<"issho.v1.ListSuspendedRequest"> & {
  * Use `create(ListSuspendedRequestSchema)` to create a new message.
  */
 export const ListSuspendedRequestSchema: GenMessage<ListSuspendedRequest> = /*@__PURE__*/
-  messageDesc(file_issho_v1_moderation, 35);
+  messageDesc(file_issho_v1_moderation, 25);
 
 /**
  * @generated from message issho.v1.ListSuspendedResponse
@@ -1144,7 +887,7 @@ export type ListSuspendedResponse = Message<"issho.v1.ListSuspendedResponse"> & 
  * Use `create(ListSuspendedResponseSchema)` to create a new message.
  */
 export const ListSuspendedResponseSchema: GenMessage<ListSuspendedResponse> = /*@__PURE__*/
-  messageDesc(file_issho_v1_moderation, 36);
+  messageDesc(file_issho_v1_moderation, 26);
 
 /**
  * @generated from message issho.v1.SuspendedPerson
@@ -1181,7 +924,7 @@ export type SuspendedPerson = Message<"issho.v1.SuspendedPerson"> & {
  * Use `create(SuspendedPersonSchema)` to create a new message.
  */
 export const SuspendedPersonSchema: GenMessage<SuspendedPerson> = /*@__PURE__*/
-  messageDesc(file_issho_v1_moderation, 37);
+  messageDesc(file_issho_v1_moderation, 27);
 
 /**
  * @generated from enum issho.v1.ReportStatus
@@ -1275,8 +1018,7 @@ export const OutingFeedbackSchema: GenEnum<OutingFeedback> = /*@__PURE__*/
 /**
  * ModerationService: the moderation queue in the admin SPA. Reports about
  * people, flags raised by the system (picks leaning towards one gender),
- * and why people left crews. (Translations are TranslationService's; the
- * three translation RPCs below only answer UNIMPLEMENTED now.)
+ * and why people left crews. (Translations are TranslationService's.)
  * Admins only: requires `Authorization: Bearer <Supabase access token>` for
  * an account with `app_metadata.admin = true` (set with `tool set-admin`);
  * anyone else gets PERMISSION_DENIED.
@@ -1286,17 +1028,6 @@ export const OutingFeedbackSchema: GenEnum<OutingFeedback> = /*@__PURE__*/
  * @generated from service issho.v1.ModerationService
  */
 export const ModerationService: GenService<{
-  /**
-   * GetModerator says who the caller is. The admin SPA calls it after
-   * sign-in to find out whether the account is an admin.
-   *
-   * @generated from rpc issho.v1.ModerationService.GetModerator
-   */
-  getModerator: {
-    methodKind: "unary";
-    input: typeof GetModeratorRequestSchema;
-    output: typeof GetModeratorResponseSchema;
-  },
   /**
    * ListReports returns reports, open ones first (oldest first), then the
    * rest newest first. At most 200.
@@ -1350,43 +1081,6 @@ export const ModerationService: GenService<{
     methodKind: "unary";
     input: typeof ListCrewLeavesRequestSchema;
     output: typeof ListCrewLeavesResponseSchema;
-  },
-  /**
-   * Deprecated: moved to TranslationService (ListCatalogLanguages). Kept
-   * because removing an RPC breaks the API's compatibility check; answers
-   * UNIMPLEMENTED.
-   *
-   * @generated from rpc issho.v1.ModerationService.ListTranslationLanguages
-   * @deprecated
-   */
-  listTranslationLanguages: {
-    methodKind: "unary";
-    input: typeof ListTranslationLanguagesRequestSchema;
-    output: typeof ListTranslationLanguagesResponseSchema;
-  },
-  /**
-   * Deprecated: moved to TranslationService (ListAppStrings,
-   * ListCatalogTranslations). Answers UNIMPLEMENTED.
-   *
-   * @generated from rpc issho.v1.ModerationService.ListTranslations
-   * @deprecated
-   */
-  listTranslations: {
-    methodKind: "unary";
-    input: typeof ListTranslationsRequestSchema;
-    output: typeof ListTranslationsResponseSchema;
-  },
-  /**
-   * Deprecated: moved to TranslationService (SaveAppString,
-   * ReviewCatalogTranslation). Answers UNIMPLEMENTED.
-   *
-   * @generated from rpc issho.v1.ModerationService.ReviewTranslation
-   * @deprecated
-   */
-  reviewTranslation: {
-    methodKind: "unary";
-    input: typeof ReviewTranslationRequestSchema;
-    output: typeof ReviewTranslationResponseSchema;
   },
   /**
    * SearchPeople finds people by name or email (contains, any case) or

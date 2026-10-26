@@ -33,9 +33,6 @@ const (
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
-	// ModerationServiceGetModeratorProcedure is the fully-qualified name of the ModerationService's
-	// GetModerator RPC.
-	ModerationServiceGetModeratorProcedure = "/issho.v1.ModerationService/GetModerator"
 	// ModerationServiceListReportsProcedure is the fully-qualified name of the ModerationService's
 	// ListReports RPC.
 	ModerationServiceListReportsProcedure = "/issho.v1.ModerationService/ListReports"
@@ -51,15 +48,6 @@ const (
 	// ModerationServiceListCrewLeavesProcedure is the fully-qualified name of the ModerationService's
 	// ListCrewLeaves RPC.
 	ModerationServiceListCrewLeavesProcedure = "/issho.v1.ModerationService/ListCrewLeaves"
-	// ModerationServiceListTranslationLanguagesProcedure is the fully-qualified name of the
-	// ModerationService's ListTranslationLanguages RPC.
-	ModerationServiceListTranslationLanguagesProcedure = "/issho.v1.ModerationService/ListTranslationLanguages"
-	// ModerationServiceListTranslationsProcedure is the fully-qualified name of the ModerationService's
-	// ListTranslations RPC.
-	ModerationServiceListTranslationsProcedure = "/issho.v1.ModerationService/ListTranslations"
-	// ModerationServiceReviewTranslationProcedure is the fully-qualified name of the
-	// ModerationService's ReviewTranslation RPC.
-	ModerationServiceReviewTranslationProcedure = "/issho.v1.ModerationService/ReviewTranslation"
 	// ModerationServiceSearchPeopleProcedure is the fully-qualified name of the ModerationService's
 	// SearchPeople RPC.
 	ModerationServiceSearchPeopleProcedure = "/issho.v1.ModerationService/SearchPeople"
@@ -79,9 +67,6 @@ const (
 
 // ModerationServiceClient is a client for the issho.v1.ModerationService service.
 type ModerationServiceClient interface {
-	// GetModerator says who the caller is. The admin SPA calls it after
-	// sign-in to find out whether the account is an admin.
-	GetModerator(context.Context, *connect.Request[v1.GetModeratorRequest]) (*connect.Response[v1.GetModeratorResponse], error)
 	// ListReports returns reports, open ones first (oldest first), then the
 	// rest newest first. At most 200.
 	ListReports(context.Context, *connect.Request[v1.ListReportsRequest]) (*connect.Response[v1.ListReportsResponse], error)
@@ -96,22 +81,6 @@ type ModerationServiceClient interface {
 	ResolveFlag(context.Context, *connect.Request[v1.ResolveFlagRequest]) (*connect.Response[v1.ResolveFlagResponse], error)
 	// ListCrewLeaves returns why people left crews, newest first. At most 200.
 	ListCrewLeaves(context.Context, *connect.Request[v1.ListCrewLeavesRequest]) (*connect.Response[v1.ListCrewLeavesResponse], error)
-	// Deprecated: moved to TranslationService (ListCatalogLanguages). Kept
-	// because removing an RPC breaks the API's compatibility check; answers
-	// UNIMPLEMENTED.
-	//
-	// Deprecated: do not use.
-	ListTranslationLanguages(context.Context, *connect.Request[v1.ListTranslationLanguagesRequest]) (*connect.Response[v1.ListTranslationLanguagesResponse], error)
-	// Deprecated: moved to TranslationService (ListAppStrings,
-	// ListCatalogTranslations). Answers UNIMPLEMENTED.
-	//
-	// Deprecated: do not use.
-	ListTranslations(context.Context, *connect.Request[v1.ListTranslationsRequest]) (*connect.Response[v1.ListTranslationsResponse], error)
-	// Deprecated: moved to TranslationService (SaveAppString,
-	// ReviewCatalogTranslation). Answers UNIMPLEMENTED.
-	//
-	// Deprecated: do not use.
-	ReviewTranslation(context.Context, *connect.Request[v1.ReviewTranslationRequest]) (*connect.Response[v1.ReviewTranslationResponse], error)
 	// SearchPeople finds people by name or email (contains, any case) or
 	// exact user id. At most 50.
 	SearchPeople(context.Context, *connect.Request[v1.SearchPeopleRequest]) (*connect.Response[v1.SearchPeopleResponse], error)
@@ -147,12 +116,6 @@ func NewModerationServiceClient(httpClient connect.HTTPClient, baseURL string, o
 	baseURL = strings.TrimRight(baseURL, "/")
 	moderationServiceMethods := v1.File_issho_v1_moderation_proto.Services().ByName("ModerationService").Methods()
 	return &moderationServiceClient{
-		getModerator: connect.NewClient[v1.GetModeratorRequest, v1.GetModeratorResponse](
-			httpClient,
-			baseURL+ModerationServiceGetModeratorProcedure,
-			connect.WithSchema(moderationServiceMethods.ByName("GetModerator")),
-			connect.WithClientOptions(opts...),
-		),
 		listReports: connect.NewClient[v1.ListReportsRequest, v1.ListReportsResponse](
 			httpClient,
 			baseURL+ModerationServiceListReportsProcedure,
@@ -181,24 +144,6 @@ func NewModerationServiceClient(httpClient connect.HTTPClient, baseURL string, o
 			httpClient,
 			baseURL+ModerationServiceListCrewLeavesProcedure,
 			connect.WithSchema(moderationServiceMethods.ByName("ListCrewLeaves")),
-			connect.WithClientOptions(opts...),
-		),
-		listTranslationLanguages: connect.NewClient[v1.ListTranslationLanguagesRequest, v1.ListTranslationLanguagesResponse](
-			httpClient,
-			baseURL+ModerationServiceListTranslationLanguagesProcedure,
-			connect.WithSchema(moderationServiceMethods.ByName("ListTranslationLanguages")),
-			connect.WithClientOptions(opts...),
-		),
-		listTranslations: connect.NewClient[v1.ListTranslationsRequest, v1.ListTranslationsResponse](
-			httpClient,
-			baseURL+ModerationServiceListTranslationsProcedure,
-			connect.WithSchema(moderationServiceMethods.ByName("ListTranslations")),
-			connect.WithClientOptions(opts...),
-		),
-		reviewTranslation: connect.NewClient[v1.ReviewTranslationRequest, v1.ReviewTranslationResponse](
-			httpClient,
-			baseURL+ModerationServiceReviewTranslationProcedure,
-			connect.WithSchema(moderationServiceMethods.ByName("ReviewTranslation")),
 			connect.WithClientOptions(opts...),
 		),
 		searchPeople: connect.NewClient[v1.SearchPeopleRequest, v1.SearchPeopleResponse](
@@ -236,25 +181,16 @@ func NewModerationServiceClient(httpClient connect.HTTPClient, baseURL string, o
 
 // moderationServiceClient implements ModerationServiceClient.
 type moderationServiceClient struct {
-	getModerator             *connect.Client[v1.GetModeratorRequest, v1.GetModeratorResponse]
-	listReports              *connect.Client[v1.ListReportsRequest, v1.ListReportsResponse]
-	resolveReport            *connect.Client[v1.ResolveReportRequest, v1.ResolveReportResponse]
-	listFlags                *connect.Client[v1.ListFlagsRequest, v1.ListFlagsResponse]
-	resolveFlag              *connect.Client[v1.ResolveFlagRequest, v1.ResolveFlagResponse]
-	listCrewLeaves           *connect.Client[v1.ListCrewLeavesRequest, v1.ListCrewLeavesResponse]
-	listTranslationLanguages *connect.Client[v1.ListTranslationLanguagesRequest, v1.ListTranslationLanguagesResponse]
-	listTranslations         *connect.Client[v1.ListTranslationsRequest, v1.ListTranslationsResponse]
-	reviewTranslation        *connect.Client[v1.ReviewTranslationRequest, v1.ReviewTranslationResponse]
-	searchPeople             *connect.Client[v1.SearchPeopleRequest, v1.SearchPeopleResponse]
-	getPerson                *connect.Client[v1.GetPersonRequest, v1.GetPersonResponse]
-	suspendPerson            *connect.Client[v1.SuspendPersonRequest, v1.SuspendPersonResponse]
-	liftSuspension           *connect.Client[v1.LiftSuspensionRequest, v1.LiftSuspensionResponse]
-	listSuspended            *connect.Client[v1.ListSuspendedRequest, v1.ListSuspendedResponse]
-}
-
-// GetModerator calls issho.v1.ModerationService.GetModerator.
-func (c *moderationServiceClient) GetModerator(ctx context.Context, req *connect.Request[v1.GetModeratorRequest]) (*connect.Response[v1.GetModeratorResponse], error) {
-	return c.getModerator.CallUnary(ctx, req)
+	listReports    *connect.Client[v1.ListReportsRequest, v1.ListReportsResponse]
+	resolveReport  *connect.Client[v1.ResolveReportRequest, v1.ResolveReportResponse]
+	listFlags      *connect.Client[v1.ListFlagsRequest, v1.ListFlagsResponse]
+	resolveFlag    *connect.Client[v1.ResolveFlagRequest, v1.ResolveFlagResponse]
+	listCrewLeaves *connect.Client[v1.ListCrewLeavesRequest, v1.ListCrewLeavesResponse]
+	searchPeople   *connect.Client[v1.SearchPeopleRequest, v1.SearchPeopleResponse]
+	getPerson      *connect.Client[v1.GetPersonRequest, v1.GetPersonResponse]
+	suspendPerson  *connect.Client[v1.SuspendPersonRequest, v1.SuspendPersonResponse]
+	liftSuspension *connect.Client[v1.LiftSuspensionRequest, v1.LiftSuspensionResponse]
+	listSuspended  *connect.Client[v1.ListSuspendedRequest, v1.ListSuspendedResponse]
 }
 
 // ListReports calls issho.v1.ModerationService.ListReports.
@@ -280,27 +216,6 @@ func (c *moderationServiceClient) ResolveFlag(ctx context.Context, req *connect.
 // ListCrewLeaves calls issho.v1.ModerationService.ListCrewLeaves.
 func (c *moderationServiceClient) ListCrewLeaves(ctx context.Context, req *connect.Request[v1.ListCrewLeavesRequest]) (*connect.Response[v1.ListCrewLeavesResponse], error) {
 	return c.listCrewLeaves.CallUnary(ctx, req)
-}
-
-// ListTranslationLanguages calls issho.v1.ModerationService.ListTranslationLanguages.
-//
-// Deprecated: do not use.
-func (c *moderationServiceClient) ListTranslationLanguages(ctx context.Context, req *connect.Request[v1.ListTranslationLanguagesRequest]) (*connect.Response[v1.ListTranslationLanguagesResponse], error) {
-	return c.listTranslationLanguages.CallUnary(ctx, req)
-}
-
-// ListTranslations calls issho.v1.ModerationService.ListTranslations.
-//
-// Deprecated: do not use.
-func (c *moderationServiceClient) ListTranslations(ctx context.Context, req *connect.Request[v1.ListTranslationsRequest]) (*connect.Response[v1.ListTranslationsResponse], error) {
-	return c.listTranslations.CallUnary(ctx, req)
-}
-
-// ReviewTranslation calls issho.v1.ModerationService.ReviewTranslation.
-//
-// Deprecated: do not use.
-func (c *moderationServiceClient) ReviewTranslation(ctx context.Context, req *connect.Request[v1.ReviewTranslationRequest]) (*connect.Response[v1.ReviewTranslationResponse], error) {
-	return c.reviewTranslation.CallUnary(ctx, req)
 }
 
 // SearchPeople calls issho.v1.ModerationService.SearchPeople.
@@ -330,9 +245,6 @@ func (c *moderationServiceClient) ListSuspended(ctx context.Context, req *connec
 
 // ModerationServiceHandler is an implementation of the issho.v1.ModerationService service.
 type ModerationServiceHandler interface {
-	// GetModerator says who the caller is. The admin SPA calls it after
-	// sign-in to find out whether the account is an admin.
-	GetModerator(context.Context, *connect.Request[v1.GetModeratorRequest]) (*connect.Response[v1.GetModeratorResponse], error)
 	// ListReports returns reports, open ones first (oldest first), then the
 	// rest newest first. At most 200.
 	ListReports(context.Context, *connect.Request[v1.ListReportsRequest]) (*connect.Response[v1.ListReportsResponse], error)
@@ -347,22 +259,6 @@ type ModerationServiceHandler interface {
 	ResolveFlag(context.Context, *connect.Request[v1.ResolveFlagRequest]) (*connect.Response[v1.ResolveFlagResponse], error)
 	// ListCrewLeaves returns why people left crews, newest first. At most 200.
 	ListCrewLeaves(context.Context, *connect.Request[v1.ListCrewLeavesRequest]) (*connect.Response[v1.ListCrewLeavesResponse], error)
-	// Deprecated: moved to TranslationService (ListCatalogLanguages). Kept
-	// because removing an RPC breaks the API's compatibility check; answers
-	// UNIMPLEMENTED.
-	//
-	// Deprecated: do not use.
-	ListTranslationLanguages(context.Context, *connect.Request[v1.ListTranslationLanguagesRequest]) (*connect.Response[v1.ListTranslationLanguagesResponse], error)
-	// Deprecated: moved to TranslationService (ListAppStrings,
-	// ListCatalogTranslations). Answers UNIMPLEMENTED.
-	//
-	// Deprecated: do not use.
-	ListTranslations(context.Context, *connect.Request[v1.ListTranslationsRequest]) (*connect.Response[v1.ListTranslationsResponse], error)
-	// Deprecated: moved to TranslationService (SaveAppString,
-	// ReviewCatalogTranslation). Answers UNIMPLEMENTED.
-	//
-	// Deprecated: do not use.
-	ReviewTranslation(context.Context, *connect.Request[v1.ReviewTranslationRequest]) (*connect.Response[v1.ReviewTranslationResponse], error)
 	// SearchPeople finds people by name or email (contains, any case) or
 	// exact user id. At most 50.
 	SearchPeople(context.Context, *connect.Request[v1.SearchPeopleRequest]) (*connect.Response[v1.SearchPeopleResponse], error)
@@ -394,12 +290,6 @@ type ModerationServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewModerationServiceHandler(svc ModerationServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
 	moderationServiceMethods := v1.File_issho_v1_moderation_proto.Services().ByName("ModerationService").Methods()
-	moderationServiceGetModeratorHandler := connect.NewUnaryHandler(
-		ModerationServiceGetModeratorProcedure,
-		svc.GetModerator,
-		connect.WithSchema(moderationServiceMethods.ByName("GetModerator")),
-		connect.WithHandlerOptions(opts...),
-	)
 	moderationServiceListReportsHandler := connect.NewUnaryHandler(
 		ModerationServiceListReportsProcedure,
 		svc.ListReports,
@@ -428,24 +318,6 @@ func NewModerationServiceHandler(svc ModerationServiceHandler, opts ...connect.H
 		ModerationServiceListCrewLeavesProcedure,
 		svc.ListCrewLeaves,
 		connect.WithSchema(moderationServiceMethods.ByName("ListCrewLeaves")),
-		connect.WithHandlerOptions(opts...),
-	)
-	moderationServiceListTranslationLanguagesHandler := connect.NewUnaryHandler(
-		ModerationServiceListTranslationLanguagesProcedure,
-		svc.ListTranslationLanguages,
-		connect.WithSchema(moderationServiceMethods.ByName("ListTranslationLanguages")),
-		connect.WithHandlerOptions(opts...),
-	)
-	moderationServiceListTranslationsHandler := connect.NewUnaryHandler(
-		ModerationServiceListTranslationsProcedure,
-		svc.ListTranslations,
-		connect.WithSchema(moderationServiceMethods.ByName("ListTranslations")),
-		connect.WithHandlerOptions(opts...),
-	)
-	moderationServiceReviewTranslationHandler := connect.NewUnaryHandler(
-		ModerationServiceReviewTranslationProcedure,
-		svc.ReviewTranslation,
-		connect.WithSchema(moderationServiceMethods.ByName("ReviewTranslation")),
 		connect.WithHandlerOptions(opts...),
 	)
 	moderationServiceSearchPeopleHandler := connect.NewUnaryHandler(
@@ -480,8 +352,6 @@ func NewModerationServiceHandler(svc ModerationServiceHandler, opts ...connect.H
 	)
 	return "/issho.v1.ModerationService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
-		case ModerationServiceGetModeratorProcedure:
-			moderationServiceGetModeratorHandler.ServeHTTP(w, r)
 		case ModerationServiceListReportsProcedure:
 			moderationServiceListReportsHandler.ServeHTTP(w, r)
 		case ModerationServiceResolveReportProcedure:
@@ -492,12 +362,6 @@ func NewModerationServiceHandler(svc ModerationServiceHandler, opts ...connect.H
 			moderationServiceResolveFlagHandler.ServeHTTP(w, r)
 		case ModerationServiceListCrewLeavesProcedure:
 			moderationServiceListCrewLeavesHandler.ServeHTTP(w, r)
-		case ModerationServiceListTranslationLanguagesProcedure:
-			moderationServiceListTranslationLanguagesHandler.ServeHTTP(w, r)
-		case ModerationServiceListTranslationsProcedure:
-			moderationServiceListTranslationsHandler.ServeHTTP(w, r)
-		case ModerationServiceReviewTranslationProcedure:
-			moderationServiceReviewTranslationHandler.ServeHTTP(w, r)
 		case ModerationServiceSearchPeopleProcedure:
 			moderationServiceSearchPeopleHandler.ServeHTTP(w, r)
 		case ModerationServiceGetPersonProcedure:
@@ -517,10 +381,6 @@ func NewModerationServiceHandler(svc ModerationServiceHandler, opts ...connect.H
 // UnimplementedModerationServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedModerationServiceHandler struct{}
 
-func (UnimplementedModerationServiceHandler) GetModerator(context.Context, *connect.Request[v1.GetModeratorRequest]) (*connect.Response[v1.GetModeratorResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.ModerationService.GetModerator is not implemented"))
-}
-
 func (UnimplementedModerationServiceHandler) ListReports(context.Context, *connect.Request[v1.ListReportsRequest]) (*connect.Response[v1.ListReportsResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.ModerationService.ListReports is not implemented"))
 }
@@ -539,18 +399,6 @@ func (UnimplementedModerationServiceHandler) ResolveFlag(context.Context, *conne
 
 func (UnimplementedModerationServiceHandler) ListCrewLeaves(context.Context, *connect.Request[v1.ListCrewLeavesRequest]) (*connect.Response[v1.ListCrewLeavesResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.ModerationService.ListCrewLeaves is not implemented"))
-}
-
-func (UnimplementedModerationServiceHandler) ListTranslationLanguages(context.Context, *connect.Request[v1.ListTranslationLanguagesRequest]) (*connect.Response[v1.ListTranslationLanguagesResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.ModerationService.ListTranslationLanguages is not implemented"))
-}
-
-func (UnimplementedModerationServiceHandler) ListTranslations(context.Context, *connect.Request[v1.ListTranslationsRequest]) (*connect.Response[v1.ListTranslationsResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.ModerationService.ListTranslations is not implemented"))
-}
-
-func (UnimplementedModerationServiceHandler) ReviewTranslation(context.Context, *connect.Request[v1.ReviewTranslationRequest]) (*connect.Response[v1.ReviewTranslationResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.ModerationService.ReviewTranslation is not implemented"))
 }
 
 func (UnimplementedModerationServiceHandler) SearchPeople(context.Context, *connect.Request[v1.SearchPeopleRequest]) (*connect.Response[v1.SearchPeopleResponse], error) {
