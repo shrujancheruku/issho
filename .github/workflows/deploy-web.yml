@@ -3,9 +3,8 @@ name: deploy-web
 # Deploys the admin SPA (issho-admin) and the app's web build (issho-web) to
 # Cloudflare Workers with scripts/deploy-web.sh, when either changes on main.
 #
-# Off until it's configured (Settings → Secrets and variables → Actions):
-#   variable API_URL                 the hosted API's origin (M9; a quick
-#                                    tunnel's address changes too often)
+# Configured 2026-10-26 (Settings → Secrets and variables → Actions):
+#   variable API_URL                 https://api.joinissho.com
 #   variable CLOUDFLARE_ACCOUNT_ID
 #   variable EXPO_PUBLIC_SUPABASE_URL, EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
 #            EXPO_PUBLIC_GOOGLE_MAPS_WEB_API_KEY   (public values)
@@ -62,5 +61,5 @@ jobs:
         run: scripts/deploy-web.sh "$API_URL"
       - name: Sites answer
         run: |
-          curl -fsS -o /dev/null https://issho-admin.shrujancheruku.workers.dev/
-          curl -fsS -o /dev/null https://issho-web.shrujancheruku.workers.dev/
+          curl -fsS -o /dev/null https://admin.joinissho.com/
+          curl -fsS -o /dev/null https://app.joinissho.com/
