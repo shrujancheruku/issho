@@ -470,8 +470,20 @@
   .thread-anim .reached .map .stop { transform: none; transition-delay: calc(var(--at) * 1.6s); }
 
   /* Date set: the winning slot turns gold. */
-  .thread-anim .slots .pick { background: var(--slot2); color: transparent; transition: background-color .18s .7s, color .18s .7s; }
-  .thread-anim .reached .slots .pick { background: var(--gold); color: var(--ink); animation: tie .5s .7s cubic-bezier(.3, 1.6, .5, 1) backwards; }
+  /* The transition is only on the way to gold: on the way back (the script
+     adds .thread-anim after the first paint) it changes at once. */
+  .thread-anim .slots .pick { background: var(--slot2); color: transparent; }
+  /* Until it's picked it is a cell like its neighbours, full size; then it
+     swells once as it turns gold and settles like a damped spring, every
+     segment eased in and out so the motion never changes direction sharply.
+     (No backwards fill: that held the first keyframe through the delay.) */
+  .thread-anim .reached .slots .pick { background: var(--gold); color: var(--ink); animation: pick .7s .7s; transition: background-color .28s .7s ease-out, color .28s .7s ease-out; }
+  @keyframes pick {
+    0% { transform: none; animation-timing-function: cubic-bezier(.25, .1, .25, 1); }
+    38% { transform: scale(1.07); animation-timing-function: cubic-bezier(.45, 0, .55, 1); }
+    72% { transform: scale(.99); animation-timing-function: cubic-bezier(.45, 0, .55, 1); }
+    100% { transform: none; }
+  }
 
   /* Going: the group gathers, then "I can go" becomes its result. */
   .thread-anim .people span { transform: scale(0); opacity: 0; transition: transform .5s cubic-bezier(.3, 1.6, .5, 1), opacity .18s; }
