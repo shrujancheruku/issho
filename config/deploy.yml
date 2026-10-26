@@ -9,7 +9,10 @@
 service: issho
 
 # GitHub Container Registry, under the repository's owner (private package).
-image: shrujancheruku/issho-backend
+# The deploy workflow created it (2026-10-26), so it's linked to the repository
+# and the workflow's own token can push it; the older issho-backend package,
+# pushed from a dev machine, isn't and can be deleted.
+image: shrujancheruku/issho
 
 servers:
   web:
