@@ -26,14 +26,14 @@ The Workers' `wrangler.jsonc` files claim their host names as custom domains, so
 
 ## One-time setup
 
-1. **A VPS** with a recent Ubuntu or Debian, amd64, reachable over SSH with your key as `root` (Kamal installs Docker on first setup). 2 GB of memory is plenty. Allow only ports 22, 80 and 443; ideally 80 and 443 only from [Cloudflare's addresses](https://www.cloudflare.com/ips/).
+1. **The server** (done 2026-10-26): Compute Engine VM `issho-api` in project `issho-dev-512213`, `asia-northeast1-b` (Tokyo, near the database in Seoul), `e2-small` (2 GB), Ubuntu 24.04, 20 GB disk, static address `35.243.76.67` (reserved as `issho-api`). Its startup script installs Docker, adds a 2 GB swap file and unattended upgrades, and puts the `kamal` user (created from the SSH key in the instance metadata) in the `docker` group: Compute Engine has no root login, so Kamal connects as `kamal` (`ssh.user`). Firewall `issho-api-web-from-cloudflare` lets 80 and 443 in only from [Cloudflare's addresses](https://www.cloudflare.com/ips/) (tag `issho-api`); SSH is the project's default rule.
 2. **The API's domain on Cloudflare:** an `A` record for `api.joinissho.com` pointing at the VPS, **proxied** (orange cloud). SSL/TLS mode **Full (strict)**.
 3. **A Cloudflare origin certificate** for that host (SSL/TLS → Origin Server → Create certificate). Save the certificate and key outside the repository, e.g. `~/.config/issho/origin-cert.pem` and `origin-key.pem`.
 4. **A registry token:** a GitHub personal access token (classic) with `write:packages`, exported as `KAMAL_REGISTRY_PASSWORD` when deploying. The image is pushed to `ghcr.io/<owner>/issho-backend`; keep the package private.
 5. **A production Supabase project**, configured as in [supabase-hosted.md](supabase-hosted.md), and its values in a gitignored `.env.issho-prod` (same names as `.env.issho-dev`). `DATABASE_URL` must be a **session-mode** connection (direct, or the session pooler): the API listens for chat messages and the worker for River jobs.
 6. **Fill in `config/deploy.yml`:** every line marked `TODO` (server address, API host, registry account, `SUPABASE_URL`, `ALLOWED_ORIGINS`).
 7. **Secrets:** `cp .kamal/secrets.example .kamal/secrets` (gitignored). It reads each value from `.env.issho-prod` and the certificate files, so the file itself holds no secrets. See [secrets.md](secrets.md).
-8. **Install Kamal:** `gem install kamal`, or run it from its image: `alias kamal='docker run -it --rm -v "$PWD:/workdir" -v "$SSH_AUTH_SOCK:/ssh-agent" -e SSH_AUTH_SOCK=/ssh-agent -v /var/run/docker.sock:/var/run/docker.sock ghcr.io/basecamp/kamal:v2.12.0'`.
+8. **Install Kamal** (Kamal 2 needs Ruby 3.2+; macOS ships 2.6, so the image is simpler; add `-v ~/.config/issho:/root/.config/issho:ro` so the secrets file finds the certificate, and on OrbStack or Docker Desktop pass the SSH agent as `-v /run/host-services/ssh-auth.sock:/run/host-services/ssh-auth.sock -e SSH_AUTH_SOCK=/run/host-services/ssh-auth.sock`): `gem install kamal`, or run it from its image: `alias kamal='docker run -it --rm -v "$PWD:/workdir" -v "$SSH_AUTH_SOCK:/ssh-agent" -e SSH_AUTH_SOCK=/ssh-agent -v /var/run/docker.sock:/var/run/docker.sock ghcr.io/basecamp/kamal:v2.12.0'`.
 9. **First deploy:** `kamal setup` (installs Docker, starts kamal-proxy, then deploys as below).
 
 ## Deploying
