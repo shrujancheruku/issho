@@ -4,6 +4,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -43,6 +44,11 @@ type Config struct {
 	// SentryDSN turns on error reporting (internal/platform/sentry);
 	// SentryEnvironment names the deployment (default "development").
 	SentryDSN, SentryEnvironment string
+	// SentryTracesRate is the share of API requests traced, 0 to 1
+	// (SENTRY_TRACES_SAMPLE_RATE, default 1: every request while traffic is
+	// small; lower it as traffic grows). Requests the app traced are always
+	// traced, so both halves link up.
+	SentryTracesRate float64
 }
 
 func Load() (Config, error) {
@@ -61,6 +67,11 @@ func Load() (Config, error) {
 		SentryDSN:             os.Getenv("SENTRY_DSN"),
 		SentryEnvironment:     getenv("SENTRY_ENVIRONMENT", "development"),
 	}
+	rate, err := strconv.ParseFloat(getenv("SENTRY_TRACES_SAMPLE_RATE", "1"), 64)
+	if err != nil || rate < 0 || rate > 1 {
+		return c, fmt.Errorf("SENTRY_TRACES_SAMPLE_RATE: want a number from 0 to 1")
+	}
+	c.SentryTracesRate = rate
 	if v := os.Getenv("ALLOWED_ORIGINS"); v != "" {
 		c.AllowedOrigins = strings.Split(v, ",")
 	}

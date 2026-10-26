@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 
+import { useAuth } from '@/features/auth/auth-provider';
 import { languageLabel, useActivities, useCities, useLanguages } from '@/features/profile/data';
 import { useProfile } from '@/features/profile/use-profile';
 import { useI18n } from '@/i18n/i18n-provider';
@@ -15,7 +16,10 @@ export type Names = { name: string; secondary: string };
  */
 export function usePlanNames() {
   const profile = useProfile();
-  const cityId = profile.data?.profile?.cityId ?? '';
+  // The city from GetMe, so activities load without waiting for the profile
+  // (a request less in the chain on opening the app); the profile's for an
+  // API from before GetMe sent it.
+  const cityId = useAuth().cityId || (profile.data?.profile?.cityId ?? '');
   const activities = useActivities(cityId);
   const cities = useCities();
   const languages = useLanguages();

@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
   greyed: { opacity: 0.55 },
   tag: { alignSelf: 'flex-start', borderRadius: 999, paddingVertical: Spacing.half, paddingHorizontal: Spacing.two, marginBottom: Spacing.one },
   tagText: { fontSize: 12, lineHeight: 16, fontWeight: 500 },
-  title: { fontSize: 20, lineHeight: 28 },
+  title: { fontSize: 20, lineHeight: 29 },
   bottom: { flexDirection: 'row', alignItems: 'flex-end', gap: Spacing.two, marginTop: Spacing.one },
   grow: { flex: 1 },
 });

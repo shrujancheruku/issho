@@ -188,7 +188,10 @@ type User struct {
 	// A moderator has suspended the account. Every other call is refused
 	// (PERMISSION_DENIED) except signing out and DeleteAccount; the app
 	// shows that it's suspended.
-	Suspended     bool `protobuf:"varint,6,opt,name=suspended,proto3" json:"suspended,omitempty"`
+	Suspended bool `protobuf:"varint,6,opt,name=suspended,proto3" json:"suspended,omitempty"`
+	// The home area's city (empty until onboarded), so the app can load the
+	// city's activities straight after GetMe.
+	CityId        string `protobuf:"bytes,7,opt,name=city_id,json=cityId,proto3" json:"city_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -265,6 +268,13 @@ func (x *User) GetSuspended() bool {
 	return false
 }
 
+func (x *User) GetCityId() string {
+	if x != nil {
+		return x.CityId
+	}
+	return ""
+}
+
 var File_issho_v1_identity_proto protoreflect.FileDescriptor
 
 const file_issho_v1_identity_proto_rawDesc = "" +
@@ -274,14 +284,15 @@ const file_issho_v1_identity_proto_rawDesc = "" +
 	"\x15DeleteAccountResponse\"\x0e\n" +
 	"\fGetMeRequest\"3\n" +
 	"\rGetMeResponse\x12\"\n" +
-	"\x04user\x18\x01 \x01(\v2\x0e.issho.v1.UserR\x04user\"\xc2\x01\n" +
+	"\x04user\x18\x01 \x01(\v2\x0e.issho.v1.UserR\x04user\"\xdb\x01\n" +
 	"\x04User\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
 	"\x05email\x18\x02 \x01(\tR\x05email\x12\x1c\n" +
 	"\tonboarded\x18\x03 \x01(\bR\tonboarded\x12)\n" +
 	"\x10primary_language\x18\x04 \x01(\tR\x0fprimaryLanguage\x12-\n" +
 	"\x12secondary_language\x18\x05 \x01(\tR\x11secondaryLanguage\x12\x1c\n" +
-	"\tsuspended\x18\x06 \x01(\bR\tsuspended2\xa1\x01\n" +
+	"\tsuspended\x18\x06 \x01(\bR\tsuspended\x12\x17\n" +
+	"\acity_id\x18\a \x01(\tR\x06cityId2\xa1\x01\n" +
 	"\x0fIdentityService\x12:\n" +
 	"\x05GetMe\x12\x16.issho.v1.GetMeRequest\x1a\x17.issho.v1.GetMeResponse\"\x00\x12R\n" +
 	"\rDeleteAccount\x12\x1e.issho.v1.DeleteAccountRequest\x1a\x1f.issho.v1.DeleteAccountResponse\"\x00B>Z<github.com/shrujancheruku/issho/backend/gen/issho/v1;isshov1b\x06proto3"

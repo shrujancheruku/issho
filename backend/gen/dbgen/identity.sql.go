@@ -23,19 +23,23 @@ func (q *Queries) DeleteUser(ctx context.Context, id uuid.UUID) error {
 }
 
 const getDisplayLanguages = `-- name: GetDisplayLanguages :one
-select primary_language, secondary_language from app.profiles where user_id = $1
+select p.primary_language, p.secondary_language, a.city_id
+from app.profiles p join app.areas a on a.id = p.home_area_id
+where p.user_id = $1
 `
 
 type GetDisplayLanguagesRow struct {
 	PrimaryLanguage   string
 	SecondaryLanguage *string
+	CityID            string
 }
 
-// No row = not onboarded yet.
+// No row = not onboarded yet. With the home city, so the app can load the
+// city's catalogue straight after GetMe instead of waiting for GetProfile.
 func (q *Queries) GetDisplayLanguages(ctx context.Context, userID uuid.UUID) (GetDisplayLanguagesRow, error) {
 	row := q.db.QueryRow(ctx, getDisplayLanguages, userID)
 	var i GetDisplayLanguagesRow
-	err := row.Scan(&i.PrimaryLanguage, &i.SecondaryLanguage)
+	err := row.Scan(&i.PrimaryLanguage, &i.SecondaryLanguage, &i.CityID)
 	return i, err
 }
 

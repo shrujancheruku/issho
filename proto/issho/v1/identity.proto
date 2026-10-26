@@ -47,4 +47,7 @@ message User {
   // (PERMISSION_DENIED) except signing out and DeleteAccount; the app
   // shows that it's suspended.
   bool suspended = 6;
+  // The home area's city (empty until onboarded), so the app can load the
+  // city's activities straight after GetMe.
+  string city_id = 7;
 }

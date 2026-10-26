@@ -23,15 +23,17 @@ import (
 var enabled bool
 
 // Init starts reporting for one service ("api", "worker"); an empty dsn
-// leaves it off. Call the returned flush before exiting so queued reports
-// are sent.
-func Init(dsn, release, environment, service string) (flush func(), err error) {
+// leaves it off. tracesRate is the share of requests traced (0 to 1; see
+// tracing.go). Call the returned flush before exiting so queued reports are
+// sent.
+func Init(dsn, release, environment, service string, tracesRate float64) (flush func(), err error) {
 	if dsn == "" {
 		return func() {}, nil
 	}
 	if err := sentrygo.Init(sentrygo.ClientOptions{
 		Dsn: dsn, Release: release, Environment: environment, ServerName: service,
 		SendDefaultPII: false, AttachStacktrace: true,
+		EnableTracing: tracesRate > 0, TracesSampler: sampler(tracesRate),
 	}); err != nil {
 		return nil, fmt.Errorf("sentry: %w", err)
 	}
@@ -60,7 +62,9 @@ func Report(ctx context.Context, err error, tags map[string]string) {
 }
 
 // Handler reports panics in h, then lets them continue to net/http, which
-// logs them and closes the connection as before.
+// logs them and closes the connection as before. With tracing on, each
+// request is also a transaction, named by its route ("POST
+// /issho.v1.PlanService/GetPlan").
 func Handler(h http.Handler) http.Handler {
 	if !enabled {
 		return h

@@ -43,5 +43,5 @@ export function CrewCard({ crew, names }: { crew: Crew; names: ReturnType<typeof
 
 const styles = StyleSheet.create({
   card: { borderRadius: 16, padding: Spacing.three, gap: Spacing.one, borderWidth: 2 },
-  title: { fontSize: 20, lineHeight: 28 },
+  title: { fontSize: 20, lineHeight: 29 },
 });

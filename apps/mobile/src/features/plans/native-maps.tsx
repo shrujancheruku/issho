@@ -1,5 +1,6 @@
+import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Platform, StyleSheet, Text, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { Brand } from '@/constants/theme';
@@ -20,6 +21,16 @@ try {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   maps = require('react-native-maps');
 } catch {
+  maps = null;
+}
+// An Android build made without GOOGLE_MAPS_ANDROID_API_KEY crashes natively
+// the moment a Google map is drawn (no JS error to catch), so treat the maps
+// as missing there. Expo Go brings its own key.
+if (
+  Platform.OS === 'android' &&
+  Constants.executionEnvironment !== ExecutionEnvironment.StoreClient &&
+  !Constants.expoConfig?.extra?.androidMapsKey
+) {
   maps = null;
 }
 

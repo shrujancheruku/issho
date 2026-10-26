@@ -96,7 +96,7 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	flush, err := sentry.Init(cfg.SentryDSN, version, cfg.SentryEnvironment, "api")
+	flush, err := sentry.Init(cfg.SentryDSN, version, cfg.SentryEnvironment, "api", cfg.SentryTracesRate)
 	if err != nil {
 		return err
 	}

@@ -37,8 +37,9 @@ type AuthAdmin interface {
 type Account struct {
 	User      dbgen.AppUser
 	Onboarded bool
-	// Display languages; empty until onboarded.
+	// Display languages and home city; empty until onboarded.
 	PrimaryLanguage, SecondaryLanguage string
+	CityID                             string
 	// A moderator suspended the account (app.suspensions).
 	Suspended bool
 }
@@ -77,6 +78,7 @@ func (s *Service) Me(ctx context.Context, c auth.Caller) (Account, error) {
 	default:
 		acct.Onboarded = true
 		acct.PrimaryLanguage = langs.PrimaryLanguage
+		acct.CityID = langs.CityID
 		if langs.SecondaryLanguage != nil {
 			acct.SecondaryLanguage = *langs.SecondaryLanguage
 		}

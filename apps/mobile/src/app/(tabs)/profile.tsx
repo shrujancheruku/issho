@@ -4,7 +4,6 @@ import { router } from 'expo-router';
 import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Chip } from '@/components/chip';
 import { ListGroup, ListRow } from '@/components/list-group';
 import { ScreenHeader, SectionTitle } from '@/components/screen-header';
 import { Segmented } from '@/components/segmented';
@@ -18,7 +17,6 @@ import { useMyCrews } from '@/features/crews/data';
 import { usePlanNames } from '@/features/plans/names';
 import { pairText } from '@/features/plans/plan-card';
 import type { Step } from '@/features/profile/draft';
-import { interestLevels, interestStyle } from '@/features/profile/interest';
 import { useProfile } from '@/features/profile/use-profile';
 import { useTheme } from '@/hooks/use-theme';
 import { useI18n } from '@/i18n/i18n-provider';
@@ -48,12 +46,7 @@ export default function YouScreen() {
   const p = profile.data?.profile;
   const activeCrews = crews.data?.filter((c) => c.status === CrewStatus.ACTIVE).length ?? 0;
 
-  // Loved first: the chips read like the Plans sections.
-  const liked = p
-    ? [...p.activities]
-        .filter((a) => a.interest !== Interest.UNSPECIFIED)
-        .sort((a, b) => interestLevels.indexOf(b.interest as never) - interestLevels.indexOf(a.interest as never))
-    : [];
+  const liked = p ? p.activities.filter((a) => a.interest !== Interest.UNSPECIFIED) : [];
   const languageLine = p
     ? [p.primaryLanguage, p.secondaryLanguage]
         .filter(Boolean)
@@ -85,31 +78,14 @@ export default function YouScreen() {
               </View>
 
               <View style={styles.section}>
-                <View style={styles.sectionHead}>
-                  <SectionTitle>{t('profile.activities')}</SectionTitle>
-                  <TextLink label={t('you.change')} onPress={() => edit('activities')} />
-                </View>
-                <View style={styles.chips}>
-                  {liked.map((a) => {
-                    const style = interestStyle(a.interest, theme)!;
-                    const n = names.activity(a.activityId);
-                    return (
-                      <Chip
-                        key={a.activityId}
-                        label={n.name}
-                        secondary={n.secondary}
-                        selected
-                        selectedColors={style}
-                        onPress={() => edit('activities')}
-                      />
-                    );
-                  })}
-                </View>
-              </View>
-
-              <View style={styles.section}>
                 <SectionTitle>{t('you.howYouMeet')}</SectionTitle>
                 <ListGroup>
+                  {/* A row like the others, not every chip on the tab: the list is long. */}
+                  <SettingRow
+                    title={t('profile.activities')}
+                    detail={t('you.activitiesCount', { count: liked.length })}
+                    onPress={() => edit('activities')}
+                  />
                   <SettingRow title={t('profile.about')} detail={p.displayName} onPress={() => edit('about')} />
                   <SettingRow
                     title={t('profile.area')}
@@ -224,7 +200,5 @@ const styles = StyleSheet.create({
   },
   card: { borderRadius: 16, padding: Spacing.three, gap: Spacing.half },
   section: { gap: Spacing.two },
-  sectionHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
   rowText: { flex: 1, minWidth: 0 },
 });

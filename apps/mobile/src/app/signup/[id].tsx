@@ -138,7 +138,7 @@ const styles = StyleSheet.create({
   center: { alignItems: 'center', justifyContent: 'center' },
   column: { width: '100%', maxWidth: FormWidth, alignSelf: 'center' },
   head: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.three, padding: Spacing.three, paddingTop: Spacing.four },
-  title: { fontSize: 22, lineHeight: 30 },
+  title: { fontSize: 22, lineHeight: 32 },
   close: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   closeMark: { fontSize: 24, lineHeight: 28 },
   content: { padding: Spacing.three, gap: Spacing.four },

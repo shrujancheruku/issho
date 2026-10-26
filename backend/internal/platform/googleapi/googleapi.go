@@ -13,6 +13,8 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/shrujancheruku/issho/backend/internal/platform/sentry"
 )
 
 type Client struct {
@@ -26,7 +28,7 @@ type Client struct {
 func New(apiKey string) *Client {
 	return &Client{
 		key:        apiKey,
-		http:       &http.Client{Timeout: 60 * time.Second},
+		http:       &http.Client{Timeout: 60 * time.Second, Transport: sentry.Transport(nil)},
 		MaxRetries: 3,
 		Backoff:    time.Second,
 	}

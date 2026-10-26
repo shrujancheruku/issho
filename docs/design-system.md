@@ -67,7 +67,7 @@ The rules: loops only on something live, and one per screen, paused when the scr
 
 ## Type
 
-- **Display:** Dela Gothic One, the wordmark's face, for titles and plan or crew names. One weight: never set a font weight on it.
+- **Display:** Dela Gothic One, the wordmark's face, for titles and plan or crew names. One weight: never set a font weight on it. Give it a line height of at least 1.45 times its size (its ascent and descent need that much); tighter, Android cuts off descenders.
 - **Body:** Zen Kaku Gothic New (400, 500, 700), which sets Japanese and Latin with the same rhythm. In the app each weight is its own family, and `ThemedText` picks it from the style's `fontWeight`. Inputs set `BodyFont.regular` themselves.
 - The admin bundles both fonts with `@fontsource` (its CSP allows only `'self'`) and loads only 400 and 700. The marketing page loads them from Google Fonts.
 
