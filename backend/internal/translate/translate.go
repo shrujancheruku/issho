@@ -44,7 +44,7 @@ type Translator interface {
 // Store is the cache; *dbgen.Queries implements it.
 type Store interface {
 	GetTranslations(ctx context.Context, arg dbgen.GetTranslationsParams) ([]dbgen.GetTranslationsRow, error)
-	InsertTranslation(ctx context.Context, arg dbgen.InsertTranslationParams) error
+	InsertTranslations(ctx context.Context, arg dbgen.InsertTranslationsParams) error
 }
 
 // Text is one piece of localised text as stored ({"en": "...", ...}) plus
@@ -57,8 +57,9 @@ type Text struct {
 const (
 	// DefaultWait is how long a request waits for fresh translations before
 	// falling back. First requests for a language are slow; later ones hit the
-	// cache.
-	DefaultWait = 8 * time.Second
+	// cache. Short, because a request that falls back is marked incomplete
+	// and the app asks again (GetStrings), while a long wait holds up a screen.
+	DefaultWait = 3 * time.Second
 	// backgroundTimeout bounds a translation that outlives its request.
 	backgroundTimeout = 2 * time.Minute
 	// batchSize keeps each translator call (and its JSON output) small.
@@ -218,15 +219,19 @@ func (s *Service) translate(ctx context.Context, lang string, items []Item, keys
 				slog.Error("translation failed", "lang", lang, "items", end-start, "err", err)
 				return
 			}
+			batch := dbgen.InsertTranslationsParams{Lang: lang, Model: s.Translator.Name()}
 			for i, text := range got {
 				results[start+i] = text
 				if text == "" {
 					continue
 				}
-				if err := s.Store.InsertTranslation(ctx, dbgen.InsertTranslationParams{
-					SourceHash: keys[start+i], Lang: lang, Source: items[start+i].Text,
-					Context: items[start+i].Context, Text: text, Model: s.Translator.Name(),
-				}); err != nil {
+				batch.SourceHashes = append(batch.SourceHashes, keys[start+i])
+				batch.Sources = append(batch.Sources, items[start+i].Text)
+				batch.Contexts = append(batch.Contexts, items[start+i].Context)
+				batch.Texts = append(batch.Texts, text)
+			}
+			if len(batch.Texts) > 0 {
+				if err := s.Store.InsertTranslations(ctx, batch); err != nil {
 					slog.Error("translation cache write failed", "lang", lang, "err", err)
 				}
 			}

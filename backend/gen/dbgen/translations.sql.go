@@ -44,30 +44,34 @@ func (q *Queries) GetTranslations(ctx context.Context, arg GetTranslationsParams
 	return items, nil
 }
 
-const insertTranslation = `-- name: InsertTranslation :exec
+const insertTranslations = `-- name: InsertTranslations :exec
 insert into app.translations (source_hash, lang, source, context, text, model)
-values ($1, $2, $3, $4, $5, $6)
+select unnest($1::text[]), $2::text, unnest($3::text[]),
+       unnest($4::text[]), unnest($5::text[]), $6::text
 on conflict (source_hash, lang) do nothing
 `
 
-type InsertTranslationParams struct {
-	SourceHash string
-	Lang       string
-	Source     string
-	Context    string
-	Text       string
-	Model      string
+type InsertTranslationsParams struct {
+	SourceHashes []string
+	Lang         string
+	Sources      []string
+	Contexts     []string
+	Texts        []string
+	Model        string
 }
 
 // Concurrent requests may translate the same text; the first one wins and a
 // reviewed translation is never overwritten.
-func (q *Queries) InsertTranslation(ctx context.Context, arg InsertTranslationParams) error {
-	_, err := q.db.Exec(ctx, insertTranslation,
-		arg.SourceHash,
+// A batch from one translator call is one statement: one round trip
+// instead of one per text (the database is a long way from the API).
+// Several unnests in one select list advance together (same lengths).
+func (q *Queries) InsertTranslations(ctx context.Context, arg InsertTranslationsParams) error {
+	_, err := q.db.Exec(ctx, insertTranslations,
+		arg.SourceHashes,
 		arg.Lang,
-		arg.Source,
-		arg.Context,
-		arg.Text,
+		arg.Sources,
+		arg.Contexts,
+		arg.Texts,
 		arg.Model,
 	)
 	return err
