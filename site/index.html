@@ -248,8 +248,11 @@
   .chip.love { background: var(--love); border-color: var(--love); color: var(--on-love); }
   .chip.like { background: var(--gold); border-color: var(--gold); color: var(--ink); }
   .chip.open { background: var(--gold-tint); border-color: var(--gold-tint); color: var(--ink); }
-  /* In running text, small enough to keep the line spacing. */
-  .text .chip { padding: 0 .5rem; font-size: .85em; line-height: 1.5; border-width: 0; }
+  /* In running text, small enough to keep the line spacing. Zen Kaku Gothic's
+     line box has more room above the letters than below, so the text sat about
+     1px low: a shorter line with the difference as bottom padding keeps the
+     chip's height and centres the caps in it. */
+  .text .chip { padding: 0 .5rem .15em; font-size: .85em; line-height: 1.35; border-width: 0; }
   .typing { display: flex; align-items: center; gap: .5rem; color: var(--muted); font-size: .875rem; margin-top: .4rem; }
   .typing i { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); animation: dot 1.2s infinite ease-in-out; }
   .typing i:nth-child(2) { animation-delay: .15s; }
