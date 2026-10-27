@@ -243,6 +243,17 @@
   .app .sub { color: var(--muted); font-size: .9rem; margin-top: .15rem; }
   .app .hint { color: var(--muted); font-size: .875rem; margin-top: .9rem; }
   .app .row { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1rem; }
+  /* The day card's two buttons always sit side by side. Both labels fit on one
+     line beside the text on desktop and down to a 29rem screen (the narrowest
+     where they still fit as they are); below that, "Share with someone you
+     trust" takes the rest of the row as "Share with / someone you trust", which
+     holds two lines down to a 360px phone with the tighter padding, and
+     "I'm here" grows to its height. */
+  .row.pair { flex-wrap: nowrap; }
+  @media (max-width: 29rem) {
+    .row.pair .fake-btn { display: flex; flex-direction: column; justify-content: center; padding-inline: .5rem; line-height: 1.3; text-align: center; }
+    .row.pair .fake-btn:last-child { flex: 1 1 0; min-width: 0; }
+  }
   .chip { display: inline-block; padding: .35rem .8rem; border-radius: 999px; border: 1.5px solid var(--line-strong); font-size: .875rem; font-weight: 500; }
   /* The three interest levels, filled as in the app: vermilion, gold, pale gold. */
   .chip.love { background: var(--love); border-color: var(--love); color: var(--on-love); }
@@ -758,7 +769,7 @@
           </div>
           <p class="composer" aria-hidden="true"><span class="input"><span class="typed"></span><span class="placeholder">Write a message</span></span><span class="send">Send</span></p>
         </div>
-        <div class="row"><span class="fake-btn primary">I&rsquo;m here</span><span class="fake-btn">Share with someone you trust</span></div>
+        <div class="row pair"><span class="fake-btn primary">I&rsquo;m here</span><span class="fake-btn">Share with <span>someone you trust</span></span></div>
       </figure>
     </section>
 
