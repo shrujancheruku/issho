@@ -51,6 +51,8 @@
     --slot3: #47558F;
     /* "Ai", the app's accent: your chat bubbles and the crew's head. */
     --ai: #3A4A9E;
+    /* The footer's band: the page's own ground in dark, a shade darker in light. */
+    --footer: #0D1330;
     --display: "Dela Gothic One", "Hiragino Kaku Gothic ProN", "Arial Black", sans-serif;
     --kanji: "Noto Serif JP", "Hiragino Mincho ProN", serif;
     --sans: "Zen Kaku Gothic New", "Hiragino Sans", "Noto Sans JP", -apple-system, "Segoe UI", sans-serif;
@@ -80,6 +82,7 @@
       --slot2: #D5DBE7;
       --slot3: #AEB8CF;
       --ai: #24307A;
+      --footer: #DCE2EC;
       color-scheme: light;
     }
   }
@@ -100,6 +103,7 @@
     --slot2: #D5DBE7;
     --slot3: #AEB8CF;
     --ai: #24307A;
+    --footer: #DCE2EC;
     color-scheme: light;
   }
 
@@ -111,6 +115,7 @@
      motion gets an instant change. Browsers without @property just flip. */
   @property --ai { syntax: "<color>"; inherits: true; initial-value: transparent; }
   @property --bg { syntax: "<color>"; inherits: true; initial-value: transparent; }
+  @property --footer { syntax: "<color>"; inherits: true; initial-value: transparent; }
   @property --gold { syntax: "<color>"; inherits: true; initial-value: transparent; }
   @property --gold-hover { syntax: "<color>"; inherits: true; initial-value: transparent; }
   @property --gold-tint { syntax: "<color>"; inherits: true; initial-value: transparent; }
@@ -138,7 +143,7 @@
   @property --text { syntax: "<color>"; inherits: true; initial-value: transparent; }
   @property --thread { syntax: "<color>"; inherits: true; initial-value: transparent; }
   @property --when { syntax: "<color>"; inherits: true; initial-value: transparent; }
-  html.theming { transition: --ai .45s ease, --bg .45s ease, --gold .45s ease, --gold-hover .45s ease, --gold-tint .45s ease, --heading .45s ease, --ink .45s ease, --line .45s ease, --line-strong .45s ease, --love .45s ease, --map-land .45s ease, --map-major .45s ease, --map-minor .45s ease, --map-park .45s ease, --map-path .45s ease, --map-rail .45s ease, --map-water .45s ease, --map-water-text .45s ease, --muted .45s ease, --on-love .45s ease, --raised .45s ease, --slot1 .45s ease, --slot2 .45s ease, --slot3 .45s ease, --sun .45s ease, --surface .45s ease, --text .45s ease, --thread .45s ease, --when .45s ease; }
+  html.theming { transition: --ai .45s ease, --bg .45s ease, --footer .45s ease, --gold .45s ease, --gold-hover .45s ease, --gold-tint .45s ease, --heading .45s ease, --ink .45s ease, --line .45s ease, --line-strong .45s ease, --love .45s ease, --map-land .45s ease, --map-major .45s ease, --map-minor .45s ease, --map-park .45s ease, --map-path .45s ease, --map-rail .45s ease, --map-water .45s ease, --map-water-text .45s ease, --muted .45s ease, --on-love .45s ease, --raised .45s ease, --slot1 .45s ease, --slot2 .45s ease, --slot3 .45s ease, --sun .45s ease, --surface .45s ease, --text .45s ease, --thread .45s ease, --when .45s ease; }
 
   * { box-sizing: border-box; }
   html { scroll-behavior: smooth; }
@@ -450,12 +455,14 @@
 
   /* Footer: a sign-off rather than just the copyright. The round mark sits on
      the spine, like the hero's thread, with the content at the page's indent. */
-  .site-footer {
+  .site-footer { background: var(--footer); border-top: 1px solid var(--line); }
+  /* The band runs the full width; .wrap inside it keeps the content in the page's column. */
+  .site-footer > .wrap {
     display: grid; grid-template-columns: var(--indent) 1fr; align-items: start;
-    padding-block: clamp(2.5rem, 6vw, 4rem) 2.5rem; border-top: 1px solid var(--line);
+    padding-block: clamp(2.5rem, 6vw, 4rem) 2.5rem;
   }
   /* Ringed like the story's knots, so it reads as the thread's last knot on either canvas. */
-  .site-footer .mark { width: 2.5rem; height: 2.5rem; margin-left: calc(var(--spine) - 1.25rem); border-radius: 50%; box-shadow: 0 0 0 4px var(--bg), 0 0 0 6px var(--gold); }
+  .site-footer .mark { width: 2.5rem; height: 2.5rem; margin-left: calc(var(--spine) - 1.25rem); border-radius: 50%; box-shadow: 0 0 0 4px var(--footer), 0 0 0 6px var(--gold); }
   .site-footer .bye { font: 400 clamp(1.4rem, 3vw, 1.9rem)/1.2 var(--display); color: var(--heading); }
   .site-footer .ja { margin-top: .35rem; font-weight: 500; }
   .site-footer nav { display: flex; flex-wrap: wrap; gap: .5rem 1.75rem; margin-top: 1.5rem; }
@@ -831,7 +838,8 @@
 </div>
 
 <!-- The thread ties off at the round mark, on the same spine as the hero. -->
-<footer class="wrap site-footer">
+<footer class="site-footer">
+  <div class="wrap">
   <img class="mark" src="favicon.svg" alt="" width="40" height="40">
   <div>
     <p class="bye">See you out there.</p>
@@ -842,6 +850,7 @@
       <a href="#join">Join the waitlist</a>
     </nav>
     <p class="small">&copy; <span id="year">2026</span> Issho. Built with &#x2764;&#xFE0F; in &#x1F1EF;&#x1F1F5;</p>
+  </div>
   </div>
 </footer>
 
