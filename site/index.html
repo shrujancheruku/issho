@@ -466,15 +466,17 @@
   /* Motion, with the app's tokens (apps/mobile/src/constants/motion.ts):
      press 100 ms at 0.97, change 180 ms, draw 450 ms, gather = a small
      overshoot, routeDraw 1.6 s, walk 5.2 s + 1.8 s rest, breathe 2.4 s.
-     Each fragment plays once, when the thread reaches its stage (the script
-     adds .reached), and the walker and typing dots only run while their
+     Each fragment plays once, when its top first reaches the middle of the
+     screen (the script adds .reached). Beside the text on wide screens that's
+     about when the thread reaches its knot; on phones, where the fragment sits
+     below the text, it waits until you've read the text. The walker and typing dots only run while their
      fragment is on screen (.live). Everything here sits under .thread-anim,
      which the script only sets without reduced motion: otherwise, or without
      JavaScript, every fragment simply shows its finished state. */
   .button, .theme-switch { transition: transform .1s; }
   .button:active, .theme-switch:active { transform: scale(.97); }
 
-  .thread-anim .stage.reached .knot { animation: tie .5s cubic-bezier(.3, 1.6, .5, 1); }
+  .thread-anim .knot.reached { animation: tie .5s cubic-bezier(.3, 1.6, .5, 1); }
   /* The knot the thread has most recently reached breathes (the breathe
      token, 2.4 s): a gold ring easing out from it and fading. */
   .knot::after { content: ""; position: absolute; inset: -6px; border-radius: 50%; border: 2px solid var(--gold); opacity: 0; pointer-events: none; }
@@ -880,13 +882,15 @@
   })();
 
   // Draw the thread as the page scrolls: the fill ends at the middle of the screen, and
-  // each knot is tied once the fill reaches it. Done in script rather than with CSS
+  // each knot is tied once the fill reaches it. Each stage's fragment plays once its
+  // own top reaches the middle too, so on phones it waits until you've read the text. Done in script rather than with CSS
   // scroll-driven animations so it works the same in every browser.
   (function () {
     if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     var story = document.querySelector(".story");
     var fill = story.querySelector(".fill");
     var knots = document.querySelectorAll(".knot");
+    var cards = document.querySelectorAll(".stage .app");
     var queued = false;
     function update() {
       queued = false;
@@ -901,9 +905,12 @@
         var k = knots[i].getBoundingClientRect();
         var tied = atEnd || k.top + k.height / 2 <= mid;
         knots[i].classList.toggle("tied", tied);
-        if (tied) current = knots[i];
-        // Each stage's fragment plays once, the first time the thread reaches it.
-        if (tied) knots[i].parentNode.classList.add("reached");
+        // The knot ties with a spring once, the first time the thread reaches it.
+        if (tied) { current = knots[i]; knots[i].classList.add("reached"); }
+      }
+      // Each fragment plays once, the first time its top reaches the middle of the screen.
+      for (var c = 0; c < cards.length; c++) {
+        if (atEnd || cards[c].getBoundingClientRect().top <= mid) cards[c].classList.add("reached");
       }
       // Only the latest knot reached pulses: one live thing on the thread.
       for (var j = 0; j < knots.length; j++) knots[j].classList.toggle("current", knots[j] === current);
@@ -916,7 +923,7 @@
     // and goes again, while the plan card is on screen and its route is drawn.
     var route = document.getElementById("route");
     var dot = document.querySelector(".walker-dot");
-    var card = route.closest(".app"), stage = route.closest(".stage");
+    var card = route.closest(".app");
     var length = route.getTotalLength();
     var walking = false, began = 0, firstWalk = true;
     function step(now) {
@@ -934,7 +941,7 @@
       requestAnimationFrame(step);
     }
     function walkWhenLive() {
-      var live = card.classList.contains("live") && stage.classList.contains("reached");
+      var live = card.classList.contains("live") && card.classList.contains("reached");
       if (live && !walking) {
         walking = true;
         // The first time, wait for the route to finish drawing.
@@ -948,14 +955,14 @@
     }
     addEventListener("scroll", walkWhenLive, { passive: true });
 
-    // Scenes that play once, the first time their card is on screen after the
-    // thread reaches it. The markup holds each one's end, which is what shows
+    // Scenes that play once, the first time their card is on screen after its
+    // top reaches the middle of the screen. The markup holds each one's end, which is what shows
     // without the script or with reduced motion; here each starts from its beginning.
     var scenes = [];
     function scene(card, run) { scenes.push({ card: card, run: run }); }
     function playWhenLive() {
       scenes = scenes.filter(function (sc) {
-        if (!sc.card.classList.contains("live") || !sc.card.closest(".stage").classList.contains("reached")) return true;
+        if (!sc.card.classList.contains("live") || !sc.card.classList.contains("reached")) return true;
         sc.run();
         return false;
       });
