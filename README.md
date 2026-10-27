@@ -17,11 +17,46 @@ Remember when friends just happened? Same team, same class, same corner café. I
 ### How it works
 
 1. **It starts with a plan. Pick something you'd do anyway.** Photo walks, bouldering, ramen crawls, board-game cafés. Tag each activity *Love it*, *Like it* or *Open to try*, and **Plans** shows what's on near you, best matches first. The activity breaks the ice, so you don't have to. Like the look of one? Sign up and mark the times you're free. Nothing's booked until a time works for enough of you.
+
+   <picture>
+     <source media="(prefers-color-scheme: dark)" srcset="assets/readme/plan-dark.svg">
+     <img src="assets/readme/plan-light.svg" width="400" alt="A plan in the app: a photo walk from Kichijoji station, its route drawing itself on a map of Inokashira Park, with a walker strolling it">
+   </picture>
+
 2. **Date set. Enough of you said yes. It's on.** When enough people can make the same time, we lock in a date and split everyone into small groups, matched on what you love, a language you share and the group size you like.
+
+   <picture>
+     <source media="(prefers-color-scheme: dark)" srcset="assets/readme/date-dark.svg">
+     <img src="assets/readme/date-light.svg" width="400" alt="When people can go: a grid of days and times, where Saturday at 2 PM turns gold">
+   </picture>
+
 3. **Going. A few people, not a crowd.** Your invite lands in **Together**, under "Needs you". Confirm your place and see who's coming. Photos are only shared with your group. Groups stay small, so everyone gets a word in and you'll remember every name.
+
+   <picture>
+     <source media="(prefers-color-scheme: dark)" srcset="assets/readme/going-dark.svg">
+     <img src="assets/readme/going-light.svg" width="400" alt="Can you go? Five seats round a table, filling as people say yes; you confirm and see who is going">
+   </picture>
+
 4. **On the day. Show up. The activity does the talking.** The group chat opens ahead of time, so you can say hi and spot each other at the gates. Tap "I'm here" when you arrive, and share the outing with someone you trust.
+
+   <picture>
+     <source media="(prefers-color-scheme: dark)" srcset="assets/readme/day-dark.svg">
+     <img src="assets/readme/day-light.svg" width="400" alt="The group chat on the day: you type and send a message, then Kenji starts typing">
+   </picture>
+
 5. **How was it? Pick who you'd meet again. Privately.** Nobody sees your picks. Pick each other, and you're more likely to share a group again. Anyone you'd rather not see again, you won't.
+
+   <picture>
+     <source media="(prefers-color-scheme: dark)" srcset="assets/readme/again-dark.svg">
+     <img src="assets/readme/again-light.svg" width="400" alt="Who would you meet again? Aoi, Maya and Sam get ticked, privately">
+   </picture>
+
 6. **A crew. Strangers on Saturday, regulars by spring.** Clicked with your group? We'll offer you a crew: your own group chat, with a fresh plan picked for you every week or so. It starts once at least three of you say yes, and you can leave any time.
+
+   <picture>
+     <source media="(prefers-color-scheme: dark)" srcset="assets/readme/crew-dark.svg">
+     <img src="assets/readme/crew-light.svg" width="400" alt="A crew offer: Maya says yes, then you do, and the crew starts">
+   </picture>
 
 ### Issho (一緒) means "together"
 
