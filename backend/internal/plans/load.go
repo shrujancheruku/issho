@@ -31,7 +31,23 @@ type City struct {
 	Relations matching.Relations
 	// Review: admins review the city's plans before they open (00021).
 	Review bool
+
+	// Lookups into Activities and Users, built when they're loaded.
+	activities map[matching.ActivityID]*matching.Activity
+	users      map[matching.UserID]*matching.User
 }
+
+// Activity returns one of the city's activities (enabled, and in season
+// if loaded for a month), or nil.
+func (c *City) Activity(id matching.ActivityID) *matching.Activity { return c.activities[id] }
+
+// ActivitiesByID maps the city's activities by id, for matching's inputs.
+// It's shared (a City may be cached): don't modify it.
+func (c *City) ActivitiesByID() map[matching.ActivityID]*matching.Activity { return c.activities }
+
+// UsersByID maps the people matched in the city by id (LoadCity only). It's
+// shared: don't modify it.
+func (c *City) UsersByID() map[matching.UserID]*matching.User { return c.users }
 
 // LoadCity reads a city for matching, with the activities enabled there and
 // in season in the given month (0 = any month).
@@ -103,6 +119,10 @@ func loadPlaces(ctx context.Context, q *dbgen.Queries, cityID string, month time
 		}
 		c.Activities = append(c.Activities, m)
 	}
+	c.activities = make(map[matching.ActivityID]*matching.Activity, len(c.Activities))
+	for i := range c.Activities {
+		c.activities[c.Activities[i].ID] = &c.Activities[i]
+	}
 	venues, err := q.ListCityVenueCounts(ctx, cityID)
 	if err != nil {
 		return nil, err
@@ -139,8 +159,9 @@ func loadCaller(ctx context.Context, q *dbgen.Queries, userID uuid.UUID) (Caller
 	return Caller{City: r.CityID, Primary: primary, Secondary: secondary}, nil
 }
 
-// LoadUser reads one person for matching, with their city and display
-// languages. pgx.ErrNoRows means they have no profile.
+// LoadUser reads one person for their feed, with their city and display
+// languages. It leaves out Reliability and EventsAttended, which only group
+// assembly (LoadCity) uses. pgx.ErrNoRows means they have no profile.
 func LoadUser(ctx context.Context, q *dbgen.Queries, userID uuid.UUID) (*matching.User, Caller, error) {
 	r, err := q.GetMatchingUser(ctx, userID)
 	if err != nil {
@@ -148,17 +169,7 @@ func LoadUser(ctx context.Context, q *dbgen.Queries, userID uuid.UUID) (*matchin
 	}
 	primary, secondary := i18n.ForApp(r.PrimaryLanguage, deref(r.SecondaryLanguage))
 	caller := Caller{City: r.CityID, Primary: primary, Secondary: secondary}
-	u := &matching.User{
-		ID:             matching.UserID(userID.String()),
-		HomeArea:       matching.AreaID(r.HomeAreaID),
-		MaxTravelMin:   int(r.MaxTravelMin),
-		Gender:         matching.Gender(r.Gender),
-		SameGenderOnly: r.SameGenderOnly,
-		Size:           matching.SizePref(r.SizePref),
-		Budget:         int(r.Budget),
-		Prefs:          map[matching.ActivityID]int{},
-		Reliability:    float64(r.Reliability),
-	}
+	u := newUser(userID, r.HomeAreaID, r.MaxTravelMin, r.Gender, r.SameGenderOnly, r.SizePref, r.Budget)
 	for i, code := range r.LangCodes {
 		u.Languages = append(u.Languages, matching.Language{Code: code, Fluent: r.LangFluent[i], Level: int(r.LangLevels[i])})
 	}
@@ -168,7 +179,31 @@ func LoadUser(ctx context.Context, q *dbgen.Queries, userID uuid.UUID) (*matchin
 	for i, a := range r.PrefActivities {
 		u.Prefs[matching.ActivityID(a)] = int(r.PrefWeights[i])
 	}
-	return u, caller, nil
+	return &u, caller, nil
+}
+
+// newUser is a profile as matching sees it, before its languages,
+// availability and preferences are added.
+func newUser(id uuid.UUID, homeArea string, maxTravelMin int16, gender string, sameGenderOnly bool, sizePref string, budget int16) matching.User {
+	return matching.User{
+		ID:             matching.UserID(id.String()),
+		HomeArea:       matching.AreaID(homeArea),
+		MaxTravelMin:   int(maxTravelMin),
+		Gender:         matching.Gender(gender),
+		SameGenderOnly: sameGenderOnly,
+		Size:           matching.SizePref(sizePref),
+		Budget:         int(budget),
+		Prefs:          map[matching.ActivityID]int{},
+	}
+}
+
+// reliability is how often someone turned up when they'd confirmed: of
+// their confirmed places at finished events, how many they attended, with a
+// prior of two outings attended, so a newcomer starts at 1 and one miss
+// doesn't sink them (one no-show in their first outing gives 2/3).
+func reliability(attended, confirmed int) float64 {
+	const prior = 2
+	return float64(prior+attended) / float64(prior+confirmed)
 }
 
 // loadUsers reads every profile in the city with its languages,
@@ -180,31 +215,18 @@ func loadUsers(ctx context.Context, q *dbgen.Queries, c *City) error {
 		return err
 	}
 	c.Users = make([]matching.User, len(rows))
-	index := make(map[matching.UserID]int, len(rows))
 	for i, r := range rows {
-		id := matching.UserID(r.UserID.String())
-		index[id] = i
-		c.Users[i] = matching.User{
-			ID:             id,
-			HomeArea:       matching.AreaID(r.HomeAreaID),
-			MaxTravelMin:   int(r.MaxTravelMin),
-			Gender:         matching.Gender(r.Gender),
-			SameGenderOnly: r.SameGenderOnly,
-			Size:           matching.SizePref(r.SizePref),
-			Budget:         int(r.Budget),
-			Prefs:          map[matching.ActivityID]int{},
-			Reliability:    float64(r.Reliability),
-			EventsAttended: int(r.EventsAttended),
-		}
+		c.Users[i] = newUser(r.UserID, r.HomeAreaID, r.MaxTravelMin, r.Gender, r.SameGenderOnly, r.SizePref, r.Budget)
+		c.Users[i].Reliability = reliability(int(r.DoneAttended), int(r.DoneConfirmed))
+		c.Users[i].EventsAttended = int(r.EventsAttended)
+	}
+	c.users = make(map[matching.UserID]*matching.User, len(c.Users))
+	for i := range c.Users {
+		c.users[c.Users[i].ID] = &c.Users[i]
 	}
 	// A profile saved between two of these queries may be missing from the
 	// first; its rows in the later ones are skipped until the next pass.
-	user := func(id fmt.Stringer) *matching.User {
-		if i, ok := index[matching.UserID(id.String())]; ok {
-			return &c.Users[i]
-		}
-		return nil
-	}
+	user := func(id fmt.Stringer) *matching.User { return c.users[matching.UserID(id.String())] }
 
 	langs, err := q.ListMatchingLanguages(ctx, c.ID)
 	if err != nil {

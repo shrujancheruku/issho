@@ -37,20 +37,18 @@ where v.city_id = $1 and v.status <> 'rejected' and (v.status = 'approved' or no
 group by v.area_id, v.category_id;
 
 -- name: ListMatchingUsers :many
--- Reliability is how often someone turned up when they'd confirmed: outings
--- attended over confirmed places at finished events, with a prior of two
--- outings attended so a newcomer starts at 1.0 and one miss doesn't sink
--- them (one no-show in their first outing gives 0.67). Cancelling in
--- advance (dropped) isn't a miss. Attended = checked in, or said so in
--- their feedback afterwards (people forget to check in).
+-- Turnout (plans.reliability): of their confirmed places at finished events,
+-- how many they attended. Cancelling in advance (dropped) isn't a miss.
+-- Attended = checked in, or said so in their feedback afterwards (people
+-- forget to check in).
 select p.user_id, p.home_area_id, p.max_travel_min, p.gender, p.same_gender_only, p.size_pref,
        p.budget,
-       ((2 + (select count(*) from app.group_members m join app.events e on e.id = m.event_id
-              where m.user_id = p.user_id and e.status = 'done' and m.response = 'confirmed'
-                and (m.checked_in_at is not null or exists (
-                  select 1 from app.event_feedback f where f.group_id = m.group_id and f.user_id = m.user_id and f.attended))))::real
-        / (2 + (select count(*) from app.group_members m join app.events e on e.id = m.event_id
-                where m.user_id = p.user_id and e.status = 'done' and m.response = 'confirmed'))::real)::real as reliability,
+       (select count(*) from app.group_members m join app.events e on e.id = m.event_id
+        where m.user_id = p.user_id and e.status = 'done' and m.response = 'confirmed'
+          and (m.checked_in_at is not null or exists (
+            select 1 from app.event_feedback f where f.group_id = m.group_id and f.user_id = m.user_id and f.attended)))::int as done_attended,
+       (select count(*) from app.group_members m join app.events e on e.id = m.event_id
+        where m.user_id = p.user_id and e.status = 'done' and m.response = 'confirmed')::int as done_confirmed,
        (select count(*) from app.group_members m
         where m.user_id = p.user_id
           and (m.checked_in_at is not null or exists (
@@ -101,7 +99,7 @@ where city_id = @city_id and closed_reason = any(@reasons::text[]) and closed_at
 -- database is a long way from the API). Each list's arrays share an order.
 -- name: GetMatchingUser :one
 select p.user_id, a.city_id, p.home_area_id, p.max_travel_min, p.gender, p.same_gender_only, p.size_pref,
-       p.budget, p.reliability, p.primary_language, p.secondary_language,
+       p.budget, p.primary_language, p.secondary_language,
        array(select l.lang from app.user_languages l where l.user_id = p.user_id order by l.fluent desc, l.lang)::text[] as lang_codes,
        array(select l.fluent from app.user_languages l where l.user_id = p.user_id order by l.fluent desc, l.lang)::bool[] as lang_fluent,
        array(select coalesce(l.level, 0) from app.user_languages l where l.user_id = p.user_id order by l.fluent desc, l.lang)::int2[] as lang_levels,

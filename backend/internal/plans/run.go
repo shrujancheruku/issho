@@ -282,14 +282,7 @@ func (r *Runner) Schedule(ctx context.Context, cityID string, now time.Time) (Sc
 	if err != nil {
 		return rep, err
 	}
-	users := make(map[matching.UserID]*matching.User, len(c.Users))
-	for i := range c.Users {
-		users[c.Users[i].ID] = &c.Users[i]
-	}
-	acts := make(map[matching.ActivityID]*matching.Activity, len(c.Activities))
-	for i := range c.Activities {
-		acts[c.Activities[i].ID] = &c.Activities[i]
-	}
+	users, acts := c.UsersByID(), c.ActivitiesByID()
 	open, err := ListOpen(ctx, q, cityID)
 	if err != nil {
 		return rep, err

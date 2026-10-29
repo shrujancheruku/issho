@@ -112,10 +112,7 @@ func (s *Service) feed(ctx context.Context, q *dbgen.Queries, userID uuid.UUID) 
 	if err != nil {
 		return nil, nil, caller, err
 	}
-	acts := make(map[matching.ActivityID]*matching.Activity, len(c.Activities))
-	for i := range c.Activities {
-		acts[c.Activities[i].ID] = &c.Activities[i]
-	}
+	acts := c.ActivitiesByID()
 	open, err := ListOpen(ctx, q, cityID)
 	if err != nil {
 		return nil, nil, caller, err

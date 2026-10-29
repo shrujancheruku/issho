@@ -101,7 +101,7 @@ func (h *ReviewHandler) ListReviewPlans(ctx context.Context, req *connect.Reques
 	if err != nil {
 		return nil, err
 	}
-	names, err := englishActivityNames(ctx, q, req.Msg.CityId)
+	names, err := h.Svc.activityNames(ctx, q, req.Msg.CityId)
 	if err != nil {
 		return nil, err
 	}
@@ -134,7 +134,7 @@ func (h *ReviewHandler) GetReviewPlan(ctx context.Context, req *connect.Request[
 	if err != nil {
 		return nil, err
 	}
-	names, err := englishActivityNames(ctx, q, r.CityID)
+	names, err := h.Svc.activityNames(ctx, q, r.CityID)
 	if err != nil {
 		return nil, err
 	}
@@ -290,7 +290,7 @@ func (h *ReviewHandler) CreatePlan(ctx context.Context, req *connect.Request[iss
 	}
 	var followUp *matching.Activity
 	if m.FollowUpId != "" {
-		if followUp = city.activity(matching.ActivityID(m.FollowUpId)); followUp == nil || followUp.ID == act.ID {
+		if followUp = city.Activity(matching.ActivityID(m.FollowUpId)); followUp == nil || followUp.ID == act.ID {
 			return nil, errs.Invalid("follow_up_id: not another activity in the city")
 		}
 	}
@@ -352,20 +352,11 @@ func cityActivity(ctx context.Context, q *dbgen.Queries, areaID, activityID stri
 	if err != nil {
 		return nil, nil, err
 	}
-	act := city.activity(matching.ActivityID(activityID))
+	act := city.Activity(matching.ActivityID(activityID))
 	if act == nil {
 		return nil, nil, errs.Invalid("activity_id: not an activity enabled in the city")
 	}
 	return city, act, nil
-}
-
-func (c *City) activity(id matching.ActivityID) *matching.Activity {
-	for i := range c.Activities {
-		if c.Activities[i].ID == id {
-			return &c.Activities[i]
-		}
-	}
-	return nil
 }
 
 func venueOptions(ctx context.Context, q *dbgen.Queries, areaID string, act *matching.Activity, limit int32) ([]dbgen.ListVenueOptionsRow, error) {
@@ -414,19 +405,6 @@ func planText(title, summary string) (t, s []byte, err error) {
 		s = english(summary)
 	}
 	return t, s, nil
-}
-
-// englishActivityNames maps a city's activity ids to their English names.
-func englishActivityNames(ctx context.Context, q *dbgen.Queries, cityID string) (map[string]string, error) {
-	rows, err := q.ListCityActivities(ctx, cityID)
-	if err != nil {
-		return nil, err
-	}
-	out := make(map[string]string, len(rows))
-	for _, r := range rows {
-		out[r.ID] = i18n.Pick(r.Name, i18n.Authoring)
-	}
-	return out, nil
 }
 
 func reviewPlanToProto(r dbgen.GetReviewPlanRow, names map[string]string) *isshov1.ReviewPlan {
