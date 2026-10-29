@@ -162,13 +162,13 @@ func TestIntegrationRunner(t *testing.T) {
 	// Its screen still opens for two weeks, saying why it closed; then it's gone.
 	svc := &Service{DB: f.pool}
 	waiting := uuid.MustParse(string(signups[1].User))
-	if it, _, _, err := svc.Plan(ctx, waiting, plan.ID); err != nil || it.ClosedReason != ClosedNoGroup || !it.SignedUp || it.Title == "" {
+	if it, _, _, err := svc.Plan(ctx, waiting, plan.ID, time.Now()); err != nil || it.ClosedReason != ClosedNoGroup || !it.SignedUp || it.Title == "" {
 		t.Errorf("closed plan's screen = %+v, %v", it, err)
 	}
 	if _, err := f.pool.Exec(ctx, "update app.plans set closed_at = now() - interval '15 days' where id = $1", plan.ID); err != nil {
 		t.Fatal(err)
 	}
-	if _, _, _, err := svc.Plan(ctx, waiting, plan.ID); !errors.Is(err, ErrNotFound) {
+	if _, _, _, err := svc.Plan(ctx, waiting, plan.ID, time.Now()); !errors.Is(err, ErrNotFound) {
 		t.Errorf("after 15 days: %v, want ErrNotFound", err)
 	}
 }

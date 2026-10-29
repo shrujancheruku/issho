@@ -124,7 +124,7 @@ func TestIntegrationService(t *testing.T) {
 	if _, err := svc.SignUp(ctx, en, planID, matching.Signup{}); !errors.Is(err, ErrNotForYou) {
 		t.Errorf("signup by an English speaker: %v, want ErrNotForYou", err)
 	}
-	if _, _, _, err := svc.Plan(ctx, ja, uuid.New()); !errors.Is(err, ErrNotFound) {
+	if _, _, _, err := svc.Plan(ctx, ja, uuid.New(), time.Now()); !errors.Is(err, ErrNotFound) {
 		t.Errorf("unknown plan: %v, want ErrNotFound", err)
 	}
 	var inv *InvalidError
@@ -147,7 +147,7 @@ func TestIntegrationService(t *testing.T) {
 	if item, err = svc.SignUp(ctx, ja, planID, signup); err != nil || item.Signups != 1 {
 		t.Errorf("signing up again: %+v, %v", item, err)
 	}
-	item, steps, got, err := svc.Plan(ctx, ja, planID)
+	item, steps, got, err := svc.Plan(ctx, ja, planID, time.Now())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -160,11 +160,19 @@ func TestIntegrationService(t *testing.T) {
 	if !item.SignedUp || item.Signups != 1 || got == nil || !reflect.DeepEqual(*got, signup) {
 		t.Errorf("Plan = %+v, %+v; want signed up with %+v", item, got, signup)
 	}
+	// The plan's screen judges it alone, as the feed does among the others.
+	feed, ferr := svc.Feed(ctx, ja)
+	if ferr != nil || len(feed) != 1 {
+		t.Fatalf("feed = %+v, %v", feed, ferr)
+	}
+	if f := feed[0]; f.Level != item.Level || f.Minutes != item.Minutes || f.Friends != item.Friends || f.Title != item.Title || f.SignedUp != item.SignedUp {
+		t.Errorf("feed entry %+v differs from the plan's screen %+v", f, item)
+	}
 
 	if err := svc.Withdraw(ctx, ja, planID); err != nil {
 		t.Fatal(err)
 	}
-	if item, _, got, err := svc.Plan(ctx, ja, planID); err != nil || item.SignedUp || item.Signups != 0 || got != nil {
+	if item, _, got, err := svc.Plan(ctx, ja, planID, time.Now()); err != nil || item.SignedUp || item.Signups != 0 || got != nil {
 		t.Errorf("after withdrawing: %+v, %+v, %v", item, got, err)
 	}
 	if err := Close(ctx, f.q, planID, ClosedWithdrawn, day(1)); err != nil {

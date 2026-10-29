@@ -144,7 +144,7 @@ func TestIntegrationWalks(t *testing.T) {
 		"zz-station":   {"ja": {Name: "吉祥寺駅", Location: maps.LatLng{Lat: 35.703, Lng: 139.58}}},
 		"zz-tea-house": {"ja": {Name: "茶房", Location: maps.LatLng{Lat: 35.705, Lng: 139.582}}},
 	}}
-	item, steps, _, err := svc.Plan(ctx, f.users[0], plan.ID)
+	item, steps, _, err := svc.Plan(ctx, f.users[0], plan.ID, time.Now())
 	if err != nil {
 		t.Fatal(err)
 	}

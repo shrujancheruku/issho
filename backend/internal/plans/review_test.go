@@ -97,7 +97,7 @@ func TestIntegrationReview(t *testing.T) {
 	if feed[0].Title != "Kichijoji board games" {
 		t.Errorf("feed title = %q", feed[0].Title)
 	}
-	item, _, _, err := svc.Plan(ctx, f.users[0], uuid.MustParse(draft))
+	item, _, _, err := svc.Plan(ctx, f.users[0], uuid.MustParse(draft), time.Now())
 	if err != nil || item.Summary != "Games and tea." {
 		t.Errorf("plan summary = %q, %v", item.Summary, err)
 	}

@@ -123,6 +123,71 @@ func (q *Queries) DeleteSignups(ctx context.Context, arg DeleteSignupsParams) er
 	return err
 }
 
+const getOpenPlan = `-- name: GetOpenPlan :one
+select p.id, p.area_id, p.activity_id, p.follow_up_id, p.primary_language, p.secondary_language,
+       p.round, p.window_start, p.window_days, p.signup_deadline, p.venue_place_id, p.follow_up_venue_place_id,
+       p.route_polyline, p.route_seconds, p.meeting_place_id, p.title, p.description, exists (select 1 from app.plan_stops st where st.plan_id = p.id) as walk,
+       (select count(*) from app.plan_signups s where s.plan_id = p.id)::int as signups
+from app.plans p
+where p.id = $1 and p.city_id = $2 and p.status = 'open'
+`
+
+type GetOpenPlanParams struct {
+	ID     uuid.UUID
+	CityID string
+}
+
+type GetOpenPlanRow struct {
+	ID                   uuid.UUID
+	AreaID               string
+	ActivityID           string
+	FollowUpID           *string
+	PrimaryLanguage      string
+	SecondaryLanguage    *string
+	Round                int16
+	WindowStart          pgtype.Date
+	WindowDays           int16
+	SignupDeadline       pgtype.Timestamptz
+	VenuePlaceID         *string
+	FollowUpVenuePlaceID *string
+	RoutePolyline        *string
+	RouteSeconds         *int32
+	MeetingPlaceID       *string
+	Title                []byte
+	Description          []byte
+	Walk                 bool
+	Signups              int32
+}
+
+// One open plan in a city, for its screen and signing up. The same columns
+// as ListOpenPlans, so the rows convert (plans.openFromRow).
+func (q *Queries) GetOpenPlan(ctx context.Context, arg GetOpenPlanParams) (GetOpenPlanRow, error) {
+	row := q.db.QueryRow(ctx, getOpenPlan, arg.ID, arg.CityID)
+	var i GetOpenPlanRow
+	err := row.Scan(
+		&i.ID,
+		&i.AreaID,
+		&i.ActivityID,
+		&i.FollowUpID,
+		&i.PrimaryLanguage,
+		&i.SecondaryLanguage,
+		&i.Round,
+		&i.WindowStart,
+		&i.WindowDays,
+		&i.SignupDeadline,
+		&i.VenuePlaceID,
+		&i.FollowUpVenuePlaceID,
+		&i.RoutePolyline,
+		&i.RouteSeconds,
+		&i.MeetingPlaceID,
+		&i.Title,
+		&i.Description,
+		&i.Walk,
+		&i.Signups,
+	)
+	return i, err
+}
+
 const getPlan = `-- name: GetPlan :one
 select p.id, p.city_id, p.area_id, p.activity_id, p.follow_up_id, p.primary_language,
        p.secondary_language, p.description, p.round, p.window_start, p.window_days,

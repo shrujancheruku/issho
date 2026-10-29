@@ -62,7 +62,7 @@ func TestIntegrationRoutes(t *testing.T) {
 		}
 	}
 	// The plan screen's walk is the route's (no Places key in this test).
-	_, steps, _, err := (&Service{DB: f.pool}).Plan(ctx, f.users[0], two)
+	_, steps, _, err := (&Service{DB: f.pool}).Plan(ctx, f.users[0], two, time.Now())
 	if err != nil {
 		t.Fatal(err)
 	}
