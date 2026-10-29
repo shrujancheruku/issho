@@ -6,7 +6,7 @@ Seed data that makes Issho location-agnostic. Code never hard-codes a city, so a
 |---|---|
 | `activities.json` | The **global activity catalogue** (66 activities in 8 categories; broad on purpose, see below) |
 | `venue-categories.json` | **Venue categories** (48): our kinds of place, mapped to Google place types |
-| `citypacks/<city>.json` | One **city pack** per city: `tokyo.json` (launch city) and `austin.json` (a **synthetic test pack**: a real car-based city that proves a second city needs no code changes; not a launch city) |
+| `citypacks/<city>.json` | One **city pack** per city: `tokyo.json` (launch city), `austin.json` (a **synthetic test pack**: a real car-based city that proves a second city needs no code changes; not a launch city) and `da-nang-hoi-an.json` (two cities in one pack, below) |
 
 City packs can also be edited (or created) in the admin SPA's **Cities** page, which opens a pull request with the change; once merged, the page loads it into the database. Keep hand edits in the same format (`cities.EncodePack`: two-space indents, unescaped non-ASCII; a test checks it) so the editor's pull requests change only what was edited.
 
@@ -69,7 +69,10 @@ Matching is on the primary type, so prefer specific types (`flea_market`, `dance
   "languages": ["ja", "en"],                // languages commonly used here, most common first; any language code. Suggestions for onboarding/events; the first is used for venue search
   "travel_modes": ["walk", "drive"],        // modes to calculate: walk and/or drive (no public transport)
   "areas": [                                // the unit users pick as "home"
-    { "id": "tokyo-kichijoji", "name": { "en": "Kichijoji", "ja": "吉祥寺" }, "lat": 35.7030, "lng": 139.5798 }
+    { "id": "tokyo-kichijoji", "name": { "en": "Kichijoji", "ja": "吉祥寺" }, "lat": 35.7030, "lng": 139.5798 },
+    { "id": "da-nang-hoi-an-hai-chau", "name": { "en": "Hai Chau", "vi": "Hải Châu" }, "lat": 16.059, "lng": 108.2195,
+      "osm_id": 13969677,                   // optional: the area's administrative boundary in OpenStreetMap (a relation id)
+      "boundary": ["emfaBw_lsS…"] }         // optional: its outline, one encoded polyline per ring; written by make boundaries
   ],
   "activity_overrides": [
     { "activity_id": "seasonal-viewing", "months": [3, 4] },    // seasonal
@@ -79,14 +82,19 @@ Matching is on the primary type, so prefer specific types (`flea_market`, `dance
 }
 ```
 
+**Boundaries.** An area with a `boundary` has its venues searched over the whole of it, and every venue (found or added by hand) goes to the area that contains it; places outside every area are left out. Without one, venues are searched within each category's radius of the point and go to the nearest point, as for Tokyo and Austin today. `make boundaries CITY=<city>` fetches each area's outline from OpenStreetMap by its `osm_id` (Nominatim, simplified to about 20 m) and rewrites the pack; validation checks that each point is inside its own boundary and nobody else's. The admin SPA's editor keeps boundaries as they are (it doesn't edit them). Boundaries are OpenStreetMap data, © OpenStreetMap contributors, available under the [Open Database License](https://opendatacommons.org/licenses/odbl/).
+
 ## Adding a city
+
+A pack is a matching pool: people are only grouped with others in the same pack, and each person's travel limit decides how far within it. A town too small for many plans on its own can join a nearby city's pack as a few more areas, as Hoi An does in `da-nang-hoi-an.json` (three wards about 30 km from Da Nang); people there who won't travel far still meet each other, and those who will also meet Da Nang's.
+
 
 1. Copy `citypacks/tokyo.json` to `citypacks/<city>.json`.
 2. Set the id, timezone, currency, languages and travel modes. The file name must be `<id>.json`.
-3. Define 10–30 **areas**: neighbourhoods or stations people would recognise as "home". Prefix each id with `<city>-`. Coordinates are the centre of the area.
+3. Define the **areas**: the government's own administrative units at the level below the city (Da Nang's wards, for example), with their official names as the local name. They cover the city without gaps and have boundaries anyone can check. Prefix each id with `<city>-`. For the coordinates, take the unit's administrative point from OpenStreetMap (Nominatim) rather than the middle of its boundary, which for a large unit can be in the hills: the point is where travel times start, so it should be in the built-up part. Set each area's `osm_id` to the unit's OpenStreetMap relation and run `make boundaries CITY=<city>`, then draw the boundaries and points on a map to check. (Tokyo still uses 12 stations; see docs/ROADMAP.md.)
 4. Add overrides for seasonal, local-name or not-applicable activities.
 5. `go test ./internal/cities/`, then `make seed`.
-6. Build its travel matrix and discover venues: `make matrix CITY=<city>` and `make venues CITY=<city>` (dry-run first with `ARGS=-dry-run`; see [../docs/google-maps.md](../docs/google-maps.md)). Rebuild the matrix at least every 30 days.
+6. Build its travel matrix and discover venues: `make matrix CITY=<city>` and `make venues CITY=<city>` (dry-run first with `ARGS=-dry-run`; with boundaries, discovery stops at `-max-requests`, 4,000 by default; see [../docs/google-maps.md](../docs/google-maps.md)). Rebuild the matrix at least every 30 days.
 7. Update [../docs/ROADMAP.md](../docs/ROADMAP.md).
 
 Languages (how they're shown: [../docs/architecture.md](../docs/architecture.md#languages)):

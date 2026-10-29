@@ -1,0 +1,264 @@
+{
+  "id": "da-nang-hoi-an",
+  "_comment": "Areas are the wards (phường) of Da Nang city as reorganised on 1 July 2025: the 12 urban wards of the former Da Nang and the 3 of Hoi An, which became part of the city when Quang Nam province merged into it. Hoi An is too small for many plans on its own, so its people share a matching pool with Da Nang's (about 30 km, 40 minutes by road); each person's travel limit still decides who meets whom. Points are each ward's administrative point in OpenStreetMap; boundaries come from its osm_id (make boundaries). Both are OpenStreetMap data, © OpenStreetMap contributors, ODbL.",
+  "name": {
+    "en": "Da Nang and Hoi An",
+    "vi": "Đà Nẵng và Hội An"
+  },
+  "timezone": "Asia/Ho_Chi_Minh",
+  "currency": "VND",
+  "languages": [
+    "vi",
+    "en"
+  ],
+  "travel_modes": [
+    "walk",
+    "drive"
+  ],
+  "areas": [
+    {
+      "id": "da-nang-hoi-an-hai-chau",
+      "name": {
+        "en": "Hai Chau",
+        "vi": "Hải Châu"
+      },
+      "lat": 16.059,
+      "lng": 108.2195,
+      "osm_id": 13969677,
+      "boundary": [
+        "emfaBw_lsSjF_PvFkHzHwEpMsDbJw@xQpAbZbKxPsQ`CaFw@}@^u@~Bx@bCy@{JwM`bAkMf{@|JkCsNVeC}C@EiGbAAiBsRvAEnAeKgFu@bAyFBeSygCxBeQjAmV|Ccx@hSut@bGvm@pb@aGnM{ChOe@jQhBtQgAuQj@cQzC}NjFsLd[fIdKrN|B`TyMpFkHdGiErI",
+        "gofaBo`msSpB{@RyAkE`@uEy@aCgO}@bAa@rJuArA"
+      ]
+    },
+    {
+      "id": "da-nang-hoi-an-hoa-cuong",
+      "name": {
+        "en": "Hoa Cuong",
+        "vi": "Hòa Cường"
+      },
+      "lat": 16.0416,
+      "lng": 108.2175,
+      "osm_id": 13967817,
+      "boundary": [
+        "{h~`BesisSxdB}k@bVth@ve@sKj@dCvHsBdJcGMqArFsEnBkEEyCmGcIEgNsDmJh@QwB{YiFwL_f@v@sMvBuBqCmSrCaA{@PkAjBZ`Hqf@p]wB~DeE|MwCdJcG|EFhCqB`AaFpFwIoNmM{IaMsFyP{Bq]wB}Gs]{DsG?ui@zGuKfC}QxHiVxTkQnHaTz@CdScAxFfFt@oAdKwADhBrRcA@DhG|CAWdCjCrNbTjLyA~AiQjBuBjD|A|U}AH{@iHoV`JeYnN`A`x@~IWpEt@`O|MlIsBpEnHzOcF"
+      ]
+    },
+    {
+      "id": "da-nang-hoi-an-thanh-khe",
+      "name": {
+        "en": "Thanh Khe",
+        "vi": "Thanh Khê"
+      },
+      "lat": 16.0684,
+      "lng": 108.1966,
+      "osm_id": 13995327,
+      "boundary": [
+        "s~baBsvdsSlMwUlEnCzNeWzMlIlEyHhh@wEk@}EyFsKeC~BeHqE`O_VqTg[lmAsa@uCqJ{ObFqEoHmIrBaO}MqEu@_JVaAax@dYoNnVaJz@hH|AI}A}UtBkDhQkBxA_BcTkLg{@}JabAjMzJvMcCx@_Cy@_@t@v@|@aC`FyPrQpM|HhNxLjEhi@WpOwCp\\qJ|n@yBfDD~Ae@eE?jGaY~{@rCdBoBlDnBlAUb@"
+      ]
+    },
+    {
+      "id": "da-nang-hoi-an-an-khe",
+      "name": {
+        "en": "An Khe",
+        "vi": "An Khê"
+      },
+      "lat": 16.05,
+      "lng": 108.1855,
+      "osm_id": 13981042,
+      "boundary": [
+        "gsx`B{|csSx@uA{A}Lp@oDhIcK|LqCzWa]qH{TgLaI}AcKmD_DXqBdLmO~FmDkCoOLiDoAJkF}FFeFvAy@oAoJbAc@|EbCbJmAa@_AjBy@|BqJiBWPsAoFq@_DsFuHJSiJgBf@}@aDsBn@wCoJaGpB@pDlGbIDxCoBjEsFrELpAiMlHsEhAk@eCwe@rKcVuh@gsDpnAb\\re@dNxVhFeApBbIdB^U|CrJqAn@pElI{A`@bBjDq@w@cEbDs@|@|D~HkB?r@vE?fCgAxBp@hA{@dFfDf@i@bNfLhJdN~GtCpQnRnFjAbGsErK\\lEsDtPiCnDlFfBrJ"
+      ]
+    },
+    {
+      "id": "da-nang-hoi-an-an-hai",
+      "name": {
+        "en": "An Hai",
+        "vi": "An Hải"
+      },
+      "lat": 16.0701,
+      "lng": 108.2364,
+      "osm_id": 13996723,
+      "boundary": [
+        "_kcaBc~psSldCwB`T{@jQoHqA{Q~A{Gc@}F{BaFqI_FmSsdAyb@xC__@v@{j@}@y[gCaDjL_G_B}@hDyHwBwF~SfItAk@tB|@\\cBpFs@K[fCoPqFa@b@xBxBmQlSzYzXsCbC`I|M~FcBf@v@v@k@?vAfS?"
+      ]
+    },
+    {
+      "id": "da-nang-hoi-an-son-tra",
+      "name": {
+        "en": "Son Tra",
+        "vi": "Sơn Trà"
+      },
+      "lat": 16.1022,
+      "lng": 108.2486,
+      "osm_id": 13996982,
+      "boundary": [
+        "s|kaBmqmsSEsWh@Ad@pNtLmJaFyHnCwBrFnHh@a@qFqH`CgBtEfGh@a@wEgGtB_BlAzA~HmGk@s@~DkBj@wD}J}@k@_EaAmAfA~GkCb@_C_ByIoOdDaDjCYbAbGg@iGxC]~KaSxAcN}CaAn@L`A}DdCrAzDaIm@yAb@cCtHuMvAJ`AsB`AmMwA_It@iAqAsE\\gIzHf@n@`DbASfAtFq@{FfQqD|@tEr@O{@uErQ{B\\~@vWxJLjA`C`AjRpGMyBxP|FpBvBoKzLoARkPaHuUzFwBUaJrD`V`n@uD[_@eKw@e@wo@|FV~I|AbDlHtHdUjOtt@cGbx@iS~k@kFEuRgS??wAw@j@g@w@_GbBaI}MrCcC{Y{XlQmSyByB`@c@nPpFrDmJ}@]j@uBgIuAvF_TxHvB|@iD~F~A`DkLco@_Iw]iM{V_GqNiHaG{FwJwQiCaRhBmHbBsAK{BlF\\lH_Gp@VvLeNvDnAqAuJkBeAwBd@}F}B_EeQDiDfHuLJkDsBqEzBgIeAg@l@gAsCsBUqC_CCMmAmY{TuDsFyAaNsFqPzAkG{AgLvE_UbDgFzJwAlFeClDbBrB]lN}MfCyF^gNeBs@uAeHeI_IsF_@aL~BuG_@oHxB{GAiPaAqIwDy@kBkGk@cAkAmAyGlBqJmA}FaIgLoIqGyBwE`DcSE}GxAgEoCqRkMuOAcMdDgTq@eDuGhE{AuBuGh@iEvJeR|KgOnQc_@vKkUpO{XtM{FvNqGzDn@|@yBtC@lDfAl@iFrDe@bGlE~FbF`C\\zDpBtBzBjAxLr@pSqBtBzCjLvD|EfF|Je@`Dr@xVuC|HdNtBlP_ItPuA|NuUlSwJvB{OdPgCbAgGzNy@lFoHjMLvHkC|MjA~FlCdF|AbJx@?HfExBhChG`CnCpGgGtN_A~FwDnCsDK{FhESw@oA`@m@|B_CgC_DT@pHyEpDkFnJ}A@}CtDs@WeBnAoErHeDJuBvByHp@kC|BiJjB_FnGkCf@QjEaEvIBpH_CjBo@tE\\rJaFlLnB|R~Br@v@fG`GfB@~CfBA|CfGjEw@jB|HdBA\\tEiE`IZbA~F`@pA|HpE`Dh@fCoG`Cq@~CmEv@U~HbCbCdBA~N}HxMfB`CgCzA?fBdAtFzKrL^tBeAzBN~RrKfArC}BvDWdFbBx@lEEvHjFhB|H`GChBrExCVhIyAvC`@lDgBfDrAbCjDnAdGyFdI}@zJhBbDpI|E",
+        "q`haBerrsSpBo@{Ee[sBmBiGzHiLhExMjGv@eCgFIw@oAjDgEzEyB"
+      ]
+    },
+    {
+      "id": "da-nang-hoi-an-ngu-hanh-son",
+      "name": {
+        "en": "Ngu Hanh Son",
+        "vi": "Ngũ Hành Sơn"
+      },
+      "lat": 16.0108,
+      "lng": 108.2532,
+      "osm_id": 13967842,
+      "boundary": [
+        "_jn`BebosSnJgAf^wNzDyEfFyOjE_EvKaBdQ`B^mFqB_RyCgKqAn@y@qBkBIuMhEyEgGqAF{Nmn@mAaBmFWaIuOiMaKuBuIx@[EsAqFVEaC~AeAy@yA~@iAgBgLqA?UoJsAmKmAC@mCpC@pDkTdH?DmFdT@xC_BbEcNDwDaHs^zHZ|HaCfDuDpBmOiA{Ct@}\\`BuDyc@ubAexAjs@yb@bP}O~IcuAbi@gbBbl@iUdK_gBpm@u`AvUcf@|IlSrdApI~EzB`Fb@|F_BzGpAzQhVyT|QyHjv@cLrG?r]zDl]uStKgEpK[zIhDdYtW~NjH`PrClNm@fFdB|YhRbIX`[yDbNrAfJ`HvTnm@|Gb@lPuJlRuApH|Cp_@xY"
+      ]
+    },
+    {
+      "id": "da-nang-hoi-an-hoa-khanh",
+      "name": {
+        "en": "Hoa Khanh",
+        "vi": "Hòa Khánh"
+      },
+      "lat": 16.0503,
+      "lng": 108.1546,
+      "osm_id": 14651840,
+      "boundary": [
+        "{xz`B{burSzDmOcBmWnCyKhLoPnGkF~FqQ`H_ItHuDlG_AbDqHnKeFj@{AY}CaC{DXwFuF_PaMmDE{@iCF@qIbCu@p@wEpBaCGyB_BoAOaD}AeCvD}ID_G{AqCv@aAiKyHiAbBeBkBiF^uAeCDkOmFsLC}MmGw[TeDgDoQsEmJUiJuEmGf@yG{AsG\\sIaAeKn@_D~BcCe@gMfJuWaIeBi@iN_JwCaNcP_HuCqGkK{PaOg@h@eFgDiAz@yBq@gCfAwE??s@_IjB}@}DcDr@v@bEkDp@a@cBmIzAo@qEsJpAT}CeB_@qBcIiFdAwUea@aO~UdHpEdC_CxFrKj@|Eih@vEmExH{MmI{NdWmEoCmMvUuTeNTc@oBmAnBmDsCeB}^zt@oRb[x_@j]pn@{Yn]_G|T|n@xAtAeCxClHrBUj@bCnAlJ`n@g@nKzCdEDdEmBlC~CpL{@~CgCt@uK|M\\fFkEhIOxMcChNVnNel@nB_@cG_BhD_EUuB`AJxA_OdFwKlMdCrHtNvOsI`In@|@}CfKr@nC{BvBTlBnGIGlCxBOtD~G~Nf@rFbB?hDpGhDjErIy@pAtCfArBrMhGxOpKh@~G{AjHxCvJfAth@eCtIoDrCIzCdAlGhG|HlN~JnC|YzPba@H"
+      ]
+    },
+    {
+      "id": "da-nang-hoi-an-hai-van",
+      "name": {
+        "en": "Hai Van",
+        "vi": "Hải Vân"
+      },
+      "lat": 16.1348,
+      "lng": 108.1149,
+      "osm_id": 14651843,
+      "boundary": [
+        "sr_aBsiaqS|KSpC_GzC{YzBwDF}PvById@_KiDmHyH_A}EcI{E{RiC{DcC_Af@iKhCmCyDuOQ_MjAkCfEaC|@oHwHmEeEoFbC_LL}Nm@gSuBsE@uIrMaNo@mKtIwDdByFrEwEvDUzEyDfDmJxDyDbB_Fg@eNzCwEwAyHdMoMfFaCnAgIhCqF{@eF}D{BhDcHMaOdStB~GcBxCcGrKh@~@sIzDoKdKqFbIsLtI}FqRwYwY_\\uKsN{BgG_IyIiDsH{@aN}EiFoc@_fAmFwF}EuQ}F}G{F}MwAqJgDuEiEgWiDgCkByHIaGcI{TyEsT~@sQsByIZsMcDk^~CqKHaEmFqJ@gTeJsJLyQgAiG~@{FqDkFyAiJNaIfEuN{FyHyD}KmCu^mIeHyG}PsCyCwh@fBqIs@iHaDkOzF_If@qDgAkGsIeG_Ne@uDhHi^wGoLgCwOkMmKwEgKgP{Tm_@o`@gE_QoKsKjE}BfLoBwLwZuDsVlCmRgA{P}DwO]qHh@_HhIgKdBmO{BqCoH}@yBuAeHb@oMsCfHwVrD}sApS{o@e@uImFoLvAgBzADtCf@xClCzAeC}DeLO_SqCiCx@cDtC]hAkEi@}FiOqa@sDkD_UsJ}AcEsAkPyFuOfWpAfBbB~A~FnA_@jF`I~RuLdOdXxAuA~KdKnIwKmJkItFyEhBhBn[qN`EcIfw@ucAqJsH~@sBuOeW`HwFzBkH_@iBmEkBq@vDkAUmC{Hl@SaAyDeGgJaF~FkWgUwLzNkf@ne@wz@xl@eJ~AyHeAiE_CjAaIsAuBcCt@eClJl@jGqWdRh@rBsG|EwF@cc@rNyByBCfAcOnB{ZcCoMmDwI{G~FFxFqPM}FsAeB`AsTqE}SqCyDyJ{EaO?eDf@iDxEqVlGed@l@eJaAwPmIkGmGeEaKu@uFf@eOvBeE~HBlEiCvBwEn@eF]iLeCcHmEeBoMS_B`L}NtDyCsDuATcIeDiHyGwKxAgFjDeW{DeIrDsIYsUaDs@cC}C~AcS}Ku@eAj@_SaDqOwDgGcIwBo@kCxDoJoDuI~@oC{@}Rp@_DiBiGeCgGuPm@iBwDmEmA[}C{C}CEuJ~Bu@]_I`BuJoAsEgFeBw@iGr@u@IsTp@aD|FwEC_IiFkA_GrAo@~CcO`@s@yDsHbDAiB}SqDcAb@pKv]nHl_ArC|NnCrHvHbFx@rJbLdGeBxEyHfFwCxWcMtXvA`SnBvChFhCzV`ByAnHN`GwBdEO~Ch@dEtHtO_@`IlApHdErFtOlHjHhHjHrQfJ|ExDfKrOnSxPjOnLt[|FfZsIbRdCdK_AzIdAfGwHtGgH`LW~D}DpH|AvIsDvOvDhPbMpR`EvDvI\\`C`Gq@fGkGrM]xG}B|HXbR{BhO`B`IeDlRjFtIMxRiJ|f@rHlGlLbFvEzHn@vFg@jFcDlIsOnSoDlN{Q`]{CbLeDvDoKfY{DbGIrN~B|E_A~EsLrWNlHsA|ChB|FmGrd@xA~LObGg]z_@_KvFkGrAaKfGsGzGdAjJgFzHuP|a@sDlFh@~GqVjY}ChGxCpBlGzJh@fDpHvFlBjEzGfCl@vFvLfHdG{@rGnAlR|T|CrJr@`JbMjEzCpEnKxAnDhKHvMzAbFhChCMdI|JlVPfFvDhD{DnV?pFoDlJcEpDcHlLyB`JgC`DV~YUpCqAVy@nB|@dJw@`IqBhFeGjG{AhGTnEaRxIoDjFaCrM}JzFkGhIkDf@}J~RiUfOkH|B{FdG{DlLItFnGzIu@tOzEbFxJ|@~D|BnErO~FxLhQhW_F|SIrG`Ol@nG~GvJt@j@lCzBvAiA`WnIl\\vFfDpAzLbEfC~BDvEaFzEgBxOyDbGGrd@x|@`IqBp@eEjIsIrEwBbBcEhS{Fp[mOlD[`GzAxLk@|MlBnGdCnFUlJ|FxDKx@nB_@tJ|A|Qs@bFh@bHxB|DzEpC`BjDEzHxA`HvInHjGUlYaIbFpA`GlEnk@rIbGgMvHwCjJvCbCjDrFHfGpCdFb@hFlIbHPfEzDhL|BlDQrE_F`DmA`e@e@pLtMxFxOhExFdLfGxBfFtGrHhFx@j@lHdCbEFhGtHxKdDlMpLpIrD`HpIpG~FdBzLSnFvRjKvMpIvAjB|B~Ch@fKC~E`NhClCrKLhRpClHsAfT{MdP_Bd`@h^fPs@",
+        "my}aB_nksStAaCzGcCzByDTgBcCaFLkD`M}Um@mDmEcDwIbByHgHe\\wFeFGmNrFaPzVw@rJr@zAvFlE|ELfR~NhJgApNtErEP"
+      ]
+    },
+    {
+      "id": "da-nang-hoi-an-lien-chieu",
+      "name": {
+        "en": "Lien Chieu",
+        "vi": "Liên Chiểu"
+      },
+      "lat": 16.0767,
+      "lng": 108.1392,
+      "osm_id": 15848509,
+      "boundary": [
+        "qjhaB}olrSxFy@nOwI`VoHzBb@h]aBpBsDlOcDpK}K|Gx@bHcAjCkIrBb@|FoIrGe@ZiA|EbA_@lCrDkC{F|KYrKmGcAwAv@FbBtFfFh@m@mAoAxDqA|B}JtDcCtHbAmBfApBj@Op@{E|@KdBfCH@r@aGlDhAl@vFiD}BhJtBB}BxBj@zA`@_BrA~@g@uBhBsAcBq@FcD~@qAfALg@oCvADvAtB`@]wAuC\\kByAt@KoBfCe@|C~AJkBtC^m@gChEy@V}A{FbAfAiAgAwBjAQ{@iChE`C~AWaBeAl@aAx@pAjDR{DoCsBBeBeChE_@bCuDbCe@}@eA~@cDgBoAeAhGo@z@mAMz@}DsAyAd@{C_Bf@gAdCtAnBGnBmD~@oNqM{@Sq@|CYoGiAv@@mAzHwIvFeOrDma@eAe|@hGnErGzArLu@rRsDtD_G`GoCzB}Ce@aTiD{]x@eHoGyHhGkGwJgAkHyC_HzAqKi@iGyOsBsMuCgAx@qAkEsIqGiD?iDsFcB_Og@uD_HyBNFmCoGHUmBzBwBs@oCnCqIa@sBrIaIuNwOeCsHvKmM~NeFKyAtBaA~DT~AiD^bGdl@oBWoNbCiNNyMjEiI]gFtK}MfCu@z@_D_DqLlBmCEeE{CeEf@oKmJan@cCoATk@mHsBdCyCyAuA}T}n@o]~Fqn@zYy_@k]ed@nm@jWfU`F_GdGfJ`AxDm@RlCzHjATp@wDlEjB^hB{BjHaHvFtOdW_ArBpJrHgw@tcAaEbIo[pNiBiBuFxElJjIoIvK_LeKyAtAeOeX_StLkFaIoA^_B_GgBcBgWqAxFtOrAjP|AbE~TrJrDjDhP`e@_AxIuC\\y@bDpChCN~R|DdL{AdCyCmCuCg@{AEwAfBlFnLd@tIqSzo@sD|sAgHvVnMrCdHc@xBtAnH|@zBpCeBlOiIfKi@~G\\pH|DvOfAzPmClRtDrV"
+      ]
+    },
+    {
+      "id": "da-nang-hoi-an-cam-le",
+      "name": {
+        "en": "Cam Le",
+        "vi": "Cẩm Lệ"
+      },
+      "lat": 16.0153,
+      "lng": 108.2013,
+      "osm_id": 13967823,
+      "boundary": [
+        "mls`BqpcsShCkAxE\\`FkA_C{Dg@}F|FoUt@mSA{O{Cgj@|Awh@kAkHyCcEmXkSeGkZ{Ka\\u]{j@uRaVuSiRyWmQ}N{WgMmLqFvIaA`FiCpB}EGeJbG}MvC_EdEq]vBaHpf@kB[QjA`Az@lSsCtBpCrMwB~e@w@hFvLvBzYi@PrDlJBtH`GqBvCnJrBo@|@`DfBg@RhJtHK~CrFnFp@QrAhBV}BpJkBx@`@~@cJlA}EcCcAb@nAnJwAx@GdFjF|FnAKMhDjCnO_GlDeLlOYpBlD~C|AbKfL`IvEbQ`MpQxKrI~Pdm@zb@vAfZrE"
+      ]
+    },
+    {
+      "id": "da-nang-hoi-an-hoa-xuan",
+      "name": {
+        "en": "Hoa Xuan",
+        "vi": "Hòa Xuân"
+      },
+      "lat": 16.0049,
+      "lng": 108.2204,
+      "osm_id": 13967826,
+      "boundary": [
+        "afm`BefhsSq@c]zEj@GyDhA]|AZ_@|@fC~BvDm@fAwKyBmCnAkG~EzAC}DiJmAv@oCkBYPqD{AKp@yFz@@QeCyFO{@mLxCMjCgBkDy]~CAhGkInFi@pMrFrELtCs@fBsCy@wA`BwA|@bAbC}AjC|AjE??rAvHB~@mEtDvAlEBfB|AtAcBb@^|@aDpDc@bEkHfCwKx@jArLmGkDyBPqHsCiEcCgACcCuCR}@uDn@m@qAoC}R~@YmIrLIlGwJiCcEmBuJ_AUkGfDeFDoe@oOkL{AuKVsIfF{FtPuElFm]bNgN|@aNeGiZiVqH}CmRtAmPtJ}Gc@wTom@gJaHcNsAa[xDcIY}YiRgFeBmNl@aPsC_OkHeYuW{IiDqKZuKfEm]tSvB|GzBp]rFxPzI`Mv\\zZ|NzWx`@bYj^ta@t]zj@zK`\\dGjZlXjSlElIhQtBxKmA~BsAbEfDlBId@eBzCfAtBsFrFiDxJhElAqCzE`AD`AlEfBfEBr@~BvFJv@mBj@Re@pAlBt@Lu@fBpBp@{B"
+      ]
+    },
+    {
+      "id": "da-nang-hoi-an-hoi-an",
+      "name": {
+        "en": "Hoi An",
+        "vi": "Hội An"
+      },
+      "lat": 15.8794,
+      "lng": 108.3325,
+      "osm_id": 19337535,
+      "boundary": [
+        "}tx_B_a`tSpDOYyI_GcIz@oGjFcQbOyRtK{_@oJiGuAhCsE`B}AqEU_LkBeJoCMgEoGQoLfF{a@mBuAJ}LmAyGvCsSkBgGkM_RaFu_@tCwYfFuOwS{LiPmE{AfPaCpHcL`QsBh@sCiA{Jf[oAza@b@tCcJdNYtQ_GTsA}HaN`Bm@oAmAt@i@y@qCfA_CeFyClBaBpHqAd@d@rB_Bb@`BvInFwBv@lBeClAOpCiKzRX`AtNjE{DlR{EfLgFvSpJzEbEjShE}AxVu@nB_EpJ|@pAlCrAbZlFPrX~JpIdGr@tAJlU"
+      ]
+    },
+    {
+      "id": "da-nang-hoi-an-hoi-an-dong",
+      "name": {
+        "en": "Hoi An East",
+        "vi": "Hội An Đông"
+      },
+      "lat": 15.8786,
+      "lng": 108.364,
+      "osm_id": 19337534,
+      "boundary": [
+        "uj~_Bo|dtSfFiK`Mv@tHgSlC_DNqCdCmAw@mBoFvBoAeDd@g@w@iC~Ac@e@sBpAe@`BqHxCmB~BdFpCgAh@x@lAu@l@nA`NaBrA|H~FUXuQbJeNc@uCnA{a@zJg[rChArBi@bLaQ`CqHx@kOjQpDvSzL~Rcs@yDuYuJyTmXgP}d@ojAaKa]aHtEa@qB{BaBuGG{I|EiGtEeUzYeBPeH~IHlAwXt]yAa@{ElJjAt@G`CuElFgBMl@f@cI`QFdBuFnGwLpVwHhKJdDuEtLfXlJod@flAwFzJnK|[jJvDjIgA`@~AvEHlGpKgE~CbC|Dt@xQbVtZ"
+      ]
+    },
+    {
+      "id": "da-nang-hoi-an-hoi-an-tay",
+      "name": {
+        "en": "Hoi An West",
+        "vi": "Hội An Tây"
+      },
+      "lat": 15.8974,
+      "lng": 108.3109,
+      "osm_id": 19337533,
+      "boundary": [
+        "iy}_Bgi}sS~KkStVsU`Q{BNbDhH_@Kcf@n@mFvB}A`MdGzAoMk@mRLcB~@QAeCaPiTsAcZqAmCqJ}@oB~DyVt@iE|AcEkSqJ{EfFwSzEgLzDmRuNkEYaAy@jDaMw@gFhK_M}EcVuZu@yQcC}DfE_DmGqKwEIa@_BkIfAkJwD_AkBoIqXvF{Jnd@glAgXmJie@z|@n@tAgAxCiMlLmDlJaf@xy@yd@dr@hCtGzk@|FlAeCwAeAhFmHlBrBzDr@wCvQJjEfO~BjHeDvCvKLrRcJnRoXtIqBnFr@nGt@FzEvKfKlGpAnAC~B|GfEfCbDm@tA~AnCfLlLi@`@vRla@`FdEgBxCpAl@NxCpC@n@~EjHzBfc@XnNhAbJ`D"
+      ]
+    }
+  ],
+  "activity_overrides": [
+    {
+      "activity_id": "japanese-arts",
+      "disabled": true
+    },
+    {
+      "activity_id": "anime",
+      "disabled": true
+    },
+    {
+      "activity_id": "skiing",
+      "disabled": true
+    },
+    {
+      "activity_id": "seasonal-viewing",
+      "disabled": true
+    },
+    {
+      "activity_id": "temple-shrine",
+      "name": {
+        "en": "Pagodas and temples"
+      }
+    },
+    {
+      "activity_id": "sento",
+      "name": {
+        "en": "Spa or massage"
+      }
+    },
+    {
+      "activity_id": "language-exchange",
+      "name": {
+        "en": "Vietnamese–English exchange"
+      }
+    },
+    {
+      "activity_id": "beach-day",
+      "months": [
+        4,
+        5,
+        6,
+        7,
+        8
+      ]
+    }
+  ]
+}

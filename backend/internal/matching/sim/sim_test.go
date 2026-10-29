@@ -30,7 +30,7 @@ func load(t *testing.T, city string) (cities.Pack, []cities.Activity) {
 func TestSimulate(t *testing.T) {
 	cfg := matching.DefaultConfig()
 	cfg.LanguagePairs = [][2]string{{"ja", "en"}}
-	for _, city := range []string{"tokyo", "austin"} {
+	for _, city := range []string{"tokyo", "austin", "da-nang-hoi-an"} {
 		t.Run(city, func(t *testing.T) {
 			pack, acts := load(t, city)
 			st := Run(pack, acts, Options{Users: 500, Seed: 1, Month: time.May}, cfg)

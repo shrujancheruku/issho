@@ -11,7 +11,7 @@ include $(ENV_FILE)
 export
 endif
 
-.PHONY: setup secrets-scan docs gen gen-proto gen-sql gen-strings email-templates ui-bundle app-build app-icons readme-panels lint test migrate-up migrate-status api worker seed matrix venues sim
+.PHONY: setup secrets-scan docs gen gen-proto gen-sql gen-strings email-templates ui-bundle app-build app-icons readme-panels lint test migrate-up migrate-status api worker seed matrix venues boundaries sim
 
 # One-time setup after cloning: install JS deps and enable the secret-scanning pre-commit hook.
 setup:
@@ -81,6 +81,10 @@ matrix:
 
 venues:
 	cd backend && go run ./cmd/tool discover-venues $(ARGS) $(CITY)
+
+# Areas' outlines from OpenStreetMap, by each area's osm_id (no database).
+boundaries:
+	cd backend && go run ./cmd/tool area-boundaries $(ARGS) ../data/citypacks/$(CITY).json
 
 # Matching on synthetic users (no database or API keys): make sim [ARGS='-users 1000 -seed 2']
 sim:

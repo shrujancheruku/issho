@@ -25,6 +25,9 @@ const MaxCacheAge = 30 * 24 * time.Hour
 type Area struct {
 	ID string
 	maps.LatLng
+	// Boundary is the area's outline, if its city pack has one: venues are
+	// then searched for over all of it and placed in the area they're in.
+	Boundary maps.Boundary
 }
 
 // MatrixJob is one provider call: an origin to its destinations in one mode.

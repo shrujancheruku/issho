@@ -9,11 +9,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
+	"github.com/shrujancheruku/issho/backend/internal/maps"
 )
 
 // Text is a localised string keyed by BCP 47 language tag.
@@ -38,6 +40,13 @@ type Area struct {
 	Name Text    `json:"name"`
 	Lat  float64 `json:"lat"`
 	Lng  float64 `json:"lng"`
+	// OSMID is the OpenStreetMap relation of the area's administrative
+	// boundary, which `tool area-boundaries` fetches Boundary from.
+	OSMID int64 `json:"osm_id,omitempty"`
+	// Boundary is the area's outline: one encoded polyline (maps.Polyline)
+	// per outer ring. Venues are searched for over all of it; without one,
+	// only around the point.
+	Boundary []string `json:"boundary,omitempty"`
 }
 
 type ActivityOverride struct {
@@ -220,7 +229,11 @@ func SeedPackData(ctx context.Context, pool *pgxpool.Pool, p Pack) error {
 		}
 		for _, a := range p.Areas {
 			n, _ := json.Marshal(a.Name)
-			if err := q.UpsertArea(ctx, dbgen.UpsertAreaParams{ID: a.ID, CityID: p.ID, Name: n, Lat: a.Lat, Lng: a.Lng}); err != nil {
+			b, err := maps.DecodeBoundary(a.Boundary)
+			if err != nil {
+				return fmt.Errorf("area %s: boundary: %w", a.ID, err)
+			}
+			if err := q.UpsertArea(ctx, dbgen.UpsertAreaParams{ID: a.ID, CityID: p.ID, Name: n, Lat: a.Lat, Lng: a.Lng, Boundary: wkt(b)}); err != nil {
 				return fmt.Errorf("area %s: %w", a.ID, err)
 			}
 		}
@@ -237,6 +250,34 @@ func SeedPackData(ctx context.Context, pool *pgxpool.Pool, p Pack) error {
 		}
 		return nil
 	})
+}
+
+// wkt writes a boundary as a WKT MULTIPOLYGON for PostGIS ("" for none),
+// closing each ring as WKT requires.
+func wkt(b maps.Boundary) string {
+	if len(b) == 0 {
+		return ""
+	}
+	var s strings.Builder
+	s.WriteString("MULTIPOLYGON(")
+	for i, r := range b {
+		if r[0] != r[len(r)-1] {
+			r = append(r[:len(r):len(r)], r[0])
+		}
+		if i > 0 {
+			s.WriteByte(',')
+		}
+		s.WriteString("((")
+		for k, q := range r {
+			if k > 0 {
+				s.WriteByte(',')
+			}
+			fmt.Fprintf(&s, "%g %g", q.Lng, q.Lat)
+		}
+		s.WriteString("))")
+	}
+	s.WriteByte(')')
+	return s.String()
 }
 
 // EncodePack writes a pack the way the files in data/citypacks are

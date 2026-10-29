@@ -83,17 +83,19 @@ func (q *Queries) ListAllVenueCategories(ctx context.Context) ([]ListAllVenueCat
 
 const listCurationAreas = `-- name: ListCurationAreas :many
 select id, city_id, coalesce(name->>'en', id)::text as name,
-       st_y(centroid::geometry)::float8 as lat, st_x(centroid::geometry)::float8 as lng
+       st_y(centroid::geometry)::float8 as lat, st_x(centroid::geometry)::float8 as lng,
+       coalesce(st_asgeojson(boundary), '')::text as boundary
 from app.areas
 order by city_id, name->>'en', id
 `
 
 type ListCurationAreasRow struct {
-	ID     string
-	CityID string
-	Name   string
-	Lat    float64
-	Lng    float64
+	ID       string
+	CityID   string
+	Name     string
+	Lat      float64
+	Lng      float64
+	Boundary string
 }
 
 func (q *Queries) ListCurationAreas(ctx context.Context) ([]ListCurationAreasRow, error) {
@@ -111,6 +113,7 @@ func (q *Queries) ListCurationAreas(ctx context.Context) ([]ListCurationAreasRow
 			&i.Name,
 			&i.Lat,
 			&i.Lng,
+			&i.Boundary,
 		); err != nil {
 			return nil, err
 		}

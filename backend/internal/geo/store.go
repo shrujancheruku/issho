@@ -2,6 +2,7 @@ package geo
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -29,13 +30,45 @@ func LoadCity(ctx context.Context, q *dbgen.Queries, cityID string) ([]Area, []m
 	}
 	areas := make([]Area, len(rows))
 	for i, r := range rows {
-		areas[i] = Area{ID: r.ID, LatLng: maps.LatLng{Lat: r.Lat, Lng: r.Lng}}
+		b, err := ParseBoundary(r.Boundary)
+		if err != nil {
+			return nil, nil, fmt.Errorf("area %s: %w", r.ID, err)
+		}
+		areas[i] = Area{ID: r.ID, LatLng: maps.LatLng{Lat: r.Lat, Lng: r.Lng}, Boundary: b}
 	}
 	ms := make([]maps.Mode, len(modes))
 	for i, m := range modes {
 		ms[i] = maps.Mode(m)
 	}
 	return areas, ms, nil
+}
+
+// ParseBoundary reads an area's boundary as the database returns it
+// (st_asgeojson of a MultiPolygon; "" for none). Holes are dropped, as in
+// maps.Boundary.
+func ParseBoundary(geojson string) (maps.Boundary, error) {
+	if geojson == "" {
+		return nil, nil
+	}
+	var g struct {
+		Type        string           `json:"type"`
+		Coordinates [][][][2]float64 `json:"coordinates"`
+	}
+	if err := json.Unmarshal([]byte(geojson), &g); err != nil || g.Type != "MultiPolygon" {
+		return nil, fmt.Errorf("boundary is not a GeoJSON MultiPolygon: %v", err)
+	}
+	var b maps.Boundary
+	for _, poly := range g.Coordinates {
+		if len(poly) == 0 {
+			continue
+		}
+		ring := make([]maps.LatLng, len(poly[0]))
+		for i, c := range poly[0] {
+			ring[i] = maps.LatLng{Lat: c[1], Lng: c[0]}
+		}
+		b = append(b, ring)
+	}
+	return b, nil
 }
 
 // LoadVenueCategories returns the categories needed by the city's enabled

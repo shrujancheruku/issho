@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/shrujancheruku/issho/backend/internal/maps"
 	"github.com/shrujancheruku/issho/backend/internal/maps/google"
 )
 
@@ -73,6 +74,12 @@ func TestValidatePackRejects(t *testing.T) {
 	if err := ValidatePack(good, nil); err != nil {
 		t.Fatalf("valid pack rejected: %v", err)
 	}
+	bounded := good
+	bounded.Areas = []Area{{ID: "x-a", Name: Text{"en": "A"}, Lat: 1, Lng: 1, OSMID: 42,
+		Boundary: []string{maps.EncodePolyline([]maps.LatLng{{Lat: 0.5, Lng: 0.5}, {Lat: 0.5, Lng: 1.5}, {Lat: 1.5, Lng: 1.5}, {Lat: 1.5, Lng: 0.5}})}}}
+	if err := ValidatePack(bounded, nil); err != nil {
+		t.Fatalf("valid pack with a boundary rejected: %v", err)
+	}
 	cases := map[string]func(p *Pack){
 		"bad mode":      func(p *Pack) { p.TravelModes = []string{"teleport"} },
 		"bad lang code": func(p *Pack) { p.Languages = []string{"ja", "Japanese"} },
@@ -87,6 +94,15 @@ func TestValidatePackRejects(t *testing.T) {
 		"bad month":         func(p *Pack) { p.ActivityOverrides = []ActivityOverride{{ActivityID: "hike", Months: []int16{13}}} },
 		"unknown act":       func(p *Pack) { p.ActivityOverrides = []ActivityOverride{{ActivityID: "nope"}} },
 		"duplicate area":    func(p *Pack) { p.Areas = append(p.Areas, p.Areas[0]) },
+		"bad boundary":      func(p *Pack) { p.Areas[0].Boundary = []string{"_p~iF"} },
+		"negative osm id":   func(p *Pack) { p.Areas[0].OSMID = -1 },
+		"point outside its boundary": func(p *Pack) {
+			p.Areas[0].Boundary = []string{maps.EncodePolyline([]maps.LatLng{{Lat: 2, Lng: 2}, {Lat: 2, Lng: 3}, {Lat: 3, Lng: 3}, {Lat: 3, Lng: 2}})}
+		},
+		"point inside another's boundary": func(p *Pack) {
+			p.Areas = append(p.Areas, Area{ID: "x-b", Name: Text{"en": "B"}, Lat: 1.5, Lng: 1.5,
+				Boundary: []string{maps.EncodePolyline([]maps.LatLng{{Lat: 0.5, Lng: 0.5}, {Lat: 0.5, Lng: 2}, {Lat: 2, Lng: 2}, {Lat: 2, Lng: 0.5}})}})
+		},
 	}
 	for name, mutate := range cases {
 		p := good
@@ -128,5 +144,20 @@ func TestValidateCatalogReplaces(t *testing.T) {
 	err := ValidateCatalog(nil, acts)
 	if err == nil || !strings.Contains(err.Error(), `"walk", which is still an activity`) || !strings.Contains(err.Error(), `"jog" is already replaced by run`) {
 		t.Errorf("got %v", err)
+	}
+}
+
+func TestWKT(t *testing.T) {
+	if got := wkt(nil); got != "" {
+		t.Errorf("no boundary: %q", got)
+	}
+	b := maps.Boundary{{{Lat: 16, Lng: 108}, {Lat: 16, Lng: 108.5}, {Lat: 16.5, Lng: 108}}, {{Lat: 1, Lng: 2}, {Lat: 1, Lng: 3}, {Lat: 2, Lng: 3}, {Lat: 1, Lng: 2}}}
+	// Rings are closed (the second already is), longitude first.
+	const want = "MULTIPOLYGON(((108 16,108.5 16,108 16.5,108 16)),((2 1,3 1,3 2,2 1)))"
+	if got := wkt(b); got != want {
+		t.Errorf("got %s\nwant %s", got, want)
+	}
+	if len(b[0]) != 3 {
+		t.Error("closing a ring changed the caller's slice")
 	}
 }

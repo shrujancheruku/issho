@@ -8,6 +8,7 @@ package curation
 import (
 	"context"
 	"errors"
+	"fmt"
 	"slices"
 	"strings"
 	"sync"
@@ -90,7 +91,11 @@ func cityAreas(ctx context.Context, q *dbgen.Queries, cityID string) ([]area, er
 	var out []area
 	for _, r := range rows {
 		if r.CityID == cityID {
-			out = append(out, area{Area: geo.Area{ID: r.ID, LatLng: maps.LatLng{Lat: r.Lat, Lng: r.Lng}}, Name: r.Name})
+			b, err := geo.ParseBoundary(r.Boundary)
+			if err != nil {
+				return nil, fmt.Errorf("area %s: %w", r.ID, err)
+			}
+			out = append(out, area{Area: geo.Area{ID: r.ID, LatLng: maps.LatLng{Lat: r.Lat, Lng: r.Lng}, Boundary: b}, Name: r.Name})
 		}
 	}
 	if len(out) == 0 {
@@ -99,12 +104,14 @@ func cityAreas(ctx context.Context, q *dbgen.Queries, cityID string) ([]area, er
 	return out, nil
 }
 
+// nearest is the area p is in (geo.Locate): the one whose boundary has it,
+// or the nearest by point.
 func nearest(areas []area, p maps.LatLng) area {
 	plain := make([]geo.Area, len(areas))
 	for i, a := range areas {
 		plain[i] = a.Area
 	}
-	n := geo.Nearest(plain, p)
+	n, _ := geo.Locate(plain, p)
 	for _, a := range areas {
 		if a.ID == n.ID {
 			return a
@@ -302,7 +309,13 @@ func (h *Handler) SearchVenues(ctx context.Context, req *connect.Request[isshov1
 		wg.Go(func() {
 			sem <- struct{}{}
 			defer func() { <-sem }()
-			results[i], errs[i] = h.Places.Search(ctx, maps.SearchRequest{Query: query, Near: a.LatLng, RadiusM: searchRadiusM, Language: "en"})
+			near, radius := a.LatLng, float64(searchRadiusM)
+			if len(a.Boundary) > 0 {
+				// A box over the whole area, as discovery searches all of it.
+				near, radius = a.Boundary.Circle()
+				radius = max(radius, searchRadiusM)
+			}
+			results[i], errs[i] = h.Places.Search(ctx, maps.SearchRequest{Query: query, Near: near, RadiusM: radius, Language: "en"})
 		})
 	}
 	wg.Wait()
@@ -364,10 +377,11 @@ func (h *Handler) SearchVenues(ctx context.Context, req *connect.Request[isshov1
 
 // fits says whether a place could be one of a category's venues: one of
 // its Google types (any, not only the primary: an admin is vouching for
-// it) is the category's, and it's within the category's search radius of
-// its nearest area, as discovery would have found it.
+// it) is the category's, and it's where discovery could have found it:
+// inside its area's boundary, or within the category's search radius of
+// the area's point.
 func fits(c dbgen.ListAllVenueCategoriesRow, p maps.Place, near area) bool {
-	if maps.DistanceM(near.LatLng, p.Location) > float64(c.SearchRadiusM) {
+	if !near.Boundary.Contains(p.Location) && maps.DistanceM(near.LatLng, p.Location) > float64(c.SearchRadiusM) {
 		return false
 	}
 	for _, t := range p.Types {

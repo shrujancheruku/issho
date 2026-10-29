@@ -86,6 +86,7 @@ where app.venues.city_id = excluded.city_id;
 
 -- name: ListCurationAreas :many
 select id, city_id, coalesce(name->>'en', id)::text as name,
-       st_y(centroid::geometry)::float8 as lat, st_x(centroid::geometry)::float8 as lng
+       st_y(centroid::geometry)::float8 as lat, st_x(centroid::geometry)::float8 as lng,
+       coalesce(st_asgeojson(boundary), '')::text as boundary
 from app.areas
 order by city_id, name->>'en', id;
