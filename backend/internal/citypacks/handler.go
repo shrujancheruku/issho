@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"maps"
 	"regexp"
 	"slices"
@@ -37,6 +38,10 @@ const (
 	// MovedM is how far an area's centre must move for it to need venues
 	// and travel times again.
 	MovedM = 100
+	// AreaSearchBudget caps one area's venue search from the Cities page. The
+	// request waits for it, so it stays at a few minutes of searches; an area
+	// with a boundary that needs more gets the rest from tool discover-venues.
+	AreaSearchBudget = 400
 )
 
 // Repo is the GitHub repository the packs live in (*github.Client).
@@ -236,11 +241,12 @@ func (h *Handler) ProposeCityPack(ctx context.Context, req *connect.Request[issh
 		return nil, err
 	}
 	p := fromProto(req.Msg.Pack)
-	if err := h.check(ctx, p); err != nil {
-		return nil, err
-	}
 	base, sha, exists, err := h.basePack(ctx, p.ID)
 	if err != nil {
+		return nil, err
+	}
+	keepBoundaries(&p, base)
+	if err := h.check(ctx, p); err != nil {
 		return nil, err
 	}
 	var old *cities.Pack
@@ -372,14 +378,18 @@ func (h *Handler) DiscoverAreaVenues(ctx context.Context, req *connect.Request[i
 	}
 	// A new city has no city-wide venues yet (beaches, trails): find them
 	// with its first area.
-	venues, searches, err := geo.DiscoverAreaVenues(ctx, h.Places, areas, m.AreaId, cats, n == 0, langs[0])
+	venues, searches, err := geo.DiscoverAreaVenues(ctx, h.Places, areas, m.AreaId, cats, n == 0, langs[0], AreaSearchBudget)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeUnavailable, fmt.Errorf("google search failed: %w", err))
+	}
+	if searches.Skipped > 0 {
+		slog.WarnContext(ctx, "area venue search ran out of budget; run tool discover-venues for finer coverage",
+			"area", m.AreaId, "searches", searches.Made, "skipped", searches.Skipped)
 	}
 	if err := geo.SaveVenues(ctx, h.DB, m.CityId, venues); err != nil {
 		return nil, err
 	}
-	return connect.NewResponse(&isshov1.DiscoverAreaVenuesResponse{Searches: int32(searches), Venues: int32(len(venues))}), nil
+	return connect.NewResponse(&isshov1.DiscoverAreaVenuesResponse{Searches: int32(searches.Made), Venues: int32(len(venues))}), nil
 }
 
 // Changes describes a pack's changes from the default branch's (nil for a
@@ -484,6 +494,18 @@ func toProto(p cities.Pack) *isshov1.CityPack {
 		out.ActivityOverrides = append(out.ActivityOverrides, po)
 	}
 	return out
+}
+
+// keepBoundaries copies each area's boundary from the default branch's pack:
+// the editor doesn't edit them (`tool area-boundaries` does), so they'd
+// otherwise be dropped. An area moved out of its boundary then fails
+// validation, which is the point.
+func keepBoundaries(p *cities.Pack, base cities.Pack) {
+	for i, a := range p.Areas {
+		if j := slices.IndexFunc(base.Areas, func(b cities.Area) bool { return b.ID == a.ID }); j >= 0 {
+			p.Areas[i].OSMID, p.Areas[i].Boundary = base.Areas[j].OSMID, base.Areas[j].Boundary
+		}
+	}
 }
 
 // fromProto builds a pack from the editor's, trimming text; empty names

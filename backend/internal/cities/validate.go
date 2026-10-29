@@ -6,6 +6,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/shrujancheruku/issho/backend/internal/maps"
 	"github.com/shrujancheruku/issho/backend/internal/platform/i18n"
 )
 
@@ -155,6 +156,32 @@ func ValidatePack(p Pack, activityIDs map[string]bool) error {
 		}
 		if a.Lat < -90 || a.Lat > 90 || a.Lng < -180 || a.Lng > 180 || (a.Lat == 0 && a.Lng == 0) {
 			bad("area %s: invalid coordinates %v,%v", a.ID, a.Lat, a.Lng)
+		}
+		if a.OSMID < 0 {
+			bad("area %s: osm_id %d is not a relation id", a.ID, a.OSMID)
+		}
+	}
+	// The point is where travel times start and, without a boundary, where
+	// venues are searched: it must be inside its own area and nobody else's,
+	// which also catches boundaries swapped between areas.
+	bounds := map[string]maps.Boundary{}
+	for _, a := range p.Areas {
+		b, err := maps.DecodeBoundary(a.Boundary)
+		if err != nil {
+			bad("area %s: boundary: %v", a.ID, err)
+		} else if len(b) > 0 {
+			bounds[a.ID] = b
+		}
+	}
+	for _, a := range p.Areas {
+		pt := maps.LatLng{Lat: a.Lat, Lng: a.Lng}
+		if b, ok := bounds[a.ID]; ok && !b.Contains(pt) {
+			bad("area %s: its point %v,%v is outside its boundary", a.ID, a.Lat, a.Lng)
+		}
+		for _, o := range p.Areas {
+			if b, ok := bounds[o.ID]; ok && o.ID != a.ID && b.Contains(pt) {
+				bad("area %s: its point is inside %s's boundary", a.ID, o.ID)
+			}
 		}
 	}
 	seen := map[string]bool{}

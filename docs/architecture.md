@@ -78,7 +78,7 @@ Defined in `backend/db/migrations/`. All app tables live in the `app` schema. Th
 | `area_travel_times` | Area-to-area minutes per mode, from the Routes API (`tool build-matrix`). A cache: rows older than 30 days are deleted. |
 | `activities` | The global catalogue. `name` is JSON keyed by language (`{"en": …, "ja": …}`); `venue_categories` lists where it can happen; `blocks` the parts of the day it suits |
 | `venue_categories` | Our venue kinds (cafe, park, karaoke …) mapped to Google place types, with a search radius |
-| `venues` | Discovered places: `google_place_id` + category, nearest area, curation status (per place, set by admins: who and when, or who added it), our tags. A city's `approved_venues_only` makes the matcher use only approved ones. **No Google content** (names, addresses, locations) is stored; see [google-maps.md](google-maps.md#5-terms-what-we-may-store). |
+| `venues` | Discovered places: `google_place_id` + category, area (the one containing it when areas have boundaries, else the nearest), curation status (per place, set by admins: who and when, or who added it), our tags. A city's `approved_venues_only` makes the matcher use only approved ones. **No Google content** (names, addresses, locations) is stored; see [google-maps.md](google-maps.md#5-terms-what-we-may-store). |
 | `city_activity_overrides` | A city can rename, disable or set seasonal months for an activity |
 | `users` | App account; `id` = Supabase `auth.users.id` |
 | `profiles` | Matching preferences (home area, travel time, group size, gender rules, …), display languages (`primary_language`, optional `secondary_language`) and the accepted code-of-conduct version. Written only whole, by `ProfileService.SaveProfile` (onboarding and settings) |
@@ -120,7 +120,7 @@ What a person **reads** (`profiles.primary_language`, `secondary_language`) is s
 
 ## City packs (location independence)
 
-A city is defined entirely by data in `data/citypacks/<city>.json`: areas with coordinates, languages, travel modes, and activity overrides. `cmd/tool seed` validates it and loads it in a single transaction; `tool build-matrix` and `tool discover-venues` then fill its travel times and venues from Google Maps. Adding a city means adding a JSON file and running those three commands; no code changes. The admin SPA's city-pack editor does the same through a GitHub pull request: once merged, it seeds the pack, rebuilds travel times and finds venues per area. `austin.json` (car-based) exists to prove this. See [../data/README.md](../data/README.md).
+A city is defined entirely by data in `data/citypacks/<city>.json`: areas with coordinates (and optionally their administrative boundaries, from OpenStreetMap, over which venues are searched), languages, travel modes, and activity overrides. `cmd/tool seed` validates it and loads it in a single transaction; `tool build-matrix` and `tool discover-venues` then fill its travel times and venues from Google Maps. Adding a city means adding a JSON file and running those three commands; no code changes. The admin SPA's city-pack editor does the same through a GitHub pull request: once merged, it seeds the pack, rebuilds travel times and finds venues per area. `austin.json` (car-based) exists to prove this; `da-nang-hoi-an.json` puts two nearby cities in one pack so the smaller one shares the larger one's matching pool. See [../data/README.md](../data/README.md).
 
 ## Code generation
 

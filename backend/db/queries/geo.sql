@@ -5,7 +5,8 @@ select travel_modes from app.cities where id = $1;
 select languages from app.cities where id = $1;
 
 -- name: ListCityAreas :many
-select id, st_y(centroid::geometry)::float8 as lat, st_x(centroid::geometry)::float8 as lng
+select id, st_y(centroid::geometry)::float8 as lat, st_x(centroid::geometry)::float8 as lng,
+       coalesce(st_asgeojson(boundary), '')::text as boundary
 from app.areas
 where city_id = $1
 order by id;

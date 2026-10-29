@@ -125,20 +125,23 @@ func (q *Queries) UpsertActivity(ctx context.Context, arg UpsertActivityParams) 
 }
 
 const upsertArea = `-- name: UpsertArea :exec
-insert into app.areas (id, city_id, name, centroid)
-values ($1, $2, $3, st_setsrid(st_makepoint($4::float8, $5::float8), 4326)::geography)
+insert into app.areas (id, city_id, name, centroid, boundary)
+values ($1, $2, $3, st_setsrid(st_makepoint($4::float8, $5::float8), 4326)::geography,
+        st_geogfromtext(nullif($6::text, '')))
 on conflict (id) do update set
-  city_id = excluded.city_id, name = excluded.name, centroid = excluded.centroid
+  city_id = excluded.city_id, name = excluded.name, centroid = excluded.centroid, boundary = excluded.boundary
 `
 
 type UpsertAreaParams struct {
-	ID     string
-	CityID string
-	Name   []byte
-	Lng    float64
-	Lat    float64
+	ID       string
+	CityID   string
+	Name     []byte
+	Lng      float64
+	Lat      float64
+	Boundary string
 }
 
+// boundary is WKT (a MULTIPOLYGON), or ” for an area without one.
 func (q *Queries) UpsertArea(ctx context.Context, arg UpsertAreaParams) error {
 	_, err := q.db.Exec(ctx, upsertArea,
 		arg.ID,
@@ -146,6 +149,7 @@ func (q *Queries) UpsertArea(ctx context.Context, arg UpsertAreaParams) error {
 		arg.Name,
 		arg.Lng,
 		arg.Lat,
+		arg.Boundary,
 	)
 	return err
 }

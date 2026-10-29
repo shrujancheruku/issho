@@ -283,3 +283,16 @@ func TestIntegrationCityPacks(t *testing.T) {
 		t.Errorf("list without a token: %v", err)
 	}
 }
+
+func TestKeepBoundaries(t *testing.T) {
+	base := cities.Pack{Areas: []cities.Area{{ID: "x-a", OSMID: 7, Boundary: []string{"_p~iF~ps|U_ulLnnqC_mqNvxq`@"}}}}
+	// What the editor sends: no boundary fields, plus a new area.
+	p := cities.Pack{Areas: []cities.Area{{ID: "x-a", Lat: 1}, {ID: "x-new", Lat: 2}}}
+	keepBoundaries(&p, base)
+	if a := p.Areas[0]; a.OSMID != 7 || len(a.Boundary) != 1 || a.Lat != 1 {
+		t.Errorf("existing area: %+v", a)
+	}
+	if a := p.Areas[1]; a.OSMID != 0 || a.Boundary != nil {
+		t.Errorf("new area got a boundary: %+v", a)
+	}
+}

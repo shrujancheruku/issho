@@ -5,6 +5,7 @@
 //	tool seed [-catalog data/activities.json] [-venue-categories data/venue-categories.json] data/citypacks/tokyo.json ...
 //	tool build-matrix [-dry-run] <city>
 //	tool discover-venues [-dry-run] [-categories cafe,park] <city>
+//	tool area-boundaries [-threshold 0.0002] data/citypacks/<city>.json   (areas' outlines from OpenStreetMap, by osm_id)
 //	tool simulate [-users 500] [-seed 1] [-month 5] [-config '{...}'] data/citypacks/tokyo.json ...
 //	tool walk-bench run|judge|review|report [flags]   (compare walk proposers; see walkbench.go)
 //	tool set-admin [-revoke] <email>   (the admin SPA's role; needs SUPABASE_URL and SUPABASE_SECRET_KEY)
@@ -48,7 +49,7 @@ func main() {
 
 func run(args []string) error {
 	if len(args) == 0 {
-		return errors.New("usage: tool migrate|seed|build-matrix|discover-venues|email-templates|simulate|walk-bench|set-admin|set-translator|ui-strings|translate-compare|ui-bundle|sentry-test [args]")
+		return errors.New("usage: tool migrate|seed|build-matrix|discover-venues|area-boundaries|email-templates|simulate|walk-bench|set-admin|set-translator|ui-strings|translate-compare|ui-bundle|sentry-test [args]")
 	}
 	switch args[0] {
 	case "simulate":
@@ -63,6 +64,8 @@ func run(args []string) error {
 		return uiBundle(args[1:]) // an API only: no database needed
 	case "sentry-test":
 		return sentryTest() // Sentry only: no database needed
+	case "area-boundaries":
+		return areaBoundaries(args[1:]) // OpenStreetMap and a file only: no database needed
 	}
 	ctx := context.Background()
 	url := os.Getenv("DATABASE_URL")
@@ -172,6 +175,8 @@ func discoverVenues(ctx context.Context, pool *pgxpool.Pool, args []string) erro
 	fs := flag.NewFlagSet("discover-venues", flag.ExitOnError)
 	dryRun := fs.Bool("dry-run", false, "print the planned API usage without calling Google")
 	only := fs.String("categories", "", "comma-separated venue category ids to discover (default: all the city uses)")
+	// Under Nearby Search Pro's 5,000 free requests a month (docs/google-maps.md).
+	budget := fs.Int("max-requests", 4000, "most Nearby Search requests to make; areas with a boundary are searched less finely when it runs out")
 	_ = fs.Parse(args)
 	city, err := cityArg(fs)
 	if err != nil {
@@ -193,7 +198,10 @@ func discoverVenues(ctx context.Context, pool *pgxpool.Pool, args []string) erro
 	}
 
 	jobs := geo.PlanVenues(areas, cats)
-	slog.Info("venue discovery plan", "city", city, "areas", len(areas), "categories", len(cats), "requests", len(jobs))
+	// Areas with a boundary add searches where results come back full, so
+	// the count is only known as a range until it runs.
+	slog.Info("venue discovery plan", "city", city, "areas", len(areas), "categories", len(cats),
+		"requests_at_least", len(jobs), "requests_at_most", min(geo.MaxSearches(jobs), *budget), "max_requests", *budget)
 	if *dryRun {
 		return nil
 	}
@@ -206,14 +214,17 @@ func discoverVenues(ctx context.Context, pool *pgxpool.Pool, args []string) erro
 	if err != nil {
 		return err
 	}
-	venues, err := geo.DiscoverVenues(ctx, google.New(key), areas, cats, langs[0])
+	venues, n, err := geo.DiscoverVenues(ctx, google.New(key), areas, cats, langs[0], *budget)
 	if err != nil {
-		return err
+		return fmt.Errorf("after %d requests: %w", n.Made, err)
 	}
 	if err := geo.SaveVenues(ctx, pool, city, venues); err != nil {
 		return err
 	}
-	slog.Info("venues saved", "city", city, "venues", len(venues))
+	slog.Info("venues saved", "city", city, "venues", len(venues), "requests", n.Made, "finer_searches_skipped", n.Skipped)
+	if n.Skipped > 0 {
+		slog.Warn("the budget ran out: some busy parts of bounded areas were searched less finely; rerun with a higher -max-requests to fill them in (found venues are kept)")
+	}
 	return nil
 }
 

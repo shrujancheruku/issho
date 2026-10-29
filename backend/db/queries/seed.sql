@@ -7,10 +7,12 @@ on conflict (id) do update set
   travel_modes = excluded.travel_modes;
 
 -- name: UpsertArea :exec
-insert into app.areas (id, city_id, name, centroid)
-values (@id, @city_id, @name, st_setsrid(st_makepoint(@lng::float8, @lat::float8), 4326)::geography)
+-- boundary is WKT (a MULTIPOLYGON), or '' for an area without one.
+insert into app.areas (id, city_id, name, centroid, boundary)
+values (@id, @city_id, @name, st_setsrid(st_makepoint(@lng::float8, @lat::float8), 4326)::geography,
+        st_geogfromtext(nullif(@boundary::text, '')))
 on conflict (id) do update set
-  city_id = excluded.city_id, name = excluded.name, centroid = excluded.centroid;
+  city_id = excluded.city_id, name = excluded.name, centroid = excluded.centroid, boundary = excluded.boundary;
 
 -- name: UpsertActivity :exec
 insert into app.activities (id, name, category, indoor, energy, cost_level, conversational,

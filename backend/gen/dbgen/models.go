@@ -31,6 +31,7 @@ type AppArea struct {
 	CityID   string
 	Name     []byte
 	Centroid string
+	Boundary interface{}
 }
 
 type AppAreaTravelTime struct {

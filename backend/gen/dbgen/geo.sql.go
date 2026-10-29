@@ -74,16 +74,18 @@ func (q *Queries) GetCityTravelModes(ctx context.Context, id string) ([]string, 
 }
 
 const listCityAreas = `-- name: ListCityAreas :many
-select id, st_y(centroid::geometry)::float8 as lat, st_x(centroid::geometry)::float8 as lng
+select id, st_y(centroid::geometry)::float8 as lat, st_x(centroid::geometry)::float8 as lng,
+       coalesce(st_asgeojson(boundary), '')::text as boundary
 from app.areas
 where city_id = $1
 order by id
 `
 
 type ListCityAreasRow struct {
-	ID  string
-	Lat float64
-	Lng float64
+	ID       string
+	Lat      float64
+	Lng      float64
+	Boundary string
 }
 
 func (q *Queries) ListCityAreas(ctx context.Context, cityID string) ([]ListCityAreasRow, error) {
@@ -95,7 +97,12 @@ func (q *Queries) ListCityAreas(ctx context.Context, cityID string) ([]ListCityA
 	var items []ListCityAreasRow
 	for rows.Next() {
 		var i ListCityAreasRow
-		if err := rows.Scan(&i.ID, &i.Lat, &i.Lng); err != nil {
+		if err := rows.Scan(
+			&i.ID,
+			&i.Lat,
+			&i.Lng,
+			&i.Boundary,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
