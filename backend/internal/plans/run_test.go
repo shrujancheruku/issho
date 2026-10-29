@@ -132,9 +132,14 @@ func TestIntegrationRunner(t *testing.T) {
 	if err := Withdraw(ctx, f.q, plan.ID, uuid.MustParse(string(signups[0].User))); err != nil {
 		t.Fatal(err)
 	}
+	// The worker's whole pass at the deadline (Match): round 1's group,
+	// which nobody confirmed, is settled as cancelled; scheduling closes the
+	// plan; and suggesting, which comes after, finds it in its cool-down, so
+	// nothing opens in its place.
 	deadline := open[0].Window.Deadline
-	if rep, err := r.Schedule(ctx, f.city, deadline); err != nil || rep != (ScheduleReport{Checked: 1, Closed: 1}) {
-		t.Fatalf("Schedule at the deadline = %+v, %v", rep, err)
+	m, err := r.Match(ctx, f.city, deadline)
+	if err != nil || m.Settled.Cancelled != 1 || m.Scheduled != (ScheduleReport{Checked: 1, Closed: 1}) || m.Opened != 0 {
+		t.Fatalf("Match at the deadline = %+v, %v", m, err)
 	}
 	if p, err := f.q.GetPlan(ctx, plan.ID); err != nil || p.ClosedReason == nil || *p.ClosedReason != ClosedNoGroup {
 		t.Fatalf("plan after the deadline: %+v, %v", p, err)
@@ -154,10 +159,6 @@ func TestIntegrationRunner(t *testing.T) {
 	}
 	if rows.Err() != nil || len(told) != 1 || told[0].String() != string(signups[1].User) {
 		t.Errorf("told %v, want only %s (%v)", told, signups[1].User, rows.Err())
-	}
-	// It's in its cool-down now, so it isn't suggested again.
-	if opened, err := r.Suggest(ctx, f.city, deadline); err != nil || opened != 0 {
-		t.Errorf("Suggest during the cool-down opened %d, %v", opened, err)
 	}
 	// Its screen still opens for two weeks, saying why it closed; then it's gone.
 	svc := &Service{DB: f.pool}
