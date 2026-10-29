@@ -32,8 +32,6 @@ import { useTheme } from '@/hooks/use-theme';
 import { useI18n, useOtherLanguage } from '@/i18n/i18n-provider';
 import { haptics } from '@/lib/haptics';
 
-const ReportDays = 30; // as the server (plans.ReportFor)
-
 type Names = ReturnType<typeof usePlanNames>;
 type Ctx = { id: string; data: GetEventResponse; e: MyEvent; state: EventState; names: Names; now: number; lang: string };
 
@@ -288,10 +286,10 @@ function SafetyLinks({ ctx }: { ctx: Ctx }) {
   const { t } = useI18n();
   const { e, data, names, now, lang } = ctx;
   const canShare = e.response === InviteResponse.CONFIRMED && e.status === EventStatus.SCHEDULED;
-  // Anyone who confirmed, even if they cancelled since, until 30 days after the start.
+  // Anyone who confirmed, even if they cancelled since, until the server's report_until.
   const canReport =
     (e.response === InviteResponse.CONFIRMED || e.response === InviteResponse.DROPPED) &&
-    (!e.startsAt || now <= Number(e.startsAt.seconds) * 1000 + ReportDays * 86_400_000);
+    (!e.reportUntil || now <= Number(e.reportUntil.seconds) * 1000);
   return (
     <View>
       {canShare && (

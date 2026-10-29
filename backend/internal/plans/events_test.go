@@ -71,7 +71,7 @@ func TestIntegrationEvents(t *testing.T) {
 
 	evs, err := svc.Events(ctx, a, before)
 	if err != nil || len(evs) != 1 || evs[0].Response != Invited || evs[0].GroupStatus != GroupInviting ||
-		evs[0].Title != "Test" || !evs[0].StartsAt.Equal(starts) || !evs[0].RevealAt.Equal(starts.Add(-RevealBefore)) {
+		evs[0].Title != "Test" || !evs[0].StartsAt.Equal(starts) || !evs[0].RevealAt().Equal(starts.Add(-RevealBefore)) {
 		t.Fatalf("Events = %+v, %v", evs, err)
 	}
 	if _, _, _, err := svc.Event(ctx, f.users[4], eventID, before); !errors.Is(err, ErrNoEvent) {
@@ -153,8 +153,8 @@ func TestIntegrationEvents(t *testing.T) {
 	if err != nil || rep != (SettleReport{Cancelled: 1}) {
 		t.Fatalf("Settle = %+v, %v", rep, err)
 	}
-	if g := group(c); g.GroupStatus != GroupCancelled || g.Status != "cancelled" {
-		t.Errorf("after settling: group %s, event %s", g.GroupStatus, g.Status)
+	if g := group(c); g.GroupStatus != GroupCancelled || g.EventStatus != EventCancelled {
+		t.Errorf("after settling: group %s, event %s", g.GroupStatus, g.EventStatus)
 	}
 	waiting, err := f.q.ListSignups(ctx, planID)
 	if err != nil || !slices.Contains(waiting, c) {
@@ -188,7 +188,7 @@ func TestIntegrationEvents(t *testing.T) {
 	if rep, err := r.Settle(ctx, f.city, day(27, 9)); err != nil || rep.Finished != 1 {
 		t.Errorf("Settle after the event = %+v, %v", rep, err)
 	}
-	if it, _, _, err := svc.Event(ctx, e, event2, day(27, 9)); err != nil || it.Status != "done" || it.GroupStatus != GroupConfirmed {
+	if it, _, _, err := svc.Event(ctx, e, event2, day(27, 9)); err != nil || it.EventStatus != EventDone || it.GroupStatus != GroupConfirmed {
 		t.Errorf("round 2 after the event: %+v, %v", it, err)
 	}
 }

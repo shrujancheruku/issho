@@ -34,7 +34,7 @@ func (q *Queries) DeleteOldChats(ctx context.Context, arg DeleteOldChatsParams) 
 }
 
 const getChatAccess = `-- name: GetChatAccess :one
-select m.group_id, m.response, g.status as group_status, e.status as event_status, e.starts_at
+select m.group_id, m.response, g.status as group_status, e.status as event_status, e.starts_at, e.confirm_by
 from app.group_members m
 join app.event_groups g on g.id = m.group_id
 join app.events e on e.id = m.event_id
@@ -52,6 +52,7 @@ type GetChatAccessRow struct {
 	GroupStatus string
 	EventStatus string
 	StartsAt    pgtype.Timestamptz
+	ConfirmBy   pgtype.Timestamptz
 }
 
 // Whether and how someone may use an event's group chat: their group, their
@@ -65,6 +66,7 @@ func (q *Queries) GetChatAccess(ctx context.Context, arg GetChatAccessParams) (G
 		&i.GroupStatus,
 		&i.EventStatus,
 		&i.StartsAt,
+		&i.ConfirmBy,
 	)
 	return i, err
 }

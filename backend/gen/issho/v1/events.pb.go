@@ -1517,6 +1517,10 @@ type MyEvent struct {
 	FeedbackUntil *timestamppb.Timestamp `protobuf:"bytes,26,opt,name=feedback_until,json=feedbackUntil,proto3" json:"feedback_until,omitempty"`
 	// The caller has given feedback.
 	FeedbackGiven bool `protobuf:"varint,27,opt,name=feedback_given,json=feedbackGiven,proto3" json:"feedback_given,omitempty"`
+	// Until when the caller can report someone in their group (see
+	// ReportPerson): 30 days after the start, for anyone who confirmed, even
+	// if they cancelled since. Unset without a start time (no limit).
+	ReportUntil   *timestamppb.Timestamp `protobuf:"bytes,28,opt,name=report_until,json=reportUntil,proto3" json:"report_until,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1740,6 +1744,13 @@ func (x *MyEvent) GetFeedbackGiven() bool {
 	return false
 }
 
+func (x *MyEvent) GetReportUntil() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ReportUntil
+	}
+	return nil
+}
+
 var File_issho_v1_events_proto protoreflect.FileDescriptor
 
 const file_issho_v1_events_proto_rawDesc = "" +
@@ -1819,7 +1830,7 @@ const file_issho_v1_events_proto_rawDesc = "" +
 	"\bevent_id\x18\x01 \x01(\tR\aeventId\x12-\n" +
 	"\x06action\x18\x02 \x01(\x0e2\x15.issho.v1.EventActionR\x06action\"A\n" +
 	"\x16RespondToEventResponse\x12'\n" +
-	"\x05event\x18\x01 \x01(\v2\x11.issho.v1.MyEventR\x05event\"\x91\t\n" +
+	"\x05event\x18\x01 \x01(\v2\x11.issho.v1.MyEventR\x05event\"\xd0\t\n" +
 	"\aMyEvent\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
 	"\aplan_id\x18\x02 \x01(\tR\x06planId\x12\x14\n" +
@@ -1851,7 +1862,8 @@ const file_issho_v1_events_proto_rawDesc = "" +
 	"\x0echeck_in_until\x18\x18 \x01(\v2\x1a.google.protobuf.TimestampR\fcheckInUntil\x12?\n" +
 	"\rfeedback_from\x18\x19 \x01(\v2\x1a.google.protobuf.TimestampR\ffeedbackFrom\x12A\n" +
 	"\x0efeedback_until\x18\x1a \x01(\v2\x1a.google.protobuf.TimestampR\rfeedbackUntil\x12%\n" +
-	"\x0efeedback_given\x18\x1b \x01(\bR\rfeedbackGiven*\xb3\x01\n" +
+	"\x0efeedback_given\x18\x1b \x01(\bR\rfeedbackGiven\x12=\n" +
+	"\freport_until\x18\x1c \x01(\v2\x1a.google.protobuf.TimestampR\vreportUntil*\xb3\x01\n" +
 	"\fReportReason\x12\x1d\n" +
 	"\x19REPORT_REASON_UNSPECIFIED\x10\x00\x12\x18\n" +
 	"\x14REPORT_REASON_DATING\x10\x01\x12\x1c\n" +
@@ -1964,29 +1976,30 @@ var file_issho_v1_events_proto_depIdxs = []int32{
 	26, // 24: issho.v1.MyEvent.check_in_until:type_name -> google.protobuf.Timestamp
 	26, // 25: issho.v1.MyEvent.feedback_from:type_name -> google.protobuf.Timestamp
 	26, // 26: issho.v1.MyEvent.feedback_until:type_name -> google.protobuf.Timestamp
-	19, // 27: issho.v1.EventService.ListMyEvents:input_type -> issho.v1.ListMyEventsRequest
-	21, // 28: issho.v1.EventService.GetEvent:input_type -> issho.v1.GetEventRequest
-	23, // 29: issho.v1.EventService.RespondToEvent:input_type -> issho.v1.RespondToEventRequest
-	14, // 30: issho.v1.EventService.ListChatMessages:input_type -> issho.v1.ListChatMessagesRequest
-	16, // 31: issho.v1.EventService.SendChatMessage:input_type -> issho.v1.SendChatMessageRequest
-	12, // 32: issho.v1.EventService.CheckIn:input_type -> issho.v1.CheckInRequest
-	5,  // 33: issho.v1.EventService.GetFeedback:input_type -> issho.v1.GetFeedbackRequest
-	8,  // 34: issho.v1.EventService.SubmitFeedback:input_type -> issho.v1.SubmitFeedbackRequest
-	10, // 35: issho.v1.EventService.ReportPerson:input_type -> issho.v1.ReportPersonRequest
-	20, // 36: issho.v1.EventService.ListMyEvents:output_type -> issho.v1.ListMyEventsResponse
-	22, // 37: issho.v1.EventService.GetEvent:output_type -> issho.v1.GetEventResponse
-	24, // 38: issho.v1.EventService.RespondToEvent:output_type -> issho.v1.RespondToEventResponse
-	15, // 39: issho.v1.EventService.ListChatMessages:output_type -> issho.v1.ListChatMessagesResponse
-	17, // 40: issho.v1.EventService.SendChatMessage:output_type -> issho.v1.SendChatMessageResponse
-	13, // 41: issho.v1.EventService.CheckIn:output_type -> issho.v1.CheckInResponse
-	6,  // 42: issho.v1.EventService.GetFeedback:output_type -> issho.v1.GetFeedbackResponse
-	9,  // 43: issho.v1.EventService.SubmitFeedback:output_type -> issho.v1.SubmitFeedbackResponse
-	11, // 44: issho.v1.EventService.ReportPerson:output_type -> issho.v1.ReportPersonResponse
-	36, // [36:45] is the sub-list for method output_type
-	27, // [27:36] is the sub-list for method input_type
-	27, // [27:27] is the sub-list for extension type_name
-	27, // [27:27] is the sub-list for extension extendee
-	0,  // [0:27] is the sub-list for field type_name
+	26, // 27: issho.v1.MyEvent.report_until:type_name -> google.protobuf.Timestamp
+	19, // 28: issho.v1.EventService.ListMyEvents:input_type -> issho.v1.ListMyEventsRequest
+	21, // 29: issho.v1.EventService.GetEvent:input_type -> issho.v1.GetEventRequest
+	23, // 30: issho.v1.EventService.RespondToEvent:input_type -> issho.v1.RespondToEventRequest
+	14, // 31: issho.v1.EventService.ListChatMessages:input_type -> issho.v1.ListChatMessagesRequest
+	16, // 32: issho.v1.EventService.SendChatMessage:input_type -> issho.v1.SendChatMessageRequest
+	12, // 33: issho.v1.EventService.CheckIn:input_type -> issho.v1.CheckInRequest
+	5,  // 34: issho.v1.EventService.GetFeedback:input_type -> issho.v1.GetFeedbackRequest
+	8,  // 35: issho.v1.EventService.SubmitFeedback:input_type -> issho.v1.SubmitFeedbackRequest
+	10, // 36: issho.v1.EventService.ReportPerson:input_type -> issho.v1.ReportPersonRequest
+	20, // 37: issho.v1.EventService.ListMyEvents:output_type -> issho.v1.ListMyEventsResponse
+	22, // 38: issho.v1.EventService.GetEvent:output_type -> issho.v1.GetEventResponse
+	24, // 39: issho.v1.EventService.RespondToEvent:output_type -> issho.v1.RespondToEventResponse
+	15, // 40: issho.v1.EventService.ListChatMessages:output_type -> issho.v1.ListChatMessagesResponse
+	17, // 41: issho.v1.EventService.SendChatMessage:output_type -> issho.v1.SendChatMessageResponse
+	13, // 42: issho.v1.EventService.CheckIn:output_type -> issho.v1.CheckInResponse
+	6,  // 43: issho.v1.EventService.GetFeedback:output_type -> issho.v1.GetFeedbackResponse
+	9,  // 44: issho.v1.EventService.SubmitFeedback:output_type -> issho.v1.SubmitFeedbackResponse
+	11, // 45: issho.v1.EventService.ReportPerson:output_type -> issho.v1.ReportPersonResponse
+	37, // [37:46] is the sub-list for method output_type
+	28, // [28:37] is the sub-list for method input_type
+	28, // [28:28] is the sub-list for extension type_name
+	28, // [28:28] is the sub-list for extension extendee
+	0,  // [0:28] is the sub-list for field type_name
 }
 
 func init() { file_issho_v1_events_proto_init() }

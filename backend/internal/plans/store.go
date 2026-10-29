@@ -298,6 +298,8 @@ const ProposalRest = 24 * time.Hour
 const (
 	EventProposed  = "proposed"
 	EventScheduled = "scheduled"
+	EventDone      = "done"
+	EventCancelled = "cancelled"
 )
 
 // SaveEvent stores a scheduled round: the event, its groups and their

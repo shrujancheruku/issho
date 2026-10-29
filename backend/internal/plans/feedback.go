@@ -74,32 +74,16 @@ type FeedbackForm struct {
 	Open              bool
 }
 
-// feedbackWindow says when the caller can give feedback: only someone who
-// went ahead with their group (confirmed, in a group that wasn't
-// cancelled), from FeedbackAfter to FeedbackFor after the start. err is
-// why they can't at all.
-func feedbackWindow(r dbgen.GetChatAccessRow, now time.Time) (FeedbackForm, error) {
-	var f FeedbackForm
-	switch {
-	case r.Response != Confirmed:
-		return f, ErrNotGoing
-	case r.GroupStatus != GroupConfirmed || r.EventStatus == "cancelled":
-		return f, ErrEventOver
-	case !r.StartsAt.Valid:
-		return f, ErrFeedbackClosed
-	}
-	f.OpensAt, f.ClosesAt = r.StartsAt.Time.Add(FeedbackAfter), r.StartsAt.Time.Add(FeedbackFor)
-	f.Open = !now.Before(f.OpensAt) && now.Before(f.ClosesAt)
-	return f, nil
-}
-
-// membership reads the caller's place in an event.
-func membership(ctx context.Context, q *dbgen.Queries, userID, eventID uuid.UUID) (dbgen.GetChatAccessRow, error) {
+// loadMembership reads the caller's place in an event and their group.
+func loadMembership(ctx context.Context, q *dbgen.Queries, userID, eventID uuid.UUID) (uuid.UUID, Membership, error) {
 	r, err := q.GetChatAccess(ctx, dbgen.GetChatAccessParams{EventID: eventID, UserID: userID})
 	if errors.Is(err, pgx.ErrNoRows) {
-		return r, ErrNoEvent
+		return uuid.Nil, Membership{}, ErrNoEvent
 	}
-	return r, err
+	if err != nil {
+		return uuid.Nil, Membership{}, err
+	}
+	return r.GroupID, newMembership(r.Response, r.GroupStatus, r.EventStatus, r.StartsAt, r.ConfirmBy), nil
 }
 
 func listMates(ctx context.Context, q *dbgen.Queries, groupID, userID uuid.UUID) ([]Mate, error) {
@@ -120,21 +104,21 @@ func listMates(ctx context.Context, q *dbgen.Queries, groupID, userID uuid.UUID)
 // someone); it's only open to those who went ahead with the group.
 func (s *Service) FeedbackForm(ctx context.Context, userID, eventID uuid.UUID, now time.Time) (FeedbackForm, error) {
 	q := dbgen.New(s.DB)
-	r, err := membership(ctx, q, userID, eventID)
+	groupID, m, err := loadMembership(ctx, q, userID, eventID)
 	if err != nil {
 		return FeedbackForm{}, err
 	}
-	if r.Response != Confirmed && r.Response != Dropped {
+	if !m.confirmedOnce() {
 		return FeedbackForm{}, ErrNotGoing
 	}
-	f, err := feedbackWindow(r, now)
-	if err != nil {
-		f = FeedbackForm{}
+	var f FeedbackForm
+	if from, until, err := m.FeedbackWindow(); err == nil {
+		f.OpensAt, f.ClosesAt, f.Open = from, until, m.Feedback(now) == nil
 	}
-	if f.Mates, err = listMates(ctx, q, r.GroupID, userID); err != nil {
+	if f.Mates, err = listMates(ctx, q, groupID, userID); err != nil {
 		return f, err
 	}
-	fb, err := q.GetFeedback(ctx, dbgen.GetFeedbackParams{GroupID: r.GroupID, UserID: userID})
+	fb, err := q.GetFeedback(ctx, dbgen.GetFeedbackParams{GroupID: groupID, UserID: userID})
 	if errors.Is(err, pgx.ErrNoRows) {
 		return f, nil
 	}
@@ -145,7 +129,7 @@ func (s *Service) FeedbackForm(ctx context.Context, userID, eventID uuid.UUID, n
 	if fb.PlanRating != nil && fb.GroupRating != nil {
 		f.PlanRating, f.GroupRating = int(*fb.PlanRating), int(*fb.GroupRating)
 	}
-	picks, err := q.ListPicks(ctx, dbgen.ListPicksParams{GroupID: r.GroupID, PickerID: userID})
+	picks, err := q.ListPicks(ctx, dbgen.ListPicksParams{GroupID: groupID, PickerID: userID})
 	for _, p := range picks {
 		if p.Pick == PickAvoid {
 			f.Avoid = append(f.Avoid, p.PickedID)
@@ -171,18 +155,13 @@ func (s *Service) SubmitFeedback(ctx context.Context, userID, eventID uuid.UUID,
 	}
 	return pgx.BeginFunc(ctx, s.DB, func(tx pgx.Tx) error {
 		q := dbgen.New(tx)
-		r, err := membership(ctx, q, userID, eventID)
+		groupID, m, err := loadMembership(ctx, q, userID, eventID)
 		if err != nil {
 			return err
 		}
-		f, err := feedbackWindow(r, now)
-		if err != nil {
+		if err := m.Feedback(now); err != nil {
 			return err
 		}
-		if !f.Open {
-			return ErrFeedbackClosed
-		}
-		groupID := r.GroupID
 		mates, err := listMates(ctx, q, groupID, userID)
 		if err != nil {
 			return err
@@ -291,17 +270,14 @@ func (s *Service) Report(ctx context.Context, userID, eventID, mateID uuid.UUID,
 		return err
 	}
 	q := dbgen.New(s.DB)
-	r, err := membership(ctx, q, userID, eventID)
+	groupID, m, err := loadMembership(ctx, q, userID, eventID)
 	if err != nil {
 		return err
 	}
-	if r.Response != Confirmed && r.Response != Dropped {
-		return ErrNotGoing
+	if err := m.Report(now); err != nil {
+		return err
 	}
-	if r.StartsAt.Valid && now.After(r.StartsAt.Time.Add(ReportFor)) {
-		return ErrTooLate
-	}
-	mates, err := listMates(ctx, q, r.GroupID, userID)
+	mates, err := listMates(ctx, q, groupID, userID)
 	if err != nil {
 		return err
 	}

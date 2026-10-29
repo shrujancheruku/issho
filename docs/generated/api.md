@@ -1647,6 +1647,7 @@ One event as the caller sees it.
 | feedback_from | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | When the caller can give feedback (see GetFeedback); unset unless they went ahead with their group. |
 | feedback_until | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 | feedback_given | [bool](#bool) |  | The caller has given feedback. |
+| report_until | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | Until when the caller can report someone in their group (see ReportPerson): 30 days after the start, for anyone who confirmed, even if they cancelled since. Unset without a start time (no limit). |
 
 
 

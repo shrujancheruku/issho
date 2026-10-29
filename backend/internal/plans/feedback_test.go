@@ -106,7 +106,7 @@ func TestIntegrationFeedback(t *testing.T) {
 	// c hasn't answered yet: the event is still in their list days later.
 	later := starts.Add(5 * 24 * time.Hour)
 	items, err := svc.Events(ctx, c, later)
-	if err != nil || len(items) != 1 || items[0].FeedbackGiven || !items[0].FeedbackFrom.Equal(open) {
+	if err != nil || len(items) != 1 || items[0].FeedbackGiven || !feedbackFrom(items[0]).Equal(open) {
 		t.Errorf("c's events days later = %+v, %v; want the event, feedback due", items, err)
 	}
 

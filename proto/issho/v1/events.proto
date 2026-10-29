@@ -285,6 +285,10 @@ message MyEvent {
   google.protobuf.Timestamp feedback_until = 26;
   // The caller has given feedback.
   bool feedback_given = 27;
+  // Until when the caller can report someone in their group (see
+  // ReportPerson): 30 days after the start, for anyone who confirmed, even
+  // if they cancelled since. Unset without a start time (no limit).
+  google.protobuf.Timestamp report_until = 28;
 }
 
 enum EventStatus {

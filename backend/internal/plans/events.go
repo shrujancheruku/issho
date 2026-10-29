@@ -102,25 +102,17 @@ type EventItem struct {
 	Summary, SecondarySummary string
 	Date                      time.Time // local date in the city, as midnight UTC
 	Block                     matching.Block
-	StartsAt, ConfirmBy       time.Time // StartsAt zero = not set
-	Status, GroupStatus       string
-	Response                  string
-	Confirmed                 int // people who confirmed in the caller's group
-	Quorum, MinAttendance     int
+	// The caller's answer, the states and the times (StartsAt zero = not
+	// set), and with them what the caller can do when.
+	Membership
+	Confirmed             int // people who confirmed in the caller's group
+	Quorum, MinAttendance int
 	// MeetingPoint is the exact place to meet, in the caller's language,
-	// once revealed (RevealAt) to someone who confirmed; "" otherwise.
-	MeetingPoint string
-	RevealAt     time.Time
-	meetingRaw   []byte
-	// CheckedIn is set once the caller checked in; check-in is open from
-	// CheckInFrom to CheckInUntil (zero without a start time).
-	CheckedIn                 bool
-	CheckInFrom, CheckInUntil time.Time
-	// Feedback is open from FeedbackFrom to FeedbackUntil for someone who
-	// went ahead with their group (zero otherwise); FeedbackGiven once
-	// they've given it.
-	FeedbackFrom, FeedbackUntil time.Time
-	FeedbackGiven               bool
+	// once revealed (Membership.Revealed); "" otherwise.
+	MeetingPoint  string
+	meetingRaw    []byte
+	CheckedIn     bool
+	FeedbackGiven bool
 }
 
 // Events returns the caller's events from yesterday on, and older ones
@@ -242,8 +234,8 @@ func eventFromRow(r dbgen.ListUserEventsRow) EventItem {
 		Route: routeFrom(r.RoutePolyline, r.RouteSeconds), MeetingPlace: deref(r.MeetingPlaceID),
 		Walk: r.Walk, WalkTitle: r.Title, WalkSummary: r.Description,
 		Date: r.Date.Time, Block: matching.Block(r.Block),
-		StartsAt: r.StartsAt.Time, ConfirmBy: r.ConfirmBy.Time,
-		Status: r.Status, GroupStatus: r.GroupStatus, Response: r.Response,
+		Membership: newMembership(r.Response, r.GroupStatus, r.Status, r.StartsAt, r.ConfirmBy),
+		CheckedIn:  r.CheckedInAt.Valid, FeedbackGiven: r.FeedbackGiven,
 		Confirmed: int(r.Confirmed), Quorum: int(r.Quorum), MinAttendance: int(r.MinAttendance),
 		meetingRaw: r.MeetingPoint,
 	}
@@ -252,23 +244,13 @@ func eventFromRow(r dbgen.ListUserEventsRow) EventItem {
 	if v := deref(r.GroupVenuePlaceID); v != "" && v != it.Venue {
 		it.Venue, it.Route = v, nil
 	}
-	if !it.StartsAt.IsZero() {
-		it.RevealAt = it.StartsAt.Add(-RevealBefore)
-		it.CheckInFrom, it.CheckInUntil = it.StartsAt.Add(-CheckInBefore), it.StartsAt.Add(CheckInAfter)
-	}
-	it.CheckedIn = r.CheckedInAt.Valid
-	if !it.StartsAt.IsZero() && it.Response == Confirmed && it.GroupStatus == GroupConfirmed && it.Status != "cancelled" {
-		it.FeedbackFrom, it.FeedbackUntil = it.StartsAt.Add(FeedbackAfter), it.StartsAt.Add(FeedbackFor)
-	}
-	it.FeedbackGiven = r.FeedbackGiven
 	return it
 }
 
-// reveal fills MeetingPoint when the caller may see it: they confirmed, the
-// group is going ahead, and it's at most RevealBefore until the start.
+// reveal fills MeetingPoint when the caller may see it (Membership.Revealed).
 func (it *EventItem) reveal(caller Caller, now time.Time) {
 	it.MeetingPoint = ""
-	if it.Response != Confirmed || it.GroupStatus == GroupCancelled || it.RevealAt.IsZero() || now.Before(it.RevealAt) {
+	if !it.Revealed(now) {
 		return
 	}
 	if len(it.meetingRaw) > 0 {
@@ -290,35 +272,17 @@ func (s *Service) Respond(ctx context.Context, userID, eventID uuid.UUID, action
 		if err != nil {
 			return err
 		}
-		if m.EventStatus != "scheduled" || m.GroupStatus == GroupCancelled {
-			return ErrEventOver
-		}
-		var next string
-		switch action {
-		case Confirm, Decline:
-			if !now.Before(m.ConfirmBy.Time) {
-				return ErrTooLate
-			}
-			if action == Confirm && (m.Response == Invited || m.Response == Declined) {
-				next = Confirmed
-			} else if action == Decline && m.Response == Invited {
-				next = Declined
-			} else {
-				return ErrNotNow
-			}
-		case Cancel:
-			if m.StartsAt.Valid && !now.Before(m.StartsAt.Time) {
-				return ErrTooLate
-			}
-			if m.Response != Confirmed {
-				return ErrNotNow
-			}
-			next = Dropped
-		default:
-			return fmt.Errorf("unknown action %d", action)
+		next, err := lockedMembership(m).Answer(action, now)
+		if err != nil {
+			return err
 		}
 		return setResponse(ctx, q, m, userID, eventID, next, now)
 	})
+}
+
+// lockedMembership is a locked row's membership.
+func lockedMembership(m dbgen.LockMembershipRow) Membership {
+	return newMembership(m.Response, m.GroupStatus, m.EventStatus, m.StartsAt, m.ConfirmBy)
 }
 
 // setResponse records someone's new answer and what it does to their
@@ -367,13 +331,8 @@ func (s *Service) CheckIn(ctx context.Context, userID, eventID uuid.UUID, now ti
 	if err != nil {
 		return err
 	}
-	switch {
-	case it.Response != Confirmed:
-		return ErrNotGoing
-	case it.Status == "cancelled" || it.GroupStatus == GroupCancelled:
-		return ErrEventOver
-	case it.CheckInFrom.IsZero() || now.Before(it.CheckInFrom) || now.After(it.CheckInUntil):
-		return ErrCheckInClosed
+	if err := it.Membership.CheckIn(now); err != nil {
+		return err
 	}
 	_, err = q.CheckIn(ctx, dbgen.CheckInParams{EventID: eventID, UserID: userID, At: pgtype.Timestamptz{Time: now, Valid: true}})
 	return err
