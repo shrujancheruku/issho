@@ -27,3 +27,17 @@ Project-specific rules for AI coding agents. They **take precedence over generic
 - Never print secrets in command output: no `cat` of env files, and filter CLI output so only public values (e.g. the publishable key) are shown.
 - `EXPO_PUBLIC_*` values are bundled into the app and are public.
 - `make secrets-scan` before pushing; the pre-commit hook also scans.
+
+## Agent skills
+
+### Issue tracker
+
+GitHub Issues on shrujancheruku/issho via `gh` (public repo: no secrets or personal data in issues). See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+The five default labels: needs-triage, needs-info, ready-for-agent, ready-for-human, wontfix. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: a root `GLOSSARY.md`; decisions live in the Decision log of `docs/ROADMAP.md`, not `docs/adr/`. See `docs/agents/domain.md`.
