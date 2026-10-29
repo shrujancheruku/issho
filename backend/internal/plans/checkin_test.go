@@ -32,7 +32,7 @@ func TestIntegrationCheckIn(t *testing.T) {
 		t.Fatal(err)
 	}
 	starts := day(12).Add(14 * time.Hour)
-	eventID, err := SaveEvent(ctx, f.pool, Event{
+	eventID, _, err := SaveEvent(ctx, f.pool, Event{
 		PlanID: planID, Round: 1, StartsAt: starts, ConfirmBy: day(11), Now: day(5),
 		Scheduled: matching.Scheduled{
 			Occasion: matching.Occasion{Date: day(12), Block: matching.Afternoon},
@@ -69,7 +69,7 @@ func TestIntegrationCheckIn(t *testing.T) {
 	if err := svc.CheckIn(ctx, b, eventID, starts.Add(CheckInAfter+time.Minute)); !errors.Is(err, ErrCheckInClosed) {
 		t.Errorf("3 hours late: %v, want ErrCheckInClosed", err)
 	}
-	if it, _, _, err := svc.Event(ctx, a, eventID, starts); err != nil || !it.CheckedIn || !it.CheckInFrom.Equal(starts.Add(-CheckInBefore)) {
+	if it, _, _, err := svc.Event(ctx, a, eventID, starts); err != nil || !it.CheckedIn || !checkInFrom(it).Equal(starts.Add(-CheckInBefore)) {
 		t.Errorf("event for a = %+v, %v", it, err)
 	}
 
@@ -93,4 +93,14 @@ func TestIntegrationCheckIn(t *testing.T) {
 			t.Errorf("%s: attended %d, reliability %.3f; want %v", u.ID, u.EventsAttended, u.Reliability, want)
 		}
 	}
+}
+
+func checkInFrom(it EventItem) time.Time {
+	from, _ := it.CheckInWindow()
+	return from
+}
+
+func feedbackFrom(it EventItem) time.Time {
+	from, _, _ := it.FeedbackWindow()
+	return from
 }

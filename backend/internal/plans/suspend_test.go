@@ -41,7 +41,7 @@ func TestIntegrationRemoveFromUpcoming(t *testing.T) {
 
 	// An outing: a, b and c confirmed (quorum 3, minimum 2), d invited.
 	outing := newPlan(f.area)
-	eventID, err := SaveEvent(ctx, f.pool, Event{
+	eventID, _, err := SaveEvent(ctx, f.pool, Event{
 		PlanID: outing, Round: 1, StartsAt: day(12, 14), ConfirmBy: day(11, 0), Now: day(5, 0),
 		Scheduled: matching.Scheduled{
 			Occasion: matching.Occasion{Date: day(12, 0), Block: matching.Afternoon},

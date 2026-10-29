@@ -92,24 +92,14 @@ func (s *Service) ApproveProposal(ctx context.Context, eventID, by uuid.UUID, t 
 		}); err != nil {
 			return err
 		}
-		if err := q.DeleteSignups(ctx, dbgen.DeleteSignupsParams{PlanID: e.PlanID, UserIds: invited}); err != nil {
-			return err
-		}
-		if err := notify(ctx, q, NotifyInvited, eventID, invited); err != nil {
-			return err
-		}
-		waiting, err := q.CountPlanSignups(ctx, e.PlanID)
-		if err != nil {
-			return err
-		}
-		if waiting == 0 {
-			return Close(ctx, q, e.PlanID, ClosedDone, now)
-		}
-		loc, err := time.LoadLocation(ev.Timezone)
-		if err != nil {
-			return err
-		}
-		return NextRound(ctx, q, e.PlanID, t.Round(now, loc))
+		_, err = startRound(ctx, q, e.PlanID, eventID, invited, func() (Window, error) {
+			loc, err := time.LoadLocation(ev.Timezone)
+			if err != nil {
+				return Window{}, err
+			}
+			return t.Round(now, loc), nil
+		}, now)
+		return err
 	})
 }
 

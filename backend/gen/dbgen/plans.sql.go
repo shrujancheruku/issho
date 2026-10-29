@@ -12,7 +12,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const closePlan = `-- name: ClosePlan :exec
+const closePlan = `-- name: ClosePlan :execrows
 update app.plans set status = 'closed', closed_reason = $1::text, closed_at = $2
 where id = $3 and status = 'open'
 `
@@ -23,9 +23,12 @@ type ClosePlanParams struct {
 	ID       uuid.UUID
 }
 
-func (q *Queries) ClosePlan(ctx context.Context, arg ClosePlanParams) error {
-	_, err := q.db.Exec(ctx, closePlan, arg.Reason, arg.ClosedAt, arg.ID)
-	return err
+func (q *Queries) ClosePlan(ctx context.Context, arg ClosePlanParams) (int64, error) {
+	result, err := q.db.Exec(ctx, closePlan, arg.Reason, arg.ClosedAt, arg.ID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const closePlanNoGroup = `-- name: ClosePlanNoGroup :exec
@@ -49,6 +52,28 @@ type ClosePlanNoGroupParams struct {
 func (q *Queries) ClosePlanNoGroup(ctx context.Context, arg ClosePlanNoGroupParams) error {
 	_, err := q.db.Exec(ctx, closePlanNoGroup, arg.ClosedAt, arg.ID)
 	return err
+}
+
+const countWaitingSignups = `-- name: CountWaitingSignups :one
+select count(*)::int
+from app.plan_signups s
+join app.plans pl on pl.id = s.plan_id
+join app.profiles p on p.user_id = s.user_id
+join app.areas a on a.id = p.home_area_id and a.city_id = pl.city_id
+join app.users u on u.id = s.user_id
+where s.plan_id = $1 and u.deleted_at is null
+  and not exists (select 1 from app.suspensions x where x.user_id = s.user_id and x.lifted_at is null)
+`
+
+// People still waiting for a plan whom matching would still place: they
+// live in the plan's city and aren't deleted or suspended (as
+// ListMatchingUsers). Once a round's invitations go out, this decides
+// between a next round and closing the plan as done.
+func (q *Queries) CountWaitingSignups(ctx context.Context, planID uuid.UUID) (int32, error) {
+	row := q.db.QueryRow(ctx, countWaitingSignups, planID)
+	var column_1 int32
+	err := row.Scan(&column_1)
+	return column_1, err
 }
 
 const deleteSignup = `-- name: DeleteSignup :exec
@@ -96,6 +121,71 @@ type DeleteSignupsParams struct {
 func (q *Queries) DeleteSignups(ctx context.Context, arg DeleteSignupsParams) error {
 	_, err := q.db.Exec(ctx, deleteSignups, arg.PlanID, arg.UserIds)
 	return err
+}
+
+const getOpenPlan = `-- name: GetOpenPlan :one
+select p.id, p.area_id, p.activity_id, p.follow_up_id, p.primary_language, p.secondary_language,
+       p.round, p.window_start, p.window_days, p.signup_deadline, p.venue_place_id, p.follow_up_venue_place_id,
+       p.route_polyline, p.route_seconds, p.meeting_place_id, p.title, p.description, exists (select 1 from app.plan_stops st where st.plan_id = p.id) as walk,
+       (select count(*) from app.plan_signups s where s.plan_id = p.id)::int as signups
+from app.plans p
+where p.id = $1 and p.city_id = $2 and p.status = 'open'
+`
+
+type GetOpenPlanParams struct {
+	ID     uuid.UUID
+	CityID string
+}
+
+type GetOpenPlanRow struct {
+	ID                   uuid.UUID
+	AreaID               string
+	ActivityID           string
+	FollowUpID           *string
+	PrimaryLanguage      string
+	SecondaryLanguage    *string
+	Round                int16
+	WindowStart          pgtype.Date
+	WindowDays           int16
+	SignupDeadline       pgtype.Timestamptz
+	VenuePlaceID         *string
+	FollowUpVenuePlaceID *string
+	RoutePolyline        *string
+	RouteSeconds         *int32
+	MeetingPlaceID       *string
+	Title                []byte
+	Description          []byte
+	Walk                 bool
+	Signups              int32
+}
+
+// One open plan in a city, for its screen and signing up. The same columns
+// as ListOpenPlans, so the rows convert (plans.openFromRow).
+func (q *Queries) GetOpenPlan(ctx context.Context, arg GetOpenPlanParams) (GetOpenPlanRow, error) {
+	row := q.db.QueryRow(ctx, getOpenPlan, arg.ID, arg.CityID)
+	var i GetOpenPlanRow
+	err := row.Scan(
+		&i.ID,
+		&i.AreaID,
+		&i.ActivityID,
+		&i.FollowUpID,
+		&i.PrimaryLanguage,
+		&i.SecondaryLanguage,
+		&i.Round,
+		&i.WindowStart,
+		&i.WindowDays,
+		&i.SignupDeadline,
+		&i.VenuePlaceID,
+		&i.FollowUpVenuePlaceID,
+		&i.RoutePolyline,
+		&i.RouteSeconds,
+		&i.MeetingPlaceID,
+		&i.Title,
+		&i.Description,
+		&i.Walk,
+		&i.Signups,
+	)
+	return i, err
 }
 
 const getPlan = `-- name: GetPlan :one

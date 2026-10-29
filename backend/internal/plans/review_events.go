@@ -39,7 +39,7 @@ func (h *ReviewHandler) ListReviewEvents(ctx context.Context, req *connect.Reque
 	if err != nil {
 		return nil, err
 	}
-	names, err := englishActivityNames(ctx, q, req.Msg.CityId)
+	names, err := h.Svc.activityNames(ctx, q, req.Msg.CityId)
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +71,7 @@ func (h *ReviewHandler) GetReviewEvent(ctx context.Context, req *connect.Request
 	if err != nil {
 		return nil, err
 	}
-	names, err := englishActivityNames(ctx, q, ev.CityID)
+	names, err := h.Svc.activityNames(ctx, q, ev.CityID)
 	if err != nil {
 		return nil, err
 	}

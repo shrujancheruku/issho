@@ -89,7 +89,7 @@ func TestIntegrationMeetingPlace(t *testing.T) {
 
 	station := maps.PlaceDetails{Name: "吉祥寺駅", Location: maps.LatLng{Lat: 35.703, Lng: 139.58}}
 	svc := &Service{DB: f.pool, Places: fakePlaces{"zz-station": {"ja": station}, "zz-meet-cafe": {"ja": {Name: "カフェ", Location: maps.LatLng{Lat: 35.705, Lng: 139.582}}}}}
-	_, steps, _, err := svc.Plan(ctx, f.users[0], planID)
+	_, steps, _, err := svc.Plan(ctx, f.users[0], planID, time.Now())
 	if err != nil {
 		t.Fatal(err)
 	}

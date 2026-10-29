@@ -18,6 +18,14 @@ import (
 // Handler serves PlanService.
 type Handler struct {
 	Svc *Service
+	Now func() time.Time // nil = time.Now
+}
+
+func (h *Handler) now() time.Time {
+	if h.Now != nil {
+		return h.Now()
+	}
+	return time.Now()
 }
 
 func (h *Handler) ListFeed(ctx context.Context, _ *connect.Request[isshov1.ListFeedRequest]) (*connect.Response[isshov1.ListFeedResponse], error) {
@@ -45,7 +53,7 @@ func (h *Handler) GetPlan(ctx context.Context, req *connect.Request[isshov1.GetP
 	if err != nil {
 		return nil, err
 	}
-	item, steps, signup, err := h.Svc.Plan(ctx, userID, planID)
+	item, steps, signup, err := h.Svc.Plan(ctx, userID, planID, h.now())
 	if err != nil {
 		return nil, connectError(err)
 	}

@@ -35,7 +35,7 @@ func (q *Queries) GetCityMatching(ctx context.Context, id string) (GetCityMatchi
 
 const getMatchingUser = `-- name: GetMatchingUser :one
 select p.user_id, a.city_id, p.home_area_id, p.max_travel_min, p.gender, p.same_gender_only, p.size_pref,
-       p.budget, p.reliability, p.primary_language, p.secondary_language,
+       p.budget, p.primary_language, p.secondary_language,
        array(select l.lang from app.user_languages l where l.user_id = p.user_id order by l.fluent desc, l.lang)::text[] as lang_codes,
        array(select l.fluent from app.user_languages l where l.user_id = p.user_id order by l.fluent desc, l.lang)::bool[] as lang_fluent,
        array(select coalesce(l.level, 0) from app.user_languages l where l.user_id = p.user_id order by l.fluent desc, l.lang)::int2[] as lang_levels,
@@ -57,7 +57,6 @@ type GetMatchingUserRow struct {
 	SameGenderOnly    bool
 	SizePref          string
 	Budget            int16
-	Reliability       float32
 	PrimaryLanguage   string
 	SecondaryLanguage *string
 	LangCodes         []string
@@ -85,7 +84,6 @@ func (q *Queries) GetMatchingUser(ctx context.Context, userID uuid.UUID) (GetMat
 		&i.SameGenderOnly,
 		&i.SizePref,
 		&i.Budget,
-		&i.Reliability,
 		&i.PrimaryLanguage,
 		&i.SecondaryLanguage,
 		&i.LangCodes,
@@ -359,12 +357,12 @@ func (q *Queries) ListMatchingPrefs(ctx context.Context, cityID string) ([]AppUs
 const listMatchingUsers = `-- name: ListMatchingUsers :many
 select p.user_id, p.home_area_id, p.max_travel_min, p.gender, p.same_gender_only, p.size_pref,
        p.budget,
-       ((2 + (select count(*) from app.group_members m join app.events e on e.id = m.event_id
-              where m.user_id = p.user_id and e.status = 'done' and m.response = 'confirmed'
-                and (m.checked_in_at is not null or exists (
-                  select 1 from app.event_feedback f where f.group_id = m.group_id and f.user_id = m.user_id and f.attended))))::real
-        / (2 + (select count(*) from app.group_members m join app.events e on e.id = m.event_id
-                where m.user_id = p.user_id and e.status = 'done' and m.response = 'confirmed'))::real)::real as reliability,
+       (select count(*) from app.group_members m join app.events e on e.id = m.event_id
+        where m.user_id = p.user_id and e.status = 'done' and m.response = 'confirmed'
+          and (m.checked_in_at is not null or exists (
+            select 1 from app.event_feedback f where f.group_id = m.group_id and f.user_id = m.user_id and f.attended)))::int as done_attended,
+       (select count(*) from app.group_members m join app.events e on e.id = m.event_id
+        where m.user_id = p.user_id and e.status = 'done' and m.response = 'confirmed')::int as done_confirmed,
        (select count(*) from app.group_members m
         where m.user_id = p.user_id
           and (m.checked_in_at is not null or exists (
@@ -386,16 +384,15 @@ type ListMatchingUsersRow struct {
 	SameGenderOnly bool
 	SizePref       string
 	Budget         int16
-	Reliability    float32
+	DoneAttended   int32
+	DoneConfirmed  int32
 	EventsAttended int32
 }
 
-// Reliability is how often someone turned up when they'd confirmed: outings
-// attended over confirmed places at finished events, with a prior of two
-// outings attended so a newcomer starts at 1.0 and one miss doesn't sink
-// them (one no-show in their first outing gives 0.67). Cancelling in
-// advance (dropped) isn't a miss. Attended = checked in, or said so in
-// their feedback afterwards (people forget to check in).
+// Turnout (plans.reliability): of their confirmed places at finished events,
+// how many they attended. Cancelling in advance (dropped) isn't a miss.
+// Attended = checked in, or said so in their feedback afterwards (people
+// forget to check in).
 func (q *Queries) ListMatchingUsers(ctx context.Context, cityID string) ([]ListMatchingUsersRow, error) {
 	rows, err := q.db.Query(ctx, listMatchingUsers, cityID)
 	if err != nil {
@@ -413,7 +410,8 @@ func (q *Queries) ListMatchingUsers(ctx context.Context, cityID string) ([]ListM
 			&i.SameGenderOnly,
 			&i.SizePref,
 			&i.Budget,
-			&i.Reliability,
+			&i.DoneAttended,
+			&i.DoneConfirmed,
 			&i.EventsAttended,
 		); err != nil {
 			return nil, err
@@ -429,12 +427,13 @@ func (q *Queries) ListMatchingUsers(ctx context.Context, cityID string) ([]ListM
 const listRecentlyFailedPlans = `-- name: ListRecentlyFailedPlans :many
 select area_id, activity_id, follow_up_id, primary_language, secondary_language
 from app.plans
-where city_id = $1 and closed_reason in ('no_group', 'rejected') and closed_at >= $2
+where city_id = $1 and closed_reason = any($2::text[]) and closed_at >= $3
 `
 
 type ListRecentlyFailedPlansParams struct {
-	CityID string
-	Since  pgtype.Timestamptz
+	CityID  string
+	Reasons []string
+	Since   pgtype.Timestamptz
 }
 
 type ListRecentlyFailedPlansRow struct {
@@ -449,7 +448,7 @@ type ListRecentlyFailedPlansRow struct {
 // recently: not suggested again until the cool-down passes, or the same
 // plan would come back the next morning.
 func (q *Queries) ListRecentlyFailedPlans(ctx context.Context, arg ListRecentlyFailedPlansParams) ([]ListRecentlyFailedPlansRow, error) {
-	rows, err := q.db.Query(ctx, listRecentlyFailedPlans, arg.CityID, arg.Since)
+	rows, err := q.db.Query(ctx, listRecentlyFailedPlans, arg.CityID, arg.Reasons, arg.Since)
 	if err != nil {
 		return nil, err
 	}

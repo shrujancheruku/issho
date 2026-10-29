@@ -33,7 +33,7 @@ func feedbackEvent(t *testing.T, f *fixture, invited []uuid.UUID, confirm int) (
 		ids[i] = matching.UserID(u.String())
 	}
 	starts := day(12).Add(14 * time.Hour)
-	eventID, err := SaveEvent(ctx, f.pool, Event{
+	eventID, _, err := SaveEvent(ctx, f.pool, Event{
 		PlanID: planID, Round: 1, StartsAt: starts, ConfirmBy: day(11), Now: day(5),
 		Scheduled: matching.Scheduled{
 			Occasion: matching.Occasion{Date: day(12), Block: matching.Afternoon},
@@ -106,7 +106,7 @@ func TestIntegrationFeedback(t *testing.T) {
 	// c hasn't answered yet: the event is still in their list days later.
 	later := starts.Add(5 * 24 * time.Hour)
 	items, err := svc.Events(ctx, c, later)
-	if err != nil || len(items) != 1 || items[0].FeedbackGiven || !items[0].FeedbackFrom.Equal(open) {
+	if err != nil || len(items) != 1 || items[0].FeedbackGiven || !feedbackFrom(items[0]).Equal(open) {
 		t.Errorf("c's events days later = %+v, %v; want the event, feedback due", items, err)
 	}
 

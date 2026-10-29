@@ -44,8 +44,8 @@ func TestIntegrationEvents(t *testing.T) {
 	a, b, c, d := f.users[0], f.users[1], f.users[2], f.users[3]
 	starts, confirmBy := day(12, 14), day(11, 0)
 	next := Window{Start: day(21, 0), Days: 14, Deadline: day(28, 0)}
-	eventID, err := SaveEvent(ctx, f.pool, Event{
-		PlanID: planID, Round: 1, StartsAt: starts, ConfirmBy: confirmBy, Next: &next, Now: day(5, 0),
+	eventID, _, err := SaveEvent(ctx, f.pool, Event{
+		PlanID: planID, Round: 1, StartsAt: starts, ConfirmBy: confirmBy, Next: next, Now: day(5, 0),
 		Scheduled: matching.Scheduled{
 			Occasion: matching.Occasion{Date: day(12, 0), Block: matching.Afternoon},
 			Groups:   []matching.Group{{Invited: ids(a, b, c, d), Quorum: 3, MinAttendance: 2, Score: 1}},
@@ -71,7 +71,7 @@ func TestIntegrationEvents(t *testing.T) {
 
 	evs, err := svc.Events(ctx, a, before)
 	if err != nil || len(evs) != 1 || evs[0].Response != Invited || evs[0].GroupStatus != GroupInviting ||
-		evs[0].Title != "Test" || !evs[0].StartsAt.Equal(starts) || !evs[0].RevealAt.Equal(starts.Add(-RevealBefore)) {
+		evs[0].Title != "Test" || !evs[0].StartsAt.Equal(starts) || !evs[0].RevealAt().Equal(starts.Add(-RevealBefore)) {
 		t.Fatalf("Events = %+v, %v", evs, err)
 	}
 	if _, _, _, err := svc.Event(ctx, f.users[4], eventID, before); !errors.Is(err, ErrNoEvent) {
@@ -153,8 +153,8 @@ func TestIntegrationEvents(t *testing.T) {
 	if err != nil || rep != (SettleReport{Cancelled: 1}) {
 		t.Fatalf("Settle = %+v, %v", rep, err)
 	}
-	if g := group(c); g.GroupStatus != GroupCancelled || g.Status != "cancelled" {
-		t.Errorf("after settling: group %s, event %s", g.GroupStatus, g.Status)
+	if g := group(c); g.GroupStatus != GroupCancelled || g.EventStatus != EventCancelled {
+		t.Errorf("after settling: group %s, event %s", g.GroupStatus, g.EventStatus)
 	}
 	waiting, err := f.q.ListSignups(ctx, planID)
 	if err != nil || !slices.Contains(waiting, c) {
@@ -167,8 +167,8 @@ func TestIntegrationEvents(t *testing.T) {
 	// Round 2: two confirm, which is enough at the deadline; the day after
 	// the event it's done.
 	e, g := f.users[4], f.users[5]
-	event2, err := SaveEvent(ctx, f.pool, Event{
-		PlanID: planID, Round: 2, StartsAt: day(26, 14), ConfirmBy: day(25, 0), Now: day(20, 0),
+	event2, _, err := SaveEvent(ctx, f.pool, Event{
+		PlanID: planID, Round: 2, StartsAt: day(26, 14), ConfirmBy: day(25, 0), Now: day(20, 0), Next: next,
 		Scheduled: matching.Scheduled{
 			Occasion: matching.Occasion{Date: day(26, 0), Block: matching.Afternoon},
 			Groups:   []matching.Group{{Invited: ids(e, g), Quorum: 3, MinAttendance: 2, Score: 1}},
@@ -188,7 +188,7 @@ func TestIntegrationEvents(t *testing.T) {
 	if rep, err := r.Settle(ctx, f.city, day(27, 9)); err != nil || rep.Finished != 1 {
 		t.Errorf("Settle after the event = %+v, %v", rep, err)
 	}
-	if it, _, _, err := svc.Event(ctx, e, event2, day(27, 9)); err != nil || it.Status != "done" || it.GroupStatus != GroupConfirmed {
+	if it, _, _, err := svc.Event(ctx, e, event2, day(27, 9)); err != nil || it.EventStatus != EventDone || it.GroupStatus != GroupConfirmed {
 		t.Errorf("round 2 after the event: %+v, %v", it, err)
 	}
 }

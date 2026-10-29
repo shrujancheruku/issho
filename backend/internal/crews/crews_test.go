@@ -36,7 +36,7 @@ func outing(t *testing.T, f *testfixture.Fixture, people []uuid.UUID) (uuid.UUID
 		ids[i] = matching.UserID(u.String())
 	}
 	starts := day(12).Add(14 * time.Hour)
-	eventID, err := plans.SaveEvent(ctx, f.Pool, plans.Event{
+	eventID, _, err := plans.SaveEvent(ctx, f.Pool, plans.Event{
 		PlanID: planID, Round: 1, StartsAt: starts, ConfirmBy: day(11), Now: day(5),
 		Scheduled: matching.Scheduled{
 			Occasion: matching.Occasion{Date: day(12), Block: matching.Afternoon},

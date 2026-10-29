@@ -170,10 +170,7 @@ func loadWalkPlaces(ctx context.Context, q *dbgen.Queries, cityID string) (*walk
 // (a few at a time, at once); a walk that can't be composed isn't opened,
 // and matching is asked again for the next best plan in its place.
 func (r *Runner) suggest(ctx context.Context, q *dbgen.Queries, c *City, in matching.SuggestInput, w Window, now time.Time) (int, error) {
-	acts := make(map[matching.ActivityID]*matching.Activity, len(c.Activities))
-	for i := range c.Activities {
-		acts[c.Activities[i].ID] = &c.Activities[i]
-	}
+	acts := c.ActivitiesByID()
 	failures, err := q.ListRecentWalkFailures(ctx, dbgen.ListRecentWalkFailuresParams{
 		CityID: c.ID, Since: pgtype.Timestamptz{Time: now.Add(-WalkRetryAfter), Valid: true},
 	})

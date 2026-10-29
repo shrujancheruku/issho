@@ -36,7 +36,8 @@ type MatchAllArgs struct{}
 
 func (MatchAllArgs) Kind() string { return "match_all" }
 
-// MatchCityArgs runs one city's matching pass: schedule, then suggest.
+// MatchCityArgs runs one city's matching pass (plans.Runner.Match), then
+// its crews.
 type MatchCityArgs struct {
 	City string `json:"city"`
 }
@@ -91,44 +92,19 @@ const MatchCityTimeout = 20 * time.Minute
 
 func (w *matchCityWorker) Timeout(*river.Job[MatchCityArgs]) time.Duration { return MatchCityTimeout }
 
-// Work settles events whose confirmation deadline passed (people from
-// cancelled groups go back on the waiting list), then schedules (plans that
-// are scheduled or close free room under the city's cap), then suggests.
+// Work runs the city's matching pass (plans.Runner.Match), then its crews.
 func (w *matchCityWorker) Work(ctx context.Context, job *river.Job[MatchCityArgs]) error {
 	now := w.now()
-	settled, err := w.runner.Settle(ctx, job.Args.City, now)
+	rep, err := w.runner.Match(ctx, job.Args.City, now)
 	if err != nil {
-		return fmt.Errorf("settle %s: %w", job.Args.City, err)
-	}
-	rep, err := w.runner.Schedule(ctx, job.Args.City, now)
-	if err != nil {
-		return fmt.Errorf("schedule %s: %w", job.Args.City, err)
-	}
-	opened, err := w.runner.Suggest(ctx, job.Args.City, now)
-	if err != nil {
-		return fmt.Errorf("suggest %s: %w", job.Args.City, err)
-	}
-	// Meeting places for walks just opened (before routes: a walk's route
-	// starts there), then routes and their 25/30-day refresh (Maps terms).
-	// Failures are logged; plans work without either.
-	meetings, err := w.runner.RefreshMeetingPlaces(ctx, job.Args.City)
-	if err != nil {
-		w.runner.Log.Warn("meeting places", "city", job.Args.City, "err", err)
-	}
-	routes, routesCleared, err := w.runner.RefreshRoutes(ctx, job.Args.City, now)
-	if err != nil {
-		w.runner.Log.Warn("plan routes", "city", job.Args.City, "err", err)
+		return err
 	}
 	// Crews (offers, forming, weekly plan suggestions) don't hold up matching.
 	crewPass, err := w.crews.Pass(ctx, job.Args.City, now)
 	if err != nil {
 		w.runner.Log.Warn("crews", "city", job.Args.City, "err", err)
 	}
-	w.runner.Log.Info("city matched", "city", job.Args.City,
-		"groups_confirmed", settled.Confirmed, "groups_cancelled", settled.Cancelled, "events_done", settled.Finished,
-		"chat_messages_deleted", settled.ChatMessagesDeleted, "feedback_asked", settled.FeedbackAsked,
-		"checked", rep.Checked, "scheduled", rep.Scheduled, "closed", rep.Closed, "opened", opened,
-		"meeting_places", meetings, "routes", routes, "routes_cleared", routesCleared,
+	w.runner.Log.Info("city matched", "city", job.Args.City, "pass", rep,
 		"crews_offered", crewPass.Offered, "crews_formed", crewPass.Formed, "crews_lapsed", crewPass.Lapsed, "crew_suggestions", crewPass.Suggested)
 	return nil
 }

@@ -51,16 +51,11 @@ func (s *Service) RemoveFromUpcoming(ctx context.Context, userID uuid.UUID, now 
 			if err != nil {
 				return err
 			}
-			if m.EventStatus != "scheduled" || m.GroupStatus == GroupCancelled || (m.StartsAt.Valid && !now.Before(m.StartsAt.Time)) {
+			next, ok := lockedMembership(m).Leave(now)
+			if !ok {
 				return nil
 			}
-			switch m.Response {
-			case Invited:
-				return setResponse(ctx, q, m, userID, eventID, Declined, now)
-			case Confirmed:
-				return setResponse(ctx, q, m, userID, eventID, Dropped, now)
-			}
-			return nil
+			return setResponse(ctx, q, m, userID, eventID, next, now)
 		}); err != nil {
 			return err
 		}

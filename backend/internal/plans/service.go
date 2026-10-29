@@ -97,39 +97,50 @@ type Step struct {
 	Note, SecondaryNote string
 }
 
-// feed loads the caller and ranks their city's open plans for them.
-func (s *Service) feed(ctx context.Context, q *dbgen.Queries, userID uuid.UUID) ([]FeedItem, *matching.User, Caller, error) {
+// viewer is someone plans are shown to: their matching profile, who they
+// are (city, display languages) and their city's places (cached).
+type viewer struct {
+	user   *matching.User
+	caller Caller
+	city   *City
+}
+
+// loadViewer reads who's asking. ErrNoProfile means they have no profile.
+func (s *Service) loadViewer(ctx context.Context, q *dbgen.Queries, userID uuid.UUID) (viewer, error) {
 	u, caller, err := LoadUser(ctx, q, userID)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return nil, nil, caller, ErrNoProfile
+		return viewer{caller: caller}, ErrNoProfile
 	}
 	if err != nil {
-		return nil, nil, caller, err
+		return viewer{caller: caller}, err
 	}
-	cityID := caller.City
 	// Any month: a plan that's open stays shown whatever the season.
-	c, err := s.places(ctx, q, cityID)
+	c, err := s.places(ctx, q, caller.City)
 	if err != nil {
-		return nil, nil, caller, err
+		return viewer{caller: caller}, err
 	}
-	acts := make(map[matching.ActivityID]*matching.Activity, len(c.Activities))
-	for i := range c.Activities {
-		acts[c.Activities[i].ID] = &c.Activities[i]
-	}
-	open, err := ListOpen(ctx, q, cityID)
-	if err != nil {
-		return nil, nil, caller, err
-	}
-	// The worker withdraws plans whose activity was disabled; until it runs,
-	// they're hidden.
+	return viewer{user: u, caller: caller, city: c}, nil
+}
+
+// see returns open plans as v sees them, best first (matching.Feed): their
+// level, travel time, friends signed up, whether they signed up, and titles.
+// The feed passes every open plan in the city; a plan's screen and signing
+// up pass just that one, since each plan is judged on its own. Plans whose
+// activity was disabled are left out: the worker withdraws them, and until
+// it runs they're hidden.
+func (s *Service) see(ctx context.Context, q *dbgen.Queries, v viewer, userID uuid.UUID, open []Open) ([]FeedItem, error) {
+	acts := v.city.ActivitiesByID()
 	open = slices.DeleteFunc(open, func(p Open) bool { return acts[p.Activity] == nil })
+	if len(open) == 0 {
+		return nil, nil
+	}
 	mine, err := q.ListUserOpenSignups(ctx, userID)
 	if err != nil {
-		return nil, nil, caller, err
+		return nil, err
 	}
-	friends, err := s.friendsInterested(ctx, q, userID, cityID, open)
+	friends, err := s.friendsInterested(ctx, q, userID, v.caller.City, open)
 	if err != nil {
-		return nil, nil, caller, err
+		return nil, err
 	}
 	plans := make([]matching.OpenPlan, len(open))
 	// matching.Feed returns plans, not ids; Suggest never opens the same
@@ -139,7 +150,7 @@ func (s *Service) feed(ctx context.Context, q *dbgen.Queries, userID uuid.UUID) 
 		plans[i] = p.OpenPlan
 		byPlan[p.Plan] = append(byPlan[p.Plan], p)
 	}
-	ranked := matching.Feed(u, plans, acts, c.Travel, c.Config, friends)
+	ranked := matching.Feed(v.user, plans, acts, v.city.Travel, v.city.Config, friends)
 	out := make([]FeedItem, len(ranked))
 	for i, r := range ranked {
 		p := byPlan[r.Plan][0]
@@ -150,14 +161,14 @@ func (s *Service) feed(ctx context.Context, q *dbgen.Queries, userID uuid.UUID) 
 	for i := range out {
 		named[i] = titled{out[i].Plan, out[i].WalkTitle}
 	}
-	titles, secondary, err := s.titles(ctx, q, cityID, caller, named)
+	titles, secondary, err := s.titles(ctx, q, v.caller.City, v.caller, named)
 	if err != nil {
-		return nil, nil, caller, err
+		return nil, err
 	}
 	for i := range out {
 		out[i].Title, out[i].SecondaryTitle = titles[i], secondary[i]
 	}
-	return out, u, caller, nil
+	return out, nil
 }
 
 // Contexts tell the translator what the text is.
@@ -289,17 +300,31 @@ func (s *Service) friendsInterested(ctx context.Context, q *dbgen.Queries, userI
 
 // Feed returns every open plan in the caller's city, best for them first.
 func (s *Service) Feed(ctx context.Context, userID uuid.UUID) ([]FeedItem, error) {
-	items, _, _, err := s.feed(ctx, dbgen.New(s.DB), userID)
-	return items, err
+	q := dbgen.New(s.DB)
+	v, err := s.loadViewer(ctx, q, userID)
+	if err != nil {
+		return nil, err
+	}
+	open, err := ListOpen(ctx, q, v.caller.City)
+	if err != nil {
+		return nil, err
+	}
+	return s.see(ctx, q, v, userID, open)
 }
 
-// Plan returns one open plan as the caller sees it, its steps, and their
-// signup (nil if they haven't signed up).
-func (s *Service) Plan(ctx context.Context, userID, planID uuid.UUID) (FeedItem, []Step, *matching.Signup, error) {
+// Plan returns one plan as the caller sees it, its steps, and their signup
+// (nil if they haven't signed up): an open one, or one that closed less
+// than ShowClosedFor before now.
+func (s *Service) Plan(ctx context.Context, userID, planID uuid.UUID, now time.Time) (FeedItem, []Step, *matching.Signup, error) {
 	q := dbgen.New(s.DB)
-	item, _, caller, err := s.find(ctx, q, userID, planID)
+	v, err := s.loadViewer(ctx, q, userID)
+	if err != nil {
+		return FeedItem{}, nil, nil, err
+	}
+	caller := v.caller
+	item, err := s.openPlan(ctx, q, v, userID, planID)
 	if errors.Is(err, ErrNotFound) {
-		item, err = s.closedPlan(ctx, q, caller, userID, planID)
+		item, err = s.closedPlan(ctx, q, caller, userID, planID, now)
 	}
 	if err != nil {
 		return item, nil, nil, err
@@ -416,17 +441,24 @@ func walkMinutes(a, b maps.LatLng) int {
 	return max(1, int(math.Ceil(maps.DistanceM(a, b)*1.3/80)))
 }
 
-func (s *Service) find(ctx context.Context, q *dbgen.Queries, userID, planID uuid.UUID) (FeedItem, *matching.User, Caller, error) {
-	items, u, caller, err := s.feed(ctx, q, userID)
+// openPlan returns one open plan in the caller's city as they see it, or
+// ErrNotFound.
+func (s *Service) openPlan(ctx context.Context, q *dbgen.Queries, v viewer, userID, planID uuid.UUID) (FeedItem, error) {
+	r, err := q.GetOpenPlan(ctx, dbgen.GetOpenPlanParams{ID: planID, CityID: v.caller.City})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return FeedItem{}, ErrNotFound
+	}
 	if err != nil {
-		return FeedItem{}, nil, caller, err
+		return FeedItem{}, err
 	}
-	for _, it := range items {
-		if it.ID == planID {
-			return it, u, caller, nil
-		}
+	items, err := s.see(ctx, q, v, userID, []Open{openFromRow(dbgen.ListOpenPlansRow(r))})
+	if err != nil {
+		return FeedItem{}, err
 	}
-	return FeedItem{}, nil, caller, ErrNotFound
+	if len(items) == 0 {
+		return FeedItem{}, ErrNotFound
+	}
+	return items[0], nil
 }
 
 // ShowClosedFor is how long a closed plan's screen stays available, so a
@@ -435,10 +467,10 @@ const ShowClosedFor = 14 * 24 * time.Hour
 
 // closedPlan returns a plan in the caller's city that closed within
 // ShowClosedFor, unranked (Level and Minutes don't matter once closed).
-func (s *Service) closedPlan(ctx context.Context, q *dbgen.Queries, caller Caller, userID, planID uuid.UUID) (FeedItem, error) {
+func (s *Service) closedPlan(ctx context.Context, q *dbgen.Queries, caller Caller, userID, planID uuid.UUID, now time.Time) (FeedItem, error) {
 	r, err := q.GetRecentlyClosedPlan(ctx, dbgen.GetRecentlyClosedPlanParams{
 		ID: planID, CityID: caller.City,
-		Since: pgtype.Timestamptz{Time: time.Now().Add(-ShowClosedFor), Valid: true},
+		Since: pgtype.Timestamptz{Time: now.Add(-ShowClosedFor), Valid: true},
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
 		return FeedItem{}, ErrNotFound
@@ -469,7 +501,11 @@ func (s *Service) closedPlan(ctx context.Context, q *dbgen.Queries, caller Calle
 // signup.User is set from userID.
 func (s *Service) SignUp(ctx context.Context, userID, planID uuid.UUID, signup matching.Signup) (FeedItem, error) {
 	q := dbgen.New(s.DB)
-	item, _, _, err := s.find(ctx, q, userID, planID)
+	v, err := s.loadViewer(ctx, q, userID)
+	if err != nil {
+		return FeedItem{}, err
+	}
+	item, err := s.openPlan(ctx, q, v, userID, planID)
 	if err != nil {
 		return FeedItem{}, err
 	}

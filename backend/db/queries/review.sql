@@ -51,16 +51,12 @@ where id = @id and status = 'draft';
 
 -- name: RejectDraft :execrows
 update app.plans
-set status = 'closed', closed_reason = 'rejected', closed_at = @at, reviewed_by = @reviewed_by, reviewed_at = @at
+set status = 'closed', closed_reason = @reason::text, closed_at = @at, reviewed_by = @reviewed_by, reviewed_at = @at
 where id = @id and status = 'draft';
 
 -- name: EditPlanText :execrows
 update app.plans set title = sqlc.narg(title), description = sqlc.narg(description)
 where id = @id and status in ('draft', 'open');
-
--- name: WithdrawPlan :execrows
-update app.plans set status = 'closed', closed_reason = 'withdrawn', closed_at = @at
-where id = @id and status = 'open';
 
 -- Venues for an activity in an area, as PickVenue would choose from: one
 -- row per place (a place can be in two categories), approved first.
@@ -161,9 +157,6 @@ where g.event_id = $1 and not exists (select 1 from app.group_members m where m.
 
 -- name: ListEventMemberIDs :many
 select user_id from app.group_members where event_id = $1 order by user_id;
-
--- name: CountPlanSignups :one
-select count(*)::int from app.plan_signups where plan_id = $1;
 
 -- name: ApproveProposalEvent :exec
 update app.events set status = 'scheduled', reviewed_by = @reviewed_by, reviewed_at = @at

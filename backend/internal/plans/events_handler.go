@@ -289,9 +289,9 @@ func eventError(err error) error {
 
 var (
 	eventStatusPB = map[string]isshov1.EventStatus{
-		"scheduled": isshov1.EventStatus_EVENT_STATUS_SCHEDULED,
-		"done":      isshov1.EventStatus_EVENT_STATUS_DONE,
-		"cancelled": isshov1.EventStatus_EVENT_STATUS_CANCELLED,
+		EventScheduled: isshov1.EventStatus_EVENT_STATUS_SCHEDULED,
+		EventDone:      isshov1.EventStatus_EVENT_STATUS_DONE,
+		EventCancelled: isshov1.EventStatus_EVENT_STATUS_CANCELLED,
 	}
 	groupStatusPB = map[string]isshov1.GroupStatus{
 		GroupInviting:  isshov1.GroupStatus_GROUP_STATUS_INVITING,
@@ -314,7 +314,7 @@ func timestamp(t time.Time) *timestamppb.Timestamp {
 }
 
 func eventToProto(it EventItem) *isshov1.MyEvent {
-	return &isshov1.MyEvent{
+	e := &isshov1.MyEvent{
 		Id:                 it.ID.String(),
 		PlanId:             it.PlanID.String(),
 		Title:              it.Title,
@@ -328,19 +328,23 @@ func eventToProto(it EventItem) *isshov1.MyEvent {
 		Block:              blocksPB[it.Block],
 		StartsAt:           timestamp(it.StartsAt),
 		ConfirmBy:          timestamp(it.ConfirmBy),
-		Status:             eventStatusPB[it.Status],
+		Status:             eventStatusPB[it.EventStatus],
 		GroupStatus:        groupStatusPB[it.GroupStatus],
 		Response:           responsePB[it.Response],
 		Confirmed:          int32(it.Confirmed),
 		Quorum:             int32(it.Quorum),
 		MinAttendance:      int32(it.MinAttendance),
 		MeetingPoint:       it.MeetingPoint,
-		RevealAt:           timestamp(it.RevealAt),
+		RevealAt:           timestamp(it.RevealAt()),
 		CheckedIn:          it.CheckedIn,
-		CheckInFrom:        timestamp(it.CheckInFrom),
-		CheckInUntil:       timestamp(it.CheckInUntil),
-		FeedbackFrom:       timestamp(it.FeedbackFrom),
-		FeedbackUntil:      timestamp(it.FeedbackUntil),
 		FeedbackGiven:      it.FeedbackGiven,
+		ReportUntil:        timestamp(it.ReportUntil()),
 	}
+	from, until := it.CheckInWindow()
+	e.CheckInFrom, e.CheckInUntil = timestamp(from), timestamp(until)
+	// Unset unless they went ahead with their group.
+	if from, until, err := it.FeedbackWindow(); err == nil {
+		e.FeedbackFrom, e.FeedbackUntil = timestamp(from), timestamp(until)
+	}
+	return e
 }

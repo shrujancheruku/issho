@@ -28,26 +28,16 @@ type ChatState struct {
 	Open              bool      // writable now
 }
 
-// chatAccess checks the caller may read the event's group chat: they
-// confirmed, and the group and event aren't cancelled.
+// chatAccess checks the caller may read the event's group chat
+// (Membership.Chat) and says when it's open for writing.
 func chatAccess(ctx context.Context, q *dbgen.Queries, userID, eventID uuid.UUID, now time.Time) (ChatState, error) {
-	r, err := q.GetChatAccess(ctx, dbgen.GetChatAccessParams{EventID: eventID, UserID: userID})
-	if errors.Is(err, pgx.ErrNoRows) {
-		return ChatState{}, ErrNoEvent
-	}
+	groupID, m, err := loadMembership(ctx, q, userID, eventID)
 	if err != nil {
 		return ChatState{}, err
 	}
-	if r.Response != Confirmed {
-		return ChatState{}, ErrNotGoing
-	}
-	if r.GroupStatus == GroupCancelled || r.EventStatus == "cancelled" {
-		return ChatState{}, ErrEventOver
-	}
-	st := ChatState{GroupID: r.GroupID}
-	if r.StartsAt.Valid {
-		st.OpensAt, st.ClosesAt = r.StartsAt.Time.Add(-chat.OpensBefore), r.StartsAt.Time.Add(chat.ClosesAfter)
-		st.Open = !now.Before(st.OpensAt) && now.Before(st.ClosesAt)
+	st := ChatState{GroupID: groupID}
+	if st.OpensAt, st.ClosesAt, st.Open, err = m.Chat(now); err != nil {
+		return ChatState{}, err
 	}
 	return st, nil
 }
