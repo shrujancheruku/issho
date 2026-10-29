@@ -111,11 +111,11 @@ func TestIntegrationReview(t *testing.T) {
 	if _, err := h.RejectPlan(adminCtx, connect.NewRequest(&isshov1.RejectPlanRequest{PlanId: other.String()})); err != nil {
 		t.Fatal(err)
 	}
-	failed, err := f.q.ListRecentlyFailedPlans(ctx, dbgen.ListRecentlyFailedPlansParams{CityID: f.city, Since: pgtype.Timestamptz{Time: now.Add(-time.Hour), Valid: true}})
+	failed, err := f.q.ListRecentlyFailedPlans(ctx, dbgen.ListRecentlyFailedPlansParams{CityID: f.city, Reasons: failedReasons, Since: pgtype.Timestamptz{Time: now.Add(-time.Hour), Valid: true}})
 	if err != nil || len(failed) != 1 || failed[0].PrimaryLanguage != "en" {
 		t.Fatalf("recently failed after a rejection = %+v, %v", failed, err)
 	}
-	if closed := list(isshov1.ReviewPlanStatus_REVIEW_PLAN_STATUS_CLOSED); len(closed) != 1 || closed[0].ClosedReason != "rejected" {
+	if closed := list(isshov1.ReviewPlanStatus_REVIEW_PLAN_STATUS_CLOSED); len(closed) != 1 || closed[0].ClosedReason != ClosedRejected {
 		t.Fatalf("closed = %v", closed)
 	}
 

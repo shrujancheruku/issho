@@ -33,7 +33,7 @@ func feedbackEvent(t *testing.T, f *fixture, invited []uuid.UUID, confirm int) (
 		ids[i] = matching.UserID(u.String())
 	}
 	starts := day(12).Add(14 * time.Hour)
-	eventID, err := SaveEvent(ctx, f.pool, Event{
+	eventID, _, err := SaveEvent(ctx, f.pool, Event{
 		PlanID: planID, Round: 1, StartsAt: starts, ConfirmBy: day(11), Now: day(5),
 		Scheduled: matching.Scheduled{
 			Occasion: matching.Occasion{Date: day(12), Block: matching.Afternoon},

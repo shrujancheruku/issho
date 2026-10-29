@@ -93,7 +93,7 @@ order by f.user_id, f.activity_id;
 -- name: ListRecentlyFailedPlans :many
 select area_id, activity_id, follow_up_id, primary_language, secondary_language
 from app.plans
-where city_id = @city_id and closed_reason in ('no_group', 'rejected') and closed_at >= @since;
+where city_id = @city_id and closed_reason = any(@reasons::text[]) and closed_at >= @since;
 
 -- One person and their city, for their feed.
 -- One person for matching, with their languages, availability and activity

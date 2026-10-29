@@ -12,7 +12,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const closePlan = `-- name: ClosePlan :exec
+const closePlan = `-- name: ClosePlan :execrows
 update app.plans set status = 'closed', closed_reason = $1::text, closed_at = $2
 where id = $3 and status = 'open'
 `
@@ -23,9 +23,12 @@ type ClosePlanParams struct {
 	ID       uuid.UUID
 }
 
-func (q *Queries) ClosePlan(ctx context.Context, arg ClosePlanParams) error {
-	_, err := q.db.Exec(ctx, closePlan, arg.Reason, arg.ClosedAt, arg.ID)
-	return err
+func (q *Queries) ClosePlan(ctx context.Context, arg ClosePlanParams) (int64, error) {
+	result, err := q.db.Exec(ctx, closePlan, arg.Reason, arg.ClosedAt, arg.ID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const closePlanNoGroup = `-- name: ClosePlanNoGroup :exec
@@ -49,6 +52,28 @@ type ClosePlanNoGroupParams struct {
 func (q *Queries) ClosePlanNoGroup(ctx context.Context, arg ClosePlanNoGroupParams) error {
 	_, err := q.db.Exec(ctx, closePlanNoGroup, arg.ClosedAt, arg.ID)
 	return err
+}
+
+const countWaitingSignups = `-- name: CountWaitingSignups :one
+select count(*)::int
+from app.plan_signups s
+join app.plans pl on pl.id = s.plan_id
+join app.profiles p on p.user_id = s.user_id
+join app.areas a on a.id = p.home_area_id and a.city_id = pl.city_id
+join app.users u on u.id = s.user_id
+where s.plan_id = $1 and u.deleted_at is null
+  and not exists (select 1 from app.suspensions x where x.user_id = s.user_id and x.lifted_at is null)
+`
+
+// People still waiting for a plan whom matching would still place: they
+// live in the plan's city and aren't deleted or suspended (as
+// ListMatchingUsers). Once a round's invitations go out, this decides
+// between a next round and closing the plan as done.
+func (q *Queries) CountWaitingSignups(ctx context.Context, planID uuid.UUID) (int32, error) {
+	row := q.db.QueryRow(ctx, countWaitingSignups, planID)
+	var column_1 int32
+	err := row.Scan(&column_1)
+	return column_1, err
 }
 
 const deleteSignup = `-- name: DeleteSignup :exec

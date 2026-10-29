@@ -69,7 +69,7 @@ where p.id = $1;
 -- name: LockOpenPlan :one
 select round from app.plans where id = $1 and status = 'open' for update;
 
--- name: ClosePlan :exec
+-- name: ClosePlan :execrows
 update app.plans set status = 'closed', closed_reason = @reason::text, closed_at = @closed_at
 where id = @id and status = 'open';
 
@@ -84,6 +84,20 @@ with closed as (
 )
 insert into app.notifications (user_id, kind, plan_id)
 select s.user_id, 'plan_no_group', s.plan_id from app.plan_signups s join closed c on c.id = s.plan_id;
+
+-- People still waiting for a plan whom matching would still place: they
+-- live in the plan's city and aren't deleted or suspended (as
+-- ListMatchingUsers). Once a round's invitations go out, this decides
+-- between a next round and closing the plan as done.
+-- name: CountWaitingSignups :one
+select count(*)::int
+from app.plan_signups s
+join app.plans pl on pl.id = s.plan_id
+join app.profiles p on p.user_id = s.user_id
+join app.areas a on a.id = p.home_area_id and a.city_id = pl.city_id
+join app.users u on u.id = s.user_id
+where s.plan_id = $1 and u.deleted_at is null
+  and not exists (select 1 from app.suspensions x where x.user_id = s.user_id and x.lifted_at is null);
 
 -- name: NextPlanRound :exec
 update app.plans

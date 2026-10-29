@@ -44,8 +44,8 @@ func TestIntegrationEvents(t *testing.T) {
 	a, b, c, d := f.users[0], f.users[1], f.users[2], f.users[3]
 	starts, confirmBy := day(12, 14), day(11, 0)
 	next := Window{Start: day(21, 0), Days: 14, Deadline: day(28, 0)}
-	eventID, err := SaveEvent(ctx, f.pool, Event{
-		PlanID: planID, Round: 1, StartsAt: starts, ConfirmBy: confirmBy, Next: &next, Now: day(5, 0),
+	eventID, _, err := SaveEvent(ctx, f.pool, Event{
+		PlanID: planID, Round: 1, StartsAt: starts, ConfirmBy: confirmBy, Next: next, Now: day(5, 0),
 		Scheduled: matching.Scheduled{
 			Occasion: matching.Occasion{Date: day(12, 0), Block: matching.Afternoon},
 			Groups:   []matching.Group{{Invited: ids(a, b, c, d), Quorum: 3, MinAttendance: 2, Score: 1}},
@@ -167,8 +167,8 @@ func TestIntegrationEvents(t *testing.T) {
 	// Round 2: two confirm, which is enough at the deadline; the day after
 	// the event it's done.
 	e, g := f.users[4], f.users[5]
-	event2, err := SaveEvent(ctx, f.pool, Event{
-		PlanID: planID, Round: 2, StartsAt: day(26, 14), ConfirmBy: day(25, 0), Now: day(20, 0),
+	event2, _, err := SaveEvent(ctx, f.pool, Event{
+		PlanID: planID, Round: 2, StartsAt: day(26, 14), ConfirmBy: day(25, 0), Now: day(20, 0), Next: next,
 		Scheduled: matching.Scheduled{
 			Occasion: matching.Occasion{Date: day(26, 0), Block: matching.Afternoon},
 			Groups:   []matching.Group{{Invited: ids(e, g), Quorum: 3, MinAttendance: 2, Score: 1}},

@@ -22,13 +22,6 @@ import (
 // ErrClosed means the plan doesn't exist or no longer takes signups.
 var ErrClosed = errors.New("plan is not open")
 
-// Close reasons (app.plans.closed_reason).
-const (
-	ClosedDone      = "done"      // scheduled, nobody left waiting
-	ClosedNoGroup   = "no_group"  // the deadline passed and no group could form
-	ClosedWithdrawn = "withdrawn" // taken down
-)
-
 // wholeDay stands for matching's whole-day Occasion (Block "") in
 // app.plan_signup_unavailable, whose primary key can't hold a null.
 const wholeDay = "day"
@@ -110,13 +103,6 @@ func openFromRow(r dbgen.ListOpenPlansRow) Open {
 func Create(ctx context.Context, q *dbgen.Queries, cityID string, s matching.Suggestion, w Window, acts map[matching.ActivityID]*matching.Activity) (uuid.UUID, error) {
 	return create(ctx, q, cityID, s, w, acts, PlanOpen)
 }
-
-// Plan states (app.plans.status).
-const (
-	PlanDraft  = "draft" // waiting for an admin, in a city under review
-	PlanOpen   = "open"
-	PlanClosed = "closed"
-)
 
 // create is Create with the plan's status: open, or a draft in a city
 // under review.
@@ -279,9 +265,10 @@ type Event struct {
 	StartsAt  time.Time // zero = not set
 	ConfirmBy time.Time
 	Forced    bool
-	// Next is the plan's next round, for whoever is still waiting; nil
-	// closes the plan as done, at Now.
-	Next *Window
+	// Next is the plan's next round, if anyone is still waiting once the
+	// invitations go out (startRound); otherwise the plan closes as done,
+	// at Now.
+	Next Window
 	Now  time.Time
 	// Propose saves the round for an admin to review (a city under review,
 	// 00022): the event and its groups, but nobody is invited or told, and
@@ -303,13 +290,12 @@ const (
 )
 
 // SaveEvent stores a scheduled round: the event, its groups and their
-// invitations. Everyone invited stops waiting; the rest stay signed up for
-// the next round, which starts in the same transaction, so a crash can't
-// leave a round scheduled but still open. It fails with ErrClosed if the
-// plan closed or moved to another round in the meantime.
-func SaveEvent(ctx context.Context, pool *pgxpool.Pool, e Event) (uuid.UUID, error) {
-	var eventID uuid.UUID
-	err := pgx.BeginFunc(ctx, pool, func(tx pgx.Tx) error {
+// invitations, which go out (startRound) in the same transaction, so a
+// crash can't leave a round scheduled but still open. closed is whether the
+// plan closed as done, with nobody left waiting. It fails with ErrClosed if
+// the plan closed or moved to another round in the meantime.
+func SaveEvent(ctx context.Context, pool *pgxpool.Pool, e Event) (eventID uuid.UUID, closed bool, err error) {
+	err = pgx.BeginFunc(ctx, pool, func(tx pgx.Tx) error {
 		q := dbgen.New(tx)
 		round, err := q.LockOpenPlan(ctx, e.PlanID)
 		if errors.Is(err, pgx.ErrNoRows) || (err == nil && int(round) != e.Round) {
@@ -361,37 +347,13 @@ func SaveEvent(ctx context.Context, pool *pgxpool.Pool, e Event) (uuid.UUID, err
 		if e.Propose {
 			return nil // ApproveProposal invites them and moves the plan on
 		}
-		if err := q.DeleteSignups(ctx, dbgen.DeleteSignupsParams{PlanID: e.PlanID, UserIds: invited}); err != nil {
-			return err
-		}
-		if err := notify(ctx, q, NotifyInvited, eventID, invited); err != nil {
-			return err
-		}
-		if e.Next == nil {
-			return Close(ctx, q, e.PlanID, ClosedDone, e.Now)
-		}
-		return NextRound(ctx, q, e.PlanID, *e.Next)
+		closed, err = startRound(ctx, q, e.PlanID, eventID, invited, func() (Window, error) { return e.Next, nil }, e.Now)
+		return err
 	})
 	if err != nil {
-		return uuid.Nil, err
+		return uuid.Nil, false, err
 	}
-	return eventID, nil
-}
-
-// NextRound moves a plan to its next round, keeping whoever is still signed up.
-func NextRound(ctx context.Context, q *dbgen.Queries, planID uuid.UUID, w Window) error {
-	return q.NextPlanRound(ctx, dbgen.NextPlanRoundParams{
-		ID:             planID,
-		WindowStart:    date(w.Start),
-		WindowDays:     int16(w.Days),
-		SignupDeadline: pgtype.Timestamptz{Time: w.Deadline, Valid: true},
-	})
-}
-
-// Close stops a plan taking signups at the given time; reason is one of the
-// Closed* constants.
-func Close(ctx context.Context, q *dbgen.Queries, planID uuid.UUID, reason string, at time.Time) error {
-	return q.ClosePlan(ctx, dbgen.ClosePlanParams{ID: planID, Reason: reason, ClosedAt: pgtype.Timestamptz{Time: at, Valid: true}})
+	return eventID, closed, nil
 }
 
 func date(t time.Time) pgtype.Date { return pgtype.Date{Time: t, Valid: true} }

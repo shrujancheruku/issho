@@ -228,7 +228,7 @@ func (r *Runner) Suggest(ctx context.Context, cityID string, now time.Time) (int
 		return 0, err
 	}
 	failed, err := q.ListRecentlyFailedPlans(ctx, dbgen.ListRecentlyFailedPlansParams{
-		CityID: cityID, Since: pgtype.Timestamptz{Time: now.Add(-r.Timing.Cooldown), Valid: true},
+		CityID: cityID, Reasons: failedReasons, Since: pgtype.Timestamptz{Time: now.Add(-r.Timing.Cooldown), Valid: true},
 	})
 	if err != nil {
 		return 0, err
@@ -387,16 +387,13 @@ func (r *Runner) schedulePlan(ctx context.Context, q *dbgen.Queries, c *City, us
 		Propose:   c.Review,
 		StartsAt:  r.Timing.startsAt(res.Occasion, c.Location),
 		ConfirmBy: confirmBy(res.Occasion, c.Location),
+		Next:      r.Timing.Round(now, c.Location),
 	}
 	invited := 0
 	for _, g := range res.Groups {
 		invited += len(g.Invited)
 	}
-	if invited < len(signups) {
-		next := r.Timing.Round(now, c.Location)
-		ev.Next = &next
-	}
-	id, err := SaveEvent(ctx, r.DB, ev)
+	id, done, err := SaveEvent(ctx, r.DB, ev)
 	if errors.Is(err, ErrClosed) {
 		// Closed or scheduled by someone else since ListOpen.
 		return 0, 0, nil
@@ -411,7 +408,7 @@ func (r *Runner) schedulePlan(ctx context.Context, q *dbgen.Queries, c *City, us
 	}
 	r.Log.Info("plan scheduled", "city", c.ID, "plan", p.ID, "event", id, "date", res.Occasion.Date.Format(time.DateOnly),
 		"block", res.Occasion.Block, "groups", len(res.Groups), "invited", invited, "waiting", len(signups)-invited, "forced", force)
-	if ev.Next == nil {
+	if done {
 		return 1, 1, nil
 	}
 	return 0, 1, nil

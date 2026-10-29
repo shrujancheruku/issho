@@ -74,7 +74,7 @@ func TestIntegrationNotifications(t *testing.T) {
 		t.Fatal(err)
 	}
 	invited := []matching.UserID{matching.UserID(a.String()), matching.UserID(b.String()), matching.UserID(c.String())}
-	eventID, err := SaveEvent(ctx, f.pool, Event{
+	eventID, _, err := SaveEvent(ctx, f.pool, Event{
 		PlanID: planID, Round: 1, StartsAt: day(12).Add(14 * time.Hour), ConfirmBy: day(11), Now: day(5),
 		Scheduled: matching.Scheduled{
 			Occasion: matching.Occasion{Date: day(12), Block: matching.Afternoon},

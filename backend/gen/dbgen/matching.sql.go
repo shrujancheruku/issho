@@ -429,12 +429,13 @@ func (q *Queries) ListMatchingUsers(ctx context.Context, cityID string) ([]ListM
 const listRecentlyFailedPlans = `-- name: ListRecentlyFailedPlans :many
 select area_id, activity_id, follow_up_id, primary_language, secondary_language
 from app.plans
-where city_id = $1 and closed_reason in ('no_group', 'rejected') and closed_at >= $2
+where city_id = $1 and closed_reason = any($2::text[]) and closed_at >= $3
 `
 
 type ListRecentlyFailedPlansParams struct {
-	CityID string
-	Since  pgtype.Timestamptz
+	CityID  string
+	Reasons []string
+	Since   pgtype.Timestamptz
 }
 
 type ListRecentlyFailedPlansRow struct {
@@ -449,7 +450,7 @@ type ListRecentlyFailedPlansRow struct {
 // recently: not suggested again until the cool-down passes, or the same
 // plan would come back the next morning.
 func (q *Queries) ListRecentlyFailedPlans(ctx context.Context, arg ListRecentlyFailedPlansParams) ([]ListRecentlyFailedPlansRow, error) {
-	rows, err := q.db.Query(ctx, listRecentlyFailedPlans, arg.CityID, arg.Since)
+	rows, err := q.db.Query(ctx, listRecentlyFailedPlans, arg.CityID, arg.Reasons, arg.Since)
 	if err != nil {
 		return nil, err
 	}

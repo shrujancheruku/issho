@@ -17,6 +17,10 @@ func TestIntegrationStore(t *testing.T) {
 	ctx, pool, q, users := context.Background(), f.pool, f.q, f.users
 	city, area, act := f.city, matching.AreaID(f.area), matching.ActivityID(f.act)
 	uid := func(i int) matching.UserID { return matching.UserID(users[i].String()) }
+	// Only people living in the city count as waiting for a next round.
+	for _, u := range users {
+		f.addProfile(t, u, "ja")
+	}
 	day := func(d int) time.Time { return time.Date(2030, 1, d, 0, 0, 0, 0, time.UTC) }
 
 	w := Window{Start: day(7), Days: 14, Deadline: time.Date(2030, 1, 20, 12, 0, 0, 0, time.UTC)}
@@ -62,16 +66,16 @@ func TestIntegrationStore(t *testing.T) {
 	occasion := matching.Occasion{Date: day(13), Block: matching.Evening}
 	next := Window{Start: day(21), Days: 14, Deadline: day(30)}
 	ev := Event{
-		PlanID: planID, Round: 1, ConfirmBy: day(11), Next: &next,
+		PlanID: planID, Round: 1, ConfirmBy: day(11), Next: next,
 		Scheduled: matching.Scheduled{
 			Occasion: occasion,
 			Groups:   []matching.Group{{Invited: []matching.UserID{uid(0), uid(1)}, Quorum: 2, MinAttendance: 2, Score: 1.5}},
 		},
 	}
-	if _, err := SaveEvent(ctx, pool, Event{PlanID: planID, Round: 2, Scheduled: ev.Scheduled, ConfirmBy: day(11)}); !errors.Is(err, ErrClosed) {
+	if _, _, err := SaveEvent(ctx, pool, Event{PlanID: planID, Round: 2, Scheduled: ev.Scheduled, ConfirmBy: day(11)}); !errors.Is(err, ErrClosed) {
 		t.Errorf("SaveEvent for a round that isn't current: %v, want ErrClosed", err)
 	}
-	if _, err := SaveEvent(ctx, pool, ev); err != nil {
+	if _, _, err := SaveEvent(ctx, pool, ev); err != nil {
 		t.Fatal(err)
 	}
 	// Invited people stop waiting; the third stays for the next round,

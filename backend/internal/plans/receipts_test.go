@@ -33,7 +33,7 @@ func TestIntegrationPushReceipts(t *testing.T) {
 	for _, u := range f.users {
 		invited = append(invited, matching.UserID(u.String()))
 	}
-	if _, err := SaveEvent(ctx, f.pool, Event{
+	if _, _, err := SaveEvent(ctx, f.pool, Event{
 		PlanID: planID, Round: 1, StartsAt: day(12).Add(14 * time.Hour), ConfirmBy: day(11), Now: day(5),
 		Scheduled: matching.Scheduled{
 			Occasion: matching.Occasion{Date: day(12), Block: matching.Afternoon},

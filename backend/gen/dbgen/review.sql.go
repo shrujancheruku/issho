@@ -69,17 +69,6 @@ func (q *Queries) ClearPlanRoute(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
-const countPlanSignups = `-- name: CountPlanSignups :one
-select count(*)::int from app.plan_signups where plan_id = $1
-`
-
-func (q *Queries) CountPlanSignups(ctx context.Context, planID uuid.UUID) (int32, error) {
-	row := q.db.QueryRow(ctx, countPlanSignups, planID)
-	var column_1 int32
-	err := row.Scan(&column_1)
-	return column_1, err
-}
-
 const deleteEmptyGroups = `-- name: DeleteEmptyGroups :exec
 delete from app.event_groups g
 where g.event_id = $1 and not exists (select 1 from app.group_members m where m.group_id = g.id)
@@ -783,18 +772,24 @@ func (q *Queries) MoveProposalMember(ctx context.Context, arg MoveProposalMember
 
 const rejectDraft = `-- name: RejectDraft :execrows
 update app.plans
-set status = 'closed', closed_reason = 'rejected', closed_at = $1, reviewed_by = $2, reviewed_at = $1
-where id = $3 and status = 'draft'
+set status = 'closed', closed_reason = $1::text, closed_at = $2, reviewed_by = $3, reviewed_at = $2
+where id = $4 and status = 'draft'
 `
 
 type RejectDraftParams struct {
+	Reason     string
 	At         pgtype.Timestamptz
 	ReviewedBy pgtype.UUID
 	ID         uuid.UUID
 }
 
 func (q *Queries) RejectDraft(ctx context.Context, arg RejectDraftParams) (int64, error) {
-	result, err := q.db.Exec(ctx, rejectDraft, arg.At, arg.ReviewedBy, arg.ID)
+	result, err := q.db.Exec(ctx, rejectDraft,
+		arg.Reason,
+		arg.At,
+		arg.ReviewedBy,
+		arg.ID,
+	)
 	if err != nil {
 		return 0, err
 	}
@@ -889,22 +884,4 @@ func (q *Queries) SetProposalStart(ctx context.Context, arg SetProposalStartPara
 		arg.ID,
 	)
 	return err
-}
-
-const withdrawPlan = `-- name: WithdrawPlan :execrows
-update app.plans set status = 'closed', closed_reason = 'withdrawn', closed_at = $1
-where id = $2 and status = 'open'
-`
-
-type WithdrawPlanParams struct {
-	At pgtype.Timestamptz
-	ID uuid.UUID
-}
-
-func (q *Queries) WithdrawPlan(ctx context.Context, arg WithdrawPlanParams) (int64, error) {
-	result, err := q.db.Exec(ctx, withdrawPlan, arg.At, arg.ID)
-	if err != nil {
-		return 0, err
-	}
-	return result.RowsAffected(), nil
 }

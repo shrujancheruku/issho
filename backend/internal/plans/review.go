@@ -175,32 +175,8 @@ func (h *ReviewHandler) ApprovePlan(ctx context.Context, req *connect.Request[is
 	if err != nil {
 		return nil, err
 	}
-	q := dbgen.New(h.Svc.DB)
-	p, err := q.GetReviewPlan(ctx, id)
-	if errors.Is(err, pgx.ErrNoRows) {
-		return nil, connect.NewError(connect.CodeNotFound, errors.New("no such plan"))
-	}
-	if err != nil {
-		return nil, err
-	}
-	loc, err := location(ctx, q, p.CityID)
-	if err != nil {
-		return nil, err
-	}
-	// A draft may have waited days: its round starts now, as if just
-	// suggested.
-	now := h.now()
-	w := h.Timing.Round(now, loc)
-	n, err := q.ApproveDraft(ctx, dbgen.ApproveDraftParams{
-		ID: id, WindowStart: date(w.Start), WindowDays: int16(w.Days),
-		SignupDeadline: pgtype.Timestamptz{Time: w.Deadline, Valid: true},
-		ReviewedBy:     pgtype.UUID{Bytes: c.UserID, Valid: true}, At: pgtype.Timestamptz{Time: now, Valid: true},
-	})
-	if err != nil {
-		return nil, err
-	}
-	if n == 0 {
-		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("not a draft"))
+	if err := h.Svc.ApproveDraft(ctx, id, c.UserID, h.Timing, h.now()); err != nil {
+		return nil, roundError(err)
 	}
 	return connect.NewResponse(&isshov1.ApprovePlanResponse{}), nil
 }
@@ -214,16 +190,21 @@ func (h *ReviewHandler) RejectPlan(ctx context.Context, req *connect.Request[iss
 	if err != nil {
 		return nil, err
 	}
-	n, err := dbgen.New(h.Svc.DB).RejectDraft(ctx, dbgen.RejectDraftParams{
-		ID: id, ReviewedBy: pgtype.UUID{Bytes: c.UserID, Valid: true}, At: pgtype.Timestamptz{Time: h.now(), Valid: true},
-	})
-	if err != nil {
-		return nil, err
-	}
-	if n == 0 {
-		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("not a draft"))
+	if err := h.Svc.RejectDraft(ctx, id, c.UserID, h.now()); err != nil {
+		return nil, roundError(err)
 	}
 	return connect.NewResponse(&isshov1.RejectPlanResponse{}), nil
+}
+
+// roundError maps a plan transition's errors (rounds.go) to codes.
+func roundError(err error) error {
+	switch {
+	case errors.Is(err, ErrNotFound):
+		return connect.NewError(connect.CodeNotFound, errors.New("no such plan"))
+	case errors.Is(err, ErrNotDraft), errors.Is(err, ErrNotOpen):
+		return connect.NewError(connect.CodeFailedPrecondition, err)
+	}
+	return err
 }
 
 func (h *ReviewHandler) EditPlan(ctx context.Context, req *connect.Request[isshov1.EditPlanRequest]) (*connect.Response[isshov1.EditPlanResponse], error) {
@@ -256,12 +237,8 @@ func (h *ReviewHandler) WithdrawPlan(ctx context.Context, req *connect.Request[i
 	if err != nil {
 		return nil, err
 	}
-	n, err := dbgen.New(h.Svc.DB).WithdrawPlan(ctx, dbgen.WithdrawPlanParams{ID: id, At: pgtype.Timestamptz{Time: h.now(), Valid: true}})
-	if err != nil {
-		return nil, err
-	}
-	if n == 0 {
-		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("not an open plan"))
+	if err := h.Svc.WithdrawPlan(ctx, id, h.now()); err != nil {
+		return nil, roundError(err)
 	}
 	return connect.NewResponse(&isshov1.WithdrawPlanResponse{}), nil
 }

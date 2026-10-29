@@ -180,7 +180,7 @@ func TestIntegrationProposals(t *testing.T) {
 	for _, s := range waiting[:2] {
 		invite = append(invite, s.User)
 	}
-	second, err := SaveEvent(ctx, f.pool, Event{
+	second, _, err := SaveEvent(ctx, f.pool, Event{
 		PlanID: planID, Round: 2, Propose: true, Now: now,
 		StartsAt: time.Date(2030, 1, 12, 14, 0, 0, 0, tokyo), ConfirmBy: time.Date(2030, 1, 11, 0, 0, 0, 0, tokyo),
 		Scheduled: matching.Scheduled{

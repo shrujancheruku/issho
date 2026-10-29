@@ -289,9 +289,9 @@ func eventError(err error) error {
 
 var (
 	eventStatusPB = map[string]isshov1.EventStatus{
-		"scheduled": isshov1.EventStatus_EVENT_STATUS_SCHEDULED,
-		"done":      isshov1.EventStatus_EVENT_STATUS_DONE,
-		"cancelled": isshov1.EventStatus_EVENT_STATUS_CANCELLED,
+		EventScheduled: isshov1.EventStatus_EVENT_STATUS_SCHEDULED,
+		EventDone:      isshov1.EventStatus_EVENT_STATUS_DONE,
+		EventCancelled: isshov1.EventStatus_EVENT_STATUS_CANCELLED,
 	}
 	groupStatusPB = map[string]isshov1.GroupStatus{
 		GroupInviting:  isshov1.GroupStatus_GROUP_STATUS_INVITING,
