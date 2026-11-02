@@ -1,4 +1,4 @@
-import { Code, ConnectError, EventStatus, InviteResponse, type GetEventResponse, type MyEvent } from '@issho/api-client';
+import { Code, ConnectError, type GetEventResponse, type MyEvent } from '@issho/api-client';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState, type ReactNode } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Linking, ScrollView, Share, StyleSheet, View } from 'react-native';
@@ -20,8 +20,7 @@ import { FormWidth, Spacing } from '@/constants/theme';
 import { ChatPanel } from '@/features/events/chat-panel';
 import { useEvent, useRespond } from '@/features/events/data';
 import { shareText } from '@/features/events/share';
-import { outingStage } from '@/features/events/stage';
-import { eventState, stateText, type EventState } from '@/features/events/state';
+import { outing, stateText, type MeetingPoint, type Outing } from '@/features/events/outing';
 import { Fact, Facts } from '@/features/plans/fact';
 import { formatStart, lastSignupDay, walkHours } from '@/features/plans/format';
 import { usePlanNames } from '@/features/plans/names';
@@ -31,9 +30,10 @@ import { useNow } from '@/hooks/use-now';
 import { useTheme } from '@/hooks/use-theme';
 import { useI18n, useOtherLanguage } from '@/i18n/i18n-provider';
 import { haptics } from '@/lib/haptics';
+import { ms } from '@/lib/time';
 
 type Names = ReturnType<typeof usePlanNames>;
-type Ctx = { id: string; data: GetEventResponse; e: MyEvent; state: EventState; names: Names; now: number; lang: string };
+type Ctx = { id: string; data: GetEventResponse; e: MyEvent; o: Outing; names: Names; now: number; lang: string };
 
 /**
  * Opens the share sheet with the outing's details. Browsers without the
@@ -86,15 +86,12 @@ export default function EventScreen() {
     );
   }
 
-  const state = eventState(e, now);
-  const stage = outingStage(e, now);
-  const ctx: Ctx = { id, data: event.data, e, state, names, now, lang };
-  const muted = state.tone === 'muted' && stage !== 4;
-  // On the day the live dot by the time is the screen's one live thing.
-  const thread = <Thread stage={stage} id={`event:${id}`} live={!muted && stage !== 3} />;
+  const o = outing(e, now);
+  const ctx: Ctx = { id, data: event.data, e, o, names, now, lang };
+  const thread = <Thread stage={o.threadKnot} id={`event:${id}`} live={o.live} />;
 
   // Going: the chat fills the screen under a fixed head, so it can't scroll with the rest.
-  if (stage === 2 && !muted) {
+  if (o.chatFirst) {
     return (
       <Frame onBack={leave}>
         <View style={styles.head}>
@@ -126,7 +123,7 @@ export default function EventScreen() {
       <ScrollView contentContainerStyle={styles.content}>
         <Title e={e} />
         {thread}
-        {muted ? <Muted ctx={ctx} /> : stage === 1 ? <Invited ctx={ctx} /> : stage === 3 ? <OnTheDay ctx={ctx} /> : <HowWasIt ctx={ctx} />}
+        {o.view === 'muted' ? <Muted ctx={ctx} /> : o.view === 'invited' ? <Invited ctx={ctx} /> : o.view === 'onTheDay' ? <OnTheDay ctx={ctx} /> : <HowWasIt ctx={ctx} />}
       </ScrollView>
     </Frame>
   );
@@ -177,16 +174,12 @@ function Card({ children }: { children: ReactNode }) {
   return <View style={[styles.card, { backgroundColor: theme.surface }]}>{children}</View>;
 }
 
-function meetingPoint({ e, now, lang }: Ctx, t: ReturnType<typeof useI18n>['t']) {
-  return (
-    e.meetingPoint ||
-    (e.revealAt && now < Number(e.revealAt.seconds) * 1000
-      ? t('event.meetingPointLater', { date: formatStart(e.revealAt, lang) })
-      : t('event.meetingPointFirstStop'))
-  );
+function meetingPoint({ o, lang }: Ctx, t: ReturnType<typeof useI18n>['t']) {
+  const m: MeetingPoint = o.meetingPoint;
+  return m.kind === 'set' ? m.text : m.kind === 'later' ? t('event.meetingPointLater', { date: formatStart(m.revealAt, lang) }) : t('event.meetingPointFirstStop');
 }
 
-/** Stage two, invited: can you go? The answer becomes its result in place. */
+/** Invited: can you go? The answer becomes its result in place. */
 function Invited({ ctx }: { ctx: Ctx }) {
   const { t } = useI18n();
   const { e, lang, names, data } = ctx;
@@ -252,8 +245,8 @@ function PlanTab({ ctx }: { ctx: Ctx }) {
   const summary = useSummary(data);
   return (
     <>
-      <ThemedText type="smallBold" themeColor={ctx.state.tone === 'good' ? 'link' : 'textSecondary'}>
-        {stateText(t, ctx.state, e, lang)}
+      <ThemedText type="smallBold" themeColor={ctx.o.tone === 'good' ? 'link' : 'textSecondary'}>
+        {stateText(t, ctx.o, e, lang)}
       </ThemedText>
       {!!summary && <ThemedText style={styles.summary}>{summary}</ThemedText>}
       <Facts>
@@ -266,7 +259,7 @@ function PlanTab({ ctx }: { ctx: Ctx }) {
       </Facts>
       <PlanStops steps={data.steps} routePolyline={data.routePolyline} names={names} />
       <SafetyLinks ctx={ctx} />
-      {ctx.state.actions.includes('cancel') && (
+      {ctx.o.canCancel && (
         <>
           {respond.isError && <ThemedText themeColor="error">{t('error.network')}</ThemedText>}
           <TextLink label={t('event.cancel')} muted disabled={respond.isPending} onPress={() => respond.mutate('cancel')} />
@@ -284,15 +277,10 @@ function useSummary(data: GetEventResponse) {
 /** Share with someone you trust (a safety habit) and report someone: plain links, no motion. */
 function SafetyLinks({ ctx }: { ctx: Ctx }) {
   const { t } = useI18n();
-  const { e, data, names, now, lang } = ctx;
-  const canShare = e.response === InviteResponse.CONFIRMED && e.status === EventStatus.SCHEDULED;
-  // Anyone who confirmed, even if they cancelled since, until the server's report_until.
-  const canReport =
-    (e.response === InviteResponse.CONFIRMED || e.response === InviteResponse.DROPPED) &&
-    (!e.reportUntil || now <= Number(e.reportUntil.seconds) * 1000);
+  const { e, data, names, o, lang } = ctx;
   return (
     <View>
-      {canShare && (
+      {o.canShare && (
         <TextLink
           label={t('event.share')}
           onPress={() =>
@@ -300,22 +288,21 @@ function SafetyLinks({ ctx }: { ctx: Ctx }) {
           }
         />
       )}
-      {canReport && (
+      {o.canReport && (
         <TextLink label={t('event.report')} muted onPress={() => router.push({ pathname: '/report/[id]', params: { id: e.id } })} />
       )}
     </View>
   );
 }
 
-/** Stage four, on the day: the countdown, where to meet, and "I'm here". */
+/** On the day: the countdown, where to meet, and "I'm here". */
 function OnTheDay({ ctx }: { ctx: Ctx }) {
   const { t } = useI18n();
   const { e, data, now, lang } = ctx;
   const respond = useRespond(ctx.id);
-  const start = e.startsAt ? Number(e.startsAt.seconds) * 1000 : NaN;
+  const start = ms(e.startsAt);
   const minutes = Math.ceil((start - now) / 60_000);
   const mapsUrl = data.steps.find((s) => s.venueMapsUrl)?.venueMapsUrl;
-  const canCheckIn = ctx.state.actions.includes('checkIn') || e.checkedIn;
   return (
     <>
       <Card>
@@ -331,7 +318,7 @@ function OnTheDay({ ctx }: { ctx: Ctx }) {
         </ThemedText>
         <View style={styles.gapAbove}>
           {respond.isError && <ThemedText themeColor="error">{t('error.network')}</ThemedText>}
-          {canCheckIn ? (
+          {ctx.o.canCheckIn ? (
             <ResultButton
               label={t('event.checkIn')}
               doneLabel={t('event.state.checkedIn')}
@@ -366,12 +353,12 @@ function OnTheDay({ ctx }: { ctx: Ctx }) {
   );
 }
 
-/** Stage five: how was it, then who you'd meet again. */
+/** After: how was it, then who you'd meet again. */
 function HowWasIt({ ctx }: { ctx: Ctx }) {
   const { t } = useI18n();
   const { e } = ctx;
   const open = () => router.push({ pathname: '/feedback/[id]', params: { id: e.id } });
-  const feedbackOpen = ctx.state.actions.includes('feedback');
+  const feedbackOpen = ctx.o.canGiveFeedback;
   return (
     <>
       <Card>
@@ -400,8 +387,8 @@ function Muted({ ctx }: { ctx: Ctx }) {
   return (
     <>
       <Card>
-        <ThemedText themeColor="textSecondary">{stateText(t, ctx.state, ctx.e, ctx.lang)}</ThemedText>
-        {ctx.state.actions.includes('confirm') && (
+        <ThemedText themeColor="textSecondary">{stateText(t, ctx.o, ctx.e, ctx.lang)}</ThemedText>
+        {ctx.o.canConfirm && (
           <View style={styles.gapAbove}>
             <PrimaryButton label={t('event.confirm')} busy={respond.isPending} onPress={() => respond.mutate('confirm')} />
           </View>

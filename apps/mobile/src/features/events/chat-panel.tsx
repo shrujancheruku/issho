@@ -15,6 +15,7 @@ import { pairText, planTitle } from '@/features/plans/plan-card';
 import { useNow } from '@/hooks/use-now';
 import { useTheme } from '@/hooks/use-theme';
 import { useI18n } from '@/i18n/i18n-provider';
+import { ms } from '@/lib/time';
 
 import { useChat, type ChatTarget } from './chat';
 import type { Message } from './chat-messages';
@@ -105,8 +106,8 @@ export function ChatPanel({ target, header }: { target: ChatTarget; header?: Rea
 
   const state = history.data;
   const crew = 'crewId' in target;
-  const opensAt = state?.opensAt ? Number(state.opensAt.seconds) * 1000 : NaN;
-  const closesAt = state?.closesAt ? Number(state.closesAt.seconds) * 1000 : NaN;
+  const opensAt = ms(state?.opensAt);
+  const closesAt = ms(state?.closesAt);
   // The server decides; the clock only updates the note while the screen is open.
   const open = !!state && (crew || (now >= opensAt && now < closesAt));
   const denied = history.error instanceof ConnectError && history.error.code === Code.PermissionDenied;

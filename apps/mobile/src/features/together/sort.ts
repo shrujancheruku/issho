@@ -1,6 +1,6 @@
 import { CrewResponse, CrewStatus, EventStatus, InviteResponse, type Crew, type FeedPlan, type MyEvent } from '@issho/api-client';
 
-import { eventState } from '@/features/events/state';
+import { outing } from '@/features/events/outing';
 
 /** Something waiting for the person's answer, most urgent kinds first. */
 export type NeedsYou =
@@ -23,18 +23,18 @@ const order: Record<NeedsYou['kind'], number> = { invite: 0, checkIn: 1, crewOff
 
 /**
  * Sorts the person's events, crews and signups into Together's sections,
- * following EventService's rules (features/events/state.ts). Pure, so the
+ * following EventService's rules (features/events/outing.ts). Pure, so the
  * rules are unit-tested.
  */
 export function sortTogether(events: MyEvent[], crews: Crew[], feed: FeedPlan[], now: number): Together {
   const needsYou: NeedsYou[] = [];
   const groups: Group[] = [];
   for (const e of events) {
-    const state = eventState(e, now);
+    const o = outing(e, now);
     const before = needsYou.length;
-    if (e.response === InviteResponse.INVITED && state.actions.includes('confirm')) needsYou.push({ kind: 'invite', event: e });
-    else if (state.actions.includes('checkIn')) needsYou.push({ kind: 'checkIn', event: e });
-    else if (state.message === 'event.state.feedback') needsYou.push({ kind: 'feedback', event: e });
+    if (o.needsAnswer) needsYou.push({ kind: 'invite', event: e });
+    else if (o.needsCheckIn) needsYou.push({ kind: 'checkIn', event: e });
+    else if (o.needsFeedback) needsYou.push({ kind: 'feedback', event: e });
     // Going (or waiting for enough people): the group chat is theirs. An
     // outing that needs an answer is listed there only, not twice.
     const listed = needsYou.length > before;

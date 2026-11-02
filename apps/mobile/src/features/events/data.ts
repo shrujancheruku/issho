@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { feedKey } from '@/features/plans/data';
 import { api } from '@/lib/api';
 
-import type { EventAction } from './state';
+import type { EventAction } from './outing';
 
 const eventsKey = ['events'] as const;
 const eventKey = (id: string) => ['event', id] as const;
