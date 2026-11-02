@@ -1,19 +1,18 @@
 import { Code, ConnectError } from '@issho/api-client';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { Avatar } from '@/components/avatar';
 import { Chip } from '@/components/chip';
-import { LanguageSwitch } from '@/components/language-switch';
 import { PressableScale } from '@/components/pressable-scale';
 import { PrimaryButton } from '@/components/primary-button';
-import { BackLink, TextLink } from '@/components/text-link';
+import { LoadState } from '@/components/query-screen';
+import { ScreenFrame, useLeave } from '@/components/screen-frame';
+import { TextLink } from '@/components/text-link';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
 import { Thread } from '@/components/thread';
-import { FormWidth, Spacing } from '@/constants/theme';
+import { Spacing } from '@/constants/theme';
 import { useEvent, useFeedback, useSubmitFeedback, type FeedbackAnswer } from '@/features/events/data';
 import { Heading } from '@/features/plans/fact';
 import { formatStart } from '@/features/plans/format';
@@ -84,7 +83,7 @@ export default function FeedbackScreen() {
   const submit = useSubmitFeedback(id);
   // The person's changes; until they make one, the earlier answer (if any).
   const [draft, setAnswer] = useState<FeedbackAnswer | null>(null);
-  const leave = () => (router.canGoBack() ? router.back() : router.replace('/'));
+  const leave = useLeave('/');
 
   const f = form.data;
   const answer: FeedbackAnswer =
@@ -112,15 +111,12 @@ export default function FeedbackScreen() {
   let body;
   if (denied) {
     body = <ThemedText themeColor="textSecondary">{t('feedback.notOpen')}</ThemedText>;
-  } else if (form.isError) {
+  } else if (!f) {
     body = (
       <View>
-        <ThemedText themeColor="textSecondary">{t('common.loadFailed')}</ThemedText>
-        <TextLink label={t('common.retry')} onPress={() => void form.refetch()} />
+        <LoadState queries={[form]} />
       </View>
     );
-  } else if (!f) {
-    body = <ActivityIndicator />;
   } else if (!f.open) {
     // Before it opens, after two weeks, or for someone whose group didn't go ahead.
     body = (
@@ -190,70 +186,59 @@ export default function FeedbackScreen() {
   }
 
   return (
-    <ThemedView style={styles.fill}>
-      <SafeAreaView style={styles.fill}>
-        <View style={[styles.fill, styles.column]}>
-          <View style={styles.header}>
-            <BackLink label={t('common.back')} onPress={leave} />
-            <LanguageSwitch />
-          </View>
-          <ScrollView contentContainerStyle={styles.content}>
-            <View style={styles.titleBlock}>
-              <ThemedText type="subtitle" accessibilityRole="header">
-                {t('feedback.title')}
-              </ThemedText>
-              {!!title && <ThemedText themeColor="textSecondary">{title}</ThemedText>}
-            </View>
-            <Thread stage={4} id={`event:${id}`} live={false} />
-            {body}
-            {/* Reporting is its own screen: also open to people who cancelled. */}
-            {!!f?.mates.length && (
-              <TextLink label={t('event.report')} muted center onPress={() => router.push({ pathname: '/report/[id]', params: { id } })} />
-            )}
-          </ScrollView>
-          {f?.open && (
-            <View style={styles.footer}>
-              {submit.isError ? (
-                <ThemedText themeColor="error" style={styles.error}>
-                  {submit.error instanceof ConnectError && submit.error.code === Code.FailedPrecondition
-                    ? t('feedback.closed')
-                    : t('error.network')}
-                </ThemedText>
-              ) : (
-                answer.attended &&
-                !rated && (
-                  <ThemedText type="small" themeColor="textSecondary" style={styles.center}>
-                    {t('feedback.ratingsNeeded')}
-                  </ThemedText>
-                )
-              )}
-              <PrimaryButton
-                label={t('feedback.send')}
-                disabled={answer.attended && !rated}
-                busy={submit.isPending}
-                onPress={() => submit.mutate(answer.attended ? answer : { attended: false, planRating: 0, groupRating: 0, picks: [], avoid: [] }, {
-                    onSuccess: () => {
-                      haptics.success();
-                      leave();
-                    },
-                  })
-                }
-              />
-            </View>
-          )}
+    <ScreenFrame onBack={leave}>
+      <ScrollView contentContainerStyle={styles.content}>
+        <View style={styles.titleBlock}>
+          <ThemedText type="subtitle" accessibilityRole="header">
+            {t('feedback.title')}
+          </ThemedText>
+          {!!title && <ThemedText themeColor="textSecondary">{title}</ThemedText>}
         </View>
-      </SafeAreaView>
-    </ThemedView>
+        <Thread stage={4} id={`event:${id}`} live={false} />
+        {body}
+        {/* Reporting is its own screen: also open to people who cancelled. */}
+        {!!f?.mates.length && (
+          <TextLink label={t('event.report')} muted center onPress={() => router.push({ pathname: '/report/[id]', params: { id } })} />
+        )}
+      </ScrollView>
+      {f?.open && (
+        <View style={styles.footer}>
+          {submit.isError ? (
+            <ThemedText themeColor="error" style={styles.error}>
+              {submit.error instanceof ConnectError && submit.error.code === Code.FailedPrecondition
+                ? t('feedback.closed')
+                : t('error.network')}
+            </ThemedText>
+          ) : (
+            answer.attended &&
+            !rated && (
+              <ThemedText type="small" themeColor="textSecondary" style={styles.center}>
+                {t('feedback.ratingsNeeded')}
+              </ThemedText>
+            )
+          )}
+          <PrimaryButton
+            label={t('feedback.send')}
+            disabled={answer.attended && !rated}
+            busy={submit.isPending}
+            onPress={() => submit.mutate(answer.attended ? answer : { attended: false, planRating: 0, groupRating: 0, picks: [], avoid: [] }, {
+                onSuccess: () => {
+                  haptics.success();
+                  leave();
+                },
+              })
+            }
+          />
+        </View>
+      )}
+    </ScreenFrame>
   );
 }
 
 const styles = StyleSheet.create({
-  fill: { flex: 1 },
   bold: { fontWeight: 700 },
   // Four to a row even on a 375 pt phone (4 × 78 + 3 gaps in 343).
   pick: { width: 78, alignItems: 'center', gap: Spacing.one, paddingVertical: Spacing.two, paddingHorizontal: Spacing.one, borderRadius: 14 },
-  column: { width: '100%', maxWidth: FormWidth, alignSelf: 'center' },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.three },
   content: { padding: Spacing.three, paddingTop: Spacing.two, gap: Spacing.four },
   titleBlock: { gap: Spacing.one },
   section: { gap: Spacing.two },

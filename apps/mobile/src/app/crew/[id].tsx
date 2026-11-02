@@ -1,19 +1,21 @@
 import { Code, ConnectError, CrewResponse, CrewStatus, type Crew, type CrewMember } from '@issho/api-client';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withDelay, withSequence } from 'react-native-reanimated';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Avatar } from '@/components/avatar';
 import { PrimaryButton } from '@/components/primary-button';
+import { LoadState } from '@/components/query-screen';
 import { ResultButton } from '@/components/result-button';
 import { SectionTitle } from '@/components/screen-header';
+import { ScreenFrame, columnStyle, useLeave } from '@/components/screen-frame';
 import { Segmented } from '@/components/segmented';
 import { BackLink, TextLink } from '@/components/text-link';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Brand, FormWidth, Spacing } from '@/constants/theme';
+import { Brand, Spacing } from '@/constants/theme';
 import { useCrew, useRespondToCrew } from '@/features/crews/data';
 import { crewName } from '@/features/crews/name';
 import { ChatPanel, SuggestedPlan } from '@/features/chat/chat-panel';
@@ -40,7 +42,7 @@ export default function CrewScreen() {
   const { id = '' } = useLocalSearchParams<{ id: string }>();
   const { t } = useI18n();
   const crew = useCrew(id);
-  const leave = () => (router.canGoBack() ? router.back() : router.replace('/'));
+  const leave = useLeave('/');
   // An offer that started while it was open stays on the offer's layout,
   // showing that it started, until the person opens the chat.
   const [wasOffer, setWasOffer] = useState<boolean | null>(null);
@@ -48,41 +50,19 @@ export default function CrewScreen() {
   const c = crew.data;
   if (c && wasOffer === null) setWasOffer(c.status === CrewStatus.OFFERED);
 
-  const notFound = crew.error instanceof ConnectError && crew.error.code === Code.NotFound;
   if (!c) {
     return (
-      <Plain onBack={leave}>
-        {notFound ? (
-          <ThemedText themeColor="textSecondary">{t('crew.notFound')}</ThemedText>
-        ) : crew.isError ? (
-          <>
-            <ThemedText themeColor="textSecondary">{t('common.loadFailed')}</ThemedText>
-            <TextLink label={t('common.retry')} onPress={() => void crew.refetch()} />
-          </>
-        ) : (
-          <ActivityIndicator />
-        )}
-      </Plain>
+      <ScreenFrame onBack={leave}>
+        <View style={styles.plain}>
+          <LoadState queries={[crew]} notFound={t('crew.notFound')} />
+        </View>
+      </ScreenFrame>
     );
   }
   if (c.status === CrewStatus.OFFERED || (wasOffer && !showChat)) {
     return <Offer crew={c} onBack={leave} onOpenChat={() => setShowChat(true)} />;
   }
   return <Active crew={c} onBack={leave} />;
-}
-
-function Plain({ onBack, children }: { onBack: () => void; children: React.ReactNode }) {
-  const { t } = useI18n();
-  return (
-    <ThemedView style={styles.fill}>
-      <SafeAreaView style={styles.fill}>
-        <View style={[styles.column, styles.plain]}>
-          <BackLink label={t('common.back')} onPress={onBack} />
-          {children}
-        </View>
-      </SafeAreaView>
-    </ThemedView>
-  );
 }
 
 function useCrewName(crew: Crew) {
@@ -189,7 +169,7 @@ function Offer({ crew, onBack, onOpenChat }: { crew: Crew; onBack: () => void; o
     <ThemedView style={styles.fill}>
       <ScrollView contentContainerStyle={styles.offerScroll} bounces={false}>
         <View style={[styles.offerHead, { backgroundColor: theme.accent, paddingTop: insets.top + Spacing.two }]}>
-          <View style={styles.column}>
+          <View style={columnStyle}>
             <BackLink label={t('common.back')} onPress={onBack} color={theme.onAccent} />
             <View style={styles.offerTitle}>
               <ThemedText type="small" style={{ color: theme.onAccent }}>
@@ -207,7 +187,7 @@ function Offer({ crew, onBack, onOpenChat }: { crew: Crew; onBack: () => void; o
             <People crew={crew} hop={hop} />
           </View>
         </View>
-        <View style={[styles.column, styles.offerBody]}>
+        <View style={[columnStyle, styles.offerBody]}>
           <View style={styles.counter} accessible accessibilityLabel={t('crew.yesCount', { count: Math.min(yes, Quorum) })}>
             <ThemedText type="smallBold">{t('crew.yesCount', { count: Math.min(yes, Quorum) })}</ThemedText>
             <View style={styles.bars}>
@@ -284,7 +264,7 @@ function Active({ crew, onBack }: { crew: Crew; onBack: () => void }) {
   return (
     <ThemedView style={styles.fill}>
       <View style={[styles.activeHead, { backgroundColor: theme.accent, paddingTop: insets.top + Spacing.two }]}>
-        <View style={[styles.column, styles.activeHeadInner]}>
+        <View style={[columnStyle, styles.activeHeadInner]}>
           <View style={styles.headRow}>
             <BackLink label={t('common.back')} onPress={onBack} color={theme.onAccent} />
             <Pressable
@@ -329,7 +309,7 @@ function Active({ crew, onBack }: { crew: Crew; onBack: () => void }) {
         </View>
       </View>
       <SafeAreaView style={styles.fill} edges={['bottom', 'left', 'right']}>
-        <KeyboardAvoidingView behavior="padding" style={[styles.fill, styles.column]}>
+        <KeyboardAvoidingView behavior="padding" style={[styles.fill, columnStyle]}>
           {tab === 'chat' ? (
             // Suggestions already sit in the chat where they were made; the Plans tab gathers them.
             <ChatPanel room={{ crewId: crew.id }} />
@@ -363,7 +343,6 @@ function Active({ crew, onBack }: { crew: Crew; onBack: () => void }) {
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },
-  column: { width: '100%', maxWidth: FormWidth, alignSelf: 'center' },
   plain: { padding: Spacing.three, gap: Spacing.three },
   dim: { opacity: 0.85 },
   offerScroll: { flexGrow: 1 },

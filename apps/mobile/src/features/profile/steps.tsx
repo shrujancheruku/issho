@@ -1,9 +1,10 @@
 import { Gender, GroupSize } from '@issho/api-client';
 import { useMemo, useState, type ReactNode } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Switch, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, Switch, TextInput, View } from 'react-native';
 
 import { AvailabilityGrid } from '@/components/availability-grid';
 import { Chip } from '@/components/chip';
+import { LoadState } from '@/components/query-screen';
 import { ThemedText } from '@/components/themed-text';
 import { BodyFont, Brand, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -76,19 +77,6 @@ function Section({ title, hint, children }: { title: string; hint?: string; chil
 
 function Wrap({ children }: { children: ReactNode }) {
   return <View style={styles.wrap}>{children}</View>;
-}
-
-function LoadState({ query }: { query: { isPending: boolean; isError: boolean; refetch: () => unknown } }) {
-  const { t } = useI18n();
-  if (query.isPending) return <ActivityIndicator />;
-  if (query.isError)
-    return (
-      <Pressable onPress={() => void query.refetch()}>
-        <ThemedText themeColor="textSecondary">{t('common.loadFailed')}</ThemedText>
-        <ThemedText type="link">{t('common.retry')}</ThemedText>
-      </Pressable>
-    );
-  return null;
 }
 
 function LanguagesStep({ draft, onChange }: StepProps) {
@@ -240,7 +228,7 @@ function AreaStep({ draft, onChange }: StepProps) {
   return (
     <>
       <Section title={t('profile.city')}>
-        <LoadState query={cities} />
+        {!cities.isSuccess && <LoadState queries={[cities]} />}
         <Wrap>
           {cities.data?.map((c) => (
             <Chip
@@ -317,7 +305,7 @@ function ActivitiesStep({ draft, onChange }: StepProps) {
       <ThemedText type="smallBold" themeColor={picked >= MinActivities ? undefined : 'error'}>
         {t('interest.minimum', { count: MinActivities })} {t('profile.activitiesPicked', { count: picked })}
       </ThemedText>
-      <LoadState query={activities} />
+      {!activities.isSuccess && <LoadState queries={[activities]} />}
       {byCategory.map(([category, items]) => (
         <Section key={category} title={categoryTitle(t, category)}>
           <Wrap>

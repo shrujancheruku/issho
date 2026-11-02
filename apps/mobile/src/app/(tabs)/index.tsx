@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Avatar } from '@/components/avatar';
 import { ListGroup, ListRow } from '@/components/list-group';
 import { PrimaryButton } from '@/components/primary-button';
+import { LoadFailed } from '@/components/query-screen';
 import { ScreenHeader, SectionTitle } from '@/components/screen-header';
 import { TextLink } from '@/components/text-link';
 import { ThemedText } from '@/components/themed-text';
@@ -64,8 +65,7 @@ export default function TogetherScreen() {
   if (failed && empty) {
     body = (
       <View style={styles.center}>
-        <ThemedText themeColor="textSecondary">{t('common.loadFailed')}</ThemedText>
-        <TextLink label={t('common.retry')} onPress={refresh} center />
+        <LoadFailed onRetry={refresh} center />
       </View>
     );
   } else if (loading) {

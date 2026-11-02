@@ -1,10 +1,11 @@
 import { Code, ConnectError, ReportReason } from '@issho/api-client';
 import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Pressable } from 'react-native';
+import { View } from 'react-native';
 
 import { ChipChoice, DetailsInput, FormError, FormScreen } from '@/components/form-screen';
 import { PrimaryButton } from '@/components/primary-button';
+import { LoadState } from '@/components/query-screen';
 import { ThemedText } from '@/components/themed-text';
 import { useCrew, useReportCrewMember } from '@/features/crews/data';
 import { useFeedback, useReport } from '@/features/events/data';
@@ -46,15 +47,12 @@ export default function ReportScreen() {
   let body;
   if (report.isSuccess) {
     body = <ThemedText>{t('report.sent')}</ThemedText>;
-  } else if (form.isError) {
-    body = (
-      <Pressable onPress={() => void form.refetch()}>
-        <ThemedText themeColor="textSecondary">{t('common.loadFailed')}</ThemedText>
-        <ThemedText type="link">{t('common.retry')}</ThemedText>
-      </Pressable>
-    );
   } else if (!form.data) {
-    body = <ActivityIndicator />;
+    body = (
+      <View>
+        <LoadState queries={[form]} />
+      </View>
+    );
   } else if (!mates.length) {
     body = <ThemedText themeColor="textSecondary">{t('report.nobody')}</ThemedText>;
   } else {

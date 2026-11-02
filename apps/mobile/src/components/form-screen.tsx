@@ -1,12 +1,10 @@
-import { router } from 'expo-router';
 import type { ReactNode } from 'react';
-import { KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 
 import { Chip } from '@/components/chip';
+import { ScreenFrame, useLeave } from '@/components/screen-frame';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { BodyFont, FormWidth, Spacing } from '@/constants/theme';
+import { BodyFont, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useI18n } from '@/i18n/i18n-provider';
 
@@ -32,30 +30,28 @@ export function FormScreen({
   footer?: ReactNode;
 }) {
   const { t } = useI18n();
-  const back = () => (router.canGoBack() ? router.back() : router.replace('/'));
+  const back = useLeave('/');
+  const header = (
+    <View style={styles.header}>
+      <Pressable accessibilityRole="button" onPress={back} hitSlop={8}>
+        <ThemedText type="link">‹ {t('common.back')}</ThemedText>
+      </Pressable>
+    </View>
+  );
   return (
-    <ThemedView style={styles.fill}>
-      <SafeAreaView style={styles.fill}>
-        <KeyboardAvoidingView behavior="padding" style={[styles.fill, styles.column]}>
-          <View style={styles.header}>
-            <Pressable accessibilityRole="button" onPress={back} hitSlop={8}>
-              <ThemedText type="link">‹ {t('common.back')}</ThemedText>
-            </Pressable>
-          </View>
-          <ScrollView contentContainerStyle={styles.content}>
-            <View style={styles.titleBlock}>
-              <ThemedText type="subtitle">{title}</ThemedText>
-              <ThemedText type="small" themeColor="textSecondary">
-                {hint}
-              </ThemedText>
-              {intro}
-            </View>
-            {children}
-          </ScrollView>
-          {footer && <View style={styles.footer}>{footer}</View>}
-        </KeyboardAvoidingView>
-      </SafeAreaView>
-    </ThemedView>
+    <ScreenFrame header={header}>
+      <ScrollView contentContainerStyle={styles.content}>
+        <View style={styles.titleBlock}>
+          <ThemedText type="subtitle">{title}</ThemedText>
+          <ThemedText type="small" themeColor="textSecondary">
+            {hint}
+          </ThemedText>
+          {intro}
+        </View>
+        {children}
+      </ScrollView>
+      {footer && <View style={styles.footer}>{footer}</View>}
+    </ScreenFrame>
   );
 }
 
@@ -114,8 +110,6 @@ export function FormError({ children }: { children: string }) {
 }
 
 const styles = StyleSheet.create({
-  fill: { flex: 1 },
-  column: { width: '100%', maxWidth: FormWidth, alignSelf: 'center' },
   header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: Spacing.four, paddingTop: Spacing.three },
   content: { padding: Spacing.four, gap: Spacing.four },
   titleBlock: { gap: Spacing.two },
