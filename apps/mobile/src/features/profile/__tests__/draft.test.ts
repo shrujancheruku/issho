@@ -4,9 +4,11 @@ import { Gender, Interest, TimeBlock } from '@issho/api-client';
 import {
   addSpoken,
   addSuggestions,
+  canSave,
   cycleSuggestion,
   cycleInterest,
   emptyDraft,
+  nextEditStep,
   setCity,
   setGender,
   setPrimaryLanguage,
@@ -125,4 +127,23 @@ it('cycles a suggestion up and then off', () => {
   expect(list[0].interest).toBe(Interest.LOVE);
   list = cycleSuggestion(list, 'hike');
   expect(list.map((s) => s.activityId)).toEqual(['karaoke']);
+});
+
+it('a complete draft can be saved and has nothing more to edit', () => {
+  expect(canSave(complete(), year)).toBe(true);
+  expect(nextEditStep('about', complete(), year)).toBeNull();
+});
+
+it('changing city in settings needs the area and activities again', () => {
+  let d = setCity(complete(), 'osaka');
+  expect(canSave(d, year)).toBe(false);
+  d = { ...d, homeAreaId: 'osaka-namba' };
+  expect(nextEditStep('area', d, year)).toBe('activities');
+  for (const id of ['hike', 'karaoke', 'pottery']) d = cycleInterest(d, id);
+  expect(canSave(d, year)).toBe(true);
+  expect(nextEditStep('activities', d, year)).toBeNull();
+});
+
+it('does not hold up a save on the code of conduct', () => {
+  expect(canSave({ ...complete(), conductAccepted: false }, year)).toBe(true);
 });

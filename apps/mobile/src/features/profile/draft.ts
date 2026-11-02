@@ -178,6 +178,31 @@ export function stepValid(step: Step, d: Draft, year = new Date().getFullYear())
   }
 }
 
+/**
+ * Steps a person can edit from settings. Conduct is left out: settings never
+ * accepts the code of conduct on someone's behalf (the server refuses an
+ * outdated version), so it can't be what blocks a save there.
+ */
+const editableSteps: readonly Step[] = steps.filter((s) => s !== 'conduct');
+
+/**
+ * Where settings goes after `step` is edited: the first other step the draft
+ * made incomplete, or null when it can be saved. Some edits invalidate other
+ * answers (a new city clears the activities, which belong to it), and the
+ * whole profile is saved, so those steps must be redone first.
+ */
+export function nextEditStep(step: Step, d: Draft, year = new Date().getFullYear()): Step | null {
+  const i = editableSteps.indexOf(step);
+  // Later steps first, then earlier ones.
+  const order = [...editableSteps.slice(i + 1), ...editableSteps.slice(0, Math.max(i, 0))];
+  return order.find((s) => !stepValid(s, d, year)) ?? null;
+}
+
+/** Whether settings can save the draft: every editable step is complete. */
+export function canSave(d: Draft, year = new Date().getFullYear()): boolean {
+  return editableSteps.every((s) => stepValid(s, d, year));
+}
+
 export function fromProfile(p: Profile, currentConductVersion: number): Draft {
   return {
     displayName: p.displayName,
