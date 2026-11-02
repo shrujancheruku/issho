@@ -306,3 +306,35 @@ func TestIntegrationRemoveFromAll(t *testing.T) {
 		t.Fatalf("second run: %v", err)
 	}
 }
+
+// TestIntegrationOfferSeasonUsesCityTimezone: at 20:00 UTC on 31 January it
+// is already 1 February in Auckland, so an activity in season only in
+// February is what a crew there is offered, though it is January in UTC.
+func TestIntegrationOfferSeasonUsesCityTimezone(t *testing.T) {
+	f := testfixture.New(t, "zz-crews-tz", "Pacific/Auckland", 3)
+	ctx := context.Background()
+	for _, u := range f.Users {
+		f.AddProfile(t, u, "ja")
+	}
+	if _, err := f.Pool.Exec(ctx, `insert into app.city_activity_overrides (city_id, activity_id, months) values ($1, $2, '{2}')
+		on conflict (city_id, activity_id) do update set months = excluded.months`, f.City, f.Act); err != nil {
+		t.Fatal(err)
+	}
+	a, b, c := f.Users[0], f.Users[1], f.Users[2]
+	eventID, starts := outing(t, f, f.Users)
+	plansSvc := &plans.Service{DB: f.Pool}
+	for _, p := range []struct {
+		who   uuid.UUID
+		picks []uuid.UUID
+	}{{a, []uuid.UUID{b, c}}, {b, []uuid.UUID{a, c}}, {c, []uuid.UUID{a, b}}} {
+		fb := plans.Feedback{Attended: true, PlanRating: 4, GroupRating: 4, Picks: p.picks}
+		if err := plansSvc.SubmitFeedback(ctx, p.who, eventID, fb, starts.Add(plans.FeedbackAfter)); err != nil {
+			t.Fatal(err)
+		}
+	}
+	r := &Runner{DB: f.Pool, Log: slog.New(slog.NewTextHandler(io.Discard, nil))}
+	now := time.Date(2030, 1, 31, 20, 0, 0, 0, time.UTC)
+	if rep, err := r.Pass(ctx, f.City, now); err != nil || rep.Offered != 1 {
+		t.Fatalf("pass = %+v, %v; want one offered", rep, err)
+	}
+}

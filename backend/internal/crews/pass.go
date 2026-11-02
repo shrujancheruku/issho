@@ -29,9 +29,12 @@ type PassReport struct {
 }
 
 // Pass decides offers that everyone answered or that ran out, suggests a
-// plan to crews due one, and offers new crews.
+// plan to crews due one, and offers new crews. A crew that fails doesn't
+// hold up the others: the counts are of what succeeded and the error joins
+// every failure.
 func (r *Runner) Pass(ctx context.Context, cityID string, now time.Time) (PassReport, error) {
 	var rep PassReport
+	var errs []error
 	q := dbgen.New(r.DB)
 	at := pgtype.Timestamptz{Time: now, Valid: true}
 
@@ -51,7 +54,7 @@ func (r *Runner) Pass(ctx context.Context, cityID string, now time.Time) (PassRe
 			return err
 		})
 		if err != nil {
-			return rep, fmt.Errorf("crew %s: %w", id, err)
+			errs = append(errs, fmt.Errorf("crew %s: %w", id, err))
 		}
 	}
 
@@ -65,7 +68,8 @@ func (r *Runner) Pass(ctx context.Context, cityID string, now time.Time) (PassRe
 			continue // nothing fits this week; try again next pass
 		}
 		if err != nil {
-			return rep, err
+			errs = append(errs, fmt.Errorf("crew %s: %w", id, err))
+			continue
 		}
 		err = pgx.BeginFunc(ctx, r.DB, func(tx pgx.Tx) error {
 			q := dbgen.New(tx)
@@ -85,12 +89,14 @@ func (r *Runner) Pass(ctx context.Context, cityID string, now time.Time) (PassRe
 			return q.NotifyChat(ctx, id.String())
 		})
 		if err != nil {
-			return rep, fmt.Errorf("crew %s: %w", id, err)
+			errs = append(errs, fmt.Errorf("crew %s: %w", id, err))
+			continue
 		}
 		rep.Suggested++
 	}
 
-	return rep, r.offer(ctx, q, cityID, now, &rep)
+	errs = append(errs, r.offer(ctx, q, cityID, now, &rep))
+	return rep, errors.Join(errs...)
 }
 
 // offer offers crews to people who got on well across outings
@@ -112,7 +118,16 @@ func (r *Runner) offer(ctx context.Context, q *dbgen.Queries, cityID string, now
 	for _, a := range averse {
 		g.Averse[matching.MakePair(matching.UserID(a.AverseID.String()), matching.UserID(a.OtherID.String()))] = true
 	}
-	city, err := plans.LoadCity(ctx, q, cityID, now.In(time.UTC).Month())
+	// Seasons are the city's own, not UTC's: they differ near month ends.
+	row, err := q.GetCityMatching(ctx, cityID)
+	if err != nil {
+		return err
+	}
+	loc, err := time.LoadLocation(row.Timezone)
+	if err != nil {
+		return fmt.Errorf("city %s: %w", cityID, err)
+	}
+	city, err := plans.LoadCity(ctx, q, cityID, now.In(loc).Month())
 	if err != nil {
 		return err
 	}
