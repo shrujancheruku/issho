@@ -15,12 +15,16 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/maps"
 )
 
+// ErrCityNotFound is what LoadCity returns for a city that isn't seeded, so
+// callers can tell it from a database failure.
+var ErrCityNotFound = errors.New("city not found; seed its pack first")
+
 // LoadCity reads a seeded city's areas and travel modes.
 func LoadCity(ctx context.Context, q *dbgen.Queries, cityID string) ([]Area, []maps.Mode, error) {
 	modes, err := q.GetCityTravelModes(ctx, cityID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, nil, fmt.Errorf("city %q not found; seed its pack first", cityID)
+			return nil, nil, fmt.Errorf("city %q: %w", cityID, ErrCityNotFound)
 		}
 		return nil, nil, err
 	}
@@ -166,14 +170,24 @@ func Refresh(ctx context.Context, pool *pgxpool.Pool, r maps.Router, cityID stri
 	if newest.Valid && now.Sub(newest.Time) < RefreshAge {
 		return false, 0, nil
 	}
-	areas, modes, err := LoadCity(ctx, q, cityID)
-	if err != nil {
-		return false, 0, err
-	}
-	rows, err := BuildMatrix(ctx, r, areas, modes)
-	if err != nil {
-		return false, 0, err
-	}
-	deleted, err = SaveMatrix(ctx, pool, cityID, rows)
+	_, deleted, err = RebuildMatrix(ctx, pool, r, cityID)
 	return err == nil, deleted, err
+}
+
+// RebuildMatrix loads a seeded city, asks the router for every pair's
+// travel time and saves them (SaveMatrix). It is the one place that does
+// these three steps: the admin SPA's apply, the worker's refresh and
+// `tool build-matrix` all call it. It returns the rows written and the
+// stale rows deleted.
+func RebuildMatrix(ctx context.Context, pool *pgxpool.Pool, r maps.Router, cityID string) (rows int, deleted int64, err error) {
+	areas, modes, err := LoadCity(ctx, dbgen.New(pool), cityID)
+	if err != nil {
+		return 0, 0, err
+	}
+	built, err := BuildMatrix(ctx, r, areas, modes)
+	if err != nil {
+		return 0, 0, err
+	}
+	deleted, err = SaveMatrix(ctx, pool, cityID, built)
+	return len(built), deleted, err
 }

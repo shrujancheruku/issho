@@ -20,7 +20,6 @@ import (
 	"connectrpc.com/connect"
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
 	"github.com/shrujancheruku/issho/backend/internal/cities"
 	"github.com/shrujancheruku/issho/backend/internal/geo"
@@ -35,13 +34,6 @@ const (
 	Dir = "data/citypacks"
 	// BranchPrefix marks the editor's branches (and so its pull requests).
 	BranchPrefix = "citypack/"
-	// MovedM is how far an area's centre must move for it to need venues
-	// and travel times again.
-	MovedM = 100
-	// AreaSearchBudget caps one area's venue search from the Cities page. The
-	// request waits for it, so it stays at a few minutes of searches; an area
-	// with a boundary that needs more gets the rest from tool discover-venues.
-	AreaSearchBudget = 400
 )
 
 // Repo is the GitHub repository the packs live in (*github.Client).
@@ -79,14 +71,21 @@ func (h *Handler) repo() (Repo, error) {
 	return h.GitHub, nil
 }
 
-func githubError(err error) error {
+// githubError maps a GitHub failure for the caller. GitHub's own message
+// (URLs, rate-limit details) stays in the log, not in the response.
+func githubError(ctx context.Context, err error) error {
 	if errors.Is(err, github.ErrNotFound) {
-		return connect.NewError(connect.CodeNotFound, errors.New("no such city pack on "+"the default branch"))
+		return connect.NewError(connect.CodeNotFound, errors.New("no such city pack on the default branch"))
 	}
-	return connect.NewError(connect.CodeUnavailable, err)
+	slog.ErrorContext(ctx, "github request failed", "err", err)
+	return connect.NewError(connect.CodeUnavailable, errors.New("GitHub is unavailable; try again"))
 }
 
-var cityID = regexp.MustCompile(`^[a-z][a-z0-9-]{1,30}$`)
+// Compiled once: check runs on every proposal and apply.
+var (
+	cityID   = regexp.MustCompile(`^[a-z][a-z0-9-]{1,30}$`)
+	currency = regexp.MustCompile(`^[A-Z]{3}$`)
+)
 
 func path(id string) string { return Dir + "/" + id + ".json" }
 
@@ -102,7 +101,7 @@ func (h *Handler) basePack(ctx context.Context, id string) (p cities.Pack, sha s
 		return p, "", false, nil
 	}
 	if err != nil {
-		return p, "", false, githubError(err)
+		return p, "", false, githubError(ctx, err)
 	}
 	if err := json.Unmarshal(raw, &p); err != nil {
 		return p, "", false, fmt.Errorf("%s: %w", path(id), err)
@@ -114,7 +113,6 @@ func (h *Handler) ListCityPacks(ctx context.Context, _ *connect.Request[isshov1.
 	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
-	q := dbgen.New(h.DB)
 	out := &isshov1.ListCityPacksResponse{Configured: h.GitHub != nil}
 	byID := map[string]*isshov1.CityPackSummary{}
 	get := func(id string) *isshov1.CityPackSummary {
@@ -128,7 +126,7 @@ func (h *Handler) ListCityPacks(ctx context.Context, _ *connect.Request[isshov1.
 	if h.GitHub != nil {
 		files, err := h.GitHub.Dir(ctx, Dir, h.Base)
 		if err != nil {
-			return nil, githubError(err)
+			return nil, githubError(ctx, err)
 		}
 		for _, f := range files {
 			if id, ok := strings.CutSuffix(f, ".json"); ok {
@@ -137,37 +135,20 @@ func (h *Handler) ListCityPacks(ctx context.Context, _ *connect.Request[isshov1.
 		}
 		prs, err := h.GitHub.OpenPRs(ctx, BranchPrefix)
 		if err != nil {
-			return nil, githubError(err)
+			return nil, githubError(ctx, err)
 		}
 		for _, p := range prs {
 			out.PullRequests = append(out.PullRequests, &isshov1.CityPackPullRequest{Number: int32(p.Number), Title: p.Title, Url: p.URL})
 		}
 	}
-	rows, err := q.ListCities(ctx)
+	seeded, err := cities.PackStatuses(ctx, h.DB)
 	if err != nil {
 		return nil, err
 	}
-	for _, r := range rows {
-		s := get(r.ID)
-		s.Seeded = true
-		var name cities.Text
-		if json.Unmarshal(r.Name, &name) == nil && name["en"] != "" {
-			s.Name = name["en"]
-		}
-	}
-	areas, err := q.ListCityPackAreas(ctx)
-	if err != nil {
-		return nil, err
-	}
-	for _, a := range areas {
-		s := get(a.CityID)
-		s.Areas++
-		if !a.HasTravelTimes {
-			s.AreasWithoutTravelTimes = append(s.AreasWithoutTravelTimes, a.ID)
-		}
-		if !a.HasVenues {
-			s.AreasWithoutVenues = append(s.AreasWithoutVenues, a.ID)
-		}
+	for _, c := range seeded {
+		s := get(c.ID)
+		s.Seeded, s.Name, s.Areas = true, c.Name, int32(c.Areas)
+		s.AreasWithoutTravelTimes, s.AreasWithoutVenues = c.AreasWithoutTravelTimes, c.AreasWithoutVenues
 	}
 	for _, id := range slices.Sorted(maps.Keys(byID)) {
 		out.Packs = append(out.Packs, byID[id])
@@ -180,7 +161,7 @@ func (h *Handler) GetCityPack(ctx context.Context, req *connect.Request[isshov1.
 		return nil, err
 	}
 	out := &isshov1.GetCityPackResponse{}
-	acts, err := dbgen.New(h.DB).ListCatalogActivities(ctx)
+	acts, err := cities.CatalogActivities(ctx, h.DB)
 	if err != nil {
 		return nil, err
 	}
@@ -209,7 +190,7 @@ func (h *Handler) check(ctx context.Context, p cities.Pack) error {
 	if !cityID.MatchString(p.ID) {
 		return errs.Invalid("id: lowercase letters, digits and dashes, starting with a letter")
 	}
-	acts, err := dbgen.New(h.DB).ListCatalogActivities(ctx)
+	acts, err := cities.CatalogActivities(ctx, h.DB)
 	if err != nil {
 		return err
 	}
@@ -223,7 +204,7 @@ func (h *Handler) check(ctx context.Context, p cities.Pack) error {
 	if _, err := time.LoadLocation(p.Timezone); err != nil || !strings.Contains(p.Timezone, "/") {
 		return errs.Invalid("timezone %q: an IANA name like Asia/Tokyo", p.Timezone)
 	}
-	if !regexp.MustCompile(`^[A-Z]{3}$`).MatchString(p.Currency) {
+	if !currency.MatchString(p.Currency) {
 		return errs.Invalid("currency %q: an ISO 4217 code like JPY", p.Currency)
 	}
 	return nil
@@ -246,6 +227,7 @@ func (h *Handler) ProposeCityPack(ctx context.Context, req *connect.Request[issh
 		return nil, err
 	}
 	keepBoundaries(&p, base)
+	keepOverrideNames(&p, base)
 	if err := h.check(ctx, p); err != nil {
 		return nil, err
 	}
@@ -288,7 +270,7 @@ func (h *Handler) ProposeCityPack(ctx context.Context, req *connect.Request[issh
 	branch := fmt.Sprintf("%s%s-%d", BranchPrefix, p.ID, h.now().Unix())
 	pr, err := repo.Propose(ctx, branch, path(p.ID), content, sha, title, title, body.String())
 	if err != nil {
-		return nil, githubError(err)
+		return nil, githubError(ctx, err)
 	}
 	return connect.NewResponse(&isshov1.ProposeCityPackResponse{PullRequest: &isshov1.CityPackPullRequest{
 		Number: int32(pr.Number), Title: pr.Title, Url: pr.URL,
@@ -309,43 +291,19 @@ func (h *Handler) ApplyCityPack(ctx context.Context, req *connect.Request[isshov
 	if err := h.check(ctx, p); err != nil {
 		return nil, err
 	}
-	q := dbgen.New(h.DB)
-	before, err := q.ListCityAreas(ctx, p.ID)
+	d, err := cities.Apply(ctx, h.DB, h.Router, p)
+	if errors.Is(err, cities.ErrTravelTimes) {
+		// The pack is seeded; only Google's answer is missing, and the
+		// worker's refresh retries within a day. Google's text stays in the log.
+		slog.ErrorContext(ctx, "applied a city pack but its travel times failed", "city", p.ID, "err", err)
+		return nil, connect.NewError(connect.CodeUnavailable, errors.New("seeded, but Google's travel times failed (the worker retries within a day)"))
+	}
 	if err != nil {
 		return nil, err
 	}
-	was := map[string]gmaps.LatLng{}
-	for _, a := range before {
-		was[a.ID] = gmaps.LatLng{Lat: a.Lat, Lng: a.Lng}
-	}
-	if err := cities.SeedPackData(ctx, h.DB, p); err != nil {
-		return nil, err
-	}
-	out := &isshov1.ApplyCityPackResponse{}
-	for _, a := range p.Areas {
-		at, ok := was[a.ID]
-		switch {
-		case !ok:
-			out.NewAreas = append(out.NewAreas, a.ID)
-		case gmaps.DistanceM(at, gmaps.LatLng{Lat: a.Lat, Lng: a.Lng}) > MovedM:
-			out.MovedAreas = append(out.MovedAreas, a.ID)
-		}
-	}
-	if (len(out.NewAreas) > 0 || len(out.MovedAreas) > 0) && h.Router != nil {
-		areas, modes, err := geo.LoadCity(ctx, q, p.ID)
-		if err != nil {
-			return nil, err
-		}
-		rows, err := geo.BuildMatrix(ctx, h.Router, areas, modes)
-		if err != nil {
-			return nil, connect.NewError(connect.CodeUnavailable, fmt.Errorf("seeded, but Google's travel times failed (the worker retries within a day): %w", err))
-		}
-		if _, err := geo.SaveMatrix(ctx, h.DB, p.ID, rows); err != nil {
-			return nil, err
-		}
-		out.TravelTimesRebuilt, out.TravelTimes = true, int32(len(rows))
-	}
-	return connect.NewResponse(out), nil
+	return connect.NewResponse(&isshov1.ApplyCityPackResponse{
+		NewAreas: d.NewAreas, MovedAreas: d.MovedAreas, TravelTimesRebuilt: d.TravelTimesRebuilt, TravelTimes: int32(d.TravelTimes),
+	}), nil
 }
 
 func (h *Handler) DiscoverAreaVenues(ctx context.Context, req *connect.Request[isshov1.DiscoverAreaVenuesRequest]) (*connect.Response[isshov1.DiscoverAreaVenuesResponse], error) {
@@ -355,41 +313,20 @@ func (h *Handler) DiscoverAreaVenues(ctx context.Context, req *connect.Request[i
 	if h.Places == nil {
 		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("finding venues needs GOOGLE_MAPS_API_KEY"))
 	}
-	m := req.Msg
-	q := dbgen.New(h.DB)
-	areas, _, err := geo.LoadCity(ctx, q, m.CityId)
-	if err != nil {
+	searches, venues, err := cities.DiscoverAreaVenues(ctx, h.DB, h.Places, req.Msg.CityId, req.Msg.AreaId)
+	switch {
+	case errors.Is(err, geo.ErrCityNotFound):
+		// Only "not seeded" is NotFound: a database failure must not look like it.
 		return nil, connect.NewError(connect.CodeNotFound, errors.New("no such city"))
-	}
-	if !slices.ContainsFunc(areas, func(a geo.Area) bool { return a.ID == m.AreaId }) {
+	case errors.Is(err, cities.ErrAreaNotInCity):
 		return nil, errs.Invalid("area_id: not in that city")
-	}
-	cats, err := geo.LoadVenueCategories(ctx, q, m.CityId, nil)
-	if err != nil {
+	case errors.Is(err, cities.ErrSearch):
+		slog.ErrorContext(ctx, "area venue search failed", "city", req.Msg.CityId, "area", req.Msg.AreaId, "err", err)
+		return nil, connect.NewError(connect.CodeUnavailable, errors.New("Google search failed; try again"))
+	case err != nil:
 		return nil, err
 	}
-	n, err := q.CountCityVenues(ctx, m.CityId)
-	if err != nil {
-		return nil, err
-	}
-	langs, err := q.GetCityLanguages(ctx, m.CityId)
-	if err != nil || len(langs) == 0 {
-		return nil, fmt.Errorf("city languages: %v", err)
-	}
-	// A new city has no city-wide venues yet (beaches, trails): find them
-	// with its first area.
-	venues, searches, err := geo.DiscoverAreaVenues(ctx, h.Places, areas, m.AreaId, cats, n == 0, langs[0], AreaSearchBudget)
-	if err != nil {
-		return nil, connect.NewError(connect.CodeUnavailable, fmt.Errorf("google search failed: %w", err))
-	}
-	if searches.Skipped > 0 {
-		slog.WarnContext(ctx, "area venue search ran out of budget; run tool discover-venues for finer coverage",
-			"area", m.AreaId, "searches", searches.Made, "skipped", searches.Skipped)
-	}
-	if err := geo.SaveVenues(ctx, h.DB, m.CityId, venues); err != nil {
-		return nil, err
-	}
-	return connect.NewResponse(&isshov1.DiscoverAreaVenuesResponse{Searches: int32(searches.Made), Venues: int32(len(venues))}), nil
+	return connect.NewResponse(&isshov1.DiscoverAreaVenuesResponse{Searches: int32(searches), Venues: int32(venues)}), nil
 }
 
 // Changes describes a pack's changes from the default branch's (nil for a
@@ -504,6 +441,29 @@ func keepBoundaries(p *cities.Pack, base cities.Pack) {
 	for i, a := range p.Areas {
 		if j := slices.IndexFunc(base.Areas, func(b cities.Area) bool { return b.ID == a.ID }); j >= 0 {
 			p.Areas[i].OSMID, p.Areas[i].Boundary = base.Areas[j].OSMID, base.Areas[j].Boundary
+		}
+	}
+}
+
+// keepOverrideNames carries an override's non-English names over from the
+// default branch's pack: the editor shows and sends only the English one
+// (PackOverride.name), so saving would otherwise drop e.g. a Japanese name.
+// They are kept only while the override still has an English name; clearing
+// it means the admin is removing the custom name, and an English-less name
+// would fail validation. The editor's English name always wins.
+func keepOverrideNames(p *cities.Pack, base cities.Pack) {
+	for i, o := range p.ActivityOverrides {
+		if o.Name["en"] == "" {
+			continue
+		}
+		j := slices.IndexFunc(base.ActivityOverrides, func(b cities.ActivityOverride) bool { return b.ActivityID == o.ActivityID })
+		if j < 0 {
+			continue
+		}
+		for lang, name := range base.ActivityOverrides[j].Name {
+			if _, ok := o.Name[lang]; !ok {
+				p.ActivityOverrides[i].Name[lang] = name
+			}
 		}
 	}
 }
