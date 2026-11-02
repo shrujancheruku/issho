@@ -219,14 +219,18 @@ func run() error {
 	protocols := new(http.Protocols)
 	protocols.SetHTTP1(true)
 	protocols.SetUnencryptedHTTP2(true)
+	baseCtx, baseCancel := context.WithCancel(context.Background())
+	defer baseCancel()
 	srv := &http.Server{
 		Addr:              cfg.APIAddr,
 		Handler:           handler,
 		Protocols:         protocols,
 		ReadHeaderTimeout: 10 * time.Second,
-		// Request contexts end when the process is told to stop. Shutdown
-		// doesn't track WebSockets (hijacked connections); this ends them.
-		BaseContext: func(net.Listener) context.Context { return ctx },
+		// Not the signal context: that would cancel in-flight requests the
+		// moment SIGTERM arrives, before Shutdown drains them. baseCancel
+		// runs after Shutdown, to end the WebSockets it doesn't track
+		// (hijacked connections).
+		BaseContext: func(net.Listener) context.Context { return baseCtx },
 	}
 
 	errc := make(chan error, 1)
@@ -243,5 +247,7 @@ func run() error {
 	}
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	return srv.Shutdown(shutdownCtx)
+	err = srv.Shutdown(shutdownCtx)
+	baseCancel()
+	return err
 }
