@@ -39,15 +39,14 @@ func (h *Handler) ListActivities(ctx context.Context, req *connect.Request[issho
 	for i, r := range rows {
 		texts[i] = translate.Text{Raw: r.Name, Context: "name of a group activity, shown on a tile"}
 	}
-	primaryNames, secondaryNames := h.resolvePair(ctx, primary, secondary, texts)
+	names := h.Translations.ResolvePair(ctx, primary, secondary, texts)
 
 	out := make([]*isshov1.Activity, 0, len(rows))
 	for i, r := range rows {
-		name, secondaryName := i18n.Pair(primaryNames[i], secondaryNames[i], i18n.Pick(r.Name, i18n.Authoring))
 		out = append(out, &isshov1.Activity{
 			Id:             r.ID,
-			Name:           name,
-			SecondaryName:  secondaryName,
+			Name:           names[i][0],
+			SecondaryName:  names[i][1],
 			Category:       r.Category,
 			Indoor:         r.Indoor,
 			Energy:         int32(r.Energy),

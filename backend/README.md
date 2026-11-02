@@ -12,8 +12,8 @@ The Go backend for Issho: a modular monolith serving a ConnectRPC API. It uses P
 | `internal/platform/config` | Environment variables → `Config` |
 | `internal/platform/db` | pgx pool and goose migration runner |
 | `internal/platform/auth` | Supabase JWT verification (JWKS) and the Connect auth interceptor; `Require` and `RequireAdmin` for handlers |
-| `internal/platform/i18n` | Language rules: which primary/secondary pair to show (`ForApp`, events included), what to display from resolved text (`Pair`), ISO 639-1 validation |
-| `internal/translate` | Text in any language on demand: stored text → `app.translations` cache → `Translator`, with in-flight de-duplication, a bounded wait and background completion; `Prefill` for content that must exist in given languages (events) |
+| `internal/platform/i18n` | Language rules: what to display from text resolved into the primary and secondary languages (`Pair`, called by `translate.Service.ResolvePair`; used directly only for never-translated area names), ISO 639-1 validation |
+| `internal/translate` | Text in any language on demand: stored text → `app.translations` cache → `Translator`, with in-flight de-duplication, a bounded wait and background completion; `ResolvePair` for the reader's primary + secondary languages at once, ready to show (the one place the language rule is applied); `Prefill` for content that must exist in given languages (events) |
 | `internal/translate/google` | `Translator` using Google Cloud Translation Basic (v2): plain-text mode, batches of ≤ 128 strings and ~5,000 characters |
 | `internal/translate/gemini` | `Translator` using Gemini (`gemini-3.8-flash`), the default: each string's context plus the translation guide (`internal/translate/guide.md`: voice, the product's name, terms such as crew, register per language), 40 strings per call, 4 calls side by side. Editing the guide doesn't redo cached translations: delete the unreviewed `app.translations` rows of the languages concerned |
 | `internal/translate/translators` | Picks the translator from `TRANSLATOR` for the API, the worker and the tools |

@@ -205,16 +205,10 @@ func (s *Service) titles(ctx context.Context, q *dbgen.Queries, cityID string, c
 		raw, _ := json.Marshal(map[string]string{i18n.Authoring: englishTitles[i]})
 		texts[i] = translate.Text{Raw: raw, Context: titleContext}
 	}
-	primary, secondary := make([]string, len(items)), make([]string, len(items))
-	if s.Translations != nil {
-		primary = s.Translations.Resolve(ctx, caller.Primary, texts)
-		if caller.Secondary != "" {
-			secondary = s.Translations.Resolve(ctx, caller.Secondary, texts)
-		}
-	}
+	pairs := s.Translations.ResolvePair(ctx, caller.Primary, caller.Secondary, texts)
 	titles, secondaryTitles = make([]string, len(items)), make([]string, len(items))
-	for i := range items {
-		titles[i], secondaryTitles[i] = i18n.Pair(primary[i], secondary[i], englishTitles[i])
+	for i, p := range pairs {
+		titles[i], secondaryTitles[i] = p[0], p[1]
 	}
 	return titles, secondaryTitles, nil
 }

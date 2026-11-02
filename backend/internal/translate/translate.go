@@ -7,7 +7,7 @@
 // app.translations and reuses it for everyone after that.
 //
 // Translation is best-effort: if the translator is off, slow or failing,
-// Resolve returns "" for that text and callers fall back (i18n.Pair). A slow
+// Resolve returns "" for that text and callers fall back (ResolvePair). A slow
 // translation keeps running in the background so the next request finds it
 // cached.
 package translate
@@ -95,6 +95,37 @@ func (s *Service) Resolve(ctx context.Context, lang string, texts []Text) []stri
 		wait = DefaultWait
 	}
 	return s.resolve(ctx, lang, texts, wait)
+}
+
+// ResolvePair resolves each text into a reader's two display languages and
+// returns what to show: [0] in the primary language, [1] in the secondary
+// ("" when there is none, or it reads the same). It applies i18n.Pair, so a
+// missing primary shows the secondary alone and English is the last resort.
+// The two languages are looked up concurrently: on a cold cache each may wait
+// up to Service.Wait for the translator, and one after the other that would
+// double the request's delay. A nil Service translates nothing (stored text
+// and English only).
+func (s *Service) ResolvePair(ctx context.Context, primary, secondary string, texts []Text) [][2]string {
+	var inPrimary, inSecondary []string
+	if s != nil {
+		// A secondary equal to the primary is the same language chosen twice.
+		if secondary == primary {
+			secondary = ""
+		}
+		var wg sync.WaitGroup
+		wg.Go(func() { inPrimary = s.Resolve(ctx, primary, texts) })
+		wg.Go(func() { inSecondary = s.Resolve(ctx, secondary, texts) })
+		wg.Wait()
+	}
+	out := make([][2]string, len(texts))
+	for i, t := range texts {
+		var p, sec string
+		if inPrimary != nil {
+			p, sec = inPrimary[i], inSecondary[i]
+		}
+		out[i][0], out[i][1] = i18n.Pair(p, sec, i18n.Pick(t.Raw, i18n.Authoring))
+	}
+	return out
 }
 
 func (s *Service) resolve(ctx context.Context, lang string, texts []Text, wait time.Duration) []string {

@@ -295,18 +295,7 @@ func (s *Service) texts(ctx context.Context, raws [][]byte, hint string, caller 
 	for i, r := range raws {
 		texts[i] = translate.Text{Raw: r, Context: hint}
 	}
-	primary, secondary := make([]string, len(raws)), make([]string, len(raws))
-	if s.Translations != nil {
-		primary = s.Translations.Resolve(ctx, caller.Primary, texts)
-		if caller.Secondary != "" {
-			secondary = s.Translations.Resolve(ctx, caller.Secondary, texts)
-		}
-	}
-	out := make([][2]string, len(raws))
-	for i, r := range raws {
-		out[i][0], out[i][1] = i18n.Pair(primary[i], secondary[i], i18n.Pick(r, i18n.Authoring))
-	}
-	return out
+	return s.Translations.ResolvePair(ctx, caller.Primary, caller.Secondary, texts)
 }
 
 // walkSteps lists a composed walk's stops: each place fetched live

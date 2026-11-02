@@ -30,15 +30,6 @@ func TestPick(t *testing.T) {
 	}
 }
 
-func TestForApp(t *testing.T) {
-	if p, s := ForApp("ja", "fr"); p != "ja" || s != "fr" {
-		t.Errorf("got %q, %q", p, s)
-	}
-	if _, s := ForApp("ja", "ja"); s != "" {
-		t.Errorf("secondary equal to primary must be dropped, got %q", s)
-	}
-}
-
 func TestPair(t *testing.T) {
 	tests := []struct{ primary, secondary, wantP, wantS string }{
 		{"カラオケ", "Karaoke", "カラオケ", "Karaoke"},

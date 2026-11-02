@@ -2,8 +2,8 @@
 //
 // Languages are symmetric: no language is privileged. People can speak any
 // language and events can be held in any language. Everything shown to a
-// person is in up to two languages: their primary and an optional secondary
-// (ForApp), events included. Localised text is stored as JSON objects keyed
+// person is in up to two languages: their primary and an optional secondary,
+// events included (translate.Service.ResolvePair). Localised text is stored as JSON objects keyed
 // by language code: {"en": "...", "ja": "...", "es": "..."}.
 package i18n
 
@@ -65,17 +65,10 @@ func Display(tag string) string {
 	return base
 }
 
-// ForApp picks the two languages a person reads everything in, events
-// included: their primary language and their optional secondary choice.
-func ForApp(userPrimary, userSecondary string) (primary, secondary string) {
-	if userSecondary == userPrimary {
-		userSecondary = ""
-	}
-	return userPrimary, userSecondary
-}
-
 // Pair decides what to display from text already resolved into the primary
 // and secondary languages ("" = not available) and the stored English text.
+// ResolvePair does the resolving and calls this; call it directly only for
+// text that is never translated (area names).
 //
 //   - If the primary is missing but the secondary exists, the secondary is
 //     shown alone: better one language the person reads than a fallback they
@@ -100,7 +93,7 @@ func Pair(primary, secondary, english string) (string, string) {
 // Pick returns the best single match for locale from a localised JSON object:
 // the exact tag, then the base language ("ja-JP" -> "ja"), then the authoring
 // language, then any value, so a missing translation never produces an empty
-// label. Prefer Pair for anything shown to users.
+// label. Prefer translate.Service.ResolvePair for anything shown to users.
 func Pick(raw []byte, locale string) string {
 	var m map[string]string
 	if err := json.Unmarshal(raw, &m); err != nil || len(m) == 0 {
