@@ -66,7 +66,8 @@ export default function EventScreen() {
     <QueryScreen queries={[event]} notFound={t('event.notFound')} onBack={leave}>
       {([data]) => {
         const e = data.event;
-        if (!e) return null;
+        // A response without its event is the same as not finding it.
+        if (!e) return <ThemedText themeColor="textSecondary">{t('event.notFound')}</ThemedText>;
         const o = outing(e, now);
         const ctx: Ctx = { id, data, e, o, names, now, lang };
         const thread = <Thread stage={o.threadKnot} id={`event:${id}`} live={o.live} />;
