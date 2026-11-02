@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"sync"
 
 	"connectrpc.com/connect"
 
@@ -33,13 +32,12 @@ func (h *Handler) ListCities(ctx context.Context, req *connect.Request[isshov1.L
 	for i, c := range cities {
 		texts[i] = translate.Text{Raw: c.Name, Context: "name of a city"}
 	}
-	names, secondaryNames := h.resolvePair(ctx, primary, secondary, texts)
+	pairs := h.Translations.ResolvePair(ctx, primary, secondary, texts)
 
 	out := make([]*isshov1.City, 0, len(cities))
 	byID := map[string]*isshov1.City{}
 	for i, c := range cities {
-		name, sec := i18n.Pair(names[i], secondaryNames[i], i18n.Pick(c.Name, i18n.Authoring))
-		pc := &isshov1.City{Id: c.ID, Name: name, SecondaryName: sec, Languages: c.Languages}
+		pc := &isshov1.City{Id: c.ID, Name: pairs[i][0], SecondaryName: pairs[i][1], Languages: c.Languages}
 		out = append(out, pc)
 		byID[c.ID] = pc
 	}
@@ -65,20 +63,7 @@ func displayLanguages(locale, secondaryLanguage string) (string, string, error) 
 	if secondary != "" && !i18n.ValidDisplay(secondary) {
 		return "", "", connect.NewError(connect.CodeInvalidArgument, errors.New("secondary_language must be a language code such as \"es\""))
 	}
-	primary, secondary = i18n.ForApp(primary, secondary)
 	return primary, secondary, nil
-}
-
-// resolvePair resolves texts into both languages concurrently: on a cold
-// cache each may wait for the translator.
-func (h *Handler) resolvePair(ctx context.Context, primary, secondary string, texts []translate.Text) ([]string, []string) {
-	var p, s []string
-	var wg sync.WaitGroup
-	wg.Add(2)
-	go func() { defer wg.Done(); p = h.Translations.Resolve(ctx, primary, texts) }()
-	go func() { defer wg.Done(); s = h.Translations.Resolve(ctx, secondary, texts) }()
-	wg.Wait()
-	return p, s
 }
 
 // stored returns the text stored in exactly lang, or "".

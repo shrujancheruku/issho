@@ -12,7 +12,7 @@ import {
 } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { isRightToLeft } from '@/i18n/direction';
-import { useShownLanguage } from '@/i18n/i18n-provider';
+import { useOptionalI18n } from '@/i18n/i18n-provider';
 import { baseLanguage } from '@/i18n/strings';
 
 type ThemedTextProps = TextProps & {
@@ -28,7 +28,7 @@ type ThemedTextProps = TextProps & {
 
 export function ThemedText({ style, type = 'default', themeColor, lang, ...rest }: ThemedTextProps) {
   const theme = useTheme();
-  const shown = useShownLanguage();
+  const shown = useOptionalI18n()?.lang;
   const tag = lang || shown || 'en';
   const language = baseLanguage(tag) || 'en';
   const color = theme[themeColor ?? (type === 'linkPrimary' ? 'link' : 'text')];

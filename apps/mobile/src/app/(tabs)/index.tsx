@@ -16,7 +16,7 @@ import { crewName } from '@/features/crews/name';
 import { formatStart, lastSignupDay } from '@/features/plans/format';
 import { levelColors, levelLabels } from '@/features/plans/level';
 import { usePlanNames } from '@/features/plans/names';
-import { friendsText, pairText, planTitle } from '@/features/plans/plan-card';
+import { friendsText, pairText } from '@/features/plans/plan-card';
 import { useTogether, type NeedsYou } from '@/features/together/data';
 import { InviteCard } from '@/features/together/invite-card';
 import { useTheme } from '@/hooks/use-theme';
@@ -157,18 +157,8 @@ function RowText({ title, detail, detailColor, extra }: { title: string; detail:
   );
 }
 
-function useLang() {
-  const { languages, showing } = useI18n();
-  return showing === 'secondary' ? languages.secondary : languages.primary;
-}
-
-function eventTitle(e: MyEvent, showing: 'primary' | 'secondary') {
-  return showing === 'secondary' && e.secondaryTitle ? e.secondaryTitle : e.title;
-}
-
 function NeedsYouRow({ item, names }: { item: Exclude<NeedsYou, { kind: 'invite' }>; names: Names }) {
-  const { t, showing } = useI18n();
-  const lang = useLang();
+  const { t, lang, pick } = useI18n();
   if (item.kind === 'crewOffer') {
     const name = crewName(item.crew, names, (n) => t('crew.name', { name: n })).name;
     return (
@@ -182,15 +172,15 @@ function NeedsYouRow({ item, names }: { item: Exclude<NeedsYou, { kind: 'invite'
   if (item.kind === 'checkIn') {
     return (
       <ListRow onPress={() => openEvent(e.id)}>
-        <Avatar name={eventTitle(e, showing)} />
-        <RowText title={eventTitle(e, showing)} detail={t('together.checkIn')} detailColor="goldText" />
+        <Avatar name={pick(e.title, e.secondaryTitle).name} />
+        <RowText title={pick(e.title, e.secondaryTitle).name} detail={t('together.checkIn')} detailColor="goldText" />
       </ListRow>
     );
   }
   return (
     <ListRow onPress={() => router.push({ pathname: '/feedback/[id]', params: { id: e.id } })}>
-      <Avatar name={eventTitle(e, showing)} />
-      <RowText title={t('event.feedback')} detail={`${eventTitle(e, showing)}, ${formatStart(e.startsAt, lang)}`} detailColor="goldText" />
+      <Avatar name={pick(e.title, e.secondaryTitle).name} />
+      <RowText title={t('event.feedback')} detail={`${pick(e.title, e.secondaryTitle).name}, ${formatStart(e.startsAt, lang)}`} detailColor="goldText" />
     </ListRow>
   );
 }
@@ -208,9 +198,8 @@ function CrewRow({ crew, names }: { crew: Crew; names: Names }) {
 }
 
 function OutingRow({ event, names }: { event: MyEvent; names: Names }) {
-  const { t, showing } = useI18n();
-  const lang = useLang();
-  const title = eventTitle(event, showing);
+  const { t, lang, pick } = useI18n();
+  const title = pick(event.title, event.secondaryTitle).name;
   return (
     <ListRow onPress={() => openEvent(event.id)} chevron={false}>
       <Avatar name={title} />
@@ -224,12 +213,11 @@ function OutingRow({ event, names }: { event: MyEvent; names: Names }) {
 }
 
 function WaitingRow({ plan, names }: { plan: FeedPlan; names: Names }) {
-  const { t, showing } = useI18n();
-  const lang = useLang();
+  const { t, lang, pick } = useI18n();
   return (
     <ListRow onPress={() => openPlan(plan.id)}>
       <View style={styles.rowText}>
-        <ThemedText style={styles.rowTitle}>{planTitle(plan, showing).name}</ThemedText>
+        <ThemedText style={styles.rowTitle}>{pick(plan.title, plan.secondaryTitle).name}</ThemedText>
         <ThemedText type="small" themeColor="textSecondary">
           {pairText(names.area(plan.areaId))}. {t('plan.interested', { count: plan.signups })}
         </ThemedText>
@@ -257,7 +245,7 @@ const steps = [
  * thread, then this week's two best plans and the way to the rest.
  */
 function FirstWeek({ plans, names }: { plans: FeedPlan[]; names: Names }) {
-  const { t, showing } = useI18n();
+  const { t, pick } = useI18n();
   const theme = useTheme();
   const picks = plans.filter((p) => p.level === PlanLevel.TOP || p.level === PlanLevel.GOOD).slice(0, 2);
   return (
@@ -295,7 +283,7 @@ function FirstWeek({ plans, names }: { plans: FeedPlan[]; names: Names }) {
                     <ThemedText style={[styles.levelTagText, { color: colors.text }]}>{t(levelLabels[p.level])}</ThemedText>
                   </View>
                   <View style={styles.rowText}>
-                    <ThemedText style={styles.rowTitle}>{planTitle(p, showing).name}</ThemedText>
+                    <ThemedText style={styles.rowTitle}>{pick(p.title, p.secondaryTitle).name}</ThemedText>
                     <ThemedText type="small" themeColor="textSecondary">
                       {pairText(names.area(p.areaId))}. {t('plan.interested', { count: p.signups })}
                     </ThemedText>

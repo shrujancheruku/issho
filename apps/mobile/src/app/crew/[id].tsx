@@ -154,9 +154,8 @@ function Person({ member, index, hop, label }: { member: CrewMember; index: numb
 }
 
 function Offer({ crew, onBack, onOpenChat }: { crew: Crew; onBack: () => void; onOpenChat: () => void }) {
-  const { t, languages, showing } = useI18n();
+  const { t, lang } = useI18n();
   const otherLanguage = useOtherLanguage();
-  const lang = showing === 'secondary' ? languages.secondary : languages.primary;
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const names = usePlanNames();

@@ -10,6 +10,7 @@ import { fromBundle } from './bundle';
 import { applyDirection } from './direction';
 import { readCached, writeCached, type CachedStrings } from './cache';
 import { deviceLanguages } from './device';
+import { pickShown, resolveShowing } from './shown';
 import { catalogFingerprint, displayEnglish, lookup, pseudoEnglish, type Params, type StringKey } from './strings';
 
 type Languages = { primary: string; secondary: string };
@@ -21,6 +22,13 @@ type I18nState = {
   device: Languages;
   /** Which of the two languages longer text is shown in (the switch). */
   showing: 'primary' | 'secondary';
+  /** The language being shown: the primary unless the switch is on a secondary that exists. */
+  lang: string;
+  /**
+   * Orders a text the API sent in both display languages for the language being
+   * shown: `name` first, `secondary` beside it ('' when there is none).
+   */
+  pick: (primaryText: string, secondaryText: string | undefined) => { name: string; secondary: string };
   toggleShowing: () => void;
   /**
    * Shows the app in other languages before they're saved, e.g. while the
@@ -70,7 +78,9 @@ export function I18nProvider({ children }: PropsWithChildren) {
   useEffect(() => applyDirection(languages.primary), [languages.primary]);
   const primary = useUiStrings(languages.primary);
   const secondary = useUiStrings(languages.secondary);
-  const shown = showing === 'secondary' && languages.secondary ? 'secondary' : 'primary';
+  const shown = resolveShowing(languages.secondary, showing);
+  const lang = shown === 'secondary' ? languages.secondary : languages.primary;
+  const pick = useCallback((a: string, b: string | undefined) => pickShown(shown, a, b), [shown]);
 
   const t = useCallback(
     (key: StringKey, params?: Params) =>
@@ -93,6 +103,8 @@ export function I18nProvider({ children }: PropsWithChildren) {
       languages,
       device: { primary: devicePrimary, secondary: deviceSecondary },
       showing: shown,
+      lang,
+      pick,
       toggleShowing: () => setShowing((s) => (s === 'primary' ? 'secondary' : 'primary')),
       previewLanguages,
       t,
@@ -100,19 +112,9 @@ export function I18nProvider({ children }: PropsWithChildren) {
     }),
     // languages is rebuilt each render; its fields are what matter.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [languages.primary, languages.secondary, devicePrimary, deviceSecondary, shown, t, pair, previewLanguages],
+    [languages.primary, languages.secondary, devicePrimary, deviceSecondary, shown, lang, pick, t, pair, previewLanguages],
   );
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
-}
-
-/**
- * The language text is being shown in, for ThemedText's typeface; English
- * outside the provider (it never throws, unlike useI18n).
- */
-export function useShownLanguage(): string {
-  const ctx = useContext(I18nContext);
-  if (!ctx) return 'en';
-  return ctx.showing === 'secondary' && ctx.languages.secondary ? ctx.languages.secondary : ctx.languages.primary;
 }
 
 /** The other display language (what side-by-side secondary text is in), or ''. */
@@ -120,6 +122,11 @@ export function useOtherLanguage(): string {
   const ctx = useContext(I18nContext);
   if (!ctx || !ctx.languages.secondary) return '';
   return ctx.showing === 'secondary' ? ctx.languages.primary : ctx.languages.secondary;
+}
+
+/** useI18n for components that may render outside the provider (ThemedText); null there. */
+export function useOptionalI18n() {
+  return useContext(I18nContext);
 }
 
 export function useI18n() {

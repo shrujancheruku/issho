@@ -11,7 +11,6 @@ import (
 
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	"github.com/shrujancheruku/issho/backend/internal/matching"
-	"github.com/shrujancheruku/issho/backend/internal/platform/i18n"
 )
 
 // City is everything matching needs about one city.
@@ -155,8 +154,7 @@ func loadCaller(ctx context.Context, q *dbgen.Queries, userID uuid.UUID) (Caller
 	if err != nil {
 		return Caller{}, err
 	}
-	primary, secondary := i18n.ForApp(r.PrimaryLanguage, deref(r.SecondaryLanguage))
-	return Caller{City: r.CityID, Primary: primary, Secondary: secondary}, nil
+	return Caller{City: r.CityID, Primary: r.PrimaryLanguage, Secondary: deref(r.SecondaryLanguage)}, nil
 }
 
 // LoadUser reads one person for their feed, with their city and display
@@ -167,8 +165,7 @@ func LoadUser(ctx context.Context, q *dbgen.Queries, userID uuid.UUID) (*matchin
 	if err != nil {
 		return nil, Caller{}, err
 	}
-	primary, secondary := i18n.ForApp(r.PrimaryLanguage, deref(r.SecondaryLanguage))
-	caller := Caller{City: r.CityID, Primary: primary, Secondary: secondary}
+	caller := Caller{City: r.CityID, Primary: r.PrimaryLanguage, Secondary: deref(r.SecondaryLanguage)}
 	u := newUser(userID, r.HomeAreaID, r.MaxTravelMin, r.Gender, r.SameGenderOnly, r.SizePref, r.Budget)
 	for i, code := range r.LangCodes {
 		u.Languages = append(u.Languages, matching.Language{Code: code, Fluent: r.LangFluent[i], Level: int(r.LangLevels[i])})

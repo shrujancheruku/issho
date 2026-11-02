@@ -27,7 +27,7 @@ export function Timeline({
   names: ReturnType<typeof usePlanNames>;
   closed?: boolean;
 }) {
-  const { t, showing } = useI18n();
+  const { t, pick } = useI18n();
   // Google's terms: Places data shown without a Google map needs attribution.
   const fromGoogle = steps.some((s) => s.venueName || s.venueAddress);
   return (
@@ -36,14 +36,8 @@ export function Timeline({
         const activity = names.activity(step.activityId);
         const last = i === steps.length - 1;
         // Venue names come primary first; follow the language switch like the rest.
-        const [venue, venueOther] =
-          showing === "secondary" && step.venueSecondaryName
-            ? [step.venueSecondaryName, step.venueName]
-            : [step.venueName, step.venueSecondaryName];
-        const note =
-          showing === "secondary" && step.secondaryNote
-            ? step.secondaryNote
-            : step.note;
+        const { name: venue, secondary: venueOther } = pick(step.venueName, step.venueSecondaryName);
+        const note = pick(step.note, step.secondaryNote).name;
         // What happens here; a walk's stop is just its place.
         const label = step.meeting
           ? t("plan.meetHere")

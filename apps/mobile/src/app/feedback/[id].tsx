@@ -76,8 +76,7 @@ function Pick({ name, on, onPress }: { name: string; on: boolean; onPress: () =>
  */
 export default function FeedbackScreen() {
   const { id = '' } = useLocalSearchParams<{ id: string }>();
-  const { t, languages, showing } = useI18n();
-  const lang = showing === 'secondary' ? languages.secondary : languages.primary;
+  const { t, lang, pick } = useI18n();
   const now = useNow();
   const theme = useTheme();
   const form = useFeedback(id);
@@ -95,7 +94,7 @@ export default function FeedbackScreen() {
       : { attended: true, planRating: 0, groupRating: 0, picks: [], avoid: [] });
 
   const e = event.data?.event;
-  const title = e ? (showing === 'secondary' && e.secondaryTitle ? e.secondaryTitle : e.title) : '';
+  const title = e ? pick(e.title, e.secondaryTitle).name : '';
   const denied = form.error instanceof ConnectError && form.error.code === Code.PermissionDenied;
   const rated = answer.planRating > 0 && answer.groupRating > 0;
   const mates = f?.mates.filter((m) => !m.cancelled) ?? [];

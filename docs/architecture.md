@@ -99,7 +99,7 @@ Languages are **symmetric**: no language is the default, and people who don't sp
 
 Events used to lead with their own language; since plans got titles (2026-10-22) they're shown in the reader's languages like everything else, and a plan's own languages decide who it suits, not how it's written.
 
-`i18n.ForApp` implements this; nothing else should re-implement it. Short text (names, titles) is shown **side by side** ("陶芸 · Cerámica"); longer text (descriptions, UI copy) uses a **switch** between the two languages.
+`translate.Service.ResolvePair` implements this on the server (it takes the reader's two languages and returns each text ready to show); nothing else should re-implement it. In the app, `useI18n()` does: `lang` is the language being shown and `pick(primaryText, secondaryText)` orders a text the API sent in both languages for the language switch (`i18n/shown.ts`). Short text (names, titles) is shown **side by side** ("陶芸 · Cerámica"); longer text (descriptions, UI copy) uses a **switch** between the two languages.
 
 **Storage: English always, everything else on demand.** Localised text is stored as JSON objects (`{"en": …, "ja": …}`). English is the only language that must always be present; our own content (activity catalogue, venue categories) is stored in English only. Other languages come from `internal/translate`:
 
@@ -107,7 +107,7 @@ Events used to lead with their own language; since plans got titles (2026-10-22)
 2. otherwise a cached machine translation from `app.translations`
 3. otherwise Google Cloud Translation translates it now, and the result is cached and reused for everyone. A request waits up to 3 s (`translate.DefaultWait`); a slower translation finishes in the background for the next request. Without `GOOGLE_TRANSLATE_API_KEY`, step 3 is skipped.
 
-`i18n.Pair` then decides what to show: if the primary language isn't available yet, the secondary is shown alone; English is only the last resort. APIs return both texts (e.g. `name` + `secondary_name`) and clients choose the layout. Any ISO 639-1 language is accepted.
+`ResolvePair` looks up the two languages concurrently, then `i18n.Pair` decides what to show: if the primary language isn't available yet, the secondary is shown alone; English is only the last resort. APIs return both texts (e.g. `name` + `secondary_name`) and clients choose the layout. Any ISO 639-1 language is accepted.
 
 **Events** (M6) are stored with English **plus each of their own languages prefilled** (`translate.Service.Prefill`), so a JP–ES exchange exists in en, ja and es from the start; any other viewer's language is translated on demand.
 

@@ -39,9 +39,8 @@ export function AvailabilityGrid({
   selected: readonly string[];
   onToggle: (weekday: number, block: TimeBlock) => void;
 }) {
-  const { t, languages, showing } = useI18n();
+  const { t, lang } = useI18n();
   const theme = useTheme();
-  const lang = showing === 'secondary' ? languages.secondary : languages.primary;
   return (
     <View style={styles.grid}>
       <View style={styles.row}>
