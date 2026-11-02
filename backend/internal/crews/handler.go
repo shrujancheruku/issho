@@ -73,34 +73,6 @@ func (h *Handler) RespondToCrew(ctx context.Context, req *connect.Request[isshov
 	return connect.NewResponse(out), nil
 }
 
-func (h *Handler) ListCrewMessages(ctx context.Context, req *connect.Request[isshov1.ListCrewMessagesRequest]) (*connect.Response[isshov1.ListCrewMessagesResponse], error) {
-	userID, crewID, err := crewCall(ctx, req.Msg.CrewId)
-	if err != nil {
-		return nil, err
-	}
-	msgs, err := h.Svc.Messages(ctx, userID, crewID, req.Msg.AfterId)
-	if err != nil {
-		return nil, crewError(err)
-	}
-	out := &isshov1.ListCrewMessagesResponse{Messages: make([]*isshov1.CrewMessage, len(msgs))}
-	for i, m := range msgs {
-		out.Messages[i] = messageToProto(m)
-	}
-	return connect.NewResponse(out), nil
-}
-
-func (h *Handler) SendCrewMessage(ctx context.Context, req *connect.Request[isshov1.SendCrewMessageRequest]) (*connect.Response[isshov1.SendCrewMessageResponse], error) {
-	userID, crewID, err := crewCall(ctx, req.Msg.CrewId)
-	if err != nil {
-		return nil, err
-	}
-	m, err := h.Svc.Send(ctx, userID, crewID, req.Msg.Body)
-	if err != nil {
-		return nil, crewError(err)
-	}
-	return connect.NewResponse(&isshov1.SendCrewMessageResponse{Message: messageToProto(m)}), nil
-}
-
 var leaveReasons = map[isshov1.LeaveReason]string{
 	isshov1.LeaveReason_LEAVE_REASON_UNCOMFORTABLE:     LeaveUncomfortable,
 	isshov1.LeaveReason_LEAVE_REASON_NOT_INTERESTED:    LeaveNotInterested,
@@ -191,14 +163,6 @@ func crewToProto(it Item) *isshov1.Crew {
 	}
 	for _, m := range it.Members {
 		out.Members = append(out.Members, &isshov1.CrewMember{Id: m.ID.String(), Name: m.Name, Accepted: m.Accepted, Me: m.Me})
-	}
-	return out
-}
-
-func messageToProto(m Message) *isshov1.CrewMessage {
-	out := &isshov1.CrewMessage{Id: m.ID, Name: m.Name, Body: m.Body, At: timestamppb.New(m.At), Mine: m.Mine}
-	if m.PlanID != uuid.Nil {
-		out.PlanId = m.PlanID.String()
 	}
 	return out
 }

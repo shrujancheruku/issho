@@ -242,44 +242,6 @@ func (q *Queries) InsertCrewMembers(ctx context.Context, arg InsertCrewMembersPa
 	return err
 }
 
-const insertCrewMessage = `-- name: InsertCrewMessage :one
-insert into app.crew_messages (crew_id, user_id, body) values ($1, $2, $3)
-returning id, created_at
-`
-
-type InsertCrewMessageParams struct {
-	CrewID uuid.UUID
-	UserID pgtype.UUID
-	Body   string
-}
-
-type InsertCrewMessageRow struct {
-	ID        int64
-	CreatedAt pgtype.Timestamptz
-}
-
-func (q *Queries) InsertCrewMessage(ctx context.Context, arg InsertCrewMessageParams) (InsertCrewMessageRow, error) {
-	row := q.db.QueryRow(ctx, insertCrewMessage, arg.CrewID, arg.UserID, arg.Body)
-	var i InsertCrewMessageRow
-	err := row.Scan(&i.ID, &i.CreatedAt)
-	return i, err
-}
-
-const insertCrewPlanMessage = `-- name: InsertCrewPlanMessage :exec
-insert into app.crew_messages (crew_id, plan_id, created_at) values ($1, $2, $3)
-`
-
-type InsertCrewPlanMessageParams struct {
-	CrewID uuid.UUID
-	PlanID pgtype.UUID
-	At     pgtype.Timestamptz
-}
-
-func (q *Queries) InsertCrewPlanMessage(ctx context.Context, arg InsertCrewPlanMessageParams) error {
-	_, err := q.db.Exec(ctx, insertCrewPlanMessage, arg.CrewID, arg.PlanID, arg.At)
-	return err
-}
-
 const isCrewMember = `-- name: IsCrewMember :one
 select exists (select 1 from app.crew_members where crew_id = $1 and user_id = $2 and response in ('accepted', 'left'))::bool
 `
@@ -421,58 +383,6 @@ func (q *Queries) ListCrewMembers(ctx context.Context, crewID uuid.UUID) ([]List
 	return items, nil
 }
 
-const listCrewMessages = `-- name: ListCrewMessages :many
-select c.id, c.user_id, pr.display_name, c.body, c.plan_id, c.created_at
-from app.crew_messages c
-left join app.profiles pr on pr.user_id = c.user_id
-where c.crew_id = $1 and c.id > $2
-order by c.id
-limit $3
-`
-
-type ListCrewMessagesParams struct {
-	CrewID  uuid.UUID
-	AfterID int64
-	Max     int32
-}
-
-type ListCrewMessagesRow struct {
-	ID          int64
-	UserID      pgtype.UUID
-	DisplayName *string
-	Body        string
-	PlanID      pgtype.UUID
-	CreatedAt   pgtype.Timestamptz
-}
-
-// Messages after a given one, oldest first, with the sender's first name.
-func (q *Queries) ListCrewMessages(ctx context.Context, arg ListCrewMessagesParams) ([]ListCrewMessagesRow, error) {
-	rows, err := q.db.Query(ctx, listCrewMessages, arg.CrewID, arg.AfterID, arg.Max)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []ListCrewMessagesRow
-	for rows.Next() {
-		var i ListCrewMessagesRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.UserID,
-			&i.DisplayName,
-			&i.Body,
-			&i.PlanID,
-			&i.CreatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const listCrewOffersToDecide = `-- name: ListCrewOffersToDecide :many
 select c.id from app.crews c
 where c.city_id = $1 and c.status = 'offered'
@@ -534,58 +444,6 @@ func (q *Queries) ListCrewsToSuggest(ctx context.Context, arg ListCrewsToSuggest
 			return nil, err
 		}
 		items = append(items, id)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listLatestCrewMessages = `-- name: ListLatestCrewMessages :many
-select id, user_id, display_name, body, plan_id, created_at from (
-  select c.id, c.user_id, pr.display_name, c.body, c.plan_id, c.created_at
-  from app.crew_messages c
-  left join app.profiles pr on pr.user_id = c.user_id
-  where c.crew_id = $1
-  order by c.id desc
-  limit $2
-) latest order by id
-`
-
-type ListLatestCrewMessagesParams struct {
-	CrewID uuid.UUID
-	Max    int32
-}
-
-type ListLatestCrewMessagesRow struct {
-	ID          int64
-	UserID      pgtype.UUID
-	DisplayName *string
-	Body        string
-	PlanID      pgtype.UUID
-	CreatedAt   pgtype.Timestamptz
-}
-
-func (q *Queries) ListLatestCrewMessages(ctx context.Context, arg ListLatestCrewMessagesParams) ([]ListLatestCrewMessagesRow, error) {
-	rows, err := q.db.Query(ctx, listLatestCrewMessages, arg.CrewID, arg.Max)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []ListLatestCrewMessagesRow
-	for rows.Next() {
-		var i ListLatestCrewMessagesRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.UserID,
-			&i.DisplayName,
-			&i.Body,
-			&i.PlanID,
-			&i.CreatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err

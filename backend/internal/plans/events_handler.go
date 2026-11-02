@@ -11,7 +11,6 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
-	"github.com/shrujancheruku/issho/backend/internal/chat"
 )
 
 // EventHandler serves EventService.
@@ -94,42 +93,6 @@ func (h *EventHandler) RespondToEvent(ctx context.Context, req *connect.Request[
 		return nil, eventError(err)
 	}
 	return connect.NewResponse(&isshov1.RespondToEventResponse{Event: eventToProto(it)}), nil
-}
-
-func (h *EventHandler) ListChatMessages(ctx context.Context, req *connect.Request[isshov1.ListChatMessagesRequest]) (*connect.Response[isshov1.ListChatMessagesResponse], error) {
-	userID, err := caller(ctx)
-	if err != nil {
-		return nil, err
-	}
-	eventID, err := parseEventID(req.Msg.EventId)
-	if err != nil {
-		return nil, err
-	}
-	msgs, st, err := h.Svc.ChatMessages(ctx, userID, eventID, req.Msg.AfterId, h.now())
-	if err != nil {
-		return nil, eventError(err)
-	}
-	out := &isshov1.ListChatMessagesResponse{OpensAt: timestamp(st.OpensAt), ClosesAt: timestamp(st.ClosesAt), Open: st.Open}
-	for _, m := range msgs {
-		out.Messages = append(out.Messages, chatToProto(m))
-	}
-	return connect.NewResponse(out), nil
-}
-
-func (h *EventHandler) SendChatMessage(ctx context.Context, req *connect.Request[isshov1.SendChatMessageRequest]) (*connect.Response[isshov1.SendChatMessageResponse], error) {
-	userID, err := caller(ctx)
-	if err != nil {
-		return nil, err
-	}
-	eventID, err := parseEventID(req.Msg.EventId)
-	if err != nil {
-		return nil, err
-	}
-	m, err := h.Svc.SendChat(ctx, userID, eventID, req.Msg.Body, h.now())
-	if err != nil {
-		return nil, eventError(err)
-	}
-	return connect.NewResponse(&isshov1.SendChatMessageResponse{Message: chatToProto(m)}), nil
 }
 
 func (h *EventHandler) CheckIn(ctx context.Context, req *connect.Request[isshov1.CheckInRequest]) (*connect.Response[isshov1.CheckInResponse], error) {
@@ -258,10 +221,6 @@ func parseIDs(field string, ss []string) ([]uuid.UUID, error) {
 	return ids, nil
 }
 
-func chatToProto(m chat.Message) *isshov1.ChatMessage {
-	return &isshov1.ChatMessage{Id: m.ID, Name: m.Name, Body: m.Body, At: timestamp(m.At), Mine: m.Mine}
-}
-
 func parseEventID(s string) (uuid.UUID, error) {
 	id, err := uuid.Parse(s)
 	if err != nil {
@@ -279,7 +238,7 @@ func eventError(err error) error {
 		return connect.NewError(connect.CodeNotFound, err)
 	case errors.Is(err, ErrNotGoing):
 		return connect.NewError(connect.CodePermissionDenied, err)
-	case errors.Is(err, ErrChatClosed), errors.Is(err, ErrCheckInClosed), errors.Is(err, ErrFeedbackClosed):
+	case errors.Is(err, ErrCheckInClosed), errors.Is(err, ErrFeedbackClosed):
 		return connect.NewError(connect.CodeFailedPrecondition, err)
 	case errors.Is(err, ErrNoProfile), errors.Is(err, ErrEventOver), errors.Is(err, ErrTooLate), errors.Is(err, ErrNotNow):
 		return connect.NewError(connect.CodeFailedPrecondition, err)

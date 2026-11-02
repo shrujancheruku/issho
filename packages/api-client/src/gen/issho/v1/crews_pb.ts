@@ -14,7 +14,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file issho/v1/crews.proto.
  */
 export const file_issho_v1_crews: GenFile = /*@__PURE__*/
-  fileDesc("ChRpc3Noby92MS9jcmV3cy5wcm90bxIIaXNzaG8udjEiFAoSTGlzdE15Q3Jld3NSZXF1ZXN0IjQKE0xpc3RNeUNyZXdzUmVzcG9uc2USHQoFY3Jld3MYASADKAsyDi5pc3Noby52MS5DcmV3IiEKDkdldENyZXdSZXF1ZXN0Eg8KB2NyZXdfaWQYASABKAkiLwoPR2V0Q3Jld1Jlc3BvbnNlEhwKBGNyZXcYASABKAsyDi5pc3Noby52MS5DcmV3IjcKFFJlc3BvbmRUb0NyZXdSZXF1ZXN0Eg8KB2NyZXdfaWQYASABKAkSDgoGYWNjZXB0GAIgASgIIjUKFVJlc3BvbmRUb0NyZXdSZXNwb25zZRIcCgRjcmV3GAEgASgLMg4uaXNzaG8udjEuQ3JldyI8ChdMaXN0Q3Jld01lc3NhZ2VzUmVxdWVzdBIPCgdjcmV3X2lkGAEgASgJEhAKCGFmdGVyX2lkGAIgASgDIkMKGExpc3RDcmV3TWVzc2FnZXNSZXNwb25zZRInCghtZXNzYWdlcxgBIAMoCzIVLmlzc2hvLnYxLkNyZXdNZXNzYWdlIjcKFlNlbmRDcmV3TWVzc2FnZVJlcXVlc3QSDwoHY3Jld19pZBgBIAEoCRIMCgRib2R5GAIgASgJIkEKF1NlbmRDcmV3TWVzc2FnZVJlc3BvbnNlEiYKB21lc3NhZ2UYASABKAsyFS5pc3Noby52MS5DcmV3TWVzc2FnZSJbChBMZWF2ZUNyZXdSZXF1ZXN0Eg8KB2NyZXdfaWQYASABKAkSJQoGcmVhc29uGAIgASgOMhUuaXNzaG8udjEuTGVhdmVSZWFzb24SDwoHZGV0YWlscxgDIAEoCSITChFMZWF2ZUNyZXdSZXNwb25zZSJ2ChdSZXBvcnRDcmV3TWVtYmVyUmVxdWVzdBIPCgdjcmV3X2lkGAEgASgJEhEKCW1lbWJlcl9pZBgCIAEoCRImCgZyZWFzb24YAyABKA4yFi5pc3Noby52MS5SZXBvcnRSZWFzb24SDwoHZGV0YWlscxgEIAEoCSIaChhSZXBvcnRDcmV3TWVtYmVyUmVzcG9uc2Ui4AEKBENyZXcSCgoCaWQYASABKAkSJAoGc3RhdHVzGAIgASgOMhQuaXNzaG8udjEuQ3Jld1N0YXR1cxITCgthY3Rpdml0eV9pZBgDIAEoCRIPCgdhcmVhX2lkGAQgASgJEi8KC29mZmVyX3VudGlsGAUgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIoCghyZXNwb25zZRgGIAEoDjIWLmlzc2hvLnYxLkNyZXdSZXNwb25zZRIlCgdtZW1iZXJzGAcgAygLMhQuaXNzaG8udjEuQ3Jld01lbWJlciJECgpDcmV3TWVtYmVyEgoKAmlkGAEgASgJEgwKBG5hbWUYAiABKAkSEAoIYWNjZXB0ZWQYAyABKAgSCgoCbWUYBCABKAgifAoLQ3Jld01lc3NhZ2USCgoCaWQYASABKAMSDAoEbmFtZRgCIAEoCRIMCgRib2R5GAMgASgJEiYKAmF0GAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIMCgRtaW5lGAUgASgIEg8KB3BsYW5faWQYBiABKAkqWgoKQ3Jld1N0YXR1cxIbChdDUkVXX1NUQVRVU19VTlNQRUNJRklFRBAAEhcKE0NSRVdfU1RBVFVTX09GRkVSRUQQARIWChJDUkVXX1NUQVRVU19BQ1RJVkUQAipkCgxDcmV3UmVzcG9uc2USHQoZQ1JFV19SRVNQT05TRV9VTlNQRUNJRklFRBAAEhkKFUNSRVdfUkVTUE9OU0VfT0ZGRVJFRBABEhoKFkNSRVdfUkVTUE9OU0VfQUNDRVBURUQQAirDAQoLTGVhdmVSZWFzb24SHAoYTEVBVkVfUkVBU09OX1VOU1BFQ0lGSUVEEAASHgoaTEVBVkVfUkVBU09OX1VOQ09NRk9SVEFCTEUQARIfChtMRUFWRV9SRUFTT05fTk9UX0lOVEVSRVNURUQQAhIZChVMRUFWRV9SRUFTT05fSU5BQ1RJVkUQAxIiCh5MRUFWRV9SRUFTT05fVE9PX01BTllfTUVTU0FHRVMQBBIWChJMRUFWRV9SRUFTT05fT1RIRVIQBTLNBAoLQ3Jld1NlcnZpY2USTAoLTGlzdE15Q3Jld3MSHC5pc3Noby52MS5MaXN0TXlDcmV3c1JlcXVlc3QaHS5pc3Noby52MS5MaXN0TXlDcmV3c1Jlc3BvbnNlIgASQAoHR2V0Q3JldxIYLmlzc2hvLnYxLkdldENyZXdSZXF1ZXN0GhkuaXNzaG8udjEuR2V0Q3Jld1Jlc3BvbnNlIgASUgoNUmVzcG9uZFRvQ3JldxIeLmlzc2hvLnYxLlJlc3BvbmRUb0NyZXdSZXF1ZXN0Gh8uaXNzaG8udjEuUmVzcG9uZFRvQ3Jld1Jlc3BvbnNlIgASWwoQTGlzdENyZXdNZXNzYWdlcxIhLmlzc2hvLnYxLkxpc3RDcmV3TWVzc2FnZXNSZXF1ZXN0GiIuaXNzaG8udjEuTGlzdENyZXdNZXNzYWdlc1Jlc3BvbnNlIgASWAoPU2VuZENyZXdNZXNzYWdlEiAuaXNzaG8udjEuU2VuZENyZXdNZXNzYWdlUmVxdWVzdBohLmlzc2hvLnYxLlNlbmRDcmV3TWVzc2FnZVJlc3BvbnNlIgASRgoJTGVhdmVDcmV3EhouaXNzaG8udjEuTGVhdmVDcmV3UmVxdWVzdBobLmlzc2hvLnYxLkxlYXZlQ3Jld1Jlc3BvbnNlIgASWwoQUmVwb3J0Q3Jld01lbWJlchIhLmlzc2hvLnYxLlJlcG9ydENyZXdNZW1iZXJSZXF1ZXN0GiIuaXNzaG8udjEuUmVwb3J0Q3Jld01lbWJlclJlc3BvbnNlIgBCPlo8Z2l0aHViLmNvbS9zaHJ1amFuY2hlcnVrdS9pc3Noby9iYWNrZW5kL2dlbi9pc3Noby92MTtpc3Nob3YxYgZwcm90bzM", [file_google_protobuf_timestamp, file_issho_v1_events]);
+  fileDesc("ChRpc3Noby92MS9jcmV3cy5wcm90bxIIaXNzaG8udjEiFAoSTGlzdE15Q3Jld3NSZXF1ZXN0IjQKE0xpc3RNeUNyZXdzUmVzcG9uc2USHQoFY3Jld3MYASADKAsyDi5pc3Noby52MS5DcmV3IiEKDkdldENyZXdSZXF1ZXN0Eg8KB2NyZXdfaWQYASABKAkiLwoPR2V0Q3Jld1Jlc3BvbnNlEhwKBGNyZXcYASABKAsyDi5pc3Noby52MS5DcmV3IjcKFFJlc3BvbmRUb0NyZXdSZXF1ZXN0Eg8KB2NyZXdfaWQYASABKAkSDgoGYWNjZXB0GAIgASgIIjUKFVJlc3BvbmRUb0NyZXdSZXNwb25zZRIcCgRjcmV3GAEgASgLMg4uaXNzaG8udjEuQ3JldyJbChBMZWF2ZUNyZXdSZXF1ZXN0Eg8KB2NyZXdfaWQYASABKAkSJQoGcmVhc29uGAIgASgOMhUuaXNzaG8udjEuTGVhdmVSZWFzb24SDwoHZGV0YWlscxgDIAEoCSITChFMZWF2ZUNyZXdSZXNwb25zZSJ2ChdSZXBvcnRDcmV3TWVtYmVyUmVxdWVzdBIPCgdjcmV3X2lkGAEgASgJEhEKCW1lbWJlcl9pZBgCIAEoCRImCgZyZWFzb24YAyABKA4yFi5pc3Noby52MS5SZXBvcnRSZWFzb24SDwoHZGV0YWlscxgEIAEoCSIaChhSZXBvcnRDcmV3TWVtYmVyUmVzcG9uc2Ui4AEKBENyZXcSCgoCaWQYASABKAkSJAoGc3RhdHVzGAIgASgOMhQuaXNzaG8udjEuQ3Jld1N0YXR1cxITCgthY3Rpdml0eV9pZBgDIAEoCRIPCgdhcmVhX2lkGAQgASgJEi8KC29mZmVyX3VudGlsGAUgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIoCghyZXNwb25zZRgGIAEoDjIWLmlzc2hvLnYxLkNyZXdSZXNwb25zZRIlCgdtZW1iZXJzGAcgAygLMhQuaXNzaG8udjEuQ3Jld01lbWJlciJECgpDcmV3TWVtYmVyEgoKAmlkGAEgASgJEgwKBG5hbWUYAiABKAkSEAoIYWNjZXB0ZWQYAyABKAgSCgoCbWUYBCABKAgqWgoKQ3Jld1N0YXR1cxIbChdDUkVXX1NUQVRVU19VTlNQRUNJRklFRBAAEhcKE0NSRVdfU1RBVFVTX09GRkVSRUQQARIWChJDUkVXX1NUQVRVU19BQ1RJVkUQAipkCgxDcmV3UmVzcG9uc2USHQoZQ1JFV19SRVNQT05TRV9VTlNQRUNJRklFRBAAEhkKFUNSRVdfUkVTUE9OU0VfT0ZGRVJFRBABEhoKFkNSRVdfUkVTUE9OU0VfQUNDRVBURUQQAirDAQoLTGVhdmVSZWFzb24SHAoYTEVBVkVfUkVBU09OX1VOU1BFQ0lGSUVEEAASHgoaTEVBVkVfUkVBU09OX1VOQ09NRk9SVEFCTEUQARIfChtMRUFWRV9SRUFTT05fTk9UX0lOVEVSRVNURUQQAhIZChVMRUFWRV9SRUFTT05fSU5BQ1RJVkUQAxIiCh5MRUFWRV9SRUFTT05fVE9PX01BTllfTUVTU0FHRVMQBBIWChJMRUFWRV9SRUFTT05fT1RIRVIQBTKWAwoLQ3Jld1NlcnZpY2USTAoLTGlzdE15Q3Jld3MSHC5pc3Noby52MS5MaXN0TXlDcmV3c1JlcXVlc3QaHS5pc3Noby52MS5MaXN0TXlDcmV3c1Jlc3BvbnNlIgASQAoHR2V0Q3JldxIYLmlzc2hvLnYxLkdldENyZXdSZXF1ZXN0GhkuaXNzaG8udjEuR2V0Q3Jld1Jlc3BvbnNlIgASUgoNUmVzcG9uZFRvQ3JldxIeLmlzc2hvLnYxLlJlc3BvbmRUb0NyZXdSZXF1ZXN0Gh8uaXNzaG8udjEuUmVzcG9uZFRvQ3Jld1Jlc3BvbnNlIgASRgoJTGVhdmVDcmV3EhouaXNzaG8udjEuTGVhdmVDcmV3UmVxdWVzdBobLmlzc2hvLnYxLkxlYXZlQ3Jld1Jlc3BvbnNlIgASWwoQUmVwb3J0Q3Jld01lbWJlchIhLmlzc2hvLnYxLlJlcG9ydENyZXdNZW1iZXJSZXF1ZXN0GiIuaXNzaG8udjEuUmVwb3J0Q3Jld01lbWJlclJlc3BvbnNlIgBCPlo8Z2l0aHViLmNvbS9zaHJ1amFuY2hlcnVrdS9pc3Noby9iYWNrZW5kL2dlbi9pc3Noby92MTtpc3Nob3YxYgZwcm90bzM", [file_google_protobuf_timestamp, file_issho_v1_events]);
 
 /**
  * @generated from message issho.v1.ListMyCrewsRequest
@@ -120,86 +120,6 @@ export const RespondToCrewResponseSchema: GenMessage<RespondToCrewResponse> = /*
   messageDesc(file_issho_v1_crews, 5);
 
 /**
- * @generated from message issho.v1.ListCrewMessagesRequest
- */
-export type ListCrewMessagesRequest = Message<"issho.v1.ListCrewMessagesRequest"> & {
-  /**
-   * @generated from field: string crew_id = 1;
-   */
-  crewId: string;
-
-  /**
-   * 0 = the latest messages.
-   *
-   * @generated from field: int64 after_id = 2;
-   */
-  afterId: bigint;
-};
-
-/**
- * Describes the message issho.v1.ListCrewMessagesRequest.
- * Use `create(ListCrewMessagesRequestSchema)` to create a new message.
- */
-export const ListCrewMessagesRequestSchema: GenMessage<ListCrewMessagesRequest> = /*@__PURE__*/
-  messageDesc(file_issho_v1_crews, 6);
-
-/**
- * @generated from message issho.v1.ListCrewMessagesResponse
- */
-export type ListCrewMessagesResponse = Message<"issho.v1.ListCrewMessagesResponse"> & {
-  /**
-   * @generated from field: repeated issho.v1.CrewMessage messages = 1;
-   */
-  messages: CrewMessage[];
-};
-
-/**
- * Describes the message issho.v1.ListCrewMessagesResponse.
- * Use `create(ListCrewMessagesResponseSchema)` to create a new message.
- */
-export const ListCrewMessagesResponseSchema: GenMessage<ListCrewMessagesResponse> = /*@__PURE__*/
-  messageDesc(file_issho_v1_crews, 7);
-
-/**
- * @generated from message issho.v1.SendCrewMessageRequest
- */
-export type SendCrewMessageRequest = Message<"issho.v1.SendCrewMessageRequest"> & {
-  /**
-   * @generated from field: string crew_id = 1;
-   */
-  crewId: string;
-
-  /**
-   * @generated from field: string body = 2;
-   */
-  body: string;
-};
-
-/**
- * Describes the message issho.v1.SendCrewMessageRequest.
- * Use `create(SendCrewMessageRequestSchema)` to create a new message.
- */
-export const SendCrewMessageRequestSchema: GenMessage<SendCrewMessageRequest> = /*@__PURE__*/
-  messageDesc(file_issho_v1_crews, 8);
-
-/**
- * @generated from message issho.v1.SendCrewMessageResponse
- */
-export type SendCrewMessageResponse = Message<"issho.v1.SendCrewMessageResponse"> & {
-  /**
-   * @generated from field: issho.v1.CrewMessage message = 1;
-   */
-  message?: CrewMessage | undefined;
-};
-
-/**
- * Describes the message issho.v1.SendCrewMessageResponse.
- * Use `create(SendCrewMessageResponseSchema)` to create a new message.
- */
-export const SendCrewMessageResponseSchema: GenMessage<SendCrewMessageResponse> = /*@__PURE__*/
-  messageDesc(file_issho_v1_crews, 9);
-
-/**
  * @generated from message issho.v1.LeaveCrewRequest
  */
 export type LeaveCrewRequest = Message<"issho.v1.LeaveCrewRequest"> & {
@@ -226,7 +146,7 @@ export type LeaveCrewRequest = Message<"issho.v1.LeaveCrewRequest"> & {
  * Use `create(LeaveCrewRequestSchema)` to create a new message.
  */
 export const LeaveCrewRequestSchema: GenMessage<LeaveCrewRequest> = /*@__PURE__*/
-  messageDesc(file_issho_v1_crews, 10);
+  messageDesc(file_issho_v1_crews, 6);
 
 /**
  * @generated from message issho.v1.LeaveCrewResponse
@@ -239,7 +159,7 @@ export type LeaveCrewResponse = Message<"issho.v1.LeaveCrewResponse"> & {
  * Use `create(LeaveCrewResponseSchema)` to create a new message.
  */
 export const LeaveCrewResponseSchema: GenMessage<LeaveCrewResponse> = /*@__PURE__*/
-  messageDesc(file_issho_v1_crews, 11);
+  messageDesc(file_issho_v1_crews, 7);
 
 /**
  * @generated from message issho.v1.ReportCrewMemberRequest
@@ -275,7 +195,7 @@ export type ReportCrewMemberRequest = Message<"issho.v1.ReportCrewMemberRequest"
  * Use `create(ReportCrewMemberRequestSchema)` to create a new message.
  */
 export const ReportCrewMemberRequestSchema: GenMessage<ReportCrewMemberRequest> = /*@__PURE__*/
-  messageDesc(file_issho_v1_crews, 12);
+  messageDesc(file_issho_v1_crews, 8);
 
 /**
  * @generated from message issho.v1.ReportCrewMemberResponse
@@ -288,7 +208,7 @@ export type ReportCrewMemberResponse = Message<"issho.v1.ReportCrewMemberRespons
  * Use `create(ReportCrewMemberResponseSchema)` to create a new message.
  */
 export const ReportCrewMemberResponseSchema: GenMessage<ReportCrewMemberResponse> = /*@__PURE__*/
-  messageDesc(file_issho_v1_crews, 13);
+  messageDesc(file_issho_v1_crews, 9);
 
 /**
  * A crew, or an offer of one, as the caller sees it.
@@ -345,7 +265,7 @@ export type Crew = Message<"issho.v1.Crew"> & {
  * Use `create(CrewSchema)` to create a new message.
  */
 export const CrewSchema: GenMessage<Crew> = /*@__PURE__*/
-  messageDesc(file_issho_v1_crews, 14);
+  messageDesc(file_issho_v1_crews, 10);
 
 /**
  * @generated from message issho.v1.CrewMember
@@ -383,52 +303,7 @@ export type CrewMember = Message<"issho.v1.CrewMember"> & {
  * Use `create(CrewMemberSchema)` to create a new message.
  */
 export const CrewMemberSchema: GenMessage<CrewMember> = /*@__PURE__*/
-  messageDesc(file_issho_v1_crews, 15);
-
-/**
- * A message in a crew's chat: someone's text, or a plan Issho suggested
- * (plan_id set; name and body empty).
- *
- * @generated from message issho.v1.CrewMessage
- */
-export type CrewMessage = Message<"issho.v1.CrewMessage"> & {
-  /**
-   * @generated from field: int64 id = 1;
-   */
-  id: bigint;
-
-  /**
-   * @generated from field: string name = 2;
-   */
-  name: string;
-
-  /**
-   * @generated from field: string body = 3;
-   */
-  body: string;
-
-  /**
-   * @generated from field: google.protobuf.Timestamp at = 4;
-   */
-  at?: Timestamp | undefined;
-
-  /**
-   * @generated from field: bool mine = 5;
-   */
-  mine: boolean;
-
-  /**
-   * @generated from field: string plan_id = 6;
-   */
-  planId: string;
-};
-
-/**
- * Describes the message issho.v1.CrewMessage.
- * Use `create(CrewMessageSchema)` to create a new message.
- */
-export const CrewMessageSchema: GenMessage<CrewMessage> = /*@__PURE__*/
-  messageDesc(file_issho_v1_crews, 16);
+  messageDesc(file_issho_v1_crews, 11);
 
 /**
  * @generated from enum issho.v1.CrewStatus
@@ -577,29 +452,6 @@ export const CrewService: GenService<{
     methodKind: "unary";
     input: typeof RespondToCrewRequestSchema;
     output: typeof RespondToCrewResponseSchema;
-  },
-  /**
-   * ListCrewMessages returns the crew's chat: the latest messages, or
-   * those after after_id. Members only (PERMISSION_DENIED otherwise). New
-   * messages also arrive over the WebSocket at GET /ws/chat, starting with
-   * {"token", "crewId", "afterId"} (see the backend README).
-   *
-   * @generated from rpc issho.v1.CrewService.ListCrewMessages
-   */
-  listCrewMessages: {
-    methodKind: "unary";
-    input: typeof ListCrewMessagesRequestSchema;
-    output: typeof ListCrewMessagesResponseSchema;
-  },
-  /**
-   * SendCrewMessage posts 1–1000 characters to the crew's chat.
-   *
-   * @generated from rpc issho.v1.CrewService.SendCrewMessage
-   */
-  sendCrewMessage: {
-    methodKind: "unary";
-    input: typeof SendCrewMessageRequestSchema;
-    output: typeof SendCrewMessageResponseSchema;
   },
   /**
    * LeaveCrew takes the caller out of a crew, with why. The reason is

@@ -16,7 +16,6 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
-	"github.com/shrujancheruku/issho/backend/internal/chat"
 	"github.com/shrujancheruku/issho/backend/internal/matching"
 	"github.com/shrujancheruku/issho/backend/internal/plans"
 )
@@ -93,13 +92,6 @@ type Mate struct {
 	Name     string
 	Accepted bool
 	Me       bool
-}
-
-// Message is a message in a crew's chat: someone's text, or a plan
-// suggested by Issho (PlanID set, Name and Body empty).
-type Message struct {
-	chat.Message
-	PlanID uuid.UUID
 }
 
 // List returns the caller's crews and the crew offers still open to them,
@@ -321,65 +313,6 @@ func loadMembership(ctx context.Context, q *dbgen.Queries, userID, crewID uuid.U
 		return Membership{}, err
 	}
 	return newMembership(r.Status, r.Response, r.OfferUntil), nil
-}
-
-// Messages returns a crew's chat after message afterID (0 = the latest
-// messages), oldest first.
-func (s *Service) Messages(ctx context.Context, userID, crewID uuid.UUID, afterID int64) ([]Message, error) {
-	q := dbgen.New(s.DB)
-	if m, err := loadMembership(ctx, q, userID, crewID); err != nil {
-		return nil, err
-	} else if err := m.Chat(); err != nil {
-		return nil, err
-	}
-	var rows []dbgen.ListCrewMessagesRow
-	if afterID == 0 {
-		rs, err := q.ListLatestCrewMessages(ctx, dbgen.ListLatestCrewMessagesParams{CrewID: crewID, Max: chat.Page})
-		if err != nil {
-			return nil, err
-		}
-		for _, r := range rs {
-			rows = append(rows, dbgen.ListCrewMessagesRow(r))
-		}
-	} else {
-		var err error
-		if rows, err = q.ListCrewMessages(ctx, dbgen.ListCrewMessagesParams{CrewID: crewID, AfterID: afterID, Max: chat.Page}); err != nil {
-			return nil, err
-		}
-	}
-	out := make([]Message, len(rows))
-	for i, r := range rows {
-		out[i] = Message{
-			Message: chat.Message{ID: r.ID, Name: deref(r.DisplayName), Body: r.Body, At: r.CreatedAt.Time, Mine: r.UserID.Valid && r.UserID.Bytes == userID},
-			PlanID:  r.PlanID.Bytes,
-		}
-	}
-	return out, nil
-}
-
-// Send posts to the caller's crew chat and tells every API instance (NOTIFY
-// chat, as for event chats), so open chats update.
-func (s *Service) Send(ctx context.Context, userID, crewID uuid.UUID, body string) (Message, error) {
-	body, ok := chat.Clean(body)
-	if !ok {
-		return Message{}, plans.Invalid("message: 1 to %d characters", chat.MaxMessage)
-	}
-	var msg Message
-	err := pgx.BeginFunc(ctx, s.DB, func(tx pgx.Tx) error {
-		q := dbgen.New(tx)
-		if m, err := loadMembership(ctx, q, userID, crewID); err != nil {
-			return err
-		} else if err := m.Chat(); err != nil {
-			return err
-		}
-		r, err := q.InsertCrewMessage(ctx, dbgen.InsertCrewMessageParams{CrewID: crewID, UserID: pgtype.UUID{Bytes: userID, Valid: true}, Body: body})
-		if err != nil {
-			return err
-		}
-		msg = Message{Message: chat.Message{ID: r.ID, Body: body, At: r.CreatedAt.Time, Mine: true}}
-		return q.NotifyChat(ctx, crewID.String())
-	})
-	return msg, err
 }
 
 // ReportMember reports someone met in a crew, as plans.Service.Report does

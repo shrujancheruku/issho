@@ -41,12 +41,6 @@ const (
 	// EventServiceRespondToEventProcedure is the fully-qualified name of the EventService's
 	// RespondToEvent RPC.
 	EventServiceRespondToEventProcedure = "/issho.v1.EventService/RespondToEvent"
-	// EventServiceListChatMessagesProcedure is the fully-qualified name of the EventService's
-	// ListChatMessages RPC.
-	EventServiceListChatMessagesProcedure = "/issho.v1.EventService/ListChatMessages"
-	// EventServiceSendChatMessageProcedure is the fully-qualified name of the EventService's
-	// SendChatMessage RPC.
-	EventServiceSendChatMessageProcedure = "/issho.v1.EventService/SendChatMessage"
 	// EventServiceCheckInProcedure is the fully-qualified name of the EventService's CheckIn RPC.
 	EventServiceCheckInProcedure = "/issho.v1.EventService/CheckIn"
 	// EventServiceGetFeedbackProcedure is the fully-qualified name of the EventService's GetFeedback
@@ -74,16 +68,6 @@ type EventServiceClient interface {
 	// FAILED_PRECONDITION when it's too late, the event is cancelled or over,
 	// or the answer doesn't apply (e.g. cancelling a place not confirmed).
 	RespondToEvent(context.Context, *connect.Request[v1.RespondToEventRequest]) (*connect.Response[v1.RespondToEventResponse], error)
-	// ListChatMessages returns the caller's group chat for an event: the
-	// latest messages, or those after after_id. Only for people who
-	// confirmed (PERMISSION_DENIED otherwise); empty until it opens 48 hours
-	// before the start. New messages also arrive over the WebSocket at
-	// GET /ws/chat (see the backend README).
-	ListChatMessages(context.Context, *connect.Request[v1.ListChatMessagesRequest]) (*connect.Response[v1.ListChatMessagesResponse], error)
-	// SendChatMessage posts to the caller's group chat while it's open (48
-	// hours before the start until 24 hours after; FAILED_PRECONDITION
-	// otherwise). 1–1000 characters.
-	SendChatMessage(context.Context, *connect.Request[v1.SendChatMessageRequest]) (*connect.Response[v1.SendChatMessageResponse], error)
 	// CheckIn records that the caller has arrived: only people who confirmed
 	// (PERMISSION_DENIED otherwise), from 30 minutes before the start until 3
 	// hours after (FAILED_PRECONDITION otherwise). Checking in again is fine.
@@ -138,18 +122,6 @@ func NewEventServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 			connect.WithSchema(eventServiceMethods.ByName("RespondToEvent")),
 			connect.WithClientOptions(opts...),
 		),
-		listChatMessages: connect.NewClient[v1.ListChatMessagesRequest, v1.ListChatMessagesResponse](
-			httpClient,
-			baseURL+EventServiceListChatMessagesProcedure,
-			connect.WithSchema(eventServiceMethods.ByName("ListChatMessages")),
-			connect.WithClientOptions(opts...),
-		),
-		sendChatMessage: connect.NewClient[v1.SendChatMessageRequest, v1.SendChatMessageResponse](
-			httpClient,
-			baseURL+EventServiceSendChatMessageProcedure,
-			connect.WithSchema(eventServiceMethods.ByName("SendChatMessage")),
-			connect.WithClientOptions(opts...),
-		),
 		checkIn: connect.NewClient[v1.CheckInRequest, v1.CheckInResponse](
 			httpClient,
 			baseURL+EventServiceCheckInProcedure,
@@ -179,15 +151,13 @@ func NewEventServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 
 // eventServiceClient implements EventServiceClient.
 type eventServiceClient struct {
-	listMyEvents     *connect.Client[v1.ListMyEventsRequest, v1.ListMyEventsResponse]
-	getEvent         *connect.Client[v1.GetEventRequest, v1.GetEventResponse]
-	respondToEvent   *connect.Client[v1.RespondToEventRequest, v1.RespondToEventResponse]
-	listChatMessages *connect.Client[v1.ListChatMessagesRequest, v1.ListChatMessagesResponse]
-	sendChatMessage  *connect.Client[v1.SendChatMessageRequest, v1.SendChatMessageResponse]
-	checkIn          *connect.Client[v1.CheckInRequest, v1.CheckInResponse]
-	getFeedback      *connect.Client[v1.GetFeedbackRequest, v1.GetFeedbackResponse]
-	submitFeedback   *connect.Client[v1.SubmitFeedbackRequest, v1.SubmitFeedbackResponse]
-	reportPerson     *connect.Client[v1.ReportPersonRequest, v1.ReportPersonResponse]
+	listMyEvents   *connect.Client[v1.ListMyEventsRequest, v1.ListMyEventsResponse]
+	getEvent       *connect.Client[v1.GetEventRequest, v1.GetEventResponse]
+	respondToEvent *connect.Client[v1.RespondToEventRequest, v1.RespondToEventResponse]
+	checkIn        *connect.Client[v1.CheckInRequest, v1.CheckInResponse]
+	getFeedback    *connect.Client[v1.GetFeedbackRequest, v1.GetFeedbackResponse]
+	submitFeedback *connect.Client[v1.SubmitFeedbackRequest, v1.SubmitFeedbackResponse]
+	reportPerson   *connect.Client[v1.ReportPersonRequest, v1.ReportPersonResponse]
 }
 
 // ListMyEvents calls issho.v1.EventService.ListMyEvents.
@@ -203,16 +173,6 @@ func (c *eventServiceClient) GetEvent(ctx context.Context, req *connect.Request[
 // RespondToEvent calls issho.v1.EventService.RespondToEvent.
 func (c *eventServiceClient) RespondToEvent(ctx context.Context, req *connect.Request[v1.RespondToEventRequest]) (*connect.Response[v1.RespondToEventResponse], error) {
 	return c.respondToEvent.CallUnary(ctx, req)
-}
-
-// ListChatMessages calls issho.v1.EventService.ListChatMessages.
-func (c *eventServiceClient) ListChatMessages(ctx context.Context, req *connect.Request[v1.ListChatMessagesRequest]) (*connect.Response[v1.ListChatMessagesResponse], error) {
-	return c.listChatMessages.CallUnary(ctx, req)
-}
-
-// SendChatMessage calls issho.v1.EventService.SendChatMessage.
-func (c *eventServiceClient) SendChatMessage(ctx context.Context, req *connect.Request[v1.SendChatMessageRequest]) (*connect.Response[v1.SendChatMessageResponse], error) {
-	return c.sendChatMessage.CallUnary(ctx, req)
 }
 
 // CheckIn calls issho.v1.EventService.CheckIn.
@@ -249,16 +209,6 @@ type EventServiceHandler interface {
 	// FAILED_PRECONDITION when it's too late, the event is cancelled or over,
 	// or the answer doesn't apply (e.g. cancelling a place not confirmed).
 	RespondToEvent(context.Context, *connect.Request[v1.RespondToEventRequest]) (*connect.Response[v1.RespondToEventResponse], error)
-	// ListChatMessages returns the caller's group chat for an event: the
-	// latest messages, or those after after_id. Only for people who
-	// confirmed (PERMISSION_DENIED otherwise); empty until it opens 48 hours
-	// before the start. New messages also arrive over the WebSocket at
-	// GET /ws/chat (see the backend README).
-	ListChatMessages(context.Context, *connect.Request[v1.ListChatMessagesRequest]) (*connect.Response[v1.ListChatMessagesResponse], error)
-	// SendChatMessage posts to the caller's group chat while it's open (48
-	// hours before the start until 24 hours after; FAILED_PRECONDITION
-	// otherwise). 1–1000 characters.
-	SendChatMessage(context.Context, *connect.Request[v1.SendChatMessageRequest]) (*connect.Response[v1.SendChatMessageResponse], error)
 	// CheckIn records that the caller has arrived: only people who confirmed
 	// (PERMISSION_DENIED otherwise), from 30 minutes before the start until 3
 	// hours after (FAILED_PRECONDITION otherwise). Checking in again is fine.
@@ -309,18 +259,6 @@ func NewEventServiceHandler(svc EventServiceHandler, opts ...connect.HandlerOpti
 		connect.WithSchema(eventServiceMethods.ByName("RespondToEvent")),
 		connect.WithHandlerOptions(opts...),
 	)
-	eventServiceListChatMessagesHandler := connect.NewUnaryHandler(
-		EventServiceListChatMessagesProcedure,
-		svc.ListChatMessages,
-		connect.WithSchema(eventServiceMethods.ByName("ListChatMessages")),
-		connect.WithHandlerOptions(opts...),
-	)
-	eventServiceSendChatMessageHandler := connect.NewUnaryHandler(
-		EventServiceSendChatMessageProcedure,
-		svc.SendChatMessage,
-		connect.WithSchema(eventServiceMethods.ByName("SendChatMessage")),
-		connect.WithHandlerOptions(opts...),
-	)
 	eventServiceCheckInHandler := connect.NewUnaryHandler(
 		EventServiceCheckInProcedure,
 		svc.CheckIn,
@@ -353,10 +291,6 @@ func NewEventServiceHandler(svc EventServiceHandler, opts ...connect.HandlerOpti
 			eventServiceGetEventHandler.ServeHTTP(w, r)
 		case EventServiceRespondToEventProcedure:
 			eventServiceRespondToEventHandler.ServeHTTP(w, r)
-		case EventServiceListChatMessagesProcedure:
-			eventServiceListChatMessagesHandler.ServeHTTP(w, r)
-		case EventServiceSendChatMessageProcedure:
-			eventServiceSendChatMessageHandler.ServeHTTP(w, r)
 		case EventServiceCheckInProcedure:
 			eventServiceCheckInHandler.ServeHTTP(w, r)
 		case EventServiceGetFeedbackProcedure:
@@ -384,14 +318,6 @@ func (UnimplementedEventServiceHandler) GetEvent(context.Context, *connect.Reque
 
 func (UnimplementedEventServiceHandler) RespondToEvent(context.Context, *connect.Request[v1.RespondToEventRequest]) (*connect.Response[v1.RespondToEventResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.EventService.RespondToEvent is not implemented"))
-}
-
-func (UnimplementedEventServiceHandler) ListChatMessages(context.Context, *connect.Request[v1.ListChatMessagesRequest]) (*connect.Response[v1.ListChatMessagesResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.EventService.ListChatMessages is not implemented"))
-}
-
-func (UnimplementedEventServiceHandler) SendChatMessage(context.Context, *connect.Request[v1.SendChatMessageRequest]) (*connect.Response[v1.SendChatMessageResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.EventService.SendChatMessage is not implemented"))
 }
 
 func (UnimplementedEventServiceHandler) CheckIn(context.Context, *connect.Request[v1.CheckInRequest]) (*connect.Response[v1.CheckInResponse], error) {

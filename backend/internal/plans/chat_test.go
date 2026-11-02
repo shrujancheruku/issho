@@ -43,6 +43,8 @@ func TestIntegrationChat(t *testing.T) {
 		t.Fatal(err)
 	}
 	svc := &Service{DB: f.pool}
+	rooms := &chat.Service{DB: f.pool, Event: ChatAccess{}}
+	room := chat.Room{Kind: chat.EventRoom, ID: eventID}
 	for _, u := range []uuid.UUID{a, b} {
 		if err := svc.Respond(ctx, u, eventID, Confirm, day(6)); err != nil {
 			t.Fatal(err)
@@ -51,55 +53,57 @@ func TestIntegrationChat(t *testing.T) {
 
 	// Closed until 48 h before.
 	early := starts.Add(-chat.OpensBefore - time.Minute)
-	if _, err := svc.SendChat(ctx, a, eventID, "hi", early); !errors.Is(err, ErrChatClosed) {
-		t.Errorf("before it opens: %v, want ErrChatClosed", err)
+	if _, err := rooms.Send(ctx, a, room, "hi", early); !errors.Is(err, chat.ErrClosed) {
+		t.Errorf("before it opens: %v, want ErrClosed", err)
 	}
-	if msgs, st, err := svc.ChatMessages(ctx, a, eventID, 0, early); err != nil || len(msgs) != 0 || st.Open || !st.OpensAt.Equal(starts.Add(-chat.OpensBefore)) {
+	if msgs, st, err := rooms.Latest(ctx, a, room, early); err != nil || len(msgs) != 0 || st.Open || !st.OpensAt.Equal(starts.Add(-chat.OpensBefore)) {
 		t.Errorf("reading before it opens: %v, %+v, %v", msgs, st, err)
 	}
 
 	open := starts.Add(-24 * time.Hour)
-	first, err := svc.SendChat(ctx, a, eventID, "  Shall we meet at the north exit?  ", open)
+	first, err := rooms.Send(ctx, a, room, "  Shall we meet at the north exit?  ", open)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if first.Body != "Shall we meet at the north exit?" || !first.Mine {
 		t.Errorf("sent = %+v (body should be trimmed)", first)
 	}
-	msgs, st, err := svc.ChatMessages(ctx, b, eventID, 0, open)
+	msgs, st, err := rooms.Latest(ctx, b, room, open)
 	if err != nil || !st.Open || len(msgs) != 1 || msgs[0].Mine || msgs[0].Name != "Test" || msgs[0].Body != first.Body {
 		t.Errorf("b reads = %+v, %+v, %v", msgs, st, err)
 	}
 	for name, body := range map[string]string{"empty": "   ", "too long": strings.Repeat("あ", chat.MaxMessage+1)} {
-		var inv *InvalidError
-		if _, err := svc.SendChat(ctx, a, eventID, body, open); !errors.As(err, &inv) {
-			t.Errorf("%s message: %v, want InvalidError", name, err)
+		if _, err := rooms.Send(ctx, a, room, body, open); !errors.Is(err, chat.ErrBadMessage) {
+			t.Errorf("%s message: %v, want ErrBadMessage", name, err)
 		}
 	}
-	if _, err := svc.SendChat(ctx, a, eventID, strings.Repeat("あ", chat.MaxMessage), open); err != nil {
+	if _, err := rooms.Send(ctx, a, room, strings.Repeat("あ", chat.MaxMessage), open); err != nil {
 		t.Errorf("a message of exactly %d characters: %v", chat.MaxMessage, err)
 	}
 	// Only people going.
-	if _, _, err := svc.ChatMessages(ctx, c, eventID, 0, open); !errors.Is(err, ErrNotGoing) {
-		t.Errorf("someone only invited: %v, want ErrNotGoing", err)
+	if _, _, err := rooms.Latest(ctx, c, room, open); !errors.Is(err, chat.ErrForbidden) {
+		t.Errorf("someone only invited: %v, want ErrForbidden", err)
 	}
-	if _, err := svc.SendChat(ctx, c, eventID, "hello?", open); !errors.Is(err, ErrNotGoing) {
-		t.Errorf("someone only invited sending: %v, want ErrNotGoing", err)
+	if _, err := rooms.Send(ctx, c, room, "hello?", open); !errors.Is(err, chat.ErrForbidden) {
+		t.Errorf("someone only invited sending: %v, want ErrForbidden", err)
+	}
+	if _, _, err := rooms.Latest(ctx, a, chat.Room{Kind: chat.EventRoom, ID: uuid.New()}, open); !errors.Is(err, chat.ErrNoRoom) {
+		t.Errorf("an event that doesn't exist: %v, want ErrNoRoom", err)
 	}
 	// Reading after a message returns only what's newer.
-	if _, err := svc.SendChat(ctx, b, eventID, "Yes, see you there", open); err != nil {
+	if _, err := rooms.Send(ctx, b, room, "Yes, see you there", open); err != nil {
 		t.Fatal(err)
 	}
-	if newer, _, err := svc.ChatMessages(ctx, a, eventID, first.ID, open); err != nil || len(newer) != 2 || newer[1].Body != "Yes, see you there" {
+	if newer, _, err := rooms.After(ctx, a, room, first.ID, open); err != nil || len(newer) != 2 || newer[1].Body != "Yes, see you there" {
 		t.Errorf("after the first message: %+v, %v", newer, err)
 	}
 
 	// After 24 h past the start: readable, not writable.
 	late := starts.Add(chat.ClosesAfter)
-	if _, err := svc.SendChat(ctx, a, eventID, "thanks!", late); !errors.Is(err, ErrChatClosed) {
-		t.Errorf("after it closes: %v, want ErrChatClosed", err)
+	if _, err := rooms.Send(ctx, a, room, "thanks!", late); !errors.Is(err, chat.ErrClosed) {
+		t.Errorf("after it closes: %v, want ErrClosed", err)
 	}
-	if msgs, st, err := svc.ChatMessages(ctx, a, eventID, 0, late); err != nil || st.Open || len(msgs) != 3 {
+	if msgs, st, err := rooms.Latest(ctx, a, room, late); err != nil || st.Open || len(msgs) != 3 {
 		t.Errorf("reading after it closes: %d messages, %+v, %v", len(msgs), st, err)
 	}
 

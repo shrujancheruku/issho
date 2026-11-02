@@ -20,6 +20,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"github.com/shrujancheruku/issho/backend/internal/chat"
 	"github.com/shrujancheruku/issho/backend/internal/crews"
 	"github.com/shrujancheruku/issho/backend/internal/plans"
 	"github.com/shrujancheruku/issho/backend/internal/platform/auth"
@@ -63,14 +64,15 @@ func TestIntegrationSocket(t *testing.T) {
 	}
 
 	log := slog.New(slog.NewTextHandler(io.Discard, nil))
-	svc := &plans.Service{DB: pool}
+	rooms := &chat.Service{DB: pool, Event: plans.ChatAccess{}, Crew: crews.ChatAccess{}}
+	room := chat.Room{Kind: chat.EventRoom, ID: eventID}
 	hub := NewHub()
 	go hub.Run(ctx, pool, log)
-	srv := httptest.NewServer(&Handler{Hub: hub, Plans: svc, Crews: &crews.Service{DB: pool}, Verifier: verifier, Log: log})
+	srv := httptest.NewServer(&Handler{Hub: hub, Chat: rooms, Verifier: verifier, Log: log})
 	defer srv.Close()
 	wsURL := "ws" + strings.TrimPrefix(srv.URL, "http")
 
-	if _, err := svc.SendChat(ctx, other, eventID, "first", time.Now()); err != nil {
+	if _, err := rooms.Send(ctx, other, room, "first", time.Now()); err != nil {
 		t.Fatal(err)
 	}
 	conn, _, err := websocket.Dial(ctx, wsURL, nil)
@@ -78,7 +80,7 @@ func TestIntegrationSocket(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer conn.CloseNow()
-	hello, _ := json.Marshal(map[string]any{"token": token(going), "eventId": eventID.String(), "afterId": 0})
+	hello, _ := json.Marshal(map[string]any{"token": token(going), "room": map[string]any{"eventId": eventID.String()}, "afterId": 0})
 	if err := conn.Write(ctx, websocket.MessageText, hello); err != nil {
 		t.Fatal(err)
 	}
@@ -87,6 +89,7 @@ func TestIntegrationSocket(t *testing.T) {
 	type frame struct {
 		batch
 		Typing bool   `json:"typing"`
+		UserID string `json:"userId"`
 		Name   string `json:"name"`
 	}
 	readFrom := func(c *websocket.Conn) (frame, error) {
@@ -118,7 +121,7 @@ func TestIntegrationSocket(t *testing.T) {
 	got := make(chan batch, 1)
 	go func() { got <- read() }()
 	for i := 0; ; i++ {
-		if _, err := svc.SendChat(ctx, other, eventID, "second", time.Now()); err != nil {
+		if _, err := rooms.Send(ctx, other, room, "second", time.Now()); err != nil {
 			t.Fatal(err)
 		}
 		select {
@@ -143,7 +146,7 @@ func TestIntegrationSocket(t *testing.T) {
 	}
 	defer otherConn.CloseNow()
 	last := pushed.Messages[len(pushed.Messages)-1].ID
-	otherHello, _ := json.Marshal(map[string]any{"token": token(other), "eventId": eventID.String(), "afterId": last})
+	otherHello, _ := json.Marshal(map[string]any{"token": token(other), "room": map[string]any{"eventId": eventID.String()}, "afterId": last})
 	if err := otherConn.Write(ctx, websocket.MessageText, otherHello); err != nil {
 		t.Fatal(err)
 	}
@@ -160,7 +163,7 @@ func TestIntegrationSocket(t *testing.T) {
 			otherGot <- f
 		}
 	}()
-	if f, err := readFrom(conn); err != nil || f.Type != "typing" || f.Name != "Other" {
+	if f, err := readFrom(conn); err != nil || f.Type != "typing" || f.Name != "Other" || f.UserID != other.String() {
 		t.Errorf("typing = %+v, %v; want Other typing", f, err)
 	}
 	select {
@@ -175,9 +178,13 @@ func TestIntegrationSocket(t *testing.T) {
 		hello map[string]any
 		code  websocket.StatusCode
 	}{
-		{"bad token", map[string]any{"token": "nope", "eventId": eventID.String()}, closeUnauthorized},
-		{"not going", map[string]any{"token": token(invited), "eventId": eventID.String()}, closeForbidden},
-		{"unknown event", map[string]any{"token": token(going), "eventId": uuid.NewString()}, closeNotFound},
+		{"bad token", map[string]any{"token": "nope", "room": map[string]any{"eventId": eventID.String()}}, closeUnauthorized},
+		{"not going", map[string]any{"token": token(invited), "room": map[string]any{"eventId": eventID.String()}}, closeForbidden},
+		{"unknown event", map[string]any{"token": token(going), "room": map[string]any{"eventId": uuid.NewString()}}, closeNotFound},
+		{"unknown crew", map[string]any{"token": token(going), "room": map[string]any{"crewId": uuid.NewString()}}, closeNotFound},
+		{"no room", map[string]any{"token": token(going)}, closeNotFound},
+		{"not an id", map[string]any{"token": token(going), "room": map[string]any{"eventId": "nope"}}, closeNotFound},
+		{"two rooms", map[string]any{"token": token(going), "room": map[string]any{"eventId": eventID.String(), "crewId": uuid.NewString()}}, closeNotFound},
 	} {
 		conn, _, err := websocket.Dial(ctx, wsURL, nil)
 		if err != nil {

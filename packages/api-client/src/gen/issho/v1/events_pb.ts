@@ -16,7 +16,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file issho/v1/events.proto.
  */
 export const file_issho_v1_events: GenFile = /*@__PURE__*/
-  fileDesc("ChVpc3Noby92MS9ldmVudHMucHJvdG8SCGlzc2hvLnYxIiYKEkdldEZlZWRiYWNrUmVxdWVzdBIQCghldmVudF9pZBgBIAEoCSKOAgoTR2V0RmVlZGJhY2tSZXNwb25zZRIiCgVtYXRlcxgBIAMoCzITLmlzc2hvLnYxLkdyb3VwTWF0ZRINCgVnaXZlbhgCIAEoCBIQCghhdHRlbmRlZBgDIAEoCBITCgtwbGFuX3JhdGluZxgEIAEoBRIUCgxncm91cF9yYXRpbmcYBSABKAUSDQoFcGlja3MYBiADKAkSLAoIb3BlbnNfYXQYByABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi0KCWNsb3Nlc19hdBgIIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASDAoEb3BlbhgJIAEoCBINCgVhdm9pZBgKIAMoCSI4CglHcm91cE1hdGUSCgoCaWQYASABKAkSDAoEbmFtZRgCIAEoCRIRCgljYW5jZWxsZWQYAyABKAgihAEKFVN1Ym1pdEZlZWRiYWNrUmVxdWVzdBIQCghldmVudF9pZBgBIAEoCRIQCghhdHRlbmRlZBgCIAEoCBITCgtwbGFuX3JhdGluZxgDIAEoBRIUCgxncm91cF9yYXRpbmcYBCABKAUSDQoFcGlja3MYBSADKAkSDQoFYXZvaWQYBiADKAkiSQoWU3VibWl0RmVlZGJhY2tSZXNwb25zZRIvCghmZWVkYmFjaxgBIAEoCzIdLmlzc2hvLnYxLkdldEZlZWRiYWNrUmVzcG9uc2UicQoTUmVwb3J0UGVyc29uUmVxdWVzdBIQCghldmVudF9pZBgBIAEoCRIPCgdtYXRlX2lkGAIgASgJEiYKBnJlYXNvbhgDIAEoDjIWLmlzc2hvLnYxLlJlcG9ydFJlYXNvbhIPCgdkZXRhaWxzGAQgASgJIhYKFFJlcG9ydFBlcnNvblJlc3BvbnNlIiIKDkNoZWNrSW5SZXF1ZXN0EhAKCGV2ZW50X2lkGAEgASgJIjMKD0NoZWNrSW5SZXNwb25zZRIgCgVldmVudBgBIAEoCzIRLmlzc2hvLnYxLk15RXZlbnQiPQoXTGlzdENoYXRNZXNzYWdlc1JlcXVlc3QSEAoIZXZlbnRfaWQYASABKAkSEAoIYWZ0ZXJfaWQYAiABKAMirgEKGExpc3RDaGF0TWVzc2FnZXNSZXNwb25zZRInCghtZXNzYWdlcxgBIAMoCzIVLmlzc2hvLnYxLkNoYXRNZXNzYWdlEiwKCG9wZW5zX2F0GAIgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBItCgljbG9zZXNfYXQYAyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEgwKBG9wZW4YBCABKAgiOAoWU2VuZENoYXRNZXNzYWdlUmVxdWVzdBIQCghldmVudF9pZBgBIAEoCRIMCgRib2R5GAIgASgJIkEKF1NlbmRDaGF0TWVzc2FnZVJlc3BvbnNlEiYKB21lc3NhZ2UYASABKAsyFS5pc3Noby52MS5DaGF0TWVzc2FnZSJrCgtDaGF0TWVzc2FnZRIKCgJpZBgBIAEoAxIMCgRuYW1lGAIgASgJEgwKBGJvZHkYAyABKAkSJgoCYXQYBCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEgwKBG1pbmUYBSABKAgiFQoTTGlzdE15RXZlbnRzUmVxdWVzdCI5ChRMaXN0TXlFdmVudHNSZXNwb25zZRIhCgZldmVudHMYASADKAsyES5pc3Noby52MS5NeUV2ZW50IiMKD0dldEV2ZW50UmVxdWVzdBIQCghldmVudF9pZBgBIAEoCSKuAQoQR2V0RXZlbnRSZXNwb25zZRIgCgVldmVudBgBIAEoCzIRLmlzc2hvLnYxLk15RXZlbnQSIQoFc3RlcHMYAiADKAsyEi5pc3Noby52MS5QbGFuU3RlcBIRCglhdHRlbmRlZXMYAyADKAkSFgoOcm91dGVfcG9seWxpbmUYBCABKAkSDwoHc3VtbWFyeRgFIAEoCRIZChFzZWNvbmRhcnlfc3VtbWFyeRgGIAEoCSJQChVSZXNwb25kVG9FdmVudFJlcXVlc3QSEAoIZXZlbnRfaWQYASABKAkSJQoGYWN0aW9uGAIgASgOMhUuaXNzaG8udjEuRXZlbnRBY3Rpb24iOgoWUmVzcG9uZFRvRXZlbnRSZXNwb25zZRIgCgVldmVudBgBIAEoCzIRLmlzc2hvLnYxLk15RXZlbnQihwcKB015RXZlbnQSCgoCaWQYASABKAkSDwoHcGxhbl9pZBgCIAEoCRINCgV0aXRsZRgDIAEoCRIXCg9zZWNvbmRhcnlfdGl0bGUYBCABKAkSEwoLYWN0aXZpdHlfaWQYBSABKAkSHQoVZm9sbG93X3VwX2FjdGl2aXR5X2lkGAYgASgJEg8KB2FyZWFfaWQYByABKAkSGAoQcHJpbWFyeV9sYW5ndWFnZRgIIAEoCRIaChJzZWNvbmRhcnlfbGFuZ3VhZ2UYCSABKAkSDAoEZGF0ZRgKIAEoCRIiCgVibG9jaxgLIAEoDjITLmlzc2hvLnYxLlRpbWVCbG9jaxItCglzdGFydHNfYXQYDCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi4KCmNvbmZpcm1fYnkYDSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEiUKBnN0YXR1cxgOIAEoDjIVLmlzc2hvLnYxLkV2ZW50U3RhdHVzEisKDGdyb3VwX3N0YXR1cxgPIAEoDjIVLmlzc2hvLnYxLkdyb3VwU3RhdHVzEioKCHJlc3BvbnNlGBAgASgOMhguaXNzaG8udjEuSW52aXRlUmVzcG9uc2USEQoJY29uZmlybWVkGBEgASgFEg4KBnF1b3J1bRgSIAEoBRIWCg5taW5fYXR0ZW5kYW5jZRgTIAEoBRIVCg1tZWV0aW5nX3BvaW50GBQgASgJEi0KCXJldmVhbF9hdBgVIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASEgoKY2hlY2tlZF9pbhgWIAEoCBIxCg1jaGVja19pbl9mcm9tGBcgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIyCg5jaGVja19pbl91bnRpbBgYIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASMQoNZmVlZGJhY2tfZnJvbRgZIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASMgoOZmVlZGJhY2tfdW50aWwYGiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhYKDmZlZWRiYWNrX2dpdmVuGBsgASgIEjAKDHJlcG9ydF91bnRpbBgcIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAqswEKDFJlcG9ydFJlYXNvbhIdChlSRVBPUlRfUkVBU09OX1VOU1BFQ0lGSUVEEAASGAoUUkVQT1JUX1JFQVNPTl9EQVRJTkcQARIcChhSRVBPUlRfUkVBU09OX0hBUkFTU01FTlQQAhIYChRSRVBPUlRfUkVBU09OX1VOU0FGRRADEhkKFVJFUE9SVF9SRUFTT05fTk9fU0hPVxAEEhcKE1JFUE9SVF9SRUFTT05fT1RIRVIQBSp4CgtFdmVudEFjdGlvbhIcChhFVkVOVF9BQ1RJT05fVU5TUEVDSUZJRUQQABIYChRFVkVOVF9BQ1RJT05fQ09ORklSTRABEhgKFEVWRU5UX0FDVElPTl9ERUNMSU5FEAISFwoTRVZFTlRfQUNUSU9OX0NBTkNFTBADKnoKC0V2ZW50U3RhdHVzEhwKGEVWRU5UX1NUQVRVU19VTlNQRUNJRklFRBAAEhoKFkVWRU5UX1NUQVRVU19TQ0hFRFVMRUQQARIVChFFVkVOVF9TVEFUVVNfRE9ORRACEhoKFkVWRU5UX1NUQVRVU19DQU5DRUxMRUQQAyp+CgtHcm91cFN0YXR1cxIcChhHUk9VUF9TVEFUVVNfVU5TUEVDSUZJRUQQABIZChVHUk9VUF9TVEFUVVNfSU5WSVRJTkcQARIaChZHUk9VUF9TVEFUVVNfQ09ORklSTUVEEAISGgoWR1JPVVBfU1RBVFVTX0NBTkNFTExFRBADKqgBCg5JbnZpdGVSZXNwb25zZRIfChtJTlZJVEVfUkVTUE9OU0VfVU5TUEVDSUZJRUQQABIbChdJTlZJVEVfUkVTUE9OU0VfSU5WSVRFRBABEh0KGUlOVklURV9SRVNQT05TRV9DT05GSVJNRUQQAhIcChhJTlZJVEVfUkVTUE9OU0VfREVDTElORUQQAxIbChdJTlZJVEVfUkVTUE9OU0VfRFJPUFBFRBAEMuoFCgxFdmVudFNlcnZpY2USTwoMTGlzdE15RXZlbnRzEh0uaXNzaG8udjEuTGlzdE15RXZlbnRzUmVxdWVzdBoeLmlzc2hvLnYxLkxpc3RNeUV2ZW50c1Jlc3BvbnNlIgASQwoIR2V0RXZlbnQSGS5pc3Noby52MS5HZXRFdmVudFJlcXVlc3QaGi5pc3Noby52MS5HZXRFdmVudFJlc3BvbnNlIgASVQoOUmVzcG9uZFRvRXZlbnQSHy5pc3Noby52MS5SZXNwb25kVG9FdmVudFJlcXVlc3QaIC5pc3Noby52MS5SZXNwb25kVG9FdmVudFJlc3BvbnNlIgASWwoQTGlzdENoYXRNZXNzYWdlcxIhLmlzc2hvLnYxLkxpc3RDaGF0TWVzc2FnZXNSZXF1ZXN0GiIuaXNzaG8udjEuTGlzdENoYXRNZXNzYWdlc1Jlc3BvbnNlIgASWAoPU2VuZENoYXRNZXNzYWdlEiAuaXNzaG8udjEuU2VuZENoYXRNZXNzYWdlUmVxdWVzdBohLmlzc2hvLnYxLlNlbmRDaGF0TWVzc2FnZVJlc3BvbnNlIgASQAoHQ2hlY2tJbhIYLmlzc2hvLnYxLkNoZWNrSW5SZXF1ZXN0GhkuaXNzaG8udjEuQ2hlY2tJblJlc3BvbnNlIgASTAoLR2V0RmVlZGJhY2sSHC5pc3Noby52MS5HZXRGZWVkYmFja1JlcXVlc3QaHS5pc3Noby52MS5HZXRGZWVkYmFja1Jlc3BvbnNlIgASVQoOU3VibWl0RmVlZGJhY2sSHy5pc3Noby52MS5TdWJtaXRGZWVkYmFja1JlcXVlc3QaIC5pc3Noby52MS5TdWJtaXRGZWVkYmFja1Jlc3BvbnNlIgASTwoMUmVwb3J0UGVyc29uEh0uaXNzaG8udjEuUmVwb3J0UGVyc29uUmVxdWVzdBoeLmlzc2hvLnYxLlJlcG9ydFBlcnNvblJlc3BvbnNlIgBCPlo8Z2l0aHViLmNvbS9zaHJ1amFuY2hlcnVrdS9pc3Noby9iYWNrZW5kL2dlbi9pc3Noby92MTtpc3Nob3YxYgZwcm90bzM", [file_google_protobuf_timestamp, file_issho_v1_plans, file_issho_v1_profile]);
+  fileDesc("ChVpc3Noby92MS9ldmVudHMucHJvdG8SCGlzc2hvLnYxIiYKEkdldEZlZWRiYWNrUmVxdWVzdBIQCghldmVudF9pZBgBIAEoCSKOAgoTR2V0RmVlZGJhY2tSZXNwb25zZRIiCgVtYXRlcxgBIAMoCzITLmlzc2hvLnYxLkdyb3VwTWF0ZRINCgVnaXZlbhgCIAEoCBIQCghhdHRlbmRlZBgDIAEoCBITCgtwbGFuX3JhdGluZxgEIAEoBRIUCgxncm91cF9yYXRpbmcYBSABKAUSDQoFcGlja3MYBiADKAkSLAoIb3BlbnNfYXQYByABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi0KCWNsb3Nlc19hdBgIIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASDAoEb3BlbhgJIAEoCBINCgVhdm9pZBgKIAMoCSI4CglHcm91cE1hdGUSCgoCaWQYASABKAkSDAoEbmFtZRgCIAEoCRIRCgljYW5jZWxsZWQYAyABKAgihAEKFVN1Ym1pdEZlZWRiYWNrUmVxdWVzdBIQCghldmVudF9pZBgBIAEoCRIQCghhdHRlbmRlZBgCIAEoCBITCgtwbGFuX3JhdGluZxgDIAEoBRIUCgxncm91cF9yYXRpbmcYBCABKAUSDQoFcGlja3MYBSADKAkSDQoFYXZvaWQYBiADKAkiSQoWU3VibWl0RmVlZGJhY2tSZXNwb25zZRIvCghmZWVkYmFjaxgBIAEoCzIdLmlzc2hvLnYxLkdldEZlZWRiYWNrUmVzcG9uc2UicQoTUmVwb3J0UGVyc29uUmVxdWVzdBIQCghldmVudF9pZBgBIAEoCRIPCgdtYXRlX2lkGAIgASgJEiYKBnJlYXNvbhgDIAEoDjIWLmlzc2hvLnYxLlJlcG9ydFJlYXNvbhIPCgdkZXRhaWxzGAQgASgJIhYKFFJlcG9ydFBlcnNvblJlc3BvbnNlIiIKDkNoZWNrSW5SZXF1ZXN0EhAKCGV2ZW50X2lkGAEgASgJIjMKD0NoZWNrSW5SZXNwb25zZRIgCgVldmVudBgBIAEoCzIRLmlzc2hvLnYxLk15RXZlbnQiFQoTTGlzdE15RXZlbnRzUmVxdWVzdCI5ChRMaXN0TXlFdmVudHNSZXNwb25zZRIhCgZldmVudHMYASADKAsyES5pc3Noby52MS5NeUV2ZW50IiMKD0dldEV2ZW50UmVxdWVzdBIQCghldmVudF9pZBgBIAEoCSKuAQoQR2V0RXZlbnRSZXNwb25zZRIgCgVldmVudBgBIAEoCzIRLmlzc2hvLnYxLk15RXZlbnQSIQoFc3RlcHMYAiADKAsyEi5pc3Noby52MS5QbGFuU3RlcBIRCglhdHRlbmRlZXMYAyADKAkSFgoOcm91dGVfcG9seWxpbmUYBCABKAkSDwoHc3VtbWFyeRgFIAEoCRIZChFzZWNvbmRhcnlfc3VtbWFyeRgGIAEoCSJQChVSZXNwb25kVG9FdmVudFJlcXVlc3QSEAoIZXZlbnRfaWQYASABKAkSJQoGYWN0aW9uGAIgASgOMhUuaXNzaG8udjEuRXZlbnRBY3Rpb24iOgoWUmVzcG9uZFRvRXZlbnRSZXNwb25zZRIgCgVldmVudBgBIAEoCzIRLmlzc2hvLnYxLk15RXZlbnQihwcKB015RXZlbnQSCgoCaWQYASABKAkSDwoHcGxhbl9pZBgCIAEoCRINCgV0aXRsZRgDIAEoCRIXCg9zZWNvbmRhcnlfdGl0bGUYBCABKAkSEwoLYWN0aXZpdHlfaWQYBSABKAkSHQoVZm9sbG93X3VwX2FjdGl2aXR5X2lkGAYgASgJEg8KB2FyZWFfaWQYByABKAkSGAoQcHJpbWFyeV9sYW5ndWFnZRgIIAEoCRIaChJzZWNvbmRhcnlfbGFuZ3VhZ2UYCSABKAkSDAoEZGF0ZRgKIAEoCRIiCgVibG9jaxgLIAEoDjITLmlzc2hvLnYxLlRpbWVCbG9jaxItCglzdGFydHNfYXQYDCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi4KCmNvbmZpcm1fYnkYDSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEiUKBnN0YXR1cxgOIAEoDjIVLmlzc2hvLnYxLkV2ZW50U3RhdHVzEisKDGdyb3VwX3N0YXR1cxgPIAEoDjIVLmlzc2hvLnYxLkdyb3VwU3RhdHVzEioKCHJlc3BvbnNlGBAgASgOMhguaXNzaG8udjEuSW52aXRlUmVzcG9uc2USEQoJY29uZmlybWVkGBEgASgFEg4KBnF1b3J1bRgSIAEoBRIWCg5taW5fYXR0ZW5kYW5jZRgTIAEoBRIVCg1tZWV0aW5nX3BvaW50GBQgASgJEi0KCXJldmVhbF9hdBgVIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASEgoKY2hlY2tlZF9pbhgWIAEoCBIxCg1jaGVja19pbl9mcm9tGBcgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIyCg5jaGVja19pbl91bnRpbBgYIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASMQoNZmVlZGJhY2tfZnJvbRgZIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASMgoOZmVlZGJhY2tfdW50aWwYGiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhYKDmZlZWRiYWNrX2dpdmVuGBsgASgIEjAKDHJlcG9ydF91bnRpbBgcIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAqswEKDFJlcG9ydFJlYXNvbhIdChlSRVBPUlRfUkVBU09OX1VOU1BFQ0lGSUVEEAASGAoUUkVQT1JUX1JFQVNPTl9EQVRJTkcQARIcChhSRVBPUlRfUkVBU09OX0hBUkFTU01FTlQQAhIYChRSRVBPUlRfUkVBU09OX1VOU0FGRRADEhkKFVJFUE9SVF9SRUFTT05fTk9fU0hPVxAEEhcKE1JFUE9SVF9SRUFTT05fT1RIRVIQBSp4CgtFdmVudEFjdGlvbhIcChhFVkVOVF9BQ1RJT05fVU5TUEVDSUZJRUQQABIYChRFVkVOVF9BQ1RJT05fQ09ORklSTRABEhgKFEVWRU5UX0FDVElPTl9ERUNMSU5FEAISFwoTRVZFTlRfQUNUSU9OX0NBTkNFTBADKnoKC0V2ZW50U3RhdHVzEhwKGEVWRU5UX1NUQVRVU19VTlNQRUNJRklFRBAAEhoKFkVWRU5UX1NUQVRVU19TQ0hFRFVMRUQQARIVChFFVkVOVF9TVEFUVVNfRE9ORRACEhoKFkVWRU5UX1NUQVRVU19DQU5DRUxMRUQQAyp+CgtHcm91cFN0YXR1cxIcChhHUk9VUF9TVEFUVVNfVU5TUEVDSUZJRUQQABIZChVHUk9VUF9TVEFUVVNfSU5WSVRJTkcQARIaChZHUk9VUF9TVEFUVVNfQ09ORklSTUVEEAISGgoWR1JPVVBfU1RBVFVTX0NBTkNFTExFRBADKqgBCg5JbnZpdGVSZXNwb25zZRIfChtJTlZJVEVfUkVTUE9OU0VfVU5TUEVDSUZJRUQQABIbChdJTlZJVEVfUkVTUE9OU0VfSU5WSVRFRBABEh0KGUlOVklURV9SRVNQT05TRV9DT05GSVJNRUQQAhIcChhJTlZJVEVfUkVTUE9OU0VfREVDTElORUQQAxIbChdJTlZJVEVfUkVTUE9OU0VfRFJPUFBFRBAEMrMECgxFdmVudFNlcnZpY2USTwoMTGlzdE15RXZlbnRzEh0uaXNzaG8udjEuTGlzdE15RXZlbnRzUmVxdWVzdBoeLmlzc2hvLnYxLkxpc3RNeUV2ZW50c1Jlc3BvbnNlIgASQwoIR2V0RXZlbnQSGS5pc3Noby52MS5HZXRFdmVudFJlcXVlc3QaGi5pc3Noby52MS5HZXRFdmVudFJlc3BvbnNlIgASVQoOUmVzcG9uZFRvRXZlbnQSHy5pc3Noby52MS5SZXNwb25kVG9FdmVudFJlcXVlc3QaIC5pc3Noby52MS5SZXNwb25kVG9FdmVudFJlc3BvbnNlIgASQAoHQ2hlY2tJbhIYLmlzc2hvLnYxLkNoZWNrSW5SZXF1ZXN0GhkuaXNzaG8udjEuQ2hlY2tJblJlc3BvbnNlIgASTAoLR2V0RmVlZGJhY2sSHC5pc3Noby52MS5HZXRGZWVkYmFja1JlcXVlc3QaHS5pc3Noby52MS5HZXRGZWVkYmFja1Jlc3BvbnNlIgASVQoOU3VibWl0RmVlZGJhY2sSHy5pc3Noby52MS5TdWJtaXRGZWVkYmFja1JlcXVlc3QaIC5pc3Noby52MS5TdWJtaXRGZWVkYmFja1Jlc3BvbnNlIgASTwoMUmVwb3J0UGVyc29uEh0uaXNzaG8udjEuUmVwb3J0UGVyc29uUmVxdWVzdBoeLmlzc2hvLnYxLlJlcG9ydFBlcnNvblJlc3BvbnNlIgBCPlo8Z2l0aHViLmNvbS9zaHJ1amFuY2hlcnVrdS9pc3Noby9iYWNrZW5kL2dlbi9pc3Noby92MTtpc3Nob3YxYgZwcm90bzM", [file_google_protobuf_timestamp, file_issho_v1_plans, file_issho_v1_profile]);
 
 /**
  * @generated from message issho.v1.GetFeedbackRequest
@@ -301,146 +301,6 @@ export const CheckInResponseSchema: GenMessage<CheckInResponse> = /*@__PURE__*/
   messageDesc(file_issho_v1_events, 8);
 
 /**
- * @generated from message issho.v1.ListChatMessagesRequest
- */
-export type ListChatMessagesRequest = Message<"issho.v1.ListChatMessagesRequest"> & {
-  /**
-   * @generated from field: string event_id = 1;
-   */
-  eventId: string;
-
-  /**
-   * 0 = the latest messages.
-   *
-   * @generated from field: int64 after_id = 2;
-   */
-  afterId: bigint;
-};
-
-/**
- * Describes the message issho.v1.ListChatMessagesRequest.
- * Use `create(ListChatMessagesRequestSchema)` to create a new message.
- */
-export const ListChatMessagesRequestSchema: GenMessage<ListChatMessagesRequest> = /*@__PURE__*/
-  messageDesc(file_issho_v1_events, 9);
-
-/**
- * @generated from message issho.v1.ListChatMessagesResponse
- */
-export type ListChatMessagesResponse = Message<"issho.v1.ListChatMessagesResponse"> & {
-  /**
-   * @generated from field: repeated issho.v1.ChatMessage messages = 1;
-   */
-  messages: ChatMessage[];
-
-  /**
-   * When it can be written in; unset when the event has no start time.
-   *
-   * @generated from field: google.protobuf.Timestamp opens_at = 2;
-   */
-  opensAt?: Timestamp | undefined;
-
-  /**
-   * @generated from field: google.protobuf.Timestamp closes_at = 3;
-   */
-  closesAt?: Timestamp | undefined;
-
-  /**
-   * @generated from field: bool open = 4;
-   */
-  open: boolean;
-};
-
-/**
- * Describes the message issho.v1.ListChatMessagesResponse.
- * Use `create(ListChatMessagesResponseSchema)` to create a new message.
- */
-export const ListChatMessagesResponseSchema: GenMessage<ListChatMessagesResponse> = /*@__PURE__*/
-  messageDesc(file_issho_v1_events, 10);
-
-/**
- * @generated from message issho.v1.SendChatMessageRequest
- */
-export type SendChatMessageRequest = Message<"issho.v1.SendChatMessageRequest"> & {
-  /**
-   * @generated from field: string event_id = 1;
-   */
-  eventId: string;
-
-  /**
-   * @generated from field: string body = 2;
-   */
-  body: string;
-};
-
-/**
- * Describes the message issho.v1.SendChatMessageRequest.
- * Use `create(SendChatMessageRequestSchema)` to create a new message.
- */
-export const SendChatMessageRequestSchema: GenMessage<SendChatMessageRequest> = /*@__PURE__*/
-  messageDesc(file_issho_v1_events, 11);
-
-/**
- * @generated from message issho.v1.SendChatMessageResponse
- */
-export type SendChatMessageResponse = Message<"issho.v1.SendChatMessageResponse"> & {
-  /**
-   * @generated from field: issho.v1.ChatMessage message = 1;
-   */
-  message?: ChatMessage | undefined;
-};
-
-/**
- * Describes the message issho.v1.SendChatMessageResponse.
- * Use `create(SendChatMessageResponseSchema)` to create a new message.
- */
-export const SendChatMessageResponseSchema: GenMessage<SendChatMessageResponse> = /*@__PURE__*/
-  messageDesc(file_issho_v1_events, 12);
-
-/**
- * One message in a group chat.
- *
- * @generated from message issho.v1.ChatMessage
- */
-export type ChatMessage = Message<"issho.v1.ChatMessage"> & {
-  /**
-   * @generated from field: int64 id = 1;
-   */
-  id: bigint;
-
-  /**
-   * The sender's first name ("" for a deleted account).
-   *
-   * @generated from field: string name = 2;
-   */
-  name: string;
-
-  /**
-   * @generated from field: string body = 3;
-   */
-  body: string;
-
-  /**
-   * @generated from field: google.protobuf.Timestamp at = 4;
-   */
-  at?: Timestamp | undefined;
-
-  /**
-   * Sent by the caller.
-   *
-   * @generated from field: bool mine = 5;
-   */
-  mine: boolean;
-};
-
-/**
- * Describes the message issho.v1.ChatMessage.
- * Use `create(ChatMessageSchema)` to create a new message.
- */
-export const ChatMessageSchema: GenMessage<ChatMessage> = /*@__PURE__*/
-  messageDesc(file_issho_v1_events, 13);
-
-/**
  * @generated from message issho.v1.ListMyEventsRequest
  */
 export type ListMyEventsRequest = Message<"issho.v1.ListMyEventsRequest"> & {
@@ -451,7 +311,7 @@ export type ListMyEventsRequest = Message<"issho.v1.ListMyEventsRequest"> & {
  * Use `create(ListMyEventsRequestSchema)` to create a new message.
  */
 export const ListMyEventsRequestSchema: GenMessage<ListMyEventsRequest> = /*@__PURE__*/
-  messageDesc(file_issho_v1_events, 14);
+  messageDesc(file_issho_v1_events, 9);
 
 /**
  * @generated from message issho.v1.ListMyEventsResponse
@@ -468,7 +328,7 @@ export type ListMyEventsResponse = Message<"issho.v1.ListMyEventsResponse"> & {
  * Use `create(ListMyEventsResponseSchema)` to create a new message.
  */
 export const ListMyEventsResponseSchema: GenMessage<ListMyEventsResponse> = /*@__PURE__*/
-  messageDesc(file_issho_v1_events, 15);
+  messageDesc(file_issho_v1_events, 10);
 
 /**
  * @generated from message issho.v1.GetEventRequest
@@ -485,7 +345,7 @@ export type GetEventRequest = Message<"issho.v1.GetEventRequest"> & {
  * Use `create(GetEventRequestSchema)` to create a new message.
  */
 export const GetEventRequestSchema: GenMessage<GetEventRequest> = /*@__PURE__*/
-  messageDesc(file_issho_v1_events, 16);
+  messageDesc(file_issho_v1_events, 11);
 
 /**
  * @generated from message issho.v1.GetEventResponse
@@ -538,7 +398,7 @@ export type GetEventResponse = Message<"issho.v1.GetEventResponse"> & {
  * Use `create(GetEventResponseSchema)` to create a new message.
  */
 export const GetEventResponseSchema: GenMessage<GetEventResponse> = /*@__PURE__*/
-  messageDesc(file_issho_v1_events, 17);
+  messageDesc(file_issho_v1_events, 12);
 
 /**
  * @generated from message issho.v1.RespondToEventRequest
@@ -560,7 +420,7 @@ export type RespondToEventRequest = Message<"issho.v1.RespondToEventRequest"> & 
  * Use `create(RespondToEventRequestSchema)` to create a new message.
  */
 export const RespondToEventRequestSchema: GenMessage<RespondToEventRequest> = /*@__PURE__*/
-  messageDesc(file_issho_v1_events, 18);
+  messageDesc(file_issho_v1_events, 13);
 
 /**
  * @generated from message issho.v1.RespondToEventResponse
@@ -577,7 +437,7 @@ export type RespondToEventResponse = Message<"issho.v1.RespondToEventResponse"> 
  * Use `create(RespondToEventResponseSchema)` to create a new message.
  */
 export const RespondToEventResponseSchema: GenMessage<RespondToEventResponse> = /*@__PURE__*/
-  messageDesc(file_issho_v1_events, 19);
+  messageDesc(file_issho_v1_events, 14);
 
 /**
  * One event as the caller sees it.
@@ -764,7 +624,7 @@ export type MyEvent = Message<"issho.v1.MyEvent"> & {
  * Use `create(MyEventSchema)` to create a new message.
  */
 export const MyEventSchema: GenMessage<MyEvent> = /*@__PURE__*/
-  messageDesc(file_issho_v1_events, 20);
+  messageDesc(file_issho_v1_events, 15);
 
 /**
  * @generated from enum issho.v1.ReportReason
@@ -1005,32 +865,6 @@ export const EventService: GenService<{
     methodKind: "unary";
     input: typeof RespondToEventRequestSchema;
     output: typeof RespondToEventResponseSchema;
-  },
-  /**
-   * ListChatMessages returns the caller's group chat for an event: the
-   * latest messages, or those after after_id. Only for people who
-   * confirmed (PERMISSION_DENIED otherwise); empty until it opens 48 hours
-   * before the start. New messages also arrive over the WebSocket at
-   * GET /ws/chat (see the backend README).
-   *
-   * @generated from rpc issho.v1.EventService.ListChatMessages
-   */
-  listChatMessages: {
-    methodKind: "unary";
-    input: typeof ListChatMessagesRequestSchema;
-    output: typeof ListChatMessagesResponseSchema;
-  },
-  /**
-   * SendChatMessage posts to the caller's group chat while it's open (48
-   * hours before the start until 24 hours after; FAILED_PRECONDITION
-   * otherwise). 1–1000 characters.
-   *
-   * @generated from rpc issho.v1.EventService.SendChatMessage
-   */
-  sendChatMessage: {
-    methodKind: "unary";
-    input: typeof SendChatMessageRequestSchema;
-    output: typeof SendChatMessageResponseSchema;
   },
   /**
    * CheckIn records that the caller has arrived: only people who confirmed

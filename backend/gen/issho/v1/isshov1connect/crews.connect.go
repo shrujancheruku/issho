@@ -40,12 +40,6 @@ const (
 	// CrewServiceRespondToCrewProcedure is the fully-qualified name of the CrewService's RespondToCrew
 	// RPC.
 	CrewServiceRespondToCrewProcedure = "/issho.v1.CrewService/RespondToCrew"
-	// CrewServiceListCrewMessagesProcedure is the fully-qualified name of the CrewService's
-	// ListCrewMessages RPC.
-	CrewServiceListCrewMessagesProcedure = "/issho.v1.CrewService/ListCrewMessages"
-	// CrewServiceSendCrewMessageProcedure is the fully-qualified name of the CrewService's
-	// SendCrewMessage RPC.
-	CrewServiceSendCrewMessageProcedure = "/issho.v1.CrewService/SendCrewMessage"
 	// CrewServiceLeaveCrewProcedure is the fully-qualified name of the CrewService's LeaveCrew RPC.
 	CrewServiceLeaveCrewProcedure = "/issho.v1.CrewService/LeaveCrew"
 	// CrewServiceReportCrewMemberProcedure is the fully-qualified name of the CrewService's
@@ -63,13 +57,6 @@ type CrewServiceClient interface {
 	// RespondToCrew accepts or declines an offer while it's open (the answer
 	// can be changed until then). FAILED_PRECONDITION once it has closed.
 	RespondToCrew(context.Context, *connect.Request[v1.RespondToCrewRequest]) (*connect.Response[v1.RespondToCrewResponse], error)
-	// ListCrewMessages returns the crew's chat: the latest messages, or
-	// those after after_id. Members only (PERMISSION_DENIED otherwise). New
-	// messages also arrive over the WebSocket at GET /ws/chat, starting with
-	// {"token", "crewId", "afterId"} (see the backend README).
-	ListCrewMessages(context.Context, *connect.Request[v1.ListCrewMessagesRequest]) (*connect.Response[v1.ListCrewMessagesResponse], error)
-	// SendCrewMessage posts 1–1000 characters to the crew's chat.
-	SendCrewMessage(context.Context, *connect.Request[v1.SendCrewMessageRequest]) (*connect.Response[v1.SendCrewMessageResponse], error)
 	// LeaveCrew takes the caller out of a crew, with why. The reason is
 	// private: the crew isn't told why, or that they left.
 	LeaveCrew(context.Context, *connect.Request[v1.LeaveCrewRequest]) (*connect.Response[v1.LeaveCrewResponse], error)
@@ -107,18 +94,6 @@ func NewCrewServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 			connect.WithSchema(crewServiceMethods.ByName("RespondToCrew")),
 			connect.WithClientOptions(opts...),
 		),
-		listCrewMessages: connect.NewClient[v1.ListCrewMessagesRequest, v1.ListCrewMessagesResponse](
-			httpClient,
-			baseURL+CrewServiceListCrewMessagesProcedure,
-			connect.WithSchema(crewServiceMethods.ByName("ListCrewMessages")),
-			connect.WithClientOptions(opts...),
-		),
-		sendCrewMessage: connect.NewClient[v1.SendCrewMessageRequest, v1.SendCrewMessageResponse](
-			httpClient,
-			baseURL+CrewServiceSendCrewMessageProcedure,
-			connect.WithSchema(crewServiceMethods.ByName("SendCrewMessage")),
-			connect.WithClientOptions(opts...),
-		),
 		leaveCrew: connect.NewClient[v1.LeaveCrewRequest, v1.LeaveCrewResponse](
 			httpClient,
 			baseURL+CrewServiceLeaveCrewProcedure,
@@ -139,8 +114,6 @@ type crewServiceClient struct {
 	listMyCrews      *connect.Client[v1.ListMyCrewsRequest, v1.ListMyCrewsResponse]
 	getCrew          *connect.Client[v1.GetCrewRequest, v1.GetCrewResponse]
 	respondToCrew    *connect.Client[v1.RespondToCrewRequest, v1.RespondToCrewResponse]
-	listCrewMessages *connect.Client[v1.ListCrewMessagesRequest, v1.ListCrewMessagesResponse]
-	sendCrewMessage  *connect.Client[v1.SendCrewMessageRequest, v1.SendCrewMessageResponse]
 	leaveCrew        *connect.Client[v1.LeaveCrewRequest, v1.LeaveCrewResponse]
 	reportCrewMember *connect.Client[v1.ReportCrewMemberRequest, v1.ReportCrewMemberResponse]
 }
@@ -158,16 +131,6 @@ func (c *crewServiceClient) GetCrew(ctx context.Context, req *connect.Request[v1
 // RespondToCrew calls issho.v1.CrewService.RespondToCrew.
 func (c *crewServiceClient) RespondToCrew(ctx context.Context, req *connect.Request[v1.RespondToCrewRequest]) (*connect.Response[v1.RespondToCrewResponse], error) {
 	return c.respondToCrew.CallUnary(ctx, req)
-}
-
-// ListCrewMessages calls issho.v1.CrewService.ListCrewMessages.
-func (c *crewServiceClient) ListCrewMessages(ctx context.Context, req *connect.Request[v1.ListCrewMessagesRequest]) (*connect.Response[v1.ListCrewMessagesResponse], error) {
-	return c.listCrewMessages.CallUnary(ctx, req)
-}
-
-// SendCrewMessage calls issho.v1.CrewService.SendCrewMessage.
-func (c *crewServiceClient) SendCrewMessage(ctx context.Context, req *connect.Request[v1.SendCrewMessageRequest]) (*connect.Response[v1.SendCrewMessageResponse], error) {
-	return c.sendCrewMessage.CallUnary(ctx, req)
 }
 
 // LeaveCrew calls issho.v1.CrewService.LeaveCrew.
@@ -190,13 +153,6 @@ type CrewServiceHandler interface {
 	// RespondToCrew accepts or declines an offer while it's open (the answer
 	// can be changed until then). FAILED_PRECONDITION once it has closed.
 	RespondToCrew(context.Context, *connect.Request[v1.RespondToCrewRequest]) (*connect.Response[v1.RespondToCrewResponse], error)
-	// ListCrewMessages returns the crew's chat: the latest messages, or
-	// those after after_id. Members only (PERMISSION_DENIED otherwise). New
-	// messages also arrive over the WebSocket at GET /ws/chat, starting with
-	// {"token", "crewId", "afterId"} (see the backend README).
-	ListCrewMessages(context.Context, *connect.Request[v1.ListCrewMessagesRequest]) (*connect.Response[v1.ListCrewMessagesResponse], error)
-	// SendCrewMessage posts 1–1000 characters to the crew's chat.
-	SendCrewMessage(context.Context, *connect.Request[v1.SendCrewMessageRequest]) (*connect.Response[v1.SendCrewMessageResponse], error)
 	// LeaveCrew takes the caller out of a crew, with why. The reason is
 	// private: the crew isn't told why, or that they left.
 	LeaveCrew(context.Context, *connect.Request[v1.LeaveCrewRequest]) (*connect.Response[v1.LeaveCrewResponse], error)
@@ -230,18 +186,6 @@ func NewCrewServiceHandler(svc CrewServiceHandler, opts ...connect.HandlerOption
 		connect.WithSchema(crewServiceMethods.ByName("RespondToCrew")),
 		connect.WithHandlerOptions(opts...),
 	)
-	crewServiceListCrewMessagesHandler := connect.NewUnaryHandler(
-		CrewServiceListCrewMessagesProcedure,
-		svc.ListCrewMessages,
-		connect.WithSchema(crewServiceMethods.ByName("ListCrewMessages")),
-		connect.WithHandlerOptions(opts...),
-	)
-	crewServiceSendCrewMessageHandler := connect.NewUnaryHandler(
-		CrewServiceSendCrewMessageProcedure,
-		svc.SendCrewMessage,
-		connect.WithSchema(crewServiceMethods.ByName("SendCrewMessage")),
-		connect.WithHandlerOptions(opts...),
-	)
 	crewServiceLeaveCrewHandler := connect.NewUnaryHandler(
 		CrewServiceLeaveCrewProcedure,
 		svc.LeaveCrew,
@@ -262,10 +206,6 @@ func NewCrewServiceHandler(svc CrewServiceHandler, opts ...connect.HandlerOption
 			crewServiceGetCrewHandler.ServeHTTP(w, r)
 		case CrewServiceRespondToCrewProcedure:
 			crewServiceRespondToCrewHandler.ServeHTTP(w, r)
-		case CrewServiceListCrewMessagesProcedure:
-			crewServiceListCrewMessagesHandler.ServeHTTP(w, r)
-		case CrewServiceSendCrewMessageProcedure:
-			crewServiceSendCrewMessageHandler.ServeHTTP(w, r)
 		case CrewServiceLeaveCrewProcedure:
 			crewServiceLeaveCrewHandler.ServeHTTP(w, r)
 		case CrewServiceReportCrewMemberProcedure:
@@ -289,14 +229,6 @@ func (UnimplementedCrewServiceHandler) GetCrew(context.Context, *connect.Request
 
 func (UnimplementedCrewServiceHandler) RespondToCrew(context.Context, *connect.Request[v1.RespondToCrewRequest]) (*connect.Response[v1.RespondToCrewResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.CrewService.RespondToCrew is not implemented"))
-}
-
-func (UnimplementedCrewServiceHandler) ListCrewMessages(context.Context, *connect.Request[v1.ListCrewMessagesRequest]) (*connect.Response[v1.ListCrewMessagesResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.CrewService.ListCrewMessages is not implemented"))
-}
-
-func (UnimplementedCrewServiceHandler) SendCrewMessage(context.Context, *connect.Request[v1.SendCrewMessageRequest]) (*connect.Response[v1.SendCrewMessageResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.CrewService.SendCrewMessage is not implemented"))
 }
 
 func (UnimplementedCrewServiceHandler) LeaveCrew(context.Context, *connect.Request[v1.LeaveCrewRequest]) (*connect.Response[v1.LeaveCrewResponse], error) {

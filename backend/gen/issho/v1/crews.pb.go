@@ -446,199 +446,6 @@ func (x *RespondToCrewResponse) GetCrew() *Crew {
 	return nil
 }
 
-type ListCrewMessagesRequest struct {
-	state  protoimpl.MessageState `protogen:"open.v1"`
-	CrewId string                 `protobuf:"bytes,1,opt,name=crew_id,json=crewId,proto3" json:"crew_id,omitempty"`
-	// 0 = the latest messages.
-	AfterId       int64 `protobuf:"varint,2,opt,name=after_id,json=afterId,proto3" json:"after_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ListCrewMessagesRequest) Reset() {
-	*x = ListCrewMessagesRequest{}
-	mi := &file_issho_v1_crews_proto_msgTypes[6]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ListCrewMessagesRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ListCrewMessagesRequest) ProtoMessage() {}
-
-func (x *ListCrewMessagesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_crews_proto_msgTypes[6]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ListCrewMessagesRequest.ProtoReflect.Descriptor instead.
-func (*ListCrewMessagesRequest) Descriptor() ([]byte, []int) {
-	return file_issho_v1_crews_proto_rawDescGZIP(), []int{6}
-}
-
-func (x *ListCrewMessagesRequest) GetCrewId() string {
-	if x != nil {
-		return x.CrewId
-	}
-	return ""
-}
-
-func (x *ListCrewMessagesRequest) GetAfterId() int64 {
-	if x != nil {
-		return x.AfterId
-	}
-	return 0
-}
-
-type ListCrewMessagesResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Messages      []*CrewMessage         `protobuf:"bytes,1,rep,name=messages,proto3" json:"messages,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ListCrewMessagesResponse) Reset() {
-	*x = ListCrewMessagesResponse{}
-	mi := &file_issho_v1_crews_proto_msgTypes[7]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ListCrewMessagesResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ListCrewMessagesResponse) ProtoMessage() {}
-
-func (x *ListCrewMessagesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_crews_proto_msgTypes[7]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ListCrewMessagesResponse.ProtoReflect.Descriptor instead.
-func (*ListCrewMessagesResponse) Descriptor() ([]byte, []int) {
-	return file_issho_v1_crews_proto_rawDescGZIP(), []int{7}
-}
-
-func (x *ListCrewMessagesResponse) GetMessages() []*CrewMessage {
-	if x != nil {
-		return x.Messages
-	}
-	return nil
-}
-
-type SendCrewMessageRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	CrewId        string                 `protobuf:"bytes,1,opt,name=crew_id,json=crewId,proto3" json:"crew_id,omitempty"`
-	Body          string                 `protobuf:"bytes,2,opt,name=body,proto3" json:"body,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *SendCrewMessageRequest) Reset() {
-	*x = SendCrewMessageRequest{}
-	mi := &file_issho_v1_crews_proto_msgTypes[8]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *SendCrewMessageRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SendCrewMessageRequest) ProtoMessage() {}
-
-func (x *SendCrewMessageRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_crews_proto_msgTypes[8]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SendCrewMessageRequest.ProtoReflect.Descriptor instead.
-func (*SendCrewMessageRequest) Descriptor() ([]byte, []int) {
-	return file_issho_v1_crews_proto_rawDescGZIP(), []int{8}
-}
-
-func (x *SendCrewMessageRequest) GetCrewId() string {
-	if x != nil {
-		return x.CrewId
-	}
-	return ""
-}
-
-func (x *SendCrewMessageRequest) GetBody() string {
-	if x != nil {
-		return x.Body
-	}
-	return ""
-}
-
-type SendCrewMessageResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Message       *CrewMessage           `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *SendCrewMessageResponse) Reset() {
-	*x = SendCrewMessageResponse{}
-	mi := &file_issho_v1_crews_proto_msgTypes[9]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *SendCrewMessageResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SendCrewMessageResponse) ProtoMessage() {}
-
-func (x *SendCrewMessageResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_crews_proto_msgTypes[9]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SendCrewMessageResponse.ProtoReflect.Descriptor instead.
-func (*SendCrewMessageResponse) Descriptor() ([]byte, []int) {
-	return file_issho_v1_crews_proto_rawDescGZIP(), []int{9}
-}
-
-func (x *SendCrewMessageResponse) GetMessage() *CrewMessage {
-	if x != nil {
-		return x.Message
-	}
-	return nil
-}
-
 type LeaveCrewRequest struct {
 	state  protoimpl.MessageState `protogen:"open.v1"`
 	CrewId string                 `protobuf:"bytes,1,opt,name=crew_id,json=crewId,proto3" json:"crew_id,omitempty"`
@@ -651,7 +458,7 @@ type LeaveCrewRequest struct {
 
 func (x *LeaveCrewRequest) Reset() {
 	*x = LeaveCrewRequest{}
-	mi := &file_issho_v1_crews_proto_msgTypes[10]
+	mi := &file_issho_v1_crews_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -663,7 +470,7 @@ func (x *LeaveCrewRequest) String() string {
 func (*LeaveCrewRequest) ProtoMessage() {}
 
 func (x *LeaveCrewRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_crews_proto_msgTypes[10]
+	mi := &file_issho_v1_crews_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -676,7 +483,7 @@ func (x *LeaveCrewRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LeaveCrewRequest.ProtoReflect.Descriptor instead.
 func (*LeaveCrewRequest) Descriptor() ([]byte, []int) {
-	return file_issho_v1_crews_proto_rawDescGZIP(), []int{10}
+	return file_issho_v1_crews_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *LeaveCrewRequest) GetCrewId() string {
@@ -708,7 +515,7 @@ type LeaveCrewResponse struct {
 
 func (x *LeaveCrewResponse) Reset() {
 	*x = LeaveCrewResponse{}
-	mi := &file_issho_v1_crews_proto_msgTypes[11]
+	mi := &file_issho_v1_crews_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -720,7 +527,7 @@ func (x *LeaveCrewResponse) String() string {
 func (*LeaveCrewResponse) ProtoMessage() {}
 
 func (x *LeaveCrewResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_crews_proto_msgTypes[11]
+	mi := &file_issho_v1_crews_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -733,7 +540,7 @@ func (x *LeaveCrewResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LeaveCrewResponse.ProtoReflect.Descriptor instead.
 func (*LeaveCrewResponse) Descriptor() ([]byte, []int) {
-	return file_issho_v1_crews_proto_rawDescGZIP(), []int{11}
+	return file_issho_v1_crews_proto_rawDescGZIP(), []int{7}
 }
 
 type ReportCrewMemberRequest struct {
@@ -750,7 +557,7 @@ type ReportCrewMemberRequest struct {
 
 func (x *ReportCrewMemberRequest) Reset() {
 	*x = ReportCrewMemberRequest{}
-	mi := &file_issho_v1_crews_proto_msgTypes[12]
+	mi := &file_issho_v1_crews_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -762,7 +569,7 @@ func (x *ReportCrewMemberRequest) String() string {
 func (*ReportCrewMemberRequest) ProtoMessage() {}
 
 func (x *ReportCrewMemberRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_crews_proto_msgTypes[12]
+	mi := &file_issho_v1_crews_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -775,7 +582,7 @@ func (x *ReportCrewMemberRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReportCrewMemberRequest.ProtoReflect.Descriptor instead.
 func (*ReportCrewMemberRequest) Descriptor() ([]byte, []int) {
-	return file_issho_v1_crews_proto_rawDescGZIP(), []int{12}
+	return file_issho_v1_crews_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *ReportCrewMemberRequest) GetCrewId() string {
@@ -814,7 +621,7 @@ type ReportCrewMemberResponse struct {
 
 func (x *ReportCrewMemberResponse) Reset() {
 	*x = ReportCrewMemberResponse{}
-	mi := &file_issho_v1_crews_proto_msgTypes[13]
+	mi := &file_issho_v1_crews_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -826,7 +633,7 @@ func (x *ReportCrewMemberResponse) String() string {
 func (*ReportCrewMemberResponse) ProtoMessage() {}
 
 func (x *ReportCrewMemberResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_crews_proto_msgTypes[13]
+	mi := &file_issho_v1_crews_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -839,7 +646,7 @@ func (x *ReportCrewMemberResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReportCrewMemberResponse.ProtoReflect.Descriptor instead.
 func (*ReportCrewMemberResponse) Descriptor() ([]byte, []int) {
-	return file_issho_v1_crews_proto_rawDescGZIP(), []int{13}
+	return file_issho_v1_crews_proto_rawDescGZIP(), []int{9}
 }
 
 // A crew, or an offer of one, as the caller sees it.
@@ -863,7 +670,7 @@ type Crew struct {
 
 func (x *Crew) Reset() {
 	*x = Crew{}
-	mi := &file_issho_v1_crews_proto_msgTypes[14]
+	mi := &file_issho_v1_crews_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -875,7 +682,7 @@ func (x *Crew) String() string {
 func (*Crew) ProtoMessage() {}
 
 func (x *Crew) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_crews_proto_msgTypes[14]
+	mi := &file_issho_v1_crews_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -888,7 +695,7 @@ func (x *Crew) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Crew.ProtoReflect.Descriptor instead.
 func (*Crew) Descriptor() ([]byte, []int) {
-	return file_issho_v1_crews_proto_rawDescGZIP(), []int{14}
+	return file_issho_v1_crews_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *Crew) GetId() string {
@@ -955,7 +762,7 @@ type CrewMember struct {
 
 func (x *CrewMember) Reset() {
 	*x = CrewMember{}
-	mi := &file_issho_v1_crews_proto_msgTypes[15]
+	mi := &file_issho_v1_crews_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -967,7 +774,7 @@ func (x *CrewMember) String() string {
 func (*CrewMember) ProtoMessage() {}
 
 func (x *CrewMember) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_crews_proto_msgTypes[15]
+	mi := &file_issho_v1_crews_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -980,7 +787,7 @@ func (x *CrewMember) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CrewMember.ProtoReflect.Descriptor instead.
 func (*CrewMember) Descriptor() ([]byte, []int) {
-	return file_issho_v1_crews_proto_rawDescGZIP(), []int{15}
+	return file_issho_v1_crews_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *CrewMember) GetId() string {
@@ -1011,92 +818,6 @@ func (x *CrewMember) GetMe() bool {
 	return false
 }
 
-// A message in a crew's chat: someone's text, or a plan Issho suggested
-// (plan_id set; name and body empty).
-type CrewMessage struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Body          string                 `protobuf:"bytes,3,opt,name=body,proto3" json:"body,omitempty"`
-	At            *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=at,proto3" json:"at,omitempty"`
-	Mine          bool                   `protobuf:"varint,5,opt,name=mine,proto3" json:"mine,omitempty"`
-	PlanId        string                 `protobuf:"bytes,6,opt,name=plan_id,json=planId,proto3" json:"plan_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *CrewMessage) Reset() {
-	*x = CrewMessage{}
-	mi := &file_issho_v1_crews_proto_msgTypes[16]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *CrewMessage) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*CrewMessage) ProtoMessage() {}
-
-func (x *CrewMessage) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_crews_proto_msgTypes[16]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use CrewMessage.ProtoReflect.Descriptor instead.
-func (*CrewMessage) Descriptor() ([]byte, []int) {
-	return file_issho_v1_crews_proto_rawDescGZIP(), []int{16}
-}
-
-func (x *CrewMessage) GetId() int64 {
-	if x != nil {
-		return x.Id
-	}
-	return 0
-}
-
-func (x *CrewMessage) GetName() string {
-	if x != nil {
-		return x.Name
-	}
-	return ""
-}
-
-func (x *CrewMessage) GetBody() string {
-	if x != nil {
-		return x.Body
-	}
-	return ""
-}
-
-func (x *CrewMessage) GetAt() *timestamppb.Timestamp {
-	if x != nil {
-		return x.At
-	}
-	return nil
-}
-
-func (x *CrewMessage) GetMine() bool {
-	if x != nil {
-		return x.Mine
-	}
-	return false
-}
-
-func (x *CrewMessage) GetPlanId() string {
-	if x != nil {
-		return x.PlanId
-	}
-	return ""
-}
-
 var File_issho_v1_crews_proto protoreflect.FileDescriptor
 
 const file_issho_v1_crews_proto_rawDesc = "" +
@@ -1113,17 +834,7 @@ const file_issho_v1_crews_proto_rawDesc = "" +
 	"\acrew_id\x18\x01 \x01(\tR\x06crewId\x12\x16\n" +
 	"\x06accept\x18\x02 \x01(\bR\x06accept\";\n" +
 	"\x15RespondToCrewResponse\x12\"\n" +
-	"\x04crew\x18\x01 \x01(\v2\x0e.issho.v1.CrewR\x04crew\"M\n" +
-	"\x17ListCrewMessagesRequest\x12\x17\n" +
-	"\acrew_id\x18\x01 \x01(\tR\x06crewId\x12\x19\n" +
-	"\bafter_id\x18\x02 \x01(\x03R\aafterId\"M\n" +
-	"\x18ListCrewMessagesResponse\x121\n" +
-	"\bmessages\x18\x01 \x03(\v2\x15.issho.v1.CrewMessageR\bmessages\"E\n" +
-	"\x16SendCrewMessageRequest\x12\x17\n" +
-	"\acrew_id\x18\x01 \x01(\tR\x06crewId\x12\x12\n" +
-	"\x04body\x18\x02 \x01(\tR\x04body\"J\n" +
-	"\x17SendCrewMessageResponse\x12/\n" +
-	"\amessage\x18\x01 \x01(\v2\x15.issho.v1.CrewMessageR\amessage\"t\n" +
+	"\x04crew\x18\x01 \x01(\v2\x0e.issho.v1.CrewR\x04crew\"t\n" +
 	"\x10LeaveCrewRequest\x12\x17\n" +
 	"\acrew_id\x18\x01 \x01(\tR\x06crewId\x12-\n" +
 	"\x06reason\x18\x02 \x01(\x0e2\x15.issho.v1.LeaveReasonR\x06reason\x12\x18\n" +
@@ -1150,14 +861,7 @@ const file_issho_v1_crews_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1a\n" +
 	"\baccepted\x18\x03 \x01(\bR\baccepted\x12\x0e\n" +
-	"\x02me\x18\x04 \x01(\bR\x02me\"\x9e\x01\n" +
-	"\vCrewMessage\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\x12\x12\n" +
-	"\x04body\x18\x03 \x01(\tR\x04body\x12*\n" +
-	"\x02at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\x02at\x12\x12\n" +
-	"\x04mine\x18\x05 \x01(\bR\x04mine\x12\x17\n" +
-	"\aplan_id\x18\x06 \x01(\tR\x06planId*Z\n" +
+	"\x02me\x18\x04 \x01(\bR\x02me*Z\n" +
 	"\n" +
 	"CrewStatus\x12\x1b\n" +
 	"\x17CREW_STATUS_UNSPECIFIED\x10\x00\x12\x17\n" +
@@ -1173,13 +877,11 @@ const file_issho_v1_crews_proto_rawDesc = "" +
 	"\x1bLEAVE_REASON_NOT_INTERESTED\x10\x02\x12\x19\n" +
 	"\x15LEAVE_REASON_INACTIVE\x10\x03\x12\"\n" +
 	"\x1eLEAVE_REASON_TOO_MANY_MESSAGES\x10\x04\x12\x16\n" +
-	"\x12LEAVE_REASON_OTHER\x10\x052\xcd\x04\n" +
+	"\x12LEAVE_REASON_OTHER\x10\x052\x96\x03\n" +
 	"\vCrewService\x12L\n" +
 	"\vListMyCrews\x12\x1c.issho.v1.ListMyCrewsRequest\x1a\x1d.issho.v1.ListMyCrewsResponse\"\x00\x12@\n" +
 	"\aGetCrew\x12\x18.issho.v1.GetCrewRequest\x1a\x19.issho.v1.GetCrewResponse\"\x00\x12R\n" +
-	"\rRespondToCrew\x12\x1e.issho.v1.RespondToCrewRequest\x1a\x1f.issho.v1.RespondToCrewResponse\"\x00\x12[\n" +
-	"\x10ListCrewMessages\x12!.issho.v1.ListCrewMessagesRequest\x1a\".issho.v1.ListCrewMessagesResponse\"\x00\x12X\n" +
-	"\x0fSendCrewMessage\x12 .issho.v1.SendCrewMessageRequest\x1a!.issho.v1.SendCrewMessageResponse\"\x00\x12F\n" +
+	"\rRespondToCrew\x12\x1e.issho.v1.RespondToCrewRequest\x1a\x1f.issho.v1.RespondToCrewResponse\"\x00\x12F\n" +
 	"\tLeaveCrew\x12\x1a.issho.v1.LeaveCrewRequest\x1a\x1b.issho.v1.LeaveCrewResponse\"\x00\x12[\n" +
 	"\x10ReportCrewMember\x12!.issho.v1.ReportCrewMemberRequest\x1a\".issho.v1.ReportCrewMemberResponse\"\x00B>Z<github.com/shrujancheruku/issho/backend/gen/issho/v1;isshov1b\x06proto3"
 
@@ -1196,7 +898,7 @@ func file_issho_v1_crews_proto_rawDescGZIP() []byte {
 }
 
 var file_issho_v1_crews_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_issho_v1_crews_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
+var file_issho_v1_crews_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_issho_v1_crews_proto_goTypes = []any{
 	(CrewStatus)(0),                  // 0: issho.v1.CrewStatus
 	(CrewResponse)(0),                // 1: issho.v1.CrewResponse
@@ -1207,52 +909,40 @@ var file_issho_v1_crews_proto_goTypes = []any{
 	(*GetCrewResponse)(nil),          // 6: issho.v1.GetCrewResponse
 	(*RespondToCrewRequest)(nil),     // 7: issho.v1.RespondToCrewRequest
 	(*RespondToCrewResponse)(nil),    // 8: issho.v1.RespondToCrewResponse
-	(*ListCrewMessagesRequest)(nil),  // 9: issho.v1.ListCrewMessagesRequest
-	(*ListCrewMessagesResponse)(nil), // 10: issho.v1.ListCrewMessagesResponse
-	(*SendCrewMessageRequest)(nil),   // 11: issho.v1.SendCrewMessageRequest
-	(*SendCrewMessageResponse)(nil),  // 12: issho.v1.SendCrewMessageResponse
-	(*LeaveCrewRequest)(nil),         // 13: issho.v1.LeaveCrewRequest
-	(*LeaveCrewResponse)(nil),        // 14: issho.v1.LeaveCrewResponse
-	(*ReportCrewMemberRequest)(nil),  // 15: issho.v1.ReportCrewMemberRequest
-	(*ReportCrewMemberResponse)(nil), // 16: issho.v1.ReportCrewMemberResponse
-	(*Crew)(nil),                     // 17: issho.v1.Crew
-	(*CrewMember)(nil),               // 18: issho.v1.CrewMember
-	(*CrewMessage)(nil),              // 19: issho.v1.CrewMessage
-	(ReportReason)(0),                // 20: issho.v1.ReportReason
-	(*timestamppb.Timestamp)(nil),    // 21: google.protobuf.Timestamp
+	(*LeaveCrewRequest)(nil),         // 9: issho.v1.LeaveCrewRequest
+	(*LeaveCrewResponse)(nil),        // 10: issho.v1.LeaveCrewResponse
+	(*ReportCrewMemberRequest)(nil),  // 11: issho.v1.ReportCrewMemberRequest
+	(*ReportCrewMemberResponse)(nil), // 12: issho.v1.ReportCrewMemberResponse
+	(*Crew)(nil),                     // 13: issho.v1.Crew
+	(*CrewMember)(nil),               // 14: issho.v1.CrewMember
+	(ReportReason)(0),                // 15: issho.v1.ReportReason
+	(*timestamppb.Timestamp)(nil),    // 16: google.protobuf.Timestamp
 }
 var file_issho_v1_crews_proto_depIdxs = []int32{
-	17, // 0: issho.v1.ListMyCrewsResponse.crews:type_name -> issho.v1.Crew
-	17, // 1: issho.v1.GetCrewResponse.crew:type_name -> issho.v1.Crew
-	17, // 2: issho.v1.RespondToCrewResponse.crew:type_name -> issho.v1.Crew
-	19, // 3: issho.v1.ListCrewMessagesResponse.messages:type_name -> issho.v1.CrewMessage
-	19, // 4: issho.v1.SendCrewMessageResponse.message:type_name -> issho.v1.CrewMessage
-	2,  // 5: issho.v1.LeaveCrewRequest.reason:type_name -> issho.v1.LeaveReason
-	20, // 6: issho.v1.ReportCrewMemberRequest.reason:type_name -> issho.v1.ReportReason
-	0,  // 7: issho.v1.Crew.status:type_name -> issho.v1.CrewStatus
-	21, // 8: issho.v1.Crew.offer_until:type_name -> google.protobuf.Timestamp
-	1,  // 9: issho.v1.Crew.response:type_name -> issho.v1.CrewResponse
-	18, // 10: issho.v1.Crew.members:type_name -> issho.v1.CrewMember
-	21, // 11: issho.v1.CrewMessage.at:type_name -> google.protobuf.Timestamp
-	3,  // 12: issho.v1.CrewService.ListMyCrews:input_type -> issho.v1.ListMyCrewsRequest
-	5,  // 13: issho.v1.CrewService.GetCrew:input_type -> issho.v1.GetCrewRequest
-	7,  // 14: issho.v1.CrewService.RespondToCrew:input_type -> issho.v1.RespondToCrewRequest
-	9,  // 15: issho.v1.CrewService.ListCrewMessages:input_type -> issho.v1.ListCrewMessagesRequest
-	11, // 16: issho.v1.CrewService.SendCrewMessage:input_type -> issho.v1.SendCrewMessageRequest
-	13, // 17: issho.v1.CrewService.LeaveCrew:input_type -> issho.v1.LeaveCrewRequest
-	15, // 18: issho.v1.CrewService.ReportCrewMember:input_type -> issho.v1.ReportCrewMemberRequest
-	4,  // 19: issho.v1.CrewService.ListMyCrews:output_type -> issho.v1.ListMyCrewsResponse
-	6,  // 20: issho.v1.CrewService.GetCrew:output_type -> issho.v1.GetCrewResponse
-	8,  // 21: issho.v1.CrewService.RespondToCrew:output_type -> issho.v1.RespondToCrewResponse
-	10, // 22: issho.v1.CrewService.ListCrewMessages:output_type -> issho.v1.ListCrewMessagesResponse
-	12, // 23: issho.v1.CrewService.SendCrewMessage:output_type -> issho.v1.SendCrewMessageResponse
-	14, // 24: issho.v1.CrewService.LeaveCrew:output_type -> issho.v1.LeaveCrewResponse
-	16, // 25: issho.v1.CrewService.ReportCrewMember:output_type -> issho.v1.ReportCrewMemberResponse
-	19, // [19:26] is the sub-list for method output_type
-	12, // [12:19] is the sub-list for method input_type
-	12, // [12:12] is the sub-list for extension type_name
-	12, // [12:12] is the sub-list for extension extendee
-	0,  // [0:12] is the sub-list for field type_name
+	13, // 0: issho.v1.ListMyCrewsResponse.crews:type_name -> issho.v1.Crew
+	13, // 1: issho.v1.GetCrewResponse.crew:type_name -> issho.v1.Crew
+	13, // 2: issho.v1.RespondToCrewResponse.crew:type_name -> issho.v1.Crew
+	2,  // 3: issho.v1.LeaveCrewRequest.reason:type_name -> issho.v1.LeaveReason
+	15, // 4: issho.v1.ReportCrewMemberRequest.reason:type_name -> issho.v1.ReportReason
+	0,  // 5: issho.v1.Crew.status:type_name -> issho.v1.CrewStatus
+	16, // 6: issho.v1.Crew.offer_until:type_name -> google.protobuf.Timestamp
+	1,  // 7: issho.v1.Crew.response:type_name -> issho.v1.CrewResponse
+	14, // 8: issho.v1.Crew.members:type_name -> issho.v1.CrewMember
+	3,  // 9: issho.v1.CrewService.ListMyCrews:input_type -> issho.v1.ListMyCrewsRequest
+	5,  // 10: issho.v1.CrewService.GetCrew:input_type -> issho.v1.GetCrewRequest
+	7,  // 11: issho.v1.CrewService.RespondToCrew:input_type -> issho.v1.RespondToCrewRequest
+	9,  // 12: issho.v1.CrewService.LeaveCrew:input_type -> issho.v1.LeaveCrewRequest
+	11, // 13: issho.v1.CrewService.ReportCrewMember:input_type -> issho.v1.ReportCrewMemberRequest
+	4,  // 14: issho.v1.CrewService.ListMyCrews:output_type -> issho.v1.ListMyCrewsResponse
+	6,  // 15: issho.v1.CrewService.GetCrew:output_type -> issho.v1.GetCrewResponse
+	8,  // 16: issho.v1.CrewService.RespondToCrew:output_type -> issho.v1.RespondToCrewResponse
+	10, // 17: issho.v1.CrewService.LeaveCrew:output_type -> issho.v1.LeaveCrewResponse
+	12, // 18: issho.v1.CrewService.ReportCrewMember:output_type -> issho.v1.ReportCrewMemberResponse
+	14, // [14:19] is the sub-list for method output_type
+	9,  // [9:14] is the sub-list for method input_type
+	9,  // [9:9] is the sub-list for extension type_name
+	9,  // [9:9] is the sub-list for extension extendee
+	0,  // [0:9] is the sub-list for field type_name
 }
 
 func init() { file_issho_v1_crews_proto_init() }
@@ -1267,7 +957,7 @@ func file_issho_v1_crews_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_issho_v1_crews_proto_rawDesc), len(file_issho_v1_crews_proto_rawDesc)),
 			NumEnums:      3,
-			NumMessages:   17,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

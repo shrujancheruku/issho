@@ -65,9 +65,6 @@ where p.city_id = c.city_id and p.status = 'open' and p.signup_deadline > @after
 order by p.score desc, p.id
 limit 1;
 
--- name: InsertCrewPlanMessage :exec
-insert into app.crew_messages (crew_id, plan_id, created_at) values (@crew_id, @plan_id, @at);
-
 -- name: SetCrewSuggested :exec
 update app.crews set suggested_at = @at where id = @id;
 
@@ -120,29 +117,6 @@ select count(*)::int from app.crew_members where crew_id = @crew_id and response
 -- name: InsertCrewLeave :exec
 insert into app.crew_leaves (crew_id, user_id, reason, details, created_at)
 values (@crew_id, @user_id, @reason, @details, @at);
-
--- name: InsertCrewMessage :one
-insert into app.crew_messages (crew_id, user_id, body) values (@crew_id, @user_id, @body)
-returning id, created_at;
-
--- Messages after a given one, oldest first, with the sender's first name.
--- name: ListCrewMessages :many
-select c.id, c.user_id, pr.display_name, c.body, c.plan_id, c.created_at
-from app.crew_messages c
-left join app.profiles pr on pr.user_id = c.user_id
-where c.crew_id = @crew_id and c.id > @after_id
-order by c.id
-limit @max;
-
--- name: ListLatestCrewMessages :many
-select * from (
-  select c.id, c.user_id, pr.display_name, c.body, c.plan_id, c.created_at
-  from app.crew_messages c
-  left join app.profiles pr on pr.user_id = c.user_id
-  where c.crew_id = @crew_id
-  order by c.id desc
-  limit @max
-) latest order by id;
 
 -- Someone who is or was in a crew (accepted, or left since).
 -- name: IsCrewMember :one
