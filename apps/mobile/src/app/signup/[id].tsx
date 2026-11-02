@@ -1,12 +1,14 @@
 import { Code, ConnectError } from '@issho/api-client';
-import { router, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AvailabilityGrid } from '@/components/availability-grid';
 import { Chip } from '@/components/chip';
 import { PrimaryButton } from '@/components/primary-button';
+import { LoadState } from '@/components/query-screen';
+import { useLeave } from '@/components/screen-frame';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { FormWidth, Spacing } from '@/constants/theme';
@@ -31,19 +33,19 @@ export default function SignupSheet() {
   const { id = '' } = useLocalSearchParams<{ id: string }>();
   const { t, lang } = useI18n();
   const theme = useTheme();
-  const { plan, usual, saved } = usePlanTimes(id);
+  const { plan, profile, usual, saved } = usePlanTimes(id);
   const { signUp } = useSignupActions(id);
   const userId = useAuth().session?.user.id;
   // The saved times until the first edit.
   const [edited, setTimes] = useState<Times | null>(null);
   const times = edited ?? saved;
   const p = plan.data?.plan;
-  const close = () => (router.canGoBack() ? router.back() : router.replace({ pathname: '/plan/[id]', params: { id } }));
+  const close = useLeave({ pathname: '/plan/[id]', params: { id } });
 
   if (!p || !times) {
     return (
       <ThemedView style={[styles.fill, styles.center]}>
-        {plan.isError ? <ThemedText themeColor="textSecondary">{t('common.loadFailed')}</ThemedText> : <ActivityIndicator />}
+        <LoadState queries={[plan, profile]} notFound={t('plan.notFound')} center />
       </ThemedView>
     );
   }
