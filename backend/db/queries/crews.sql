@@ -93,14 +93,22 @@ join app.crews c on c.id = m.crew_id
 where m.crew_id = @crew_id and m.user_id = @user_id
 for update of m, c;
 
--- First names of a crew's members: those who accepted, and (while it's an
--- offer) those still deciding.
+-- First names of a crew's members: those who accepted, and those still
+-- deciding while the crew is an offer (crews.Membership.Visible). Members who
+-- never answered are 'lapsed' once the offer is decided, so they don't show.
 -- name: ListCrewMembers :many
 select m.user_id, pr.display_name, m.response
 from app.crew_members m
+join app.crews c on c.id = m.crew_id
 join app.profiles pr on pr.user_id = m.user_id
-where m.crew_id = $1 and m.response in ('offered', 'accepted')
+where m.crew_id = $1
+  and (m.response = 'accepted' or (m.response = 'offered' and c.status = 'offered'))
 order by pr.display_name, m.user_id;
+
+-- When an offer is decided, members who never answered are out.
+-- name: LapseUnansweredCrewMembers :exec
+update app.crew_members set response = 'lapsed', responded_at = @at
+where crew_id = @crew_id and response = 'offered';
 
 -- name: SetCrewResponse :exec
 update app.crew_members set response = @response, responded_at = @at

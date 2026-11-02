@@ -297,6 +297,22 @@ func (q *Queries) IsCrewMember(ctx context.Context, arg IsCrewMemberParams) (boo
 	return column_1, err
 }
 
+const lapseUnansweredCrewMembers = `-- name: LapseUnansweredCrewMembers :exec
+update app.crew_members set response = 'lapsed', responded_at = $1
+where crew_id = $2 and response = 'offered'
+`
+
+type LapseUnansweredCrewMembersParams struct {
+	At     pgtype.Timestamptz
+	CrewID uuid.UUID
+}
+
+// When an offer is decided, members who never answered are out.
+func (q *Queries) LapseUnansweredCrewMembers(ctx context.Context, arg LapseUnansweredCrewMembersParams) error {
+	_, err := q.db.Exec(ctx, lapseUnansweredCrewMembers, arg.At, arg.CrewID)
+	return err
+}
+
 const listCityCrewAversions = `-- name: ListCityCrewAversions :many
 
 select distinct m.user_id as averse_id, o.user_id as other_id
@@ -369,8 +385,10 @@ func (q *Queries) ListCrewMemberIDs(ctx context.Context, arg ListCrewMemberIDsPa
 const listCrewMembers = `-- name: ListCrewMembers :many
 select m.user_id, pr.display_name, m.response
 from app.crew_members m
+join app.crews c on c.id = m.crew_id
 join app.profiles pr on pr.user_id = m.user_id
-where m.crew_id = $1 and m.response in ('offered', 'accepted')
+where m.crew_id = $1
+  and (m.response = 'accepted' or (m.response = 'offered' and c.status = 'offered'))
 order by pr.display_name, m.user_id
 `
 
@@ -380,8 +398,9 @@ type ListCrewMembersRow struct {
 	Response    string
 }
 
-// First names of a crew's members: those who accepted, and (while it's an
-// offer) those still deciding.
+// First names of a crew's members: those who accepted, and those still
+// deciding while the crew is an offer (crews.Membership.Visible). Members who
+// never answered are 'lapsed' once the offer is decided, so they don't show.
 func (q *Queries) ListCrewMembers(ctx context.Context, crewID uuid.UUID) ([]ListCrewMembersRow, error) {
 	rows, err := q.db.Query(ctx, listCrewMembers, crewID)
 	if err != nil {
