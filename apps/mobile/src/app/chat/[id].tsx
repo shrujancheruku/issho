@@ -6,7 +6,7 @@ import { BackLink } from '@/components/text-link';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { FormWidth, Spacing } from '@/constants/theme';
-import { ChatPanel } from '@/features/events/chat-panel';
+import { ChatPanel } from '@/features/chat/chat-panel';
 import { useI18n } from '@/i18n/i18n-provider';
 
 /**
@@ -29,7 +29,7 @@ export default function ChatScreen() {
             </ThemedText>
             <View style={styles.side} />
           </View>
-          <ChatPanel target={{ eventId: id }} />
+          <ChatPanel room={{ eventId: id }} />
         </KeyboardAvoidingView>
       </SafeAreaView>
     </ThemedView>

@@ -17,7 +17,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Thread } from '@/components/thread';
 import { FormWidth, Spacing } from '@/constants/theme';
-import { ChatPanel } from '@/features/events/chat-panel';
+import { ChatPanel } from '@/features/chat/chat-panel';
 import { useEvent, useRespond } from '@/features/events/data';
 import { shareText } from '@/features/events/share';
 import { outing, stateText, type MeetingPoint, type Outing } from '@/features/events/outing';
@@ -107,7 +107,7 @@ export default function EventScreen() {
           />
         </View>
         {tab === 'chat' ? (
-          <ChatPanel target={{ eventId: id }} header={<Pinned ctx={ctx} />} />
+          <ChatPanel room={{ eventId: id }} header={<Pinned ctx={ctx} />} />
         ) : (
           <ScrollView contentContainerStyle={styles.content}>
             <PlanTab ctx={ctx} />

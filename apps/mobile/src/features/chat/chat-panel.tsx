@@ -1,27 +1,25 @@
-import { Code, ConnectError } from '@issho/api-client';
 import { router } from 'expo-router';
 import { useEffect, useRef, useState, type ReactElement } from 'react';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { PressableScale } from '@/components/pressable-scale';
+import { TextLink } from '@/components/text-link';
 import { ThemedText } from '@/components/themed-text';
 import { EaseOut, Motion } from '@/constants/motion';
 import { BodyFont, Brand, Spacing } from '@/constants/theme';
 import { usePlan } from '@/features/plans/data';
-import { formatStart, lastSignupDay } from '@/features/plans/format';
+import { formatMoment, lastSignupDay } from '@/features/plans/format';
 import { usePlanNames } from '@/features/plans/names';
 import { pairText } from '@/features/plans/plan-card';
-import { useNow } from '@/hooks/use-now';
 import { useTheme } from '@/hooks/use-theme';
 import { useI18n } from '@/i18n/i18n-provider';
-import { ms } from '@/lib/time';
 
-import { useChat, type ChatTarget } from './chat';
-import type { Message } from './chat-messages';
+import type { Message } from './messages';
+import { useRoom, type RoomRef } from './room';
 import { TypingDots } from './typing-dots';
 
-const MaxMessage = 1000; // as the server (plans.MaxChatMessage)
+const MaxMessage = 1000; // as the server (chat.MaxMessage)
 
 // Messages that arrive while the chat is open rise in from the bottom; the
 // history shown on opening doesn't (animate changes, not screens).
@@ -80,39 +78,35 @@ function Bubble({ m }: { m: Message }) {
 }
 
 /**
- * A group chat in place: an outing group's (open from a few days before
- * until after it, for the people going) or a crew's (always open). New
- * messages arrive over the socket (useChat). `header` scrolls above the
- * messages: a pinned meeting point or suggested plan.
+ * A chat room in place: an outing group's (open from a few days before
+ * until after it, for the people going) or a crew's. What the person may do
+ * is the server's decision (useRoom's status); new messages arrive over the
+ * room's socket. `header` scrolls above the messages: a pinned meeting point
+ * or suggested plan.
  */
-export function ChatPanel({ target, header }: { target: ChatTarget; header?: ReactElement }) {
+export function ChatPanel({ room, header }: { room: RoomRef; header?: ReactElement }) {
   const { t, lang } = useI18n();
   const theme = useTheme();
-  const now = useNow();
-  const { messages, history, send, typing, onTyping } = useChat(target);
+  const { messages, status, opensAt, send, typing, onTyping, retry } = useRoom(room);
   const [draft, setDraft] = useState('');
   const list = useRef<FlatList<Message>>(null);
 
   // The newest message when the history arrived: later ones rise in.
   const [baseline, setBaseline] = useState<number | null>(null);
-  if (baseline === null && history.data) setBaseline(messages.length ? messages[messages.length - 1].id : 0);
+  const loaded = status !== 'loading' && status !== 'error';
+  if (baseline === null && loaded) setBaseline(messages.length ? messages[messages.length - 1].id : 0);
 
   // Keep the newest message in view.
   useEffect(() => {
     if (messages.length) list.current?.scrollToEnd({ animated: true });
   }, [messages.length]);
 
-  const state = history.data;
-  const crew = 'crewId' in target;
-  const opensAt = ms(state?.opensAt);
-  const closesAt = ms(state?.closesAt);
-  // The server decides; the clock only updates the note while the screen is open.
-  const open = !!state && (crew || (now >= opensAt && now < closesAt));
-  const denied = history.error instanceof ConnectError && history.error.code === Code.PermissionDenied;
-
+  const crew = 'crewId' in room;
+  const open = status === 'open';
   let note = '';
-  if (denied) note = t('chat.notGoing');
-  else if (state && !open) note = now < opensAt ? t('chat.opensOn', { date: formatStart(state.opensAt, lang) }) : t('chat.closed');
+  if (status === 'notMember') note = t('chat.notGoing');
+  else if (status === 'notOpen' && opensAt !== undefined) note = t('chat.opensOn', { date: formatMoment(opensAt, lang) });
+  else if (status === 'notOpen' || status === 'closed') note = t('chat.closed');
 
   const submit = () => {
     const body = draft.trim();
@@ -123,8 +117,15 @@ export function ChatPanel({ target, header }: { target: ChatTarget; header?: Rea
 
   return (
     <>
-      {history.isPending ? (
+      {status === 'loading' ? (
         <ActivityIndicator style={styles.fill} />
+      ) : status === 'error' ? (
+        <View style={[styles.fill, styles.failed]}>
+          <ThemedText themeColor="textSecondary" style={styles.center}>
+            {t('common.loadFailed')}
+          </ThemedText>
+          <TextLink label={t('common.retry')} onPress={retry} center />
+        </View>
       ) : (
         <FlatList
           ref={list}
@@ -200,6 +201,7 @@ const styles = StyleSheet.create({
   suggestion: { borderWidth: 2, borderColor: Brand.gold, borderRadius: 16, padding: Spacing.three, gap: Spacing.half },
   suggestionTitle: { fontSize: 20, lineHeight: 29 },
   center: { textAlign: 'center' },
+  failed: { justifyContent: 'center', padding: Spacing.three, gap: Spacing.two },
   note: { padding: Spacing.three },
   composer: { flexDirection: 'row', alignItems: 'flex-end', gap: Spacing.two, padding: Spacing.three, borderTopWidth: 1 },
   input: { fontFamily: BodyFont.regular, flex: 1, borderRadius: 16, paddingHorizontal: Spacing.three, paddingVertical: Spacing.two, maxHeight: 120, fontSize: 16 },
