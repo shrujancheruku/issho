@@ -9,17 +9,23 @@ import { PrimaryButton } from '@/components/primary-button';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { FormWidth, Spacing } from '@/constants/theme';
-import { fromProfile, steps, stepValid, toProfile, type Draft, type Step } from '@/features/profile/draft';
+import { canSave, fromProfile, nextEditStep, steps, stepValid, toProfile, type Draft, type Step } from '@/features/profile/draft';
 import { saveErrorMessage } from '@/features/profile/save-error';
 import { StepView, stepTitles } from '@/features/profile/steps';
 import { profileKey, useProfile } from '@/features/profile/use-profile';
 import { useI18n } from '@/i18n/i18n-provider';
 import { api } from '@/lib/api';
 
-/** Edits one section of the profile and saves the whole profile. */
+/** Edits one section of the profile and saves the whole profile, once every section is complete. */
 export default function ProfileEditScreen() {
   const { step: param } = useLocalSearchParams<{ step: string }>();
-  const step = (steps as readonly string[]).includes(param) && param !== 'conduct' ? (param as Step) : 'about';
+  const first = (steps as readonly string[]).includes(param) && param !== 'conduct' ? (param as Step) : 'about';
+  // Starts at the step opened from settings. An edit can leave another step
+  // incomplete (a new city clears the activities), so the screen moves on to
+  // it in place: the draft lives in this screen's state and a route change
+  // would lose it.
+  const [moved, setStep] = useState<Step | null>(null);
+  const step = moved ?? first;
   const { t, previewLanguages } = useI18n();
   const queryClient = useQueryClient();
   const profile = useProfile();
@@ -30,6 +36,7 @@ export default function ProfileEditScreen() {
     [profile.data],
   );
   const draft = edited ?? saved;
+  const next = draft ? nextEditStep(step, draft) : null;
 
   // While editing languages, show the screen in the ones being chosen.
   useEffect(() => {
@@ -76,10 +83,14 @@ export default function ProfileEditScreen() {
           {save.isError && <ThemedText themeColor="error" style={styles.error}>{saveErrorMessage(save.error, t)}</ThemedText>}
           <View style={styles.footer}>
             <PrimaryButton
-              label={t('common.save')}
+              label={next ? t('common.continue') : t('common.save')}
               disabled={!draft || !stepValid(step, draft)}
               busy={save.isPending}
-              onPress={() => draft && save.mutate(draft)}
+              onPress={() => {
+                if (!draft) return;
+                if (next) setStep(next);
+                else if (canSave(draft)) save.mutate(draft);
+              }}
             />
           </View>
         </KeyboardAvoidingView>

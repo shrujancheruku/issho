@@ -81,6 +81,7 @@
   "crew.yourCrew": "Your crew",
   "crew.yourCrews": "Your crews",
   "error.network": "Couldn't reach Issho. Check your connection.",
+  "error.saveRejected": "Couldn't save. Check your answers and try again.",
   "event.cancel": "Cancel my place",
   "event.checkIn": "I'm here",
   "event.checkInLater": "You can check in from an hour before the start.",
