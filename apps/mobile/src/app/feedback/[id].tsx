@@ -22,6 +22,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { useI18n } from '@/i18n/i18n-provider';
 import type { StringKey } from '@/i18n/strings';
 import { haptics } from '@/lib/haptics';
+import { ms } from '@/lib/time';
 
 const ratings: [number, StringKey][] = [
   [1, 'feedback.rating1'],
@@ -127,7 +128,7 @@ export default function FeedbackScreen() {
       <ThemedText themeColor="textSecondary">
         {!f.opensAt
           ? t('feedback.notOpen')
-          : now < Number(f.opensAt.seconds) * 1000
+          : now < ms(f.opensAt)
             ? t('feedback.opensOn', { date: formatStart(f.opensAt, lang) })
             : t('feedback.closed')}
       </ThemedText>
