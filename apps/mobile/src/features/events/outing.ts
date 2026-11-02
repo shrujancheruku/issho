@@ -149,7 +149,7 @@ export function outing(e: MyEvent, now: number): Outing {
     canGiveFeedback: state.actions.includes('feedback'),
     needsAnswer: e.response === InviteResponse.INVITED && state.actions.includes('confirm'),
     needsCheckIn: state.actions.includes('checkIn'),
-    needsFeedback: state.message === 'event.state.feedback',
+    needsFeedback: state.actions.includes('feedback') && !e.feedbackGiven,
   };
 }
 
