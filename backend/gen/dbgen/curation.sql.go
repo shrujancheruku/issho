@@ -81,6 +81,53 @@ func (q *Queries) ListAllVenueCategories(ctx context.Context) ([]ListAllVenueCat
 	return items, nil
 }
 
+const listCityCurationAreas = `-- name: ListCityCurationAreas :many
+select id, city_id, coalesce(name->>'en', id)::text as name,
+       st_y(centroid::geometry)::float8 as lat, st_x(centroid::geometry)::float8 as lng,
+       coalesce(st_asgeojson(boundary), '')::text as boundary
+from app.areas
+where city_id = $1
+order by name->>'en', id
+`
+
+type ListCityCurationAreasRow struct {
+	ID       string
+	CityID   string
+	Name     string
+	Lat      float64
+	Lng      float64
+	Boundary string
+}
+
+// One city's areas: a search or an add only needs these, not every city's
+// boundaries parsed.
+func (q *Queries) ListCityCurationAreas(ctx context.Context, cityID string) ([]ListCityCurationAreasRow, error) {
+	rows, err := q.db.Query(ctx, listCityCurationAreas, cityID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListCityCurationAreasRow
+	for rows.Next() {
+		var i ListCityCurationAreasRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.CityID,
+			&i.Name,
+			&i.Lat,
+			&i.Lng,
+			&i.Boundary,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listCurationAreas = `-- name: ListCurationAreas :many
 select id, city_id, coalesce(name->>'en', id)::text as name,
        st_y(centroid::geometry)::float8 as lat, st_x(centroid::geometry)::float8 as lng,
@@ -339,10 +386,11 @@ func (q *Queries) SetApprovedVenuesOnly(ctx context.Context, arg SetApprovedVenu
 	return result.RowsAffected(), nil
 }
 
-const setVenueStatus = `-- name: SetVenueStatus :execrows
+const setVenueStatus = `-- name: SetVenueStatus :many
 update app.venues
 set status = $1, reviewed_by = $2, reviewed_at = $3
 where city_id = $4 and google_place_id = any($5::text[])
+returning google_place_id
 `
 
 type SetVenueStatusParams struct {
@@ -353,8 +401,10 @@ type SetVenueStatusParams struct {
 	PlaceIds   []string
 }
 
-func (q *Queries) SetVenueStatus(ctx context.Context, arg SetVenueStatusParams) (int64, error) {
-	result, err := q.db.Exec(ctx, setVenueStatus,
+// Returns the place id of each row changed (a place has a row per category,
+// so callers count the distinct ones).
+func (q *Queries) SetVenueStatus(ctx context.Context, arg SetVenueStatusParams) ([]string, error) {
+	rows, err := q.db.Query(ctx, setVenueStatus,
 		arg.Status,
 		arg.ReviewedBy,
 		arg.At,
@@ -362,7 +412,19 @@ func (q *Queries) SetVenueStatus(ctx context.Context, arg SetVenueStatusParams) 
 		arg.PlaceIds,
 	)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
-	return result.RowsAffected(), nil
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var google_place_id string
+		if err := rows.Scan(&google_place_id); err != nil {
+			return nil, err
+		}
+		items = append(items, google_place_id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }

@@ -159,15 +159,11 @@ func buildMatrix(ctx context.Context, pool *pgxpool.Pool, args []string) error {
 	if err != nil {
 		return err
 	}
-	rows, err := geo.BuildMatrix(ctx, google.New(key), areas, modes)
+	rows, deleted, err := geo.RebuildMatrix(ctx, pool, google.New(key), city)
 	if err != nil {
 		return err
 	}
-	deleted, err := geo.SaveMatrix(ctx, pool, city, rows)
-	if err != nil {
-		return err
-	}
-	slog.Info("travel matrix saved", "city", city, "rows", len(rows), "stale_deleted", deleted)
+	slog.Info("travel matrix saved", "city", city, "rows", rows, "stale_deleted", deleted)
 	return nil
 }
 

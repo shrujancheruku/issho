@@ -53,10 +53,13 @@ where p.status = @status::text
 order by area_name, p.google_place_id
 limit @max_rows offset @skip;
 
--- name: SetVenueStatus :execrows
+-- Returns the place id of each row changed (a place has a row per category,
+-- so callers count the distinct ones).
+-- name: SetVenueStatus :many
 update app.venues
 set status = @status, reviewed_by = @reviewed_by, reviewed_at = @at
-where city_id = @city_id and google_place_id = any(@place_ids::text[]);
+where city_id = @city_id and google_place_id = any(@place_ids::text[])
+returning google_place_id;
 
 -- Which of these places the city already has, and their status.
 -- name: ListKnownVenues :many
@@ -90,3 +93,13 @@ select id, city_id, coalesce(name->>'en', id)::text as name,
        coalesce(st_asgeojson(boundary), '')::text as boundary
 from app.areas
 order by city_id, name->>'en', id;
+
+-- One city's areas: a search or an add only needs these, not every city's
+-- boundaries parsed.
+-- name: ListCityCurationAreas :many
+select id, city_id, coalesce(name->>'en', id)::text as name,
+       st_y(centroid::geometry)::float8 as lat, st_x(centroid::geometry)::float8 as lng,
+       coalesce(st_asgeojson(boundary), '')::text as boundary
+from app.areas
+where city_id = @city_id
+order by name->>'en', id;

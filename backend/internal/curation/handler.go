@@ -2,63 +2,25 @@
 // (M8). Admins approve or reject the places discovery found, look places up
 // by name, add ones discovery missed, and can make a city use only
 // approved venues. Only place ids and our own data are stored; names and
-// addresses are fetched live from Google (Maps terms).
+// addresses are fetched live from Google (Maps terms). The rules live in
+// Service; the Handler checks the caller and maps to and from the protos.
 package curation
 
 import (
 	"context"
-	"errors"
-	"fmt"
-	"slices"
-	"strings"
-	"sync"
-	"time"
-	"unicode/utf8"
 
 	"connectrpc.com/connect"
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
-	"github.com/shrujancheruku/issho/backend/internal/geo"
-	"github.com/shrujancheruku/issho/backend/internal/maps"
 	"github.com/shrujancheruku/issho/backend/internal/platform/auth"
 	"github.com/shrujancheruku/issho/backend/internal/platform/errs"
-)
-
-const (
-	// PageSize is how many places ListVenues returns: each costs a Place
-	// Details call for its name.
-	PageSize = 50
-	// MaxBatch is how many places SetVenueStatus takes at once.
-	MaxBatch = 100
-	// MaxQuery bounds a search's text.
-	MaxQuery = 100
-	// searchRadiusM is half the side of the box searched around an area's
-	// centre: about the radius discovery searches most categories in.
-	searchRadiusM = 1500
-	// lookups bounds concurrent Google calls for one request.
-	lookups = 8
 )
 
 // Handler serves CurationService. cmd/api limits the service to admins
 // (auth.AdminOnly); each call checks again (auth.RequireAdmin) so a wiring mistake fails closed.
 type Handler struct {
-	DB *pgxpool.Pool
-	// Places is nil without GOOGLE_MAPS_API_KEY: names are then blank, and
-	// searching and adding are refused.
-	Places maps.PlaceSearch
-	Now    func() time.Time // nil = time.Now
-}
-
-func (h *Handler) now() time.Time {
-	if h.Now != nil {
-		return h.Now()
-	}
-	return time.Now()
+	Svc *Service
 }
 
 var statuses = map[isshov1.VenueStatus]string{
@@ -76,64 +38,11 @@ func statusOf(s string) isshov1.VenueStatus {
 	return isshov1.VenueStatus_VENUE_STATUS_UNSPECIFIED
 }
 
-// area is one of a city's areas, with its English name.
-type area struct {
-	geo.Area
-	Name string
-}
-
-// cityAreas returns a city's areas; NOT_FOUND for an unknown city.
-func cityAreas(ctx context.Context, q *dbgen.Queries, cityID string) ([]area, error) {
-	rows, err := q.ListCurationAreas(ctx)
-	if err != nil {
-		return nil, err
-	}
-	var out []area
-	for _, r := range rows {
-		if r.CityID == cityID {
-			b, err := geo.ParseBoundary(r.Boundary)
-			if err != nil {
-				return nil, fmt.Errorf("area %s: %w", r.ID, err)
-			}
-			out = append(out, area{Area: geo.Area{ID: r.ID, LatLng: maps.LatLng{Lat: r.Lat, Lng: r.Lng}, Boundary: b}, Name: r.Name})
-		}
-	}
-	if len(out) == 0 {
-		return nil, connect.NewError(connect.CodeNotFound, errors.New("no such city"))
-	}
-	return out, nil
-}
-
-// nearest is the area p is in (geo.Locate): the one whose boundary has it,
-// or the nearest by point.
-func nearest(areas []area, p maps.LatLng) area {
-	plain := make([]geo.Area, len(areas))
-	for i, a := range areas {
-		plain[i] = a.Area
-	}
-	n, _ := geo.Locate(plain, p)
-	for _, a := range areas {
-		if a.ID == n.ID {
-			return a
-		}
-	}
-	return areas[0]
-}
-
 func (h *Handler) ListVenueCities(ctx context.Context, _ *connect.Request[isshov1.ListVenueCitiesRequest]) (*connect.Response[isshov1.ListVenueCitiesResponse], error) {
 	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
-	q := dbgen.New(h.DB)
-	cities, err := q.ListVenueCities(ctx)
-	if err != nil {
-		return nil, err
-	}
-	areas, err := q.ListCurationAreas(ctx)
-	if err != nil {
-		return nil, err
-	}
-	cats, err := q.ListAllVenueCategories(ctx)
+	cities, areas, cats, err := h.Svc.Cities(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -160,12 +69,8 @@ func (h *Handler) SetApprovedVenuesOnly(ctx context.Context, req *connect.Reques
 	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
-	n, err := dbgen.New(h.DB).SetApprovedVenuesOnly(ctx, dbgen.SetApprovedVenuesOnlyParams{ID: req.Msg.CityId, ApprovedVenuesOnly: req.Msg.ApprovedVenuesOnly})
-	if err != nil {
+	if err := h.Svc.SetApprovedOnly(ctx, req.Msg.CityId, req.Msg.ApprovedVenuesOnly); err != nil {
 		return nil, err
-	}
-	if n == 0 {
-		return nil, connect.NewError(connect.CodeNotFound, errors.New("no such city"))
 	}
 	return connect.NewResponse(&isshov1.SetApprovedVenuesOnlyResponse{}), nil
 }
@@ -179,59 +84,25 @@ func (h *Handler) ListVenues(ctx context.Context, req *connect.Request[isshov1.L
 	if !ok {
 		return nil, errs.Invalid("status: candidate, approved or rejected")
 	}
-	if m.Offset < 0 {
-		return nil, errs.Invalid("offset: not negative")
-	}
-	rows, err := dbgen.New(h.DB).ListCurationVenues(ctx, dbgen.ListCurationVenuesParams{
-		CityID: m.CityId, AreaID: m.AreaId, CategoryID: m.CategoryId, Status: status,
-		MaxRows: PageSize, Skip: m.Offset,
+	places, total, err := h.Svc.List(ctx, ListParams{
+		CityID: m.CityId, AreaID: m.AreaId, CategoryID: m.CategoryId, Status: status, Offset: m.Offset,
 	})
 	if err != nil {
 		return nil, err
 	}
-	out := &isshov1.ListVenuesResponse{Venues: make([]*isshov1.Venue, len(rows))}
-	ids := make([]string, len(rows))
-	for i, r := range rows {
-		out.Total = r.Total
-		ids[i] = r.GooglePlaceID
+	out := &isshov1.ListVenuesResponse{Total: total, Venues: make([]*isshov1.Venue, len(places))}
+	for i, p := range places {
 		v := &isshov1.Venue{
-			PlaceId: r.GooglePlaceID, AreaId: r.AreaID, AreaName: r.AreaName, CategoryIds: r.Categories,
-			Status: statusOf(r.Status), Added: r.Added, Plans: r.Plans,
+			PlaceId: p.GooglePlaceID, AreaId: p.AreaID, AreaName: p.AreaName, CategoryIds: p.Categories,
+			Status: statusOf(p.Status), Added: p.Added, Plans: p.Plans,
+			Name: p.Name, Address: p.Address, MapsUrl: p.MapsURL, Flag: p.Flag,
 		}
-		if r.ReviewedAt.Valid {
-			v.ReviewedAt = timestamppb.New(r.ReviewedAt.Time)
+		if p.ReviewedAt.Valid {
+			v.ReviewedAt = timestamppb.New(p.ReviewedAt.Time)
 		}
 		out.Venues[i] = v
 	}
-	// Names are fetched live (Maps terms); a failure leaves one blank.
-	h.details(ctx, ids, func(i int, d maps.PlaceDetails) {
-		v := out.Venues[i]
-		v.Name, v.Address, v.MapsUrl, v.Flag = d.Name, d.Address, d.MapsURL, Flag(d.Name)
-	})
 	return connect.NewResponse(out), nil
-}
-
-// details fetches places' English details, a few at a time, calling set
-// (from one goroutine at a time) for each that succeeded.
-func (h *Handler) details(ctx context.Context, ids []string, set func(int, maps.PlaceDetails)) {
-	if h.Places == nil {
-		return
-	}
-	var mu sync.Mutex
-	var wg sync.WaitGroup
-	sem := make(chan struct{}, lookups)
-	for i, id := range ids {
-		wg.Go(func() {
-			sem <- struct{}{}
-			defer func() { <-sem }()
-			if d, err := h.Places.Details(ctx, id, "en"); err == nil {
-				mu.Lock()
-				set(i, d)
-				mu.Unlock()
-			}
-		})
-	}
-	wg.Wait()
 }
 
 func (h *Handler) SetVenueStatus(ctx context.Context, req *connect.Request[isshov1.SetVenueStatusRequest]) (*connect.Response[isshov1.SetVenueStatusResponse], error) {
@@ -244,29 +115,11 @@ func (h *Handler) SetVenueStatus(ctx context.Context, req *connect.Request[issho
 	if !ok {
 		return nil, errs.Invalid("status: candidate, approved or rejected")
 	}
-	if len(m.PlaceIds) == 0 || len(m.PlaceIds) > MaxBatch {
-		return nil, errs.Invalid("place_ids: 1 to 100")
-	}
-	if _, err := cityAreas(ctx, dbgen.New(h.DB), m.CityId); err != nil {
-		return nil, err
-	}
-	var by pgtype.UUID
-	var at pgtype.Timestamptz
-	// Back to candidate clears the review: nobody has decided.
-	if status != "candidate" {
-		by, at = pgtype.UUID{Bytes: c.UserID, Valid: true}, pgtype.Timestamptz{Time: h.now(), Valid: true}
-	}
-	q := dbgen.New(h.DB)
-	known, err := q.ListKnownVenues(ctx, dbgen.ListKnownVenuesParams{CityID: m.CityId, PlaceIds: m.PlaceIds})
+	n, err := h.Svc.SetStatus(ctx, m.CityId, m.PlaceIds, status, c.UserID)
 	if err != nil {
 		return nil, err
 	}
-	if _, err := q.SetVenueStatus(ctx, dbgen.SetVenueStatusParams{
-		CityID: m.CityId, PlaceIds: m.PlaceIds, Status: status, ReviewedBy: by, At: at,
-	}); err != nil {
-		return nil, err
-	}
-	return connect.NewResponse(&isshov1.SetVenueStatusResponse{Changed: int32(len(known))}), nil
+	return connect.NewResponse(&isshov1.SetVenueStatusResponse{Changed: int32(n)}), nil
 }
 
 func (h *Handler) SearchVenues(ctx context.Context, req *connect.Request[isshov1.SearchVenuesRequest]) (*connect.Response[isshov1.SearchVenuesResponse], error) {
@@ -274,122 +127,19 @@ func (h *Handler) SearchVenues(ctx context.Context, req *connect.Request[isshov1
 		return nil, err
 	}
 	m := req.Msg
-	query := strings.TrimSpace(m.Query)
-	if query == "" || utf8.RuneCountInString(query) > MaxQuery {
-		return nil, errs.Invalid("query: 1 to 100 characters")
-	}
-	if h.Places == nil {
-		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("searching needs GOOGLE_MAPS_API_KEY"))
-	}
-	q := dbgen.New(h.DB)
-	areas, err := cityAreas(ctx, q, m.CityId)
+	res, err := h.Svc.Search(ctx, SearchParams{CityID: m.CityId, AreaID: m.AreaId, Query: m.Query})
 	if err != nil {
 		return nil, err
 	}
-	search := areas
-	if m.AreaId != "" {
-		search = nil
-		for _, a := range areas {
-			if a.ID == m.AreaId {
-				search = []area{a}
-			}
-		}
-		if search == nil {
-			return nil, errs.Invalid("area_id: not in that city")
-		}
-	}
-
-	// One search per area, a few at a time; results in area order, each
-	// place once.
-	results := make([][]maps.SearchResult, len(search))
-	errs := make([]error, len(search))
-	var wg sync.WaitGroup
-	sem := make(chan struct{}, lookups)
-	for i, a := range search {
-		wg.Go(func() {
-			sem <- struct{}{}
-			defer func() { <-sem }()
-			near, radius := a.LatLng, float64(searchRadiusM)
-			if len(a.Boundary) > 0 {
-				// A box over the whole area, as discovery searches all of it.
-				near, radius = a.Boundary.Circle()
-				radius = max(radius, searchRadiusM)
-			}
-			results[i], errs[i] = h.Places.Search(ctx, maps.SearchRequest{Query: query, Near: near, RadiusM: radius, Language: "en"})
+	out := &isshov1.SearchVenuesResponse{Searches: int32(res.Searches)}
+	for _, f := range res.Venues {
+		out.Venues = append(out.Venues, &isshov1.FoundVenue{
+			PlaceId: f.ID, Name: f.Details.Name, Address: f.Details.Address, MapsUrl: f.Details.MapsURL,
+			AreaId: f.AreaID, AreaName: f.AreaName, Flag: Flag(f.Details.Name), Closed: f.Closed,
+			Known: f.Known, Status: statusOf(f.Status), CategoryIds: f.CategoryIDs, AddableCategoryIds: f.Addable,
 		})
 	}
-	wg.Wait()
-	if err := errors.Join(errs...); err != nil {
-		return nil, connect.NewError(connect.CodeUnavailable, errors.New("Google search failed: "+err.Error()))
-	}
-	var found []maps.SearchResult
-	seen := map[string]bool{}
-	for _, rs := range results {
-		for _, r := range rs {
-			if r.ID != "" && !seen[r.ID] {
-				seen[r.ID] = true
-				found = append(found, r)
-			}
-		}
-	}
-
-	ids := make([]string, len(found))
-	for i, f := range found {
-		ids[i] = f.ID
-	}
-	known, err := q.ListKnownVenues(ctx, dbgen.ListKnownVenuesParams{CityID: m.CityId, PlaceIds: ids})
-	if err != nil {
-		return nil, err
-	}
-	byID := map[string]dbgen.ListKnownVenuesRow{}
-	for _, k := range known {
-		byID[k.GooglePlaceID] = k
-	}
-	cats, err := q.ListAllVenueCategories(ctx)
-	if err != nil {
-		return nil, err
-	}
-	out := &isshov1.SearchVenuesResponse{Searches: int32(len(search))}
-	for _, f := range found {
-		near := nearest(areas, f.Location)
-		v := &isshov1.FoundVenue{
-			PlaceId: f.ID, Name: f.Details.Name, Address: f.Details.Address, MapsUrl: f.Details.MapsURL,
-			AreaId: near.ID, AreaName: near.Name, Flag: Flag(f.Details.Name), Closed: f.Closed,
-		}
-		if k, ok := byID[f.ID]; ok {
-			v.Known, v.Status, v.CategoryIds, v.AreaId = true, statusOf(k.Status), k.Categories, k.AreaID
-			for _, a := range areas {
-				if a.ID == k.AreaID {
-					v.AreaName = a.Name
-				}
-			}
-		} else if !f.Closed {
-			for _, c := range cats {
-				if fits(c, f.Place, near) {
-					v.AddableCategoryIds = append(v.AddableCategoryIds, c.ID)
-				}
-			}
-		}
-		out.Venues = append(out.Venues, v)
-	}
 	return connect.NewResponse(out), nil
-}
-
-// fits says whether a place could be one of a category's venues: one of
-// its Google types (any, not only the primary: an admin is vouching for
-// it) is the category's, and it's where discovery could have found it:
-// inside its area's boundary, or within the category's search radius of
-// the area's point.
-func fits(c dbgen.ListAllVenueCategoriesRow, p maps.Place, near area) bool {
-	if !near.Boundary.Contains(p.Location) && maps.DistanceM(near.LatLng, p.Location) > float64(c.SearchRadiusM) {
-		return false
-	}
-	for _, t := range p.Types {
-		if slices.Contains(c.GoogleTypes, t) {
-			return true
-		}
-	}
-	return false
 }
 
 func (h *Handler) AddVenue(ctx context.Context, req *connect.Request[isshov1.AddVenueRequest]) (*connect.Response[isshov1.AddVenueResponse], error) {
@@ -398,58 +148,9 @@ func (h *Handler) AddVenue(ctx context.Context, req *connect.Request[isshov1.Add
 		return nil, err
 	}
 	m := req.Msg
-	if h.Places == nil {
-		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("adding needs GOOGLE_MAPS_API_KEY"))
-	}
-	if m.PlaceId == "" || strings.ContainsAny(m.PlaceId, "/?#") {
-		return nil, errs.Invalid("place_id: a Google place id")
-	}
-	q := dbgen.New(h.DB)
-	areas, err := cityAreas(ctx, q, m.CityId)
+	areaID, err := h.Svc.Add(ctx, m.CityId, m.PlaceId, m.CategoryId, c.UserID)
 	if err != nil {
 		return nil, err
 	}
-	cats, err := q.ListAllVenueCategories(ctx)
-	if err != nil {
-		return nil, err
-	}
-	i := slices.IndexFunc(cats, func(c dbgen.ListAllVenueCategoriesRow) bool { return c.ID == m.CategoryId })
-	if i < 0 {
-		return nil, errs.Invalid("category_id: no such category")
-	}
-	// Checked with Google, not taken from the search the admin saw.
-	p, err := h.Places.Locate(ctx, m.PlaceId)
-	if err != nil {
-		return nil, errs.Invalid("place_id: Google doesn't know it")
-	}
-	if p.Closed {
-		return nil, errs.Invalid("Google says it's closed")
-	}
-	near := nearest(areas, p.Location)
-	if !fits(cats[i], p.Place, near) {
-		return nil, errs.Invalid("it isn't that kind of place by Google's types, or it's too far from the city's areas")
-	}
-	now := pgtype.Timestamptz{Time: h.now(), Valid: true}
-	by := pgtype.UUID{Bytes: c.UserID, Valid: true}
-	err = pgx.BeginFunc(ctx, h.DB, func(tx pgx.Tx) error {
-		q := dbgen.New(tx)
-		if err := q.AddVenue(ctx, dbgen.AddVenueParams{
-			GooglePlaceID: m.PlaceId, CityID: m.CityId, AreaID: near.ID, CategoryID: m.CategoryId, AddedBy: by, At: now,
-		}); err != nil {
-			return err
-		}
-		// Curation is per place: its other categories are approved too.
-		n, err := q.SetVenueStatus(ctx, dbgen.SetVenueStatusParams{
-			CityID: m.CityId, PlaceIds: []string{m.PlaceId}, Status: "approved", ReviewedBy: by, At: now,
-		})
-		if err == nil && n == 0 {
-			// AddVenue skipped it: another city has the place in that category.
-			return connect.NewError(connect.CodeFailedPrecondition, errors.New("another city already has this place"))
-		}
-		return err
-	})
-	if err != nil {
-		return nil, err
-	}
-	return connect.NewResponse(&isshov1.AddVenueResponse{AreaId: near.ID}), nil
+	return connect.NewResponse(&isshov1.AddVenueResponse{AreaId: areaID}), nil
 }

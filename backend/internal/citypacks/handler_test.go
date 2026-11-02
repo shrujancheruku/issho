@@ -3,6 +3,7 @@ package citypacks
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"os"
 	"slices"
 	"strings"
@@ -16,6 +17,7 @@ import (
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
 	"github.com/shrujancheruku/issho/backend/internal/cities"
 	gmaps "github.com/shrujancheruku/issho/backend/internal/maps"
+	"github.com/shrujancheruku/issho/backend/internal/maps/mapstest"
 	"github.com/shrujancheruku/issho/backend/internal/platform/auth"
 	"github.com/shrujancheruku/issho/backend/internal/platform/github"
 )
@@ -87,25 +89,6 @@ func (f *fakeRepo) OpenPRs(context.Context, string) ([]github.PR, error) {
 	return []github.PR{{Number: 42, Title: "t", URL: "u"}}, nil
 }
 
-// fakeMaps: every pair 10 minutes apart; one cafe found near any search.
-type fakeMaps struct{ matrix, nearby int }
-
-func (f *fakeMaps) Matrix(_ context.Context, r gmaps.MatrixRequest) ([]gmaps.MatrixElement, error) {
-	f.matrix++
-	var out []gmaps.MatrixElement
-	for i := range r.Origins {
-		for j := range r.Destinations {
-			out = append(out, gmaps.MatrixElement{Origin: i, Destination: j, Duration: 10 * time.Minute, OK: true})
-		}
-	}
-	return out, nil
-}
-
-func (f *fakeMaps) Nearby(_ context.Context, r gmaps.NearbyRequest) ([]gmaps.Place, error) {
-	f.nearby++
-	return []gmaps.Place{{ID: "zz-packs-place-" + r.Types[0], PrimaryType: r.Types[0], Location: r.Center}}, nil
-}
-
 // TestIntegrationCityPacks: proposing a new city and a change to it as pull
 // requests (with refusals), applying the merged pack (areas new and moved,
 // travel times rebuilt) and finding an area's venues. Skipped unless
@@ -145,7 +128,9 @@ func TestIntegrationCityPacks(t *testing.T) {
 		}
 	}
 	repo := &fakeRepo{files: map[string][]byte{"data/citypacks/other.json": []byte(`{"id":"other"}`)}}
-	fm := &fakeMaps{}
+	fm := &mapstest.Fake{NearbyFunc: func(r gmaps.NearbyRequest) []gmaps.Place {
+		return []gmaps.Place{{ID: "zz-packs-place-" + r.Types[0], PrimaryType: r.Types[0], Location: r.Center}}
+	}}
 	h := &Handler{DB: pool, GitHub: repo, Base: "main", Router: fm, Places: fm, Now: func() time.Time { return time.Unix(1900000000, 0) }}
 	adminCtx := auth.WithCaller(ctx, auth.Caller{UserID: uuid.New(), Email: "admin@example.com", Admin: true})
 
@@ -221,7 +206,7 @@ func TestIntegrationCityPacks(t *testing.T) {
 	// its activities use (a seeded database has the whole catalogue, all
 	// enabled in a new city), each finding one place here.
 	disc, err := h.DiscoverAreaVenues(adminCtx, connect.NewRequest(&isshov1.DiscoverAreaVenuesRequest{CityId: city, AreaId: city + "-a"}))
-	if err != nil || disc.Msg.Searches < 1 || disc.Msg.Venues != disc.Msg.Searches || fm.nearby != int(disc.Msg.Searches) {
+	if err != nil || disc.Msg.Searches < 1 || disc.Msg.Venues != disc.Msg.Searches || fm.Nearbys() != int(disc.Msg.Searches) {
 		t.Fatalf("discover = %v, %v", disc, err)
 	}
 	list, err := h.ListCityPacks(adminCtx, connect.NewRequest(&isshov1.ListCityPacksRequest{}))
@@ -262,18 +247,52 @@ func TestIntegrationCityPacks(t *testing.T) {
 		t.Errorf("change proposal = %q (sha %q)", parts, repo.sha)
 	}
 	repo.files["data/citypacks/zz-packs.json"] = repo.content
-	before := fm.matrix
-	if a := apply(); len(a.NewAreas) != 1 || a.NewAreas[0] != city+"-c" || len(a.MovedAreas) != 1 || a.MovedAreas[0] != city+"-b" || fm.matrix == before {
+	before := fm.Matrices()
+	if a := apply(); len(a.NewAreas) != 1 || a.NewAreas[0] != city+"-c" || len(a.MovedAreas) != 1 || a.MovedAreas[0] != city+"-b" || fm.Matrices() == before {
 		t.Errorf("second apply = %v", a)
 	}
 	// Applying again changes nothing and calls nobody.
-	before = fm.matrix
-	if a := apply(); len(a.NewAreas)+len(a.MovedAreas) != 0 || a.TravelTimesRebuilt || fm.matrix != before {
+	before = fm.Matrices()
+	if a := apply(); len(a.NewAreas)+len(a.MovedAreas) != 0 || a.TravelTimesRebuilt || fm.Matrices() != before {
 		t.Errorf("third apply = %v", a)
 	}
 	if _, err := h.ApplyCityPack(adminCtx, connect.NewRequest(&isshov1.ApplyCityPackRequest{CityId: "nowhere"})); connect.CodeOf(err) != connect.CodeNotFound {
 		t.Errorf("no such pack: %v", err)
 	}
+	// Errors: only "not seeded" is NotFound, and Google's text stays out of responses.
+	discover := func(cityID, areaID string) error {
+		_, err := h.DiscoverAreaVenues(adminCtx, connect.NewRequest(&isshov1.DiscoverAreaVenuesRequest{CityId: cityID, AreaId: areaID}))
+		return err
+	}
+	if err := discover("nowhere", "x"); connect.CodeOf(err) != connect.CodeNotFound {
+		t.Errorf("discover in an unknown city: %v", err)
+	}
+	if err := discover(city, "zz-packs-nope"); connect.CodeOf(err) != connect.CodeInvalidArgument {
+		t.Errorf("discover in an unknown area: %v", err)
+	}
+	fm.NearbyErr = errors.New("quota exceeded for key AIza-secret")
+	if err := discover(city, city+"-a"); connect.CodeOf(err) != connect.CodeUnavailable || strings.Contains(err.Error(), "AIza") {
+		t.Errorf("discover with Google down: %v", err)
+	}
+	fm.NearbyErr = nil
+	// Moving an area makes apply want the matrix; Google being down leaves the pack seeded.
+	moved := cities.Pack{}
+	if err := json.Unmarshal(repo.content, &moved); err != nil {
+		t.Fatal(err)
+	}
+	moved.Areas[0].Lat += 0.02
+	moved.Areas[0].Boundary, moved.Areas[0].OSMID = nil, 0
+	raw, err := cities.EncodePack(moved)
+	if err != nil {
+		t.Fatal(err)
+	}
+	repo.files["data/citypacks/zz-packs.json"] = raw
+	fm.MatrixErr = errors.New("quota exceeded for key AIza-secret")
+	if _, err := h.ApplyCityPack(adminCtx, connect.NewRequest(&isshov1.ApplyCityPackRequest{CityId: city})); connect.CodeOf(err) != connect.CodeUnavailable || strings.Contains(err.Error(), "AIza") {
+		t.Errorf("apply with Google down: %v", err)
+	}
+	fm.MatrixErr = nil
+
 	// Without a token, only the list works.
 	h.GitHub = nil
 	if _, err := h.GetCityPack(adminCtx, connect.NewRequest(&isshov1.GetCityPackRequest{CityId: city})); connect.CodeOf(err) != connect.CodeFailedPrecondition {
@@ -294,5 +313,33 @@ func TestKeepBoundaries(t *testing.T) {
 	}
 	if a := p.Areas[1]; a.OSMID != 0 || a.Boundary != nil {
 		t.Errorf("new area got a boundary: %+v", a)
+	}
+}
+
+func TestKeepOverrideNames(t *testing.T) {
+	base := cities.Pack{ActivityOverrides: []cities.ActivityOverride{
+		{ActivityID: "karaoke", Name: cities.Text{"en": "Sing", "ja": "カラオケ"}},
+		{ActivityID: "hanami", Name: cities.Text{"en": "Blossoms", "ja": "花見"}},
+		{ActivityID: "surf", Disabled: true},
+	}}
+	// What the editor sends: English names only.
+	p := cities.Pack{ActivityOverrides: []cities.ActivityOverride{
+		{ActivityID: "karaoke", Name: cities.Text{"en": "Sing along"}},
+		{ActivityID: "hanami"}, // the English name was cleared
+		{ActivityID: "surf", Disabled: true},
+		{ActivityID: "new", Name: cities.Text{"en": "New"}},
+	}}
+	keepOverrideNames(&p, base)
+	if got := p.ActivityOverrides[0].Name; got["en"] != "Sing along" || got["ja"] != "カラオケ" || len(got) != 2 {
+		t.Errorf("renamed in English: %v", got)
+	}
+	if got := p.ActivityOverrides[1].Name; len(got) != 0 {
+		t.Errorf("name cleared: %v", got)
+	}
+	if got := p.ActivityOverrides[2].Name; len(got) != 0 {
+		t.Errorf("no name: %v", got)
+	}
+	if got := p.ActivityOverrides[3].Name; len(got) != 1 {
+		t.Errorf("a new override: %v", got)
 	}
 }
