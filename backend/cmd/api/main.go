@@ -158,7 +158,8 @@ func run() error {
 	mux.Handle(isshov1connect.NewCatalogServiceHandler(&catalog.Handler{Q: q, Translations: translations, Suggestions: suggestions}, opts))
 	mux.Handle(isshov1connect.NewProfileServiceHandler(&profile.Handler{Svc: &profile.Service{DB: pool}}, opts))
 	planSvc := &plans.Service{DB: pool, Translations: translations}
-	venues := &curation.Handler{DB: pool}
+	venueSvc := &curation.Service{DB: pool}
+	venues := &curation.Handler{Svc: venueSvc}
 	packs := &citypacks.Handler{DB: pool, Base: "main"}
 	var gh *github.Client
 	if cfg.GitHubToken != "" {
@@ -172,7 +173,7 @@ func run() error {
 	review := &plans.ReviewHandler{Svc: planSvc, Timing: plans.DefaultTiming()}
 	if cfg.GoogleMapsAPIKey != "" {
 		places := mapsgoogle.New(cfg.GoogleMapsAPIKey)
-		planSvc.Places, venues.Places = places, places
+		planSvc.Places, venueSvc.Places = places, places
 		review.Places, review.Routes = places, places
 		packs.Router, packs.Places = places, places
 	} else {
