@@ -136,7 +136,7 @@ The access token is attached automatically. For error handling, `Code` and `Conn
 ```sh
 npx tsc --noEmit          # typecheck   (CI: pnpm typecheck)
 npx expo lint             # ESLint      (CI: pnpm lint)
-npx jest                  # unit tests  (CI: pnpm test), e.g. src/lib/__tests__/secure-storage.test.ts
+npx jest                  # unit tests  (CI: pnpm test), e.g. src/lib/__tests__/secure-storage.test.ts; component tests use `@testing-library/react-native`
 npx expo-doctor           # dependency / config diagnostics
 npx expo install <pkg>    # always use this to add packages (picks SDK-compatible versions)
 ```
@@ -166,8 +166,8 @@ npx expo export -p web               # static build in dist/ (pnpm export:web)
 
 The server sends notifications through Expo's push service when a plan someone signed up for gets a date, and when their group goes ahead or is cancelled (backend: `app.notifications`, sent by the worker every minute). `lib/push.ts`:
 
-- registers the device's Expo push token with `PushService` when the main app opens, **only if permission was already given**; it asks for permission right after the person signs up for a plan, when notifications are worth having
-- unregisters it on sign-out, before the session ends
+- registers the device's Expo push token with `PushService` (remembered per account: the same phone signed into another account registers again) when the main app opens, **only if permission was already given**; it asks for permission right after the person signs up for a plan, when notifications are worth having
+- unregisters it on sign-out, before the session ends. `useAuth().signOut` is the only way out of a session (the buttons, a deleted account, and a session the API rejects), so the token is always released first; that is best effort and never blocks the sign-out (`features/auth/__tests__/sign-out-push.test.tsx`)
 - opens the event when a notification is tapped (`useNotificationTaps`, also for the one that launched the app)
 - does nothing in Expo Go (no remote push on Android since SDK 53), simulators, the web (`lib/push.web.ts`) or without an EAS project id, so the app works the same without push
 

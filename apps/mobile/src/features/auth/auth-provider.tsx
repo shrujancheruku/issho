@@ -1,6 +1,6 @@
 import type { Session } from '@supabase/supabase-js';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { createContext, useContext, useEffect, useState, type PropsWithChildren } from 'react';
+import { createContext, useCallback, useContext, useEffect, useState, type PropsWithChildren } from 'react';
 
 import { Code, ConnectError } from '@issho/api-client';
 
@@ -25,6 +25,9 @@ type AuthState = {
   retryAccount: () => void;
   signOut: () => Promise<void>;
 };
+
+/** How long signing out waits for the push token to be released. */
+const UnregisterTimeoutMs = 3000;
 
 const AuthContext = createContext<AuthState | null>(null);
 
@@ -67,11 +70,24 @@ export function AuthProvider({ children }: PropsWithChildren) {
     if (emailLang && storedLang !== emailLang) void supabase.auth.updateUser({ data: { lang: emailLang } });
   }, [emailLang, storedLang]);
 
+  // The only way out of a session: every sign-out (the button, a deleted
+  // account, a session the API rejects) goes through here, so the push token
+  // is always released first. Best effort: it can't keep anyone signed in.
+  const signOut = useCallback(async () => {
+    // While still signed in: the API needs the session to know whose token it is.
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    await Promise.race([unregisterPush(), new Promise((resolve) => (timer = setTimeout(resolve, UnregisterTimeoutMs)))]);
+    clearTimeout(timer);
+    await supabase.auth.signOut();
+  }, []);
+
   // A session the API rejects (e.g. the account was deleted on another device)
-  // is useless; drop it so the user lands back on sign-in.
+  // is useless; drop it so the user lands back on sign-in. The unregister
+  // call fails then (the API rejects the session), which is fine: the next
+  // account to register the token takes it over server-side.
   useEffect(() => {
-    if (isUnauthenticated(me.error)) void supabase.auth.signOut();
-  }, [me.error]);
+    if (isUnauthenticated(me.error)) void signOut();
+  }, [me.error, signOut]);
 
   const value: AuthState = {
     ready,
@@ -84,11 +100,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       : null,
     accountError: me.error,
     retryAccount: () => void me.refetch(),
-    signOut: async () => {
-      // While still signed in: the API needs the session to know whose token it is.
-      await unregisterPush();
-      await supabase.auth.signOut();
-    },
+    signOut,
   };
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

@@ -4,12 +4,12 @@
  * aren't available there (useLastNotificationResponse throws), so it isn't
  * imported at all.
  */
-export async function registerForPush(_: { ask: boolean }): Promise<boolean> {
+import type { NotificationTarget } from '@/lib/notification-target';
+
+export async function registerForPush(_: { ask: boolean; userId: string }): Promise<boolean> {
   return false;
 }
 
 export async function unregisterPush() {}
-
-export type NotificationTarget = { eventId: string } | { planId: string } | { crewId: string };
 
 export function useNotificationTaps(_open: (target: NotificationTarget) => void) {}

@@ -7,6 +7,7 @@ import { useEffect } from 'react';
 import { Platform } from 'react-native';
 
 import { api } from '@/lib/api';
+import type { NotificationTarget } from '@/lib/notification-target';
 
 /**
  * Push notifications through Expo (a plan you signed up for has a date;
@@ -49,16 +50,21 @@ function pushCapable() {
   return capable;
 }
 
-let registered: string | null = null;
+/**
+ * The token last registered, and for whom. Per account, not per device: the
+ * same phone can be signed into another account next (the server moves the
+ * token to whoever registers it last).
+ */
+let registered: { userId: string; token: string } | null = null;
 
 /**
- * Registers this device for the signed-in person. With ask, it asks for
+ * Registers this device for the signed-in person (userId). With ask, it asks for
  * permission if it hasn't been decided (call it right after something that
  * makes notifications worth having, like signing up for a plan); without,
  * it only registers when permission was already given. Returns whether the
  * device is registered. Never throws.
  */
-export async function registerForPush({ ask }: { ask: boolean }): Promise<boolean> {
+export async function registerForPush({ ask, userId }: { ask: boolean; userId: string }): Promise<boolean> {
   if (!pushCapable()) return false;
   try {
     if (Platform.OS === 'android') {
@@ -76,12 +82,12 @@ export async function registerForPush({ ask }: { ask: boolean }): Promise<boolea
       return false;
     }
     const { data: token } = await Notifications.getExpoPushTokenAsync({ projectId: projectId() });
-    if (token === registered) return true;
+    if (registered?.userId === userId && registered.token === token) return true;
     await api.push.registerPushToken({
       token,
       platform: Platform.OS === 'ios' ? PushPlatform.IOS : PushPlatform.ANDROID,
     });
-    registered = token;
+    registered = { userId, token };
     devLog('registered');
     return true;
   } catch (e) {
@@ -93,18 +99,15 @@ export async function registerForPush({ ask }: { ask: boolean }): Promise<boolea
 
 /** Stops notifications to this device; call before signing out. Never throws. */
 export async function unregisterPush() {
-  const token = registered;
-  if (!token) return;
+  const current = registered;
+  if (!current) return;
   registered = null;
   try {
-    await api.push.unregisterPushToken({ token });
+    await api.push.unregisterPushToken({ token: current.token });
   } catch {
     // The token stays with the old account until someone else registers it.
   }
 }
-
-/** What a tapped notification is about: an event, a plan (one that closed) or a crew. */
-export type NotificationTarget = { eventId: string } | { planId: string } | { crewId: string };
 
 /**
  * Opens what a tapped notification is about, including the one that
