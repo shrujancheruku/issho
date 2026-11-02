@@ -1,6 +1,6 @@
 import { Code, ConnectError } from '@issho/api-client';
 import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
-import { useCallback, useEffect, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useRef, useSyncExternalStore } from 'react';
 
 import { api, getAccessToken, wsBaseUrl } from '@/lib/api';
 import { ms } from '@/lib/time';
@@ -28,7 +28,7 @@ export type RoomData = {
   /** When writing opens and closes (ms); unset when the room has no schedule. */
   opensAt?: number;
   closesAt?: number;
-  /** Not open, and the opening is still ahead (by the device clock when it was asked). */
+  /** Not open, and the opening is still to come (the window has not ended). */
   notYet: boolean;
 };
 
@@ -51,7 +51,9 @@ async function fetchRoom(qc: QueryClient, room: RoomRef): Promise<RoomData> {
     open: res.open,
     opensAt: Number.isNaN(opensAt) ? undefined : opensAt,
     closesAt: Number.isNaN(closesAt) ? undefined : closesAt,
-    notYet: !res.open && opensAt > Date.now(),
+    // Not open with the window not over: still waiting for it to open, even
+    // if the device clock is past opensAt (it can run ahead of the server's).
+    notYet: !res.open && !Number.isNaN(opensAt) && !(closesAt <= Date.now()),
   };
 }
 
@@ -64,6 +66,9 @@ export function untilNextBoundary(data: RoomData | undefined, now: number): numb
   // A second late, so the server's clock has passed it too; and setTimeout can't wait longer than 2^31 ms.
   return ahead.length ? Math.min(Math.min(...ahead) - now + 1000, 2 ** 31 - 1) : undefined;
 }
+
+// Waits (ms) before asking again when a boundary refetch shows no change.
+const skewRetryDelays = [15_000, 30_000, 60_000];
 
 // Close codes from the server (backend internal/chatws) after which
 // reconnecting can't help: not allowed in the room, or no such room.
@@ -243,6 +248,31 @@ export function useRoom(room: RoomRef) {
     staleTime: 0,
     retry: (count, err) => !denied(err) && count < 2,
   });
+
+  // If the device clock runs ahead of the server's, asking at a boundary can
+  // come back with the old state (not open yet past opensAt, still open past
+  // closesAt). Ask again a few times with growing waits, then leave it to the
+  // next mount or app focus.
+  const retries = useRef(0);
+  const { data: current, dataUpdatedAt, refetch } = query;
+  useEffect(() => {
+    if (!current) return;
+    const now = Date.now();
+    const contradicted = current.open
+      ? current.closesAt !== undefined && current.closesAt <= now
+      : current.opensAt !== undefined && current.opensAt <= now && (current.closesAt === undefined || now < current.closesAt);
+    if (!contradicted) {
+      retries.current = 0;
+      return;
+    }
+    const delay = skewRetryDelays[retries.current];
+    if (delay === undefined) return;
+    const timer = setTimeout(() => {
+      retries.current++;
+      void refetch();
+    }, delay);
+    return () => clearTimeout(timer);
+  }, [current, dataUpdatedAt, refetch]);
 
   const notMember = denied(query.error);
   // The socket needs a room the server let the person read.

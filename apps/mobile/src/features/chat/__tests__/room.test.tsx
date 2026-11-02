@@ -283,6 +283,40 @@ describe('status follows the server', () => {
     expect(result.current.status).toBe('open');
   });
 
+  it('asks again after a short wait when the boundary answer is behind (device clock 20 s ahead)', async () => {
+    const times = { opensAt: seconds(now + 600_000), closesAt: seconds(now + 6000_000) };
+    mockApi.chat.listMessages.mockResolvedValue(response({ open: false, ...times }));
+    const { result } = await mount();
+
+    // The device reaches the opening 20 s before the server does, so the
+    // answer at the boundary still says not open; the next one says open.
+    mockApi.chat.listMessages
+      .mockResolvedValueOnce(response({ open: false, ...times }))
+      .mockResolvedValueOnce(response({ open: true, ...times }));
+    await act(async () => jest.advanceTimersByTime(602_000));
+    await flush();
+    expect(mockApi.chat.listMessages).toHaveBeenCalledTimes(2);
+    expect(result.current.status).toBe('notOpen');
+
+    await act(async () => jest.advanceTimersByTime(14_000));
+    expect(mockApi.chat.listMessages).toHaveBeenCalledTimes(2);
+    await act(async () => jest.advanceTimersByTime(2_000));
+    await flush();
+    expect(mockApi.chat.listMessages).toHaveBeenCalledTimes(3);
+    expect(result.current.status).toBe('open');
+  });
+
+  it('gives up after three waits of 15, 30 and 60 seconds', async () => {
+    const times = { opensAt: seconds(now + 60_000) };
+    mockApi.chat.listMessages.mockResolvedValue(response({ open: false, ...times }));
+    await mount();
+    for (const wait of [62_000, 15_000, 30_000, 60_000, 300_000]) {
+      await act(async () => jest.advanceTimersByTime(wait));
+      await flush();
+    }
+    expect(mockApi.chat.listMessages).toHaveBeenCalledTimes(5);
+  });
+
   it('asks again when the room closes', async () => {
     mockApi.chat.listMessages.mockResolvedValue(response({ open: true, opensAt: seconds(now - 600_000), closesAt: seconds(now + 300_000) }));
     const { result } = await mount();
