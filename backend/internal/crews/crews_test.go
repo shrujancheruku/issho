@@ -13,6 +13,7 @@ import (
 
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	"github.com/shrujancheruku/issho/backend/internal/matching"
+	"github.com/shrujancheruku/issho/backend/internal/notifications"
 	"github.com/shrujancheruku/issho/backend/internal/plans"
 	"github.com/shrujancheruku/issho/backend/internal/push"
 	"github.com/shrujancheruku/issho/backend/internal/testfixture"
@@ -143,7 +144,8 @@ func TestIntegrationCrews(t *testing.T) {
 		t.Fatal(err)
 	}
 	pushes := &sender{}
-	n := &plans.Notifier{Plans: plansSvc, Sender: pushes, Catalog: catalog, Log: log}
+	n := &notifications.Notifier{DB: f.Pool, Sender: pushes, Log: log}
+	n.Register(&NotificationRenderer{Plans: plansSvc, Catalog: catalog}, NotificationKinds()...)
 	if _, err := n.Send(ctx, now); err != nil {
 		t.Fatal(err)
 	}

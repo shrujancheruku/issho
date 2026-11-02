@@ -20,10 +20,6 @@ returning id;
 -- name: InsertCrewMembers :exec
 insert into app.crew_members (crew_id, user_id) select @crew_id, unnest(@user_ids::uuid[]);
 
--- name: InsertCrewNotifications :exec
-insert into app.notifications (user_id, kind, crew_id)
-select unnest(@user_ids::uuid[]), @kind, @crew_id;
-
 -- Offers to decide: everyone answered, or the offer ran out.
 -- name: ListCrewOffersToDecide :many
 select c.id from app.crews c
@@ -184,3 +180,7 @@ where m.user_id = @user_id
   and ((m.response = 'accepted' and c.status in ('offered', 'active'))
        or (m.response = 'offered' and c.status = 'offered'))
 order by c.id;
+
+-- What a crew notification title needs.
+-- name: GetCrewForNotification :one
+select city_id, activity_id, area_id from app.crews where id = @id;

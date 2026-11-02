@@ -9,6 +9,7 @@ import (
 
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	"github.com/shrujancheruku/issho/backend/internal/matching"
+	"github.com/shrujancheruku/issho/backend/internal/notifications"
 	"github.com/shrujancheruku/issho/backend/internal/push"
 	"github.com/shrujancheruku/issho/backend/internal/uistrings"
 )
@@ -58,7 +59,8 @@ func TestIntegrationPushReceipts(t *testing.T) {
 		tok("refused"): {Error: "InvalidCredentials", Message: "bad FCM key"},
 		// tok("late") has no receipt yet.
 	}}
-	n := &Notifier{Plans: &Service{DB: f.pool}, Sender: sender, Catalog: catalog, Log: slog.New(slog.NewTextHandler(io.Discard, nil))}
+	n := &notifications.Notifier{DB: f.pool, Sender: sender, Log: slog.New(slog.NewTextHandler(io.Discard, nil))}
+	n.Register(&NotificationRenderer{Plans: &Service{DB: f.pool}, Catalog: catalog}, NotificationKinds()...)
 	sent := day(5)
 	if rep, err := n.Send(ctx, sent); err != nil || rep.Sent != 4 {
 		t.Fatalf("send = %+v, %v", rep, err)
@@ -79,8 +81,8 @@ func TestIntegrationPushReceipts(t *testing.T) {
 	if rep, err := n.CheckReceipts(ctx, sent.Add(10*time.Minute)); err != nil || rep.Delivered+rep.Refused+rep.Unregistered != 0 || tickets() != 4 {
 		t.Errorf("after 10 minutes: %+v, %v; want nothing checked yet", rep, err)
 	}
-	rep, err := n.CheckReceipts(ctx, sent.Add(ReceiptAfter+time.Minute))
-	if rep.Expired = 0; err != nil || rep != (ReceiptReport{Delivered: 1, Refused: 1, Unregistered: 1}) {
+	rep, err := n.CheckReceipts(ctx, sent.Add(notifications.ReceiptAfter+time.Minute))
+	if rep.Expired = 0; err != nil || rep != (notifications.ReceiptReport{Delivered: 1, Refused: 1, Unregistered: 1}) {
 		t.Errorf("after 16 minutes: %+v, %v", rep, err)
 	}
 	var gone bool
@@ -90,7 +92,7 @@ func TestIntegrationPushReceipts(t *testing.T) {
 	if got := tickets(); got != 1 {
 		t.Errorf("%d tickets left, want 1 (the late one)", got)
 	}
-	if rep, err := n.CheckReceipts(ctx, sent.Add(ReceiptKeep+time.Minute)); err != nil || rep.Expired < 1 || tickets() != 0 {
+	if rep, err := n.CheckReceipts(ctx, sent.Add(notifications.ReceiptKeep+time.Minute)); err != nil || rep.Expired < 1 || tickets() != 0 {
 		t.Errorf("after a day: %+v, %v; want the late one given up", rep, err)
 	}
 }

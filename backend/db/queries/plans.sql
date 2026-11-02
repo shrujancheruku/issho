@@ -239,3 +239,10 @@ select p.id from app.plans p
 where p.city_id = @city_id and p.status = 'open'
   and (exists (select 1 from app.events e where e.plan_id = p.id and e.status = 'proposed')
        or p.proposal_rejected_at > @rejected_since);
+
+-- What a notification title needs, for one about an event (its plan) or
+-- about a plan.
+-- name: GetNotificationPlan :one
+select p.city_id, p.activity_id, p.follow_up_id, p.title
+from app.plans p
+where p.id = coalesce((select e.plan_id from app.events e where e.id = sqlc.narg(event_id)::uuid), sqlc.narg(plan_id)::uuid);

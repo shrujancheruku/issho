@@ -14,6 +14,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	"github.com/shrujancheruku/issho/backend/internal/chat"
 	"github.com/shrujancheruku/issho/backend/internal/matching"
+	"github.com/shrujancheruku/issho/backend/internal/notifications"
 	"github.com/shrujancheruku/issho/backend/internal/platform/i18n"
 )
 
@@ -41,7 +42,8 @@ const (
 	Cancel                    // confirmed → dropped, until the event starts
 )
 
-// Notification kinds (app.notifications.kind), sent by SendNotifications.
+// Notification kinds (app.notifications.kind) this package queues; it
+// renders them too (NotificationRenderer).
 const (
 	NotifyInvited   = "event_invited"   // a round you signed up for has a date: please answer
 	NotifyConfirmed = "group_confirmed" // your group is going ahead
@@ -50,13 +52,13 @@ const (
 	NotifyFeedback  = "event_feedback"  // how was it? (feedback is open)
 )
 
-// notify queues a notification for each person, in the caller's
+// notify queues an event notification for each person, in the caller's
 // transaction (an outbox: nothing is sent for a change that rolls back).
+// NotifyNoGroup and NotifyFeedback are queued by SQL instead
+// (ClosePlanNoGroup, QueueFeedbackRequests), to stay atomic with, and
+// idempotent for, the update or scan that causes them.
 func notify(ctx context.Context, q *dbgen.Queries, kind string, eventID uuid.UUID, users []uuid.UUID) error {
-	if len(users) == 0 {
-		return nil
-	}
-	return q.InsertNotifications(ctx, dbgen.InsertNotificationsParams{UserIds: users, Kind: kind, EventID: pgtype.UUID{Bytes: eventID, Valid: true}})
+	return notifications.Enqueue(ctx, q, kind, users, notifications.Ref{EventID: eventID})
 }
 
 // Check-in opens CheckInBefore the start and closes CheckInAfter it:

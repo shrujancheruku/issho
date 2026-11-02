@@ -121,6 +121,24 @@ func (q *Queries) GetAreaName(ctx context.Context, id string) ([]byte, error) {
 	return name, err
 }
 
+const getCrewForNotification = `-- name: GetCrewForNotification :one
+select city_id, activity_id, area_id from app.crews where id = $1
+`
+
+type GetCrewForNotificationRow struct {
+	CityID     string
+	ActivityID *string
+	AreaID     *string
+}
+
+// What a crew notification title needs.
+func (q *Queries) GetCrewForNotification(ctx context.Context, id uuid.UUID) (GetCrewForNotificationRow, error) {
+	row := q.db.QueryRow(ctx, getCrewForNotification, id)
+	var i GetCrewForNotificationRow
+	err := row.Scan(&i.CityID, &i.ActivityID, &i.AreaID)
+	return i, err
+}
+
 const getCrewMembership = `-- name: GetCrewMembership :one
 select c.city_id, c.status, c.activity_id, c.area_id, c.offer_until, m.response
 from app.crew_members m
@@ -245,22 +263,6 @@ func (q *Queries) InsertCrewMessage(ctx context.Context, arg InsertCrewMessagePa
 	var i InsertCrewMessageRow
 	err := row.Scan(&i.ID, &i.CreatedAt)
 	return i, err
-}
-
-const insertCrewNotifications = `-- name: InsertCrewNotifications :exec
-insert into app.notifications (user_id, kind, crew_id)
-select unnest($1::uuid[]), $2, $3
-`
-
-type InsertCrewNotificationsParams struct {
-	UserIds []uuid.UUID
-	Kind    string
-	CrewID  pgtype.UUID
-}
-
-func (q *Queries) InsertCrewNotifications(ctx context.Context, arg InsertCrewNotificationsParams) error {
-	_, err := q.db.Exec(ctx, insertCrewNotifications, arg.UserIds, arg.Kind, arg.CrewID)
-	return err
 }
 
 const insertCrewPlanMessage = `-- name: InsertCrewPlanMessage :exec
