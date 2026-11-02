@@ -10,6 +10,7 @@ import { PrimaryButton } from '@/components/primary-button';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { FormWidth, Spacing } from '@/constants/theme';
+import { useAuth } from '@/features/auth/auth-provider';
 import { useSignupActions } from '@/features/plans/data';
 import { Heading } from '@/features/plans/fact';
 import { formatDate } from '@/features/plans/format';
@@ -33,6 +34,7 @@ export default function SignupSheet() {
   const theme = useTheme();
   const { plan, usual, saved } = usePlanTimes(id);
   const { signUp } = useSignupActions(id);
+  const userId = useAuth().session?.user.id;
   // The saved times until the first edit.
   const [edited, setTimes] = useState<Times | null>(null);
   const times = edited ?? saved;
@@ -118,7 +120,7 @@ export default function SignupSheet() {
                   onSuccess: () => {
                     haptics.success();
                     close();
-                    void registerForPush({ ask: true });
+                    if (userId) void registerForPush({ ask: true, userId });
                   },
                 })
               }

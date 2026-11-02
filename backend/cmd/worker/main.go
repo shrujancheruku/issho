@@ -11,7 +11,9 @@ import (
 	"time"
 
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
+	"github.com/shrujancheruku/issho/backend/internal/crews"
 	mapsgoogle "github.com/shrujancheruku/issho/backend/internal/maps/google"
+	"github.com/shrujancheruku/issho/backend/internal/notifications"
 	"github.com/shrujancheruku/issho/backend/internal/plans"
 	"github.com/shrujancheruku/issho/backend/internal/platform/config"
 	"github.com/shrujancheruku/issho/backend/internal/platform/db"
@@ -70,12 +72,11 @@ func run() error {
 		gh.API = cfg.GitHubAPI
 		go catalog.Follow(ctx, gh, gh.Base, 5*time.Minute, slog.Default())
 	}
-	notifier := &plans.Notifier{
-		Plans:   &plans.Service{DB: pool, Translations: translations},
-		Sender:  push.NewExpo(cfg.ExpoAccessToken),
-		Catalog: catalog,
-		Log:     slog.Default(),
-	}
+	// Each module that queues notifications writes their text.
+	plansSvc := &plans.Service{DB: pool, Translations: translations}
+	notifier := &notifications.Notifier{DB: pool, Sender: push.NewExpo(cfg.ExpoAccessToken), Log: slog.Default()}
+	notifier.Register(&plans.NotificationRenderer{Plans: plansSvc, Catalog: catalog}, plans.NotificationKinds()...)
+	notifier.Register(&crews.NotificationRenderer{Plans: plansSvc, Catalog: catalog}, crews.NotificationKinds()...)
 	var m worker.Maps
 	if cfg.GoogleMapsAPIKey != "" {
 		g := mapsgoogle.New(cfg.GoogleMapsAPIKey)

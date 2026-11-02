@@ -1,8 +1,8 @@
 // Package crews keeps people who got on well meeting: the worker offers a
 // crew to people who picked each other across outings (matching.FindCrews),
 // it forms when enough accept, and then has its own chat, with an open
-// plan suggested in it weekly. Built on internal/plans (outings, feedback,
-// reports and notifications); plans doesn't know about crews.
+// plan suggested in it weekly. Built on internal/plans (outings, feedback and
+// reports) and internal/notifications; plans doesn't know about crews.
 package crews
 
 import (
@@ -207,16 +207,9 @@ func decide(ctx context.Context, q *dbgen.Queries, crewID uuid.UUID, now time.Ti
 		return "", err
 	}
 	if status == Active {
-		err = notify(ctx, q, plans.NotifyCrewFormed, crewID, accepted)
+		err = notify(ctx, q, NotifyCrewFormed, crewID, accepted)
 	}
 	return status, err
-}
-
-func notify(ctx context.Context, q *dbgen.Queries, kind string, crewID uuid.UUID, users []uuid.UUID) error {
-	if len(users) == 0 {
-		return nil
-	}
-	return q.InsertCrewNotifications(ctx, dbgen.InsertCrewNotificationsParams{UserIds: users, Kind: kind, CrewID: pgtype.UUID{Bytes: crewID, Valid: true}})
 }
 
 // Leave takes the caller out of a crew, with why (private: the crew isn't

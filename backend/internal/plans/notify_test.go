@@ -13,6 +13,7 @@ import (
 
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	"github.com/shrujancheruku/issho/backend/internal/matching"
+	"github.com/shrujancheruku/issho/backend/internal/notifications"
 	"github.com/shrujancheruku/issho/backend/internal/push"
 	"github.com/shrujancheruku/issho/backend/internal/uistrings"
 )
@@ -99,13 +100,14 @@ func TestIntegrationNotifications(t *testing.T) {
 		t.Fatal(err)
 	}
 	sender := &fakeSender{gone: map[string]bool{"ExponentPushToken[a-gone]": true}}
-	n := &Notifier{Plans: &Service{DB: f.pool}, Sender: sender, Catalog: catalog, Log: slog.New(slog.NewTextHandler(io.Discard, nil))}
+	n := &notifications.Notifier{DB: f.pool, Sender: sender, Log: slog.New(slog.NewTextHandler(io.Discard, nil))}
+	n.Register(&NotificationRenderer{Plans: &Service{DB: f.pool}, Catalog: catalog}, NotificationKinds()...)
 
 	rep, err := n.Send(ctx, day(5))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rep != (NotifyReport{Sent: 2, NoDevice: 1, Unregistered: 1}) {
+	if rep != (notifications.Report{Sent: 2, NoDevice: 1, Unregistered: 1}) {
 		t.Errorf("report = %+v", rep)
 	}
 	if len(sender.sent) != 3 {
@@ -121,7 +123,7 @@ func TestIntegrationNotifications(t *testing.T) {
 	if err := f.pool.QueryRow(ctx, "select count(*) from app.push_tokens where user_id = $1", a).Scan(&tokens); err != nil || tokens != 1 {
 		t.Errorf("a's tokens after an uninstall: %d, %v; want 1", tokens, err)
 	}
-	if rep, err := n.Send(ctx, day(5)); err != nil || rep != (NotifyReport{}) {
+	if rep, err := n.Send(ctx, day(5)); err != nil || rep != (notifications.Report{}) {
 		t.Errorf("second pass = %+v, %v; want nothing left", rep, err)
 	}
 
@@ -167,7 +169,7 @@ func TestIntegrationNotifications(t *testing.T) {
 	if err := f.q.ClosePlanNoGroup(ctx, dbgen.ClosePlanNoGroupParams{ID: other, ClosedAt: pgtype.Timestamptz{Time: day(15), Valid: true}}); err != nil {
 		t.Fatal(err)
 	}
-	if rep, _ := n.Send(ctx, day(15)); rep != (NotifyReport{}) {
+	if rep, _ := n.Send(ctx, day(15)); rep != (notifications.Report{}) {
 		t.Errorf("second close notified again: %+v", rep)
 	}
 }

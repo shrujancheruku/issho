@@ -21,6 +21,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/crews"
 	"github.com/shrujancheruku/issho/backend/internal/geo"
 	"github.com/shrujancheruku/issho/backend/internal/maps"
+	"github.com/shrujancheruku/issho/backend/internal/notifications"
 	"github.com/shrujancheruku/issho/backend/internal/plans"
 	"github.com/shrujancheruku/issho/backend/internal/platform/sentry"
 	"github.com/shrujancheruku/issho/backend/internal/walks"
@@ -219,7 +220,7 @@ func (SendNotificationsArgs) InsertOpts() river.InsertOpts {
 
 type sendNotificationsWorker struct {
 	river.WorkerDefaults[SendNotificationsArgs]
-	notifier *plans.Notifier
+	notifier *notifications.Notifier
 	now      func() time.Time
 }
 
@@ -228,11 +229,11 @@ type sendNotificationsWorker struct {
 func (w *sendNotificationsWorker) Work(ctx context.Context, _ *river.Job[SendNotificationsArgs]) error {
 	now := w.now()
 	rep, err := w.notifier.Send(ctx, now)
-	if rep != (plans.NotifyReport{}) {
+	if rep != (notifications.Report{}) {
 		w.notifier.Log.Info("notifications", "sent", rep.Sent, "no_device", rep.NoDevice, "failed", rep.Failed, "unregistered", rep.Unregistered)
 	}
 	rec, rErr := w.notifier.CheckReceipts(ctx, now)
-	if rec != (plans.ReceiptReport{}) {
+	if rec != (notifications.ReceiptReport{}) {
 		w.notifier.Log.Info("push receipts", "delivered", rec.Delivered, "refused", rec.Refused, "unregistered", rec.Unregistered, "expired", rec.Expired)
 	}
 	return errors.Join(err, rErr)
@@ -252,7 +253,7 @@ type Maps struct {
 // NewClient builds the River client with every job and its schedule. The
 // pool must be a direct or session-pooler connection: River needs
 // LISTEN/NOTIFY, which the transaction pooler doesn't support.
-func NewClient(pool *pgxpool.Pool, log *slog.Logger, timing plans.Timing, notifier *plans.Notifier, m Maps) (*river.Client[pgx.Tx], error) {
+func NewClient(pool *pgxpool.Pool, log *slog.Logger, timing plans.Timing, notifier *notifications.Notifier, m Maps) (*river.Client[pgx.Tx], error) {
 	if err := timing.Validate(); err != nil {
 		return nil, err
 	}

@@ -83,7 +83,7 @@ func (r *Runner) Pass(ctx context.Context, cityID string, now time.Time) (PassRe
 			if err != nil {
 				return err
 			}
-			if err := notify(ctx, q, plans.NotifyCrewSuggestion, id, members); err != nil {
+			if err := notify(ctx, q, NotifyCrewSuggestion, id, members); err != nil {
 				return err
 			}
 			return q.NotifyChat(ctx, id.String())
@@ -165,7 +165,7 @@ func (r *Runner) offer(ctx context.Context, q *dbgen.Queries, cityID string, now
 			if err := q.InsertCrewMembers(ctx, dbgen.InsertCrewMembersParams{CrewID: crewID, UserIds: members}); err != nil {
 				return err
 			}
-			return notify(ctx, q, plans.NotifyCrewOffered, crewID, members)
+			return notify(ctx, q, NotifyCrewOffered, crewID, members)
 		})
 		if err != nil {
 			return fmt.Errorf("offer crew: %w", err)

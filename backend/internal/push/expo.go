@@ -56,7 +56,10 @@ type Receipt struct {
 }
 
 // Sender sends messages and returns a ticket for each, and fetches the
-// receipts for tickets. Receipts missing from the answer aren't ready yet
+// receipts for tickets. If Send fails partway it returns the tickets for
+// the messages sent before the error, in order, together with the error:
+// those messages were delivered to Expo and must not be sent again, so
+// callers use len(tickets) to tell what went out. Receipts missing from the answer aren't ready yet
 // (or have expired after 24 hours).
 type Sender interface {
 	Send(ctx context.Context, msgs []Message) ([]Ticket, error)

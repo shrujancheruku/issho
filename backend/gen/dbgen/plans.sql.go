@@ -123,6 +123,38 @@ func (q *Queries) DeleteSignups(ctx context.Context, arg DeleteSignupsParams) er
 	return err
 }
 
+const getNotificationPlan = `-- name: GetNotificationPlan :one
+select p.city_id, p.activity_id, p.follow_up_id, p.title
+from app.plans p
+where p.id = coalesce((select e.plan_id from app.events e where e.id = $1::uuid), $2::uuid)
+`
+
+type GetNotificationPlanParams struct {
+	EventID pgtype.UUID
+	PlanID  pgtype.UUID
+}
+
+type GetNotificationPlanRow struct {
+	CityID     string
+	ActivityID string
+	FollowUpID *string
+	Title      []byte
+}
+
+// What a notification title needs, for one about an event (its plan) or
+// about a plan.
+func (q *Queries) GetNotificationPlan(ctx context.Context, arg GetNotificationPlanParams) (GetNotificationPlanRow, error) {
+	row := q.db.QueryRow(ctx, getNotificationPlan, arg.EventID, arg.PlanID)
+	var i GetNotificationPlanRow
+	err := row.Scan(
+		&i.CityID,
+		&i.ActivityID,
+		&i.FollowUpID,
+		&i.Title,
+	)
+	return i, err
+}
+
 const getOpenPlan = `-- name: GetOpenPlan :one
 select p.id, p.area_id, p.activity_id, p.follow_up_id, p.primary_language, p.secondary_language,
        p.round, p.window_start, p.window_days, p.signup_deadline, p.venue_place_id, p.follow_up_venue_place_id,
