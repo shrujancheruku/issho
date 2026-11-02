@@ -6,9 +6,9 @@ import Svg, { Circle, Path } from 'react-native-svg';
 import { Chip } from '@/components/chip';
 import { MapSheet } from '@/components/map-sheet';
 import { PressableScale } from '@/components/pressable-scale';
+import { LoadFailed } from '@/components/query-screen';
 import { ScreenHeader, SectionTitle } from '@/components/screen-header';
 import { TabIcon } from '@/components/tab-icons';
-import { TextLink } from '@/components/text-link';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BodyFont, BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
@@ -30,7 +30,6 @@ import { haptics } from '@/lib/haptics';
  * on the device. The map is the same plans by area.
  */
 export default function PlansScreen() {
-  const { t } = useI18n();
   const feed = useFeed();
   const names = usePlanNames();
   const [view, setView] = useState<'list' | 'map'>('list');
@@ -40,8 +39,7 @@ export default function PlansScreen() {
       <SafeAreaView style={styles.fill} edges={['top', 'left', 'right']}>
         {feed.isError ? (
           <View style={styles.center}>
-            <ThemedText themeColor="textSecondary">{t('common.loadFailed')}</ThemedText>
-            <TextLink label={t('common.retry')} onPress={() => void feed.refetch()} center />
+            <LoadFailed onRetry={() => void feed.refetch()} center />
           </View>
         ) : feed.isPending || !names.ready ? (
           <View style={styles.center}>

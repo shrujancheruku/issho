@@ -1,14 +1,14 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { router, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { LanguageSwitch } from '@/components/language-switch';
 import { PrimaryButton } from '@/components/primary-button';
+import { LoadState } from '@/components/query-screen';
+import { ScreenFrame, useLeave } from '@/components/screen-frame';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { FormWidth, Spacing } from '@/constants/theme';
+import { Spacing } from '@/constants/theme';
 import { canSave, fromProfile, nextEditStep, steps, stepValid, toProfile, type Draft, type Step } from '@/features/profile/draft';
 import { saveErrorMessage } from '@/features/profile/save-error';
 import { StepView, stepTitles } from '@/features/profile/steps';
@@ -29,6 +29,8 @@ export default function ProfileEditScreen() {
   const { t, previewLanguages } = useI18n();
   const queryClient = useQueryClient();
   const profile = useProfile();
+  // Opened from a link or after a reload on the web, there's no settings screen behind this one.
+  const leave = useLeave('/profile');
   // The saved profile until the first edit.
   const [edited, setDraft] = useState<Draft | null>(null);
   const saved = useMemo(
@@ -53,55 +55,50 @@ export default function ProfileEditScreen() {
       queryClient.setQueryData(profileKey, (old: typeof profile.data) => (old ? { ...old, profile: res.profile } : old));
       // GetMe carries the display languages.
       await queryClient.invalidateQueries({ queryKey: ['me'] });
-      router.back();
+      leave();
     },
   });
 
+  const header = (
+    <View style={styles.header}>
+      <Pressable accessibilityRole="button" onPress={leave} hitSlop={8} style={styles.grow}>
+        <ThemedText type="link">‹ {t('common.back')}</ThemedText>
+      </Pressable>
+      <LanguageSwitch />
+    </View>
+  );
+
   return (
-    <ThemedView style={styles.fill}>
-      <SafeAreaView style={styles.fill}>
-        <KeyboardAvoidingView behavior="padding" style={[styles.fill, styles.column]}>
-          <View style={styles.header}>
-            <Pressable accessibilityRole="button" onPress={() => router.back()} hitSlop={8} style={styles.grow}>
-              <ThemedText type="link">‹ {t('common.back')}</ThemedText>
-            </Pressable>
-            <LanguageSwitch />
+    <ScreenFrame header={header}>
+      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        <ThemedText type="subtitle">{t(stepTitles[step])}</ThemedText>
+        {draft ? (
+          <StepView step={step} draft={draft} onChange={setDraft} />
+        ) : (
+          // A loaded profile that is missing (not onboarded) also waits here, as the route guards redirect.
+          <View>
+            <LoadState queries={[profile]} />
           </View>
-          <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-            <ThemedText type="subtitle">{t(stepTitles[step])}</ThemedText>
-            {draft ? (
-              <StepView step={step} draft={draft} onChange={setDraft} />
-            ) : profile.isError ? (
-              <Pressable onPress={() => void profile.refetch()}>
-                <ThemedText themeColor="textSecondary">{t('common.loadFailed')}</ThemedText>
-                <ThemedText type="link">{t('common.retry')}</ThemedText>
-              </Pressable>
-            ) : (
-              <ActivityIndicator />
-            )}
-          </ScrollView>
-          {save.isError && <ThemedText themeColor="error" style={styles.error}>{saveErrorMessage(save.error, t)}</ThemedText>}
-          <View style={styles.footer}>
-            <PrimaryButton
-              label={next ? t('common.continue') : t('common.save')}
-              disabled={!draft || !stepValid(step, draft)}
-              busy={save.isPending}
-              onPress={() => {
-                if (!draft) return;
-                if (next) setStep(next);
-                else if (canSave(draft)) save.mutate(draft);
-              }}
-            />
-          </View>
-        </KeyboardAvoidingView>
-      </SafeAreaView>
-    </ThemedView>
+        )}
+      </ScrollView>
+      {save.isError && <ThemedText themeColor="error" style={styles.error}>{saveErrorMessage(save.error, t)}</ThemedText>}
+      <View style={styles.footer}>
+        <PrimaryButton
+          label={next ? t('common.continue') : t('common.save')}
+          disabled={!draft || !stepValid(step, draft)}
+          busy={save.isPending}
+          onPress={() => {
+            if (!draft) return;
+            if (next) setStep(next);
+            else if (canSave(draft)) save.mutate(draft);
+          }}
+        />
+      </View>
+    </ScreenFrame>
   );
 }
 
 const styles = StyleSheet.create({
-  fill: { flex: 1 },
-  column: { width: '100%', maxWidth: FormWidth, alignSelf: 'center' },
   grow: { flex: 1 },
   header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: Spacing.four, paddingTop: Spacing.three },
   content: { padding: Spacing.four, gap: Spacing.four },

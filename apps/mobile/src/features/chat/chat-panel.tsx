@@ -4,7 +4,7 @@ import { ActivityIndicator, FlatList, Pressable, StyleSheet, TextInput, View } f
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { PressableScale } from '@/components/pressable-scale';
-import { TextLink } from '@/components/text-link';
+import { LoadFailed } from '@/components/query-screen';
 import { ThemedText } from '@/components/themed-text';
 import { EaseOut, Motion } from '@/constants/motion';
 import { BodyFont, Brand, Spacing } from '@/constants/theme';
@@ -121,10 +121,7 @@ export function ChatPanel({ room, header }: { room: RoomRef; header?: ReactEleme
         <ActivityIndicator style={styles.fill} />
       ) : status === 'error' ? (
         <View style={[styles.fill, styles.failed]}>
-          <ThemedText themeColor="textSecondary" style={styles.center}>
-            {t('common.loadFailed')}
-          </ThemedText>
-          <TextLink label={t('common.retry')} onPress={retry} center />
+          <LoadFailed onRetry={retry} center />
         </View>
       ) : (
         <FlatList

@@ -1,22 +1,21 @@
 import { Code, ConnectError, type GetEventResponse, type MyEvent } from '@issho/api-client';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState, type ReactNode } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Linking, ScrollView, Share, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Linking, ScrollView, Share, StyleSheet, View } from 'react-native';
 
 import { Avatar } from '@/components/avatar';
-import { LanguageSwitch } from '@/components/language-switch';
 import { LiveDot } from '@/components/live-dot';
 import { PrimaryButton } from '@/components/primary-button';
+import { QueryScreen } from '@/components/query-screen';
 import { ResultButton } from '@/components/result-button';
 import { RollingText } from '@/components/rolling-text';
 import { SectionTitle } from '@/components/screen-header';
+import { useLeave } from '@/components/screen-frame';
 import { Segmented } from '@/components/segmented';
-import { BackLink, TextLink } from '@/components/text-link';
+import { TextLink } from '@/components/text-link';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
 import { Thread } from '@/components/thread';
-import { FormWidth, Spacing } from '@/constants/theme';
+import { Spacing } from '@/constants/theme';
 import { ChatPanel } from '@/features/chat/chat-panel';
 import { useEvent, useRespond } from '@/features/events/data';
 import { shareText } from '@/features/events/share';
@@ -60,88 +59,56 @@ export default function EventScreen() {
   const names = usePlanNames();
   // Every 15 s: the countdown on the day is in minutes.
   const now = useNow(15_000);
-  const leave = () => (router.canGoBack() ? router.back() : router.replace('/'));
+  const leave = useLeave('/');
   const [tab, setTab] = useState<'chat' | 'plan'>('chat');
 
-  const e = event.data?.event;
-  const notFound = event.error instanceof ConnectError && event.error.code === Code.NotFound;
+  return (
+    <QueryScreen queries={[event]} notFound={t('event.notFound')} onBack={leave}>
+      {([data]) => {
+        const e = data.event;
+        // A response without its event is the same as not finding it.
+        if (!e) return <ThemedText themeColor="textSecondary">{t('event.notFound')}</ThemedText>;
+        const o = outing(e, now);
+        const ctx: Ctx = { id, data, e, o, names, now, lang };
+        const thread = <Thread stage={o.threadKnot} id={`event:${id}`} live={o.live} />;
 
-  if (!e || !event.data) {
-    return (
-      <Frame onBack={leave}>
-        <ScrollView contentContainerStyle={styles.content}>
-          {notFound ? (
-            <ThemedText themeColor="textSecondary">{t('event.notFound')}</ThemedText>
-          ) : event.isError ? (
+        // Going: the chat fills the screen under a fixed head, so it can't scroll with the rest.
+        if (o.chatFirst) {
+          return (
             <>
-              <ThemedText themeColor="textSecondary">{t('common.loadFailed')}</ThemedText>
-              <TextLink label={t('common.retry')} onPress={() => void event.refetch()} />
+              <View style={styles.head}>
+                <Title e={e} detail={`${formatStart(e.startsAt, lang)}, ${names.area(e.areaId).name}`} />
+                {thread}
+                <Segmented
+                  label={t('event.tabs')}
+                  value={tab}
+                  onChange={setTab}
+                  options={[
+                    { value: 'chat', label: t('chat.title') },
+                    { value: 'plan', label: t('event.tabPlan') },
+                  ]}
+                />
+              </View>
+              {tab === 'chat' ? (
+                <ChatPanel room={{ eventId: id }} header={<Pinned ctx={ctx} />} />
+              ) : (
+                <ScrollView contentContainerStyle={styles.content}>
+                  <PlanTab ctx={ctx} />
+                </ScrollView>
+              )}
             </>
-          ) : (
-            <ActivityIndicator />
-          )}
-        </ScrollView>
-      </Frame>
-    );
-  }
+          );
+        }
 
-  const o = outing(e, now);
-  const ctx: Ctx = { id, data: event.data, e, o, names, now, lang };
-  const thread = <Thread stage={o.threadKnot} id={`event:${id}`} live={o.live} />;
-
-  // Going: the chat fills the screen under a fixed head, so it can't scroll with the rest.
-  if (o.chatFirst) {
-    return (
-      <Frame onBack={leave}>
-        <View style={styles.head}>
-          <Title e={e} detail={`${formatStart(e.startsAt, lang)}, ${names.area(e.areaId).name}`} />
-          {thread}
-          <Segmented
-            label={t('event.tabs')}
-            value={tab}
-            onChange={setTab}
-            options={[
-              { value: 'chat', label: t('chat.title') },
-              { value: 'plan', label: t('event.tabPlan') },
-            ]}
-          />
-        </View>
-        {tab === 'chat' ? (
-          <ChatPanel room={{ eventId: id }} header={<Pinned ctx={ctx} />} />
-        ) : (
+        return (
           <ScrollView contentContainerStyle={styles.content}>
-            <PlanTab ctx={ctx} />
+            <Title e={e} />
+            {thread}
+            {o.view === 'muted' ? <Muted ctx={ctx} /> : o.view === 'invited' ? <Invited ctx={ctx} /> : o.view === 'onTheDay' ? <OnTheDay ctx={ctx} /> : <HowWasIt ctx={ctx} />}
           </ScrollView>
-        )}
-      </Frame>
-    );
-  }
-
-  return (
-    <Frame onBack={leave}>
-      <ScrollView contentContainerStyle={styles.content}>
-        <Title e={e} />
-        {thread}
-        {o.view === 'muted' ? <Muted ctx={ctx} /> : o.view === 'invited' ? <Invited ctx={ctx} /> : o.view === 'onTheDay' ? <OnTheDay ctx={ctx} /> : <HowWasIt ctx={ctx} />}
-      </ScrollView>
-    </Frame>
-  );
-}
-
-function Frame({ onBack, children }: { onBack: () => void; children: ReactNode }) {
-  const { t } = useI18n();
-  return (
-    <ThemedView style={styles.fill}>
-      <SafeAreaView style={styles.fill}>
-        <KeyboardAvoidingView behavior="padding" style={[styles.fill, styles.column]}>
-          <View style={styles.header}>
-            <BackLink label={t('common.back')} onPress={onBack} />
-            <LanguageSwitch />
-          </View>
-          {children}
-        </KeyboardAvoidingView>
-      </SafeAreaView>
-    </ThemedView>
+        );
+      }}
+    </QueryScreen>
   );
 }
 
@@ -398,10 +365,7 @@ function Muted({ ctx }: { ctx: Ctx }) {
 }
 
 const styles = StyleSheet.create({
-  fill: { flex: 1 },
   bold: { fontWeight: 700 },
-  column: { width: '100%', maxWidth: FormWidth, alignSelf: 'center' },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.three },
   head: { paddingHorizontal: Spacing.three, paddingBottom: Spacing.two, gap: Spacing.three },
   content: { padding: Spacing.three, paddingTop: Spacing.two, gap: Spacing.four - 4, paddingBottom: Spacing.five },
   titleBlock: { gap: Spacing.half },

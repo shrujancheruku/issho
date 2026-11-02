@@ -1,16 +1,15 @@
-import { Code, ConnectError, PlanClosedReason, PlanLevel, type GetPlanResponse } from '@issho/api-client';
+import { PlanClosedReason, PlanLevel, type GetPlanResponse } from '@issho/api-client';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { weekdayName, blockKeys } from '@/components/availability-grid';
-import { LanguageSwitch } from '@/components/language-switch';
 import { PrimaryButton } from '@/components/primary-button';
-import { BackLink, TextLink } from '@/components/text-link';
+import { QueryScreen } from '@/components/query-screen';
+import { useLeave } from '@/components/screen-frame';
+import { TextLink } from '@/components/text-link';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
 import { Thread } from '@/components/thread';
-import { FormWidth, Spacing } from '@/constants/theme';
+import { Spacing } from '@/constants/theme';
 import { useSignupActions } from '@/features/plans/data';
 import { Fact, Facts } from '@/features/plans/fact';
 import { formatDate, lastSignupDay, walkHours } from '@/features/plans/format';
@@ -47,63 +46,46 @@ export default function PlanScreen() {
   const { t } = useI18n();
   const { plan, profile, saved } = usePlanTimes(id);
   const names = usePlanNames();
-  // Opened directly (a link on the web), there's no screen to go back to.
-  const leave = () => (router.canGoBack() ? router.back() : router.replace('/'));
-
-  const notFound = plan.error instanceof ConnectError && plan.error.code === Code.NotFound;
-  const p = plan.data?.plan;
-  const closed = p ? closedText[p.closedReason] : undefined;
-
-  let body;
-  let footer = null;
-  if (notFound) {
-    body = <ThemedText themeColor="textSecondary">{t('plan.notFound')}</ThemedText>;
-  } else if (plan.isError || profile.isError) {
-    body = (
-      <>
-        <ThemedText themeColor="textSecondary">{t('common.loadFailed')}</ThemedText>
-        <TextLink label={t('common.retry')} onPress={() => void Promise.all([plan.refetch(), profile.refetch()])} />
-      </>
-    );
-  } else if (!p || !saved || !plan.data) {
-    body = <ActivityIndicator />;
-  } else if (p.signedUp && !closed) {
-    body = <SignedUp data={plan.data} times={saved} names={names} />;
-  } else {
-    body = <Before data={plan.data} names={names} closed={closed} loading={plan.isPlaceholderData} />;
-    if (closed) {
-      footer = <PrimaryButton label={t('plan.closed.others')} onPress={() => router.navigate('/plans')} />;
-    } else if (p.level !== PlanLevel.NOT_FOR_YOU) {
-      footer = (
-        <>
-          <PrimaryButton label={t('plan.signUp')} onPress={() => openSignup(id)} />
-          <ThemedText type="small" themeColor="textSecondary" style={styles.centerText}>
-            {t('plan.next')}
-          </ThemedText>
-        </>
-      );
-    }
-  }
-
-  return <PlanFrame onBack={leave} body={body} footer={footer} />;
-}
-
-function PlanFrame({ onBack, body, footer }: { onBack: () => void; body: React.ReactNode; footer: React.ReactNode }) {
-  const { t } = useI18n();
   const theme = useTheme();
+  // Opened directly (a link on the web), there's no screen to go back to.
+  const leave = useLeave('/');
+
   return (
-    <ThemedView style={styles.fill}>
-      <SafeAreaView style={styles.fill}>
-        <View style={[styles.fill, styles.column]}>
-          <View style={styles.header}>
-            <BackLink label={t('common.back')} onPress={onBack} />
-            <LanguageSwitch />
-          </View>
-          <ScrollView contentContainerStyle={styles.content}>{body}</ScrollView>
-          {footer && <View style={[styles.footer, { backgroundColor: theme.surface, borderTopColor: theme.backgroundSelected }]}>{footer}</View>}
-        </View>
-      </SafeAreaView>
-    </ThemedView>
+    <QueryScreen queries={[plan, profile]} notFound={t('plan.notFound')} onBack={leave}>
+      {([data]) => {
+        const p = data.plan;
+        // Both queries have loaded, so the times are there.
+        if (!p || !saved) return null;
+        const closed = closedText[p.closedReason];
+
+        let body;
+        let footer = null;
+        if (p.signedUp && !closed) {
+          body = <SignedUp data={data} times={saved} names={names} />;
+        } else {
+          body = <Before data={data} names={names} closed={closed} loading={plan.isPlaceholderData} />;
+          if (closed) {
+            footer = <PrimaryButton label={t('plan.closed.others')} onPress={() => router.navigate('/plans')} />;
+          } else if (p.level !== PlanLevel.NOT_FOR_YOU) {
+            footer = (
+              <>
+                <PrimaryButton label={t('plan.signUp')} onPress={() => openSignup(id)} />
+                <ThemedText type="small" themeColor="textSecondary" style={styles.centerText}>
+                  {t('plan.next')}
+                </ThemedText>
+              </>
+            );
+          }
+        }
+
+        return (
+          <>
+            <ScrollView contentContainerStyle={styles.content}>{body}</ScrollView>
+            {footer && <View style={[styles.footer, { backgroundColor: theme.surface, borderTopColor: theme.backgroundSelected }]}>{footer}</View>}
+          </>
+        );
+      }}
+    </QueryScreen>
   );
 }
 
@@ -240,9 +222,6 @@ function SignedUp({ data, times, names }: { data: GetPlanResponse; times: Times;
 }
 
 const styles = StyleSheet.create({
-  fill: { flex: 1 },
-  column: { width: '100%', maxWidth: FormWidth, alignSelf: 'center' },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.three },
   content: { padding: Spacing.three, paddingTop: Spacing.two, gap: Spacing.four - 4, paddingBottom: Spacing.five },
   footer: { padding: Spacing.three, gap: Spacing.one + 2, borderTopWidth: 1 },
   centerText: { textAlign: 'center' },
