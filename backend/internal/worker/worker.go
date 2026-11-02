@@ -99,13 +99,16 @@ func (w *matchCityWorker) Work(ctx context.Context, job *river.Job[MatchCityArgs
 	if err != nil {
 		return err
 	}
-	// Crews (offers, forming, weekly plan suggestions) don't hold up matching.
+	// Crews (offers, forming, weekly plan suggestions) run after matching,
+	// so they don't hold it up. Their failure fails the job, so River
+	// retries and Sentry hears of it; that re-runs Match, which is safe: it
+	// only acts on what is still due, as the next hourly pass would.
 	crewPass, err := w.crews.Pass(ctx, job.Args.City, now)
-	if err != nil {
-		w.runner.Log.Warn("crews", "city", job.Args.City, "err", err)
-	}
 	w.runner.Log.Info("city matched", "city", job.Args.City, "pass", rep,
 		"crews_offered", crewPass.Offered, "crews_formed", crewPass.Formed, "crews_lapsed", crewPass.Lapsed, "crew_suggestions", crewPass.Suggested)
+	if err != nil {
+		return fmt.Errorf("crews %s: %w", job.Args.City, err)
+	}
 	return nil
 }
 
@@ -185,9 +188,6 @@ func (w *sendNotificationsWorker) Work(ctx context.Context, _ *river.Job[SendNot
 	return errors.Join(err, rErr)
 }
 
-// NewClient builds the River client with every job and its schedule. The
-// pool must be a direct or session-pooler connection: River needs
-// LISTEN/NOTIFY, which the transaction pooler doesn't support.
 // Maps are the Google Maps lookups the worker uses; all nil without a key.
 type Maps struct {
 	Router     maps.Router
@@ -199,6 +199,9 @@ type Maps struct {
 	Walks *walks.Composer
 }
 
+// NewClient builds the River client with every job and its schedule. The
+// pool must be a direct or session-pooler connection: River needs
+// LISTEN/NOTIFY, which the transaction pooler doesn't support.
 func NewClient(pool *pgxpool.Pool, log *slog.Logger, timing plans.Timing, notifier *plans.Notifier, m Maps) (*river.Client[pgx.Tx], error) {
 	if err := timing.Validate(); err != nil {
 		return nil, err
