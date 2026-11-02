@@ -68,12 +68,12 @@ message ChatMessage {
   int64 id = 1;
   // The sender, as in typing notices ("" for a suggested plan or a deleted
   // account).
-  string user_id = 2;
+  string user_id = 6;
   // The sender's first name ("" for a deleted account).
-  string name = 3;
-  string body = 4;
-  google.protobuf.Timestamp at = 5;
+  string name = 2;
+  string body = 3;
+  google.protobuf.Timestamp at = 4;
   // Sent by the caller.
-  bool mine = 6;
+  bool mine = 5;
   string plan_id = 7;
 }

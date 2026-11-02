@@ -12,7 +12,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file issho/v1/chat.proto.
  */
 export const file_issho_v1_chat: GenFile = /*@__PURE__*/
-  fileDesc("ChNpc3Noby92MS9jaGF0LnByb3RvEghpc3Noby52MSI5CghDaGF0Um9vbRISCghldmVudF9pZBgBIAEoCUgAEhEKB2NyZXdfaWQYAiABKAlIAEIGCgRyb29tIkkKE0xpc3RNZXNzYWdlc1JlcXVlc3QSIAoEcm9vbRgBIAEoCzISLmlzc2hvLnYxLkNoYXRSb29tEhAKCGFmdGVyX2lkGAIgASgDIqoBChRMaXN0TWVzc2FnZXNSZXNwb25zZRInCghtZXNzYWdlcxgBIAMoCzIVLmlzc2hvLnYxLkNoYXRNZXNzYWdlEgwKBG9wZW4YAiABKAgSLAoIb3BlbnNfYXQYAyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi0KCWNsb3Nlc19hdBgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiRAoSU2VuZE1lc3NhZ2VSZXF1ZXN0EiAKBHJvb20YASABKAsyEi5pc3Noby52MS5DaGF0Um9vbRIMCgRib2R5GAIgASgJIj0KE1NlbmRNZXNzYWdlUmVzcG9uc2USJgoHbWVzc2FnZRgBIAEoCzIVLmlzc2hvLnYxLkNoYXRNZXNzYWdlIo0BCgtDaGF0TWVzc2FnZRIKCgJpZBgBIAEoAxIPCgd1c2VyX2lkGAIgASgJEgwKBG5hbWUYAyABKAkSDAoEYm9keRgEIAEoCRImCgJhdBgFIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASDAoEbWluZRgGIAEoCBIPCgdwbGFuX2lkGAcgASgJMqwBCgtDaGF0U2VydmljZRJPCgxMaXN0TWVzc2FnZXMSHS5pc3Noby52MS5MaXN0TWVzc2FnZXNSZXF1ZXN0Gh4uaXNzaG8udjEuTGlzdE1lc3NhZ2VzUmVzcG9uc2UiABJMCgtTZW5kTWVzc2FnZRIcLmlzc2hvLnYxLlNlbmRNZXNzYWdlUmVxdWVzdBodLmlzc2hvLnYxLlNlbmRNZXNzYWdlUmVzcG9uc2UiAEI+WjxnaXRodWIuY29tL3NocnVqYW5jaGVydWt1L2lzc2hvL2JhY2tlbmQvZ2VuL2lzc2hvL3YxO2lzc2hvdjFiBnByb3RvMw", [file_google_protobuf_timestamp]);
+  fileDesc("ChNpc3Noby92MS9jaGF0LnByb3RvEghpc3Noby52MSI5CghDaGF0Um9vbRISCghldmVudF9pZBgBIAEoCUgAEhEKB2NyZXdfaWQYAiABKAlIAEIGCgRyb29tIkkKE0xpc3RNZXNzYWdlc1JlcXVlc3QSIAoEcm9vbRgBIAEoCzISLmlzc2hvLnYxLkNoYXRSb29tEhAKCGFmdGVyX2lkGAIgASgDIqoBChRMaXN0TWVzc2FnZXNSZXNwb25zZRInCghtZXNzYWdlcxgBIAMoCzIVLmlzc2hvLnYxLkNoYXRNZXNzYWdlEgwKBG9wZW4YAiABKAgSLAoIb3BlbnNfYXQYAyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi0KCWNsb3Nlc19hdBgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiRAoSU2VuZE1lc3NhZ2VSZXF1ZXN0EiAKBHJvb20YASABKAsyEi5pc3Noby52MS5DaGF0Um9vbRIMCgRib2R5GAIgASgJIj0KE1NlbmRNZXNzYWdlUmVzcG9uc2USJgoHbWVzc2FnZRgBIAEoCzIVLmlzc2hvLnYxLkNoYXRNZXNzYWdlIo0BCgtDaGF0TWVzc2FnZRIKCgJpZBgBIAEoAxIPCgd1c2VyX2lkGAYgASgJEgwKBG5hbWUYAiABKAkSDAoEYm9keRgDIAEoCRImCgJhdBgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASDAoEbWluZRgFIAEoCBIPCgdwbGFuX2lkGAcgASgJMqwBCgtDaGF0U2VydmljZRJPCgxMaXN0TWVzc2FnZXMSHS5pc3Noby52MS5MaXN0TWVzc2FnZXNSZXF1ZXN0Gh4uaXNzaG8udjEuTGlzdE1lc3NhZ2VzUmVzcG9uc2UiABJMCgtTZW5kTWVzc2FnZRIcLmlzc2hvLnYxLlNlbmRNZXNzYWdlUmVxdWVzdBodLmlzc2hvLnYxLlNlbmRNZXNzYWdlUmVzcG9uc2UiAEI+WjxnaXRodWIuY29tL3NocnVqYW5jaGVydWt1L2lzc2hvL2JhY2tlbmQvZ2VuL2lzc2hvL3YxO2lzc2hvdjFiBnByb3RvMw", [file_google_protobuf_timestamp]);
 
 /**
  * A chat room: an event's group chat (the caller's group of that event) or
@@ -163,31 +163,31 @@ export type ChatMessage = Message<"issho.v1.ChatMessage"> & {
    * The sender, as in typing notices ("" for a suggested plan or a deleted
    * account).
    *
-   * @generated from field: string user_id = 2;
+   * @generated from field: string user_id = 6;
    */
   userId: string;
 
   /**
    * The sender's first name ("" for a deleted account).
    *
-   * @generated from field: string name = 3;
+   * @generated from field: string name = 2;
    */
   name: string;
 
   /**
-   * @generated from field: string body = 4;
+   * @generated from field: string body = 3;
    */
   body: string;
 
   /**
-   * @generated from field: google.protobuf.Timestamp at = 5;
+   * @generated from field: google.protobuf.Timestamp at = 4;
    */
   at?: Timestamp | undefined;
 
   /**
    * Sent by the caller.
    *
-   * @generated from field: bool mine = 6;
+   * @generated from field: bool mine = 5;
    */
   mine: boolean;
 

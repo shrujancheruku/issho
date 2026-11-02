@@ -334,13 +334,13 @@ type ChatMessage struct {
 	Id    int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	// The sender, as in typing notices ("" for a suggested plan or a deleted
 	// account).
-	UserId string `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	UserId string `protobuf:"bytes,6,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	// The sender's first name ("" for a deleted account).
-	Name string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
-	Body string                 `protobuf:"bytes,4,opt,name=body,proto3" json:"body,omitempty"`
-	At   *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=at,proto3" json:"at,omitempty"`
+	Name string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Body string                 `protobuf:"bytes,3,opt,name=body,proto3" json:"body,omitempty"`
+	At   *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=at,proto3" json:"at,omitempty"`
 	// Sent by the caller.
-	Mine          bool   `protobuf:"varint,6,opt,name=mine,proto3" json:"mine,omitempty"`
+	Mine          bool   `protobuf:"varint,5,opt,name=mine,proto3" json:"mine,omitempty"`
 	PlanId        string `protobuf:"bytes,7,opt,name=plan_id,json=planId,proto3" json:"plan_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -449,11 +449,11 @@ const file_issho_v1_chat_proto_rawDesc = "" +
 	"\amessage\x18\x01 \x01(\v2\x15.issho.v1.ChatMessageR\amessage\"\xb7\x01\n" +
 	"\vChatMessage\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x17\n" +
-	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x12\n" +
-	"\x04name\x18\x03 \x01(\tR\x04name\x12\x12\n" +
-	"\x04body\x18\x04 \x01(\tR\x04body\x12*\n" +
-	"\x02at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\x02at\x12\x12\n" +
-	"\x04mine\x18\x06 \x01(\bR\x04mine\x12\x17\n" +
+	"\auser_id\x18\x06 \x01(\tR\x06userId\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12\x12\n" +
+	"\x04body\x18\x03 \x01(\tR\x04body\x12*\n" +
+	"\x02at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\x02at\x12\x12\n" +
+	"\x04mine\x18\x05 \x01(\bR\x04mine\x12\x17\n" +
 	"\aplan_id\x18\a \x01(\tR\x06planId2\xac\x01\n" +
 	"\vChatService\x12O\n" +
 	"\fListMessages\x12\x1d.issho.v1.ListMessagesRequest\x1a\x1e.issho.v1.ListMessagesResponse\"\x00\x12L\n" +
