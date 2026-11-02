@@ -21,6 +21,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	"github.com/shrujancheruku/issho/backend/gen/issho/v1/isshov1connect"
 	"github.com/shrujancheruku/issho/backend/internal/catalog"
+	"github.com/shrujancheruku/issho/backend/internal/chat"
 	"github.com/shrujancheruku/issho/backend/internal/chatws"
 	"github.com/shrujancheruku/issho/backend/internal/citypacks"
 	"github.com/shrujancheruku/issho/backend/internal/crews"
@@ -183,6 +184,10 @@ func run() error {
 	mux.Handle(isshov1connect.NewEventServiceHandler(&plans.EventHandler{Svc: planSvc}, opts))
 	crewSvc := &crews.Service{DB: pool}
 	mux.Handle(isshov1connect.NewCrewServiceHandler(&crews.Handler{Svc: crewSvc}, opts))
+	// One chat module serves both kinds of room; each owner decides who may
+	// use its rooms.
+	chatSvc := &chat.Service{DB: pool, Event: plans.ChatAccess{}, Crew: crews.ChatAccess{}}
+	mux.Handle(isshov1connect.NewChatServiceHandler(&chat.Handler{Svc: chatSvc}, opts))
 	mux.Handle(isshov1connect.NewPushServiceHandler(&push.Handler{Q: q}, opts))
 	mux.Handle(isshov1connect.NewReviewServiceHandler(review, opts))
 	mux.Handle(isshov1connect.NewCurationServiceHandler(venues, opts))
@@ -210,7 +215,7 @@ func run() error {
 	chatHub := chatws.NewHub()
 	go chatHub.Run(ctx, pool, slog.Default())
 	mux.Handle("/ws/chat", &chatws.Handler{
-		Hub: chatHub, Plans: planSvc, Crews: crewSvc, Verifier: verifier, Suspended: suspensions.Suspended, Log: slog.Default(),
+		Hub: chatHub, Chat: chatSvc, Verifier: verifier, Suspended: suspensions.Suspended, Log: slog.Default(),
 		OriginPatterns: originHosts(cfg.AllowedOrigins),
 	})
 

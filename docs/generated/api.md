@@ -36,6 +36,16 @@
   
     - [CatalogService](#issho-v1-CatalogService)
   
+- [issho/v1/chat.proto](#issho_v1_chat-proto)
+    - [ChatMessage](#issho-v1-ChatMessage)
+    - [ChatRoom](#issho-v1-ChatRoom)
+    - [ListMessagesRequest](#issho-v1-ListMessagesRequest)
+    - [ListMessagesResponse](#issho-v1-ListMessagesResponse)
+    - [SendMessageRequest](#issho-v1-SendMessageRequest)
+    - [SendMessageResponse](#issho-v1-SendMessageResponse)
+  
+    - [ChatService](#issho-v1-ChatService)
+  
 - [issho/v1/citypacks.proto](#issho_v1_citypacks-proto)
     - [ApplyCityPackRequest](#issho-v1-ApplyCityPackRequest)
     - [ApplyCityPackResponse](#issho-v1-ApplyCityPackResponse)
@@ -78,7 +88,6 @@
     - [PlanService](#issho-v1-PlanService)
   
 - [issho/v1/events.proto](#issho_v1_events-proto)
-    - [ChatMessage](#issho-v1-ChatMessage)
     - [CheckInRequest](#issho-v1-CheckInRequest)
     - [CheckInResponse](#issho-v1-CheckInResponse)
     - [GetEventRequest](#issho-v1-GetEventRequest)
@@ -86,8 +95,6 @@
     - [GetFeedbackRequest](#issho-v1-GetFeedbackRequest)
     - [GetFeedbackResponse](#issho-v1-GetFeedbackResponse)
     - [GroupMate](#issho-v1-GroupMate)
-    - [ListChatMessagesRequest](#issho-v1-ListChatMessagesRequest)
-    - [ListChatMessagesResponse](#issho-v1-ListChatMessagesResponse)
     - [ListMyEventsRequest](#issho-v1-ListMyEventsRequest)
     - [ListMyEventsResponse](#issho-v1-ListMyEventsResponse)
     - [MyEvent](#issho-v1-MyEvent)
@@ -95,8 +102,6 @@
     - [ReportPersonResponse](#issho-v1-ReportPersonResponse)
     - [RespondToEventRequest](#issho-v1-RespondToEventRequest)
     - [RespondToEventResponse](#issho-v1-RespondToEventResponse)
-    - [SendChatMessageRequest](#issho-v1-SendChatMessageRequest)
-    - [SendChatMessageResponse](#issho-v1-SendChatMessageResponse)
     - [SubmitFeedbackRequest](#issho-v1-SubmitFeedbackRequest)
     - [SubmitFeedbackResponse](#issho-v1-SubmitFeedbackResponse)
   
@@ -111,21 +116,16 @@
 - [issho/v1/crews.proto](#issho_v1_crews-proto)
     - [Crew](#issho-v1-Crew)
     - [CrewMember](#issho-v1-CrewMember)
-    - [CrewMessage](#issho-v1-CrewMessage)
     - [GetCrewRequest](#issho-v1-GetCrewRequest)
     - [GetCrewResponse](#issho-v1-GetCrewResponse)
     - [LeaveCrewRequest](#issho-v1-LeaveCrewRequest)
     - [LeaveCrewResponse](#issho-v1-LeaveCrewResponse)
-    - [ListCrewMessagesRequest](#issho-v1-ListCrewMessagesRequest)
-    - [ListCrewMessagesResponse](#issho-v1-ListCrewMessagesResponse)
     - [ListMyCrewsRequest](#issho-v1-ListMyCrewsRequest)
     - [ListMyCrewsResponse](#issho-v1-ListMyCrewsResponse)
     - [ReportCrewMemberRequest](#issho-v1-ReportCrewMemberRequest)
     - [ReportCrewMemberResponse](#issho-v1-ReportCrewMemberResponse)
     - [RespondToCrewRequest](#issho-v1-RespondToCrewRequest)
     - [RespondToCrewResponse](#issho-v1-RespondToCrewResponse)
-    - [SendCrewMessageRequest](#issho-v1-SendCrewMessageRequest)
-    - [SendCrewMessageResponse](#issho-v1-SendCrewMessageResponse)
   
     - [CrewResponse](#issho-v1-CrewResponse)
     - [CrewStatus](#issho-v1-CrewStatus)
@@ -787,6 +787,145 @@ HTTP: POST /issho.v1.CatalogService/&lt;Method&gt;
 
 
 
+<a name="issho_v1_chat-proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## issho/v1/chat.proto
+
+
+
+<a name="issho-v1-ChatMessage"></a>
+
+### ChatMessage
+One message in a chat room: someone&#39;s text, or a plan Issho suggested in a
+crew&#39;s chat (plan_id set; user_id, name and body empty).
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [int64](#int64) |  |  |
+| user_id | [string](#string) |  | The sender, as in typing notices (&#34;&#34; for a suggested plan or a deleted account). |
+| name | [string](#string) |  | The sender&#39;s first name (&#34;&#34; for a deleted account). |
+| body | [string](#string) |  |  |
+| at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| mine | [bool](#bool) |  | Sent by the caller. |
+| plan_id | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-ChatRoom"></a>
+
+### ChatRoom
+A chat room: an event&#39;s group chat (the caller&#39;s group of that event) or
+a crew&#39;s.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| event_id | [string](#string) |  |  |
+| crew_id | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-ListMessagesRequest"></a>
+
+### ListMessagesRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| room | [ChatRoom](#issho-v1-ChatRoom) |  |  |
+| after_id | [int64](#int64) |  | 0 = the latest messages. |
+
+
+
+
+
+
+<a name="issho-v1-ListMessagesResponse"></a>
+
+### ListMessagesResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [ChatMessage](#issho-v1-ChatMessage) | repeated |  |
+| open | [bool](#bool) |  | Whether the caller may write now. Decided by the server; the app&#39;s clock is only used to know when to ask again. |
+| opens_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | When the room opens and closes for writing; unset when it has no schedule (a crew&#39;s chat, or an outing without a start time). |
+| closes_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-SendMessageRequest"></a>
+
+### SendMessageRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| room | [ChatRoom](#issho-v1-ChatRoom) |  |  |
+| body | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-SendMessageResponse"></a>
+
+### SendMessageResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| message | [ChatMessage](#issho-v1-ChatMessage) |  |  |
+
+
+
+
+
+ 
+
+ 
+
+ 
+
+
+<a name="issho-v1-ChatService"></a>
+
+### ChatService
+ChatService is the group chat of an outing&#39;s group or of a crew: one
+service for both, as a chat room is the same thing either way. Who may
+read or write is decided by the room&#39;s owner (an outing group: people
+going, in a window around the start; a crew: its members), and the
+responses carry that decision. New messages also arrive over the
+WebSocket at GET /ws/chat (see the backend README).
+Requires `Authorization: Bearer &lt;Supabase access token&gt;`.
+
+HTTP: POST /issho.v1.ChatService/&lt;Method&gt;
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| ListMessages | [ListMessagesRequest](#issho-v1-ListMessagesRequest) | [ListMessagesResponse](#issho-v1-ListMessagesResponse) | ListMessages returns the room&#39;s messages: the latest 100, or the 100 after after_id, oldest first, with whether the caller may write now. NOT_FOUND for a room that doesn&#39;t exist or isn&#39;t the caller&#39;s to know about; PERMISSION_DENIED when they&#39;re not (or no longer) in it. |
+| SendMessage | [SendMessageRequest](#issho-v1-SendMessageRequest) | [SendMessageResponse](#issho-v1-SendMessageResponse) | SendMessage posts 1–1000 characters. FAILED_PRECONDITION while the room isn&#39;t open for writing. |
+
+ 
+
+
+
 <a name="issho_v1_citypacks-proto"></a>
 <p align="right"><a href="#top">Top</a></p>
 
@@ -1413,25 +1552,6 @@ HTTP: POST /issho.v1.PlanService/&lt;Method&gt;
 
 
 
-<a name="issho-v1-ChatMessage"></a>
-
-### ChatMessage
-One message in a group chat.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| id | [int64](#int64) |  |  |
-| name | [string](#string) |  | The sender&#39;s first name (&#34;&#34; for a deleted account). |
-| body | [string](#string) |  |  |
-| at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
-| mine | [bool](#bool) |  | Sent by the caller. |
-
-
-
-
-
-
 <a name="issho-v1-CheckInRequest"></a>
 
 ### CheckInRequest
@@ -1547,40 +1667,6 @@ Someone else in the caller&#39;s group, for picks and reports.
 | id | [string](#string) |  | Opaque; only meaningful in feedback and reports for this event. |
 | name | [string](#string) |  | First name. |
 | cancelled | [bool](#bool) |  | They cancelled their place: they can be reported but not picked. |
-
-
-
-
-
-
-<a name="issho-v1-ListChatMessagesRequest"></a>
-
-### ListChatMessagesRequest
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| event_id | [string](#string) |  |  |
-| after_id | [int64](#int64) |  | 0 = the latest messages. |
-
-
-
-
-
-
-<a name="issho-v1-ListChatMessagesResponse"></a>
-
-### ListChatMessagesResponse
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| messages | [ChatMessage](#issho-v1-ChatMessage) | repeated |  |
-| opens_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | When it can be written in; unset when the event has no start time. |
-| closes_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
-| open | [bool](#bool) |  |  |
 
 
 
@@ -1707,37 +1793,6 @@ One event as the caller sees it.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | event | [MyEvent](#issho-v1-MyEvent) |  |  |
-
-
-
-
-
-
-<a name="issho-v1-SendChatMessageRequest"></a>
-
-### SendChatMessageRequest
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| event_id | [string](#string) |  |  |
-| body | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="issho-v1-SendChatMessageResponse"></a>
-
-### SendChatMessageResponse
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| message | [ChatMessage](#issho-v1-ChatMessage) |  |  |
 
 
 
@@ -1876,8 +1931,6 @@ HTTP: POST /issho.v1.EventService/&lt;Method&gt;
 | ListMyEvents | [ListMyEventsRequest](#issho-v1-ListMyEventsRequest) | [ListMyEventsResponse](#issho-v1-ListMyEventsResponse) | ListMyEvents returns the caller&#39;s events from yesterday on, soonest first, whatever their answer, and older ones still waiting for their feedback. |
 | GetEvent | [GetEventRequest](#issho-v1-GetEventRequest) | [GetEventResponse](#issho-v1-GetEventResponse) | GetEvent returns one of the caller&#39;s events with its stops and, if the caller confirmed, who else is going. NOT_FOUND unless the caller is invited to it. |
 | RespondToEvent | [RespondToEventRequest](#issho-v1-RespondToEventRequest) | [RespondToEventResponse](#issho-v1-RespondToEventResponse) | RespondToEvent confirms, declines or cancels the caller&#39;s place. FAILED_PRECONDITION when it&#39;s too late, the event is cancelled or over, or the answer doesn&#39;t apply (e.g. cancelling a place not confirmed). |
-| ListChatMessages | [ListChatMessagesRequest](#issho-v1-ListChatMessagesRequest) | [ListChatMessagesResponse](#issho-v1-ListChatMessagesResponse) | ListChatMessages returns the caller&#39;s group chat for an event: the latest messages, or those after after_id. Only for people who confirmed (PERMISSION_DENIED otherwise); empty until it opens 48 hours before the start. New messages also arrive over the WebSocket at GET /ws/chat (see the backend README). |
-| SendChatMessage | [SendChatMessageRequest](#issho-v1-SendChatMessageRequest) | [SendChatMessageResponse](#issho-v1-SendChatMessageResponse) | SendChatMessage posts to the caller&#39;s group chat while it&#39;s open (48 hours before the start until 24 hours after; FAILED_PRECONDITION otherwise). 1–1000 characters. |
 | CheckIn | [CheckInRequest](#issho-v1-CheckInRequest) | [CheckInResponse](#issho-v1-CheckInResponse) | CheckIn records that the caller has arrived: only people who confirmed (PERMISSION_DENIED otherwise), from 30 minutes before the start until 3 hours after (FAILED_PRECONDITION otherwise). Checking in again is fine. |
 | GetFeedback | [GetFeedbackRequest](#issho-v1-GetFeedbackRequest) | [GetFeedbackResponse](#issho-v1-GetFeedbackResponse) | GetFeedback returns the caller&#39;s feedback form for an outing: the others in their group (first names), and what the caller already said. For anyone who confirmed, even if they cancelled since (to report someone); PERMISSION_DENIED otherwise. Feedback itself is `open` only to people who went ahead with their group, from 3 hours after the start for 14 days. |
 | SubmitFeedback | [SubmitFeedbackRequest](#issho-v1-SubmitFeedbackRequest) | [SubmitFeedbackResponse](#issho-v1-SubmitFeedbackResponse) | SubmitFeedback records whether the caller went, their ratings, who they&#39;d meet again and who they&#39;d rather not, replacing anything sent before. Both are private: nobody is told who picked them; two people who picked each other are more likely to be grouped again (and may be offered a crew); &#34;rather not&#34; keeps the two apart for good. FAILED_PRECONDITION outside the window. |
@@ -1927,27 +1980,6 @@ A crew, or an offer of one, as the caller sees it.
 | name | [string](#string) |  | First name. |
 | accepted | [bool](#bool) |  |  |
 | me | [bool](#bool) |  | The caller. |
-
-
-
-
-
-
-<a name="issho-v1-CrewMessage"></a>
-
-### CrewMessage
-A message in a crew&#39;s chat: someone&#39;s text, or a plan Issho suggested
-(plan_id set; name and body empty).
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| id | [int64](#int64) |  |  |
-| name | [string](#string) |  |  |
-| body | [string](#string) |  |  |
-| at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
-| mine | [bool](#bool) |  |  |
-| plan_id | [string](#string) |  |  |
 
 
 
@@ -2005,37 +2037,6 @@ A message in a crew&#39;s chat: someone&#39;s text, or a plan Issho suggested
 
 ### LeaveCrewResponse
 
-
-
-
-
-
-
-<a name="issho-v1-ListCrewMessagesRequest"></a>
-
-### ListCrewMessagesRequest
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| crew_id | [string](#string) |  |  |
-| after_id | [int64](#int64) |  | 0 = the latest messages. |
-
-
-
-
-
-
-<a name="issho-v1-ListCrewMessagesResponse"></a>
-
-### ListCrewMessagesResponse
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| messages | [CrewMessage](#issho-v1-CrewMessage) | repeated |  |
 
 
 
@@ -2125,37 +2126,6 @@ A message in a crew&#39;s chat: someone&#39;s text, or a plan Issho suggested
 
 
 
-
-<a name="issho-v1-SendCrewMessageRequest"></a>
-
-### SendCrewMessageRequest
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| crew_id | [string](#string) |  |  |
-| body | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="issho-v1-SendCrewMessageResponse"></a>
-
-### SendCrewMessageResponse
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| message | [CrewMessage](#issho-v1-CrewMessage) |  |  |
-
-
-
-
-
  
 
 
@@ -2224,8 +2194,6 @@ HTTP: POST /issho.v1.CrewService/&lt;Method&gt;
 | ListMyCrews | [ListMyCrewsRequest](#issho-v1-ListMyCrewsRequest) | [ListMyCrewsResponse](#issho-v1-ListMyCrewsResponse) | ListMyCrews returns the caller&#39;s crews and the offers still open to them, newest first. |
 | GetCrew | [GetCrewRequest](#issho-v1-GetCrewRequest) | [GetCrewResponse](#issho-v1-GetCrewResponse) | GetCrew returns one of them. NOT_FOUND otherwise. |
 | RespondToCrew | [RespondToCrewRequest](#issho-v1-RespondToCrewRequest) | [RespondToCrewResponse](#issho-v1-RespondToCrewResponse) | RespondToCrew accepts or declines an offer while it&#39;s open (the answer can be changed until then). FAILED_PRECONDITION once it has closed. |
-| ListCrewMessages | [ListCrewMessagesRequest](#issho-v1-ListCrewMessagesRequest) | [ListCrewMessagesResponse](#issho-v1-ListCrewMessagesResponse) | ListCrewMessages returns the crew&#39;s chat: the latest messages, or those after after_id. Members only (PERMISSION_DENIED otherwise). New messages also arrive over the WebSocket at GET /ws/chat, starting with {&#34;token&#34;, &#34;crewId&#34;, &#34;afterId&#34;} (see the backend README). |
-| SendCrewMessage | [SendCrewMessageRequest](#issho-v1-SendCrewMessageRequest) | [SendCrewMessageResponse](#issho-v1-SendCrewMessageResponse) | SendCrewMessage posts 1–1000 characters to the crew&#39;s chat. |
 | LeaveCrew | [LeaveCrewRequest](#issho-v1-LeaveCrewRequest) | [LeaveCrewResponse](#issho-v1-LeaveCrewResponse) | LeaveCrew takes the caller out of a crew, with why. The reason is private: the crew isn&#39;t told why, or that they left. |
 | ReportCrewMember | [ReportCrewMemberRequest](#issho-v1-ReportCrewMemberRequest) | [ReportCrewMemberResponse](#issho-v1-ReportCrewMemberResponse) | ReportCrewMember reports someone in (or who was in) the caller&#39;s crew to the moderators, as EventService.ReportPerson does for an outing. |
 

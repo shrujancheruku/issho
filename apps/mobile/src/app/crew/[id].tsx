@@ -16,8 +16,9 @@ import { ThemedView } from '@/components/themed-view';
 import { Brand, FormWidth, Spacing } from '@/constants/theme';
 import { useCrew, useRespondToCrew } from '@/features/crews/data';
 import { crewName } from '@/features/crews/name';
-import { useChat } from '@/features/events/chat';
-import { ChatPanel, SuggestedPlan } from '@/features/events/chat-panel';
+import { ChatPanel, SuggestedPlan } from '@/features/chat/chat-panel';
+import { suggestedPlans } from '@/features/chat/messages';
+import { useRoom } from '@/features/chat/room';
 import { formatStart } from '@/features/plans/format';
 import { usePlanNames } from '@/features/plans/names';
 import { useMotion } from '@/hooks/use-motion';
@@ -275,9 +276,9 @@ function Active({ crew, onBack }: { crew: Crew; onBack: () => void }) {
   const name = useCrewName(crew);
   const [tab, setTab] = useState<'chat' | 'plans'>('chat');
   const [menu, setMenu] = useState(false);
-  const { messages } = useChat({ crewId: crew.id });
-  // Suggested plans come as chat messages: newest first.
-  const suggested = [...new Set(messages.filter((m) => m.planId).map((m) => m.planId!))].reverse();
+  // The same room (and socket) as the chat tab's: suggested plans are chat messages.
+  const { messages } = useRoom({ crewId: crew.id });
+  const suggested = suggestedPlans(messages);
   const members = crew.members.filter((m) => !m.me).map((m) => m.name).join(', ');
 
   return (
@@ -331,7 +332,7 @@ function Active({ crew, onBack }: { crew: Crew; onBack: () => void }) {
         <KeyboardAvoidingView behavior="padding" style={[styles.fill, styles.column]}>
           {tab === 'chat' ? (
             // Suggestions already sit in the chat where they were made; the Plans tab gathers them.
-            <ChatPanel target={{ crewId: crew.id }} />
+            <ChatPanel room={{ crewId: crew.id }} />
           ) : (
             <ScrollView contentContainerStyle={styles.plans}>
               {suggested.length ? (

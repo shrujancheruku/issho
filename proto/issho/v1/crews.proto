@@ -29,15 +29,6 @@ service CrewService {
   // can be changed until then). FAILED_PRECONDITION once it has closed.
   rpc RespondToCrew(RespondToCrewRequest) returns (RespondToCrewResponse) {}
 
-  // ListCrewMessages returns the crew's chat: the latest messages, or
-  // those after after_id. Members only (PERMISSION_DENIED otherwise). New
-  // messages also arrive over the WebSocket at GET /ws/chat, starting with
-  // {"token", "crewId", "afterId"} (see the backend README).
-  rpc ListCrewMessages(ListCrewMessagesRequest) returns (ListCrewMessagesResponse) {}
-
-  // SendCrewMessage posts 1–1000 characters to the crew's chat.
-  rpc SendCrewMessage(SendCrewMessageRequest) returns (SendCrewMessageResponse) {}
-
   // LeaveCrew takes the caller out of a crew, with why. The reason is
   // private: the crew isn't told why, or that they left.
   rpc LeaveCrew(LeaveCrewRequest) returns (LeaveCrewResponse) {}
@@ -68,25 +59,6 @@ message RespondToCrewRequest {
 
 message RespondToCrewResponse {
   Crew crew = 1;
-}
-
-message ListCrewMessagesRequest {
-  string crew_id = 1;
-  // 0 = the latest messages.
-  int64 after_id = 2;
-}
-
-message ListCrewMessagesResponse {
-  repeated CrewMessage messages = 1;
-}
-
-message SendCrewMessageRequest {
-  string crew_id = 1;
-  string body = 2;
-}
-
-message SendCrewMessageResponse {
-  CrewMessage message = 1;
 }
 
 message LeaveCrewRequest {
@@ -133,17 +105,6 @@ message CrewMember {
   bool accepted = 3;
   // The caller.
   bool me = 4;
-}
-
-// A message in a crew's chat: someone's text, or a plan Issho suggested
-// (plan_id set; name and body empty).
-message CrewMessage {
-  int64 id = 1;
-  string name = 2;
-  string body = 3;
-  google.protobuf.Timestamp at = 4;
-  bool mine = 5;
-  string plan_id = 6;
 }
 
 enum CrewStatus {

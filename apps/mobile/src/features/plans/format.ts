@@ -41,8 +41,12 @@ export function withoutExamples(name: string) {
 
 /** "Sat, Oct 31, 2:00 PM": an event's start, in the device's time zone. */
 export function formatStart(ts: FeedPlan['signupDeadline'], lang: string) {
-  if (!ts) return '';
-  const at = new Date(Number(ts.seconds) * 1000);
+  return ts ? formatMoment(Number(ts.seconds) * 1000, lang) : '';
+}
+
+/** The same for a time in epoch milliseconds. */
+export function formatMoment(ms: number, lang: string) {
+  const at = new Date(ms);
   const opts: Intl.DateTimeFormatOptions = { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' };
   try {
     return new Intl.DateTimeFormat(lang, opts).format(at);

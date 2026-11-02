@@ -54,9 +54,9 @@ backend/
     platform/  cross-cutting: config, db, auth, i18n, errs (no business logic)
     <domain>/  identity, catalog, cities, … each has handler.go (transport) and service.go (logic)
     plans/     plans, signups, scheduling and events (with their chats' access rules)
-    crews/     crews: the weekly pass that offers them, answers, chat, leaving
+    crews/     crews: the weekly pass that offers them, answers, leaving, and their chat room's access rules (Membership)
     notifications/  the push outbox, send pass and receipts; plans and crews register how their kinds read
-    chat/      chat storage shared by events and crews (limits, cleaning, posting with NOTIFY)
+    chat/      chat rooms for events and crews: listing, posting (limits, cleaning, NOTIFY) and the cursor; owners plug in who may use a room
     testfixture/  a throwaway city with people, for integration tests across packages
   db/migrations  goose SQL (embedded into binaries)
   db/queries     sqlc input SQL

@@ -1,0 +1,79 @@
+syntax = "proto3";
+
+package issho.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/shrujancheruku/issho/backend/gen/issho/v1;isshov1";
+
+// ChatService is the group chat of an outing's group or of a crew: one
+// service for both, as a chat room is the same thing either way. Who may
+// read or write is decided by the room's owner (an outing group: people
+// going, in a window around the start; a crew: its members), and the
+// responses carry that decision. New messages also arrive over the
+// WebSocket at GET /ws/chat (see the backend README).
+// Requires `Authorization: Bearer <Supabase access token>`.
+//
+// HTTP: POST /issho.v1.ChatService/<Method>
+service ChatService {
+  // ListMessages returns the room's messages: the latest 100, or the 100
+  // after after_id, oldest first, with whether the caller may write now.
+  // NOT_FOUND for a room that doesn't exist or isn't the caller's to know
+  // about; PERMISSION_DENIED when they're not (or no longer) in it.
+  rpc ListMessages(ListMessagesRequest) returns (ListMessagesResponse) {}
+
+  // SendMessage posts 1–1000 characters. FAILED_PRECONDITION while the
+  // room isn't open for writing.
+  rpc SendMessage(SendMessageRequest) returns (SendMessageResponse) {}
+}
+
+// A chat room: an event's group chat (the caller's group of that event) or
+// a crew's.
+message ChatRoom {
+  oneof room {
+    string event_id = 1;
+    string crew_id = 2;
+  }
+}
+
+message ListMessagesRequest {
+  ChatRoom room = 1;
+  // 0 = the latest messages.
+  int64 after_id = 2;
+}
+
+message ListMessagesResponse {
+  repeated ChatMessage messages = 1;
+  // Whether the caller may write now. Decided by the server; the app's
+  // clock is only used to know when to ask again.
+  bool open = 2;
+  // When the room opens and closes for writing; unset when it has no
+  // schedule (a crew's chat, or an outing without a start time).
+  google.protobuf.Timestamp opens_at = 3;
+  google.protobuf.Timestamp closes_at = 4;
+}
+
+message SendMessageRequest {
+  ChatRoom room = 1;
+  string body = 2;
+}
+
+message SendMessageResponse {
+  ChatMessage message = 1;
+}
+
+// One message in a chat room: someone's text, or a plan Issho suggested in a
+// crew's chat (plan_id set; user_id, name and body empty).
+message ChatMessage {
+  int64 id = 1;
+  // The sender, as in typing notices ("" for a suggested plan or a deleted
+  // account).
+  string user_id = 6;
+  // The sender's first name ("" for a deleted account).
+  string name = 2;
+  string body = 3;
+  google.protobuf.Timestamp at = 4;
+  // Sent by the caller.
+  bool mine = 5;
+  string plan_id = 7;
+}

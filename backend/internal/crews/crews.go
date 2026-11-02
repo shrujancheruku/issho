@@ -16,7 +16,6 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
-	"github.com/shrujancheruku/issho/backend/internal/chat"
 	"github.com/shrujancheruku/issho/backend/internal/matching"
 	"github.com/shrujancheruku/issho/backend/internal/plans"
 )
@@ -35,6 +34,8 @@ const (
 	Accepted  = "accepted"
 	Declined  = "declined"
 	Left      = "left"
+	// Unanswered: the offer was decided before they answered.
+	Unanswered = "lapsed"
 )
 
 // Why someone left a crew (app.crew_leaves.reason).
@@ -93,13 +94,6 @@ type Mate struct {
 	Me       bool
 }
 
-// Message is a message in a crew's chat: someone's text, or a plan
-// suggested by Issho (PlanID set, Name and Body empty).
-type Message struct {
-	chat.Message
-	PlanID uuid.UUID
-}
-
 // List returns the caller's crews and the crew offers still open to them,
 // newest first.
 func (s *Service) List(ctx context.Context, userID uuid.UUID) ([]Item, error) {
@@ -128,9 +122,7 @@ func (s *Service) Get(ctx context.Context, userID, crewID uuid.UUID) (Item, erro
 	if err != nil {
 		return Item{}, err
 	}
-	visible := (r.Status == Offered && (r.Response == Undecided || r.Response == Accepted)) ||
-		(r.Status == Active && r.Response == Accepted)
-	if !visible {
+	if !newMembership(r.Status, r.Response, r.OfferUntil).Visible() {
 		return Item{}, ErrNoCrew
 	}
 	it := Item{ID: crewID, Status: r.Status, Activity: deref(r.ActivityID), Area: deref(r.AreaID), OfferUntil: r.OfferUntil.Time, Response: r.Response}
@@ -163,8 +155,8 @@ func (s *Service) Respond(ctx context.Context, userID, crewID uuid.UUID, accept 
 		if err != nil {
 			return err
 		}
-		if m.Status != Offered || !now.Before(m.OfferUntil.Time) {
-			return ErrOver
+		if err := newMembership(m.Status, m.Response, m.OfferUntil).Respond(now); err != nil {
+			return err
 		}
 		response := Declined
 		if accept {
@@ -203,7 +195,13 @@ func decide(ctx context.Context, q *dbgen.Queries, crewID uuid.UUID, now time.Ti
 	if len(accepted) >= matching.CrewMinSize {
 		status = Active
 	}
-	if err := q.SetCrewStatus(ctx, dbgen.SetCrewStatusParams{ID: crewID, Status: status, At: pgtype.Timestamptz{Time: now, Valid: true}}); err != nil {
+	at := pgtype.Timestamptz{Time: now, Valid: true}
+	if err := q.SetCrewStatus(ctx, dbgen.SetCrewStatusParams{ID: crewID, Status: status, At: at}); err != nil {
+		return "", err
+	}
+	// Whoever never answered is out; otherwise an active crew would list
+	// them as "still deciding" for good.
+	if err := q.LapseUnansweredCrewMembers(ctx, dbgen.LapseUnansweredCrewMembersParams{CrewID: crewID, At: at}); err != nil {
 		return "", err
 	}
 	if status == Active {
@@ -234,8 +232,8 @@ func (s *Service) Leave(ctx context.Context, userID, crewID uuid.UUID, reason, d
 		if err != nil {
 			return err
 		}
-		if m.Response != Accepted || (m.Status != Active && m.Status != Offered) {
-			return ErrNotMember
+		if err := newMembership(m.Status, m.Response, m.OfferUntil).Leave(); err != nil {
+			return err
 		}
 		at := pgtype.Timestamptz{Time: now, Valid: true}
 		if err := q.InsertCrewLeave(ctx, dbgen.InsertCrewLeaveParams{
@@ -285,13 +283,14 @@ func (s *Service) RemoveFromAll(ctx context.Context, userID uuid.UUID, now time.
 			if err != nil {
 				return err
 			}
+			next, ok := newMembership(m.Status, m.Response, m.OfferUntil).Remove()
 			switch {
-			case m.Response == Undecided && m.Status == Offered:
-				return q.SetCrewResponse(ctx, dbgen.SetCrewResponseParams{CrewID: crewID, UserID: userID, Response: Declined, At: at})
-			case m.Response == Accepted && (m.Status == Offered || m.Status == Active):
+			case !ok:
+				return nil
+			case next == Left:
 				return leave(ctx, q, crewID, userID, m.Status, at)
 			}
-			return nil
+			return q.SetCrewResponse(ctx, dbgen.SetCrewResponseParams{CrewID: crewID, UserID: userID, Response: next, At: at})
 		}); err != nil {
 			return err
 		}
@@ -299,77 +298,21 @@ func (s *Service) RemoveFromAll(ctx context.Context, userID uuid.UUID, now time.
 	return nil
 }
 
-// chatAccess checks the caller is in an active crew.
-func chatAccess(ctx context.Context, q *dbgen.Queries, userID, crewID uuid.UUID) error {
+// newMembership reads a membership from a query's columns.
+func newMembership(status, response string, offerUntil pgtype.Timestamptz) Membership {
+	return Membership{Status: status, Response: response, OfferUntil: offerUntil.Time}
+}
+
+// loadMembership reads the caller's place in a crew (ErrNoCrew if none).
+func loadMembership(ctx context.Context, q *dbgen.Queries, userID, crewID uuid.UUID) (Membership, error) {
 	r, err := q.GetCrewMembership(ctx, dbgen.GetCrewMembershipParams{CrewID: crewID, UserID: userID})
 	if errors.Is(err, pgx.ErrNoRows) {
-		return ErrNoCrew
+		return Membership{}, ErrNoCrew
 	}
 	if err != nil {
-		return err
+		return Membership{}, err
 	}
-	if r.Response != Accepted {
-		return ErrNotMember
-	}
-	if r.Status != Active {
-		return ErrOver
-	}
-	return nil
-}
-
-// Messages returns a crew's chat after message afterID (0 = the latest
-// messages), oldest first.
-func (s *Service) Messages(ctx context.Context, userID, crewID uuid.UUID, afterID int64) ([]Message, error) {
-	q := dbgen.New(s.DB)
-	if err := chatAccess(ctx, q, userID, crewID); err != nil {
-		return nil, err
-	}
-	var rows []dbgen.ListCrewMessagesRow
-	if afterID == 0 {
-		rs, err := q.ListLatestCrewMessages(ctx, dbgen.ListLatestCrewMessagesParams{CrewID: crewID, Max: chat.Page})
-		if err != nil {
-			return nil, err
-		}
-		for _, r := range rs {
-			rows = append(rows, dbgen.ListCrewMessagesRow(r))
-		}
-	} else {
-		var err error
-		if rows, err = q.ListCrewMessages(ctx, dbgen.ListCrewMessagesParams{CrewID: crewID, AfterID: afterID, Max: chat.Page}); err != nil {
-			return nil, err
-		}
-	}
-	out := make([]Message, len(rows))
-	for i, r := range rows {
-		out[i] = Message{
-			Message: chat.Message{ID: r.ID, Name: deref(r.DisplayName), Body: r.Body, At: r.CreatedAt.Time, Mine: r.UserID.Valid && r.UserID.Bytes == userID},
-			PlanID:  r.PlanID.Bytes,
-		}
-	}
-	return out, nil
-}
-
-// Send posts to the caller's crew chat and tells every API instance (NOTIFY
-// chat, as for event chats), so open chats update.
-func (s *Service) Send(ctx context.Context, userID, crewID uuid.UUID, body string) (Message, error) {
-	body, ok := chat.Clean(body)
-	if !ok {
-		return Message{}, plans.Invalid("message: 1 to %d characters", chat.MaxMessage)
-	}
-	var msg Message
-	err := pgx.BeginFunc(ctx, s.DB, func(tx pgx.Tx) error {
-		q := dbgen.New(tx)
-		if err := chatAccess(ctx, q, userID, crewID); err != nil {
-			return err
-		}
-		r, err := q.InsertCrewMessage(ctx, dbgen.InsertCrewMessageParams{CrewID: crewID, UserID: pgtype.UUID{Bytes: userID, Valid: true}, Body: body})
-		if err != nil {
-			return err
-		}
-		msg = Message{Message: chat.Message{ID: r.ID, Body: body, At: r.CreatedAt.Time, Mine: true}}
-		return q.NotifyChat(ctx, crewID.String())
-	})
-	return msg, err
+	return newMembership(r.Status, r.Response, r.OfferUntil), nil
 }
 
 // ReportMember reports someone met in a crew, as plans.Service.Report does

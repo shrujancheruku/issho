@@ -12,6 +12,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
+	"github.com/shrujancheruku/issho/backend/internal/chat"
 	"github.com/shrujancheruku/issho/backend/internal/matching"
 	"github.com/shrujancheruku/issho/backend/internal/notifications"
 	"github.com/shrujancheruku/issho/backend/internal/plans"
@@ -88,6 +89,7 @@ func TestIntegrationCrews(t *testing.T) {
 	a, b, c, d := f.Users[0], f.Users[1], f.Users[2], f.Users[3]
 	plansSvc := &plans.Service{DB: f.Pool}
 	svc := &Service{DB: f.Pool}
+	rooms := &chat.Service{DB: f.Pool, Crew: ChatAccess{}}
 	log := slog.New(slog.NewTextHandler(io.Discard, nil))
 	r := &Runner{DB: f.Pool, Log: log}
 
@@ -162,8 +164,9 @@ func TestIntegrationCrews(t *testing.T) {
 		t.Error("no push about the crew offer")
 	}
 
-	if _, err := svc.Send(ctx, a, crew.ID, "hi"); !errors.Is(err, ErrNotMember) {
-		t.Errorf("chat before accepting: %v, want ErrNotMember", err)
+	room := chat.Room{Kind: chat.CrewRoom, ID: crew.ID}
+	if _, err := rooms.Send(ctx, a, room, "hi", now); !errors.Is(err, chat.ErrForbidden) {
+		t.Errorf("chat before accepting: %v, want ErrForbidden", err)
 	}
 	for _, u := range ids(a, b, c) {
 		if err := svc.Respond(ctx, u, crew.ID, true, now); err != nil {
@@ -177,19 +180,19 @@ func TestIntegrationCrews(t *testing.T) {
 		t.Errorf("answering after it formed: %v, want ErrOver", err)
 	}
 
-	if _, err := svc.Send(ctx, a, crew.ID, " hello crew "); err != nil {
+	if _, err := rooms.Send(ctx, a, room, " hello crew ", now); err != nil {
 		t.Fatal(err)
 	}
-	msgs, err := svc.Messages(ctx, b, crew.ID, 0)
+	msgs, _, err := rooms.Latest(ctx, b, room, now)
 	if err != nil || len(msgs) != 1 || msgs[0].Body != "hello crew" || msgs[0].Mine || msgs[0].Name != "Test" {
 		t.Errorf("b reads %+v, %v", msgs, err)
 	}
-	if _, err := svc.Messages(ctx, d, crew.ID, 0); !errors.Is(err, ErrNoCrew) {
-		t.Errorf("d reads the chat: %v, want ErrNoCrew", err)
+	if _, _, err := rooms.Latest(ctx, d, room, now); !errors.Is(err, chat.ErrNoRoom) {
+		t.Errorf("d reads the chat: %v, want ErrNoRoom", err)
 	}
 	var inv *plans.InvalidError
-	if _, err := svc.Send(ctx, a, crew.ID, "   "); !errors.As(err, &inv) {
-		t.Errorf("empty message: %v, want invalid", err)
+	if _, err := rooms.Send(ctx, a, room, "   ", now); !errors.Is(err, chat.ErrBadMessage) {
+		t.Errorf("empty message: %v, want ErrBadMessage", err)
 	}
 
 	// A day after forming, an open plan on its activity is suggested.
@@ -204,7 +207,7 @@ func TestIntegrationCrews(t *testing.T) {
 	if rep, err := r.Pass(ctx, f.City, now.Add(25*time.Hour)); err != nil || rep.Suggested != 1 {
 		t.Errorf("a day later: %+v, %v; want one suggestion", rep, err)
 	}
-	msgs, _ = svc.Messages(ctx, b, crew.ID, msgs[0].ID)
+	msgs, _, _ = rooms.After(ctx, b, room, msgs[0].ID, now)
 	if len(msgs) != 1 || msgs[0].PlanID != planID {
 		t.Errorf("suggestion = %+v, want plan %s", msgs, planID)
 	}

@@ -23,3 +23,15 @@ _Avoid_: app language, locale
 **Shown language**:
 Which of a person's display languages leads right now; the language switch flips it to the secondary, when they have one.
 _Avoid_: current language, active language
+
+**Crew**:
+A small standing group offered to people who got on well across outings; it suggests a plan each week and has its own chat.
+_Avoid_: club, circle
+
+**Room**:
+One chat: an outing's group chat or a crew's chat.
+_Avoid_: channel, thread, conversation
+
+**Lapsed**:
+A crew offer that someone never answered before it was decided.
+_Avoid_: expired, ignored

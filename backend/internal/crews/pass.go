@@ -13,6 +13,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
+	"github.com/shrujancheruku/issho/backend/internal/chat"
 	"github.com/shrujancheruku/issho/backend/internal/matching"
 	"github.com/shrujancheruku/issho/backend/internal/plans"
 )
@@ -73,7 +74,9 @@ func (r *Runner) Pass(ctx context.Context, cityID string, now time.Time) (PassRe
 		}
 		err = pgx.BeginFunc(ctx, r.DB, func(tx pgx.Tx) error {
 			q := dbgen.New(tx)
-			if err := q.InsertCrewPlanMessage(ctx, dbgen.InsertCrewPlanMessageParams{CrewID: id, PlanID: pgtype.UUID{Bytes: plan, Valid: true}, At: at}); err != nil {
+			// Posting takes the chat's lock, as a member's message does, so
+			// the suggestion's id commits in order with theirs.
+			if err := chat.PostPlan(ctx, q, id, plan, now); err != nil {
 				return err
 			}
 			if err := q.SetCrewSuggested(ctx, dbgen.SetCrewSuggestedParams{ID: id, At: at}); err != nil {
@@ -83,10 +86,7 @@ func (r *Runner) Pass(ctx context.Context, cityID string, now time.Time) (PassRe
 			if err != nil {
 				return err
 			}
-			if err := notify(ctx, q, NotifyCrewSuggestion, id, members); err != nil {
-				return err
-			}
-			return q.NotifyChat(ctx, id.String())
+			return notify(ctx, q, NotifyCrewSuggestion, id, members)
 		})
 		if err != nil {
 			errs = append(errs, fmt.Errorf("crew %s: %w", id, err))
