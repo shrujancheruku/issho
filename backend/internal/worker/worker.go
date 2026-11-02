@@ -103,8 +103,12 @@ func (w *matchCityWorker) Work(ctx context.Context, job *river.Job[MatchCityArgs
 	// Crews read what matching just settled, so they are queued only after
 	// it succeeded. They are a job of their own so a crews failure retries
 	// without re-running Match (which can compose walks with a paid model).
-	_, err = river.ClientFromContext[pgx.Tx](ctx).Insert(ctx, CrewsCityArgs{City: job.Args.City}, nil)
-	return err
+	// For the same reason a failed insert doesn't fail this job: the next
+	// hourly pass queues crews again.
+	if _, err := river.ClientFromContext[pgx.Tx](ctx).Insert(ctx, CrewsCityArgs{City: job.Args.City}, nil); err != nil {
+		w.runner.Log.Error("queue crews", "city", job.Args.City, "err", err)
+	}
+	return nil
 }
 
 // CrewsCityMaxAttempts is modest: the pass is cheap and the next hourly
