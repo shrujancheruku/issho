@@ -16,7 +16,7 @@ import { Fact, Facts } from '@/features/plans/fact';
 import { formatDate, lastSignupDay, walkHours } from '@/features/plans/format';
 import { levelColors, levelLabels } from '@/features/plans/level';
 import { usePlanNames } from '@/features/plans/names';
-import { distanceText, friendsText, pairText, planTitle } from '@/features/plans/plan-card';
+import { distanceText, friendsText, pairText } from '@/features/plans/plan-card';
 import { PlanStops, StopsToggle } from '@/features/plans/plan-stops';
 import { windowDates, type Times } from '@/features/plans/signup';
 import { usePlanTimes } from '@/features/plans/use-plan-times';
@@ -107,15 +107,10 @@ function PlanFrame({ onBack, body, footer }: { onBack: () => void; body: React.R
   );
 }
 
-function useLang() {
-  const { languages, showing } = useI18n();
-  return showing === 'secondary' ? languages.secondary : languages.primary;
-}
-
 function TitleBlock({ data, size = 'large' }: { data: GetPlanResponse; size?: 'large' | 'medium' }) {
-  const { showing } = useI18n();
+  const { pick } = useI18n();
   const otherLanguage = useOtherLanguage();
-  const title = planTitle(data.plan!, showing);
+  const title = pick(data.plan!.title, data.plan!.secondaryTitle);
   return (
     <View style={styles.titleBlock}>
       <ThemedText type="subtitle" style={size === 'large' ? styles.titleLarge : undefined} accessibilityRole="header">
@@ -132,11 +127,10 @@ function TitleBlock({ data, size = 'large' }: { data: GetPlanResponse; size?: 'l
 
 /** The plan before signing up (or closed, or not in a language the person speaks). */
 function Before({ data, names, closed, loading }: { data: GetPlanResponse; names: Names; closed?: StringKey; loading?: boolean }) {
-  const { t, showing } = useI18n();
+  const { t, lang, pick } = useI18n();
   const theme = useTheme();
-  const lang = useLang();
   const p = data.plan!;
-  const summary = showing === 'secondary' && data.secondarySummary ? data.secondarySummary : data.summary;
+  const summary = pick(data.summary, data.secondarySummary).name;
   const hours = walkHours(data.steps, lang);
   const dates = windowDates(p.windowStart, p.windowDays);
   const colors = levelColors(p.level, theme);
@@ -200,7 +194,7 @@ function timesText(pattern: string[], t: ReturnType<typeof useI18n>['t'], lang: 
 function SignedUp({ data, times, names }: { data: GetPlanResponse; times: Times; names: Names }) {
   const { t } = useI18n();
   const theme = useTheme();
-  const lang = useLang();
+  const { lang } = useI18n();
   const p = data.plan!;
   const { withdraw } = useSignupActions(p.id);
   return (

@@ -16,16 +16,6 @@ export function pairText(n: { name: string; secondary: string }) {
   return n.secondary ? `${n.name} · ${n.secondary}` : n.name;
 }
 
-/**
- * The plan's title in the language being shown first: the server sends it in
- * the primary display language with the secondary below.
- */
-export function planTitle(plan: FeedPlan, showing: 'primary' | 'secondary') {
-  return showing === 'secondary' && plan.secondaryTitle
-    ? { name: plan.secondaryTitle, secondary: plan.title }
-    : { name: plan.title, secondary: plan.secondaryTitle };
-}
-
 /** How far a plan is from the person's home area. */
 export function distanceText(t: ReturnType<typeof useI18n>['t'], minutes: number) {
   if (minutes < 0) return t('plan.noRoute');
@@ -54,11 +44,11 @@ export function PlanCard({
   showLevel?: boolean;
   showFriends?: boolean;
 }) {
-  const { t, showing } = useI18n();
+  const { t, pick } = useI18n();
   const otherLanguage = useOtherLanguage();
   const theme = useTheme();
   const greyed = plan.level === PlanLevel.NOT_FOR_YOU;
-  const title = planTitle(plan, showing);
+  const title = pick(plan.title, plan.secondaryTitle);
   const colors = showLevel ? levelColors(plan.level, theme) : null;
   const language = plan.secondaryLanguage
     ? [plan.primaryLanguage, plan.secondaryLanguage].map(names.language).join(' / ')

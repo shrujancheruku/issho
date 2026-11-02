@@ -29,8 +29,7 @@ import { slotKey } from '@/lib/slots';
  */
 export default function SignupSheet() {
   const { id = '' } = useLocalSearchParams<{ id: string }>();
-  const { t, languages, showing } = useI18n();
-  const lang = showing === 'secondary' ? languages.secondary : languages.primary;
+  const { t, lang } = useI18n();
   const theme = useTheme();
   const { plan, usual, saved } = usePlanTimes(id);
   const { signUp } = useSignupActions(id);

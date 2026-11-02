@@ -11,7 +11,7 @@ import { BodyFont, Brand, Spacing } from '@/constants/theme';
 import { usePlan } from '@/features/plans/data';
 import { formatStart, lastSignupDay } from '@/features/plans/format';
 import { usePlanNames } from '@/features/plans/names';
-import { pairText, planTitle } from '@/features/plans/plan-card';
+import { pairText } from '@/features/plans/plan-card';
 import { useNow } from '@/hooks/use-now';
 import { useTheme } from '@/hooks/use-theme';
 import { useI18n } from '@/i18n/i18n-provider';
@@ -32,8 +32,7 @@ const rise = FadeInDown.duration(Motion.move).easing(EaseOut);
  * close, from GetPlan (the message itself carries only the plan's id).
  */
 export function SuggestedPlan({ planId }: { planId: string }) {
-  const { t, languages, showing } = useI18n();
-  const lang = showing === 'secondary' ? languages.secondary : languages.primary;
+  const { t, lang, pick } = useI18n();
   const theme = useTheme();
   const names = usePlanNames();
   const plan = usePlan(planId).data?.plan;
@@ -48,7 +47,7 @@ export function SuggestedPlan({ planId }: { planId: string }) {
       {plan && (
         <>
           <ThemedText type="subtitle" style={styles.suggestionTitle}>
-            {planTitle(plan, showing).name}
+            {pick(plan.title, plan.secondaryTitle).name}
           </ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
             {pairText(names.area(plan.areaId))}. {t('plan.signupBy')}: {lastSignupDay(plan.signupDeadline, lang)}
@@ -87,8 +86,7 @@ function Bubble({ m }: { m: Message }) {
  * messages: a pinned meeting point or suggested plan.
  */
 export function ChatPanel({ target, header }: { target: ChatTarget; header?: ReactElement }) {
-  const { t, languages, showing } = useI18n();
-  const lang = showing === 'secondary' ? languages.secondary : languages.primary;
+  const { t, lang } = useI18n();
   const theme = useTheme();
   const now = useNow();
   const { messages, history, send, typing, onTyping } = useChat(target);

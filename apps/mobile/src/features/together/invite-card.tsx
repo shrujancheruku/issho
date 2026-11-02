@@ -20,15 +20,13 @@ import { haptics } from '@/lib/haptics';
  * where it was tapped; the outing then moves to Your groups.
  */
 export function InviteCard({ event, names }: { event: MyEvent; names: ReturnType<typeof usePlanNames> }) {
-  const { t, languages, showing } = useI18n();
+  const { t, lang, pick } = useI18n();
   const otherLanguage = useOtherLanguage();
-  const lang = showing === 'secondary' ? languages.secondary : languages.primary;
   const theme = useTheme();
   // Refresh after the button has shown "You are going"; the outing then moves to Your groups.
   const respond = useRespond(event.id, { refreshAfter: 1400 });
   const going = respond.isSuccess && respond.variables === 'confirm';
-  const [title, secondary] =
-    showing === 'secondary' && event.secondaryTitle ? [event.secondaryTitle, event.title] : [event.title, event.secondaryTitle];
+  const { name: title, secondary } = pick(event.title, event.secondaryTitle);
   const open = () => router.push({ pathname: '/event/[id]', params: { id: event.id } });
   return (
     <View style={[styles.card, { backgroundColor: theme.surface }]}>

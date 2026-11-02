@@ -23,10 +23,9 @@ export function usePlanNames() {
   const activities = useActivities(cityId);
   const cities = useCities();
   const languages = useLanguages();
-  const { showing } = useI18n();
+  const { pick } = useI18n();
   return useMemo(() => {
-    const order = (n: Names): Names =>
-      showing === 'secondary' && n.secondary ? { name: n.secondary, secondary: n.name } : n;
+    const order = (n: Names): Names => pick(n.name, n.secondary);
     const acts = new Map((activities.data ?? []).map((a) => [a.id, { name: a.name, secondary: a.secondaryName }]));
     const categories = new Map((activities.data ?? []).map((a) => [a.id, a.category]));
     const areas = new Map(
@@ -46,5 +45,5 @@ export function usePlanNames() {
       /** The person's home area centre: where the map starts when there are no pins. */
       home: coords.get(profile.data?.profile?.homeAreaId ?? ''),
     };
-  }, [activities.data, cities.data, languages.data, showing, profile.data]);
+  }, [activities.data, cities.data, languages.data, pick, profile.data]);
 }

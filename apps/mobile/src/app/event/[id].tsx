@@ -55,8 +55,7 @@ async function shareOuting(message: string, title: string) {
  */
 export default function EventScreen() {
   const { id = '' } = useLocalSearchParams<{ id: string }>();
-  const { t, languages, showing } = useI18n();
-  const lang = showing === 'secondary' ? languages.secondary : languages.primary;
+  const { t, lang } = useI18n();
   const event = useEvent(id);
   const names = usePlanNames();
   // Every 15 s: the countdown on the day is in minutes.
@@ -147,9 +146,9 @@ function Frame({ onBack, children }: { onBack: () => void; children: ReactNode }
 }
 
 function Title({ e, detail }: { e: MyEvent; detail?: string }) {
-  const { showing } = useI18n();
+  const { pick } = useI18n();
   const otherLanguage = useOtherLanguage();
-  const [name, secondary] = showing === 'secondary' && e.secondaryTitle ? [e.secondaryTitle, e.title] : [e.title, e.secondaryTitle];
+  const { name, secondary } = pick(e.title, e.secondaryTitle);
   return (
     <View style={styles.titleBlock}>
       <ThemedText type="subtitle" accessibilityRole="header">
@@ -270,8 +269,7 @@ function PlanTab({ ctx }: { ctx: Ctx }) {
 }
 
 function useSummary(data: GetEventResponse) {
-  const { showing } = useI18n();
-  return showing === 'secondary' && data.secondarySummary ? data.secondarySummary : data.summary;
+  return useI18n().pick(data.summary, data.secondarySummary).name;
 }
 
 /** Share with someone you trust (a safety habit) and report someone: plain links, no motion. */
