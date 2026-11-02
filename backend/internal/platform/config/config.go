@@ -105,7 +105,12 @@ type Worker struct {
 	// GeminiAPIKey (a Google Cloud Agent Platform key), with
 	// GoogleMapsAPIKey, composes walking plans (internal/walks). Optional:
 	// without both, no walks are opened.
-	GeminiAPIKey                 string // SentryDSN and SentryEnvironment are as in Config.
+	GeminiAPIKey string
+	// GitHubToken, GitHubRepo and GitHubAPI are as in Config. The worker
+	// only reads with them: merged human UI translations for push text.
+	// Optional: without a token, the worker uses the copies built into it.
+	GitHubToken, GitHubRepo, GitHubAPI string
+	// SentryDSN and SentryEnvironment are as in Config.
 	SentryDSN, SentryEnvironment string
 }
 
@@ -119,6 +124,9 @@ func LoadWorker() (Worker, error) {
 		Translator:            os.Getenv("TRANSLATOR"),
 		GoogleMapsAPIKey:      os.Getenv("GOOGLE_MAPS_API_KEY"),
 		GeminiAPIKey:          os.Getenv("GOOGLE_GEMINI_API_KEY"),
+		GitHubToken:           os.Getenv("GITHUB_TOKEN"),
+		GitHubRepo:            getenv("GITHUB_REPO", "shrujancheruku/issho"),
+		GitHubAPI:             getenv("GITHUB_API_URL", "https://api.github.com"),
 		SentryDSN:             os.Getenv("SENTRY_DSN"),
 		SentryEnvironment:     getenv("SENTRY_ENVIRONMENT", "development"),
 	}
