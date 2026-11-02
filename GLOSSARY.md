@@ -15,3 +15,11 @@ _Avoid_: meetup, event (in the app's copy)
 **Stage**:
 Where an outing stands for one person: *invited* (date set: can you go?), *going*, *on the day* (until check-in closes), and *after* (how was it). An outing that is over or that they're out of is *muted* rather than a stage.
 _Avoid_: step, phase, numbered stages
+
+**Display languages**:
+The one or two languages a person reads the app in: a *primary* and an optional *secondary*. Separate from the languages they speak, which matching uses.
+_Avoid_: app language, locale
+
+**Shown language**:
+Which of a person's display languages leads right now; the language switch flips it to the secondary, when they have one.
+_Avoid_: current language, active language
