@@ -37,7 +37,7 @@ type MatchAllArgs struct{}
 func (MatchAllArgs) Kind() string { return "match_all" }
 
 // MatchCityArgs runs one city's matching pass (plans.Runner.Match), then
-// its crews.
+// queues its crews pass.
 type MatchCityArgs struct {
 	City string `json:"city"`
 }
@@ -81,7 +81,6 @@ func (w *matchAllWorker) Work(ctx context.Context, job *river.Job[MatchAllArgs])
 type matchCityWorker struct {
 	river.WorkerDefaults[MatchCityArgs]
 	runner *plans.Runner
-	crews  *crews.Runner
 	now    func() time.Time
 }
 
@@ -92,20 +91,74 @@ const MatchCityTimeout = 20 * time.Minute
 
 func (w *matchCityWorker) Timeout(*river.Job[MatchCityArgs]) time.Duration { return MatchCityTimeout }
 
-// Work runs the city's matching pass (plans.Runner.Match), then its crews.
+// Work runs the city's matching pass (plans.Runner.Match), then queues its
+// crews pass.
 func (w *matchCityWorker) Work(ctx context.Context, job *river.Job[MatchCityArgs]) error {
 	now := w.now()
 	rep, err := w.runner.Match(ctx, job.Args.City, now)
 	if err != nil {
 		return err
 	}
-	// Crews (offers, forming, weekly plan suggestions) don't hold up matching.
-	crewPass, err := w.crews.Pass(ctx, job.Args.City, now)
-	if err != nil {
-		w.runner.Log.Warn("crews", "city", job.Args.City, "err", err)
+	w.runner.Log.Info("city matched", "city", job.Args.City, "pass", rep)
+	// Crews read what matching just settled, so they are queued only after
+	// it succeeded. They are a job of their own so a crews failure retries
+	// without re-running Match (which can compose walks with a paid model).
+	// For the same reason a failed insert doesn't fail this job: the next
+	// hourly pass queues crews again.
+	if _, err := river.ClientFromContext[pgx.Tx](ctx).Insert(ctx, CrewsCityArgs{City: job.Args.City}, nil); err != nil {
+		w.runner.Log.Error("queue crews", "city", job.Args.City, "err", err)
 	}
-	w.runner.Log.Info("city matched", "city", job.Args.City, "pass", rep,
-		"crews_offered", crewPass.Offered, "crews_formed", crewPass.Formed, "crews_lapsed", crewPass.Lapsed, "crew_suggestions", crewPass.Suggested)
+	return nil
+}
+
+// CrewsCityMaxAttempts is modest: the pass is cheap and the next hourly
+// match_city queues another.
+const CrewsCityMaxAttempts = 5
+
+// CrewsCityArgs runs one city's crews pass (crews.Runner.Pass: decide
+// offers, suggest plans, offer new crews). match_city queues it after
+// matching.
+type CrewsCityArgs struct {
+	City string `json:"city"`
+}
+
+func (CrewsCityArgs) Kind() string { return "crews_city" }
+
+// InsertOpts keeps one pass per city queued or running, like match_city.
+func (CrewsCityArgs) InsertOpts() river.InsertOpts {
+	return river.InsertOpts{
+		MaxAttempts: CrewsCityMaxAttempts,
+		UniqueOpts: river.UniqueOpts{
+			ByArgs: true,
+			ByState: []rivertype.JobState{
+				rivertype.JobStateAvailable, rivertype.JobStatePending, rivertype.JobStateRunning,
+				rivertype.JobStateRetryable, rivertype.JobStateScheduled,
+			},
+		},
+	}
+}
+
+// CrewsCityTimeout bounds a city's crews pass (River's default is a minute;
+// a big city decides and offers many crews, each in its own transaction).
+const CrewsCityTimeout = 5 * time.Minute
+
+type crewsCityWorker struct {
+	river.WorkerDefaults[CrewsCityArgs]
+	crews *crews.Runner
+	now   func() time.Time
+}
+
+func (w *crewsCityWorker) Timeout(*river.Job[CrewsCityArgs]) time.Duration { return CrewsCityTimeout }
+
+// Work runs the pass. One crew failing doesn't stop the others; the joined
+// error fails the job so River retries and Sentry hears of it.
+func (w *crewsCityWorker) Work(ctx context.Context, job *river.Job[CrewsCityArgs]) error {
+	rep, err := w.crews.Pass(ctx, job.Args.City, w.now())
+	w.crews.Log.Info("crews", "city", job.Args.City,
+		"offered", rep.Offered, "formed", rep.Formed, "lapsed", rep.Lapsed, "suggestions", rep.Suggested)
+	if err != nil {
+		return fmt.Errorf("crews %s: %w", job.Args.City, err)
+	}
 	return nil
 }
 
@@ -185,9 +238,6 @@ func (w *sendNotificationsWorker) Work(ctx context.Context, _ *river.Job[SendNot
 	return errors.Join(err, rErr)
 }
 
-// NewClient builds the River client with every job and its schedule. The
-// pool must be a direct or session-pooler connection: River needs
-// LISTEN/NOTIFY, which the transaction pooler doesn't support.
 // Maps are the Google Maps lookups the worker uses; all nil without a key.
 type Maps struct {
 	Router     maps.Router
@@ -199,6 +249,9 @@ type Maps struct {
 	Walks *walks.Composer
 }
 
+// NewClient builds the River client with every job and its schedule. The
+// pool must be a direct or session-pooler connection: River needs
+// LISTEN/NOTIFY, which the transaction pooler doesn't support.
 func NewClient(pool *pgxpool.Pool, log *slog.Logger, timing plans.Timing, notifier *plans.Notifier, m Maps) (*river.Client[pgx.Tx], error) {
 	if err := timing.Validate(); err != nil {
 		return nil, err
@@ -207,7 +260,8 @@ func NewClient(pool *pgxpool.Pool, log *slog.Logger, timing plans.Timing, notifi
 	river.AddWorker(workers, &matchAllWorker{q: dbgen.New(pool)})
 	river.AddWorker(workers, &matchCityWorker{runner: &plans.Runner{
 		DB: pool, Timing: timing, Log: log, Hours: m.Hours, Routes: m.Routes, Places: m.Places, Walks: m.Walks, WalkRoutes: m.WalkRoutes,
-	}, crews: &crews.Runner{DB: pool, Log: log}, now: time.Now})
+	}, now: time.Now})
+	river.AddWorker(workers, &crewsCityWorker{crews: &crews.Runner{DB: pool, Log: log}, now: time.Now})
 	river.AddWorker(workers, &refreshMapsWorker{pool: pool, router: m.Router, log: log})
 	river.AddWorker(workers, &sendNotificationsWorker{notifier: notifier, now: time.Now})
 	return river.NewClient(riverpgxv5.New(pool), &river.Config{

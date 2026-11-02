@@ -15,6 +15,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/plans"
 	"github.com/shrujancheruku/issho/backend/internal/platform/config"
 	"github.com/shrujancheruku/issho/backend/internal/platform/db"
+	"github.com/shrujancheruku/issho/backend/internal/platform/github"
 	"github.com/shrujancheruku/issho/backend/internal/platform/sentry"
 	"github.com/shrujancheruku/issho/backend/internal/push"
 	"github.com/shrujancheruku/issho/backend/internal/translate"
@@ -62,6 +63,12 @@ func run() error {
 	catalog, err := uistrings.Load()
 	if err != nil {
 		return err
+	}
+	// Merged human translations reach push text without a worker deploy.
+	if cfg.GitHubToken != "" {
+		gh := github.New(cfg.GitHubToken, cfg.GitHubRepo)
+		gh.API = cfg.GitHubAPI
+		go catalog.Follow(ctx, gh, gh.Base, 5*time.Minute, slog.Default())
 	}
 	notifier := &plans.Notifier{
 		Plans:   &plans.Service{DB: pool, Translations: translations},

@@ -1,5 +1,5 @@
 /// <reference types="jest" />
-import { crewName, withoutExamples } from '../name';
+import { crewName } from '../name';
 
 describe('crewName', () => {
   const names = {
@@ -9,7 +9,7 @@ describe('crewName', () => {
   const template = (name: string) => `${name} crew`;
 
   it('names an activity crew after the activity, without examples', () => {
-    expect(crewName({ activityId: 'food-tour', areaId: '' }, names, template)).toEqual({ name: 'Food tour crew', secondary: '食べ歩き（ラーメン） crew' });
+    expect(crewName({ activityId: 'food-tour', areaId: '' }, names, template)).toEqual({ name: 'Food tour crew', secondary: '食べ歩き crew' });
   });
 
   it('names an area crew after the area, in both stored names', () => {
@@ -17,6 +17,6 @@ describe('crewName', () => {
   });
 
   it('leaves names without examples alone', () => {
-    expect(withoutExamples('Casual soccer game')).toBe('Casual soccer game');
+    expect(crewName({ activityId: 'casual-soccer', areaId: '' }, names, template).name).toBe('casual-soccer crew');
   });
 });

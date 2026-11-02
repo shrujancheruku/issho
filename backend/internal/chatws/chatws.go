@@ -247,7 +247,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	_, raw, err := ws.Read(authCtx)
 	cancel()
 	if err != nil || json.Unmarshal(raw, &first) != nil {
-		ws.Close(closeUnauthorized, "send {token, eventId} first")
+		ws.Close(closeUnauthorized, "send {token, eventId|crewId} first")
 		return
 	}
 	caller, err := h.Verifier.Verify(first.Token)

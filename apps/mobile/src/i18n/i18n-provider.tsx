@@ -150,8 +150,8 @@ const CHECK_EVERY = 60 * 60 * 1000;
  * The UI catalogue in one language: from the device cache straight away (or,
  * on a fresh install, the copy bundled for the city packs' languages), then
  * from the server when the cache is missing, incomplete or older than this
- * build's keys. While the server is still translating, it asks again every
- * 30 seconds; a current copy is checked hourly, including when the app comes
+ * build's keys. While the server is still translating, it asks again, backing
+ * off from 5 seconds to a minute; a current copy is checked hourly, including when the app comes
  * back to the foreground. Missing strings fall back (lookup), so this never
  * blocks the UI.
  */

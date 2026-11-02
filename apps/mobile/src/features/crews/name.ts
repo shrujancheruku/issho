@@ -1,11 +1,7 @@
 import type { Crew } from '@issho/api-client';
 
+import { withoutExamples } from '@/features/plans/format';
 import type { Names } from '@/features/plans/names';
-
-/** Drops a trailing "(…)" of examples from a catalogue name, as plan titles do. */
-export function withoutExamples(name: string) {
-  return name.replace(/ \([^)]*\)$/, '');
-}
 
 /**
  * A crew's name, "{name} crew", from what it's named after: the activity

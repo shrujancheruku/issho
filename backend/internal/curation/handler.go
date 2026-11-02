@@ -45,7 +45,7 @@ const (
 )
 
 // Handler serves CurationService. cmd/api limits the service to admins
-// (auth.AdminOnly); admin() checks again so a wiring mistake fails closed.
+// (auth.AdminOnly); each call checks again (auth.RequireAdmin) so a wiring mistake fails closed.
 type Handler struct {
 	DB *pgxpool.Pool
 	// Places is nil without GOOGLE_MAPS_API_KEY: names are then blank, and

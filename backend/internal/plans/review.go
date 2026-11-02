@@ -32,8 +32,8 @@ const (
 )
 
 // ReviewHandler serves ReviewService: plan review in the admin SPA (M8).
-// cmd/api limits the service to admins (auth.AdminOnly); admin() checks
-// again so a wiring mistake fails closed.
+// cmd/api limits the service to admins (auth.AdminOnly); each call checks
+// again (auth.RequireAdmin) so a wiring mistake fails closed.
 type ReviewHandler struct {
 	Svc *Service
 	// Timing sets a round's window when a plan opens (approved or made by

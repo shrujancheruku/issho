@@ -1,10 +1,10 @@
 // Package moderation serves ModerationService, the moderation queue in the
-// admin SPA (M8): reports, flags, crew leave reasons, corrections to
-// machine translations, and people (looking someone up, suspending them).
+// admin SPA (M8): reports, flags, crew leave reasons, and people (looking
+// someone up, suspending them).
 // It also holds the API's check that refuses suspended people (Gate).
 //
 // Every call is for admins only. cmd/api enforces that for the whole
-// service (auth.AdminOnly); moderator() checks again so a wiring mistake
+// service (auth.AdminOnly); each call checks again (auth.RequireAdmin) so a wiring mistake
 // fails closed.
 package moderation
 
