@@ -53,7 +53,7 @@ type Repo interface {
 }
 
 // Handler serves CityPackService. cmd/api limits the service to admins
-// (auth.AdminOnly); admin() checks again so a wiring mistake fails closed.
+// (auth.AdminOnly); each call checks again (auth.RequireAdmin) so a wiring mistake fails closed.
 type Handler struct {
 	DB *pgxpool.Pool
 	// GitHub is nil without GITHUB_TOKEN; Base is its default branch.

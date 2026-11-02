@@ -10,8 +10,8 @@ import { ChatPanel } from '@/features/events/chat-panel';
 import { useI18n } from '@/i18n/i18n-provider';
 
 /**
- * An event's group chat on its own, for links from notifications. In the
- * app the chat sits on the outing screen (event/[id]).
+ * An event's group chat full screen, opened from "Open chat" on
+ * the outing screen (event/[id]), where the chat also sits inline.
  */
 export default function ChatScreen() {
   const { id = '' } = useLocalSearchParams<{ id: string }>();
