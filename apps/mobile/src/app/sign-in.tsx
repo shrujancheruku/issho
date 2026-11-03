@@ -1,11 +1,10 @@
 import { Image } from 'expo-image';
 import { useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Pressable, StyleSheet, TextInput, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
+import { ScreenFrame } from '@/components/screen-frame';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { BodyFont, FormWidth, Spacing } from '@/constants/theme';
+import { BodyFont, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { PrimaryButton } from '@/components/primary-button';
 import { useI18n } from '@/i18n/i18n-provider';
@@ -68,11 +67,10 @@ export default function SignInScreen() {
   const validEmail = /^\S+@\S+\.\S+$/.test(email.trim());
 
   return (
-    <ThemedView style={styles.fill}>
-      <SafeAreaView style={styles.fill}>
-        {/* Padding on both platforms: SDK 58 Android apps are edge-to-edge, so the window no
-            longer resizes for the keyboard and the code field would sit behind it. */}
-        <KeyboardAvoidingView behavior="padding" style={styles.content}>
+    // The frame keeps the keyboard off the code field (SDK 58 Android apps are edge-to-edge,
+    // so the window no longer resizes for it) and gives the form column.
+    <ScreenFrame>
+      <View style={styles.content}>
           <Image source={require('@/assets/images/logo.png')} style={styles.logo} contentFit="contain" accessibilityLabel="Issho" />
 
           {step === 'email' ? (
@@ -123,15 +121,13 @@ export default function SignInScreen() {
           )}
 
           {error && <ThemedText themeColor="error" style={styles.error}>{error}</ThemedText>}
-        </KeyboardAvoidingView>
-      </SafeAreaView>
-    </ThemedView>
+      </View>
+    </ScreenFrame>
   );
 }
 
 const styles = StyleSheet.create({
-  fill: { flex: 1 },
-  content: { flex: 1, justifyContent: 'center', padding: Spacing.four, gap: Spacing.four, width: '100%', maxWidth: FormWidth, alignSelf: 'center' },
+  content: { flex: 1, justifyContent: 'center', padding: Spacing.four, gap: Spacing.four },
   // Capped so the logo stays a logo on wide screens instead of filling them.
   logo: { width: '70%', maxWidth: 280, aspectRatio: 900 / 598, alignSelf: 'center' },
   form: { gap: Spacing.three },

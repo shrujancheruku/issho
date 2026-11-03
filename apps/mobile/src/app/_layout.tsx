@@ -1,12 +1,19 @@
 import { DelaGothicOne_400Regular, useFonts } from '@expo-google-fonts/dela-gothic-one';
-import { ZenKakuGothicNew_400Regular, ZenKakuGothicNew_500Medium, ZenKakuGothicNew_700Bold } from '@expo-google-fonts/zen-kaku-gothic-new';
+import {
+  ZenKakuGothicNew_400Regular,
+  ZenKakuGothicNew_500Medium,
+  ZenKakuGothicNew_700Bold,
+} from '@expo-google-fonts/zen-kaku-gothic-new';
 import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { ActivityIndicator, Pressable, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
+import { LoadFailed, LoadState } from '@/components/query-screen';
+import { ScreenFrame } from '@/components/screen-frame';
 import { SplashOverlay } from '@/components/splash-overlay';
+import { TextLink } from '@/components/text-link';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Colors, Spacing } from '@/constants/theme';
@@ -38,14 +45,7 @@ const queryClient = new QueryClient({
 // so give it the app's grounds; otherwise screens flash white or black.
 const navTheme = (base: typeof DefaultTheme, c: (typeof Colors)['light' | 'dark']) => ({
   ...base,
-  colors: {
-    ...base.colors,
-    primary: c.accent,
-    background: c.background,
-    card: c.surface,
-    text: c.text,
-    border: c.backgroundSelected,
-  },
+  colors: { ...base.colors, primary: c.accent, background: c.background, card: c.surface, text: c.text, border: c.backgroundSelected },
 });
 const navLight = navTheme(DefaultTheme, Colors.light);
 const navDark = navTheme(DarkTheme, Colors.dark);
@@ -110,21 +110,18 @@ function RootNavigator() {
   // Signed in, but the API hasn't told us yet whether the user is onboarded.
   if (session && onboarded === null) {
     return (
-      <ThemedView style={styles.center}>
-        {accountError ? (
-          <>
-            <ThemedText>{t('error.network')}</ThemedText>
-            <Pressable onPress={retryAccount}>
-              <ThemedText type="link">{t('common.retry')}</ThemedText>
-            </Pressable>
-            <Pressable onPress={signOut}>
-              <ThemedText type="link">{t('account.signOut')}</ThemedText>
-            </Pressable>
-          </>
-        ) : (
-          <ActivityIndicator />
-        )}
-      </ThemedView>
+      <ScreenFrame>
+        <ThemedView style={styles.center}>
+          {accountError ? (
+            <>
+              <LoadFailed center onRetry={retryAccount} />
+              <TextLink center muted label={t('account.signOut')} onPress={signOut} />
+            </>
+          ) : (
+            <LoadState queries={[]} />
+          )}
+        </ThemedView>
+      </ScreenFrame>
     );
   }
 
@@ -143,12 +140,7 @@ function RootNavigator() {
         {/* Choosing times slides up over the plan, as a sheet on phones. */}
         <Stack.Screen
           name="signup/[id]"
-          options={{
-            presentation: 'formSheet',
-            sheetAllowedDetents: [0.92],
-            sheetGrabberVisible: true,
-            sheetCornerRadius: 20,
-          }}
+          options={{ presentation: 'formSheet', sheetAllowedDetents: [0.92], sheetGrabberVisible: true, sheetCornerRadius: 20 }}
         />
         <Stack.Screen name="event/[id]" />
         <Stack.Screen name="chat/[id]" />
@@ -163,13 +155,7 @@ function RootNavigator() {
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  center: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: Spacing.three,
-    padding: Spacing.four,
-  },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: Spacing.three, padding: Spacing.four },
   message: { textAlign: 'center', maxWidth: 420 },
 });
 

@@ -11,11 +11,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { useI18n } from '@/i18n/i18n-provider';
 
 /** Centers a screen's content in a column that stays phone-width on a wide browser. */
-export const columnStyle = {
-  width: '100%',
-  maxWidth: FormWidth,
-  alignSelf: 'center',
-} as const;
+export const columnStyle = { width: '100%', maxWidth: FormWidth, alignSelf: 'center' } as const;
 
 /**
  * What every back button does: go back, or, when there is nothing to go
@@ -100,11 +96,7 @@ function AccentBand({ onBack, end, column, children }: { onBack?: () => void; en
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   return (
-    <View
-      style={{
-        backgroundColor: theme.accent,
-        paddingTop: insets.top + Spacing.two,
-      }}>
+    <View style={{ backgroundColor: theme.accent, paddingTop: insets.top + Spacing.two }}>
       <View style={[column, styles.band]}>
         {onBack && <HeaderRow onBack={onBack} end={end} color={theme.onAccent} pad={false} />}
         {children}
@@ -116,21 +108,9 @@ function AccentBand({ onBack, end, column, children }: { onBack?: () => void; en
 const styles = StyleSheet.create({
   fill: { flex: 1 },
   wide: { width: '100%', maxWidth: MaxContentWidth, alignSelf: 'center' },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   pad: { paddingHorizontal: Spacing.three },
   end: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
-  band: {
-    paddingHorizontal: Spacing.three,
-    paddingBottom: Spacing.three,
-    gap: Spacing.two,
-  },
-  tabHeader: {
-    paddingHorizontal: Spacing.three,
-    paddingTop: Spacing.four,
-    paddingBottom: Spacing.two,
-  },
+  band: { paddingHorizontal: Spacing.three, paddingBottom: Spacing.three, gap: Spacing.two },
+  tabHeader: { paddingHorizontal: Spacing.three, paddingTop: Spacing.four, paddingBottom: Spacing.two },
 });

@@ -105,13 +105,7 @@ const styles = StyleSheet.create({
   titleBlock: { gap: Spacing.two },
   section: { gap: Spacing.two },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
-  input: {
-    fontFamily: BodyFont.regular,
-    minHeight: 96,
-    borderRadius: 12,
-    padding: Spacing.three,
-    textAlignVertical: 'top',
-  },
+  input: { fontFamily: BodyFont.regular, minHeight: 96, borderRadius: 12, padding: Spacing.three, textAlignVertical: 'top' },
   footer: { padding: Spacing.four, gap: Spacing.two },
   error: { textAlign: 'center' },
 });

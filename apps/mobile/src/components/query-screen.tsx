@@ -17,9 +17,7 @@ export type QueryLike = {
   refetch: () => unknown;
 };
 
-type Loaded<Q extends readonly QueryLike[]> = {
-  [K in keyof Q]: NonNullable<Q[K]['data']>;
-};
+type Loaded<Q extends readonly QueryLike[]> = { [K in keyof Q]: NonNullable<Q[K]['data']> };
 
 const isNotFound = (error: unknown) => error instanceof ConnectError && error.code === Code.NotFound;
 
@@ -82,10 +80,6 @@ export function QueryScreen<const Q extends readonly QueryLike[]>({
 }
 
 const styles = StyleSheet.create({
-  state: {
-    padding: Spacing.three,
-    paddingTop: Spacing.two,
-    gap: Spacing.three,
-  },
+  state: { padding: Spacing.three, paddingTop: Spacing.two, gap: Spacing.three },
   center: { textAlign: 'center' },
 });
