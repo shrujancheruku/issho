@@ -36,12 +36,9 @@ const MaxNote = 2000
 // Handler serves ModerationService.
 type Handler struct {
 	Q *dbgen.Queries
-	// Plans and Crews take a suspended person out of what they'd joined.
-	Plans *plans.Service
-	Crews *crews.Service
-	// Suspensions is the API's check, told at once when one changes here.
-	Suspensions *Suspensions
-	Now         func() time.Time // nil = time.Now
+	// Svc suspends and lifts (and tells the API's check).
+	Svc *Service
+	Now func() time.Time // nil = time.Now
 }
 
 func (h *Handler) now() time.Time {

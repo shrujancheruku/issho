@@ -11,8 +11,7 @@ import (
 
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
-	"github.com/shrujancheruku/issho/backend/internal/crews"
-	"github.com/shrujancheruku/issho/backend/internal/plans"
+	"github.com/shrujancheruku/issho/backend/internal/adminjobs"
 	"github.com/shrujancheruku/issho/backend/internal/platform/auth"
 	"github.com/shrujancheruku/issho/backend/internal/testfixture"
 )
@@ -96,7 +95,18 @@ func TestIntegrationQueue(t *testing.T) {
 	q := dbgen.New(pool)
 	now := time.Date(2026, 10, 23, 12, 0, 0, 0, time.UTC)
 	suspensions := &Suspensions{Q: q}
-	h := &Handler{Q: q, Plans: &plans.Service{DB: pool}, Crews: &crews.Service{DB: pool}, Suspensions: suspensions, Now: func() time.Time { return now }}
+	jobs, err := adminjobs.NewClient(pool)
+	if err != nil {
+		t.Fatal(err)
+	}
+	dropJobs := func() {
+		if _, err := pool.Exec(ctx, `delete from river.river_job where kind = $1 and args->>'user_id' = $2`, KindRemoveSuspended, reported.String()); err != nil {
+			t.Errorf("clean jobs: %v", err)
+		}
+	}
+	dropJobs()
+	t.Cleanup(dropJobs)
+	h := &Handler{Q: q, Svc: &Service{DB: pool, Jobs: jobs, Suspensions: suspensions}, Now: func() time.Time { return now }}
 	ctx = auth.WithCaller(ctx, auth.Caller{UserID: adminID, Email: "admin@example.com", Admin: true})
 
 	// Reports: open, then dismissed with a note.

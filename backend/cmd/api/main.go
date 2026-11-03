@@ -197,7 +197,7 @@ func run() error {
 	mux.Handle(isshov1connect.NewMetricsServiceHandler(&metrics.Handler{Q: q}, opts))
 	mux.Handle(isshov1connect.NewCityPackServiceHandler(packs, opts))
 	mux.Handle(isshov1connect.NewAdminServiceHandler(&adminjobs.Handler{Jobs: jobs}, opts))
-	mux.Handle(isshov1connect.NewModerationServiceHandler(&moderation.Handler{Q: q, Plans: planSvc, Crews: crewSvc, Suspensions: suspensions}, opts))
+	mux.Handle(isshov1connect.NewModerationServiceHandler(&moderation.Handler{Q: q, Svc: &moderation.Service{DB: pool, Jobs: jobs, Suspensions: suspensions}}, opts))
 	uiCatalog, err := uistrings.Load()
 	if err != nil {
 		return err

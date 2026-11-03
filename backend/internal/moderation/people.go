@@ -162,26 +162,9 @@ func (h *Handler) SuspendPerson(ctx context.Context, req *connect.Request[isshov
 	if reason == "" || utf8.RuneCountInString(reason) > MaxNote {
 		return nil, errs.Invalid("reason: 1-2000 characters")
 	}
-	if _, err := h.Q.GetPerson(ctx, id); errors.Is(err, pgx.ErrNoRows) {
-		return nil, errs.NotFound("no such person")
-	} else if err != nil {
-		return nil, err
-	}
-	now := h.now()
-	// The suspension first, so the API refuses them from now on; then
-	// take them out of what they'd joined. If that fails part-way,
-	// suspending again finishes it (the insert does nothing the second
-	// time).
-	if _, err := h.Q.InsertSuspension(ctx, dbgen.InsertSuspensionParams{
-		UserID: id, Reason: reason, CreatedBy: c.UserID, At: pgconv.Time(now),
-	}); err != nil {
-		return nil, err
-	}
-	h.Suspensions.Invalidate()
-	if err := h.Plans.RemoveFromUpcoming(ctx, id, now); err != nil {
-		return nil, err
-	}
-	if err := h.Crews.RemoveFromAll(ctx, id, now); err != nil {
+	// The service checks the person exists, suspends and queues the cleanup
+	// in one transaction.
+	if err := h.Svc.Suspend(ctx, c.UserID, id, reason, h.now()); err != nil {
 		return nil, err
 	}
 	return connect.NewResponse(&isshov1.SuspendPersonResponse{}), nil
@@ -200,14 +183,9 @@ func (h *Handler) LiftSuspension(ctx context.Context, req *connect.Request[issho
 	if err != nil {
 		return nil, err
 	}
-	n, err := h.Q.LiftSuspension(ctx, dbgen.LiftSuspensionParams{UserID: id, LiftedBy: pgUUID(c.UserID), Note: note, At: pgconv.Time(h.now())})
-	if err != nil {
+	if err := h.Svc.Lift(ctx, c.UserID, id, note, h.now()); err != nil {
 		return nil, err
 	}
-	if n == 0 {
-		return nil, errs.Refused("not suspended")
-	}
-	h.Suspensions.Invalidate()
 	return connect.NewResponse(&isshov1.LiftSuspensionResponse{}), nil
 }
 
