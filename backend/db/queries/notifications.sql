@@ -33,6 +33,22 @@ update app.notifications set sent_at = @at where id = any(@ids::bigint[]);
 -- name: MarkNotificationsFailed :exec
 update app.notifications set attempts = attempts + 1 where id = any(@ids::bigint[]);
 
+-- Notifications older than @before that were sent or ran out of attempts
+-- (privacy: the queue keeps no history of who was told what beyond 30
+-- days). Unsent rows with attempts left are kept: the sender still wants
+-- them. At most @max per call so the daily run never holds a long lock;
+-- the caller repeats until fewer come back. No index covers "old and
+-- done" (notifications_pending_idx holds only the pending rows), so each
+-- batch scans the table, which holds 30 days of a push queue.
+-- name: DeleteOldNotifications :execrows
+delete from app.notifications
+where id in (
+  select n.id from app.notifications n
+  where n.created_at < @before and (n.sent_at is not null or n.attempts >= 5)
+  order by n.id
+  limit @max
+);
+
 -- Tickets for pushes Expo accepted, to check their receipts later. A token
 -- deleted meanwhile (DeviceNotRegistered on another ticket) is skipped.
 -- name: InsertPushTickets :exec
