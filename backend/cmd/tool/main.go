@@ -36,6 +36,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/maps/google"
 	"github.com/shrujancheruku/issho/backend/internal/matching"
 	"github.com/shrujancheruku/issho/backend/internal/matching/sim"
+	"github.com/shrujancheruku/issho/backend/internal/platform/config"
 	"github.com/shrujancheruku/issho/backend/internal/platform/db"
 )
 
@@ -49,7 +50,16 @@ func main() {
 	}
 }
 
+// toolCfg is every environment variable the tool reads, loaded once by run
+// (platform/config). Subcommands read it and check the keys they need; the
+// package has no os.Getenv of its own.
+var toolCfg config.Tool
+
 func run(args []string) error {
+	var err error
+	if toolCfg, err = config.LoadTool(); err != nil {
+		return err
+	}
 	if len(args) == 0 {
 		return errors.New("usage: tool migrate|seed|build-matrix|discover-venues|area-boundaries|email-templates|simulate|walk-bench|set-admin|set-translator|ui-strings|translate-compare|ui-bundle|sentry-test [args]")
 	}
@@ -70,7 +80,7 @@ func run(args []string) error {
 		return areaBoundaries(args[1:]) // OpenStreetMap and a file only: no database needed
 	}
 	ctx := context.Background()
-	url := os.Getenv("DATABASE_URL")
+	url := toolCfg.DatabaseURL
 	if url == "" {
 		return fmt.Errorf("DATABASE_URL is required")
 	}
@@ -115,7 +125,7 @@ func run(args []string) error {
 // mapsKey returns the server-side Google Maps key. It's only needed for real
 // runs, so -dry-run works without one.
 func mapsKey() (string, error) {
-	k := os.Getenv("GOOGLE_MAPS_API_KEY")
+	k := toolCfg.GoogleMapsAPIKey
 	if k == "" {
 		return "", errors.New("GOOGLE_MAPS_API_KEY is required (or use -dry-run); see docs/google-maps.md")
 	}
@@ -135,7 +145,7 @@ func cityArg(fs *flag.FlagSet) (string, error) {
 func seedPacks(ctx context.Context, pool *pgxpool.Pool, paths []string) error {
 	// Left a nil interface (not a typed nil) without a key: Apply checks for nil.
 	var router maps.Router
-	if key := os.Getenv("GOOGLE_MAPS_API_KEY"); key != "" {
+	if key := toolCfg.GoogleMapsAPIKey; key != "" {
 		router = google.New(key)
 	}
 	// Read and validate every pack first, so a bad file stops the run before

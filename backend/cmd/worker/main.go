@@ -70,7 +70,10 @@ func run() error {
 	if cfg.GitHubToken != "" {
 		gh := github.New(cfg.GitHubToken, cfg.GitHubRepo)
 		gh.API = cfg.GitHubAPI
-		go catalog.Follow(ctx, gh, gh.Base, 5*time.Minute, slog.Default())
+		// A refused token stops production here, not at the first push.
+		if err := catalog.Start(ctx, gh, gh.Base, 5*time.Minute, slog.Default(), cfg.Production()); err != nil {
+			return err
+		}
 	}
 	// Each module that queues notifications writes their text.
 	plansSvc := &plans.Service{DB: pool, Translations: translations}
@@ -87,7 +90,7 @@ func run() error {
 			slog.Warn("GOOGLE_GEMINI_API_KEY not set: no walking plans are opened")
 		}
 	} else {
-		slog.Warn("GOOGLE_MAPS_API_KEY not set: travel times past 30 days are deleted, not rebuilt; venue hours not checked; no walking plans are opened")
+		slog.Warn("GOOGLE_MAPS_API_KEY not set: travel times are not rebuilt (and none are deleted); venue hours not checked; no walking plans are opened")
 	}
 	client, err := worker.NewClient(pool, slog.Default(), plans.DefaultTiming(), notifier, m)
 	if err != nil {

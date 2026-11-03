@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"os"
 
 	"github.com/shrujancheruku/issho/backend/internal/platform/sentry"
 )
@@ -15,11 +14,11 @@ import (
 //
 //	kamal app exec --primary "tool sentry-test"
 func sentryTest() error {
-	dsn := os.Getenv("SENTRY_DSN")
+	dsn := toolCfg.SentryDSN
 	if dsn == "" {
 		return errors.New("SENTRY_DSN is not set")
 	}
-	flush, err := sentry.Init(dsn, version, os.Getenv("SENTRY_ENVIRONMENT"), "tool", 0)
+	flush, err := sentry.Init(dsn, version, toolCfg.SentryEnvironment, "tool", 0)
 	if err != nil {
 		return err
 	}

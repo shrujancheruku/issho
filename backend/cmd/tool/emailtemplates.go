@@ -34,7 +34,7 @@ func emailTemplates(ctx context.Context, pool *pgxpool.Pool, args []string) erro
 	if err != nil {
 		return err
 	}
-	translator, err := translators.New(os.Getenv("TRANSLATOR"), os.Getenv("GOOGLE_TRANSLATE_API_KEY"), os.Getenv("GOOGLE_GEMINI_API_KEY"))
+	translator, err := translators.New(toolCfg.Translator, toolCfg.GoogleTranslateAPIKey, toolCfg.GeminiAPIKey)
 	if err != nil {
 		return err
 	}
