@@ -78,7 +78,15 @@ jobs:
       - name: Generated code is up to date
         run: |
           time make gen-proto
+          cd backend
+          time go tool -n sqlc
+          time go tool sqlc version
+          time go tool sqlc version
+          cd ..
           time make gen-sql
+          cd backend
+          time go build ./cmd/tool
+          cd ..
           time make gen-strings
           git diff --exit-code
 
