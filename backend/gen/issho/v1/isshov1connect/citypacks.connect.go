@@ -65,9 +65,12 @@ type CityPackServiceClient interface {
 	// ApplyCityPack seeds the pack on the default branch into the database
 	// (as `tool seed` would) and, when areas were added or moved, rebuilds the
 	// city's travel times with Google. The pack is authoritative: areas it no
-	// longer lists are deleted (when nothing references them), areas named by
-	// an area's `replaces` are retired (their people, crews and plans move to
-	// the new area) and activity overrides the pack removed are dropped. The
+	// longer lists are deleted (when nothing references them; otherwise the
+	// apply is refused and nothing changes, as it is for removing curated
+	// venues, which needs the drop-curated-venues option the admin never
+	// sets), areas named by an area's `replaces` are retired (their people,
+	// crews and plans move to the new area) and activity overrides the pack
+	// removed are dropped. The
 	// response reports all of these.
 	ApplyCityPack(context.Context, *connect.Request[v1.ApplyCityPackRequest]) (*connect.Response[v1.ApplyCityPackResponse], error)
 	// DiscoverAreaVenues finds venues for one area with Google (one Nearby
@@ -169,9 +172,12 @@ type CityPackServiceHandler interface {
 	// ApplyCityPack seeds the pack on the default branch into the database
 	// (as `tool seed` would) and, when areas were added or moved, rebuilds the
 	// city's travel times with Google. The pack is authoritative: areas it no
-	// longer lists are deleted (when nothing references them), areas named by
-	// an area's `replaces` are retired (their people, crews and plans move to
-	// the new area) and activity overrides the pack removed are dropped. The
+	// longer lists are deleted (when nothing references them; otherwise the
+	// apply is refused and nothing changes, as it is for removing curated
+	// venues, which needs the drop-curated-venues option the admin never
+	// sets), areas named by an area's `replaces` are retired (their people,
+	// crews and plans move to the new area) and activity overrides the pack
+	// removed are dropped. The
 	// response reports all of these.
 	ApplyCityPack(context.Context, *connect.Request[v1.ApplyCityPackRequest]) (*connect.Response[v1.ApplyCityPackResponse], error)
 	// DiscoverAreaVenues finds venues for one area with Google (one Nearby

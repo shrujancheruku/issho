@@ -600,9 +600,12 @@ export const CityPackService: GenService<{
    * ApplyCityPack seeds the pack on the default branch into the database
    * (as `tool seed` would) and, when areas were added or moved, rebuilds the
    * city's travel times with Google. The pack is authoritative: areas it no
-   * longer lists are deleted (when nothing references them), areas named by
-   * an area's `replaces` are retired (their people, crews and plans move to
-   * the new area) and activity overrides the pack removed are dropped. The
+   * longer lists are deleted (when nothing references them; otherwise the
+   * apply is refused and nothing changes, as it is for removing curated
+   * venues, which needs the drop-curated-venues option the admin never
+   * sets), areas named by an area's `replaces` are retired (their people,
+   * crews and plans move to the new area) and activity overrides the pack
+   * removed are dropped. The
    * response reports all of these.
    *
    * @generated from rpc issho.v1.CityPackService.ApplyCityPack
