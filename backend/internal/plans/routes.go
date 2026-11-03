@@ -11,6 +11,7 @@ import (
 
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	"github.com/shrujancheruku/issho/backend/internal/maps"
+	"github.com/shrujancheruku/issho/backend/internal/platform/pgconv"
 )
 
 const (
@@ -87,7 +88,7 @@ func (r *Runner) RefreshRoutes(ctx context.Context, cityID string, now time.Time
 		if err := ctx.Err(); err != nil {
 			return rep, err
 		}
-		route, err := r.Routes.WalkingRoute(ctx, p.FromPlace, deref(p.FollowUpVenuePlaceID))
+		route, err := r.Routes.WalkingRoute(ctx, p.FromPlace, pgconv.Deref(p.FollowUpVenuePlaceID))
 		if err == nil {
 			err = q.SetPlanRoute(ctx, dbgen.SetPlanRouteParams{
 				ID: p.ID, Polyline: &route.Polyline, Seconds: ptrInt32(int32(route.Duration.Seconds())),

@@ -536,7 +536,7 @@ func (s *Service) SignUp(ctx context.Context, userID, planID uuid.UUID, signup m
 
 // Withdraw removes the caller's signup, if any.
 func (s *Service) Withdraw(ctx context.Context, userID, planID uuid.UUID) error {
-	return Withdraw(ctx, dbgen.New(s.DB), planID, userID)
+	return WithdrawSignup(ctx, s.DB, planID, userID)
 }
 
 // loadSignup reads one person's signup times for a plan, as they gave them
