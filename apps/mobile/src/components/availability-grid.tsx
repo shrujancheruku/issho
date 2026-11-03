@@ -63,7 +63,7 @@ export function AvailabilityGrid({
                 key={b}
                 accessibilityRole="checkbox"
                 accessibilityState={{ checked: on }}
-                accessibilityLabel={`${weekdayName(day, lang)} ${t(blockKeys[b])}`}
+                accessibilityLabel={t('plan.slot', { day: weekdayName(day, lang), block: t(blockKeys[b]) })}
                 onPress={() => {
                   haptics.selection();
                   onToggle(day, b);

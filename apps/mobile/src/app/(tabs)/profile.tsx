@@ -45,12 +45,14 @@ export default function YouScreen() {
   const activeCrews = crews.data?.filter((c) => crewView(c).isActive).length ?? 0;
 
   const liked = p ? p.activities.filter((a) => a.interest !== Interest.UNSPECIFIED) : [];
-  const languageLine = p
-    ? [p.primaryLanguage, p.secondaryLanguage]
-        .filter(Boolean)
-        .map((code, i) => `${t(i === 0 ? 'language.primary' : 'you.secondLanguage')}: ${names.language(code)}`)
-        .join('. ')
-    : '';
+  // One template per case, so a translation can order and punctuate the pair.
+  const languages = p ? [p.primaryLanguage, p.secondaryLanguage].filter(Boolean).map((code) => names.language(code)) : [];
+  const languageLine =
+    languages.length > 1
+      ? t('you.languagesBoth', { primary: languages[0], secondary: languages[1] })
+      : languages.length
+        ? t('you.languageMain', { language: languages[0] })
+        : '';
 
   return (
     <ScreenFrame tab header={<ScreenHeader title={t('you.title')} />}>
@@ -81,7 +83,7 @@ export default function YouScreen() {
                 <SettingRow title={t('profile.about')} detail={p.displayName} onPress={() => edit('about')} />
                 <SettingRow
                   title={t('profile.area')}
-                  detail={`${pairText(names.area(p.homeAreaId))}. ${t('profile.maxTravel')}: ${t('profile.minutes', { count: p.maxTravelMin })}`}
+                  detail={t('profile.areaTravel', { area: pairText(names.area(p.homeAreaId)), minutes: t('profile.minutes', { count: p.maxTravelMin }) })}
                   onPress={() => edit('area')}
                 />
                 <SettingRow
@@ -92,7 +94,7 @@ export default function YouScreen() {
                 <SettingRow title={t('profile.languages')} detail={languageLine} onPress={() => edit('languages')} />
                 <SettingRow
                   title={t('profile.style')}
-                  detail={groupSizes[p.groupSize] ? `${t('profile.groupSize')}: ${t(groupSizes[p.groupSize]!)}` : ''}
+                  detail={groupSizes[p.groupSize] ? t('profile.groupSizeValue', { size: t(groupSizes[p.groupSize]!) }) : ''}
                   onPress={() => edit('style')}
                 />
               </ListGroup>

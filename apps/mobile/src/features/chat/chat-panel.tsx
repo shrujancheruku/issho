@@ -52,7 +52,7 @@ export function SuggestedPlan({ planId, plan }: { planId: string; plan?: FeedPla
             {pick(plan.title, plan.secondaryTitle).name}
           </ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
-            {pairText(names.area(plan.areaId))}. {t('plan.signupBy')}: {lastSignupDay(plan.signupDeadline, lang)}
+            {t('plan.areaSignupBy', { area: pairText(names.area(plan.areaId)), date: lastSignupDay(plan.signupDeadline, lang) })}
           </ThemedText>
           {plan.signedUp && (
             <ThemedText type="smallBold" themeColor="link">

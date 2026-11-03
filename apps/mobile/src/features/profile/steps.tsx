@@ -303,7 +303,7 @@ function ActivitiesStep({ draft, onChange }: StepProps) {
       <HowToChoose />
       {!!data?.length && <SuggestActivities draft={draft} onChange={onChange} activities={data} />}
       <ThemedText type="smallBold" themeColor={picked >= MinActivities ? undefined : 'error'}>
-        {t('interest.minimum', { count: MinActivities })} {t('profile.activitiesPicked', { count: picked })}
+        {t('interest.minimumPicked', { min: MinActivities, picked })}
       </ThemedText>
       {!activities.isSuccess && <LoadState queries={[activities]} />}
       {byCategory.map(([category, items]) => (
