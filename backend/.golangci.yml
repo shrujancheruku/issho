@@ -1,0 +1,21 @@
+# golangci-lint v2. Run with `go tool golangci-lint run` (pinned in go.mod's
+# tool block); `make lint` and CI's "Lint" step both do. See backend/README.md.
+version: "2"
+linters:
+  default: standard # errcheck, govet, ineffassign, staticcheck, unused
+  exclusions:
+    # Generated code: protobuf/Connect (gen/issho) and sqlc (gen/dbgen).
+    generated: strict
+    paths:
+      - gen
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  exclusions:
+    generated: strict
+    paths:
+      - gen
+      # Held by #167 while it is in flight (one misformatted line). Drop this
+      # line and gofmt the file once #167 merges.
+      - internal/cities/schema_test.go
