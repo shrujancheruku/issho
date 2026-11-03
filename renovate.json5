@@ -27,7 +27,10 @@
   packageRules: [
     {
       // Runtime dependencies bump the patch version through release-please (`fix(deps)`).
-      matchDepTypes: ["dependencies", "require"],
+      // `indirect` is the gomod depType of `// indirect` requires: transitive libraries
+      // that still ship in the API binary. The later gomod rule re-types the build-only
+      // tools `chore` (later packageRules win).
+      matchDepTypes: ["dependencies", "require", "indirect"],
       semanticCommitType: "fix",
     },
     {
@@ -58,6 +61,17 @@
       matchUpdateTypes: ["patch", "minor"],
       semanticCommitType: "chore",
       automerge: true,
+    },
+    {
+      // gitleaks (a build-only `tool`) pulls in mholt/archives, which must be built against
+      // a matching rardecode: rardecode 2.2.0 with archives 0.1.2 fails `make secrets-scan`
+      // ("*rardecode.ReadCloser does not implement rarReader (missing method WriteTo)"),
+      // while archives 0.1.5 requires rardecode 2.2.0. Gitleaks 8.30.1 (latest) still pins
+      // archives 0.1.2, so one PR raises both. Drop this rule once gitleaks requires
+      // archives >= 0.1.5 and the two no longer move apart.
+      groupName: "go archives",
+      matchManagers: ["gomod"],
+      matchPackageNames: ["github.com/mholt/archives", "github.com/nwaples/rardecode/v2"],
     },
     {
       // Supabase's Postgres image must match the tag the Supabase CLI runs (see the

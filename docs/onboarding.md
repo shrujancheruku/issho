@@ -124,7 +124,9 @@ Read [contributing.md](contributing.md). In short:
 
 [Renovate](https://docs.renovatebot.com/) (`renovate.json5`) keeps dependencies current: Go modules (including the `go tool` dependencies), pnpm packages, GitHub Actions (pinned to commit SHAs with a version comment), the `backend/Dockerfile` base images, the Kamal image in `config/kamal-image` and the Postgres image in `ci.yml`. It opens PRs on Monday mornings (Europe/London), waits one day after a release (the same gate as pnpm's `minimumReleaseAge`), refreshes lockfiles monthly and keeps a Dependency Dashboard issue.
 
-- Titles are `fix(deps): …` (runtime) or `chore(deps): …` (dev tooling), so release-please and commitlint accept them.
+- Titles are `fix(deps): …` (runtime, including `// indirect` Go modules, which still ship in the API binary) or `chore(deps): …` (dev tooling and the build-only Go tools), so release-please and commitlint accept them.
+- `mholt/archives` and `nwaples/rardecode/v2` update in one `go archives` PR: gitleaks builds against both, and a rardecode bump alone breaks `make secrets-scan`. Drop the rule once gitleaks requires archives 0.1.5 or later.
+- The Dependency Dashboard lists most pending updates under "Rate-Limited" because of `prConcurrentLimit: 5`; they open as earlier PRs merge or close.
 - Only patch and minor updates of dev tooling and the build-only Go tools (buf, goose, sqlc, protoc-gen-doc, gitleaks) automerge, after the required checks pass. Wrangler, runtime dependencies, majors and Docker images wait for review.
 - Expo (`expo`, `expo-*`, `react-native`, `@react-native/*`, `@expo/*`, `jest-expo`, `eslint-config-expo`) arrives as one `expo` PR, never automerged. Check out the branch, run `npx expo install --fix` and `npx expo-doctor` in `apps/mobile`, and commit the result.
 - The `roadmap` job skips `renovate/*` branches (`scripts/check-roadmap.sh`), so these PRs need no ROADMAP edit.
