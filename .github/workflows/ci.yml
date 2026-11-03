@@ -90,11 +90,16 @@ jobs:
       # The health check goes over TCP (-h 127.0.0.1): the image's init scripts
       # (creating PostGIS) run on a temporary server that listens only on the
       # Unix socket, so a socket check reports healthy before that server stops.
+      # Supabase's own Postgres image, the tag the Supabase CLI runs (`supabase
+      # --version` 3.0.0 pins 17.11.0.011), so CI matches hosted Supabase: a
+      # non-superuser `postgres`, the `extensions` schema on its search_path, the
+      # same PostGIS. Keep it in step with the CLI; scripts/test-db.sh reads it
+      # from here. Multi-arch, so `make test-db` runs natively on Apple silicon.
       - name: Start PostGIS in the background
         run: |
           nohup docker run -d --name postgis -p 5432:5432 -e POSTGRES_PASSWORD=postgres \
             --health-cmd "pg_isready -h 127.0.0.1 -U postgres" --health-interval 2s --health-timeout 5s --health-retries 30 \
-            postgis/postgis:17-3.5 > "$RUNNER_TEMP/postgis.log" 2>&1 &
+            public.ecr.aws/supabase/postgres:17.11.0.011 > "$RUNNER_TEMP/postgis.log" 2>&1 &
       - uses: actions/checkout@v7
       - uses: actions/setup-go@v7
         with:

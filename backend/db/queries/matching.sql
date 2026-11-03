@@ -3,7 +3,7 @@
 -- home area.
 
 -- name: GetCityMatching :one
-select timezone, matching_weights, review from app.cities where id = $1;
+select timezone, matching, review from app.cities where id = $1;
 
 -- name: ListCityAreaIDs :many
 select id from app.areas where city_id = $1 order by id;
@@ -55,10 +55,9 @@ select p.user_id, p.home_area_id, p.max_travel_min, p.gender, p.same_gender_only
             select 1 from app.event_feedback f where f.group_id = m.group_id and f.user_id = m.user_id and f.attended)))::int as events_attended
 from app.profiles p
 join app.areas a on a.id = p.home_area_id
-join app.users u on u.id = p.user_id
-where a.city_id = $1 and u.deleted_at is null
+where a.city_id = $1
   -- Suspended people aren't matched (ModerationService.SuspendPerson).
-  and not exists (select 1 from app.suspensions s where s.user_id = u.id and s.lifted_at is null)
+  and not exists (select 1 from app.suspensions s where s.user_id = p.user_id and s.lifted_at is null)
 order by p.user_id;
 
 -- name: ListMatchingLanguages :many

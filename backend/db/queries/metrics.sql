@@ -66,8 +66,8 @@ order by w.week;
 -- The city now.
 -- name: CityNow :one
 select
-  (select count(*) from app.profiles pr join app.areas a on a.id = pr.home_area_id join app.users u on u.id = pr.user_id
-   where a.city_id = @city_id and u.deleted_at is null
+  (select count(*) from app.profiles pr join app.areas a on a.id = pr.home_area_id
+   where a.city_id = @city_id
      and not exists (select 1 from app.suspensions s where s.user_id = pr.user_id and s.lifted_at is null))::int as people,
   (select count(*) from app.plans p where p.city_id = @city_id and p.status = 'open')::int as open_plans,
   (select count(*) from app.plan_signups s join app.plans p on p.id = s.plan_id where p.city_id = @city_id and p.status = 'open')::int as waiting,
