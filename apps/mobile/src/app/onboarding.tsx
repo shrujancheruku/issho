@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View, type ScrollViewInstance } from 'react-native';
 
+import { ErrorLine } from '@/components/error-line';
 import { LanguageSwitch } from '@/components/language-switch';
 import { PrimaryButton } from '@/components/primary-button';
 import { ScreenFrame } from '@/components/screen-frame';
@@ -65,7 +66,7 @@ export default function OnboardingScreen() {
           </Pressable>
         )}
       </ScrollView>
-      {save.isError && <ThemedText themeColor="error" style={styles.error}>{saveErrorMessage(save.error, t)}</ThemedText>}
+      <ErrorLine error={save.error} text={saveErrorMessage} style={styles.error} />
       <View style={styles.footer}>
         {index > 0 && (
           <Pressable accessibilityRole="button" onPress={() => go(index - 1)} style={styles.back} disabled={save.isPending}>

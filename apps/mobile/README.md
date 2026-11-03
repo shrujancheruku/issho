@@ -71,7 +71,7 @@ lib/api.ts ── Authorization: Bearer <access token> ────────�
 - **Route guards** are only for the user experience. The API checks the token on every request.
 - **The cache is cleared** whenever the signed-in user changes, so one user never sees another's data.
 - If the API rejects the session (`unauthenticated`, e.g. the account was deleted on another device), the app signs out automatically.
-- **Suspended accounts:** `GetMe` says `suspended`, and the root layout shows only "Your account is suspended" with the account controls (`AccountActions`: sign out, delete account), since the API still allows deleting. If someone is suspended mid-session, their next call fails with `permission_denied` / `account suspended`; the query client's error handler (`app/_layout.tsx`) then reloads `GetMe`, which brings up the same screen.
+- **Suspended accounts:** `GetMe` says `suspended`, and the root layout shows only "Your account is suspended" with the account controls (`AccountActions`: sign out, delete account), since the API still allows deleting. If someone is suspended mid-session, their next call fails with `permission_denied` and the `SUSPENDED` reason (`isSuspendedError`); the query client's error handler (`app/_layout.tsx`) then reloads `GetMe`, which brings up the same screen.
 
 ## Structure
 
@@ -133,6 +133,8 @@ const activities = useQuery({
 Query keys live only in `src/lib/queries.ts` (`keys.*`); never write a key array elsewhere. Hooks and mutations stay in each feature's `data.ts`, and a mutation's `onSuccess` calls a named invalidator from `queries.ts` (`profileSaved(qc)`, `signupChanged(qc, planId)`, ...) instead of listing the keys it touches, so what a change refreshes is decided in one place. A new kind of change gets a new invalidator, with a test in `src/lib/__tests__/queries.test.ts`.
 
 The access token is attached automatically. For error handling, `Code` and `ConnectError` are exported from `@issho/api-client`.
+
+**Errors on screen:** `errorText(err, t)` (`src/lib/error-text.ts`) is the one way an error becomes text: the reason the API attached (`errorReason`, e.g. `TOO_LATE`, `CHECK_IN_CLOSED`, `SUSPENDED`) picks its string, `Unavailable` and failed fetches read as `error.network`, and everything else as `error.generic`. It never shows the server's `message`. Show it with `<ErrorLine error={mutation.error} />` (`components/error-line.tsx`; nothing renders while the error is empty); pass `text` for a screen's own wording (profile saves, sign-in). Screens that branch on a failure switch on `errorReason`, never on `Code.FailedPrecondition` or the message. Sign-in words supabase-js errors by `AuthError.code` in `features/auth/sign-in-error.ts`.
 
 ## Checks
 

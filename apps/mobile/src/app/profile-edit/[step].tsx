@@ -2,6 +2,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
+import { ErrorLine } from '@/components/error-line';
 import { PrimaryButton } from '@/components/primary-button';
 import { LoadState } from '@/components/query-screen';
 import { ScreenFrame, useLeave } from '@/components/screen-frame';
@@ -61,11 +62,7 @@ export default function ProfileEditScreen() {
           </View>
         )}
       </ScrollView>
-      {save.isError && (
-        <ThemedText themeColor="error" style={styles.error}>
-          {saveErrorMessage(save.error, t)}
-        </ThemedText>
-      )}
+      <ErrorLine error={save.error} text={saveErrorMessage} style={styles.error} />
       <View style={styles.footer}>
         <PrimaryButton
           label={next ? t('common.continue') : t('common.save')}

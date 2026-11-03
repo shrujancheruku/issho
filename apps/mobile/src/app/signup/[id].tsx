@@ -3,6 +3,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
+import { ErrorLine } from '@/components/error-line';
 import { AvailabilityGrid } from '@/components/availability-grid';
 import { Chip } from '@/components/chip';
 import { PrimaryButton } from '@/components/primary-button';
@@ -18,6 +19,7 @@ import { toggle, toSignup, windowDates, type Times } from '@/features/plans/sign
 import { usePlanTimes } from '@/features/plans/use-plan-times';
 import { useTheme } from '@/hooks/use-theme';
 import { useI18n } from '@/i18n/i18n-provider';
+import { errorText } from '@/lib/error-text';
 import { haptics } from '@/lib/haptics';
 import { registerForPush } from '@/lib/push';
 import { slotKey } from '@/lib/slots';
@@ -111,11 +113,11 @@ export default function SignupSheet() {
                   {t('plan.pickTime')}
                 </ThemedText>
               )}
-              {error && (
-                <ThemedText themeColor="error" style={styles.centerText}>
-                  {error instanceof ConnectError && error.code === Code.NotFound ? t('plan.notFound') : t('error.network')}
-                </ThemedText>
-              )}
+              <ErrorLine
+                error={error}
+                text={(e, tr) => (e instanceof ConnectError && e.code === Code.NotFound ? tr('plan.notFound') : errorText(e, tr))}
+                style={styles.centerText}
+              />
               <PrimaryButton
                 label={p.signedUp ? t('plan.update') : t('plan.signUp')}
                 disabled={times.pattern.length === 0}

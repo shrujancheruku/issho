@@ -2,7 +2,7 @@ import type { Session } from '@supabase/supabase-js';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type PropsWithChildren } from 'react';
 
-import { Code, ConnectError } from '@issho/api-client';
+import { Code, ConnectError, ErrorReason, errorReason } from '@issho/api-client';
 
 import { api } from '@/lib/api';
 import { unregisterPush } from '@/lib/push';
@@ -124,7 +124,7 @@ export function useAuth() {
  * when one arrives mid-session, ask GetMe again so the app shows it.
  */
 export function isSuspendedError(err: unknown) {
-  return err instanceof ConnectError && err.code === Code.PermissionDenied && err.rawMessage === 'account suspended';
+  return errorReason(err) === ErrorReason.SUSPENDED;
 }
 
 function isUnauthenticated(err: unknown) {

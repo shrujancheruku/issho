@@ -91,15 +91,6 @@ export function DetailsInput({ label, value, onChange }: { label: string; value:
   );
 }
 
-/** A form footer's error line. */
-export function FormError({ children }: { children: string }) {
-  return (
-    <ThemedText themeColor="error" style={styles.error}>
-      {children}
-    </ThemedText>
-  );
-}
-
 const styles = StyleSheet.create({
   content: { padding: Spacing.four, gap: Spacing.four },
   titleBlock: { gap: Spacing.two },
@@ -107,5 +98,4 @@ const styles = StyleSheet.create({
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
   input: { fontFamily: BodyFont.regular, minHeight: 96, borderRadius: 12, padding: Spacing.three, textAlignVertical: 'top' },
   footer: { padding: Spacing.four, gap: Spacing.two },
-  error: { textAlign: 'center' },
 });

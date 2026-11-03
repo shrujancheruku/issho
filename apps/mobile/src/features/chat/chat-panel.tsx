@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, type ReactElement } from 'react';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
+import { ErrorLine } from '@/components/error-line';
 import { PressableScale } from '@/components/pressable-scale';
 import { LoadFailed } from '@/components/query-screen';
 import { ThemedText } from '@/components/themed-text';
@@ -152,11 +153,7 @@ export function ChatPanel({ room, header }: { room: RoomRef; header?: ReactEleme
           {note}
         </ThemedText>
       )}
-      {send.isError && (
-        <ThemedText themeColor="error" style={styles.center}>
-          {t('error.network')}
-        </ThemedText>
-      )}
+      <ErrorLine error={send.error} style={styles.center} />
       {open && (
         <View style={[styles.composer, { borderTopColor: theme.backgroundSelected, backgroundColor: theme.surface }]}>
           <TextInput

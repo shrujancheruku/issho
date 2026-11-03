@@ -1,9 +1,10 @@
-import { Code, ConnectError, CrewResponse, CrewStatus, type Crew, type CrewMember } from '@issho/api-client';
+import { CrewResponse, CrewStatus, type Crew, type CrewMember } from '@issho/api-client';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withDelay, withSequence } from 'react-native-reanimated';
 
+import { ErrorLine } from '@/components/error-line';
 import { Avatar } from '@/components/avatar';
 import { PrimaryButton } from '@/components/primary-button';
 import { QueryScreen } from '@/components/query-screen';
@@ -177,7 +178,6 @@ function Offer({ crew, onBack, onOpenChat }: { crew: Crew; onBack: () => void; o
         activity: names.activity(crew.activityId).name,
       })
     : t('crew.shareArea', { area: names.area(crew.areaId).name });
-  const tooLate = respond.error instanceof ConnectError && respond.error.code === Code.FailedPrecondition;
 
   const head = (
     <>
@@ -251,7 +251,7 @@ function Offer({ crew, onBack, onOpenChat }: { crew: Crew; onBack: () => void; o
             </View>
           </>
         )}
-        {respond.isError && <ThemedText themeColor="error">{tooLate ? t('event.tooLate') : t('error.network')}</ThemedText>}
+        <ErrorLine error={respond.error} />
         {started ? (
           <PrimaryButton label={t('crew.openChat')} onPress={onOpenChat} />
         ) : (
