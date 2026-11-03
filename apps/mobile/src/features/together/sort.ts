@@ -39,6 +39,8 @@ export function sortTogether(events: MyEvent[], crews: Crew[], feed: FeedPlan[],
     // Going (or waiting for enough people): the group chat is theirs. An
     // outing that needs an answer is listed there only, not twice. Over, out
     // or cancelled (outing() decides) is not a group.
+    // `stage !== 'after'` also drops an event in its feedback window before
+    // it is DONE (in practice it is DONE by then).
     const listed = needsYou.length > before;
     if (!listed && e.response === InviteResponse.CONFIRMED && !o.muted && o.stage !== 'after') {
       groups.push({ kind: 'outing', event: e });
