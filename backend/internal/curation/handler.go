@@ -8,6 +8,7 @@ package curation
 
 import (
 	"context"
+	"fmt"
 
 	"connectrpc.com/connect"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -36,6 +37,15 @@ func statusOf(s string) isshov1.VenueStatus {
 		}
 	}
 	return isshov1.VenueStatus_VENUE_STATUS_UNSPECIFIED
+}
+
+// VenueStatusProto converts a venue's status for ReviewService; unlike
+// statusOf an unknown value is an error, not UNSPECIFIED.
+func VenueStatusProto(s string) (isshov1.VenueStatus, error) {
+	if v := statusOf(s); v != isshov1.VenueStatus_VENUE_STATUS_UNSPECIFIED {
+		return v, nil
+	}
+	return 0, fmt.Errorf("unknown venue status %q", s)
 }
 
 func (h *Handler) ListVenueCities(ctx context.Context, _ *connect.Request[isshov1.ListVenueCitiesRequest]) (*connect.Response[isshov1.ListVenueCitiesResponse], error) {

@@ -10,6 +10,7 @@ package moderation
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -134,7 +135,6 @@ func (h *Handler) ListReports(ctx context.Context, req *connect.Request[isshov1.
 			Note:                 r.Note,
 			EventId:              uuidString(r.EventID),
 			EventTitle:           r.EventTitle,
-			EventBlock:           r.EventBlock,
 			CrewId:               uuidString(r.CrewID),
 			CrewName:             r.CrewName,
 			CreatedAt:            timestamp(r.CreatedAt),
@@ -145,6 +145,12 @@ func (h *Handler) ListReports(ctx context.Context, req *connect.Request[isshov1.
 		for k, v := range reportStatuses {
 			if v == r.Status {
 				m.Status = k
+			}
+		}
+		// The outing may be gone (no block); a block we don't know is an error.
+		if r.EventBlock != "" {
+			if m.EventBlock, err = plans.BlockProto(r.EventBlock); err != nil {
+				return nil, fmt.Errorf("report %s: %w", r.ID, err)
 			}
 		}
 		if r.EventDate.Valid {
@@ -292,14 +298,16 @@ func (h *Handler) ListCrewLeaves(ctx context.Context, req *connect.Request[issho
 	}
 	for i, l := range rows {
 		m := &isshov1.CrewLeave{
-			Id:         l.ID,
-			CrewId:     l.CrewID.String(),
-			CrewName:   l.CrewName,
-			CrewStatus: l.CrewStatus,
-			UserId:     uuidString(l.UserID),
-			UserName:   l.UserName,
-			Details:    l.Details,
-			CreatedAt:  timestamp(l.CreatedAt),
+			Id:        l.ID,
+			CrewId:    l.CrewID.String(),
+			CrewName:  l.CrewName,
+			UserId:    uuidString(l.UserID),
+			UserName:  l.UserName,
+			Details:   l.Details,
+			CreatedAt: timestamp(l.CreatedAt),
+		}
+		if m.CrewStatus, err = crews.StatusProto(l.CrewStatus); err != nil {
+			return nil, fmt.Errorf("crew leave %d: %w", l.ID, err)
 		}
 		for k, v := range leaveReasons {
 			if v == l.Reason {

@@ -1,4 +1,4 @@
-import { LeaveReason, ReportReason } from '@issho/api-client';
+import { CrewStatus, EventStatus, GroupStatus, InviteResponse, LeaveReason, ReportReason, TimeBlock } from '@issho/api-client';
 import { timestampDate, type Timestamp } from '@bufbuild/protobuf/wkt';
 
 export const reportReasons: Record<ReportReason, string> = {
@@ -17,6 +17,46 @@ export const leaveReasons: Record<LeaveReason, string> = {
   [LeaveReason.INACTIVE]: 'Not enough happens',
   [LeaveReason.TOO_MANY_MESSAGES]: 'Too many messages',
   [LeaveReason.OTHER]: 'Something else',
+};
+
+// Lower-case labels for the typed enums the admin protos carry (they were
+// strings like "evening" before). Records, so a new enum value fails to compile.
+export const blockLabels: Record<TimeBlock, string> = {
+  [TimeBlock.UNSPECIFIED]: '',
+  [TimeBlock.MORNING]: 'morning',
+  [TimeBlock.AFTERNOON]: 'afternoon',
+  [TimeBlock.EVENING]: 'evening',
+};
+
+export const crewStatusLabels: Record<CrewStatus, string> = {
+  [CrewStatus.UNSPECIFIED]: '',
+  [CrewStatus.OFFERED]: 'offered',
+  [CrewStatus.ACTIVE]: 'active',
+  [CrewStatus.LAPSED]: 'lapsed',
+  [CrewStatus.CLOSED]: 'closed',
+};
+
+export const eventStatusLabels: Record<EventStatus, string> = {
+  [EventStatus.UNSPECIFIED]: '',
+  [EventStatus.PROPOSED]: 'proposed',
+  [EventStatus.SCHEDULED]: 'scheduled',
+  [EventStatus.DONE]: 'done',
+  [EventStatus.CANCELLED]: 'cancelled',
+};
+
+export const groupStatusLabels: Record<GroupStatus, string> = {
+  [GroupStatus.UNSPECIFIED]: '',
+  [GroupStatus.INVITING]: 'inviting',
+  [GroupStatus.CONFIRMED]: 'confirmed',
+  [GroupStatus.CANCELLED]: 'cancelled',
+};
+
+export const responseLabels: Record<InviteResponse, string> = {
+  [InviteResponse.UNSPECIFIED]: '',
+  [InviteResponse.INVITED]: 'invited',
+  [InviteResponse.CONFIRMED]: 'confirmed',
+  [InviteResponse.DECLINED]: 'declined',
+  [InviteResponse.DROPPED]: 'dropped',
 };
 
 /** "23 Oct 2026, 14:05" in the moderator's own time zone; "" if unset. */

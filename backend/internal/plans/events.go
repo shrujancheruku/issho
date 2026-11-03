@@ -15,6 +15,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/chat"
 	"github.com/shrujancheruku/issho/backend/internal/matching"
 	"github.com/shrujancheruku/issho/backend/internal/notifications"
+	"github.com/shrujancheruku/issho/backend/internal/platform/bound"
 	"github.com/shrujancheruku/issho/backend/internal/platform/i18n"
 )
 
@@ -117,16 +118,24 @@ type EventItem struct {
 	FeedbackGiven bool
 }
 
+// EventsCap bounds ListMyEvents: recent events plus older ones awaiting
+// feedback. A person has a handful (an outing a week at most, and feedback
+// closes after FeedbackFor), so 200 is far beyond real use and only guards
+// against a runaway account. Past it the oldest-first order cuts the newest.
+var EventsCap = &bound.List{Name: "ListMyEvents", Max: 200}
+
 // Events returns the caller's events from yesterday on, and older ones
 // still waiting for their feedback, soonest first.
 func (s *Service) Events(ctx context.Context, userID uuid.UUID, now time.Time) ([]EventItem, error) {
 	q := dbgen.New(s.DB)
 	items, caller, err := s.events(ctx, q, userID, dbgen.ListUserEventsParams{
 		Since: date(now.UTC().AddDate(0, 0, -1)), FeedbackSince: pgtype.Timestamptz{Time: now.Add(-FeedbackFor), Valid: true},
+		Max: EventsCap.Limit(),
 	})
 	if err != nil {
 		return nil, err
 	}
+	EventsCap.Check(ctx, s.Log, len(items))
 	if err := s.titleEvents(ctx, q, caller, items); err != nil {
 		return nil, err
 	}

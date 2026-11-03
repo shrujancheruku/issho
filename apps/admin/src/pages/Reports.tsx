@@ -2,7 +2,7 @@ import { ConnectError, ReportStatus, type ModerationReport } from '@issho/api-cl
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
-import { formatTime, personHref, reportReasons } from '../format';
+import { blockLabels, formatTime, personHref, reportReasons } from '../format';
 import { api } from '../lib';
 import { LoadMore, rowsOf, usePaged } from '../paging';
 
@@ -65,7 +65,7 @@ function ReportCard({ report: r, onPerson }: { report: ModerationReport; onPerso
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['reports'] }),
   });
   const where = r.eventId
-    ? `Outing: ${r.eventTitle} · ${r.eventDate} ${r.eventBlock}`
+    ? `Outing: ${r.eventTitle} · ${r.eventDate} ${blockLabels[r.eventBlock]}`
     : r.crewId ? `Crew: ${r.crewName}` : 'Outing or crew no longer exists';
 
   return (

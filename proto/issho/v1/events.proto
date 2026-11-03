@@ -151,6 +151,11 @@ message CheckInResponse {
   MyEvent event = 1;
 }
 
+// No paging fields: the list is bounded by what one person has (recent
+// events plus older ones awaiting feedback), and the server returns at most
+// 200, soonest first. The response is the same shape either way.
+// If paging is ever added, page_size 0 (what today's builds send) keeps
+// returning the whole bounded list, per AIP-158 (proto/README.md).
 message ListMyEventsRequest {}
 
 message ListMyEventsResponse {
@@ -252,6 +257,8 @@ enum EventStatus {
   EVENT_STATUS_SCHEDULED = 1;
   EVENT_STATUS_DONE = 2;
   EVENT_STATUS_CANCELLED = 3;
+  // Waiting for an admin to approve. Only the admin SPA sees this.
+  EVENT_STATUS_PROPOSED = 4;
 }
 
 enum GroupStatus {

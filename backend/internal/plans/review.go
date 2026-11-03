@@ -3,6 +3,7 @@ package plans
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"sync"
 	"time"
@@ -16,6 +17,7 @@ import (
 
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
+	"github.com/shrujancheruku/issho/backend/internal/curation"
 	"github.com/shrujancheruku/issho/backend/internal/maps"
 	"github.com/shrujancheruku/issho/backend/internal/matching"
 	"github.com/shrujancheruku/issho/backend/internal/platform/auth"
@@ -278,7 +280,11 @@ func (h *ReviewHandler) ListVenueOptions(ctx context.Context, req *connect.Reque
 	out := &isshov1.ListVenueOptionsResponse{Venues: make([]*isshov1.VenueOption, len(rows))}
 	var wg sync.WaitGroup
 	for i, r := range rows {
-		out.Venues[i] = &isshov1.VenueOption{PlaceId: r.GooglePlaceID, CategoryId: r.CategoryID, Status: r.Status}
+		status, err := curation.VenueStatusProto(r.Status)
+		if err != nil {
+			return nil, fmt.Errorf("venue %s: %w", r.GooglePlaceID, err)
+		}
+		out.Venues[i] = &isshov1.VenueOption{PlaceId: r.GooglePlaceID, CategoryId: r.CategoryID, Status: status}
 		if h.Svc.Places == nil {
 			continue
 		}

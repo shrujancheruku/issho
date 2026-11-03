@@ -1,7 +1,7 @@
 import { ConnectError, LeaveReason } from '@issho/api-client';
 import { useState } from 'react';
 
-import { formatTime, leaveReasons } from '../format';
+import { crewStatusLabels, formatTime, leaveReasons } from '../format';
 import { api } from '../lib';
 import { LoadMore, rowsOf, usePaged } from '../paging';
 
@@ -34,7 +34,7 @@ export function CrewLeaves() {
               {rows.map((l) => (
                 <tr key={l.id.toString()} className={l.reason === LeaveReason.UNCOMFORTABLE ? 'attention' : undefined}>
                   <td className="nowrap">{formatTime(l.createdAt)}</td>
-                  <td>{l.crewName} <span className="muted">({l.crewStatus})</span></td>
+                  <td>{l.crewName} <span className="muted">({crewStatusLabels[l.crewStatus]})</span></td>
                   <td>{l.userId ? l.userName || <span className="muted">No profile</span> : <span className="muted">Deleted account</span>}</td>
                   <td>{leaveReasons[l.reason]}</td>
                   <td>{l.details}</td>

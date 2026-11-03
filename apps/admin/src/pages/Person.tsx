@@ -1,9 +1,9 @@
-import { ConnectError, FlagKind, OutingFeedback, type Person as PersonData } from '@issho/api-client';
+import { ConnectError, EventStatus, FlagKind, OutingFeedback, type Person as PersonData } from '@issho/api-client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
 import { ConfirmButton } from '../Confirm';
-import { formatTime, leanSummary } from '../format';
+import { blockLabels, eventStatusLabels, formatTime, leanSummary, responseLabels } from '../format';
 import { api } from '../lib';
 
 const feedbackLabels: Record<OutingFeedback, string> = {
@@ -59,9 +59,9 @@ export function Person({ userId }: { userId: string }) {
             <tbody>
               {p.outings.map((o) => (
                 <tr key={o.eventId}>
-                  <td className="nowrap">{o.date} {o.block}</td>
-                  <td>{o.title} {o.eventStatus !== 'done' && <span className="muted">({o.eventStatus})</span>}</td>
-                  <td>{o.response}</td>
+                  <td className="nowrap">{o.date} {blockLabels[o.block]}</td>
+                  <td>{o.title} {o.eventStatus !== EventStatus.DONE && <span className="muted">({eventStatusLabels[o.eventStatus]})</span>}</td>
+                  <td>{responseLabels[o.response]}</td>
                   <td>{[o.checkedIn && 'checked in', feedbackLabels[o.feedback]].filter(Boolean).join(', ')}</td>
                 </tr>
               ))}

@@ -133,7 +133,7 @@ func TestIntegrationProposals(t *testing.T) {
 	}
 	ev = get()
 	tokyo := mustLoc(t, "Asia/Tokyo")
-	if e := ev.Event; e.Date != "2030-01-06" || e.Block != "morning" || !e.StartsAt.AsTime().Equal(time.Date(2030, 1, 6, 10, 30, 0, 0, tokyo)) ||
+	if e := ev.Event; e.Date != "2030-01-06" || e.Block != isshov1.TimeBlock_TIME_BLOCK_MORNING || !e.StartsAt.AsTime().Equal(time.Date(2030, 1, 6, 10, 30, 0, 0, tokyo)) ||
 		!e.ConfirmBy.AsTime().Equal(time.Date(2030, 1, 5, 0, 0, 0, 0, tokyo)) || ev.Groups[0].MeetingPoint != "North exit, by the clock" || len(ev.Groups[0].Members) != 5 {
 		t.Fatalf("after changes = %v", ev)
 	}

@@ -163,7 +163,8 @@ func TestIntegrationQueue(t *testing.T) {
 	var found bool
 	for _, l := range leaves.Msg.Leaves {
 		if l.UserId == reporter.String() {
-			found = l.CrewName == "Testville" && l.Details == "Too pushy" && l.Reason == isshov1.LeaveReason_LEAVE_REASON_UNCOMFORTABLE
+			found = l.CrewName == "Testville" && l.Details == "Too pushy" && l.Reason == isshov1.LeaveReason_LEAVE_REASON_UNCOMFORTABLE &&
+				l.CrewStatus != isshov1.CrewStatus_CREW_STATUS_UNSPECIFIED // typed, never a string
 		}
 	}
 	if !found {

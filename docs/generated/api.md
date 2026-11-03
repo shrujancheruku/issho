@@ -1351,7 +1351,11 @@ closed_reason set; older or other cities&#39; ones are NOT_FOUND.
 <a name="issho-v1-ListFeedRequest"></a>
 
 ### ListFeedRequest
-
+No paging fields: the feed is bounded by what a city has open (a few dozen
+plans), and the server returns at most 200, the oldest first, so a runaway
+city can&#39;t make it unbounded. The response is the same shape either way.
+If paging is ever added, page_size 0 (what today&#39;s builds send) keeps
+returning the whole bounded list, per AIP-158 (proto/README.md).
 
 
 
@@ -1681,7 +1685,11 @@ Someone else in the caller&#39;s group, for picks and reports.
 <a name="issho-v1-ListMyEventsRequest"></a>
 
 ### ListMyEventsRequest
-
+No paging fields: the list is bounded by what one person has (recent
+events plus older ones awaiting feedback), and the server returns at most
+200, soonest first. The response is the same shape either way.
+If paging is ever added, page_size 0 (what today&#39;s builds send) keeps
+returning the whole bounded list, per AIP-158 (proto/README.md).
 
 
 
@@ -1866,6 +1874,7 @@ One event as the caller sees it.
 | EVENT_STATUS_SCHEDULED | 1 |  |
 | EVENT_STATUS_DONE | 2 |  |
 | EVENT_STATUS_CANCELLED | 3 |  |
+| EVENT_STATUS_PROPOSED | 4 | Waiting for an admin to approve. Only the admin SPA sees this. |
 
 
 
@@ -2051,7 +2060,11 @@ A crew, or an offer of one, as the caller sees it.
 <a name="issho-v1-ListMyCrewsRequest"></a>
 
 ### ListMyCrewsRequest
-
+No paging fields: the list is bounded by the crews and open offers one
+person has, and the server returns at most 50, newest first. The response
+is the same shape either way.
+If paging is ever added, page_size 0 (what today&#39;s builds send) keeps
+returning the whole bounded list, per AIP-158 (proto/README.md).
 
 
 
@@ -2157,6 +2170,8 @@ A crew, or an offer of one, as the caller sees it.
 | CREW_STATUS_UNSPECIFIED | 0 |  |
 | CREW_STATUS_OFFERED | 1 | Offered: waiting for answers. |
 | CREW_STATUS_ACTIVE | 2 |  |
+| CREW_STATUS_LAPSED | 3 | Too few accepted in time. Only the admin SPA sees this. |
+| CREW_STATUS_CLOSED | 4 | Fewer than 2 members left. Only the admin SPA sees this. |
 
 
 
@@ -2890,7 +2905,7 @@ HTTP: POST /issho.v1.MetricsService/&lt;Method&gt;
 | id | [int64](#int64) |  |  |
 | crew_id | [string](#string) |  |  |
 | crew_name | [string](#string) |  | &#34;Football&#34; or &#34;Kichijoji&#34;: what the crew shares. |
-| crew_status | [string](#string) |  | offered, active, lapsed or closed. |
+| crew_status | [CrewStatus](#issho-v1-CrewStatus) |  |  |
 | user_id | [string](#string) |  | Empty if they&#39;ve deleted their account. |
 | user_name | [string](#string) |  |  |
 | reason | [LeaveReason](#issho-v1-LeaveReason) |  |  |
@@ -3135,7 +3150,7 @@ HTTP: POST /issho.v1.MetricsService/&lt;Method&gt;
 | event_id | [string](#string) |  | Where they met: an outing (event_*) or a crew (crew_*), if still there. |
 | event_title | [string](#string) |  |  |
 | event_date | [string](#string) |  | The outing&#39;s date (YYYY-MM-DD, in the city&#39;s time zone) and part of the day (morning, afternoon, evening). |
-| event_block | [string](#string) |  |  |
+| event_block | [TimeBlock](#issho-v1-TimeBlock) |  |  |
 | crew_id | [string](#string) |  |  |
 | crew_name | [string](#string) |  |  |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
@@ -3187,10 +3202,10 @@ HTTP: POST /issho.v1.MetricsService/&lt;Method&gt;
 | ----- | ---- | ----- | ----------- |
 | event_id | [string](#string) |  |  |
 | title | [string](#string) |  |  |
-| date | [string](#string) |  | YYYY-MM-DD in the city&#39;s time zone, and morning, afternoon or evening. |
-| block | [string](#string) |  |  |
-| event_status | [string](#string) |  | scheduled, done or cancelled. |
-| response | [string](#string) |  | invited, confirmed, declined or dropped (confirmed, then cancelled). |
+| date | [string](#string) |  | YYYY-MM-DD in the city&#39;s time zone, and the part of the day. |
+| block | [TimeBlock](#issho-v1-TimeBlock) |  |  |
+| event_status | [EventStatus](#issho-v1-EventStatus) |  |  |
+| response | [InviteResponse](#issho-v1-InviteResponse) |  |  |
 | checked_in | [bool](#bool) |  |  |
 | feedback | [OutingFeedback](#issho-v1-OutingFeedback) |  | Their feedback: SAID_WENT, SAID_DIDNT_GO, or UNSPECIFIED (none). |
 
@@ -4043,7 +4058,7 @@ HTTP: POST /issho.v1.PushService/&lt;Method&gt;
 | title | [string](#string) |  | English: the plan&#39;s stored title, or made from its activities. |
 | area_name | [string](#string) |  |  |
 | date | [string](#string) |  | Local date (YYYY-MM-DD) and part of the day; the start time. |
-| block | [string](#string) |  |  |
+| block | [TimeBlock](#issho-v1-TimeBlock) |  |  |
 | starts_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 | confirm_by | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | Invitees answer by then. |
 | forced | [bool](#bool) |  | Scheduled at the signup deadline with whoever could go, rather than because a group reached its target size. |
@@ -4069,7 +4084,7 @@ HTTP: POST /issho.v1.PushService/&lt;Method&gt;
 | quorum | [int32](#int32) |  | Confirmed straight away at quorum; at the deadline it goes ahead with at least min_attendance. |
 | min_attendance | [int32](#int32) |  |  |
 | score | [float](#float) |  |  |
-| status | [string](#string) |  | inviting, confirmed or cancelled. |
+| status | [GroupStatus](#issho-v1-GroupStatus) |  |  |
 | meeting_point | [string](#string) |  | English; &#34;&#34; for none. |
 | members | [ReviewMember](#issho-v1-ReviewMember) | repeated |  |
 
@@ -4090,7 +4105,7 @@ HTTP: POST /issho.v1.PushService/&lt;Method&gt;
 | name | [string](#string) |  |  |
 | gender | [string](#string) |  | woman, man, nonbinary or unspecified. |
 | birth_year | [int32](#int32) |  |  |
-| response | [string](#string) |  | invited, confirmed, declined or dropped. |
+| response | [InviteResponse](#issho-v1-InviteResponse) |  |  |
 | signed_up | [bool](#bool) |  | Still signed up for the plan: in a proposal, someone who withdrew since (false) is left out when it&#39;s approved. |
 
 
@@ -4305,8 +4320,8 @@ last, &#34;stop&#34; between.
 | name | [string](#string) |  | From Google, in English; &#34;&#34; without GOOGLE_MAPS_API_KEY or if it failed. |
 | address | [string](#string) |  |  |
 | maps_url | [string](#string) |  |  |
-| category_id | [string](#string) |  | Our venue category, and candidate or approved. |
-| status | [string](#string) |  |  |
+| category_id | [string](#string) |  | Our venue category. |
+| status | [VenueStatus](#issho-v1-VenueStatus) |  |  |
 
 
 
