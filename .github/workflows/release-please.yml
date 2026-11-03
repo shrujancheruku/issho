@@ -16,8 +16,31 @@ permissions:
 jobs:
   release-please:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      prs_created: ${{ steps.rp.outputs.prs_created }}
+      branch: ${{ steps.rp.outputs.pr && fromJSON(steps.rp.outputs.pr).headBranchName }}
     steps:
-      - uses: googleapis/release-please-action@v5
+      - id: rp
+        uses: googleapis/release-please-action@v5
         with:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
+
+  # PRs opened or pushed with GITHUB_TOKEN don't trigger workflows, so the
+  # release PR would never get CI. GITHUB_TOKEN may start a workflow_dispatch,
+  # so run ci.yml on the release branch: its checks attach to the PR's head
+  # commit. No PAT or App. This can't deploy or release by itself: ci.yml only
+  # tests, and the deploy workflows act only on a `push` CI run on main.
+  ci-for-release-pr:
+    needs: release-please
+    if: needs.release-please.outputs.prs_created == 'true' && needs.release-please.outputs.branch != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      actions: write
+    steps:
+      - run: gh workflow run ci.yml --repo "$GITHUB_REPOSITORY" --ref "$BRANCH"
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ needs.release-please.outputs.branch }}

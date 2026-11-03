@@ -27,7 +27,11 @@ go run ./cmd/tool seed ../data/citypacks/*.json
 # DB integration tests and tool dry-runs (no Google calls).
 # -p 1: the packages share one database and their fixtures use stable ids, so
 # packages running in parallel delete each other's rows.
-TEST_DATABASE_URL="$DATABASE_URL" go test -p 1 ./internal/geo/ ./internal/profile/ ./internal/plans/ ./internal/crews/ ./internal/chat/ ./internal/chatws/ ./internal/moderation/ ./internal/translations/ ./internal/notifications/ ./internal/cities/ ./internal/citypacks/ ./internal/curation/ -run Integration -v
+# ./... instead of a package list: the list had silently left out metrics, and
+# a new package would be left out too. Every test that needs the database is
+# named TestIntegration* (checked: all 53 tests that skip without a database
+# match), so -run Integration finds exactly those.
+TEST_DATABASE_URL="$DATABASE_URL" go test -p 1 ./... -run Integration -v
 go run ./cmd/tool build-matrix -dry-run tokyo
 go run ./cmd/tool discover-venues -dry-run austin
 go run ./cmd/tool discover-venues -dry-run da-nang-hoi-an  # areas with boundaries, read back from PostGIS

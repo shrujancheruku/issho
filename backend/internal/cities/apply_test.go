@@ -3,7 +3,6 @@ package cities
 import (
 	"context"
 	"errors"
-	"os"
 	"slices"
 	"testing"
 
@@ -12,6 +11,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/geo"
 	"github.com/shrujancheruku/issho/backend/internal/maps"
 	"github.com/shrujancheruku/issho/backend/internal/maps/mapstest"
+	"github.com/shrujancheruku/issho/backend/internal/testfixture"
 )
 
 func TestDiffAreas(t *testing.T) {
@@ -52,10 +52,7 @@ func TestDiffAreas(t *testing.T) {
 // new or moved areas; a router failure leaves the pack seeded; discovering
 // an area's venues. Skipped unless TEST_DATABASE_URL is set.
 func TestIntegrationApply(t *testing.T) {
-	url := os.Getenv("TEST_DATABASE_URL")
-	if url == "" {
-		t.Skip("TEST_DATABASE_URL not set")
-	}
+	url := testfixture.DatabaseURL(t)
 	ctx := context.Background()
 	pool, err := pgxpool.New(ctx, url)
 	if err != nil {

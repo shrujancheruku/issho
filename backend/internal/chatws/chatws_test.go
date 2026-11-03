@@ -10,7 +10,6 @@ import (
 	"io"
 	"log/slog"
 	"net/http/httptest"
-	"os"
 	"strings"
 	"testing"
 	"time"
@@ -24,6 +23,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/crews"
 	"github.com/shrujancheruku/issho/backend/internal/plans"
 	"github.com/shrujancheruku/issho/backend/internal/platform/auth"
+	"github.com/shrujancheruku/issho/backend/internal/testfixture"
 )
 
 const testIssuer = "http://test.local"
@@ -33,10 +33,7 @@ const testIssuer = "http://test.local"
 // then that person typing on their own socket; a bad token and someone not
 // going are turned away with their close codes.
 func TestIntegrationSocket(t *testing.T) {
-	url := os.Getenv("TEST_DATABASE_URL")
-	if url == "" {
-		t.Skip("TEST_DATABASE_URL not set")
-	}
+	url := testfixture.DatabaseURL(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	pool, err := pgxpool.New(ctx, url)

@@ -1,6 +1,7 @@
 // Package testfixture builds throwaway cities and users in a real database
 // for integration tests in any package. Tests using it are skipped unless
-// TEST_DATABASE_URL is set (CI sets it).
+// TEST_DATABASE_URL is set (CI sets it). When CI=true, a missing URL fails them
+// instead, so a lost env var can't pass silently.
 package testfixture
 
 import (
@@ -24,15 +25,27 @@ type Fixture struct {
 	Users           []uuid.UUID
 }
 
+// DatabaseURL returns TEST_DATABASE_URL for an integration test. Unset, the
+// test is skipped locally, but fails when CI=true: a dropped env var in the
+// workflow would otherwise turn every database test into a silent pass.
+func DatabaseURL(t *testing.T) string {
+	t.Helper()
+	url := os.Getenv("TEST_DATABASE_URL")
+	if url == "" {
+		if os.Getenv("CI") == "true" {
+			t.Fatal("TEST_DATABASE_URL not set, but CI=true: integration tests must not skip in CI")
+		}
+		t.Skip("TEST_DATABASE_URL not set")
+	}
+	return url
+}
+
 // New creates the city named id (and an activity and area named
 // after it) in the given time zone, with n users, and deletes them all when
 // the test ends. Leftovers from an interrupted run are deleted first.
 func New(t *testing.T, id, timezone string, n int) *Fixture {
 	t.Helper()
-	url := os.Getenv("TEST_DATABASE_URL")
-	if url == "" {
-		t.Skip("TEST_DATABASE_URL not set")
-	}
+	url := DatabaseURL(t)
 	ctx := context.Background()
 	pool, err := pgxpool.New(ctx, url)
 	if err != nil {

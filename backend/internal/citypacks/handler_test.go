@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"os"
 	"slices"
 	"strings"
 	"testing"
@@ -20,6 +19,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/maps/mapstest"
 	"github.com/shrujancheruku/issho/backend/internal/platform/auth"
 	"github.com/shrujancheruku/issho/backend/internal/platform/github"
+	"github.com/shrujancheruku/issho/backend/internal/testfixture"
 )
 
 func TestChanges(t *testing.T) {
@@ -94,10 +94,7 @@ func (f *fakeRepo) OpenPRs(context.Context, string) ([]github.PR, error) {
 // travel times rebuilt) and finding an area's venues. Skipped unless
 // TEST_DATABASE_URL is set.
 func TestIntegrationCityPacks(t *testing.T) {
-	url := os.Getenv("TEST_DATABASE_URL")
-	if url == "" {
-		t.Skip("TEST_DATABASE_URL not set")
-	}
+	url := testfixture.DatabaseURL(t)
 	ctx := context.Background()
 	pool, err := pgxpool.New(ctx, url)
 	if err != nil {
