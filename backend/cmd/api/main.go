@@ -13,7 +13,6 @@ import (
 	"syscall"
 	"time"
 
-	"connectrpc.com/connect"
 	connectcors "connectrpc.com/cors"
 	"github.com/rs/cors"
 
@@ -34,8 +33,6 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/platform/auth"
 	"github.com/shrujancheruku/issho/backend/internal/platform/config"
 	"github.com/shrujancheruku/issho/backend/internal/platform/db"
-	"github.com/shrujancheruku/issho/backend/internal/platform/deadline"
-	"github.com/shrujancheruku/issho/backend/internal/platform/errs"
 	"github.com/shrujancheruku/issho/backend/internal/platform/github"
 	"github.com/shrujancheruku/issho/backend/internal/platform/sentry"
 	"github.com/shrujancheruku/issho/backend/internal/platform/supabase"
@@ -116,10 +113,8 @@ func run() error {
 	q := dbgen.New(pool)
 	suspensions := &moderation.Suspensions{Q: q}
 	// errs runs outermost so it also sanitises errors returned by the auth interceptor.
-	interceptors := connect.WithInterceptors(
-		errs.Interceptor(slog.Default()),
-		// Inside errs so its DeadlineExceeded passes through as is.
-		deadline.Interceptor(deadline.Default, rpcDeadlines),
+	// handlerOptions puts errs outermost, then the deadline, then these.
+	opts := handlerOptions(slog.Default(),
 		// UIService is public because the sign-in screens need their text
 		// before anyone is signed in; it only translates the server's own
 		// copy of the UI catalogue.
@@ -134,7 +129,6 @@ func run() error {
 		moderation.Gate(suspensions, isshov1connect.IdentityServiceGetMeProcedure,
 			isshov1connect.IdentityServiceDeleteAccountProcedure, isshov1connect.PushServiceUnregisterPushTokenProcedure),
 	)
-	opts := connect.WithOptions(interceptors, connect.WithReadMaxBytes(maxRequestBytes))
 
 	mux := http.NewServeMux()
 	healthH := &health.Handler{Pool: pool, Version: version}
@@ -230,7 +224,7 @@ func run() error {
 	protocols.SetUnencryptedHTTP2(true)
 	baseCtx, baseCancel := context.WithCancel(context.Background())
 	defer baseCancel()
-	srv := newServer(cfg.APIAddr, handler, protocols, baseCtx)
+	srv := newServer(cfg.APIAddr, handler, protocols, baseCtx, prodTimeouts)
 
 	errc := make(chan error, 1)
 	go func() {

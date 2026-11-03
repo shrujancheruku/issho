@@ -36,6 +36,8 @@ func Interceptor(def time.Duration, overrides map[string]time.Duration) connect.
 			defer cancel()
 			resp, err := next(ctx, req)
 			if err != nil && errors.Is(ctx.Err(), context.DeadlineExceeded) {
+				// An *errs.Error (say Upstream wrapping a deadline) also answers
+				// errors.As for *connect.Error and keeps its own kind on purpose.
 				// A handler's own Connect error (say NotFound) stays; a bare
 				// context error from a database or HTTP call becomes ours.
 				var ce *connect.Error

@@ -23,10 +23,16 @@ type Pinger interface {
 type Handler struct {
 	Pool    Pinger
 	Version string
+	// PingTimeout overrides the package default (tests).
+	PingTimeout time.Duration
 }
 
 func (h *Handler) ping(ctx context.Context) error {
-	ctx, cancel := context.WithTimeout(ctx, PingTimeout)
+	d := PingTimeout
+	if h.PingTimeout > 0 {
+		d = h.PingTimeout
+	}
+	ctx, cancel := context.WithTimeout(ctx, d)
 	defer cancel()
 	return h.Pool.Ping(ctx)
 }

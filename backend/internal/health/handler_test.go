@@ -24,7 +24,7 @@ type pinger struct{ err error }
 func (p pinger) Ping(context.Context) error { return p.err }
 
 func TestCheckReturnsWhenThePingHangs(t *testing.T) {
-	h := &Handler{Pool: hung{}, Version: "v"}
+	h := &Handler{Pool: hung{}, Version: "v", PingTimeout: 50 * time.Millisecond}
 	start := time.Now()
 	resp, err := h.Check(context.Background(), connect.NewRequest(&isshov1.CheckRequest{}))
 	if err != nil {
@@ -33,8 +33,8 @@ func TestCheckReturnsWhenThePingHangs(t *testing.T) {
 	if resp.Msg.DatabaseOk {
 		t.Error("database_ok = true, want false")
 	}
-	if d := time.Since(start); d > PingTimeout+time.Second {
-		t.Errorf("took %v, want about %v", d, PingTimeout)
+	if d := time.Since(start); d > time.Second {
+		t.Errorf("took %v, want about 50ms", d)
 	}
 }
 

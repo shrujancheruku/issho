@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -15,7 +16,9 @@ import (
 	"github.com/shrujancheruku/issho/backend/gen/issho/v1/isshov1connect"
 )
 
-type echoUI struct{ isshov1connect.UnimplementedUIServiceHandler }
+type echoUI struct {
+	isshov1connect.UnimplementedUIServiceHandler
+}
 
 func (echoUI) GetStrings(context.Context, *connect.Request[isshov1.GetStringsRequest]) (*connect.Response[isshov1.GetStringsResponse], error) {
 	return connect.NewResponse(&isshov1.GetStringsResponse{}), nil
@@ -23,7 +26,7 @@ func (echoUI) GetStrings(context.Context, *connect.Request[isshov1.GetStringsReq
 
 func TestRequestSizeLimit(t *testing.T) {
 	mux := http.NewServeMux()
-	mux.Handle(isshov1connect.NewUIServiceHandler(echoUI{}, connect.WithReadMaxBytes(maxRequestBytes)))
+	mux.Handle(isshov1connect.NewUIServiceHandler(echoUI{}, handlerOptions(slog.Default())))
 	srv := httptest.NewServer(mux)
 	defer srv.Close()
 	c := isshov1connect.NewUIServiceClient(srv.Client(), srv.URL)
@@ -43,12 +46,9 @@ func TestCityPackAppliesAreNotCutAtThirtySeconds(t *testing.T) {
 	}
 }
 
-// A chat socket must outlive the 30 s ReadTimeout and every other server
-// timeout. Real time, so skipped with -short.
+// A socket must outlive every server timeout. Same newServer as production,
+// with the timeouts shrunk so the test takes about a second.
 func TestWebSocketOutlivesServerTimeouts(t *testing.T) {
-	if testing.Short() {
-		t.Skip("holds a socket open for 35 s")
-	}
 	t.Parallel()
 	mux := http.NewServeMux()
 	mux.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
@@ -58,23 +58,22 @@ func TestWebSocketOutlivesServerTimeouts(t *testing.T) {
 		}
 		defer ws.CloseNow()
 		// Write after every timeout would have fired, as the hub does.
-		time.Sleep(readTimeout + 5*time.Second)
+		time.Sleep(time.Second)
 		_ = ws.Write(r.Context(), websocket.MessageText, []byte("late"))
 		_ = ws.Close(websocket.StatusNormalClosure, "")
 	})
 	var protocols http.Protocols
 	protocols.SetHTTP1(true)
 	srv := httptest.NewUnstartedServer(nil)
-	real := newServer("", mux, &protocols, context.Background())
-	srv.Config.Handler, srv.Config.ReadTimeout, srv.Config.IdleTimeout, srv.Config.ReadHeaderTimeout =
-		real.Handler, real.ReadTimeout, real.IdleTimeout, real.ReadHeaderTimeout
-	if real.WriteTimeout != 0 {
-		t.Fatalf("WriteTimeout = %v, want none", real.WriteTimeout)
+	srv.Config = newServer("", mux, &protocols, context.Background(),
+		serverTimeouts{ReadHeader: 300 * time.Millisecond, Read: 300 * time.Millisecond, Idle: 300 * time.Millisecond})
+	if srv.Config.WriteTimeout != 0 {
+		t.Fatalf("WriteTimeout = %v, want none", srv.Config.WriteTimeout)
 	}
 	srv.Start()
 	defer srv.Close()
 
-	ctx, cancel := context.WithTimeout(context.Background(), readTimeout+20*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	ws, _, err := websocket.Dial(ctx, "ws"+strings.TrimPrefix(srv.URL, "http")+"/ws", nil)
 	if err != nil {
@@ -83,12 +82,12 @@ func TestWebSocketOutlivesServerTimeouts(t *testing.T) {
 	defer ws.CloseNow()
 	_, msg, err := ws.Read(ctx)
 	if err != nil || string(msg) != "late" {
-		t.Fatalf("read after %v: %q, %v", readTimeout, msg, err)
+		t.Fatalf("read after the timeouts: %q, %v", msg, err)
 	}
 }
 
 func TestServerTimeouts(t *testing.T) {
-	s := newServer(":0", http.NewServeMux(), nil, context.Background())
+	s := newServer(":0", http.NewServeMux(), nil, context.Background(), prodTimeouts)
 	if s.ReadTimeout != 30*time.Second || s.IdleTimeout != 120*time.Second || s.ReadHeaderTimeout != 10*time.Second || s.WriteTimeout != 0 {
 		t.Errorf("timeouts = %v %v %v %v", s.ReadTimeout, s.IdleTimeout, s.ReadHeaderTimeout, s.WriteTimeout)
 	}

@@ -2,11 +2,16 @@ package main
 
 import (
 	"context"
+	"log/slog"
 	"net"
 	"net/http"
 	"time"
 
+	"connectrpc.com/connect"
+
 	"github.com/shrujancheruku/issho/backend/gen/issho/v1/isshov1connect"
+	"github.com/shrujancheruku/issho/backend/internal/platform/deadline"
+	"github.com/shrujancheruku/issho/backend/internal/platform/errs"
 )
 
 // maxRequestBytes caps every Connect request body. The largest real ones are
@@ -41,14 +46,32 @@ var rpcDeadlines = map[string]time.Duration{
 	isshov1connect.TranslationServiceDraftAppStringProcedure: 2 * time.Minute,
 }
 
-func newServer(addr string, h http.Handler, protocols *http.Protocols, baseCtx context.Context) *http.Server {
+// serverTimeouts are the http.Server's; production uses prodTimeouts, tests
+// shrink them. There is deliberately no write timeout field.
+type serverTimeouts struct{ ReadHeader, Read, Idle time.Duration }
+
+var prodTimeouts = serverTimeouts{ReadHeader: readHeaderTimeout, Read: readTimeout, Idle: idleTimeout}
+
+// handlerOptions is the option set of every Connect handler: errs outermost
+// (so it also sanitises what the others return), the deadline inside it (so
+// its DeadlineExceeded passes through as is), then the caller's interceptors
+// (auth and so on), and the request size cap.
+func handlerOptions(log *slog.Logger, inner ...connect.Interceptor) connect.HandlerOption {
+	chain := append([]connect.Interceptor{
+		errs.Interceptor(log),
+		deadline.Interceptor(deadline.Default, rpcDeadlines),
+	}, inner...)
+	return connect.WithOptions(connect.WithInterceptors(chain...), connect.WithReadMaxBytes(maxRequestBytes))
+}
+
+func newServer(addr string, h http.Handler, protocols *http.Protocols, baseCtx context.Context, t serverTimeouts) *http.Server {
 	return &http.Server{
 		Addr:              addr,
 		Handler:           h,
 		Protocols:         protocols,
-		ReadHeaderTimeout: readHeaderTimeout,
-		ReadTimeout:       readTimeout,
-		IdleTimeout:       idleTimeout,
+		ReadHeaderTimeout: t.ReadHeader,
+		ReadTimeout:       t.Read,
+		IdleTimeout:       t.Idle,
 		// Not the signal context: that would cancel in-flight requests the
 		// moment SIGTERM arrives, before Shutdown drains them. baseCancel
 		// runs after Shutdown, to end the WebSockets it doesn't track
