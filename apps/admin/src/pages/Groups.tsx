@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { eventHref, localTime } from '../format';
 import { useRememberedCity } from '../city';
 import { api } from '../lib';
+import { LoadMore, rowsOf, usePaged } from '../paging';
 
 const tabs: { label: string; status: ReviewEventStatus }[] = [
   { label: 'Proposed', status: ReviewEventStatus.PROPOSED },
@@ -17,11 +18,8 @@ export function Groups() {
   const [cityId, setCityId] = useRememberedCity('plans.city', cities.data?.cities);
   const [status, setStatus] = useState(ReviewEventStatus.PROPOSED);
   const city = cities.data?.cities.find((c) => c.id === cityId);
-  const events = useQuery({
-    queryKey: ['review-events', cityId, status],
-    queryFn: () => api.review.listReviewEvents({ cityId, status }),
-    enabled: cityId !== '',
-  });
+  const events = usePaged(['review-events', cityId, status], (pageToken) => api.review.listReviewEvents({ cityId, status, pageToken }), cityId !== '');
+  const rows = rowsOf(events.data, (p) => p.events);
 
   return (
     <section>
@@ -44,15 +42,16 @@ export function Groups() {
           : 'Scheduled outings from today. Set where each group meets; people who confirmed see it 24 hours before.'}
       </p>
       {(cities.error || events.error) && <p className="error">{ConnectError.from(cities.error ?? events.error).message}</p>}
-      {events.data?.events.length === 0 && <p className="empty">Nothing here.</p>}
-      {events.data && events.data.events.length > 0 && (
+      {events.data && rows.length === 0 && <p className="empty">Nothing here.</p>}
+      {rows.length > 0 && (
         <div className="table-wrap">
           <table>
             <thead><tr><th>When</th><th>Plan</th><th>Area</th><th>Groups</th><th>People</th></tr></thead>
-            <tbody>{events.data.events.map((e) => <EventRow key={e.id} event={e} />)}</tbody>
+            <tbody>{rows.map((e) => <EventRow key={e.id} event={e} />)}</tbody>
           </table>
         </div>
       )}
+      <LoadMore query={events} />
     </section>
   );
 }

@@ -6,8 +6,7 @@ import { ConfirmButton } from '../Confirm';
 import { formatTime } from '../format';
 import { useRememberedCity } from '../city';
 import { api } from '../lib';
-
-const PAGE = 50;
+import { LoadMore, rowsOf, usePaged } from '../paging';
 
 const tabs: { label: string; status: VenueStatus; count: (c: VenueCity) => number }[] = [
   { label: 'To review', status: VenueStatus.CANDIDATE, count: (c) => c.candidates },
@@ -30,25 +29,21 @@ export function Venues() {
   const [status, setStatus] = useState(VenueStatus.CANDIDATE);
   const [areaId, setAreaId] = useState('');
   const [categoryId, setCategoryId] = useState('');
-  const [offset, setOffset] = useState(0);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   // A new filter starts from the first page with nothing selected.
   const refilter = <T,>(set: (value: T) => void) => (value: T) => {
     set(value);
-    setOffset(0);
     setSelected(new Set());
   };
   const city = cities.data?.cities.find((c) => c.id === cityId);
   const categories = cities.data?.categories ?? [];
   const categoryName = (id: string) => categories.find((c) => c.id === id)?.name ?? id;
-  const venues = useQuery({
-    queryKey: ['venues', cityId, status, areaId, categoryId, offset],
-    queryFn: () => api.curation.listVenues({ cityId, status, areaId, categoryId, offset }),
-    enabled: cityId !== '',
-  });
+  const venues = usePaged(['venues', cityId, status, areaId, categoryId], (pageToken) => api.curation.listVenues({ cityId, status, areaId, categoryId, pageToken }), cityId !== '');
   const refresh = () => {
     setSelected(new Set());
-    void queryClient.invalidateQueries({ queryKey: ['venues'] });
+    // Back to the first page rather than refetching every loaded one: each
+    // page costs a Google lookup per place.
+    void queryClient.resetQueries({ queryKey: ['venues'] });
     void queryClient.invalidateQueries({ queryKey: ['venue-cities'] });
   };
   const toggle = useMutation({
@@ -62,8 +57,8 @@ export function Venues() {
     onSuccess: refresh,
   });
 
-  const rows = venues.data?.venues ?? [];
-  const total = venues.data?.total ?? 0;
+  const rows = rowsOf(venues.data, (p) => p.venues);
+  const total = venues.data?.pages[0]?.total ?? 0;
   const allChecked = rows.length > 0 && rows.every((v) => selected.has(v.placeId));
   const check = (id: string, on: boolean) => {
     const next = new Set(selected);
@@ -145,11 +140,8 @@ export function Venues() {
               </tbody>
             </table>
           </div>
-          <div className="row pager">
-            <button className="secondary small" disabled={offset === 0} onClick={() => setOffset(Math.max(0, offset - PAGE))}>Previous</button>
-            <span className="muted">{offset + 1}–{offset + rows.length} of {total}</span>
-            <button className="secondary small" disabled={offset + PAGE >= total} onClick={() => setOffset(offset + PAGE)}>Next</button>
-          </div>
+          <p className="muted">{rows.length} of {total}</p>
+          <LoadMore query={venues} />
         </>
       )}
     </section>
