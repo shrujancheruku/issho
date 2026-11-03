@@ -31,8 +31,8 @@ const crew = (): Crew =>
     quorum: 3,
     members: Array.from({ length: 4 }, (_, i) => ({ id: `m${i}`, accepted: i < server.yes })),
   }) as unknown as Crew;
-// A lapsed or declined offer is gone from the person's list (the admin SPA is the only one that sees lapsed).
-const listed = () => (server.status === CrewStatus.LAPSED || server.response === ('declined' as unknown) ? [] : [crew()]);
+// A lapsed offer is gone from the person's list (the admin SPA is the only one that sees lapsed).
+const listed = () => (server.status === CrewStatus.LAPSED ? [] : [crew()]);
 
 beforeEach(() => {
   jest.useFakeTimers();
@@ -81,24 +81,21 @@ test('an unanswered offer needs the person; accepting it waits for the others, t
   expect(view(result.current.crew.data)).toMatchObject({ isOffer: false, isActive: true, needsAnswer: false, listedAsGroup: true });
 });
 
-test('declining sends accept=false and refreshes the crew and the list, which no longer has it', async () => {
+// The app has no declined state: it sends accept=false and refreshes, and the
+// server stops listing the crew for that person.
+test('declining sends accept=false and invalidates the crew and the list', async () => {
   const { qc, wrapper } = setup();
   const { result } = await renderHook(() => ({ crews: useMyCrews(), respond: useRespondToCrew('c1') }), { wrapper });
   await flush();
   expect(result.current.crews.data).toHaveLength(1);
   qc.setQueryData(keys.crew('c1'), { crew: crew() });
 
-  mockApi.crews.respondToCrew.mockImplementation(async () => {
-    server = { ...server, response: 'declined' as unknown as CrewResponse };
-    return {};
-  });
   await act(async () => {
     await result.current.respond.mutateAsync(false);
   });
   expect(mockApi.crews.respondToCrew).toHaveBeenCalledWith({ crewId: 'c1', accept: false });
   expect(qc.getQueryState(keys.crew('c1'))?.isInvalidated).toBe(true);
-  await flush();
-  expect(result.current.crews.data).toEqual([]);
+  expect(mockApi.crews.listMyCrews.mock.calls.length).toBeGreaterThan(1); // the list was refetched
 });
 
 test('an offer that lapses while the screen is open stops needing an answer on the next refresh', async () => {

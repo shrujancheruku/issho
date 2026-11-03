@@ -5,6 +5,7 @@ import { render } from '@testing-library/react-native';
 
 import { notificationTarget, type NotificationTarget } from '../notification-target';
 import { useNotificationTaps } from '../push';
+import { goKinds } from '../test-support/go-kinds';
 import { pushKinds } from '../queries';
 
 jest.mock('expo-constants', () => ({
@@ -27,17 +28,8 @@ const Notifications = require('expo-notifications') as {
   clearLastNotificationResponseAsync: jest.Mock;
 };
 
-// The backend's notification kinds, read from the Go source as push-kinds.test.ts does.
-declare const __dirname: string;
-declare function require(id: string): any;
-const { readFileSync } = require('fs') as { readFileSync(path: string, encoding: string): string };
-const goKinds = ['plans/events.go', 'crews/notifications.go'].flatMap((f) =>
-  [...readFileSync(`${__dirname}/../../../../../backend/internal/${f}`, 'utf8').matchAll(/^\s*Notify\w+\s*=\s*"([a-z_]+)"/gm)].map(
-    (m) => m[1],
-  ),
-);
-
 // Which id each kind carries (backend `data()`), hence which screen a tap opens.
+// Routing is by the id key present, not by kind: the kind only picks the row here.
 const routes: Record<string, { data: Record<string, string>; target: NotificationTarget }> = {
   event_invited: { data: { eventId: 'e1' }, target: { eventId: 'e1' } },
   group_confirmed: { data: { eventId: 'e1' }, target: { eventId: 'e1' } },
