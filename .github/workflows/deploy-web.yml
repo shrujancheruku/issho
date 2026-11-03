@@ -90,7 +90,7 @@ jobs:
           # deployed one. An old-format title (the first run after this
           # change) isn't parsable and counts as no earlier deploy.
           last_deployed() {
-            gh run list --workflow "$1" --branch main --status success --limit 20 \
+            gh run list --workflow "$1" --branch main --status success --limit 100 \
               --json databaseId,displayTitle --jq '.[] | "\(.databaseId) \(.displayTitle)"' |
             while read -r id title; do
               sha=$(echo "$title" | sed -n 's/^deploy \([0-9a-f]\{40\}\)$/\1/p')
@@ -107,8 +107,8 @@ jobs:
               echo "$2: no earlier deploy to diff against; deploying" >&2; echo true; return
             fi
             echo "$2: last deployed $base" >&2
-            files=$(git diff --name-only "$base" "$SHA")  # not piped into grep -q: SIGPIPE under pipefail
-            echo "$files" | grep -qE "$3" && echo true || echo false
+            files=$(git diff --name-only "$base" "$SHA")  # grep -q reads a here-string, not a pipe: no SIGPIPE under pipefail
+            grep -qE "$3" <<<"$files" && echo true || echo false
           }
           # Each target against its own last deploy: its job is "site" or
           # "deploy" (the apps).
