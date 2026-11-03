@@ -23,12 +23,13 @@ import { InviteCard } from '@/features/together/invite-card';
 import { useTheme } from '@/hooks/use-theme';
 import { useI18n } from '@/i18n/i18n-provider';
 import { api } from '@/lib/api';
+import { keys } from '@/lib/queries';
 
 type Names = ReturnType<typeof usePlanNames>;
 
 /** Developer aid: API reachability and build version. Development builds only. */
 function ApiStatus() {
-  const health = useQuery({ queryKey: ['health'], queryFn: () => api.health.check({}) });
+  const health = useQuery({ queryKey: keys.health, queryFn: () => api.health.check({}) });
   if (health.isPending) return <ThemedText type="code">API …</ThemedText>;
   if (health.isError) return <ThemedText type="code">API unreachable</ThemedText>;
   return (

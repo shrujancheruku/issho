@@ -156,7 +156,7 @@ func (w *crewsCityWorker) Timeout(*river.Job[CrewsCityArgs]) time.Duration { ret
 func (w *crewsCityWorker) Work(ctx context.Context, job *river.Job[CrewsCityArgs]) error {
 	rep, err := w.crews.Pass(ctx, job.Args.City, w.now())
 	w.crews.Log.Info("crews", "city", job.Args.City,
-		"offered", rep.Offered, "formed", rep.Formed, "lapsed", rep.Lapsed, "suggestions", rep.Suggested)
+		"offered", rep.Offered, "formed", rep.Formed, "lapsed", rep.Lapsed, "suggestions", rep.Suggested, "failed", rep.Failed)
 	if err != nil {
 		return fmt.Errorf("crews %s: %w", job.Args.City, err)
 	}

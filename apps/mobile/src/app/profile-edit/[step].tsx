@@ -1,4 +1,3 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -12,9 +11,8 @@ import { Spacing } from '@/constants/theme';
 import { canSave, fromProfile, nextEditStep, steps, stepValid, toProfile, type Draft, type Step } from '@/features/profile/draft';
 import { saveErrorMessage } from '@/features/profile/save-error';
 import { StepView, stepTitles } from '@/features/profile/steps';
-import { profileKey, useProfile } from '@/features/profile/use-profile';
+import { useProfile, useSaveProfile } from '@/features/profile/data';
 import { useI18n } from '@/i18n/i18n-provider';
-import { api } from '@/lib/api';
 
 /** Edits one section of the profile and saves the whole profile, once every section is complete. */
 export default function ProfileEditScreen() {
@@ -27,7 +25,6 @@ export default function ProfileEditScreen() {
   const [moved, setStep] = useState<Step | null>(null);
   const step = moved ?? first;
   const { t, previewLanguages } = useI18n();
-  const queryClient = useQueryClient();
   const profile = useProfile();
   // Opened from a link or after a reload on the web, there's no settings screen behind this one.
   const leave = useLeave('/profile');
@@ -46,18 +43,7 @@ export default function ProfileEditScreen() {
   }, [step, draft, previewLanguages]);
   useEffect(() => () => previewLanguages(null), [previewLanguages]);
 
-  const save = useMutation({
-    // Settings never accepts a code of conduct on the person's behalf: it
-    // sends the version they accepted, and the server refuses an outdated one.
-    mutationFn: (d: Draft) =>
-      api.profile.saveProfile({ profile: toProfile(d, profile.data?.profile?.conductVersion ?? 0) }),
-    onSuccess: async (res) => {
-      queryClient.setQueryData(profileKey, (old: typeof profile.data) => (old ? { ...old, profile: res.profile } : old));
-      // GetMe carries the display languages.
-      await queryClient.invalidateQueries({ queryKey: ['me'] });
-      leave();
-    },
-  });
+  const save = useSaveProfile();
 
   const header = (
     <View style={styles.header}>
@@ -90,7 +76,12 @@ export default function ProfileEditScreen() {
           onPress={() => {
             if (!draft) return;
             if (next) setStep(next);
-            else if (canSave(draft)) save.mutate(draft);
+            else if (canSave(draft)) save.mutate(
+                // Settings never accepts a code of conduct on the person's behalf: it
+                // sends the version they accepted, and the server refuses an outdated one.
+                toProfile(draft, profile.data?.profile?.conductVersion ?? 0),
+                { onSuccess: leave },
+              );
           }}
         />
       </View>

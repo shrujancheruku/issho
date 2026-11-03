@@ -2,9 +2,11 @@ package crews
 
 import (
 	"context"
+	"errors"
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	"github.com/shrujancheruku/issho/backend/internal/matching"
@@ -47,45 +49,61 @@ type NotificationRenderer struct {
 	Catalog *uistrings.Catalog
 }
 
-func (r *NotificationRenderer) Render(ctx context.Context, items []notifications.Pending) ([]notifications.Content, error) {
+// Render writes each item on its own: one whose crew is gone is skipped,
+// and one that errors is its own failure, not the batch's.
+func (r *NotificationRenderer) Render(ctx context.Context, items []notifications.Pending) []notifications.Result {
 	q := dbgen.New(r.Plans.DB)
-	out := make([]notifications.Content, len(items))
+	out := make([]notifications.Result, len(items))
+	// Items about the same crew, in the same language, share a title.
 	type key struct {
 		crew uuid.UUID
 		lang string
 	}
-	titles := map[key]string{}
+	type titleResult struct {
+		title string
+		gone  bool
+		err   error
+	}
+	titles := map[key]titleResult{}
 	for i, p := range items {
 		k := key{p.Ref.CrewID, p.Language}
-		title, ok := titles[k]
+		t, ok := titles[k]
 		if !ok {
-			var err error
-			if title, err = r.title(ctx, q, p); err != nil {
-				return nil, err
-			}
-			titles[k] = title
+			t.title, t.gone, t.err = r.title(ctx, q, p)
+			titles[k] = t
 		}
-		out[i] = notifications.Content{
-			Title: title,
-			Body:  r.Catalog.Text(ctx, r.Plans.Translations, p.Language, notificationText[p.Kind]),
+		switch {
+		case t.err != nil:
+			out[i].Err = t.err
+		case t.gone:
+			out[i].Skip = true
+		default:
+			out[i].Content = notifications.Content{
+				Title: t.title,
+				Body:  r.Catalog.Text(ctx, r.Plans.Translations, p.Language, notificationText[p.Kind]),
+			}
 		}
 	}
-	return out, nil
+	return out
 }
 
 // title is a crew's name in the person's language: "{name} crew" from the
 // UI catalogue, with the activity's name (translated like plan titles) or
-// the area's stored name (never machine-translated).
-func (r *NotificationRenderer) title(ctx context.Context, q *dbgen.Queries, p notifications.Pending) (string, error) {
+// the area's stored name (never machine-translated). gone is true if the
+// crew was deleted (the notification is skipped).
+func (r *NotificationRenderer) title(ctx context.Context, q *dbgen.Queries, p notifications.Pending) (title string, gone bool, err error) {
 	c, err := q.GetCrewForNotification(ctx, p.Ref.CrewID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return "", true, nil
+	}
 	if err != nil {
-		return "", err
+		return "", false, err
 	}
 	var name string
 	if c.AreaID != nil && *c.AreaID != "" {
 		raw, err := q.GetAreaName(ctx, *c.AreaID)
 		if err != nil {
-			return "", err
+			return "", false, err
 		}
 		name = i18n.Pick(raw, p.Language)
 	} else {
@@ -94,8 +112,8 @@ func (r *NotificationRenderer) title(ctx context.Context, q *dbgen.Queries, p no
 			activity = *c.ActivityID
 		}
 		if name, err = r.Plans.ActivityTitle(ctx, c.CityID, p.Language, matching.ActivityID(activity)); err != nil {
-			return "", err
+			return "", false, err
 		}
 	}
-	return strings.ReplaceAll(r.Catalog.Text(ctx, r.Plans.Translations, p.Language, "crew.name"), "{name}", name), nil
+	return strings.ReplaceAll(r.Catalog.Text(ctx, r.Plans.Translations, p.Language, "crew.name"), "{name}", name), false, nil
 }
