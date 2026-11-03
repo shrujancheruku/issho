@@ -40,3 +40,4 @@ GoogleService-Info.plist
 .claude/settings.local.json
 .claude/worktrees/
 .claude/orchestrate-state.json
+.claude/orchestrate-profiles/

@@ -35,7 +35,7 @@ Tickets run in parallel only when their touch maps don't overlap outside the sha
 - **Commits:** Conventional Commits, scopes from `docs/contributing.md` (`commitlint.config.mjs`, hook `.githooks/commit-msg`).
 - **PR title:** Conventional Commits. **Body:** `.github/pull_request_template.md`, with `Closes #<n>` (each issue for a grouped PR). No generated-by footer, Co-Authored-By or session link.
 - **Method:** squash (the `main` ruleset allows only squash).
-- **Orchestrator merges:** yes, except the merge gates below. Rule: the `main` ruleset's required checks green (`roadmap`, `secrets`, `commits`, `codegen`, `backend`, `typescript`, `image`; strict, so the branch must be up to date), plus `proto-breaking` unless the PR is labelled `breaking-ok`; every dependency merged; reviewer approved.
+- **Orchestrator merges:** yes, except the merge gates below. Rule: the `main` ruleset's required checks green (`roadmap`, `secrets`, `commits`, `codegen`, `backend`, `typescript`, `image`; strict, so the branch must be up to date; a job CI skips because the PR doesn't touch its paths reports as skipped, which counts as passing), plus `proto-breaking` unless the PR is labelled `breaking-ok`; every dependency merged; reviewer approved.
 
 ## Gates
 
@@ -71,7 +71,7 @@ Workers stop and report when they reach one:
 ## Review
 
 - **Instruction files:** `CLAUDE.md`, `apps/mobile/AGENTS.md`, `docs/contributing.md`, `.github/pull_request_template.md`, the README of each directory changed, `GLOSSARY.md` for domain terms.
-- **Risk paths** (any PR touching them is reviewed as L): `backend/db/migrations/**`, `proto/**`, `backend/internal/identity/**`, `backend/internal/platform/auth/**`, `config/**`, `.kamal/**`, `.github/workflows/deploy-*.yml`, `backend/Dockerfile`, `supabase/config.toml`, `apps/*/wrangler.jsonc`.
+- **Risk paths** (any PR touching them is reviewed as L): `backend/db/migrations/**`, `proto/**`, `backend/internal/identity/**`, `backend/internal/platform/auth/**`, `config/**`, `.kamal/**`, `.github/workflows/deploy-*.yml`, `backend/Dockerfile`, `supabase/config.toml`, `apps/*/wrangler.jsonc`, `site/wrangler.jsonc`, `scripts/deploy-web.sh`, `.github/workflows/ci.yml`, `scripts/ci-changes.sh` (a wrong path filter silently skips required checks).
 - **Tiers:** S is at most 50 changed lines in at most 3 files, none on a risk path; L touches a risk path or changes more than 400 lines; M is everything else. The S/M/L after the ticket's link on its M10 line overrides (the repo has no `size:` labels).
 - **Repo-specific checks:** `make gen` leaves no diff; ROADMAP changed only on the ticket's own M10 line (plus any Decision-log entry); migrations are new files with a Down; RPC auth is deny-by-default; no `public` schema tables, PostgREST grants or RLS-as-exposure; no secrets or personal data; `buf breaking` passes unless the PR is `breaking-ok`.
 - **Post reviews:** yes. Every round is posted on its PR as one GitHub review with event `COMMENT` (the owner's account can't approve its own PR): the verdict first in the body, findings inline on diff lines, anything off the diff in the body. Reviewers are read-only (the plugin's guard blocks GitHub writes), so the reviewer returns the review as JSON and the orchestrator checks the line numbers and posts it. Public repo: no local paths or session details.
