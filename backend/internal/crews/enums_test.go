@@ -4,7 +4,15 @@ import (
 	"testing"
 
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
+	"github.com/shrujancheruku/issho/backend/internal/matching"
 )
+
+// The app's counter starts from the quorum the API sends.
+func TestCrewToProtoSendsTheQuorum(t *testing.T) {
+	if got := crewToProto(Item{Status: Offered}).Quorum; got != matching.CrewMinSize {
+		t.Errorf("Quorum = %d, want %d", got, matching.CrewMinSize)
+	}
+}
 
 // Every status the database allows has an enum value; an unknown one is an
 // error (the admin SPA must never get UNSPECIFIED for a real crew).

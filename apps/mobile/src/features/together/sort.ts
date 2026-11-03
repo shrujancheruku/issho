@@ -1,5 +1,6 @@
-import { CrewResponse, CrewStatus, EventStatus, InviteResponse, type Crew, type FeedPlan, type MyEvent } from '@issho/api-client';
+import { InviteResponse, type Crew, type FeedPlan, type MyEvent } from '@issho/api-client';
 
+import { crewView } from '@/features/crews/crew-view';
 import { outing } from '@/features/events/outing';
 
 /** Something waiting for the person's answer, most urgent kinds first. */
@@ -36,15 +37,19 @@ export function sortTogether(events: MyEvent[], crews: Crew[], feed: FeedPlan[],
     else if (o.needsCheckIn) needsYou.push({ kind: 'checkIn', event: e });
     else if (o.needsFeedback) needsYou.push({ kind: 'feedback', event: e });
     // Going (or waiting for enough people): the group chat is theirs. An
-    // outing that needs an answer is listed there only, not twice.
+    // outing that needs an answer is listed there only, not twice. Over, out
+    // or cancelled (outing() decides) is not a group.
+    // `stage !== 'after'` also drops an event in its feedback window before
+    // it is DONE (in practice it is DONE by then).
     const listed = needsYou.length > before;
-    if (!listed && e.response === InviteResponse.CONFIRMED && e.status !== EventStatus.CANCELLED && e.status !== EventStatus.DONE) {
+    if (!listed && e.response === InviteResponse.CONFIRMED && !o.muted && o.stage !== 'after') {
       groups.push({ kind: 'outing', event: e });
     }
   }
   for (const c of crews) {
-    if (c.status === CrewStatus.ACTIVE) groups.push({ kind: 'crew', crew: c });
-    else if (c.status === CrewStatus.OFFERED && c.response !== CrewResponse.ACCEPTED) needsYou.push({ kind: 'crewOffer', crew: c });
+    const v = crewView(c);
+    if (v.listedAsGroup) groups.push({ kind: 'crew', crew: c });
+    else if (v.needsAnswer) needsYou.push({ kind: 'crewOffer', crew: c });
   }
   needsYou.sort((a, b) => order[a.kind] - order[b.kind]);
   return { needsYou, groups, waiting: feed.filter((p) => p.signedUp) };

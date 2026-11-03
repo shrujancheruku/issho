@@ -10,6 +10,8 @@ import {
   type MyEvent,
 } from '@issho/api-client';
 
+import { outing } from '@/features/events/outing';
+
 import { sortTogether } from '../sort';
 
 // Only seconds are read; the cast skips protobuf's message brand.
@@ -56,6 +58,12 @@ describe('sortTogether', () => {
     const t = sortTogether([going, cancelled], [crew('c', CrewStatus.ACTIVE)], [], now);
     expect(t.groups.map((g) => (g.kind === 'crew' ? g.crew.id : g.event.id))).toEqual(['going', 'c']);
     expect(t.needsYou).toEqual([]);
+  });
+
+  it('does not list a cancelled group, as outing() says', () => {
+    const e = event('gone-group', { response: InviteResponse.CONFIRMED, groupStatus: GroupStatus.CANCELLED });
+    expect(outing(e, now).muted).toBe(true);
+    expect(sortTogether([e], [], [], now).groups).toEqual([]);
   });
 
   it('lists an outing that needs an answer only under needs you', () => {
