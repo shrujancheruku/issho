@@ -178,7 +178,8 @@ func UpstreamReason(service string, reason isshov1.ErrorReason, msg string, err 
 // WithCause keeps a lower-level error reachable with errors.Is/As (sentinels)
 // when a kind is built from one. The message is the kind's own.
 func WithCause(err, cause error) error {
-	if e, ok := err.(*Error); ok {
+	var e *Error
+	if errors.As(err, &e) {
 		c := *e
 		c.cause = cause
 		return &c

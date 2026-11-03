@@ -26,7 +26,7 @@ func TestInterceptor(t *testing.T) {
 	}
 
 	want := connect.NewError(connect.CodeInvalidArgument, errors.New("city_id is required"))
-	if err := run(want); err != want {
+	if err := run(want); !errors.Is(err, want) {
 		t.Fatalf("connect error changed: %v", err)
 	}
 
