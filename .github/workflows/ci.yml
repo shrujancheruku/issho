@@ -230,8 +230,14 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       # One turbo run so the three tasks run in parallel; turbo prefixes each line with its task.
-      - name: Typecheck, lint and test
-        run: pnpm turbo run typecheck lint test
+      - name: DIAG jest
+        working-directory: apps/mobile
+        run: |
+          nproc; free -m
+          stamp() { while IFS= read -r l; do printf '%s %s\n' "$(date +%T.%N | cut -c1-12)" "$l"; done; }
+          date +%T
+          pnpm exec jest --ci --silent --detectOpenHandles 2>&1 | grep -E "^(PASS|FAIL|Tests|Test Suites|Time|Jest|A worker)|open handle" | stamp
+          date +%T
       - name: Admin SPA builds
         run: pnpm --filter @issho/admin build
       # Metro's transform cache (~10 MB; Expo's default location is $TMPDIR/metro-cache).
