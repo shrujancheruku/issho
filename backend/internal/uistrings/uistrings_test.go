@@ -305,24 +305,24 @@ func TestSamePlaceholders(t *testing.T) {
 	}
 }
 
-// fakeSource serves human files on one branch.
+// fakeSource serves human files on the default branch.
 type fakeSource struct {
 	files map[string]string // file name → content
 	err   error
 }
 
-func (f fakeSource) Dir(_ context.Context, path, branch string) ([]string, error) {
+func (f fakeSource) List(_ context.Context, dir string) ([]string, error) {
 	if f.err != nil {
 		return nil, f.err
 	}
-	if path != HumanDir || branch != "main" {
-		return nil, fmt.Errorf("unexpected %s on %s", path, branch)
+	if dir != HumanDir {
+		return nil, fmt.Errorf("unexpected %s", dir)
 	}
 	return slices.Sorted(maps.Keys(f.files)), nil
 }
 
-func (f fakeSource) File(_ context.Context, path, _ string) ([]byte, string, error) {
-	return []byte(f.files[strings.TrimPrefix(path, HumanDir+"/")]), "sha", nil
+func (f fakeSource) Read(_ context.Context, path string) ([]byte, bool, error) {
+	return []byte(f.files[strings.TrimPrefix(path, HumanDir+"/")]), true, nil
 }
 
 // The API follows the default branch: a merged version is served, and a
@@ -341,7 +341,7 @@ func TestLoadHuman(t *testing.T) {
 		"README.md": "not a language",
 		"zz.json":   `{}`, // not an ISO 639-1 code: skipped
 	}}
-	if err := c.LoadHuman(ctx, src, "main"); err != nil {
+	if err := c.LoadHuman(ctx, src); err != nil {
 		t.Fatal(err)
 	}
 	if s := c.Text(ctx, nil, "ja", "hi"); s != "やあ" {
@@ -350,10 +350,10 @@ func TestLoadHuman(t *testing.T) {
 	if got := c.HumanLanguages(); !slices.Equal(got, []string{"ja"}) {
 		t.Errorf("languages %v", got)
 	}
-	if err := c.LoadHuman(ctx, fakeSource{err: errors.New("down")}, "main"); err == nil {
+	if err := c.LoadHuman(ctx, fakeSource{err: errors.New("down")}); err == nil {
 		t.Error("want the error")
 	}
-	if err := c.LoadHuman(ctx, fakeSource{files: map[string]string{"ja.json": "{broken"}}, "main"); err == nil {
+	if err := c.LoadHuman(ctx, fakeSource{files: map[string]string{"ja.json": "{broken"}}); err == nil {
 		t.Error("want a parse error")
 	}
 	if s := c.Text(ctx, nil, "ja", "hi"); s != "やあ" {
@@ -376,22 +376,22 @@ func TestStartRefusedToken(t *testing.T) {
 	}
 	for _, code := range []int{http.StatusUnauthorized, http.StatusForbidden} {
 		src := fakeSource{err: fmt.Errorf("list: %w", &github.APIError{StatusCode: code, Message: "Bad credentials"})}
-		if err := newCatalog().Start(ctx, src, "main", time.Hour, log, true); err == nil {
+		if err := newCatalog().Start(ctx, src, time.Hour, log, true); err == nil {
 			t.Errorf("%d: production started", code)
 		}
-		if err := newCatalog().Start(ctx, src, "main", time.Hour, log, false); err != nil {
+		if err := newCatalog().Start(ctx, src, time.Hour, log, false); err != nil {
 			t.Errorf("%d: non-strict: %v", code, err)
 		}
 	}
 	// GitHub answers a rate limit with 403 too: that says nothing about the token.
 	for _, msg := range []string{"API rate limit exceeded for 1.2.3.4", "You have exceeded a secondary rate limit"} {
 		src := fakeSource{err: fmt.Errorf("list: %w", &github.APIError{StatusCode: http.StatusForbidden, Message: msg})}
-		if err := newCatalog().Start(ctx, src, "main", time.Hour, log, true); err != nil {
+		if err := newCatalog().Start(ctx, src, time.Hour, log, true); err != nil {
 			t.Errorf("rate limited (%q): %v", msg, err)
 		}
 	}
 	// An outage is not a bad token.
-	if err := newCatalog().Start(ctx, fakeSource{err: errors.New("down")}, "main", time.Hour, log, true); err != nil {
+	if err := newCatalog().Start(ctx, fakeSource{err: errors.New("down")}, time.Hour, log, true); err != nil {
 		t.Errorf("outage: %v", err)
 	}
 }

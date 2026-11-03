@@ -20,6 +20,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/platform/github"
 	"github.com/shrujancheruku/issho/backend/internal/platform/sentry"
 	"github.com/shrujancheruku/issho/backend/internal/push"
+	"github.com/shrujancheruku/issho/backend/internal/repoedit"
 	"github.com/shrujancheruku/issho/backend/internal/translate"
 	"github.com/shrujancheruku/issho/backend/internal/translate/translators"
 	"github.com/shrujancheruku/issho/backend/internal/uistrings"
@@ -71,7 +72,7 @@ func run() error {
 		gh := github.New(cfg.GitHubToken, cfg.GitHubRepo)
 		gh.API = cfg.GitHubAPI
 		// A refused token stops production here, not at the first push.
-		if err := catalog.Start(ctx, gh, gh.Base, 5*time.Minute, slog.Default(), cfg.Production()); err != nil {
+		if err := catalog.Start(ctx, repoedit.New(gh, gh.Base), 5*time.Minute, slog.Default(), cfg.Production()); err != nil {
 			return err
 		}
 	}

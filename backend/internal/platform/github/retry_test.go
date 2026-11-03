@@ -9,6 +9,8 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
+
+	"github.com/shrujancheruku/issho/backend/internal/platform/errs"
 )
 
 // Reads are retried on a 503; creating a ref is not, since a second try after
@@ -45,5 +47,32 @@ func TestRetryPolicy(t *testing.T) {
 	var apiErr *APIError
 	if !errors.As(err, &apiErr) || apiErr.StatusCode != http.StatusServiceUnavailable || apiErr.Message != "secret internals" {
 		t.Errorf("cause lost: %v", err)
+	}
+}
+
+// A list that still has a full page at the cap is an error, not a silent
+// partial list (the editors would open a duplicate pull request).
+func TestOpenPRsCap(t *testing.T) {
+	var pages atomic.Int32
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		pages.Add(1)
+		var b strings.Builder
+		b.WriteString("[")
+		for i := range 100 {
+			if i > 0 {
+				b.WriteString(",")
+			}
+			b.WriteString(`{"number":1,"title":"t","html_url":"u","head":{"ref":"renovate/x"}}`)
+		}
+		b.WriteString("]")
+		_, _ = w.Write([]byte(b.String()))
+	}))
+	defer srv.Close()
+	c := New("tok", "o/r")
+	c.API = srv.URL
+	prs, err := c.OpenPRs(context.Background(), "citypack/")
+	var e *errs.Error
+	if err == nil || prs != nil || !errors.As(err, &e) || e.Kind != errs.KindUpstream || pages.Load() != maxPRPages {
+		t.Errorf("OpenPRs at the cap = %v, %v (%d pages)", prs, err, pages.Load())
 	}
 }

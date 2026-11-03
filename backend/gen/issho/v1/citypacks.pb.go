@@ -572,9 +572,14 @@ func (x *GetCityPackRequest) GetCityId() string {
 }
 
 type GetCityPackResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Pack          *CityPack              `protobuf:"bytes,1,opt,name=pack,proto3" json:"pack,omitempty"`
-	Activities    []*PackActivity        `protobuf:"bytes,2,rep,name=activities,proto3" json:"activities,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The pack as it stands in the city's pending change (its open pull
+	// request) when there is one, else on the default branch.
+	Pack       *CityPack       `protobuf:"bytes,1,opt,name=pack,proto3" json:"pack,omitempty"`
+	Activities []*PackActivity `protobuf:"bytes,2,rep,name=activities,proto3" json:"activities,omitempty"`
+	// The city's open pull request, when the pack is its pending version: a
+	// proposal commits to it instead of opening another.
+	PullRequest   *CityPackPullRequest `protobuf:"bytes,3,opt,name=pull_request,json=pullRequest,proto3" json:"pull_request,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -619,6 +624,13 @@ func (x *GetCityPackResponse) GetPack() *CityPack {
 func (x *GetCityPackResponse) GetActivities() []*PackActivity {
 	if x != nil {
 		return x.Activities
+	}
+	return nil
+}
+
+func (x *GetCityPackResponse) GetPullRequest() *CityPackPullRequest {
+	if x != nil {
+		return x.PullRequest
 	}
 	return nil
 }
@@ -1199,12 +1211,13 @@ const file_issho_v1_citypacks_proto_rawDesc = "" +
 	"\x04name\x18\x03 \x01(\tR\x04name\x12\x16\n" +
 	"\x06months\x18\x04 \x03(\x05R\x06months\"-\n" +
 	"\x12GetCityPackRequest\x12\x17\n" +
-	"\acity_id\x18\x01 \x01(\tR\x06cityId\"u\n" +
+	"\acity_id\x18\x01 \x01(\tR\x06cityId\"\xb7\x01\n" +
 	"\x13GetCityPackResponse\x12&\n" +
 	"\x04pack\x18\x01 \x01(\v2\x12.issho.v1.CityPackR\x04pack\x126\n" +
 	"\n" +
 	"activities\x18\x02 \x03(\v2\x16.issho.v1.PackActivityR\n" +
-	"activities\"N\n" +
+	"activities\x12@\n" +
+	"\fpull_request\x18\x03 \x01(\v2\x1d.issho.v1.CityPackPullRequestR\vpullRequest\"N\n" +
 	"\fPackActivity\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1a\n" +
@@ -1292,24 +1305,25 @@ var file_issho_v1_citypacks_proto_depIdxs = []int32{
 	18, // 5: issho.v1.PackArea.name:type_name -> issho.v1.PackArea.NameEntry
 	4,  // 6: issho.v1.GetCityPackResponse.pack:type_name -> issho.v1.CityPack
 	9,  // 7: issho.v1.GetCityPackResponse.activities:type_name -> issho.v1.PackActivity
-	4,  // 8: issho.v1.ProposeCityPackRequest.pack:type_name -> issho.v1.CityPack
-	3,  // 9: issho.v1.ProposeCityPackResponse.pull_request:type_name -> issho.v1.CityPackPullRequest
-	14, // 10: issho.v1.ApplyCityPackResponse.replaced_areas:type_name -> issho.v1.ReplacedArea
-	0,  // 11: issho.v1.CityPackService.ListCityPacks:input_type -> issho.v1.ListCityPacksRequest
-	7,  // 12: issho.v1.CityPackService.GetCityPack:input_type -> issho.v1.GetCityPackRequest
-	10, // 13: issho.v1.CityPackService.ProposeCityPack:input_type -> issho.v1.ProposeCityPackRequest
-	12, // 14: issho.v1.CityPackService.ApplyCityPack:input_type -> issho.v1.ApplyCityPackRequest
-	15, // 15: issho.v1.CityPackService.DiscoverAreaVenues:input_type -> issho.v1.DiscoverAreaVenuesRequest
-	1,  // 16: issho.v1.CityPackService.ListCityPacks:output_type -> issho.v1.ListCityPacksResponse
-	8,  // 17: issho.v1.CityPackService.GetCityPack:output_type -> issho.v1.GetCityPackResponse
-	11, // 18: issho.v1.CityPackService.ProposeCityPack:output_type -> issho.v1.ProposeCityPackResponse
-	13, // 19: issho.v1.CityPackService.ApplyCityPack:output_type -> issho.v1.ApplyCityPackResponse
-	16, // 20: issho.v1.CityPackService.DiscoverAreaVenues:output_type -> issho.v1.DiscoverAreaVenuesResponse
-	16, // [16:21] is the sub-list for method output_type
-	11, // [11:16] is the sub-list for method input_type
-	11, // [11:11] is the sub-list for extension type_name
-	11, // [11:11] is the sub-list for extension extendee
-	0,  // [0:11] is the sub-list for field type_name
+	3,  // 8: issho.v1.GetCityPackResponse.pull_request:type_name -> issho.v1.CityPackPullRequest
+	4,  // 9: issho.v1.ProposeCityPackRequest.pack:type_name -> issho.v1.CityPack
+	3,  // 10: issho.v1.ProposeCityPackResponse.pull_request:type_name -> issho.v1.CityPackPullRequest
+	14, // 11: issho.v1.ApplyCityPackResponse.replaced_areas:type_name -> issho.v1.ReplacedArea
+	0,  // 12: issho.v1.CityPackService.ListCityPacks:input_type -> issho.v1.ListCityPacksRequest
+	7,  // 13: issho.v1.CityPackService.GetCityPack:input_type -> issho.v1.GetCityPackRequest
+	10, // 14: issho.v1.CityPackService.ProposeCityPack:input_type -> issho.v1.ProposeCityPackRequest
+	12, // 15: issho.v1.CityPackService.ApplyCityPack:input_type -> issho.v1.ApplyCityPackRequest
+	15, // 16: issho.v1.CityPackService.DiscoverAreaVenues:input_type -> issho.v1.DiscoverAreaVenuesRequest
+	1,  // 17: issho.v1.CityPackService.ListCityPacks:output_type -> issho.v1.ListCityPacksResponse
+	8,  // 18: issho.v1.CityPackService.GetCityPack:output_type -> issho.v1.GetCityPackResponse
+	11, // 19: issho.v1.CityPackService.ProposeCityPack:output_type -> issho.v1.ProposeCityPackResponse
+	13, // 20: issho.v1.CityPackService.ApplyCityPack:output_type -> issho.v1.ApplyCityPackResponse
+	16, // 21: issho.v1.CityPackService.DiscoverAreaVenues:output_type -> issho.v1.DiscoverAreaVenuesResponse
+	17, // [17:22] is the sub-list for method output_type
+	12, // [12:17] is the sub-list for method input_type
+	12, // [12:12] is the sub-list for extension type_name
+	12, // [12:12] is the sub-list for extension extendee
+	0,  // [0:12] is the sub-list for field type_name
 }
 
 func init() { file_issho_v1_citypacks_proto_init() }

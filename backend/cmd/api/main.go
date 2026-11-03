@@ -39,6 +39,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/platform/supabase"
 	"github.com/shrujancheruku/issho/backend/internal/profile"
 	"github.com/shrujancheruku/issho/backend/internal/push"
+	"github.com/shrujancheruku/issho/backend/internal/repoedit"
 	"github.com/shrujancheruku/issho/backend/internal/tagging"
 	"github.com/shrujancheruku/issho/backend/internal/tagging/gemini"
 	"github.com/shrujancheruku/issho/backend/internal/translate"
@@ -164,12 +165,15 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	packs := &citypacks.Handler{DB: pool, Base: "main", Jobs: jobs}
-	var gh *github.Client
+	packs := &citypacks.Handler{DB: pool, Jobs: jobs}
+	// Pending changes (edits waiting in a pull request) for both editors; nil
+	// without a token.
+	var pending *repoedit.Repo
 	if cfg.GitHubToken != "" {
-		gh = github.New(cfg.GitHubToken, cfg.GitHubRepo)
+		gh := github.New(cfg.GitHubToken, cfg.GitHubRepo)
 		gh.API = cfg.GitHubAPI
-		packs.GitHub, packs.Base = gh, gh.Base
+		pending = repoedit.New(gh, gh.Base)
+		packs.Repo = pending
 	} else {
 		slog.Warn("GITHUB_TOKEN not set: the city-pack editor can't read or propose packs, and the translation editor can't save")
 	}
@@ -202,7 +206,7 @@ func run() error {
 		return err
 	}
 	mux.Handle(isshov1connect.NewUIServiceHandler(&uistrings.Handler{Catalog: uiCatalog, Translations: translations}, opts))
-	uiEditor := &uistrings.Editor{Catalog: uiCatalog, Translations: translations, Base: "main"}
+	uiEditor := &uistrings.Editor{Catalog: uiCatalog, Translations: translations, Repo: pending}
 	translationEditor := &translationeditor.Handler{
 		Editor:  uiEditor,
 		Reviews: &translate.Reviewer{Q: q, UIContextPrefix: uistrings.ContextPrefix, SamePlaceholders: uistrings.SamePlaceholders},
@@ -210,11 +214,10 @@ func run() error {
 	if cfg.GeminiAPIKey != "" {
 		uiEditor.Drafter = translategemini.New(cfg.GeminiAPIKey)
 	}
-	if gh != nil {
-		uiEditor.GitHub, uiEditor.Base = gh, gh.Base
+	if pending != nil {
 		// Merged human versions are served without a deploy.
 		// A refused token stops production here, not on the first edit.
-		if err := uiCatalog.Start(ctx, gh, gh.Base, 5*time.Minute, slog.Default(), cfg.Production()); err != nil {
+		if err := uiCatalog.Start(ctx, pending, 5*time.Minute, slog.Default(), cfg.Production()); err != nil {
 			return err
 		}
 	}
