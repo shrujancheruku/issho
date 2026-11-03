@@ -68,11 +68,11 @@ var (
 	ErrOver = errors.New("this crew offer or crew is over")
 )
 
-// Service is what CrewService does for one caller.
 // Cap bounds ListMyCrews: offers still open plus crews the caller is in.
 // Crews are small groups people keep a few of, so 50 is far past real use.
 var Cap = &bound.List{Name: "ListMyCrews", Max: 50}
 
+// Service is what CrewService does for one caller.
 type Service struct {
 	DB *pgxpool.Pool
 }
