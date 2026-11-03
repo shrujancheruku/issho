@@ -21,6 +21,12 @@ git fetch --quiet origin main
 git merge-base --is-ancestor "$sha" origin/main || { echo "deploy: $sha is not on main" >&2; exit 1; }
 git checkout --quiet --detach "$sha"
 
+# The Kamal image this commit pins (config/kamal-image), read after the
+# checkout so each deploy uses its own commit's Kamal.
+[ -s config/kamal-image ] || { echo "deploy: $sha has no config/kamal-image (it predates the pin); deploy a newer commit" >&2; exit 1; }
+kamal_image=$(cat config/kamal-image)
+[ -n "$kamal_image" ] || { echo "deploy: config/kamal-image is blank" >&2; exit 1; }
+
 kamal() {
   # The repo checkout as the workdir, with the gitignored files Kamal reads
   # (.kamal/secrets and the env file it points at) mounted from /opt/issho.
@@ -35,7 +41,7 @@ kamal() {
     -v /var/run/docker.sock:/var/run/docker.sock \
     -e KAMAL_REGISTRY_PASSWORD="$token" \
     -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0='*' \
-    ghcr.io/basecamp/kamal:v2.12.0 "$@"
+    "$kamal_image" "$@"
 }
 
 # Log in for this deploy only; don't leave the token (short-lived as it is)

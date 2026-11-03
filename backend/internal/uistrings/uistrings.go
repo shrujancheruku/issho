@@ -36,6 +36,7 @@ import (
 	"connectrpc.com/connect"
 
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
+	"github.com/shrujancheruku/issho/backend/internal/platform/errs"
 	"github.com/shrujancheruku/issho/backend/internal/platform/github"
 	"github.com/shrujancheruku/issho/backend/internal/platform/i18n"
 	"github.com/shrujancheruku/issho/backend/internal/translate"
@@ -232,7 +233,7 @@ type Handler struct {
 func (h *Handler) GetStrings(ctx context.Context, req *connect.Request[isshov1.GetStringsRequest]) (*connect.Response[isshov1.GetStringsResponse], error) {
 	lang := i18n.Display(req.Msg.Language)
 	if !i18n.ValidDisplay(lang) {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("language must be a language code such as \"ja\""))
+		return nil, errs.Invalid("language must be a language code such as \"ja\"")
 	}
 	strs, complete := h.Catalog.In(ctx, h.Translations, lang)
 	version := Version(strs)

@@ -3,7 +3,6 @@ package plans
 import (
 	"context"
 	"errors"
-	"fmt"
 	"time"
 
 	"connectrpc.com/connect"
@@ -83,7 +82,7 @@ func (h *EventHandler) RespondToEvent(ctx context.Context, req *connect.Request[
 	}
 	action, ok := actions[req.Msg.Action]
 	if !ok {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("action: confirm, decline or cancel"))
+		return nil, errs.Invalid("action: confirm, decline or cancel")
 	}
 	now := h.now()
 	if err := h.Svc.Respond(ctx, userID, eventID, action, now); err != nil {
@@ -180,11 +179,11 @@ func (h *EventHandler) ReportPerson(ctx context.Context, req *connect.Request[is
 	}
 	mateID, err := uuid.Parse(req.Msg.MateId)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("mate_id: not a group mate id"))
+		return nil, errs.Invalid("mate_id: not a group mate id")
 	}
 	reason, ok := ReportReasons[req.Msg.Reason]
 	if !ok {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("reason: required"))
+		return nil, errs.Invalid("reason: required")
 	}
 	if err := h.Svc.Report(ctx, userID, eventID, mateID, reason, req.Msg.Details, h.now()); err != nil {
 		return nil, eventError(err)
@@ -215,7 +214,7 @@ func parseIDs(field string, ss []string) ([]uuid.UUID, error) {
 	for i, s := range ss {
 		id, err := uuid.Parse(s)
 		if err != nil {
-			return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("%s: not a group mate id", field))
+			return nil, errs.Invalid("%s: not a group mate id", field)
 		}
 		ids[i] = id
 	}
@@ -225,7 +224,7 @@ func parseIDs(field string, ss []string) ([]uuid.UUID, error) {
 func parseEventID(s string) (uuid.UUID, error) {
 	id, err := uuid.Parse(s)
 	if err != nil {
-		return uuid.Nil, connect.NewError(connect.CodeInvalidArgument, errors.New("event_id: not an event id"))
+		return uuid.Nil, errs.Invalid("event_id: not an event id")
 	}
 	return id, nil
 }

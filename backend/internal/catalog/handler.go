@@ -4,12 +4,12 @@ package catalog
 
 import (
 	"context"
-	"errors"
 
 	"connectrpc.com/connect"
 
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
+	"github.com/shrujancheruku/issho/backend/internal/platform/errs"
 	"github.com/shrujancheruku/issho/backend/internal/platform/i18n"
 	"github.com/shrujancheruku/issho/backend/internal/tagging"
 	"github.com/shrujancheruku/issho/backend/internal/translate"
@@ -25,7 +25,7 @@ type Handler struct {
 
 func (h *Handler) ListActivities(ctx context.Context, req *connect.Request[isshov1.ListActivitiesRequest]) (*connect.Response[isshov1.ListActivitiesResponse], error) {
 	if req.Msg.CityId == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("city_id is required"))
+		return nil, errs.Invalid("city_id is required")
 	}
 	primary, secondary, err := displayLanguages(req.Msg.Locale, req.Msg.SecondaryLanguage)
 	if err != nil {

@@ -10,7 +10,6 @@ package moderation
 
 import (
 	"context"
-	"errors"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -180,7 +179,7 @@ func (h *Handler) ResolveReport(ctx context.Context, req *connect.Request[isshov
 		return nil, err
 	}
 	if n == 0 {
-		return nil, connect.NewError(connect.CodeNotFound, errors.New("no such report"))
+		return nil, errs.NotFound("no such report")
 	}
 	return connect.NewResponse(&isshov1.ResolveReportResponse{}), nil
 }
@@ -251,7 +250,7 @@ func (h *Handler) ResolveFlag(ctx context.Context, req *connect.Request[isshov1.
 		return nil, err
 	}
 	if n == 0 {
-		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("no open flag with that id"))
+		return nil, errs.Refused("no open flag with that id")
 	}
 	return connect.NewResponse(&isshov1.ResolveFlagResponse{}), nil
 }

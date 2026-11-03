@@ -13,6 +13,7 @@ import (
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
 	"github.com/shrujancheruku/issho/backend/internal/matching"
 	"github.com/shrujancheruku/issho/backend/internal/platform/auth"
+	"github.com/shrujancheruku/issho/backend/internal/platform/errs"
 )
 
 // Handler serves PlanService.
@@ -80,7 +81,7 @@ func (h *Handler) SignUp(ctx context.Context, req *connect.Request[isshov1.SignU
 	}
 	signup, err := signupFromProto(req.Msg.Signup)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeInvalidArgument, err)
+		return nil, errs.Invalid("%s", err)
 	}
 	item, err := h.Svc.SignUp(ctx, userID, planID, signup)
 	if err != nil {
@@ -115,7 +116,7 @@ func caller(ctx context.Context) (uuid.UUID, error) {
 func parsePlanID(s string) (uuid.UUID, error) {
 	id, err := uuid.Parse(s)
 	if err != nil {
-		return uuid.Nil, connect.NewError(connect.CodeInvalidArgument, errors.New("plan_id: not a plan id"))
+		return uuid.Nil, errs.Invalid("plan_id: not a plan id")
 	}
 	return id, nil
 }
@@ -124,11 +125,11 @@ func connectError(err error) error {
 	var inv *InvalidError
 	switch {
 	case errors.As(err, &inv):
-		return connect.NewError(connect.CodeInvalidArgument, err)
+		return errs.Invalid("%s", err)
 	case errors.Is(err, ErrNotFound):
-		return connect.NewError(connect.CodeNotFound, err)
+		return errs.NotFound("%s", err)
 	case errors.Is(err, ErrNoProfile), errors.Is(err, ErrNotForYou):
-		return connect.NewError(connect.CodeFailedPrecondition, err)
+		return errs.Refused("%s", err)
 	}
 	return err
 }

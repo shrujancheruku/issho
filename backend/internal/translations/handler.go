@@ -453,7 +453,7 @@ func (h *Handler) DraftAppString(ctx context.Context, req *connect.Request[issho
 	}
 	// A draft that lost a placeholder couldn't be saved anyway.
 	if !uistrings.SamePlaceholders(english, text) {
-		return nil, connect.NewError(connect.CodeUnavailable, errors.New("the suggestion changed a {placeholder}; ask again"))
+		return nil, errs.Refused("the suggestion changed a {placeholder}; ask again")
 	}
 	return connect.NewResponse(&isshov1.DraftAppStringResponse{Text: text}), nil
 }
