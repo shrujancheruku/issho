@@ -10,7 +10,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log/slog"
 	"maps"
 	"regexp"
 	"slices"
@@ -77,7 +76,6 @@ func githubError(ctx context.Context, err error) error {
 	if errors.Is(err, github.ErrNotFound) {
 		return errs.NotFound("no such city pack on the default branch")
 	}
-	slog.ErrorContext(ctx, "github request failed", "err", err)
 	return errs.Upstream("github", err)
 }
 
@@ -301,8 +299,7 @@ func (h *Handler) ApplyCityPack(ctx context.Context, req *connect.Request[isshov
 	if errors.Is(err, cities.ErrTravelTimes) {
 		// The pack is seeded; only Google's answer is missing, and the
 		// worker's refresh retries within a day. Google's text stays in the log.
-		slog.ErrorContext(ctx, "applied a city pack but its travel times failed", "city", p.ID, "err", err)
-		return nil, errs.Upstream("google", err)
+		return nil, errs.UpstreamMsg("google", "seeded, but Google's travel times failed (the worker retries within a day)", fmt.Errorf("city %s: %w", p.ID, err))
 	}
 	if err != nil {
 		return nil, err
@@ -327,8 +324,7 @@ func (h *Handler) DiscoverAreaVenues(ctx context.Context, req *connect.Request[i
 	case errors.Is(err, cities.ErrAreaNotInCity):
 		return nil, errs.Invalid("area_id: not in that city")
 	case errors.Is(err, cities.ErrSearch):
-		slog.ErrorContext(ctx, "area venue search failed", "city", req.Msg.CityId, "area", req.Msg.AreaId, "err", err)
-		return nil, errs.Upstream("google", err)
+		return nil, errs.Upstream("google", fmt.Errorf("area venue search, city %s area %s: %w", req.Msg.CityId, req.Msg.AreaId, err))
 	case err != nil:
 		return nil, err
 	}

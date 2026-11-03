@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log/slog"
 	"slices"
 	"strings"
 	"sync"
@@ -326,8 +325,7 @@ func (s *Service) Search(ctx context.Context, p SearchParams) (Searched, error) 
 	wg.Wait()
 	if err := errors.Join(failures...); err != nil {
 		// Google's text stays in the log, not in the response.
-		slog.ErrorContext(ctx, "venue search failed", "city", p.CityID, "err", err)
-		return Searched{}, errs.Upstream("google", err)
+		return Searched{}, errs.Upstream("google", fmt.Errorf("venue search, city %s: %w", p.CityID, err))
 	}
 	var found []maps.SearchResult
 	seen := map[string]bool{}

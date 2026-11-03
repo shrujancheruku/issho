@@ -1,6 +1,6 @@
 // Package errs is the one error shape on the server. Services and handlers
-// return plain Go errors built here (Invalid, NotFound, Precondition, Denied,
-// Upstream), never *connect.Error; Interceptor turns each kind into its
+// return plain Go errors built here (Invalid, NotFound, Precondition, Refused,
+// Denied, Forbidden, Unauthenticated, Upstream), never *connect.Error; Interceptor turns each kind into its
 // Connect code, attaches a machine-readable reason when there is one, and
 // keeps internal details on the server.
 package errs
@@ -82,8 +82,8 @@ var report = sentry.Report
 
 // Interceptor is the one place an error becomes a Connect error. In order:
 //
-//  1. An *Error (built by Invalid, NotFound, Precondition, Denied, Forbidden,
-//     Unauthenticated or Upstream) becomes its kind's code, with the reason as
+//  1. An *Error (built by Invalid, NotFound, Precondition, Refused, Denied,
+//     Forbidden, Unauthenticated, Upstream or UpstreamMsg) becomes its kind's code, with the reason as
 //     a detail. Upstream errors are also logged and reported to Sentry, tagged
 //     with service and procedure; client errors are not reported. An *Error
 //     wrapped inside connect.NewError takes the inner kind, not the outer code.
@@ -161,6 +161,12 @@ func Unauthenticated(format string, a ...any) error {
 // logs and Sentry only.
 func Upstream(service string, err error) error {
 	return &Error{Kind: KindUpstream, Service: service, cause: err, msg: service + " is unavailable; try again shortly"}
+}
+
+// UpstreamMsg is Upstream with its own client message, for when the caller
+// needs to know more than "unavailable" (say, that the work was saved).
+func UpstreamMsg(service, msg string, err error) error {
+	return &Error{Kind: KindUpstream, Service: service, cause: err, msg: msg}
 }
 
 // WithCause keeps a lower-level error reachable with errors.Is/As (sentinels)

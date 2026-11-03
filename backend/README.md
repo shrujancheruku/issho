@@ -182,7 +182,7 @@ curl -s -X POST localhost:8080/issho.v1.CatalogService/ListActivities \
 
 Errors use Connect codes, e.g. `{"code":"unauthenticated","message":"missing bearer token"}` with HTTP 401.
 
-**Error hygiene:** handlers return `connect.NewError(code, err)` for anything the caller should see. Any other error is logged server-side (`unhandled error` with the procedure name) and the client receives only `{"code":"internal","message":"internal error"}`. So a raw database or upstream error never leaks to callers.
+**Error hygiene:** handlers and services return `errs` constructors (`Invalid`, `NotFound`, `Precondition`/`Refused`, `Denied`/`Forbidden`, `Unauthenticated`, `Upstream`) for anything the caller should see, never `*connect.Error`; the `errs` interceptor turns each kind into its Connect code (plus a reason detail when there is one). `Upstream` errors keep the outside service's text in the log and Sentry only. Any other error is logged server-side (`unhandled error` with the procedure name) and the client receives only `{"code":"internal","message":"internal error"}`. So a raw database or upstream error never leaks to callers.
 
 ### Authentication
 - Clients send `Authorization: Bearer <Supabase access token>`.
