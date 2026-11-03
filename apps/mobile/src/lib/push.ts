@@ -8,7 +8,7 @@ import { useEffect } from 'react';
 import { Platform } from 'react-native';
 
 import { api } from '@/lib/api';
-import type { NotificationTarget } from '@/lib/notification-target';
+import { type NotificationTarget, notificationTarget } from '@/lib/notification-target';
 import { type PushRef, pushReceived } from '@/lib/queries';
 
 /**
@@ -149,10 +149,9 @@ export function useNotificationTaps(open: (target: NotificationTarget) => void) 
       const { kind, ref } = pushData(data);
       void pushReceived(qc, kind, ref);
     }
-    if (typeof data?.eventId === 'string') open({ eventId: data.eventId });
-    else if (typeof data?.planId === 'string') open({ planId: data.planId });
-    else if (typeof data?.crewId === 'string') open({ crewId: data.crewId });
-    else return;
+    const target = notificationTarget(data);
+    if (!target) return;
+    open(target);
     // Otherwise the same notification would open the event again next launch.
     void Notifications.clearLastNotificationResponseAsync().catch(() => {});
   }, [response, open, qc]);

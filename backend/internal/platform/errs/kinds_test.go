@@ -135,6 +135,21 @@ func TestCodeOfSeesHandlerErrors(t *testing.T) {
 	}
 }
 
+func TestWithCauseOnWrappedKind(t *testing.T) {
+	cause := errors.New("sentinel")
+	got := WithCause(fmt.Errorf("outer context: %w", Invalid("x")), cause)
+	if !errors.Is(got, cause) {
+		t.Fatal("WithCause lost the sentinel on a wrapped kind")
+	}
+	if strings.Contains(got.Error(), "outer context") {
+		t.Fatalf("outer context kept: %v", got)
+	}
+	var e *Error
+	if !errors.As(got, &e) || e.Kind != KindInvalid {
+		t.Fatalf("kind lost: %v", got)
+	}
+}
+
 // connectMessage is the client-visible message of a *connect.Error, found with
 // errors.As so a wrapped error still reads.
 func connectMessage(t *testing.T, err error) string {

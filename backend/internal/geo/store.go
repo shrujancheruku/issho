@@ -57,8 +57,12 @@ func ParseBoundary(geojson string) (maps.Boundary, error) {
 		Type        string           `json:"type"`
 		Coordinates [][][][2]float64 `json:"coordinates"`
 	}
-	if err := json.Unmarshal([]byte(geojson), &g); err != nil || g.Type != "MultiPolygon" {
-		return nil, fmt.Errorf("boundary is not a GeoJSON MultiPolygon: %w", err)
+	if err := json.Unmarshal([]byte(geojson), &g); err != nil {
+		return nil, fmt.Errorf("boundary is not valid GeoJSON: %w", err)
+	}
+	// Valid JSON of another type has no error to wrap.
+	if g.Type != "MultiPolygon" {
+		return nil, fmt.Errorf("boundary is %q, not a GeoJSON MultiPolygon", g.Type)
 	}
 	var b maps.Boundary
 	for _, poly := range g.Coordinates {

@@ -176,7 +176,9 @@ func UpstreamReason(service string, reason isshov1.ErrorReason, msg string, err 
 }
 
 // WithCause keeps a lower-level error reachable with errors.Is/As (sentinels)
-// when a kind is built from one. The message is the kind's own.
+// when a kind is built from one. The message is the kind's own. A wrapped
+// *Error (found with errors.As) is replaced by a copy of its inner kind, so the
+// outer wrapping context is dropped.
 func WithCause(err, cause error) error {
 	var e *Error
 	if errors.As(err, &e) {
