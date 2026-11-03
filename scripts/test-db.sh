@@ -31,6 +31,9 @@ status=""
 for _ in $(seq 120); do
   status="$(docker inspect -f '{{.State.Health.Status}}' "$name" 2>/dev/null || true)"
   [ "$status" = healthy ] && break
+  # Fail fast if the container died (bad image, no memory) instead of waiting out the loop.
+  [ "$(docker inspect -f '{{.State.Running}}' "$name" 2>/dev/null || echo false)" = true ] ||
+    { echo "PostGIS container exited" >&2; docker logs "$name" >&2 || true; exit 1; }
   sleep 1
 done
 [ "$status" = healthy ] || { echo "PostGIS not healthy after 120s" >&2; docker logs "$name" >&2 || true; exit 1; }

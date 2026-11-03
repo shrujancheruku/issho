@@ -7,7 +7,14 @@ cd "$(dirname "$0")/../backend"
 
 : "${DATABASE_URL:?DATABASE_URL must point at a throwaway PostGIS}"
 
-# Migrations apply, roll back and re-apply; the seed loads.
+# Down-migrations are destructive: only ever run against a local database.
+case "$DATABASE_URL" in
+  postgres://*@localhost:*|postgres://*@localhost/*|postgres://*@127.0.0.1:*|postgres://*@127.0.0.1/*) ;;
+  *) echo "db-checks.sh refuses a non-local DATABASE_URL (host must be localhost or 127.0.0.1)." >&2; exit 1 ;;
+esac
+
+# Migrations apply, roll back and re-apply; the seed loads. The glob is deliberate:
+# new city packs get seeded (and tested) without editing this script.
 go run ./cmd/tool migrate up
 go run ./cmd/tool migrate down
 go run ./cmd/tool migrate up

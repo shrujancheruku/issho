@@ -58,7 +58,8 @@ test:
 	pnpm test
 
 # The backend's database checks (migrations, seed, integration tests) on a
-# throwaway PostGIS container of its own; needs Docker, never reads .env*.
+# throwaway PostGIS container of its own; needs Docker. Hosted URLs (from .env*
+# or ENV_FILE) are stripped and replaced with the container's.
 # Runs the same script as CI's backend job (scripts/db-checks.sh).
 test-db:
 	env -u ENV_FILE -u DATABASE_URL -u TEST_DATABASE_URL scripts/test-db.sh
