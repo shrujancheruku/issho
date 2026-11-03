@@ -275,7 +275,7 @@ func (c *Client) once(ctx context.Context, r Request, payload []byte) (status in
 		}
 		return 0, 0, fmt.Errorf("%s %s: %w", r.Method, c.route(r), err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	b, err := io.ReadAll(io.LimitReader(resp.Body, c.MaxBody))
 	if err != nil {
 		return 0, 0, fmt.Errorf("%s %s: read response: %w", r.Method, c.route(r), err)

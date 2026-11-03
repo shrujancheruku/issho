@@ -92,7 +92,7 @@ func writeReview(dir string, page reviewData) error {
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 	return reviewPage.Execute(f, page)
 }
 

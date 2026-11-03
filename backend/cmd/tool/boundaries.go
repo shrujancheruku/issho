@@ -105,7 +105,7 @@ func lookupBoundaries(ctx context.Context, ids []string, threshold float64) (map
 	if err != nil {
 		return nil, err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 	if res.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("nominatim: %s", res.Status)
 	}

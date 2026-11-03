@@ -78,7 +78,7 @@ func (c *ClaudeCode) JSON(ctx context.Context, system, user string, schema map[s
 	if err != nil {
 		return "", Call{}, err
 	}
-	defer os.RemoveAll(dir)
+	defer func() { _ = os.RemoveAll(dir) }()
 	schemaJSON, err := json.Marshal(schema)
 	if err != nil {
 		return "", Call{}, err

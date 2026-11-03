@@ -50,5 +50,5 @@ func (c *Client) do(ctx context.Context, method, url string, headers map[string]
 	for k, v := range headers {
 		h[k] = v
 	}
-	return c.Client.Do(ctx, httpjson.Request{Method: method, URL: url, Header: h, Body: body, Out: out, Idempotent: true})
+	return c.Do(ctx, httpjson.Request{Method: method, URL: url, Header: h, Body: body, Out: out, Idempotent: true})
 }
