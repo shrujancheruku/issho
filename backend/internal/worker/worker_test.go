@@ -96,12 +96,7 @@ func TestEveryKindReportsQueueTimeoutAndAttempts(t *testing.T) {
 
 func testPool(t *testing.T) *pgxpool.Pool {
 	t.Helper()
-	pool, err := pgxpool.New(context.Background(), testfixture.DatabaseURL(t))
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(pool.Close)
-	return pool
+	return testfixture.Pool(t)
 }
 
 func cleanJobs(t *testing.T, pool *pgxpool.Pool) {

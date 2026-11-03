@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/shrujancheruku/issho/backend/internal/testfixture"
 )
@@ -16,13 +15,8 @@ import (
 // database (the Tokyo pack). It's skipped unless TEST_DATABASE_URL is set (CI
 // sets it). It creates its own throwaway user and deletes it afterwards.
 func TestIntegrationSave(t *testing.T) {
-	url := testfixture.DatabaseURL(t)
 	ctx := context.Background()
-	pool, err := pgxpool.New(ctx, url)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(pool.Close)
+	pool := testfixture.Pool(t)
 	svc := &Service{DB: pool, Now: func() time.Time { return time.Date(year, 6, 1, 0, 0, 0, 0, time.UTC) }}
 	id := uuid.New()
 

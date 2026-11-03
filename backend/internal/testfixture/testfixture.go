@@ -40,20 +40,42 @@ func DatabaseURL(t *testing.T) string {
 	return url
 }
 
+// Pool opens a pool on the test database and closes it when the test ends. It
+// is skipped (failed in CI) like DatabaseURL. Because t.Cleanup runs in reverse
+// order, cleanups the test registers after calling it still find it open.
+// Tests that need their own bespoke rows use this; ones that fit a throwaway
+// city should use New.
+func Pool(t *testing.T) *pgxpool.Pool {
+	t.Helper()
+	pool, err := pgxpool.New(context.Background(), DatabaseURL(t))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(pool.Close)
+	return pool
+}
+
+// ClosedPool is a pool whose database is gone: every query on it fails, for
+// tests of how a caller copes with the database being down.
+func ClosedPool(t *testing.T) *pgxpool.Pool {
+	t.Helper()
+	pool, err := pgxpool.New(context.Background(), DatabaseURL(t))
+	if err != nil {
+		t.Fatal(err)
+	}
+	pool.Close()
+	return pool
+}
+
 // New creates the city named id (and an activity and area named
 // after it) in the given time zone, with n users, and deletes them all when
 // the test ends. Leftovers from an interrupted run are deleted first.
 func New(t *testing.T, id, timezone string, n int) *Fixture {
 	t.Helper()
-	url := DatabaseURL(t)
 	ctx := context.Background()
-	pool, err := pgxpool.New(ctx, url)
-	if err != nil {
-		t.Fatal(err)
-	}
-	// t.Cleanup, not defer: cleanups run in reverse order, so the pool is
-	// still open for the deletes registered below.
-	t.Cleanup(pool.Close)
+	// Pool registers pool.Close with t.Cleanup, not defer: cleanups run in
+	// reverse order, so the pool is still open for the deletes registered below.
+	pool := Pool(t)
 	f := &Fixture{Pool: pool, Q: dbgen.New(pool), City: id, Area: id + "-a", Act: id}
 	for i := range n {
 		// Stable ids, so a rerun finds and deletes an interrupted run's users.

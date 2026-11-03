@@ -4,8 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/jackc/pgx/v5/pgxpool"
-
 	"github.com/shrujancheruku/issho/backend/internal/matching"
 	"github.com/shrujancheruku/issho/backend/internal/testfixture"
 )
@@ -14,13 +12,8 @@ import (
 // reach the city's row, removing them resets to the defaults, and the admin
 // toggles (review, approved_venues_only) are never written.
 func TestIntegrationApplyMatching(t *testing.T) {
-	url := testfixture.DatabaseURL(t)
 	ctx := context.Background()
-	pool, err := pgxpool.New(ctx, url)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(pool.Close)
+	pool := testfixture.Pool(t)
 
 	const city = "zz-apply-matching"
 	cleanup := func() {
