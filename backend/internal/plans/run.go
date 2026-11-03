@@ -436,10 +436,12 @@ func (r *Runner) schedulePlan(ctx context.Context, q *dbgen.Queries, c *City, us
 	ev := Event{
 		PlanID: p.ID, Round: p.Round, Scheduled: res, Forced: force, Now: now,
 		// In a city under review the round waits for an admin (00022).
-		Propose:   c.Review,
-		StartsAt:  tm.startsAt(res.Occasion, c.Location),
-		ConfirmBy: confirmBy(res.Occasion, c.Location),
-		Next:      tm.Round(now, c.Location),
+		Propose: c.Review,
+		// The signups were read at the start of the stage (LoadWaiting).
+		CheckSignups: true,
+		StartsAt:     tm.startsAt(res.Occasion, c.Location),
+		ConfirmBy:    confirmBy(res.Occasion, c.Location),
+		Next:         tm.Round(now, c.Location),
 	}
 	invited := 0
 	for _, g := range res.Groups {

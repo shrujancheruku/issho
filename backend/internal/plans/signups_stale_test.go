@@ -43,7 +43,7 @@ func TestIntegrationSaveEventAfterAWithdrawal(t *testing.T) {
 		t.Fatal(err)
 	}
 	_, _, err = SaveEvent(ctx, f.pool, Event{ // ...and it saves a round that includes them.
-		PlanID: planID, Round: 1, ConfirmBy: day(11), Next: Window{Start: day(21), Days: 14, Deadline: day(30)}, Now: day(5),
+		PlanID: planID, Round: 1, ConfirmBy: day(11), Next: Window{Start: day(21), Days: 14, Deadline: day(30)}, Now: day(5), CheckSignups: true,
 		Scheduled: matching.Scheduled{
 			Occasion: matching.Occasion{Date: day(13), Block: matching.Evening},
 			Groups:   []matching.Group{{Invited: ids, Quorum: 2, MinAttendance: 2, Score: 1}},

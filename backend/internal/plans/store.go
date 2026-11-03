@@ -361,6 +361,10 @@ type Event struct {
 	// the plan stays in its round with everyone signed up. ApproveProposal
 	// does the rest; Next is ignored.
 	Propose bool
+	// CheckSignups makes SaveEvent fail with ErrSignupsChanged, writing
+	// nothing, unless everyone invited is still signed up for the plan. The
+	// scheduling pass sets it: it read the signups before this save.
+	CheckSignups bool
 }
 
 // ProposalRest is how long the scheduler leaves a plan alone after an admin
@@ -394,18 +398,20 @@ func SaveEvent(ctx context.Context, pool *pgxpool.Pool, e Event) (eventID uuid.U
 		// lock (which Withdraw and SaveSignup take too) that everyone it is
 		// about to invite is still waiting. Before anything is written, so
 		// nothing is invited or sent for a stale list.
-		waiting, err := q.ListSignups(ctx, e.PlanID)
-		if err != nil {
-			return err
-		}
-		still := make(map[uuid.UUID]bool, len(waiting))
-		for _, u := range waiting {
-			still[u] = true
-		}
-		for _, g := range e.Scheduled.Groups {
-			for _, u := range g.Invited {
-				if id, err := uuid.Parse(string(u)); err != nil || !still[id] {
-					return ErrSignupsChanged
+		if e.CheckSignups {
+			waiting, err := q.ListSignups(ctx, e.PlanID)
+			if err != nil {
+				return err
+			}
+			still := make(map[uuid.UUID]bool, len(waiting))
+			for _, u := range waiting {
+				still[u] = true
+			}
+			for _, g := range e.Scheduled.Groups {
+				for _, u := range g.Invited {
+					if id, err := uuid.Parse(string(u)); err != nil || !still[id] {
+						return ErrSignupsChanged
+					}
 				}
 			}
 		}
