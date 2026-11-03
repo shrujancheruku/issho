@@ -3,22 +3,19 @@ import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tansta
 import { useCallback, useEffect, useRef, useSyncExternalStore } from 'react';
 
 import { api, getAccessToken, wsBaseUrl } from '@/lib/api';
+import { keys, roomId, type RoomRef } from '@/lib/queries';
 import { ms } from '@/lib/time';
 
 import { fromApi, merge, parseFrame, type Message } from './messages';
 
-/** Whose chat: an event's group chat (the caller's group) or a crew's. */
-export type RoomRef = { eventId: string } | { crewId: string };
+export type { RoomRef };
 
 /** A room as the API's `ChatRoom` has it. */
 const roomOf = (room: RoomRef) => ({
   room: { room: 'eventId' in room ? { case: 'eventId' as const, value: room.eventId } : { case: 'crewId' as const, value: room.crewId } },
 });
 
-const roomId = (room: RoomRef) => ('eventId' in room ? `event:${room.eventId}` : `crew:${room.crewId}`);
 const roomFromId = (id: string): RoomRef => (id.startsWith('event:') ? { eventId: id.slice(6) } : { crewId: id.slice(5) });
-/** The query cache key of a room's data. */
-export const roomKey = (room: RoomRef) => ['chat', roomId(room)] as const;
 
 /** What the cache holds for a room: its messages and what the server last said about writing. */
 export type RoomData = {
@@ -42,7 +39,7 @@ const lastId = (data?: RoomData) => (data?.messages.length ? data.messages[data.
  * button) keeps what the socket brought.
  */
 async function fetchRoom(qc: QueryClient, room: RoomRef): Promise<RoomData> {
-  const prev = qc.getQueryData<RoomData>(roomKey(room));
+  const prev = qc.getQueryData<RoomData>(keys.room(room));
   const res = await api.chat.listMessages({ ...roomOf(room), afterId: BigInt(lastId(prev)) });
   const opensAt = ms(res.opensAt);
   const closesAt = ms(res.closesAt);
@@ -154,7 +151,7 @@ class RoomSocket {
     this.canType = false;
     // The token goes in the first message, never the URL (URLs end up in logs).
     ws.onopen = () => {
-      const afterId = lastId(this.qc.getQueryData<RoomData>(roomKey(this.room)));
+      const afterId = lastId(this.qc.getQueryData<RoomData>(keys.room(this.room)));
       ws.send(JSON.stringify({ token, room: this.room, afterId }));
     };
     ws.onmessage = (e) => {
@@ -167,7 +164,7 @@ class RoomSocket {
         const { userId, name } = frame;
         this.setTypers({ ...this.typers, [userId]: { name, until: Date.now() + typingShown } });
       } else {
-        this.qc.setQueryData<RoomData>(roomKey(this.room), (cur) => cur && { ...cur, messages: merge(cur.messages, frame.messages) });
+        this.qc.setQueryData<RoomData>(keys.room(this.room), (cur) => cur && { ...cur, messages: merge(cur.messages, frame.messages) });
         // Someone whose message just arrived has stopped typing.
         const sent = frame.messages.flatMap((m) => (m.userId && this.typers[m.userId] ? [m.userId] : []));
         if (sent.length) this.setTypers(Object.fromEntries(Object.entries(this.typers).filter(([who]) => !sent.includes(who))));
@@ -179,7 +176,7 @@ class RoomSocket {
       if (permanent.has(e.code)) {
         this.stopped = true;
         // Left or removed: ask the API, whose answer puts the room in its new state.
-        void this.qc.invalidateQueries({ queryKey: roomKey(this.room) });
+        void this.qc.invalidateQueries({ queryKey: keys.room(this.room) });
         return;
       }
       // 1 s, 2 s, 4 s … up to 30 s. A 4401 (expired token) gets a fresh one next time.
@@ -241,7 +238,7 @@ export function useRoom(room: RoomRef) {
   const qc = useQueryClient();
   const id = roomId(room);
   const query = useQuery({
-    queryKey: roomKey(room),
+    queryKey: keys.room(room),
     queryFn: () => fetchRoom(qc, room),
     // A room opening or closing changes what the person may do, so ask again then.
     refetchInterval: (q) => untilNextBoundary(q.state.data, Date.now()) ?? false,
@@ -290,7 +287,7 @@ export function useRoom(room: RoomRef) {
     mutationFn: async (body: string) => (await api.chat.sendMessage({ ...roomOf(room), body })).message,
     // Shown at once; the socket brings the same message (same id) again.
     onSuccess: (message) => {
-      if (message) qc.setQueryData<RoomData>(roomKey(room), (cur) => cur && { ...cur, messages: merge(cur.messages, [fromApi(message)]) });
+      if (message) qc.setQueryData<RoomData>(keys.room(room), (cur) => cur && { ...cur, messages: merge(cur.messages, [fromApi(message)]) });
     },
   });
 
