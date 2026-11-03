@@ -72,10 +72,18 @@ type CityPackServiceClient interface {
 	// crews and plans move to the new area) and activity overrides the pack
 	// removed are dropped. The
 	// response reports all of these.
+	//
+	// The apply is a background job (one at a time per city): the call
+	// validates the pack as ProposeCityPack does (INVALID_ARGUMENT, NOT_FOUND
+	// for no such pack) and returns the job's id; the report is the result of
+	// AdminService.GetAdminJob. Applying a city while its apply is queued or
+	// running returns that job's id.
 	ApplyCityPack(context.Context, *connect.Request[v1.ApplyCityPackRequest]) (*connect.Response[v1.ApplyCityPackResponse], error)
 	// DiscoverAreaVenues finds venues for one area with Google (one Nearby
 	// Search per venue category the city's activities use; the city-wide
-	// categories too when the city has no venues yet).
+	// categories too when the city has no venues yet). NOT_FOUND for an
+	// unknown city, INVALID_ARGUMENT for an area not in it. A background job
+	// like ApplyCityPack: the call returns the job's id.
 	DiscoverAreaVenues(context.Context, *connect.Request[v1.DiscoverAreaVenuesRequest]) (*connect.Response[v1.DiscoverAreaVenuesResponse], error)
 }
 
@@ -179,10 +187,18 @@ type CityPackServiceHandler interface {
 	// crews and plans move to the new area) and activity overrides the pack
 	// removed are dropped. The
 	// response reports all of these.
+	//
+	// The apply is a background job (one at a time per city): the call
+	// validates the pack as ProposeCityPack does (INVALID_ARGUMENT, NOT_FOUND
+	// for no such pack) and returns the job's id; the report is the result of
+	// AdminService.GetAdminJob. Applying a city while its apply is queued or
+	// running returns that job's id.
 	ApplyCityPack(context.Context, *connect.Request[v1.ApplyCityPackRequest]) (*connect.Response[v1.ApplyCityPackResponse], error)
 	// DiscoverAreaVenues finds venues for one area with Google (one Nearby
 	// Search per venue category the city's activities use; the city-wide
-	// categories too when the city has no venues yet).
+	// categories too when the city has no venues yet). NOT_FOUND for an
+	// unknown city, INVALID_ARGUMENT for an area not in it. A background job
+	// like ApplyCityPack: the call returns the job's id.
 	DiscoverAreaVenues(context.Context, *connect.Request[v1.DiscoverAreaVenuesRequest]) (*connect.Response[v1.DiscoverAreaVenuesResponse], error)
 }
 

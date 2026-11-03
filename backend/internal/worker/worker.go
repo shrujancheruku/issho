@@ -14,10 +14,10 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/riverqueue/river"
 	"github.com/riverqueue/river/riverdriver/riverpgxv5"
-	"github.com/riverqueue/river/rivertype"
 
 	"github.com/shrujancheruku/issho/backend/db"
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
+	"github.com/shrujancheruku/issho/backend/internal/adminjobs"
 	"github.com/shrujancheruku/issho/backend/internal/chat"
 	"github.com/shrujancheruku/issho/backend/internal/crews"
 	"github.com/shrujancheruku/issho/backend/internal/geo"
@@ -42,9 +42,9 @@ const (
 	QueueNotify = "notify"
 	// QueuePasses: match_all, match_city and crews_city.
 	QueuePasses = "passes"
-	// QueueMaintenance: refresh_maps, retention and the admin jobs that come
-	// later.
-	QueueMaintenance = "maintenance"
+	// QueueMaintenance: refresh_maps, retention and the admin SPA's long
+	// operations (apply_city_pack, discover_area_venues).
+	QueueMaintenance = adminjobs.Queue
 )
 
 // queues is the client's queue config. River's `default` queue is kept, with
@@ -68,10 +68,7 @@ func queues() map[string]river.QueueConfig {
 
 // liveStates are the job states a unique job is counted in: one queued,
 // running or waiting to retry blocks another of its kind (and args).
-var liveStates = []rivertype.JobState{
-	rivertype.JobStateAvailable, rivertype.JobStatePending, rivertype.JobStateRunning,
-	rivertype.JobStateRetryable, rivertype.JobStateScheduled,
-}
+var liveStates = adminjobs.LiveStates
 
 // Every kind sets its queue and MaxAttempts in InsertOpts and its time
 // limit in the worker's Timeout; River's defaults (a minute, 25 attempts)
@@ -406,6 +403,53 @@ func (w *sendNotificationsWorker) Work(ctx context.Context, _ *river.Job[SendNot
 	return errors.Join(err, rErr)
 }
 
+// The admin SPA's long operations (internal/adminjobs). The API validates and
+// queues them and the SPA polls; the worker runs them here, on the
+// maintenance queue, and records the result or the failure as the job's output.
+
+type applyCityPackWorker struct {
+	river.WorkerDefaults[adminjobs.ApplyCityPackArgs]
+	pool   *pgxpool.Pool
+	router maps.Router // nil: no Maps key, so no travel-time rebuild
+	log    *slog.Logger
+}
+
+func (w *applyCityPackWorker) Timeout(*river.Job[adminjobs.ApplyCityPackArgs]) time.Duration {
+	return adminjobs.ApplyCityPackTimeout
+}
+
+// Work applies the pack in one transaction (cities.Apply), then rebuilds the
+// city's travel times if areas were added or moved.
+func (w *applyCityPackWorker) Work(ctx context.Context, job *river.Job[adminjobs.ApplyCityPackArgs]) error {
+	out, err := adminjobs.ApplyCityPack(ctx, w.pool, w.router, job.Args)
+	return record(ctx, w.log, job.Args.City, out, err)
+}
+
+type discoverAreaVenuesWorker struct {
+	river.WorkerDefaults[adminjobs.DiscoverAreaVenuesArgs]
+	pool   *pgxpool.Pool
+	places maps.PlaceSearcher // nil: no Maps key
+	log    *slog.Logger
+}
+
+func (w *discoverAreaVenuesWorker) Timeout(*river.Job[adminjobs.DiscoverAreaVenuesArgs]) time.Duration {
+	return adminjobs.DiscoverAreaVenuesTimeout
+}
+
+func (w *discoverAreaVenuesWorker) Work(ctx context.Context, job *river.Job[adminjobs.DiscoverAreaVenuesArgs]) error {
+	out, err := adminjobs.DiscoverAreaVenues(ctx, w.pool, w.places, job.Args)
+	return record(ctx, w.log, job.Args.City, out, err)
+}
+
+// record stores an admin job's output on the job (for GetAdminJob) and
+// returns the run's error, which decides whether River retries.
+func record(ctx context.Context, log *slog.Logger, city string, out adminjobs.Output, err error) error {
+	if rErr := river.RecordOutput(ctx, out); rErr != nil {
+		log.Error("record admin job output", "city", city, "err", rErr)
+	}
+	return err
+}
+
 // Maps are the Google Maps lookups the worker uses; all nil without a key.
 type Maps struct {
 	Router     maps.Router
@@ -434,6 +478,8 @@ func NewClient(pool *pgxpool.Pool, log *slog.Logger, timing plans.Timing, notifi
 	river.AddWorker(workers, &refreshMapsCityWorker{log: log, refresh: func(ctx context.Context, city string) (bool, int64, error) {
 		return geo.Refresh(ctx, pool, m.Router, city, time.Now())
 	}})
+	river.AddWorker(workers, &applyCityPackWorker{pool: pool, router: m.Router, log: log})
+	river.AddWorker(workers, &discoverAreaVenuesWorker{pool: pool, places: m.Places, log: log})
 	river.AddWorker(workers, &retentionWorker{pool: pool, log: log, now: time.Now})
 	river.AddWorker(workers, &sendNotificationsWorker{notifier: notifier, now: time.Now})
 	return river.NewClient(riverpgxv5.New(pool), &river.Config{

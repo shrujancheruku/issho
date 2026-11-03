@@ -18,6 +18,7 @@ import (
 
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	"github.com/shrujancheruku/issho/backend/gen/issho/v1/isshov1connect"
+	"github.com/shrujancheruku/issho/backend/internal/adminjobs"
 	"github.com/shrujancheruku/issho/backend/internal/catalog"
 	"github.com/shrujancheruku/issho/backend/internal/chat"
 	"github.com/shrujancheruku/issho/backend/internal/chatws"
@@ -121,7 +122,7 @@ func run() error {
 		auth.Interceptor(verifier, isshov1connect.HealthServiceCheckProcedure, isshov1connect.UIServiceGetStringsProcedure),
 		// The admin SPA's services: only accounts with app_metadata.admin.
 		auth.AdminOnly(isshov1connect.ModerationServiceName, isshov1connect.ReviewServiceName, isshov1connect.CurationServiceName,
-			isshov1connect.MetricsServiceName, isshov1connect.CityPackServiceName),
+			isshov1connect.MetricsServiceName, isshov1connect.CityPackServiceName, isshov1connect.AdminServiceName),
 		// The translation editor: admins, and translators for their languages.
 		auth.TranslatorsOnly(isshov1connect.TranslationServiceName),
 		// Suspended people may only see that they are, sign out (which
@@ -158,7 +159,12 @@ func run() error {
 	planSvc := &plans.Service{DB: pool, Translations: translations}
 	venueSvc := &curation.Service{DB: pool}
 	venues := &curation.Handler{Svc: venueSvc}
-	packs := &citypacks.Handler{DB: pool, Base: "main"}
+	// Insert-only: the worker runs the admin jobs (apply a pack, find venues).
+	jobs, err := adminjobs.NewClient(pool)
+	if err != nil {
+		return err
+	}
+	packs := &citypacks.Handler{DB: pool, Base: "main", Jobs: jobs}
 	var gh *github.Client
 	if cfg.GitHubToken != "" {
 		gh = github.New(cfg.GitHubToken, cfg.GitHubRepo)
@@ -173,7 +179,7 @@ func run() error {
 		places := mapsgoogle.New(cfg.GoogleMapsAPIKey)
 		planSvc.Places, venueSvc.Places = places, places
 		review.Places, review.Routes = places, places
-		packs.Router, packs.Places = places, places
+		packs.Places = places
 	} else {
 		slog.Warn("GOOGLE_MAPS_API_KEY not set: plans show no venue names")
 	}
@@ -190,6 +196,7 @@ func run() error {
 	mux.Handle(isshov1connect.NewCurationServiceHandler(venues, opts))
 	mux.Handle(isshov1connect.NewMetricsServiceHandler(&metrics.Handler{Q: q}, opts))
 	mux.Handle(isshov1connect.NewCityPackServiceHandler(packs, opts))
+	mux.Handle(isshov1connect.NewAdminServiceHandler(&adminjobs.Handler{Jobs: jobs}, opts))
 	mux.Handle(isshov1connect.NewModerationServiceHandler(&moderation.Handler{Q: q, Plans: planSvc, Crews: crewSvc, Suspensions: suspensions}, opts))
 	uiCatalog, err := uistrings.Load()
 	if err != nil {

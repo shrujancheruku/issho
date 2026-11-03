@@ -12,8 +12,11 @@ import (
 	"connectrpc.com/connect"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/riverqueue/river"
+	"github.com/riverqueue/river/rivertype"
 
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
+	"github.com/shrujancheruku/issho/backend/internal/adminjobs"
 	"github.com/shrujancheruku/issho/backend/internal/cities"
 	gmaps "github.com/shrujancheruku/issho/backend/internal/maps"
 	"github.com/shrujancheruku/issho/backend/internal/maps/mapstest"
@@ -89,6 +92,35 @@ func (f *fakeRepo) OpenPRs(context.Context, string) ([]github.PR, error) {
 	return []github.PR{{Number: 42, Title: "t", URL: "u"}}, nil
 }
 
+// inlineJobs is the River client with the queue taken out: Insert runs the
+// job at once with the worker's own functions (adminjobs) against the same
+// database and fakes, and keeps what the job recorded. The queue itself
+// (state, uniqueness, GetAdminJob) is tested in internal/worker.
+type inlineJobs struct {
+	pool   *pgxpool.Pool
+	router gmaps.Router
+	places gmaps.PlaceSearcher
+	args   []river.JobArgs
+	out    map[int64]adminjobs.Output
+}
+
+func (j *inlineJobs) Insert(ctx context.Context, args river.JobArgs, _ *river.InsertOpts) (*rivertype.JobInsertResult, error) {
+	j.args = append(j.args, args)
+	id := int64(len(j.args))
+	var out adminjobs.Output
+	switch a := args.(type) {
+	case adminjobs.ApplyCityPackArgs:
+		out, _ = adminjobs.ApplyCityPack(ctx, j.pool, j.router, a)
+	case adminjobs.DiscoverAreaVenuesArgs:
+		out, _ = adminjobs.DiscoverAreaVenues(ctx, j.pool, j.places, a)
+	}
+	if j.out == nil {
+		j.out = map[int64]adminjobs.Output{}
+	}
+	j.out[id] = out
+	return &rivertype.JobInsertResult{Job: &rivertype.JobRow{ID: id}}, nil
+}
+
 // TestIntegrationCityPacks: proposing a new city and a change to it as pull
 // requests (with refusals), applying the merged pack (areas new and moved,
 // travel times rebuilt) and finding an area's venues. Skipped unless
@@ -128,7 +160,8 @@ func TestIntegrationCityPacks(t *testing.T) {
 	fm := &mapstest.Fake{NearbyFunc: func(r gmaps.NearbyRequest) []gmaps.Place {
 		return []gmaps.Place{{ID: "zz-packs-place-" + r.Types[0], PrimaryType: r.Types[0], Location: r.Center}}
 	}}
-	h := &Handler{DB: pool, GitHub: repo, Base: "main", Router: fm, Places: fm, Now: func() time.Time { return time.Unix(1900000000, 0) }}
+	jobs := &inlineJobs{pool: pool, router: fm, places: fm}
+	h := &Handler{DB: pool, GitHub: repo, Base: "main", Places: fm, Jobs: jobs, Now: func() time.Time { return time.Unix(1900000000, 0) }}
 	adminCtx := auth.WithCaller(ctx, auth.Caller{UserID: uuid.New(), Email: "admin@example.com", Admin: true})
 
 	pack := &isshov1.CityPack{
@@ -181,15 +214,36 @@ func TestIntegrationCityPacks(t *testing.T) {
 		t.Errorf("written = %+v, %v", written, err)
 	}
 
+	// An invalid pack on main fails the call at once, with the usual error
+	// and no job queued.
+	repo.files["data/citypacks/bad.json"] = []byte(`{"id":"bad","timezone":"Mars/Olympus","currency":"JPY"}`)
+	if _, err := h.ApplyCityPack(adminCtx, connect.NewRequest(&isshov1.ApplyCityPackRequest{CityId: "bad"})); connect.CodeOf(err) != connect.CodeInvalidArgument || len(jobs.args) != 0 {
+		t.Errorf("an invalid pack: %v (%d jobs queued)", err, len(jobs.args))
+	}
+
 	// Merged: apply it. Both areas are new; travel times are built.
 	repo.files["data/citypacks/zz-packs.json"] = repo.content
-	apply := func() *isshov1.ApplyCityPackResponse {
+	// applyJob queues the apply and returns what its job recorded; apply is
+	// the report of one that succeeded, the response the RPC returned
+	// before it became a job.
+	applyJob := func() adminjobs.Output {
 		t.Helper()
 		res, err := h.ApplyCityPack(adminCtx, connect.NewRequest(&isshov1.ApplyCityPackRequest{CityId: city}))
-		if err != nil {
-			t.Fatal(err)
+		if err != nil || res.Msg.JobId == 0 {
+			t.Fatalf("apply = %v, %v", res, err)
 		}
-		return res.Msg
+		if len(res.Msg.NewAreas) != 0 || res.Msg.TravelTimes != 0 {
+			t.Errorf("the RPC answered with a report; it belongs to the job: %v", res.Msg)
+		}
+		return jobs.out[res.Msg.JobId]
+	}
+	apply := func() *isshov1.ApplyCityPackResponse {
+		t.Helper()
+		out := applyJob()
+		if out.Failure != nil || out.ApplyCityPack == nil {
+			t.Fatalf("apply job failed: %+v", out.Failure)
+		}
+		return adminjobs.ApplyReport(*out.ApplyCityPack)
 	}
 	if a := apply(); len(a.NewAreas) != 2 || !a.TravelTimesRebuilt || a.TravelTimes == 0 {
 		t.Fatalf("first apply = %v", a)
@@ -203,8 +257,12 @@ func TestIntegrationCityPacks(t *testing.T) {
 	// its activities use (a seeded database has the whole catalogue, all
 	// enabled in a new city), each finding one place here.
 	disc, err := h.DiscoverAreaVenues(adminCtx, connect.NewRequest(&isshov1.DiscoverAreaVenuesRequest{CityId: city, AreaId: city + "-a"}))
-	if err != nil || disc.Msg.Searches < 1 || disc.Msg.Venues != disc.Msg.Searches || fm.Nearbys() != int(disc.Msg.Searches) {
+	if err != nil || disc.Msg.JobId == 0 {
 		t.Fatalf("discover = %v, %v", disc, err)
+	}
+	found := jobs.out[disc.Msg.JobId].DiscoverAreaVenues
+	if found == nil || found.Searches < 1 || found.Venues != found.Searches || fm.Nearbys() != found.Searches {
+		t.Fatalf("discover job = %+v", jobs.out[disc.Msg.JobId])
 	}
 	list, err := h.ListCityPacks(adminCtx, connect.NewRequest(&isshov1.ListCityPacksRequest{}))
 	if err != nil {
@@ -309,7 +367,9 @@ func TestIntegrationCityPacks(t *testing.T) {
 	if _, err := h.ApplyCityPack(adminCtx, connect.NewRequest(&isshov1.ApplyCityPackRequest{CityId: "nowhere"})); connect.CodeOf(err) != connect.CodeNotFound {
 		t.Errorf("no such pack: %v", err)
 	}
-	// Errors: only "not seeded" is NotFound, and Google's text stays out of responses.
+	// Errors: only "not seeded" is NotFound, and Google's text stays out of
+	// what the admin sees. Bad input fails the call at once, with no job;
+	// Google failing fails the job.
 	discover := func(cityID, areaID string) error {
 		_, err := h.DiscoverAreaVenues(adminCtx, connect.NewRequest(&isshov1.DiscoverAreaVenuesRequest{CityId: cityID, AreaId: areaID}))
 		return err
@@ -320,11 +380,18 @@ func TestIntegrationCityPacks(t *testing.T) {
 	if err := discover(city, "zz-packs-nope"); connect.CodeOf(err) != connect.CodeInvalidArgument {
 		t.Errorf("discover in an unknown area: %v", err)
 	}
+	queued := len(jobs.args)
 	fm.NearbyErr = errors.New("quota exceeded for key AIza-secret")
-	if err := discover(city, city+"-a"); connect.CodeOf(err) != connect.CodeUnavailable || strings.Contains(err.Error(), "AIza") {
-		t.Errorf("discover with Google down: %v", err)
+	if err := discover(city, city+"-a"); err != nil {
+		t.Errorf("discover with Google down is queued: %v", err)
+	}
+	if f := jobs.out[int64(queued+1)].Failure; f == nil || strings.Contains(f.Message, "AIza") || strings.Contains(f.Message, "quota") {
+		t.Errorf("discover job with Google down: %+v", jobs.out[int64(queued+1)])
 	}
 	fm.NearbyErr = nil
+	if len(jobs.args) != queued+1 {
+		t.Errorf("bad input queued a job: %d jobs, want %d", len(jobs.args), queued+1)
+	}
 	// Moving an area makes apply want the matrix; Google being down leaves the pack seeded.
 	moved := cities.Pack{}
 	if err := json.Unmarshal(repo.content, &moved); err != nil {
@@ -340,8 +407,9 @@ func TestIntegrationCityPacks(t *testing.T) {
 	}
 	repo.files["data/citypacks/zz-packs.json"] = raw
 	fm.MatrixErr = errors.New("quota exceeded for key AIza-secret")
-	if _, err := h.ApplyCityPack(adminCtx, connect.NewRequest(&isshov1.ApplyCityPackRequest{CityId: city})); connect.CodeOf(err) != connect.CodeUnavailable || strings.Contains(err.Error(), "AIza") || !strings.Contains(err.Error(), "seeded") {
-		t.Errorf("apply with Google down: %v", err)
+	if out := applyJob(); out.Failure == nil || strings.Contains(out.Failure.Message, "AIza") || !strings.Contains(out.Failure.Message, "seeded") ||
+		out.ApplyCityPack == nil || len(out.ApplyCityPack.MovedAreas) != 1 {
+		t.Errorf("apply with Google down: %+v", out)
 	}
 	fm.MatrixErr = nil
 

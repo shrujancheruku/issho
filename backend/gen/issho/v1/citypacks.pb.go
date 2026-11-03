@@ -842,8 +842,13 @@ type ApplyCityPackResponse struct {
 	RemovedAreas     []string        `protobuf:"bytes,5,rep,name=removed_areas,json=removedAreas,proto3" json:"removed_areas,omitempty"`
 	ReplacedAreas    []*ReplacedArea `protobuf:"bytes,6,rep,name=replaced_areas,json=replacedAreas,proto3" json:"replaced_areas,omitempty"`
 	RemovedOverrides []string        `protobuf:"bytes,7,rep,name=removed_overrides,json=removedOverrides,proto3" json:"removed_overrides,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
+	// The job applying the pack (see AdminService.GetAdminJob); the fields
+	// above are empty in this response and filled in the job's result. 0 from
+	// an API that still applies synchronously (the previous release), which
+	// fills the fields instead.
+	JobId         int64 `protobuf:"varint,8,opt,name=job_id,json=jobId,proto3" json:"job_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ApplyCityPackResponse) Reset() {
@@ -923,6 +928,13 @@ func (x *ApplyCityPackResponse) GetRemovedOverrides() []string {
 		return x.RemovedOverrides
 	}
 	return nil
+}
+
+func (x *ApplyCityPackResponse) GetJobId() int64 {
+	if x != nil {
+		return x.JobId
+	}
+	return 0
 }
 
 type ReplacedArea struct {
@@ -1058,7 +1070,10 @@ type DiscoverAreaVenuesResponse struct {
 	state    protoimpl.MessageState `protogen:"open.v1"`
 	Searches int32                  `protobuf:"varint,1,opt,name=searches,proto3" json:"searches,omitempty"`
 	// Venues found and saved (a place in two categories counts twice).
-	Venues        int32 `protobuf:"varint,2,opt,name=venues,proto3" json:"venues,omitempty"`
+	Venues int32 `protobuf:"varint,2,opt,name=venues,proto3" json:"venues,omitempty"`
+	// The job finding them, as in ApplyCityPackResponse.job_id; searches and
+	// venues are empty in this response and filled in the job's result.
+	JobId         int64 `protobuf:"varint,3,opt,name=job_id,json=jobId,proto3" json:"job_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1103,6 +1118,13 @@ func (x *DiscoverAreaVenuesResponse) GetSearches() int32 {
 func (x *DiscoverAreaVenuesResponse) GetVenues() int32 {
 	if x != nil {
 		return x.Venues
+	}
+	return 0
+}
+
+func (x *DiscoverAreaVenuesResponse) GetJobId() int64 {
+	if x != nil {
+		return x.JobId
 	}
 	return 0
 }
@@ -1175,7 +1197,7 @@ const file_issho_v1_citypacks_proto_rawDesc = "" +
 	"\x17ProposeCityPackResponse\x12@\n" +
 	"\fpull_request\x18\x01 \x01(\v2\x1d.issho.v1.CityPackPullRequestR\vpullRequest\"/\n" +
 	"\x14ApplyCityPackRequest\x12\x17\n" +
-	"\acity_id\x18\x01 \x01(\tR\x06cityId\"\xbb\x02\n" +
+	"\acity_id\x18\x01 \x01(\tR\x06cityId\"\xd2\x02\n" +
 	"\x15ApplyCityPackResponse\x12\x1b\n" +
 	"\tnew_areas\x18\x01 \x03(\tR\bnewAreas\x12\x1f\n" +
 	"\vmoved_areas\x18\x02 \x03(\tR\n" +
@@ -1184,7 +1206,8 @@ const file_issho_v1_citypacks_proto_rawDesc = "" +
 	"\ftravel_times\x18\x04 \x01(\x05R\vtravelTimes\x12#\n" +
 	"\rremoved_areas\x18\x05 \x03(\tR\fremovedAreas\x12=\n" +
 	"\x0ereplaced_areas\x18\x06 \x03(\v2\x16.issho.v1.ReplacedAreaR\rreplacedAreas\x12+\n" +
-	"\x11removed_overrides\x18\a \x03(\tR\x10removedOverrides\"\x92\x01\n" +
+	"\x11removed_overrides\x18\a \x03(\tR\x10removedOverrides\x12\x15\n" +
+	"\x06job_id\x18\b \x01(\x03R\x05jobId\"\x92\x01\n" +
 	"\fReplacedArea\x12\x1e\n" +
 	"\vold_area_id\x18\x01 \x01(\tR\toldAreaId\x12\x1e\n" +
 	"\vnew_area_id\x18\x02 \x01(\tR\tnewAreaId\x12\x16\n" +
@@ -1193,10 +1216,11 @@ const file_issho_v1_citypacks_proto_rawDesc = "" +
 	"\x05plans\x18\x05 \x01(\x05R\x05plans\"M\n" +
 	"\x19DiscoverAreaVenuesRequest\x12\x17\n" +
 	"\acity_id\x18\x01 \x01(\tR\x06cityId\x12\x17\n" +
-	"\aarea_id\x18\x02 \x01(\tR\x06areaId\"P\n" +
+	"\aarea_id\x18\x02 \x01(\tR\x06areaId\"g\n" +
 	"\x1aDiscoverAreaVenuesResponse\x12\x1a\n" +
 	"\bsearches\x18\x01 \x01(\x05R\bsearches\x12\x16\n" +
-	"\x06venues\x18\x02 \x01(\x05R\x06venues2\xc4\x03\n" +
+	"\x06venues\x18\x02 \x01(\x05R\x06venues\x12\x15\n" +
+	"\x06job_id\x18\x03 \x01(\x03R\x05jobId2\xc4\x03\n" +
 	"\x0fCityPackService\x12R\n" +
 	"\rListCityPacks\x12\x1e.issho.v1.ListCityPacksRequest\x1a\x1f.issho.v1.ListCityPacksResponse\"\x00\x12L\n" +
 	"\vGetCityPack\x12\x1c.issho.v1.GetCityPackRequest\x1a\x1d.issho.v1.GetCityPackResponse\"\x00\x12X\n" +

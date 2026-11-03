@@ -1,5 +1,6 @@
 import { createClient, type Interceptor } from "@connectrpc/connect";
 import { createConnectTransport } from "@connectrpc/connect-web";
+import { AdminService } from "./gen/issho/v1/admin_pb";
 import { CatalogService } from "./gen/issho/v1/catalog_pb";
 import { ChatService } from "./gen/issho/v1/chat_pb";
 import { CityPackService } from "./gen/issho/v1/citypacks_pb";
@@ -22,6 +23,7 @@ import { UIService } from "./gen/issho/v1/ui_pb";
 export { Code, ConnectError } from "@connectrpc/connect";
 export { errorReason } from "./errors";
 export { maxLen } from "./limits";
+export * from "./gen/issho/v1/admin_pb";
 export * from "./gen/issho/v1/catalog_pb";
 export * from "./gen/issho/v1/chat_pb";
 export * from "./gen/issho/v1/citypacks_pb";
@@ -55,6 +57,8 @@ export function createApi({ baseUrl, getAccessToken }: ApiClientOptions) {
   // JSON over HTTP/1.1 works everywhere, including React Native's fetch.
   const transport = createConnectTransport({ baseUrl, useBinaryFormat: false, interceptors: [auth] });
   return {
+    /** Admins only (the admin SPA): the long operations it starts. */
+    admin: createClient(AdminService, transport),
     catalog: createClient(CatalogService, transport),
     chat: createClient(ChatService, transport),
     /** Admins only (the admin SPA). */
