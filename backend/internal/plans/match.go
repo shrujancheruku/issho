@@ -106,5 +106,7 @@ func (r *Runner) Match(ctx context.Context, cityID string, now time.Time) (Match
 	if err != nil {
 		r.Log.Warn("plan routes", "city", cityID, "err", err)
 	}
-	return rep, nil
+	// The best-effort stages above only log; a timeout or shutdown during them
+	// is still not a success.
+	return rep, ctx.Err()
 }

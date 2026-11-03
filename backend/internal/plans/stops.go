@@ -48,7 +48,7 @@ func reviewPlan(ctx context.Context, q *dbgen.Queries, planID string) (uuid.UUID
 	}
 	r, err := q.GetReviewPlan(ctx, id)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return id, r, connect.NewError(connect.CodeNotFound, errors.New("no such plan"))
+		return id, r, errs.NotFound("no such plan")
 	}
 	return id, r, err
 }
@@ -61,10 +61,10 @@ func lockEditable(ctx context.Context, q *dbgen.Queries, id uuid.UUID, walk bool
 		return err
 	}
 	if p.Status != PlanDraft && p.Status != PlanOpen {
-		return connect.NewError(connect.CodeFailedPrecondition, errors.New("only draft and open plans can be edited"))
+		return errs.Precondition(isshov1.ErrorReason_ERROR_REASON_UNSPECIFIED, "only draft and open plans can be edited")
 	}
 	if p.Walk != walk {
-		return connect.NewError(connect.CodeFailedPrecondition, errors.New("the plan changed since: reload it"))
+		return errs.Precondition(isshov1.ErrorReason_ERROR_REASON_UNSPECIFIED, "the plan changed since: reload it")
 	}
 	return nil
 }
@@ -78,7 +78,7 @@ func (h *ReviewHandler) FindPlanPlaces(ctx context.Context, req *connect.Request
 		return nil, errs.Invalid("query: 1 to 100 characters")
 	}
 	if h.Places == nil {
-		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("searching needs GOOGLE_MAPS_API_KEY"))
+		return nil, errs.Precondition(isshov1.ErrorReason_ERROR_REASON_UNSPECIFIED, "searching needs GOOGLE_MAPS_API_KEY")
 	}
 	_, r, err := reviewPlan(ctx, dbgen.New(h.Svc.DB), req.Msg.PlanId)
 	if err != nil {
@@ -87,7 +87,7 @@ func (h *ReviewHandler) FindPlanPlaces(ctx context.Context, req *connect.Request
 	centre := maps.LatLng{Lat: r.AreaLat, Lng: r.AreaLng}
 	found, err := h.Places.Search(ctx, maps.SearchRequest{Query: query, Near: centre, RadiusM: walkRules.MaxFromCenterM, Language: i18n.Authoring})
 	if err != nil {
-		return nil, connect.NewError(connect.CodeUnavailable, errors.New("Google search failed: "+err.Error()))
+		return nil, errs.Upstream("google", err)
 	}
 	out := &isshov1.FindPlanPlacesResponse{}
 	for _, f := range found {
@@ -136,7 +136,7 @@ func (h *ReviewHandler) SetPlanStops(ctx context.Context, req *connect.Request[i
 		stops[i] = WalkStop{Role: role, PlaceID: s.PlaceId, Minutes: int(s.Minutes), Note: english(note)}
 	}
 	if h.Places == nil {
-		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("editing stops needs GOOGLE_MAPS_API_KEY"))
+		return nil, errs.Precondition(isshov1.ErrorReason_ERROR_REASON_UNSPECIFIED, "editing stops needs GOOGLE_MAPS_API_KEY")
 	}
 	q := dbgen.New(h.Svc.DB)
 	id, r, err := reviewPlan(ctx, q, req.Msg.PlanId)
