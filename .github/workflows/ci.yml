@@ -26,6 +26,45 @@ concurrency:
 # turbo.json doesn't declare changed. Not worth that risk.
 
 jobs:
+  # Decides which of the heavy jobs below a change needs (scripts/ci-changes.sh
+  # has the path groups and the reasoning). A job skipped by its `if:` still
+  # reports, as skipped, which satisfies the `main` ruleset's required checks;
+  # a workflow that never started would leave them pending. So gate with
+  # job-level `if:`, never `paths:` on the workflow. Pushes to main and
+  # dispatches run everything (deploys wait on that run, and main should be
+  # fully tested).
+  #
+  # If this job itself fails, the dependents run (the `!= 'success'` half of
+  # each `if:`) instead of being skipped: a skipped required check counts as
+  # passed, so an error here must not let a PR through untested.
+  changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      codegen: ${{ steps.filter.outputs.codegen }}
+      image: ${{ steps.filter.outputs.image }}
+      proto: ${{ steps.filter.outputs.proto }}
+      ts: ${{ steps.filter.outputs.ts }}
+      ts_filter: ${{ steps.filter.outputs.ts_filter }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: The path rules behave
+        run: scripts/ci-changes.test.sh
+      - name: Which jobs does this change need
+        id: filter
+        run: |
+          if [ "$EVENT" = pull_request ]; then
+            git diff --name-only "$PR_BASE" HEAD | scripts/ci-changes.sh | tee -a "$GITHUB_OUTPUT"
+          else
+            scripts/ci-changes.sh --all | tee -a "$GITHUB_OUTPUT"
+          fi
+        env:
+          EVENT: ${{ github.event_name }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+
   # Every push/PR that changes code must also update docs/ROADMAP.md.
   roadmap:
     runs-on: ubuntu-latest
@@ -93,6 +132,10 @@ jobs:
   # Proto checks and codegen drift. Kept apart from `backend` because only this
   # needs Node (protoc-gen-es), and the two jobs then run side by side.
   codegen:
+    needs: changes
+    if: >-
+      !cancelled() &&
+      (needs.changes.result != 'success' || needs.changes.outputs.codegen == 'true')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -138,7 +181,10 @@ jobs:
   # Same Go cache key as codegen but restore-only, so it adds no save step and
   # finishes well before codegen. Needs only Go (no Node, no generators).
   proto-breaking:
+    needs: changes
     if: >-
+      !cancelled() &&
+      (needs.changes.result != 'success' || needs.changes.outputs.proto == 'true') &&
       github.event_name == 'pull_request' &&
       !contains(github.event.pull_request.labels.*.name, 'breaking-ok')
     runs-on: ubuntu-latest
@@ -161,6 +207,10 @@ jobs:
       - run: go tool buf breaking proto --against '.git#branch=origin/main,subdir=proto'
 
   backend:
+    needs: changes
+    if: >-
+      !cancelled() &&
+      (needs.changes.result != 'success' || needs.changes.outputs.backend == 'true')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -219,6 +269,10 @@ jobs:
           test "$(psql "$DATABASE_URL" -Atc "select to_regclass('goose.db_version') is not null and to_regclass('public.app_goose_db_version') is null")" = t
 
   typescript:
+    needs: changes
+    if: >-
+      !cancelled() &&
+      (needs.changes.result != 'success' || needs.changes.outputs.ts == 'true')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -231,7 +285,16 @@ jobs:
       - run: pnpm install --frozen-lockfile
       # One turbo run so the three tasks run in parallel; turbo prefixes each line with its task.
       - name: Typecheck, lint and test
-        run: pnpm turbo run typecheck lint test
+        # On a PR that touches only apps/ and packages/, `--affected` limits
+        # turbo to the changed packages and their dependents (ts_filter is
+        # empty otherwise, and when `changes` failed). Turbo diffs against the
+        # PR's base, which a depth-1 checkout doesn't have.
+        run: |
+          if [ -n "$TS_FILTER" ]; then git fetch --no-tags --unshallow; fi
+          pnpm turbo run typecheck lint test $TS_FILTER
+        env:
+          TS_FILTER: ${{ needs.changes.outputs.ts_filter }}
+          TURBO_SCM_BASE: ${{ github.event.pull_request.base.sha }}
       - name: Admin SPA builds
         run: pnpm --filter @issho/admin build
       # Metro's transform cache (~10 MB; Expo's default location is $TMPDIR/metro-cache).
@@ -251,6 +314,10 @@ jobs:
   # The deploy image (backend/Dockerfile, shipped by Kamal in M9) keeps
   # building, and its binaries start. Not pushed anywhere.
   image:
+    needs: changes
+    if: >-
+      !cancelled() &&
+      (needs.changes.result != 'success' || needs.changes.outputs.image == 'true')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
