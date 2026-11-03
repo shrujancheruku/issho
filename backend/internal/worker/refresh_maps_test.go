@@ -9,7 +9,7 @@ import (
 )
 
 // A worker without a Maps key must delete nothing. The pool is nil, so any
-// query (the city list, geo.Refresh's DeleteStaleTravelTimes) would panic:
+// query (the city list, a delete) would panic:
 // returning cleanly proves the pass touched no data.
 func TestRefreshMapsWithoutRouterTouchesNoData(t *testing.T) {
 	var buf bytes.Buffer

@@ -148,7 +148,7 @@ func keys(m map[string]bool) []string {
 var ErrNoRouter = errors.New("geo: no Maps router to rebuild the travel times")
 
 // RefreshAge is when a city's travel times are rebuilt: well inside
-// MaxCacheAge, so a failed run has days to be retried before the limit.
+// Google's 30-day limit on caching Routes content, so a failed run has days to be retried.
 const RefreshAge = 25 * 24 * time.Hour
 
 // Refresh rebuilds a city's travel-time matrix when its newest row is older
