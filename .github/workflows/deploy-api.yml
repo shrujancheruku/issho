@@ -113,7 +113,7 @@ jobs:
             files=$(git diff --name-only "$base" "$SHA")  # grep -q reads a here-string, not a pipe: no SIGPIPE under pipefail
             grep -qE "$3" <<<"$files" && echo true || echo false
           }
-          echo "api=$(changed deploy-api.yml deploy '^(backend/|data/|config/deploy\.yml$|config/server/|\.github/workflows/deploy-api\.yml$)')" >> "$GITHUB_OUTPUT"
+          echo "api=$(changed deploy-api.yml deploy '^(backend/|data/|config/deploy\.yml$|config/server/|config/kamal-image$|\.github/workflows/deploy-api\.yml$)')" >> "$GITHUB_OUTPUT"
 
   deploy:
     needs: changes

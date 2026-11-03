@@ -23,7 +23,9 @@ git checkout --quiet --detach "$sha"
 
 # The Kamal image this commit pins (config/kamal-image), read after the
 # checkout so each deploy uses its own commit's Kamal.
+[ -s config/kamal-image ] || { echo "deploy: $sha has no config/kamal-image (it predates the pin); deploy a newer commit" >&2; exit 1; }
 kamal_image=$(cat config/kamal-image)
+[ -n "$kamal_image" ] || { echo "deploy: config/kamal-image is blank" >&2; exit 1; }
 
 kamal() {
   # The repo checkout as the workdir, with the gitignored files Kamal reads

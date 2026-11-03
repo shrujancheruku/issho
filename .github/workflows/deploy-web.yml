@@ -112,7 +112,7 @@ jobs:
           }
           # Each target against its own last deploy: its job is "site" or
           # "deploy" (the apps).
-          echo "site=$(changed deploy-web.yml site '^(site/|\.github/workflows/deploy-web\.yml$)')" >> "$GITHUB_OUTPUT"
+          echo "site=$(changed deploy-web.yml site '^(site/|apps/admin/package\.json$|\.github/workflows/deploy-web\.yml$)')" >> "$GITHUB_OUTPUT"
           echo "apps=$(changed deploy-web.yml deploy '^(apps/admin/|apps/mobile/|packages/|pnpm-lock\.yaml$|scripts/deploy-web\.sh$|\.github/workflows/deploy-web\.yml$)')" >> "$GITHUB_OUTPUT"
 
   site:

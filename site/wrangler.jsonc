@@ -1,5 +1,5 @@
 // The marketing page (this folder, as is) as a static-assets-only Worker at
-// joinissho.com and www.joinissho.com. Deploy: `npx wrangler deploy` here.
+// joinissho.com and www.joinissho.com. Deploy: `pnpm -C apps/admin exec wrangler deploy -c ../../site/wrangler.jsonc` from the repo root.
 {
   "name": "issho-site",
   "compatibility_date": "2026-10-26",
