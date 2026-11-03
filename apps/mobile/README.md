@@ -150,6 +150,8 @@ npx expo install <pkg>    # always use this to add packages (picks SDK-compatibl
 
 Tests use the `jest-expo` preset. TypeScript 6 no longer loads `@types` packages automatically, so test files start with `/// <reference types="jest" />`.
 
+The logic users would notice first is tested as pure functions or hooks: the crew offer-to-active transitions (`features/crews/__tests__/data.test.tsx`, with `crew-view.test.ts`), push payload routing (`lib/__tests__/push-routing.test.tsx`; `notificationTarget()` is the pure part) and the feedback picks/avoid rule (`features/events/feedback.ts`). `push-kinds.test.ts` and `push-routing.test.tsx` read the backend's `Notify*` constants from the Go source, so a new notification kind without a refresh row and a route fails them. Tests that wait on TanStack Query use fake timers and `act` (see `chat/__tests__/room.test.tsx`), not `waitFor`, which hangs on its timers.
+
 If installing a package fails with `ERR_PNPM_IGNORED_BUILDS`, approve or deny its install script in `pnpm-workspace.yaml` (see [onboarding troubleshooting](../../docs/onboarding.md#troubleshooting)).
 
 ## Web
