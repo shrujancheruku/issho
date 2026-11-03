@@ -50,7 +50,7 @@ jest.mock('@/components/text-link', () => {
     ),
   };
 });
-jest.mock('@/features/plans/plan-card', () => ({ pairText: () => '' }));
+jest.mock('@/features/plans/text', () => ({ pairText: () => '' }));
 jest.mock('@/features/plans/names', () => ({ usePlanNames: () => ({ area: () => ({ name: '' }) }) }));
 
 const mockApi = api as unknown as {

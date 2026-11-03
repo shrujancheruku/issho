@@ -15,7 +15,7 @@ import { useAuth } from '@/features/auth/auth-provider';
 import { crewView } from '@/features/crews/crew-view';
 import { useMyCrews } from '@/features/crews/data';
 import { usePlanNames } from '@/features/plans/names';
-import { pairText } from '@/features/plans/plan-card';
+import { pairText } from '@/features/plans/text';
 import type { Step } from '@/features/profile/draft';
 import { useProfile } from '@/features/profile/data';
 import { useTheme } from '@/hooks/use-theme';

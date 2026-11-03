@@ -17,9 +17,9 @@ import { usePlanNames } from '@/features/plans/names';
 import { PlanCard } from '@/features/plans/plan-card';
 import { PlansMap } from '@/features/plans/plans-map';
 import { planCategories, planSections, type PlanFilter, type PlanSection } from '@/features/plans/sections';
+import { categoryLabel } from '@/features/plans/text';
 import { useTheme } from '@/hooks/use-theme';
 import { useI18n } from '@/i18n/i18n-provider';
-import { english, type StringKey } from '@/i18n/strings';
 import { haptics } from '@/lib/haptics';
 
 /**
@@ -99,12 +99,6 @@ function SearchField({ value, onChange }: { value: string; onChange: (v: string)
       />
     </View>
   );
-}
-
-function categoryLabel(t: (k: StringKey) => string, category: string) {
-  const key = `category.${category}`;
-  // A category added on the server before this build knows it shows its id.
-  return key in english ? t(key as StringKey) : category;
 }
 
 function ListView() {

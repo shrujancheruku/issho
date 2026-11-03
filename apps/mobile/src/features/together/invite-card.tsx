@@ -10,7 +10,7 @@ import { Spacing } from '@/constants/theme';
 import { useRespond } from '@/features/events/data';
 import { formatStart, lastSignupDay } from '@/features/plans/format';
 import type { usePlanNames } from '@/features/plans/names';
-import { pairText } from '@/features/plans/plan-card';
+import { pairText } from '@/features/plans/text';
 import { useTheme } from '@/hooks/use-theme';
 import { useI18n, useOtherLanguage } from '@/i18n/i18n-provider';
 import { haptics } from '@/lib/haptics';

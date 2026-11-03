@@ -13,7 +13,7 @@ import { BodyFont, Brand, Spacing } from '@/constants/theme';
 import { usePlanCards } from '@/features/plans/data';
 import { formatMoment, lastSignupDay } from '@/features/plans/format';
 import { usePlanNames } from '@/features/plans/names';
-import { pairText } from '@/features/plans/plan-card';
+import { pairText } from '@/features/plans/text';
 import { useTheme } from '@/hooks/use-theme';
 import { useI18n } from '@/i18n/i18n-provider';
 

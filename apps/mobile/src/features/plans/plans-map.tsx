@@ -6,7 +6,8 @@ import { useTheme } from '@/hooks/use-theme';
 
 import { dropDelay } from './drop-in';
 import { bounds, initialRegion, type Pin } from './map-data';
-import { BadgeMarker, MapUnavailable, maps } from './native-maps';
+import { MapUnavailable } from './map-unavailable';
+import { BadgeMarker, maps } from './native-maps';
 import { pinColors } from './pin-color';
 
 export type PlansMapProps = {
