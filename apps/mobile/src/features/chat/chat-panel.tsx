@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type ReactElement } from 'react';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
-import { ErrorLine } from '@/components/error-line';
+import { ErrorLine, refreshFailedText } from '@/components/error-line';
 import { PressableScale } from '@/components/pressable-scale';
 import { LoadFailed } from '@/components/query-screen';
 import { ThemedText } from '@/components/themed-text';
@@ -90,7 +90,7 @@ function Bubble({ m }: { m: Message }) {
 export function ChatPanel({ room, header }: { room: RoomRef; header?: ReactElement }) {
   const { t, lang } = useI18n();
   const theme = useTheme();
-  const { messages, status, opensAt, send, typing, onTyping, retry } = useRoom(room);
+  const { messages, status, opensAt, send, typing, onTyping, retry, refreshError } = useRoom(room);
   const [draft, setDraft] = useState('');
   const list = useRef<FlatList<Message>>(null);
 
@@ -120,6 +120,7 @@ export function ChatPanel({ room, header }: { room: RoomRef; header?: ReactEleme
 
   return (
     <>
+      <ErrorLine type="small" error={refreshError} text={refreshFailedText} style={styles.refresh} />
       {status === 'loading' ? (
         <ActivityIndicator style={styles.fill} />
       ) : status === 'error' ? (
@@ -187,6 +188,7 @@ export function ChatPanel({ room, header }: { room: RoomRef; header?: ReactEleme
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },
+  refresh: { paddingHorizontal: Spacing.three, paddingBottom: Spacing.two },
   messages: { padding: Spacing.three, gap: Spacing.two },
   bubble: { maxWidth: '78%', paddingVertical: Spacing.two, paddingHorizontal: Spacing.three - 4 },
   // The corner nearest the sender is the sharp one.

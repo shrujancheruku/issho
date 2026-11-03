@@ -307,6 +307,8 @@ export function useRoom(room: RoomRef) {
     send,
     typing,
     onTyping,
+    // The last refetch failed; the messages shown are from before.
+    refreshError: query.isRefetchError ? query.error : null,
     retry: () => void query.refetch(),
   };
 }
