@@ -2,6 +2,7 @@ import { ConnectError, FlagKind, OutingFeedback, type Person as PersonData } fro
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
+import { ConfirmButton } from '../Confirm';
 import { formatTime, leanSummary } from '../format';
 import { api } from '../lib';
 
@@ -85,7 +86,6 @@ export function Person({ userId }: { userId: string }) {
 function Decision({ person: p }: { person: PersonData }) {
   const queryClient = useQueryClient();
   const [text, setText] = useState('');
-  const [confirming, setConfirming] = useState(false);
   const act = useMutation({
     mutationFn: async () => {
       if (p.suspended) await api.moderation.liftSuspension({ userId: p.userId, note: text });
@@ -93,7 +93,6 @@ function Decision({ person: p }: { person: PersonData }) {
     },
     onSuccess: () => {
       setText('');
-      setConfirming(false);
       void queryClient.invalidateQueries({ queryKey: ['person', p.userId] });
       void queryClient.invalidateQueries({ queryKey: ['suspended'] });
       void queryClient.invalidateQueries({ queryKey: ['people'] });
@@ -107,7 +106,7 @@ function Decision({ person: p }: { person: PersonData }) {
           <h2>Lift the suspension</h2>
           <p className="muted">They can use Issho again, but aren't put back into the plans, outings or crews they were taken out of.</p>
           <label className="note">Note<textarea rows={2} maxLength={2000} value={text} onChange={(e) => setText(e.target.value)} placeholder="Why it's lifted" /></label>
-          <div className="row"><button disabled={act.isPending} onClick={() => act.mutate()}>Lift suspension</button></div>
+          <div className="row"><ConfirmButton label="Lift suspension" confirmLabel={`Yes, lift ${p.name ? `${p.name}'s` : 'their'} suspension`} disabled={act.isPending} onConfirm={() => act.mutate()} /></div>
         </>
       ) : (
         <>
@@ -119,14 +118,8 @@ function Decision({ person: p }: { person: PersonData }) {
           </p>
           <label className="note">Reason<textarea rows={2} maxLength={2000} value={text} onChange={(e) => setText(e.target.value)} placeholder="What happened" /></label>
           <div className="row">
-            {!confirming ? (
-              <button disabled={text.trim() === ''} onClick={() => setConfirming(true)}>Suspend…</button>
-            ) : (
-              <>
-                <button disabled={act.isPending} onClick={() => act.mutate()}>Yes, suspend {p.name || 'them'}</button>
-                <button className="secondary" onClick={() => setConfirming(false)}>Cancel</button>
-              </>
-            )}
+            <ConfirmButton keepOpen label="Suspend…" confirmLabel={`Yes, suspend ${p.name || 'them'}`}
+              disabled={text.trim() === '' || act.isPending} onConfirm={() => act.mutate()} />
           </div>
         </>
       )}
