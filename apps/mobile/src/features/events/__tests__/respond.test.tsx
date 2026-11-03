@@ -33,3 +33,24 @@ test('cancelling a place also refreshes the plan the event is for', async () => 
   await waitFor(() => expect(qc.getQueryState(keys.plan('p1'))?.isInvalidated).toBe(true));
   expect(qc.getQueryState(keys.feed)?.isInvalidated).toBe(true);
 });
+
+test('declining from a card, with the event never opened, refreshes the plan the card names', async () => {
+  const qc = new QueryClient();
+  qc.setQueryData(keys.plan('p9'), {});
+  function Card() {
+    const r = useRespond('e9', { planId: 'p9' });
+    useEffect(() => {
+      respond = r;
+    });
+    return null;
+  }
+  await render(
+    <QueryClientProvider client={qc}>
+      <Card />
+    </QueryClientProvider>,
+  );
+  await act(async () => {
+    await respond.mutateAsync('decline');
+  });
+  await waitFor(() => expect(qc.getQueryState(keys.plan('p9'))?.isInvalidated).toBe(true));
+});

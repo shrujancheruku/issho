@@ -40,16 +40,19 @@ export function AuthProvider({ children }: PropsWithChildren) {
   // The user the cache belongs to. A ref, so the listener can compare without
   // a side effect inside a setState updater (which React may run twice).
   const cacheUser = useRef<string | undefined>(undefined);
+  const heard = useRef(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      cacheUser.current = data.session?.user.id;
+      // A listener event may have run first; it knows the newer user.
+      if (!heard.current) cacheUser.current = data.session?.user.id;
       setSession(data.session);
       setReady(true);
     });
     // Fires on sign-in, sign-out and token refresh. Cached server data belongs to
     // the previous user, so clear it whenever the user changes.
     const { data } = supabase.auth.onAuthStateChange((_event, next) => {
+      heard.current = true;
       if (cacheUser.current !== next?.user.id) queryClient.clear();
       cacheUser.current = next?.user.id;
       setSession(next);

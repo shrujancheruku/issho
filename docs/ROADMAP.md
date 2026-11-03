@@ -294,8 +294,7 @@ Clears every tier of the 2026-11-02 audit before the deferred release items (M11
 - ⬜ db: [make test-db, a throwaway database per worktree](https://github.com/shrujancheruku/issho/issues/211) S → [one baseline migration; reset issho-dev](https://github.com/shrujancheruku/issho/issues/160) L
 - ⬜ api: [error reasons](https://github.com/shrujancheruku/issho/issues/162) M · [size limits, timeouts, deadline](https://github.com/shrujancheruku/issho/issues/175) M · [AIP-158 admin paging](https://github.com/shrujancheruku/issho/issues/177) L
 - ⬜ backend: [one city-pack apply path](https://github.com/shrujancheruku/issho/issues/165) S · [one item never stops a pass](https://github.com/shrujancheruku/issho/issues/180) M · [APP_ENV and fail-fast config](https://github.com/shrujancheruku/issho/issues/181) M
-- ✅ mobile: [query-key module](https://github.com/shrujancheruku/issho/issues/171) M
-- ⬜ mobile: [one screen frame, tabs included](https://github.com/shrujancheruku/issho/issues/201) M (moved up from Tier 3: it blocks #170)
+- ⬜ mobile: [query-key module](https://github.com/shrujancheruku/issho/issues/171) ✅ M · [one screen frame, tabs included](https://github.com/shrujancheruku/issho/issues/201) M (moved up from Tier 3: it blocks #170)
 
 **Wave 1b** (Tier 1)
 - ⬜ db: [retention](https://github.com/shrujancheruku/issho/issues/161) M (after #160)

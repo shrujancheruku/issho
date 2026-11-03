@@ -29,12 +29,13 @@ const planIdOf = (queryClient: QueryClient, id: string) => queryClient.getQueryD
  * Answers an invitation, then refreshes the event, the list of events and
  * the feed and the plan (a cancelled group puts people back on a plan's
  * waiting list).
- * `refreshAfter` (ms) succeeds at once and refreshes later, so a button can
+ * `planId` is the event's plan when the caller has the event (a card in a
+ * list); otherwise it comes from the cached event. `refreshAfter` (ms) succeeds at once and refreshes later, so a button can
  * show its result before the refreshed list moves the item away.
  */
-export function useRespond(id: string, { refreshAfter = 0 }: { refreshAfter?: number } = {}) {
+export function useRespond(id: string, { refreshAfter = 0, planId }: { refreshAfter?: number; planId?: string } = {}) {
   const queryClient = useQueryClient();
-  const refresh = () => eventChanged(queryClient, id, { feed: true, planId: planIdOf(queryClient, id) });
+  const refresh = () => eventChanged(queryClient, id, { feed: true, planId: planId ?? planIdOf(queryClient, id) });
   return useMutation({
     // Checking in is its own call; the rest are answers.
     mutationFn: async (action: Exclude<EventAction, 'feedback'>) => {
