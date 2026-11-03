@@ -127,4 +127,4 @@ Finally, sign in from the app. Point `apps/mobile/.env` at the hosted project (`
 
 ## Advisors
 
-No known warnings. `extension_in_public` for `postgis` was the only one until the baseline migration (#160) created PostGIS in the `extensions` schema; `issho-dev` is reset onto it by the runbook in [deploy.md](deploy.md#resetting-issho-dev-onto-the-baseline-migration).
+No known warnings. `extension_in_public` for `postgis` was the only one until the baseline migration (#160) created PostGIS in the `extensions` schema; `issho-dev` is reset onto it by the runbook in [deploy.md](deploy.md#resetting-a-database-onto-the-baseline-migration).
