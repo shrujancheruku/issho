@@ -186,6 +186,16 @@ func (a *Activity) hours() float64 {
 	return DefaultHours
 }
 
+// Length is how long the activity takes (DefaultHours when the catalogue
+// doesn't say). A nil activity has the default length.
+func (a *Activity) Length() time.Duration {
+	h := DefaultHours
+	if a != nil {
+		h = a.hours()
+	}
+	return time.Duration(h * float64(time.Hour))
+}
+
 // With is the activity a plan of a followed by b asks of its groups: both
 // group sizes, a part of the day that suits both, and the dearer of the two.
 // For scheduling; b nil = a.
