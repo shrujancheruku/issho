@@ -3,7 +3,8 @@ import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { View } from 'react-native';
 
-import { ChipChoice, DetailsInput, FormError, FormScreen } from '@/components/form-screen';
+import { ErrorLine } from '@/components/error-line';
+import { ChipChoice, DetailsInput, FormScreen } from '@/components/form-screen';
 import { PrimaryButton } from '@/components/primary-button';
 import { LoadState } from '@/components/query-screen';
 import { ThemedText } from '@/components/themed-text';
@@ -79,13 +80,7 @@ export default function ReportScreen() {
         !report.isSuccess &&
         mates.length > 0 && (
           <>
-            {report.isError && (
-              <FormError>
-                {report.error instanceof ConnectError && report.error.code === Code.FailedPrecondition
-                  ? t('event.tooLate')
-                  : t('error.network')}
-              </FormError>
-            )}
+            <ErrorLine error={report.error} center />
             <PrimaryButton
               label={t('report.send')}
               disabled={!mate || reason === ReportReason.UNSPECIFIED}

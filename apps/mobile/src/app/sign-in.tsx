@@ -2,7 +2,9 @@ import { Image } from 'expo-image';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
+import { ErrorLine } from '@/components/error-line';
 import { ScreenFrame } from '@/components/screen-frame';
+import { signInErrorText } from '@/features/auth/sign-in-error';
 import { ThemedText } from '@/components/themed-text';
 import { BodyFont, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -26,7 +28,8 @@ export default function SignInScreen() {
   const [code, setCode] = useState('');
   const [step, setStep] = useState<'email' | 'code'>('email');
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // The AuthError, never its message: signInErrorText words it by code.
+  const [error, setError] = useState<{ code?: string } | null>(null);
 
   const sendCode = async () => {
     setBusy(true);
@@ -40,7 +43,7 @@ export default function SignInScreen() {
       options: { shouldCreateUser: true, data: { lang: languages.primary } },
     });
     setBusy(false);
-    if (error) return setError(error.message);
+    if (error) return setError(error);
     setCode('');
     setStep('code');
   };
@@ -52,7 +55,7 @@ export default function SignInScreen() {
     setBusy(false);
     if (error) {
       setCode('');
-      setError(error.message);
+      setError(error);
     }
   };
 
@@ -120,11 +123,7 @@ export default function SignInScreen() {
           </View>
         )}
 
-        {error && (
-          <ThemedText themeColor="error" style={styles.error}>
-            {error}
-          </ThemedText>
-        )}
+        <ErrorLine error={error} text={(e, tr) => signInErrorText(e as { code?: string }, tr)} style={styles.error} />
       </View>
     </ScreenFrame>
   );

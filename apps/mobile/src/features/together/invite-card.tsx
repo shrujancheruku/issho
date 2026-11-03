@@ -2,6 +2,7 @@ import type { MyEvent } from '@issho/api-client';
 import { router } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
+import { ErrorLine } from '@/components/error-line';
 import { ResultButton } from '@/components/result-button';
 import { TextLink } from '@/components/text-link';
 import { ThemedText } from '@/components/themed-text';
@@ -47,11 +48,7 @@ export function InviteCard({ event, names }: { event: MyEvent; names: ReturnType
       <ThemedText type="small" themeColor="textSecondary" style={styles.count}>
         {t('event.confirmedCount', { count: event.confirmed })}
       </ThemedText>
-      {respond.isError && (
-        <ThemedText type="small" themeColor="error">
-          {t('error.network')}
-        </ThemedText>
-      )}
+      <ErrorLine error={respond.error} type="small" />
       <ResultButton
         label={t('event.confirm')}
         doneLabel={t('event.state.going')}

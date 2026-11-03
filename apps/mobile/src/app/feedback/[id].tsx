@@ -3,6 +3,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
+import { ErrorLine } from '@/components/error-line';
 import { Avatar } from '@/components/avatar';
 import { Chip } from '@/components/chip';
 import { PressableScale } from '@/components/pressable-scale';
@@ -204,11 +205,7 @@ export default function FeedbackScreen() {
       {f?.open && (
         <View style={styles.footer}>
           {submit.isError ? (
-            <ThemedText themeColor="error" style={styles.error}>
-              {submit.error instanceof ConnectError && submit.error.code === Code.FailedPrecondition
-                ? t('feedback.closed')
-                : t('error.network')}
-            </ThemedText>
+            <ErrorLine error={submit.error} style={styles.error} />
           ) : (
             answer.attended &&
             !rated && (

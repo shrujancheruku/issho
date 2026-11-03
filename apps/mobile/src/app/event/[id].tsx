@@ -3,6 +3,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useState, type ReactNode } from 'react';
 import { Linking, ScrollView, Share, StyleSheet, View } from 'react-native';
 
+import { ErrorLine } from '@/components/error-line';
 import { Avatar } from '@/components/avatar';
 import { LiveDot } from '@/components/live-dot';
 import { PrimaryButton } from '@/components/primary-button';
@@ -150,7 +151,6 @@ function Invited({ ctx }: { ctx: Ctx }) {
   const { t } = useI18n();
   const { e, lang, names, data } = ctx;
   const respond = useRespond(ctx.id, { refreshAfter: 1400 });
-  const tooLate = respond.error instanceof ConnectError && respond.error.code === Code.FailedPrecondition;
   const going = respond.isSuccess && respond.variables === 'confirm';
   return (
     <>
@@ -165,7 +165,7 @@ function Invited({ ctx }: { ctx: Ctx }) {
         <ThemedText type="small" themeColor="textSecondary" style={styles.gapBelow}>
           {t('event.confirmedCount', { count: e.confirmed })}
         </ThemedText>
-        {respond.isError && <ThemedText themeColor="error">{tooLate ? t('event.tooLate') : t('error.network')}</ThemedText>}
+        <ErrorLine error={respond.error} />
         <ResultButton
           label={t('event.confirm')}
           doneLabel={t('event.state.going')}
@@ -227,7 +227,7 @@ function PlanTab({ ctx }: { ctx: Ctx }) {
       <SafetyLinks ctx={ctx} />
       {ctx.o.canCancel && (
         <>
-          {respond.isError && <ThemedText themeColor="error">{t('error.network')}</ThemedText>}
+          <ErrorLine error={respond.error} />
           <TextLink label={t('event.cancel')} muted disabled={respond.isPending} onPress={() => respond.mutate('cancel')} />
         </>
       )}
@@ -282,7 +282,7 @@ function OnTheDay({ ctx }: { ctx: Ctx }) {
           {t('event.meetingPoint')}: {meetingPoint(ctx, t)}
         </ThemedText>
         <View style={styles.gapAbove}>
-          {respond.isError && <ThemedText themeColor="error">{t('error.network')}</ThemedText>}
+          <ErrorLine error={respond.error} />
           {ctx.o.canCheckIn ? (
             <ResultButton
               label={t('event.checkIn')}
