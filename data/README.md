@@ -12,7 +12,7 @@ City packs can also be edited (or created) in the admin SPA's **Cities** page, w
 
 Load with `make seed` (everything) or `cd backend && go run ./cmd/tool seed ../data/citypacks/<city>.json`. Each pack goes through `cities.Apply`: with `GOOGLE_MAPS_API_KEY` set, new or moved areas get their travel times; without it the pack is seeded and the travel times are skipped (run `build-matrix` later).
 
-**Validation:** `go test ./internal/cities/` (part of `make test` and CI) checks every file here: required fields, ranges, duplicate ids, references between files, and that every Google type is a valid Places API (New) type. Seeding validates too. Seeding runs in a transaction and is idempotent (upserts). **Removing** an entry from the JSON does not delete it from the database; disable it with an override, or merge it into another activity with `replaces` (below).
+**Validation:** `go test ./internal/cities/` (part of `make test` and CI) checks every file here: required fields, ranges, duplicate ids, references between files, and that every Google type is a valid Places API (New) type. Seeding validates too. Seeding runs in a transaction and is idempotent (upserts). **Catalogue activities:** removing one from `activities.json` does not delete it from the database; disable it with an override, or merge it into another activity with `replaces` (below). **City packs are authoritative**, see "Applying a pack" below.
 
 ## Activity schema (`activities.json`)
 
@@ -72,7 +72,8 @@ Matching is on the primary type, so prefer specific types (`flea_market`, `dance
     { "id": "tokyo-kichijoji", "name": { "en": "Kichijoji", "ja": "吉祥寺" }, "lat": 35.7030, "lng": 139.5798 },
     { "id": "da-nang-hoi-an-hai-chau", "name": { "en": "Hai Chau", "vi": "Hải Châu" }, "lat": 16.059, "lng": 108.2195,
       "osm_id": 13969677,                   // optional: the area's administrative boundary in OpenStreetMap (a relation id)
-      "boundary": ["emfaBw_lsS…"] }         // optional: its outline, one encoded polyline per ring; written by make boundaries
+      "boundary": ["emfaBw_lsS…"],          // optional: its outline, one encoded polyline per ring; written by make boundaries
+      "replaces": ["da-nang-hoi-an-old"] }  // optional: retired area ids this one takes over (see "Applying a pack")
   ],
   "activity_overrides": [
     { "activity_id": "seasonal-viewing", "months": [3, 4] },    // seasonal
@@ -83,6 +84,24 @@ Matching is on the primary type, so prefer specific types (`flea_market`, `dance
 ```
 
 **Boundaries.** An area with a `boundary` has its venues searched over the whole of it, and every venue (found or added by hand) goes to the area that contains it; places outside every area are left out. Without one, venues are searched within each category's radius of the point and go to the nearest point, as for Tokyo and Austin today. `make boundaries CITY=<city>` fetches each area's outline from OpenStreetMap by its `osm_id` (Nominatim, simplified to about 20 m) and rewrites the pack; validation checks that each point is inside its own boundary and nobody else's. The admin SPA's editor keeps boundaries as they are (it doesn't edit them). Boundaries are OpenStreetMap data, © OpenStreetMap contributors, available under the [Open Database License](https://opendatacommons.org/licenses/odbl/).
+
+## Applying a pack
+
+A pack is the source of truth for its city's areas and activity overrides: applying it (`tool seed`, or **Apply from main** in the admin SPA) makes the database match it, in one transaction. Both go through `cities.Apply`.
+
+| The pack... | Applying it... |
+|---|---|
+| lists an area that is new or moved more than 100 m | upserts it; travel times are rebuilt (with a Maps key) |
+| no longer lists an override | **deletes the override row**: the activity is offered again under its catalogue name, in every month. A `disabled: true` override that is removed re-enables the activity |
+| no longer lists an area **nothing references** (no profile, crew or plan) | **deletes the area and cascades** to its venues, travel times and walk failures |
+| no longer lists an area that people, crews or plans still use | **refuses before writing anything**, naming the area and counts: `tokyo-shibuya: 12 people, 3 plans; list it in an area's replaces` |
+| lists `replaces: [old ids]` on an area | moves `profiles.home_area_id`, `crews.area_id` and `plans.area_id` from each old area to this one, then deletes the old areas (venues, travel times and walk failures cascade) |
+
+An apply is also **refused when it would delete curated venues** (approved, rejected or added by hand) of a removed or replaced area, since discovery only brings back candidates. `tool seed -drop-curated-venues` allows it; the admin SPA cannot. Nothing else in a pack touches users' data, and no apply ever deletes a city, or a profile, crew or plan.
+
+`tool seed` logs a warning listing the removed areas, the replaced areas (old, new, and how many people, crews and plans moved) and the removed overrides. The admin SPA's apply answers with an error that names them when it refuses. There is no dry run: the pull request review is the preview.
+
+**Retiring an area** (a hand edit in a pull request; the editor can't remove areas): delete its entry and list its id in the `replaces` of the area that covers it. Validation rejects a replaced id that is still an area of any pack, or replaced twice; `Apply` rejects one that belongs to another city. Keep the `replaces` entry until every environment (local, `issho-dev`, production) has applied the pack; after that it is a no-op and can go. The editor keeps `osm_id`, `boundary` and `replaces` from `main` in its pull requests.
 
 ## Adding a city
 

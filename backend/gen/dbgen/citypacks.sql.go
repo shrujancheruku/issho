@@ -9,6 +9,55 @@ import (
 	"context"
 )
 
+const countAreaReferences = `-- name: CountAreaReferences :many
+select a.id,
+       (select count(*) from app.profiles p where p.home_area_id = a.id)::int as people,
+       (select count(*) from app.crews c where c.area_id = a.id)::int as crews,
+       (select count(*) from app.plans p where p.area_id = a.id)::int as plans,
+       (select count(distinct v.google_place_id) from app.venues v
+         where v.area_id = a.id and (v.status <> 'candidate' or v.added_by is not null))::int as curated_venues
+from app.areas a
+where a.id = any($1::text[])
+order by a.id
+`
+
+type CountAreaReferencesRow struct {
+	ID            string
+	People        int32
+	Crews         int32
+	Plans         int32
+	CuratedVenues int32
+}
+
+// What depends on each area: people (home area), crews, plans, and venues
+// an admin curated (approved or rejected, or added by hand), which a delete
+// would lose; discovery would only bring back candidates.
+func (q *Queries) CountAreaReferences(ctx context.Context, ids []string) ([]CountAreaReferencesRow, error) {
+	rows, err := q.db.Query(ctx, countAreaReferences, ids)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []CountAreaReferencesRow
+	for rows.Next() {
+		var i CountAreaReferencesRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.People,
+			&i.Crews,
+			&i.Plans,
+			&i.CuratedVenues,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const countCityVenues = `-- name: CountCityVenues :one
 select count(*)::int from app.venues where city_id = $1
 `
@@ -18,6 +67,83 @@ func (q *Queries) CountCityVenues(ctx context.Context, cityID string) (int32, er
 	var column_1 int32
 	err := row.Scan(&column_1)
 	return column_1, err
+}
+
+const deleteAreas = `-- name: DeleteAreas :exec
+delete from app.areas where id = any($1::text[])
+`
+
+// Venues, travel times and walk failures of these areas cascade.
+func (q *Queries) DeleteAreas(ctx context.Context, ids []string) error {
+	_, err := q.db.Exec(ctx, deleteAreas, ids)
+	return err
+}
+
+const deleteCityOverridesExcept = `-- name: DeleteCityOverridesExcept :many
+delete from app.city_activity_overrides
+where city_id = $1 and not (activity_id = any($2::text[]))
+returning activity_id
+`
+
+type DeleteCityOverridesExceptParams struct {
+	CityID string
+	Keep   []string
+}
+
+// The city's overrides that the pack no longer lists: the activity falls back
+// to the catalogue's default.
+func (q *Queries) DeleteCityOverridesExcept(ctx context.Context, arg DeleteCityOverridesExceptParams) ([]string, error) {
+	rows, err := q.db.Query(ctx, deleteCityOverridesExcept, arg.CityID, arg.Keep)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var activity_id string
+		if err := rows.Scan(&activity_id); err != nil {
+			return nil, err
+		}
+		items = append(items, activity_id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listAreaCities = `-- name: ListAreaCities :many
+
+select id, city_id from app.areas where id = any($1::text[])
+`
+
+type ListAreaCitiesRow struct {
+	ID     string
+	CityID string
+}
+
+// Applying a pack makes the database match it (cities.Apply). The queries
+// below find what a pack no longer lists, count what depends on it and
+// carry people over to the area that replaces it.
+// Which city each of these areas belongs to (absent ids are not returned).
+func (q *Queries) ListAreaCities(ctx context.Context, ids []string) ([]ListAreaCitiesRow, error) {
+	rows, err := q.db.Query(ctx, listAreaCities, ids)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListAreaCitiesRow
+	for rows.Next() {
+		var i ListAreaCitiesRow
+		if err := rows.Scan(&i.ID, &i.CityID); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listCatalogActivities = `-- name: ListCatalogActivities :many
@@ -90,4 +216,55 @@ func (q *Queries) ListCityPackAreas(ctx context.Context) ([]ListCityPackAreasRow
 		return nil, err
 	}
 	return items, nil
+}
+
+const moveCrewsToArea = `-- name: MoveCrewsToArea :execrows
+update app.crews set area_id = $1 where area_id = $2
+`
+
+type MoveCrewsToAreaParams struct {
+	NewID *string
+	OldID *string
+}
+
+func (q *Queries) MoveCrewsToArea(ctx context.Context, arg MoveCrewsToAreaParams) (int64, error) {
+	result, err := q.db.Exec(ctx, moveCrewsToArea, arg.NewID, arg.OldID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const movePlansToArea = `-- name: MovePlansToArea :execrows
+update app.plans set area_id = $1 where area_id = $2
+`
+
+type MovePlansToAreaParams struct {
+	NewID string
+	OldID string
+}
+
+func (q *Queries) MovePlansToArea(ctx context.Context, arg MovePlansToAreaParams) (int64, error) {
+	result, err := q.db.Exec(ctx, movePlansToArea, arg.NewID, arg.OldID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const moveProfilesToArea = `-- name: MoveProfilesToArea :execrows
+update app.profiles set home_area_id = $1 where home_area_id = $2
+`
+
+type MoveProfilesToAreaParams struct {
+	NewID string
+	OldID string
+}
+
+func (q *Queries) MoveProfilesToArea(ctx context.Context, arg MoveProfilesToAreaParams) (int64, error) {
+	result, err := q.db.Exec(ctx, moveProfilesToArea, arg.NewID, arg.OldID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }

@@ -47,6 +47,12 @@ type Area struct {
 	// per outer ring. Venues are searched for over all of it; without one,
 	// only around the point.
 	Boundary []string `json:"boundary,omitempty"`
+	// Replaces lists ids of retired areas this one takes over. Applying the
+	// pack moves their people, crews and plans here, then deletes them (and
+	// their venues and travel times). Keep an entry until every environment
+	// has applied the pack. Like OSMID and Boundary it is edited in the file,
+	// not in the admin SPA.
+	Replaces []string `json:"replaces,omitempty"`
 }
 
 type ActivityOverride struct {
@@ -200,15 +206,45 @@ func SeedCatalog(ctx context.Context, pool *pgxpool.Pool, venueCategoriesPath, a
 	return len(acts), err
 }
 
-// seedPack upserts a validated pack in one transaction, so a bad pack never
-// leaves a half-seeded city. The catalogue must be seeded first because
-// overrides reference activity ids. Seeding is idempotent: re-running updates
-// in place. Areas or overrides removed from the JSON are not deleted from the
-// database. It is private so that Apply is the one way to write a pack: it
-// also works out what needs Google again.
-func seedPack(ctx context.Context, pool *pgxpool.Pool, p Pack) error {
-	return pgx.BeginFunc(ctx, pool, func(tx pgx.Tx) error {
+// seedPack makes the database match a validated pack in one transaction, so
+// a bad pack never leaves a half-seeded city. The catalogue must be seeded
+// first because overrides reference activity ids. Seeding is idempotent.
+// The pack is authoritative:
+//   - overrides it doesn't list are deleted (the activity falls back to the
+//     catalogue default);
+//   - areas listed in an area's Replaces hand their people, crews and plans
+//     to it, then are deleted;
+//   - other areas it no longer lists are deleted, but only when nothing
+//     references them: otherwise the whole apply is refused (ErrRefused)
+//     before anything is written.
+//
+// Deleting an area cascades to its venues, travel times and walk failures;
+// when those include venues an admin curated, it is refused too unless
+// opts.DropCuratedVenues. It is private so that Apply is the one way to
+// write a pack: it also works out what needs Google again.
+func seedPack(ctx context.Context, pool *pgxpool.Pool, p Pack, opts Options) (Diff, error) {
+	var d Diff
+	err := pgx.BeginFunc(ctx, pool, func(tx pgx.Tx) error {
+		d = Diff{}
 		q := dbgen.New(tx)
+		// Read inside the transaction so the pre-check and the writes see the
+		// same rows.
+		before, err := q.ListCityAreas(ctx, p.ID)
+		if err != nil {
+			return err
+		}
+		was := make(map[string]maps.LatLng, len(before))
+		for _, a := range before {
+			was[a.ID] = maps.LatLng{Lat: a.Lat, Lng: a.Lng}
+		}
+		plan := planAreas(was, p)
+		replaced, removed, err := checkRemovals(ctx, q, p.ID, plan, opts)
+		if err != nil {
+			return err
+		}
+		d.NewAreas, d.MovedAreas = DiffAreas(was, p.Areas)
+		d.RemovedAreas, d.ReplacedAreas = removed, replaced
+
 		name, _ := json.Marshal(p.Name)
 		if err := q.UpsertCity(ctx, dbgen.UpsertCityParams{
 			ID: p.ID, Name: name, Timezone: p.Timezone, Currency: p.Currency, Languages: p.Languages,
@@ -226,7 +262,27 @@ func seedPack(ctx context.Context, pool *pgxpool.Pool, p Pack) error {
 				return fmt.Errorf("area %s: %w", a.ID, err)
 			}
 		}
+		// Move references before deleting: profiles, crews and plans have no
+		// cascade, so the delete would otherwise fail.
+		for _, r := range d.ReplacedAreas {
+			if _, err := q.MoveProfilesToArea(ctx, dbgen.MoveProfilesToAreaParams{OldID: r.Old, NewID: r.New}); err != nil {
+				return fmt.Errorf("moving people from %s to %s: %w", r.Old, r.New, err)
+			}
+			if _, err := q.MoveCrewsToArea(ctx, dbgen.MoveCrewsToAreaParams{OldID: &r.Old, NewID: &r.New}); err != nil {
+				return fmt.Errorf("moving crews from %s to %s: %w", r.Old, r.New, err)
+			}
+			if _, err := q.MovePlansToArea(ctx, dbgen.MovePlansToAreaParams{OldID: r.Old, NewID: r.New}); err != nil {
+				return fmt.Errorf("moving plans from %s to %s: %w", r.Old, r.New, err)
+			}
+		}
+		if gone := append(replacedIDs(d.ReplacedAreas), d.RemovedAreas...); len(gone) > 0 {
+			if err := q.DeleteAreas(ctx, gone); err != nil {
+				return fmt.Errorf("deleting areas %v: %w", gone, err)
+			}
+		}
+		keep := make([]string, 0, len(p.ActivityOverrides))
 		for _, o := range p.ActivityOverrides {
+			keep = append(keep, o.ActivityID)
 			var n []byte
 			if len(o.Name) > 0 {
 				n, _ = json.Marshal(o.Name)
@@ -237,8 +293,13 @@ func seedPack(ctx context.Context, pool *pgxpool.Pool, p Pack) error {
 				return fmt.Errorf("override %s: %w", o.ActivityID, err)
 			}
 		}
-		return nil
+		d.RemovedOverrides, err = q.DeleteCityOverridesExcept(ctx, dbgen.DeleteCityOverridesExceptParams{CityID: p.ID, Keep: keep})
+		return err
 	})
+	if err != nil {
+		return Diff{}, err
+	}
+	return d, nil
 }
 
 // wkt writes a boundary as a WKT MULTIPOLYGON for PostGIS ("" for none),

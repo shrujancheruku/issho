@@ -32,8 +32,7 @@ func TestDiffAreas(t *testing.T) {
 		// 0.002° of latitude is 222 m.
 		{"a real move", []Area{area("a", 35.702, 139.6), area("b", 35.71, 139.61)}, nil, []string{"a"}},
 		{"new and moved keep the pack's order", []Area{area("z", 1, 1), area("b", 35.72, 139.61), area("y", 2, 2), area("a", 35.8, 139.6)}, []string{"z", "y"}, []string{"b", "a"}},
-		// Areas are never removed by seeding, so an area missing from the pack is no change.
-		{"an area missing from the pack", []Area{area("a", 35.7, 139.6)}, nil, nil},
+		{"an area missing from the pack is not new or moved", []Area{area("a", 35.7, 139.6)}, nil, nil},
 		{"nothing known yet", []Area{area("a", 35.7, 139.6)}, []string{"a"}, nil},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -99,14 +98,14 @@ func TestIntegrationApply(t *testing.T) {
 	}
 
 	// New city: both areas are new and the matrix is built.
-	d, err := Apply(ctx, pool, fake, pack)
+	d, err := Apply(ctx, pool, fake, pack, Options{})
 	if err != nil || len(d.NewAreas) != 2 || len(d.MovedAreas) != 0 || !d.TravelTimesRebuilt || d.TravelTimes == 0 || fake.Matrices() == 0 {
 		t.Fatalf("first apply = %+v, %v (%d matrices)", d, err, fake.Matrices())
 	}
 
 	// Unchanged: nobody is called.
 	calls := fake.Matrices()
-	if d, err := Apply(ctx, pool, fake, pack); err != nil || len(d.NewAreas)+len(d.MovedAreas) != 0 || d.TravelTimesRebuilt || fake.Matrices() != calls {
+	if d, err := Apply(ctx, pool, fake, pack, Options{}); err != nil || len(d.NewAreas)+len(d.MovedAreas) != 0 || d.TravelTimesRebuilt || fake.Matrices() != calls {
 		t.Errorf("second apply = %+v, %v", d, err)
 	}
 
@@ -114,7 +113,7 @@ func TestIntegrationApply(t *testing.T) {
 	pack.Areas[1].Lat += 0.009
 	pack.Areas = append(pack.Areas, Area{ID: city + "-c", Name: Text{"en": "Gamma"}, Lat: 35.72, Lng: 139.62})
 	fake.MatrixErr = errors.New("quota exceeded for key AIza-secret")
-	d, err = Apply(ctx, pool, fake, pack)
+	d, err = Apply(ctx, pool, fake, pack, Options{})
 	if !errors.Is(err, ErrTravelTimes) || len(d.NewAreas) != 1 || len(d.MovedAreas) != 1 || d.TravelTimesRebuilt {
 		t.Fatalf("failing apply = %+v, %v", d, err)
 	}
@@ -125,13 +124,13 @@ func TestIntegrationApply(t *testing.T) {
 	// The failed run already seeded the new positions, so a retry sees no
 	// change; the worker's refresh is what rebuilds the matrix.
 	fake.MatrixErr = nil
-	if d, err := Apply(ctx, pool, fake, pack); err != nil || len(d.NewAreas)+len(d.MovedAreas) != 0 {
+	if d, err := Apply(ctx, pool, fake, pack, Options{}); err != nil || len(d.NewAreas)+len(d.MovedAreas) != 0 {
 		t.Errorf("retry = %+v, %v", d, err)
 	}
 
 	// Without a router (no Maps key) the pack is seeded and nothing is built.
 	pack.Areas[0].Lat += 0.009
-	if d, err := Apply(ctx, pool, nil, pack); err != nil || len(d.MovedAreas) != 1 || d.TravelTimesRebuilt {
+	if d, err := Apply(ctx, pool, nil, pack, Options{}); err != nil || len(d.MovedAreas) != 1 || d.TravelTimesRebuilt {
 		t.Errorf("apply without a router = %+v, %v", d, err)
 	}
 
