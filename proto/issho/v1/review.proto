@@ -26,7 +26,7 @@ service ReviewService {
   rpc SetCityReview(SetCityReviewRequest) returns (SetCityReviewResponse) {}
 
   // ListReviewPlans returns a city's plans in one state: drafts oldest
-  // first, open and closed plans newest first. At most 200.
+  // first, open and closed plans newest first. Paged: page_size, page_token.
   rpc ListReviewPlans(ListReviewPlansRequest) returns (ListReviewPlansResponse) {}
 
   // GetReviewPlan returns one plan with its stops (venue names from Google,
@@ -53,7 +53,9 @@ service ReviewService {
 
   // ListVenueOptions returns the venues found in an area for an activity's
   // venue categories (not rejected ones), approved first, with names from
-  // Google in English. At most 20. Empty for activities that need no venue.
+  // Google in English. Not paged on purpose: it fills a picker with the best
+  // 20 (approved first) and each costs a Google lookup, so 20 is the bound,
+  // not a cap hiding more. Empty for activities that need no venue.
   rpc ListVenueOptions(ListVenueOptionsRequest) returns (ListVenueOptionsResponse) {}
 
   // CreatePlan opens a plan made by hand, with a signup window from today.
@@ -90,7 +92,7 @@ service ReviewService {
   // approves or rejects it.
 
   // ListReviewEvents returns a city's proposals, or its upcoming scheduled
-  // events (to set meeting points), soonest first. At most 200.
+  // events (to set meeting points), soonest first. Paged: page_size, page_token.
   rpc ListReviewEvents(ListReviewEventsRequest) returns (ListReviewEventsResponse) {}
 
   // GetReviewEvent returns one with its groups and who's in them.
@@ -163,10 +165,18 @@ message ListReviewPlansRequest {
   string city_id = 1;
   // Required.
   ReviewPlanStatus status = 2;
+  // How many to return; 0 = 50, at most 200 (more is clamped).
+  int32 page_size = 3;
+  // From a previous response's next_page_token for the same request;
+  // empty = the first page. Opaque. INVALID_ARGUMENT if it is not from this
+  // list with these filters.
+  string page_token = 4;
 }
 
 message ListReviewPlansResponse {
   repeated ReviewPlan plans = 1;
+  // Pass as page_token for the next page; empty on the last page.
+  string next_page_token = 2;
 }
 
 message ReviewPlan {
@@ -360,10 +370,18 @@ message ListReviewEventsRequest {
   string city_id = 1;
   // Required. Scheduled events are listed from today.
   ReviewEventStatus status = 2;
+  // How many to return; 0 = 50, at most 200 (more is clamped).
+  int32 page_size = 3;
+  // From a previous response's next_page_token for the same request;
+  // empty = the first page. Opaque. INVALID_ARGUMENT if it is not from this
+  // list with these filters.
+  string page_token = 4;
 }
 
 message ListReviewEventsResponse {
   repeated ReviewEvent events = 1;
+  // Pass as page_token for the next page; empty on the last page.
+  string next_page_token = 2;
 }
 
 message ReviewEvent {

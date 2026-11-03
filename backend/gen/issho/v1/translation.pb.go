@@ -975,8 +975,12 @@ type ListCatalogTranslationsRequest struct {
 	UnreviewedOnly bool                   `protobuf:"varint,2,opt,name=unreviewed_only,json=unreviewedOnly,proto3" json:"unreviewed_only,omitempty"`
 	// Matches the English source or the translation; empty = all.
 	Search string `protobuf:"bytes,3,opt,name=search,proto3" json:"search,omitempty"`
-	// How many to skip (pages of 100).
-	Offset        int32 `protobuf:"varint,4,opt,name=offset,proto3" json:"offset,omitempty"`
+	// How many to return; 0 = 50, at most 200 (more is clamped).
+	PageSize int32 `protobuf:"varint,5,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	// From a previous response's next_page_token for the same request;
+	// empty = the first page. Opaque. INVALID_ARGUMENT if it is not from this
+	// list with these filters.
+	PageToken     string `protobuf:"bytes,6,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1032,16 +1036,25 @@ func (x *ListCatalogTranslationsRequest) GetSearch() string {
 	return ""
 }
 
-func (x *ListCatalogTranslationsRequest) GetOffset() int32 {
+func (x *ListCatalogTranslationsRequest) GetPageSize() int32 {
 	if x != nil {
-		return x.Offset
+		return x.PageSize
 	}
 	return 0
 }
 
+func (x *ListCatalogTranslationsRequest) GetPageToken() string {
+	if x != nil {
+		return x.PageToken
+	}
+	return ""
+}
+
 type ListCatalogTranslationsResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Translations  []*Translation         `protobuf:"bytes,1,rep,name=translations,proto3" json:"translations,omitempty"`
+	state        protoimpl.MessageState `protogen:"open.v1"`
+	Translations []*Translation         `protobuf:"bytes,1,rep,name=translations,proto3" json:"translations,omitempty"`
+	// Pass as page_token for the next page; empty on the last page.
+	NextPageToken string `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1081,6 +1094,13 @@ func (x *ListCatalogTranslationsResponse) GetTranslations() []*Translation {
 		return x.Translations
 	}
 	return nil
+}
+
+func (x *ListCatalogTranslationsResponse) GetNextPageToken() string {
+	if x != nil {
+		return x.NextPageToken
+	}
+	return ""
 }
 
 type ReviewCatalogTranslationRequest struct {
@@ -1425,14 +1445,17 @@ const file_issho_v1_translation_proto_rawDesc = "" +
 	"\x04text\x18\x01 \x01(\tR\x04text\"\x1d\n" +
 	"\x1bListCatalogLanguagesRequest\"[\n" +
 	"\x1cListCatalogLanguagesResponse\x12;\n" +
-	"\tlanguages\x18\x01 \x03(\v2\x1d.issho.v1.TranslationLanguageR\tlanguages\"\x8d\x01\n" +
+	"\tlanguages\x18\x01 \x03(\v2\x1d.issho.v1.TranslationLanguageR\tlanguages\"\xbf\x01\n" +
 	"\x1eListCatalogTranslationsRequest\x12\x12\n" +
 	"\x04lang\x18\x01 \x01(\tR\x04lang\x12'\n" +
 	"\x0funreviewed_only\x18\x02 \x01(\bR\x0eunreviewedOnly\x12\x16\n" +
-	"\x06search\x18\x03 \x01(\tR\x06search\x12\x16\n" +
-	"\x06offset\x18\x04 \x01(\x05R\x06offset\"\\\n" +
+	"\x06search\x18\x03 \x01(\tR\x06search\x12\x1b\n" +
+	"\tpage_size\x18\x05 \x01(\x05R\bpageSize\x12\x1d\n" +
+	"\n" +
+	"page_token\x18\x06 \x01(\tR\tpageTokenJ\x04\b\x04\x10\x05R\x06offset\"\x84\x01\n" +
 	"\x1fListCatalogTranslationsResponse\x129\n" +
-	"\ftranslations\x18\x01 \x03(\v2\x15.issho.v1.TranslationR\ftranslations\"j\n" +
+	"\ftranslations\x18\x01 \x03(\v2\x15.issho.v1.TranslationR\ftranslations\x12&\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"j\n" +
 	"\x1fReviewCatalogTranslationRequest\x12\x1f\n" +
 	"\vsource_hash\x18\x01 \x01(\tR\n" +
 	"sourceHash\x12\x12\n" +

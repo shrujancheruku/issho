@@ -21,12 +21,10 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/geo"
 	"github.com/shrujancheruku/issho/backend/internal/maps"
 	"github.com/shrujancheruku/issho/backend/internal/platform/errs"
+	"github.com/shrujancheruku/issho/backend/internal/platform/paging"
 )
 
 const (
-	// PageSize is how many places List returns: each costs a Place
-	// Details call for its name.
-	PageSize = 50
 	// MaxBatch is how many places SetStatus takes at once.
 	MaxBatch = 100
 	// MaxQuery bounds a search's text.
@@ -144,11 +142,14 @@ func (s *Service) SetApprovedOnly(ctx context.Context, cityID string, on bool) e
 	return nil
 }
 
-// ListParams selects one page of a city's places in a status.
+// ListParams selects one page of a city's places in a status. PageSize is
+// 1 to paging.MaxSize (each place costs a Place Details call for its name);
+// Token is the previous page's NextToken.
 type ListParams struct {
 	CityID, AreaID, CategoryID string
 	Status                     string // candidate, approved or rejected
-	Offset                     int32
+	PageSize                   int32
+	Token                      string
 }
 
 // Listed is a place with the live details Google gave for it (blank when
@@ -158,18 +159,34 @@ type Listed struct {
 	Name, Address, MapsURL, Flag string
 }
 
-// List returns a page of places and how many match in all. Names are
-// fetched live (Maps terms); a failed lookup leaves one blank.
-func (s *Service) List(ctx context.Context, p ListParams) (places []Listed, total int32, err error) {
-	if p.Offset < 0 {
-		return nil, 0, errs.Invalid("offset: not negative")
-	}
-	rows, err := dbgen.New(s.DB).ListCurationVenues(ctx, dbgen.ListCurationVenuesParams{
-		CityID: p.CityID, AreaID: p.AreaID, CategoryID: p.CategoryID, Status: p.Status,
-		MaxRows: PageSize, Skip: p.Offset,
-	})
+// List returns a page of places, how many match in all, and the token for
+// the next page ("" on the last). Names are fetched live (Maps terms); a
+// failed lookup leaves one blank.
+func (s *Service) List(ctx context.Context, p ListParams) (places []Listed, total int32, next string, err error) {
+	size, err := paging.Size(p.PageSize)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, "", err
+	}
+	scope := paging.Scope("ListVenues", p.CityID, p.AreaID, p.CategoryID, p.Status)
+	k, err := paging.Open(p.Token, scope, 3)
+	if err != nil {
+		return nil, 0, "", err
+	}
+	arg := dbgen.ListCurationVenuesParams{
+		CityID: p.CityID, AreaID: p.AreaID, CategoryID: p.CategoryID, Status: p.Status, MaxRows: size + 1,
+	}
+	arg.HasAfter, arg.AfterAreaName, arg.AfterAreaID, arg.AfterPlaceID = k.Present, k.String(), k.String(), k.String()
+	if err := k.Err(); err != nil {
+		return nil, 0, "", err
+	}
+	rows, err := dbgen.New(s.DB).ListCurationVenues(ctx, arg)
+	if err != nil {
+		return nil, 0, "", err
+	}
+	rows, more := paging.Trim(rows, size)
+	if more {
+		last := rows[len(rows)-1]
+		next = paging.Encode(scope, last.AreaName, last.AreaID, last.GooglePlaceID)
 	}
 	places = make([]Listed, len(rows))
 	ids := make([]string, len(rows))
@@ -182,7 +199,7 @@ func (s *Service) List(ctx context.Context, p ListParams) (places []Listed, tota
 		l := &places[i]
 		l.Name, l.Address, l.MapsURL, l.Flag = d.Name, d.Address, d.MapsURL, Flag(d.Name)
 	})
-	return places, total, nil
+	return places, total, next, nil
 }
 
 // details fetches places' English details, a few at a time, calling set

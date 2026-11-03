@@ -11,7 +11,8 @@ group by lang
 order by lang;
 
 -- One language's catalogue translations, unreviewed ones first, matching
--- @search in the English source or the translation ('' = all).
+-- @search in the English source or the translation ('' = all). Keyset on
+-- (reviewed, source, context, source_hash), the last making it a total order.
 -- name: ListCatalogTranslations :many
 select source_hash, lang, source, context, text, model, reviewed, reviewed_at, created_at
 from app.translations
@@ -19,8 +20,11 @@ where lang = @lang
   and not starts_with(context, @ui_context::text)
   and (@unreviewed_only::boolean = false or not reviewed)
   and (@search::text = '' or source ilike '%' || @search || '%' or text ilike '%' || @search || '%')
-order by reviewed, source, context
-limit @max_rows offset @skip_rows;
+  and (not @has_after::boolean
+       or (reviewed, source, context, source_hash)
+          > (@after_reviewed::boolean, @after_source::text, @after_context::text, @after_hash::text))
+order by reviewed, source, context, source_hash
+limit @max_rows;
 
 -- Languages with any machine translations, UI strings included (for the
 -- admins' list of languages).

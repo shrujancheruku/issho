@@ -374,7 +374,13 @@ type ListReviewPlansRequest struct {
 	state  protoimpl.MessageState `protogen:"open.v1"`
 	CityId string                 `protobuf:"bytes,1,opt,name=city_id,json=cityId,proto3" json:"city_id,omitempty"`
 	// Required.
-	Status        ReviewPlanStatus `protobuf:"varint,2,opt,name=status,proto3,enum=issho.v1.ReviewPlanStatus" json:"status,omitempty"`
+	Status ReviewPlanStatus `protobuf:"varint,2,opt,name=status,proto3,enum=issho.v1.ReviewPlanStatus" json:"status,omitempty"`
+	// How many to return; 0 = 50, at most 200 (more is clamped).
+	PageSize int32 `protobuf:"varint,3,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	// From a previous response's next_page_token for the same request;
+	// empty = the first page. Opaque. INVALID_ARGUMENT if it is not from this
+	// list with these filters.
+	PageToken     string `protobuf:"bytes,4,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -423,9 +429,25 @@ func (x *ListReviewPlansRequest) GetStatus() ReviewPlanStatus {
 	return ReviewPlanStatus_REVIEW_PLAN_STATUS_UNSPECIFIED
 }
 
+func (x *ListReviewPlansRequest) GetPageSize() int32 {
+	if x != nil {
+		return x.PageSize
+	}
+	return 0
+}
+
+func (x *ListReviewPlansRequest) GetPageToken() string {
+	if x != nil {
+		return x.PageToken
+	}
+	return ""
+}
+
 type ListReviewPlansResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Plans         []*ReviewPlan          `protobuf:"bytes,1,rep,name=plans,proto3" json:"plans,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Plans []*ReviewPlan          `protobuf:"bytes,1,rep,name=plans,proto3" json:"plans,omitempty"`
+	// Pass as page_token for the next page; empty on the last page.
+	NextPageToken string `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -465,6 +487,13 @@ func (x *ListReviewPlansResponse) GetPlans() []*ReviewPlan {
 		return x.Plans
 	}
 	return nil
+}
+
+func (x *ListReviewPlansResponse) GetNextPageToken() string {
+	if x != nil {
+		return x.NextPageToken
+	}
+	return ""
 }
 
 type ReviewPlan struct {
@@ -1993,7 +2022,13 @@ type ListReviewEventsRequest struct {
 	state  protoimpl.MessageState `protogen:"open.v1"`
 	CityId string                 `protobuf:"bytes,1,opt,name=city_id,json=cityId,proto3" json:"city_id,omitempty"`
 	// Required. Scheduled events are listed from today.
-	Status        ReviewEventStatus `protobuf:"varint,2,opt,name=status,proto3,enum=issho.v1.ReviewEventStatus" json:"status,omitempty"`
+	Status ReviewEventStatus `protobuf:"varint,2,opt,name=status,proto3,enum=issho.v1.ReviewEventStatus" json:"status,omitempty"`
+	// How many to return; 0 = 50, at most 200 (more is clamped).
+	PageSize int32 `protobuf:"varint,3,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	// From a previous response's next_page_token for the same request;
+	// empty = the first page. Opaque. INVALID_ARGUMENT if it is not from this
+	// list with these filters.
+	PageToken     string `protobuf:"bytes,4,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2042,9 +2077,25 @@ func (x *ListReviewEventsRequest) GetStatus() ReviewEventStatus {
 	return ReviewEventStatus_REVIEW_EVENT_STATUS_UNSPECIFIED
 }
 
+func (x *ListReviewEventsRequest) GetPageSize() int32 {
+	if x != nil {
+		return x.PageSize
+	}
+	return 0
+}
+
+func (x *ListReviewEventsRequest) GetPageToken() string {
+	if x != nil {
+		return x.PageToken
+	}
+	return ""
+}
+
 type ListReviewEventsResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Events        []*ReviewEvent         `protobuf:"bytes,1,rep,name=events,proto3" json:"events,omitempty"`
+	state  protoimpl.MessageState `protogen:"open.v1"`
+	Events []*ReviewEvent         `protobuf:"bytes,1,rep,name=events,proto3" json:"events,omitempty"`
+	// Pass as page_token for the next page; empty on the last page.
+	NextPageToken string `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2084,6 +2135,13 @@ func (x *ListReviewEventsResponse) GetEvents() []*ReviewEvent {
 		return x.Events
 	}
 	return nil
+}
+
+func (x *ListReviewEventsResponse) GetNextPageToken() string {
+	if x != nil {
+		return x.NextPageToken
+	}
+	return ""
 }
 
 type ReviewEvent struct {
@@ -3069,12 +3127,16 @@ const file_issho_v1_review_proto_rawDesc = "" +
 	"\x14SetCityReviewRequest\x12\x17\n" +
 	"\acity_id\x18\x01 \x01(\tR\x06cityId\x12\x16\n" +
 	"\x06review\x18\x02 \x01(\bR\x06review\"\x17\n" +
-	"\x15SetCityReviewResponse\"e\n" +
+	"\x15SetCityReviewResponse\"\xa1\x01\n" +
 	"\x16ListReviewPlansRequest\x12\x17\n" +
 	"\acity_id\x18\x01 \x01(\tR\x06cityId\x122\n" +
-	"\x06status\x18\x02 \x01(\x0e2\x1a.issho.v1.ReviewPlanStatusR\x06status\"E\n" +
+	"\x06status\x18\x02 \x01(\x0e2\x1a.issho.v1.ReviewPlanStatusR\x06status\x12\x1b\n" +
+	"\tpage_size\x18\x03 \x01(\x05R\bpageSize\x12\x1d\n" +
+	"\n" +
+	"page_token\x18\x04 \x01(\tR\tpageToken\"m\n" +
 	"\x17ListReviewPlansResponse\x12*\n" +
-	"\x05plans\x18\x01 \x03(\v2\x14.issho.v1.ReviewPlanR\x05plans\"\xd5\x06\n" +
+	"\x05plans\x18\x01 \x03(\v2\x14.issho.v1.ReviewPlanR\x05plans\x12&\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\xd5\x06\n" +
 	"\n" +
 	"ReviewPlan\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
@@ -3192,12 +3254,16 @@ const file_issho_v1_review_proto_rawDesc = "" +
 	"\asummary\x18\n" +
 	" \x01(\tR\asummary\"-\n" +
 	"\x12CreatePlanResponse\x12\x17\n" +
-	"\aplan_id\x18\x01 \x01(\tR\x06planId\"g\n" +
+	"\aplan_id\x18\x01 \x01(\tR\x06planId\"\xa3\x01\n" +
 	"\x17ListReviewEventsRequest\x12\x17\n" +
 	"\acity_id\x18\x01 \x01(\tR\x06cityId\x123\n" +
-	"\x06status\x18\x02 \x01(\x0e2\x1b.issho.v1.ReviewEventStatusR\x06status\"I\n" +
+	"\x06status\x18\x02 \x01(\x0e2\x1b.issho.v1.ReviewEventStatusR\x06status\x12\x1b\n" +
+	"\tpage_size\x18\x03 \x01(\x05R\bpageSize\x12\x1d\n" +
+	"\n" +
+	"page_token\x18\x04 \x01(\tR\tpageToken\"q\n" +
 	"\x18ListReviewEventsResponse\x12-\n" +
-	"\x06events\x18\x01 \x03(\v2\x15.issho.v1.ReviewEventR\x06events\"\xdc\x03\n" +
+	"\x06events\x18\x01 \x03(\v2\x15.issho.v1.ReviewEventR\x06events\x12&\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\xdc\x03\n" +
 	"\vReviewEvent\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
 	"\aplan_id\x18\x02 \x01(\tR\x06planId\x123\n" +

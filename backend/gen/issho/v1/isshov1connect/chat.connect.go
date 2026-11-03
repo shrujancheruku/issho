@@ -44,6 +44,9 @@ const (
 type ChatServiceClient interface {
 	// ListMessages returns the room's messages: the latest 100, or the 100
 	// after after_id, oldest first, with whether the caller may write now.
+	// This is a sync cursor (catch up from the last message you hold), not
+	// AIP-158 paging: there is no page_token, and it never walks back through
+	// history. The admin lists page with page_size and page_token instead.
 	// NOT_FOUND for a room that doesn't exist or isn't the caller's to know
 	// about; PERMISSION_DENIED when they're not (or no longer) in it.
 	ListMessages(context.Context, *connect.Request[v1.ListMessagesRequest]) (*connect.Response[v1.ListMessagesResponse], error)
@@ -98,6 +101,9 @@ func (c *chatServiceClient) SendMessage(ctx context.Context, req *connect.Reques
 type ChatServiceHandler interface {
 	// ListMessages returns the room's messages: the latest 100, or the 100
 	// after after_id, oldest first, with whether the caller may write now.
+	// This is a sync cursor (catch up from the last message you hold), not
+	// AIP-158 paging: there is no page_token, and it never walks back through
+	// history. The admin lists page with page_size and page_token instead.
 	// NOT_FOUND for a room that doesn't exist or isn't the caller's to know
 	// about; PERMISSION_DENIED when they're not (or no longer) in it.
 	ListMessages(context.Context, *connect.Request[v1.ListMessagesRequest]) (*connect.Response[v1.ListMessagesResponse], error)

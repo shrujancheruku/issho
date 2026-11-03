@@ -924,7 +924,7 @@ HTTP: POST /issho.v1.ChatService/&lt;Method&gt;
 
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
-| ListMessages | [ListMessagesRequest](#issho-v1-ListMessagesRequest) | [ListMessagesResponse](#issho-v1-ListMessagesResponse) | ListMessages returns the room&#39;s messages: the latest 100, or the 100 after after_id, oldest first, with whether the caller may write now. NOT_FOUND for a room that doesn&#39;t exist or isn&#39;t the caller&#39;s to know about; PERMISSION_DENIED when they&#39;re not (or no longer) in it. |
+| ListMessages | [ListMessagesRequest](#issho-v1-ListMessagesRequest) | [ListMessagesResponse](#issho-v1-ListMessagesResponse) | ListMessages returns the room&#39;s messages: the latest 100, or the 100 after after_id, oldest first, with whether the caller may write now. This is a sync cursor (catch up from the last message you hold), not AIP-158 paging: there is no page_token, and it never walks back through history. The admin lists page with page_size and page_token instead. NOT_FOUND for a room that doesn&#39;t exist or isn&#39;t the caller&#39;s to know about; PERMISSION_DENIED when they&#39;re not (or no longer) in it. |
 | SendMessage | [SendMessageRequest](#issho-v1-SendMessageRequest) | [SendMessageResponse](#issho-v1-SendMessageResponse) | SendMessage posts 1–1000 characters. FAILED_PRECONDITION while the room isn&#39;t open for writing. |
 
  
@@ -2309,7 +2309,8 @@ HTTP: POST /issho.v1.CrewService/&lt;Method&gt;
 | status | [VenueStatus](#issho-v1-VenueStatus) |  |  |
 | area_id | [string](#string) |  | Optional filters. |
 | category_id | [string](#string) |  |  |
-| offset | [int32](#int32) |  | Places to skip, for the next page. |
+| page_size | [int32](#int32) |  | How many to return; 0 = 50, at most 200 (more is clamped). |
+| page_token | [string](#string) |  | From a previous response&#39;s next_page_token for the same request; empty = the first page. Opaque. INVALID_ARGUMENT if it is not from this list with these filters. |
 
 
 
@@ -2326,6 +2327,7 @@ HTTP: POST /issho.v1.CrewService/&lt;Method&gt;
 | ----- | ---- | ----- | ----------- |
 | venues | [Venue](#issho-v1-Venue) | repeated |  |
 | total | [int32](#int32) |  | How many places match, over all pages. |
+| next_page_token | [string](#string) |  | Pass as page_token for the next page; empty on the last page. |
 
 
 
@@ -2965,6 +2967,8 @@ HTTP: POST /issho.v1.MetricsService/&lt;Method&gt;
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | reason | [LeaveReason](#issho-v1-LeaveReason) |  | UNSPECIFIED = every reason. |
+| page_size | [int32](#int32) |  | How many to return; 0 = 50, at most 200 (more is clamped). |
+| page_token | [string](#string) |  | From a previous response&#39;s next_page_token for the same request; empty = the first page. Opaque. INVALID_ARGUMENT if it is not from this list with these filters. |
 
 
 
@@ -2980,6 +2984,7 @@ HTTP: POST /issho.v1.MetricsService/&lt;Method&gt;
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | leaves | [CrewLeave](#issho-v1-CrewLeave) | repeated |  |
+| next_page_token | [string](#string) |  | Pass as page_token for the next page; empty on the last page. |
 
 
 
@@ -2995,6 +3000,8 @@ HTTP: POST /issho.v1.MetricsService/&lt;Method&gt;
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | resolved | [bool](#bool) |  | false = open flags; true = resolved ones. |
+| page_size | [int32](#int32) |  | How many to return; 0 = 50, at most 200 (more is clamped). |
+| page_token | [string](#string) |  | From a previous response&#39;s next_page_token for the same request; empty = the first page. Opaque. INVALID_ARGUMENT if it is not from this list with these filters. |
 
 
 
@@ -3010,6 +3017,7 @@ HTTP: POST /issho.v1.MetricsService/&lt;Method&gt;
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | flags | [ModerationFlag](#issho-v1-ModerationFlag) | repeated |  |
+| next_page_token | [string](#string) |  | Pass as page_token for the next page; empty on the last page. |
 
 
 
@@ -3026,6 +3034,8 @@ HTTP: POST /issho.v1.MetricsService/&lt;Method&gt;
 | ----- | ---- | ----- | ----------- |
 | status | [ReportStatus](#issho-v1-ReportStatus) |  | UNSPECIFIED = every status. |
 | reported_id | [string](#string) |  | Only reports about this person; empty = everyone. |
+| page_size | [int32](#int32) |  | How many to return; 0 = 50, at most 200 (more is clamped). |
+| page_token | [string](#string) |  | From a previous response&#39;s next_page_token for the same request; empty = the first page. Opaque. INVALID_ARGUMENT if it is not from this list with these filters. |
 
 
 
@@ -3041,6 +3051,7 @@ HTTP: POST /issho.v1.MetricsService/&lt;Method&gt;
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | reports | [ModerationReport](#issho-v1-ModerationReport) | repeated |  |
+| next_page_token | [string](#string) |  | Pass as page_token for the next page; empty on the last page. |
 
 
 
@@ -3051,6 +3062,12 @@ HTTP: POST /issho.v1.MetricsService/&lt;Method&gt;
 
 ### ListSuspendedRequest
 
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| page_size | [int32](#int32) |  | How many to return; 0 = 50, at most 200 (more is clamped). |
+| page_token | [string](#string) |  | From a previous response&#39;s next_page_token for the same request; empty = the first page. Opaque. INVALID_ARGUMENT if it is not from this list with these filters. |
 
 
 
@@ -3066,6 +3083,7 @@ HTTP: POST /issho.v1.MetricsService/&lt;Method&gt;
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | people | [SuspendedPerson](#issho-v1-SuspendedPerson) | repeated |  |
+| next_page_token | [string](#string) |  | Pass as page_token for the next page; empty on the last page. |
 
 
 
@@ -3151,8 +3169,8 @@ HTTP: POST /issho.v1.MetricsService/&lt;Method&gt;
 | reports_made | [int32](#int32) |  |  |
 | suspended | [bool](#bool) |  |  |
 | suspensions | [Suspension](#issho-v1-Suspension) | repeated | Newest first. |
-| flags | [ModerationFlag](#issho-v1-ModerationFlag) | repeated | Open ones first. |
-| outings | [PersonOuting](#issho-v1-PersonOuting) | repeated | Newest first, at most 50. |
+| flags | [ModerationFlag](#issho-v1-ModerationFlag) | repeated | Open ones first. Not paged: there is at most one open flag per kind, and flags are rare (a person gets one only from a system signal). |
+| outings | [PersonOuting](#issho-v1-PersonOuting) | repeated | Newest first, the latest 50. Not paged on purpose: a moderator reads the recent past to decide, and 50 outings is a real bound on what that takes (the full history is not a moderation question). |
 
 
 
@@ -3261,6 +3279,8 @@ HTTP: POST /issho.v1.MetricsService/&lt;Method&gt;
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | query | [string](#string) |  | At least 2 characters. |
+| page_size | [int32](#int32) |  | How many to return; 0 = 50, at most 200 (more is clamped). |
+| page_token | [string](#string) |  | From a previous response&#39;s next_page_token for the same request; empty = the first page. Opaque. INVALID_ARGUMENT if it is not from this list with these filters. |
 
 
 
@@ -3276,6 +3296,7 @@ HTTP: POST /issho.v1.MetricsService/&lt;Method&gt;
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | people | [PersonSummary](#issho-v1-PersonSummary) | repeated |  |
+| next_page_token | [string](#string) |  | Pass as page_token for the next page; empty on the last page. |
 
 
 
@@ -3407,16 +3428,16 @@ HTTP: POST /issho.v1.ModerationService/&lt;Method&gt;
 
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
-| ListReports | [ListReportsRequest](#issho-v1-ListReportsRequest) | [ListReportsResponse](#issho-v1-ListReportsResponse) | ListReports returns reports, open ones first (oldest first), then the rest newest first. At most 200. |
+| ListReports | [ListReportsRequest](#issho-v1-ListReportsRequest) | [ListReportsResponse](#issho-v1-ListReportsResponse) | ListReports returns reports, open ones first (oldest first), then the rest newest first. Paged: page_size, page_token. |
 | ResolveReport | [ResolveReportRequest](#issho-v1-ResolveReportRequest) | [ResolveReportResponse](#issho-v1-ResolveReportResponse) | ResolveReport records the decision on a report. It can be changed later (resolve again). The pair stays apart in matching either way. |
-| ListFlags | [ListFlagsRequest](#issho-v1-ListFlagsRequest) | [ListFlagsResponse](#issho-v1-ListFlagsResponse) | ListFlags returns open flags (oldest first) or resolved ones (newest first). At most 200. |
+| ListFlags | [ListFlagsRequest](#issho-v1-ListFlagsRequest) | [ListFlagsResponse](#issho-v1-ListFlagsResponse) | ListFlags returns open flags (oldest first) or resolved ones (newest first). Paged: page_size, page_token. |
 | ResolveFlag | [ResolveFlagRequest](#issho-v1-ResolveFlagRequest) | [ResolveFlagResponse](#issho-v1-ResolveFlagResponse) | ResolveFlag closes an open flag with a note. FAILED_PRECONDITION if it&#39;s already resolved. A later signal opens a new flag. |
-| ListCrewLeaves | [ListCrewLeavesRequest](#issho-v1-ListCrewLeavesRequest) | [ListCrewLeavesResponse](#issho-v1-ListCrewLeavesResponse) | ListCrewLeaves returns why people left crews, newest first. At most 200. |
-| SearchPeople | [SearchPeopleRequest](#issho-v1-SearchPeopleRequest) | [SearchPeopleResponse](#issho-v1-SearchPeopleResponse) | SearchPeople finds people by name or email (contains, any case) or exact user id. At most 50. |
+| ListCrewLeaves | [ListCrewLeavesRequest](#issho-v1-ListCrewLeavesRequest) | [ListCrewLeavesResponse](#issho-v1-ListCrewLeavesResponse) | ListCrewLeaves returns why people left crews, newest first. Paged: page_size, page_token. |
+| SearchPeople | [SearchPeopleRequest](#issho-v1-SearchPeopleRequest) | [SearchPeopleResponse](#issho-v1-SearchPeopleResponse) | SearchPeople finds people by name or email (contains, any case) or exact user id, by name (people without one last). Paged: page_size, page_token. |
 | GetPerson | [GetPersonRequest](#issho-v1-GetPersonRequest) | [GetPersonResponse](#issho-v1-GetPersonResponse) | GetPerson returns what a moderator needs to decide about someone: who they are, report counts, flags, suspensions and recent outings. NOT_FOUND if there&#39;s no such account. |
 | SuspendPerson | [SuspendPersonRequest](#issho-v1-SuspendPersonRequest) | [SuspendPersonResponse](#issho-v1-SuspendPersonResponse) | SuspendPerson keeps someone out of Issho until it&#39;s lifted: the API refuses their calls (GetMe says they&#39;re suspended; signing out and deleting the account still work), the chat socket refuses them, matching leaves them out and they get no notifications. They&#39;re also taken out of their open signups, outings that haven&#39;t started, and crews. Suspending someone already suspended only repeats that removal. INVALID_ARGUMENT for the caller&#39;s own account. |
 | LiftSuspension | [LiftSuspensionRequest](#issho-v1-LiftSuspensionRequest) | [LiftSuspensionResponse](#issho-v1-LiftSuspensionResponse) | LiftSuspension ends someone&#39;s suspension. They can use Issho again, but aren&#39;t put back into what they were taken out of. FAILED_PRECONDITION if they aren&#39;t suspended. |
-| ListSuspended | [ListSuspendedRequest](#issho-v1-ListSuspendedRequest) | [ListSuspendedResponse](#issho-v1-ListSuspendedResponse) | ListSuspended returns everyone suspended now, most recent first. At most 200. |
+| ListSuspended | [ListSuspendedRequest](#issho-v1-ListSuspendedRequest) | [ListSuspendedResponse](#issho-v1-ListSuspendedResponse) | ListSuspended returns everyone suspended now, most recent first. Paged: page_size, page_token. |
 
  
 
@@ -3797,6 +3818,8 @@ HTTP: POST /issho.v1.PushService/&lt;Method&gt;
 | ----- | ---- | ----- | ----------- |
 | city_id | [string](#string) |  |  |
 | status | [ReviewEventStatus](#issho-v1-ReviewEventStatus) |  | Required. Scheduled events are listed from today. |
+| page_size | [int32](#int32) |  | How many to return; 0 = 50, at most 200 (more is clamped). |
+| page_token | [string](#string) |  | From a previous response&#39;s next_page_token for the same request; empty = the first page. Opaque. INVALID_ARGUMENT if it is not from this list with these filters. |
 
 
 
@@ -3812,6 +3835,7 @@ HTTP: POST /issho.v1.PushService/&lt;Method&gt;
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | events | [ReviewEvent](#issho-v1-ReviewEvent) | repeated |  |
+| next_page_token | [string](#string) |  | Pass as page_token for the next page; empty on the last page. |
 
 
 
@@ -3828,6 +3852,8 @@ HTTP: POST /issho.v1.PushService/&lt;Method&gt;
 | ----- | ---- | ----- | ----------- |
 | city_id | [string](#string) |  |  |
 | status | [ReviewPlanStatus](#issho-v1-ReviewPlanStatus) |  | Required. |
+| page_size | [int32](#int32) |  | How many to return; 0 = 50, at most 200 (more is clamped). |
+| page_token | [string](#string) |  | From a previous response&#39;s next_page_token for the same request; empty = the first page. Opaque. INVALID_ARGUMENT if it is not from this list with these filters. |
 
 
 
@@ -3843,6 +3869,7 @@ HTTP: POST /issho.v1.PushService/&lt;Method&gt;
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | plans | [ReviewPlan](#issho-v1-ReviewPlan) | repeated |  |
+| next_page_token | [string](#string) |  | Pass as page_token for the next page; empty on the last page. |
 
 
 
@@ -4361,18 +4388,18 @@ HTTP: POST /issho.v1.ReviewService/&lt;Method&gt;
 | ----------- | ------------ | ------------- | ------------|
 | ListReviewCities | [ListReviewCitiesRequest](#issho-v1-ListReviewCitiesRequest) | [ListReviewCitiesResponse](#issho-v1-ListReviewCitiesResponse) | ListReviewCities returns every city with its review switch and plan counts. |
 | SetCityReview | [SetCityReviewRequest](#issho-v1-SetCityReviewRequest) | [SetCityReviewResponse](#issho-v1-SetCityReviewResponse) | SetCityReview turns review on or off for a city. Turning it off doesn&#39;t open the drafts already waiting: approve or reject them. |
-| ListReviewPlans | [ListReviewPlansRequest](#issho-v1-ListReviewPlansRequest) | [ListReviewPlansResponse](#issho-v1-ListReviewPlansResponse) | ListReviewPlans returns a city&#39;s plans in one state: drafts oldest first, open and closed plans newest first. At most 200. |
+| ListReviewPlans | [ListReviewPlansRequest](#issho-v1-ListReviewPlansRequest) | [ListReviewPlansResponse](#issho-v1-ListReviewPlansResponse) | ListReviewPlans returns a city&#39;s plans in one state: drafts oldest first, open and closed plans newest first. Paged: page_size, page_token. |
 | GetReviewPlan | [GetReviewPlanRequest](#issho-v1-GetReviewPlanRequest) | [GetReviewPlanResponse](#issho-v1-GetReviewPlanResponse) | GetReviewPlan returns one plan with its stops (venue names from Google, in English). NOT_FOUND if there&#39;s no such plan. |
 | ApprovePlan | [ApprovePlanRequest](#issho-v1-ApprovePlanRequest) | [ApprovePlanResponse](#issho-v1-ApprovePlanResponse) | ApprovePlan opens a draft, with a fresh signup window from today. FAILED_PRECONDITION if it isn&#39;t a draft. |
 | RejectPlan | [RejectPlanRequest](#issho-v1-RejectPlanRequest) | [RejectPlanResponse](#issho-v1-RejectPlanResponse) | RejectPlan turns a draft down. The matcher won&#39;t suggest the same plan again until the cool-down passes (two weeks). FAILED_PRECONDITION if it isn&#39;t a draft. |
 | EditPlan | [EditPlanRequest](#issho-v1-EditPlanRequest) | [EditPlanResponse](#issho-v1-EditPlanResponse) | EditPlan replaces a draft&#39;s or open plan&#39;s English title and summary. FAILED_PRECONDITION for a closed plan. |
 | WithdrawPlan | [WithdrawPlanRequest](#issho-v1-WithdrawPlanRequest) | [WithdrawPlanResponse](#issho-v1-WithdrawPlanResponse) | WithdrawPlan closes an open plan (&#34;withdrawn&#34;). People who signed up see it closed; nobody is notified. Groups already scheduled go ahead. FAILED_PRECONDITION if it isn&#39;t open. |
-| ListVenueOptions | [ListVenueOptionsRequest](#issho-v1-ListVenueOptionsRequest) | [ListVenueOptionsResponse](#issho-v1-ListVenueOptionsResponse) | ListVenueOptions returns the venues found in an area for an activity&#39;s venue categories (not rejected ones), approved first, with names from Google in English. At most 20. Empty for activities that need no venue. |
+| ListVenueOptions | [ListVenueOptionsRequest](#issho-v1-ListVenueOptionsRequest) | [ListVenueOptionsResponse](#issho-v1-ListVenueOptionsResponse) | ListVenueOptions returns the venues found in an area for an activity&#39;s venue categories (not rejected ones), approved first, with names from Google in English. Not paged on purpose: it fills a picker with the best 20 (approved first) and each costs a Google lookup, so 20 is the bound, not a cap hiding more. Empty for activities that need no venue. |
 | CreatePlan | [CreatePlanRequest](#issho-v1-CreatePlanRequest) | [CreatePlanResponse](#issho-v1-CreatePlanResponse) | CreatePlan opens a plan made by hand, with a signup window from today. It opens straight away, also in a city under review. INVALID_ARGUMENT for an unknown area or activity, an area or activity not in the city, or a venue not found for the activity there. |
 | FindPlanPlaces | [FindPlanPlacesRequest](#issho-v1-FindPlanPlacesRequest) | [FindPlanPlacesResponse](#issho-v1-FindPlanPlacesResponse) | Editing a plan&#39;s stops (draft or open plans; an event already scheduled shows the change to the people going). FindPlanPlaces looks places up by name with Google within 3 km of the plan&#39;s area. FAILED_PRECONDITION without a Google Maps key. |
 | SetPlanStops | [SetPlanStopsRequest](#issho-v1-SetPlanStopsRequest) | [SetPlanStopsResponse](#issho-v1-SetPlanStopsResponse) | SetPlanStops replaces a walk&#39;s stops, in walking order: the first is where people meet, the last where they sit down at the end. Each place is checked with Google (it exists, isn&#39;t closed, is within 3 km of the area&#39;s centre, appears once) and the walking route is worked out again in this order. A walk outside the composer&#39;s rules (2 to 4 hours, no walk between stops over 20 minutes, 100 minutes of walking at most) is saved anyway, with warnings. INVALID_ARGUMENT for a plan that isn&#39;t a walk, fewer than 3 or more than 10 places, or a place that fails. |
 | SetPlanVenue | [SetPlanVenueRequest](#issho-v1-SetPlanVenueRequest) | [SetPlanVenueResponse](#issho-v1-SetPlanVenueResponse) | SetPlanVenue changes the venue of a plan that isn&#39;t a walk, or of its follow-up: one of the venues found for the activity in the area (ListVenueOptions), or &#34;&#34; to let the matcher pick. The walk between the two is worked out again. |
-| ListReviewEvents | [ListReviewEventsRequest](#issho-v1-ListReviewEventsRequest) | [ListReviewEventsResponse](#issho-v1-ListReviewEventsResponse) | ListReviewEvents returns a city&#39;s proposals, or its upcoming scheduled events (to set meeting points), soonest first. At most 200. |
+| ListReviewEvents | [ListReviewEventsRequest](#issho-v1-ListReviewEventsRequest) | [ListReviewEventsResponse](#issho-v1-ListReviewEventsResponse) | ListReviewEvents returns a city&#39;s proposals, or its upcoming scheduled events (to set meeting points), soonest first. Paged: page_size, page_token. |
 | GetReviewEvent | [GetReviewEventRequest](#issho-v1-GetReviewEventRequest) | [GetReviewEventResponse](#issho-v1-GetReviewEventResponse) | GetReviewEvent returns one with its groups and who&#39;s in them. NOT_FOUND if there&#39;s no such event. |
 | MoveProposalMember | [MoveProposalMemberRequest](#issho-v1-MoveProposalMemberRequest) | [MoveProposalMemberResponse](#issho-v1-MoveProposalMemberResponse) | MoveProposalMember moves someone to another group of the proposal. FAILED_PRECONDITION if it&#39;s no longer a proposal; NOT_FOUND for a group not in it or someone not in it. |
 | RemoveProposalMember | [RemoveProposalMemberRequest](#issho-v1-RemoveProposalMemberRequest) | [RemoveProposalMemberResponse](#issho-v1-RemoveProposalMemberResponse) | RemoveProposalMember takes someone out of the proposal; they stay signed up for the plan&#39;s next round. A group left empty goes. |
@@ -4587,7 +4614,8 @@ HTTP: POST /issho.v1.ReviewService/&lt;Method&gt;
 | lang | [string](#string) |  |  |
 | unreviewed_only | [bool](#bool) |  |  |
 | search | [string](#string) |  | Matches the English source or the translation; empty = all. |
-| offset | [int32](#int32) |  | How many to skip (pages of 100). |
+| page_size | [int32](#int32) |  | How many to return; 0 = 50, at most 200 (more is clamped). |
+| page_token | [string](#string) |  | From a previous response&#39;s next_page_token for the same request; empty = the first page. Opaque. INVALID_ARGUMENT if it is not from this list with these filters. |
 
 
 
@@ -4603,6 +4631,7 @@ HTTP: POST /issho.v1.ReviewService/&lt;Method&gt;
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | translations | [Translation](#issho-v1-Translation) | repeated |  |
+| next_page_token | [string](#string) |  | Pass as page_token for the next page; empty on the last page. |
 
 
 

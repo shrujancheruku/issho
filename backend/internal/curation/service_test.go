@@ -200,11 +200,19 @@ func TestIntegrationService(t *testing.T) {
 	if c := f.cityRow(t); c.Candidates != 3 || c.Approved != 0 || c.ApprovedVenuesOnly {
 		t.Fatalf("city = %+v", c)
 	}
-	list := func(status, area, category string, offset int32) ([]Listed, int32) {
+	page := func(status, area, category string, size int32, token string) ([]Listed, int32, string) {
 		t.Helper()
-		ls, total, err := svc.List(ctx, ListParams{CityID: f.city, Status: status, AreaID: area, CategoryID: category, Offset: offset})
+		ls, total, next, err := svc.List(ctx, ListParams{CityID: f.city, Status: status, AreaID: area, CategoryID: category, PageSize: size, Token: token})
 		if err != nil {
 			t.Fatal(err)
+		}
+		return ls, total, next
+	}
+	list := func(status, area, category string) ([]Listed, int32) {
+		t.Helper()
+		ls, total, next := page(status, area, category, 0, "")
+		if next != "" {
+			t.Fatalf("one page expected, got next %q", next)
 		}
 		return ls, total
 	}
@@ -215,24 +223,36 @@ func TestIntegrationService(t *testing.T) {
 		}
 		return out
 	}
-	all, total := list("candidate", "", "", 0)
+	all, total := list("candidate", "", "")
 	if total != 3 || !slices.Equal(ids(all), []string{"zz-p1", "zz-p3", "zz-p2"}) {
 		t.Fatalf("candidates = %v (total %d)", ids(all), total)
 	}
 	if v := all[0]; v.Name != "スナック ゆき" || v.Flag != "snack bar?" || v.AreaName != "Alpha" || len(v.Categories) != 2 || v.MapsURL == "" {
 		t.Errorf("p1 = %+v", v)
 	}
-	if got, _ := list("candidate", "", f.bar, 0); !slices.Equal(ids(got), []string{"zz-p1", "zz-p2"}) {
+	if got, _ := list("candidate", "", f.bar); !slices.Equal(ids(got), []string{"zz-p1", "zz-p2"}) {
 		t.Errorf("bars = %v", ids(got))
 	}
-	if got, _ := list("candidate", f.areaB, "", 0); !slices.Equal(ids(got), []string{"zz-p2"}) {
+	if got, _ := list("candidate", f.areaB, ""); !slices.Equal(ids(got), []string{"zz-p2"}) {
 		t.Errorf("in Beta = %v", ids(got))
 	}
-	if page, total := list("candidate", "", "", 2); total != 3 || !slices.Equal(ids(page), []string{"zz-p2"}) {
-		t.Errorf("second page = %v (total %d)", ids(page), total)
+	// Paging: total stays the whole count on every page; the token walks on.
+	first, total, next := page("candidate", "", "", 2, "")
+	if total != 3 || next == "" || !slices.Equal(ids(first), []string{"zz-p1", "zz-p3"}) {
+		t.Fatalf("first page = %v (total %d, next %q)", ids(first), total, next)
 	}
-	if _, _, err := svc.List(ctx, ListParams{CityID: f.city, Status: "candidate", Offset: -1}); codeOf(err) != connect.CodeInvalidArgument {
-		t.Errorf("negative offset: %v", err)
+	if second, total, end := page("candidate", "", "", 2, next); total != 3 || end != "" || !slices.Equal(ids(second), []string{"zz-p2"}) {
+		t.Errorf("second page = %v (total %d, next %q)", ids(second), total, end)
+	}
+	for name, p := range map[string]ListParams{
+		"negative size":  {CityID: f.city, Status: "candidate", PageSize: -1},
+		"garbage token":  {CityID: f.city, Status: "candidate", Token: "garbage"},
+		"another filter": {CityID: f.city, Status: "candidate", CategoryID: f.bar, Token: next},
+		"another status": {CityID: f.city, Status: "approved", Token: next},
+	} {
+		if _, _, _, err := svc.List(ctx, p); codeOf(err) != connect.CodeInvalidArgument {
+			t.Errorf("%s: %v", name, err)
+		}
 	}
 
 	// Reject the snack bar (both its rows), approve the café.
@@ -390,7 +410,7 @@ func TestIntegrationService(t *testing.T) {
 	if err != nil || area != f.areaA {
 		t.Fatalf("add p4 = %q, %v", area, err)
 	}
-	approved, _ := list("approved", "", "", 0)
+	approved, _ := list("approved", "", "")
 	if !slices.Equal(ids(approved), []string{"zz-p3", "zz-p4"}) {
 		t.Fatalf("approved = %v", ids(approved))
 	}
@@ -429,7 +449,7 @@ func TestIntegrationUpstreamErrors(t *testing.T) {
 		t.Errorf("add without a key: %v", err)
 	}
 	// Listing still works, with blank names.
-	ls, _, err := f.svc.List(ctx, ListParams{CityID: f.city, Status: "candidate"})
+	ls, _, _, err := f.svc.List(ctx, ListParams{CityID: f.city, Status: "candidate"})
 	if err != nil || len(ls) == 0 || ls[0].Name != "" {
 		t.Errorf("list without a key: %v, %v", ls, err)
 	}

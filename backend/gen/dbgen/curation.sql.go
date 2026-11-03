@@ -182,36 +182,44 @@ with places as (
          bool_or(v.added_by is not null) as added,
          max(v.reviewed_at)::timestamptz as reviewed_at
   from app.venues v
-  where v.city_id = $4 and ($5::text = '' or v.area_id = $5)
+  where v.city_id = $6 and ($7::text = '' or v.area_id = $7)
   group by v.google_place_id, v.area_id
-  having $6::text = '' or bool_or(v.category_id = $6)
+  having $8::text = '' or bool_or(v.category_id = $8)
 ), used as (
   select pl.venue_place_id as place_id from app.plans pl
-  where pl.city_id = $4 and pl.status in ('draft', 'open') and pl.venue_place_id is not null
+  where pl.city_id = $6 and pl.status in ('draft', 'open') and pl.venue_place_id is not null
   union all
   select pl.follow_up_venue_place_id from app.plans pl
-  where pl.city_id = $4 and pl.status in ('draft', 'open') and pl.follow_up_venue_place_id is not null
+  where pl.city_id = $6 and pl.status in ('draft', 'open') and pl.follow_up_venue_place_id is not null
 ), uses as (
   select place_id, count(*)::int as plans from used group by place_id
+), listed as (
+  select p.google_place_id, p.area_id, coalesce(a.name->>'en', p.area_id)::text as area_name,
+         p.categories, p.status, p.added, p.reviewed_at, coalesce(u.plans, 0)::int as plans,
+         count(*) over ()::int as total
+  from places p
+  join app.areas a on a.id = p.area_id
+  left join uses u on u.place_id = p.google_place_id
+  where p.status = $9::text
 )
-select p.google_place_id, p.area_id, coalesce(a.name->>'en', p.area_id)::text as area_name,
-       p.categories, p.status, p.added, p.reviewed_at, coalesce(u.plans, 0)::int as plans,
-       count(*) over ()::int as total
-from places p
-join app.areas a on a.id = p.area_id
-left join uses u on u.place_id = p.google_place_id
-where p.status = $1::text
-order by area_name, p.google_place_id
-limit $3 offset $2
+select google_place_id, area_id, area_name, categories, status, added, reviewed_at, plans, total
+from listed
+where not $1::boolean
+   or (area_name, area_id, google_place_id) > ($2::text, $3::text, $4::text)
+order by area_name, area_id, google_place_id
+limit $5
 `
 
 type ListCurationVenuesParams struct {
-	Status     string
-	Skip       int32
-	MaxRows    int32
-	CityID     string
-	AreaID     string
-	CategoryID string
+	HasAfter      bool
+	AfterAreaName string
+	AfterAreaID   string
+	AfterPlaceID  string
+	MaxRows       int32
+	CityID        string
+	AreaID        string
+	CategoryID    string
+	Status        string
 }
 
 type ListCurationVenuesRow struct {
@@ -227,17 +235,23 @@ type ListCurationVenuesRow struct {
 }
 
 // A city's places in one status, optionally in one area or category, a
-// page at a time: by area, then place id (a stable order to page through).
+// page at a time: by area name, area id, then place id (a total order to
+// page through). Keyset after (@after_area_name, @after_area_id,
+// @after_place_id) when @has_after; total counts every match, before the
+// cursor cuts it, so the page can say "N in all".
 // plans = draft or open plans that use the place, which rejecting it
-// doesn't change. total = how many places match, for paging.
+// doesn't change.
 func (q *Queries) ListCurationVenues(ctx context.Context, arg ListCurationVenuesParams) ([]ListCurationVenuesRow, error) {
 	rows, err := q.db.Query(ctx, listCurationVenues,
-		arg.Status,
-		arg.Skip,
+		arg.HasAfter,
+		arg.AfterAreaName,
+		arg.AfterAreaID,
+		arg.AfterPlaceID,
 		arg.MaxRows,
 		arg.CityID,
 		arg.AreaID,
 		arg.CategoryID,
+		arg.Status,
 	)
 	if err != nil {
 		return nil, err

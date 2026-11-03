@@ -106,7 +106,7 @@ type ReviewServiceClient interface {
 	// doesn't open the drafts already waiting: approve or reject them.
 	SetCityReview(context.Context, *connect.Request[v1.SetCityReviewRequest]) (*connect.Response[v1.SetCityReviewResponse], error)
 	// ListReviewPlans returns a city's plans in one state: drafts oldest
-	// first, open and closed plans newest first. At most 200.
+	// first, open and closed plans newest first. Paged: page_size, page_token.
 	ListReviewPlans(context.Context, *connect.Request[v1.ListReviewPlansRequest]) (*connect.Response[v1.ListReviewPlansResponse], error)
 	// GetReviewPlan returns one plan with its stops (venue names from Google,
 	// in English). NOT_FOUND if there's no such plan.
@@ -127,7 +127,9 @@ type ReviewServiceClient interface {
 	WithdrawPlan(context.Context, *connect.Request[v1.WithdrawPlanRequest]) (*connect.Response[v1.WithdrawPlanResponse], error)
 	// ListVenueOptions returns the venues found in an area for an activity's
 	// venue categories (not rejected ones), approved first, with names from
-	// Google in English. At most 20. Empty for activities that need no venue.
+	// Google in English. Not paged on purpose: it fills a picker with the best
+	// 20 (approved first) and each costs a Google lookup, so 20 is the bound,
+	// not a cap hiding more. Empty for activities that need no venue.
 	ListVenueOptions(context.Context, *connect.Request[v1.ListVenueOptionsRequest]) (*connect.Response[v1.ListVenueOptionsResponse], error)
 	// CreatePlan opens a plan made by hand, with a signup window from today.
 	// It opens straight away, also in a city under review.
@@ -154,7 +156,7 @@ type ReviewServiceClient interface {
 	// two is worked out again.
 	SetPlanVenue(context.Context, *connect.Request[v1.SetPlanVenueRequest]) (*connect.Response[v1.SetPlanVenueResponse], error)
 	// ListReviewEvents returns a city's proposals, or its upcoming scheduled
-	// events (to set meeting points), soonest first. At most 200.
+	// events (to set meeting points), soonest first. Paged: page_size, page_token.
 	ListReviewEvents(context.Context, *connect.Request[v1.ListReviewEventsRequest]) (*connect.Response[v1.ListReviewEventsResponse], error)
 	// GetReviewEvent returns one with its groups and who's in them.
 	// NOT_FOUND if there's no such event.
@@ -466,7 +468,7 @@ type ReviewServiceHandler interface {
 	// doesn't open the drafts already waiting: approve or reject them.
 	SetCityReview(context.Context, *connect.Request[v1.SetCityReviewRequest]) (*connect.Response[v1.SetCityReviewResponse], error)
 	// ListReviewPlans returns a city's plans in one state: drafts oldest
-	// first, open and closed plans newest first. At most 200.
+	// first, open and closed plans newest first. Paged: page_size, page_token.
 	ListReviewPlans(context.Context, *connect.Request[v1.ListReviewPlansRequest]) (*connect.Response[v1.ListReviewPlansResponse], error)
 	// GetReviewPlan returns one plan with its stops (venue names from Google,
 	// in English). NOT_FOUND if there's no such plan.
@@ -487,7 +489,9 @@ type ReviewServiceHandler interface {
 	WithdrawPlan(context.Context, *connect.Request[v1.WithdrawPlanRequest]) (*connect.Response[v1.WithdrawPlanResponse], error)
 	// ListVenueOptions returns the venues found in an area for an activity's
 	// venue categories (not rejected ones), approved first, with names from
-	// Google in English. At most 20. Empty for activities that need no venue.
+	// Google in English. Not paged on purpose: it fills a picker with the best
+	// 20 (approved first) and each costs a Google lookup, so 20 is the bound,
+	// not a cap hiding more. Empty for activities that need no venue.
 	ListVenueOptions(context.Context, *connect.Request[v1.ListVenueOptionsRequest]) (*connect.Response[v1.ListVenueOptionsResponse], error)
 	// CreatePlan opens a plan made by hand, with a signup window from today.
 	// It opens straight away, also in a city under review.
@@ -514,7 +518,7 @@ type ReviewServiceHandler interface {
 	// two is worked out again.
 	SetPlanVenue(context.Context, *connect.Request[v1.SetPlanVenueRequest]) (*connect.Response[v1.SetPlanVenueResponse], error)
 	// ListReviewEvents returns a city's proposals, or its upcoming scheduled
-	// events (to set meeting points), soonest first. At most 200.
+	// events (to set meeting points), soonest first. Paged: page_size, page_token.
 	ListReviewEvents(context.Context, *connect.Request[v1.ListReviewEventsRequest]) (*connect.Response[v1.ListReviewEventsResponse], error)
 	// GetReviewEvent returns one with its groups and who's in them.
 	// NOT_FOUND if there's no such event.
