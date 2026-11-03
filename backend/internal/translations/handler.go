@@ -99,7 +99,7 @@ func caller(ctx context.Context) (auth.Caller, error) {
 		return c, err
 	}
 	if !c.Admin && len(c.TranslatorLangs) == 0 {
-		return c, connect.NewError(connect.CodePermissionDenied, errors.New("translators only"))
+		return c, errs.Forbidden("translators only")
 	}
 	return c, nil
 }
@@ -114,12 +114,13 @@ func forLang(ctx context.Context, lang string) (auth.Caller, error) {
 		return c, errs.Invalid("lang: an ISO 639-1 code such as \"ja\", or zh-Hant")
 	}
 	if !c.Translates(lang) {
-		return c, connect.NewError(connect.CodePermissionDenied, fmt.Errorf("you don't translate %q", lang))
+		return c, errs.Forbidden("you don't translate %q", lang)
 	}
 	return c, nil
 }
 
-func githubError(err error) error { return connect.NewError(connect.CodeUnavailable, err) }
+// githubError keeps GitHub's own message off the wire (logs and Sentry only).
+func githubError(err error) error { return errs.Upstream("github", err) }
 
 func (h *Handler) GetTranslator(ctx context.Context, _ *connect.Request[isshov1.GetTranslatorRequest]) (*connect.Response[isshov1.GetTranslatorResponse], error) {
 	c, err := caller(ctx)
@@ -303,7 +304,7 @@ func languageName(lang string) string {
 // on a new branch when there's none. It retries once if the branch moved.
 func (h *Handler) change(ctx context.Context, lang, message string, edit func(map[string]uistrings.Human) bool) (*github.PR, map[string]uistrings.Human, error) {
 	if h.GitHub == nil {
-		return nil, nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("saving translations needs GITHUB_TOKEN on the API"))
+		return nil, nil, errs.Precondition(isshov1.ErrorReason_ERROR_REASON_UNSPECIFIED, "saving translations needs GITHUB_TOKEN on the API")
 	}
 	h.mu.Lock()
 	defer h.mu.Unlock()
@@ -432,7 +433,7 @@ func (h *Handler) DraftAppString(ctx context.Context, req *connect.Request[issho
 		return nil, errs.Invalid("key: no such UI string")
 	}
 	if h.Drafter == nil {
-		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("suggestions need GOOGLE_GEMINI_API_KEY on the API"))
+		return nil, errs.Precondition(isshov1.ErrorReason_ERROR_REASON_UNSPECIFIED, "suggestions need GOOGLE_GEMINI_API_KEY on the API")
 	}
 	d := translate.Draft{English: english, Context: h.Catalog.Note(key), Current: strings.TrimSpace(req.Msg.Current)}
 	if v, ok := h.Catalog.HumanVersions(i18n.Authoring)[key]; ok && h.Catalog.Current(key, v) {
@@ -450,7 +451,7 @@ func (h *Handler) DraftAppString(ctx context.Context, req *connect.Request[issho
 	}
 	text, err := h.Drafter.Draft(ctx, lang, d)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeUnavailable, err)
+		return nil, errs.Upstream("gemini", err)
 	}
 	// A draft that lost a placeholder couldn't be saved anyway.
 	if !uistrings.SamePlaceholders(english, text) {
@@ -523,7 +524,7 @@ func (h *Handler) ReviewCatalogTranslation(ctx context.Context, req *connect.Req
 	}
 	t, err := h.Q.GetTranslation(ctx, key)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return nil, connect.NewError(connect.CodeNotFound, errors.New("no such translation"))
+		return nil, errs.NotFound("no such translation")
 	}
 	if err != nil {
 		return nil, err

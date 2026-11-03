@@ -2,14 +2,15 @@ package moderation
 
 import (
 	"context"
-	"errors"
 	"sync"
 	"time"
 
 	"connectrpc.com/connect"
 	"github.com/google/uuid"
+	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
 
 	"github.com/shrujancheruku/issho/backend/internal/platform/auth"
+	"github.com/shrujancheruku/issho/backend/internal/platform/errs"
 )
 
 // suspensionsTTL bounds how long another API instance can take to notice a
@@ -60,7 +61,7 @@ func (s *Suspensions) Invalidate() {
 }
 
 // ErrSuspended is what a suspended person's calls get.
-var ErrSuspended = connect.NewError(connect.CodePermissionDenied, errors.New("account suspended"))
+var ErrSuspended = errs.Denied(isshov1.ErrorReason_ERROR_REASON_SUSPENDED, "account suspended")
 
 // Gate refuses calls from suspended people, except the procedures in
 // allowed (GetMe, so the app can say so; signing out; deleting the
