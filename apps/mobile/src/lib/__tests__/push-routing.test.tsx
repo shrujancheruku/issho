@@ -23,6 +23,7 @@ jest.mock('expo-notifications', () => ({
   AndroidImportance: { HIGH: 4 },
 }));
 
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const Notifications = require('expo-notifications') as {
   useLastNotificationResponse: jest.Mock;
   clearLastNotificationResponseAsync: jest.Mock;
