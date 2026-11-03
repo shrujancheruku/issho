@@ -51,7 +51,7 @@ func Open(ctx context.Context, url string) (*pgxpool.Pool, error) {
 // Migrate runs a goose command ("up", "down", "status", ...) against the embedded migrations.
 func Migrate(ctx context.Context, pool *pgxpool.Pool, command string, args ...string) error {
 	sqlDB := stdlib.OpenDBFromPool(pool)
-	defer sqlDB.Close()
+	defer func() { _ = sqlDB.Close() }()
 	return migrate(ctx, sqlDB, command, args...)
 }
 

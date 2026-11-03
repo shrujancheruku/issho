@@ -94,6 +94,10 @@ func TestIntegrationSetAdminSupabaseFailure(t *testing.T) {
 	if err := setAdmin(context.Background(), pool, []string{"zz-tool-fail@example.com"}); err == nil {
 		t.Error("Supabase 500: want an error, not a silent success")
 	}
+	// The client retries a 5xx (the PUT is idempotent): 3 attempts, pinned here.
+	if n := len(sb.Calls()); n != 3 {
+		t.Errorf("%d Supabase attempts, want 3", n)
+	}
 }
 
 func TestIntegrationSetTranslator(t *testing.T) {

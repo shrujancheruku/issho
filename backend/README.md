@@ -303,7 +303,10 @@ The simulator runs the whole flow on synthetic users: suggest, signups from each
 
 ```sh
 go test ./...          # or `make test` from the root
+make lint-go           # golangci-lint + sqlc vet; `make lint` and CI's "Lint" step run it
 ```
+
+Linting is golangci-lint v2 (pinned in `go.mod`'s `tool` block; config in `.golangci.yml`): the `standard` set (errcheck, govet, ineffassign, staticcheck, unused) plus the gofmt and goimports formatters, with `gen/` excluded. Fix findings rather than silencing them; a `//nolint` names the linter and gives a reason.
 
 | Test | Covers |
 |---|---|

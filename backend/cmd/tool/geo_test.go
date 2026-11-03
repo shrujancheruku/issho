@@ -39,11 +39,11 @@ func count(t *testing.T, pool *pgxpool.Pool, sql string, args ...any) int {
 
 // geoCity is a throwaway city of two walkable areas whose only activity needs
 // one venue category (Google type "cafe").
-func geoCity(t *testing.T) (f *testfixture.Fixture, areaB string) {
+func geoCity(t *testing.T) *testfixture.Fixture {
 	t.Helper()
 	ctx := context.Background()
-	f = testfixture.New(t, "zz-tool-geo", "UTC", 0)
-	areaB = f.City + "-b"
+	f := testfixture.New(t, "zz-tool-geo", "UTC", 0)
+	areaB := f.City + "-b"
 	if err := f.Q.UpsertArea(ctx, dbgen.UpsertAreaParams{ID: areaB, CityID: f.City, Name: []byte(`{"en":"B"}`), Lat: 0.005, Lng: 0}); err != nil {
 		t.Fatal(err)
 	}
@@ -63,11 +63,11 @@ func geoCity(t *testing.T) (f *testfixture.Fixture, areaB string) {
 			t.Errorf("cleanup: %v", err)
 		}
 	})
-	return f, areaB
+	return f
 }
 
 func TestIntegrationBuildMatrix(t *testing.T) {
-	f, _ := geoCity(t)
+	f := geoCity(t)
 	ctx := context.Background()
 	fake := &mapstest.Fake{}
 	useFakeMaps(t, fake)
@@ -130,7 +130,7 @@ func TestIntegrationBuildMatrix(t *testing.T) {
 }
 
 func TestIntegrationDiscoverVenues(t *testing.T) {
-	f, _ := geoCity(t)
+	f := geoCity(t)
 	ctx := context.Background()
 	// One café, found from every search, next to the first area.
 	fake := &mapstest.Fake{NearbyFunc: func(maps.NearbyRequest) []maps.Place {

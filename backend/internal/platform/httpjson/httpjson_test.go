@@ -32,7 +32,7 @@ func TestRetriesConnectionReset(t *testing.T) {
 		if calls.Add(1) == 1 {
 			conn, _, _ := w.(http.Hijacker).Hijack()
 			_ = conn.(*net.TCPConn).SetLinger(0) // RST rather than FIN
-			conn.Close()
+			_ = conn.Close()
 			return
 		}
 		_, _ = w.Write([]byte(`{"ok":true}`))

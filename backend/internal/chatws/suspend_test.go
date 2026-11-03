@@ -69,7 +69,7 @@ func TestIntegrationSocketSuspendedOnNextSend(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() { conn.CloseNow() })
+	t.Cleanup(func() { _ = conn.CloseNow() })
 	hello, _ := json.Marshal(map[string]any{"token": token, "room": map[string]any{"eventId": eventID.String()}})
 	if err := conn.Write(ctx, websocket.MessageText, hello); err != nil {
 		t.Fatal(err)
