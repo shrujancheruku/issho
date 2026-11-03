@@ -119,6 +119,10 @@ enum CrewStatus {
   // Offered: waiting for answers.
   CREW_STATUS_OFFERED = 1;
   CREW_STATUS_ACTIVE = 2;
+  // Too few accepted in time. Only the admin SPA sees this.
+  CREW_STATUS_LAPSED = 3;
+  // Fewer than 2 members left. Only the admin SPA sees this.
+  CREW_STATUS_CLOSED = 4;
 }
 
 enum CrewResponse {

@@ -257,6 +257,8 @@ enum EventStatus {
   EVENT_STATUS_SCHEDULED = 1;
   EVENT_STATUS_DONE = 2;
   EVENT_STATUS_CANCELLED = 3;
+  // Waiting for an admin to approve. Only the admin SPA sees this.
+  EVENT_STATUS_PROPOSED = 4;
 }
 
 enum GroupStatus {

@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
 import { ConfirmButton } from '../Confirm';
-import { localParts, localTime, personHref } from '../format';
+import { blockLabels, groupStatusLabels, localParts, localTime, personHref, responseLabels } from '../format';
 import { api } from '../lib';
 
 /** One proposed round (or scheduled event): its time, groups and people. */
@@ -33,7 +33,7 @@ export function GroupReview({ eventId }: { eventId: string }) {
       </div>
       <dl className="ids facts">
         <dt>Where</dt><dd>{e.areaName}</dd>
-        <dt>Starts</dt><dd>{localTime(e.startsAt, e.timeZone)} ({e.block}, {e.timeZone})</dd>
+        <dt>Starts</dt><dd>{localTime(e.startsAt, e.timeZone)} ({blockLabels[e.block]}, {e.timeZone})</dd>
         <dt>Answers by</dt><dd>{localTime(e.confirmBy, e.timeZone)}</dd>
         <dt>Plan</dt><dd><a href={`#/plan/${e.planId}`}>open the plan</a>{e.forced && ' · scheduled at the signup deadline with whoever could go'}</dd>
       </dl>
@@ -94,7 +94,7 @@ function GroupCard({ index, group: g, groups, proposed, busy, onMove, onRemove, 
     <article className={short ? 'card group danger' : 'card group'}>
       <div className="card-head">
         <strong>Group {index + 1}</strong>
-        <span className="muted">{g.members.length} people · confirms at {g.quorum}, goes ahead with {g.minAttendance} · score {g.score.toFixed(2)}{!proposed && ` · ${g.status}`}</span>
+        <span className="muted">{g.members.length} people · confirms at {g.quorum}, goes ahead with {g.minAttendance} · score {g.score.toFixed(2)}{!proposed && ` · ${groupStatusLabels[g.status]}`}</span>
       </div>
       {short && <p className="error">Fewer than its minimum: move someone in or it can't be approved.</p>}
       <table>
@@ -103,7 +103,7 @@ function GroupCard({ index, group: g, groups, proposed, busy, onMove, onRemove, 
             <tr key={m.userId}>
               <td><a href={personHref(m.userId)}>{m.name || 'No profile'}</a>{!m.signedUp && proposed && <span className="badge small-badge">withdrew</span>}</td>
               <td>{m.gender}{m.birthYear > 0 && `, ${year - m.birthYear}`}</td>
-              <td>{proposed ? '' : m.response}</td>
+              <td>{proposed ? '' : responseLabels[m.response]}</td>
               {proposed && (
                 <td className="nowrap">
                   {groups.length > 1 && (

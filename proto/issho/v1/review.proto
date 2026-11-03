@@ -3,7 +3,10 @@ syntax = "proto3";
 package issho.v1;
 
 import "google/protobuf/timestamp.proto";
+import "issho/v1/curation.proto";
+import "issho/v1/events.proto";
 import "issho/v1/plans.proto";
+import "issho/v1/profile.proto";
 
 option go_package = "github.com/shrujancheruku/issho/backend/gen/issho/v1;isshov1";
 
@@ -331,9 +334,11 @@ message VenueOption {
   string name = 2;
   string address = 3;
   string maps_url = 4;
-  // Our venue category, and candidate or approved.
+  // Our venue category.
   string category_id = 5;
-  string status = 6;
+  VenueStatus status = 7;
+  // status was a string at 6.
+  reserved 6;
 }
 
 message CreatePlanRequest {
@@ -393,7 +398,7 @@ message ReviewEvent {
   string area_name = 5;
   // Local date (YYYY-MM-DD) and part of the day; the start time.
   string date = 6;
-  string block = 7;
+  TimeBlock block = 15;
   google.protobuf.Timestamp starts_at = 8;
   // Invitees answer by then.
   google.protobuf.Timestamp confirm_by = 9;
@@ -406,6 +411,8 @@ message ReviewEvent {
   google.protobuf.Timestamp created_at = 13;
   // The city's time zone (IANA), for showing and setting local times.
   string time_zone = 14;
+  // block was a string at 7.
+  reserved 7;
 }
 
 message GetReviewEventRequest {
@@ -424,11 +431,12 @@ message ReviewGroup {
   int32 quorum = 2;
   int32 min_attendance = 3;
   float score = 4;
-  // inviting, confirmed or cancelled.
-  string status = 5;
+  GroupStatus status = 8;
   // English; "" for none.
   string meeting_point = 6;
   repeated ReviewMember members = 7;
+  // status was a string at 5.
+  reserved 5;
 }
 
 message ReviewMember {
@@ -437,11 +445,12 @@ message ReviewMember {
   // woman, man, nonbinary or unspecified.
   string gender = 3;
   int32 birth_year = 4;
-  // invited, confirmed, declined or dropped.
-  string response = 5;
+  InviteResponse response = 7;
   // Still signed up for the plan: in a proposal, someone who withdrew
   // since (false) is left out when it's approved.
   bool signed_up = 6;
+  // response was a string at 5.
+  reserved 5;
 }
 
 message MoveProposalMemberRequest {
