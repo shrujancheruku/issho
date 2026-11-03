@@ -102,16 +102,37 @@ func LoadVenueCategories(ctx context.Context, q *dbgen.Queries, cityID string, o
 // transaction: it upserts rows and deletes every row of the city that the
 // rebuild didn't write, so nothing outlives the Maps caching limit and a
 // pair that lost its route goes at once. Returns the number of rows deleted.
+//
+// The upsert is one statement over parallel arrays however many rows there
+// are (a city of 50 areas has thousands), not a round trip per row (#185).
+// A pair listed twice keeps its last row, as the one-by-one upserts did.
 func SaveMatrix(ctx context.Context, pool *pgxpool.Pool, cityID string, rows []TravelTime) (int64, error) {
+	type pair struct {
+		from, to string
+		mode     maps.Mode
+	}
+	last := make(map[pair]int, len(rows))
+	for i, r := range rows {
+		last[pair{r.From, r.To, r.Mode}] = i
+	}
+	arg := dbgen.UpsertTravelTimesParams{
+		FromAreaIds: make([]string, 0, len(last)), ToAreaIds: make([]string, 0, len(last)),
+		Modes: make([]string, 0, len(last)), Minutes: make([]int32, 0, len(last)),
+	}
+	for i, r := range rows {
+		if last[pair{r.From, r.To, r.Mode}] != i {
+			continue
+		}
+		arg.FromAreaIds = append(arg.FromAreaIds, r.From)
+		arg.ToAreaIds = append(arg.ToAreaIds, r.To)
+		arg.Modes = append(arg.Modes, string(r.Mode))
+		arg.Minutes = append(arg.Minutes, r.Minutes)
+	}
 	var deleted int64
 	err := pgx.BeginFunc(ctx, pool, func(tx pgx.Tx) error {
 		q := dbgen.New(tx)
-		for _, r := range rows {
-			if err := q.UpsertTravelTime(ctx, dbgen.UpsertTravelTimeParams{
-				FromAreaID: r.From, ToAreaID: r.To, Mode: string(r.Mode), Minutes: r.Minutes,
-			}); err != nil {
-				return fmt.Errorf("%s→%s %s: %w", r.From, r.To, r.Mode, err)
-			}
+		if err := q.UpsertTravelTimes(ctx, arg); err != nil {
+			return fmt.Errorf("save travel times: %w", err)
 		}
 		n, err := q.DeleteTravelTimesNotRefreshed(ctx, cityID)
 		deleted = n
@@ -121,19 +142,28 @@ func SaveMatrix(ctx context.Context, pool *pgxpool.Pool, cityID string, rows []T
 }
 
 // SaveVenues upserts discovered venues. Existing venues keep their area and
-// curation status; only last_seen_at is refreshed.
+// curation status; only last_seen_at is refreshed. One statement over
+// parallel arrays, not a round trip per venue (#185); a (place, category)
+// listed twice counts once, the first listing's area winning as it did.
 func SaveVenues(ctx context.Context, pool *pgxpool.Pool, cityID string, venues []Venue) error {
-	return pgx.BeginFunc(ctx, pool, func(tx pgx.Tx) error {
-		q := dbgen.New(tx)
-		for _, v := range venues {
-			if err := q.UpsertVenue(ctx, dbgen.UpsertVenueParams{
-				GooglePlaceID: v.PlaceID, CityID: cityID, AreaID: v.AreaID, CategoryID: v.CategoryID,
-			}); err != nil {
-				return fmt.Errorf("venue %s: %w", v.PlaceID, err)
-			}
+	type key struct{ place, category string }
+	seen := make(map[key]bool, len(venues))
+	arg := dbgen.UpsertVenuesParams{CityID: cityID}
+	for _, v := range venues {
+		if k := (key{v.PlaceID, v.CategoryID}); !seen[k] {
+			seen[k] = true
+			arg.GooglePlaceIds = append(arg.GooglePlaceIds, v.PlaceID)
+			arg.AreaIds = append(arg.AreaIds, v.AreaID)
+			arg.CategoryIds = append(arg.CategoryIds, v.CategoryID)
 		}
+	}
+	if len(arg.GooglePlaceIds) == 0 {
 		return nil
-	})
+	}
+	if err := dbgen.New(pool).UpsertVenues(ctx, arg); err != nil {
+		return fmt.Errorf("save venues: %w", err)
+	}
+	return nil
 }
 
 func keys(m map[string]bool) []string {

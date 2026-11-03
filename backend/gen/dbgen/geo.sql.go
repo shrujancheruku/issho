@@ -155,25 +155,33 @@ func (q *Queries) RejectVenue(ctx context.Context, googlePlaceID string) error {
 	return err
 }
 
-const upsertTravelTime = `-- name: UpsertTravelTime :exec
+const upsertTravelTimes = `-- name: UpsertTravelTimes :exec
 insert into app.area_travel_times (from_area_id, to_area_id, mode, minutes, computed_at)
-values ($1, $2, $3, $4, now())
+select u.from_area_id, u.to_area_id, u.mode, u.minutes, now()
+from (select unnest($1::text[]) as from_area_id, unnest($2::text[]) as to_area_id,
+             unnest($3::text[]) as mode, unnest($4::int[]) as minutes) u
 on conflict (from_area_id, to_area_id, mode) do update set
   minutes = excluded.minutes, computed_at = excluded.computed_at
 `
 
-type UpsertTravelTimeParams struct {
-	FromAreaID string
-	ToAreaID   string
-	Mode       string
-	Minutes    int32
+type UpsertTravelTimesParams struct {
+	FromAreaIds []string
+	ToAreaIds   []string
+	Modes       []string
+	Minutes     []int32
 }
 
-func (q *Queries) UpsertTravelTime(ctx context.Context, arg UpsertTravelTimeParams) error {
-	_, err := q.db.Exec(ctx, upsertTravelTime,
-		arg.FromAreaID,
-		arg.ToAreaID,
-		arg.Mode,
+// One statement for a whole rebuild (the arrays are parallel, as in
+// InsertPushTickets): a city's matrix is thousands of rows, and a round trip
+// each made the rebuild minutes long (#185). Every row gets the same
+// computed_at (now() is the transaction's start), which
+// DeleteTravelTimesNotRefreshed relies on. A pair may appear only once per
+// statement (on conflict can't touch a row twice); SaveMatrix sees to it.
+func (q *Queries) UpsertTravelTimes(ctx context.Context, arg UpsertTravelTimesParams) error {
+	_, err := q.db.Exec(ctx, upsertTravelTimes,
+		arg.FromAreaIds,
+		arg.ToAreaIds,
+		arg.Modes,
 		arg.Minutes,
 	)
 	return err
@@ -203,6 +211,39 @@ func (q *Queries) UpsertVenue(ctx context.Context, arg UpsertVenueParams) error 
 		arg.CityID,
 		arg.AreaID,
 		arg.CategoryID,
+	)
+	return err
+}
+
+const upsertVenues = `-- name: UpsertVenues :exec
+insert into app.venues (google_place_id, city_id, area_id, category_id, status)
+select u.google_place_id, $1, u.area_id, u.category_id, coalesce(
+  (select v.status from app.venues v where v.google_place_id = u.google_place_id
+   order by v.status = 'rejected' desc, v.status = 'approved' desc limit 1), 'candidate')
+from (select unnest($2::text[]) as google_place_id, unnest($3::text[]) as area_id,
+             unnest($4::text[]) as category_id) u
+on conflict (google_place_id, category_id) do update set last_seen_at = now()
+`
+
+type UpsertVenuesParams struct {
+	CityID         string
+	GooglePlaceIds []string
+	AreaIds        []string
+	CategoryIds    []string
+}
+
+// UpsertVenue for a batch of discovered venues (parallel arrays), one
+// statement instead of a round trip each (#185). The status a place already
+// has is read from the rows before this statement, as the one-by-one inserts
+// would have found it: a new row in the same batch only ever copies it. A
+// (place, category) pair may appear only once per statement; SaveVenues
+// sees to it.
+func (q *Queries) UpsertVenues(ctx context.Context, arg UpsertVenuesParams) error {
+	_, err := q.db.Exec(ctx, upsertVenues,
+		arg.CityID,
+		arg.GooglePlaceIds,
+		arg.AreaIds,
+		arg.CategoryIds,
 	)
 	return err
 }
