@@ -173,8 +173,7 @@ func run() error {
 	} else {
 		slog.Warn("GITHUB_TOKEN not set: the city-pack editor can't read or propose packs, and the translation editor can't save")
 	}
-	// The worker's timing, so a plan an admin opens gets the same window.
-	review := &plans.ReviewHandler{Svc: planSvc, Timing: plans.DefaultTiming()}
+	review := &plans.ReviewHandler{Svc: planSvc}
 	if cfg.GoogleMapsAPIKey != "" {
 		places := mapsgoogle.New(cfg.GoogleMapsAPIKey)
 		planSvc.Places, venueSvc.Places = places, places

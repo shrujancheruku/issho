@@ -425,10 +425,14 @@ func TestIntegrationCityPacks(t *testing.T) {
 }
 
 func TestKeepFileOnly(t *testing.T) {
-	base := cities.Pack{Areas: []cities.Area{{ID: "x-a", OSMID: 7, Boundary: []string{"_p~iF~ps|U_ulLnnqC_mqNvxq`@"}, Replaces: []string{"x-old"}}}}
+	base := cities.Pack{Matching: []byte(`{"plans_per_pool": 3}`), MeetingPlaces: []cities.MeetingPlace{{Types: []string{"park"}, RadiusM: 500}},
+		Areas: []cities.Area{{ID: "x-a", OSMID: 7, Boundary: []string{"_p~iF~ps|U_ulLnnqC_mqNvxq`@"}, Replaces: []string{"x-old"}}}}
 	// What the editor sends: no osm_id, boundary or replaces, plus a new area.
 	p := cities.Pack{Areas: []cities.Area{{ID: "x-a", Lat: 1}, {ID: "x-new", Lat: 2}}}
 	keepFileOnly(&p, base)
+	if string(p.Matching) != `{"plans_per_pool": 3}` || len(p.MeetingPlaces) != 1 || p.MeetingPlaces[0].RadiusM != 500 {
+		t.Errorf("matching and meeting_places not kept: %s %+v", p.Matching, p.MeetingPlaces)
+	}
 	if a := p.Areas[0]; a.OSMID != 7 || len(a.Boundary) != 1 || !slices.Equal(a.Replaces, []string{"x-old"}) || a.Lat != 1 {
 		t.Errorf("existing area: %+v", a)
 	}
