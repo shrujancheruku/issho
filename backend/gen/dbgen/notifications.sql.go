@@ -25,6 +25,36 @@ func (q *Queries) DeleteExpiredPushTickets(ctx context.Context, before pgtype.Ti
 	return result.RowsAffected(), nil
 }
 
+const deleteOldNotifications = `-- name: DeleteOldNotifications :execrows
+delete from app.notifications
+where id in (
+  select n.id from app.notifications n
+  where n.created_at < $1 and (n.sent_at is not null or n.attempts >= 5)
+  order by n.id
+  limit $2
+)
+`
+
+type DeleteOldNotificationsParams struct {
+	Before pgtype.Timestamptz
+	Max    int32
+}
+
+// Notifications older than @before that were sent or ran out of attempts
+// (privacy: the queue keeps no history of who was told what beyond 30
+// days). Unsent rows with attempts left are kept: the sender still wants
+// them. At most @max per call so the daily run never holds a long lock;
+// the caller repeats until fewer come back. No index covers "old and
+// done" (notifications_pending_idx holds only the pending rows), so each
+// batch scans the table, which holds 30 days of a push queue.
+func (q *Queries) DeleteOldNotifications(ctx context.Context, arg DeleteOldNotificationsParams) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteOldNotifications, arg.Before, arg.Max)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const deletePushTickets = `-- name: DeletePushTickets :exec
 delete from app.push_tickets where id = any($1::text[])
 `
