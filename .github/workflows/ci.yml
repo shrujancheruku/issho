@@ -13,11 +13,12 @@ on:
   # a `push` CI run (deploy-*.yml check workflow_run.event).
   workflow_dispatch:
 
-# Runs on main always finish, because deploys wait for them. A newer push to a
-# PR cancels its older run. (A dispatched run is keyed by its branch, so it
-# isn't cancelled either.)
+# A newer push to a PR cancels its older run. Runs on main always finish,
+# because deploys wait for them: each push run gets its own group (by SHA),
+# since GitHub drops a *queued* run when a newer one joins the same group, even
+# with cancel-in-progress off. A dispatched run is keyed by its branch.
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.event_name == 'push' && github.sha || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 # No Turbo cache (checked 2026-11): it would save about 20s off `typescript`,
