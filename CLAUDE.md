@@ -6,6 +6,7 @@ Project-specific rules for AI coding agents. They **take precedence over generic
 - [docs/ROADMAP.md](docs/ROADMAP.md): plan, status and decision log
 - [docs/architecture.md](docs/architecture.md): how the pieces fit together
 - The README in the directory you're changing. `apps/mobile/AGENTS.md` has Expo-specific rules.
+- [.claude/orchestration.md](.claude/orchestration.md) when working through a backlog in parallel with the [orchestrate plugin](https://github.com/shrujancheruku/claude-orchestrate): lanes, verify commands, gates and the merge rule.
 
 ## Every change
 - Update **docs/ROADMAP.md** (status, decision log, "Last updated"). CI fails code changes without it.
