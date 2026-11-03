@@ -10,7 +10,6 @@ import { ThemedText } from '@/components/themed-text';
 import { BodyFont, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useI18n } from '@/i18n/i18n-provider';
-import { errorText } from '@/lib/error-text';
 import { api } from '@/lib/api';
 
 import { addSuggestions, cycleSuggestion, type Draft } from './draft';
