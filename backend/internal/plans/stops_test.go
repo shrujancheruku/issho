@@ -12,58 +12,42 @@ import (
 
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
 	"github.com/shrujancheruku/issho/backend/internal/maps"
+	"github.com/shrujancheruku/issho/backend/internal/maps/mapstest"
 	"github.com/shrujancheruku/issho/backend/internal/matching"
 	"github.com/shrujancheruku/issho/backend/internal/platform/auth"
 	"github.com/shrujancheruku/issho/backend/internal/walks"
 )
 
-// fakeMap knows places around (0, 0), the fixture's area centre, and walks
-// 10 minutes between any two unless told otherwise.
-type fakeMap struct {
-	places map[string]maps.SearchResult
-	legs   map[[2]string]time.Duration
-	walks  [][]string
-}
-
-func (f *fakeMap) Details(_ context.Context, id, _ string) (maps.PlaceDetails, error) {
-	p, ok := f.places[id]
-	if !ok {
-		return maps.PlaceDetails{}, errors.New("not found")
+// editMap knows the given places around (0, 0), the fixture's area centre, and
+// walks 10 minutes between any two unless legs says otherwise. Its search
+// finds meet, shrine and far; it refuses a walk that is asked to optimize,
+// because an admin's order must be kept.
+func editMap(places map[string]maps.SearchResult, legs map[[2]string]time.Duration) *mapstest.Fake {
+	return &mapstest.Fake{
+		Places: places,
+		SearchFunc: func(maps.SearchRequest) []maps.SearchResult {
+			var out []maps.SearchResult
+			for _, id := range []string{"meet", "shrine", "far"} {
+				out = append(out, places[id])
+			}
+			return out
+		},
+		WalkFunc: func(ids []string, optimize bool) (maps.WalkRoute, error) {
+			if optimize {
+				return maps.WalkRoute{}, errors.New("an admin's order must be kept")
+			}
+			r := maps.WalkRoute{Route: maps.Route{Polyline: "poly"}}
+			for i := 1; i < len(ids); i++ {
+				d, ok := legs[[2]string{ids[i-1], ids[i]}]
+				if !ok {
+					d = 10 * time.Minute
+				}
+				r.Legs = append(r.Legs, maps.Route{Duration: d})
+				r.Duration += d
+			}
+			return r, nil
+		},
 	}
-	return p.Details, nil
-}
-
-func (f *fakeMap) Search(_ context.Context, req maps.SearchRequest) ([]maps.SearchResult, error) {
-	var out []maps.SearchResult
-	for _, id := range []string{"meet", "shrine", "far"} {
-		out = append(out, f.places[id])
-	}
-	return out, nil
-}
-
-func (f *fakeMap) Locate(_ context.Context, id string) (maps.SearchResult, error) {
-	p, ok := f.places[id]
-	if !ok {
-		return p, errors.New("not found")
-	}
-	return p, nil
-}
-
-func (f *fakeMap) WalkThrough(_ context.Context, places []string, optimize bool) (maps.WalkRoute, error) {
-	if optimize {
-		return maps.WalkRoute{}, errors.New("an admin's order must be kept")
-	}
-	f.walks = append(f.walks, places)
-	r := maps.WalkRoute{Route: maps.Route{Polyline: "poly"}}
-	for i := 1; i < len(places); i++ {
-		d, ok := f.legs[[2]string{places[i-1], places[i]}]
-		if !ok {
-			d = 10 * time.Minute
-		}
-		r.Legs = append(r.Legs, maps.Route{Duration: d})
-		r.Duration += d
-	}
-	return r, nil
 }
 
 // TestIntegrationEditStops: an admin edits a walk's stops (reordered, one
@@ -89,7 +73,7 @@ func TestIntegrationEditStops(t *testing.T) {
 		}
 	}
 	// 0.01° of longitude at the equator is about 1.1 km.
-	fm := &fakeMap{places: map[string]maps.SearchResult{
+	fm := editMap(map[string]maps.SearchResult{
 		"meet":   at("meet", "Station", 0, "train_station"),
 		"temple": at("temple", "Old Temple", 0.005, "buddhist_temple"),
 		"shrine": at("shrine", "Shrine", 0.01, "shinto_shrine"),
@@ -98,10 +82,10 @@ func TestIntegrationEditStops(t *testing.T) {
 		"far":    at("far", "Far Away", 0.05, "park"),
 		"gone":   at("gone", "Gone Bar", 0.002, "bar"),
 		"cafe2":  at("cafe2", "Second Cafe", 0.003, "cafe"),
-	}, legs: map[[2]string]time.Duration{{"shrine", "street"}: 25 * time.Minute}}
-	gone := fm.places["gone"]
+	}, map[[2]string]time.Duration{{"shrine", "street"}: 25 * time.Minute})
+	gone := fm.Places["gone"]
 	gone.Closed = true
-	fm.places["gone"] = gone
+	fm.Places["gone"] = gone
 
 	now := time.Date(2030, 1, 1, 9, 0, 0, 0, time.UTC)
 	svc := &Service{DB: f.pool, Places: fm}
@@ -170,7 +154,7 @@ func TestIntegrationEditStops(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if last := fm.walks[len(fm.walks)-1]; !slices.Equal(last, []string{"meet", "shrine", "street", "temple", "cafe"}) {
+	if last := fm.WalkCalls()[len(fm.WalkCalls())-1]; !slices.Equal(last, []string{"meet", "shrine", "street", "temple", "cafe"}) {
 		t.Errorf("routed through %v", last)
 	}
 	// 150 minutes at the stops + 55 walking; the shrine to the street is 25.

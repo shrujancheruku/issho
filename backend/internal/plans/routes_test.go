@@ -8,14 +8,15 @@ import (
 	"time"
 
 	"github.com/shrujancheruku/issho/backend/internal/maps"
+	"github.com/shrujancheruku/issho/backend/internal/maps/mapstest"
 	"github.com/shrujancheruku/issho/backend/internal/matching"
 )
 
-type fakeRoutes struct{ calls int }
-
-func (f *fakeRoutes) WalkingRoute(_ context.Context, from, to string) (maps.Route, error) {
-	f.calls++
-	return maps.Route{Polyline: "enc:" + from + ">" + to, Duration: 9*time.Minute + 10*time.Second, Meters: 700}, nil
+// encRoutes answers every walking route with a 9 min 10 s line named for its ends.
+func encRoutes() *mapstest.Fake {
+	return &mapstest.Fake{RouteFunc: func(from, to string) maps.Route {
+		return maps.Route{Polyline: "enc:" + from + ">" + to, Duration: 9*time.Minute + 10*time.Second, Meters: 700}
+	}}
 }
 
 // TestIntegrationRoutes: a plan with two venues gets its walking route on
@@ -42,15 +43,15 @@ func TestIntegrationRoutes(t *testing.T) {
 	if _, err := Create(ctx, f.q, f.city, matching.Suggestion{Plan: matching.Plan{Area: matching.AreaID(f.area), Activity: act.ID, Primary: "en"}, Audience: 6, Score: 1}, w, acts); err != nil {
 		t.Fatal(err)
 	}
-	finder := &fakeRoutes{}
+	finder := encRoutes()
 	r := &Runner{DB: f.pool, Log: slog.New(slog.NewTextHandler(io.Discard, nil)), Routes: finder}
 
 	now := time.Now()
-	if rr, err := r.RefreshRoutes(ctx, f.city, now); err != nil || rr.Computed != 1 || rr.Cleared != 0 || finder.calls != 1 {
-		t.Fatalf("first pass: computed=%d cleared=%d calls=%d err=%v; want only the two-venue plan", rr.Computed, rr.Cleared, finder.calls, err)
+	if rr, err := r.RefreshRoutes(ctx, f.city, now); err != nil || rr.Computed != 1 || rr.Cleared != 0 || len(finder.RouteCalls()) != 1 {
+		t.Fatalf("first pass: computed=%d cleared=%d calls=%d err=%v; want only the two-venue plan", rr.Computed, rr.Cleared, len(finder.RouteCalls()), err)
 	}
-	if rr, _ := r.RefreshRoutes(ctx, f.city, now); rr.Computed != 0 || finder.calls != 1 {
-		t.Errorf("second pass computed %d (calls %d); a fresh route isn't recomputed", rr.Computed, finder.calls)
+	if rr, _ := r.RefreshRoutes(ctx, f.city, now); rr.Computed != 0 || len(finder.RouteCalls()) != 1 {
+		t.Errorf("second pass computed %d (calls %d); a fresh route isn't recomputed", rr.Computed, len(finder.RouteCalls()))
 	}
 	open, err := ListOpen(ctx, f.q, f.city)
 	if err != nil {

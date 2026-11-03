@@ -6,8 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jackc/pgx/v5/pgxpool"
-
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	"github.com/shrujancheruku/issho/backend/internal/maps"
 	"github.com/shrujancheruku/issho/backend/internal/testfixture"
@@ -17,15 +15,8 @@ import (
 // seeded database. It's skipped unless TEST_DATABASE_URL is set (CI sets it).
 // It creates its own throwaway city and deletes it afterwards.
 func TestIntegrationStore(t *testing.T) {
-	url := testfixture.DatabaseURL(t)
 	ctx := context.Background()
-	pool, err := pgxpool.New(ctx, url)
-	if err != nil {
-		t.Fatal(err)
-	}
-	// t.Cleanup, not defer: cleanups run after the test body and in reverse
-	// order, so the pool must still be open when the city is deleted below.
-	t.Cleanup(pool.Close)
+	pool := testfixture.Pool(t)
 	q := dbgen.New(pool)
 
 	const city = "zz-geo-test"
@@ -102,10 +93,10 @@ func TestIntegrationStore(t *testing.T) {
 	}
 
 	// Refresh: a fresh matrix is left alone.
-	router := &fakeRouter{}
+	router := islandRouter()
 	now := time.Now()
-	if rebuilt, _, err := Refresh(ctx, pool, router, city, now); err != nil || rebuilt || router.calls != 0 {
-		t.Errorf("fresh matrix: rebuilt=%v calls=%d err=%v", rebuilt, router.calls, err)
+	if rebuilt, _, err := Refresh(ctx, pool, router, city, now); err != nil || rebuilt || router.Matrices() != 0 {
+		t.Errorf("fresh matrix: rebuilt=%v calls=%d err=%v", rebuilt, router.Matrices(), err)
 	}
 	// After RefreshAge it's rebuilt, and a pair the rebuild doesn't return
 	// (a walk to the far area) goes straight away rather than at 30 days.

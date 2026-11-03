@@ -10,7 +10,6 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/shrujancheruku/issho/backend/internal/testfixture"
 )
@@ -120,11 +119,7 @@ func TestIntegrationPassSkipsFailedCrew(t *testing.T) {
 // so River retries the job.
 func TestIntegrationPassSetupFailure(t *testing.T) {
 	f := testfixture.New(t, "zz-crews-setupfail", "UTC", 1)
-	down, err := pgxpool.New(context.Background(), testfixture.DatabaseURL(t))
-	if err != nil {
-		t.Fatal(err)
-	}
-	down.Close()
+	down := testfixture.ClosedPool(t)
 	r := &Runner{DB: down, Log: slog.New(slog.NewTextHandler(io.Discard, nil))}
 	if _, err := r.Pass(context.Background(), f.City, day(21)); err == nil {
 		t.Error("Pass with the database down: no error")

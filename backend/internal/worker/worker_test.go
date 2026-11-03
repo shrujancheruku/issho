@@ -17,7 +17,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/db"
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	"github.com/shrujancheruku/issho/backend/internal/adminjobs"
-	"github.com/shrujancheruku/issho/backend/internal/maps"
+	"github.com/shrujancheruku/issho/backend/internal/maps/mapstest"
 	"github.com/shrujancheruku/issho/backend/internal/moderation"
 	"github.com/shrujancheruku/issho/backend/internal/testfixture"
 	"github.com/shrujancheruku/issho/backend/internal/walks"
@@ -96,12 +96,7 @@ func TestEveryKindReportsQueueTimeoutAndAttempts(t *testing.T) {
 
 func testPool(t *testing.T) *pgxpool.Pool {
 	t.Helper()
-	pool, err := pgxpool.New(context.Background(), testfixture.DatabaseURL(t))
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(pool.Close)
-	return pool
+	return testfixture.Pool(t)
 }
 
 func cleanJobs(t *testing.T, pool *pgxpool.Pool) {
@@ -246,7 +241,8 @@ func TestIntegrationRefreshMapsQueuesOneJobPerCity(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	w := &refreshMapsWorker{pool: pool, router: fakeRouter{}, log: slog.New(slog.NewTextHandler(io.Discard, nil))}
+	router := &mapstest.Fake{} // queueing city jobs must not touch Google
+	w := &refreshMapsWorker{pool: pool, router: router, log: slog.New(slog.NewTextHandler(io.Discard, nil))}
 	rw := rivertest.NewWorker(t, riverpgxv5.New(pool), &river.Config{Schema: db.RiverSchema}, w)
 	tx, err := pool.Begin(ctx)
 	if err != nil {
@@ -254,6 +250,9 @@ func TestIntegrationRefreshMapsQueuesOneJobPerCity(t *testing.T) {
 	}
 	if _, err := rw.Work(ctx, t, tx, RefreshMapsArgs{}, nil); err != nil {
 		t.Fatal(err)
+	}
+	if n := router.Matrices(); n != 0 {
+		t.Errorf("RefreshMaps called the router %d times; it only queues jobs", n)
 	}
 	if err := tx.Commit(ctx); err != nil {
 		t.Fatal(err)
@@ -287,5 +286,3 @@ func TestRefreshMapsCityFailureIsItsOwn(t *testing.T) {
 		t.Errorf("good city: %v", err)
 	}
 }
-
-type fakeRouter struct{ maps.Router }

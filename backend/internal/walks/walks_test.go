@@ -5,11 +5,11 @@ import (
 	"errors"
 	"slices"
 	"strings"
-	"sync"
 	"testing"
 	"time"
 
 	"github.com/shrujancheruku/issho/backend/internal/maps"
+	"github.com/shrujancheruku/issho/backend/internal/maps/mapstest"
 )
 
 var center = maps.LatLng{Lat: 35.7, Lng: 139.65}
@@ -17,55 +17,23 @@ var center = maps.LatLng{Lat: 35.7, Lng: 139.65}
 // near is a point about dm metres north of the centre.
 func near(dm float64) maps.LatLng { return maps.LatLng{Lat: center.Lat + dm/111000, Lng: center.Lng} }
 
-// fakePlaces answers Find from a table keyed by query (without the city).
-type fakePlaces struct {
-	mu      sync.Mutex
-	places  map[string]maps.Found
-	queries []string
-}
-
-func (f *fakePlaces) Find(_ context.Context, req maps.FindRequest) (maps.Found, bool, error) {
-	f.mu.Lock()
-	defer f.mu.Unlock()
-	f.queries = append(f.queries, req.Query)
-	name := strings.TrimSuffix(req.Query, ", Tokyo")
-	p, ok := f.places[name]
-	if p.Name == "" {
-		p.Name = name
-	}
-	return p, ok, nil
-}
-
-// fakeRoutes walks the places in order (or reversed in between, to stand
-// for Google reordering), each leg taking legs[to place] (default 8 min).
-type fakeRoutes struct {
-	legs    map[string]time.Duration
-	reverse bool
-	calls   [][]string
-}
-
-func (f *fakeRoutes) WalkThrough(_ context.Context, places []string, optimize bool) (maps.WalkRoute, error) {
-	f.calls = append(f.calls, places)
-	order := []int{0}
-	for i := 1; i < len(places)-1; i++ {
-		order = append(order, i)
-	}
-	if f.reverse && optimize {
-		slices.Reverse(order[1:])
-	}
-	order = append(order, len(places)-1)
-	w := maps.WalkRoute{Order: order}
-	for _, i := range order[1:] {
-		d, ok := f.legs[places[i]]
-		if !ok {
-			d = 8 * time.Minute
+// placesFake answers Find from a table keyed by query (without the city),
+// naming a place after its query when the table doesn't.
+func placesFake(places map[string]maps.Found) *mapstest.Fake {
+	return &mapstest.Fake{FindFunc: func(req maps.FindRequest) (maps.Found, bool) {
+		name := strings.TrimSuffix(req.Query, ", Tokyo")
+		p, ok := places[name]
+		if p.Name == "" {
+			p.Name = name
 		}
-		w.Legs = append(w.Legs, maps.Route{Duration: d, Meters: int(d.Minutes() * 80)})
-		w.Duration += d
-		w.Meters += int(d.Minutes() * 80)
-	}
-	w.Polyline = "line"
-	return w, nil
+		return p, ok
+	}}
+}
+
+// routesFake walks the places in order (or reversed in between, to stand
+// for Google reordering), each leg taking legs[to place] (default 8 min).
+func routesFake(legs map[string]time.Duration, reverse bool) *mapstest.Fake {
+	return &mapstest.Fake{Legs: legs, LegDuration: 8 * time.Minute, ReverseOptimized: reverse}
 }
 
 // fakeProposer returns its proposals in turn and records the feedback.
@@ -112,7 +80,7 @@ func templePlaces() map[string]maps.Found {
 	}
 }
 
-func composer(p *fakeProposer, places *fakePlaces, routes *fakeRoutes) *Composer {
+func composer(p *fakeProposer, places, routes *mapstest.Fake) *Composer {
 	return &Composer{Proposer: p, Places: places, Routes: routes, Rules: DefaultRules()}
 }
 
@@ -129,8 +97,8 @@ func roles(w Walk) string {
 }
 
 func TestCompose(t *testing.T) {
-	places := &fakePlaces{places: templePlaces()}
-	routes := &fakeRoutes{reverse: true}
+	places := placesFake(templePlaces())
+	routes := routesFake(nil, true)
 	w, err := composer(&fakeProposer{proposals: []Proposal{temples()}}, places, routes).Compose(context.Background(), req())
 	if err != nil {
 		t.Fatal(err)
@@ -140,15 +108,15 @@ func TestCompose(t *testing.T) {
 		t.Errorf("stops = %s", got)
 	}
 	// 10 + 95 at the stops + 45, and 5 legs of 8 minutes.
-	if w.Minutes() != 190 || w.Stops[0].Walk != 0 || w.Stops[1].Walk != 8*time.Minute || w.Route.Polyline != "line" {
+	if w.Minutes() != 190 || w.Stops[0].Walk != 0 || w.Stops[1].Walk != 8*time.Minute || w.Route.Polyline != "walk-line" {
 		t.Errorf("walk = %+v (%d min)", w, w.Minutes())
 	}
 	if w.Title != "Koenji's temples, ending with coffee" || w.Stops[1].Note != "Look at Temple D." {
 		t.Errorf("text = %q / %q", w.Title, w.Stops[1].Note)
 	}
 	// The city is added to every search, so a common name finds the right place.
-	if !slices.Contains(places.queries, "Temple A, Tokyo") {
-		t.Errorf("queries = %q", places.queries)
+	if !slices.Contains(places.FindQueries(), "Temple A, Tokyo") {
+		t.Errorf("queries = %q", places.FindQueries())
 	}
 }
 
@@ -168,7 +136,7 @@ func TestComposeDropsBadStops(t *testing.T) {
 	places["A Bank"] = maps.Found{Place: maps.Place{ID: "p-bank", PrimaryType: "bank", Location: near(200)}}
 	places["Temple A again"] = places["Temple A"]
 	places["Hase-ji"] = maps.Found{Place: places["Temple C"].Place, Name: "Temple C"}
-	c := composer(&fakeProposer{proposals: []Proposal{p}}, &fakePlaces{places: places}, &fakeRoutes{})
+	c := composer(&fakeProposer{proposals: []Proposal{p}}, placesFake(places), routesFake(nil, false))
 	var attempts []Attempt
 	c.OnAttempt = func(a Attempt) { attempts = append(attempts, a) }
 	w, err := c.Compose(context.Background(), req())
@@ -197,13 +165,13 @@ func TestComposeDropsBadStops(t *testing.T) {
 func TestComposeDropsOutlierStops(t *testing.T) {
 	// Temple C is 30 minutes from Shrine B: left out, and the walk routed
 	// again without it.
-	routes := &fakeRoutes{legs: map[string]time.Duration{"p-c": 30 * time.Minute}}
-	w, err := composer(&fakeProposer{proposals: []Proposal{temples()}}, &fakePlaces{places: templePlaces()}, routes).Compose(context.Background(), req())
+	routes := routesFake(map[string]time.Duration{"p-c": 30 * time.Minute}, false)
+	w, err := composer(&fakeProposer{proposals: []Proposal{temples()}}, placesFake(templePlaces()), routes).Compose(context.Background(), req())
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got := roles(w); got != "meet:p-station stop:p-a stop:p-b stop:p-d finish:p-e" || len(routes.calls) != 2 {
-		t.Errorf("stops = %s after %d routes", got, len(routes.calls))
+	if got := roles(w); got != "meet:p-station stop:p-a stop:p-b stop:p-d finish:p-e" || len(routes.WalkCalls()) != 2 {
+		t.Errorf("stops = %s after %d routes", got, len(routes.WalkCalls()))
 	}
 }
 
@@ -212,7 +180,7 @@ func TestComposeRetriesWithFeedback(t *testing.T) {
 	bad.Meet = place("Somewhere Nice", "park", 10)
 	bad.Stops = []Place{place("Temple A", "temple", 25), place("Made-up Temple", "temple", 20), place("Shrine B", "shrine", 20)}
 	prop := &fakeProposer{proposals: []Proposal{bad, temples()}}
-	w, err := composer(prop, &fakePlaces{places: templePlaces()}, &fakeRoutes{}).Compose(context.Background(), req())
+	w, err := composer(prop, placesFake(templePlaces()), routesFake(nil, false)).Compose(context.Background(), req())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -258,7 +226,7 @@ func TestComposeRejects(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			prop := &fakeProposer{proposals: []Proposal{tc.p, tc.p}}
-			_, err := composer(prop, &fakePlaces{places: tc.places}, &fakeRoutes{legs: tc.legs}).Compose(context.Background(), req())
+			_, err := composer(prop, placesFake(tc.places), routesFake(tc.legs, false)).Compose(context.Background(), req())
 			var rej *Rejected
 			if !errors.As(err, &rej) || !strings.Contains(rej.Error(), tc.want) {
 				t.Fatalf("err = %v, want a rejection with %q", err, tc.want)
@@ -272,7 +240,7 @@ func TestComposeRejects(t *testing.T) {
 
 func TestComposeErrors(t *testing.T) {
 	// A model or API failure isn't a rejection: the worker tries again later.
-	_, err := composer(&fakeProposer{}, &fakePlaces{places: templePlaces()}, &fakeRoutes{}).Compose(context.Background(), req())
+	_, err := composer(&fakeProposer{}, placesFake(templePlaces()), routesFake(nil, false)).Compose(context.Background(), req())
 	var rej *Rejected
 	if err == nil || errors.As(err, &rej) {
 		t.Errorf("err = %v", err)
@@ -329,7 +297,7 @@ func TestComposeStopsRetryingWithoutBudget(t *testing.T) {
 	bad := temples()
 	bad.Stops = bad.Stops[:1] // too few stops
 	fp := &fakeProposer{proposals: []Proposal{bad, temples()}}
-	c := composer(fp, &fakePlaces{places: templePlaces()}, &fakeRoutes{})
+	c := composer(fp, placesFake(templePlaces()), routesFake(nil, false))
 	clock := time.Now()
 	c.Clock = func() time.Time { return clock }
 	c.Proposer = slowProposer{fp, &clock}
