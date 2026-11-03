@@ -2,7 +2,6 @@ package sentry
 
 import (
 	"context"
-	"net/http"
 	"strings"
 
 	sentrygo "github.com/getsentry/sentry-go"
@@ -12,7 +11,7 @@ import (
 
 // Performance tracing: each API request is a transaction (Handler), with a
 // span per database query and connection wait (DBTracer) and per call to
-// Google or another outside API (Transport). The app sends its trace with
+// Google or another outside API (StartHTTP, called by platform/httpjson). The app sends its trace with
 // each request, so a slow screen on a phone links to what the API did.
 //
 // Spans are only made inside a sampled transaction, so all of this does
@@ -109,28 +108,21 @@ func queryName(sql string) string {
 	return "query"
 }
 
-// Transport makes a span per outgoing request: method, host and path only.
-// No headers (Google's key is one), no query string, and no trace headers
-// sent to the outside API.
-func Transport(base http.RoundTripper) http.RoundTripper {
-	if base == nil {
-		base = http.DefaultTransport
+// StartHTTP starts one span for a whole outgoing call (retries included) and
+// returns the function that ends it with the final status (0 if no response)
+// and error. description is built by the caller from the method, host and a
+// path template, so no query string or id reaches Sentry. A no-op outside a
+// sampled transaction.
+func StartHTTP(ctx context.Context, description string) func(status int, err error) {
+	sctx := child(ctx, "http.client", description)
+	if sctx == ctx {
+		return func(int, error) {}
 	}
-	return roundTripper{base}
-}
-
-type roundTripper struct{ base http.RoundTripper }
-
-func (t roundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
-	ctx := child(req.Context(), "http.client", req.Method+" "+req.URL.Host+req.URL.Path)
-	if ctx == req.Context() {
-		return t.base.RoundTrip(req)
+	return func(status int, err error) {
+		if span, ok := sctx.Value(spanKey{}).(*sentrygo.Span); ok && status != 0 {
+			span.Status = sentrygo.HTTPtoSpanStatus(status)
+			span.SetData("http.response.status_code", status)
+		}
+		finish(sctx, err)
 	}
-	res, err := t.base.RoundTrip(req)
-	if span, ok := ctx.Value(spanKey{}).(*sentrygo.Span); ok && res != nil {
-		span.Status = sentrygo.HTTPtoSpanStatus(res.StatusCode)
-		span.SetData("http.response.status_code", res.StatusCode)
-	}
-	finish(ctx, err)
-	return res, err
 }
