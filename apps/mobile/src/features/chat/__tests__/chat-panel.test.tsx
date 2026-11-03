@@ -129,13 +129,15 @@ it('offers a retry, not "no messages yet", when history fails', async () => {
 });
 
 it('keeps the messages and says so when a later refetch fails', async () => {
+  // No waiting between the room's retries.
+  client = new QueryClient({ defaultOptions: { queries: { retryDelay: 0 } } });
   await renderPanel(<ChatPanel room={{ eventId: 'e1' }} />);
   expect(await screen.findByText('hello')).toBeTruthy();
 
   mockApi.chat.listMessages.mockRejectedValue(new ConnectError('down', Code.Unavailable));
   void client.refetchQueries();
   // The room asks again twice before giving up.
-  expect(await screen.findByText('common.refreshFailed', {}, { timeout: 5000 })).toBeTruthy();
+  expect(await screen.findByText('common.refreshFailed')).toBeTruthy();
   expect(screen.getByText('hello')).toBeTruthy();
   expect(screen.queryByText('common.loadFailed')).toBeNull();
 });

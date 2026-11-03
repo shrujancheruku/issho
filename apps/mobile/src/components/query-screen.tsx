@@ -73,7 +73,8 @@ export function LoadState({ queries, notFound, center }: { queries: readonly Que
  * data, in the same order as `queries`. Having data is what counts, not
  * the last fetch: when a refetch fails the data stays, with a "Couldn't
  * refresh" line above it (the failed state is only for a screen with no
- * data yet). `children` renders the body (and
+ * data yet). `notFound` likewise applies only while a query has no data: a
+ * refetch that fails with NotFound keeps the stale body. `children` renders the body (and
  * its own scrolling), because the success layouts differ screen to screen.
  */
 export function QueryScreen<const Q extends readonly QueryLike[]>({

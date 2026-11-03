@@ -35,7 +35,7 @@ jest.mock('@/components/text-link', () => {
 
 const pending = (): QueryLike => ({ isError: false, error: null, data: undefined, refetch: jest.fn() });
 const failed = (error: unknown = new Error('down')): QueryLike => ({ ...pending(), isError: true, error });
-const loaded = (data: unknown): QueryLike => ({ ...pending(), data })
+const loaded = (data: unknown): QueryLike => ({ ...pending(), data });
 // A loaded query whose latest refetch failed: React Query keeps the data and sets the error.
 const refetchFailed = (data: unknown, error: unknown = new Error('offline')): QueryLike => ({ ...loaded(data), isError: true, isRefetchError: true, error });
 
