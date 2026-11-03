@@ -69,13 +69,15 @@ limit 1;
 update app.crews set suggested_at = @at where id = @id;
 
 -- The caller's crews: offers still open to them, and crews they're in.
+-- @max caps ListMyCrews (internal/platform/bound).
 -- name: ListUserCrews :many
 select c.id, c.city_id, c.status, c.activity_id, c.area_id, c.offer_until, m.response
 from app.crew_members m
 join app.crews c on c.id = m.crew_id
 where m.user_id = @user_id
   and ((c.status = 'offered' and m.response in ('offered', 'accepted')) or (c.status = 'active' and m.response = 'accepted'))
-order by c.created_at desc, c.id;
+order by c.created_at desc, c.id
+limit sqlc.narg('max')::int;
 
 -- name: GetCrewMembership :one
 select c.city_id, c.status, c.activity_id, c.area_id, c.offer_until, m.response

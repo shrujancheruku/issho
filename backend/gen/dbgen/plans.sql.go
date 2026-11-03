@@ -670,7 +670,13 @@ select p.id, p.area_id, p.activity_id, p.follow_up_id, p.primary_language, p.sec
 from app.plans p
 where p.city_id = $1 and p.status = 'open'
 order by p.created_at, p.id
+limit $2::int
 `
+
+type ListOpenPlansParams struct {
+	CityID string
+	Max    *int32
+}
 
 type ListOpenPlansRow struct {
 	ID                   uuid.UUID
@@ -696,8 +702,10 @@ type ListOpenPlansRow struct {
 
 // Signup counts come from the same rows the worker schedules from, so the
 // feed's "7 interested" always matches.
-func (q *Queries) ListOpenPlans(ctx context.Context, cityID string) ([]ListOpenPlansRow, error) {
-	rows, err := q.db.Query(ctx, listOpenPlans, cityID)
+// @max caps the list (internal/platform/bound); null reads every row, as the
+// worker does.
+func (q *Queries) ListOpenPlans(ctx context.Context, arg ListOpenPlansParams) ([]ListOpenPlansRow, error) {
+	rows, err := q.db.Query(ctx, listOpenPlans, arg.CityID, arg.Max)
 	if err != nil {
 		return nil, err
 	}

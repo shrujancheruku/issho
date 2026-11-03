@@ -56,9 +56,15 @@ type Open struct {
 	WalkTitle, WalkSummary []byte
 }
 
-// ListOpen returns a city's open plans with their signup counts, oldest first.
+// ListOpen returns a city's open plans with their signup counts, oldest
+// first. It reads them all: the worker schedules from this list, so it must
+// never be cut short (the feed caps its own read, see listFeed).
 func ListOpen(ctx context.Context, q *dbgen.Queries, cityID string) ([]Open, error) {
-	rows, err := q.ListOpenPlans(ctx, cityID)
+	return listOpen(ctx, q, cityID, nil)
+}
+
+func listOpen(ctx context.Context, q *dbgen.Queries, cityID string, max *int32) ([]Open, error) {
+	rows, err := q.ListOpenPlans(ctx, dbgen.ListOpenPlansParams{CityID: cityID, Max: max})
 	if err != nil {
 		return nil, err
 	}

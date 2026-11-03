@@ -40,6 +40,11 @@ service CrewService {
   rpc ReportCrewMember(ReportCrewMemberRequest) returns (ReportCrewMemberResponse) {}
 }
 
+// No paging fields: the list is bounded by the crews and open offers one
+// person has, and the server returns at most 50, newest first. The response
+// is the same shape either way.
+// If paging is ever added, page_size 0 (what today's builds send) keeps
+// returning the whole bounded list, per AIP-158 (proto/README.md).
 message ListMyCrewsRequest {}
 
 message ListMyCrewsResponse {

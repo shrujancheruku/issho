@@ -18,6 +18,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	"github.com/shrujancheruku/issho/backend/internal/matching"
 	"github.com/shrujancheruku/issho/backend/internal/plans"
+	"github.com/shrujancheruku/issho/backend/internal/platform/bound"
 )
 
 // A crew's state (app.crews.status).
@@ -67,6 +68,10 @@ var (
 	ErrOver = errors.New("this crew offer or crew is over")
 )
 
+// Cap bounds ListMyCrews: offers still open plus crews the caller is in.
+// Crews are small groups people keep a few of, so 50 is far past real use.
+var Cap = &bound.List{Name: "ListMyCrews", Max: 50}
+
 // Service is what CrewService does for one caller.
 type Service struct {
 	DB *pgxpool.Pool
@@ -98,10 +103,11 @@ type Mate struct {
 // newest first.
 func (s *Service) List(ctx context.Context, userID uuid.UUID) ([]Item, error) {
 	q := dbgen.New(s.DB)
-	rows, err := q.ListUserCrews(ctx, userID)
+	rows, err := q.ListUserCrews(ctx, dbgen.ListUserCrewsParams{UserID: userID, Max: Cap.Limit()})
 	if err != nil {
 		return nil, err
 	}
+	Cap.Check(ctx, nil, len(rows))
 	items := make([]Item, len(rows))
 	for i, r := range rows {
 		items[i] = Item{ID: r.ID, Status: r.Status, Activity: deref(r.ActivityID), Area: deref(r.AreaID), OfferUntil: r.OfferUntil.Time, Response: r.Response}
