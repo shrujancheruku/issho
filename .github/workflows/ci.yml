@@ -62,8 +62,8 @@ jobs:
           path: |
             ~/go/pkg/mod
             ~/.cache/go-build
-          key: go-${{ runner.os }}-codegen-${{ hashFiles('backend/go.sum') }}
-          restore-keys: go-${{ runner.os }}-codegen-
+          key: go-${{ runner.os }}-codegen-v2-${{ hashFiles('backend/go.sum') }}
+          restore-keys: go-${{ runner.os }}-codegen-v2-
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with:
@@ -76,7 +76,11 @@ jobs:
         if: github.event_name == 'pull_request'
         run: go tool buf breaking proto --against '.git#branch=origin/main,subdir=proto'
       - name: Generated code is up to date
-        run: make gen && git diff --exit-code
+        run: |
+          time make gen-proto
+          time make gen-sql
+          time make gen-strings
+          git diff --exit-code
 
   backend:
     runs-on: ubuntu-latest
