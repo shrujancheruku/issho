@@ -25,8 +25,8 @@ env:
     # owner and testers); M11 replaces it with a production project in Tokyo
     # before real users.
     SUPABASE_URL: https://yjnzrhusfxilktbjrzsw.supabase.co
-    # The sites on joinissho.com, plus their workers.dev addresses while both work.
-    ALLOWED_ORIGINS: https://admin.joinissho.com,https://app.joinissho.com,https://issho-admin.shrujancheruku.workers.dev,https://issho-web.shrujancheruku.workers.dev
+    # The sites on joinissho.com. Their workers.dev addresses are switched off.
+    ALLOWED_ORIGINS: https://admin.joinissho.com,https://app.joinissho.com
     # preview while this deploy points at issho-dev: it keeps the optional-key
     # behaviour. M11 switches it to production, which refuses to start without
     # its keys (backend/README.md). Also the default for SENTRY_ENVIRONMENT.

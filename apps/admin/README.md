@@ -55,21 +55,15 @@ Local sign-in codes arrive in Mailpit (`supabase status` → `MAILPIT_URL`). `VI
 
 ## Deploy
 
-`issho-admin` is a Cloudflare Worker with static assets only (`wrangler.jsonc`: `dist/`, unknown paths get `index.html`), at https://issho-admin.shrujancheruku.workers.dev. The app's web build deploys the same way as `issho-web`. Both are built against `issho-dev`.
-
-Until the API is hosted (M9) it runs on a dev machine behind a **Cloudflare quick tunnel**, a temporary `https://….trycloudflare.com` address (no account or domain needed; it changes every time the tunnel starts and only works while that machine runs the API):
+`issho-admin` is a Cloudflare Worker with static assets only (`wrangler.jsonc`: `dist/`, unknown paths get `index.html`), at https://admin.joinissho.com (its `workers.dev` address is switched off). The app's web build deploys the same way as `issho-web`, at https://app.joinissho.com. Both are built against `issho-dev` and the hosted API, https://api.joinissho.com.
 
 ```sh
-cloudflared tunnel --url http://localhost:8080      # prints the https://….trycloudflare.com URL
-SUPABASE_URL=<issho-dev URL> \
-ALLOWED_ORIGINS=https://issho-admin.shrujancheruku.workers.dev,https://issho-web.shrujancheruku.workers.dev \
-  make api ENV_FILE=.env.issho-dev
-scripts/deploy-web.sh https://….trycloudflare.com  # both sites; add `admin` or `web` for one
+scripts/deploy-web.sh                              # both sites, against https://api.joinissho.com; add `admin` or `web` for one
 ```
 
-The API URL is baked into each build, so redeploy after restarting the tunnel. `scripts/deploy-web.sh` takes the Supabase URL and publishable key from the environment (`EXPO_PUBLIC_*`) or else `apps/mobile/.env`, and deploys with your `wrangler login` (or `CLOUDFLARE_API_TOKEN`). `public/_headers` sets a strict Content-Security-Policy, `noindex` and no framing. Its `connect-src` allows Supabase and `*.trycloudflare.com`; the script narrows the deployed copy to the one API origin it was given, so the page can't call any other tunnel (checked in Chrome).
+The API URL is baked into each build, so redeploy if it changes. `scripts/deploy-web.sh` takes the Supabase URL and publishable key from the environment (`EXPO_PUBLIC_*`) or else `apps/mobile/.env`, and deploys with your `wrangler login` (or `CLOUDFLARE_API_TOKEN`). `public/_headers` sets a strict Content-Security-Policy, `noindex` and no framing. Its `connect-src` allows Supabase and `https://api.joinissho.com`; the script swaps in the API origin it was given if that differs, so the page can't call any other origin.
 
-**From CI:** `.github/workflows/deploy-web.yml` runs the same script on every push to `main` that touches either site. It's skipped until the repository variable `API_URL` is set, which should wait for the hosted API (M9): a tunnel's address changes too often. The workflow's header lists the other variables and the `CLOUDFLARE_API_TOKEN` secret (an account API token limited to *Workers Scripts: Edit*).
+**From CI:** `.github/workflows/deploy-web.yml` runs the same script on every push to `main` that touches either site. It's skipped until the repository variable `API_URL` is set (`https://api.joinissho.com`). The workflow's header lists the other variables and the `CLOUDFLARE_API_TOKEN` secret (an account API token limited to *Workers Scripts: Edit*).
 
 Anyone can open the page; data needs an admin token, which the API checks on every call. There's deliberately no Cloudflare Access in front (owner's decision, 2026-10-25).
 

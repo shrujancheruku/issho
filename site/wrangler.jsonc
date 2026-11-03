@@ -3,6 +3,8 @@
 {
   "name": "issho-site",
   "compatibility_date": "2026-10-26",
+  // The workers.dev address is switched off; the custom domains are the only way in.
+  "workers_dev": false,
   "assets": { "directory": "." },
   "routes": [
     { "pattern": "joinissho.com", "custom_domain": true },

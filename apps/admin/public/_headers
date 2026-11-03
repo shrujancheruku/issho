@@ -1,8 +1,9 @@
 # Served by Workers static assets. The page only talks to Supabase Auth and
-# the API. scripts/deploy-web.sh replaces https://*.trycloudflare.com below
-# with the API's exact origin in the deployed copy (dist/_headers).
+# the API. scripts/deploy-web.sh leaves https://api.joinissho.com below
+# as is, or replaces it with the API origin it was given if that differs
+# (dist/_headers).
 /*
-  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self' https://*.supabase.co https://*.trycloudflare.com; frame-ancestors 'none'; base-uri 'none'; form-action 'self'
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self' https://*.supabase.co https://api.joinissho.com; frame-ancestors 'none'; base-uri 'none'; form-action 'self'
   X-Content-Type-Options: nosniff
   Referrer-Policy: no-referrer
   X-Robots-Tag: noindex, nofollow
