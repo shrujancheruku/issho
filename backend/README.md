@@ -187,7 +187,7 @@ go run ./cmd/tool migrate status
 
 ## Seeding
 
-`cmd/tool seed` validates and upserts `../data/venue-categories.json` and `../data/activities.json`, then each city pack given (`make seed` loads them all). It's idempotent. Note that removing an area from the JSON does **not** delete it from the database. See [../data/README.md](../data/README.md).
+`cmd/tool seed` validates and upserts `../data/venue-categories.json` and `../data/activities.json`, then each city pack given (`make seed` loads them all) through `cities.Apply`, the only way to write a pack. With `GOOGLE_MAPS_API_KEY` set it also builds the travel times of new or moved areas; without it they are skipped (logged). It's idempotent. Note that removing an area from the JSON does **not** delete it from the database. See [../data/README.md](../data/README.md).
 
 ## Geo data (Google Maps)
 
