@@ -23,6 +23,11 @@ import (
 // ErrClosed means the plan doesn't exist or no longer takes signups.
 var ErrClosed = errors.New("plan is not open")
 
+// ErrSignupsChanged means someone the round would place is no longer signed
+// up for the plan (they withdrew after the pass read the signups). Nothing
+// was written; the next pass schedules the plan from fresh signups.
+var ErrSignupsChanged = errors.New("a signup changed since the pass read them")
+
 // wholeDay stands for matching's whole-day Occasion (Block "") in
 // app.plan_signup_unavailable, whose primary key can't hold a null.
 const wholeDay = "day"
@@ -241,25 +246,61 @@ func WithdrawSignup(ctx context.Context, pool *pgxpool.Pool, planID, userID uuid
 // occasions each person is already invited to or going to (from the
 // window's start) added to Unavailable, so nobody is double-booked.
 func LoadSignups(ctx context.Context, q *dbgen.Queries, planID uuid.UUID, from time.Time) ([]matching.Signup, error) {
-	ids, err := q.ListSignups(ctx, planID)
+	waiting, err := LoadWaiting(ctx, q, []uuid.UUID{planID})
 	if err != nil {
 		return nil, err
 	}
-	out := make([]matching.Signup, len(ids))
-	byUser := make(map[uuid.UUID]*matching.Signup, len(ids))
-	for i, id := range ids {
-		out[i].User = matching.UserID(id.String())
-		byUser[id] = &out[i]
+	signups := waiting[planID]
+	if signups == nil {
+		signups = []matching.Signup{} // as before: empty, not nil
 	}
-	slots, err := q.ListSignupSlots(ctx, planID)
+	return AddBusy(ctx, q, signups, from)
+}
+
+// LoadWaiting returns the waiting signups of several plans, sorted by user
+// and keyed by plan, with the weekly pattern and the dates each person
+// stored for that plan: three queries however many plans (#185). It is
+// LoadSignups without the person's other commitments (AddBusy), which change
+// as plans are scheduled and so are read per plan, when its turn comes.
+func LoadWaiting(ctx context.Context, q *dbgen.Queries, planIDs []uuid.UUID) (map[uuid.UUID][]matching.Signup, error) {
+	type key struct{ plan, user uuid.UUID }
+	rows, err := q.ListPlansSignups(ctx, planIDs)
+	if err != nil {
+		return nil, err
+	}
+	out := make(map[uuid.UUID][]matching.Signup, len(planIDs))
+	for _, r := range rows {
+		out[r.PlanID] = append(out[r.PlanID], matching.Signup{User: matching.UserID(r.UserID.String())})
+	}
+	// Rows arrive sorted by plan then user, so a person's index in their
+	// plan's list is found by counting as the list is filled.
+	index := make(map[key]int, len(rows))
+	next := map[uuid.UUID]int{}
+	for _, r := range rows {
+		index[key{r.PlanID, r.UserID}] = next[r.PlanID]
+		next[r.PlanID]++
+	}
+	// nil for a person who withdrew between the queries (they are not in the
+	// first result); their rows are skipped.
+	signup := func(plan, user uuid.UUID) *matching.Signup {
+		i, ok := index[key{plan, user}]
+		if !ok {
+			return nil
+		}
+		return &out[plan][i]
+	}
+	slots, err := q.ListPlansSignupSlots(ctx, planIDs)
 	if err != nil {
 		return nil, err
 	}
 	for _, r := range slots {
-		s := byUser[r.UserID]
+		s := signup(r.PlanID, r.UserID)
+		if s == nil {
+			continue
+		}
 		s.Pattern = append(s.Pattern, matching.Slot{Weekday: time.Weekday(r.Weekday), Block: matching.Block(r.Block)})
 	}
-	unavailable, err := q.ListSignupUnavailable(ctx, planID)
+	unavailable, err := q.ListPlansSignupUnavailable(ctx, planIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -268,8 +309,28 @@ func LoadSignups(ctx context.Context, q *dbgen.Queries, planID uuid.UUID, from t
 		if r.Block == wholeDay {
 			b = ""
 		}
-		s := byUser[r.UserID]
+		s := signup(r.PlanID, r.UserID)
+		if s == nil {
+			continue
+		}
 		s.Unavailable = append(s.Unavailable, matching.Occasion{Date: r.Date.Time, Block: b})
+	}
+	return out, nil
+}
+
+// AddBusy adds to each signup's Unavailable the occasions their person is
+// already invited to or going to, from the given date, so nobody is
+// double-booked. It changes signups in place and returns them.
+func AddBusy(ctx context.Context, q *dbgen.Queries, signups []matching.Signup, from time.Time) ([]matching.Signup, error) {
+	ids := make([]uuid.UUID, len(signups))
+	byUser := make(map[uuid.UUID]*matching.Signup, len(signups))
+	for i := range signups {
+		id, err := uuid.Parse(string(signups[i].User))
+		if err != nil {
+			return nil, err
+		}
+		ids[i] = id
+		byUser[id] = &signups[i]
 	}
 	busy, err := q.ListBusyOccasions(ctx, dbgen.ListBusyOccasionsParams{UserIds: ids, FromDate: date(from)})
 	if err != nil {
@@ -279,7 +340,7 @@ func LoadSignups(ctx context.Context, q *dbgen.Queries, planID uuid.UUID, from t
 		s := byUser[r.UserID]
 		s.Unavailable = append(s.Unavailable, matching.Occasion{Date: r.Date.Time, Block: matching.Block(r.Block)})
 	}
-	return out, nil
+	return signups, nil
 }
 
 // Event is a scheduled round to save.
@@ -300,6 +361,10 @@ type Event struct {
 	// the plan stays in its round with everyone signed up. ApproveProposal
 	// does the rest; Next is ignored.
 	Propose bool
+	// CheckSignups makes SaveEvent fail with ErrSignupsChanged, writing
+	// nothing, unless everyone invited is still signed up for the plan. The
+	// scheduling pass sets it: it read the signups before this save.
+	CheckSignups bool
 }
 
 // ProposalRest is how long the scheduler leaves a plan alone after an admin
@@ -328,6 +393,27 @@ func SaveEvent(ctx context.Context, pool *pgxpool.Pool, e Event) (eventID uuid.U
 		}
 		if err != nil {
 			return err
+		}
+		// The pass read the plan's signups once, up front, so check under the
+		// lock (which Withdraw and SaveSignup take too) that everyone it is
+		// about to invite is still waiting. Before anything is written, so
+		// nothing is invited or sent for a stale list.
+		if e.CheckSignups {
+			waiting, err := q.ListSignups(ctx, e.PlanID)
+			if err != nil {
+				return err
+			}
+			still := make(map[uuid.UUID]bool, len(waiting))
+			for _, u := range waiting {
+				still[u] = true
+			}
+			for _, g := range e.Scheduled.Groups {
+				for _, u := range g.Invited {
+					if id, err := uuid.Parse(string(u)); err != nil || !still[id] {
+						return ErrSignupsChanged
+					}
+				}
+			}
 		}
 		o := e.Scheduled.Occasion
 		status := EventScheduled

@@ -41,22 +41,40 @@ group by v.area_id, v.category_id;
 -- how many they attended. Cancelling in advance (dropped) isn't a miss.
 -- Attended is app.attendance's rule (checked in or said so in feedback;
 -- feedback saying no wins; the group went ahead).
-select p.user_id, p.home_area_id, p.max_travel_min, p.gender, p.same_gender_only, p.size_pref,
-       p.budget,
-       att.n as done_attended,
-       (select count(*) from app.group_members m join app.events e on e.id = m.event_id
-        where m.user_id = p.user_id and e.status = 'done' and m.response = 'confirmed')::int as done_confirmed,
+--
+-- Both counts come from one grouped pass over the city's people's
+-- memberships (hist) rather than a correlated count per person: one scan and
+-- one hash aggregate instead of an index probe per person per count (#185).
+-- done_confirmed counts a confirmed place at any finished event, including
+-- one whose group was cancelled, so it is not derived from `attended` or
+-- went_ahead.
+with city_people as (
+  select p.user_id, p.home_area_id, p.max_travel_min, p.gender, p.same_gender_only, p.size_pref, p.budget
+  from app.profiles p
+  join app.areas a on a.id = p.home_area_id
+  where a.city_id = $1
+    -- Suspended people aren't matched (ModerationService.SuspendPerson).
+    and not exists (select 1 from app.suspended_users s where s.user_id = p.user_id)
+), hist as (
+  select t.user_id,
+         count(*) filter (where t.attended)::int as attended,
+         count(*) filter (where t.response = 'confirmed' and e.status = 'done')::int as confirmed
+  from app.attendance t
+  join app.events e on e.id = t.event_id
+  where t.user_id in (select user_id from city_people)
+  group by t.user_id
+)
+select c.user_id, c.home_area_id, c.max_travel_min, c.gender, c.same_gender_only, c.size_pref,
+       c.budget,
+       coalesce(h.attended, 0)::int as done_attended,
+       coalesce(h.confirmed, 0)::int as done_confirmed,
        -- Same count as done_attended (attended implies a confirmed place at a
        -- finished outing); its own column for the newcomer check
        -- (matching.User.EventsAttended).
-       att.n as events_attended
-from app.profiles p
-join app.areas a on a.id = p.home_area_id
-cross join lateral (select count(*)::int as n from app.attendance t where t.user_id = p.user_id and t.attended) att
-where a.city_id = $1
-  -- Suspended people aren't matched (ModerationService.SuspendPerson).
-  and not exists (select 1 from app.suspended_users s where s.user_id = p.user_id)
-order by p.user_id;
+       coalesce(h.attended, 0)::int as events_attended
+from city_people c
+left join hist h on h.user_id = c.user_id
+order by c.user_id;
 
 -- name: ListMatchingLanguages :many
 select l.user_id, l.lang, l.fluent, coalesce(l.level, 0)::smallint as level

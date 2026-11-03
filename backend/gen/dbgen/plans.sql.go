@@ -897,6 +897,99 @@ func (q *Queries) ListPlansOnHold(ctx context.Context, arg ListPlansOnHoldParams
 	return items, nil
 }
 
+const listPlansSignupSlots = `-- name: ListPlansSignupSlots :many
+select plan_id, user_id, weekday, block from app.plan_signup_slots
+where plan_id = any($1::uuid[]) order by plan_id, user_id, weekday, block
+`
+
+func (q *Queries) ListPlansSignupSlots(ctx context.Context, planIds []uuid.UUID) ([]AppPlanSignupSlot, error) {
+	rows, err := q.db.Query(ctx, listPlansSignupSlots, planIds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []AppPlanSignupSlot
+	for rows.Next() {
+		var i AppPlanSignupSlot
+		if err := rows.Scan(
+			&i.PlanID,
+			&i.UserID,
+			&i.Weekday,
+			&i.Block,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listPlansSignupUnavailable = `-- name: ListPlansSignupUnavailable :many
+select plan_id, user_id, date, block from app.plan_signup_unavailable
+where plan_id = any($1::uuid[]) order by plan_id, user_id, date, block
+`
+
+func (q *Queries) ListPlansSignupUnavailable(ctx context.Context, planIds []uuid.UUID) ([]AppPlanSignupUnavailable, error) {
+	rows, err := q.db.Query(ctx, listPlansSignupUnavailable, planIds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []AppPlanSignupUnavailable
+	for rows.Next() {
+		var i AppPlanSignupUnavailable
+		if err := rows.Scan(
+			&i.PlanID,
+			&i.UserID,
+			&i.Date,
+			&i.Block,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listPlansSignups = `-- name: ListPlansSignups :many
+select plan_id, user_id from app.plan_signups
+where plan_id = any($1::uuid[]) order by plan_id, user_id
+`
+
+type ListPlansSignupsRow struct {
+	PlanID uuid.UUID
+	UserID uuid.UUID
+}
+
+// The waiting signups of several plans at once, keyed by plan_id: the
+// scheduling stage loads every open plan of a city in three queries, not
+// three per plan (#185).
+func (q *Queries) ListPlansSignups(ctx context.Context, planIds []uuid.UUID) ([]ListPlansSignupsRow, error) {
+	rows, err := q.db.Query(ctx, listPlansSignups, planIds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListPlansSignupsRow
+	for rows.Next() {
+		var i ListPlansSignupsRow
+		if err := rows.Scan(&i.PlanID, &i.UserID); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listRecentWalkFailures = `-- name: ListRecentWalkFailures :many
 select f.area_id, f.activity_id
 from app.walk_failures f join app.areas a on a.id = f.area_id
@@ -1017,68 +1110,6 @@ func (q *Queries) ListRecentlyClosedPlansByIDs(ctx context.Context, arg ListRece
 			&i.ClosedAt,
 			&i.SignedUp,
 		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listSignupSlots = `-- name: ListSignupSlots :many
-select user_id, weekday, block from app.plan_signup_slots
-where plan_id = $1 order by user_id, weekday, block
-`
-
-type ListSignupSlotsRow struct {
-	UserID  uuid.UUID
-	Weekday int16
-	Block   string
-}
-
-func (q *Queries) ListSignupSlots(ctx context.Context, planID uuid.UUID) ([]ListSignupSlotsRow, error) {
-	rows, err := q.db.Query(ctx, listSignupSlots, planID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []ListSignupSlotsRow
-	for rows.Next() {
-		var i ListSignupSlotsRow
-		if err := rows.Scan(&i.UserID, &i.Weekday, &i.Block); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listSignupUnavailable = `-- name: ListSignupUnavailable :many
-select user_id, date, block from app.plan_signup_unavailable
-where plan_id = $1 order by user_id, date, block
-`
-
-type ListSignupUnavailableRow struct {
-	UserID uuid.UUID
-	Date   pgtype.Date
-	Block  string
-}
-
-func (q *Queries) ListSignupUnavailable(ctx context.Context, planID uuid.UUID) ([]ListSignupUnavailableRow, error) {
-	rows, err := q.db.Query(ctx, listSignupUnavailable, planID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []ListSignupUnavailableRow
-	for rows.Next() {
-		var i ListSignupUnavailableRow
-		if err := rows.Scan(&i.UserID, &i.Date, &i.Block); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

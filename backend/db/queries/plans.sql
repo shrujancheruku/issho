@@ -143,13 +143,20 @@ select @plan_id, @user_id, unnest(@dates::date[]), unnest(@blocks::text[]);
 -- name: ListSignups :many
 select user_id from app.plan_signups where plan_id = $1 order by user_id;
 
--- name: ListSignupSlots :many
-select user_id, weekday, block from app.plan_signup_slots
-where plan_id = $1 order by user_id, weekday, block;
+-- The waiting signups of several plans at once, keyed by plan_id: the
+-- scheduling stage loads every open plan of a city in three queries, not
+-- three per plan (#185).
+-- name: ListPlansSignups :many
+select plan_id, user_id from app.plan_signups
+where plan_id = any(@plan_ids::uuid[]) order by plan_id, user_id;
 
--- name: ListSignupUnavailable :many
-select user_id, date, block from app.plan_signup_unavailable
-where plan_id = $1 order by user_id, date, block;
+-- name: ListPlansSignupSlots :many
+select plan_id, user_id, weekday, block from app.plan_signup_slots
+where plan_id = any(@plan_ids::uuid[]) order by plan_id, user_id, weekday, block;
+
+-- name: ListPlansSignupUnavailable :many
+select plan_id, user_id, date, block from app.plan_signup_unavailable
+where plan_id = any(@plan_ids::uuid[]) order by plan_id, user_id, date, block;
 
 -- name: DeleteSignups :exec
 -- People placed in a group stop waiting: their invitation records them now.
