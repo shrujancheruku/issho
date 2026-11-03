@@ -11,6 +11,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
+	"github.com/shrujancheruku/issho/backend/internal/matching"
 	"github.com/shrujancheruku/issho/backend/internal/plans"
 	"github.com/shrujancheruku/issho/backend/internal/platform/auth"
 	"github.com/shrujancheruku/issho/backend/internal/platform/errs"
@@ -173,7 +174,7 @@ func StatusProto(s string) (isshov1.CrewStatus, error) {
 func crewToProto(it Item) *isshov1.Crew {
 	out := &isshov1.Crew{
 		Id: it.ID.String(), Status: statusPB[it.Status], ActivityId: it.Activity, AreaId: it.Area,
-		Response: responsePB[it.Response],
+		Response: responsePB[it.Response], Quorum: matching.CrewMinSize,
 	}
 	if it.Status == Offered {
 		out.OfferUntil = timestamppb.New(it.OfferUntil)
