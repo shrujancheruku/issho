@@ -2,6 +2,7 @@ import { ConnectError, VenueStatus, type FoundVenue, type Venue, type VenueCity 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 
+import { ConfirmButton } from '../Confirm';
 import { formatTime } from '../format';
 import { useRememberedCity } from '../city';
 import { api } from '../lib';
@@ -119,10 +120,10 @@ export function Venues() {
           <div className="row">
             <span className="muted">{selected.size} selected</span>
             {others.map((t) => (
-              <button key={t.status} className="small secondary" disabled={!selected.size || setStatusOf.isPending}
-                onClick={() => setStatusOf.mutate({ ids: [...selected], to: t.status })}>
-                {t.status === VenueStatus.CANDIDATE ? 'Back to review' : t.status === VenueStatus.APPROVED ? 'Approve' : 'Reject'} selected
-              </button>
+              <ConfirmButton key={t.status} className="small secondary" disabled={!selected.size || setStatusOf.isPending}
+                label={`${t.status === VenueStatus.CANDIDATE ? 'Back to review' : t.status === VenueStatus.APPROVED ? 'Approve' : 'Reject'} selected`}
+                confirmLabel={`Yes, ${t.status === VenueStatus.CANDIDATE ? 'send back' : t.status === VenueStatus.APPROVED ? 'approve' : 'reject'} ${selected.size} ${selected.size === 1 ? 'venue' : 'venues'}`}
+                onConfirm={() => setStatusOf.mutate({ ids: [...selected], to: t.status })} />
             ))}
             <span className="spacer" />
             <span className="muted">Names are fetched from Google each time; a <span className="badge small-badge flag">flag</span> means look closer.</span>
@@ -181,8 +182,8 @@ function VenueRow({ venue: v, checked, onCheck, categoryName, busy, onSet }: {
       <td>{v.plans || ''}</td>
       <td className="nowrap muted">{v.reviewedAt ? formatTime(v.reviewedAt) : ''}</td>
       <td className="nowrap">
-        {v.status !== VenueStatus.APPROVED && <button className="small" disabled={busy} onClick={() => onSet(VenueStatus.APPROVED)}>Approve</button>}{' '}
-        {v.status !== VenueStatus.REJECTED && <button className="small secondary" disabled={busy} onClick={() => onSet(VenueStatus.REJECTED)}>Reject</button>}
+        {v.status !== VenueStatus.APPROVED && <ConfirmButton className="small" label="Approve" confirmLabel={`Yes, approve ${v.name || v.placeId}`} cancelLabel={`Cancel approving ${v.name || v.placeId}`} disabled={busy} onConfirm={() => onSet(VenueStatus.APPROVED)} />}{' '}
+        {v.status !== VenueStatus.REJECTED && <ConfirmButton className="small secondary" label="Reject" confirmLabel={`Yes, reject ${v.name || v.placeId}`} cancelLabel={`Cancel rejecting ${v.name || v.placeId}`} disabled={busy} onConfirm={() => onSet(VenueStatus.REJECTED)} />}
       </td>
     </tr>
   );
