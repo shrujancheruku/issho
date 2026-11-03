@@ -7,7 +7,6 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
@@ -31,13 +30,8 @@ func TestNonAdminRefused(t *testing.T) {
 // TestIntegrationQueue walks a report, a flag, a crew leave and a
 // translation through the queue. Skipped unless TEST_DATABASE_URL is set.
 func TestIntegrationQueue(t *testing.T) {
-	url := testfixture.DatabaseURL(t)
 	ctx := context.Background()
-	pool, err := pgxpool.New(ctx, url)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(pool.Close)
+	pool := testfixture.Pool(t)
 
 	// Stable ids, so a rerun deletes an interrupted run's rows first.
 	reporter := uuid.NewSHA1(uuid.NameSpaceURL, []byte("issho-test:moderation/reporter"))

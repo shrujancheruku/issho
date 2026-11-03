@@ -8,7 +8,6 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
@@ -42,13 +41,8 @@ func TestNonAdminRefused(t *testing.T) {
 // both), a cancelled group, a no-show, feedback and picks; the weekly
 // numbers and the city now. Skipped unless TEST_DATABASE_URL is set.
 func TestIntegrationMetrics(t *testing.T) {
-	url := testfixture.DatabaseURL(t)
 	ctx := context.Background()
-	pool, err := pgxpool.New(ctx, url)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(pool.Close)
+	pool := testfixture.Pool(t)
 	const city, area, act = "zz-metrics", "zz-metrics-a", "zz-metrics"
 	// Stable ids, so a rerun deletes an interrupted run's rows first.
 	user := func(name string) uuid.UUID {

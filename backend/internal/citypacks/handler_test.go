@@ -126,13 +126,8 @@ func (j *inlineJobs) Insert(ctx context.Context, args river.JobArgs, _ *river.In
 // travel times rebuilt) and finding an area's venues. Skipped unless
 // TEST_DATABASE_URL is set.
 func TestIntegrationCityPacks(t *testing.T) {
-	url := testfixture.DatabaseURL(t)
 	ctx := context.Background()
-	pool, err := pgxpool.New(ctx, url)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(pool.Close)
+	pool := testfixture.Pool(t)
 	const city, act, cat = "zz-packs", "zz-packs-act", "zz-packs-cafe"
 	cleanup := func() {
 		for _, s := range []string{

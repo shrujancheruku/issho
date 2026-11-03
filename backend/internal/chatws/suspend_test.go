@@ -17,7 +17,6 @@ import (
 	"github.com/coder/websocket"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/shrujancheruku/issho/backend/internal/chat"
 	"github.com/shrujancheruku/issho/backend/internal/crews"
@@ -30,14 +29,9 @@ import (
 // was suspended is closed with 4403 by their next send (a typing notice), with
 // nothing pushed from the hub in between.
 func TestIntegrationSocketSuspendedOnNextSend(t *testing.T) {
-	url := testfixture.DatabaseURL(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	pool, err := pgxpool.New(ctx, url)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(pool.Close)
+	pool := testfixture.Pool(t)
 	going, other, invited := uuid.New(), uuid.New(), uuid.New()
 	eventID := seed(t, ctx, pool, going, other, invited)
 	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)

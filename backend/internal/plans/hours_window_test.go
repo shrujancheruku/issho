@@ -8,13 +8,14 @@ import (
 	"time"
 
 	"github.com/shrujancheruku/issho/backend/internal/maps"
+	"github.com/shrujancheruku/issho/backend/internal/maps/mapstest"
 	"github.com/shrujancheruku/issho/backend/internal/matching"
 )
 
 // byVenue answers each venue with its own hours (none = unknown).
-type byVenue map[string]maps.Hours
-
-func (b byVenue) Hours(_ context.Context, id string) (maps.Hours, error) { return b[id], nil }
+func byVenue(hours map[string]maps.Hours) *mapstest.Fake {
+	return &mapstest.Fake{HoursFunc: func(id string) maps.Hours { return hours[id] }}
+}
 
 // TestCheckVenuesWindow: venues must be open for the activity's own hours
 // from the start, and the follow-up's from where the activity really ends.
@@ -77,7 +78,7 @@ func TestCheckVenuesWindow(t *testing.T) {
 			acts["b"] = c.followUp
 			p.FollowUp, p.FollowUpVenue = "b", "w"
 		}
-		r := &Runner{Log: slog.New(slog.NewTextHandler(io.Discard, nil)), Hours: byVenue{"v": c.venue, "w": c.after}}
+		r := &Runner{Log: slog.New(slog.NewTextHandler(io.Discard, nil)), Hours: byVenue(map[string]maps.Hours{"v": c.venue, "w": c.after})}
 		if got := r.checkVenues(context.Background(), p, acts, c.start, map[string]*maps.Hours{}); got != c.want {
 			t.Errorf("%s: %v, want %v", c.name, got, c.want)
 		}

@@ -10,25 +10,26 @@ import (
 	"time"
 
 	"github.com/shrujancheruku/issho/backend/internal/maps"
+	"github.com/shrujancheruku/issho/backend/internal/maps/mapstest"
 	"github.com/shrujancheruku/issho/backend/internal/matching"
 )
 
-// fakeSearch finds a station for station searches and records them.
-type fakeSearch struct{ reqs []maps.NearbyRequest }
-
-func (f *fakeSearch) Nearby(_ context.Context, r maps.NearbyRequest) ([]maps.Place, error) {
-	f.reqs = append(f.reqs, r)
-	if slices.Contains(r.Types, "train_station") {
-		return []maps.Place{{ID: "zz-station"}}, nil
-	}
-	return nil, nil
+// stationSearch finds a station for station searches and records them.
+func stationSearch() *mapstest.Fake {
+	return &mapstest.Fake{NearbyFunc: func(r maps.NearbyRequest) []maps.Place {
+		if slices.Contains(r.Types, "train_station") {
+			return []maps.Place{{ID: "zz-station"}}
+		}
+		return nil
+	}}
 }
 
-type recordingRoutes struct{ from, to string }
-
-func (f *recordingRoutes) WalkingRoute(_ context.Context, from, to string) (maps.Route, error) {
-	f.from, f.to = from, to
-	return maps.Route{Polyline: "enc", Duration: 20 * time.Minute}, nil
+// recordingRoutes answers every walking route with a 20-minute line; the
+// calls are read back with RouteCalls.
+func recordingRoutes() *mapstest.Fake {
+	return &mapstest.Fake{RouteFunc: func(_, _ string) maps.Route {
+		return maps.Route{Polyline: "enc", Duration: 20 * time.Minute}
+	}}
 }
 
 // TestIntegrationMeetingPlace: a photo walk (no venue) ending at a café
@@ -69,26 +70,26 @@ func TestIntegrationMeetingPlace(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	search, routes := &fakeSearch{}, &recordingRoutes{}
+	search, routes := stationSearch(), recordingRoutes()
 	r := &Runner{DB: f.pool, Log: slog.New(slog.NewTextHandler(io.Discard, nil)), Places: search, Routes: routes}
-	if found, err := r.RefreshMeetingPlaces(ctx, f.city); err != nil || found.Found != 1 || len(search.reqs) != 1 {
-		t.Fatalf("found=%d searches=%d err=%v; want one station for the walk only", found, len(search.reqs), err)
+	if found, err := r.RefreshMeetingPlaces(ctx, f.city); err != nil || found.Found != 1 || len(search.NearbyRequests()) != 1 {
+		t.Fatalf("found=%d searches=%d err=%v; want one station for the walk only", found, len(search.NearbyRequests()), err)
 	}
-	if c := search.reqs[0].Center; math.Abs(c.Lat-35.703) > 1e-9 || math.Abs(c.Lng-139.58) > 1e-9 {
+	if c := search.NearbyRequests()[0].Center; math.Abs(c.Lat-35.703) > 1e-9 || math.Abs(c.Lng-139.58) > 1e-9 {
 		t.Errorf("search centred on %v; want the area's centre", c)
 	}
-	if found, _ := r.RefreshMeetingPlaces(ctx, f.city); found.Found != 0 || len(search.reqs) != 1 {
-		t.Errorf("second pass searched again (%d searches)", len(search.reqs))
+	if found, _ := r.RefreshMeetingPlaces(ctx, f.city); found.Found != 0 || len(search.NearbyRequests()) != 1 {
+		t.Errorf("second pass searched again (%d searches)", len(search.NearbyRequests()))
 	}
 	if _, err := r.RefreshRoutes(ctx, f.city, time.Now()); err != nil {
 		t.Fatal(err)
 	}
-	if routes.from != "zz-station" || routes.to != "zz-meet-cafe" {
-		t.Errorf("route %s → %s; want from the station to the café", routes.from, routes.to)
+	if got := routes.RouteCalls(); len(got) == 0 || got[len(got)-1] != [2]string{"zz-station", "zz-meet-cafe"} {
+		t.Errorf("routes %v; want the last from the station to the café", got)
 	}
 
 	station := maps.PlaceDetails{Name: "吉祥寺駅", Location: maps.LatLng{Lat: 35.703, Lng: 139.58}}
-	svc := &Service{DB: f.pool, Places: fakePlaces{"zz-station": {"ja": station}, "zz-meet-cafe": {"ja": {Name: "カフェ", Location: maps.LatLng{Lat: 35.705, Lng: 139.582}}}}}
+	svc := &Service{DB: f.pool, Places: &mapstest.Fake{Localized: map[string]map[string]maps.PlaceDetails{"zz-station": {"ja": station}, "zz-meet-cafe": {"ja": {Name: "カフェ", Location: maps.LatLng{Lat: 35.705, Lng: 139.582}}}}}}
 	_, steps, _, err := svc.Plan(ctx, f.users[0], planID, time.Now())
 	if err != nil {
 		t.Fatal(err)

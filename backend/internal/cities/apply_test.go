@@ -6,8 +6,6 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/jackc/pgx/v5/pgxpool"
-
 	"github.com/shrujancheruku/issho/backend/internal/geo"
 	"github.com/shrujancheruku/issho/backend/internal/maps"
 	"github.com/shrujancheruku/issho/backend/internal/maps/mapstest"
@@ -52,13 +50,8 @@ func TestDiffAreas(t *testing.T) {
 // new or moved areas; a router failure leaves the pack seeded; discovering
 // an area's venues. Skipped unless TEST_DATABASE_URL is set.
 func TestIntegrationApply(t *testing.T) {
-	url := testfixture.DatabaseURL(t)
 	ctx := context.Background()
-	pool, err := pgxpool.New(ctx, url)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(pool.Close)
+	pool := testfixture.Pool(t)
 
 	const city, act, cat = "zz-apply", "zz-apply-act", "zz-apply-cafe"
 	cleanup := func() {
