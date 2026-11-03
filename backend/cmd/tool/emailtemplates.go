@@ -20,6 +20,10 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/translate/translators"
 )
 
+// newTranslator picks the machine translator; a var so tests can swap in a
+// fake and never reach Google or Gemini.
+var newTranslator = translators.New
+
 // emailTemplates regenerates the sign-in email templates in every language
 // listed in the source, through the translation cache (so a re-run only
 // translates what changed), and writes them only if every language succeeded.
@@ -34,7 +38,7 @@ func emailTemplates(ctx context.Context, pool *pgxpool.Pool, args []string) erro
 	if err != nil {
 		return err
 	}
-	translator, err := translators.New(toolCfg.Translator, toolCfg.GoogleTranslateAPIKey, toolCfg.GeminiAPIKey)
+	translator, err := newTranslator(toolCfg.Translator, toolCfg.GoogleTranslateAPIKey, toolCfg.GeminiAPIKey)
 	if err != nil {
 		return err
 	}

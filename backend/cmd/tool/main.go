@@ -123,6 +123,15 @@ func run(args []string) error {
 	}
 }
 
+// mapsClient is the Google Maps client build-matrix and discover-venues use:
+// a var so tests can swap in a fake and never reach the paid APIs.
+var mapsClient = func(key string) interface {
+	maps.Router
+	maps.PlaceSearcher
+} {
+	return google.New(key)
+}
+
 // mapsKey returns the server-side Google Maps key. It's only needed for real
 // runs, so -dry-run works without one.
 func mapsKey() (string, error) {
@@ -224,7 +233,7 @@ func buildMatrix(ctx context.Context, pool *pgxpool.Pool, args []string) error {
 	if err != nil {
 		return err
 	}
-	rows, deleted, err := geo.RebuildMatrix(ctx, pool, google.New(key), city)
+	rows, deleted, err := geo.RebuildMatrix(ctx, pool, mapsClient(key), city)
 	if err != nil {
 		return err
 	}
@@ -275,7 +284,7 @@ func discoverVenues(ctx context.Context, pool *pgxpool.Pool, args []string) erro
 	if err != nil {
 		return err
 	}
-	venues, n, err := geo.DiscoverVenues(ctx, google.New(key), areas, cats, langs[0], *budget)
+	venues, n, err := geo.DiscoverVenues(ctx, mapsClient(key), areas, cats, langs[0], *budget)
 	if err != nil {
 		return fmt.Errorf("after %d requests: %w", n.Made, err)
 	}
