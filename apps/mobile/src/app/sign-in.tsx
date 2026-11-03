@@ -71,56 +71,60 @@ export default function SignInScreen() {
     // so the window no longer resizes for it) and gives the form column.
     <ScreenFrame>
       <View style={styles.content}>
-          <Image source={require('@/assets/images/logo.png')} style={styles.logo} contentFit="contain" accessibilityLabel="Issho" />
+        <Image source={require('@/assets/images/logo.png')} style={styles.logo} contentFit="contain" accessibilityLabel="Issho" />
 
-          {step === 'email' ? (
-            <View style={styles.form}>
-              <ThemedText type="subtitle">{t('signIn.title')}</ThemedText>
-              <TextInput
-                style={inputStyle}
-                value={email}
-                onChangeText={setEmail}
-                placeholder="you@example.com"
-                placeholderTextColor={theme.textSecondary}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-                autoComplete="email"
-                textContentType="emailAddress"
-                returnKeyType="send"
-                onSubmitEditing={() => validEmail && void sendCode()}
-              />
-              <PrimaryButton label={t('signIn.sendCode')} onPress={sendCode} disabled={!validEmail} busy={busy} />
+        {step === 'email' ? (
+          <View style={styles.form}>
+            <ThemedText type="subtitle">{t('signIn.title')}</ThemedText>
+            <TextInput
+              style={inputStyle}
+              value={email}
+              onChangeText={setEmail}
+              placeholder="you@example.com"
+              placeholderTextColor={theme.textSecondary}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              autoComplete="email"
+              textContentType="emailAddress"
+              returnKeyType="send"
+              onSubmitEditing={() => validEmail && void sendCode()}
+            />
+            <PrimaryButton label={t('signIn.sendCode')} onPress={sendCode} disabled={!validEmail} busy={busy} />
+          </View>
+        ) : (
+          <View style={styles.form}>
+            <ThemedText type="subtitle">{t('signIn.checkEmail')}</ThemedText>
+            <ThemedText themeColor="textSecondary">{t('signIn.codeSent', { email: email.trim() })}</ThemedText>
+            <TextInput
+              style={[inputStyle, styles.code]}
+              value={code}
+              onChangeText={onCodeChange}
+              keyboardType="number-pad"
+              autoComplete="one-time-code"
+              textContentType="oneTimeCode"
+              maxLength={CODE_LENGTH}
+              autoFocus
+              editable={!busy}
+              accessibilityLabel={t('signIn.codeLabel')}
+            />
+            {busy && <ActivityIndicator />}
+            <View style={styles.row}>
+              <Pressable onPress={sendCode} disabled={busy}>
+                <ThemedText type="link">{t('signIn.resend')}</ThemedText>
+              </Pressable>
+              <Pressable onPress={() => setStep('email')} disabled={busy}>
+                <ThemedText type="link">{t('signIn.differentEmail')}</ThemedText>
+              </Pressable>
             </View>
-          ) : (
-            <View style={styles.form}>
-              <ThemedText type="subtitle">{t('signIn.checkEmail')}</ThemedText>
-              <ThemedText themeColor="textSecondary">{t('signIn.codeSent', { email: email.trim() })}</ThemedText>
-              <TextInput
-                style={[inputStyle, styles.code]}
-                value={code}
-                onChangeText={onCodeChange}
-                keyboardType="number-pad"
-                autoComplete="one-time-code"
-                textContentType="oneTimeCode"
-                maxLength={CODE_LENGTH}
-                autoFocus
-                editable={!busy}
-                accessibilityLabel={t('signIn.codeLabel')}
-              />
-              {busy && <ActivityIndicator />}
-              <View style={styles.row}>
-                <Pressable onPress={sendCode} disabled={busy}>
-                  <ThemedText type="link">{t('signIn.resend')}</ThemedText>
-                </Pressable>
-                <Pressable onPress={() => setStep('email')} disabled={busy}>
-                  <ThemedText type="link">{t('signIn.differentEmail')}</ThemedText>
-                </Pressable>
-              </View>
-            </View>
-          )}
+          </View>
+        )}
 
-          {error && <ThemedText themeColor="error" style={styles.error}>{error}</ThemedText>}
+        {error && (
+          <ThemedText themeColor="error" style={styles.error}>
+            {error}
+          </ThemedText>
+        )}
       </View>
     </ScreenFrame>
   );

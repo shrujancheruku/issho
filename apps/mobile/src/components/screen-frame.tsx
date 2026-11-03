@@ -84,7 +84,10 @@ function HeaderRow({ onBack, end, color, pad = true }: { onBack: () => void; end
     <View style={[styles.header, pad && styles.pad]}>
       <BackLink label={t('common.back')} onPress={onBack} color={color} />
       <View style={styles.end}>
-        <LanguageSwitch />
+        {/* The switch aligns itself to the end of its parent, which would drop it below a taller control beside it. */}
+        <View>
+          <LanguageSwitch />
+        </View>
         {end}
       </View>
     </View>
