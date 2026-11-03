@@ -303,10 +303,13 @@ The simulator runs the whole flow on synthetic users: suggest, signups from each
 
 ```sh
 go test ./...          # or `make test` from the root
+go test ./... -skip Integration -coverprofile=coverage.out && go tool cover -func=coverage.out   # coverage, only when you want it (`*.out` is gitignored)
 make lint-go           # golangci-lint + sqlc vet; `make lint` and CI's "Lint" step run it
 ```
 
 **Shared test doubles (a rule).** New tests use `internal/maps/mapstest` for anything that stands in for Google Maps and `internal/testfixture` for anything that needs the database: `testfixture.New` for a throwaway city with users, `testfixture.Pool` when a test inserts its own rows. A test file never defines its own fake of a `maps` interface, never calls `pgxpool.New` and never reads `TEST_DATABASE_URL`; if the shared package lacks a capability, extend it (with a test in `mapstest_test.go`) rather than keeping a local fake. Unset `TEST_DATABASE_URL` skips a database test locally and fails it when `CI=true`.
+
+Coverage is reported, never gated: CI's Test step writes a profile and a "Go coverage" table (per package, then the total) to the job summary (`scripts/go-coverage-summary.sh`). It excludes the Integration tests, which need the database. Local `make test` doesn't measure it.
 
 Linting is golangci-lint v2 (pinned in `go.mod`'s `tool` block; config in `.golangci.yml`): the `standard` set (errcheck, govet, ineffassign, staticcheck, unused) plus the gofmt and goimports formatters, with `gen/` excluded. Fix findings rather than silencing them; a `//nolint` names the linter and gives a reason.
 
