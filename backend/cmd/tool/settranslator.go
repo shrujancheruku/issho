@@ -6,7 +6,6 @@ import (
 	"flag"
 	"fmt"
 	"log/slog"
-	"os"
 	"slices"
 	"strings"
 
@@ -44,7 +43,7 @@ func setTranslator(ctx context.Context, pool *pgxpool.Pool, args []string) error
 			}
 		}
 	}
-	url, key := strings.TrimRight(os.Getenv("SUPABASE_URL"), "/"), os.Getenv("SUPABASE_SECRET_KEY")
+	url, key := toolCfg.SupabaseURL, toolCfg.SupabaseSecretKey
 	if url == "" || key == "" {
 		return errors.New("SUPABASE_URL and SUPABASE_SECRET_KEY are required")
 	}
