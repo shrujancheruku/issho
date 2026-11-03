@@ -2,7 +2,7 @@
 // building a city's geo data from Google Maps, and simulating matching.
 //
 //	tool migrate up|down|status|...
-//	tool seed [-catalog data/activities.json] [-venue-categories data/venue-categories.json] data/citypacks/tokyo.json ...
+//	tool seed [-catalog data/activities.json] [-venue-categories data/venue-categories.json] [-drop-curated-venues] data/citypacks/tokyo.json ...
 //	  (seed applies packs with cities.Apply: GOOGLE_MAPS_API_KEY builds the travel times of new or moved areas, else they are skipped)
 //	tool build-matrix [-dry-run] <city>
 //	tool discover-venues [-dry-run] [-categories cafe,park] <city>
@@ -100,13 +100,14 @@ func run(args []string) error {
 		fs := flag.NewFlagSet("seed", flag.ExitOnError)
 		catalog := fs.String("catalog", "../data/activities.json", "activity catalogue JSON")
 		venueCats := fs.String("venue-categories", "../data/venue-categories.json", "venue categories JSON")
+		drop := fs.Bool("drop-curated-venues", false, "allow deleting approved, rejected or hand-added venues of areas a pack removes or replaces (otherwise such a seed is refused)")
 		_ = fs.Parse(args[1:])
 		n, err := cities.SeedCatalog(ctx, pool, *venueCats, *catalog)
 		if err != nil {
 			return err
 		}
 		slog.Info("seeded catalogue", "activities", n)
-		return seedPacks(ctx, pool, fs.Args())
+		return seedPacks(ctx, pool, fs.Args(), cities.Options{DropCuratedVenues: *drop})
 	case "build-matrix":
 		return buildMatrix(ctx, pool, args[1:])
 	case "discover-venues":
@@ -142,7 +143,7 @@ func cityArg(fs *flag.FlagSet) (string, error) {
 // seedPacks applies each pack with cities.Apply, the one way to write a pack,
 // so new or moved areas get their travel times. With GOOGLE_MAPS_API_KEY it
 // rebuilds the matrix; without, it seeds and says the travel times were skipped.
-func seedPacks(ctx context.Context, pool *pgxpool.Pool, paths []string) error {
+func seedPacks(ctx context.Context, pool *pgxpool.Pool, paths []string, opts cities.Options) error {
 	// Left a nil interface (not a typed nil) without a key: Apply checks for nil.
 	var router maps.Router
 	if key := toolCfg.GoogleMapsAPIKey; key != "" {
@@ -161,8 +162,11 @@ func seedPacks(ctx context.Context, pool *pgxpool.Pool, paths []string) error {
 		}
 		packs = append(packs, p)
 	}
+	if err := cities.ValidatePacks(packs); err != nil {
+		return err
+	}
 	return applyPacks(ctx, packs, router != nil, func(ctx context.Context, p cities.Pack) (cities.Diff, error) {
-		return cities.Apply(ctx, pool, router, p)
+		return cities.Apply(ctx, pool, router, p, opts)
 	})
 }
 
@@ -182,6 +186,12 @@ func applyPacks(ctx context.Context, packs []cities.Pack, haveRouter bool, apply
 		slog.Info("seeded city pack", "city", p.ID, "areas", len(p.Areas),
 			"new_areas", d.NewAreas, "moved_areas", d.MovedAreas,
 			"travel_times_rebuilt", d.TravelTimesRebuilt, "travel_time_rows", d.TravelTimes)
+		// A pack is authoritative: say what it deleted, as the log is the
+		// record of a seed.
+		if len(d.RemovedAreas)+len(d.ReplacedAreas)+len(d.RemovedOverrides) > 0 {
+			slog.Warn("city pack removed data", "city", p.ID, "removed_areas", d.RemovedAreas,
+				"replaced_areas", d.ReplacedAreas, "removed_overrides", d.RemovedOverrides)
+		}
 		if !haveRouter && len(d.NewAreas)+len(d.MovedAreas) > 0 {
 			slog.Warn("travel times skipped: GOOGLE_MAPS_API_KEY is not set; run build-matrix once it is", "city", p.ID)
 		}

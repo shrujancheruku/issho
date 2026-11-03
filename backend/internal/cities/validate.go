@@ -161,6 +161,21 @@ func ValidatePack(p Pack, activityIDs map[string]bool) error {
 			bad("area %s: osm_id %d is not a relation id", a.ID, a.OSMID)
 		}
 	}
+	// `replaces` follows the activities' rules: a replaced id is retired (not
+	// an area of this pack) and replaced once. That it is not an area of any
+	// other pack is ValidatePacks; that it is this city's is checked by Apply.
+	replacedBy := map[string]string{}
+	for _, a := range p.Areas {
+		for _, r := range a.Replaces {
+			if areaIDs[r] {
+				bad("area %s: replaces %q, which is still an area", a.ID, r)
+			}
+			if prev, ok := replacedBy[r]; ok {
+				bad("area %s: %q is already replaced by %s", a.ID, r, prev)
+			}
+			replacedBy[r] = a.ID
+		}
+	}
 	// The point is where travel times start and, without a boundary, where
 	// venues are searched: it must be inside its own area and nobody else's,
 	// which also catches boundaries swapped between areas.
@@ -203,6 +218,34 @@ func ValidatePack(p Pack, activityIDs map[string]bool) error {
 		for _, m := range o.Months {
 			if m < 1 || m > 12 {
 				bad("override %s: month %d outside 1..12", o.ActivityID, m)
+			}
+		}
+	}
+	return errors.Join(errs...)
+}
+
+// ValidatePacks checks what no single pack can: an id one pack replaces must
+// not be an area of any pack, nor replaced by another pack. Area ids carry
+// their city's prefix, so only a typo or a copy-paste across packs trips this.
+func ValidatePacks(packs []Pack) error {
+	var errs []error
+	areaOf := map[string]string{}
+	for _, p := range packs {
+		for _, a := range p.Areas {
+			areaOf[a.ID] = p.ID
+		}
+	}
+	replacedBy := map[string]string{} // replaced id -> pack that replaces it
+	for _, p := range packs {
+		for _, a := range p.Areas {
+			for _, r := range a.Replaces {
+				if city, ok := areaOf[r]; ok {
+					errs = append(errs, fmt.Errorf("area %s: replaces %q, which is an area of pack %s", a.ID, r, city))
+				}
+				if prev, ok := replacedBy[r]; ok && prev != p.ID {
+					errs = append(errs, fmt.Errorf("area %s: %q is also replaced in pack %s", a.ID, r, prev))
+				}
+				replacedBy[r] = p.ID
 			}
 		}
 	}
