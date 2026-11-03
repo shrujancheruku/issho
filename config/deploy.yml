@@ -90,9 +90,10 @@ env:
 
 accessories:
   # Nightly pg_dump to Cloudflare R2, an off-site copy (config/backup/backup.sh;
-  # docs/deploy.md). The Postgres image matches the database's major version.
+  # docs/deploy.md). The image is config/backup/Dockerfile (Postgres client and
+  # curl; its major version matches the database's), built and pushed by hand.
   backup:
-    image: postgres:17-alpine
+    image: ghcr.io/shrujancheruku/issho-backup:17
     host: 35.243.76.67
     cmd: sh /backup/backup.sh
     files:
@@ -102,10 +103,13 @@ accessories:
         R2_ENDPOINT: https://b6f3e52f2491d38421018e275ef7896b.r2.cloudflarestorage.com
         R2_BUCKET: issho-backups # 30-day lifecycle rule
         BACKUP_AT: "18" # UTC hour: 03:00 in Tokyo, the quietest time for the main city
+        SENTRY_ENVIRONMENT: production
       secret:
         - DATABASE_URL
         - R2_ACCESS_KEY_ID
         - R2_SECRET_ACCESS_KEY
+        # Cron monitor check-ins; empty = none (config/backup/backup.sh).
+        - SENTRY_DSN
 
 aliases:
   # kamal migrate: apply migrations with the image for the current commit
