@@ -50,15 +50,15 @@ func TestIntegrationSuggestDefersWalksWithoutBudget(t *testing.T) {
 	}
 }
 
-// slowWalkProposer is a model that takes a moment, so the budget can run out
-// between a rejected attempt and its retry.
+// slowWalkProposer is a model that takes two minutes of the fake clock, so
+// the budget runs out between a rejected attempt and its retry.
 type slowWalkProposer struct {
 	*walkProposer
-	delay time.Duration
+	clock *time.Time
 }
 
 func (s slowWalkProposer) Propose(ctx context.Context, req walks.Request, fb []string) (walks.Proposal, error) {
-	time.Sleep(s.delay)
+	*s.clock = s.clock.Add(2 * time.Minute)
 	return s.walkProposer.Propose(ctx, req, fb)
 }
 
@@ -81,9 +81,12 @@ func TestIntegrationSuggestDefersWhenBudgetRunsOutBetweenAttempts(t *testing.T) 
 	}
 	log := slog.New(slog.NewTextHandler(io.Discard, nil))
 	prop, router := &walkProposer{bad: true}, &walkRouter{}
+	clock := time.Now()
 	r := &Runner{DB: f.pool, Timing: DefaultTiming(), Log: log, WalkRoutes: router,
-		Walks: &walks.Composer{Proposer: slowWalkProposer{prop, 1500 * time.Millisecond}, Places: findAll{}, Routes: router, Rules: walks.DefaultRules(), Log: log}}
-	ctx, cancel := context.WithTimeout(bg, walks.MinBudget+time.Second)
+		Walks: &walks.Composer{Proposer: slowWalkProposer{prop, &clock}, Places: findAll{}, Routes: router, Rules: walks.DefaultRules(), Log: log,
+			Clock: func() time.Time { return clock }}}
+	// 7 minutes left: enough to start; the first proposal uses two.
+	ctx, cancel := context.WithDeadline(bg, clock.Add(walks.MinBudget+time.Minute))
 	defer cancel()
 	now := time.Date(2030, 1, 1, 9, 0, 0, 0, time.UTC)
 	rep, err := r.Suggest(ctx, f.city, now)

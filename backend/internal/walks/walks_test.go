@@ -311,15 +311,15 @@ func TestHasBudget(t *testing.T) {
 	}
 }
 
-// slowProposer takes a while, as a model does, so the job's budget can run
-// out between attempts.
+// slowProposer takes two minutes of the (fake) clock per proposal, as a
+// model can, so the job's budget runs out between attempts.
 type slowProposer struct {
 	*fakeProposer
-	delay time.Duration
+	clock *time.Time
 }
 
 func (s slowProposer) Propose(ctx context.Context, r Request, fb []string) (Proposal, error) {
-	time.Sleep(s.delay)
+	*s.clock = s.clock.Add(2 * time.Minute)
 	return s.fakeProposer.Propose(ctx, r, fb)
 }
 
@@ -330,8 +330,11 @@ func TestComposeStopsRetryingWithoutBudget(t *testing.T) {
 	bad.Stops = bad.Stops[:1] // too few stops
 	fp := &fakeProposer{proposals: []Proposal{bad, temples()}}
 	c := composer(fp, &fakePlaces{places: templePlaces()}, &fakeRoutes{})
-	c.Proposer = slowProposer{fp, 300 * time.Millisecond}
-	ctx, cancel := context.WithTimeout(context.Background(), MinBudget+100*time.Millisecond)
+	clock := time.Now()
+	c.Clock = func() time.Time { return clock }
+	c.Proposer = slowProposer{fp, &clock}
+	// 7 minutes left: enough to start; the first proposal uses two.
+	ctx, cancel := context.WithDeadline(context.Background(), clock.Add(MinBudget+time.Minute))
 	defer cancel()
 	_, err := c.Compose(ctx, req())
 	if !errors.Is(err, ErrNoBudget) || len(fp.feedback) != 1 {

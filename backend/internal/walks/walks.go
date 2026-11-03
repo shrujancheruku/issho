@@ -89,9 +89,19 @@ var ErrNoBudget = errors.New("walks: not enough time left to compose")
 
 // HasBudget reports whether ctx has at least MinBudget left (no deadline
 // means unlimited).
-func HasBudget(ctx context.Context) bool {
+func HasBudget(ctx context.Context) bool { return hasBudget(ctx, time.Now) }
+
+// HasBudget is the package function on the composer's Clock.
+func (c *Composer) HasBudget(ctx context.Context) bool {
+	if c.Clock == nil {
+		return HasBudget(ctx)
+	}
+	return hasBudget(ctx, c.Clock)
+}
+
+func hasBudget(ctx context.Context, now func() time.Time) bool {
 	dl, ok := ctx.Deadline()
-	return !ok || time.Until(dl) >= MinBudget
+	return !ok || dl.Sub(now()) >= MinBudget
 }
 
 // Proposer proposes walks. feedback lists what was wrong with its previous
@@ -179,6 +189,9 @@ type Composer struct {
 	// OnAttempt, if set, hears about every proposal and how it fared
 	// (benchmarks, logs).
 	OnAttempt func(Attempt)
+	// Clock tells the time HasBudget measures the context's deadline
+	// against; nil = time.Now. Tests set it to avoid sleeping.
+	Clock func() time.Time
 }
 
 // Why a proposed place wasn't used (Drop.Reason).
@@ -215,7 +228,7 @@ type Attempt struct {
 func (c *Composer) Compose(ctx context.Context, req Request) (Walk, error) {
 	var feedback []string
 	for n := range max(c.Rules.Attempts, 1) {
-		if n > 0 && !HasBudget(ctx) {
+		if n > 0 && !c.HasBudget(ctx) {
 			return Walk{}, ErrNoBudget
 		}
 		p, err := c.Proposer.Propose(ctx, req, feedback)

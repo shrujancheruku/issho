@@ -207,7 +207,7 @@ func (r *Runner) suggest(ctx context.Context, q *dbgen.Queries, c *City, in matc
 			}
 			// Too little of the job's time left for a model call that can take
 			// minutes: leave the walk for the next run (a deferral, not a failure).
-			if !walks.HasBudget(ctx) {
+			if !r.Walks.HasBudget(ctx) {
 				results[i].skip = true
 				rep.Deferred++
 				outOfTime = true
