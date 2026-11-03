@@ -1,4 +1,4 @@
-import { CrewResponse, CrewStatus, type Crew, type CrewMember } from '@issho/api-client';
+import { type Crew, type CrewMember } from '@issho/api-client';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -16,6 +16,7 @@ import { TextLink } from '@/components/text-link';
 import { ThemedText } from '@/components/themed-text';
 import { Brand, Spacing } from '@/constants/theme';
 import { useCrew, useRespondToCrew } from '@/features/crews/data';
+import { crewView } from '@/features/crews/crew-view';
 import { crewName } from '@/features/crews/name';
 import { ChatPanel, SuggestedPlan } from '@/features/chat/chat-panel';
 import { suggestedPlans } from '@/features/chat/messages';
@@ -27,9 +28,6 @@ import { useTheme } from '@/hooks/use-theme';
 import { isRightToLeft } from '@/i18n/direction';
 import { useI18n, useOtherLanguage } from '@/i18n/i18n-provider';
 import { haptics } from '@/lib/haptics';
-
-/** A crew starts when this many say yes. */
-const Quorum = 3;
 
 /**
  * A crew. While it's an offer: who's in it, on a thread that fills a third
@@ -47,7 +45,7 @@ export default function CrewScreen() {
   const [wasOffer, setWasOffer] = useState<boolean | null>(null);
   const [showChat, setShowChat] = useState(false);
   const c = crew.data;
-  if (c && wasOffer === null) setWasOffer(c.status === CrewStatus.OFFERED);
+  if (c && wasOffer === null) setWasOffer(crewView(c).isOffer);
 
   if (!c) {
     return (
@@ -56,7 +54,7 @@ export default function CrewScreen() {
       </QueryScreen>
     );
   }
-  if (c.status === CrewStatus.OFFERED || (wasOffer && !showChat)) {
+  if (crewView(c).isOffer || (wasOffer && !showChat)) {
     return <Offer crew={c} onBack={leave} onOpenChat={() => setShowChat(true)} />;
   }
   return <Active crew={c} onBack={leave} />;
@@ -72,11 +70,11 @@ function useCrewName(crew: Crew) {
 function People({ crew, hop }: { crew: Crew; hop: number }) {
   const { t, languages } = useI18n();
   const m = useMotion();
-  const yes = crew.members.filter((x) => x.accepted).length;
-  const fill = useSharedValue(Math.min(yes, Quorum) / Quorum);
+  const { yesShown, quorum } = crewView(crew);
+  const fill = useSharedValue(yesShown / quorum);
   useEffect(() => {
-    fill.value = m.draw(Math.min(yes, Quorum) / Quorum);
-  }, [yes, fill, m]);
+    fill.value = m.draw(yesShown / quorum);
+  }, [yesShown, quorum, fill, m]);
   const fillStyle = useAnimatedStyle(() => ({
     transform: [{ scaleX: fill.value }],
   }));
@@ -155,9 +153,7 @@ function Offer({ crew, onBack, onOpenChat }: { crew: Crew; onBack: () => void; o
   const names = usePlanNames();
   const name = useCrewName(crew);
   const respond = useRespondToCrew(crew.id);
-  const started = crew.status === CrewStatus.ACTIVE;
-  const accepted = crew.response === CrewResponse.ACCEPTED;
-  const yes = crew.members.filter((m) => m.accepted).length;
+  const { isActive: started, accepted, yes, yesShown, quorum } = crewView(crew);
 
   // The crew started while the screen was open: hop, and a success haptic.
   const [hop, setHop] = useState(0);
@@ -205,11 +201,11 @@ function Offer({ crew, onBack, onOpenChat }: { crew: Crew; onBack: () => void; o
           style={styles.counter}
           accessible
           accessibilityLabel={t('crew.yesCount', {
-            count: Math.min(yes, Quorum),
+            count: yesShown,
           })}>
-          <ThemedText type="smallBold">{t('crew.yesCount', { count: Math.min(yes, Quorum) })}</ThemedText>
+          <ThemedText type="smallBold">{t('crew.yesCount', { count: yesShown })}</ThemedText>
           <View style={styles.bars}>
-            {Array.from({ length: Quorum }, (_, i) => (
+            {Array.from({ length: quorum }, (_, i) => (
               <View
                 key={i}
                 style={[

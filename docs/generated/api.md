@@ -2171,6 +2171,7 @@ A crew, or an offer of one, as the caller sees it.
 | offer_until | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | When the offer closes. |
 | response | [CrewResponse](#issho-v1-CrewResponse) |  |  |
 | members | [CrewMember](#issho-v1-CrewMember) | repeated | Everyone who accepted, and while it&#39;s an offer, everyone deciding. |
+| quorum | [int32](#int32) |  | How many acceptances start the crew (matching.CrewMinSize). Apps use 3 when it is 0, from an API that doesn&#39;t send it yet. |
 
 
 

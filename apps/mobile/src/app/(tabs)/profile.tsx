@@ -1,4 +1,4 @@
-import { CrewStatus, GroupSize, Interest } from '@issho/api-client';
+import { GroupSize, Interest } from '@issho/api-client';
 import { router } from 'expo-router';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
@@ -12,6 +12,7 @@ import { BottomTabInset, Spacing } from '@/constants/theme';
 import { useDeleteAccount } from '@/features/account/account-actions';
 import { setAppearance, useAppearance, type AppearancePreference } from '@/features/appearance/preference';
 import { useAuth } from '@/features/auth/auth-provider';
+import { crewView } from '@/features/crews/crew-view';
 import { useMyCrews } from '@/features/crews/data';
 import { usePlanNames } from '@/features/plans/names';
 import { pairText } from '@/features/plans/plan-card';
@@ -41,7 +42,7 @@ export default function YouScreen() {
   const crews = useMyCrews();
   const names = usePlanNames();
   const p = profile.data?.profile;
-  const activeCrews = crews.data?.filter((c) => c.status === CrewStatus.ACTIVE).length ?? 0;
+  const activeCrews = crews.data?.filter((c) => crewView(c).isActive).length ?? 0;
 
   const liked = p ? p.activities.filter((a) => a.interest !== Interest.UNSPECIFIED) : [];
   const languageLine = p

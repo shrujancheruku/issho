@@ -677,7 +677,10 @@ type Crew struct {
 	OfferUntil *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=offer_until,json=offerUntil,proto3" json:"offer_until,omitempty"`
 	Response   CrewResponse           `protobuf:"varint,6,opt,name=response,proto3,enum=issho.v1.CrewResponse" json:"response,omitempty"`
 	// Everyone who accepted, and while it's an offer, everyone deciding.
-	Members       []*CrewMember `protobuf:"bytes,7,rep,name=members,proto3" json:"members,omitempty"`
+	Members []*CrewMember `protobuf:"bytes,7,rep,name=members,proto3" json:"members,omitempty"`
+	// How many acceptances start the crew (matching.CrewMinSize). Apps use 3
+	// when it is 0, from an API that doesn't send it yet.
+	Quorum        int32 `protobuf:"varint,8,opt,name=quorum,proto3" json:"quorum,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -759,6 +762,13 @@ func (x *Crew) GetMembers() []*CrewMember {
 		return x.Members
 	}
 	return nil
+}
+
+func (x *Crew) GetQuorum() int32 {
+	if x != nil {
+		return x.Quorum
+	}
+	return 0
 }
 
 type CrewMember struct {
@@ -859,7 +869,7 @@ const file_issho_v1_crews_proto_rawDesc = "" +
 	"\tmember_id\x18\x02 \x01(\tR\bmemberId\x12.\n" +
 	"\x06reason\x18\x03 \x01(\x0e2\x16.issho.v1.ReportReasonR\x06reason\x12\"\n" +
 	"\adetails\x18\x04 \x01(\tB\b\xbaH\x05r\x03\x18\xe8\aR\adetails\"\x1a\n" +
-	"\x18ReportCrewMemberResponse\"\x9f\x02\n" +
+	"\x18ReportCrewMemberResponse\"\xb7\x02\n" +
 	"\x04Crew\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12,\n" +
 	"\x06status\x18\x02 \x01(\x0e2\x14.issho.v1.CrewStatusR\x06status\x12\x1f\n" +
@@ -869,7 +879,8 @@ const file_issho_v1_crews_proto_rawDesc = "" +
 	"\voffer_until\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"offerUntil\x122\n" +
 	"\bresponse\x18\x06 \x01(\x0e2\x16.issho.v1.CrewResponseR\bresponse\x12.\n" +
-	"\amembers\x18\a \x03(\v2\x14.issho.v1.CrewMemberR\amembers\"\\\n" +
+	"\amembers\x18\a \x03(\v2\x14.issho.v1.CrewMemberR\amembers\x12\x16\n" +
+	"\x06quorum\x18\b \x01(\x05R\x06quorum\"\\\n" +
 	"\n" +
 	"CrewMember\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
