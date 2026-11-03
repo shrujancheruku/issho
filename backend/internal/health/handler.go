@@ -55,3 +55,4 @@ func (h *Handler) Up(w http.ResponseWriter, r *http.Request) {
 	}
 	_, _ = w.Write([]byte("ok\n"))
 }
+// throwaway ci probe
