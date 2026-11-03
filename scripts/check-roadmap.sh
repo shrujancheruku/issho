@@ -15,7 +15,9 @@ fi
 
 # Renovate's dependency PRs (branch renovate/*) change lockfiles, pins and workflows
 # but are not build-plan progress. HEAD_REF is the PR's head branch (empty on pushes,
-# where main only receives squash merges that already passed this check).
+# where main only receives squash merges that already passed this check). The skip is
+# by branch name, so anyone can name a branch renovate/...; acceptable because a
+# human still reviews every PR before it merges.
 if [[ "${HEAD_REF:-}" == renovate/* ]]; then
   echo "Renovate branch; roadmap update not required."
   exit 0

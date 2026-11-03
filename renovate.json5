@@ -36,30 +36,12 @@
       semanticCommitType: "chore",
     },
     {
-      // Expo moves as one SDK: never automerged. `expo install --fix` picks the
-      // versions each SDK expects, which Renovate can't, so a person aligns them.
-      groupName: "expo",
-      matchPackageNames: [
-        "expo",
-        "expo-*",
-        "react-native",
-        "@react-native/*",
-        "@expo/*",
-        "jest-expo",
-        "eslint-config-expo",
-      ],
-      automerge: false,
-      prBodyNotes: [
-        "Align the SDK-pinned packages before merging: from `apps/mobile` run `npx expo install --fix` and `npx expo-doctor`, and commit the result. Follow `apps/mobile/AGENTS.md` (read the versioned Expo docs; don't rely on memory).",
-      ],
-    },
-    {
       // Automerge only patch and minor updates of dev tooling, once the required
       // checks pass (the `main` ruleset enforces them). Everything else waits for review.
       matchDepTypes: ["devDependencies"],
       matchUpdateTypes: ["patch", "minor"],
       // Wrangler deploys the admin and the site: review it.
-      excludePackageNames: ["wrangler"],
+      matchPackageNames: ["!wrangler"],
       automerge: true,
     },
     {
@@ -82,6 +64,27 @@
       // comment in ci.yml), so a person checks each bump against the CLI.
       matchPackageNames: ["public.ecr.aws/supabase/postgres"],
       automerge: false,
+    },
+    {
+      // Expo moves as one SDK: never automerged. `expo install --fix` picks the
+      // versions each SDK expects, which Renovate can't, so a person aligns them.
+      // Keep this rule LAST: later packageRules win, and an earlier position would let
+      // the devDependencies automerge rule override `automerge: false` for
+      // jest-expo and eslint-config-expo.
+      groupName: "expo",
+      matchPackageNames: [
+        "expo",
+        "expo-*",
+        "react-native",
+        "@react-native/*",
+        "@expo/*",
+        "jest-expo",
+        "eslint-config-expo",
+      ],
+      automerge: false,
+      prBodyNotes: [
+        "Align the SDK-pinned packages before merging: from `apps/mobile` run `npx expo install --fix` and `npx expo-doctor`, and commit the result. Follow `apps/mobile/AGENTS.md` (read the versioned Expo docs; don't rely on memory).",
+      ],
     },
   ],
   customManagers: [

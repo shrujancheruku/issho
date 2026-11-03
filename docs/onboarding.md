@@ -126,10 +126,10 @@ Read [contributing.md](contributing.md). In short:
 
 - Titles are `fix(deps): …` (runtime) or `chore(deps): …` (dev tooling), so release-please and commitlint accept them.
 - Only patch and minor updates of dev tooling and the build-only Go tools (buf, goose, sqlc, protoc-gen-doc, gitleaks) automerge, after the required checks pass. Wrangler, runtime dependencies, majors and Docker images wait for review.
-- Expo (`expo`, `expo-*`, `react-native`, `@react-native/*`) arrives as one `expo` PR, never automerged. Check out the branch, run `npx expo install --fix` and `npx expo-doctor` in `apps/mobile`, and commit the result.
+- Expo (`expo`, `expo-*`, `react-native`, `@react-native/*`, `@expo/*`, `jest-expo`, `eslint-config-expo`) arrives as one `expo` PR, never automerged. Check out the branch, run `npx expo install --fix` and `npx expo-doctor` in `apps/mobile`, and commit the result.
 - The `roadmap` job skips `renovate/*` branches (`scripts/check-roadmap.sh`), so these PRs need no ROADMAP edit.
 - When you add a `uses:` line, pin it to a SHA with a version comment (`uses: owner/repo@<sha> # v1.2.3`); Renovate keeps both current.
-- **Owner setup (once):** install the Renovate GitHub App on `shrujancheruku/issho` (github.com/apps/renovate, "Only select repositories"), merge its onboarding PR or close it if `renovate.json5` is already on `main`, and turn off Dependabot version updates under Settings > Code security.
+- **Owner setup (once):** install the Renovate GitHub App on `shrujancheruku/issho` (github.com/apps/renovate, "Only select repositories"), merge its onboarding PR or close it if `renovate.json5` is already on `main`, and turn off Dependabot version updates under Settings > Code security. The config was never run through Renovate's validator, so check the onboarding PR or the first Dependency Dashboard for config errors.
 
 ## Troubleshooting
 
