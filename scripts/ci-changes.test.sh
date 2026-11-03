@@ -83,7 +83,11 @@ trap 'rm -rf "$tmp"' EXIT
   git mv backend/a.go docs/a.txt
   git -c user.name=t -c user.email=t@t commit -qm two
   git diff --no-renames --name-only HEAD~1 HEAD
-) | { ./ci-changes.sh | grep -qx 'backend=true'; } || { echo "FAIL rename via git diff"; fail=1; }
+) >"$tmp/rename-paths" || { echo "FAIL rename setup"; exit 1; }
+# Capture and match in the shell: `grep -q` exits at the first hit, and under
+# pipefail the writer's SIGPIPE would then fail the pipeline (flaky).
+rename_out=$(./ci-changes.sh <"$tmp/rename-paths")
+[[ $'\n'"$rename_out"$'\n' == *$'\nbackend=true\n'* ]] || { echo "FAIL rename via git diff"; fail=1; }
 
 all_out=$(./ci-changes.sh --all </dev/null | grep -Ev '^(admin|mobile)=' | tr '\n' ' ' | sed 's/ $//')
 [[ "$all_out" == "$all" ]] || { echo "FAIL --all: $all_out"; fail=1; }
