@@ -216,8 +216,8 @@ type UpsertVenueParams struct {
 	CategoryID    string
 }
 
-// Re-discovering a venue only bumps last_seen_at; curation status and tags
-// are kept. A place found in a new category takes the status an admin (or
+// Re-discovering a venue only bumps last_seen_at; curation status
+// is kept. A place found in a new category takes the status an admin (or
 // a closure) already gave the place: curation is per place (00023).
 func (q *Queries) UpsertVenue(ctx context.Context, arg UpsertVenueParams) error {
 	_, err := q.db.Exec(ctx, upsertVenue,

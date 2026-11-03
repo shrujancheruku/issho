@@ -121,8 +121,8 @@ func SaveMatrix(ctx context.Context, pool *pgxpool.Pool, cityID string, rows []T
 	return deleted, err
 }
 
-// SaveVenues upserts discovered venues. Existing venues keep their area,
-// curation status and tags; only last_seen_at is refreshed.
+// SaveVenues upserts discovered venues. Existing venues keep their area and
+// curation status; only last_seen_at is refreshed.
 func SaveVenues(ctx context.Context, pool *pgxpool.Pool, cityID string, venues []Venue) error {
 	return pgx.BeginFunc(ctx, pool, func(tx pgx.Tx) error {
 		q := dbgen.New(tx)

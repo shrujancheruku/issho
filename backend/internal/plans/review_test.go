@@ -44,7 +44,7 @@ func TestIntegrationReview(t *testing.T) {
 
 	// The matcher's plan is a draft: not open, not in anyone's feed, and
 	// counted under the city's cap, so a second pass adds nothing.
-	if opened, err := r.Suggest(ctx, f.city, now); err != nil || opened != 1 {
+	if opened, err := r.Suggest(ctx, f.city, now); err != nil || opened.Opened != 1 {
 		t.Fatalf("Suggest = %d, %v", opened, err)
 	}
 	if open, err := ListOpen(ctx, f.q, f.city); err != nil || len(open) != 0 {
@@ -53,7 +53,7 @@ func TestIntegrationReview(t *testing.T) {
 	if feed, err := svc.Feed(ctx, f.users[0]); err != nil || len(feed) != 0 {
 		t.Fatalf("feed with only a draft = %d plans, %v", len(feed), err)
 	}
-	if opened, err := r.Suggest(ctx, f.city, now); err != nil || opened != 0 {
+	if opened, err := r.Suggest(ctx, f.city, now); err != nil || opened.Opened != 0 {
 		t.Fatalf("second Suggest = %d, %v (the draft should count)", opened, err)
 	}
 	list := func(status isshov1.ReviewPlanStatus) []*isshov1.ReviewPlan {

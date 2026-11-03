@@ -37,49 +37,60 @@ func NotificationKinds() []string {
 	return []string{NotifyInvited, NotifyConfirmed, NotifyCancelled, NotifyNoGroup, NotifyFeedback}
 }
 
-func (r *NotificationRenderer) Render(ctx context.Context, items []notifications.Pending) ([]notifications.Content, error) {
+// Render writes each item on its own: one whose plan is gone is skipped,
+// and one that errors is its own failure, not the batch's.
+func (r *NotificationRenderer) Render(ctx context.Context, items []notifications.Pending) []notifications.Result {
 	q := dbgen.New(r.Plans.DB)
-	out := make([]notifications.Content, len(items))
+	out := make([]notifications.Result, len(items))
 	// Items about the same plan, in the same language, share a title.
 	type key struct {
 		ref  notifications.Ref
 		lang string
 	}
-	titles := map[key]string{}
+	type titleResult struct {
+		title string
+		gone  bool
+		err   error
+	}
+	titles := map[key]titleResult{}
 	for i, p := range items {
 		k := key{p.Ref, p.Language}
-		title, ok := titles[k]
+		t, ok := titles[k]
 		if !ok {
-			var err error
-			if title, err = r.title(ctx, q, p); err != nil {
-				return nil, err
-			}
-			titles[k] = title
+			t.title, t.gone, t.err = r.title(ctx, q, p)
+			titles[k] = t
 		}
-		out[i] = notifications.Content{
-			Title: title,
-			Body:  r.Catalog.Text(ctx, r.Plans.Translations, p.Language, notificationText[p.Kind]),
+		switch {
+		case t.err != nil:
+			out[i].Err = t.err
+		case t.gone:
+			out[i].Skip = true
+		default:
+			out[i].Content = notifications.Content{
+				Title: t.title,
+				Body:  r.Catalog.Text(ctx, r.Plans.Translations, p.Language, notificationText[p.Kind]),
+			}
 		}
 	}
-	return out, nil
+	return out
 }
 
-// title is the plan's title in the person's language; "" if the plan is
-// gone (the message still goes out, and the app shows what it can).
-func (r *NotificationRenderer) title(ctx context.Context, q *dbgen.Queries, p notifications.Pending) (string, error) {
+// title is the plan's title in the person's language; gone is true if the
+// plan was deleted (nothing to say, so the notification is skipped).
+func (r *NotificationRenderer) title(ctx context.Context, q *dbgen.Queries, p notifications.Pending) (title string, gone bool, err error) {
 	pl, err := q.GetNotificationPlan(ctx, dbgen.GetNotificationPlanParams{EventID: nullable(p.Ref.EventID), PlanID: nullable(p.Ref.PlanID)})
 	if errors.Is(err, pgx.ErrNoRows) {
-		return "", nil
+		return "", true, nil
 	}
 	if err != nil {
-		return "", err
+		return "", false, err
 	}
 	plan := titled{matching.Plan{Activity: matching.ActivityID(pl.ActivityID), FollowUp: matching.ActivityID(deref(pl.FollowUpID))}, pl.Title}
 	t, _, err := r.Plans.titles(ctx, q, pl.CityID, Caller{Primary: p.Language}, []titled{plan})
 	if err != nil {
-		return "", err
+		return "", false, err
 	}
-	return t[0], nil
+	return t[0], false, nil
 }
 
 func nullable(id uuid.UUID) pgtype.UUID { return pgtype.UUID{Bytes: id, Valid: id != uuid.Nil} }

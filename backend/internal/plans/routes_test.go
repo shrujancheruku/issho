@@ -46,11 +46,11 @@ func TestIntegrationRoutes(t *testing.T) {
 	r := &Runner{DB: f.pool, Timing: DefaultTiming(), Log: slog.New(slog.NewTextHandler(io.Discard, nil)), Routes: finder}
 
 	now := time.Now()
-	if computed, cleared, err := r.RefreshRoutes(ctx, f.city, now); err != nil || computed != 1 || cleared != 0 || finder.calls != 1 {
-		t.Fatalf("first pass: computed=%d cleared=%d calls=%d err=%v; want only the two-venue plan", computed, cleared, finder.calls, err)
+	if rr, err := r.RefreshRoutes(ctx, f.city, now); err != nil || rr.Computed != 1 || rr.Cleared != 0 || finder.calls != 1 {
+		t.Fatalf("first pass: computed=%d cleared=%d calls=%d err=%v; want only the two-venue plan", rr.Computed, rr.Cleared, finder.calls, err)
 	}
-	if computed, _, _ := r.RefreshRoutes(ctx, f.city, now); computed != 0 || finder.calls != 1 {
-		t.Errorf("second pass computed %d (calls %d); a fresh route isn't recomputed", computed, finder.calls)
+	if rr, _ := r.RefreshRoutes(ctx, f.city, now); rr.Computed != 0 || finder.calls != 1 {
+		t.Errorf("second pass computed %d (calls %d); a fresh route isn't recomputed", rr.Computed, finder.calls)
 	}
 	open, err := ListOpen(ctx, f.q, f.city)
 	if err != nil {
@@ -71,12 +71,12 @@ func TestIntegrationRoutes(t *testing.T) {
 	}
 
 	recomputedAt := now.Add(RouteRefreshAge + time.Hour)
-	if computed, _, _ := r.RefreshRoutes(ctx, f.city, recomputedAt); computed != 1 {
-		t.Errorf("after %s: computed %d, want 1", RouteRefreshAge, computed)
+	if rr, _ := r.RefreshRoutes(ctx, f.city, recomputedAt); rr.Computed != 1 {
+		t.Errorf("after %s: computed %d, want 1", RouteRefreshAge, rr.Computed)
 	}
 	// Without a finder (no Maps key), a route past the limit is cleared.
 	noKey := &Runner{DB: f.pool, Timing: DefaultTiming(), Log: r.Log}
-	if computed, cleared, err := noKey.RefreshRoutes(ctx, f.city, recomputedAt.Add(RouteMaxAge+time.Hour)); err != nil || computed != 0 || cleared != 1 {
-		t.Errorf("past the limit without a key: computed=%d cleared=%d err=%v; want 1 cleared", computed, cleared, err)
+	if rr, err := noKey.RefreshRoutes(ctx, f.city, recomputedAt.Add(RouteMaxAge+time.Hour)); err != nil || rr.Computed != 0 || rr.Cleared != 1 {
+		t.Errorf("past the limit without a key: computed=%d cleared=%d err=%v; want 1 cleared", rr.Computed, rr.Cleared, err)
 	}
 }

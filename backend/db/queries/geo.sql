@@ -39,8 +39,8 @@ where exists (
 order by c.id;
 
 -- name: UpsertVenue :exec
--- Re-discovering a venue only bumps last_seen_at; curation status and tags
--- are kept. A place found in a new category takes the status an admin (or
+-- Re-discovering a venue only bumps last_seen_at; curation status
+-- is kept. A place found in a new category takes the status an admin (or
 -- a closure) already gave the place: curation is per place (00023).
 insert into app.venues (google_place_id, city_id, area_id, category_id, status)
 values (@google_place_id, @city_id, @area_id, @category_id, coalesce(

@@ -58,7 +58,7 @@ const upsertUser = `-- name: UpsertUser :one
 insert into app.users (id, email)
 values ($1, $2)
 on conflict (id) do update set email = coalesce(excluded.email, app.users.email)
-returning id, email, verified_at, deleted_at, created_at
+returning id, email, created_at
 `
 
 type UpsertUserParams struct {
@@ -72,12 +72,6 @@ type UpsertUserParams struct {
 func (q *Queries) UpsertUser(ctx context.Context, arg UpsertUserParams) (AppUser, error) {
 	row := q.db.QueryRow(ctx, upsertUser, arg.ID, arg.Email)
 	var i AppUser
-	err := row.Scan(
-		&i.ID,
-		&i.Email,
-		&i.VerifiedAt,
-		&i.DeletedAt,
-		&i.CreatedAt,
-	)
+	err := row.Scan(&i.ID, &i.Email, &i.CreatedAt)
 	return i, err
 }

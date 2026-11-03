@@ -64,6 +64,34 @@ func LoadCity(ctx context.Context, q *dbgen.Queries, cityID string, month time.M
 	return c, nil
 }
 
+// InSeason returns the city with only the activities in season in the given
+// month: what LoadCity(month) would have, without reloading the city. c must
+// have been loaded with month 0 (every enabled activity). The season is
+// decided by the same query, so the two cannot differ. The result shares c's
+// other fields: don't modify them.
+func (c *City) InSeason(ctx context.Context, q *dbgen.Queries, month time.Month) (*City, error) {
+	rows, err := q.ListMatchingActivities(ctx, dbgen.ListMatchingActivitiesParams{CityID: c.ID, Month: int16(month)})
+	if err != nil {
+		return nil, err
+	}
+	inSeason := make(map[matching.ActivityID]bool, len(rows))
+	for _, a := range rows {
+		inSeason[matching.ActivityID(a.ID)] = true
+	}
+	out := *c
+	out.Activities = nil
+	for _, a := range c.Activities {
+		if inSeason[a.ID] {
+			out.Activities = append(out.Activities, a)
+		}
+	}
+	out.activities = make(map[matching.ActivityID]*matching.Activity, len(out.Activities))
+	for i := range out.Activities {
+		out.activities[out.Activities[i].ID] = &out.Activities[i]
+	}
+	return &out, nil
+}
+
 // loadPlaces reads everything about a city except its people: settings,
 // areas, travel times, activities and venues.
 func loadPlaces(ctx context.Context, q *dbgen.Queries, cityID string, month time.Month) (*City, error) {
@@ -78,7 +106,7 @@ func loadPlaces(ctx context.Context, q *dbgen.Queries, cityID string, month time
 	if c.Location, err = time.LoadLocation(row.Timezone); err != nil {
 		return nil, fmt.Errorf("city %s: %w", cityID, err)
 	}
-	if c.Config, err = matching.ParseConfig(row.MatchingWeights); err != nil {
+	if c.Config, err = matching.ParseConfig(row.Matching); err != nil {
 		return nil, fmt.Errorf("city %s: %w", cityID, err)
 	}
 
