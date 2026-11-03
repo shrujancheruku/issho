@@ -6,6 +6,8 @@ import { Brand } from '@/constants/theme';
 
 import { DropIn } from './drop-in';
 import { routeView } from './map-data';
+import { MapUnavailable } from './map-unavailable';
+import { pinStyles, stopColors } from './map-pins';
 import { decodePolyline } from './polyline';
 import type { RouteMapProps } from './route-map';
 import type { MeasuredPath } from './route-path';
@@ -21,15 +23,22 @@ const mapId = process.env.EXPO_PUBLIC_GOOGLE_MAPS_WEB_MAP_ID ?? 'DEMO_MAP_ID';
  */
 export function RouteMap({ steps, routePolyline }: RouteMapProps) {
   const view = useMemo(() => routeView(steps, routePolyline, decodePolyline), [steps, routePolyline]);
-  // No key: the timeline already says everything; skip the map quietly.
-  if (!view.stops.length || !apiKey) return null;
+  if (!view.stops.length) return null;
+  // No key: say so, as on phones, rather than leave a gap.
+  if (!apiKey) {
+    return (
+      <View style={pinStyles.routeFrame}>
+        <MapUnavailable />
+      </View>
+    );
+  }
   return <WebRouteMap view={view} routeKey={routePolyline} apiKey={apiKey} />;
 }
 
 function WebRouteMap({ view, routeKey, apiKey }: { view: ReturnType<typeof routeView>; routeKey: string; apiKey: string }) {
   const route = useRouteDraw(view.path, view.stops, routeKey);
   return (
-    <View style={styles.frame}>
+    <View style={pinStyles.routeFrame}>
       <APIProvider apiKey={apiKey}>
         <Map
           style={StyleSheet.absoluteFill as object}
@@ -43,8 +52,8 @@ function WebRouteMap({ view, routeKey, apiKey }: { view: ReturnType<typeof route
             // Centred on the stop, so the line runs through the middle of each pin.
             <AdvancedMarker key={s.n} position={{ lat: s.lat, lng: s.lng }} anchorLeft="-50%" anchorTop="-50%">
               <DropIn id={`${routeKey}:${s.n}`} delay={route.stopDelays[i]}>
-                <View style={styles.pin}>
-                  <Text style={styles.label}>{s.n}</Text>
+                <View style={[pinStyles.pin, { backgroundColor: stopColors.background }]}>
+                  <Text style={[pinStyles.label, { color: stopColors.text }]}>{s.n}</Text>
                 </View>
               </DropIn>
             </AdvancedMarker>
@@ -62,29 +71,9 @@ function Walker({ measured, enabled }: { measured: MeasuredPath; enabled: boolea
   if (!at) return null;
   return (
     <AdvancedMarker position={at} clickable={false} zIndex={1} anchorLeft="-50%" anchorTop="-50%">
-      <View style={styles.halo}>
-        <View style={styles.walker} />
+      <View style={pinStyles.halo}>
+        <View style={pinStyles.walker} />
       </View>
     </AdvancedMarker>
   );
 }
-
-const styles = StyleSheet.create({
-  // Tall enough for a walk's stops (a kilometre or two, often north to
-  // south) to show apart rather than stacked at district scale.
-  frame: { height: 320, borderRadius: 16, overflow: 'hidden' },
-  pin: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: '#ffffff',
-    // As on phones (route-map.tsx): gold stops, deep gold route.
-    backgroundColor: Brand.gold,
-  },
-  label: { fontSize: 13, fontWeight: '700', color: Brand.ink },
-  halo: { width: 20, height: 20, borderRadius: 10, backgroundColor: 'rgba(222, 169, 44, 0.3)', alignItems: 'center', justifyContent: 'center' },
-  walker: { width: 10, height: 10, borderRadius: 5, backgroundColor: Brand.gold },
-});

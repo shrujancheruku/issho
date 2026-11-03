@@ -24,7 +24,7 @@ import { outing, stateText, type MeetingPoint, type Outing } from '@/features/ev
 import { Fact, Facts } from '@/features/plans/fact';
 import { formatStart, lastSignupDay, walkHours } from '@/features/plans/format';
 import { usePlanNames } from '@/features/plans/names';
-import { pairText } from '@/features/plans/plan-card';
+import { pairText } from '@/features/plans/text';
 import { PlanStops, StopsToggle } from '@/features/plans/plan-stops';
 import { useNow } from '@/hooks/use-now';
 import { useTheme } from '@/hooks/use-theme';

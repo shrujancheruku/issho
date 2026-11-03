@@ -16,7 +16,7 @@ import { crewName } from '@/features/crews/name';
 import { formatStart, lastSignupDay } from '@/features/plans/format';
 import { levelColors, levelLabels } from '@/features/plans/level';
 import { usePlanNames } from '@/features/plans/names';
-import { friendsText, pairText } from '@/features/plans/plan-card';
+import { friendsText, pairText } from '@/features/plans/text';
 import { useTogether, type NeedsYou } from '@/features/together/data';
 import { InviteCard } from '@/features/together/invite-card';
 import { useTheme } from '@/hooks/use-theme';
