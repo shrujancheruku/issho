@@ -21,6 +21,7 @@ import { crewName } from '@/features/crews/name';
 import { ChatPanel, SuggestedPlan } from '@/features/chat/chat-panel';
 import { suggestedPlans } from '@/features/chat/messages';
 import { useRoom } from '@/features/chat/room';
+import { usePlanCards } from '@/features/plans/data';
 import { formatStart } from '@/features/plans/format';
 import { usePlanNames } from '@/features/plans/names';
 import { useMotion } from '@/hooks/use-motion';
@@ -283,6 +284,7 @@ function Active({ crew, onBack }: { crew: Crew; onBack: () => void }) {
   // The same room (and socket) as the chat tab's: suggested plans are chat messages.
   const { messages } = useRoom({ crewId: crew.id });
   const suggested = suggestedPlans(messages);
+  const cards = usePlanCards(suggested);
   const members = crew.members
     .filter((m) => !m.me)
     .map((m) => m.name)
@@ -360,13 +362,13 @@ function Active({ crew, onBack }: { crew: Crew; onBack: () => void }) {
             <>
               <View style={styles.section}>
                 <SectionTitle>{t('crew.suggested')}</SectionTitle>
-                <SuggestedPlan planId={suggested[0]} />
+                <SuggestedPlan planId={suggested[0]} plan={cards.get(suggested[0])} />
               </View>
               {suggested.length > 1 && (
                 <View style={styles.section}>
                   <SectionTitle>{t('crew.suggestedBefore')}</SectionTitle>
                   {suggested.slice(1).map((p) => (
-                    <SuggestedPlan key={p} planId={p} />
+                    <SuggestedPlan key={p} planId={p} plan={cards.get(p)} />
                   ))}
                 </View>
               )}

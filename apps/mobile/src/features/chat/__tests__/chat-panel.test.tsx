@@ -2,9 +2,10 @@
 /// <reference types="jest" />
 import { Code, ConnectError } from '@issho/api-client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 
 import { api } from '@/lib/api';
+import { keys } from '@/lib/queries';
 
 import { ChatPanel } from '../chat-panel';
 import { useRoom } from '../room';
@@ -12,7 +13,7 @@ import { useRoom } from '../room';
 // The real panel, hook and socket code run; only the edges are faked: the
 // API client, the translations, navigation and WebSocket.
 jest.mock('@/lib/api', () => ({
-  api: { chat: { listMessages: jest.fn(), sendMessage: jest.fn() }, plans: { getPlan: jest.fn() } },
+  api: { chat: { listMessages: jest.fn(), sendMessage: jest.fn() }, plans: { getPlan: jest.fn(), getPlanCards: jest.fn() } },
   getAccessToken: jest.fn(async () => 'token'),
   wsBaseUrl: 'ws://test',
 }));
@@ -51,9 +52,11 @@ jest.mock('@/components/text-link', () => {
 });
 jest.mock('@/features/plans/plan-card', () => ({ pairText: () => '' }));
 jest.mock('@/features/plans/names', () => ({ usePlanNames: () => ({ area: () => ({ name: '' }) }) }));
-jest.mock('@/features/plans/data', () => ({ usePlan: () => ({ data: undefined }) }));
 
-const mockApi = api as unknown as { chat: { listMessages: jest.Mock } };
+const mockApi = api as unknown as {
+  chat: { listMessages: jest.Mock };
+  plans: { getPlan: jest.Mock; getPlanCards: jest.Mock };
+};
 
 const sockets: object[] = [];
 class FakeWebSocket {
@@ -85,6 +88,8 @@ beforeEach(() => {
   sockets.length = 0;
   (globalThis as unknown as { WebSocket: unknown }).WebSocket = FakeWebSocket;
   mockApi.chat.listMessages.mockReset().mockResolvedValue(reply());
+  mockApi.plans.getPlan.mockReset();
+  mockApi.plans.getPlanCards.mockReset().mockResolvedValue({ plans: [] });
 });
 
 // Open timers (garbage collection, retries) would keep Jest from exiting.
@@ -153,4 +158,33 @@ it('opens one socket for the crew chat tab, though the screen and the panel both
   expect(await screen.findByText('hello')).toBeTruthy();
   expect(sockets).toHaveLength(1);
   expect(mockApi.chat.listMessages).toHaveBeenCalledTimes(1);
+});
+
+const suggestion = (id: bigint, planId: string) => ({ id, userId: '', name: '', body: '', at: { seconds: 1000n }, mine: false, planId });
+const card = (id: string) => ({ id, title: `Title ${id}`, secondaryTitle: '', areaId: 'a', signupDeadline: undefined, signedUp: false });
+
+it('keeps the cards on screen when a new suggestion arrives and the batch is asked again', async () => {
+  mockApi.chat.listMessages.mockResolvedValue(reply({ messages: [suggestion(1n, 'p1'), suggestion(2n, 'p2')] }));
+  mockApi.plans.getPlanCards.mockResolvedValue({ plans: [card('p1'), card('p2')] });
+  await renderPanel(<ChatPanel room={{ crewId: 'c1' }} />);
+  expect(await screen.findByText('Title p2', {}, { timeout: 3000 })).toBeTruthy();
+
+  // The next call never answers, so what shows is the placeholder.
+  mockApi.plans.getPlanCards.mockReturnValue(new Promise(() => {}));
+  mockApi.chat.listMessages.mockResolvedValue(reply({ messages: [suggestion(1n, 'p1'), suggestion(2n, 'p2'), suggestion(3n, 'p3')] }));
+  await client.refetchQueries({ queryKey: keys.room({ crewId: 'c1' }) });
+  await waitFor(() => expect(mockApi.plans.getPlanCards).toHaveBeenLastCalledWith({ planIds: ['p1', 'p2', 'p3'] }));
+  expect(screen.getByText('Title p1')).toBeTruthy();
+  expect(screen.getByText('Title p2')).toBeTruthy();
+});
+
+it('loads every suggested plan\'s card with one GetPlanCards call and no GetPlan', async () => {
+  mockApi.chat.listMessages.mockResolvedValue(reply({ messages: [suggestion(1n, 'p1'), suggestion(2n, 'p2'), suggestion(3n, 'p3')] }));
+  mockApi.plans.getPlanCards.mockResolvedValue({ plans: ['p1', 'p2', 'p3'].map(card) });
+  await renderPanel(<ChatPanel room={{ crewId: 'c1' }} />);
+  expect(await screen.findByText('Title p3', {}, { timeout: 3000 })).toBeTruthy();
+  expect(screen.getByText('Title p1')).toBeTruthy();
+  expect(mockApi.plans.getPlanCards).toHaveBeenCalledTimes(1);
+  expect(mockApi.plans.getPlanCards).toHaveBeenCalledWith({ planIds: ['p1', 'p2', 'p3'] });
+  expect(mockApi.plans.getPlan).not.toHaveBeenCalled();
 });

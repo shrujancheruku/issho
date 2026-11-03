@@ -270,6 +270,97 @@ func (x *GetPlanRequest) GetPlanId() string {
 	return ""
 }
 
+// At most 50 ids (INVALID_ARGUMENT beyond that); duplicates count once.
+type GetPlanCardsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PlanIds       []string               `protobuf:"bytes,1,rep,name=plan_ids,json=planIds,proto3" json:"plan_ids,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetPlanCardsRequest) Reset() {
+	*x = GetPlanCardsRequest{}
+	mi := &file_issho_v1_plans_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetPlanCardsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetPlanCardsRequest) ProtoMessage() {}
+
+func (x *GetPlanCardsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_issho_v1_plans_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetPlanCardsRequest.ProtoReflect.Descriptor instead.
+func (*GetPlanCardsRequest) Descriptor() ([]byte, []int) {
+	return file_issho_v1_plans_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *GetPlanCardsRequest) GetPlanIds() []string {
+	if x != nil {
+		return x.PlanIds
+	}
+	return nil
+}
+
+// Cards for the ids the caller can see, in no particular order (match them
+// by FeedPlan.id); the rest are left out.
+type GetPlanCardsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Plans         []*FeedPlan            `protobuf:"bytes,1,rep,name=plans,proto3" json:"plans,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetPlanCardsResponse) Reset() {
+	*x = GetPlanCardsResponse{}
+	mi := &file_issho_v1_plans_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetPlanCardsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetPlanCardsResponse) ProtoMessage() {}
+
+func (x *GetPlanCardsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_issho_v1_plans_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetPlanCardsResponse.ProtoReflect.Descriptor instead.
+func (*GetPlanCardsResponse) Descriptor() ([]byte, []int) {
+	return file_issho_v1_plans_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *GetPlanCardsResponse) GetPlans() []*FeedPlan {
+	if x != nil {
+		return x.Plans
+	}
+	return nil
+}
+
 // A plan that closed in the last 14 days is still returned, with
 // closed_reason set; older or other cities' ones are NOT_FOUND.
 type GetPlanResponse struct {
@@ -298,7 +389,7 @@ type GetPlanResponse struct {
 
 func (x *GetPlanResponse) Reset() {
 	*x = GetPlanResponse{}
-	mi := &file_issho_v1_plans_proto_msgTypes[3]
+	mi := &file_issho_v1_plans_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -310,7 +401,7 @@ func (x *GetPlanResponse) String() string {
 func (*GetPlanResponse) ProtoMessage() {}
 
 func (x *GetPlanResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_plans_proto_msgTypes[3]
+	mi := &file_issho_v1_plans_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -323,7 +414,7 @@ func (x *GetPlanResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPlanResponse.ProtoReflect.Descriptor instead.
 func (*GetPlanResponse) Descriptor() ([]byte, []int) {
-	return file_issho_v1_plans_proto_rawDescGZIP(), []int{3}
+	return file_issho_v1_plans_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *GetPlanResponse) GetPlan() *FeedPlan {
@@ -412,7 +503,7 @@ type PlanStep struct {
 
 func (x *PlanStep) Reset() {
 	*x = PlanStep{}
-	mi := &file_issho_v1_plans_proto_msgTypes[4]
+	mi := &file_issho_v1_plans_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -424,7 +515,7 @@ func (x *PlanStep) String() string {
 func (*PlanStep) ProtoMessage() {}
 
 func (x *PlanStep) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_plans_proto_msgTypes[4]
+	mi := &file_issho_v1_plans_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -437,7 +528,7 @@ func (x *PlanStep) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PlanStep.ProtoReflect.Descriptor instead.
 func (*PlanStep) Descriptor() ([]byte, []int) {
-	return file_issho_v1_plans_proto_rawDescGZIP(), []int{4}
+	return file_issho_v1_plans_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *PlanStep) GetActivityId() string {
@@ -541,7 +632,7 @@ type SignUpRequest struct {
 
 func (x *SignUpRequest) Reset() {
 	*x = SignUpRequest{}
-	mi := &file_issho_v1_plans_proto_msgTypes[5]
+	mi := &file_issho_v1_plans_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -553,7 +644,7 @@ func (x *SignUpRequest) String() string {
 func (*SignUpRequest) ProtoMessage() {}
 
 func (x *SignUpRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_plans_proto_msgTypes[5]
+	mi := &file_issho_v1_plans_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -566,7 +657,7 @@ func (x *SignUpRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SignUpRequest.ProtoReflect.Descriptor instead.
 func (*SignUpRequest) Descriptor() ([]byte, []int) {
-	return file_issho_v1_plans_proto_rawDescGZIP(), []int{5}
+	return file_issho_v1_plans_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *SignUpRequest) GetPlanId() string {
@@ -592,7 +683,7 @@ type SignUpResponse struct {
 
 func (x *SignUpResponse) Reset() {
 	*x = SignUpResponse{}
-	mi := &file_issho_v1_plans_proto_msgTypes[6]
+	mi := &file_issho_v1_plans_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -604,7 +695,7 @@ func (x *SignUpResponse) String() string {
 func (*SignUpResponse) ProtoMessage() {}
 
 func (x *SignUpResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_plans_proto_msgTypes[6]
+	mi := &file_issho_v1_plans_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -617,7 +708,7 @@ func (x *SignUpResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SignUpResponse.ProtoReflect.Descriptor instead.
 func (*SignUpResponse) Descriptor() ([]byte, []int) {
-	return file_issho_v1_plans_proto_rawDescGZIP(), []int{6}
+	return file_issho_v1_plans_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *SignUpResponse) GetPlan() *FeedPlan {
@@ -636,7 +727,7 @@ type WithdrawRequest struct {
 
 func (x *WithdrawRequest) Reset() {
 	*x = WithdrawRequest{}
-	mi := &file_issho_v1_plans_proto_msgTypes[7]
+	mi := &file_issho_v1_plans_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -648,7 +739,7 @@ func (x *WithdrawRequest) String() string {
 func (*WithdrawRequest) ProtoMessage() {}
 
 func (x *WithdrawRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_plans_proto_msgTypes[7]
+	mi := &file_issho_v1_plans_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -661,7 +752,7 @@ func (x *WithdrawRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WithdrawRequest.ProtoReflect.Descriptor instead.
 func (*WithdrawRequest) Descriptor() ([]byte, []int) {
-	return file_issho_v1_plans_proto_rawDescGZIP(), []int{7}
+	return file_issho_v1_plans_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *WithdrawRequest) GetPlanId() string {
@@ -679,7 +770,7 @@ type WithdrawResponse struct {
 
 func (x *WithdrawResponse) Reset() {
 	*x = WithdrawResponse{}
-	mi := &file_issho_v1_plans_proto_msgTypes[8]
+	mi := &file_issho_v1_plans_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -691,7 +782,7 @@ func (x *WithdrawResponse) String() string {
 func (*WithdrawResponse) ProtoMessage() {}
 
 func (x *WithdrawResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_plans_proto_msgTypes[8]
+	mi := &file_issho_v1_plans_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -704,7 +795,7 @@ func (x *WithdrawResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WithdrawResponse.ProtoReflect.Descriptor instead.
 func (*WithdrawResponse) Descriptor() ([]byte, []int) {
-	return file_issho_v1_plans_proto_rawDescGZIP(), []int{8}
+	return file_issho_v1_plans_proto_rawDescGZIP(), []int{10}
 }
 
 // An open plan as the caller sees it.
@@ -755,7 +846,7 @@ type FeedPlan struct {
 
 func (x *FeedPlan) Reset() {
 	*x = FeedPlan{}
-	mi := &file_issho_v1_plans_proto_msgTypes[9]
+	mi := &file_issho_v1_plans_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -767,7 +858,7 @@ func (x *FeedPlan) String() string {
 func (*FeedPlan) ProtoMessage() {}
 
 func (x *FeedPlan) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_plans_proto_msgTypes[9]
+	mi := &file_issho_v1_plans_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -780,7 +871,7 @@ func (x *FeedPlan) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FeedPlan.ProtoReflect.Descriptor instead.
 func (*FeedPlan) Descriptor() ([]byte, []int) {
-	return file_issho_v1_plans_proto_rawDescGZIP(), []int{9}
+	return file_issho_v1_plans_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *FeedPlan) GetId() string {
@@ -923,7 +1014,7 @@ type Signup struct {
 
 func (x *Signup) Reset() {
 	*x = Signup{}
-	mi := &file_issho_v1_plans_proto_msgTypes[10]
+	mi := &file_issho_v1_plans_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -935,7 +1026,7 @@ func (x *Signup) String() string {
 func (*Signup) ProtoMessage() {}
 
 func (x *Signup) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_plans_proto_msgTypes[10]
+	mi := &file_issho_v1_plans_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -948,7 +1039,7 @@ func (x *Signup) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Signup.ProtoReflect.Descriptor instead.
 func (*Signup) Descriptor() ([]byte, []int) {
-	return file_issho_v1_plans_proto_rawDescGZIP(), []int{10}
+	return file_issho_v1_plans_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *Signup) GetPattern() []*AvailabilitySlot {
@@ -977,7 +1068,7 @@ type UnavailableTime struct {
 
 func (x *UnavailableTime) Reset() {
 	*x = UnavailableTime{}
-	mi := &file_issho_v1_plans_proto_msgTypes[11]
+	mi := &file_issho_v1_plans_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -989,7 +1080,7 @@ func (x *UnavailableTime) String() string {
 func (*UnavailableTime) ProtoMessage() {}
 
 func (x *UnavailableTime) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_plans_proto_msgTypes[11]
+	mi := &file_issho_v1_plans_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1002,7 +1093,7 @@ func (x *UnavailableTime) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UnavailableTime.ProtoReflect.Descriptor instead.
 func (*UnavailableTime) Descriptor() ([]byte, []int) {
-	return file_issho_v1_plans_proto_rawDescGZIP(), []int{11}
+	return file_issho_v1_plans_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *UnavailableTime) GetDate() string {
@@ -1028,7 +1119,11 @@ const file_issho_v1_plans_proto_rawDesc = "" +
 	"\x10ListFeedResponse\x12(\n" +
 	"\x05plans\x18\x01 \x03(\v2\x12.issho.v1.FeedPlanR\x05plans\")\n" +
 	"\x0eGetPlanRequest\x12\x17\n" +
-	"\aplan_id\x18\x01 \x01(\tR\x06planId\"\xfb\x01\n" +
+	"\aplan_id\x18\x01 \x01(\tR\x06planId\"0\n" +
+	"\x13GetPlanCardsRequest\x12\x19\n" +
+	"\bplan_ids\x18\x01 \x03(\tR\aplanIds\"@\n" +
+	"\x14GetPlanCardsResponse\x12(\n" +
+	"\x05plans\x18\x01 \x03(\v2\x12.issho.v1.FeedPlanR\x05plans\"\xfb\x01\n" +
 	"\x0fGetPlanResponse\x12&\n" +
 	"\x04plan\x18\x01 \x01(\v2\x12.issho.v1.FeedPlanR\x04plan\x12(\n" +
 	"\x06signup\x18\x02 \x01(\v2\x10.issho.v1.SignupR\x06signup\x12(\n" +
@@ -1100,10 +1195,11 @@ const file_issho_v1_plans_proto_rawDesc = "" +
 	"\x0ePLAN_LEVEL_LOW\x10\x02\x12\x14\n" +
 	"\x10PLAN_LEVEL_MAYBE\x10\x03\x12\x13\n" +
 	"\x0fPLAN_LEVEL_GOOD\x10\x04\x12\x12\n" +
-	"\x0ePLAN_LEVEL_TOP\x10\x052\x98\x02\n" +
+	"\x0ePLAN_LEVEL_TOP\x10\x052\xe9\x02\n" +
 	"\vPlanService\x12C\n" +
 	"\bListFeed\x12\x19.issho.v1.ListFeedRequest\x1a\x1a.issho.v1.ListFeedResponse\"\x00\x12@\n" +
-	"\aGetPlan\x12\x18.issho.v1.GetPlanRequest\x1a\x19.issho.v1.GetPlanResponse\"\x00\x12=\n" +
+	"\aGetPlan\x12\x18.issho.v1.GetPlanRequest\x1a\x19.issho.v1.GetPlanResponse\"\x00\x12O\n" +
+	"\fGetPlanCards\x12\x1d.issho.v1.GetPlanCardsRequest\x1a\x1e.issho.v1.GetPlanCardsResponse\"\x00\x12=\n" +
 	"\x06SignUp\x12\x17.issho.v1.SignUpRequest\x1a\x18.issho.v1.SignUpResponse\"\x00\x12C\n" +
 	"\bWithdraw\x12\x19.issho.v1.WithdrawRequest\x1a\x1a.issho.v1.WithdrawResponse\"\x00B>Z<github.com/shrujancheruku/issho/backend/gen/issho/v1;isshov1b\x06proto3"
 
@@ -1120,53 +1216,58 @@ func file_issho_v1_plans_proto_rawDescGZIP() []byte {
 }
 
 var file_issho_v1_plans_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_issho_v1_plans_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
+var file_issho_v1_plans_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
 var file_issho_v1_plans_proto_goTypes = []any{
 	(PlanClosedReason)(0),         // 0: issho.v1.PlanClosedReason
 	(PlanLevel)(0),                // 1: issho.v1.PlanLevel
 	(*ListFeedRequest)(nil),       // 2: issho.v1.ListFeedRequest
 	(*ListFeedResponse)(nil),      // 3: issho.v1.ListFeedResponse
 	(*GetPlanRequest)(nil),        // 4: issho.v1.GetPlanRequest
-	(*GetPlanResponse)(nil),       // 5: issho.v1.GetPlanResponse
-	(*PlanStep)(nil),              // 6: issho.v1.PlanStep
-	(*SignUpRequest)(nil),         // 7: issho.v1.SignUpRequest
-	(*SignUpResponse)(nil),        // 8: issho.v1.SignUpResponse
-	(*WithdrawRequest)(nil),       // 9: issho.v1.WithdrawRequest
-	(*WithdrawResponse)(nil),      // 10: issho.v1.WithdrawResponse
-	(*FeedPlan)(nil),              // 11: issho.v1.FeedPlan
-	(*Signup)(nil),                // 12: issho.v1.Signup
-	(*UnavailableTime)(nil),       // 13: issho.v1.UnavailableTime
-	(*timestamppb.Timestamp)(nil), // 14: google.protobuf.Timestamp
-	(*AvailabilitySlot)(nil),      // 15: issho.v1.AvailabilitySlot
-	(TimeBlock)(0),                // 16: issho.v1.TimeBlock
+	(*GetPlanCardsRequest)(nil),   // 5: issho.v1.GetPlanCardsRequest
+	(*GetPlanCardsResponse)(nil),  // 6: issho.v1.GetPlanCardsResponse
+	(*GetPlanResponse)(nil),       // 7: issho.v1.GetPlanResponse
+	(*PlanStep)(nil),              // 8: issho.v1.PlanStep
+	(*SignUpRequest)(nil),         // 9: issho.v1.SignUpRequest
+	(*SignUpResponse)(nil),        // 10: issho.v1.SignUpResponse
+	(*WithdrawRequest)(nil),       // 11: issho.v1.WithdrawRequest
+	(*WithdrawResponse)(nil),      // 12: issho.v1.WithdrawResponse
+	(*FeedPlan)(nil),              // 13: issho.v1.FeedPlan
+	(*Signup)(nil),                // 14: issho.v1.Signup
+	(*UnavailableTime)(nil),       // 15: issho.v1.UnavailableTime
+	(*timestamppb.Timestamp)(nil), // 16: google.protobuf.Timestamp
+	(*AvailabilitySlot)(nil),      // 17: issho.v1.AvailabilitySlot
+	(TimeBlock)(0),                // 18: issho.v1.TimeBlock
 }
 var file_issho_v1_plans_proto_depIdxs = []int32{
-	11, // 0: issho.v1.ListFeedResponse.plans:type_name -> issho.v1.FeedPlan
-	11, // 1: issho.v1.GetPlanResponse.plan:type_name -> issho.v1.FeedPlan
-	12, // 2: issho.v1.GetPlanResponse.signup:type_name -> issho.v1.Signup
-	6,  // 3: issho.v1.GetPlanResponse.steps:type_name -> issho.v1.PlanStep
-	12, // 4: issho.v1.SignUpRequest.signup:type_name -> issho.v1.Signup
-	11, // 5: issho.v1.SignUpResponse.plan:type_name -> issho.v1.FeedPlan
-	1,  // 6: issho.v1.FeedPlan.level:type_name -> issho.v1.PlanLevel
-	14, // 7: issho.v1.FeedPlan.signup_deadline:type_name -> google.protobuf.Timestamp
-	0,  // 8: issho.v1.FeedPlan.closed_reason:type_name -> issho.v1.PlanClosedReason
-	14, // 9: issho.v1.FeedPlan.closed_at:type_name -> google.protobuf.Timestamp
-	15, // 10: issho.v1.Signup.pattern:type_name -> issho.v1.AvailabilitySlot
-	13, // 11: issho.v1.Signup.unavailable:type_name -> issho.v1.UnavailableTime
-	16, // 12: issho.v1.UnavailableTime.block:type_name -> issho.v1.TimeBlock
-	2,  // 13: issho.v1.PlanService.ListFeed:input_type -> issho.v1.ListFeedRequest
-	4,  // 14: issho.v1.PlanService.GetPlan:input_type -> issho.v1.GetPlanRequest
-	7,  // 15: issho.v1.PlanService.SignUp:input_type -> issho.v1.SignUpRequest
-	9,  // 16: issho.v1.PlanService.Withdraw:input_type -> issho.v1.WithdrawRequest
-	3,  // 17: issho.v1.PlanService.ListFeed:output_type -> issho.v1.ListFeedResponse
-	5,  // 18: issho.v1.PlanService.GetPlan:output_type -> issho.v1.GetPlanResponse
-	8,  // 19: issho.v1.PlanService.SignUp:output_type -> issho.v1.SignUpResponse
-	10, // 20: issho.v1.PlanService.Withdraw:output_type -> issho.v1.WithdrawResponse
-	17, // [17:21] is the sub-list for method output_type
-	13, // [13:17] is the sub-list for method input_type
-	13, // [13:13] is the sub-list for extension type_name
-	13, // [13:13] is the sub-list for extension extendee
-	0,  // [0:13] is the sub-list for field type_name
+	13, // 0: issho.v1.ListFeedResponse.plans:type_name -> issho.v1.FeedPlan
+	13, // 1: issho.v1.GetPlanCardsResponse.plans:type_name -> issho.v1.FeedPlan
+	13, // 2: issho.v1.GetPlanResponse.plan:type_name -> issho.v1.FeedPlan
+	14, // 3: issho.v1.GetPlanResponse.signup:type_name -> issho.v1.Signup
+	8,  // 4: issho.v1.GetPlanResponse.steps:type_name -> issho.v1.PlanStep
+	14, // 5: issho.v1.SignUpRequest.signup:type_name -> issho.v1.Signup
+	13, // 6: issho.v1.SignUpResponse.plan:type_name -> issho.v1.FeedPlan
+	1,  // 7: issho.v1.FeedPlan.level:type_name -> issho.v1.PlanLevel
+	16, // 8: issho.v1.FeedPlan.signup_deadline:type_name -> google.protobuf.Timestamp
+	0,  // 9: issho.v1.FeedPlan.closed_reason:type_name -> issho.v1.PlanClosedReason
+	16, // 10: issho.v1.FeedPlan.closed_at:type_name -> google.protobuf.Timestamp
+	17, // 11: issho.v1.Signup.pattern:type_name -> issho.v1.AvailabilitySlot
+	15, // 12: issho.v1.Signup.unavailable:type_name -> issho.v1.UnavailableTime
+	18, // 13: issho.v1.UnavailableTime.block:type_name -> issho.v1.TimeBlock
+	2,  // 14: issho.v1.PlanService.ListFeed:input_type -> issho.v1.ListFeedRequest
+	4,  // 15: issho.v1.PlanService.GetPlan:input_type -> issho.v1.GetPlanRequest
+	5,  // 16: issho.v1.PlanService.GetPlanCards:input_type -> issho.v1.GetPlanCardsRequest
+	9,  // 17: issho.v1.PlanService.SignUp:input_type -> issho.v1.SignUpRequest
+	11, // 18: issho.v1.PlanService.Withdraw:input_type -> issho.v1.WithdrawRequest
+	3,  // 19: issho.v1.PlanService.ListFeed:output_type -> issho.v1.ListFeedResponse
+	7,  // 20: issho.v1.PlanService.GetPlan:output_type -> issho.v1.GetPlanResponse
+	6,  // 21: issho.v1.PlanService.GetPlanCards:output_type -> issho.v1.GetPlanCardsResponse
+	10, // 22: issho.v1.PlanService.SignUp:output_type -> issho.v1.SignUpResponse
+	12, // 23: issho.v1.PlanService.Withdraw:output_type -> issho.v1.WithdrawResponse
+	19, // [19:24] is the sub-list for method output_type
+	14, // [14:19] is the sub-list for method input_type
+	14, // [14:14] is the sub-list for extension type_name
+	14, // [14:14] is the sub-list for extension extendee
+	0,  // [0:14] is the sub-list for field type_name
 }
 
 func init() { file_issho_v1_plans_proto_init() }
@@ -1181,7 +1282,7 @@ func file_issho_v1_plans_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_issho_v1_plans_proto_rawDesc), len(file_issho_v1_plans_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   12,
+			NumMessages:   14,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -14,7 +14,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file issho/v1/plans.proto.
  */
 export const file_issho_v1_plans: GenFile = /*@__PURE__*/
-  fileDesc("ChRpc3Noby92MS9wbGFucy5wcm90bxIIaXNzaG8udjEiEQoPTGlzdEZlZWRSZXF1ZXN0IjUKEExpc3RGZWVkUmVzcG9uc2USIQoFcGxhbnMYASADKAsyEi5pc3Noby52MS5GZWVkUGxhbiIhCg5HZXRQbGFuUmVxdWVzdBIPCgdwbGFuX2lkGAEgASgJIrwBCg9HZXRQbGFuUmVzcG9uc2USIAoEcGxhbhgBIAEoCzISLmlzc2hvLnYxLkZlZWRQbGFuEiAKBnNpZ251cBgCIAEoCzIQLmlzc2hvLnYxLlNpZ251cBIhCgVzdGVwcxgDIAMoCzISLmlzc2hvLnYxLlBsYW5TdGVwEhYKDnJvdXRlX3BvbHlsaW5lGAQgASgJEg8KB3N1bW1hcnkYBSABKAkSGQoRc2Vjb25kYXJ5X3N1bW1hcnkYBiABKAkiiAIKCFBsYW5TdGVwEhMKC2FjdGl2aXR5X2lkGAEgASgJEhIKCnZlbnVlX25hbWUYAiABKAkSHAoUdmVudWVfc2Vjb25kYXJ5X25hbWUYAyABKAkSFQoNdmVudWVfYWRkcmVzcxgEIAEoCRIWCg52ZW51ZV9tYXBzX3VybBgFIAEoCRIUCgx3YWxrX21pbnV0ZXMYBiABKAUSCwoDbGF0GAcgASgBEgsKA2xuZxgIIAEoARIPCgdtZWV0aW5nGAkgASgIEg4KBmZpbmlzaBgKIAEoCBIPCgdtaW51dGVzGAsgASgFEgwKBG5vdGUYDCABKAkSFgoOc2Vjb25kYXJ5X25vdGUYDSABKAkiQgoNU2lnblVwUmVxdWVzdBIPCgdwbGFuX2lkGAEgASgJEiAKBnNpZ251cBgCIAEoCzIQLmlzc2hvLnYxLlNpZ251cCIyCg5TaWduVXBSZXNwb25zZRIgCgRwbGFuGAEgASgLMhIuaXNzaG8udjEuRmVlZFBsYW4iIgoPV2l0aGRyYXdSZXF1ZXN0Eg8KB3BsYW5faWQYASABKAkiEgoQV2l0aGRyYXdSZXNwb25zZSL3AwoIRmVlZFBsYW4SCgoCaWQYASABKAkSDwoHYXJlYV9pZBgCIAEoCRITCgthY3Rpdml0eV9pZBgDIAEoCRIdChVmb2xsb3dfdXBfYWN0aXZpdHlfaWQYBCABKAkSGAoQcHJpbWFyeV9sYW5ndWFnZRgFIAEoCRIaChJzZWNvbmRhcnlfbGFuZ3VhZ2UYBiABKAkSDwoHc2lnbnVwcxgHIAEoBRIiCgVsZXZlbBgIIAEoDjITLmlzc2hvLnYxLlBsYW5MZXZlbBIWCg50cmF2ZWxfbWludXRlcxgJIAEoBRIUCgx3aW5kb3dfc3RhcnQYCiABKAkSEwoLd2luZG93X2RheXMYCyABKAUSMwoPc2lnbnVwX2RlYWRsaW5lGAwgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIRCglzaWduZWRfdXAYDSABKAgSDQoFdGl0bGUYDiABKAkSFwoPc2Vjb25kYXJ5X3RpdGxlGA8gASgJEjEKDWNsb3NlZF9yZWFzb24YECABKA4yGi5pc3Noby52MS5QbGFuQ2xvc2VkUmVhc29uEi0KCWNsb3NlZF9hdBgRIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASGgoSZnJpZW5kc19pbnRlcmVzdGVkGBIgASgFImUKBlNpZ251cBIrCgdwYXR0ZXJuGAEgAygLMhouaXNzaG8udjEuQXZhaWxhYmlsaXR5U2xvdBIuCgt1bmF2YWlsYWJsZRgCIAMoCzIZLmlzc2hvLnYxLlVuYXZhaWxhYmxlVGltZSJDCg9VbmF2YWlsYWJsZVRpbWUSDAoEZGF0ZRgBIAEoCRIiCgVibG9jaxgCIAEoDjITLmlzc2hvLnYxLlRpbWVCbG9jayqWAQoQUGxhbkNsb3NlZFJlYXNvbhIiCh5QTEFOX0NMT1NFRF9SRUFTT05fVU5TUEVDSUZJRUQQABIfChtQTEFOX0NMT1NFRF9SRUFTT05fTk9fR1JPVVAQARIbChdQTEFOX0NMT1NFRF9SRUFTT05fRE9ORRACEiAKHFBMQU5fQ0xPU0VEX1JFQVNPTl9XSVRIRFJBV04QAyqWAQoJUGxhbkxldmVsEhoKFlBMQU5fTEVWRUxfVU5TUEVDSUZJRUQQABIaChZQTEFOX0xFVkVMX05PVF9GT1JfWU9VEAESEgoOUExBTl9MRVZFTF9MT1cQAhIUChBQTEFOX0xFVkVMX01BWUJFEAMSEwoPUExBTl9MRVZFTF9HT09EEAQSEgoOUExBTl9MRVZFTF9UT1AQBTKYAgoLUGxhblNlcnZpY2USQwoITGlzdEZlZWQSGS5pc3Noby52MS5MaXN0RmVlZFJlcXVlc3QaGi5pc3Noby52MS5MaXN0RmVlZFJlc3BvbnNlIgASQAoHR2V0UGxhbhIYLmlzc2hvLnYxLkdldFBsYW5SZXF1ZXN0GhkuaXNzaG8udjEuR2V0UGxhblJlc3BvbnNlIgASPQoGU2lnblVwEhcuaXNzaG8udjEuU2lnblVwUmVxdWVzdBoYLmlzc2hvLnYxLlNpZ25VcFJlc3BvbnNlIgASQwoIV2l0aGRyYXcSGS5pc3Noby52MS5XaXRoZHJhd1JlcXVlc3QaGi5pc3Noby52MS5XaXRoZHJhd1Jlc3BvbnNlIgBCPlo8Z2l0aHViLmNvbS9zaHJ1amFuY2hlcnVrdS9pc3Noby9iYWNrZW5kL2dlbi9pc3Noby92MTtpc3Nob3YxYgZwcm90bzM", [file_google_protobuf_timestamp, file_issho_v1_profile]);
+  fileDesc("ChRpc3Noby92MS9wbGFucy5wcm90bxIIaXNzaG8udjEiEQoPTGlzdEZlZWRSZXF1ZXN0IjUKEExpc3RGZWVkUmVzcG9uc2USIQoFcGxhbnMYASADKAsyEi5pc3Noby52MS5GZWVkUGxhbiIhCg5HZXRQbGFuUmVxdWVzdBIPCgdwbGFuX2lkGAEgASgJIicKE0dldFBsYW5DYXJkc1JlcXVlc3QSEAoIcGxhbl9pZHMYASADKAkiOQoUR2V0UGxhbkNhcmRzUmVzcG9uc2USIQoFcGxhbnMYASADKAsyEi5pc3Noby52MS5GZWVkUGxhbiK8AQoPR2V0UGxhblJlc3BvbnNlEiAKBHBsYW4YASABKAsyEi5pc3Noby52MS5GZWVkUGxhbhIgCgZzaWdudXAYAiABKAsyEC5pc3Noby52MS5TaWdudXASIQoFc3RlcHMYAyADKAsyEi5pc3Noby52MS5QbGFuU3RlcBIWCg5yb3V0ZV9wb2x5bGluZRgEIAEoCRIPCgdzdW1tYXJ5GAUgASgJEhkKEXNlY29uZGFyeV9zdW1tYXJ5GAYgASgJIogCCghQbGFuU3RlcBITCgthY3Rpdml0eV9pZBgBIAEoCRISCgp2ZW51ZV9uYW1lGAIgASgJEhwKFHZlbnVlX3NlY29uZGFyeV9uYW1lGAMgASgJEhUKDXZlbnVlX2FkZHJlc3MYBCABKAkSFgoOdmVudWVfbWFwc191cmwYBSABKAkSFAoMd2Fsa19taW51dGVzGAYgASgFEgsKA2xhdBgHIAEoARILCgNsbmcYCCABKAESDwoHbWVldGluZxgJIAEoCBIOCgZmaW5pc2gYCiABKAgSDwoHbWludXRlcxgLIAEoBRIMCgRub3RlGAwgASgJEhYKDnNlY29uZGFyeV9ub3RlGA0gASgJIkIKDVNpZ25VcFJlcXVlc3QSDwoHcGxhbl9pZBgBIAEoCRIgCgZzaWdudXAYAiABKAsyEC5pc3Noby52MS5TaWdudXAiMgoOU2lnblVwUmVzcG9uc2USIAoEcGxhbhgBIAEoCzISLmlzc2hvLnYxLkZlZWRQbGFuIiIKD1dpdGhkcmF3UmVxdWVzdBIPCgdwbGFuX2lkGAEgASgJIhIKEFdpdGhkcmF3UmVzcG9uc2Ui9wMKCEZlZWRQbGFuEgoKAmlkGAEgASgJEg8KB2FyZWFfaWQYAiABKAkSEwoLYWN0aXZpdHlfaWQYAyABKAkSHQoVZm9sbG93X3VwX2FjdGl2aXR5X2lkGAQgASgJEhgKEHByaW1hcnlfbGFuZ3VhZ2UYBSABKAkSGgoSc2Vjb25kYXJ5X2xhbmd1YWdlGAYgASgJEg8KB3NpZ251cHMYByABKAUSIgoFbGV2ZWwYCCABKA4yEy5pc3Noby52MS5QbGFuTGV2ZWwSFgoOdHJhdmVsX21pbnV0ZXMYCSABKAUSFAoMd2luZG93X3N0YXJ0GAogASgJEhMKC3dpbmRvd19kYXlzGAsgASgFEjMKD3NpZ251cF9kZWFkbGluZRgMIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASEQoJc2lnbmVkX3VwGA0gASgIEg0KBXRpdGxlGA4gASgJEhcKD3NlY29uZGFyeV90aXRsZRgPIAEoCRIxCg1jbG9zZWRfcmVhc29uGBAgASgOMhouaXNzaG8udjEuUGxhbkNsb3NlZFJlYXNvbhItCgljbG9zZWRfYXQYESABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhoKEmZyaWVuZHNfaW50ZXJlc3RlZBgSIAEoBSJlCgZTaWdudXASKwoHcGF0dGVybhgBIAMoCzIaLmlzc2hvLnYxLkF2YWlsYWJpbGl0eVNsb3QSLgoLdW5hdmFpbGFibGUYAiADKAsyGS5pc3Noby52MS5VbmF2YWlsYWJsZVRpbWUiQwoPVW5hdmFpbGFibGVUaW1lEgwKBGRhdGUYASABKAkSIgoFYmxvY2sYAiABKA4yEy5pc3Noby52MS5UaW1lQmxvY2sqlgEKEFBsYW5DbG9zZWRSZWFzb24SIgoeUExBTl9DTE9TRURfUkVBU09OX1VOU1BFQ0lGSUVEEAASHwobUExBTl9DTE9TRURfUkVBU09OX05PX0dST1VQEAESGwoXUExBTl9DTE9TRURfUkVBU09OX0RPTkUQAhIgChxQTEFOX0NMT1NFRF9SRUFTT05fV0lUSERSQVdOEAMqlgEKCVBsYW5MZXZlbBIaChZQTEFOX0xFVkVMX1VOU1BFQ0lGSUVEEAASGgoWUExBTl9MRVZFTF9OT1RfRk9SX1lPVRABEhIKDlBMQU5fTEVWRUxfTE9XEAISFAoQUExBTl9MRVZFTF9NQVlCRRADEhMKD1BMQU5fTEVWRUxfR09PRBAEEhIKDlBMQU5fTEVWRUxfVE9QEAUy6QIKC1BsYW5TZXJ2aWNlEkMKCExpc3RGZWVkEhkuaXNzaG8udjEuTGlzdEZlZWRSZXF1ZXN0GhouaXNzaG8udjEuTGlzdEZlZWRSZXNwb25zZSIAEkAKB0dldFBsYW4SGC5pc3Noby52MS5HZXRQbGFuUmVxdWVzdBoZLmlzc2hvLnYxLkdldFBsYW5SZXNwb25zZSIAEk8KDEdldFBsYW5DYXJkcxIdLmlzc2hvLnYxLkdldFBsYW5DYXJkc1JlcXVlc3QaHi5pc3Noby52MS5HZXRQbGFuQ2FyZHNSZXNwb25zZSIAEj0KBlNpZ25VcBIXLmlzc2hvLnYxLlNpZ25VcFJlcXVlc3QaGC5pc3Noby52MS5TaWduVXBSZXNwb25zZSIAEkMKCFdpdGhkcmF3EhkuaXNzaG8udjEuV2l0aGRyYXdSZXF1ZXN0GhouaXNzaG8udjEuV2l0aGRyYXdSZXNwb25zZSIAQj5aPGdpdGh1Yi5jb20vc2hydWphbmNoZXJ1a3UvaXNzaG8vYmFja2VuZC9nZW4vaXNzaG8vdjE7aXNzaG92MWIGcHJvdG8z", [file_google_protobuf_timestamp, file_issho_v1_profile]);
 
 /**
  * No paging fields: the feed is bounded by what a city has open (a few dozen
@@ -68,6 +68,45 @@ export type GetPlanRequest = Message<"issho.v1.GetPlanRequest"> & {
  */
 export const GetPlanRequestSchema: GenMessage<GetPlanRequest> = /*@__PURE__*/
   messageDesc(file_issho_v1_plans, 2);
+
+/**
+ * At most 50 ids (INVALID_ARGUMENT beyond that); duplicates count once.
+ *
+ * @generated from message issho.v1.GetPlanCardsRequest
+ */
+export type GetPlanCardsRequest = Message<"issho.v1.GetPlanCardsRequest"> & {
+  /**
+   * @generated from field: repeated string plan_ids = 1;
+   */
+  planIds: string[];
+};
+
+/**
+ * Describes the message issho.v1.GetPlanCardsRequest.
+ * Use `create(GetPlanCardsRequestSchema)` to create a new message.
+ */
+export const GetPlanCardsRequestSchema: GenMessage<GetPlanCardsRequest> = /*@__PURE__*/
+  messageDesc(file_issho_v1_plans, 3);
+
+/**
+ * Cards for the ids the caller can see, in no particular order (match them
+ * by FeedPlan.id); the rest are left out.
+ *
+ * @generated from message issho.v1.GetPlanCardsResponse
+ */
+export type GetPlanCardsResponse = Message<"issho.v1.GetPlanCardsResponse"> & {
+  /**
+   * @generated from field: repeated issho.v1.FeedPlan plans = 1;
+   */
+  plans: FeedPlan[];
+};
+
+/**
+ * Describes the message issho.v1.GetPlanCardsResponse.
+ * Use `create(GetPlanCardsResponseSchema)` to create a new message.
+ */
+export const GetPlanCardsResponseSchema: GenMessage<GetPlanCardsResponse> = /*@__PURE__*/
+  messageDesc(file_issho_v1_plans, 4);
 
 /**
  * A plan that closed in the last 14 days is still returned, with
@@ -128,7 +167,7 @@ export type GetPlanResponse = Message<"issho.v1.GetPlanResponse"> & {
  * Use `create(GetPlanResponseSchema)` to create a new message.
  */
 export const GetPlanResponseSchema: GenMessage<GetPlanResponse> = /*@__PURE__*/
-  messageDesc(file_issho_v1_plans, 3);
+  messageDesc(file_issho_v1_plans, 5);
 
 /**
  * One stop of a plan.
@@ -240,7 +279,7 @@ export type PlanStep = Message<"issho.v1.PlanStep"> & {
  * Use `create(PlanStepSchema)` to create a new message.
  */
 export const PlanStepSchema: GenMessage<PlanStep> = /*@__PURE__*/
-  messageDesc(file_issho_v1_plans, 4);
+  messageDesc(file_issho_v1_plans, 6);
 
 /**
  * @generated from message issho.v1.SignUpRequest
@@ -262,7 +301,7 @@ export type SignUpRequest = Message<"issho.v1.SignUpRequest"> & {
  * Use `create(SignUpRequestSchema)` to create a new message.
  */
 export const SignUpRequestSchema: GenMessage<SignUpRequest> = /*@__PURE__*/
-  messageDesc(file_issho_v1_plans, 5);
+  messageDesc(file_issho_v1_plans, 7);
 
 /**
  * @generated from message issho.v1.SignUpResponse
@@ -279,7 +318,7 @@ export type SignUpResponse = Message<"issho.v1.SignUpResponse"> & {
  * Use `create(SignUpResponseSchema)` to create a new message.
  */
 export const SignUpResponseSchema: GenMessage<SignUpResponse> = /*@__PURE__*/
-  messageDesc(file_issho_v1_plans, 6);
+  messageDesc(file_issho_v1_plans, 8);
 
 /**
  * @generated from message issho.v1.WithdrawRequest
@@ -296,7 +335,7 @@ export type WithdrawRequest = Message<"issho.v1.WithdrawRequest"> & {
  * Use `create(WithdrawRequestSchema)` to create a new message.
  */
 export const WithdrawRequestSchema: GenMessage<WithdrawRequest> = /*@__PURE__*/
-  messageDesc(file_issho_v1_plans, 7);
+  messageDesc(file_issho_v1_plans, 9);
 
 /**
  * @generated from message issho.v1.WithdrawResponse
@@ -309,7 +348,7 @@ export type WithdrawResponse = Message<"issho.v1.WithdrawResponse"> & {
  * Use `create(WithdrawResponseSchema)` to create a new message.
  */
 export const WithdrawResponseSchema: GenMessage<WithdrawResponse> = /*@__PURE__*/
-  messageDesc(file_issho_v1_plans, 8);
+  messageDesc(file_issho_v1_plans, 10);
 
 /**
  * An open plan as the caller sees it.
@@ -445,7 +484,7 @@ export type FeedPlan = Message<"issho.v1.FeedPlan"> & {
  * Use `create(FeedPlanSchema)` to create a new message.
  */
 export const FeedPlanSchema: GenMessage<FeedPlan> = /*@__PURE__*/
-  messageDesc(file_issho_v1_plans, 9);
+  messageDesc(file_issho_v1_plans, 11);
 
 /**
  * The times that suit someone for one plan. Pre-fill pattern with the
@@ -474,7 +513,7 @@ export type Signup = Message<"issho.v1.Signup"> & {
  * Use `create(SignupSchema)` to create a new message.
  */
 export const SignupSchema: GenMessage<Signup> = /*@__PURE__*/
-  messageDesc(file_issho_v1_plans, 10);
+  messageDesc(file_issho_v1_plans, 12);
 
 /**
  * @generated from message issho.v1.UnavailableTime
@@ -500,7 +539,7 @@ export type UnavailableTime = Message<"issho.v1.UnavailableTime"> & {
  * Use `create(UnavailableTimeSchema)` to create a new message.
  */
 export const UnavailableTimeSchema: GenMessage<UnavailableTime> = /*@__PURE__*/
-  messageDesc(file_issho_v1_plans, 11);
+  messageDesc(file_issho_v1_plans, 13);
 
 /**
  * @generated from enum issho.v1.PlanClosedReason
@@ -629,6 +668,21 @@ export const PlanService: GenService<{
     methodKind: "unary";
     input: typeof GetPlanRequestSchema;
     output: typeof GetPlanResponseSchema;
+  },
+  /**
+   * GetPlanCards returns the feed's card (FeedPlan) for each of up to 50
+   * plans, in one call with no stops, route or Google lookups. Each id is
+   * judged as GetPlan would: an open plan in the caller's city, or one closed
+   * there in the last 14 days (with closed_reason). Unknown, other-city and
+   * older closed ids are left out, not an error. INVALID_ARGUMENT for more
+   * than 50 ids or one that isn't a plan id.
+   *
+   * @generated from rpc issho.v1.PlanService.GetPlanCards
+   */
+  getPlanCards: {
+    methodKind: "unary";
+    input: typeof GetPlanCardsRequestSchema;
+    output: typeof GetPlanCardsResponseSchema;
   },
   /**
    * SignUp signs the caller up for an open plan, or replaces the times they

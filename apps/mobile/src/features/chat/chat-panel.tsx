@@ -1,4 +1,4 @@
-import { maxLen, SendMessageRequestSchema } from '@issho/api-client';
+import { type FeedPlan, maxLen, SendMessageRequestSchema } from '@issho/api-client';
 import { router } from 'expo-router';
 import { useEffect, useRef, useState, type ReactElement } from 'react';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, TextInput, View } from 'react-native';
@@ -10,14 +10,14 @@ import { LoadFailed } from '@/components/query-screen';
 import { ThemedText } from '@/components/themed-text';
 import { EaseOut, Motion } from '@/constants/motion';
 import { BodyFont, Brand, Spacing } from '@/constants/theme';
-import { usePlan } from '@/features/plans/data';
+import { usePlanCards } from '@/features/plans/data';
 import { formatMoment, lastSignupDay } from '@/features/plans/format';
 import { usePlanNames } from '@/features/plans/names';
 import { pairText } from '@/features/plans/plan-card';
 import { useTheme } from '@/hooks/use-theme';
 import { useI18n } from '@/i18n/i18n-provider';
 
-import type { Message } from './messages';
+import { suggestedPlans, type Message } from './messages';
 import { useRoom, type RoomRef } from './room';
 import { TypingDots } from './typing-dots';
 
@@ -30,13 +30,14 @@ const rise = FadeInDown.duration(Motion.move).easing(EaseOut);
 
 /**
  * A plan Issho suggested in a crew's chat: what, where and when signups
- * close, from GetPlan (the message itself carries only the plan's id).
+ * close. The message carries only the plan's id; the card (`plan`) comes from
+ * one GetPlanCards call for all of a room's suggestions (usePlanCards), and
+ * tapping opens the plan screen, which calls GetPlan.
  */
-export function SuggestedPlan({ planId }: { planId: string }) {
+export function SuggestedPlan({ planId, plan }: { planId: string; plan?: FeedPlan }) {
   const { t, lang, pick } = useI18n();
   const theme = useTheme();
   const names = usePlanNames();
-  const plan = usePlan(planId).data?.plan;
   return (
     <PressableScale
       accessibilityRole="button"
@@ -91,6 +92,8 @@ export function ChatPanel({ room, header }: { room: RoomRef; header?: ReactEleme
   const { t, lang } = useI18n();
   const theme = useTheme();
   const { messages, status, opensAt, send, typing, onTyping, retry, refreshError } = useRoom(room);
+  // One GetPlanCards call for every suggestion in the room (not a GetPlan each).
+  const cards = usePlanCards(suggestedPlans(messages));
   const [draft, setDraft] = useState('');
   const list = useRef<FlatList<Message>>(null);
 
@@ -144,7 +147,7 @@ export function ChatPanel({ room, header }: { room: RoomRef; header?: ReactEleme
           }
           renderItem={({ item }) => (
             <Animated.View entering={baseline !== null && item.id > baseline ? rise : undefined}>
-              {item.planId ? <SuggestedPlan planId={item.planId} /> : <Bubble m={item} />}
+              {item.planId ? <SuggestedPlan planId={item.planId} plan={cards.get(item.planId)} /> : <Bubble m={item} />}
             </Animated.View>
           )}
           keyboardDismissMode="interactive"
