@@ -15,10 +15,10 @@ import (
 // city of about 2,000 people with event history (#185): EXPLAIN ANALYZE of
 // ListMatchingUsers and the time of LoadCity and a full Match. It is a
 // measurement, not a check, so it only runs with ISSHO_MEASURE=1 (and a
-// TEST_DATABASE_URL, as every integration test). The history is generated in
+// test database, as every integration test). The history is generated in
 // SQL, so nothing large is committed:
 //
-//	ISSHO_MEASURE=1 TEST_DATABASE_URL=... go test ./internal/plans -run MatchingMeasure -v
+//	ISSHO_MEASURE=1 go test -count=1 ./internal/plans -run MatchingMeasure -v
 func TestIntegrationMatchingMeasure(t *testing.T) {
 	if os.Getenv("ISSHO_MEASURE") == "" {
 		t.Skip("ISSHO_MEASURE not set")

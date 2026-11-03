@@ -3,7 +3,6 @@ package moderation
 import (
 	"context"
 	"fmt"
-	"os"
 	"slices"
 	"testing"
 	"time"
@@ -15,6 +14,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
 	"github.com/shrujancheruku/issho/backend/internal/platform/auth"
+	"github.com/shrujancheruku/issho/backend/internal/testfixture"
 )
 
 // pagingEnv opens the test database, makes n users with stable ids (a rerun
@@ -22,16 +22,8 @@ import (
 // and a handler. Skipped unless TEST_DATABASE_URL is set.
 func pagingEnv(t *testing.T, name string, n int) (context.Context, *pgxpool.Pool, *Handler, []uuid.UUID) {
 	t.Helper()
-	url := os.Getenv("TEST_DATABASE_URL")
-	if url == "" {
-		t.Skip("TEST_DATABASE_URL not set")
-	}
 	ctx := context.Background()
-	pool, err := pgxpool.New(ctx, url)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(pool.Close)
+	pool := testfixture.Pool(t)
 	var supabase bool
 	if err := pool.QueryRow(ctx, "select exists (select 1 from pg_namespace where nspname = 'auth')").Scan(&supabase); err != nil {
 		t.Fatal(err)

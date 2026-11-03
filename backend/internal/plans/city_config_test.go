@@ -78,14 +78,14 @@ func TestIntegrationCityMeetingPlaces(t *testing.T) {
 		if _, err := f.pool.Exec(ctx, `update app.plans set meeting_place_id = null where city_id = $1`, f.city); err != nil {
 			t.Fatal(err)
 		}
-		search := &fakeSearch{}
+		search := stationSearch()
 		r := &Runner{DB: f.pool, Log: slog.New(slog.NewTextHandler(io.Discard, nil)), Places: search}
 		if _, err := r.RefreshMeetingPlaces(ctx, f.city); err != nil {
 			t.Fatal(err)
 		}
-		return search.reqs
+		return search.NearbyRequests()
 	}
-	// fakeSearch finds only train stations, so the searches before one run out.
+	// stationSearch finds only train stations, so the searches before one run out.
 	got := run()
 	if len(got) != 1 || got[0].RadiusM != 1000 || got[0].Types[0] != "train_station" {
 		t.Errorf("default searches = %+v; want the station first (and, finding one, only it)", got)

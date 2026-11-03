@@ -330,10 +330,11 @@ func (r *Runner) scheduleIn(ctx context.Context, c *City, now time.Time) (Schedu
 	open = slices.DeleteFunc(open, func(p Open) bool { return slices.Contains(held, p.ID) })
 	slices.SortStableFunc(open, func(a, b Open) int { return cmp.Compare(b.Signups, a.Signups) })
 	// Everyone waiting for any of the plans, in three queries instead of
-	// three per plan (#185). Scheduling a plan only changes its own signups
-	// (the people it places leave its list), so a later plan's are still
-	// current when its turn comes; what other plans do to a person's time
-	// is read fresh per plan (AddBusy in schedulePlan).
+	// three per plan (#185). What other plans do to a person's time is read
+	// fresh per plan (AddBusy in schedulePlan). A signup withdrawn or changed
+	// after this read is caught when the round is saved: SaveEvent checks
+	// everyone it invites is still waiting and writes nothing if not
+	// (ErrSignupsChanged), so the plan is skipped and the next pass redoes it.
 	planIDs := make([]uuid.UUID, len(open))
 	for i, p := range open {
 		planIDs[i] = p.ID
@@ -447,6 +448,13 @@ func (r *Runner) schedulePlan(ctx context.Context, q *dbgen.Queries, c *City, us
 	id, done, err := SaveEvent(ctx, r.DB, ev)
 	if errors.Is(err, ErrClosed) {
 		// Closed or scheduled by someone else since ListOpen.
+		return 0, 0, nil
+	}
+	if errors.Is(err, ErrSignupsChanged) {
+		// Someone withdrew after this pass read the signups. Nothing was
+		// written: skipped, not failed; the next pass schedules the plan
+		// from fresh signups.
+		r.Log.Info("plan skipped, a signup changed during the pass", "city", c.ID, "plan", p.ID)
 		return 0, 0, nil
 	}
 	if err != nil {

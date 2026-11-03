@@ -33,14 +33,9 @@ const testIssuer = "http://test.local"
 // then that person typing on their own socket; a bad token and someone not
 // going are turned away with their close codes.
 func TestIntegrationSocket(t *testing.T) {
-	url := testfixture.DatabaseURL(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	pool, err := pgxpool.New(ctx, url)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(pool.Close)
+	pool := testfixture.Pool(t)
 	going, other, invited := uuid.New(), uuid.New(), uuid.New()
 	eventID := seed(t, ctx, pool, going, other, invited)
 

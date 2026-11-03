@@ -2,12 +2,10 @@ package translations
 
 import (
 	"context"
-	"os"
 	"slices"
 	"testing"
 
 	"connectrpc.com/connect"
-	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
@@ -21,13 +19,8 @@ import (
 // placeholders, and a machine translation never overwrites it afterwards.
 // Skipped unless TEST_DATABASE_URL is set.
 func TestIntegrationCatalogReview(t *testing.T) {
-	url := testfixture.DatabaseURL(t)
 	ctx := context.Background()
-	pool, err := pgxpool.New(ctx, url)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(pool.Close)
+	pool := testfixture.Pool(t)
 	q := dbgen.New(pool)
 
 	const source, uiSource = "Translations test: code sent to {email}", "Translations test: Save"
@@ -94,16 +87,8 @@ func TestIntegrationCatalogReview(t *testing.T) {
 // token is for one search and one language. Skipped unless TEST_DATABASE_URL
 // is set.
 func TestIntegrationCatalogPaging(t *testing.T) {
-	url := os.Getenv("TEST_DATABASE_URL")
-	if url == "" {
-		t.Skip("TEST_DATABASE_URL not set")
-	}
 	ctx := context.Background()
-	pool, err := pgxpool.New(ctx, url)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(pool.Close)
+	pool := testfixture.Pool(t)
 	q := dbgen.New(pool)
 
 	// Three sources, each in four contexts, so the source repeats; three

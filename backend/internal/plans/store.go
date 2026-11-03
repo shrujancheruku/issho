@@ -23,6 +23,11 @@ import (
 // ErrClosed means the plan doesn't exist or no longer takes signups.
 var ErrClosed = errors.New("plan is not open")
 
+// ErrSignupsChanged means someone the round would place is no longer signed
+// up for the plan (they withdrew after the pass read the signups). Nothing
+// was written; the next pass schedules the plan from fresh signups.
+var ErrSignupsChanged = errors.New("a signup changed since the pass read them")
+
 // wholeDay stands for matching's whole-day Occasion (Block "") in
 // app.plan_signup_unavailable, whose primary key can't hold a null.
 const wholeDay = "day"
@@ -275,13 +280,24 @@ func LoadWaiting(ctx context.Context, q *dbgen.Queries, planIDs []uuid.UUID) (ma
 		index[key{r.PlanID, r.UserID}] = next[r.PlanID]
 		next[r.PlanID]++
 	}
-	signup := func(plan, user uuid.UUID) *matching.Signup { return &out[plan][index[key{plan, user}]] }
+	// nil for a person who withdrew between the queries (they are not in the
+	// first result); their rows are skipped.
+	signup := func(plan, user uuid.UUID) *matching.Signup {
+		i, ok := index[key{plan, user}]
+		if !ok {
+			return nil
+		}
+		return &out[plan][i]
+	}
 	slots, err := q.ListPlansSignupSlots(ctx, planIDs)
 	if err != nil {
 		return nil, err
 	}
 	for _, r := range slots {
 		s := signup(r.PlanID, r.UserID)
+		if s == nil {
+			continue
+		}
 		s.Pattern = append(s.Pattern, matching.Slot{Weekday: time.Weekday(r.Weekday), Block: matching.Block(r.Block)})
 	}
 	unavailable, err := q.ListPlansSignupUnavailable(ctx, planIDs)
@@ -294,6 +310,9 @@ func LoadWaiting(ctx context.Context, q *dbgen.Queries, planIDs []uuid.UUID) (ma
 			b = ""
 		}
 		s := signup(r.PlanID, r.UserID)
+		if s == nil {
+			continue
+		}
 		s.Unavailable = append(s.Unavailable, matching.Occasion{Date: r.Date.Time, Block: b})
 	}
 	return out, nil
@@ -370,6 +389,25 @@ func SaveEvent(ctx context.Context, pool *pgxpool.Pool, e Event) (eventID uuid.U
 		}
 		if err != nil {
 			return err
+		}
+		// The pass read the plan's signups once, up front, so check under the
+		// lock (which Withdraw and SaveSignup take too) that everyone it is
+		// about to invite is still waiting. Before anything is written, so
+		// nothing is invited or sent for a stale list.
+		waiting, err := q.ListSignups(ctx, e.PlanID)
+		if err != nil {
+			return err
+		}
+		still := make(map[uuid.UUID]bool, len(waiting))
+		for _, u := range waiting {
+			still[u] = true
+		}
+		for _, g := range e.Scheduled.Groups {
+			for _, u := range g.Invited {
+				if id, err := uuid.Parse(string(u)); err != nil || !still[id] {
+					return ErrSignupsChanged
+				}
+			}
 		}
 		o := e.Scheduled.Occasion
 		status := EventScheduled

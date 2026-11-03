@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/shrujancheruku/issho/backend/internal/maps"
+	"github.com/shrujancheruku/issho/backend/internal/maps/mapstest"
 	"github.com/shrujancheruku/issho/backend/internal/walks"
 )
 
@@ -41,32 +42,16 @@ func (p *walkProposer) Propose(_ context.Context, req walks.Request, _ []string)
 
 // findAll finds every place near (35.703, 139.58), each with a type that
 // fits its name.
-type findAll struct{}
-
-func (findAll) Find(_ context.Context, r maps.FindRequest) (maps.Found, bool, error) {
-	name, _, _ := strings.Cut(r.Query, ",")
-	typ := map[string]string{"Station": "train_station", "Tea House": "tea_house"}[name]
-	if typ == "" {
-		typ = "buddhist_temple"
-	}
-	id := "zz-" + strings.ToLower(strings.ReplaceAll(name, " ", "-"))
-	return maps.Found{Place: maps.Place{ID: id, PrimaryType: typ, Location: maps.LatLng{Lat: 35.703, Lng: 139.58}}, Name: name}, true, nil
-}
-
-// walkRouter walks the places in the order given, 10 minutes a leg, and
-// records each walk.
-type walkRouter struct{ calls [][]string }
-
-func (w *walkRouter) WalkThrough(_ context.Context, places []string, _ bool) (maps.WalkRoute, error) {
-	w.calls = append(w.calls, places)
-	r := maps.WalkRoute{Route: maps.Route{Polyline: "walk-line", Duration: time.Duration(len(places)-1) * 10 * time.Minute}}
-	for i := range places {
-		r.Order = append(r.Order, i)
-		if i > 0 {
-			r.Legs = append(r.Legs, maps.Route{Duration: 10 * time.Minute})
+func findAll() *mapstest.Fake {
+	return &mapstest.Fake{FindFunc: func(r maps.FindRequest) (maps.Found, bool) {
+		name, _, _ := strings.Cut(r.Query, ",")
+		typ := map[string]string{"Station": "train_station", "Tea House": "tea_house"}[name]
+		if typ == "" {
+			typ = "buddhist_temple"
 		}
-	}
-	return r, nil
+		id := "zz-" + strings.ToLower(strings.ReplaceAll(name, " ", "-"))
+		return maps.Found{Place: maps.Place{ID: id, PrimaryType: typ, Location: maps.LatLng{Lat: 35.703, Lng: 139.58}}, Name: name}, true
+	}}
 }
 
 // TestIntegrationWalks: the fixture's activity as a walk. Without a
@@ -99,8 +84,8 @@ func TestIntegrationWalks(t *testing.T) {
 	}
 
 	// A walk that can't be composed isn't opened, and the area rests.
-	prop, router := &walkProposer{bad: true}, &walkRouter{}
-	r.Walks = &walks.Composer{Proposer: prop, Places: findAll{}, Routes: router, Rules: walks.DefaultRules(), Log: log}
+	prop, router := &walkProposer{bad: true}, &mapstest.Fake{}
+	r.Walks = &walks.Composer{Proposer: prop, Places: findAll(), Routes: router, Rules: walks.DefaultRules(), Log: log}
 	r.WalkRoutes = router
 	if opened, err := r.Suggest(ctx, f.city, now); err != nil || opened.Opened != 0 || prop.calls != 2 {
 		t.Fatalf("Suggest with a bad walk opened %d after %d proposals, %v", opened, prop.calls, err)
@@ -140,10 +125,10 @@ func TestIntegrationWalks(t *testing.T) {
 
 	// The plan screen: the walk's own title and summary, and every stop
 	// with its place, time, walk and note.
-	svc := &Service{DB: f.pool, Places: fakePlaces{
+	svc := &Service{DB: f.pool, Places: &mapstest.Fake{Localized: map[string]map[string]maps.PlaceDetails{
 		"zz-station":   {"ja": {Name: "吉祥寺駅", Location: maps.LatLng{Lat: 35.703, Lng: 139.58}}},
 		"zz-tea-house": {"ja": {Name: "茶房", Location: maps.LatLng{Lat: 35.705, Lng: 139.582}}},
-	}}
+	}}}
 	item, steps, _, err := svc.Plan(ctx, f.users[0], plan.ID, time.Now())
 	if err != nil {
 		t.Fatal(err)
@@ -161,7 +146,7 @@ func TestIntegrationWalks(t *testing.T) {
 	}
 
 	// A walk never gets the old kind of meeting place: it starts at its own.
-	r.Places = &fakeSearch{}
+	r.Places = stationSearch()
 	if found, err := r.RefreshMeetingPlaces(ctx, f.city); err != nil || found.Found != 0 {
 		t.Errorf("meeting places for a walk: %d, %v", found, err)
 	}
@@ -169,13 +154,13 @@ func TestIntegrationWalks(t *testing.T) {
 	// At 25 days the route is recomputed through the stops in their order;
 	// at 30 it's cleared with the legs (and, with a router, recomputed in
 	// the same pass; without one it stays cleared).
-	router.calls = nil
+	router.ResetWalkCalls()
 	if _, err := f.pool.Exec(ctx, "update app.plans set route_computed_at = $2 where id = $1", plan.ID, later.Add(-26*24*time.Hour)); err != nil {
 		t.Fatal(err)
 	}
-	if rr, err := r.RefreshRoutes(ctx, f.city, later); err != nil || rr.Computed != 1 || len(router.calls) != 1 ||
-		!slices.Equal(router.calls[0], []string{"zz-station", "zz-temple-a", "zz-temple-b", "zz-temple-c", "zz-tea-house"}) {
-		t.Fatalf("refresh computed %d with %q, %v", rr.Computed, router.calls, err)
+	if rr, err := r.RefreshRoutes(ctx, f.city, later); err != nil || rr.Computed != 1 || len(router.WalkCalls()) != 1 ||
+		!slices.Equal(router.WalkCalls()[0], []string{"zz-station", "zz-temple-a", "zz-temple-b", "zz-temple-c", "zz-tea-house"}) {
+		t.Fatalf("refresh computed %d with %q, %v", rr.Computed, router.WalkCalls(), err)
 	}
 	r.WalkRoutes = nil
 	if rr, err := r.RefreshRoutes(ctx, f.city, later.Add(31*24*time.Hour)); err != nil || rr.Cleared != 1 {
@@ -192,17 +177,17 @@ func TestIntegrationWalks(t *testing.T) {
 	p := plan
 	p.Walk = true
 	start := time.Date(2030, 1, 12, 14, 0, 0, 0, time.FixedZone("JST", 9*3600))
-	r.Hours = &fakeHours{h: everyDay(9, 16)}
+	r.Hours = &mapstest.Fake{HoursFunc: sameHours(everyDay(9, 16))}
 	if v := r.checkVenues(ctx, p, nil, start, map[string]*maps.Hours{}); v != venueClosedAt {
 		t.Errorf("tea house closing at 16:00: %v", v)
 	}
-	r.Hours = &fakeHours{h: everyDay(9, 18)}
+	r.Hours = &mapstest.Fake{HoursFunc: sameHours(everyDay(9, 18))}
 	if v := r.checkVenues(ctx, p, nil, start, map[string]*maps.Hours{}); v != venuesOK {
 		t.Errorf("open until 18:00: %v", v)
 	}
-	gone := &fakeHours{h: maps.Hours{Closed: true}}
+	gone := &mapstest.Fake{HoursFunc: sameHours(maps.Hours{Closed: true})}
 	r.Hours = gone
-	if v := r.checkVenues(ctx, p, nil, start, map[string]*maps.Hours{}); v != venueGone || gone.calls != 1 {
-		t.Errorf("closed stop: %v after %d lookups", v, gone.calls)
+	if v := r.checkVenues(ctx, p, nil, start, map[string]*maps.Hours{}); v != venueGone || gone.HoursCalls() != 1 {
+		t.Errorf("closed stop: %v after %d lookups", v, gone.HoursCalls())
 	}
 }

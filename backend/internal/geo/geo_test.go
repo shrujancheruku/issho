@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/shrujancheruku/issho/backend/internal/maps"
+	"github.com/shrujancheruku/issho/backend/internal/maps/mapstest"
 )
 
 // Three areas: a and b are ~1.1 km apart, c is ~22 km away.
@@ -35,27 +36,26 @@ func TestPlanMatrixSkipsSelfAndFarWalks(t *testing.T) {
 	}
 }
 
-// fakeRouter: 90 s per km, and no driving route to or from x-c (e.g. an island).
-type fakeRouter struct{ calls int }
-
-func (f *fakeRouter) Matrix(_ context.Context, r maps.MatrixRequest) ([]maps.MatrixElement, error) {
-	f.calls++
-	var out []maps.MatrixElement
-	for oi, o := range r.Origins {
-		for di, d := range r.Destinations {
-			e := maps.MatrixElement{Origin: oi, Destination: di, OK: true,
-				Duration: time.Duration(maps.DistanceM(o, d)*0.09) * time.Second}
-			if r.Mode == maps.Drive && (d.Lat == 35.9 || o.Lat == 35.9) {
-				e = maps.MatrixElement{Origin: oi, Destination: di}
+// islandRouter is 90 s per km, and no driving route to or from x-c (e.g. an island).
+func islandRouter() *mapstest.Fake {
+	return &mapstest.Fake{MatrixFunc: func(r maps.MatrixRequest) []maps.MatrixElement {
+		var out []maps.MatrixElement
+		for oi, o := range r.Origins {
+			for di, d := range r.Destinations {
+				e := maps.MatrixElement{Origin: oi, Destination: di, OK: true,
+					Duration: time.Duration(maps.DistanceM(o, d)*0.09) * time.Second}
+				if r.Mode == maps.Drive && (d.Lat == 35.9 || o.Lat == 35.9) {
+					e = maps.MatrixElement{Origin: oi, Destination: di}
+				}
+				out = append(out, e)
 			}
-			out = append(out, e)
 		}
-	}
-	return out, nil
+		return out
+	}}
 }
 
 func TestBuildMatrix(t *testing.T) {
-	r := &fakeRouter{}
+	r := islandRouter()
 	got, err := BuildMatrix(context.Background(), r, areas, []maps.Mode{maps.Drive, maps.Walk})
 	if err != nil {
 		t.Fatal(err)
@@ -74,21 +74,20 @@ func TestBuildMatrix(t *testing.T) {
 	if m := byKey["x-a>x-b>walk"]; m != 2 {
 		t.Errorf("x-a→x-b walk = %d min, want 2 (rounded up)", m)
 	}
-	if r.calls != 3+2 {
-		t.Errorf("got %d provider calls, want 5", r.calls)
+	if r.Matrices() != 3+2 {
+		t.Errorf("got %d provider calls, want 5", r.Matrices())
 	}
 }
 
-type fakeSearcher struct{ reqs []maps.NearbyRequest }
-
-func (f *fakeSearcher) Nearby(_ context.Context, r maps.NearbyRequest) ([]maps.Place, error) {
-	f.reqs = append(f.reqs, r)
-	// Every search finds the same place right next to x-b, plus one whose
-	// primary type doesn't match the category (it must be dropped).
-	return []maps.Place{
-		{ID: "p1", PrimaryType: r.Types[0], Location: maps.LatLng{Lat: 35.7101, Lng: 139.58}},
-		{ID: "bar-in-karaoke-results", PrimaryType: "bar", Location: maps.LatLng{Lat: 35.7101, Lng: 139.58}},
-	}, nil
+// sameSpotSearcher: every search finds the same place right next to x-b, plus
+// one whose primary type doesn't match the category (it must be dropped).
+func sameSpotSearcher() *mapstest.Fake {
+	return &mapstest.Fake{NearbyFunc: func(r maps.NearbyRequest) []maps.Place {
+		return []maps.Place{
+			{ID: "p1", PrimaryType: r.Types[0], Location: maps.LatLng{Lat: 35.7101, Lng: 139.58}},
+			{ID: "bar-in-karaoke-results", PrimaryType: "bar", Location: maps.LatLng{Lat: 35.7101, Lng: 139.58}},
+		}
+	}}
 }
 
 func TestDiscoverVenues(t *testing.T) {
@@ -96,13 +95,13 @@ func TestDiscoverVenues(t *testing.T) {
 		{ID: "cafe", GoogleTypes: []string{"cafe"}, RadiusM: 1500},
 		{ID: "beach", GoogleTypes: []string{"beach"}, RadiusM: 50000},
 	}
-	s := &fakeSearcher{}
+	s := sameSpotSearcher()
 	got, n, err := DiscoverVenues(context.Background(), s, areas, cats, "ja", 100)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(s.reqs) != 3+1 || n.Made != 4 { // cafe per area, beach once
-		t.Errorf("got %d searches (%d counted), want 4", len(s.reqs), n.Made)
+	if len(s.NearbyRequests()) != 3+1 || n.Made != 4 { // cafe per area, beach once
+		t.Errorf("got %d searches (%d counted), want 4", len(s.NearbyRequests()), n.Made)
 	}
 	if len(got) != 2 {
 		t.Fatalf("got %d venues, want one per category (wrong primary types dropped): %+v", len(got), got)
@@ -121,14 +120,14 @@ func TestDiscoverAreaVenues(t *testing.T) {
 	}
 	// One area's own searches; the city-wide ones only for a new city.
 	for wide, want := range map[bool]int{false: 1, true: 2} {
-		s := &fakeSearcher{}
+		s := sameSpotSearcher()
 		got, n, err := DiscoverAreaVenues(context.Background(), s, areas, "x-a", cats, wide, "ja", 100)
-		if err != nil || n.Made != want || len(s.reqs) != want {
-			t.Fatalf("wide %v: %d searches (%d made), %v; want %d", wide, n.Made, len(s.reqs), err, want)
+		if err != nil || n.Made != want || len(s.NearbyRequests()) != want {
+			t.Fatalf("wide %v: %d searches (%d made), %v; want %d", wide, n.Made, len(s.NearbyRequests()), err, want)
 		}
 		// Searched from x-a, but placed in the nearest area.
-		if s.reqs[0].Center != areas[0].LatLng || got[0].AreaID != "x-b" {
-			t.Errorf("wide %v: searched at %v, venue in %s", wide, s.reqs[0].Center, got[0].AreaID)
+		if s.NearbyRequests()[0].Center != areas[0].LatLng || got[0].AreaID != "x-b" {
+			t.Errorf("wide %v: searched at %v, venue in %s", wide, s.NearbyRequests()[0].Center, got[0].AreaID)
 		}
 	}
 }
@@ -145,22 +144,18 @@ func square(c maps.LatLng, half float64) maps.Boundary {
 // denseSearcher returns a full page for any circle reaching the dense spot
 // and two places otherwise, all at the circle's centre, plus one place far
 // outside every area.
-type denseSearcher struct {
-	dense maps.LatLng
-	reqs  []maps.NearbyRequest
-}
-
-func (f *denseSearcher) Nearby(_ context.Context, r maps.NearbyRequest) ([]maps.Place, error) {
-	f.reqs = append(f.reqs, r)
-	n := 2
-	if maps.DistanceM(r.Center, f.dense) <= r.RadiusM {
-		n = r.Max
-	}
-	out := []maps.Place{{ID: "far-away", PrimaryType: r.Types[0], Location: maps.LatLng{Lat: 36.5, Lng: 139.58}}}
-	for i := range n - 1 {
-		out = append(out, maps.Place{ID: fmt.Sprintf("%v-%d", r.Center, i), PrimaryType: r.Types[0], Location: r.Center})
-	}
-	return out, nil
+func denseSearcher(dense maps.LatLng) *mapstest.Fake {
+	return &mapstest.Fake{NearbyFunc: func(r maps.NearbyRequest) []maps.Place {
+		n := 2
+		if maps.DistanceM(r.Center, dense) <= r.RadiusM {
+			n = r.Max
+		}
+		out := []maps.Place{{ID: "far-away", PrimaryType: r.Types[0], Location: maps.LatLng{Lat: 36.5, Lng: 139.58}}}
+		for i := range n - 1 {
+			out = append(out, maps.Place{ID: fmt.Sprintf("%v-%d", r.Center, i), PrimaryType: r.Types[0], Location: r.Center})
+		}
+		return out
+	}}
 }
 
 func TestDiscoverVenuesWithinBoundaries(t *testing.T) {
@@ -172,29 +167,30 @@ func TestDiscoverVenuesWithinBoundaries(t *testing.T) {
 		{ID: "x-e", LatLng: ec, Boundary: square(ec, 3000)},
 	}
 	cats := []VenueCategory{{ID: "cafe", GoogleTypes: []string{"cafe"}, RadiusM: 800}}
-	s := &denseSearcher{dense: maps.LatLng{Lat: 16.0, Lng: 108.19}} // in w's west
+	dense := maps.LatLng{Lat: 16.0, Lng: 108.19} // in w's west
+	s := denseSearcher(dense)
 	got, n, err := DiscoverVenues(context.Background(), s, wards, cats, "vi", 1000)
 	if err != nil {
 		t.Fatal(err)
 	}
 	jobs := PlanVenues(wards, cats)
-	if n.Made != len(s.reqs) || n.Made <= len(jobs) || n.Made >= MaxSearches(jobs) || n.Skipped != 0 {
+	if n.Made != len(s.NearbyRequests()) || n.Made <= len(jobs) || n.Made >= MaxSearches(jobs) || n.Skipped != 0 {
 		t.Errorf("%+v: want more than the %d first searches (the dense spot splits), fewer than the %d bound, none skipped", n, len(jobs), MaxSearches(jobs))
 	}
 
 	// A small budget: every area is still searched, never more than it allows.
 	for _, budget := range []int{2, 9, 12} {
-		s := &denseSearcher{dense: s.dense}
+		s := denseSearcher(dense)
 		_, n, err := DiscoverVenues(context.Background(), s, wards, cats, "vi", budget)
-		if err != nil || n.Made > budget || n.Made != len(s.reqs) || n.Skipped == 0 {
-			t.Errorf("budget %d: %+v, %d made, %v; want at most the budget and some skipped", budget, n, len(s.reqs), err)
+		if err != nil || n.Made > budget || n.Made != len(s.NearbyRequests()) || n.Skipped == 0 {
+			t.Errorf("budget %d: %+v, %d made, %v; want at most the budget and some skipped", budget, n, len(s.NearbyRequests()), err)
 		}
 	}
 	if _, _, err := DiscoverVenues(context.Background(), s, wards, cats, "vi", 1); err == nil {
 		t.Error("a budget below the first searches ran")
 	}
 	smallest := math.Inf(1)
-	for _, r := range s.reqs {
+	for _, r := range s.NearbyRequests() {
 		smallest = min(smallest, r.RadiusM)
 		if r.Max != pageSize {
 			t.Errorf("search asked for %d places, want %d", r.Max, pageSize)
@@ -207,8 +203,8 @@ func TestDiscoverVenuesWithinBoundaries(t *testing.T) {
 	// However the dense spot falls between circles, some smallest one
 	// still reaches it.
 	reached := false
-	for _, r := range s.reqs {
-		reached = reached || r.RadiusM == smallest && maps.DistanceM(r.Center, s.dense) <= r.RadiusM
+	for _, r := range s.NearbyRequests() {
+		reached = reached || r.RadiusM == smallest && maps.DistanceM(r.Center, dense) <= r.RadiusM
 	}
 	if !reached {
 		t.Error("no smallest circle reaches the dense spot")
@@ -219,7 +215,7 @@ func TestDiscoverVenuesWithinBoundaries(t *testing.T) {
 		}
 	}
 	// The dense spot's places are in w, whatever point is nearer.
-	where, _ := Locate(wards, s.dense)
+	where, _ := Locate(wards, dense)
 	if where.ID != "x-w" {
 		t.Errorf("dense spot located in %s", where.ID)
 	}

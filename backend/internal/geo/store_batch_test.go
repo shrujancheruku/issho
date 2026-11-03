@@ -29,12 +29,9 @@ func (c *statementCounter) TraceQueryEnd(context.Context, *pgx.Conn, pgx.TraceQu
 // areas has 2,450 walking pairs; one statement per pair made a rebuild thousands
 // of round trips to a database that is far from the worker.
 func TestIntegrationSaveBatches(t *testing.T) {
-	url := testfixture.DatabaseURL(t)
 	ctx := context.Background()
-	cfg, err := pgxpool.ParseConfig(url)
-	if err != nil {
-		t.Fatal(err)
-	}
+	// A second pool on the same database, with the counting tracer.
+	cfg := testfixture.Pool(t).Config()
 	counter := &statementCounter{}
 	cfg.ConnConfig.Tracer = counter
 	pool, err := pgxpool.NewWithConfig(ctx, cfg)

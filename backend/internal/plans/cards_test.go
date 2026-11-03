@@ -8,17 +8,9 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/shrujancheruku/issho/backend/internal/maps"
+	"github.com/shrujancheruku/issho/backend/internal/maps/mapstest"
 	"github.com/shrujancheruku/issho/backend/internal/matching"
 )
-
-// countingPlaces fails the test's expectation if Cards ever asks Google.
-type countingPlaces struct{ calls int }
-
-func (c *countingPlaces) Details(context.Context, string, string) (maps.PlaceDetails, error) {
-	c.calls++
-	return maps.PlaceDetails{}, errors.New("unexpected Places call")
-}
 
 // Over the cap is refused before anything is looked up (no database needed).
 func TestCardsTooManyIDs(t *testing.T) {
@@ -66,7 +58,8 @@ func TestIntegrationCards(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	places := &countingPlaces{}
+	// Cards must never ask Google: any Details call is counted and fails.
+	places := &mapstest.Fake{DetailsErr: errors.New("unexpected Places call")}
 	svc := &Service{DB: f.pool, Places: places}
 	got, err := svc.Cards(ctx, ja, []uuid.UUID{open, closed, old, elsewhere, uuid.New(), open}, now)
 	if err != nil {
@@ -85,8 +78,8 @@ func TestIntegrationCards(t *testing.T) {
 	if it := byID[closed]; it.Title == "" || it.ClosedReason != ClosedNoGroup || !it.SignedUp || it.Minutes != -1 {
 		t.Errorf("closed card = %+v", it)
 	}
-	if places.calls != 0 {
-		t.Errorf("Cards called Places %d times, want 0", places.calls)
+	if places.DetailsCalls() != 0 {
+		t.Errorf("Cards called Places %d times, want 0", places.DetailsCalls())
 	}
 	// The same ids through GetPlan agree on what is readable.
 	for _, id := range []uuid.UUID{old, elsewhere} {

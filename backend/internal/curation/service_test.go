@@ -101,13 +101,8 @@ type fixture struct {
 
 func newFixture(t *testing.T) *fixture {
 	t.Helper()
-	url := testfixture.DatabaseURL(t)
 	ctx := context.Background()
-	pool, err := pgxpool.New(ctx, url)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(pool.Close)
+	pool := testfixture.Pool(t)
 
 	f := &fixture{pool: pool, city: "zz-curation", bar: "zz-curation-bar", cafe: "zz-curation-cafe", adminID: uuid.New(),
 		now: time.Date(2030, 1, 1, 9, 0, 0, 0, time.UTC)}

@@ -60,6 +60,7 @@
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
     "test": "jest",
+    "test:coverage": "jest --coverage --coverageReporters=json-summary --coverageReporters=text-summary",
     "export:web": "expo export -p web",
     "deploy:web": "expo export -p web && wrangler deploy"
   },
