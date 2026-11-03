@@ -1,6 +1,6 @@
 # Go tools are pinned in backend/go.mod via `tool` directives (go.work makes them usable from the root).
 GOTOOL := go tool
-GITLEAKS := go run github.com/zricethezav/gitleaks/v8@v8.30.1
+GITLEAKS := go tool gitleaks
 
 # Optional env file for targeting another environment without exporting secrets in
 # your shell, e.g. `make migrate-up seed ENV_FILE=.env.issho-dev`. Files matching

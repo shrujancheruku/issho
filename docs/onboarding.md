@@ -14,7 +14,7 @@ Follow this top to bottom on a fresh machine. By the end you'll have the API, th
 | Supabase CLI | latest | `brew install supabase/tap/supabase` |
 | Xcode + iOS Simulator | latest | App Store (only for running the iOS app) |
 
-You **don't** need to install buf, sqlc, goose or gitleaks. They're pinned in `backend/go.mod` (or the `Makefile`) and run through `go tool` / `go run`.
+You **don't** need to install buf, sqlc, goose or gitleaks. They're pinned in `backend/go.mod` and run through `go tool`.
 
 ## 2. Clone and set up
 
