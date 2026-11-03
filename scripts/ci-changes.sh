@@ -16,7 +16,9 @@
 # job that reads them (found by grepping for go:embed and `../` in Go code,
 # the Makefile and the scripts): backend/internal/translate/guide.md (embedded),
 # data/ and supabase/templates (read by Go tests), supabase/config.toml and
-# apps/mobile/src/i18n (read or rewritten by cmd/tool and its tests).
+# apps/mobile/src/i18n (read or rewritten by cmd/tool and its tests),
+# backend/internal/plans/events.go and crews/notifications.go (read by the
+# mobile Jest test push-kinds.test.ts, so a change there runs typescript).
 # Re-check when adding a go:embed or a test that reads outside its package.
 set -euo pipefail
 
@@ -41,6 +43,13 @@ classify() {
     # are pinned by tool directives here, so a bump can change the proto checks.
     backend/go.mod | backend/go.sum)
       backend=true image=true codegen=true proto=true ts_pkgs=false ;;
+
+    # --- Two Go files the mobile app's Jest suite reads: push-kinds.test.ts
+    # parses their Notify* constants to keep apps/mobile's pushKinds table in
+    # step. Everything backend/* does, plus the typescript job; turbo's
+    # --affected wouldn't pick apps/mobile for a backend-only change.
+    backend/internal/plans/events.go | backend/internal/crews/notifications.go)
+      backend=true image=true codegen=true ts=true ts_pkgs=false ;;
 
     # --- Go. The backend job (vet, unit tests, migrations, DB integration
     # tests) and the deploy image both build all of backend/. Markdown under

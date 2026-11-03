@@ -122,6 +122,8 @@ function pushData(data: Record<string, unknown> | undefined): { kind: unknown; r
  * (a confirmed group shows on the event and the list). The table is
  * `pushKinds` in lib/queries.ts. Mount where the person is signed in.
  */
+// Mounted only for a signed-in, onboarded person: a push that arrives while
+// signed out or in onboarding is deliberately ignored (nothing is cached yet).
 export function usePushRefresh() {
   const qc = useQueryClient();
   useEffect(() => {
