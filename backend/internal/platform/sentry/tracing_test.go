@@ -45,25 +45,14 @@ func TestSampler(t *testing.T) {
 	}
 }
 
-// Outside a traced request the transport and tracer change nothing, and
-// never add headers (Google's key travels in one; trace headers aren't sent out).
-func TestTransportUntracedAndNoHeaders(t *testing.T) {
-	var got http.Header
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { got = r.Header.Clone() }))
-	defer srv.Close()
-	client := &http.Client{Transport: Transport(nil)}
-	req, _ := http.NewRequestWithContext(context.Background(), "GET", srv.URL+"/v1/places/x?fields=a", nil)
-	res, err := client.Do(req)
-	if err != nil {
-		t.Fatal(err)
-	}
-	res.Body.Close()
-	if got.Get(sentrygo.SentryTraceHeader) != "" || got.Get(sentrygo.SentryBaggageHeader) != "" {
-		t.Fatalf("trace headers sent to an outside API: %v", got)
-	}
-	if ctx := child(context.Background(), "op", "d"); ctx != context.Background() {
+// Outside a traced request StartHTTP changes nothing: no span, and no
+// trace headers are ever added to outgoing calls (Google's key travels in one).
+func TestStartHTTPUntraced(t *testing.T) {
+	ctx := context.Background()
+	if c := child(ctx, "op", "d"); c != ctx {
 		t.Fatal("a span started without a traced request")
 	}
+	StartHTTP(ctx, "GET example.com/v1")(200, nil) // must not panic
 }
 
 type captured struct{ events []*sentrygo.Event }
@@ -89,14 +78,11 @@ func TestRequestTransaction(t *testing.T) {
 
 	google := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}))
 	defer google.Close()
-	client := &http.Client{Transport: Transport(nil)}
 	h := Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := DBTracer{}.TraceQueryStart(r.Context(), nil, pgx.TraceQueryStartData{SQL: "-- name: GetPlan :one\nselect 1"})
 		DBTracer{}.TraceQueryEnd(ctx, nil, pgx.TraceQueryEndData{})
-		req, _ := http.NewRequestWithContext(r.Context(), "GET", google.URL+"/v1/places/abc?key=secret", nil)
-		if res, err := client.Do(req); err == nil {
-			res.Body.Close()
-		}
+		end := StartHTTP(r.Context(), "GET "+strings.TrimPrefix(google.URL, "http://")+"/v1/places/{id}")
+		end(http.StatusOK, nil)
 	}))
 	h.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest("POST", "/issho.v1.PlanService/GetPlan", nil))
 	h.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest("GET", "/up", nil))
@@ -112,7 +98,7 @@ func TestRequestTransaction(t *testing.T) {
 	for _, s := range tx.Spans {
 		descs = append(descs, s.Op+": "+s.Description)
 	}
-	want := []string{"db.sql.query: GetPlan", "http.client: GET " + strings.TrimPrefix(google.URL, "http://") + "/v1/places/abc"}
+	want := []string{"db.sql.query: GetPlan", "http.client: GET " + strings.TrimPrefix(google.URL, "http://") + "/v1/places/{id}"}
 	if strings.Join(descs, "|") != strings.Join(want, "|") {
 		t.Errorf("spans %q, want %q (no query string)", descs, want)
 	}

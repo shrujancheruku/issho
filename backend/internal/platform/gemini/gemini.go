@@ -35,10 +35,13 @@ type Client struct {
 }
 
 // New uses a Google Cloud API key for Agent Platform, restricted to it.
-// timeout bounds each attempt (the transport retries 429s and 5xxs).
+// timeout bounds each attempt. The transport retries 429s, 5xxs and resets,
+// but not an attempt that timed out: calls are billed and a model that thought
+// for the whole timeout would be paid for again.
 func New(apiKey, model string, timeout time.Duration) *Client {
 	api := googleapi.New(apiKey)
 	api.SetTimeout(timeout)
+	api.RetryTimeouts = false
 	return &Client{API: api, URL: defaultURL, Model: model}
 }
 
