@@ -138,6 +138,9 @@ func seedPacks(ctx context.Context, pool *pgxpool.Pool, paths []string) error {
 	if key := os.Getenv("GOOGLE_MAPS_API_KEY"); key != "" {
 		router = google.New(key)
 	}
+	// Read and validate every pack first, so a bad file stops the run before
+	// anything is seeded.
+	packs := make([]cities.Pack, 0, len(paths))
 	for _, path := range paths {
 		p, err := cities.ReadPack(path)
 		if err != nil {
@@ -146,7 +149,20 @@ func seedPacks(ctx context.Context, pool *pgxpool.Pool, paths []string) error {
 		if err := cities.ValidatePack(p, nil); err != nil {
 			return fmt.Errorf("%s: %w", path, err)
 		}
-		d, err := cities.Apply(ctx, pool, router, p)
+		packs = append(packs, p)
+	}
+	return applyPacks(ctx, packs, router != nil, func(ctx context.Context, p cities.Pack) (cities.Diff, error) {
+		return cities.Apply(ctx, pool, router, p)
+	})
+}
+
+// applyPacks runs apply on each pack and logs its Diff. apply is injected so
+// the error handling can be tested without a database. A failed travel-time
+// rebuild (cities.ErrTravelTimes) only warns, since the pack is seeded; any
+// other error stops the run.
+func applyPacks(ctx context.Context, packs []cities.Pack, haveRouter bool, apply func(context.Context, cities.Pack) (cities.Diff, error)) error {
+	for _, p := range packs {
+		d, err := apply(ctx, p)
 		if errors.Is(err, cities.ErrTravelTimes) {
 			// The pack is seeded; build-matrix or the worker's refresh retries.
 			slog.Warn("seeded city pack, but the travel times failed", "city", p.ID, "error", err)
@@ -156,7 +172,7 @@ func seedPacks(ctx context.Context, pool *pgxpool.Pool, paths []string) error {
 		slog.Info("seeded city pack", "city", p.ID, "areas", len(p.Areas),
 			"new_areas", d.NewAreas, "moved_areas", d.MovedAreas,
 			"travel_times_rebuilt", d.TravelTimesRebuilt, "travel_time_rows", d.TravelTimes)
-		if router == nil && len(d.NewAreas)+len(d.MovedAreas) > 0 {
+		if !haveRouter && len(d.NewAreas)+len(d.MovedAreas) > 0 {
 			slog.Warn("travel times skipped: GOOGLE_MAPS_API_KEY is not set; run build-matrix once it is", "city", p.ID)
 		}
 	}
