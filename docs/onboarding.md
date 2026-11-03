@@ -135,3 +135,4 @@ Read [contributing.md](contributing.md). In short:
 | Sign-in code email never arrives | Locally, emails only go to Mailpit (http://127.0.0.1:54324). After changing `supabase/config.toml` or templates, run `supabase stop && supabase start`. |
 | Expo Go says the project needs a newer SDK | The store version of Expo Go lags behind new SDKs. Let the CLI install the right one: see [Running on a device](../apps/mobile/README.md#running-on-a-device). |
 | App shows "unreachable" | API not running, or `EXPO_PUBLIC_API_URL` isn't reachable from the simulator or phone. |
+
