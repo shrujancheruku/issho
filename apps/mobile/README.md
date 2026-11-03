@@ -150,6 +150,8 @@ npx expo install <pkg>    # always use this to add packages (picks SDK-compatibl
 
 Tests use the `jest-expo` preset. TypeScript 6 no longer loads `@types` packages automatically, so test files start with `/// <reference types="jest" />`.
 
+`src/i18n/__tests__/ui-strings.test.tsx` covers `useUiStrings` (the provider's private hook, so through `I18nProvider`) on fake timers that every test restores: a language with nothing on the device is fetched, an incomplete copy is asked for again after 5, 10, 20, 40 and then 60 s, a complete one is checked hourly with its version (and "unchanged" keeps the text), a copy for other English text is refetched in full, failures retry three times and then stop, and a return to the foreground refetches only a copy over an hour old. `src/features/auth/__tests__/sign-in-screen.test.tsx` runs the real sign-in screen against faked `supabase.auth.signInWithOtp` and `verifyOtp` (never a hosted project): email, code, a wrong code, resend and the error wording. Jest maps `@/assets/*` to `assets/`, as `tsconfig.json` does.
+
 If installing a package fails with `ERR_PNPM_IGNORED_BUILDS`, approve or deny its install script in `pnpm-workspace.yaml` (see [onboarding troubleshooting](../../docs/onboarding.md#troubleshooting)).
 
 ## Web
