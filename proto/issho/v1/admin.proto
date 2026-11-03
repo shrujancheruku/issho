@@ -1,0 +1,66 @@
+syntax = "proto3";
+
+package issho.v1;
+
+import "google/protobuf/timestamp.proto";
+import "issho/v1/citypacks.proto";
+import "issho/v1/errors.proto";
+
+option go_package = "github.com/shrujancheruku/issho/backend/gen/issho/v1;isshov1";
+
+// AdminService: the long operations the admin SPA starts. A request can't
+// outlast Cloudflare's 100 s cut-off, so an operation that may (applying a
+// city pack, finding an area's venues) is a background job: the RPC that
+// starts it validates its input at once, queues the job and returns a
+// job_id, and the SPA polls GetAdminJob (every 2 s) until the job is done.
+// Admins only, like ModerationService: anyone else gets PERMISSION_DENIED.
+//
+// HTTP: POST /issho.v1.AdminService/<Method>
+service AdminService {
+  // GetAdminJob returns a job's state, times and, once it is done, its
+  // result or its failure. NOT_FOUND for an unknown id, and for a job that
+  // isn't an admin operation. River's cleaner deletes finished jobs (after
+  // a day for those that succeeded, a week for those that failed, by
+  // default), after which this is NOT_FOUND.
+  rpc GetAdminJob(GetAdminJobRequest) returns (GetAdminJobResponse) {}
+}
+
+message GetAdminJobRequest {
+  int64 job_id = 1;
+}
+
+message GetAdminJobResponse {
+  int64 job_id = 1;
+  AdminJobState state = 2;
+  // When the job was queued, when its latest attempt started (unset while
+  // queued) and when it finished (unset until succeeded or failed).
+  google.protobuf.Timestamp queued_at = 3;
+  google.protobuf.Timestamp started_at = 4;
+  google.protobuf.Timestamp finished_at = 5;
+  // The operation's result, set when state is SUCCEEDED.
+  oneof result {
+    ApplyCityPackResponse apply_city_pack = 6;
+    DiscoverAreaVenuesResponse discover_area_venues = 7;
+  }
+  // Set when state is FAILED.
+  AdminJobFailure failure = 8;
+}
+
+enum AdminJobState {
+  ADMIN_JOB_STATE_UNSPECIFIED = 0;
+  // Waiting to run, or to be retried after a failed attempt.
+  ADMIN_JOB_STATE_QUEUED = 1;
+  ADMIN_JOB_STATE_RUNNING = 2;
+  ADMIN_JOB_STATE_SUCCEEDED = 3;
+  // Out of attempts, or failed in a way a retry can't fix.
+  ADMIN_JOB_STATE_FAILED = 4;
+}
+
+// AdminJobFailure is why a job failed, in the shape of a failed call: a
+// message for the admin (what was refused, or that Google failed) and the
+// reason a screen can branch on (errors.proto). Internal details stay in the
+// worker's log.
+message AdminJobFailure {
+  string message = 1;
+  ErrorReason reason = 2;
+}

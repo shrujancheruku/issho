@@ -43,6 +43,9 @@ const (
 	// The feature isn't set up on this server, e.g. suggestions without a model
 	// key (FAILED_PRECONDITION).
 	ErrorReason_ERROR_REASON_FEATURE_UNAVAILABLE ErrorReason = 8
+	// An outside call or a background job ran past its time limit; asking again
+	// may work (UNAVAILABLE for a call).
+	ErrorReason_ERROR_REASON_TIMED_OUT ErrorReason = 9
 )
 
 // Enum value maps for ErrorReason.
@@ -57,6 +60,7 @@ var (
 		6: "ERROR_REASON_CHECK_IN_CLOSED",
 		7: "ERROR_REASON_FEEDBACK_CLOSED",
 		8: "ERROR_REASON_FEATURE_UNAVAILABLE",
+		9: "ERROR_REASON_TIMED_OUT",
 	}
 	ErrorReason_value = map[string]int32{
 		"ERROR_REASON_UNSPECIFIED":         0,
@@ -68,6 +72,7 @@ var (
 		"ERROR_REASON_CHECK_IN_CLOSED":     6,
 		"ERROR_REASON_FEEDBACK_CLOSED":     7,
 		"ERROR_REASON_FEATURE_UNAVAILABLE": 8,
+		"ERROR_REASON_TIMED_OUT":           9,
 	}
 )
 
@@ -153,7 +158,7 @@ const file_issho_v1_errors_proto_rawDesc = "" +
 	"\n" +
 	"\x15issho/v1/errors.proto\x12\bissho.v1\"B\n" +
 	"\x11ErrorReasonDetail\x12-\n" +
-	"\x06reason\x18\x01 \x01(\x0e2\x15.issho.v1.ErrorReasonR\x06reason*\xa0\x02\n" +
+	"\x06reason\x18\x01 \x01(\x0e2\x15.issho.v1.ErrorReasonR\x06reason*\xbc\x02\n" +
 	"\vErrorReason\x12\x1c\n" +
 	"\x18ERROR_REASON_UNSPECIFIED\x10\x00\x12\x1a\n" +
 	"\x16ERROR_REASON_SUSPENDED\x10\x01\x12\x1b\n" +
@@ -163,7 +168,8 @@ const file_issho_v1_errors_proto_rawDesc = "" +
 	"\x14ERROR_REASON_NOT_NOW\x10\x05\x12 \n" +
 	"\x1cERROR_REASON_CHECK_IN_CLOSED\x10\x06\x12 \n" +
 	"\x1cERROR_REASON_FEEDBACK_CLOSED\x10\a\x12$\n" +
-	" ERROR_REASON_FEATURE_UNAVAILABLE\x10\bB>Z<github.com/shrujancheruku/issho/backend/gen/issho/v1;isshov1b\x06proto3"
+	" ERROR_REASON_FEATURE_UNAVAILABLE\x10\b\x12\x1a\n" +
+	"\x16ERROR_REASON_TIMED_OUT\x10\tB>Z<github.com/shrujancheruku/issho/backend/gen/issho/v1;isshov1b\x06proto3"
 
 var (
 	file_issho_v1_errors_proto_rawDescOnce sync.Once

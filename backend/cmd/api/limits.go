@@ -36,15 +36,16 @@ const (
 // (each makes many upstream calls). 0 means no deadline of ours: the admin's
 // request is still cancelled when they close the page.
 var rpcDeadlines = map[string]time.Duration{
-	// Seeds a pack, then rebuilds the city's travel times with Google:
-	// one routes call per pair of areas.
-	isshov1connect.CityPackServiceApplyCityPackProcedure: 0,
-	// One Nearby Search per venue category, for the area.
-	isshov1connect.CityPackServiceDiscoverAreaVenuesProcedure: 2 * time.Minute,
+	// ApplyCityPack and DiscoverAreaVenues used to be here (a pack apply
+	// rebuilds travel times; a venue search makes hundreds of calls). They are
+	// River jobs now (internal/adminjobs): the RPC only validates and queues,
+	// so the default deadline fits.
 	// Validates against the default branch, then opens a pull request.
 	isshov1connect.CityPackServiceProposeCityPackProcedure: 2 * time.Minute,
-	// A model call per draft.
-	isshov1connect.TranslationServiceDraftAppStringProcedure: 2 * time.Minute,
+	// A model call per draft, which gives up after its own 60 s budget
+	// (gemini.InteractiveBudget); the rest is the lookups before it. Under
+	// Cloudflare's 100 s cut-off.
+	isshov1connect.TranslationServiceDraftAppStringProcedure: 90 * time.Second,
 }
 
 // serverTimeouts are the http.Server's; production uses prodTimeouts, tests

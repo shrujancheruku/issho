@@ -3,6 +3,7 @@ package gemini
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -138,5 +139,37 @@ func TestDraft(t *testing.T) {
 	}
 	if _, err := tr.Draft(context.Background(), "en", translate.Draft{English: "Hello"}); err != nil || !strings.Contains(system, "livelier, warmer version") {
 		t.Errorf("english prompt: %v\n%s", err, system)
+	}
+}
+
+// A draft that runs past its budget fails with translate.ErrBudget, however
+// the transport would retry; the budget is the total, not per attempt.
+func TestDraftBudget(t *testing.T) {
+	if got := New("k").DraftBudget; got != 60*time.Second {
+		t.Errorf("an interactive translator's budget is %v, want 60s", got)
+	}
+	hung := make(chan struct{})
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		select { // Gemini never answers
+		case <-r.Context().Done():
+		case <-hung:
+		}
+	}))
+	defer srv.Close()
+	defer close(hung)
+	tr := New("test-key")
+	tr.Client.URL = srv.URL + "/v1/publishers/google/models/%s:generateContent"
+	tr.DraftBudget = 50 * time.Millisecond
+	start := time.Now()
+	_, err := tr.Draft(context.Background(), "ja", translate.Draft{English: "Hello"})
+	if !errors.Is(err, translate.ErrBudget) || time.Since(start) > 5*time.Second {
+		t.Fatalf("draft = %v after %v", err, time.Since(start))
+	}
+	// A caller that gives up is not "over budget".
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	tr.DraftBudget = time.Minute
+	if _, err := tr.Draft(ctx, "ja", translate.Draft{English: "Hello"}); errors.Is(err, translate.ErrBudget) || err == nil {
+		t.Errorf("cancelled draft = %v", err)
 	}
 }

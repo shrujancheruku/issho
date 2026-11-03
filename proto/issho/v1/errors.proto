@@ -33,4 +33,7 @@ enum ErrorReason {
   // The feature isn't set up on this server, e.g. suggestions without a model
   // key (FAILED_PRECONDITION).
   ERROR_REASON_FEATURE_UNAVAILABLE = 8;
+  // An outside call or a background job ran past its time limit; asking again
+  // may work (UNAVAILABLE for a call).
+  ERROR_REASON_TIMED_OUT = 9;
 }
