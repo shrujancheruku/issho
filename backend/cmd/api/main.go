@@ -203,7 +203,10 @@ func run() error {
 	if gh != nil {
 		translationEditor.GitHub, translationEditor.Base = gh, gh.Base
 		// Merged human versions are served without a deploy.
-		go uiCatalog.Follow(ctx, gh, gh.Base, 5*time.Minute, slog.Default())
+		// A refused token stops production here, not on the first edit.
+		if err := uiCatalog.Start(ctx, gh, gh.Base, 5*time.Minute, slog.Default(), cfg.Production()); err != nil {
+			return err
+		}
 	}
 	mux.Handle(isshov1connect.NewTranslationServiceHandler(translationEditor, opts))
 

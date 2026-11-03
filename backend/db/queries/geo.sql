@@ -17,14 +17,6 @@ values ($1, $2, $3, $4, now())
 on conflict (from_area_id, to_area_id, mode) do update set
   minutes = excluded.minutes, computed_at = excluded.computed_at;
 
--- Google Maps terms only allow temporary caching of Routes content, so travel
--- times older than the cutoff are deleted rather than kept around. A pair that
--- no longer has a route (or a mode the city dropped) also ages out this way.
--- name: DeleteStaleTravelTimes :execrows
-delete from app.area_travel_times t
-using app.areas a
-where a.id = t.from_area_id and a.city_id = @city_id and t.computed_at < @cutoff;
-
 -- name: ListCityVenueCategories :many
 -- Only categories needed by an activity enabled in the city, so discovery
 -- doesn't pay for venues nothing will use (e.g. temples in Austin).
