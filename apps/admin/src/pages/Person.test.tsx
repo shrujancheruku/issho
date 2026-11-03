@@ -86,17 +86,28 @@ describe('suspend a person', () => {
 });
 
 describe('lift a suspension', () => {
-  // Lifting has no confirm step in the page (it is the safe direction: the
-  // person is let back in), so there is no cancel test.
   it('sends the note and shows the person as no longer suspended', async () => {
     serve(true);
     const { user } = renderPage(<Person userId={userId} />);
     await user.type(await screen.findByLabelText('Note'), 'appealed');
     await user.click(screen.getByRole('button', { name: 'Lift suspension' }));
+    expect(fake.requests('moderation.liftSuspension')).toEqual([]); // the first click only asks
+    await user.click(screen.getByRole('button', { name: 'Yes, lift Aoi suspension' }));
 
     expect(fake.requests('moderation.liftSuspension')).toEqual([{ userId, note: 'appealed' }]);
     expect(await screen.findByText('Suspend', { selector: 'h2' })).toBeTruthy();
     expect(screen.queryByText('Suspended')).toBeNull();
+  });
+
+  it('sends nothing when the confirmation is cancelled', async () => {
+    serve(true);
+    const { user } = renderPage(<Person userId={userId} />);
+    await user.click(await screen.findByRole('button', { name: 'Lift suspension' }));
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    expect(fake.requests('moderation.liftSuspension')).toEqual([]);
+    expect(screen.getByRole('button', { name: 'Lift suspension' })).toBeTruthy();
+    expect(screen.getByText('Suspended')).toBeTruthy();
   });
 
   it('shows the error and keeps the suspension when the RPC fails', async () => {
@@ -104,6 +115,7 @@ describe('lift a suspension', () => {
     fake.on('moderation.liftSuspension', () => { throw new ConnectError('try again later', Code.Unavailable); });
     const { user } = renderPage(<Person userId={userId} />);
     await user.click(await screen.findByRole('button', { name: 'Lift suspension' }));
+    await user.click(screen.getByRole('button', { name: 'Yes, lift Aoi suspension' }));
 
     expect(await screen.findByText(/try again later/)).toBeTruthy();
     expect(screen.getByText('Suspended')).toBeTruthy();
@@ -114,9 +126,10 @@ describe('lift a suspension', () => {
     const gate = deferred();
     fake.on('moderation.liftSuspension', async () => { await gate.promise; state.suspended = false; return {}; });
     const { user } = renderPage(<Person userId={userId} />);
-    const lift = await screen.findByRole('button', { name: 'Lift suspension' });
-    await user.click(lift);
-    await user.click(lift); // the RPC hasn't answered yet
+    await user.click(await screen.findByRole('button', { name: 'Lift suspension' }));
+    const yes = screen.getByRole('button', { name: 'Yes, lift Aoi suspension' });
+    await user.click(yes);
+    await user.click(yes); // the RPC hasn't answered yet
     expect(fake.requests('moderation.liftSuspension')).toHaveLength(1);
     gate.release();
     expect(await screen.findByText('Suspend', { selector: 'h2' })).toBeTruthy();

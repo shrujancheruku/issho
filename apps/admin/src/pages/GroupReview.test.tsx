@@ -30,14 +30,13 @@ function serve() {
   return state;
 }
 
-// The page has no confirm step for either decision: approve sends the
-// invitations at the first click. So there is no cancel test; the double-click
-// tests below are what stops a second send.
+// Both decisions ask first (ConfirmButton): the first click sends nothing.
 describe('approve a proposed round', () => {
   it('sends the event id and shows the round as scheduled', async () => {
     serve();
     const { user } = renderPage(<GroupReview eventId={eventId} />);
     await user.click(await screen.findByRole('button', { name: 'Approve and send invitations' }));
+    await user.click(screen.getByRole('button', { name: 'Yes, invite everyone' }));
 
     expect(fake.requests('review.approveProposal')).toEqual([{ eventId }]);
     expect(await screen.findByText('Scheduled')).toBeTruthy();
@@ -50,6 +49,7 @@ describe('approve a proposed round', () => {
     fake.on('review.approveProposal', () => { throw new ConnectError('a group is below its minimum', Code.FailedPrecondition); });
     const { user } = renderPage(<GroupReview eventId={eventId} />);
     await user.click(await screen.findByRole('button', { name: 'Approve and send invitations' }));
+    await user.click(screen.getByRole('button', { name: 'Yes, invite everyone' }));
 
     expect(await screen.findByText(/below its minimum/)).toBeTruthy();
     expect(screen.getByText('Proposed')).toBeTruthy();
@@ -61,9 +61,10 @@ describe('approve a proposed round', () => {
     const gate = deferred();
     fake.on('review.approveProposal', async () => { await gate.promise; state.status = ReviewEventStatus.SCHEDULED; return {}; });
     const { user } = renderPage(<GroupReview eventId={eventId} />);
-    const approve = await screen.findByRole('button', { name: 'Approve and send invitations' });
-    await user.click(approve);
-    await user.click(approve);
+    await user.click(await screen.findByRole('button', { name: 'Approve and send invitations' }));
+    const yes = screen.getByRole('button', { name: 'Yes, invite everyone' });
+    await user.click(yes);
+    await user.click(yes); // the RPC hasn't answered yet
     gate.release();
 
     expect(await screen.findByText('Scheduled')).toBeTruthy();
@@ -76,6 +77,7 @@ describe('reject a proposed round', () => {
     serve();
     const { user } = renderPage(<GroupReview eventId={eventId} />);
     await user.click(await screen.findByRole('button', { name: 'Reject' }));
+    await user.click(screen.getByRole('button', { name: 'Yes, reject this round' }));
 
     expect(fake.requests('review.rejectProposal')).toEqual([{ eventId }]);
     // The proposal is deleted, so the refetch finds nothing: the page says so.
@@ -89,6 +91,7 @@ describe('reject a proposed round', () => {
     fake.on('review.rejectProposal', () => { throw new ConnectError('already decided', Code.FailedPrecondition); });
     const { user } = renderPage(<GroupReview eventId={eventId} />);
     await user.click(await screen.findByRole('button', { name: 'Reject' }));
+    await user.click(screen.getByRole('button', { name: 'Yes, reject this round' }));
 
     expect(await screen.findByText(/already decided/)).toBeTruthy();
     expect(screen.getByText('Proposed')).toBeTruthy();
@@ -99,12 +102,29 @@ describe('reject a proposed round', () => {
     const gate = deferred();
     fake.on('review.rejectProposal', async () => { await gate.promise; state.gone = true; return {}; });
     const { user } = renderPage(<GroupReview eventId={eventId} />);
-    const reject = await screen.findByRole('button', { name: 'Reject' });
-    await user.click(reject);
-    await user.click(reject);
+    await user.click(await screen.findByRole('button', { name: 'Reject' }));
+    const yes = screen.getByRole('button', { name: 'Yes, reject this round' });
+    await user.click(yes);
+    await user.click(yes); // the RPC hasn't answered yet
     gate.release();
 
     expect(await screen.findByText(/no such event/)).toBeTruthy();
     expect(fake.requests('review.rejectProposal')).toHaveLength(1);
+  });
+});
+
+describe('cancelling a confirmation', () => {
+  it.each([
+    ['Approve and send invitations', 'review.approveProposal'],
+    ['Reject', 'review.rejectProposal'],
+  ] as const)('%s: sends nothing and leaves the proposal as it was', async (label, rpc) => {
+    serve();
+    const { user } = renderPage(<GroupReview eventId={eventId} />);
+    await user.click(await screen.findByRole('button', { name: label }));
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    expect(fake.requests(rpc)).toEqual([]);
+    expect(screen.getByRole('button', { name: label })).toBeTruthy();
+    expect(screen.getByText('Proposed')).toBeTruthy();
   });
 });

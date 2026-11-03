@@ -27,13 +27,13 @@ function serve(status: ReviewPlanStatus) {
   return state;
 }
 
-// Neither the plan's approval nor its rejection has a confirm step in the
-// page, so there are no cancel tests; the double-click tests cover a second send.
+// Every decision asks first (ConfirmButton): the first click sends nothing.
 describe('approve a draft plan', () => {
   it('sends the plan id alone when the text is unchanged, and shows it open', async () => {
     serve(ReviewPlanStatus.DRAFT);
     const { user } = renderPage(<PlanDetail planId={planId} />);
     await user.click(await screen.findByRole('button', { name: 'Approve' }));
+    await user.click(screen.getByRole('button', { name: 'Yes, open this plan' }));
 
     expect(fake.requests('review.approvePlan')).toEqual([{ planId }]);
     expect(fake.requests('review.editPlan')).toEqual([]);
@@ -48,6 +48,8 @@ describe('approve a draft plan', () => {
     await user.clear(title);
     await user.type(title, 'Late ramen');
     await user.click(screen.getByRole('button', { name: 'Save and approve' }));
+    expect(fake.calls.map((c) => c.rpc)).toEqual(['review.getReviewPlan']); // nothing saved until confirmed
+    await user.click(screen.getByRole('button', { name: 'Yes, open this plan' }));
 
     expect(await screen.findByText('Open')).toBeTruthy();
     expect(fake.calls.map((c) => c.rpc).filter((r) => r !== 'review.getReviewPlan')).toEqual(['review.editPlan', 'review.approvePlan']);
@@ -59,6 +61,7 @@ describe('approve a draft plan', () => {
     fake.on('review.approvePlan', () => { throw new ConnectError('the plan has changed', Code.FailedPrecondition); });
     const { user } = renderPage(<PlanDetail planId={planId} />);
     await user.click(await screen.findByRole('button', { name: 'Approve' }));
+    await user.click(screen.getByRole('button', { name: 'Yes, open this plan' }));
 
     expect(await screen.findByText(/the plan has changed/)).toBeTruthy();
     expect(screen.getByText('Draft')).toBeTruthy();
@@ -69,9 +72,10 @@ describe('approve a draft plan', () => {
     const gate = deferred();
     fake.on('review.approvePlan', async () => { await gate.promise; state.status = ReviewPlanStatus.OPEN; return {}; });
     const { user } = renderPage(<PlanDetail planId={planId} />);
-    const approve = await screen.findByRole('button', { name: 'Approve' });
-    await user.click(approve);
-    await user.click(approve);
+    await user.click(await screen.findByRole('button', { name: 'Approve' }));
+    const yes = screen.getByRole('button', { name: 'Yes, open this plan' });
+    await user.click(yes);
+    await user.click(yes); // the RPC hasn't answered yet
     gate.release();
 
     expect(await screen.findByText('Open')).toBeTruthy();
@@ -84,6 +88,7 @@ describe('reject a draft plan', () => {
     serve(ReviewPlanStatus.DRAFT);
     const { user } = renderPage(<PlanDetail planId={planId} />);
     await user.click(await screen.findByRole('button', { name: 'Reject' }));
+    await user.click(screen.getByRole('button', { name: 'Yes, reject this plan' }));
 
     expect(fake.requests('review.rejectPlan')).toEqual([{ planId }]);
     expect(await screen.findByText('Closed: rejected')).toBeTruthy();
@@ -96,6 +101,7 @@ describe('reject a draft plan', () => {
     fake.on('review.rejectPlan', () => { throw new ConnectError('no connection', Code.Unavailable); });
     const { user } = renderPage(<PlanDetail planId={planId} />);
     await user.click(await screen.findByRole('button', { name: 'Reject' }));
+    await user.click(screen.getByRole('button', { name: 'Yes, reject this plan' }));
 
     expect(await screen.findByText(/no connection/)).toBeTruthy();
     expect(screen.getByText('Draft')).toBeTruthy();
@@ -106,9 +112,10 @@ describe('reject a draft plan', () => {
     const gate = deferred();
     fake.on('review.rejectPlan', async () => { await gate.promise; state.status = ReviewPlanStatus.CLOSED; state.closedReason = 'rejected'; return {}; });
     const { user } = renderPage(<PlanDetail planId={planId} />);
-    const reject = await screen.findByRole('button', { name: 'Reject' });
-    await user.click(reject);
-    await user.click(reject);
+    await user.click(await screen.findByRole('button', { name: 'Reject' }));
+    const yes = screen.getByRole('button', { name: 'Yes, reject this plan' });
+    await user.click(yes);
+    await user.click(yes); // the RPC hasn't answered yet
     gate.release();
 
     expect(await screen.findByText('Closed: rejected')).toBeTruthy();
@@ -121,6 +128,7 @@ describe('withdraw an open plan', () => {
     serve(ReviewPlanStatus.OPEN);
     const { user } = renderPage(<PlanDetail planId={planId} />);
     await user.click(await screen.findByRole('button', { name: 'Withdraw plan' }));
+    await user.click(screen.getByRole('button', { name: 'Yes, withdraw this plan' }));
 
     expect(fake.requests('review.withdrawPlan')).toEqual([{ planId }]);
     expect(await screen.findByText('Closed: withdrawn')).toBeTruthy();
@@ -131,8 +139,43 @@ describe('withdraw an open plan', () => {
     fake.on('review.withdrawPlan', () => { throw new ConnectError('no connection', Code.Unavailable); });
     const { user } = renderPage(<PlanDetail planId={planId} />);
     await user.click(await screen.findByRole('button', { name: 'Withdraw plan' }));
+    await user.click(screen.getByRole('button', { name: 'Yes, withdraw this plan' }));
 
     expect(await screen.findByText(/no connection/)).toBeTruthy();
     expect(screen.getByText('Open')).toBeTruthy();
+  });
+});
+
+describe('cancelling a confirmation', () => {
+  it.each([
+    [ReviewPlanStatus.DRAFT, 'Approve', 'Draft', 'review.approvePlan'],
+    [ReviewPlanStatus.DRAFT, 'Reject', 'Draft', 'review.rejectPlan'],
+    [ReviewPlanStatus.OPEN, 'Withdraw plan', 'Open', 'review.withdrawPlan'],
+  ] as const)('%#: sends nothing and leaves the plan as it was', async (status, label, badge, rpc) => {
+    serve(status);
+    const { user } = renderPage(<PlanDetail planId={planId} />);
+    await user.click(await screen.findByRole('button', { name: label }));
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    expect(fake.requests(rpc)).toEqual([]);
+    expect(screen.getByRole('button', { name: label })).toBeTruthy();
+    expect(screen.getByText(badge)).toBeTruthy();
+  });
+});
+
+describe('withdraw double submit', () => {
+  it('sends one RPC for a double click', async () => {
+    const state = serve(ReviewPlanStatus.OPEN);
+    const gate = deferred();
+    fake.on('review.withdrawPlan', async () => { await gate.promise; state.status = ReviewPlanStatus.CLOSED; state.closedReason = 'withdrawn'; return {}; });
+    const { user } = renderPage(<PlanDetail planId={planId} />);
+    await user.click(await screen.findByRole('button', { name: 'Withdraw plan' }));
+    const yes = screen.getByRole('button', { name: 'Yes, withdraw this plan' });
+    await user.click(yes);
+    await user.click(yes);
+    gate.release();
+
+    expect(await screen.findByText('Closed: withdrawn')).toBeTruthy();
+    expect(fake.requests('review.withdrawPlan')).toHaveLength(1);
   });
 });

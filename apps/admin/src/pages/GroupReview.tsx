@@ -2,6 +2,7 @@ import { ConnectError, ReviewEventStatus, type ReviewEvent, type ReviewGroup } f
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
+import { ConfirmButton } from '../Confirm';
 import { localParts, localTime, personHref } from '../format';
 import { api } from '../lib';
 
@@ -49,8 +50,10 @@ export function GroupReview({ eventId }: { eventId: string }) {
       {proposed && (
         <article className="card decision">
           <div className="row">
-            <button disabled={act.isPending} onClick={() => act.mutate(() => api.review.approveProposal({ eventId }))}>Approve and send invitations</button>
-            <button className="secondary" disabled={act.isPending} onClick={() => act.mutate(() => api.review.rejectProposal({ eventId }))}>Reject</button>
+            <ConfirmButton label="Approve and send invitations" confirmLabel="Yes, invite everyone" disabled={act.isPending}
+              onConfirm={() => act.mutate(() => api.review.approveProposal({ eventId }))} />
+            <ConfirmButton className="secondary" label="Reject" confirmLabel="Yes, reject this round" disabled={act.isPending}
+              onConfirm={() => act.mutate(() => api.review.rejectProposal({ eventId }))} />
           </div>
           <p className="muted hint">
             Approving invites everyone still signed up and tells them; anyone who withdrew since is left out. Rejecting

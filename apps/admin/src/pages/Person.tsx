@@ -2,6 +2,7 @@ import { ConnectError, FlagKind, OutingFeedback, type Person as PersonData } fro
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
+import { ConfirmButton } from '../Confirm';
 import { formatTime, leanSummary } from '../format';
 import { api } from '../lib';
 
@@ -107,7 +108,7 @@ function Decision({ person: p }: { person: PersonData }) {
           <h2>Lift the suspension</h2>
           <p className="muted">They can use Issho again, but aren't put back into the plans, outings or crews they were taken out of.</p>
           <label className="note">Note<textarea rows={2} maxLength={2000} value={text} onChange={(e) => setText(e.target.value)} placeholder="Why it's lifted" /></label>
-          <div className="row"><button disabled={act.isPending} onClick={() => act.mutate()}>Lift suspension</button></div>
+          <div className="row"><ConfirmButton label="Lift suspension" confirmLabel={`Yes, lift ${p.name || 'their'} suspension`} disabled={act.isPending} onConfirm={() => act.mutate()} /></div>
         </>
       ) : (
         <>
