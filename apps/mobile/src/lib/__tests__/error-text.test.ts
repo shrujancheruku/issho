@@ -17,6 +17,7 @@ it.each([
   [ErrorReason.NOT_NOW, Code.FailedPrecondition, 'error.notNow'],
   [ErrorReason.CHECK_IN_CLOSED, Code.FailedPrecondition, 'error.checkInClosed'],
   [ErrorReason.FEEDBACK_CLOSED, Code.FailedPrecondition, 'feedback.closed'],
+  [ErrorReason.FEATURE_UNAVAILABLE, Code.FailedPrecondition, 'suggest.unavailable'],
 ])('reason %s reads as %s', (reason, code, key) => {
   expect(text(withReason(code, reason))).toBe(key);
 });

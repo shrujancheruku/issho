@@ -2610,6 +2610,7 @@ ErrorReason is added to only when a screen needs the distinction.
 | ERROR_REASON_NOT_NOW | 5 | Check-in isn&#39;t open yet, or the answer doesn&#39;t apply now (FAILED_PRECONDITION). |
 | ERROR_REASON_CHECK_IN_CLOSED | 6 | Check-in is closed (FAILED_PRECONDITION). |
 | ERROR_REASON_FEEDBACK_CLOSED | 7 | Feedback isn&#39;t open (FAILED_PRECONDITION). |
+| ERROR_REASON_FEATURE_UNAVAILABLE | 8 | The feature isn&#39;t set up on this server, e.g. suggestions without a model key (FAILED_PRECONDITION). |
 
 
  
