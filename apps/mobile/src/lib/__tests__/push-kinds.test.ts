@@ -24,7 +24,7 @@ test('every kind the backend queues has a row in the push table, and the table h
 });
 
 const seedAll = (qc: QueryClient) => {
-  for (const k of [keys.feed, keys.events, keys.event('e1'), keys.event('e2'), keys.crews, keys.crew('c1'), keys.crew('c2')])
+  for (const k of [keys.feed, keys.planCardsAll, keys.events, keys.event('e1'), keys.event('e2'), keys.crews, keys.crew('c1'), keys.crew('c2')])
     qc.setQueryData(k, 1);
 };
 const staleKeys = (qc: QueryClient) =>
@@ -37,11 +37,11 @@ const staleKeys = (qc: QueryClient) =>
 const expected = (...ks: (readonly unknown[])[]) => ks.map((k) => JSON.stringify(k)).sort();
 
 test.each([
-  ['event_invited', { eventId: 'e1' }, [keys.events, keys.event('e1'), keys.feed]],
+  ['event_invited', { eventId: 'e1' }, [keys.events, keys.event('e1'), keys.feed, keys.planCardsAll]],
   ['group_confirmed', { eventId: 'e1' }, [keys.event('e1'), keys.events]],
   ['group_cancelled', { eventId: 'e1' }, [keys.event('e1'), keys.events]],
   ['event_feedback', { eventId: 'e1' }, [keys.event('e1'), keys.events]],
-  ['plan_no_group', { planId: 'p1' }, [keys.feed, keys.events]],
+  ['plan_no_group', { planId: 'p1' }, [keys.feed, keys.planCardsAll, keys.events]],
   ['crew_offered', { crewId: 'c1' }, [keys.crews, keys.crew('c1')]],
   ['crew_formed', { crewId: 'c1' }, [keys.crews, keys.crew('c1')]],
   ['crew_suggestion', { crewId: 'c1' }, [keys.crew('c1')]],

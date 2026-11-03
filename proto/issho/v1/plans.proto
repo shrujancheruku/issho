@@ -27,6 +27,14 @@ service PlanService {
   // NOT_FOUND for an unknown or closed plan, or one in another city.
   rpc GetPlan(GetPlanRequest) returns (GetPlanResponse) {}
 
+  // GetPlanCards returns the feed's card (FeedPlan) for each of up to 50
+  // plans, in one call with no stops, route or Google lookups. Each id is
+  // judged as GetPlan would: an open plan in the caller's city, or one closed
+  // there in the last 14 days (with closed_reason). Unknown, other-city and
+  // older closed ids are left out, not an error. INVALID_ARGUMENT for more
+  // than 50 ids or one that isn't a plan id.
+  rpc GetPlanCards(GetPlanCardsRequest) returns (GetPlanCardsResponse) {}
+
   // SignUp signs the caller up for an open plan, or replaces the times they
   // gave. FAILED_PRECONDITION when the plan has closed or they don't speak
   // its language; INVALID_ARGUMENT for times outside the plan's window.
@@ -49,6 +57,17 @@ message ListFeedResponse {
 
 message GetPlanRequest {
   string plan_id = 1;
+}
+
+// At most 50 ids (INVALID_ARGUMENT beyond that); duplicates count once.
+message GetPlanCardsRequest {
+  repeated string plan_ids = 1;
+}
+
+// Cards for the ids the caller can see, in no particular order (match them
+// by FeedPlan.id); the rest are left out.
+message GetPlanCardsResponse {
+  repeated FeedPlan plans = 1;
 }
 
 // A plan that closed in the last 14 days is still returned, with

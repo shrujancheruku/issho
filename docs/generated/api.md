@@ -85,6 +85,8 @@
   
 - [issho/v1/plans.proto](#issho_v1_plans-proto)
     - [FeedPlan](#issho-v1-FeedPlan)
+    - [GetPlanCardsRequest](#issho-v1-GetPlanCardsRequest)
+    - [GetPlanCardsResponse](#issho-v1-GetPlanCardsResponse)
     - [GetPlanRequest](#issho-v1-GetPlanRequest)
     - [GetPlanResponse](#issho-v1-GetPlanResponse)
     - [ListFeedRequest](#issho-v1-ListFeedRequest)
@@ -1507,6 +1509,37 @@ An open plan as the caller sees it.
 
 
 
+<a name="issho-v1-GetPlanCardsRequest"></a>
+
+### GetPlanCardsRequest
+At most 50 ids (INVALID_ARGUMENT beyond that); duplicates count once.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| plan_ids | [string](#string) | repeated |  |
+
+
+
+
+
+
+<a name="issho-v1-GetPlanCardsResponse"></a>
+
+### GetPlanCardsResponse
+Cards for the ids the caller can see, in no particular order (match them
+by FeedPlan.id); the rest are left out.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| plans | [FeedPlan](#issho-v1-FeedPlan) | repeated |  |
+
+
+
+
+
+
 <a name="issho-v1-GetPlanRequest"></a>
 
 ### GetPlanRequest
@@ -1742,6 +1775,7 @@ HTTP: POST /issho.v1.PlanService/&lt;Method&gt;
 | ----------- | ------------ | ------------- | ------------|
 | ListFeed | [ListFeedRequest](#issho-v1-ListFeedRequest) | [ListFeedResponse](#issho-v1-ListFeedResponse) | ListFeed returns every open plan in the caller&#39;s city, best for them first, so scrolling far enough shows everything. Each plan&#39;s level also colours the map. |
 | GetPlan | [GetPlanRequest](#issho-v1-GetPlanRequest) | [GetPlanResponse](#issho-v1-GetPlanResponse) | GetPlan returns one open plan with the caller&#39;s signup, if any. NOT_FOUND for an unknown or closed plan, or one in another city. |
+| GetPlanCards | [GetPlanCardsRequest](#issho-v1-GetPlanCardsRequest) | [GetPlanCardsResponse](#issho-v1-GetPlanCardsResponse) | GetPlanCards returns the feed&#39;s card (FeedPlan) for each of up to 50 plans, in one call with no stops, route or Google lookups. Each id is judged as GetPlan would: an open plan in the caller&#39;s city, or one closed there in the last 14 days (with closed_reason). Unknown, other-city and older closed ids are left out, not an error. INVALID_ARGUMENT for more than 50 ids or one that isn&#39;t a plan id. |
 | SignUp | [SignUpRequest](#issho-v1-SignUpRequest) | [SignUpResponse](#issho-v1-SignUpResponse) | SignUp signs the caller up for an open plan, or replaces the times they gave. FAILED_PRECONDITION when the plan has closed or they don&#39;t speak its language; INVALID_ARGUMENT for times outside the plan&#39;s window. |
 | Withdraw | [WithdrawRequest](#issho-v1-WithdrawRequest) | [WithdrawResponse](#issho-v1-WithdrawResponse) | Withdraw removes the caller&#39;s signup. Withdrawing twice is fine. |
 

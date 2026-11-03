@@ -744,6 +744,84 @@ func (q *Queries) ListOpenPlans(ctx context.Context, arg ListOpenPlansParams) ([
 	return items, nil
 }
 
+const listOpenPlansByIDs = `-- name: ListOpenPlansByIDs :many
+select p.id, p.area_id, p.activity_id, p.follow_up_id, p.primary_language, p.secondary_language,
+       p.round, p.window_start, p.window_days, p.signup_deadline, p.venue_place_id, p.follow_up_venue_place_id,
+       p.route_polyline, p.route_seconds, p.meeting_place_id, p.title, p.description, exists (select 1 from app.plan_stops st where st.plan_id = p.id) as walk,
+       (select count(*) from app.plan_signups s where s.plan_id = p.id)::int as signups
+from app.plans p
+where p.id = any($1::uuid[]) and p.city_id = $2 and p.status = 'open'
+`
+
+type ListOpenPlansByIDsParams struct {
+	Ids    []uuid.UUID
+	CityID string
+}
+
+type ListOpenPlansByIDsRow struct {
+	ID                   uuid.UUID
+	AreaID               string
+	ActivityID           string
+	FollowUpID           *string
+	PrimaryLanguage      string
+	SecondaryLanguage    *string
+	Round                int16
+	WindowStart          pgtype.Date
+	WindowDays           int16
+	SignupDeadline       pgtype.Timestamptz
+	VenuePlaceID         *string
+	FollowUpVenuePlaceID *string
+	RoutePolyline        *string
+	RouteSeconds         *int32
+	MeetingPlaceID       *string
+	Title                []byte
+	Description          []byte
+	Walk                 bool
+	Signups              int32
+}
+
+// GetOpenPlan for many ids at once (GetPlanCards): the same columns and the
+// same city and status rule, so the rows convert (plans.openFromRow).
+func (q *Queries) ListOpenPlansByIDs(ctx context.Context, arg ListOpenPlansByIDsParams) ([]ListOpenPlansByIDsRow, error) {
+	rows, err := q.db.Query(ctx, listOpenPlansByIDs, arg.Ids, arg.CityID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListOpenPlansByIDsRow
+	for rows.Next() {
+		var i ListOpenPlansByIDsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.AreaID,
+			&i.ActivityID,
+			&i.FollowUpID,
+			&i.PrimaryLanguage,
+			&i.SecondaryLanguage,
+			&i.Round,
+			&i.WindowStart,
+			&i.WindowDays,
+			&i.SignupDeadline,
+			&i.VenuePlaceID,
+			&i.FollowUpVenuePlaceID,
+			&i.RoutePolyline,
+			&i.RouteSeconds,
+			&i.MeetingPlaceID,
+			&i.Title,
+			&i.Description,
+			&i.Walk,
+			&i.Signups,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listPlanStops = `-- name: ListPlanStops :many
 select position, role, place_id, minutes, note, walk_seconds
 from app.plan_stops where plan_id = $1 order by position
@@ -846,6 +924,99 @@ func (q *Queries) ListRecentWalkFailures(ctx context.Context, arg ListRecentWalk
 	for rows.Next() {
 		var i ListRecentWalkFailuresRow
 		if err := rows.Scan(&i.AreaID, &i.ActivityID); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listRecentlyClosedPlansByIDs = `-- name: ListRecentlyClosedPlansByIDs :many
+select p.id, p.area_id, p.activity_id, p.follow_up_id, p.primary_language, p.secondary_language,
+       p.round, p.window_start, p.window_days, p.signup_deadline, p.venue_place_id, p.follow_up_venue_place_id,
+       p.route_polyline, p.route_seconds, p.meeting_place_id, p.title, p.description, exists (select 1 from app.plan_stops st where st.plan_id = p.id) as walk,
+       (select count(*) from app.plan_signups s where s.plan_id = p.id)::int as signups,
+       p.closed_reason::text as closed_reason, p.closed_at,
+       exists (select 1 from app.plan_signups s where s.plan_id = p.id and s.user_id = $1) as signed_up
+from app.plans p
+where p.id = any($2::uuid[]) and p.city_id = $3 and p.status = 'closed' and p.closed_at > $4
+`
+
+type ListRecentlyClosedPlansByIDsParams struct {
+	UserID uuid.UUID
+	Ids    []uuid.UUID
+	CityID string
+	Since  pgtype.Timestamptz
+}
+
+type ListRecentlyClosedPlansByIDsRow struct {
+	ID                   uuid.UUID
+	AreaID               string
+	ActivityID           string
+	FollowUpID           *string
+	PrimaryLanguage      string
+	SecondaryLanguage    *string
+	Round                int16
+	WindowStart          pgtype.Date
+	WindowDays           int16
+	SignupDeadline       pgtype.Timestamptz
+	VenuePlaceID         *string
+	FollowUpVenuePlaceID *string
+	RoutePolyline        *string
+	RouteSeconds         *int32
+	MeetingPlaceID       *string
+	Title                []byte
+	Description          []byte
+	Walk                 bool
+	Signups              int32
+	ClosedReason         string
+	ClosedAt             pgtype.Timestamptz
+	SignedUp             bool
+}
+
+// GetRecentlyClosedPlan and GetPlanClosure for many ids at once
+// (GetPlanCards).
+func (q *Queries) ListRecentlyClosedPlansByIDs(ctx context.Context, arg ListRecentlyClosedPlansByIDsParams) ([]ListRecentlyClosedPlansByIDsRow, error) {
+	rows, err := q.db.Query(ctx, listRecentlyClosedPlansByIDs,
+		arg.UserID,
+		arg.Ids,
+		arg.CityID,
+		arg.Since,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListRecentlyClosedPlansByIDsRow
+	for rows.Next() {
+		var i ListRecentlyClosedPlansByIDsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.AreaID,
+			&i.ActivityID,
+			&i.FollowUpID,
+			&i.PrimaryLanguage,
+			&i.SecondaryLanguage,
+			&i.Round,
+			&i.WindowStart,
+			&i.WindowDays,
+			&i.SignupDeadline,
+			&i.VenuePlaceID,
+			&i.FollowUpVenuePlaceID,
+			&i.RoutePolyline,
+			&i.RouteSeconds,
+			&i.MeetingPlaceID,
+			&i.Title,
+			&i.Description,
+			&i.Walk,
+			&i.Signups,
+			&i.ClosedReason,
+			&i.ClosedAt,
+			&i.SignedUp,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

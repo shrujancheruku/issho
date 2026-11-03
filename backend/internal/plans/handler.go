@@ -70,6 +70,30 @@ func (h *Handler) GetPlan(ctx context.Context, req *connect.Request[isshov1.GetP
 	return connect.NewResponse(out), nil
 }
 
+func (h *Handler) GetPlanCards(ctx context.Context, req *connect.Request[isshov1.GetPlanCardsRequest]) (*connect.Response[isshov1.GetPlanCardsResponse], error) {
+	userID, err := caller(ctx)
+	if err != nil {
+		return nil, err
+	}
+	// The cap counts distinct ids, so Service.Cards checks it after
+	// de-duplicating, not on the raw list.
+	ids := make([]uuid.UUID, len(req.Msg.PlanIds))
+	for i, s := range req.Msg.PlanIds {
+		if ids[i], err = parsePlanID(s); err != nil {
+			return nil, err
+		}
+	}
+	items, err := h.Svc.Cards(ctx, userID, ids, h.now())
+	if err != nil {
+		return nil, connectError(err)
+	}
+	out := &isshov1.GetPlanCardsResponse{Plans: make([]*isshov1.FeedPlan, len(items))}
+	for i, it := range items {
+		out.Plans[i] = planToProto(it)
+	}
+	return connect.NewResponse(out), nil
+}
+
 func (h *Handler) SignUp(ctx context.Context, req *connect.Request[isshov1.SignUpRequest]) (*connect.Response[isshov1.SignUpResponse], error) {
 	userID, err := caller(ctx)
 	if err != nil {

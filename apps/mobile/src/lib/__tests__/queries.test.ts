@@ -9,9 +9,9 @@ const stale = (qc: QueryClient, queryKey: readonly unknown[]) => qc.getQueryStat
 test('saving a profile refreshes the account, profile, feed and activities of any city', async () => {
   const qc = new QueryClient();
   const activities = keys.activities('osaka', 'en', 'ja');
-  seed(qc, keys.me('u1'), keys.profile, keys.feed, activities, keys.events);
+  seed(qc, keys.me('u1'), keys.profile, keys.feed, activities, keys.events, keys.planCards(['p1']));
   await profileSaved(qc);
-  for (const k of [keys.me('u1'), keys.profile, keys.feed, activities]) expect(stale(qc, k)).toBe(true);
+  for (const k of [keys.me('u1'), keys.profile, keys.feed, activities, keys.planCards(['p1'])]) expect(stale(qc, k)).toBe(true);
   expect(stale(qc, keys.events)).toBe(false);
 });
 
@@ -27,16 +27,17 @@ test('leaving a crew removes the crew and its chat room, then refreshes the list
 
 test('cancelling a place refreshes the event, the events, the feed and the plan', async () => {
   const qc = new QueryClient();
-  seed(qc, keys.event('e1'), keys.events, keys.feed, keys.plan('p1'), keys.plan('p2'));
+  seed(qc, keys.event('e1'), keys.events, keys.feed, keys.plan('p1'), keys.plan('p2'), keys.planCards(['p1']));
   await eventChanged(qc, 'e1', { feed: true, planId: 'p1' });
-  for (const k of [keys.event('e1'), keys.events, keys.feed, keys.plan('p1')]) expect(stale(qc, k)).toBe(true);
+  for (const k of [keys.event('e1'), keys.events, keys.feed, keys.plan('p1'), keys.planCards(['p1'])]) expect(stale(qc, k)).toBe(true);
   expect(stale(qc, keys.plan('p2'))).toBe(false);
 });
 
 test('signing up refreshes the plan and the feed', async () => {
   const qc = new QueryClient();
-  seed(qc, keys.plan('p1'), keys.feed, keys.events);
+  seed(qc, keys.plan('p1'), keys.feed, keys.events, keys.planCards(['p1', 'p2']));
   await signupChanged(qc, 'p1');
+  expect(stale(qc, keys.planCards(['p1', 'p2']))).toBe(true);
   expect(stale(qc, keys.plan('p1'))).toBe(true);
   expect(stale(qc, keys.feed)).toBe(true);
   expect(stale(qc, keys.events)).toBe(false);
