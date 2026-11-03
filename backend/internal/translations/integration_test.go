@@ -42,7 +42,7 @@ func TestIntegrationCatalogReview(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	h := &Handler{Q: q}
+	h := &Handler{Reviews: &translate.Reviewer{Q: q, UIContextPrefix: uistrings.ContextPrefix, SamePlaceholders: uistrings.SamePlaceholders}}
 	ctx2 := as(japanese)
 	list, err := h.ListCatalogTranslations(ctx2, connect.NewRequest(&isshov1.ListCatalogTranslationsRequest{Lang: "ja", UnreviewedOnly: true, Search: "Translations test"}))
 	if err != nil {
@@ -134,7 +134,7 @@ func TestIntegrationCatalogPaging(t *testing.T) {
 		t.Fatalf("setup: %d rows", len(want))
 	}
 
-	h := &Handler{Q: q}
+	h := &Handler{Reviews: &translate.Reviewer{Q: q, UIContextPrefix: uistrings.ContextPrefix, SamePlaceholders: uistrings.SamePlaceholders}}
 	ctx2 := as(japanese)
 	page := func(search string, size int32, token string) (*isshov1.ListCatalogTranslationsResponse, error) {
 		res, err := h.ListCatalogTranslations(ctx2, connect.NewRequest(&isshov1.ListCatalogTranslationsRequest{
