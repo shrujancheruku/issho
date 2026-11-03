@@ -93,10 +93,10 @@ func TestIntegrationStore(t *testing.T) {
 	}
 
 	// Refresh: a fresh matrix is left alone.
-	router := &fakeRouter{}
+	router := islandRouter()
 	now := time.Now()
-	if rebuilt, _, err := Refresh(ctx, pool, router, city, now); err != nil || rebuilt || router.calls != 0 {
-		t.Errorf("fresh matrix: rebuilt=%v calls=%d err=%v", rebuilt, router.calls, err)
+	if rebuilt, _, err := Refresh(ctx, pool, router, city, now); err != nil || rebuilt || router.Matrices() != 0 {
+		t.Errorf("fresh matrix: rebuilt=%v calls=%d err=%v", rebuilt, router.Matrices(), err)
 	}
 	// After RefreshAge it's rebuilt, and a pair the rebuild doesn't return
 	// (a walk to the far area) goes straight away rather than at 30 days.
