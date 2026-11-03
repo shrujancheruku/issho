@@ -1,116 +1,54 @@
 // Package googleapi is the shared REST/JSON transport for Google APIs that
-// take an API key (Maps Platform, Cloud Translation): key in a header, JSON in
-// and out, retries with backoff on 429 and 5xx.
+// take an API key (Maps Platform, Cloud Translation, Gemini): key in a header,
+// JSON in and out, on the shared retry and tracing policy of
+// internal/platform/httpjson.
 package googleapi
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
-	"errors"
-	"fmt"
-	"io"
 	"net/http"
-	"strings"
 	"time"
 
-	"github.com/shrujancheruku/issho/backend/internal/platform/sentry"
+	"github.com/shrujancheruku/issho/backend/internal/platform/httpjson"
 )
 
+// Client embeds the policy client, so MaxRetries and Backoff are its settings.
 type Client struct {
-	key  string
-	http *http.Client
-	// Retries for 429 and 5xx responses, with exponential backoff from Backoff.
-	MaxRetries int
-	Backoff    time.Duration
+	key string
+	*httpjson.Client
 }
 
 func New(apiKey string) *Client {
-	return &Client{
-		key:        apiKey,
-		http:       &http.Client{Timeout: 60 * time.Second, Transport: sentry.Transport(nil)},
-		MaxRetries: 3,
-		Backoff:    time.Second,
-	}
+	return &Client{key: apiKey, Client: httpjson.New("google", 60*time.Second)}
 }
 
-// APIError is a non-2xx response. The body is Google's error JSON, which never
-// contains the API key.
-type APIError struct {
-	StatusCode int
-	Body       string
-}
-
-func (e *APIError) Error() string {
-	return fmt.Sprintf("google api: HTTP %d: %s", e.StatusCode, e.Body)
-}
+// APIError is a non-2xx response, the cause inside the errs.Upstream error
+// the calls return. The body is Google's error JSON, which never contains the
+// API key.
+type APIError = httpjson.StatusError
 
 // SetTimeout bounds each attempt (60 s by default). Model calls that
 // think for a while need longer; interactive ones want less.
-func (c *Client) SetTimeout(d time.Duration) { c.http.Timeout = d }
-
-func retryable(code int) bool { return code == http.StatusTooManyRequests || code >= 500 }
+func (c *Client) SetTimeout(d time.Duration) { c.Timeout = d }
 
 // Post sends body as JSON and decodes the response into out. headers are
-// extra request headers, e.g. X-Goog-FieldMask.
+// extra request headers, e.g. X-Goog-FieldMask. Every Google call here is a
+// read-only query or a pure generation, so a POST may be resent.
 func (c *Client) Post(ctx context.Context, url string, headers map[string]string, body, out any) error {
-	payload, err := json.Marshal(body)
-	if err != nil {
-		return err
-	}
-	return c.retry(ctx, func() error { return c.once(ctx, http.MethodPost, url, headers, payload, out) })
+	return c.do(ctx, http.MethodPost, url, headers, body, out)
 }
 
-// Get fetches url and decodes the JSON response into out, with the same
-// retries as Post.
+// Get fetches url and decodes the JSON response into out.
 func (c *Client) Get(ctx context.Context, url string, headers map[string]string, out any) error {
-	return c.retry(ctx, func() error { return c.once(ctx, http.MethodGet, url, headers, nil, out) })
+	return c.do(ctx, http.MethodGet, url, headers, nil, out)
 }
 
-func (c *Client) retry(ctx context.Context, call func() error) error {
-	for attempt := 0; ; attempt++ {
-		err := call()
-		var apiErr *APIError
-		if err == nil || !errors.As(err, &apiErr) || !retryable(apiErr.StatusCode) || attempt >= c.MaxRetries {
-			return err
-		}
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case <-time.After(c.Backoff << attempt):
-		}
-	}
-}
-
-func (c *Client) once(ctx context.Context, method, url string, headers map[string]string, payload []byte, out any) error {
-	var body io.Reader
-	if payload != nil {
-		body = bytes.NewReader(payload)
-	}
-	req, err := http.NewRequestWithContext(ctx, method, url, body)
-	if err != nil {
-		return err
-	}
-	if payload != nil {
-		req.Header.Set("Content-Type", "application/json")
-	}
+func (c *Client) do(ctx context.Context, method, url string, headers map[string]string, body, out any) error {
 	// Header rather than ?key= so the key never appears in URLs, which end up in
 	// logs and error messages.
-	req.Header.Set("X-Goog-Api-Key", c.key)
+	h := map[string]string{"X-Goog-Api-Key": c.key}
 	for k, v := range headers {
-		req.Header.Set(k, v)
+		h[k] = v
 	}
-	resp, err := c.http.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	b, err := io.ReadAll(io.LimitReader(resp.Body, 10<<20))
-	if err != nil {
-		return err
-	}
-	if resp.StatusCode/100 != 2 {
-		return &APIError{StatusCode: resp.StatusCode, Body: strings.TrimSpace(string(b))}
-	}
-	return json.Unmarshal(b, out)
+	return c.Client.Do(ctx, httpjson.Request{Method: method, URL: url, Header: h, Body: body, Out: out, Idempotent: true})
 }

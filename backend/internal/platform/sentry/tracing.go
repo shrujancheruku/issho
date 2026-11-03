@@ -109,6 +109,25 @@ func queryName(sql string) string {
 	return "query"
 }
 
+// StartHTTP starts one span for a whole outgoing call (retries included) and
+// returns the function that ends it with the final status (0 if no response)
+// and error. description is built by the caller from the method, host and a
+// path template, so no query string or id reaches Sentry. A no-op outside a
+// sampled transaction.
+func StartHTTP(ctx context.Context, description string) func(status int, err error) {
+	sctx := child(ctx, "http.client", description)
+	if sctx == ctx {
+		return func(int, error) {}
+	}
+	return func(status int, err error) {
+		if span, ok := sctx.Value(spanKey{}).(*sentrygo.Span); ok && status != 0 {
+			span.Status = sentrygo.HTTPtoSpanStatus(status)
+			span.SetData("http.response.status_code", status)
+		}
+		finish(sctx, err)
+	}
+}
+
 // Transport makes a span per outgoing request: method, host and path only.
 // No headers (Google's key is one), no query string, and no trace headers
 // sent to the outside API.

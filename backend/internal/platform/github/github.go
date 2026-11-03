@@ -7,19 +7,20 @@
 package github
 
 import (
-	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"maps"
 	"net/http"
 	"net/url"
 	"slices"
 	"strings"
 	"time"
+
+	"github.com/shrujancheruku/issho/backend/internal/platform/errs"
+	"github.com/shrujancheruku/issho/backend/internal/platform/httpjson"
 )
 
 const defaultAPI = "https://api.github.com"
@@ -29,11 +30,11 @@ type Client struct {
 	// Repo is "owner/name"; Base the branch pull requests target.
 	Repo, Base string
 	API        string // overridable for tests
-	http       *http.Client
+	api        *httpjson.Client
 }
 
 func New(token, repo string) *Client {
-	return &Client{token: token, Repo: repo, Base: "main", API: defaultAPI, http: &http.Client{Timeout: 30 * time.Second}}
+	return &Client{token: token, Repo: repo, Base: "main", API: defaultAPI, api: httpjson.New("github", 30*time.Second)}
 }
 
 // ErrNotFound is a 404: no such file, branch or repository.
@@ -48,45 +49,57 @@ type APIError struct {
 
 func (e *APIError) Error() string { return fmt.Sprintf("GitHub: %d %s", e.StatusCode, e.Message) }
 
+// templateWords are the path segments of GitHub's REST API that are part of
+// the route; every other segment (repository, branch, file path, sha) is an
+// id and becomes "{}" in traces and logs.
+var templateWords = map[string]bool{
+	"repos": true, "contents": true, "git": true, "ref": true, "refs": true,
+	"heads": true, "trees": true, "commits": true, "pulls": true,
+}
+
+func routeOf(path string) string {
+	path, _, _ = strings.Cut(path, "?")
+	segs := strings.Split(strings.TrimPrefix(path, "/"), "/")
+	for i, s := range segs {
+		if !templateWords[s] {
+			segs[i] = "{}"
+		}
+	}
+	return "/" + strings.Join(segs, "/")
+}
+
 func (c *Client) do(ctx context.Context, method, path string, body, out any) error {
-	var r io.Reader
-	if body != nil {
-		b, err := json.Marshal(body)
-		if err != nil {
-			return err
-		}
-		r = bytes.NewReader(b)
-	}
-	req, err := http.NewRequestWithContext(ctx, method, c.API+path, r)
-	if err != nil {
-		return err
-	}
-	req.Header.Set("Authorization", "Bearer "+c.token)
-	req.Header.Set("Accept", "application/vnd.github+json")
-	req.Header.Set("X-GitHub-Api-Version", "2022-11-28")
-	if body != nil {
-		req.Header.Set("Content-Type", "application/json")
-	}
-	res, err := c.http.Do(req)
-	if err != nil {
-		return err
-	}
-	defer res.Body.Close()
-	data, _ := io.ReadAll(io.LimitReader(res.Body, 8<<20))
-	if res.StatusCode == http.StatusNotFound {
-		return ErrNotFound
-	}
-	if res.StatusCode >= 300 {
-		var e struct {
-			Message string `json:"message"`
-		}
-		_ = json.Unmarshal(data, &e)
-		return &APIError{StatusCode: res.StatusCode, Message: e.Message}
-	}
-	if out == nil {
+	// Trees and commits are content-addressed objects: a second one is
+	// harmless, so those POSTs may be resent. A second ref, pull request, file
+	// commit or ref update would report a conflict for work that already
+	// happened, so those are sent once.
+	objectPost := method == http.MethodPost && (strings.HasSuffix(path, "/git/trees") || strings.HasSuffix(path, "/git/commits"))
+	err := c.api.Do(ctx, httpjson.Request{
+		Method: method, URL: c.API + path, Route: routeOf(path), Body: body, Out: out,
+		Header: map[string]string{
+			"Authorization":        "Bearer " + c.token,
+			"Accept":               "application/vnd.github+json",
+			"X-GitHub-Api-Version": "2022-11-28",
+		},
+		Idempotent: objectPost,
+		NoRetry:    method != http.MethodGet && !objectPost,
+	})
+	if err == nil {
 		return nil
 	}
-	return json.Unmarshal(data, out)
+	se, ok := httpjson.Status(err)
+	if !ok {
+		return err
+	}
+	if se.StatusCode == http.StatusNotFound {
+		return ErrNotFound
+	}
+	var e struct {
+		Message string `json:"message"`
+	}
+	_ = json.Unmarshal([]byte(se.Body), &e)
+	// Keeps errs.Upstream's fixed client message; the cause is GitHub's.
+	return errs.WithCause(err, &APIError{StatusCode: se.StatusCode, Message: e.Message})
 }
 
 func (c *Client) repoPath(format string, a ...any) string {

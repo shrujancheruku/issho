@@ -5,14 +5,12 @@
 package push
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
-	"strings"
 	"time"
+
+	"github.com/shrujancheruku/issho/backend/internal/platform/httpjson"
 )
 
 const (
@@ -73,11 +71,11 @@ type Expo struct {
 	AccessToken string
 	URL         string // overridable for tests
 	ReceiptsURL string
-	HTTP        *http.Client
+	api         *httpjson.Client
 }
 
 func NewExpo(accessToken string) *Expo {
-	return &Expo{AccessToken: accessToken, URL: defaultURL, ReceiptsURL: defaultReceiptsURL, HTTP: &http.Client{Timeout: 30 * time.Second}}
+	return &Expo{AccessToken: accessToken, URL: defaultURL, ReceiptsURL: defaultReceiptsURL, api: httpjson.New("expo", 30*time.Second)}
 }
 
 func (e *Expo) Send(ctx context.Context, msgs []Message) ([]Ticket, error) {
@@ -104,7 +102,7 @@ func (e *Expo) send(ctx context.Context, msgs []Message) ([]Ticket, error) {
 			} `json:"details"`
 		} `json:"data"`
 	}
-	if err := e.post(ctx, e.URL, msgs, &parsed); err != nil {
+	if err := e.post(ctx, e.URL, msgs, &parsed, false); err != nil {
 		return nil, err
 	}
 	if len(parsed.Data) != len(msgs) {
@@ -130,7 +128,7 @@ func (e *Expo) Receipts(ctx context.Context, ids []string) (map[string]Receipt, 
 			} `json:"data"`
 		}
 		body := map[string][]string{"ids": ids[start:min(start+receiptBatchSize, len(ids))]}
-		if err := e.post(ctx, e.ReceiptsURL, body, &parsed); err != nil {
+		if err := e.post(ctx, e.ReceiptsURL, body, &parsed, true); err != nil {
 			return out, err
 		}
 		for id, d := range parsed.Data {
@@ -140,35 +138,18 @@ func (e *Expo) Receipts(ctx context.Context, ids []string) (map[string]Receipt, 
 	return out, nil
 }
 
-// post sends v as JSON to url and decodes the answer into out.
-func (e *Expo) post(ctx context.Context, url string, v, out any) error {
-	body, err := json.Marshal(v)
-	if err != nil {
-		return err
-	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(body))
-	if err != nil {
-		return err
-	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
+// post sends v as JSON to url and decodes the answer into out. Only
+// idempotent calls (receipts: a read) are retried. A send that failed on a 5xx
+// or a reset may already have reached the phones, and Expo's push API takes no
+// idempotency key, so resending could notify twice; the caller handles a failed
+// send (len(tickets) says what went out).
+func (e *Expo) post(ctx context.Context, url string, v, out any, idempotent bool) error {
+	h := map[string]string{}
 	if e.AccessToken != "" {
-		req.Header.Set("Authorization", "Bearer "+e.AccessToken)
+		h["Authorization"] = "Bearer " + e.AccessToken
 	}
-	resp, err := e.HTTP.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	raw, err := io.ReadAll(io.LimitReader(resp.Body, 4<<20))
-	if err != nil {
-		return err
-	}
-	if resp.StatusCode/100 != 2 {
-		return fmt.Errorf("expo push: HTTP %d: %s", resp.StatusCode, strings.TrimSpace(string(raw)))
-	}
-	if err := json.Unmarshal(raw, out); err != nil {
-		return fmt.Errorf("expo push: %w", err)
-	}
-	return nil
+	return e.api.Do(ctx, httpjson.Request{
+		Method: http.MethodPost, URL: url, Header: h, Body: v, Out: out,
+		Idempotent: idempotent, NoRetry: !idempotent,
+	})
 }

@@ -6,48 +6,52 @@
 package supabase
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"time"
 
 	"github.com/google/uuid"
+
+	"github.com/shrujancheruku/issho/backend/internal/platform/httpjson"
 )
 
 type Admin struct {
 	baseURL   string
 	secretKey string
-	http      *http.Client
+	api       *httpjson.Client
 }
 
 func NewAdmin(supabaseURL, secretKey string) *Admin {
-	return &Admin{baseURL: supabaseURL, secretKey: secretKey, http: &http.Client{Timeout: 10 * time.Second}}
+	return &Admin{baseURL: supabaseURL, secretKey: secretKey, api: httpjson.New("supabase", 10*time.Second)}
+}
+
+// userRoute is the trace route for the admin users endpoints (the id is not
+// part of it).
+const userRoute = "/auth/v1/admin/users/{id}"
+
+// call sends one admin request. New-style secret keys go in the apikey header
+// only; they are not JWTs.
+func (a *Admin) call(ctx context.Context, method string, id uuid.UUID, body any) error {
+	return a.api.Do(ctx, httpjson.Request{
+		Method: method, URL: a.baseURL + "/auth/v1/admin/users/" + id.String(), Route: userRoute,
+		Header: map[string]string{"apikey": a.secretKey}, Body: body,
+	})
 }
 
 // DeleteUser removes the auth user. On Supabase, app.users references
 // auth.users with ON DELETE CASCADE, so this also deletes the user's app data.
-// Deleting an already-deleted user is treated as success, so retries are safe.
+// Deleting an already-deleted user is treated as success, so retries are safe
+// (and the client retries a DELETE on a reset or 5xx).
 func (a *Admin) DeleteUser(ctx context.Context, id uuid.UUID) error {
-	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, a.baseURL+"/auth/v1/admin/users/"+id.String(), nil)
-	if err != nil {
-		return err
+	err := a.call(ctx, http.MethodDelete, id, nil)
+	if se, ok := httpjson.Status(err); ok && se.StatusCode == http.StatusNotFound {
+		return nil
 	}
-	// New-style secret keys go in the apikey header only; they are not JWTs.
-	req.Header.Set("apikey", a.secretKey)
-	resp, err := a.http.Do(req)
 	if err != nil {
 		return fmt.Errorf("delete auth user: %w", err)
 	}
-	defer resp.Body.Close()
-	if resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusNotFound {
-		return nil
-	}
-	// The response body is safe to surface: it never echoes the key.
-	body, _ := io.ReadAll(io.LimitReader(resp.Body, 512))
-	return fmt.Errorf("delete auth user: status %d: %s", resp.StatusCode, body)
+	return nil
 }
 
 // SetAdmin grants or removes the admin role (app_metadata.admin), which
@@ -74,25 +78,11 @@ func (a *Admin) SetTranslatorLangs(ctx context.Context, id uuid.UUID, langs []st
 	return a.setAppMetadata(ctx, id, "translator_langs", value)
 }
 
+// setAppMetadata is a PUT of the same value: repeating it is harmless, so the
+// client may retry it.
 func (a *Admin) setAppMetadata(ctx context.Context, id uuid.UUID, key string, value any) error {
-	body, err := json.Marshal(map[string]any{"app_metadata": map[string]any{key: value}})
-	if err != nil {
-		return err
-	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodPut, a.baseURL+"/auth/v1/admin/users/"+id.String(), bytes.NewReader(body))
-	if err != nil {
-		return err
-	}
-	req.Header.Set("apikey", a.secretKey)
-	req.Header.Set("Content-Type", "application/json")
-	resp, err := a.http.Do(req)
-	if err != nil {
+	if err := a.call(ctx, http.MethodPut, id, map[string]any{"app_metadata": map[string]any{key: value}}); err != nil {
 		return fmt.Errorf("update auth user: %w", err)
 	}
-	defer resp.Body.Close()
-	if resp.StatusCode == http.StatusOK {
-		return nil
-	}
-	msg, _ := io.ReadAll(io.LimitReader(resp.Body, 512))
-	return fmt.Errorf("update auth user: status %d: %s", resp.StatusCode, msg)
+	return nil
 }
