@@ -76,7 +76,7 @@ func TestIntegrationSocket(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer conn.CloseNow()
+	defer func() { _ = conn.CloseNow() }()
 	hello, _ := json.Marshal(map[string]any{"token": token(going), "room": map[string]any{"eventId": eventID.String()}, "afterId": 0})
 	if err := conn.Write(ctx, websocket.MessageText, hello); err != nil {
 		t.Fatal(err)
@@ -141,7 +141,7 @@ func TestIntegrationSocket(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer otherConn.CloseNow()
+	defer func() { _ = otherConn.CloseNow() }()
 	last := pushed.Messages[len(pushed.Messages)-1].ID
 	otherHello, _ := json.Marshal(map[string]any{"token": token(other), "room": map[string]any{"eventId": eventID.String()}, "afterId": last})
 	if err := otherConn.Write(ctx, websocket.MessageText, otherHello); err != nil {
@@ -194,7 +194,7 @@ func TestIntegrationSocket(t *testing.T) {
 		if !errors.As(err, &ce) || ce.Code != c.code {
 			t.Errorf("%s: %v, want close %d", c.name, err, c.code)
 		}
-		conn.CloseNow()
+		_ = conn.CloseNow()
 	}
 }
 

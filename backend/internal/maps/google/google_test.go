@@ -103,7 +103,7 @@ func TestMatrixChunksTo625Elements(t *testing.T) {
 			t.Fatalf("duplicate element %v", k)
 		}
 		seen[k] = true
-		wantOK := !(e.Origin == 0 && e.Destination == 1)
+		wantOK := e.Origin != 0 || e.Destination != 1
 		if e.OK != wantOK {
 			t.Errorf("element %v: OK=%v, want %v", k, e.OK, wantOK)
 		}
