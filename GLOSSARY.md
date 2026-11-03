@@ -32,6 +32,14 @@ _Avoid_: club, circle
 One chat: an outing's group chat or a crew's chat.
 _Avoid_: channel, thread, conversation
 
+**Attended**:
+Someone attended an outing when they said they could go, their group went ahead, and they checked in or said in their feedback that they went. If their feedback says they didn't go, that wins over a check-in.
+_Avoid_: went, showed up, turned up (as separate rules)
+
+**Met**:
+Two people have met when they both attended the same group at an outing.
+_Avoid_: know each other, been grouped together
+
 **Lapsed**:
 A crew offer that someone never answered before it was decided.
 _Avoid_: expired, ignored
