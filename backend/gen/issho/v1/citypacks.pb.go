@@ -835,8 +835,15 @@ type ApplyCityPackResponse struct {
 	// there's no Google Maps key.
 	TravelTimesRebuilt bool  `protobuf:"varint,3,opt,name=travel_times_rebuilt,json=travelTimesRebuilt,proto3" json:"travel_times_rebuilt,omitempty"`
 	TravelTimes        int32 `protobuf:"varint,4,opt,name=travel_times,json=travelTimes,proto3" json:"travel_times,omitempty"`
-	unknownFields      protoimpl.UnknownFields
-	sizeCache          protoimpl.SizeCache
+	// What an authoritative apply took away (the pack is the source of truth):
+	// areas deleted because nothing referenced them, areas retired by an
+	// area's `replaces` (their people, crews and plans moved to the new one),
+	// and the activity ids whose city override the pack dropped.
+	RemovedAreas     []string        `protobuf:"bytes,5,rep,name=removed_areas,json=removedAreas,proto3" json:"removed_areas,omitempty"`
+	ReplacedAreas    []*ReplacedArea `protobuf:"bytes,6,rep,name=replaced_areas,json=replacedAreas,proto3" json:"replaced_areas,omitempty"`
+	RemovedOverrides []string        `protobuf:"bytes,7,rep,name=removed_overrides,json=removedOverrides,proto3" json:"removed_overrides,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *ApplyCityPackResponse) Reset() {
@@ -897,6 +904,104 @@ func (x *ApplyCityPackResponse) GetTravelTimes() int32 {
 	return 0
 }
 
+func (x *ApplyCityPackResponse) GetRemovedAreas() []string {
+	if x != nil {
+		return x.RemovedAreas
+	}
+	return nil
+}
+
+func (x *ApplyCityPackResponse) GetReplacedAreas() []*ReplacedArea {
+	if x != nil {
+		return x.ReplacedAreas
+	}
+	return nil
+}
+
+func (x *ApplyCityPackResponse) GetRemovedOverrides() []string {
+	if x != nil {
+		return x.RemovedOverrides
+	}
+	return nil
+}
+
+type ReplacedArea struct {
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	OldAreaId string                 `protobuf:"bytes,1,opt,name=old_area_id,json=oldAreaId,proto3" json:"old_area_id,omitempty"`
+	NewAreaId string                 `protobuf:"bytes,2,opt,name=new_area_id,json=newAreaId,proto3" json:"new_area_id,omitempty"`
+	// Rows moved from the old area to the new one.
+	People        int32 `protobuf:"varint,3,opt,name=people,proto3" json:"people,omitempty"`
+	Crews         int32 `protobuf:"varint,4,opt,name=crews,proto3" json:"crews,omitempty"`
+	Plans         int32 `protobuf:"varint,5,opt,name=plans,proto3" json:"plans,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReplacedArea) Reset() {
+	*x = ReplacedArea{}
+	mi := &file_issho_v1_citypacks_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReplacedArea) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReplacedArea) ProtoMessage() {}
+
+func (x *ReplacedArea) ProtoReflect() protoreflect.Message {
+	mi := &file_issho_v1_citypacks_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReplacedArea.ProtoReflect.Descriptor instead.
+func (*ReplacedArea) Descriptor() ([]byte, []int) {
+	return file_issho_v1_citypacks_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *ReplacedArea) GetOldAreaId() string {
+	if x != nil {
+		return x.OldAreaId
+	}
+	return ""
+}
+
+func (x *ReplacedArea) GetNewAreaId() string {
+	if x != nil {
+		return x.NewAreaId
+	}
+	return ""
+}
+
+func (x *ReplacedArea) GetPeople() int32 {
+	if x != nil {
+		return x.People
+	}
+	return 0
+}
+
+func (x *ReplacedArea) GetCrews() int32 {
+	if x != nil {
+		return x.Crews
+	}
+	return 0
+}
+
+func (x *ReplacedArea) GetPlans() int32 {
+	if x != nil {
+		return x.Plans
+	}
+	return 0
+}
+
 type DiscoverAreaVenuesRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	CityId        string                 `protobuf:"bytes,1,opt,name=city_id,json=cityId,proto3" json:"city_id,omitempty"`
@@ -907,7 +1012,7 @@ type DiscoverAreaVenuesRequest struct {
 
 func (x *DiscoverAreaVenuesRequest) Reset() {
 	*x = DiscoverAreaVenuesRequest{}
-	mi := &file_issho_v1_citypacks_proto_msgTypes[14]
+	mi := &file_issho_v1_citypacks_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -919,7 +1024,7 @@ func (x *DiscoverAreaVenuesRequest) String() string {
 func (*DiscoverAreaVenuesRequest) ProtoMessage() {}
 
 func (x *DiscoverAreaVenuesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_citypacks_proto_msgTypes[14]
+	mi := &file_issho_v1_citypacks_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -932,7 +1037,7 @@ func (x *DiscoverAreaVenuesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DiscoverAreaVenuesRequest.ProtoReflect.Descriptor instead.
 func (*DiscoverAreaVenuesRequest) Descriptor() ([]byte, []int) {
-	return file_issho_v1_citypacks_proto_rawDescGZIP(), []int{14}
+	return file_issho_v1_citypacks_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *DiscoverAreaVenuesRequest) GetCityId() string {
@@ -960,7 +1065,7 @@ type DiscoverAreaVenuesResponse struct {
 
 func (x *DiscoverAreaVenuesResponse) Reset() {
 	*x = DiscoverAreaVenuesResponse{}
-	mi := &file_issho_v1_citypacks_proto_msgTypes[15]
+	mi := &file_issho_v1_citypacks_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -972,7 +1077,7 @@ func (x *DiscoverAreaVenuesResponse) String() string {
 func (*DiscoverAreaVenuesResponse) ProtoMessage() {}
 
 func (x *DiscoverAreaVenuesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_citypacks_proto_msgTypes[15]
+	mi := &file_issho_v1_citypacks_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -985,7 +1090,7 @@ func (x *DiscoverAreaVenuesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DiscoverAreaVenuesResponse.ProtoReflect.Descriptor instead.
 func (*DiscoverAreaVenuesResponse) Descriptor() ([]byte, []int) {
-	return file_issho_v1_citypacks_proto_rawDescGZIP(), []int{15}
+	return file_issho_v1_citypacks_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *DiscoverAreaVenuesResponse) GetSearches() int32 {
@@ -1070,13 +1175,22 @@ const file_issho_v1_citypacks_proto_rawDesc = "" +
 	"\x17ProposeCityPackResponse\x12@\n" +
 	"\fpull_request\x18\x01 \x01(\v2\x1d.issho.v1.CityPackPullRequestR\vpullRequest\"/\n" +
 	"\x14ApplyCityPackRequest\x12\x17\n" +
-	"\acity_id\x18\x01 \x01(\tR\x06cityId\"\xaa\x01\n" +
+	"\acity_id\x18\x01 \x01(\tR\x06cityId\"\xbb\x02\n" +
 	"\x15ApplyCityPackResponse\x12\x1b\n" +
 	"\tnew_areas\x18\x01 \x03(\tR\bnewAreas\x12\x1f\n" +
 	"\vmoved_areas\x18\x02 \x03(\tR\n" +
 	"movedAreas\x120\n" +
 	"\x14travel_times_rebuilt\x18\x03 \x01(\bR\x12travelTimesRebuilt\x12!\n" +
-	"\ftravel_times\x18\x04 \x01(\x05R\vtravelTimes\"M\n" +
+	"\ftravel_times\x18\x04 \x01(\x05R\vtravelTimes\x12#\n" +
+	"\rremoved_areas\x18\x05 \x03(\tR\fremovedAreas\x12=\n" +
+	"\x0ereplaced_areas\x18\x06 \x03(\v2\x16.issho.v1.ReplacedAreaR\rreplacedAreas\x12+\n" +
+	"\x11removed_overrides\x18\a \x03(\tR\x10removedOverrides\"\x92\x01\n" +
+	"\fReplacedArea\x12\x1e\n" +
+	"\vold_area_id\x18\x01 \x01(\tR\toldAreaId\x12\x1e\n" +
+	"\vnew_area_id\x18\x02 \x01(\tR\tnewAreaId\x12\x16\n" +
+	"\x06people\x18\x03 \x01(\x05R\x06people\x12\x14\n" +
+	"\x05crews\x18\x04 \x01(\x05R\x05crews\x12\x14\n" +
+	"\x05plans\x18\x05 \x01(\x05R\x05plans\"M\n" +
 	"\x19DiscoverAreaVenuesRequest\x12\x17\n" +
 	"\acity_id\x18\x01 \x01(\tR\x06cityId\x12\x17\n" +
 	"\aarea_id\x18\x02 \x01(\tR\x06areaId\"P\n" +
@@ -1102,7 +1216,7 @@ func file_issho_v1_citypacks_proto_rawDescGZIP() []byte {
 	return file_issho_v1_citypacks_proto_rawDescData
 }
 
-var file_issho_v1_citypacks_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
+var file_issho_v1_citypacks_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
 var file_issho_v1_citypacks_proto_goTypes = []any{
 	(*ListCityPacksRequest)(nil),       // 0: issho.v1.ListCityPacksRequest
 	(*ListCityPacksResponse)(nil),      // 1: issho.v1.ListCityPacksResponse
@@ -1118,37 +1232,39 @@ var file_issho_v1_citypacks_proto_goTypes = []any{
 	(*ProposeCityPackResponse)(nil),    // 11: issho.v1.ProposeCityPackResponse
 	(*ApplyCityPackRequest)(nil),       // 12: issho.v1.ApplyCityPackRequest
 	(*ApplyCityPackResponse)(nil),      // 13: issho.v1.ApplyCityPackResponse
-	(*DiscoverAreaVenuesRequest)(nil),  // 14: issho.v1.DiscoverAreaVenuesRequest
-	(*DiscoverAreaVenuesResponse)(nil), // 15: issho.v1.DiscoverAreaVenuesResponse
-	nil,                                // 16: issho.v1.CityPack.NameEntry
-	nil,                                // 17: issho.v1.PackArea.NameEntry
+	(*ReplacedArea)(nil),               // 14: issho.v1.ReplacedArea
+	(*DiscoverAreaVenuesRequest)(nil),  // 15: issho.v1.DiscoverAreaVenuesRequest
+	(*DiscoverAreaVenuesResponse)(nil), // 16: issho.v1.DiscoverAreaVenuesResponse
+	nil,                                // 17: issho.v1.CityPack.NameEntry
+	nil,                                // 18: issho.v1.PackArea.NameEntry
 }
 var file_issho_v1_citypacks_proto_depIdxs = []int32{
 	2,  // 0: issho.v1.ListCityPacksResponse.packs:type_name -> issho.v1.CityPackSummary
 	3,  // 1: issho.v1.ListCityPacksResponse.pull_requests:type_name -> issho.v1.CityPackPullRequest
-	16, // 2: issho.v1.CityPack.name:type_name -> issho.v1.CityPack.NameEntry
+	17, // 2: issho.v1.CityPack.name:type_name -> issho.v1.CityPack.NameEntry
 	5,  // 3: issho.v1.CityPack.areas:type_name -> issho.v1.PackArea
 	6,  // 4: issho.v1.CityPack.activity_overrides:type_name -> issho.v1.PackOverride
-	17, // 5: issho.v1.PackArea.name:type_name -> issho.v1.PackArea.NameEntry
+	18, // 5: issho.v1.PackArea.name:type_name -> issho.v1.PackArea.NameEntry
 	4,  // 6: issho.v1.GetCityPackResponse.pack:type_name -> issho.v1.CityPack
 	9,  // 7: issho.v1.GetCityPackResponse.activities:type_name -> issho.v1.PackActivity
 	4,  // 8: issho.v1.ProposeCityPackRequest.pack:type_name -> issho.v1.CityPack
 	3,  // 9: issho.v1.ProposeCityPackResponse.pull_request:type_name -> issho.v1.CityPackPullRequest
-	0,  // 10: issho.v1.CityPackService.ListCityPacks:input_type -> issho.v1.ListCityPacksRequest
-	7,  // 11: issho.v1.CityPackService.GetCityPack:input_type -> issho.v1.GetCityPackRequest
-	10, // 12: issho.v1.CityPackService.ProposeCityPack:input_type -> issho.v1.ProposeCityPackRequest
-	12, // 13: issho.v1.CityPackService.ApplyCityPack:input_type -> issho.v1.ApplyCityPackRequest
-	14, // 14: issho.v1.CityPackService.DiscoverAreaVenues:input_type -> issho.v1.DiscoverAreaVenuesRequest
-	1,  // 15: issho.v1.CityPackService.ListCityPacks:output_type -> issho.v1.ListCityPacksResponse
-	8,  // 16: issho.v1.CityPackService.GetCityPack:output_type -> issho.v1.GetCityPackResponse
-	11, // 17: issho.v1.CityPackService.ProposeCityPack:output_type -> issho.v1.ProposeCityPackResponse
-	13, // 18: issho.v1.CityPackService.ApplyCityPack:output_type -> issho.v1.ApplyCityPackResponse
-	15, // 19: issho.v1.CityPackService.DiscoverAreaVenues:output_type -> issho.v1.DiscoverAreaVenuesResponse
-	15, // [15:20] is the sub-list for method output_type
-	10, // [10:15] is the sub-list for method input_type
-	10, // [10:10] is the sub-list for extension type_name
-	10, // [10:10] is the sub-list for extension extendee
-	0,  // [0:10] is the sub-list for field type_name
+	14, // 10: issho.v1.ApplyCityPackResponse.replaced_areas:type_name -> issho.v1.ReplacedArea
+	0,  // 11: issho.v1.CityPackService.ListCityPacks:input_type -> issho.v1.ListCityPacksRequest
+	7,  // 12: issho.v1.CityPackService.GetCityPack:input_type -> issho.v1.GetCityPackRequest
+	10, // 13: issho.v1.CityPackService.ProposeCityPack:input_type -> issho.v1.ProposeCityPackRequest
+	12, // 14: issho.v1.CityPackService.ApplyCityPack:input_type -> issho.v1.ApplyCityPackRequest
+	15, // 15: issho.v1.CityPackService.DiscoverAreaVenues:input_type -> issho.v1.DiscoverAreaVenuesRequest
+	1,  // 16: issho.v1.CityPackService.ListCityPacks:output_type -> issho.v1.ListCityPacksResponse
+	8,  // 17: issho.v1.CityPackService.GetCityPack:output_type -> issho.v1.GetCityPackResponse
+	11, // 18: issho.v1.CityPackService.ProposeCityPack:output_type -> issho.v1.ProposeCityPackResponse
+	13, // 19: issho.v1.CityPackService.ApplyCityPack:output_type -> issho.v1.ApplyCityPackResponse
+	16, // 20: issho.v1.CityPackService.DiscoverAreaVenues:output_type -> issho.v1.DiscoverAreaVenuesResponse
+	16, // [16:21] is the sub-list for method output_type
+	11, // [11:16] is the sub-list for method input_type
+	11, // [11:11] is the sub-list for extension type_name
+	11, // [11:11] is the sub-list for extension extendee
+	0,  // [0:11] is the sub-list for field type_name
 }
 
 func init() { file_issho_v1_citypacks_proto_init() }
@@ -1162,7 +1278,7 @@ func file_issho_v1_citypacks_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_issho_v1_citypacks_proto_rawDesc), len(file_issho_v1_citypacks_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   18,
+			NumMessages:   19,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

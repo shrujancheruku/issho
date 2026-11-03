@@ -304,8 +304,15 @@ func (h *Handler) ApplyCityPack(ctx context.Context, req *connect.Request[isshov
 	if err != nil {
 		return nil, err
 	}
+	replaced := make([]*isshov1.ReplacedArea, 0, len(d.ReplacedAreas))
+	for _, r := range d.ReplacedAreas {
+		replaced = append(replaced, &isshov1.ReplacedArea{
+			OldAreaId: r.Old, NewAreaId: r.New, People: int32(r.People), Crews: int32(r.Crews), Plans: int32(r.Plans),
+		})
+	}
 	return connect.NewResponse(&isshov1.ApplyCityPackResponse{
 		NewAreas: d.NewAreas, MovedAreas: d.MovedAreas, TravelTimesRebuilt: d.TravelTimesRebuilt, TravelTimes: int32(d.TravelTimes),
+		RemovedAreas: d.RemovedAreas, ReplacedAreas: replaced, RemovedOverrides: d.RemovedOverrides,
 	}), nil
 }
 

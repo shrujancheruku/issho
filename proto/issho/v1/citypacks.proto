@@ -146,6 +146,22 @@ message ApplyCityPackResponse {
   // there's no Google Maps key.
   bool travel_times_rebuilt = 3;
   int32 travel_times = 4;
+  // What an authoritative apply took away (the pack is the source of truth):
+  // areas deleted because nothing referenced them, areas retired by an
+  // area's `replaces` (their people, crews and plans moved to the new one),
+  // and the activity ids whose city override the pack dropped.
+  repeated string removed_areas = 5;
+  repeated ReplacedArea replaced_areas = 6;
+  repeated string removed_overrides = 7;
+}
+
+message ReplacedArea {
+  string old_area_id = 1;
+  string new_area_id = 2;
+  // Rows moved from the old area to the new one.
+  int32 people = 3;
+  int32 crews = 4;
+  int32 plans = 5;
 }
 
 message DiscoverAreaVenuesRequest {

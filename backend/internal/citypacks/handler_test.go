@@ -253,6 +253,37 @@ func TestIntegrationCityPacks(t *testing.T) {
 	if a := apply(); len(a.NewAreas)+len(a.MovedAreas) != 0 || a.TravelTimesRebuilt || fm.Matrices() != before {
 		t.Errorf("third apply = %v", a)
 	}
+
+	// An authoritative apply reports what it took away: Gamma is replaced by
+	// Delta (nothing references it, so zero rows move), the override the pack
+	// dropped, and then Delta itself, deleted outright.
+	edit := func(change func(p *cities.Pack)) {
+		t.Helper()
+		cur := cities.Pack{}
+		if err := json.Unmarshal(repo.content, &cur); err != nil {
+			t.Fatal(err)
+		}
+		change(&cur)
+		raw, err := cities.EncodePack(cur)
+		if err != nil {
+			t.Fatal(err)
+		}
+		repo.files["data/citypacks/zz-packs.json"] = raw
+	}
+	edit(func(p *cities.Pack) {
+		p.Areas[2] = cities.Area{ID: city + "-d", Name: cities.Text{"en": "Delta"}, Lat: 35.72, Lng: 139.62, Replaces: []string{city + "-c"}}
+		p.ActivityOverrides = nil
+	})
+	rem := apply()
+	if len(rem.ReplacedAreas) != 1 || rem.ReplacedAreas[0].OldAreaId != city+"-c" || rem.ReplacedAreas[0].NewAreaId != city+"-d" ||
+		rem.ReplacedAreas[0].People+rem.ReplacedAreas[0].Crews+rem.ReplacedAreas[0].Plans != 0 ||
+		len(rem.RemovedOverrides) != 1 || len(rem.RemovedAreas) != 0 {
+		t.Errorf("replacing apply = %v", rem)
+	}
+	edit(func(p *cities.Pack) { p.Areas = p.Areas[:2] })
+	if rem := apply(); !slices.Equal(rem.RemovedAreas, []string{city + "-d"}) || len(rem.ReplacedAreas) != 0 {
+		t.Errorf("removing apply = %v", rem)
+	}
 	if _, err := h.ApplyCityPack(adminCtx, connect.NewRequest(&isshov1.ApplyCityPackRequest{CityId: "nowhere"})); connect.CodeOf(err) != connect.CodeNotFound {
 		t.Errorf("no such pack: %v", err)
 	}

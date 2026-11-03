@@ -65,6 +65,7 @@
     - [PackOverride](#issho-v1-PackOverride)
     - [ProposeCityPackRequest](#issho-v1-ProposeCityPackRequest)
     - [ProposeCityPackResponse](#issho-v1-ProposeCityPackResponse)
+    - [ReplacedArea](#issho-v1-ReplacedArea)
   
     - [CityPackService](#issho-v1-CityPackService)
   
@@ -965,6 +966,9 @@ HTTP: POST /issho.v1.ChatService/&lt;Method&gt;
 | moved_areas | [string](#string) | repeated |  |
 | travel_times_rebuilt | [bool](#bool) |  | Travel times rebuilt (the rows saved); false when no area changed or there&#39;s no Google Maps key. |
 | travel_times | [int32](#int32) |  |  |
+| removed_areas | [string](#string) | repeated | What an authoritative apply took away (the pack is the source of truth): areas deleted because nothing referenced them, areas retired by an area&#39;s `replaces` (their people, crews and plans moved to the new one), and the activity ids whose city override the pack dropped. |
+| replaced_areas | [ReplacedArea](#issho-v1-ReplacedArea) | repeated |  |
+| removed_overrides | [string](#string) | repeated |  |
 
 
 
@@ -1232,6 +1236,25 @@ HTTP: POST /issho.v1.ChatService/&lt;Method&gt;
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | pull_request | [CityPackPullRequest](#issho-v1-CityPackPullRequest) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-ReplacedArea"></a>
+
+### ReplacedArea
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| old_area_id | [string](#string) |  |  |
+| new_area_id | [string](#string) |  |  |
+| people | [int32](#int32) |  | Rows moved from the old area to the new one. |
+| crews | [int32](#int32) |  |  |
+| plans | [int32](#int32) |  |  |
 
 
 
