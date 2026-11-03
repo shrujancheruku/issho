@@ -54,9 +54,6 @@ func findAll() *mapstest.Fake {
 	}}
 }
 
-// walkRouter (a Fake with its defaults) walks the places in the order given,
-// 10 minutes a leg; WalkCalls records each walk.
-
 // TestIntegrationWalks: the fixture's activity as a walk. Without a
 // composer nothing opens; a walk that can't be composed isn't opened and
 // rests; a good one opens with its stops, title, summary and route, and the

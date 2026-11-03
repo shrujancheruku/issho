@@ -241,7 +241,8 @@ func TestIntegrationRefreshMapsQueuesOneJobPerCity(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	w := &refreshMapsWorker{pool: pool, router: &mapstest.Fake{}, log: slog.New(slog.NewTextHandler(io.Discard, nil))}
+	router := &mapstest.Fake{} // queueing city jobs must not touch Google
+	w := &refreshMapsWorker{pool: pool, router: router, log: slog.New(slog.NewTextHandler(io.Discard, nil))}
 	rw := rivertest.NewWorker(t, riverpgxv5.New(pool), &river.Config{Schema: db.RiverSchema}, w)
 	tx, err := pool.Begin(ctx)
 	if err != nil {
@@ -249,6 +250,9 @@ func TestIntegrationRefreshMapsQueuesOneJobPerCity(t *testing.T) {
 	}
 	if _, err := rw.Work(ctx, t, tx, RefreshMapsArgs{}, nil); err != nil {
 		t.Fatal(err)
+	}
+	if n := router.Matrices(); n != 0 {
+		t.Errorf("RefreshMaps called the router %d times; it only queues jobs", n)
 	}
 	if err := tx.Commit(ctx); err != nil {
 		t.Fatal(err)

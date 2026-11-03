@@ -229,7 +229,7 @@ func (f *Fake) WalkingRoute(_ context.Context, from, to string) (maps.Route, err
 
 func (f *Fake) WalkThrough(_ context.Context, places []string, optimize bool) (maps.WalkRoute, error) {
 	f.mu.Lock()
-	f.walkCalls = append(f.walkCalls, places)
+	f.walkCalls = append(f.walkCalls, slices.Clone(places))
 	f.mu.Unlock()
 	if f.WalkErr != nil {
 		return maps.WalkRoute{}, f.WalkErr
