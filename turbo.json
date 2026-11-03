@@ -19,6 +19,9 @@
         "^build"
       ]
     },
-    "test": {}
+    "test": {},
+    "test:coverage": {
+      "outputs": ["coverage/**"]
+    }
   }
 }

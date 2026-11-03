@@ -303,8 +303,11 @@ The simulator runs the whole flow on synthetic users: suggest, signups from each
 
 ```sh
 go test ./...          # or `make test` from the root
+go test ./... -skip Integration -coverprofile=coverage.out && go tool cover -func=coverage.out   # coverage, only when you want it (`*.out` is gitignored)
 make lint-go           # golangci-lint + sqlc vet; `make lint` and CI's "Lint" step run it
 ```
+
+Coverage is reported, never gated: CI's Test step writes a profile and a "Go coverage" table (per package, then the total) to the job summary (`scripts/go-coverage-summary.sh`). It excludes the Integration tests, which need the database. Local `make test` doesn't measure it.
 
 Linting is golangci-lint v2 (pinned in `go.mod`'s `tool` block; config in `.golangci.yml`): the `standard` set (errcheck, govet, ineffassign, staticcheck, unused) plus the gofmt and goimports formatters, with `gen/` excluded. Fix findings rather than silencing them; a `//nolint` names the linter and gives a reason.
 

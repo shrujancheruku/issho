@@ -75,7 +75,7 @@ Anyone can open the page; data needs an admin token, which the API checks on eve
 
 ## Checks
 
-`pnpm --filter @issho/admin typecheck`, `lint` (ESLint with typescript-eslint and the React hooks rules, `eslint.config.mjs`), `test` (Vitest: flag wording, placeholder check, and the pages' irreversible flows) and `build`. CI runs all four.
+`pnpm --filter @issho/admin typecheck`, `lint` (ESLint with typescript-eslint and the React hooks rules, `eslint.config.mjs`), `test` (Vitest: flag wording, placeholder check, and the pages' irreversible flows) and `build`. CI runs all four. `pnpm --filter @issho/admin test:coverage` is `test` with a V8 coverage report (`@vitest/coverage-v8`; written to the gitignored `coverage/`); CI runs it instead of `test` and shows the totals in the job summary. Reported, never gated.
 
 ### Page tests
 
