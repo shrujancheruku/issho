@@ -3,6 +3,8 @@ package translations
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"maps"
 	"strings"
 	"sync"
@@ -393,13 +395,14 @@ func TestCatalog(t *testing.T) {
 // drafter returns its answer and records what it was given.
 type drafter struct {
 	answer string
+	err    error
 	got    translate.Draft
 	lang   string
 }
 
 func (d *drafter) Draft(_ context.Context, lang string, in translate.Draft) (string, error) {
 	d.lang, d.got = lang, in
-	return d.answer, nil
+	return d.answer, d.err
 }
 
 func TestDraftAppString(t *testing.T) {
@@ -440,5 +443,16 @@ func TestDraftAppString(t *testing.T) {
 	d.answer = "ログイン中" // lost {email}
 	if _, err := draft(japanese, "ja", "who", ""); connect.CodeOf(err) != connect.CodeFailedPrecondition {
 		t.Errorf("lost placeholder: %v", err)
+	}
+	// A draft that ran out of its time budget is a retryable Unavailable
+	// carrying the timed-out reason, not an internal error.
+	d.err = fmt.Errorf("gemini draft: %w", translate.ErrBudget)
+	_, err = draft(japanese, "ja", "hi", "")
+	var ce *connect.Error
+	if !errors.As(err, &ce) || ce.Code() != connect.CodeUnavailable || len(ce.Details()) != 1 {
+		t.Fatalf("over budget: %v", err)
+	}
+	if m, derr := ce.Details()[0].Value(); derr != nil || m.(*isshov1.ErrorReasonDetail).Reason != isshov1.ErrorReason_ERROR_REASON_TIMED_OUT {
+		t.Errorf("reason = %v, %v", m, derr)
 	}
 }

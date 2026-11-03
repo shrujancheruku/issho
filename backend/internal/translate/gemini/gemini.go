@@ -9,6 +9,7 @@ package gemini
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -33,13 +34,24 @@ const (
 	parallel = 4
 )
 
+// InteractiveBudget is the total time a call made inside a request may take,
+// retries included. The client's 60 s limit is per attempt and the transport
+// retries 429s and 5xxs, so without a total one call could take about four
+// minutes, past Cloudflare's 100 s cut-off.
+const InteractiveBudget = 60 * time.Second
+
 type Translator struct {
 	Client *gemini.Client
+	// DraftBudget bounds Draft, the one call made inside a request (the
+	// translation editor's Suggest). Zero = no total limit. Translate runs in
+	// the background (translate.Service detaches it from the request), so it
+	// keeps the per-attempt limit and the retries.
+	DraftBudget time.Duration
 }
 
 // New uses a Google Cloud API key for Agent Platform.
 func New(apiKey string) *Translator {
-	return &Translator{Client: gemini.New(apiKey, Model, 60*time.Second)}
+	return &Translator{Client: gemini.New(apiKey, Model, 60*time.Second), DraftBudget: InteractiveBudget}
 }
 
 var _ translate.Translator = (*Translator)(nil)
@@ -144,7 +156,15 @@ The user message is a JSON array of items, each with an "id", the English "text"
 // drafts the owner's livelier version of the plain text; for any other
 // language, a version that reads naturally to a native speaker, starting
 // from the current text.
+//
+// It is called from a request, so it has a total budget (DraftBudget) and
+// returns translate.ErrBudget when that runs out.
 func (t *Translator) Draft(ctx context.Context, lang string, d translate.Draft) (string, error) {
+	if t.DraftBudget > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeoutCause(ctx, t.DraftBudget, translate.ErrBudget)
+		defer cancel()
+	}
 	user, _ := json.Marshal(d)
 	raw, err := t.Client.Generate(ctx, gemini.Request{
 		System:          draftPrompt(lang),
@@ -154,6 +174,10 @@ func (t *Translator) Draft(ctx context.Context, lang string, d translate.Draft) 
 		Thinking:        "LOW",
 	})
 	if err != nil {
+		// Our budget, not the caller going away (whose cause is its own).
+		if errors.Is(context.Cause(ctx), translate.ErrBudget) {
+			return "", fmt.Errorf("gemini draft: %w after %s: %w", translate.ErrBudget, t.DraftBudget, err)
+		}
 		return "", err
 	}
 	var a struct {

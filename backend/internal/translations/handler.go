@@ -448,6 +448,9 @@ func (h *Handler) DraftAppString(ctx context.Context, req *connect.Request[issho
 		d.Voice = "" // the draft is the livelier English itself
 	}
 	text, err := h.Drafter.Draft(ctx, lang, d)
+	if errors.Is(err, translate.ErrBudget) {
+		return nil, errs.UpstreamReason("gemini", isshov1.ErrorReason_ERROR_REASON_TIMED_OUT, "gemini took too long; try again", err)
+	}
 	if err != nil {
 		return nil, errs.Upstream("gemini", err)
 	}
