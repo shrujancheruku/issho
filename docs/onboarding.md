@@ -120,6 +120,17 @@ Read [contributing.md](contributing.md). In short:
 - [generated/api.md](generated/api.md): every API endpoint
 - READMEs in each directory: [backend](../backend/README.md), [mobile](../apps/mobile/README.md), [api-client](../packages/api-client/README.md), [proto](../proto/README.md), [data](../data/README.md), [supabase](../supabase/README.md)
 
+## Dependency updates
+
+[Renovate](https://docs.renovatebot.com/) (`renovate.json5`) keeps dependencies current: Go modules (including the `go tool` dependencies), pnpm packages, GitHub Actions (pinned to commit SHAs with a version comment), the `backend/Dockerfile` base images, the Kamal image in `config/kamal-image` and the Postgres image in `ci.yml`. It opens PRs on Monday mornings (Europe/London), waits one day after a release (the same gate as pnpm's `minimumReleaseAge`), refreshes lockfiles monthly and keeps a Dependency Dashboard issue.
+
+- Titles are `fix(deps): …` (runtime) or `chore(deps): …` (dev tooling), so release-please and commitlint accept them.
+- Only patch and minor updates of dev tooling and the build-only Go tools (buf, goose, sqlc, protoc-gen-doc, gitleaks) automerge, after the required checks pass. Wrangler, runtime dependencies, majors and Docker images wait for review.
+- Expo (`expo`, `expo-*`, `react-native`, `@react-native/*`, `@expo/*`, `jest-expo`, `eslint-config-expo`) arrives as one `expo` PR, never automerged. Check out the branch, run `npx expo install --fix` and `npx expo-doctor` in `apps/mobile`, and commit the result.
+- The `roadmap` job skips `renovate/*` branches (`scripts/check-roadmap.sh`), so these PRs need no ROADMAP edit.
+- When you add a `uses:` line, pin it to a SHA with a version comment (`uses: owner/repo@<sha> # v1.2.3`); Renovate keeps both current.
+- **Owner setup (once):** install the Renovate GitHub App on `shrujancheruku/issho` (github.com/apps/renovate, "Only select repositories"), merge its onboarding PR or close it if `renovate.json5` is already on `main`, and turn off Dependabot version updates under Settings > Code security. The config was never run through Renovate's validator, so check the onboarding PR or the first Dependency Dashboard for config errors.
+
 ## Troubleshooting
 
 | Symptom | Fix |
