@@ -17,7 +17,7 @@ import { useMyCrews } from '@/features/crews/data';
 import { usePlanNames } from '@/features/plans/names';
 import { pairText } from '@/features/plans/plan-card';
 import type { Step } from '@/features/profile/draft';
-import { useProfile } from '@/features/profile/use-profile';
+import { useProfile } from '@/features/profile/data';
 import { useTheme } from '@/hooks/use-theme';
 import { useI18n } from '@/i18n/i18n-provider';
 import type { StringKey } from '@/i18n/strings';

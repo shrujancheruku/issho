@@ -1,11 +1,12 @@
 import type { Session } from '@supabase/supabase-js';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { createContext, useCallback, useContext, useEffect, useState, type PropsWithChildren } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type PropsWithChildren } from 'react';
 
 import { Code, ConnectError } from '@issho/api-client';
 
 import { api } from '@/lib/api';
 import { unregisterPush } from '@/lib/push';
+import { keys } from '@/lib/queries';
 import { supabase } from '@/lib/supabase';
 
 type AuthState = {
@@ -36,25 +37,29 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const [ready, setReady] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
 
+  // The user the cache belongs to. A ref, so the listener can compare without
+  // a side effect inside a setState updater (which React may run twice).
+  const cacheUser = useRef<string | undefined>(undefined);
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
+      cacheUser.current = data.session?.user.id;
       setSession(data.session);
       setReady(true);
     });
     // Fires on sign-in, sign-out and token refresh. Cached server data belongs to
     // the previous user, so clear it whenever the user changes.
     const { data } = supabase.auth.onAuthStateChange((_event, next) => {
-      setSession((prev) => {
-        if (prev?.user.id !== next?.user.id) queryClient.clear();
-        return next;
-      });
+      if (cacheUser.current !== next?.user.id) queryClient.clear();
+      cacheUser.current = next?.user.id;
+      setSession(next);
     });
     return () => data.subscription.unsubscribe();
   }, [queryClient]);
 
   // GetMe also creates the app account on first sign-in.
   const me = useQuery({
-    queryKey: ['me', session?.user.id],
+    queryKey: keys.me(session?.user.id),
     queryFn: () => api.identity.getMe({}),
     enabled: !!session,
     retry: (count, err) => !isUnauthenticated(err) && count < 2,

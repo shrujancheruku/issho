@@ -5,6 +5,7 @@ import { AppState } from 'react-native';
 
 import { useAuth } from '@/features/auth/auth-provider';
 import { api } from '@/lib/api';
+import { keys } from '@/lib/queries';
 
 import { fromBundle } from './bundle';
 import { applyDirection } from './direction';
@@ -167,12 +168,12 @@ function useUiStrings(lang: string) {
   const queryClient = useQueryClient();
   const cached = useMemo(() => (needed ? (readCached(lang) ?? fromBundle(lang)) : undefined), [needed, lang]);
   const query = useQuery({
-    queryKey: ['ui-strings', lang],
+    queryKey: keys.uiStrings(lang),
     enabled: needed,
     queryFn: async (): Promise<CachedStrings> => {
       // A current copy is sent by version: if it still is, the server says so
       // rather than sending every string again.
-      const had = queryClient.getQueryData<CachedStrings>(['ui-strings', lang]);
+      const had = queryClient.getQueryData<CachedStrings>(keys.uiStrings(lang));
       const res = await api.ui.getStrings({ language: lang, knownVersion: isCurrent(had) ? had!.catalogVersion : '' });
       const value: CachedStrings =
         res.unchanged && had

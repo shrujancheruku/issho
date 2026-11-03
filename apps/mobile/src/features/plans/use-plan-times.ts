@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { useProfile } from '@/features/profile/use-profile';
+import { useProfile } from '@/features/profile/data';
 import { slotKey } from '@/lib/slots';
 
 import { usePlan } from './data';
