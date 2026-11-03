@@ -57,7 +57,7 @@ curl -X POST -H 'Content-Type: application/json' -d '{}' https://<api host>/issh
 kamal logs-api          # or logs-worker
 ```
 
-**Checking Sentry:** `kamal app exec --primary "tool sentry-test"` sends one test error to the `issho-api` project (Sentry organisation `shrujan`, EU region), as the API and worker would.
+**Checking Sentry:** `kamal app exec --primary "tool sentry-test"` sends one test error to the `issho-api` project (Sentry organisation `shrujan`, EU region), as the API and worker would. Events are tagged with `APP_ENV`, which is `preview` while this deploy points at `issho-dev` (#232; it was `production` before). **To check next time you work in Sentry:** any alert rule that filters on environment `production` no longer fires for the API and worker; add `preview`, then delete this note. The backup monitor still reports as `production`.
 
 **Seeding and Google tools** run the same way, inside the image: `kamal app exec --primary "tool seed /data/citypacks/tokyo.json"` (the catalogue is seeded too).
 

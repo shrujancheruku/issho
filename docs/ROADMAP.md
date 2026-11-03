@@ -321,6 +321,7 @@ Put off by the owner until they're needed: accounts and decisions (analytics and
 - ⬜ Spot-check machine translations for the launch languages (admin can mark `app.translations.reviewed`; M8; moving to the translation editor under *App languages*).
 - ⬜ **Production Supabase project** (Tokyo, `ap-northeast-1`, next to the server), replacing `issho-dev` behind `api.joinissho.com`: migrations, `config push`, the Resend SMTP settings, then the new `DATABASE_URL`, `SUPABASE_URL` and keys in `.env.issho-prod` (and the server's copy, docs/deploy.md), the Kamal config and the EAS and GitHub variables. Rehearse a restore of an R2 backup into it first.
 - ⬜ **Google Play internal testing:** the owner's Play developer account exists (2026-10-26) but waits on Google's identity verification. Then: create the app (Issho, `com.joinissho.app`), upload the first `production` AAB by hand (Google requires it), add testers; after that EAS Submit uploads with a service-account key.
+- ⬜ **Turn on the backup alert** ([#239](https://github.com/shrujancheruku/issho/issues/239)): push the `issho-backup` image, `SENTRY_DSN` on the server, reboot the accessory, then the Sentry monitor's alert rule (steps in docs/deploy.md). Backups run nightly meanwhile; only the alert is off.
 - ⬜ Stripe Identity verification behind a feature flag, for the public launch.
 
 ### Web release (not scheduled): 🟡
