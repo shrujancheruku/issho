@@ -107,7 +107,7 @@ message City {
 }
 
 message Area {
-  // e.g. "tokyo-kichijoji".
+  // e.g. "tokyo-musashino".
   string id = 1;
   string name = 2;
   string secondary_name = 3;

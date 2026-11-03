@@ -403,7 +403,7 @@
 | gender | [Gender](#issho-v1-Gender) |  |  |
 | same_gender_only | [bool](#bool) |  | Only be grouped with people of the same gender. Needs gender woman, man or nonbinary. |
 | city_id | [string](#string) |  | Read-only: the city of home_area_id. |
-| home_area_id | [string](#string) |  | Area id from CatalogService.ListCities, e.g. &#34;tokyo-kichijoji&#34;. |
+| home_area_id | [string](#string) |  | Area id from CatalogService.ListCities, e.g. &#34;tokyo-musashino&#34;. |
 | max_travel_min | [int32](#int32) |  | Longest trip from home_area_id they&#39;ll make, 5–180 minutes. |
 | spoken_languages | [SpokenLanguage](#issho-v1-SpokenLanguage) | repeated | Languages they can speak at an event (used for matching). At least one fluent; no duplicates. |
 | primary_language | [string](#string) |  | Display languages (what they read): ISO 639-1 codes. primary_language is required; secondary_language is optional and must differ. |
@@ -589,7 +589,7 @@ HTTP: POST /issho.v1.ProfileService/&lt;Method&gt;
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| id | [string](#string) |  | e.g. &#34;tokyo-kichijoji&#34;. |
+| id | [string](#string) |  | e.g. &#34;tokyo-musashino&#34;. |
 | name | [string](#string) |  |  |
 | secondary_name | [string](#string) |  |  |
 | lat | [double](#double) |  | The area&#39;s centre (WGS 84), from the city pack: where the map of plans puts the area&#39;s pin. |
@@ -1289,7 +1289,7 @@ An open plan as the caller sees it.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | id | [string](#string) |  |  |
-| area_id | [string](#string) |  | Area id (CatalogService.ListCities), e.g. &#34;tokyo-kichijoji&#34;. |
+| area_id | [string](#string) |  | Area id (CatalogService.ListCities), e.g. &#34;tokyo-musashino&#34;. |
 | activity_id | [string](#string) |  | Activity id (CatalogService.ListActivities). |
 | follow_up_activity_id | [string](#string) |  | An optional second activity, such as a meal after bouldering; &#34;&#34; = none. |
 | primary_language | [string](#string) |  | The plan&#39;s languages (ISO 639-1): everyone at the event speaks the primary one, or the secondary one for a language exchange (&#34;&#34; = none). |

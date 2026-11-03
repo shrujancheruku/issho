@@ -14,7 +14,7 @@ func valid() Profile {
 		DisplayName:     "  Aiko ",
 		BirthYear:       1995,
 		Gender:          "woman",
-		HomeAreaID:      "tokyo-kichijoji",
+		HomeAreaID:      "tokyo-musashino",
 		MaxTravelMin:    30,
 		Languages:       []Language{{Code: "JA", Fluent: true, Level: 3}, {Code: "es", Level: 1}},
 		PrimaryLanguage: "ja",

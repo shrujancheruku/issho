@@ -69,7 +69,7 @@ Matching is on the primary type, so prefer specific types (`flea_market`, `dance
   "languages": ["ja", "en"],                // languages commonly used here, most common first; any language code. Suggestions for onboarding/events; the first is used for venue search
   "travel_modes": ["walk", "drive"],        // modes to calculate: walk and/or drive (no public transport)
   "areas": [                                // the unit users pick as "home"
-    { "id": "tokyo-kichijoji", "name": { "en": "Kichijoji", "ja": "吉祥寺" }, "lat": 35.7030, "lng": 139.5798 },
+    { "id": "tokyo-musashino", "name": { "en": "Musashino", "ja": "武蔵野市" }, "lat": 35.7054, "lng": 139.5660, "osm_id": 1761804, "replaces": ["tokyo-kichijoji"] },
     { "id": "da-nang-hoi-an-hai-chau", "name": { "en": "Hai Chau", "vi": "Hải Châu" }, "lat": 16.059, "lng": 108.2195,
       "osm_id": 13969677,                   // optional: the area's administrative boundary in OpenStreetMap (a relation id)
       "boundary": ["emfaBw_lsS…"],          // optional: its outline, one encoded polyline per ring; written by make boundaries
@@ -83,7 +83,7 @@ Matching is on the primary type, so prefer specific types (`flea_market`, `dance
 }
 ```
 
-**Boundaries.** An area with a `boundary` has its venues searched over the whole of it, and every venue (found or added by hand) goes to the area that contains it; places outside every area are left out. Without one, venues are searched within each category's radius of the point and go to the nearest point, as for Tokyo and Austin today. `make boundaries CITY=<city>` fetches each area's outline from OpenStreetMap by its `osm_id` (Nominatim, simplified to about 20 m) and rewrites the pack; validation checks that each point is inside its own boundary and nobody else's. The admin SPA's editor keeps boundaries as they are (it doesn't edit them). Boundaries are OpenStreetMap data, © OpenStreetMap contributors, available under the [Open Database License](https://opendatacommons.org/licenses/odbl/).
+**Boundaries.** An area with a `boundary` has its venues searched over the whole of it, and every venue (found or added by hand) goes to the area that contains it; places outside every area are left out. Without one, venues are searched within each category's radius of the point and go to the nearest point, as for Austin today. `make boundaries CITY=<city>` fetches each area's outline from OpenStreetMap by its `osm_id` (Nominatim, simplified to about 20 m) and rewrites the pack; validation checks that each point is inside its own boundary and nobody else's. The admin SPA's editor keeps boundaries as they are (it doesn't edit them). Boundaries are OpenStreetMap data, © OpenStreetMap contributors, available under the [Open Database License](https://opendatacommons.org/licenses/odbl/).
 
 ## Applying a pack
 
@@ -110,7 +110,7 @@ A pack is a matching pool: people are only grouped with others in the same pack,
 
 1. Copy `citypacks/tokyo.json` to `citypacks/<city>.json`.
 2. Set the id, timezone, currency, languages and travel modes. The file name must be `<id>.json`.
-3. Define the **areas**: the government's own administrative units at the level below the city (Da Nang's wards, for example), with their official names as the local name. They cover the city without gaps and have boundaries anyone can check. Prefix each id with `<city>-`. For the coordinates, take the unit's administrative point from OpenStreetMap (Nominatim) rather than the middle of its boundary, which for a large unit can be in the hills: the point is where travel times start, so it should be in the built-up part. Set each area's `osm_id` to the unit's OpenStreetMap relation and run `make boundaries CITY=<city>`, then draw the boundaries and points on a map to check. (Tokyo still uses 12 stations; see docs/ROADMAP.md.)
+3. Define the **areas**: the government's own administrative units at the level below the city (Da Nang's wards, for example), with their official names as the local name. They cover the city without gaps and have boundaries anyone can check. Prefix each id with `<city>-`. For the coordinates, take the unit's administrative point from OpenStreetMap (Nominatim) rather than the middle of its boundary, which for a large unit can be in the hills: the point is where travel times start, so it should be in the built-up part. Set each area's `osm_id` to the unit's OpenStreetMap relation and run `make boundaries CITY=<city>`, then draw the boundaries and points on a map to check. This is the rule for every city, unless there is a very good reason not to: the local government's units, boundaries and names (owner's decision, 2026-11-03). Tokyo's areas are 7 municipalities (区/市) in the west of the city, named in Japanese as on addresses (`武蔵野市`, `杉並区`, …); its old station areas were retired with `replaces`.
 4. Add overrides for seasonal, local-name or not-applicable activities.
 5. `go test ./internal/cities/`, then `make seed`.
 6. Build its travel matrix and discover venues: `make matrix CITY=<city>` and `make venues CITY=<city>` (dry-run first with `ARGS=-dry-run`; with boundaries, discovery stops at `-max-requests`, 4,000 by default; see [../docs/google-maps.md](../docs/google-maps.md)). Rebuild the matrix at least every 30 days.

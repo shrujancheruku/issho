@@ -427,7 +427,7 @@ type Profile struct {
 	SameGenderOnly bool `protobuf:"varint,4,opt,name=same_gender_only,json=sameGenderOnly,proto3" json:"same_gender_only,omitempty"`
 	// Read-only: the city of home_area_id.
 	CityId string `protobuf:"bytes,5,opt,name=city_id,json=cityId,proto3" json:"city_id,omitempty"`
-	// Area id from CatalogService.ListCities, e.g. "tokyo-kichijoji".
+	// Area id from CatalogService.ListCities, e.g. "tokyo-musashino".
 	HomeAreaId string `protobuf:"bytes,6,opt,name=home_area_id,json=homeAreaId,proto3" json:"home_area_id,omitempty"`
 	// Longest trip from home_area_id they'll make, 5–180 minutes.
 	MaxTravelMin int32 `protobuf:"varint,7,opt,name=max_travel_min,json=maxTravelMin,proto3" json:"max_travel_min,omitempty"`

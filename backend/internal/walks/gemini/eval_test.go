@@ -23,7 +23,7 @@ import (
 //
 //	WALKS_EVAL=1 GOOGLE_GEMINI_API_KEY=… GOOGLE_MAPS_API_KEY=… go test ./internal/walks/gemini/ -run Eval -v -timeout 30m
 //
-// WALKS_EVAL_ONLY=photography@tokyo-koenji limits it to one case. The bar
+// WALKS_EVAL_ONLY=photography@tokyo-suginami limits it to one case. The bar
 // is that most walks compose; their quality is for a person to judge.
 func TestEval(t *testing.T) {
 	if os.Getenv("WALKS_EVAL") == "" {
@@ -59,10 +59,10 @@ func TestEval(t *testing.T) {
 	}
 	// Every walking theme, in areas known for it and in ones that aren't.
 	cases := []string{
-		"temple-shrine@tokyo-koenji", "temple-shrine@tokyo-shibuya",
-		"photography@tokyo-nakameguro", "photography@tokyo-shimokitazawa",
-		"city-walk@tokyo-kichijoji", "food-tour@tokyo-kichijoji",
-		"cafe-hop@tokyo-sangenjaya", "seasonal-viewing@tokyo-jiyugaoka",
+		"temple-shrine@tokyo-suginami", "temple-shrine@tokyo-shibuya",
+		"photography@tokyo-meguro", "photography@tokyo-setagaya",
+		"city-walk@tokyo-musashino", "food-tour@tokyo-musashino",
+		"cafe-hop@tokyo-setagaya", "seasonal-viewing@tokyo-meguro",
 		"city-walk@austin-south-congress", "food-tour@austin-east",
 	}
 	if only := os.Getenv("WALKS_EVAL_ONLY"); only != "" {
