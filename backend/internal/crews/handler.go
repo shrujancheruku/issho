@@ -145,6 +145,10 @@ func crewError(err error) error {
 }
 
 var (
+	// LAPSED and CLOSED are for the admin SPA only: the app never sees them
+	// because ListUserCrews returns only offered/active crews and
+	// Membership.Visible() gates Get. If a query there changes, installed
+	// builds would get values they don't know.
 	statusPB = map[string]isshov1.CrewStatus{
 		Offered: isshov1.CrewStatus_CREW_STATUS_OFFERED,
 		Active:  isshov1.CrewStatus_CREW_STATUS_ACTIVE,

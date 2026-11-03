@@ -10,6 +10,7 @@ package moderation
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -149,7 +150,7 @@ func (h *Handler) ListReports(ctx context.Context, req *connect.Request[isshov1.
 		// The outing may be gone (no block); a block we don't know is an error.
 		if r.EventBlock != "" {
 			if m.EventBlock, err = plans.BlockProto(r.EventBlock); err != nil {
-				return nil, err
+				return nil, fmt.Errorf("report %s: %w", r.ID, err)
 			}
 		}
 		if r.EventDate.Valid {
@@ -306,7 +307,7 @@ func (h *Handler) ListCrewLeaves(ctx context.Context, req *connect.Request[issho
 			CreatedAt: timestamp(l.CreatedAt),
 		}
 		if m.CrewStatus, err = crews.StatusProto(l.CrewStatus); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("crew leave %d: %w", l.ID, err)
 		}
 		for k, v := range leaveReasons {
 			if v == l.Reason {

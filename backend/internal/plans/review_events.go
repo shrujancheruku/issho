@@ -3,6 +3,7 @@ package plans
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"connectrpc.com/connect"
@@ -116,7 +117,7 @@ func (h *ReviewHandler) GetReviewEvent(ctx context.Context, req *connect.Request
 	for _, g := range groups {
 		gStatus, err := GroupStatusProto(g.Status)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("group %s: %w", g.ID, err)
 		}
 		rg := &isshov1.ReviewGroup{
 			Id: g.ID.String(), Quorum: int32(g.Quorum), MinAttendance: int32(g.MinAttendance), Score: g.Score, Status: gStatus,
@@ -128,7 +129,7 @@ func (h *ReviewHandler) GetReviewEvent(ctx context.Context, req *connect.Request
 			if m.GroupID == g.ID {
 				response, err := ResponseProto(m.Response)
 				if err != nil {
-					return nil, err
+					return nil, fmt.Errorf("group member %s in %s: %w", m.UserID, g.ID, err)
 				}
 				rg.Members = append(rg.Members, &isshov1.ReviewMember{
 					UserId: m.UserID.String(), Name: m.Name, Gender: m.Gender, BirthYear: m.BirthYear,
@@ -261,7 +262,7 @@ func proposalError(err error) error {
 func reviewEventToProto(e dbgen.GetReviewEventRow, names map[string]string) (*isshov1.ReviewEvent, error) {
 	block, err := BlockProto(e.Block)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("review event %s: %w", e.ID, err)
 	}
 	out := &isshov1.ReviewEvent{
 		Id: e.ID.String(), PlanId: e.PlanID.String(), AreaName: e.AreaName, Block: block, Forced: e.Forced,

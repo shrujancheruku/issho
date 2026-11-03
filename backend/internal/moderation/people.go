@@ -3,6 +3,7 @@ package moderation
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -122,13 +123,13 @@ func (h *Handler) GetPerson(ctx context.Context, req *connect.Request[isshov1.Ge
 	for _, o := range outings {
 		po := &isshov1.PersonOuting{EventId: o.EventID.String(), Title: o.Title, CheckedIn: o.CheckedIn}
 		if po.Block, err = plans.BlockProto(o.Block); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("outing %s: %w", o.EventID, err)
 		}
 		if po.EventStatus, err = plans.EventStatusProto(o.EventStatus); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("outing %s: %w", o.EventID, err)
 		}
 		if po.Response, err = plans.ResponseProto(o.Response); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("outing %s: %w", o.EventID, err)
 		}
 		if o.Date.Valid {
 			po.Date = o.Date.Time.Format(time.DateOnly)

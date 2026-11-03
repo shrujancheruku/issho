@@ -3,6 +3,7 @@ package plans
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"sync"
 	"time"
@@ -281,7 +282,7 @@ func (h *ReviewHandler) ListVenueOptions(ctx context.Context, req *connect.Reque
 	for i, r := range rows {
 		status, err := curation.VenueStatusProto(r.Status)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("venue %s: %w", r.GooglePlaceID, err)
 		}
 		out.Venues[i] = &isshov1.VenueOption{PlaceId: r.GooglePlaceID, CategoryId: r.CategoryID, Status: status}
 		if h.Svc.Places == nil {
