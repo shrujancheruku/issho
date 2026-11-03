@@ -13,7 +13,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -38,8 +37,6 @@ const (
 	Keep = 30 * 24 * time.Hour
 	// DeleteBatch is how many rows one retention delete removes at most.
 	DeleteBatch = 1000
-	// MaxMessage is the longest message, in characters.
-	MaxMessage = 1000
 	// Page is how many messages one read returns at most.
 	Page = 100
 )
@@ -51,8 +48,9 @@ var (
 	ErrForbidden = errors.New("only people in this chat can use it")
 	// ErrClosed means the room isn't open for writing now.
 	ErrClosed = errors.New("the chat is not open")
-	// ErrBadMessage means the message isn't 1 to MaxMessage characters.
-	ErrBadMessage = fmt.Errorf("message: 1 to %d characters", MaxMessage)
+	// ErrBadMessage means the message is empty once trimmed, or not valid UTF-8.
+	// (Its upper length is the body's max_len rule in chat.proto.)
+	ErrBadMessage = errors.New("message: must not be empty")
 )
 
 // Kind is what owns a room.
@@ -127,11 +125,12 @@ func (s *Service) access(kind Kind) (Access, error) {
 	return nil, ErrNoRoom
 }
 
-// Clean trims a message and reports whether it's one that can be sent:
-// 1 to MaxMessage characters of valid UTF-8.
+// Clean trims a message and reports whether it's one that can be sent: not
+// empty, valid UTF-8. The length limit is not here: it is the max_len rule on
+// SendMessageRequest.body, enforced by the validate interceptor.
 func Clean(body string) (string, bool) {
 	body = strings.TrimSpace(body)
-	return body, body != "" && utf8.RuneCountInString(body) <= MaxMessage && utf8.ValidString(body)
+	return body, body != "" && utf8.ValidString(body)
 }
 
 // State returns what the caller may do in a room, or why they can't read it.

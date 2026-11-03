@@ -7,7 +7,6 @@ import (
 	"slices"
 	"strings"
 	"time"
-	"unicode/utf8"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -23,8 +22,6 @@ const (
 	FeedbackAfter = CheckInAfter
 	FeedbackFor   = 14 * 24 * time.Hour
 	ReportFor     = 30 * 24 * time.Hour
-	// MaxReportDetails is the longest report text, in characters.
-	MaxReportDetails = 1000
 )
 
 // ErrFeedbackClosed means it's not the time to give feedback.
@@ -244,7 +241,8 @@ func checkPickLean(ctx context.Context, q *dbgen.Queries, userID uuid.UUID, now 
 	})
 }
 
-// CheckReport checks a report's reason and returns its details trimmed,
+// CheckReport checks a report's reason and returns its details trimmed (their
+// length limit is a protovalidate rule on the request, not checked here),
 // for reports about an outing (Report) and about a crew (crews).
 func CheckReport(reason, details string) (string, error) {
 	switch reason {
@@ -253,9 +251,6 @@ func CheckReport(reason, details string) (string, error) {
 		return "", invalid("reason: dating, harassment, unsafe, no_show or other")
 	}
 	details = strings.TrimSpace(details)
-	if utf8.RuneCountInString(details) > MaxReportDetails {
-		return "", invalid("details: at most %d characters", MaxReportDetails)
-	}
 	return details, nil
 }
 

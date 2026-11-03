@@ -1,3 +1,4 @@
+import { maxLen, SendMessageRequestSchema } from '@issho/api-client';
 import { router } from 'expo-router';
 import { useEffect, useRef, useState, type ReactElement } from 'react';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, TextInput, View } from 'react-native';
@@ -20,7 +21,8 @@ import type { Message } from './messages';
 import { useRoom, type RoomRef } from './room';
 import { TypingDots } from './typing-dots';
 
-const MaxMessage = 1000; // as the server (chat.MaxMessage)
+// The server's rule on the message body (chat.proto), not a copy of it.
+const MaxMessage = maxLen(SendMessageRequestSchema, 'body');
 
 // Messages that arrive while the chat is open rise in from the bottom; the
 // history shown on opening doesn't (animate changes, not screens).

@@ -3,7 +3,6 @@ package plans
 import (
 	"context"
 	"errors"
-	"strings"
 	"testing"
 	"time"
 
@@ -72,13 +71,15 @@ func TestIntegrationChat(t *testing.T) {
 	if err != nil || !st.Open || len(msgs) != 1 || msgs[0].Mine || msgs[0].Name != "Test" || msgs[0].Body != first.Body {
 		t.Errorf("b reads = %+v, %+v, %v", msgs, st, err)
 	}
-	for name, body := range map[string]string{"empty": "   ", "too long": strings.Repeat("あ", chat.MaxMessage+1)} {
+	for name, body := range map[string]string{"empty": "   "} {
 		if _, err := rooms.Send(ctx, a, room, body, open); !errors.Is(err, chat.ErrBadMessage) {
 			t.Errorf("%s message: %v, want ErrBadMessage", name, err)
 		}
 	}
-	if _, err := rooms.Send(ctx, a, room, strings.Repeat("あ", chat.MaxMessage), open); err != nil {
-		t.Errorf("a message of exactly %d characters: %v", chat.MaxMessage, err)
+	// A third stored message: the retention checks below count it. (The length
+	// boundary is the validate interceptor's, tested there.)
+	if _, err := rooms.Send(ctx, a, room, "third", open); err != nil {
+		t.Fatal(err)
 	}
 	// Only people going.
 	if _, _, err := rooms.Latest(ctx, c, room, open); !errors.Is(err, chat.ErrForbidden) {

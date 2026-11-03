@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package issho.v1;
 
+import "buf/validate/validate.proto";
+
 option go_package = "github.com/shrujancheruku/issho/backend/gen/issho/v1;isshov1";
 
 // ProfileService reads and writes the caller's own profile: what matching
@@ -42,7 +44,7 @@ message SaveProfileResponse {
 
 message Profile {
   // First name or nickname, shown only to confirmed attendees. 1–40 characters.
-  string display_name = 1;
+  string display_name = 1 [(buf.validate.field).string.max_len = 40];
   // Must make the person at least 18 this year.
   int32 birth_year = 2;
   Gender gender = 3;

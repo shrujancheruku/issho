@@ -7,9 +7,6 @@ import { ThemedText } from '@/components/themed-text';
 import { BodyFont, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
-/** The longest details text, as the server (plans.MaxReportDetails). */
-const MaxDetails = 1000;
-
 /**
  * A short form on its own screen (reporting someone, leaving a crew): a
  * back link, a title with its hint (and anything under it, intro), the
@@ -75,7 +72,18 @@ export function ChipChoice<T extends string | number>({
 }
 
 /** Free text for a form, up to the server's limit. */
-export function DetailsInput({ label, value, onChange }: { label: string; value: string; onChange: (text: string) => void }) {
+/** `maxLength` is the request's `details` limit: `maxLen(<Request>Schema, 'details')`. */
+export function DetailsInput({
+  label,
+  value,
+  onChange,
+  maxLength,
+}: {
+  label: string;
+  value: string;
+  onChange: (text: string) => void;
+  maxLength: number;
+}) {
   const theme = useTheme();
   return (
     <View style={styles.section}>
@@ -83,7 +91,7 @@ export function DetailsInput({ label, value, onChange }: { label: string; value:
       <TextInput
         value={value}
         onChangeText={onChange}
-        maxLength={MaxDetails}
+        maxLength={maxLength}
         multiline
         style={[styles.input, { color: theme.text, backgroundColor: theme.backgroundElement }]}
       />

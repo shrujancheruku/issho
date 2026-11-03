@@ -40,10 +40,7 @@ func TestValidate(t *testing.T) {
 		edit  func(*Profile)
 		field string
 	}{
-		"blank name": {func(p *Profile) { p.DisplayName = "   " }, "display_name"},
-		"long name": {func(p *Profile) {
-			p.DisplayName = "あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれ"
-		}, "display_name"},
+		"blank name":             {func(p *Profile) { p.DisplayName = "   " }, "display_name"},
 		"17 this year":           {func(p *Profile) { p.BirthYear = year - 17 }, "birth_year"},
 		"typo year":              {func(p *Profile) { p.BirthYear = 1099 }, "birth_year"},
 		"no gender":              {func(p *Profile) { p.Gender = "" }, "gender"},

@@ -12,6 +12,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/gen/issho/v1/isshov1connect"
 	"github.com/shrujancheruku/issho/backend/internal/platform/deadline"
 	"github.com/shrujancheruku/issho/backend/internal/platform/errs"
+	"github.com/shrujancheruku/issho/backend/internal/platform/validate"
 )
 
 // maxRequestBytes caps every Connect request body. The largest real ones are
@@ -55,12 +56,14 @@ var prodTimeouts = serverTimeouts{ReadHeader: readHeaderTimeout, Read: readTimeo
 // handlerOptions is the option set of every Connect handler: errs outermost
 // (so it also sanitises what the others return), the deadline inside it (so
 // its DeadlineExceeded passes through as is), then the caller's interceptors
-// (auth and so on), and the request size cap.
+// (auth and so on), then request validation (so a caller who isn't signed in
+// hears Unauthenticated, not the rules), and the request size cap.
 func handlerOptions(log *slog.Logger, inner ...connect.Interceptor) connect.HandlerOption {
 	chain := append([]connect.Interceptor{
 		errs.Interceptor(log),
 		deadline.Interceptor(deadline.Default, rpcDeadlines),
 	}, inner...)
+	chain = append(chain, validate.Interceptor())
 	return connect.WithOptions(connect.WithInterceptors(chain...), connect.WithReadMaxBytes(maxRequestBytes))
 }
 

@@ -1,4 +1,4 @@
-import { Gender, GroupSize } from '@issho/api-client';
+import { Gender, GroupSize, maxLen, ProfileSchema } from '@issho/api-client';
 import { useMemo, useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, Switch, TextInput, View } from 'react-native';
 
@@ -185,7 +185,7 @@ function AboutStep({ draft, onChange }: StepProps) {
           style={input}
           value={draft.displayName}
           onChangeText={(displayName) => onChange({ ...draft, displayName })}
-          maxLength={40}
+          maxLength={maxLen(ProfileSchema, 'display_name')}
           autoComplete="given-name"
           textContentType="givenName"
         />
