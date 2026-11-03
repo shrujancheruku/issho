@@ -139,6 +139,8 @@ type Runner struct {
 
 // stayChecks is how often, inside a stay, a venue is checked to be open, so
 // a break in the middle of a long stay (a lunch closure) is noticed too.
+// Sampling can't see a closure shorter than this that falls between two
+// samples; that's accepted, since real breaks are an hour or more.
 const stayChecks = 30 * time.Minute
 
 // stayTimes are the times to check a venue is open for a stay of length d
@@ -168,10 +170,10 @@ const (
 // checkVenues looks up the plan's venues' opening hours (once per venue per
 // pass; cache) and says whether they're open around an event starting at
 // start: the activity's venue from the start for the activity's own hours,
-// then the follow-up's from where the activity ends for its hours (acts is
-// the plan's activity and its follow-up; either may be nil, which counts as
-// the default length). Lookup failures don't block scheduling: they're logged and the
-// venue is assumed open.
+// then the follow-up's from where the activity ends for its own hours (acts
+// holds the plan's activity and its follow-up; a missing one counts as the
+// default length). Lookup failures don't block scheduling: they're logged
+// and the venue is assumed open.
 func (r *Runner) checkVenues(ctx context.Context, p Open, acts map[matching.ActivityID]*matching.Activity, start time.Time, cache map[string]*maps.Hours) venueProblem {
 	if r.Hours == nil {
 		return venuesOK

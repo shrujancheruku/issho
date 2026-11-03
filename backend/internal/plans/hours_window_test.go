@@ -34,6 +34,15 @@ func TestCheckVenuesWindow(t *testing.T) {
 	act := func(hours float64) *matching.Activity { return &matching.Activity{ID: "a", Hours: hours} }
 	next := func(hours float64) *matching.Activity { return &matching.Activity{ID: "b", Hours: hours} }
 	none := maps.Hours{}
+	// Closed 12:10–12:25 only, between the samples at 12:00 and 12:30. This
+	// documents the 30-minute sampling (a short break goes unseen), not a
+	// requirement.
+	shortBreak := maps.Hours{Known: true}
+	for d := time.Sunday; d <= time.Saturday; d++ {
+		shortBreak.Periods = append(shortBreak.Periods,
+			maps.Period{Open: maps.WeekTime{Day: d, Hour: 9}, Close: maps.WeekTime{Day: d, Hour: 12, Minute: 10}},
+			maps.Period{Open: maps.WeekTime{Day: d, Hour: 12, Minute: 25}, Close: maps.WeekTime{Day: d, Hour: 22}})
+	}
 
 	for _, c := range []struct {
 		name         string
@@ -53,6 +62,7 @@ func TestCheckVenuesWindow(t *testing.T) {
 		{"overnight: bar open past midnight", act(3), nil, sat(22, 0), bar, none, venuesOK},
 		{"overnight: bar closes at 02:00 before a 5h activity ends", act(5), nil, sat(22, 0), bar, none, venueClosedAt},
 		{"closes for lunch in the middle of a long stay", act(3), nil, sat(11, 0), lunch, none, venueClosedAt},
+		{"a 15-minute break between samples is not seen (documents the sampling)", act(3), nil, sat(11, 0), shortBreak, none, venuesOK},
 		{"venue with no hours data is assumed open", act(6), nil, sat(14, 0), none, none, venuesOK},
 		{"an 8h activity needs a venue open the whole slot", act(8), nil, sat(16, 0), everyDay(10, 22), none, venueClosedAt},
 		{"an 8h activity at a venue open all day", act(8), nil, sat(10, 0), allDay, none, venuesOK},
