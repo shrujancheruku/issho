@@ -18,6 +18,8 @@
 //     the caller's deadline bounds the whole call, retries included.
 //   - One Sentry span per call, named from the method, host and Request.Route
 //     (a path template), never the query string or ids.
+//   - An attempt that hits Timeout is retried unless RetryTimeouts is off (a
+//     billed model call).
 //   - A non-2xx answer becomes an errs.Upstream error whose cause is a
 //     *StatusError holding the upstream body. The body goes to the log and to
 //     Sentry through the cause; the client-facing message is fixed.
@@ -33,6 +35,7 @@ import (
 	"log/slog"
 	"math/rand/v2"
 	"net/http"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -57,8 +60,16 @@ type Client struct {
 	MaxRetryAfter time.Duration
 	// MaxBody limits how much of a response is read.
 	MaxBody int64
-	HTTP    *http.Client
-	Log     *slog.Logger
+	// HideBody keeps the upstream's answer out of logs, errors and Sentry:
+	// only the status is kept. For APIs whose error text may echo secrets or
+	// personal data (Supabase's admin API, Expo's push answers).
+	HideBody bool
+	// RetryTimeouts retries an attempt that hit Timeout (default true). A
+	// billed call that thinks for minutes (Gemini) turns it off: the retry
+	// would pay again for work that was probably still running.
+	RetryTimeouts bool
+	HTTP          *http.Client
+	Log           *slog.Logger
 }
 
 // New returns a client with the default policy: 3 attempts, 500 ms backoff,
@@ -70,9 +81,9 @@ func New(service string, timeout time.Duration) *Client {
 	return &Client{
 		Service: service, Timeout: timeout,
 		MaxRetries: 2, Backoff: 500 * time.Millisecond, MaxRetryAfter: 30 * time.Second,
-		MaxBody: 10 << 20,
-		HTTP:    &http.Client{}, // no client timeout: each attempt gets its own context
-		Log:     slog.Default(),
+		MaxBody: 10 << 20, RetryTimeouts: true,
+		HTTP: &http.Client{}, // no client timeout: each attempt gets its own context
+		Log:  slog.Default(),
 	}
 }
 
@@ -92,7 +103,16 @@ type Request struct {
 	Idempotent bool
 	// NoRetry never retries, whatever the method.
 	NoRetry bool
+	// Expect lists statuses that are an answer, not a failure (a 404 probe, a
+	// 422 the caller turns into a conflict). They come back as a
+	// *StatusError, not wrapped in errs.Upstream, are logged at debug, and
+	// leave the span ok.
+	Expect []int
 }
+
+// maxErrBody bounds StatusError.Body, so Error() and the Sentry cause stay
+// small however much an upstream sends.
+const maxErrBody = 2 << 10
 
 // StatusError is a non-2xx answer. Body is the upstream's text, for logs and
 // Sentry only: it is the cause inside an errs.Upstream, so it never reaches a
@@ -103,6 +123,9 @@ type StatusError struct {
 }
 
 func (e *StatusError) Error() string {
+	if e.Body == "" {
+		return fmt.Sprintf("HTTP %d", e.StatusCode)
+	}
 	return fmt.Sprintf("HTTP %d: %s", e.StatusCode, e.Body)
 }
 
@@ -127,6 +150,11 @@ func (c *Client) Do(ctx context.Context, r Request) error {
 	route := c.route(r)
 	end := sentry.StartHTTP(ctx, r.Method+" "+c.host(r)+route)
 	status, err := c.attempts(ctx, r, payload)
+	if err != nil && status != 0 && slices.Contains(r.Expect, status) {
+		end(status, nil)
+		c.Log.Debug("upstream status expected", "service", c.Service, "method", r.Method, "route", route, "status", status)
+		return err
+	}
 	end(status, err)
 	if err == nil {
 		return nil
@@ -137,8 +165,11 @@ func (c *Client) Do(ctx context.Context, r Request) error {
 	}
 	if se, ok := Status(err); ok {
 		// Method and route only: never the URL's query (keys) or headers.
-		c.Log.Warn("upstream error", "service", c.Service, "method", r.Method, "route", route,
-			"status", se.StatusCode, "body", truncate(se.Body, 512))
+		attrs := []any{"service", c.Service, "method", r.Method, "route", route, "status", se.StatusCode}
+		if !c.HideBody {
+			attrs = append(attrs, "body", truncate(se.Body, 512))
+		}
+		c.Log.Warn("upstream error", attrs...)
 	}
 	return errs.Upstream(c.Service, err)
 }
@@ -175,6 +206,9 @@ func (c *Client) attempts(ctx context.Context, r Request, payload []byte) (int, 
 		status, retryAfter, err := c.once(ctx, r, payload)
 		if err == nil || ctx.Err() != nil || attempt >= c.MaxRetries || !safe(r) || !retryable(status, err) {
 			return status, err
+		}
+		if !c.RetryTimeouts && status == 0 && errors.Is(err, context.DeadlineExceeded) {
+			return status, err // the attempt timed out (the caller's context is still live)
 		}
 		wait := c.Backoff << attempt
 		wait = wait/2 + rand.N(wait/2+1) // jitter: 50-100% of the step
@@ -247,8 +281,11 @@ func (c *Client) once(ctx context.Context, r Request, payload []byte) (status in
 		return 0, 0, fmt.Errorf("%s %s: read response: %w", r.Method, c.route(r), err)
 	}
 	if resp.StatusCode/100 != 2 {
-		return resp.StatusCode, parseRetryAfter(resp.Header.Get("Retry-After")),
-			&StatusError{StatusCode: resp.StatusCode, Body: strings.TrimSpace(string(b))}
+		se := &StatusError{StatusCode: resp.StatusCode}
+		if !c.HideBody {
+			se.Body = truncate(strings.TrimSpace(string(b)), maxErrBody)
+		}
+		return resp.StatusCode, parseRetryAfter(resp.Header.Get("Retry-After")), se
 	}
 	if r.Out != nil {
 		if err := json.Unmarshal(b, r.Out); err != nil {

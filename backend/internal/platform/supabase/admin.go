@@ -23,7 +23,15 @@ type Admin struct {
 }
 
 func NewAdmin(supabaseURL, secretKey string) *Admin {
-	return &Admin{baseURL: supabaseURL, secretKey: secretKey, api: httpjson.New("supabase", 10*time.Second)}
+	return &Admin{baseURL: supabaseURL, secretKey: secretKey, api: newAPI()}
+}
+
+// newAPI hides response bodies: the admin API's error text can echo the
+// user's email or the key, and only the status matters here.
+func newAPI() *httpjson.Client {
+	c := httpjson.New("supabase", 10*time.Second)
+	c.HideBody = true
+	return c
 }
 
 // userRoute is the trace route for the admin users endpoints (the id is not
@@ -32,10 +40,10 @@ const userRoute = "/auth/v1/admin/users/{id}"
 
 // call sends one admin request. New-style secret keys go in the apikey header
 // only; they are not JWTs.
-func (a *Admin) call(ctx context.Context, method string, id uuid.UUID, body any) error {
+func (a *Admin) call(ctx context.Context, method string, id uuid.UUID, body any, expect ...int) error {
 	return a.api.Do(ctx, httpjson.Request{
 		Method: method, URL: a.baseURL + "/auth/v1/admin/users/" + id.String(), Route: userRoute,
-		Header: map[string]string{"apikey": a.secretKey}, Body: body,
+		Header: map[string]string{"apikey": a.secretKey}, Body: body, Expect: expect,
 	})
 }
 
@@ -44,7 +52,7 @@ func (a *Admin) call(ctx context.Context, method string, id uuid.UUID, body any)
 // Deleting an already-deleted user is treated as success, so retries are safe
 // (and the client retries a DELETE on a reset or 5xx).
 func (a *Admin) DeleteUser(ctx context.Context, id uuid.UUID) error {
-	err := a.call(ctx, http.MethodDelete, id, nil)
+	err := a.call(ctx, http.MethodDelete, id, nil, http.StatusNotFound)
 	if se, ok := httpjson.Status(err); ok && se.StatusCode == http.StatusNotFound {
 		return nil
 	}

@@ -75,7 +75,15 @@ type Expo struct {
 }
 
 func NewExpo(accessToken string) *Expo {
-	return &Expo{AccessToken: accessToken, URL: defaultURL, ReceiptsURL: defaultReceiptsURL, api: httpjson.New("expo", 30*time.Second)}
+	return &Expo{AccessToken: accessToken, URL: defaultURL, ReceiptsURL: defaultReceiptsURL, api: newAPI()}
+}
+
+// newAPI hides response bodies: Expo's error text can quote push tokens, which
+// identify a device. The status and the tickets' own error codes are enough.
+func newAPI() *httpjson.Client {
+	c := httpjson.New("expo", 30*time.Second)
+	c.HideBody = true
+	return c
 }
 
 func (e *Expo) Send(ctx context.Context, msgs []Message) ([]Ticket, error) {

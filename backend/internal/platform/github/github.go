@@ -74,6 +74,10 @@ func (c *Client) do(ctx context.Context, method, path string, body, out any) err
 	// commit or ref update would report a conflict for work that already
 	// happened, so those are sent once.
 	objectPost := method == http.MethodPost && (strings.HasSuffix(path, "/git/trees") || strings.HasSuffix(path, "/git/commits"))
+	expect := []int{http.StatusNotFound}
+	if method == http.MethodPatch {
+		expect = append(expect, http.StatusUnprocessableEntity)
+	}
 	err := c.api.Do(ctx, httpjson.Request{
 		Method: method, URL: c.API + path, Route: routeOf(path), Body: body, Out: out,
 		Header: map[string]string{
@@ -83,6 +87,9 @@ func (c *Client) do(ctx context.Context, method, path string, body, out any) err
 		},
 		Idempotent: objectPost,
 		NoRetry:    method != http.MethodGet && !objectPost,
+		// A missing file or branch is an answer callers probe for; a 422 on the
+		// ref update means the branch moved (ErrConflict).
+		Expect: expect,
 	})
 	if err == nil {
 		return nil
@@ -98,6 +105,9 @@ func (c *Client) do(ctx context.Context, method, path string, body, out any) err
 		Message string `json:"message"`
 	}
 	_ = json.Unmarshal([]byte(se.Body), &e)
+	if slices.Contains(expect, se.StatusCode) { // not wrapped: the caller reads it
+		return &APIError{StatusCode: se.StatusCode, Message: e.Message}
+	}
 	// Keeps errs.Upstream's fixed client message; the cause is GitHub's.
 	return errs.WithCause(err, &APIError{StatusCode: se.StatusCode, Message: e.Message})
 }
