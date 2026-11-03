@@ -1,12 +1,11 @@
 import type { ReactNode } from 'react';
-import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 
 import { Chip } from '@/components/chip';
 import { ScreenFrame, useLeave } from '@/components/screen-frame';
 import { ThemedText } from '@/components/themed-text';
 import { BodyFont, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { useI18n } from '@/i18n/i18n-provider';
 
 /** The longest details text, as the server (plans.MaxReportDetails). */
 const MaxDetails = 1000;
@@ -29,17 +28,9 @@ export function FormScreen({
   children: ReactNode;
   footer?: ReactNode;
 }) {
-  const { t } = useI18n();
   const back = useLeave('/');
-  const header = (
-    <View style={styles.header}>
-      <Pressable accessibilityRole="button" onPress={back} hitSlop={8}>
-        <ThemedText type="link">‹ {t('common.back')}</ThemedText>
-      </Pressable>
-    </View>
-  );
   return (
-    <ScreenFrame header={header}>
+    <ScreenFrame onBack={back}>
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.titleBlock}>
           <ThemedText type="subtitle">{title}</ThemedText>
@@ -110,12 +101,17 @@ export function FormError({ children }: { children: string }) {
 }
 
 const styles = StyleSheet.create({
-  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: Spacing.four, paddingTop: Spacing.three },
   content: { padding: Spacing.four, gap: Spacing.four },
   titleBlock: { gap: Spacing.two },
   section: { gap: Spacing.two },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
-  input: { fontFamily: BodyFont.regular, minHeight: 96, borderRadius: 12, padding: Spacing.three, textAlignVertical: 'top' },
+  input: {
+    fontFamily: BodyFont.regular,
+    minHeight: 96,
+    borderRadius: 12,
+    padding: Spacing.three,
+    textAlignVertical: 'top',
+  },
   footer: { padding: Spacing.four, gap: Spacing.two },
   error: { textAlign: 'center' },
 });

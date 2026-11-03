@@ -2,7 +2,7 @@ import { Code, ConnectError } from '@issho/api-client';
 import type { ReactNode } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet } from 'react-native';
 
-import { ScreenFrame } from '@/components/screen-frame';
+import { ScreenFrame, type FrameProps } from '@/components/screen-frame';
 import { TextLink } from '@/components/text-link';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
@@ -17,7 +17,9 @@ export type QueryLike = {
   refetch: () => unknown;
 };
 
-type Loaded<Q extends readonly QueryLike[]> = { [K in keyof Q]: NonNullable<Q[K]['data']> };
+type Loaded<Q extends readonly QueryLike[]> = {
+  [K in keyof Q]: NonNullable<Q[K]['data']>;
+};
 
 const isNotFound = (error: unknown) => error instanceof ConnectError && error.code === Code.NotFound;
 
@@ -58,17 +60,16 @@ export function LoadState({ queries, notFound, center }: { queries: readonly Que
 export function QueryScreen<const Q extends readonly QueryLike[]>({
   queries,
   notFound,
-  onBack,
   children,
-}: {
+  ...frame
+}: FrameProps & {
   queries: Q;
   /** Shown when a query's error is "not found". */
   notFound?: string;
-  onBack: () => void;
   children: (data: Loaded<Q>) => ReactNode;
 }) {
   return (
-    <ScreenFrame onBack={onBack}>
+    <ScreenFrame {...frame}>
       {queries.every((q) => q.isSuccess) ? (
         children(queries.map((q) => q.data) as Loaded<Q>)
       ) : (
@@ -81,6 +82,10 @@ export function QueryScreen<const Q extends readonly QueryLike[]>({
 }
 
 const styles = StyleSheet.create({
-  state: { padding: Spacing.three, paddingTop: Spacing.two, gap: Spacing.three },
+  state: {
+    padding: Spacing.three,
+    paddingTop: Spacing.two,
+    gap: Spacing.three,
+  },
   center: { textAlign: 'center' },
 });

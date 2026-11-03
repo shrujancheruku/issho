@@ -1,9 +1,5 @@
 import { DelaGothicOne_400Regular, useFonts } from '@expo-google-fonts/dela-gothic-one';
-import {
-  ZenKakuGothicNew_400Regular,
-  ZenKakuGothicNew_500Medium,
-  ZenKakuGothicNew_700Bold,
-} from '@expo-google-fonts/zen-kaku-gothic-new';
+import { ZenKakuGothicNew_400Regular, ZenKakuGothicNew_500Medium, ZenKakuGothicNew_700Bold } from '@expo-google-fonts/zen-kaku-gothic-new';
 import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -42,7 +38,14 @@ const queryClient = new QueryClient({
 // so give it the app's grounds; otherwise screens flash white or black.
 const navTheme = (base: typeof DefaultTheme, c: (typeof Colors)['light' | 'dark']) => ({
   ...base,
-  colors: { ...base.colors, primary: c.accent, background: c.background, card: c.surface, text: c.text, border: c.backgroundSelected },
+  colors: {
+    ...base.colors,
+    primary: c.accent,
+    background: c.background,
+    card: c.surface,
+    text: c.text,
+    border: c.backgroundSelected,
+  },
 });
 const navLight = navTheme(DefaultTheme, Colors.light);
 const navDark = navTheme(DarkTheme, Colors.dark);
@@ -140,7 +143,12 @@ function RootNavigator() {
         {/* Choosing times slides up over the plan, as a sheet on phones. */}
         <Stack.Screen
           name="signup/[id]"
-          options={{ presentation: 'formSheet', sheetAllowedDetents: [0.92], sheetGrabberVisible: true, sheetCornerRadius: 20 }}
+          options={{
+            presentation: 'formSheet',
+            sheetAllowedDetents: [0.92],
+            sheetGrabberVisible: true,
+            sheetCornerRadius: 20,
+          }}
         />
         <Stack.Screen name="event/[id]" />
         <Stack.Screen name="chat/[id]" />
@@ -155,7 +163,13 @@ function RootNavigator() {
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: Spacing.three, padding: Spacing.four },
+  center: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: Spacing.three,
+    padding: Spacing.four,
+  },
   message: { textAlign: 'center', maxWidth: 420 },
 });
 

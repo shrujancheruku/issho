@@ -1,15 +1,14 @@
 import { CrewStatus, GroupSize, Interest } from '@issho/api-client';
 import { router } from 'expo-router';
-import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { ListGroup, ListRow } from '@/components/list-group';
+import { LoadState } from '@/components/query-screen';
+import { ScreenFrame } from '@/components/screen-frame';
 import { ScreenHeader, SectionTitle } from '@/components/screen-header';
 import { Segmented } from '@/components/segmented';
-import { TextLink } from '@/components/text-link';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { BottomTabInset, FormWidth, Spacing } from '@/constants/theme';
+import { BottomTabInset, Spacing } from '@/constants/theme';
 import { useDeleteAccount } from '@/features/account/account-actions';
 import { setAppearance, useAppearance, type AppearancePreference } from '@/features/appearance/preference';
 import { useAuth } from '@/features/auth/auth-provider';
@@ -53,64 +52,57 @@ export default function YouScreen() {
     : '';
 
   return (
-    <ThemedView style={styles.fill}>
-      <SafeAreaView style={styles.fill} edges={['top', 'left', 'right']}>
-        <ScrollView contentContainerStyle={styles.content}>
-          <ScreenHeader title={t('you.title')} />
-          {!p ? (
-            profile.isError ? (
-              <TextLink label={t('common.retry')} onPress={() => void profile.refetch()} />
-            ) : (
-              <ActivityIndicator />
-            )
-          ) : (
-            <>
-              <View style={[styles.card, { backgroundColor: theme.surface }]}>
-                <ThemedText type="subtitle">{p.displayName}</ThemedText>
-                <ThemedText themeColor="textSecondary">{pairText(names.area(p.homeAreaId))}</ThemedText>
-                {activeCrews > 0 && (
-                  <ThemedText type="small" themeColor="textSecondary">
-                    {t('you.crews', { count: activeCrews })}
-                  </ThemedText>
-                )}
-              </View>
+    <ScreenFrame tab header={<ScreenHeader title={t('you.title')} />}>
+      <ScrollView contentContainerStyle={styles.content}>
+        {!p ? (
+          <LoadState queries={[profile]} />
+        ) : (
+          <>
+            <View style={[styles.card, { backgroundColor: theme.surface }]}>
+              <ThemedText type="subtitle">{p.displayName}</ThemedText>
+              <ThemedText themeColor="textSecondary">{pairText(names.area(p.homeAreaId))}</ThemedText>
+              {activeCrews > 0 && (
+                <ThemedText type="small" themeColor="textSecondary">
+                  {t('you.crews', { count: activeCrews })}
+                </ThemedText>
+              )}
+            </View>
 
-              <View style={styles.section}>
-                <SectionTitle>{t('you.howYouMeet')}</SectionTitle>
-                <ListGroup>
-                  {/* A row like the others, not every chip on the tab: the list is long. */}
-                  <SettingRow
-                    title={t('profile.activities')}
-                    detail={t('you.activitiesCount', { count: liked.length })}
-                    onPress={() => edit('activities')}
-                  />
-                  <SettingRow title={t('profile.about')} detail={p.displayName} onPress={() => edit('about')} />
-                  <SettingRow
-                    title={t('profile.area')}
-                    detail={`${pairText(names.area(p.homeAreaId))}. ${t('profile.maxTravel')}: ${t('profile.minutes', { count: p.maxTravelMin })}`}
-                    onPress={() => edit('area')}
-                  />
-                  <SettingRow
-                    title={t('profile.availability')}
-                    detail={t('you.slots', { count: p.availability.length })}
-                    onPress={() => edit('availability')}
-                  />
-                  <SettingRow title={t('profile.languages')} detail={languageLine} onPress={() => edit('languages')} />
-                  <SettingRow
-                    title={t('profile.style')}
-                    detail={groupSizes[p.groupSize] ? `${t('profile.groupSize')}: ${t(groupSizes[p.groupSize]!)}` : ''}
-                    onPress={() => edit('style')}
-                  />
-                </ListGroup>
-              </View>
-            </>
-          )}
+            <View style={styles.section}>
+              <SectionTitle>{t('you.howYouMeet')}</SectionTitle>
+              <ListGroup>
+                {/* A row like the others, not every chip on the tab: the list is long. */}
+                <SettingRow
+                  title={t('profile.activities')}
+                  detail={t('you.activitiesCount', { count: liked.length })}
+                  onPress={() => edit('activities')}
+                />
+                <SettingRow title={t('profile.about')} detail={p.displayName} onPress={() => edit('about')} />
+                <SettingRow
+                  title={t('profile.area')}
+                  detail={`${pairText(names.area(p.homeAreaId))}. ${t('profile.maxTravel')}: ${t('profile.minutes', { count: p.maxTravelMin })}`}
+                  onPress={() => edit('area')}
+                />
+                <SettingRow
+                  title={t('profile.availability')}
+                  detail={t('you.slots', { count: p.availability.length })}
+                  onPress={() => edit('availability')}
+                />
+                <SettingRow title={t('profile.languages')} detail={languageLine} onPress={() => edit('languages')} />
+                <SettingRow
+                  title={t('profile.style')}
+                  detail={groupSizes[p.groupSize] ? `${t('profile.groupSize')}: ${t(groupSizes[p.groupSize]!)}` : ''}
+                  onPress={() => edit('style')}
+                />
+              </ListGroup>
+            </View>
+          </>
+        )}
 
-          <AppearanceSetting />
-          <Account />
-        </ScrollView>
-      </SafeAreaView>
-    </ThemedView>
+        <AppearanceSetting />
+        <Account />
+      </ScrollView>
+    </ScreenFrame>
   );
 }
 
@@ -173,15 +165,10 @@ function Account() {
 }
 
 const styles = StyleSheet.create({
-  fill: { flex: 1 },
   content: {
     padding: Spacing.three,
-    paddingTop: Spacing.four,
     paddingBottom: BottomTabInset + Spacing.four,
     gap: Spacing.four + 4,
-    width: '100%',
-    maxWidth: FormWidth,
-    alignSelf: 'center',
   },
   card: { borderRadius: 16, padding: Spacing.three, gap: Spacing.half },
   section: { gap: Spacing.two },

@@ -1,6 +1,7 @@
 // TypeScript 6 no longer auto-includes @types packages; scope Jest globals to this file.
 /// <reference types="jest" />
 import { fireEvent, render, screen } from '@testing-library/react-native';
+import { router } from 'expo-router';
 
 import SignupSheet from '@/app/signup/[id]';
 
@@ -20,6 +21,7 @@ jest.mock('@/i18n/i18n-provider', () => ({ useI18n: () => ({ t: (key: string) =>
 jest.mock('@/constants/theme', () => ({ FormWidth: 600, Spacing: new Proxy({}, { get: () => 4 }) }));
 jest.mock('@/hooks/use-theme', () => ({ useTheme: () => new Proxy({}, { get: () => '#000' }) }));
 jest.mock('@/components/themed-view', () => ({ ThemedView: ({ children }: { children: unknown }) => children }));
+jest.mock('@/components/language-switch', () => ({ LanguageSwitch: () => null }));
 jest.mock('@/components/availability-grid', () => ({ AvailabilityGrid: () => null }));
 jest.mock('@/components/chip', () => ({ Chip: () => null }));
 jest.mock('@/components/primary-button', () => ({ PrimaryButton: () => null }));
@@ -66,5 +68,24 @@ describe('SignupSheet', () => {
     expect(screen.getByText('common.loadFailed')).toBeTruthy();
     await fireEvent.press(screen.getByText('common.retry'));
     expect(profile.refetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('can be closed when the plan fails to load', async () => {
+    mockUsePlanTimes.mockReturnValue({
+      plan: query({ isError: true, error: new Error('down') }),
+      profile: query({ isSuccess: true, data: {} }),
+      usual: [],
+      saved: null,
+    });
+    await render(<SignupSheet />);
+
+    await fireEvent.press(screen.getByLabelText('common.close'));
+    expect(router.replace).toHaveBeenCalled();
+  });
+
+  it('can be closed while loading', async () => {
+    mockUsePlanTimes.mockReturnValue({ plan: query({}), profile: query({}), usual: [], saved: null });
+    await render(<SignupSheet />);
+    expect(screen.getByLabelText('common.close')).toBeTruthy();
   });
 });
