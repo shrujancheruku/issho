@@ -327,6 +327,9 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			// Every send (a typing notice is all a socket sends) is checked
 			// against the suspended list the API gate uses, which is cached in
 			// memory, so this costs no query. The hub never pushes a close.
+			// A cache error fails open here on purpose, unlike the connect-time
+			// check: a database blip shouldn't drop live sockets, and the API gate
+			// still refuses the person.
 			if h.Suspended != nil {
 				if sus, err := h.Suspended(ctx, caller.UserID); err == nil && sus {
 					select {
