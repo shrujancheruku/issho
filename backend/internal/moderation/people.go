@@ -18,6 +18,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/platform/auth"
 	"github.com/shrujancheruku/issho/backend/internal/platform/errs"
 	"github.com/shrujancheruku/issho/backend/internal/platform/paging"
+	"github.com/shrujancheruku/issho/backend/internal/platform/pgconv"
 )
 
 // outingRows is how many of a person's latest outings GetPerson shows. A
@@ -172,7 +173,7 @@ func (h *Handler) SuspendPerson(ctx context.Context, req *connect.Request[isshov
 	// suspending again finishes it (the insert does nothing the second
 	// time).
 	if _, err := h.Q.InsertSuspension(ctx, dbgen.InsertSuspensionParams{
-		UserID: id, Reason: reason, CreatedBy: c.UserID, At: pgTime(now),
+		UserID: id, Reason: reason, CreatedBy: c.UserID, At: pgconv.Time(now),
 	}); err != nil {
 		return nil, err
 	}
@@ -199,7 +200,7 @@ func (h *Handler) LiftSuspension(ctx context.Context, req *connect.Request[issho
 	if err != nil {
 		return nil, err
 	}
-	n, err := h.Q.LiftSuspension(ctx, dbgen.LiftSuspensionParams{UserID: id, LiftedBy: pgUUID(c.UserID), Note: note, At: pgTime(h.now())})
+	n, err := h.Q.LiftSuspension(ctx, dbgen.LiftSuspensionParams{UserID: id, LiftedBy: pgUUID(c.UserID), Note: note, At: pgconv.Time(h.now())})
 	if err != nil {
 		return nil, err
 	}
@@ -224,7 +225,7 @@ func (h *Handler) ListSuspended(ctx context.Context, req *connect.Request[isshov
 		return nil, err
 	}
 	arg := dbgen.ListOpenSuspensionsParams{MaxRows: size + 1}
-	arg.HasAfter, arg.AfterTs, arg.AfterID = k.Present, pgTime(k.Time()), k.UUID()
+	arg.HasAfter, arg.AfterTs, arg.AfterID = k.Present, pgconv.Time(k.Time()), k.UUID()
 	if err := k.Err(); err != nil {
 		return nil, err
 	}

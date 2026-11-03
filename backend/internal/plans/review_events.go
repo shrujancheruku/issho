@@ -17,6 +17,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/platform/errs"
 	"github.com/shrujancheruku/issho/backend/internal/platform/i18n"
 	"github.com/shrujancheruku/issho/backend/internal/platform/paging"
+	"github.com/shrujancheruku/issho/backend/internal/platform/pgconv"
 )
 
 // Group review in ReviewService (proposals.go has the rules).
@@ -276,7 +277,7 @@ func reviewEventToProto(e dbgen.GetReviewEventRow, names map[string]string) (*is
 	if e.Title != nil {
 		out.Title = i18n.Pick(e.Title, i18n.Authoring)
 	} else {
-		out.Title = Title(names[e.ActivityID], names[deref(e.FollowUpID)])
+		out.Title = Title(names[e.ActivityID], names[pgconv.Deref(e.FollowUpID)])
 	}
 	if e.Date.Valid {
 		out.Date = e.Date.Time.Format(time.DateOnly)

@@ -30,7 +30,7 @@ func (s *Service) RemoveFromUpcoming(ctx context.Context, userID uuid.UUID, now 
 		return err
 	}
 	for _, planID := range plans {
-		if err := Withdraw(ctx, q, planID, userID); err != nil {
+		if err := WithdrawSignup(ctx, s.DB, planID, userID); err != nil {
 			return err
 		}
 	}

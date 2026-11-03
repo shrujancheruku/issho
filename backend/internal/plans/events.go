@@ -17,6 +17,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/notifications"
 	"github.com/shrujancheruku/issho/backend/internal/platform/bound"
 	"github.com/shrujancheruku/issho/backend/internal/platform/i18n"
+	"github.com/shrujancheruku/issho/backend/internal/platform/pgconv"
 )
 
 // An invitation's answer (app.group_members.response).
@@ -241,10 +242,10 @@ func eventFromRow(r dbgen.ListUserEventsRow) EventItem {
 		ID: r.ID, PlanID: r.PlanID, GroupID: r.GroupID, City: r.CityID,
 		Plan: matching.Plan{
 			Area: matching.AreaID(r.AreaID), Activity: matching.ActivityID(r.ActivityID),
-			FollowUp: matching.ActivityID(deref(r.FollowUpID)), Primary: r.PrimaryLanguage, Secondary: deref(r.SecondaryLanguage),
+			FollowUp: matching.ActivityID(pgconv.Deref(r.FollowUpID)), Primary: r.PrimaryLanguage, Secondary: pgconv.Deref(r.SecondaryLanguage),
 		},
-		Venue: deref(r.VenuePlaceID), FollowUpVenue: deref(r.FollowUpVenuePlaceID),
-		Route: routeFrom(r.RoutePolyline, r.RouteSeconds), MeetingPlace: deref(r.MeetingPlaceID),
+		Venue: pgconv.Deref(r.VenuePlaceID), FollowUpVenue: pgconv.Deref(r.FollowUpVenuePlaceID),
+		Route: routeFrom(r.RoutePolyline, r.RouteSeconds), MeetingPlace: pgconv.Deref(r.MeetingPlaceID),
 		Walk: r.Walk, WalkTitle: r.Title, WalkSummary: r.Description,
 		Date: r.Date.Time, Block: matching.Block(r.Block),
 		Membership: newMembership(r.Response, r.GroupStatus, r.Status, r.StartsAt, r.ConfirmBy),
@@ -254,7 +255,7 @@ func eventFromRow(r dbgen.ListUserEventsRow) EventItem {
 	}
 	// A group sent somewhere else (a full venue, an admin) meets there; the
 	// plan's route doesn't start there.
-	if v := deref(r.GroupVenuePlaceID); v != "" && v != it.Venue {
+	if v := pgconv.Deref(r.GroupVenuePlaceID); v != "" && v != it.Venue {
 		it.Venue, it.Route = v, nil
 	}
 	return it
