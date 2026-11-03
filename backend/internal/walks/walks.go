@@ -76,9 +76,16 @@ type Meta struct {
 	CostUSD float64
 }
 
-// MinBudget is the time a job must have left to start composing a walk:
-// the Gemini call is capped at 5 minutes, and Maps checks follow.
+// MinBudget is the time a job must have left to start a proposal: one
+// Gemini call is capped at 5 minutes, and the Maps checks follow. Compose
+// asks again before each retry, so a walk never starts an attempt it
+// can't finish. Calls already running aren't cut short by this: they end at
+// the context's deadline.
 const MinBudget = 6 * time.Minute
+
+// ErrNoBudget means Compose stopped for lack of time, not because the
+// walk was bad: the caller leaves the walk for its next run.
+var ErrNoBudget = errors.New("walks: not enough time left to compose")
 
 // HasBudget reports whether ctx has at least MinBudget left (no deadline
 // means unlimited).
@@ -202,11 +209,15 @@ type Attempt struct {
 }
 
 // Compose proposes a walk and checks it. A walk that can't be made to fit
-// the rules is a *Rejected; other errors (an API down) are worth retrying
+// the rules is a *Rejected; ErrNoBudget means the job's time ran out
+// before a retry; other errors (an API down) are worth retrying
 // later.
 func (c *Composer) Compose(ctx context.Context, req Request) (Walk, error) {
 	var feedback []string
 	for n := range max(c.Rules.Attempts, 1) {
+		if n > 0 && !HasBudget(ctx) {
+			return Walk{}, ErrNoBudget
+		}
 		p, err := c.Proposer.Propose(ctx, req, feedback)
 		if err != nil {
 			c.observe(Attempt{N: n + 1, Err: err})

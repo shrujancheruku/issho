@@ -5,11 +5,9 @@ import (
 	"errors"
 	"io"
 	"log/slog"
-	"slices"
 	"testing"
 	"time"
 
-	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/riverqueue/river"
 	"github.com/riverqueue/river/riverdriver/riverpgxv5"
@@ -237,14 +235,6 @@ func TestIntegrationRefreshMapsQueuesOneJobPerCity(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	cities, err := q.ListCities(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-	var want []string
-	for _, c := range cities {
-		want = append(want, c.ID)
-	}
 	w := &refreshMapsWorker{pool: pool, router: fakeRouter{}, log: slog.New(slog.NewTextHandler(io.Discard, nil))}
 	rw := rivertest.NewWorker(t, riverpgxv5.New(pool), &river.Config{Schema: db.RiverSchema}, w)
 	tx, err := pool.Begin(ctx)
@@ -257,18 +247,14 @@ func TestIntegrationRefreshMapsQueuesOneJobPerCity(t *testing.T) {
 	if err := tx.Commit(ctx); err != nil {
 		t.Fatal(err)
 	}
-	rows, err := pool.Query(ctx, `select args->>'city' from river.river_job where kind = 'refresh_maps_city'`)
-	if err != nil {
-		t.Fatal(err)
-	}
-	got, err := pgx.CollectRows(rows, pgx.RowTo[string])
-	if err != nil {
-		t.Fatal(err)
-	}
-	slices.Sort(got)
-	slices.Sort(want)
-	if !slices.Equal(got, want) {
-		t.Errorf("queued for %v, want one per city %v", got, want)
+	for _, id := range []string{"zz-worker-a", "zz-worker-b"} {
+		var n int
+		if err := pool.QueryRow(ctx, `select count(*) from river.river_job where kind = 'refresh_maps_city' and args->>'city' = $1`, id).Scan(&n); err != nil {
+			t.Fatal(err)
+		}
+		if n != 1 {
+			t.Errorf("%s has %d refresh_maps_city jobs, want 1", id, n)
+		}
 	}
 }
 

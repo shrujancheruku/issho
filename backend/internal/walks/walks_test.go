@@ -297,3 +297,48 @@ func TestIs(t *testing.T) {
 		}
 	}
 }
+
+func TestHasBudget(t *testing.T) {
+	if !HasBudget(context.Background()) {
+		t.Error("a context without a deadline has no budget limit")
+	}
+	for d, want := range map[time.Duration]bool{MinBudget - time.Minute: false, MinBudget + time.Minute: true} {
+		ctx, cancel := context.WithTimeout(context.Background(), d)
+		if got := HasBudget(ctx); got != want {
+			t.Errorf("%v left: %v, want %v", d, got, want)
+		}
+		cancel()
+	}
+}
+
+// slowProposer takes a while, as a model does, so the job's budget can run
+// out between attempts.
+type slowProposer struct {
+	*fakeProposer
+	delay time.Duration
+}
+
+func (s slowProposer) Propose(ctx context.Context, r Request, fb []string) (Proposal, error) {
+	time.Sleep(s.delay)
+	return s.fakeProposer.Propose(ctx, r, fb)
+}
+
+// Attempt 1 is rejected and the budget is gone: no second proposal, and the
+// error says time ran out (not that the walk was bad).
+func TestComposeStopsRetryingWithoutBudget(t *testing.T) {
+	bad := temples()
+	bad.Stops = bad.Stops[:1] // too few stops
+	fp := &fakeProposer{proposals: []Proposal{bad, temples()}}
+	c := composer(fp, &fakePlaces{places: templePlaces()}, &fakeRoutes{})
+	c.Proposer = slowProposer{fp, 300 * time.Millisecond}
+	ctx, cancel := context.WithTimeout(context.Background(), MinBudget+100*time.Millisecond)
+	defer cancel()
+	_, err := c.Compose(ctx, req())
+	if !errors.Is(err, ErrNoBudget) || len(fp.feedback) != 1 {
+		t.Fatalf("err %v after %d proposals", err, len(fp.feedback))
+	}
+	var rej *Rejected
+	if errors.As(err, &rej) {
+		t.Error("running out of time is not a rejection")
+	}
+}

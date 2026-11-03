@@ -49,3 +49,50 @@ func TestIntegrationSuggestDefersWalksWithoutBudget(t *testing.T) {
 		t.Fatalf("enough budget: %+v after %d proposals, %v", rep, prop.calls, err)
 	}
 }
+
+// slowWalkProposer is a model that takes a moment, so the budget can run out
+// between a rejected attempt and its retry.
+type slowWalkProposer struct {
+	*walkProposer
+	delay time.Duration
+}
+
+func (s slowWalkProposer) Propose(ctx context.Context, req walks.Request, fb []string) (walks.Proposal, error) {
+	time.Sleep(s.delay)
+	return s.walkProposer.Propose(ctx, req, fb)
+}
+
+// Out of time between attempts is a deferral: counted as Deferred, not
+// Failed, nothing rests, no further proposal is asked for, and the pass
+// returns normally so meeting places and routes still run.
+func TestIntegrationSuggestDefersWhenBudgetRunsOutBetweenAttempts(t *testing.T) {
+	f := newFixture(t, "zz-plans-walkbudget2", "Asia/Tokyo", 8)
+	bg := context.Background()
+	for _, id := range f.users {
+		f.addProfile(t, id, "ja")
+	}
+	for _, s := range []string{
+		`update app.activities set walk_theme = 'temples', name = '{"en":"Temples and shrines"}' where id = '` + f.act + `'`,
+		`update app.areas set centroid = 'POINT(139.58 35.703)', name = '{"en":"Kichijoji"}' where id = '` + f.area + `'`,
+	} {
+		if _, err := f.pool.Exec(bg, s); err != nil {
+			t.Fatal(err)
+		}
+	}
+	log := slog.New(slog.NewTextHandler(io.Discard, nil))
+	prop, router := &walkProposer{bad: true}, &walkRouter{}
+	r := &Runner{DB: f.pool, Timing: DefaultTiming(), Log: log, WalkRoutes: router,
+		Walks: &walks.Composer{Proposer: slowWalkProposer{prop, 1500 * time.Millisecond}, Places: findAll{}, Routes: router, Rules: walks.DefaultRules(), Log: log}}
+	ctx, cancel := context.WithTimeout(bg, walks.MinBudget+time.Second)
+	defer cancel()
+	now := time.Date(2030, 1, 1, 9, 0, 0, 0, time.UTC)
+	rep, err := r.Suggest(ctx, f.city, now)
+	if err != nil || rep.Deferred != 1 || rep.Failed != 0 || rep.Opened != 0 || prop.calls != 1 {
+		t.Fatalf("%+v after %d proposals, %v", rep, prop.calls, err)
+	}
+	// No rest was recorded: with time, the area is tried again at once.
+	prop.bad = false
+	if rep, err := r.Suggest(bg, f.city, now); err != nil || rep.Opened != 1 {
+		t.Fatalf("after the deferral: %+v, %v", rep, err)
+	}
+}

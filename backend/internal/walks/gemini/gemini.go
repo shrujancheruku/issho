@@ -23,8 +23,9 @@ const (
 	Model = "gemini-3.8-flash"
 	// A walk is composed in the background, and medium thinking can take a
 	// few minutes. This is only a cap on one attempt: the call also stops
-	// at the job's context deadline, and the pass starts no walk with less
-	// than walks.MinBudget left, so a call never runs into the job's end.
+	// at the job's context deadline. The pass starts no walk, and Compose
+	// no retry, with less than walks.MinBudget left; a call already
+	// running ends at the deadline.
 	timeout = 5 * time.Minute
 )
 
