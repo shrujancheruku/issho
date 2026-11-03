@@ -42,6 +42,16 @@ type AppAreaTravelTime struct {
 	ComputedAt pgtype.Timestamptz
 }
 
+type AppAttendance struct {
+	UserID    uuid.UUID
+	GroupID   uuid.UUID
+	EventID   uuid.UUID
+	Date      pgtype.Date
+	Response  string
+	WentAhead *bool
+	Attended  *bool
+}
+
 type AppAvailabilitySlot struct {
 	UserID  uuid.UUID
 	Weekday int16
@@ -161,6 +171,11 @@ type AppGroupMember struct {
 	Response    string
 	RespondedAt pgtype.Timestamptz
 	CheckedInAt pgtype.Timestamptz
+}
+
+type AppKeptApart struct {
+	UserID  pgtype.UUID
+	OtherID uuid.UUID
 }
 
 type AppMatePick struct {
@@ -303,6 +318,11 @@ type AppReport struct {
 	CrewID     pgtype.UUID
 	ReviewedBy pgtype.UUID
 	Note       string
+}
+
+type AppSuspendedUser struct {
+	UserID       uuid.UUID
+	SuspensionID int64
 }
 
 type AppSuspension struct {

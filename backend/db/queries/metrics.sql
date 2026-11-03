@@ -1,7 +1,7 @@
 -- Domain metrics for the admin SPA (M8), per city and week. Weeks start on
 -- Monday in the city's own time zone; an outing counts in the week of its
--- (local) date. Attended means what matching's reliability means: confirmed
--- and checked in, or said so in their feedback.
+-- (local) date. Attended is app.attendance's rule, the same as matching's
+-- reliability.
 
 -- name: WeeklyMetrics :many
 with city as (
@@ -13,14 +13,11 @@ with city as (
 ), members as (
   -- Everyone invited to a finished outing that went ahead, and whether
   -- they went.
-  select m.user_id, m.group_id, m.response, e.date,
-         (m.response = 'confirmed' and (m.checked_in_at is not null or exists (
-           select 1 from app.event_feedback f where f.group_id = m.group_id and f.user_id = m.user_id and f.attended))) as attended
-  from app.group_members m
-  join app.event_groups g on g.id = m.group_id
-  join app.events e on e.id = m.event_id
+  select t.user_id, t.group_id, t.response, t.date, t.attended
+  from app.attendance t
+  join app.events e on e.id = t.event_id
   join app.plans p on p.id = e.plan_id
-  where p.city_id = @city_id and e.status = 'done' and g.status <> 'cancelled'
+  where p.city_id = @city_id and t.went_ahead
 ), went as (
   select user_id, date from members where attended
 )
@@ -68,7 +65,7 @@ order by w.week;
 select
   (select count(*) from app.profiles pr join app.areas a on a.id = pr.home_area_id
    where a.city_id = @city_id
-     and not exists (select 1 from app.suspensions s where s.user_id = pr.user_id and s.lifted_at is null))::int as people,
+     and not exists (select 1 from app.suspended_users s where s.user_id = pr.user_id))::int as people,
   (select count(*) from app.plans p where p.city_id = @city_id and p.status = 'open')::int as open_plans,
   (select count(*) from app.plan_signups s join app.plans p on p.id = s.plan_id where p.city_id = @city_id and p.status = 'open')::int as waiting,
   (select count(*) from app.events e join app.plans p on p.id = e.plan_id
