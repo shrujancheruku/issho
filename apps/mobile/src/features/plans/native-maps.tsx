@@ -2,48 +2,28 @@ import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { useEffect, useState } from 'react';
 import { Platform, StyleSheet, Text, View } from 'react-native';
 
-import { ThemedText } from '@/components/themed-text';
-import { Brand } from '@/constants/theme';
 import { useMotion } from '@/hooks/use-motion';
-import { useI18n } from '@/i18n/i18n-provider';
 
 import { DropIn } from './drop-in';
+import { PIN_SELECTED, pinStyles } from './map-pins';
 
 /**
- * react-native-maps, shared by the phone maps. It's native code: a
- * development build made before it was added doesn't have it, and
- * importing it there throws at load time, which would take a whole screen
- * down. It's loaded here, once; null means "not in this build", and the
- * maps show MapUnavailable instead. (Expo Go and new builds include it.)
+ * react-native-maps, shared by the phone maps. It's native code, so a
+ * development build has to include it (every current one does; an older one
+ * is rebuilt, since importing it there would throw at load time).
  */
-export let maps: typeof import('react-native-maps') | null = null;
-try {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  maps = require('react-native-maps');
-} catch {
-  maps = null;
-}
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+export let maps: typeof import('react-native-maps') | null = require('react-native-maps');
 // An Android build made without GOOGLE_MAPS_ANDROID_API_KEY crashes natively
-// the moment a Google map is drawn (no JS error to catch), so treat the maps
-// as missing there. Expo Go brings its own key.
+// the moment a Google map is drawn (no JS error to catch), a build-config
+// mistake, so treat the maps as missing there and show MapUnavailable.
+// Expo Go brings its own key.
 if (
   Platform.OS === 'android' &&
   Constants.executionEnvironment !== ExecutionEnvironment.StoreClient &&
   !Constants.expoConfig?.extra?.androidMapsKey
 ) {
   maps = null;
-}
-
-/** Shown in place of a map that can't be drawn here. */
-export function MapUnavailable() {
-  const { t } = useI18n();
-  return (
-    <View style={styles.missing}>
-      <ThemedText type="small" themeColor="textSecondary">
-        {t('map.unavailable')}
-      </ThemedText>
-    </View>
-  );
 }
 
 /**
@@ -86,8 +66,8 @@ export function BadgeMarker({
   if (!maps) return null;
   const { Marker } = maps;
   const pin = (
-    <View style={[styles.pin, selected && styles.selected, { backgroundColor: colors.background }]}>
-      <Text style={[styles.label, { color: colors.text }]}>{label}</Text>
+    <View style={[pinStyles.pin, selected && pinStyles.selected, { backgroundColor: colors.background }]}>
+      <Text style={[pinStyles.label, { color: colors.text }]}>{label}</Text>
     </View>
   );
   return (
@@ -106,23 +86,7 @@ export function BadgeMarker({
   );
 }
 
-const PIN = 30;
-const PIN_SELECTED = 38;
-
 const styles = StyleSheet.create({
-  missing: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center', padding: 24 },
   // The bitmap's bounds: big enough for the selected pin and its border.
   box: { width: PIN_SELECTED + 6, height: PIN_SELECTED + 6, alignItems: 'center', justifyContent: 'center' },
-  pin: {
-    width: PIN,
-    height: PIN,
-    borderRadius: PIN / 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: '#ffffff',
-  },
-  // Bigger rather than scaled, so it stays inside the measured box.
-  selected: { width: PIN_SELECTED, height: PIN_SELECTED, borderRadius: PIN_SELECTED / 2, borderColor: Brand.ink },
-  label: { fontSize: 13, fontWeight: '700' },
 });

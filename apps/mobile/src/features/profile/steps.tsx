@@ -7,9 +7,10 @@ import { Chip } from '@/components/chip';
 import { LoadState } from '@/components/query-screen';
 import { ThemedText } from '@/components/themed-text';
 import { BodyFont, Brand, Spacing } from '@/constants/theme';
+import { categoryLabel } from '@/features/plans/text';
 import { useTheme } from '@/hooks/use-theme';
 import { useI18n } from '@/i18n/i18n-provider';
-import { english, type StringKey } from '@/i18n/strings';
+import type { StringKey } from '@/i18n/strings';
 
 import { languageLabel, useActivities, useCities, useLanguages } from './data';
 import {
@@ -307,7 +308,7 @@ function ActivitiesStep({ draft, onChange }: StepProps) {
       </ThemedText>
       {!activities.isSuccess && <LoadState queries={[activities]} />}
       {byCategory.map(([category, items]) => (
-        <Section key={category} title={categoryTitle(t, category)}>
+        <Section key={category} title={categoryLabel(t, category)}>
           <Wrap>
             {items.map((a) => {
               const interest = draft.activities[a.id];
@@ -357,12 +358,6 @@ function HowToChoose() {
       </ThemedText>
     </View>
   );
-}
-
-function categoryTitle(t: (k: StringKey) => string, category: string) {
-  const key = `category.${category}`;
-  // A category added on the server before this build knows it shows its id.
-  return key in english ? t(key as StringKey) : category;
 }
 
 function StyleStep({ draft, onChange }: StepProps) {
