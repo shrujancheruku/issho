@@ -31,8 +31,8 @@ At most one open PR per lane.
 
 ## Shared files
 
-- `docs/ROADMAP.md`: each PR flips only its own M10 line (⬜ → ✅, plus a short note if the ticket asks for one), and may append a Decision-log entry if it makes a decision. It never touches "Last updated" or the M10 heading. CI's `roadmap` job (`scripts/check-roadmap.sh`) needs the file to change in any code PR. On a rebase conflict, keep both sides' lines.
-- **Orchestrator owns:** "Last updated" and the M10 heading status, bumped in one `docs:` PR at the end of a run.
+- `docs/ROADMAP.md`: each PR marks only its own M10 item, with ✅ right after the item's link and before its size (`[title](…/n) ✅ M`, plus a short note if the ticket asks for one). It never splits or restructures a line, and leaves the line's leading ⬜ alone. It may append a Decision-log row if it makes a decision (exactly three cells: date, decision, why). It never touches "Last updated" or the M10 heading. CI's `roadmap` job (`scripts/check-roadmap.sh`) needs the file to change in any code PR. On a conflict, merge `origin/main` in (no rebase) and keep both sides' lines.
+- **Orchestrator owns:** "Last updated", the M10 heading status, and a line's leading ⬜ → ✅ once every item on it is done, all in one `docs:` PR at the end of a run.
 - Directory READMEs: update the one for the directory changed, as `CLAUDE.md` requires.
 - **Release-please files, never edited by hand:** `CHANGELOG.md`, `.release-please-manifest.json`, `version.txt`, `package.json` and `apps/mobile/package.json` versions, `apps/mobile/app.json` version.
 - **Generated, never merged by hand:** `backend/gen/**`, `packages/api-client/src/gen/**`, `docs/generated/**`, `backend/internal/uistrings/*.json`. After a rebase, take either side, run `make gen`, and commit the result. CI's `codegen` job fails on drift.
@@ -78,6 +78,7 @@ Workers stop and report when they reach one:
 
 ## Review
 
+- **On the PR:** every review is posted on its PR as one GitHub review with event `COMMENT` (the owner's account can't approve its own PR): the verdict first in the body, findings inline on diff lines, anything off the diff in the body. Reviewers are read-only (the plugin's guard blocks GitHub writes), so the reviewer returns the review as JSON and the orchestrator checks the line numbers and posts it. Public repo: no local paths or session details.
 - **Instruction files:** `CLAUDE.md`, `apps/mobile/AGENTS.md`, `docs/contributing.md`, `.github/pull_request_template.md`, the README of each directory changed, `GLOSSARY.md` for domain terms.
 - **Risk paths** (any PR touching them is reviewed as L): `backend/db/migrations/**`, `proto/**`, `backend/internal/identity/**`, `backend/internal/platform/auth/**`, `config/**`, `.kamal/**`, `.github/workflows/deploy-*.yml`, `backend/Dockerfile`, `supabase/config.toml`, `apps/*/wrangler.jsonc`.
 - **Repo-specific checks:** `make gen` leaves no diff; ROADMAP changed only on the ticket's own M10 line (plus any Decision-log entry); migrations are new files with a Down; RPC auth is deny-by-default; no `public` schema tables, PostgREST grants or RLS-as-exposure; no secrets or personal data; `buf breaking` passes unless the ticket is `breaking-ok`.
