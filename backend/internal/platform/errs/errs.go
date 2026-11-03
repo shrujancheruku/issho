@@ -64,7 +64,11 @@ func (e *Error) As(target any) bool {
 }
 
 func (e *Error) connectError() *connect.Error {
-	ce := connect.NewError(codes[e.Kind], errors.New(e.msg))
+	code, ok := codes[e.Kind]
+	if !ok {
+		code = connect.CodeInternal // a zero or unknown Kind is a bug, not Code(0)
+	}
+	ce := connect.NewError(code, errors.New(e.msg))
 	if e.Reason != isshov1.ErrorReason_ERROR_REASON_UNSPECIFIED {
 		if d, err := connect.NewErrorDetail(&isshov1.ErrorReasonDetail{Reason: e.Reason}); err == nil {
 			ce.AddDetail(d)
@@ -76,15 +80,21 @@ func (e *Error) connectError() *connect.Error {
 // report is swapped in tests.
 var report = sentry.Report
 
-// Interceptor turns an *Error into its Connect error (Sentry gets Upstream
-// ones, tagged with service and procedure; client errors aren't reported),
-// passes other *connect.Error values through, and turns anything else into a
-// generic CodeInternal error, and logs the original with the procedure name.
+// Interceptor is the one place an error becomes a Connect error. In order:
 //
-// Without it, connect-go sends err.Error() to the client as an "unknown" error.
-// That leaks database messages (table and constraint names, SQLSTATEs) and
-// upstream responses to anyone calling a public API. Handlers that want callers
-// to see a message must return connect.NewError with an explicit code.
+//  1. An *Error (built by Invalid, NotFound, Precondition, Denied, Forbidden,
+//     Unauthenticated or Upstream) becomes its kind's code, with the reason as
+//     a detail. Upstream errors are also logged and reported to Sentry, tagged
+//     with service and procedure; client errors are not reported. An *Error
+//     wrapped inside connect.NewError takes the inner kind, not the outer code.
+//  2. Any other *connect.Error passes through unchanged.
+//  3. Anything else is logged and reported, and becomes CodeInternal "internal
+//     error".
+//
+// Without step 3, connect-go sends err.Error() to the client as an "unknown"
+// error, leaking database messages (table and constraint names, SQLSTATEs) and
+// upstream responses to anyone calling a public API. Handlers and services
+// should return errs constructors, not connect.NewError.
 func Interceptor(log *slog.Logger) connect.UnaryInterceptorFunc {
 	return func(next connect.UnaryFunc) connect.UnaryFunc {
 		return func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {

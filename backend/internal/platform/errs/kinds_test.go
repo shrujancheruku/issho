@@ -77,6 +77,7 @@ func TestKindsMapToCodes(t *testing.T) {
 		{"denied", Denied(suspended, "account suspended"), connect.CodePermissionDenied, "account suspended", suspended},
 		{"forbidden", Forbidden("admins only"), connect.CodePermissionDenied, "admins only", 0},
 		{"unauthenticated", Unauthenticated("invalid token"), connect.CodeUnauthenticated, "invalid token", 0},
+		{"zero kind", &Error{msg: "bug"}, connect.CodeInternal, "bug", 0},
 		{"wrapped", fmt.Errorf("ctx: %w", Invalid("x")), connect.CodeInvalidArgument, "x", 0},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
