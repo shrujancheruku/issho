@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file issho/v1/citypacks.proto.
  */
 export const file_issho_v1_citypacks: GenFile = /*@__PURE__*/
-  fileDesc("Chhpc3Noby92MS9jaXR5cGFja3MucHJvdG8SCGlzc2hvLnYxIhYKFExpc3RDaXR5UGFja3NSZXF1ZXN0IosBChVMaXN0Q2l0eVBhY2tzUmVzcG9uc2USEgoKY29uZmlndXJlZBgBIAEoCBIoCgVwYWNrcxgCIAMoCzIZLmlzc2hvLnYxLkNpdHlQYWNrU3VtbWFyeRI0Cg1wdWxsX3JlcXVlc3RzGAMgAygLMh0uaXNzaG8udjEuQ2l0eVBhY2tQdWxsUmVxdWVzdCKdAQoPQ2l0eVBhY2tTdW1tYXJ5EgoKAmlkGAEgASgJEgwKBG5hbWUYAiABKAkSDwoHaW5fcmVwbxgDIAEoCBIOCgZzZWVkZWQYBCABKAgSDQoFYXJlYXMYBSABKAUSIgoaYXJlYXNfd2l0aG91dF90cmF2ZWxfdGltZXMYBiADKAkSHAoUYXJlYXNfd2l0aG91dF92ZW51ZXMYByADKAkiQQoTQ2l0eVBhY2tQdWxsUmVxdWVzdBIOCgZudW1iZXIYASABKAUSDQoFdGl0bGUYAiABKAkSCwoDdXJsGAMgASgJIqQCCghDaXR5UGFjaxIKCgJpZBgBIAEoCRIPCgdjb21tZW50GAIgASgJEioKBG5hbWUYAyADKAsyHC5pc3Noby52MS5DaXR5UGFjay5OYW1lRW50cnkSEAoIdGltZXpvbmUYBCABKAkSEAoIY3VycmVuY3kYBSABKAkSEQoJbGFuZ3VhZ2VzGAYgAygJEhQKDHRyYXZlbF9tb2RlcxgHIAMoCRIhCgVhcmVhcxgIIAMoCzISLmlzc2hvLnYxLlBhY2tBcmVhEjIKEmFjdGl2aXR5X292ZXJyaWRlcxgJIAMoCzIWLmlzc2hvLnYxLlBhY2tPdmVycmlkZRorCglOYW1lRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASKJAQoIUGFja0FyZWESCgoCaWQYASABKAkSKgoEbmFtZRgCIAMoCzIcLmlzc2hvLnYxLlBhY2tBcmVhLk5hbWVFbnRyeRILCgNsYXQYAyABKAESCwoDbG5nGAQgASgBGisKCU5hbWVFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBIlMKDFBhY2tPdmVycmlkZRITCgthY3Rpdml0eV9pZBgBIAEoCRIQCghkaXNhYmxlZBgCIAEoCBIMCgRuYW1lGAMgASgJEg4KBm1vbnRocxgEIAMoBSIlChJHZXRDaXR5UGFja1JlcXVlc3QSDwoHY2l0eV9pZBgBIAEoCSJjChNHZXRDaXR5UGFja1Jlc3BvbnNlEiAKBHBhY2sYASABKAsyEi5pc3Noby52MS5DaXR5UGFjaxIqCgphY3Rpdml0aWVzGAIgAygLMhYuaXNzaG8udjEuUGFja0FjdGl2aXR5IjoKDFBhY2tBY3Rpdml0eRIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEhAKCGNhdGVnb3J5GAMgASgJIkgKFlByb3Bvc2VDaXR5UGFja1JlcXVlc3QSIAoEcGFjaxgBIAEoCzISLmlzc2hvLnYxLkNpdHlQYWNrEgwKBG5vdGUYAiABKAkiTgoXUHJvcG9zZUNpdHlQYWNrUmVzcG9uc2USMwoMcHVsbF9yZXF1ZXN0GAEgASgLMh0uaXNzaG8udjEuQ2l0eVBhY2tQdWxsUmVxdWVzdCInChRBcHBseUNpdHlQYWNrUmVxdWVzdBIPCgdjaXR5X2lkGAEgASgJInMKFUFwcGx5Q2l0eVBhY2tSZXNwb25zZRIRCgluZXdfYXJlYXMYASADKAkSEwoLbW92ZWRfYXJlYXMYAiADKAkSHAoUdHJhdmVsX3RpbWVzX3JlYnVpbHQYAyABKAgSFAoMdHJhdmVsX3RpbWVzGAQgASgFIj0KGURpc2NvdmVyQXJlYVZlbnVlc1JlcXVlc3QSDwoHY2l0eV9pZBgBIAEoCRIPCgdhcmVhX2lkGAIgASgJIj4KGkRpc2NvdmVyQXJlYVZlbnVlc1Jlc3BvbnNlEhAKCHNlYXJjaGVzGAEgASgFEg4KBnZlbnVlcxgCIAEoBTLEAwoPQ2l0eVBhY2tTZXJ2aWNlElIKDUxpc3RDaXR5UGFja3MSHi5pc3Noby52MS5MaXN0Q2l0eVBhY2tzUmVxdWVzdBofLmlzc2hvLnYxLkxpc3RDaXR5UGFja3NSZXNwb25zZSIAEkwKC0dldENpdHlQYWNrEhwuaXNzaG8udjEuR2V0Q2l0eVBhY2tSZXF1ZXN0Gh0uaXNzaG8udjEuR2V0Q2l0eVBhY2tSZXNwb25zZSIAElgKD1Byb3Bvc2VDaXR5UGFjaxIgLmlzc2hvLnYxLlByb3Bvc2VDaXR5UGFja1JlcXVlc3QaIS5pc3Noby52MS5Qcm9wb3NlQ2l0eVBhY2tSZXNwb25zZSIAElIKDUFwcGx5Q2l0eVBhY2sSHi5pc3Noby52MS5BcHBseUNpdHlQYWNrUmVxdWVzdBofLmlzc2hvLnYxLkFwcGx5Q2l0eVBhY2tSZXNwb25zZSIAEmEKEkRpc2NvdmVyQXJlYVZlbnVlcxIjLmlzc2hvLnYxLkRpc2NvdmVyQXJlYVZlbnVlc1JlcXVlc3QaJC5pc3Noby52MS5EaXNjb3ZlckFyZWFWZW51ZXNSZXNwb25zZSIAQj5aPGdpdGh1Yi5jb20vc2hydWphbmNoZXJ1a3UvaXNzaG8vYmFja2VuZC9nZW4vaXNzaG8vdjE7aXNzaG92MWIGcHJvdG8z");
+  fileDesc("Chhpc3Noby92MS9jaXR5cGFja3MucHJvdG8SCGlzc2hvLnYxIhYKFExpc3RDaXR5UGFja3NSZXF1ZXN0IosBChVMaXN0Q2l0eVBhY2tzUmVzcG9uc2USEgoKY29uZmlndXJlZBgBIAEoCBIoCgVwYWNrcxgCIAMoCzIZLmlzc2hvLnYxLkNpdHlQYWNrU3VtbWFyeRI0Cg1wdWxsX3JlcXVlc3RzGAMgAygLMh0uaXNzaG8udjEuQ2l0eVBhY2tQdWxsUmVxdWVzdCKdAQoPQ2l0eVBhY2tTdW1tYXJ5EgoKAmlkGAEgASgJEgwKBG5hbWUYAiABKAkSDwoHaW5fcmVwbxgDIAEoCBIOCgZzZWVkZWQYBCABKAgSDQoFYXJlYXMYBSABKAUSIgoaYXJlYXNfd2l0aG91dF90cmF2ZWxfdGltZXMYBiADKAkSHAoUYXJlYXNfd2l0aG91dF92ZW51ZXMYByADKAkiQQoTQ2l0eVBhY2tQdWxsUmVxdWVzdBIOCgZudW1iZXIYASABKAUSDQoFdGl0bGUYAiABKAkSCwoDdXJsGAMgASgJIqQCCghDaXR5UGFjaxIKCgJpZBgBIAEoCRIPCgdjb21tZW50GAIgASgJEioKBG5hbWUYAyADKAsyHC5pc3Noby52MS5DaXR5UGFjay5OYW1lRW50cnkSEAoIdGltZXpvbmUYBCABKAkSEAoIY3VycmVuY3kYBSABKAkSEQoJbGFuZ3VhZ2VzGAYgAygJEhQKDHRyYXZlbF9tb2RlcxgHIAMoCRIhCgVhcmVhcxgIIAMoCzISLmlzc2hvLnYxLlBhY2tBcmVhEjIKEmFjdGl2aXR5X292ZXJyaWRlcxgJIAMoCzIWLmlzc2hvLnYxLlBhY2tPdmVycmlkZRorCglOYW1lRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASKJAQoIUGFja0FyZWESCgoCaWQYASABKAkSKgoEbmFtZRgCIAMoCzIcLmlzc2hvLnYxLlBhY2tBcmVhLk5hbWVFbnRyeRILCgNsYXQYAyABKAESCwoDbG5nGAQgASgBGisKCU5hbWVFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBIlMKDFBhY2tPdmVycmlkZRITCgthY3Rpdml0eV9pZBgBIAEoCRIQCghkaXNhYmxlZBgCIAEoCBIMCgRuYW1lGAMgASgJEg4KBm1vbnRocxgEIAMoBSIlChJHZXRDaXR5UGFja1JlcXVlc3QSDwoHY2l0eV9pZBgBIAEoCSJjChNHZXRDaXR5UGFja1Jlc3BvbnNlEiAKBHBhY2sYASABKAsyEi5pc3Noby52MS5DaXR5UGFjaxIqCgphY3Rpdml0aWVzGAIgAygLMhYuaXNzaG8udjEuUGFja0FjdGl2aXR5IjoKDFBhY2tBY3Rpdml0eRIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEhAKCGNhdGVnb3J5GAMgASgJIkgKFlByb3Bvc2VDaXR5UGFja1JlcXVlc3QSIAoEcGFjaxgBIAEoCzISLmlzc2hvLnYxLkNpdHlQYWNrEgwKBG5vdGUYAiABKAkiTgoXUHJvcG9zZUNpdHlQYWNrUmVzcG9uc2USMwoMcHVsbF9yZXF1ZXN0GAEgASgLMh0uaXNzaG8udjEuQ2l0eVBhY2tQdWxsUmVxdWVzdCInChRBcHBseUNpdHlQYWNrUmVxdWVzdBIPCgdjaXR5X2lkGAEgASgJItUBChVBcHBseUNpdHlQYWNrUmVzcG9uc2USEQoJbmV3X2FyZWFzGAEgAygJEhMKC21vdmVkX2FyZWFzGAIgAygJEhwKFHRyYXZlbF90aW1lc19yZWJ1aWx0GAMgASgIEhQKDHRyYXZlbF90aW1lcxgEIAEoBRIVCg1yZW1vdmVkX2FyZWFzGAUgAygJEi4KDnJlcGxhY2VkX2FyZWFzGAYgAygLMhYuaXNzaG8udjEuUmVwbGFjZWRBcmVhEhkKEXJlbW92ZWRfb3ZlcnJpZGVzGAcgAygJImYKDFJlcGxhY2VkQXJlYRITCgtvbGRfYXJlYV9pZBgBIAEoCRITCgtuZXdfYXJlYV9pZBgCIAEoCRIOCgZwZW9wbGUYAyABKAUSDQoFY3Jld3MYBCABKAUSDQoFcGxhbnMYBSABKAUiPQoZRGlzY292ZXJBcmVhVmVudWVzUmVxdWVzdBIPCgdjaXR5X2lkGAEgASgJEg8KB2FyZWFfaWQYAiABKAkiPgoaRGlzY292ZXJBcmVhVmVudWVzUmVzcG9uc2USEAoIc2VhcmNoZXMYASABKAUSDgoGdmVudWVzGAIgASgFMsQDCg9DaXR5UGFja1NlcnZpY2USUgoNTGlzdENpdHlQYWNrcxIeLmlzc2hvLnYxLkxpc3RDaXR5UGFja3NSZXF1ZXN0Gh8uaXNzaG8udjEuTGlzdENpdHlQYWNrc1Jlc3BvbnNlIgASTAoLR2V0Q2l0eVBhY2sSHC5pc3Noby52MS5HZXRDaXR5UGFja1JlcXVlc3QaHS5pc3Noby52MS5HZXRDaXR5UGFja1Jlc3BvbnNlIgASWAoPUHJvcG9zZUNpdHlQYWNrEiAuaXNzaG8udjEuUHJvcG9zZUNpdHlQYWNrUmVxdWVzdBohLmlzc2hvLnYxLlByb3Bvc2VDaXR5UGFja1Jlc3BvbnNlIgASUgoNQXBwbHlDaXR5UGFjaxIeLmlzc2hvLnYxLkFwcGx5Q2l0eVBhY2tSZXF1ZXN0Gh8uaXNzaG8udjEuQXBwbHlDaXR5UGFja1Jlc3BvbnNlIgASYQoSRGlzY292ZXJBcmVhVmVudWVzEiMuaXNzaG8udjEuRGlzY292ZXJBcmVhVmVudWVzUmVxdWVzdBokLmlzc2hvLnYxLkRpc2NvdmVyQXJlYVZlbnVlc1Jlc3BvbnNlIgBCPlo8Z2l0aHViLmNvbS9zaHJ1amFuY2hlcnVrdS9pc3Noby9iYWNrZW5kL2dlbi9pc3Noby92MTtpc3Nob3YxYgZwcm90bzM");
 
 /**
  * @generated from message issho.v1.ListCityPacksRequest
@@ -430,6 +430,26 @@ export type ApplyCityPackResponse = Message<"issho.v1.ApplyCityPackResponse"> & 
    * @generated from field: int32 travel_times = 4;
    */
   travelTimes: number;
+
+  /**
+   * What an authoritative apply took away (the pack is the source of truth):
+   * areas deleted because nothing referenced them, areas retired by an
+   * area's `replaces` (their people, crews and plans moved to the new one),
+   * and the activity ids whose city override the pack dropped.
+   *
+   * @generated from field: repeated string removed_areas = 5;
+   */
+  removedAreas: string[];
+
+  /**
+   * @generated from field: repeated issho.v1.ReplacedArea replaced_areas = 6;
+   */
+  replacedAreas: ReplacedArea[];
+
+  /**
+   * @generated from field: repeated string removed_overrides = 7;
+   */
+  removedOverrides: string[];
 };
 
 /**
@@ -438,6 +458,45 @@ export type ApplyCityPackResponse = Message<"issho.v1.ApplyCityPackResponse"> & 
  */
 export const ApplyCityPackResponseSchema: GenMessage<ApplyCityPackResponse> = /*@__PURE__*/
   messageDesc(file_issho_v1_citypacks, 13);
+
+/**
+ * @generated from message issho.v1.ReplacedArea
+ */
+export type ReplacedArea = Message<"issho.v1.ReplacedArea"> & {
+  /**
+   * @generated from field: string old_area_id = 1;
+   */
+  oldAreaId: string;
+
+  /**
+   * @generated from field: string new_area_id = 2;
+   */
+  newAreaId: string;
+
+  /**
+   * Rows moved from the old area to the new one.
+   *
+   * @generated from field: int32 people = 3;
+   */
+  people: number;
+
+  /**
+   * @generated from field: int32 crews = 4;
+   */
+  crews: number;
+
+  /**
+   * @generated from field: int32 plans = 5;
+   */
+  plans: number;
+};
+
+/**
+ * Describes the message issho.v1.ReplacedArea.
+ * Use `create(ReplacedAreaSchema)` to create a new message.
+ */
+export const ReplacedAreaSchema: GenMessage<ReplacedArea> = /*@__PURE__*/
+  messageDesc(file_issho_v1_citypacks, 14);
 
 /**
  * @generated from message issho.v1.DiscoverAreaVenuesRequest
@@ -459,7 +518,7 @@ export type DiscoverAreaVenuesRequest = Message<"issho.v1.DiscoverAreaVenuesRequ
  * Use `create(DiscoverAreaVenuesRequestSchema)` to create a new message.
  */
 export const DiscoverAreaVenuesRequestSchema: GenMessage<DiscoverAreaVenuesRequest> = /*@__PURE__*/
-  messageDesc(file_issho_v1_citypacks, 14);
+  messageDesc(file_issho_v1_citypacks, 15);
 
 /**
  * @generated from message issho.v1.DiscoverAreaVenuesResponse
@@ -483,7 +542,7 @@ export type DiscoverAreaVenuesResponse = Message<"issho.v1.DiscoverAreaVenuesRes
  * Use `create(DiscoverAreaVenuesResponseSchema)` to create a new message.
  */
 export const DiscoverAreaVenuesResponseSchema: GenMessage<DiscoverAreaVenuesResponse> = /*@__PURE__*/
-  messageDesc(file_issho_v1_citypacks, 15);
+  messageDesc(file_issho_v1_citypacks, 16);
 
 /**
  * CityPackService: the city-pack editor in the admin SPA (M8). City packs
@@ -540,8 +599,14 @@ export const CityPackService: GenService<{
   /**
    * ApplyCityPack seeds the pack on the default branch into the database
    * (as `tool seed` would) and, when areas were added or moved, rebuilds the
-   * city's travel times with Google. Areas removed from the file are kept,
-   * as seeding always does.
+   * city's travel times with Google. The pack is authoritative: areas it no
+   * longer lists are deleted (when nothing references them; otherwise the
+   * apply is refused and nothing changes, as it is for removing curated
+   * venues, which needs the drop-curated-venues option the admin never
+   * sets), areas named by an area's `replaces` are retired (their people,
+   * crews and plans move to the new area) and activity overrides the pack
+   * removed are dropped. The
+   * response reports all of these.
    *
    * @generated from rpc issho.v1.CityPackService.ApplyCityPack
    */

@@ -40,7 +40,7 @@ One Google Cloud project per environment (`issho-dev` now, `issho-prod` before l
 Cap usage so that a bug (e.g. a loop calling discovery) can't run up a bill. Quota names vary a little in the console; set the per-minute and per-day limits for each API:
 
 1. **Billing → Budgets & alerts → Create budget**: scope the `issho-dev` project, budget **$10/month**, alerts at 50%, 90% and 100%. Budgets only alert; they don't stop spending. The quotas below are the hard stop.
-2. **APIs & Services → Routes API → Quotas**: set *Compute Route Matrix elements per minute* to **1,000** (a full Tokyo build is ~170 elements).
+2. **APIs & Services → Routes API → Quotas**: set *Compute Route Matrix elements per minute* to **1,000** (a full Tokyo build is 50 elements).
 3. **APIs & Services → Places API (New) → Quotas**: set *Search Nearby requests per day* to **1,500** (a city without boundaries is ~500 requests). A city with boundaries can use up to `discover-venues -max-requests` (4,000 by default): raise the quota for the day of the run, or pass a budget under it.
 
 ## 4. Running the tools
@@ -57,7 +57,7 @@ make venues CITY=tokyo
 Always dry-run first: it reads the city from the database and prints exactly what a real run would call.
 
 **Costs at MVP scale** (check current [pricing](https://developers.google.com/maps/billing-and-pricing/pricing); each SKU has a free monthly usage allowance):
-- `build-matrix`: one billed element per origin/destination pair. Only walking and driving are calculated (Google has no transit routes in Japan). Tokyo (12 areas) = 166 elements, Austin (10 areas) = 102, Da Nang and Hoi An (15 areas) = 242. Same-area pairs are never requested, and walking is only requested between areas less than 4 km apart.
+- `build-matrix`: one billed element per origin/destination pair. Only walking and driving are calculated (Google has no transit routes in Japan). Tokyo (7 areas) = 50 elements, Austin (10 areas) = 102, Da Nang and Hoi An (15 areas) = 242. Same-area pairs are never requested, and walking is only requested between areas less than 4 km apart.
 - **The worker's monthly rebuild** (`refresh_maps`, daily check): the same elements as `build-matrix`, once every 25 days per city.
 - **Venue names on plans** (API, `GetPlan` / `GetEvent`): Place Details with `displayName`, `shortFormattedAddress`, `googleMapsUri`, `location` (the Pro SKU), up to two calls per venue (one per display language) each time a plan or event screen is opened. This is the cost that grows with users: watch it.
 - **Plan routes** (worker, `RefreshRoutes` in each city pass): one Routes `computeRoutes` call (walking, by place id; duration, distance and polyline only) per plan with two venues, when it opens and then every 25 days while it's open or has an event to come. Negligible.

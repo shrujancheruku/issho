@@ -65,6 +65,7 @@
     - [PackOverride](#issho-v1-PackOverride)
     - [ProposeCityPackRequest](#issho-v1-ProposeCityPackRequest)
     - [ProposeCityPackResponse](#issho-v1-ProposeCityPackResponse)
+    - [ReplacedArea](#issho-v1-ReplacedArea)
   
     - [CityPackService](#issho-v1-CityPackService)
   
@@ -965,6 +966,9 @@ HTTP: POST /issho.v1.ChatService/&lt;Method&gt;
 | moved_areas | [string](#string) | repeated |  |
 | travel_times_rebuilt | [bool](#bool) |  | Travel times rebuilt (the rows saved); false when no area changed or there&#39;s no Google Maps key. |
 | travel_times | [int32](#int32) |  |  |
+| removed_areas | [string](#string) | repeated | What an authoritative apply took away (the pack is the source of truth): areas deleted because nothing referenced them, areas retired by an area&#39;s `replaces` (their people, crews and plans moved to the new one), and the activity ids whose city override the pack dropped. |
+| replaced_areas | [ReplacedArea](#issho-v1-ReplacedArea) | repeated |  |
+| removed_overrides | [string](#string) | repeated |  |
 
 
 
@@ -1237,6 +1241,25 @@ HTTP: POST /issho.v1.ChatService/&lt;Method&gt;
 
 
 
+
+<a name="issho-v1-ReplacedArea"></a>
+
+### ReplacedArea
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| old_area_id | [string](#string) |  |  |
+| new_area_id | [string](#string) |  |  |
+| people | [int32](#int32) |  | Rows moved from the old area to the new one. |
+| crews | [int32](#int32) |  |  |
+| plans | [int32](#int32) |  |  |
+
+
+
+
+
  
 
  
@@ -1266,7 +1289,7 @@ HTTP: POST /issho.v1.CityPackService/&lt;Method&gt;
 | ListCityPacks | [ListCityPacksRequest](#issho-v1-ListCityPacksRequest) | [ListCityPacksResponse](#issho-v1-ListCityPacksResponse) | ListCityPacks returns the packs on the default branch, the cities in the database, and open pull requests from the editor. |
 | GetCityPack | [GetCityPackRequest](#issho-v1-GetCityPackRequest) | [GetCityPackResponse](#issho-v1-GetCityPackResponse) | GetCityPack returns a pack from the default branch, with the activity catalogue for its overrides. NOT_FOUND if there&#39;s no such file. |
 | ProposeCityPack | [ProposeCityPackRequest](#issho-v1-ProposeCityPackRequest) | [ProposeCityPackResponse](#issho-v1-ProposeCityPackResponse) | ProposeCityPack opens a pull request with a new or changed pack. INVALID_ARGUMENT if it fails validation (as in CI), removes or renames an area of the pack on the default branch, or changes nothing. |
-| ApplyCityPack | [ApplyCityPackRequest](#issho-v1-ApplyCityPackRequest) | [ApplyCityPackResponse](#issho-v1-ApplyCityPackResponse) | ApplyCityPack seeds the pack on the default branch into the database (as `tool seed` would) and, when areas were added or moved, rebuilds the city&#39;s travel times with Google. Areas removed from the file are kept, as seeding always does. |
+| ApplyCityPack | [ApplyCityPackRequest](#issho-v1-ApplyCityPackRequest) | [ApplyCityPackResponse](#issho-v1-ApplyCityPackResponse) | ApplyCityPack seeds the pack on the default branch into the database (as `tool seed` would) and, when areas were added or moved, rebuilds the city&#39;s travel times with Google. The pack is authoritative: areas it no longer lists are deleted (when nothing references them; otherwise the apply is refused and nothing changes, as it is for removing curated venues, which needs the drop-curated-venues option the admin never sets), areas named by an area&#39;s `replaces` are retired (their people, crews and plans move to the new area) and activity overrides the pack removed are dropped. The response reports all of these. |
 | DiscoverAreaVenues | [DiscoverAreaVenuesRequest](#issho-v1-DiscoverAreaVenuesRequest) | [DiscoverAreaVenuesResponse](#issho-v1-DiscoverAreaVenuesResponse) | DiscoverAreaVenues finds venues for one area with Google (one Nearby Search per venue category the city&#39;s activities use; the city-wide categories too when the city has no venues yet). |
 
  
