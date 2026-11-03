@@ -92,6 +92,7 @@ On a physical phone, swap `localhost`/`127.0.0.1` in **both** URLs for your Mac'
 | `make gen` | Regenerates protobuf (Go, TS, API docs) and sqlc code |
 | `make lint` | buf lint, `go vet`, `sqlc vet`, TypeScript typecheck, ESLint (via Turborepo) |
 | `make test` | Go tests and mobile unit tests (Jest) |
+| `make test-db` | The database integration tests on a throwaway PostGIS container (needs Docker; hosted URLs from `.env*` or `ENV_FILE` are stripped and replaced) |
 | `make secrets-scan` | Scans all git history for secrets |
 | `make migrate-up` / `make migrate-status` | goose migrations against `DATABASE_URL` |
 | `make seed` | Loads the catalogue, venue categories and every city pack (idempotent) |
