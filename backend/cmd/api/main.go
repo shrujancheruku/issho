@@ -202,12 +202,16 @@ func run() error {
 		return err
 	}
 	mux.Handle(isshov1connect.NewUIServiceHandler(&uistrings.Handler{Catalog: uiCatalog, Translations: translations}, opts))
-	translationEditor := &translationeditor.Handler{Q: q, Catalog: uiCatalog, Translations: translations, Base: "main"}
+	uiEditor := &uistrings.Editor{Catalog: uiCatalog, Translations: translations, Base: "main"}
+	translationEditor := &translationeditor.Handler{
+		Editor:  uiEditor,
+		Reviews: &translate.Reviewer{Q: q, UIContextPrefix: uistrings.ContextPrefix, SamePlaceholders: uistrings.SamePlaceholders},
+	}
 	if cfg.GeminiAPIKey != "" {
-		translationEditor.Drafter = translategemini.New(cfg.GeminiAPIKey)
+		uiEditor.Drafter = translategemini.New(cfg.GeminiAPIKey)
 	}
 	if gh != nil {
-		translationEditor.GitHub, translationEditor.Base = gh, gh.Base
+		uiEditor.GitHub, uiEditor.Base = gh, gh.Base
 		// Merged human versions are served without a deploy.
 		// A refused token stops production here, not on the first edit.
 		if err := uiCatalog.Start(ctx, gh, gh.Base, 5*time.Minute, slog.Default(), cfg.Production()); err != nil {
