@@ -141,7 +141,7 @@ The access token is attached automatically. For error handling, `Code` and `Conn
 ```sh
 npx tsc --noEmit          # typecheck   (CI: pnpm typecheck)
 npx expo lint             # ESLint      (CI: pnpm lint)
-npx jest                  # unit tests  (CI: pnpm test), e.g. src/lib/__tests__/secure-storage.test.ts; component tests use `@testing-library/react-native`
+npx jest                  # unit tests  (CI: pnpm test), e.g. src/lib/__tests__/secure-storage.test.ts; component tests use `@testing-library/react-native`. `jest.setup.js` unrefs TanStack Query's timers: without it each test file left a 5-minute gc timer and Jest sat idle for ~5 minutes after the last test (check with `jest --detectOpenHandles`)
 npx expo-doctor           # dependency / config diagnostics
 npx expo install <pkg>    # always use this to add packages (picks SDK-compatible versions)
 ```
