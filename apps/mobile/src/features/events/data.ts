@@ -1,22 +1,19 @@
-import { EventAction as Action, type ReportReason } from '@issho/api-client';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { EventAction as Action, type GetEventResponse, type ReportReason } from '@issho/api-client';
+import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 
-import { feedKey } from '@/features/plans/data';
 import { api } from '@/lib/api';
+import { eventChanged, keys } from '@/lib/queries';
 
 import type { EventAction } from './outing';
 
-const eventsKey = ['events'] as const;
-const eventKey = (id: string) => ['event', id] as const;
-
 /** The person's events from yesterday on, soonest first. */
 export function useMyEvents() {
-  return useQuery({ queryKey: eventsKey, queryFn: () => api.events.listMyEvents({}), select: (r) => r.events });
+  return useQuery({ queryKey: keys.events, queryFn: () => api.events.listMyEvents({}), select: (r) => r.events });
 }
 
 /** One event with its stops and, once confirmed, who is going. */
 export function useEvent(id: string) {
-  return useQuery({ queryKey: eventKey(id), queryFn: () => api.events.getEvent({ eventId: id }), enabled: !!id });
+  return useQuery({ queryKey: keys.event(id), queryFn: () => api.events.getEvent({ eventId: id }), enabled: !!id });
 }
 
 const actions: Record<Exclude<EventAction, 'checkIn' | 'feedback'>, Action> = {
@@ -25,20 +22,20 @@ const actions: Record<Exclude<EventAction, 'checkIn' | 'feedback'>, Action> = {
   cancel: Action.CANCEL,
 };
 
+/** The plan an event is for, from the cached event (undefined when it was never opened). */
+const planIdOf = (queryClient: QueryClient, id: string) => queryClient.getQueryData<GetEventResponse>(keys.event(id))?.event?.planId;
+
 /**
  * Answers an invitation, then refreshes the event, the list of events and
- * the feed (a cancelled group puts people back on a plan's waiting list).
- * `refreshAfter` (ms) succeeds at once and refreshes later, so a button can
+ * the feed and the plan (a cancelled group puts people back on a plan's
+ * waiting list).
+ * `planId` is the event's plan when the caller has the event (a card in a
+ * list); otherwise it comes from the cached event. `refreshAfter` (ms) succeeds at once and refreshes later, so a button can
  * show its result before the refreshed list moves the item away.
  */
-export function useRespond(id: string, { refreshAfter = 0 }: { refreshAfter?: number } = {}) {
+export function useRespond(id: string, { refreshAfter = 0, planId }: { refreshAfter?: number; planId?: string } = {}) {
   const queryClient = useQueryClient();
-  const refresh = () =>
-    Promise.all([
-      queryClient.invalidateQueries({ queryKey: eventKey(id) }),
-      queryClient.invalidateQueries({ queryKey: eventsKey }),
-      queryClient.invalidateQueries({ queryKey: feedKey }),
-    ]);
+  const refresh = () => eventChanged(queryClient, id, { feed: true, planId: planId ?? planIdOf(queryClient, id) });
   return useMutation({
     // Checking in is its own call; the rest are answers.
     mutationFn: async (action: Exclude<EventAction, 'feedback'>) => {
@@ -52,11 +49,9 @@ export function useRespond(id: string, { refreshAfter = 0 }: { refreshAfter?: nu
   });
 }
 
-const feedbackKey = (id: string) => ['feedback', id] as const;
-
 /** The person's feedback form for an event: their group and earlier answer. */
 export function useFeedback(id: string) {
-  return useQuery({ queryKey: feedbackKey(id), queryFn: () => api.events.getFeedback({ eventId: id }), enabled: !!id });
+  return useQuery({ queryKey: keys.feedback(id), queryFn: () => api.events.getFeedback({ eventId: id }), enabled: !!id });
 }
 
 export type FeedbackAnswer = { attended: boolean; planRating: number; groupRating: number; picks: string[]; avoid: string[] };
@@ -67,11 +62,8 @@ export function useSubmitFeedback(id: string) {
   return useMutation({
     mutationFn: (answer: FeedbackAnswer) => api.events.submitFeedback({ eventId: id, ...answer }),
     onSuccess: (res) => {
-      queryClient.setQueryData(feedbackKey(id), res.feedback);
-      return Promise.all([
-        queryClient.invalidateQueries({ queryKey: eventKey(id) }),
-        queryClient.invalidateQueries({ queryKey: eventsKey }),
-      ]);
+      queryClient.setQueryData(keys.feedback(id), res.feedback);
+      return eventChanged(queryClient, id);
     },
   });
 }
