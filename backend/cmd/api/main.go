@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"log/slog"
-	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -14,7 +13,6 @@ import (
 	"syscall"
 	"time"
 
-	"connectrpc.com/connect"
 	connectcors "connectrpc.com/cors"
 	"github.com/rs/cors"
 
@@ -35,7 +33,6 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/platform/auth"
 	"github.com/shrujancheruku/issho/backend/internal/platform/config"
 	"github.com/shrujancheruku/issho/backend/internal/platform/db"
-	"github.com/shrujancheruku/issho/backend/internal/platform/errs"
 	"github.com/shrujancheruku/issho/backend/internal/platform/github"
 	"github.com/shrujancheruku/issho/backend/internal/platform/sentry"
 	"github.com/shrujancheruku/issho/backend/internal/platform/supabase"
@@ -116,8 +113,8 @@ func run() error {
 	q := dbgen.New(pool)
 	suspensions := &moderation.Suspensions{Q: q}
 	// errs runs outermost so it also sanitises errors returned by the auth interceptor.
-	opts := connect.WithInterceptors(
-		errs.Interceptor(slog.Default()),
+	// handlerOptions puts errs outermost, then the deadline, then these.
+	opts := handlerOptions(slog.Default(),
 		// UIService is public because the sign-in screens need their text
 		// before anyone is signed in; it only translates the server's own
 		// copy of the UI catalogue.
@@ -227,17 +224,7 @@ func run() error {
 	protocols.SetUnencryptedHTTP2(true)
 	baseCtx, baseCancel := context.WithCancel(context.Background())
 	defer baseCancel()
-	srv := &http.Server{
-		Addr:              cfg.APIAddr,
-		Handler:           handler,
-		Protocols:         protocols,
-		ReadHeaderTimeout: 10 * time.Second,
-		// Not the signal context: that would cancel in-flight requests the
-		// moment SIGTERM arrives, before Shutdown drains them. baseCancel
-		// runs after Shutdown, to end the WebSockets it doesn't track
-		// (hijacked connections).
-		BaseContext: func(net.Listener) context.Context { return baseCtx },
-	}
+	srv := newServer(cfg.APIAddr, handler, protocols, baseCtx, prodTimeouts)
 
 	errc := make(chan error, 1)
 	go func() {

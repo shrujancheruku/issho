@@ -92,7 +92,7 @@ On a physical phone, swap `localhost`/`127.0.0.1` in **both** URLs for your Mac'
 | `make gen` | Regenerates protobuf (Go, TS, API docs) and sqlc code |
 | `make lint` | buf lint, `go vet`, `sqlc vet`, TypeScript typecheck, ESLint (via Turborepo) |
 | `make test` | Go tests and mobile unit tests (Jest) |
-| `make test-db` | The database integration tests on a throwaway PostGIS container (needs Docker; hosted URLs from `.env*` or `ENV_FILE` are stripped and replaced) |
+| `make test-db` | The database integration tests on a throwaway Supabase Postgres container (needs Docker; hosted URLs from `.env*` or `ENV_FILE` are stripped and replaced) |
 | `make secrets-scan` | Scans all git history for secrets |
 | `make migrate-up` / `make migrate-status` | goose migrations against `DATABASE_URL` |
 | `make seed` | Loads the catalogue, venue categories and every city pack (idempotent) |
@@ -130,7 +130,6 @@ Read [contributing.md](contributing.md). In short:
 | Pre-commit hook blocks a commit | It found a secret. Remove it from the staged files. If it's a confirmed false positive, add an allowlist entry to `.gitleaks.toml` in a reviewed PR. |
 | CI `roadmap` job fails | Your change touched code but not `docs/ROADMAP.md`. Update the status. |
 | CI "Generated code is up to date" fails | Run `make gen` and commit the result. |
-| `docker run postgis/postgis…` → "no matching manifest for linux/arm64" | That image is amd64-only. Use `supabase start`, or add `--platform linux/amd64` (OrbStack emulates it). |
 | CI "pnpm install" → `ERR_PNPM_IGNORED_BUILDS` | A new dependency has an install script. Run `pnpm approve-builds '<pkg>'` (allow) or `'!<pkg>'` (deny) and commit `pnpm-workspace.yaml`. |
 | `DeleteAccount` → `failed_precondition` | The API has no `SUPABASE_SECRET_KEY`. Export it (step 3) and restart the API. |
 | Sign-in code email never arrives | Locally, emails only go to Mailpit (http://127.0.0.1:54324). After changing `supabase/config.toml` or templates, run `supabase stop && supabase start`. |

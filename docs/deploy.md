@@ -100,7 +100,7 @@ A Kamal accessory, `backup` (`config/deploy.yml`), runs `config/backup/backup.sh
 2. In the bucket's settings, add a **lifecycle rule** deleting objects after 30 days: that's the retention.
 3. `kamal accessory boot backup`, then check the setup once: `kamal accessory exec backup "env BACKUP_ONCE=1 sh /backup/backup.sh"`, which should print `backup: uploaded issho-….dump`. `kamal accessory logs backup` shows each night.
 
-**Restore drill** (2026-10-26): the first dump (380 KB) was downloaded from R2 and restored in full into a throwaway `postgis/postgis:17-3.5` container (amd64 only: `--platform linux/amd64` on a Mac). It needs the extensions first: `create schema extensions; create extension postgis schema extensions; create extension pgcrypto schema extensions;`, then `pg_restore --no-owner --no-privileges -d postgres issho-….dump`. All 68 tables in `app`, `goose`, `river` and `auth` came back with the live row counts (7,139 rows), except the session tables, which are left out on purpose, and one River job queued after the dump. The drill found `auth.mfa_amr_claims` failing its foreign key without the sessions, so it's now left out too. Delete the dump afterwards: it holds people's data.
+**Restore drill** (2026-10-26): the first dump (380 KB) was downloaded from R2 and restored in full into a throwaway `postgis/postgis:17-3.5` container (amd64 only: `--platform linux/amd64` on a Mac; use the Supabase image CI runs, `public.ecr.aws/supabase/postgres`, which is multi-arch and already has the `extensions` schema). That dump predates the baseline reset and holds PostGIS in `public`; later dumps hold it in `extensions`. It needs the extensions first: `create schema extensions; create extension postgis schema extensions; create extension pgcrypto schema extensions;`, then `pg_restore --no-owner --no-privileges -d postgres issho-….dump`. All 68 tables in `app`, `goose`, `river` and `auth` came back with the live row counts (7,139 rows), except the session tables, which are left out on purpose, and one River job queued after the dump. The drill found `auth.mfa_amr_claims` failing its foreign key without the sessions, so it's now left out too. Delete the dump afterwards: it holds people's data.
 
 **Restoring into a new Supabase project** (not yet rehearsed): download a dump from R2, then into an empty project with the same migrations applied:
 
@@ -111,6 +111,96 @@ pg_restore --no-owner --no-privileges --data-only --schema=app -d "$NEW_DATABASE
 ```
 
 Supabase creates `auth` itself, so only its data comes back (people's accounts; they sign in again). `goose` and `river` hold bookkeeping that the new project's own migrations recreate.
+
+## Resetting a database onto the baseline migration
+
+[#160](https://github.com/shrujancheruku/issho/issues/160) replaced migrations `00001`-`00028` with one baseline (`00001_baseline.sql`, then River's `00002_river.go`). A database that ran the old history is **reset**, not migrated: goose would see version 28 and the baseline's `00001` as already applied. Merging the PR triggers the automatic deploy, whose `migrate` step applies the baseline, so the reset happens **before the merge** and the deploy follows right after it. The API is down in between.
+
+**issho-dev was reset with the short variant below on 2026-11-03, the owner's call: nothing was carried over.**
+
+Run SQL with `supabase db query --linked "…"` or `psql "$DATABASE_URL"` (a session-mode URL, as everywhere else). Keep a scratch file of the output: the PostGIS version goes in the PR.
+
+### When nothing in the database needs keeping
+
+1. Stop the API and worker (`kamal app stop`), then drop the old schemas in one transaction. `auth.users` is not touched, so admin and translator roles (`auth.users.raw_app_meta_data`) survive:
+   ```sql
+   begin;
+   drop schema app cascade;
+   drop schema river cascade;
+   drop schema goose cascade;
+   drop extension postgis cascade;   -- from public
+   commit;
+   ```
+2. Merge the PR. The deploy workflow runs `kamal migrate` (which applies `00001_baseline` and `00002_river` from nothing, creating PostGIS in `extensions`) and `kamal deploy`. `kamal app exec --primary "tool migrate status"` should show both applied.
+3. Seed the packs: `kamal app exec --primary "tool seed /data/citypacks/tokyo.json /data/citypacks/austin.json /data/citypacks/da-nang-hoi-an.json"`. With `GOOGLE_MAPS_API_KEY` set this also builds the travel times; if the log says they were skipped, run `kamal app exec --primary "tool build-matrix <city>"` for each city.
+4. Run the checks in *Verify* below, and record `select extversion from pg_extension where extname = 'postgis';` in the PR.
+
+### When the data matters (production with active users)
+
+Keeps the old rows, renaming `app` to a scratch schema and copying the reference data across.
+
+1. **Final dump, kept.** Take one on demand and copy it somewhere the 30-day lifecycle rule won't delete it:
+   ```sh
+   kamal accessory exec --reuse backup "env BACKUP_ONCE=1 sh /backup/backup.sh"   # prints: backup: uploaded issho-….dump
+   `--reuse` runs it in the accessory's running container; without it Kamal starts a fresh container from the configured image, which may not be pushed yet.
+   In R2, copy that object to `pre-baseline/issho-….dump` and check the lifecycle rule doesn't cover the prefix (or turn it into an object with its own retention). Delete it when the reset is verified: it holds people's data. If the backup accessory isn't running yet, `pg_dump --format=custom --no-owner --no-privileges --schema=app --schema=goose --schema=river --schema=auth` with the same exclusions as `config/backup/backup.sh`, to a file outside the repo.
+2. **Stop the API and worker**, so nothing writes while the schemas are swapped: `kamal app stop`. The API stays down from here until the PR merges and deploys (step 4), so do steps 2 to 4 in one sitting and have the PR approved and green first.
+3. **Empty the database, keeping `app`'s old rows for step 6.** In one transaction:
+   ```sql
+   begin;
+   -- The old app schema stays, renamed, as the scratch schema for step 6. Its two
+   -- PostGIS columns go first so PostGIS can be dropped (areas are re-seeded).
+   alter schema app rename to app_old;
+   alter table app_old.areas drop column centroid, drop column boundary;
+   drop schema river cascade;
+   drop schema goose cascade;
+   drop extension postgis;            -- from public; no cascade, so it fails safely if anything else still uses it
+   commit;
+   ```
+   `auth.users` is not touched. Admin and translator roles live in `auth.users.raw_app_meta_data` (`admin`, `translator_langs`), so they survive as they are.
+4. **Deploy the baseline, right after step 3.** Merge the PR: the deploy workflow runs `kamal migrate` (which applies `00001_baseline` and `00002_river` from nothing, creating PostGIS in `extensions`) and `kamal deploy`. Or run `kamal build push && kamal migrate && kamal deploy --skip-push` from the PR's commit. `kamal app exec --primary "tool migrate status"` should show both migrations applied.
+5. **Seed every city pack and rebuild the travel times.** `tool seed` builds the matrix of new areas when `GOOGLE_MAPS_API_KEY` is set (about 554 elements across the three packs):
+   ```sh
+   kamal app exec --primary "tool seed /data/citypacks/tokyo.json /data/citypacks/austin.json /data/citypacks/da-nang-hoi-an.json"
+   kamal app exec --primary "tool build-matrix tokyo"          # only if the seed log says the travel times were skipped; same for austin, da-nang-hoi-an
+   ```
+6. **Carry the reference data over from `app_old`**, then drop it. Venues keep their curation status and who set it and when; `added_by` is kept only where that user still exists in `auth.users`. Translations keep their review. Accounts, profiles, plans, crews, chats, notifications and reports are **not** carried over.
+   ```sql
+   begin;
+   insert into app.venues (google_place_id, city_id, area_id, category_id, status, last_seen_at, reviewed_by, reviewed_at, added_by)
+   select v.google_place_id, v.city_id, v.area_id, v.category_id, v.status, v.last_seen_at, v.reviewed_by, v.reviewed_at,
+          case when exists (select 1 from auth.users u where u.id = v.added_by) then v.added_by end
+   from app_old.venues v
+   where exists (select 1 from app.areas a where a.id = v.area_id and a.city_id = v.city_id)
+     and exists (select 1 from app.venue_categories c where c.id = v.category_id)
+   on conflict do nothing;
+
+   insert into app.translations (source_hash, lang, source, context, text, model, reviewed, created_at, reviewed_by, reviewed_at)
+   select source_hash, lang, source, context, text, model, reviewed, created_at, reviewed_by, reviewed_at
+   from app_old.translations
+   on conflict do nothing;
+
+   -- Run everything above up to and including this select, and compare the counts. Only then run `commit;`.
+   select (select count(*) from app_old.venues) as venues_before, (select count(*) from app.venues) as venues_after,
+          (select count(*) from app_old.translations) as translations_before, (select count(*) from app.translations) as translations_after;
+   -- Venues in cities or areas that no longer exist in the packs are the only ones allowed to be missing.
+   ```
+   If the counts are right, run `commit;`, then `drop schema app_old cascade;`. If not, run `rollback;` and look again; `app_old` is untouched.
+   Roles need nothing: check that the admins and translators you expect are still there, and re-run `tool set-admin <email>` / `tool set-translator <email> <langs>` for any that aren't (the dump from step 1 lists them: `auth.users.raw_app_meta_data`):
+   ```sql
+   select email, raw_app_meta_data->>'admin' as admin, raw_app_meta_data->>'translator_langs' as translator_langs
+   from auth.users where raw_app_meta_data ? 'admin' or raw_app_meta_data ? 'translator_langs';
+   ```
+7. **Record the PostGIS version** and put the result in the PR: `select extversion from pg_extension where extname = 'postgis';`
+8. **Verify** (also the last step of the short variant):
+   - goose is at the baseline: `select version_id from goose.db_version order by id desc limit 1;` is `2`, and `app_old` and `public.app_goose_db_version` don't exist.
+   - `anon` and `authenticated` have no access: `select has_schema_privilege('anon', 'app', 'usage'), has_schema_privilege('authenticated', 'river', 'usage')` is `f, f`, and `select count(*) from information_schema.role_table_grants where grantee in ('anon','authenticated') and table_schema in ('app','river')` is `0`. (`extensions` tables such as `spatial_ref_sys` are owned by `supabase_admin`; with the Data API off they aren't reachable.)
+   - The Data API still answers 503: the `curl` in [supabase-hosted.md](supabase-hosted.md).
+   - `supabase db advisors --linked` is clean: `0014_extension_in_public` is gone.
+   - `curl https://api.joinissho.com/up`, and `HealthService/Check` reports `"databaseOk": true`.
+   - A sign-in from the app creates the `app.users` row again.
+
+**Backups from before the reset don't restore onto the baseline.** They hold the old `app` schema (`public.geography` columns, the dropped columns) and goose's 28-step history, so neither `pg_restore` of the whole dump nor a `--data-only --schema=app` restore into a database migrated to the baseline works: the column lists differ. To read old data, restore into a scratch Postgres with PostGIS in `public` and copy rows out. Dumps taken after the reset restore as described under *Off-site backups*, with the extensions in the `extensions` schema.
 
 ## To check on the first real deploy
 

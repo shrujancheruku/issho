@@ -57,13 +57,20 @@ jobs:
       # sqlc fills ~2.4 GB (464 MB compressed); backend never runs them, and
       # its own cache is 68 MB. Go needs every archive and module zip to treat
       # a cached tool binary as up to date, so this cache can't be trimmed.
+      # An exact key hit is never saved again, so whatever was built when the
+      # key was first written is all the cache will ever hold. The key was once
+      # written before `make gen` built the backend's own dependencies
+      # (gen-strings), and for weeks every run recompiled them and re-downloaded
+      # modules (codegen 2m20s, backend 1m05s). Bump the `v` when a generator
+      # starts building something the cache doesn't hold. go.mod is in the key
+      # because `tool` directives live there.
       - uses: actions/cache@v6
         with:
           path: |
             ~/go/pkg/mod
             ~/.cache/go-build
-          key: go-${{ runner.os }}-codegen-${{ hashFiles('backend/go.sum') }}
-          restore-keys: go-${{ runner.os }}-codegen-
+          key: go-${{ runner.os }}-codegen-v2-${{ hashFiles('backend/go.mod', 'backend/go.sum') }}
+          restore-keys: go-${{ runner.os }}-codegen-v2-
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with:
@@ -90,11 +97,16 @@ jobs:
       # The health check goes over TCP (-h 127.0.0.1): the image's init scripts
       # (creating PostGIS) run on a temporary server that listens only on the
       # Unix socket, so a socket check reports healthy before that server stops.
+      # Supabase's own Postgres image, the tag the Supabase CLI runs (`supabase
+      # --version` 3.0.0 pins 17.11.0.011), so CI matches hosted Supabase: a
+      # non-superuser `postgres`, the `extensions` schema on its search_path, the
+      # same PostGIS. Keep it in step with the CLI; scripts/test-db.sh reads it
+      # from here. Multi-arch, so `make test-db` runs natively on Apple silicon.
       - name: Start PostGIS in the background
         run: |
           nohup docker run -d --name postgis -p 5432:5432 -e POSTGRES_PASSWORD=postgres \
             --health-cmd "pg_isready -h 127.0.0.1 -U postgres" --health-interval 2s --health-timeout 5s --health-retries 30 \
-            postgis/postgis:17-3.5 > "$RUNNER_TEMP/postgis.log" 2>&1 &
+            public.ecr.aws/supabase/postgres:17.11.0.011 > "$RUNNER_TEMP/postgis.log" 2>&1 &
       - uses: actions/checkout@v7
       - uses: actions/setup-go@v7
         with:
