@@ -141,6 +141,11 @@ func (PlanLevel) EnumDescriptor() ([]byte, []int) {
 	return file_issho_v1_plans_proto_rawDescGZIP(), []int{1}
 }
 
+// No paging fields: the feed is bounded by what a city has open (a few dozen
+// plans), and the server returns at most 200, the oldest first, so a runaway
+// city can't make it unbounded. The response is the same shape either way.
+// If paging is ever added, page_size 0 (what today's builds send) keeps
+// returning the whole bounded list, per AIP-158 (proto/README.md).
 type ListFeedRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields

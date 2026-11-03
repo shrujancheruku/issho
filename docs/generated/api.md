@@ -1351,7 +1351,11 @@ closed_reason set; older or other cities&#39; ones are NOT_FOUND.
 <a name="issho-v1-ListFeedRequest"></a>
 
 ### ListFeedRequest
-
+No paging fields: the feed is bounded by what a city has open (a few dozen
+plans), and the server returns at most 200, the oldest first, so a runaway
+city can&#39;t make it unbounded. The response is the same shape either way.
+If paging is ever added, page_size 0 (what today&#39;s builds send) keeps
+returning the whole bounded list, per AIP-158 (proto/README.md).
 
 
 
@@ -1681,7 +1685,11 @@ Someone else in the caller&#39;s group, for picks and reports.
 <a name="issho-v1-ListMyEventsRequest"></a>
 
 ### ListMyEventsRequest
-
+No paging fields: the list is bounded by what one person has (recent
+events plus older ones awaiting feedback), and the server returns at most
+200, soonest first. The response is the same shape either way.
+If paging is ever added, page_size 0 (what today&#39;s builds send) keeps
+returning the whole bounded list, per AIP-158 (proto/README.md).
 
 
 
@@ -2051,7 +2059,11 @@ A crew, or an offer of one, as the caller sees it.
 <a name="issho-v1-ListMyCrewsRequest"></a>
 
 ### ListMyCrewsRequest
-
+No paging fields: the list is bounded by the crews and open offers one
+person has, and the server returns at most 50, newest first. The response
+is the same shape either way.
+If paging is ever added, page_size 0 (what today&#39;s builds send) keeps
+returning the whole bounded list, per AIP-158 (proto/README.md).
 
 
 

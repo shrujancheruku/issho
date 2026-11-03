@@ -48,6 +48,8 @@ limit 1;
 
 -- Signup counts come from the same rows the worker schedules from, so the
 -- feed's "7 interested" always matches.
+-- @max caps the list (internal/platform/bound); null reads every row, as the
+-- worker does.
 -- name: ListOpenPlans :many
 select p.id, p.area_id, p.activity_id, p.follow_up_id, p.primary_language, p.secondary_language,
        p.round, p.window_start, p.window_days, p.signup_deadline, p.venue_place_id, p.follow_up_venue_place_id,
@@ -55,7 +57,8 @@ select p.id, p.area_id, p.activity_id, p.follow_up_id, p.primary_language, p.sec
        (select count(*) from app.plan_signups s where s.plan_id = p.id)::int as signups
 from app.plans p
 where p.city_id = @city_id and p.status = 'open'
-order by p.created_at, p.id;
+order by p.created_at, p.id
+limit sqlc.narg('max')::int;
 
 -- One open plan in a city, for its screen and signing up. The same columns
 -- as ListOpenPlans, so the rows convert (plans.openFromRow).
