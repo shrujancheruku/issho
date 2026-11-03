@@ -18,6 +18,8 @@ type MatchReport struct {
 	Opened    int // plans suggested
 	// SuggestFailed: suggestions that could not be opened.
 	SuggestFailed int
+	// SuggestDeferred: walks left for the next run for lack of time.
+	SuggestDeferred int
 	// Meeting places found and routes computed or cleared (best effort),
 	// and the plans they failed for.
 	MeetingPlaces, Routes, RoutesCleared int
@@ -32,7 +34,7 @@ func (r MatchReport) LogValue() slog.Value {
 		slog.Int("feedback_asked", r.Settled.FeedbackAsked), slog.Int("settle_failed", r.Settled.Failed),
 		slog.Int("checked", r.Scheduled.Checked), slog.Int("scheduled", r.Scheduled.Scheduled), slog.Int("closed", r.Scheduled.Closed),
 		slog.Int("schedule_failed", r.Scheduled.Failed),
-		slog.Int("opened", r.Opened), slog.Int("suggest_failed", r.SuggestFailed),
+		slog.Int("opened", r.Opened), slog.Int("suggest_failed", r.SuggestFailed), slog.Int("suggest_deferred", r.SuggestDeferred),
 		slog.Int("meeting_places", r.MeetingPlaces), slog.Int("meeting_places_failed", r.MeetingPlacesFailed),
 		slog.Int("routes", r.Routes), slog.Int("routes_cleared", r.RoutesCleared), slog.Int("routes_failed", r.RoutesFailed),
 	)
@@ -81,7 +83,7 @@ func (r *Runner) Match(ctx context.Context, cityID string, now time.Time) (Match
 		stageErr = fmt.Errorf("schedule %s: %w", cityID, err)
 	} else {
 		suggested, err := r.suggestIn(ctx, c, now)
-		rep.Opened, rep.SuggestFailed = suggested.Opened, suggested.Failed
+		rep.Opened, rep.SuggestFailed, rep.SuggestDeferred = suggested.Opened, suggested.Failed, suggested.Deferred
 		if err != nil {
 			stageErr = fmt.Errorf("suggest %s: %w", cityID, err)
 		}

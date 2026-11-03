@@ -22,7 +22,8 @@ func Activities(pack cities.Pack, catalogue []cities.Activity, month time.Month)
 	var out []matching.Activity
 	for _, a := range catalogue {
 		o := overrides[a.ID]
-		if o.Disabled || (month != 0 && len(o.Months) > 0 && !slices.Contains(o.Months, int16(month))) {
+		// A non-nil months list restricts the season even when empty (SQL: `m = any('{}')` is false), so only nil means all year.
+		if o.Disabled || (month != 0 && o.Months != nil && !slices.Contains(o.Months, int16(month))) {
 			continue
 		}
 		out = append(out, newActivity(a.ID, a.Category, a.CostLevel, a.Conversational, a.MinGroupSize, a.MaxGroupSize,

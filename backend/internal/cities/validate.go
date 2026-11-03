@@ -215,6 +215,11 @@ func ValidatePack(p Pack, activityIDs map[string]bool) error {
 		if activityIDs != nil && !activityIDs[o.ActivityID] {
 			bad("override %s: unknown activity", o.ActivityID)
 		}
+		// An empty list would mean "never in season", which is what disabled says;
+		// omit months for all year.
+		if o.Months != nil && len(o.Months) == 0 {
+			bad("override %s: months is empty (omit it for all year, or set disabled)", o.ActivityID)
+		}
 		for _, m := range o.Months {
 			if m < 1 || m > 12 {
 				bad("override %s: month %d outside 1..12", o.ActivityID, m)

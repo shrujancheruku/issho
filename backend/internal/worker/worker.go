@@ -33,10 +33,70 @@ import (
 // so hourly rather than the daily minimum.
 const MatchEvery = time.Hour
 
+// The queues. They are separate so a long pass can't hold up pushes: a
+// 20-minute match_city sits on a `passes` worker for its whole run, while
+// `notify` has a worker of its own, so a push still goes out within the
+// minute. River runs each queue's jobs on that queue's workers only.
+const (
+	// QueueNotify: send_notifications (and its receipt checks).
+	QueueNotify = "notify"
+	// QueuePasses: match_all, match_city and crews_city.
+	QueuePasses = "passes"
+	// QueueMaintenance: refresh_maps, retention and the admin jobs that come
+	// later.
+	QueueMaintenance = "maintenance"
+)
+
+// queues is the client's queue config. River's `default` queue is kept, with
+// one worker, for one deploy window: jobs enqueued by the previous release
+// sit in `default` (the queue is stored on the row), and a client that
+// doesn't serve it would leave them to wait forever. Nothing inserts into
+// `default` any more, so it drains within a pass or two (the periodic jobs
+// queue their replacements in the new queues, and uniqueness ignores the
+// queue, so a leftover row only delays its own kind's next insert until it
+// finishes). Remove it once `select count(*) from river.river_job where
+// queue = 'default' and state in ('available','retryable','scheduled','running')`
+// is 0 on the deployed database.
+func queues() map[string]river.QueueConfig {
+	return map[string]river.QueueConfig{
+		QueueNotify:        {MaxWorkers: 1},
+		QueuePasses:        {MaxWorkers: 2},
+		QueueMaintenance:   {MaxWorkers: 1},
+		river.QueueDefault: {MaxWorkers: 1},
+	}
+}
+
+// liveStates are the job states a unique job is counted in: one queued,
+// running or waiting to retry blocks another of its kind (and args).
+var liveStates = []rivertype.JobState{
+	rivertype.JobStateAvailable, rivertype.JobStatePending, rivertype.JobStateRunning,
+	rivertype.JobStateRetryable, rivertype.JobStateScheduled,
+}
+
+// Every kind sets its queue and MaxAttempts in InsertOpts and its time
+// limit in the worker's Timeout; River's defaults (a minute, 25 attempts)
+// fit none of them. The periodic jobs re-run on a schedule, so a few
+// attempts are enough: the next run is the retry.
+
+// MatchAllTimeout and MatchAllMaxAttempts: match_all only lists the cities
+// and queues a match_city for each.
+const (
+	MatchAllTimeout     = time.Minute
+	MatchAllMaxAttempts = 3
+)
+
 // MatchAllArgs starts a matching pass for every city.
 type MatchAllArgs struct{}
 
 func (MatchAllArgs) Kind() string { return "match_all" }
+
+// InsertOpts: one fan-out at a time, so a slow one is never doubled.
+func (MatchAllArgs) InsertOpts() river.InsertOpts {
+	return river.InsertOpts{Queue: QueuePasses, MaxAttempts: MatchAllMaxAttempts,
+		UniqueOpts: river.UniqueOpts{ByArgs: true, ByState: liveStates}}
+}
+
+func (w *matchAllWorker) Timeout(*river.Job[MatchAllArgs]) time.Duration { return MatchAllTimeout }
 
 // MatchCityArgs runs one city's matching pass (plans.Runner.Match), then
 // queues its crews pass.
@@ -50,13 +110,10 @@ func (MatchCityArgs) Kind() string { return "match_city" }
 // passes never schedule the same plans at once (the plan-row locks in
 // internal/plans would make the second one skip them anyway).
 func (MatchCityArgs) InsertOpts() river.InsertOpts {
-	return river.InsertOpts{UniqueOpts: river.UniqueOpts{
-		ByArgs: true,
-		ByState: []rivertype.JobState{
-			rivertype.JobStateAvailable, rivertype.JobStatePending, rivertype.JobStateRunning,
-			rivertype.JobStateRetryable, rivertype.JobStateScheduled,
-		},
-	}}
+	return river.InsertOpts{
+		Queue: QueuePasses, MaxAttempts: MatchCityMaxAttempts,
+		UniqueOpts: river.UniqueOpts{ByArgs: true, ByState: liveStates},
+	}
 }
 
 type matchAllWorker struct {
@@ -88,8 +145,13 @@ type matchCityWorker struct {
 
 // MatchCityTimeout bounds a city's pass. River's default is a minute, but
 // composing walks asks a model that can think for minutes (a few walks at
-// once, each retried once).
-const MatchCityTimeout = 20 * time.Minute
+// once, each retried once). It is also the budget the walks draw on: the
+// pass starts no walk with less than walks.MinBudget of it left.
+// MatchCityMaxAttempts is 3 because the next hourly pass retries anyway.
+const (
+	MatchCityTimeout     = 25 * time.Minute
+	MatchCityMaxAttempts = 3
+)
 
 func (w *matchCityWorker) Timeout(*river.Job[MatchCityArgs]) time.Duration { return MatchCityTimeout }
 
@@ -130,13 +192,8 @@ func (CrewsCityArgs) Kind() string { return "crews_city" }
 func (CrewsCityArgs) InsertOpts() river.InsertOpts {
 	return river.InsertOpts{
 		MaxAttempts: CrewsCityMaxAttempts,
-		UniqueOpts: river.UniqueOpts{
-			ByArgs: true,
-			ByState: []rivertype.JobState{
-				rivertype.JobStateAvailable, rivertype.JobStatePending, rivertype.JobStateRunning,
-				rivertype.JobStateRetryable, rivertype.JobStateScheduled,
-			},
-		},
+		Queue:       QueuePasses,
+		UniqueOpts:  river.UniqueOpts{ByArgs: true, ByState: liveStates},
 	}
 }
 
@@ -168,10 +225,40 @@ func (w *crewsCityWorker) Work(ctx context.Context, job *river.Job[CrewsCityArgs
 // rebuilt only when it's geo.RefreshAge old.
 const RefreshMapsEvery = 24 * time.Hour
 
-// RefreshMapsArgs rebuilds stale travel-time matrices (Maps caching terms).
+// RefreshMapsArgs starts the travel-time check (Maps caching terms): it
+// queues a refresh_maps_city for every city.
 type RefreshMapsArgs struct{}
 
 func (RefreshMapsArgs) Kind() string { return "refresh_maps" }
+
+// RefreshMapsTimeout and RefreshMapsMaxAttempts: the fan-out only lists
+// cities and inserts jobs. RefreshMapsCityTimeout: a city's rebuild asks
+// Maps for every pair of areas, which takes minutes in a big city.
+const (
+	RefreshMapsTimeout         = time.Minute
+	RefreshMapsMaxAttempts     = 3
+	RefreshMapsCityTimeout     = 10 * time.Minute
+	RefreshMapsCityMaxAttempts = 3
+)
+
+func (RefreshMapsArgs) InsertOpts() river.InsertOpts {
+	return river.InsertOpts{Queue: QueueMaintenance, MaxAttempts: RefreshMapsMaxAttempts,
+		UniqueOpts: river.UniqueOpts{ByArgs: true, ByState: liveStates}}
+}
+
+// RefreshMapsCityArgs rebuilds one city's travel times when they are
+// geo.RefreshAge old. A city of its own so one failing (or slow) doesn't
+// hold up or retry the others.
+type RefreshMapsCityArgs struct {
+	City string `json:"city"`
+}
+
+func (RefreshMapsCityArgs) Kind() string { return "refresh_maps_city" }
+
+func (RefreshMapsCityArgs) InsertOpts() river.InsertOpts {
+	return river.InsertOpts{Queue: QueueMaintenance, MaxAttempts: RefreshMapsCityMaxAttempts,
+		UniqueOpts: river.UniqueOpts{ByArgs: true, ByState: liveStates}}
+}
 
 type refreshMapsWorker struct {
 	river.WorkerDefaults[RefreshMapsArgs]
@@ -180,8 +267,35 @@ type refreshMapsWorker struct {
 	log    *slog.Logger
 }
 
-// Work checks every city; one city failing doesn't stop the others, but
-// fails the job so River retries it.
+func (w *refreshMapsWorker) Timeout(*river.Job[RefreshMapsArgs]) time.Duration {
+	return RefreshMapsTimeout
+}
+
+type refreshMapsCityWorker struct {
+	river.WorkerDefaults[RefreshMapsCityArgs]
+	// refresh rebuilds a city's matrix if stale (geo.Refresh); a field so
+	// tests need no Maps.
+	refresh func(ctx context.Context, city string) (rebuilt bool, deleted int64, err error)
+	log     *slog.Logger
+}
+
+func (w *refreshMapsCityWorker) Timeout(*river.Job[RefreshMapsCityArgs]) time.Duration {
+	return RefreshMapsCityTimeout
+}
+
+// Work refreshes the city; an error fails only this job, which River retries.
+func (w *refreshMapsCityWorker) Work(ctx context.Context, job *river.Job[RefreshMapsCityArgs]) error {
+	rebuilt, deleted, err := w.refresh(ctx, job.Args.City)
+	switch {
+	case err != nil:
+		return fmt.Errorf("refresh maps %s: %w", job.Args.City, err)
+	case rebuilt:
+		w.log.Info("travel times rebuilt", "city", job.Args.City, "stale_deleted", deleted)
+	}
+	return nil
+}
+
+// Work queues a refresh_maps_city for every city.
 func (w *refreshMapsWorker) Work(ctx context.Context, _ *river.Job[RefreshMapsArgs]) error {
 	// A missing key never deletes data. Without a router, geo.Refresh would
 	// delete rows past the Maps caching limit; we skip it instead. The terms
@@ -194,20 +308,15 @@ func (w *refreshMapsWorker) Work(ctx context.Context, _ *river.Job[RefreshMapsAr
 		return nil
 	}
 	cities, err := dbgen.New(w.pool).ListCities(ctx)
-	if err != nil {
+	if err != nil || len(cities) == 0 {
 		return err
 	}
-	var errs []error
-	for _, c := range cities {
-		rebuilt, deleted, err := geo.Refresh(ctx, w.pool, w.router, c.ID, time.Now())
-		switch {
-		case err != nil:
-			errs = append(errs, fmt.Errorf("%s: %w", c.ID, err))
-		case rebuilt:
-			w.log.Info("travel times rebuilt", "city", c.ID, "stale_deleted", deleted)
-		}
+	params := make([]river.InsertManyParams, len(cities))
+	for i, c := range cities {
+		params[i] = river.InsertManyParams{Args: RefreshMapsCityArgs{City: c.ID}}
 	}
-	return errors.Join(errs...)
+	_, err = river.ClientFromContext[pgx.Tx](ctx).InsertMany(ctx, params)
+	return err
 }
 
 // RetentionEvery is how often old notifications and crew chats are deleted.
@@ -217,6 +326,19 @@ const RetentionEvery = 24 * time.Hour
 type RetentionArgs struct{}
 
 func (RetentionArgs) Kind() string { return "retention" }
+
+// RetentionTimeout: the deletes go in batches of 1000, so minutes at most.
+const (
+	RetentionTimeout     = 5 * time.Minute
+	RetentionMaxAttempts = 3
+)
+
+func (RetentionArgs) InsertOpts() river.InsertOpts {
+	return river.InsertOpts{Queue: QueueMaintenance, MaxAttempts: RetentionMaxAttempts,
+		UniqueOpts: river.UniqueOpts{ByArgs: true, ByState: liveStates}}
+}
+
+func (w *retentionWorker) Timeout(*river.Job[RetentionArgs]) time.Duration { return RetentionTimeout }
 
 type retentionWorker struct {
 	river.WorkerDefaults[RetentionArgs]
@@ -245,12 +367,22 @@ type SendNotificationsArgs struct{}
 
 func (SendNotificationsArgs) Kind() string { return "send_notifications" }
 
-// One pass at a time: two would send the same notifications twice.
+// SendNotificationsTimeout: a batch to Expo and the receipts take seconds;
+// a minute's job that hangs is cut off well before the next three.
+const (
+	SendNotificationsTimeout     = 2 * time.Minute
+	SendNotificationsMaxAttempts = 3
+)
+
+// One pass at a time: two would send the same notifications twice. On its
+// own queue so a long match_city never delays a push.
 func (SendNotificationsArgs) InsertOpts() river.InsertOpts {
-	return river.InsertOpts{UniqueOpts: river.UniqueOpts{ByState: []rivertype.JobState{
-		rivertype.JobStateAvailable, rivertype.JobStatePending, rivertype.JobStateRunning,
-		rivertype.JobStateRetryable, rivertype.JobStateScheduled,
-	}}}
+	return river.InsertOpts{Queue: QueueNotify, MaxAttempts: SendNotificationsMaxAttempts,
+		UniqueOpts: river.UniqueOpts{ByState: liveStates}}
+}
+
+func (w *sendNotificationsWorker) Timeout(*river.Job[SendNotificationsArgs]) time.Duration {
+	return SendNotificationsTimeout
 }
 
 type sendNotificationsWorker struct {
@@ -299,6 +431,9 @@ func NewClient(pool *pgxpool.Pool, log *slog.Logger, timing plans.Timing, notifi
 	}, now: time.Now})
 	river.AddWorker(workers, &crewsCityWorker{crews: &crews.Runner{DB: pool, Log: log}, now: time.Now})
 	river.AddWorker(workers, &refreshMapsWorker{pool: pool, router: m.Router, log: log})
+	river.AddWorker(workers, &refreshMapsCityWorker{log: log, refresh: func(ctx context.Context, city string) (bool, int64, error) {
+		return geo.Refresh(ctx, pool, m.Router, city, time.Now())
+	}})
 	river.AddWorker(workers, &retentionWorker{pool: pool, log: log, now: time.Now})
 	river.AddWorker(workers, &sendNotificationsWorker{notifier: notifier, now: time.Now})
 	return river.NewClient(riverpgxv5.New(pool), &river.Config{
@@ -306,7 +441,7 @@ func NewClient(pool *pgxpool.Pool, log *slog.Logger, timing plans.Timing, notifi
 		Logger: log,
 		// Failed and panicking jobs are reported (no-op without SENTRY_DSN).
 		ErrorHandler: sentry.JobErrors{},
-		Queues:       map[string]river.QueueConfig{river.QueueDefault: {MaxWorkers: 4}},
+		Queues:       queues(),
 		PeriodicJobs: []*river.PeriodicJob{
 			river.NewPeriodicJob(river.PeriodicInterval(MatchEvery),
 				func() (river.JobArgs, *river.InsertOpts) { return MatchAllArgs{}, nil },

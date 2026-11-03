@@ -76,6 +76,34 @@ type Meta struct {
 	CostUSD float64
 }
 
+// MinBudget is the time a job must have left to start a proposal: one
+// Gemini call is capped at 5 minutes, and the Maps checks follow. Compose
+// asks again before each retry, so a walk never starts an attempt it
+// can't finish. Calls already running aren't cut short by this: they end at
+// the context's deadline.
+const MinBudget = 6 * time.Minute
+
+// ErrNoBudget means Compose stopped for lack of time, not because the
+// walk was bad: the caller leaves the walk for its next run.
+var ErrNoBudget = errors.New("walks: not enough time left to compose")
+
+// HasBudget reports whether ctx has at least MinBudget left (no deadline
+// means unlimited).
+func HasBudget(ctx context.Context) bool { return hasBudget(ctx, time.Now) }
+
+// HasBudget is the package function on the composer's Clock.
+func (c *Composer) HasBudget(ctx context.Context) bool {
+	if c.Clock == nil {
+		return HasBudget(ctx)
+	}
+	return hasBudget(ctx, c.Clock)
+}
+
+func hasBudget(ctx context.Context, now func() time.Time) bool {
+	dl, ok := ctx.Deadline()
+	return !ok || dl.Sub(now()) >= MinBudget
+}
+
 // Proposer proposes walks. feedback lists what was wrong with its previous
 // proposal for the same request (empty the first time).
 type Proposer interface {
@@ -161,6 +189,9 @@ type Composer struct {
 	// OnAttempt, if set, hears about every proposal and how it fared
 	// (benchmarks, logs).
 	OnAttempt func(Attempt)
+	// Clock tells the time HasBudget measures the context's deadline
+	// against; nil = time.Now. Tests set it to avoid sleeping.
+	Clock func() time.Time
 }
 
 // Why a proposed place wasn't used (Drop.Reason).
@@ -191,11 +222,15 @@ type Attempt struct {
 }
 
 // Compose proposes a walk and checks it. A walk that can't be made to fit
-// the rules is a *Rejected; other errors (an API down) are worth retrying
+// the rules is a *Rejected; ErrNoBudget means the job's time ran out
+// before a retry; other errors (an API down) are worth retrying
 // later.
 func (c *Composer) Compose(ctx context.Context, req Request) (Walk, error) {
 	var feedback []string
 	for n := range max(c.Rules.Attempts, 1) {
+		if n > 0 && !c.HasBudget(ctx) {
+			return Walk{}, ErrNoBudget
+		}
 		p, err := c.Proposer.Propose(ctx, req, feedback)
 		if err != nil {
 			c.observe(Attempt{N: n + 1, Err: err})

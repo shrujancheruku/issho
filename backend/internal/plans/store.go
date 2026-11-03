@@ -390,12 +390,3 @@ func ptr(s string) *string {
 	}
 	return &s
 }
-
-// deref stays only because plans/run.go (held by #183 when this was written)
-// still calls it; move that to pgconv.Deref, then delete this.
-func deref(s *string) string {
-	if s == nil {
-		return ""
-	}
-	return *s
-}
