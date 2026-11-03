@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"log/slog"
-	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -35,6 +34,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/platform/auth"
 	"github.com/shrujancheruku/issho/backend/internal/platform/config"
 	"github.com/shrujancheruku/issho/backend/internal/platform/db"
+	"github.com/shrujancheruku/issho/backend/internal/platform/deadline"
 	"github.com/shrujancheruku/issho/backend/internal/platform/errs"
 	"github.com/shrujancheruku/issho/backend/internal/platform/github"
 	"github.com/shrujancheruku/issho/backend/internal/platform/sentry"
@@ -116,8 +116,10 @@ func run() error {
 	q := dbgen.New(pool)
 	suspensions := &moderation.Suspensions{Q: q}
 	// errs runs outermost so it also sanitises errors returned by the auth interceptor.
-	opts := connect.WithInterceptors(
+	interceptors := connect.WithInterceptors(
 		errs.Interceptor(slog.Default()),
+		// Inside errs so its DeadlineExceeded passes through as is.
+		deadline.Interceptor(deadline.Default, rpcDeadlines),
 		// UIService is public because the sign-in screens need their text
 		// before anyone is signed in; it only translates the server's own
 		// copy of the UI catalogue.
@@ -132,6 +134,7 @@ func run() error {
 		moderation.Gate(suspensions, isshov1connect.IdentityServiceGetMeProcedure,
 			isshov1connect.IdentityServiceDeleteAccountProcedure, isshov1connect.PushServiceUnregisterPushTokenProcedure),
 	)
+	opts := connect.WithOptions(interceptors, connect.WithReadMaxBytes(maxRequestBytes))
 
 	mux := http.NewServeMux()
 	healthH := &health.Handler{Pool: pool, Version: version}
@@ -227,17 +230,7 @@ func run() error {
 	protocols.SetUnencryptedHTTP2(true)
 	baseCtx, baseCancel := context.WithCancel(context.Background())
 	defer baseCancel()
-	srv := &http.Server{
-		Addr:              cfg.APIAddr,
-		Handler:           handler,
-		Protocols:         protocols,
-		ReadHeaderTimeout: 10 * time.Second,
-		// Not the signal context: that would cancel in-flight requests the
-		// moment SIGTERM arrives, before Shutdown drains them. baseCancel
-		// runs after Shutdown, to end the WebSockets it doesn't track
-		// (hijacked connections).
-		BaseContext: func(net.Listener) context.Context { return baseCtx },
-	}
+	srv := newServer(cfg.APIAddr, handler, protocols, baseCtx)
 
 	errc := make(chan error, 1)
 	go func() {
