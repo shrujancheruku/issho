@@ -1,4 +1,4 @@
-import { LeaveReason } from '@issho/api-client';
+import { LeaveCrewRequestSchema, LeaveReason, maxLen } from '@issho/api-client';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Pressable } from 'react-native';
@@ -60,7 +60,12 @@ export default function LeaveCrewScreen() {
           </Pressable>
         )}
       </ChipChoice>
-      <DetailsInput label={t('leave.details')} value={details} onChange={setDetails} />
+      <DetailsInput
+        label={t('leave.details')}
+        value={details}
+        onChange={setDetails}
+        maxLength={maxLen(LeaveCrewRequestSchema, 'details')}
+      />
     </FormScreen>
   );
 }

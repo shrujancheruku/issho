@@ -7,6 +7,7 @@
 package isshov1
 
 import (
+	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
@@ -232,9 +233,11 @@ func (x *ListMessagesResponse) GetClosesAt() *timestamppb.Timestamp {
 }
 
 type SendMessageRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Room          *ChatRoom              `protobuf:"bytes,1,opt,name=room,proto3" json:"room,omitempty"`
-	Body          string                 `protobuf:"bytes,2,opt,name=body,proto3" json:"body,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Room  *ChatRoom              `protobuf:"bytes,1,opt,name=room,proto3" json:"room,omitempty"`
+	// 1 to 1000 characters as sent; the server then trims it and rejects an
+	// empty message.
+	Body          string `protobuf:"bytes,2,opt,name=body,proto3" json:"body,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -429,7 +432,7 @@ var File_issho_v1_chat_proto protoreflect.FileDescriptor
 
 const file_issho_v1_chat_proto_rawDesc = "" +
 	"\n" +
-	"\x13issho/v1/chat.proto\x12\bissho.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"J\n" +
+	"\x13issho/v1/chat.proto\x12\bissho.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"J\n" +
 	"\bChatRoom\x12\x1b\n" +
 	"\bevent_id\x18\x01 \x01(\tH\x00R\aeventId\x12\x19\n" +
 	"\acrew_id\x18\x02 \x01(\tH\x00R\x06crewIdB\x06\n" +
@@ -441,10 +444,11 @@ const file_issho_v1_chat_proto_rawDesc = "" +
 	"\bmessages\x18\x01 \x03(\v2\x15.issho.v1.ChatMessageR\bmessages\x12\x12\n" +
 	"\x04open\x18\x02 \x01(\bR\x04open\x125\n" +
 	"\bopens_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\aopensAt\x127\n" +
-	"\tcloses_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\bclosesAt\"P\n" +
+	"\tcloses_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\bclosesAt\"\\\n" +
 	"\x12SendMessageRequest\x12&\n" +
-	"\x04room\x18\x01 \x01(\v2\x12.issho.v1.ChatRoomR\x04room\x12\x12\n" +
-	"\x04body\x18\x02 \x01(\tR\x04body\"F\n" +
+	"\x04room\x18\x01 \x01(\v2\x12.issho.v1.ChatRoomR\x04room\x12\x1e\n" +
+	"\x04body\x18\x02 \x01(\tB\n" +
+	"\xbaH\ar\x05\x10\x01\x18\xe8\aR\x04body\"F\n" +
 	"\x13SendMessageResponse\x12/\n" +
 	"\amessage\x18\x01 \x01(\v2\x15.issho.v1.ChatMessageR\amessage\"\xb7\x01\n" +
 	"\vChatMessage\x12\x0e\n" +

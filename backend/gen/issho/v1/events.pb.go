@@ -7,6 +7,7 @@
 package isshov1
 
 import (
+	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
@@ -675,7 +676,7 @@ type ReportPersonRequest struct {
 	// GroupMate.id.
 	MateId string       `protobuf:"bytes,2,opt,name=mate_id,json=mateId,proto3" json:"mate_id,omitempty"`
 	Reason ReportReason `protobuf:"varint,3,opt,name=reason,proto3,enum=issho.v1.ReportReason" json:"reason,omitempty"`
-	// Optional, up to 1000 characters.
+	// Optional, up to 1000 characters as sent (the server then trims it).
 	Details       string `protobuf:"bytes,4,opt,name=details,proto3" json:"details,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1458,7 +1459,7 @@ var File_issho_v1_events_proto protoreflect.FileDescriptor
 
 const file_issho_v1_events_proto_rawDesc = "" +
 	"\n" +
-	"\x15issho/v1/events.proto\x12\bissho.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x14issho/v1/plans.proto\x1a\x16issho/v1/profile.proto\"/\n" +
+	"\x15issho/v1/events.proto\x12\bissho.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x14issho/v1/plans.proto\x1a\x16issho/v1/profile.proto\"/\n" +
 	"\x12GetFeedbackRequest\x12\x19\n" +
 	"\bevent_id\x18\x01 \x01(\tR\aeventId\"\xe6\x02\n" +
 	"\x13GetFeedbackResponse\x12)\n" +
@@ -1487,12 +1488,12 @@ const file_issho_v1_events_proto_rawDesc = "" +
 	"\x05picks\x18\x05 \x03(\tR\x05picks\x12\x14\n" +
 	"\x05avoid\x18\x06 \x03(\tR\x05avoid\"S\n" +
 	"\x16SubmitFeedbackResponse\x129\n" +
-	"\bfeedback\x18\x01 \x01(\v2\x1d.issho.v1.GetFeedbackResponseR\bfeedback\"\x93\x01\n" +
+	"\bfeedback\x18\x01 \x01(\v2\x1d.issho.v1.GetFeedbackResponseR\bfeedback\"\x9d\x01\n" +
 	"\x13ReportPersonRequest\x12\x19\n" +
 	"\bevent_id\x18\x01 \x01(\tR\aeventId\x12\x17\n" +
 	"\amate_id\x18\x02 \x01(\tR\x06mateId\x12.\n" +
-	"\x06reason\x18\x03 \x01(\x0e2\x16.issho.v1.ReportReasonR\x06reason\x12\x18\n" +
-	"\adetails\x18\x04 \x01(\tR\adetails\"\x16\n" +
+	"\x06reason\x18\x03 \x01(\x0e2\x16.issho.v1.ReportReasonR\x06reason\x12\"\n" +
+	"\adetails\x18\x04 \x01(\tB\b\xbaH\x05r\x03\x18\xe8\aR\adetails\"\x16\n" +
 	"\x14ReportPersonResponse\"+\n" +
 	"\x0eCheckInRequest\x12\x19\n" +
 	"\bevent_id\x18\x01 \x01(\tR\aeventId\":\n" +

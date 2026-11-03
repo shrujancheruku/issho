@@ -12,6 +12,7 @@ The Go backend for Issho: a modular monolith serving a ConnectRPC API. It uses P
 | `internal/platform/config` | Environment variables → `Config` |
 | `internal/platform/db` | pgx pool and goose migration runner |
 | `internal/platform/auth` | Supabase JWT verification (JWKS) and the Connect auth interceptor; `Require` and `RequireAdmin` for handlers |
+| `internal/platform/validate` | Runs the `buf.validate` rules from `proto/` on every request (last interceptor, after auth); a violation is `errs.Invalid` |
 | `internal/platform/i18n` | Language rules: what to display from text resolved into the primary and secondary languages (`Pair`, called by `translate.Service.ResolvePair`; used directly only for never-translated area names), ISO 639-1 validation |
 | `internal/translate` | Text in any language on demand: stored text → `app.translations` cache → `Translator`, with in-flight de-duplication, a bounded wait and background completion; `ResolvePair` for the reader's primary + secondary languages at once, ready to show (the one place the language rule is applied); `Prefill` for content that must exist in given languages (events) |
 | `internal/translate/google` | `Translator` using Google Cloud Translation Basic (v2): plain-text mode, batches of ≤ 128 strings and ~5,000 characters |

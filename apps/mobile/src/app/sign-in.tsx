@@ -10,9 +10,8 @@ import { BodyFont, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { PrimaryButton } from '@/components/primary-button';
 import { useI18n } from '@/i18n/i18n-provider';
+import { CODE_LENGTH } from '@/lib/otp';
 import { supabase } from '@/lib/supabase';
-
-const CODE_LENGTH = 6; // matches [auth.email] otp_length in supabase/config.toml
 
 /**
  * Passwordless sign-in: the user enters an email, receives a 6-digit code and
