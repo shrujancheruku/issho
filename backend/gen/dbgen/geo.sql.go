@@ -131,6 +131,45 @@ func (q *Queries) ListCityVenueCategories(ctx context.Context, cityID string) ([
 	return items, nil
 }
 
+const listDiscoveredVenuePairs = `-- name: ListDiscoveredVenuePairs :many
+select distinct area_id, category_id
+from app.venues
+where city_id = $1 and added_by is null and last_seen_at >= $2
+`
+
+type ListDiscoveredVenuePairsParams struct {
+	CityID string
+	Since  pgtype.Timestamptz
+}
+
+type ListDiscoveredVenuePairsRow struct {
+	AreaID     string
+	CategoryID string
+}
+
+// Area × category pairs discovery already found venues for since a cut-off:
+// what a rerun after a failed run doesn't search (and pay for) again. Venues
+// an admin added by hand don't count, they say nothing about a search.
+func (q *Queries) ListDiscoveredVenuePairs(ctx context.Context, arg ListDiscoveredVenuePairsParams) ([]ListDiscoveredVenuePairsRow, error) {
+	rows, err := q.db.Query(ctx, listDiscoveredVenuePairs, arg.CityID, arg.Since)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListDiscoveredVenuePairsRow
+	for rows.Next() {
+		var i ListDiscoveredVenuePairsRow
+		if err := rows.Scan(&i.AreaID, &i.CategoryID); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const newestTravelTime = `-- name: NewestTravelTime :one
 select max(t.computed_at)::timestamptz
 from app.area_travel_times t

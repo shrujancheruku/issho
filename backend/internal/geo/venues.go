@@ -140,6 +140,9 @@ type Searches struct {
 // mostly over Hải Vân's 400 km² of hills. The budget makes the cost a choice,
 // not a property of the data. Searches go coarse to fine across every area,
 // so a run that hits it has covered every area, just less finely.
+//
+// When a search fails, the venues found so far are returned with the error,
+// not dropped: they cost requests and the free allowance is monthly.
 func DiscoverVenues(ctx context.Context, s maps.PlaceSearcher, areas []Area, cats []VenueCategory, language string, budget int) ([]Venue, Searches, error) {
 	if len(areas) == 0 {
 		return nil, Searches{}, nil
@@ -185,7 +188,9 @@ func runVenueJobs(ctx context.Context, s maps.PlaceSearcher, areas []Area, jobs 
 			if where == "" {
 				where = "city centre"
 			}
-			return nil, n, fmt.Errorf("%s near %s: %w", j.Category.ID, where, err)
+			// What was found so far comes back with the error: it was paid
+			// for, and the caller decides to save it (see DiscoverJobs).
+			return out, n, fmt.Errorf("%s near %s: %w", j.Category.ID, where, err)
 		}
 		if len(places) >= pageSize {
 			// All of a circle's children or none, so what is searched

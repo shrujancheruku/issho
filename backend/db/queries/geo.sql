@@ -58,3 +58,11 @@ where a.city_id = $1;
 -- A venue Google reports as permanently closed is never picked again.
 -- name: RejectVenue :exec
 update app.venues set status = 'rejected' where google_place_id = $1;
+
+-- Area × category pairs discovery already found venues for since a cut-off:
+-- what a rerun after a failed run doesn't search (and pay for) again. Venues
+-- an admin added by hand don't count, they say nothing about a search.
+-- name: ListDiscoveredVenuePairs :many
+select distinct area_id, category_id
+from app.venues
+where city_id = @city_id and added_by is null and last_seen_at >= @since;
