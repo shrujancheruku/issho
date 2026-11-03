@@ -174,16 +174,20 @@ func setup(t *testing.T, mainJa string) (*Handler, *fakeRepo) {
 		t.Fatal(err)
 	}
 	repo := newRepo(map[string]string{uistrings.HumanDir + "/ja.json": mainJa})
+	q := &store{rows: map[string]dbgen.GetTranslationRow{
+		"ja/ui":  {SourceHash: "ui", Lang: "ja", Source: "Save", Context: uistrings.ContextPrefix + ". A button.", Text: "節約"},
+		"ja/act": {SourceHash: "act", Lang: "ja", Source: "Pottery class", Context: "name of a group activity", Text: "陶芸"},
+	}}
+	now := func() time.Time { return time.Unix(1700000000, 0) }
 	h := &Handler{
-		Q: &store{rows: map[string]dbgen.GetTranslationRow{
-			"ja/ui":  {SourceHash: "ui", Lang: "ja", Source: "Save", Context: uistrings.ContextPrefix + ". A button.", Text: "節約"},
-			"ja/act": {SourceHash: "act", Lang: "ja", Source: "Pottery class", Context: "name of a group activity", Text: "陶芸"},
-		}},
-		Catalog:      cat,
-		Translations: &translate.Service{Store: &memCache{rows: map[string]string{}}, Translator: tagger{}},
-		GitHub:       repo,
-		Base:         "main",
-		Now:          func() time.Time { return time.Unix(1700000000, 0) },
+		Editor: &uistrings.Editor{
+			Catalog:      cat,
+			Translations: &translate.Service{Store: &memCache{rows: map[string]string{}}, Translator: tagger{}},
+			GitHub:       repo,
+			Base:         "main",
+			Now:          now,
+		},
+		Reviews: &translate.Reviewer{Q: q, UIContextPrefix: uistrings.ContextPrefix, SamePlaceholders: uistrings.SamePlaceholders, Now: now},
 	}
 	return h, repo
 }
@@ -354,7 +358,7 @@ func TestSaveAndRemove(t *testing.T) {
 		}
 	}
 
-	h.GitHub = nil
+	h.Editor.GitHub = nil
 	if _, err := h.SaveAppString(ctx, connect.NewRequest(&isshov1.SaveAppStringRequest{Lang: "ja", Key: "hi", Text: "やっほー"})); connect.CodeOf(err) != connect.CodeFailedPrecondition {
 		t.Errorf("without GitHub: %v", err)
 	}
@@ -414,7 +418,7 @@ func TestDraftAppString(t *testing.T) {
 		t.Errorf("without a drafter: %v", err)
 	}
 	d := &drafter{answer: "やっほー"}
-	h.Drafter = d
+	h.Editor.Drafter = d
 	res, err := draft(japanese, "ja", "hi", "")
 	if err != nil || res.Msg.Text != "やっほー" {
 		t.Fatalf("draft: %+v %v", res, err)
