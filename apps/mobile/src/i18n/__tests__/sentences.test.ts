@@ -14,6 +14,11 @@ describe('whole-sentence templates render the English they replaced', () => {
     ['last day', 'Last day to sign up: Fri 6 Nov', t('plan.signupByDate', { date: 'Fri 6 Nov' })],
     ['area, distance', `${area}, 20 min away`, t('plan.areaDistance', { area, distance: t('plan.minutes', { minutes: 20 }) })],
     [
+      'area, distance, language',
+      `${area}, 20 min away. Japanese`,
+      t('plan.areaDistanceLanguage', { area, distance: t('plan.minutes', { minutes: 20 }), language: 'Japanese' }),
+    ],
+    [
       'interested, when',
       'Interested: 4. No date yet. We pick one when enough people can go at the same time.',
       t('plan.interestedWhen', { count: 4 }),

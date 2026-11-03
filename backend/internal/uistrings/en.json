@@ -199,6 +199,7 @@
   "onboarding.step": "Step {step} of {total}",
   "onboarding.welcome": "Welcome to Issho",
   "plan.areaDistance": "{area}, {distance}",
+  "plan.areaDistanceLanguage": "{area}, {distance}. {language}",
   "plan.areaInterested": "{area}. Interested: {count}",
   "plan.areaSignupBy": "{area}. Last day to sign up: {date}",
   "plan.blockOut": "Dates you cannot go",

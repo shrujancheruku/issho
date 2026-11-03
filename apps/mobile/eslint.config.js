@@ -7,10 +7,10 @@ const expoConfig = require('eslint-config-expo/flat');
 // catalogue template with placeholders (apps/mobile/README.md, "Writing UI text").
 const T = "CallExpression[callee.name='t']";
 const PUNCT = String.raw`(:|\.|,|;|!|\?|·|–|—|\||\)|：|。|、)`;
-const glued = (selector) => ({
+const glued = (id, selector) => ({
   selector,
   message:
-    'Don\'t glue t() output with punctuation or other t() output: make one catalogue template with placeholders so translators can reorder and punctuate it (apps/mobile/README.md, "Writing UI text").',
+    '[' + id + '] Don\'t glue t() output with punctuation or other t() output: make one catalogue template with placeholders so translators can reorder and punctuate it (apps/mobile/README.md, "Writing UI text").',
 });
 
 module.exports = defineConfig([
@@ -31,12 +31,13 @@ module.exports = defineConfig([
           selector: `CallExpression[callee.property.name='${name}']`,
           message: `${name}() isn't available in Hermes on every device; copy and use the mutating method instead.`,
         })),
-        glued(String.raw`JSXExpressionContainer:has(> ${T}) + JSXText[value=/^\s*${PUNCT}/]`),
-        glued(String.raw`JSXText[value=/(${PUNCT}|\()\s*$/] + JSXExpressionContainer:has(> ${T})`),
-        glued(String.raw`JSXExpressionContainer:has(> ${T}) + JSXText[value=/^ +$/] + JSXExpressionContainer:has(> ${T})`),
-        glued(`TemplateLiteral:has(> ${T}):has(> TemplateElement[value.raw=/./])`),
-        glued(`BinaryExpression[operator='+']:has(> ${T})`),
-        glued(`CallExpression[callee.property.name='join'][callee.object.type='ArrayExpression']:not([arguments.0.value=/^\\s*$/]):has(${T})`),
+        glued('text-after-t', String.raw`JSXExpressionContainer:has(> ${T}) + JSXText[value=/^\s*${PUNCT}/]`),
+        glued('text-before-t', String.raw`JSXText[value=/(${PUNCT}|\()\s*$/] + JSXExpressionContainer:has(> ${T})`),
+        glued('t-beside-t', String.raw`JSXExpressionContainer:has(> ${T}) + JSXText[value=/^ +$/] + JSXExpressionContainer:has(> ${T})`),
+        glued('template-literal', `TemplateLiteral:has(> ${T}):has(> TemplateElement[value.raw=/./])`),
+        glued('plus', `BinaryExpression[operator='+']:has(> ${T})`),
+        glued('join', `CallExpression[callee.property.name='join'][callee.object.type='ArrayExpression']:not([arguments.0.value=/^\\s*$/]):has(${T})`),
+        glued('punctuation-after-t', String.raw`JSXExpressionContainer:has(> ${T}) ~ JSXExpressionContainer:has(TemplateElement[value.raw=/^${PUNCT}/], Literal[value=/^${PUNCT}/])`),
         // Left and right don't mirror in right-to-left languages; start and
         // end do. (Absolute left/right positions and map padding are allowed.)
         {
