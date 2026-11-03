@@ -17,6 +17,12 @@ name: deploy-web
 #   secret   CLOUDFLARE_API_TOKEN    scoped to Workers Scripts: Edit
 # Without API_URL the apps job is skipped, not failed.
 
+# The run's title records the commit it deployed. The run's own head_sha is
+# main's tip when the run was created, not workflow_run.head_sha, so it can't
+# say what was deployed; changes reads this title back from the last run
+# whose job for each target succeeded instead.
+run-name: deploy ${{ github.event.workflow_run.head_sha || github.sha }}
+
 on:
   workflow_run:
     workflows: [ci]
@@ -65,21 +71,49 @@ jobs:
           if [ "${{ github.event_name }}" = workflow_dispatch ]; then
             echo "site=true" >> "$GITHUB_OUTPUT"; echo "apps=true" >> "$GITHUB_OUTPUT"; exit 0
           fi
-          # The last commit this workflow ran successfully for, not the
-          # parent: skipped runs (CI red) don't count, so their changes ride
-          # along with the next deploy. No earlier run, or one no longer in
-          # the history: deploy everything.
-          base=$(gh run list --workflow deploy-web.yml --branch main --status success \
-            --limit 1 --json headSha --jq '.[0].headSha // empty')
-          if [ -z "$base" ] || ! git cat-file -e "$base^{commit}" 2>/dev/null; then
-            echo "no earlier deploy to diff against; deploying"
-            echo "site=true" >> "$GITHUB_OUTPUT"; echo "apps=true" >> "$GITHUB_OUTPUT"; exit 0
+          # Out-of-order finish: if main has moved on, a newer commit's run
+          # deploys this one too (it diffs against the same bases). Without
+          # this, CI finish order would decide deploy order and an older
+          # commit could replace a newer one.
+          git fetch --quiet origin main
+          if [ "$(git rev-parse origin/main)" != "$SHA" ]; then
+            echo "main has moved on; the newer run deploys this"
+            echo "site=false" >> "$GITHUB_OUTPUT"; echo "apps=false" >> "$GITHUB_OUTPUT"; exit 0
           fi
-          echo "last deployed: $base"
-          files=$(git diff --name-only "$base" "$SHA")
-          echo "$files"
-          echo "site=$(echo "$files" | grep -qE '^(site/|\.github/workflows/deploy-web\.yml$)' && echo true || echo false)" >> "$GITHUB_OUTPUT"
-          echo "apps=$(echo "$files" | grep -qE '^(apps/admin/|apps/mobile/|packages/|pnpm-lock\.yaml$|scripts/deploy-web\.sh$|\.github/workflows/deploy-web\.yml$)' && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          # The last commit a deploy job actually deployed, not the parent and
+          # not just the last successful run: runs for red CI are skipped, a
+          # run that skipped because main moved on or because the target isn't
+          # configured still concludes success, and none of those deployed
+          # anything. So walk the recent successful runs and take the first
+          # whose deploy job (arg 2) succeeded. The commit comes from the run
+          # title (run-name above), since the run's own head_sha isn't the
+          # deployed one. An old-format title (the first run after this
+          # change) isn't parsable and counts as no earlier deploy.
+          last_deployed() {
+            gh run list --workflow "$1" --branch main --status success --limit 20 \
+              --json databaseId,displayTitle --jq '.[] | "\(.databaseId) \(.displayTitle)"' |
+            while read -r id title; do
+              sha=$(echo "$title" | sed -n 's/^deploy \([0-9a-f]\{40\}\)$/\1/p')
+              [ -n "$sha" ] || continue
+              job=$(gh run view "$id" --json jobs --jq "[.jobs[] | select(.name == \"$2\") | .conclusion][0]")
+              if [ "$job" = success ]; then echo "$sha"; break; fi
+            done || true  # gh may get SIGPIPE after the break; pipefail would abort
+          }
+          # Has anything under the pattern changed since the target's last
+          # deploy? No earlier deploy, or one no longer in the history: yes.
+          changed() {
+            base=$(last_deployed "$1" "$2")
+            if [ -z "$base" ] || ! git cat-file -e "$base^{commit}" 2>/dev/null; then
+              echo "$2: no earlier deploy to diff against; deploying" >&2; echo true; return
+            fi
+            echo "$2: last deployed $base" >&2
+            files=$(git diff --name-only "$base" "$SHA")  # not piped into grep -q: SIGPIPE under pipefail
+            echo "$files" | grep -qE "$3" && echo true || echo false
+          }
+          # Each target against its own last deploy: its job is "site" or
+          # "deploy" (the apps).
+          echo "site=$(changed deploy-web.yml site '^(site/|\.github/workflows/deploy-web\.yml$)')" >> "$GITHUB_OUTPUT"
+          echo "apps=$(changed deploy-web.yml deploy '^(apps/admin/|apps/mobile/|packages/|pnpm-lock\.yaml$|scripts/deploy-web\.sh$|\.github/workflows/deploy-web\.yml$)')" >> "$GITHUB_OUTPUT"
 
   site:
     needs: changes
