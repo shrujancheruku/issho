@@ -19,9 +19,6 @@ func TestTiming(t *testing.T) {
 		t.Fatal(err)
 	}
 	tm := DefaultTiming()
-	if err := tm.Validate(); err != nil {
-		t.Fatal(err)
-	}
 	// 20:00 UTC on Tuesday 1 January is already Wednesday 2 January in Tokyo.
 	now := time.Date(2030, 1, 1, 20, 0, 0, 0, time.UTC)
 	w := tm.Round(now, tokyo)
@@ -41,11 +38,6 @@ func TestTiming(t *testing.T) {
 	if got := confirmBy(matching.Occasion{Date: time.Date(2030, 1, 5, 0, 0, 0, 0, time.UTC)}, tokyo); !got.Equal(time.Date(2030, 1, 4, 0, 0, 0, 0, tokyo)) {
 		t.Errorf("confirmBy = %v", got)
 	}
-	for _, bad := range []Timing{{LeadDays: 0, WindowDays: 14, SignupDays: 7}, {LeadDays: 2, WindowDays: 9, SignupDays: 7}} {
-		if bad.Validate() == nil {
-			t.Errorf("%+v: no error", bad)
-		}
-	}
 }
 
 // TestIntegrationRunner opens a plan for a city of eight people who love the
@@ -58,7 +50,7 @@ func TestIntegrationRunner(t *testing.T) {
 	for _, id := range f.users {
 		f.addProfile(t, id, "ja")
 	}
-	r := &Runner{DB: f.pool, Timing: DefaultTiming(), Log: slog.New(slog.NewTextHandler(io.Discard, nil))}
+	r := &Runner{DB: f.pool, Log: slog.New(slog.NewTextHandler(io.Discard, nil))}
 	// Tuesday 1 January, 18:00 in Tokyo: the window runs 3–16 January.
 	now := time.Date(2030, 1, 1, 9, 0, 0, 0, time.UTC)
 

@@ -43,7 +43,7 @@ func TestIntegrationRoutes(t *testing.T) {
 		t.Fatal(err)
 	}
 	finder := &fakeRoutes{}
-	r := &Runner{DB: f.pool, Timing: DefaultTiming(), Log: slog.New(slog.NewTextHandler(io.Discard, nil)), Routes: finder}
+	r := &Runner{DB: f.pool, Log: slog.New(slog.NewTextHandler(io.Discard, nil)), Routes: finder}
 
 	now := time.Now()
 	if rr, err := r.RefreshRoutes(ctx, f.city, now); err != nil || rr.Computed != 1 || rr.Cleared != 0 || finder.calls != 1 {
@@ -75,7 +75,7 @@ func TestIntegrationRoutes(t *testing.T) {
 		t.Errorf("after %s: computed %d, want 1", RouteRefreshAge, rr.Computed)
 	}
 	// Without a finder (no Maps key), a route past the limit is cleared.
-	noKey := &Runner{DB: f.pool, Timing: DefaultTiming(), Log: r.Log}
+	noKey := &Runner{DB: f.pool, Log: r.Log}
 	if rr, err := noKey.RefreshRoutes(ctx, f.city, recomputedAt.Add(RouteMaxAge+time.Hour)); err != nil || rr.Computed != 0 || rr.Cleared != 1 {
 		t.Errorf("past the limit without a key: computed=%d cleared=%d err=%v; want 1 cleared", rr.Computed, rr.Cleared, err)
 	}

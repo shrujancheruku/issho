@@ -108,7 +108,7 @@ func TestIntegrationBaselineSchema(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		defer tx.Rollback(ctx) //nolint:errcheck // the rollback is the point
+		defer tx.Rollback(ctx)                                //nolint:errcheck // the rollback is the point
 		_, err = tx.Conn().PgConn().Exec(ctx, down).ReadAll() // several statements: simple protocol
 		if err == nil || !strings.Contains(err.Error(), "refusing") {
 			t.Errorf("Down with app.users rows: err = %v, want a refusal", err)

@@ -38,6 +38,10 @@ type Diff struct {
 	// rows written.
 	TravelTimesRebuilt bool
 	TravelTimes        int
+	// MatchingChanged and MeetingPlacesChanged are set when the stored
+	// matching overlay or meeting-place list differs from the pack's, which
+	// includes a reset to the defaults because the pack dropped the field.
+	MatchingChanged, MeetingPlacesChanged bool
 }
 
 // ErrTravelTimes wraps a router failure in Apply. The pack is already

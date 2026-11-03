@@ -214,7 +214,7 @@ func (h *ReviewHandler) ApproveProposal(ctx context.Context, req *connect.Reques
 	if err != nil {
 		return nil, err
 	}
-	if err := h.Svc.ApproveProposal(ctx, id, c.UserID, h.Timing, h.now()); err != nil {
+	if err := h.Svc.ApproveProposal(ctx, id, c.UserID, h.now()); err != nil {
 		return nil, proposalError(err)
 	}
 	return connect.NewResponse(&isshov1.ApproveProposalResponse{}), nil

@@ -148,7 +148,7 @@ func TestIntegrationEvents(t *testing.T) {
 
 	// At the deadline one confirmation isn't enough: the group and the event
 	// are cancelled, and c goes back to waiting for the plan.
-	r := &Runner{DB: f.pool, Timing: DefaultTiming(), Log: slog.New(slog.NewTextHandler(io.Discard, nil))}
+	r := &Runner{DB: f.pool, Log: slog.New(slog.NewTextHandler(io.Discard, nil))}
 	rep, err := r.Settle(ctx, f.city, confirmBy)
 	if err != nil || rep != (SettleReport{Cancelled: 1}) {
 		t.Fatalf("Settle = %+v, %v", rep, err)

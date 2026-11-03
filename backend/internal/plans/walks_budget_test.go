@@ -30,7 +30,7 @@ func TestIntegrationSuggestDefersWalksWithoutBudget(t *testing.T) {
 	}
 	log := slog.New(slog.NewTextHandler(io.Discard, nil))
 	prop, router := &walkProposer{}, &walkRouter{}
-	r := &Runner{DB: f.pool, Timing: DefaultTiming(), Log: log, WalkRoutes: router,
+	r := &Runner{DB: f.pool, Log: log, WalkRoutes: router,
 		Walks: &walks.Composer{Proposer: prop, Places: findAll{}, Routes: router, Rules: walks.DefaultRules(), Log: log}}
 	now := time.Date(2030, 1, 1, 9, 0, 0, 0, time.UTC)
 
@@ -82,7 +82,7 @@ func TestIntegrationSuggestDefersWhenBudgetRunsOutBetweenAttempts(t *testing.T) 
 	log := slog.New(slog.NewTextHandler(io.Discard, nil))
 	prop, router := &walkProposer{bad: true}, &walkRouter{}
 	clock := time.Now()
-	r := &Runner{DB: f.pool, Timing: DefaultTiming(), Log: log, WalkRoutes: router,
+	r := &Runner{DB: f.pool, Log: log, WalkRoutes: router,
 		Walks: &walks.Composer{Proposer: slowWalkProposer{prop, &clock}, Places: findAll{}, Routes: router, Rules: walks.DefaultRules(), Log: log,
 			Clock: func() time.Time { return clock }}}
 	// 7 minutes left: enough to start; the first proposal uses two.

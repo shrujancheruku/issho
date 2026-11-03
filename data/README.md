@@ -79,9 +79,19 @@ Matching is on the primary type, so prefer specific types (`flea_market`, `dance
     { "activity_id": "seasonal-viewing", "months": [3, 4] },    // seasonal
     { "activity_id": "beach-day", "disabled": true },           // hide in this city
     { "activity_id": "sento", "name": { "en": "Public bath" } } // local name
+  ],
+  "matching": {                             // optional: a partial matching.Config over the defaults (backend/README.md, "Matching")
+    "plans_per_pool": 4,
+    "timing": { "block_starts": { "evening": "21:00" } }   // a Spanish dinner; the other blocks keep their defaults
+  },
+  "meeting_places": [                       // optional: searched near an area's point for plans that start without a venue, in this order
+    { "types": ["park", "cafe"], "radius_m": 800 },        // Google Places (New) primary types
+    { "types": ["train_station", "subway_station"], "radius_m": 1000 }
   ]
 }
 ```
+
+**City behaviour in the pack.** `matching` overlays `matching.DefaultConfig` key by key (nested objects too); an unknown key or a value `Config.Validate` rejects fails validation, so a typo can't leave a setting at its default. `matching.timing` sets when rounds happen: `lead_days` (2; at most 14), `window_days` (14; at most 60), `signup_days` (7; at most 30; lead + signup must stay below the window), `cooldown_days` (14; 0–365) and `block_starts`, the local start of each part of the day as `"HH:MM"` (morning `10:00`, afternoon `14:00`, evening `18:30`), in increasing order. `meeting_places` is the ordered list of searches (place types and a radius in metres, up to 50 000); the first to find a place wins. The `types` are Google Places (New) **primary types** (see [table A](https://developers.google.com/maps/documentation/places/web-service/place-types)); validation checks only that the list isn't empty and the radius is 1–50 000, so a misspelt type finds nothing rather than failing: check a new list against a few real areas. Without it a city searches stations within 1 km, then parks within 1.5 km. A pack with neither field behaves exactly as before. Both are hand edits in a pull request: the admin SPA's editor keeps them as they are, and applying a pack **replaces** the city's values, so removing a field resets it to the defaults; the apply report (admin SPA) says when either changed or was reset. `review` and `approved_venues_only` are admin toggles, not facts about the city, so applying a pack never writes them.
 
 **Boundaries.** An area with a `boundary` has its venues searched over the whole of it, and every venue (found or added by hand) goes to the area that contains it; places outside every area are left out. Without one, venues are searched within each category's radius of the point and go to the nearest point, as for Austin today. `make boundaries CITY=<city>` fetches each area's outline from OpenStreetMap by its `osm_id` (Nominatim, simplified to about 20 m) and rewrites the pack; validation checks that each point is inside its own boundary and nobody else's. The admin SPA's editor keeps boundaries as they are (it doesn't edit them). Boundaries are OpenStreetMap data, © OpenStreetMap contributors, available under the [Open Database License](https://opendatacommons.org/licenses/odbl/).
 
@@ -101,7 +111,7 @@ An apply is also **refused when it would delete curated venues** (approved, reje
 
 `tool seed` logs a warning listing the removed areas, the replaced areas (old, new, and how many people, crews and plans moved) and the removed overrides. The admin SPA's apply answers with an error that names them when it refuses. There is no dry run: the pull request review is the preview.
 
-**Retiring an area** (a hand edit in a pull request; the editor can't remove areas): delete its entry and list its id in the `replaces` of the area that covers it. Validation rejects a replaced id that is still an area of any pack, or replaced twice; `Apply` rejects one that belongs to another city. Keep the `replaces` entry until every environment (local, `issho-dev`, production) has applied the pack; after that it is a no-op and can go. The editor keeps `osm_id`, `boundary` and `replaces` from `main` in its pull requests.
+**Retiring an area** (a hand edit in a pull request; the editor can't remove areas): delete its entry and list its id in the `replaces` of the area that covers it. Validation rejects a replaced id that is still an area of any pack, or replaced twice; `Apply` rejects one that belongs to another city. Keep the `replaces` entry until every environment (local, `issho-dev`, production) has applied the pack; after that it is a no-op and can go. The editor keeps `osm_id`, `boundary`, `replaces`, `matching` and `meeting_places` from `main` in its pull requests.
 
 ## Adding a city
 

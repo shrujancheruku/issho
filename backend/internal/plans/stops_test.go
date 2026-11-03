@@ -105,7 +105,7 @@ func TestIntegrationEditStops(t *testing.T) {
 
 	now := time.Date(2030, 1, 1, 9, 0, 0, 0, time.UTC)
 	svc := &Service{DB: f.pool, Places: fm}
-	h := &ReviewHandler{Svc: svc, Timing: DefaultTiming(), Now: func() time.Time { return now }, Places: fm, Routes: fm}
+	h := &ReviewHandler{Svc: svc, Now: func() time.Time { return now }, Places: fm, Routes: fm}
 	adminCtx := auth.WithCaller(ctx, auth.Caller{UserID: uuid.New(), Admin: true})
 
 	walk := walks.Walk{Title: "Temples", Summary: "A walk.", Route: maps.Route{Polyline: "old", Duration: 30 * time.Minute}, Stops: []walks.WalkStop{

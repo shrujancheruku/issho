@@ -85,7 +85,26 @@ func TestValidatePackRejects(t *testing.T) {
 	if err := ValidatePack(bounded, nil); err != nil {
 		t.Fatalf("valid pack with a boundary rejected: %v", err)
 	}
+	withBlocks := good
+	withBlocks.Matching = []byte(`{"timing": {"block_starts": {"evening": "21:00"}}, "plans_per_pool": 3}`)
+	withBlocks.MeetingPlaces = []MeetingPlace{{Types: []string{"park"}, RadiusM: 800}}
+	if err := ValidatePack(withBlocks, nil); err != nil {
+		t.Fatalf("valid matching and meeting_places rejected: %v", err)
+	}
 	cases := map[string]func(p *Pack){
+		"unknown matching key": func(p *Pack) { p.Matching = []byte(`{"plans_per_poool": 3}`) },
+		"invalid matching":     func(p *Pack) { p.Matching = []byte(`{"min_group_size": 1}`) },
+		"invalid timing":       func(p *Pack) { p.Matching = []byte(`{"timing": {"block_starts": {"evening": "7pm"}}}`) },
+		"matching not object":  func(p *Pack) { p.Matching = []byte(`[1]`) },
+		"meeting place without types": func(p *Pack) {
+			p.MeetingPlaces = []MeetingPlace{{RadiusM: 500}}
+		},
+		"meeting place without radius": func(p *Pack) {
+			p.MeetingPlaces = []MeetingPlace{{Types: []string{"park"}}}
+		},
+		"meeting place blank type": func(p *Pack) {
+			p.MeetingPlaces = []MeetingPlace{{Types: []string{""}, RadiusM: 500}}
+		},
 		"bad mode":      func(p *Pack) { p.TravelModes = []string{"teleport"} },
 		"bad lang code": func(p *Pack) { p.Languages = []string{"ja", "Japanese"} },
 		"translated override": func(p *Pack) {

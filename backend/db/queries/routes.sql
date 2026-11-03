@@ -62,3 +62,8 @@ limit @max;
 
 -- name: SetMeetingPlace :exec
 update app.plans set meeting_place_id = @place_id where id = @id;
+
+-- The city's ordered meeting-place searches (cities.meeting_places, from its
+-- pack); '[]' = the defaults (cities.DefaultMeetingPlaces).
+-- name: GetCityMeetingPlaces :one
+select meeting_places from app.cities where id = $1;

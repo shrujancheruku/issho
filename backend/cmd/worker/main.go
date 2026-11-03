@@ -92,7 +92,7 @@ func run() error {
 	} else {
 		slog.Warn("GOOGLE_MAPS_API_KEY not set: travel times are not rebuilt (and none are deleted); venue hours not checked; no walking plans are opened")
 	}
-	client, err := worker.NewClient(pool, slog.Default(), plans.DefaultTiming(), notifier, m)
+	client, err := worker.NewClient(pool, slog.Default(), notifier, m)
 	if err != nil {
 		return err
 	}
