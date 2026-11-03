@@ -119,20 +119,10 @@ jobs:
           done
           echo "PostGIS not healthy after 90s"; cat "$RUNNER_TEMP/postgis.log"; docker logs postgis || true
           exit 1
-      - name: Migrations apply, roll back and re-apply; seed loads
-        working-directory: backend
-        run: |
-          go run ./cmd/tool migrate up
-          go run ./cmd/tool migrate down
-          go run ./cmd/tool migrate up
-          go run ./cmd/tool seed ../data/citypacks/tokyo.json ../data/citypacks/austin.json ../data/citypacks/da-nang-hoi-an.json
-      - name: DB integration tests and tool dry-runs (no Google calls)
-        working-directory: backend
-        run: |
-          TEST_DATABASE_URL="$DATABASE_URL" go test ./internal/geo/ ./internal/profile/ ./internal/plans/ ./internal/crews/ ./internal/chat/ ./internal/chatws/ ./internal/moderation/ ./internal/translations/ ./internal/notifications/ ./internal/cities/ ./internal/citypacks/ ./internal/curation/ -run Integration -v
-          go run ./cmd/tool build-matrix -dry-run tokyo
-          go run ./cmd/tool discover-venues -dry-run austin
-          go run ./cmd/tool discover-venues -dry-run da-nang-hoi-an  # areas with boundaries, read back from PostGIS
+      # Migrations up/down/up, seed, DB integration tests and tool dry-runs: one
+      # script, shared with `make test-db`.
+      - name: Database checks
+        run: scripts/db-checks.sh
       - name: Migration bookkeeping stays out of the public schema
         # Supabase's Data API exposes public tables to anonymous clients; see internal/platform/db.
         run: |
