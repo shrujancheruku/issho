@@ -69,12 +69,59 @@ See [../data/README.md](../data/README.md). It's a JSON file plus `make seed`, w
 - **Mobile:** `cd apps/mobile && npx expo install <pkg>`. This picks SDK-compatible versions.
 - **Other TS packages:** `pnpm add <pkg>` in the package's folder.
 
+## CI and branch protection
+
+`.github/workflows/ci.yml` runs on every push to `main`, every pull request, and on demand (`workflow_dispatch`). A new push to a PR cancels its earlier run; runs on `main` always finish, because the deploys wait for them. Every job has a 15-minute timeout. There is deliberately no Turbo cache (it would save about 20s of `typescript` and risks a cache hit skipping a check).
+
+- **Required checks on `main`:** `roadmap`, `secrets`, `commits`, `codegen`, `backend`, `typescript`, `image`.
+- **`proto-breaking` is not required.** It runs `buf breaking` against `main`. A PR with the `breaking-ok` label skips it (a deliberate override); without the label it shows red. `codegen`'s drift check runs either way.
+- **Release PR:** a PR opened with `GITHUB_TOKEN` doesn't trigger workflows, so `release-please.yml` dispatches `ci.yml` on the release branch (`gh workflow run`, `actions: write`, no PAT or App). On a dispatch, `roadmap` compares against the merge-base with `main` and `commits` runs commitlint over the commits since `main`. A dispatched run is not a `push`, so it can't trigger a deploy.
+- **Integration tests** run as `go test ./... -run Integration`, so a new package is picked up. They call `testfixture.DatabaseURL(t)`, which skips without `TEST_DATABASE_URL` locally but fails when `CI=true`.
+
+### Settings that live on GitHub, not in the repo
+
+The owner applies these once (they need admin rights). Create the label and the ruleset:
+
+```sh
+gh label create breaking-ok --repo shrujancheruku/issho --color D93F0B \
+  --description "Intentional breaking proto change: skips proto-breaking"
+
+gh api -X POST repos/shrujancheruku/issho/rulesets --input - <<'JSON'
+{
+  "name": "main",
+  "target": "branch",
+  "enforcement": "active",
+  "conditions": { "ref_name": { "include": ["~DEFAULT_BRANCH"], "exclude": [] } },
+  "rules": [
+    { "type": "deletion" },
+    { "type": "non_fast_forward" },
+    { "type": "pull_request", "parameters": {
+        "required_approving_review_count": 0,
+        "dismiss_stale_reviews_on_push": false,
+        "require_code_owner_review": false,
+        "require_last_push_approval": false,
+        "required_review_thread_resolution": false,
+        "allowed_merge_methods": ["squash"] } },
+    { "type": "required_status_checks", "parameters": {
+        "strict_required_status_checks_policy": true,
+        "required_status_checks": [
+          { "context": "roadmap" }, { "context": "secrets" }, { "context": "commits" },
+          { "context": "codegen" }, { "context": "backend" }, { "context": "typescript" },
+          { "context": "image" } ] } }
+  ]
+}
+JSON
+```
+
+That requires the checks, requires branches to be up to date, allows squash merges only, and blocks force-pushes and deletion. Add a bypass actor in the ruleset if the owner should be able to merge without a PR. Check it afterwards with `gh api repos/shrujancheruku/issho/rulesets`. The next release-please PR should show all seven checks green without anyone pushing to it; if `commits` or another check doesn't attach, look at the dispatched run in the Actions tab.
+
 ## Testing
 
 | What | How | Where |
 |---|---|---|
 | Go unit tests | `make test` | `*_test.go` next to the code; table-driven style |
 | Auth | Tests sign JWTs with a throwaway ES256 key | `internal/platform/auth/auth_test.go` |
+| Go integration tests | `make test-db` (`go test ./... -run Integration`; `TestIntegration*` names) | CI `backend` job; they fail instead of skipping when `CI=true` |
 | Migrations | Up, down, up, then seed against PostGIS | CI `backend` job; locally against `supabase start` |
 | TypeScript | `pnpm typecheck`, `pnpm lint` (Turborepo) | all workspace packages |
 | Mobile unit tests | `pnpm test` (Jest, `jest-expo` preset) | `apps/mobile/src/**/__tests__/*.test.ts` |

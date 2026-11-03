@@ -11,6 +11,7 @@ import (
 
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
+	"github.com/shrujancheruku/issho/backend/internal/testfixture"
 	"github.com/shrujancheruku/issho/backend/internal/translate"
 	"github.com/shrujancheruku/issho/backend/internal/uistrings"
 )
@@ -20,10 +21,7 @@ import (
 // placeholders, and a machine translation never overwrites it afterwards.
 // Skipped unless TEST_DATABASE_URL is set.
 func TestIntegrationCatalogReview(t *testing.T) {
-	url := os.Getenv("TEST_DATABASE_URL")
-	if url == "" {
-		t.Skip("TEST_DATABASE_URL not set")
-	}
+	url := testfixture.DatabaseURL(t)
 	ctx := context.Background()
 	pool, err := pgxpool.New(ctx, url)
 	if err != nil {

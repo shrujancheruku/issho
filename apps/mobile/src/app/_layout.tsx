@@ -7,10 +7,13 @@ import {
 import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { ActivityIndicator, Pressable, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
+import { LoadFailed, LoadState } from '@/components/query-screen';
+import { ScreenFrame } from '@/components/screen-frame';
 import { SplashOverlay } from '@/components/splash-overlay';
+import { TextLink } from '@/components/text-link';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Colors, Spacing } from '@/constants/theme';
@@ -107,21 +110,18 @@ function RootNavigator() {
   // Signed in, but the API hasn't told us yet whether the user is onboarded.
   if (session && onboarded === null) {
     return (
-      <ThemedView style={styles.center}>
-        {accountError ? (
-          <>
-            <ThemedText>{t('error.network')}</ThemedText>
-            <Pressable onPress={retryAccount}>
-              <ThemedText type="link">{t('common.retry')}</ThemedText>
-            </Pressable>
-            <Pressable onPress={signOut}>
-              <ThemedText type="link">{t('account.signOut')}</ThemedText>
-            </Pressable>
-          </>
-        ) : (
-          <ActivityIndicator />
-        )}
-      </ThemedView>
+      <ScreenFrame>
+        <ThemedView style={styles.center}>
+          {accountError ? (
+            <>
+              <LoadFailed center onRetry={retryAccount} />
+              <TextLink center muted label={t('account.signOut')} onPress={signOut} />
+            </>
+          ) : (
+            <LoadState queries={[]} />
+          )}
+        </ThemedView>
+      </ScreenFrame>
     );
   }
 

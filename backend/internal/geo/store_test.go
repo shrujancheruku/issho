@@ -2,7 +2,7 @@ package geo
 
 import (
 	"context"
-	"os"
+	"errors"
 	"testing"
 	"time"
 
@@ -10,16 +10,14 @@ import (
 
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	"github.com/shrujancheruku/issho/backend/internal/maps"
+	"github.com/shrujancheruku/issho/backend/internal/testfixture"
 )
 
 // TestIntegrationStore runs the store queries against a real, migrated and
 // seeded database. It's skipped unless TEST_DATABASE_URL is set (CI sets it).
 // It creates its own throwaway city and deletes it afterwards.
 func TestIntegrationStore(t *testing.T) {
-	url := os.Getenv("TEST_DATABASE_URL")
-	if url == "" {
-		t.Skip("TEST_DATABASE_URL not set")
-	}
+	url := testfixture.DatabaseURL(t)
 	ctx := context.Background()
 	pool, err := pgxpool.New(ctx, url)
 	if err != nil {
@@ -131,9 +129,12 @@ func TestIntegrationStore(t *testing.T) {
 	if err := pool.QueryRow(ctx, "select count(*) from app.area_travel_times where from_area_id like $1", city+"%").Scan(&rows); err != nil || rows != 5 {
 		t.Errorf("after the rebuild: %d rows, %v; want 5", rows, err)
 	}
-	// Without a Maps key nothing can be rebuilt: rows past the limit are deleted.
+	// Without a Maps key nothing is rebuilt and nothing is deleted, however old.
 	age(31)
-	if rebuilt, deleted, err := Refresh(ctx, pool, nil, city, now); err != nil || rebuilt || deleted != 5 {
-		t.Errorf("no router: rebuilt=%v deleted=%d err=%v; want all 5 deleted", rebuilt, deleted, err)
+	if rebuilt, deleted, err := Refresh(ctx, pool, nil, city, now); !errors.Is(err, ErrNoRouter) || rebuilt || deleted != 0 {
+		t.Errorf("no router: rebuilt=%v deleted=%d err=%v; want ErrNoRouter and no deletes", rebuilt, deleted, err)
+	}
+	if err := pool.QueryRow(ctx, "select count(*) from app.area_travel_times where from_area_id like $1", city+"%").Scan(&rows); err != nil || rows != 5 {
+		t.Errorf("no router: %d rows, %v; want 5 kept", rows, err)
 	}
 }

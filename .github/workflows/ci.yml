@@ -3,23 +3,56 @@ name: ci
 on:
   push:
     branches: [main]
+  # labeled/unlabeled re-run CI so adding or removing `breaking-ok` updates
+  # the proto-breaking result.
   pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+  # Dispatched by release-please.yml on the release PR's branch: PRs opened
+  # with GITHUB_TOKEN don't trigger workflows, so without this the release PR
+  # would never get its required checks. Deploys ignore it: they run only for
+  # a `push` CI run (deploy-*.yml check workflow_run.event).
+  workflow_dispatch:
+
+# A newer push to a PR cancels its older run. Runs on main always finish,
+# because deploys wait for them: each push run gets its own group (by SHA),
+# since GitHub drops a *queued* run when a newer one joins the same group, even
+# with cancel-in-progress off. A dispatched run is keyed by its branch.
+concurrency:
+  group: ci-${{ github.event_name == 'push' && github.sha || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+# No Turbo cache (checked 2026-11): it would save about 20s off `typescript`,
+# which isn't the slowest job, and a cache hit could skip a check when an input
+# turbo.json doesn't declare changed. Not worth that risk.
 
 jobs:
   # Every push/PR that changes code must also update docs/ROADMAP.md.
   roadmap:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: Roadmap updated with this change
-        run: scripts/check-roadmap.sh "${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}"
+        # A dispatch has no event base: compare with where the branch left main.
+        run: |
+          case "$EVENT" in
+            pull_request) base="$PR_BASE" ;;
+            workflow_dispatch) git fetch --no-tags origin main && base=$(git merge-base origin/main HEAD) ;;
+            *) base="$BEFORE" ;;
+          esac
+          scripts/check-roadmap.sh "$base"
+        env:
+          EVENT: ${{ github.event_name }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          BEFORE: ${{ github.event.before }}
 
   # Scans every commit in the push/PR for secrets (see .gitleaks.toml). Runs on
   # every event because the repo is public: a leaked key must fail loudly.
   secrets:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
         with:
@@ -30,21 +63,38 @@ jobs:
           cache: false
       - run: make secrets-scan
 
+  # On a dispatch (the release PR) there is no PR event, so lint the commits
+  # since main by hand rather than rely on a skipped required check counting
+  # as passed.
   commits:
-    if: github.event_name == 'pull_request'
+    if: github.event_name != 'push'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - uses: wagoid/commitlint-github-action@v6
+        if: github.event_name == 'pull_request'
         with:
           configFile: commitlint.config.mjs
+      - uses: pnpm/action-setup@v6
+        if: github.event_name == 'workflow_dispatch'
+      - uses: actions/setup-node@v7
+        if: github.event_name == 'workflow_dispatch'
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+        if: github.event_name == 'workflow_dispatch'
+      - run: git fetch --no-tags origin main && pnpm exec commitlint --config commitlint.config.mjs --from "$(git merge-base origin/main HEAD)" --to HEAD
+        if: github.event_name == 'workflow_dispatch'
 
   # Proto checks and codegen drift. Kept apart from `backend` because only this
   # needs Node (protoc-gen-es), and the two jobs then run side by side.
   codegen:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
         with:
@@ -79,14 +129,40 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Proto lint
         run: go tool buf lint proto
-      - name: Proto breaking changes
-        if: github.event_name == 'pull_request'
-        run: go tool buf breaking proto --against '.git#branch=origin/main,subdir=proto'
       - name: Generated code is up to date
         run: make gen && git diff --exit-code
 
+  # buf breaking, apart from `codegen` so a failure here doesn't skip the drift
+  # check there. NOT a required check: the `breaking-ok` label skips it (a
+  # deliberate override), and an unlabeled breaking PR still shows it red.
+  # Same Go cache key as codegen but restore-only, so it adds no save step and
+  # finishes well before codegen. Needs only Go (no Node, no generators).
+  proto-breaking:
+    if: >-
+      github.event_name == 'pull_request' &&
+      !contains(github.event.pull_request.labels.*.name, 'breaking-ok')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: backend/go.mod
+          cache: false
+      - uses: actions/cache/restore@v6
+        with:
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+          key: go-${{ runner.os }}-codegen-v2-${{ hashFiles('backend/go.mod', 'backend/go.sum') }}
+          restore-keys: go-${{ runner.os }}-codegen-v2-
+      - run: go tool buf breaking proto --against '.git#branch=origin/main,subdir=proto'
+
   backend:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     env:
       DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
     steps:
@@ -120,9 +196,11 @@ jobs:
             ~/.cache/go-build
           key: go-${{ runner.os }}-backend-${{ hashFiles('backend/go.sum') }}
           restore-keys: go-${{ runner.os }}-backend-
+      # Integration tests are skipped here (the database isn't up yet, and CI=true
+      # makes them fail rather than skip); "Database checks" runs them.
       - name: Vet and test
         working-directory: backend
-        run: go vet ./... && go test ./...
+        run: go vet ./... && go test ./... -skip Integration
       - name: Wait for PostGIS
         run: |
           for _ in $(seq 90); do
@@ -142,6 +220,7 @@ jobs:
 
   typescript:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
@@ -173,6 +252,7 @@ jobs:
   # building, and its binaries start. Not pushed anywhere.
   image:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     env:
       # The build record artifact and job summary aren't read by anyone.
       DOCKER_BUILD_SUMMARY: false

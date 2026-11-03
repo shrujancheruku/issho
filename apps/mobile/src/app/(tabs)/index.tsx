@@ -1,18 +1,17 @@
 import { PlanLevel, type Crew, type FeedPlan, type MyEvent } from '@issho/api-client';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 
 import { Avatar } from '@/components/avatar';
 import { ListGroup, ListRow } from '@/components/list-group';
 import { PrimaryButton } from '@/components/primary-button';
-import { LoadFailed } from '@/components/query-screen';
+import { LoadState } from '@/components/query-screen';
+import { ScreenFrame } from '@/components/screen-frame';
 import { ScreenHeader, SectionTitle } from '@/components/screen-header';
 import { TextLink } from '@/components/text-link';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { BottomTabInset, Spacing } from '@/constants/theme';
 import { crewName } from '@/features/crews/name';
 import { formatStart, lastSignupDay } from '@/features/plans/format';
 import { levelColors, levelLabels } from '@/features/plans/level';
@@ -29,7 +28,10 @@ type Names = ReturnType<typeof usePlanNames>;
 
 /** Developer aid: API reachability and build version. Development builds only. */
 function ApiStatus() {
-  const health = useQuery({ queryKey: keys.health, queryFn: () => api.health.check({}) });
+  const health = useQuery({
+    queryKey: keys.health,
+    queryFn: () => api.health.check({}),
+  });
   if (health.isPending) return <ThemedText type="code">API …</ThemedText>;
   if (health.isError) return <ThemedText type="code">API unreachable</ThemedText>;
   return (
@@ -63,16 +65,10 @@ export default function TogetherScreen() {
   const others = needsYou.filter((n) => n.kind !== 'invite');
 
   let body;
-  if (failed && empty) {
+  if ((failed && empty) || loading) {
     body = (
       <View style={styles.center}>
-        <LoadFailed onRetry={refresh} center />
-      </View>
-    );
-  } else if (loading) {
-    body = (
-      <View style={styles.center}>
-        <ActivityIndicator />
+        <LoadState queries={[events, crews, feed]} center />
       </View>
     );
   } else if (empty) {
@@ -125,22 +121,27 @@ export default function TogetherScreen() {
   }
 
   return (
-    <ThemedView style={styles.fill}>
-      <SafeAreaView style={styles.fill} edges={['top', 'left', 'right']}>
-        <ScrollView
-          contentContainerStyle={styles.content}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} />}>
-          <ScreenHeader title={t('together.title')} />
-          {body}
-          {__DEV__ && <ApiStatus />}
-        </ScrollView>
-      </SafeAreaView>
-    </ThemedView>
+    <ScreenFrame tab wide header={<ScreenHeader title={t('together.title')} />}>
+      <ScrollView contentContainerStyle={styles.content} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} />}>
+        {body}
+        {__DEV__ && <ApiStatus />}
+      </ScrollView>
+    </ScreenFrame>
   );
 }
 
 /** Two lines beside an avatar: a name, and what's new or when. */
-function RowText({ title, detail, detailColor, extra }: { title: string; detail: string; detailColor?: 'goldText' | 'textSecondary'; extra?: string }) {
+function RowText({
+  title,
+  detail,
+  detailColor,
+  extra,
+}: {
+  title: string;
+  detail: string;
+  detailColor?: 'goldText' | 'textSecondary';
+  extra?: string;
+}) {
   return (
     <View style={styles.rowText}>
       <ThemedText style={styles.rowTitle} numberOfLines={1}>
@@ -165,7 +166,13 @@ function NeedsYouRow({ item, names }: { item: Exclude<NeedsYou, { kind: 'invite'
     return (
       <ListRow onPress={() => openCrew(item.crew.id)}>
         <Avatar name={name} ring="gold" />
-        <RowText title={name} detail={t('crew.offerCard', { date: formatStart(item.crew.offerUntil, lang) })} detailColor="goldText" />
+        <RowText
+          title={name}
+          detail={t('crew.offerCard', {
+            date: formatStart(item.crew.offerUntil, lang),
+          })}
+          detailColor="goldText"
+        />
       </ListRow>
     );
   }
@@ -181,7 +188,11 @@ function NeedsYouRow({ item, names }: { item: Exclude<NeedsYou, { kind: 'invite'
   return (
     <ListRow onPress={() => router.push({ pathname: '/feedback/[id]', params: { id: e.id } })}>
       <Avatar name={pick(e.title, e.secondaryTitle).name} />
-      <RowText title={t('event.feedback')} detail={`${pick(e.title, e.secondaryTitle).name}, ${formatStart(e.startsAt, lang)}`} detailColor="goldText" />
+      <RowText
+        title={t('event.feedback')}
+        detail={`${pick(e.title, e.secondaryTitle).name}, ${formatStart(e.startsAt, lang)}`}
+        detailColor="goldText"
+      />
     </ListRow>
   );
 }
@@ -256,7 +267,15 @@ function FirstWeek({ plans, names }: { plans: FeedPlan[]; names: Names }) {
         {steps.map(([title, body], i) => (
           <View key={title} style={styles.step}>
             <View style={styles.stepRail}>
-              <View style={[styles.stepKnot, { borderColor: theme.goldText, backgroundColor: theme.background }]} />
+              <View
+                style={[
+                  styles.stepKnot,
+                  {
+                    borderColor: theme.goldText,
+                    backgroundColor: theme.background,
+                  },
+                ]}
+              />
               {i < steps.length - 1 && <View style={[styles.stepLine, { backgroundColor: theme.goldText }]} />}
             </View>
             <View style={[styles.stepText, i < steps.length - 1 && styles.stepGap]}>
@@ -303,17 +322,16 @@ function FirstWeek({ plans, names }: { plans: FeedPlan[]; names: Names }) {
 const KNOT = 14;
 
 const styles = StyleSheet.create({
-  fill: { flex: 1 },
   content: {
     padding: Spacing.three,
-    paddingTop: Spacing.four,
     paddingBottom: BottomTabInset + Spacing.four,
     gap: Spacing.four + 4,
-    width: '100%',
-    maxWidth: MaxContentWidth,
-    alignSelf: 'center',
   },
-  center: { paddingVertical: Spacing.six, alignItems: 'center', gap: Spacing.two },
+  center: {
+    paddingVertical: Spacing.six,
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
   section: { gap: Spacing.two },
   rowText: { flex: 1, minWidth: 0 },
   rowTitle: { fontWeight: 700 },
@@ -321,11 +339,33 @@ const styles = StyleSheet.create({
   intro: { maxWidth: 420, lineHeight: 26 },
   step: { flexDirection: 'row', gap: Spacing.three },
   stepRail: { width: KNOT, alignItems: 'center' },
-  stepKnot: { width: KNOT, height: KNOT, borderRadius: KNOT / 2, borderWidth: 2, marginTop: 5 },
+  stepKnot: {
+    width: KNOT,
+    height: KNOT,
+    borderRadius: KNOT / 2,
+    borderWidth: 2,
+    marginTop: 5,
+  },
   stepLine: { width: 2, flex: 1, marginTop: -2, marginBottom: -7 },
   stepText: { flex: 1 },
   stepGap: { paddingBottom: Spacing.three + 2 },
-  pickRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three - 4, padding: Spacing.three - 4, paddingHorizontal: Spacing.three },
-  levelTag: { width: 76, paddingVertical: Spacing.one, borderRadius: 12, alignItems: 'center' },
-  levelTagText: { fontSize: 12, lineHeight: 16, fontWeight: 500, textAlign: 'center' },
+  pickRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.three - 4,
+    padding: Spacing.three - 4,
+    paddingHorizontal: Spacing.three,
+  },
+  levelTag: {
+    width: 76,
+    paddingVertical: Spacing.one,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  levelTagText: {
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: 500,
+    textAlign: 'center',
+  },
 });

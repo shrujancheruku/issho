@@ -2,7 +2,7 @@ import { Code, ConnectError } from '@issho/api-client';
 import type { ReactNode } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet } from 'react-native';
 
-import { ScreenFrame } from '@/components/screen-frame';
+import { ScreenFrame, type FrameProps } from '@/components/screen-frame';
 import { TextLink } from '@/components/text-link';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
@@ -58,17 +58,16 @@ export function LoadState({ queries, notFound, center }: { queries: readonly Que
 export function QueryScreen<const Q extends readonly QueryLike[]>({
   queries,
   notFound,
-  onBack,
   children,
-}: {
+  ...frame
+}: FrameProps & {
   queries: Q;
   /** Shown when a query's error is "not found". */
   notFound?: string;
-  onBack: () => void;
   children: (data: Loaded<Q>) => ReactNode;
 }) {
   return (
-    <ScreenFrame onBack={onBack}>
+    <ScreenFrame {...frame}>
       {queries.every((q) => q.isSuccess) ? (
         children(queries.map((q) => q.data) as Loaded<Q>)
       ) : (

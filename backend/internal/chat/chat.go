@@ -33,8 +33,11 @@ const (
 	// messages are deleted (Keep).
 	OpensBefore = 48 * time.Hour
 	ClosesAfter = 24 * time.Hour
-	// Keep is how long after the event its group's messages are kept.
+	// Keep is how long after the event its group's messages are kept, and
+	// after a crew closes its chat.
 	Keep = 30 * 24 * time.Hour
+	// DeleteBatch is how many rows one retention delete removes at most.
+	DeleteBatch = 1000
 	// MaxMessage is the longest message, in characters.
 	MaxMessage = 1000
 	// Page is how many messages one read returns at most.
@@ -323,6 +326,23 @@ func (s *Service) Typed(ctx context.Context, userID uuid.UUID, room Room, now ti
 // than Keep ago. Run by the worker's settle pass.
 func DeleteOld(ctx context.Context, q *dbgen.Queries, cityID string, now time.Time) (int64, error) {
 	return q.DeleteOldChats(ctx, dbgen.DeleteOldChatsParams{CityID: cityID, Before: pgtype.Date{Time: now.Add(-Keep), Valid: true}})
+}
+
+// DeleteOldCrewChats deletes the chats of crews that closed or lapsed
+// (closed_at) more than Keep ago, for privacy. It deletes in batches of
+// DeleteBatch, so a pass never holds a long lock, and returns the total.
+// An active crew's chat is kept, whoever has left it.
+func DeleteOldCrewChats(ctx context.Context, q *dbgen.Queries, now time.Time) (int64, error) {
+	var total int64
+	for {
+		n, err := q.DeleteOldCrewChats(ctx, dbgen.DeleteOldCrewChatsParams{
+			Before: pgtype.Timestamptz{Time: now.Add(-Keep), Valid: true}, Max: DeleteBatch,
+		})
+		total += n
+		if err != nil || n < DeleteBatch {
+			return total, err
+		}
+	}
 }
 
 func deref(s *string) string {

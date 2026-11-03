@@ -11,28 +11,6 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const deleteStaleTravelTimes = `-- name: DeleteStaleTravelTimes :execrows
-delete from app.area_travel_times t
-using app.areas a
-where a.id = t.from_area_id and a.city_id = $1 and t.computed_at < $2
-`
-
-type DeleteStaleTravelTimesParams struct {
-	CityID string
-	Cutoff pgtype.Timestamptz
-}
-
-// Google Maps terms only allow temporary caching of Routes content, so travel
-// times older than the cutoff are deleted rather than kept around. A pair that
-// no longer has a route (or a mode the city dropped) also ages out this way.
-func (q *Queries) DeleteStaleTravelTimes(ctx context.Context, arg DeleteStaleTravelTimesParams) (int64, error) {
-	result, err := q.db.Exec(ctx, deleteStaleTravelTimes, arg.CityID, arg.Cutoff)
-	if err != nil {
-		return 0, err
-	}
-	return result.RowsAffected(), nil
-}
-
 const deleteTravelTimesNotRefreshed = `-- name: DeleteTravelTimesNotRefreshed :execrows
 delete from app.area_travel_times t
 using app.areas a

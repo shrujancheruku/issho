@@ -3,7 +3,6 @@ package curation
 import (
 	"context"
 	"errors"
-	"os"
 	"slices"
 	"strings"
 	"testing"
@@ -18,6 +17,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/geo"
 	"github.com/shrujancheruku/issho/backend/internal/maps"
 	"github.com/shrujancheruku/issho/backend/internal/maps/mapstest"
+	"github.com/shrujancheruku/issho/backend/internal/testfixture"
 )
 
 func TestFits(t *testing.T) {
@@ -101,10 +101,7 @@ type fixture struct {
 
 func newFixture(t *testing.T) *fixture {
 	t.Helper()
-	url := os.Getenv("TEST_DATABASE_URL")
-	if url == "" {
-		t.Skip("TEST_DATABASE_URL not set")
-	}
+	url := testfixture.DatabaseURL(t)
 	ctx := context.Background()
 	pool, err := pgxpool.New(ctx, url)
 	if err != nil {

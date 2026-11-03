@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
@@ -145,23 +144,23 @@ func keys(m map[string]bool) []string {
 	return out
 }
 
+// ErrNoRouter is Refresh without a Maps router.
+var ErrNoRouter = errors.New("geo: no Maps router to rebuild the travel times")
+
 // RefreshAge is when a city's travel times are rebuilt: well inside
-// MaxCacheAge, so a failed run has days to be retried before the limit.
+// Google's 30-day limit on caching Routes content, so a failed run has days to be retried.
 const RefreshAge = 25 * 24 * time.Hour
 
 // Refresh rebuilds a city's travel-time matrix when its newest row is older
 // than RefreshAge (or it has none), as the Google Maps caching terms
-// require. Without a router (no Maps key) it can't rebuild, so it deletes
-// rows past MaxCacheAge instead: staying within the terms matters more
-// than keeping stale data. It reports whether it rebuilt and how many rows
+// require. Without a router (no Maps key) it returns ErrNoRouter and touches
+// nothing: a missing key never deletes data, and rebuilding is the fix
+// (production can't start without the key). It reports whether it rebuilt and how many rows
 // it deleted.
 func Refresh(ctx context.Context, pool *pgxpool.Pool, r maps.Router, cityID string, now time.Time) (rebuilt bool, deleted int64, err error) {
 	q := dbgen.New(pool)
 	if r == nil {
-		deleted, err = q.DeleteStaleTravelTimes(ctx, dbgen.DeleteStaleTravelTimesParams{
-			CityID: cityID, Cutoff: pgtype.Timestamptz{Time: now.Add(-MaxCacheAge), Valid: true},
-		})
-		return false, deleted, err
+		return false, 0, ErrNoRouter
 	}
 	newest, err := q.NewestTravelTime(ctx, cityID)
 	if err != nil {

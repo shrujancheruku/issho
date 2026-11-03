@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 	"math"
-	"time"
 
 	"github.com/shrujancheruku/issho/backend/internal/maps"
 )
@@ -16,11 +15,6 @@ import (
 // areas isn't requested. Nobody walks 5 km to an outing, and skipping those
 // pairs cuts the walk matrix (a billed element per pair) to a fraction.
 const MaxWalkM = 4000
-
-// MaxCacheAge is how long travel times may be kept. Google's terms allow only
-// temporary caching of Routes content; rows older than this are deleted, so the
-// matrix must be rebuilt regularly (the M6 worker will schedule it).
-const MaxCacheAge = 30 * 24 * time.Hour
 
 type Area struct {
 	ID string

@@ -6,7 +6,6 @@ import (
 	"flag"
 	"fmt"
 	"log/slog"
-	"os"
 	"strings"
 
 	"github.com/google/uuid"
@@ -29,7 +28,7 @@ func setAdmin(ctx context.Context, pool *pgxpool.Pool, args []string) error {
 		return errors.New("usage: tool set-admin [-revoke] <email>")
 	}
 	email := strings.TrimSpace(fs.Arg(0))
-	url, key := strings.TrimRight(os.Getenv("SUPABASE_URL"), "/"), os.Getenv("SUPABASE_SECRET_KEY")
+	url, key := toolCfg.SupabaseURL, toolCfg.SupabaseSecretKey
 	if url == "" || key == "" {
 		return errors.New("SUPABASE_URL and SUPABASE_SECRET_KEY are required")
 	}
