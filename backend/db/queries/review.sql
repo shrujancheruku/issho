@@ -12,7 +12,8 @@ order by c.id;
 update app.cities set review = @review where id = @id;
 
 -- A city's plans in one state: drafts oldest first (they've waited
--- longest), others newest first.
+-- longest), others newest first. Keyset: the page after (@after_ts, @after_id)
+-- when @has_after; @max_rows is the page size plus one.
 -- name: ListReviewPlans :many
 select p.id, p.city_id, p.status, coalesce(p.closed_reason, '')::text as closed_reason,
        p.title, p.description, p.area_id, coalesce(a.name->>'en', p.area_id)::text as area_name,
@@ -23,7 +24,12 @@ select p.id, p.city_id, p.status, coalesce(p.closed_reason, '')::text as closed_
 from app.plans p
 join app.areas a on a.id = p.area_id
 where p.city_id = @city_id and p.status = @status
-order by case when p.status = 'draft' then p.created_at end asc, p.created_at desc, p.id
+  and (not @has_after::boolean
+       or (p.status = 'draft' and (p.created_at, p.id) > (@after_ts::timestamptz, @after_id::uuid))
+       or (p.status <> 'draft' and (p.created_at, p.id) < (@after_ts::timestamptz, @after_id::uuid)))
+order by case when p.status = 'draft' then p.created_at end asc,
+         case when p.status = 'draft' then p.id end asc,
+         p.created_at desc, p.id desc
 limit @max_rows;
 
 -- One plan, with what its stops need.
@@ -59,7 +65,8 @@ update app.plans set title = sqlc.narg(title), description = sqlc.narg(descripti
 where id = @id and status in ('draft', 'open');
 
 -- Venues for an activity in an area, as PickVenue would choose from: one
--- row per place (a place can be in two categories), approved first.
+-- row per place (a place can be in two categories), approved first. Not
+-- paged: @max_rows is the picker's bound (best 20), not a hidden remainder.
 -- name: ListVenueOptions :many
 select v.google_place_id, min(v.category_id)::text as category_id,
        (case when bool_or(v.status = 'approved') then 'approved' else 'candidate' end)::text as status
@@ -70,7 +77,8 @@ order by bool_or(v.status = 'approved') desc, v.google_place_id
 limit @max_rows;
 
 -- Group review (00022): proposals waiting in a city, or its upcoming
--- scheduled events (for meeting points). Soonest first.
+-- scheduled events (for meeting points). Soonest first. Keyset on
+-- (date, block, id) after (@after_date, @after_block, @after_id).
 -- name: ListReviewEvents :many
 select e.id, e.plan_id, e.status, e.date, e.block, e.starts_at, e.confirm_by, e.forced, e.created_at,
        p.title, p.activity_id, p.follow_up_id, coalesce(a.name->>'en', p.area_id)::text as area_name,
@@ -82,6 +90,8 @@ join app.plans p on p.id = e.plan_id
 join app.areas a on a.id = p.area_id
 join app.cities c on c.id = p.city_id
 where p.city_id = @city_id and e.status = @status and (e.status = 'proposed' or e.date >= @from_date)
+  and (not @has_after::boolean
+       or (e.date, e.block, e.id) > (@after_date::date, @after_block::text, @after_id::uuid))
 order by e.date, e.block, e.id
 limit @max_rows;
 

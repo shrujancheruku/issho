@@ -97,8 +97,11 @@ where lang = $1
   and not starts_with(context, $2::text)
   and ($3::boolean = false or not reviewed)
   and ($4::text = '' or source ilike '%' || $4 || '%' or text ilike '%' || $4 || '%')
-order by reviewed, source, context
-limit $6 offset $5
+  and (not $5::boolean
+       or (reviewed, source, context, source_hash)
+          > ($6::boolean, $7::text, $8::text, $9::text))
+order by reviewed, source, context, source_hash
+limit $10
 `
 
 type ListCatalogTranslationsParams struct {
@@ -106,7 +109,11 @@ type ListCatalogTranslationsParams struct {
 	UiContext      string
 	UnreviewedOnly bool
 	Search         string
-	SkipRows       int32
+	HasAfter       bool
+	AfterReviewed  bool
+	AfterSource    string
+	AfterContext   string
+	AfterHash      string
 	MaxRows        int32
 }
 
@@ -123,14 +130,19 @@ type ListCatalogTranslationsRow struct {
 }
 
 // One language's catalogue translations, unreviewed ones first, matching
-// @search in the English source or the translation (” = all).
+// @search in the English source or the translation (” = all). Keyset on
+// (reviewed, source, context, source_hash), the last making it a total order.
 func (q *Queries) ListCatalogTranslations(ctx context.Context, arg ListCatalogTranslationsParams) ([]ListCatalogTranslationsRow, error) {
 	rows, err := q.db.Query(ctx, listCatalogTranslations,
 		arg.Lang,
 		arg.UiContext,
 		arg.UnreviewedOnly,
 		arg.Search,
-		arg.SkipRows,
+		arg.HasAfter,
+		arg.AfterReviewed,
+		arg.AfterSource,
+		arg.AfterContext,
+		arg.AfterHash,
 		arg.MaxRows,
 	)
 	if err != nil {

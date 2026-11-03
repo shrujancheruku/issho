@@ -18,7 +18,7 @@ option go_package = "github.com/shrujancheruku/issho/backend/gen/issho/v1;isshov
 // HTTP: POST /issho.v1.ModerationService/<Method>
 service ModerationService {
   // ListReports returns reports, open ones first (oldest first), then the
-  // rest newest first. At most 200.
+  // rest newest first. Paged: page_size, page_token.
   rpc ListReports(ListReportsRequest) returns (ListReportsResponse) {}
 
   // ResolveReport records the decision on a report. It can be changed
@@ -26,18 +26,20 @@ service ModerationService {
   rpc ResolveReport(ResolveReportRequest) returns (ResolveReportResponse) {}
 
   // ListFlags returns open flags (oldest first) or resolved ones (newest
-  // first). At most 200.
+  // first). Paged: page_size, page_token.
   rpc ListFlags(ListFlagsRequest) returns (ListFlagsResponse) {}
 
   // ResolveFlag closes an open flag with a note. FAILED_PRECONDITION if
   // it's already resolved. A later signal opens a new flag.
   rpc ResolveFlag(ResolveFlagRequest) returns (ResolveFlagResponse) {}
 
-  // ListCrewLeaves returns why people left crews, newest first. At most 200.
+  // ListCrewLeaves returns why people left crews, newest first. Paged: page_size,
+  // page_token.
   rpc ListCrewLeaves(ListCrewLeavesRequest) returns (ListCrewLeavesResponse) {}
 
   // SearchPeople finds people by name or email (contains, any case) or
-  // exact user id. At most 50.
+  // exact user id, by name (people without one last). Paged: page_size,
+  // page_token.
   rpc SearchPeople(SearchPeopleRequest) returns (SearchPeopleResponse) {}
 
   // GetPerson returns what a moderator needs to decide about someone:
@@ -59,8 +61,8 @@ service ModerationService {
   // FAILED_PRECONDITION if they aren't suspended.
   rpc LiftSuspension(LiftSuspensionRequest) returns (LiftSuspensionResponse) {}
 
-  // ListSuspended returns everyone suspended now, most recent first. At
-  // most 200.
+  // ListSuspended returns everyone suspended now, most recent first.
+  // Paged: page_size, page_token.
   rpc ListSuspended(ListSuspendedRequest) returns (ListSuspendedResponse) {}
 }
 
@@ -79,10 +81,18 @@ message ListReportsRequest {
   ReportStatus status = 1;
   // Only reports about this person; empty = everyone.
   string reported_id = 2;
+  // How many to return; 0 = 50, at most 200 (more is clamped).
+  int32 page_size = 3;
+  // From a previous response's next_page_token for the same request;
+  // empty = the first page. Opaque. INVALID_ARGUMENT if it is not from this
+  // list with these filters.
+  string page_token = 4;
 }
 
 message ListReportsResponse {
   repeated ModerationReport reports = 1;
+  // Pass as page_token for the next page; empty on the last page.
+  string next_page_token = 2;
 }
 
 message ModerationReport {
@@ -138,10 +148,18 @@ enum FlagKind {
 message ListFlagsRequest {
   // false = open flags; true = resolved ones.
   bool resolved = 1;
+  // How many to return; 0 = 50, at most 200 (more is clamped).
+  int32 page_size = 2;
+  // From a previous response's next_page_token for the same request;
+  // empty = the first page. Opaque. INVALID_ARGUMENT if it is not from this
+  // list with these filters.
+  string page_token = 3;
 }
 
 message ListFlagsResponse {
   repeated ModerationFlag flags = 1;
+  // Pass as page_token for the next page; empty on the last page.
+  string next_page_token = 2;
 }
 
 message ModerationFlag {
@@ -171,10 +189,18 @@ message ResolveFlagResponse {}
 message ListCrewLeavesRequest {
   // UNSPECIFIED = every reason.
   LeaveReason reason = 1;
+  // How many to return; 0 = 50, at most 200 (more is clamped).
+  int32 page_size = 2;
+  // From a previous response's next_page_token for the same request;
+  // empty = the first page. Opaque. INVALID_ARGUMENT if it is not from this
+  // list with these filters.
+  string page_token = 3;
 }
 
 message ListCrewLeavesResponse {
   repeated CrewLeave leaves = 1;
+  // Pass as page_token for the next page; empty on the last page.
+  string next_page_token = 2;
 }
 
 message CrewLeave {
@@ -195,10 +221,18 @@ message CrewLeave {
 message SearchPeopleRequest {
   // At least 2 characters.
   string query = 1;
+  // How many to return; 0 = 50, at most 200 (more is clamped).
+  int32 page_size = 2;
+  // From a previous response's next_page_token for the same request;
+  // empty = the first page. Opaque. INVALID_ARGUMENT if it is not from this
+  // list with these filters.
+  string page_token = 3;
 }
 
 message SearchPeopleResponse {
   repeated PersonSummary people = 1;
+  // Pass as page_token for the next page; empty on the last page.
+  string next_page_token = 2;
 }
 
 message PersonSummary {
@@ -236,9 +270,12 @@ message Person {
   bool suspended = 12;
   // Newest first.
   repeated Suspension suspensions = 13;
-  // Open ones first.
+  // Open ones first. Not paged: there is at most one open flag per kind, and
+  // flags are rare (a person gets one only from a system signal).
   repeated ModerationFlag flags = 14;
-  // Newest first, at most 50.
+  // Newest first, the latest 50. Not paged on purpose: a moderator reads
+  // the recent past to decide, and 50 outings is a real bound on what that
+  // takes (the full history is not a moderation question).
   repeated PersonOuting outings = 15;
 }
 
@@ -290,10 +327,19 @@ message LiftSuspensionRequest {
 
 message LiftSuspensionResponse {}
 
-message ListSuspendedRequest {}
+message ListSuspendedRequest {
+  // How many to return; 0 = 50, at most 200 (more is clamped).
+  int32 page_size = 1;
+  // From a previous response's next_page_token for the same request;
+  // empty = the first page. Opaque. INVALID_ARGUMENT if it is not from this
+  // list with these filters.
+  string page_token = 2;
+}
 
 message ListSuspendedResponse {
   repeated SuspendedPerson people = 1;
+  // Pass as page_token for the next page; empty on the last page.
+  string next_page_token = 2;
 }
 
 message SuspendedPerson {

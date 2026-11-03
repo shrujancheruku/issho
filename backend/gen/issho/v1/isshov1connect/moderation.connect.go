@@ -68,21 +68,23 @@ const (
 // ModerationServiceClient is a client for the issho.v1.ModerationService service.
 type ModerationServiceClient interface {
 	// ListReports returns reports, open ones first (oldest first), then the
-	// rest newest first. At most 200.
+	// rest newest first. Paged: page_size, page_token.
 	ListReports(context.Context, *connect.Request[v1.ListReportsRequest]) (*connect.Response[v1.ListReportsResponse], error)
 	// ResolveReport records the decision on a report. It can be changed
 	// later (resolve again). The pair stays apart in matching either way.
 	ResolveReport(context.Context, *connect.Request[v1.ResolveReportRequest]) (*connect.Response[v1.ResolveReportResponse], error)
 	// ListFlags returns open flags (oldest first) or resolved ones (newest
-	// first). At most 200.
+	// first). Paged: page_size, page_token.
 	ListFlags(context.Context, *connect.Request[v1.ListFlagsRequest]) (*connect.Response[v1.ListFlagsResponse], error)
 	// ResolveFlag closes an open flag with a note. FAILED_PRECONDITION if
 	// it's already resolved. A later signal opens a new flag.
 	ResolveFlag(context.Context, *connect.Request[v1.ResolveFlagRequest]) (*connect.Response[v1.ResolveFlagResponse], error)
-	// ListCrewLeaves returns why people left crews, newest first. At most 200.
+	// ListCrewLeaves returns why people left crews, newest first. Paged: page_size,
+	// page_token.
 	ListCrewLeaves(context.Context, *connect.Request[v1.ListCrewLeavesRequest]) (*connect.Response[v1.ListCrewLeavesResponse], error)
 	// SearchPeople finds people by name or email (contains, any case) or
-	// exact user id. At most 50.
+	// exact user id, by name (people without one last). Paged: page_size,
+	// page_token.
 	SearchPeople(context.Context, *connect.Request[v1.SearchPeopleRequest]) (*connect.Response[v1.SearchPeopleResponse], error)
 	// GetPerson returns what a moderator needs to decide about someone:
 	// who they are, report counts, flags, suspensions and recent outings.
@@ -100,8 +102,8 @@ type ModerationServiceClient interface {
 	// but aren't put back into what they were taken out of.
 	// FAILED_PRECONDITION if they aren't suspended.
 	LiftSuspension(context.Context, *connect.Request[v1.LiftSuspensionRequest]) (*connect.Response[v1.LiftSuspensionResponse], error)
-	// ListSuspended returns everyone suspended now, most recent first. At
-	// most 200.
+	// ListSuspended returns everyone suspended now, most recent first.
+	// Paged: page_size, page_token.
 	ListSuspended(context.Context, *connect.Request[v1.ListSuspendedRequest]) (*connect.Response[v1.ListSuspendedResponse], error)
 }
 
@@ -246,21 +248,23 @@ func (c *moderationServiceClient) ListSuspended(ctx context.Context, req *connec
 // ModerationServiceHandler is an implementation of the issho.v1.ModerationService service.
 type ModerationServiceHandler interface {
 	// ListReports returns reports, open ones first (oldest first), then the
-	// rest newest first. At most 200.
+	// rest newest first. Paged: page_size, page_token.
 	ListReports(context.Context, *connect.Request[v1.ListReportsRequest]) (*connect.Response[v1.ListReportsResponse], error)
 	// ResolveReport records the decision on a report. It can be changed
 	// later (resolve again). The pair stays apart in matching either way.
 	ResolveReport(context.Context, *connect.Request[v1.ResolveReportRequest]) (*connect.Response[v1.ResolveReportResponse], error)
 	// ListFlags returns open flags (oldest first) or resolved ones (newest
-	// first). At most 200.
+	// first). Paged: page_size, page_token.
 	ListFlags(context.Context, *connect.Request[v1.ListFlagsRequest]) (*connect.Response[v1.ListFlagsResponse], error)
 	// ResolveFlag closes an open flag with a note. FAILED_PRECONDITION if
 	// it's already resolved. A later signal opens a new flag.
 	ResolveFlag(context.Context, *connect.Request[v1.ResolveFlagRequest]) (*connect.Response[v1.ResolveFlagResponse], error)
-	// ListCrewLeaves returns why people left crews, newest first. At most 200.
+	// ListCrewLeaves returns why people left crews, newest first. Paged: page_size,
+	// page_token.
 	ListCrewLeaves(context.Context, *connect.Request[v1.ListCrewLeavesRequest]) (*connect.Response[v1.ListCrewLeavesResponse], error)
 	// SearchPeople finds people by name or email (contains, any case) or
-	// exact user id. At most 50.
+	// exact user id, by name (people without one last). Paged: page_size,
+	// page_token.
 	SearchPeople(context.Context, *connect.Request[v1.SearchPeopleRequest]) (*connect.Response[v1.SearchPeopleResponse], error)
 	// GetPerson returns what a moderator needs to decide about someone:
 	// who they are, report counts, flags, suspensions and recent outings.
@@ -278,8 +282,8 @@ type ModerationServiceHandler interface {
 	// but aren't put back into what they were taken out of.
 	// FAILED_PRECONDITION if they aren't suspended.
 	LiftSuspension(context.Context, *connect.Request[v1.LiftSuspensionRequest]) (*connect.Response[v1.LiftSuspensionResponse], error)
-	// ListSuspended returns everyone suspended now, most recent first. At
-	// most 200.
+	// ListSuspended returns everyone suspended now, most recent first.
+	// Paged: page_size, page_token.
 	ListSuspended(context.Context, *connect.Request[v1.ListSuspendedRequest]) (*connect.Response[v1.ListSuspendedResponse], error)
 }
 

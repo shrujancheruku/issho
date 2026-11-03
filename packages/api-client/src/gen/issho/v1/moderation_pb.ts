@@ -16,7 +16,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file issho/v1/moderation.proto.
  */
 export const file_issho_v1_moderation: GenFile = /*@__PURE__*/
-  fileDesc("Chlpc3Noby92MS9tb2RlcmF0aW9uLnByb3RvEghpc3Noby52MSJRChJMaXN0UmVwb3J0c1JlcXVlc3QSJgoGc3RhdHVzGAEgASgOMhYuaXNzaG8udjEuUmVwb3J0U3RhdHVzEhMKC3JlcG9ydGVkX2lkGAIgASgJIkIKE0xpc3RSZXBvcnRzUmVzcG9uc2USKwoHcmVwb3J0cxgBIAMoCzIaLmlzc2hvLnYxLk1vZGVyYXRpb25SZXBvcnQinwQKEE1vZGVyYXRpb25SZXBvcnQSCgoCaWQYASABKAkSEwoLcmVwb3J0ZXJfaWQYAiABKAkSFQoNcmVwb3J0ZXJfbmFtZRgDIAEoCRITCgtyZXBvcnRlZF9pZBgEIAEoCRIVCg1yZXBvcnRlZF9uYW1lGAUgASgJEh4KFnJlcG9ydHNfYWJvdXRfcmVwb3J0ZWQYBiABKAUSJgoGcmVhc29uGAcgASgOMhYuaXNzaG8udjEuUmVwb3J0UmVhc29uEg8KB2RldGFpbHMYCCABKAkSJgoGc3RhdHVzGAkgASgOMhYuaXNzaG8udjEuUmVwb3J0U3RhdHVzEgwKBG5vdGUYCiABKAkSEAoIZXZlbnRfaWQYCyABKAkSEwoLZXZlbnRfdGl0bGUYDCABKAkSEgoKZXZlbnRfZGF0ZRgNIAEoCRITCgtldmVudF9ibG9jaxgOIAEoCRIPCgdjcmV3X2lkGA8gASgJEhEKCWNyZXdfbmFtZRgQIAEoCRIuCgpjcmVhdGVkX2F0GBEgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIuCgp1cGRhdGVkX2F0GBIgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIvCgtyZXZpZXdlZF9hdBgTIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASEwoLcmV2aWV3ZWRfYnkYFCABKAkiXwoUUmVzb2x2ZVJlcG9ydFJlcXVlc3QSEQoJcmVwb3J0X2lkGAEgASgJEiYKBnN0YXR1cxgCIAEoDjIWLmlzc2hvLnYxLlJlcG9ydFN0YXR1cxIMCgRub3RlGAMgASgJIhcKFVJlc29sdmVSZXBvcnRSZXNwb25zZSIkChBMaXN0RmxhZ3NSZXF1ZXN0EhAKCHJlc29sdmVkGAEgASgIIjwKEUxpc3RGbGFnc1Jlc3BvbnNlEicKBWZsYWdzGAEgAygLMhguaXNzaG8udjEuTW9kZXJhdGlvbkZsYWcirAIKDk1vZGVyYXRpb25GbGFnEgoKAmlkGAEgASgDEg8KB3VzZXJfaWQYAiABKAkSEQoJdXNlcl9uYW1lGAMgASgJEiAKBGtpbmQYBCABKA4yEi5pc3Noby52MS5GbGFnS2luZBIUCgxkZXRhaWxzX2pzb24YBSABKAkSDAoEbm90ZRgGIAEoCRIuCgpjcmVhdGVkX2F0GAcgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIuCgp1cGRhdGVkX2F0GAggASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIvCgtyZXNvbHZlZF9hdBgJIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASEwoLcmVzb2x2ZWRfYnkYCiABKAkiMwoSUmVzb2x2ZUZsYWdSZXF1ZXN0Eg8KB2ZsYWdfaWQYASABKAMSDAoEbm90ZRgCIAEoCSIVChNSZXNvbHZlRmxhZ1Jlc3BvbnNlIj4KFUxpc3RDcmV3TGVhdmVzUmVxdWVzdBIlCgZyZWFzb24YASABKA4yFS5pc3Noby52MS5MZWF2ZVJlYXNvbiI9ChZMaXN0Q3Jld0xlYXZlc1Jlc3BvbnNlEiMKBmxlYXZlcxgBIAMoCzITLmlzc2hvLnYxLkNyZXdMZWF2ZSLcAQoJQ3Jld0xlYXZlEgoKAmlkGAEgASgDEg8KB2NyZXdfaWQYAiABKAkSEQoJY3Jld19uYW1lGAMgASgJEhMKC2NyZXdfc3RhdHVzGAQgASgJEg8KB3VzZXJfaWQYBSABKAkSEQoJdXNlcl9uYW1lGAYgASgJEiUKBnJlYXNvbhgHIAEoDjIVLmlzc2hvLnYxLkxlYXZlUmVhc29uEg8KB2RldGFpbHMYCCABKAkSLgoKY3JlYXRlZF9hdBgJIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiJAoTU2VhcmNoUGVvcGxlUmVxdWVzdBINCgVxdWVyeRgBIAEoCSI/ChRTZWFyY2hQZW9wbGVSZXNwb25zZRInCgZwZW9wbGUYASADKAsyFy5pc3Noby52MS5QZXJzb25TdW1tYXJ5IlAKDVBlcnNvblN1bW1hcnkSDwoHdXNlcl9pZBgBIAEoCRIMCgRuYW1lGAIgASgJEg0KBWVtYWlsGAMgASgJEhEKCXN1c3BlbmRlZBgEIAEoCCIjChBHZXRQZXJzb25SZXF1ZXN0Eg8KB3VzZXJfaWQYASABKAkiNQoRR2V0UGVyc29uUmVzcG9uc2USIAoGcGVyc29uGAEgASgLMhAuaXNzaG8udjEuUGVyc29uIoYDCgZQZXJzb24SDwoHdXNlcl9pZBgBIAEoCRIMCgRuYW1lGAIgASgJEg0KBWVtYWlsGAMgASgJEi0KCWpvaW5lZF9hdBgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASDgoGZ2VuZGVyGAUgASgJEhIKCmJpcnRoX3llYXIYBiABKAUSEQoJaG9tZV9hcmVhGAcgASgJEg8KB2NpdHlfaWQYCCABKAkSFQoNcmVwb3J0c19hYm91dBgJIAEoBRIaChJvcGVuX3JlcG9ydHNfYWJvdXQYCiABKAUSFAoMcmVwb3J0c19tYWRlGAsgASgFEhEKCXN1c3BlbmRlZBgMIAEoCBIpCgtzdXNwZW5zaW9ucxgNIAMoCzIULmlzc2hvLnYxLlN1c3BlbnNpb24SJwoFZmxhZ3MYDiADKAsyGC5pc3Noby52MS5Nb2RlcmF0aW9uRmxhZxInCgdvdXRpbmdzGA8gAygLMhYuaXNzaG8udjEuUGVyc29uT3V0aW5nIsEBCgpTdXNwZW5zaW9uEgoKAmlkGAEgASgDEg4KBnJlYXNvbhgCIAEoCRISCgpjcmVhdGVkX2J5GAMgASgJEi4KCmNyZWF0ZWRfYXQYBCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi0KCWxpZnRlZF9hdBgFIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASEQoJbGlmdGVkX2J5GAYgASgJEhEKCWxpZnRfbm90ZRgHIAEoCSK0AQoMUGVyc29uT3V0aW5nEhAKCGV2ZW50X2lkGAEgASgJEg0KBXRpdGxlGAIgASgJEgwKBGRhdGUYAyABKAkSDQoFYmxvY2sYBCABKAkSFAoMZXZlbnRfc3RhdHVzGAUgASgJEhAKCHJlc3BvbnNlGAYgASgJEhIKCmNoZWNrZWRfaW4YByABKAgSKgoIZmVlZGJhY2sYCCABKA4yGC5pc3Noby52MS5PdXRpbmdGZWVkYmFjayI3ChRTdXNwZW5kUGVyc29uUmVxdWVzdBIPCgd1c2VyX2lkGAEgASgJEg4KBnJlYXNvbhgCIAEoCSIXChVTdXNwZW5kUGVyc29uUmVzcG9uc2UiNgoVTGlmdFN1c3BlbnNpb25SZXF1ZXN0Eg8KB3VzZXJfaWQYASABKAkSDAoEbm90ZRgCIAEoCSIYChZMaWZ0U3VzcGVuc2lvblJlc3BvbnNlIhYKFExpc3RTdXNwZW5kZWRSZXF1ZXN0IkIKFUxpc3RTdXNwZW5kZWRSZXNwb25zZRIpCgZwZW9wbGUYASADKAsyGS5pc3Noby52MS5TdXNwZW5kZWRQZXJzb24igQEKD1N1c3BlbmRlZFBlcnNvbhIPCgd1c2VyX2lkGAEgASgJEgwKBG5hbWUYAiABKAkSDgoGcmVhc29uGAMgASgJEikKBXNpbmNlGAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIUCgxzdXNwZW5kZWRfYnkYBSABKAkqfgoMUmVwb3J0U3RhdHVzEh0KGVJFUE9SVF9TVEFUVVNfVU5TUEVDSUZJRUQQABIWChJSRVBPUlRfU1RBVFVTX09QRU4QARIaChZSRVBPUlRfU1RBVFVTX0FDVElPTkVEEAISGwoXUkVQT1JUX1NUQVRVU19ESVNNSVNTRUQQAypFCghGbGFnS2luZBIZChVGTEFHX0tJTkRfVU5TUEVDSUZJRUQQABIeChpGTEFHX0tJTkRfUElDS19HRU5ERVJfTEVBThABKnMKDk91dGluZ0ZlZWRiYWNrEh8KG09VVElOR19GRUVEQkFDS19VTlNQRUNJRklFRBAAEh0KGU9VVElOR19GRUVEQkFDS19TQUlEX1dFTlQQARIhCh1PVVRJTkdfRkVFREJBQ0tfU0FJRF9ESUROVF9HTxACMroGChFNb2RlcmF0aW9uU2VydmljZRJMCgtMaXN0UmVwb3J0cxIcLmlzc2hvLnYxLkxpc3RSZXBvcnRzUmVxdWVzdBodLmlzc2hvLnYxLkxpc3RSZXBvcnRzUmVzcG9uc2UiABJSCg1SZXNvbHZlUmVwb3J0Eh4uaXNzaG8udjEuUmVzb2x2ZVJlcG9ydFJlcXVlc3QaHy5pc3Noby52MS5SZXNvbHZlUmVwb3J0UmVzcG9uc2UiABJGCglMaXN0RmxhZ3MSGi5pc3Noby52MS5MaXN0RmxhZ3NSZXF1ZXN0GhsuaXNzaG8udjEuTGlzdEZsYWdzUmVzcG9uc2UiABJMCgtSZXNvbHZlRmxhZxIcLmlzc2hvLnYxLlJlc29sdmVGbGFnUmVxdWVzdBodLmlzc2hvLnYxLlJlc29sdmVGbGFnUmVzcG9uc2UiABJVCg5MaXN0Q3Jld0xlYXZlcxIfLmlzc2hvLnYxLkxpc3RDcmV3TGVhdmVzUmVxdWVzdBogLmlzc2hvLnYxLkxpc3RDcmV3TGVhdmVzUmVzcG9uc2UiABJPCgxTZWFyY2hQZW9wbGUSHS5pc3Noby52MS5TZWFyY2hQZW9wbGVSZXF1ZXN0Gh4uaXNzaG8udjEuU2VhcmNoUGVvcGxlUmVzcG9uc2UiABJGCglHZXRQZXJzb24SGi5pc3Noby52MS5HZXRQZXJzb25SZXF1ZXN0GhsuaXNzaG8udjEuR2V0UGVyc29uUmVzcG9uc2UiABJSCg1TdXNwZW5kUGVyc29uEh4uaXNzaG8udjEuU3VzcGVuZFBlcnNvblJlcXVlc3QaHy5pc3Noby52MS5TdXNwZW5kUGVyc29uUmVzcG9uc2UiABJVCg5MaWZ0U3VzcGVuc2lvbhIfLmlzc2hvLnYxLkxpZnRTdXNwZW5zaW9uUmVxdWVzdBogLmlzc2hvLnYxLkxpZnRTdXNwZW5zaW9uUmVzcG9uc2UiABJSCg1MaXN0U3VzcGVuZGVkEh4uaXNzaG8udjEuTGlzdFN1c3BlbmRlZFJlcXVlc3QaHy5pc3Noby52MS5MaXN0U3VzcGVuZGVkUmVzcG9uc2UiAEI+WjxnaXRodWIuY29tL3NocnVqYW5jaGVydWt1L2lzc2hvL2JhY2tlbmQvZ2VuL2lzc2hvL3YxO2lzc2hvdjFiBnByb3RvMw", [file_google_protobuf_timestamp, file_issho_v1_crews, file_issho_v1_events]);
+  fileDesc("Chlpc3Noby92MS9tb2RlcmF0aW9uLnByb3RvEghpc3Noby52MSJ4ChJMaXN0UmVwb3J0c1JlcXVlc3QSJgoGc3RhdHVzGAEgASgOMhYuaXNzaG8udjEuUmVwb3J0U3RhdHVzEhMKC3JlcG9ydGVkX2lkGAIgASgJEhEKCXBhZ2Vfc2l6ZRgDIAEoBRISCgpwYWdlX3Rva2VuGAQgASgJIlsKE0xpc3RSZXBvcnRzUmVzcG9uc2USKwoHcmVwb3J0cxgBIAMoCzIaLmlzc2hvLnYxLk1vZGVyYXRpb25SZXBvcnQSFwoPbmV4dF9wYWdlX3Rva2VuGAIgASgJIp8EChBNb2RlcmF0aW9uUmVwb3J0EgoKAmlkGAEgASgJEhMKC3JlcG9ydGVyX2lkGAIgASgJEhUKDXJlcG9ydGVyX25hbWUYAyABKAkSEwoLcmVwb3J0ZWRfaWQYBCABKAkSFQoNcmVwb3J0ZWRfbmFtZRgFIAEoCRIeChZyZXBvcnRzX2Fib3V0X3JlcG9ydGVkGAYgASgFEiYKBnJlYXNvbhgHIAEoDjIWLmlzc2hvLnYxLlJlcG9ydFJlYXNvbhIPCgdkZXRhaWxzGAggASgJEiYKBnN0YXR1cxgJIAEoDjIWLmlzc2hvLnYxLlJlcG9ydFN0YXR1cxIMCgRub3RlGAogASgJEhAKCGV2ZW50X2lkGAsgASgJEhMKC2V2ZW50X3RpdGxlGAwgASgJEhIKCmV2ZW50X2RhdGUYDSABKAkSEwoLZXZlbnRfYmxvY2sYDiABKAkSDwoHY3Jld19pZBgPIAEoCRIRCgljcmV3X25hbWUYECABKAkSLgoKY3JlYXRlZF9hdBgRIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLgoKdXBkYXRlZF9hdBgSIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLwoLcmV2aWV3ZWRfYXQYEyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhMKC3Jldmlld2VkX2J5GBQgASgJIl8KFFJlc29sdmVSZXBvcnRSZXF1ZXN0EhEKCXJlcG9ydF9pZBgBIAEoCRImCgZzdGF0dXMYAiABKA4yFi5pc3Noby52MS5SZXBvcnRTdGF0dXMSDAoEbm90ZRgDIAEoCSIXChVSZXNvbHZlUmVwb3J0UmVzcG9uc2UiSwoQTGlzdEZsYWdzUmVxdWVzdBIQCghyZXNvbHZlZBgBIAEoCBIRCglwYWdlX3NpemUYAiABKAUSEgoKcGFnZV90b2tlbhgDIAEoCSJVChFMaXN0RmxhZ3NSZXNwb25zZRInCgVmbGFncxgBIAMoCzIYLmlzc2hvLnYxLk1vZGVyYXRpb25GbGFnEhcKD25leHRfcGFnZV90b2tlbhgCIAEoCSKsAgoOTW9kZXJhdGlvbkZsYWcSCgoCaWQYASABKAMSDwoHdXNlcl9pZBgCIAEoCRIRCgl1c2VyX25hbWUYAyABKAkSIAoEa2luZBgEIAEoDjISLmlzc2hvLnYxLkZsYWdLaW5kEhQKDGRldGFpbHNfanNvbhgFIAEoCRIMCgRub3RlGAYgASgJEi4KCmNyZWF0ZWRfYXQYByABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi4KCnVwZGF0ZWRfYXQYCCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi8KC3Jlc29sdmVkX2F0GAkgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBITCgtyZXNvbHZlZF9ieRgKIAEoCSIzChJSZXNvbHZlRmxhZ1JlcXVlc3QSDwoHZmxhZ19pZBgBIAEoAxIMCgRub3RlGAIgASgJIhUKE1Jlc29sdmVGbGFnUmVzcG9uc2UiZQoVTGlzdENyZXdMZWF2ZXNSZXF1ZXN0EiUKBnJlYXNvbhgBIAEoDjIVLmlzc2hvLnYxLkxlYXZlUmVhc29uEhEKCXBhZ2Vfc2l6ZRgCIAEoBRISCgpwYWdlX3Rva2VuGAMgASgJIlYKFkxpc3RDcmV3TGVhdmVzUmVzcG9uc2USIwoGbGVhdmVzGAEgAygLMhMuaXNzaG8udjEuQ3Jld0xlYXZlEhcKD25leHRfcGFnZV90b2tlbhgCIAEoCSLcAQoJQ3Jld0xlYXZlEgoKAmlkGAEgASgDEg8KB2NyZXdfaWQYAiABKAkSEQoJY3Jld19uYW1lGAMgASgJEhMKC2NyZXdfc3RhdHVzGAQgASgJEg8KB3VzZXJfaWQYBSABKAkSEQoJdXNlcl9uYW1lGAYgASgJEiUKBnJlYXNvbhgHIAEoDjIVLmlzc2hvLnYxLkxlYXZlUmVhc29uEg8KB2RldGFpbHMYCCABKAkSLgoKY3JlYXRlZF9hdBgJIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiSwoTU2VhcmNoUGVvcGxlUmVxdWVzdBINCgVxdWVyeRgBIAEoCRIRCglwYWdlX3NpemUYAiABKAUSEgoKcGFnZV90b2tlbhgDIAEoCSJYChRTZWFyY2hQZW9wbGVSZXNwb25zZRInCgZwZW9wbGUYASADKAsyFy5pc3Noby52MS5QZXJzb25TdW1tYXJ5EhcKD25leHRfcGFnZV90b2tlbhgCIAEoCSJQCg1QZXJzb25TdW1tYXJ5Eg8KB3VzZXJfaWQYASABKAkSDAoEbmFtZRgCIAEoCRINCgVlbWFpbBgDIAEoCRIRCglzdXNwZW5kZWQYBCABKAgiIwoQR2V0UGVyc29uUmVxdWVzdBIPCgd1c2VyX2lkGAEgASgJIjUKEUdldFBlcnNvblJlc3BvbnNlEiAKBnBlcnNvbhgBIAEoCzIQLmlzc2hvLnYxLlBlcnNvbiKGAwoGUGVyc29uEg8KB3VzZXJfaWQYASABKAkSDAoEbmFtZRgCIAEoCRINCgVlbWFpbBgDIAEoCRItCglqb2luZWRfYXQYBCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEg4KBmdlbmRlchgFIAEoCRISCgpiaXJ0aF95ZWFyGAYgASgFEhEKCWhvbWVfYXJlYRgHIAEoCRIPCgdjaXR5X2lkGAggASgJEhUKDXJlcG9ydHNfYWJvdXQYCSABKAUSGgoSb3Blbl9yZXBvcnRzX2Fib3V0GAogASgFEhQKDHJlcG9ydHNfbWFkZRgLIAEoBRIRCglzdXNwZW5kZWQYDCABKAgSKQoLc3VzcGVuc2lvbnMYDSADKAsyFC5pc3Noby52MS5TdXNwZW5zaW9uEicKBWZsYWdzGA4gAygLMhguaXNzaG8udjEuTW9kZXJhdGlvbkZsYWcSJwoHb3V0aW5ncxgPIAMoCzIWLmlzc2hvLnYxLlBlcnNvbk91dGluZyLBAQoKU3VzcGVuc2lvbhIKCgJpZBgBIAEoAxIOCgZyZWFzb24YAiABKAkSEgoKY3JlYXRlZF9ieRgDIAEoCRIuCgpjcmVhdGVkX2F0GAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBItCglsaWZ0ZWRfYXQYBSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhEKCWxpZnRlZF9ieRgGIAEoCRIRCglsaWZ0X25vdGUYByABKAkitAEKDFBlcnNvbk91dGluZxIQCghldmVudF9pZBgBIAEoCRINCgV0aXRsZRgCIAEoCRIMCgRkYXRlGAMgASgJEg0KBWJsb2NrGAQgASgJEhQKDGV2ZW50X3N0YXR1cxgFIAEoCRIQCghyZXNwb25zZRgGIAEoCRISCgpjaGVja2VkX2luGAcgASgIEioKCGZlZWRiYWNrGAggASgOMhguaXNzaG8udjEuT3V0aW5nRmVlZGJhY2siNwoUU3VzcGVuZFBlcnNvblJlcXVlc3QSDwoHdXNlcl9pZBgBIAEoCRIOCgZyZWFzb24YAiABKAkiFwoVU3VzcGVuZFBlcnNvblJlc3BvbnNlIjYKFUxpZnRTdXNwZW5zaW9uUmVxdWVzdBIPCgd1c2VyX2lkGAEgASgJEgwKBG5vdGUYAiABKAkiGAoWTGlmdFN1c3BlbnNpb25SZXNwb25zZSI9ChRMaXN0U3VzcGVuZGVkUmVxdWVzdBIRCglwYWdlX3NpemUYASABKAUSEgoKcGFnZV90b2tlbhgCIAEoCSJbChVMaXN0U3VzcGVuZGVkUmVzcG9uc2USKQoGcGVvcGxlGAEgAygLMhkuaXNzaG8udjEuU3VzcGVuZGVkUGVyc29uEhcKD25leHRfcGFnZV90b2tlbhgCIAEoCSKBAQoPU3VzcGVuZGVkUGVyc29uEg8KB3VzZXJfaWQYASABKAkSDAoEbmFtZRgCIAEoCRIOCgZyZWFzb24YAyABKAkSKQoFc2luY2UYBCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhQKDHN1c3BlbmRlZF9ieRgFIAEoCSp+CgxSZXBvcnRTdGF0dXMSHQoZUkVQT1JUX1NUQVRVU19VTlNQRUNJRklFRBAAEhYKElJFUE9SVF9TVEFUVVNfT1BFThABEhoKFlJFUE9SVF9TVEFUVVNfQUNUSU9ORUQQAhIbChdSRVBPUlRfU1RBVFVTX0RJU01JU1NFRBADKkUKCEZsYWdLaW5kEhkKFUZMQUdfS0lORF9VTlNQRUNJRklFRBAAEh4KGkZMQUdfS0lORF9QSUNLX0dFTkRFUl9MRUFOEAEqcwoOT3V0aW5nRmVlZGJhY2sSHwobT1VUSU5HX0ZFRURCQUNLX1VOU1BFQ0lGSUVEEAASHQoZT1VUSU5HX0ZFRURCQUNLX1NBSURfV0VOVBABEiEKHU9VVElOR19GRUVEQkFDS19TQUlEX0RJRE5UX0dPEAIyugYKEU1vZGVyYXRpb25TZXJ2aWNlEkwKC0xpc3RSZXBvcnRzEhwuaXNzaG8udjEuTGlzdFJlcG9ydHNSZXF1ZXN0Gh0uaXNzaG8udjEuTGlzdFJlcG9ydHNSZXNwb25zZSIAElIKDVJlc29sdmVSZXBvcnQSHi5pc3Noby52MS5SZXNvbHZlUmVwb3J0UmVxdWVzdBofLmlzc2hvLnYxLlJlc29sdmVSZXBvcnRSZXNwb25zZSIAEkYKCUxpc3RGbGFncxIaLmlzc2hvLnYxLkxpc3RGbGFnc1JlcXVlc3QaGy5pc3Noby52MS5MaXN0RmxhZ3NSZXNwb25zZSIAEkwKC1Jlc29sdmVGbGFnEhwuaXNzaG8udjEuUmVzb2x2ZUZsYWdSZXF1ZXN0Gh0uaXNzaG8udjEuUmVzb2x2ZUZsYWdSZXNwb25zZSIAElUKDkxpc3RDcmV3TGVhdmVzEh8uaXNzaG8udjEuTGlzdENyZXdMZWF2ZXNSZXF1ZXN0GiAuaXNzaG8udjEuTGlzdENyZXdMZWF2ZXNSZXNwb25zZSIAEk8KDFNlYXJjaFBlb3BsZRIdLmlzc2hvLnYxLlNlYXJjaFBlb3BsZVJlcXVlc3QaHi5pc3Noby52MS5TZWFyY2hQZW9wbGVSZXNwb25zZSIAEkYKCUdldFBlcnNvbhIaLmlzc2hvLnYxLkdldFBlcnNvblJlcXVlc3QaGy5pc3Noby52MS5HZXRQZXJzb25SZXNwb25zZSIAElIKDVN1c3BlbmRQZXJzb24SHi5pc3Noby52MS5TdXNwZW5kUGVyc29uUmVxdWVzdBofLmlzc2hvLnYxLlN1c3BlbmRQZXJzb25SZXNwb25zZSIAElUKDkxpZnRTdXNwZW5zaW9uEh8uaXNzaG8udjEuTGlmdFN1c3BlbnNpb25SZXF1ZXN0GiAuaXNzaG8udjEuTGlmdFN1c3BlbnNpb25SZXNwb25zZSIAElIKDUxpc3RTdXNwZW5kZWQSHi5pc3Noby52MS5MaXN0U3VzcGVuZGVkUmVxdWVzdBofLmlzc2hvLnYxLkxpc3RTdXNwZW5kZWRSZXNwb25zZSIAQj5aPGdpdGh1Yi5jb20vc2hydWphbmNoZXJ1a3UvaXNzaG8vYmFja2VuZC9nZW4vaXNzaG8vdjE7aXNzaG92MWIGcHJvdG8z", [file_google_protobuf_timestamp, file_issho_v1_crews, file_issho_v1_events]);
 
 /**
  * @generated from message issho.v1.ListReportsRequest
@@ -35,6 +35,22 @@ export type ListReportsRequest = Message<"issho.v1.ListReportsRequest"> & {
    * @generated from field: string reported_id = 2;
    */
   reportedId: string;
+
+  /**
+   * How many to return; 0 = 50, at most 200 (more is clamped).
+   *
+   * @generated from field: int32 page_size = 3;
+   */
+  pageSize: number;
+
+  /**
+   * From a previous response's next_page_token for the same request;
+   * empty = the first page. Opaque. INVALID_ARGUMENT if it is not from this
+   * list with these filters.
+   *
+   * @generated from field: string page_token = 4;
+   */
+  pageToken: string;
 };
 
 /**
@@ -52,6 +68,13 @@ export type ListReportsResponse = Message<"issho.v1.ListReportsResponse"> & {
    * @generated from field: repeated issho.v1.ModerationReport reports = 1;
    */
   reports: ModerationReport[];
+
+  /**
+   * Pass as page_token for the next page; empty on the last page.
+   *
+   * @generated from field: string next_page_token = 2;
+   */
+  nextPageToken: string;
 };
 
 /**
@@ -241,6 +264,22 @@ export type ListFlagsRequest = Message<"issho.v1.ListFlagsRequest"> & {
    * @generated from field: bool resolved = 1;
    */
   resolved: boolean;
+
+  /**
+   * How many to return; 0 = 50, at most 200 (more is clamped).
+   *
+   * @generated from field: int32 page_size = 2;
+   */
+  pageSize: number;
+
+  /**
+   * From a previous response's next_page_token for the same request;
+   * empty = the first page. Opaque. INVALID_ARGUMENT if it is not from this
+   * list with these filters.
+   *
+   * @generated from field: string page_token = 3;
+   */
+  pageToken: string;
 };
 
 /**
@@ -258,6 +297,13 @@ export type ListFlagsResponse = Message<"issho.v1.ListFlagsResponse"> & {
    * @generated from field: repeated issho.v1.ModerationFlag flags = 1;
    */
   flags: ModerationFlag[];
+
+  /**
+   * Pass as page_token for the next page; empty on the last page.
+   *
+   * @generated from field: string next_page_token = 2;
+   */
+  nextPageToken: string;
 };
 
 /**
@@ -382,6 +428,22 @@ export type ListCrewLeavesRequest = Message<"issho.v1.ListCrewLeavesRequest"> & 
    * @generated from field: issho.v1.LeaveReason reason = 1;
    */
   reason: LeaveReason;
+
+  /**
+   * How many to return; 0 = 50, at most 200 (more is clamped).
+   *
+   * @generated from field: int32 page_size = 2;
+   */
+  pageSize: number;
+
+  /**
+   * From a previous response's next_page_token for the same request;
+   * empty = the first page. Opaque. INVALID_ARGUMENT if it is not from this
+   * list with these filters.
+   *
+   * @generated from field: string page_token = 3;
+   */
+  pageToken: string;
 };
 
 /**
@@ -399,6 +461,13 @@ export type ListCrewLeavesResponse = Message<"issho.v1.ListCrewLeavesResponse"> 
    * @generated from field: repeated issho.v1.CrewLeave leaves = 1;
    */
   leaves: CrewLeave[];
+
+  /**
+   * Pass as page_token for the next page; empty on the last page.
+   *
+   * @generated from field: string next_page_token = 2;
+   */
+  nextPageToken: string;
 };
 
 /**
@@ -481,6 +550,22 @@ export type SearchPeopleRequest = Message<"issho.v1.SearchPeopleRequest"> & {
    * @generated from field: string query = 1;
    */
   query: string;
+
+  /**
+   * How many to return; 0 = 50, at most 200 (more is clamped).
+   *
+   * @generated from field: int32 page_size = 2;
+   */
+  pageSize: number;
+
+  /**
+   * From a previous response's next_page_token for the same request;
+   * empty = the first page. Opaque. INVALID_ARGUMENT if it is not from this
+   * list with these filters.
+   *
+   * @generated from field: string page_token = 3;
+   */
+  pageToken: string;
 };
 
 /**
@@ -498,6 +583,13 @@ export type SearchPeopleResponse = Message<"issho.v1.SearchPeopleResponse"> & {
    * @generated from field: repeated issho.v1.PersonSummary people = 1;
    */
   people: PersonSummary[];
+
+  /**
+   * Pass as page_token for the next page; empty on the last page.
+   *
+   * @generated from field: string next_page_token = 2;
+   */
+  nextPageToken: string;
 };
 
 /**
@@ -655,14 +747,17 @@ export type Person = Message<"issho.v1.Person"> & {
   suspensions: Suspension[];
 
   /**
-   * Open ones first.
+   * Open ones first. Not paged: there is at most one open flag per kind, and
+   * flags are rare (a person gets one only from a system signal).
    *
    * @generated from field: repeated issho.v1.ModerationFlag flags = 14;
    */
   flags: ModerationFlag[];
 
   /**
-   * Newest first, at most 50.
+   * Newest first, the latest 50. Not paged on purpose: a moderator reads
+   * the recent past to decide, and 50 outings is a real bound on what that
+   * takes (the full history is not a moderation question).
    *
    * @generated from field: repeated issho.v1.PersonOuting outings = 15;
    */
@@ -863,6 +958,21 @@ export const LiftSuspensionResponseSchema: GenMessage<LiftSuspensionResponse> = 
  * @generated from message issho.v1.ListSuspendedRequest
  */
 export type ListSuspendedRequest = Message<"issho.v1.ListSuspendedRequest"> & {
+  /**
+   * How many to return; 0 = 50, at most 200 (more is clamped).
+   *
+   * @generated from field: int32 page_size = 1;
+   */
+  pageSize: number;
+
+  /**
+   * From a previous response's next_page_token for the same request;
+   * empty = the first page. Opaque. INVALID_ARGUMENT if it is not from this
+   * list with these filters.
+   *
+   * @generated from field: string page_token = 2;
+   */
+  pageToken: string;
 };
 
 /**
@@ -880,6 +990,13 @@ export type ListSuspendedResponse = Message<"issho.v1.ListSuspendedResponse"> & 
    * @generated from field: repeated issho.v1.SuspendedPerson people = 1;
    */
   people: SuspendedPerson[];
+
+  /**
+   * Pass as page_token for the next page; empty on the last page.
+   *
+   * @generated from field: string next_page_token = 2;
+   */
+  nextPageToken: string;
 };
 
 /**
@@ -1030,7 +1147,7 @@ export const OutingFeedbackSchema: GenEnum<OutingFeedback> = /*@__PURE__*/
 export const ModerationService: GenService<{
   /**
    * ListReports returns reports, open ones first (oldest first), then the
-   * rest newest first. At most 200.
+   * rest newest first. Paged: page_size, page_token.
    *
    * @generated from rpc issho.v1.ModerationService.ListReports
    */
@@ -1052,7 +1169,7 @@ export const ModerationService: GenService<{
   },
   /**
    * ListFlags returns open flags (oldest first) or resolved ones (newest
-   * first). At most 200.
+   * first). Paged: page_size, page_token.
    *
    * @generated from rpc issho.v1.ModerationService.ListFlags
    */
@@ -1073,7 +1190,8 @@ export const ModerationService: GenService<{
     output: typeof ResolveFlagResponseSchema;
   },
   /**
-   * ListCrewLeaves returns why people left crews, newest first. At most 200.
+   * ListCrewLeaves returns why people left crews, newest first. Paged: page_size,
+   * page_token.
    *
    * @generated from rpc issho.v1.ModerationService.ListCrewLeaves
    */
@@ -1084,7 +1202,8 @@ export const ModerationService: GenService<{
   },
   /**
    * SearchPeople finds people by name or email (contains, any case) or
-   * exact user id. At most 50.
+   * exact user id, by name (people without one last). Paged: page_size,
+   * page_token.
    *
    * @generated from rpc issho.v1.ModerationService.SearchPeople
    */
@@ -1134,8 +1253,8 @@ export const ModerationService: GenService<{
     output: typeof LiftSuspensionResponseSchema;
   },
   /**
-   * ListSuspended returns everyone suspended now, most recent first. At
-   * most 200.
+   * ListSuspended returns everyone suspended now, most recent first.
+   * Paged: page_size, page_token.
    *
    * @generated from rpc issho.v1.ModerationService.ListSuspended
    */

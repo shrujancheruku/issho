@@ -28,6 +28,12 @@ const (
 // Diff is what applying a pack changed that needs Google again.
 type Diff struct {
 	NewAreas, MovedAreas []string
+	// RemovedAreas were deleted (nothing referenced them). ReplacedAreas
+	// were retired by an area's `replaces`, their people moved on.
+	// RemovedOverrides are activity ids whose override the pack dropped.
+	RemovedAreas     []string
+	ReplacedAreas    []ReplacedArea
+	RemovedOverrides []string
 	// TravelTimesRebuilt is set when the matrix was rebuilt, with TravelTimes
 	// rows written.
 	TravelTimesRebuilt bool
@@ -54,25 +60,17 @@ func DiffAreas(was map[string]maps.LatLng, areas []Area) (added, moved []string)
 	return added, moved
 }
 
-// Apply seeds a validated pack, works out which areas are new or moved
-// (compared with the database before seeding) and, when there are any and a
-// router is given, rebuilds the city's travel times. A nil router (no Maps
-// key) skips the rebuild. If the router fails, the pack stays seeded and the
-// error wraps ErrTravelTimes; the Diff is still returned.
-func Apply(ctx context.Context, pool *pgxpool.Pool, router maps.Router, p Pack) (Diff, error) {
-	before, err := dbgen.New(pool).ListCityAreas(ctx, p.ID)
+// Apply makes the database match a validated pack (see seedPack for what
+// that deletes, and when it refuses with ErrRefused), works out which areas
+// are new or moved and, when there are any and a router is given, rebuilds
+// the city's travel times. A nil router (no Maps key) skips the rebuild. If
+// the router fails, the pack stays seeded and the error wraps ErrTravelTimes;
+// the Diff is still returned.
+func Apply(ctx context.Context, pool *pgxpool.Pool, router maps.Router, p Pack, opts Options) (Diff, error) {
+	d, err := seedPack(ctx, pool, p, opts)
 	if err != nil {
 		return Diff{}, err
 	}
-	was := make(map[string]maps.LatLng, len(before))
-	for _, a := range before {
-		was[a.ID] = maps.LatLng{Lat: a.Lat, Lng: a.Lng}
-	}
-	if err := seedPack(ctx, pool, p); err != nil {
-		return Diff{}, err
-	}
-	var d Diff
-	d.NewAreas, d.MovedAreas = DiffAreas(was, p.Areas)
 	if (len(d.NewAreas) == 0 && len(d.MovedAreas) == 0) || router == nil {
 		return d, nil
 	}

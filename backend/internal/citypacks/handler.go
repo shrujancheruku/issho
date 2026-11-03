@@ -226,7 +226,7 @@ func (h *Handler) ProposeCityPack(ctx context.Context, req *connect.Request[issh
 	if err != nil {
 		return nil, err
 	}
-	keepBoundaries(&p, base)
+	keepFileOnly(&p, base)
 	keepOverrideNames(&p, base)
 	if err := h.check(ctx, p); err != nil {
 		return nil, err
@@ -291,7 +291,13 @@ func (h *Handler) ApplyCityPack(ctx context.Context, req *connect.Request[isshov
 	if err := h.check(ctx, p); err != nil {
 		return nil, err
 	}
-	d, err := cities.Apply(ctx, h.DB, h.Router, p)
+	// The admin never consents to losing curated venues; that is `tool seed
+	// -drop-curated-venues`.
+	d, err := cities.Apply(ctx, h.DB, h.Router, p, cities.Options{})
+	if errors.Is(err, cities.ErrRefused) {
+		// Names areas and counts only, nothing was written.
+		return nil, connect.NewError(connect.CodeFailedPrecondition, err)
+	}
 	if errors.Is(err, cities.ErrTravelTimes) {
 		// The pack is seeded; only Google's answer is missing, and the
 		// worker's refresh retries within a day. Google's text stays in the log.
@@ -433,14 +439,15 @@ func toProto(p cities.Pack) *isshov1.CityPack {
 	return out
 }
 
-// keepBoundaries copies each area's boundary from the default branch's pack:
-// the editor doesn't edit them (`tool area-boundaries` does), so they'd
-// otherwise be dropped. An area moved out of its boundary then fails
+// keepFileOnly copies the fields the editor doesn't show from the default
+// branch's pack, or its pull requests would drop them: each area's osm_id and
+// boundary (`tool area-boundaries` writes them) and replaces (written by hand
+// when an area is retired). An area moved out of its boundary then fails
 // validation, which is the point.
-func keepBoundaries(p *cities.Pack, base cities.Pack) {
+func keepFileOnly(p *cities.Pack, base cities.Pack) {
 	for i, a := range p.Areas {
 		if j := slices.IndexFunc(base.Areas, func(b cities.Area) bool { return b.ID == a.ID }); j >= 0 {
-			p.Areas[i].OSMID, p.Areas[i].Boundary = base.Areas[j].OSMID, base.Areas[j].Boundary
+			p.Areas[i].OSMID, p.Areas[i].Boundary, p.Areas[i].Replaces = base.Areas[j].OSMID, base.Areas[j].Boundary, base.Areas[j].Replaces
 		}
 	}
 }

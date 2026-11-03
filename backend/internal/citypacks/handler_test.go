@@ -300,15 +300,15 @@ func TestIntegrationCityPacks(t *testing.T) {
 	}
 }
 
-func TestKeepBoundaries(t *testing.T) {
-	base := cities.Pack{Areas: []cities.Area{{ID: "x-a", OSMID: 7, Boundary: []string{"_p~iF~ps|U_ulLnnqC_mqNvxq`@"}}}}
-	// What the editor sends: no boundary fields, plus a new area.
+func TestKeepFileOnly(t *testing.T) {
+	base := cities.Pack{Areas: []cities.Area{{ID: "x-a", OSMID: 7, Boundary: []string{"_p~iF~ps|U_ulLnnqC_mqNvxq`@"}, Replaces: []string{"x-old"}}}}
+	// What the editor sends: no osm_id, boundary or replaces, plus a new area.
 	p := cities.Pack{Areas: []cities.Area{{ID: "x-a", Lat: 1}, {ID: "x-new", Lat: 2}}}
-	keepBoundaries(&p, base)
-	if a := p.Areas[0]; a.OSMID != 7 || len(a.Boundary) != 1 || a.Lat != 1 {
+	keepFileOnly(&p, base)
+	if a := p.Areas[0]; a.OSMID != 7 || len(a.Boundary) != 1 || !slices.Equal(a.Replaces, []string{"x-old"}) || a.Lat != 1 {
 		t.Errorf("existing area: %+v", a)
 	}
-	if a := p.Areas[1]; a.OSMID != 0 || a.Boundary != nil {
+	if a := p.Areas[1]; a.OSMID != 0 || a.Boundary != nil || a.Replaces != nil {
 		t.Errorf("new area got a boundary: %+v", a)
 	}
 }

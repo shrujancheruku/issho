@@ -84,13 +84,14 @@ func (h *Handler) ListVenues(ctx context.Context, req *connect.Request[isshov1.L
 	if !ok {
 		return nil, errs.Invalid("status: candidate, approved or rejected")
 	}
-	places, total, err := h.Svc.List(ctx, ListParams{
-		CityID: m.CityId, AreaID: m.AreaId, CategoryID: m.CategoryId, Status: status, Offset: m.Offset,
+	places, total, next, err := h.Svc.List(ctx, ListParams{
+		CityID: m.CityId, AreaID: m.AreaId, CategoryID: m.CategoryId, Status: status,
+		PageSize: m.PageSize, Token: m.PageToken,
 	})
 	if err != nil {
 		return nil, err
 	}
-	out := &isshov1.ListVenuesResponse{Total: total, Venues: make([]*isshov1.Venue, len(places))}
+	out := &isshov1.ListVenuesResponse{Total: total, NextPageToken: next, Venues: make([]*isshov1.Venue, len(places))}
 	for i, p := range places {
 		v := &isshov1.Venue{
 			PlaceId: p.GooglePlaceID, AreaId: p.AreaID, AreaName: p.AreaName, CategoryIds: p.Categories,

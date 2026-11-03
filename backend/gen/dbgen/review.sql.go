@@ -501,15 +501,21 @@ join app.plans p on p.id = e.plan_id
 join app.areas a on a.id = p.area_id
 join app.cities c on c.id = p.city_id
 where p.city_id = $1 and e.status = $2 and (e.status = 'proposed' or e.date >= $3)
+  and (not $4::boolean
+       or (e.date, e.block, e.id) > ($5::date, $6::text, $7::uuid))
 order by e.date, e.block, e.id
-limit $4
+limit $8
 `
 
 type ListReviewEventsParams struct {
-	CityID   string
-	Status   string
-	FromDate pgtype.Date
-	MaxRows  int32
+	CityID     string
+	Status     string
+	FromDate   pgtype.Date
+	HasAfter   bool
+	AfterDate  pgtype.Date
+	AfterBlock string
+	AfterID    uuid.UUID
+	MaxRows    int32
 }
 
 type ListReviewEventsRow struct {
@@ -532,12 +538,17 @@ type ListReviewEventsRow struct {
 }
 
 // Group review (00022): proposals waiting in a city, or its upcoming
-// scheduled events (for meeting points). Soonest first.
+// scheduled events (for meeting points). Soonest first. Keyset on
+// (date, block, id) after (@after_date, @after_block, @after_id).
 func (q *Queries) ListReviewEvents(ctx context.Context, arg ListReviewEventsParams) ([]ListReviewEventsRow, error) {
 	rows, err := q.db.Query(ctx, listReviewEvents,
 		arg.CityID,
 		arg.Status,
 		arg.FromDate,
+		arg.HasAfter,
+		arg.AfterDate,
+		arg.AfterBlock,
+		arg.AfterID,
 		arg.MaxRows,
 	)
 	if err != nil {
@@ -585,14 +596,22 @@ select p.id, p.city_id, p.status, coalesce(p.closed_reason, '')::text as closed_
 from app.plans p
 join app.areas a on a.id = p.area_id
 where p.city_id = $1 and p.status = $2
-order by case when p.status = 'draft' then p.created_at end asc, p.created_at desc, p.id
-limit $3
+  and (not $3::boolean
+       or (p.status = 'draft' and (p.created_at, p.id) > ($4::timestamptz, $5::uuid))
+       or (p.status <> 'draft' and (p.created_at, p.id) < ($4::timestamptz, $5::uuid)))
+order by case when p.status = 'draft' then p.created_at end asc,
+         case when p.status = 'draft' then p.id end asc,
+         p.created_at desc, p.id desc
+limit $6
 `
 
 type ListReviewPlansParams struct {
-	CityID  string
-	Status  string
-	MaxRows int32
+	CityID   string
+	Status   string
+	HasAfter bool
+	AfterTs  pgtype.Timestamptz
+	AfterID  uuid.UUID
+	MaxRows  int32
 }
 
 type ListReviewPlansRow struct {
@@ -622,9 +641,17 @@ type ListReviewPlansRow struct {
 }
 
 // A city's plans in one state: drafts oldest first (they've waited
-// longest), others newest first.
+// longest), others newest first. Keyset: the page after (@after_ts, @after_id)
+// when @has_after; @max_rows is the page size plus one.
 func (q *Queries) ListReviewPlans(ctx context.Context, arg ListReviewPlansParams) ([]ListReviewPlansRow, error) {
-	rows, err := q.db.Query(ctx, listReviewPlans, arg.CityID, arg.Status, arg.MaxRows)
+	rows, err := q.db.Query(ctx, listReviewPlans,
+		arg.CityID,
+		arg.Status,
+		arg.HasAfter,
+		arg.AfterTs,
+		arg.AfterID,
+		arg.MaxRows,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -690,7 +717,8 @@ type ListVenueOptionsRow struct {
 }
 
 // Venues for an activity in an area, as PickVenue would choose from: one
-// row per place (a place can be in two categories), approved first.
+// row per place (a place can be in two categories), approved first. Not
+// paged: @max_rows is the picker's bound (best 20), not a hidden remainder.
 func (q *Queries) ListVenueOptions(ctx context.Context, arg ListVenueOptionsParams) ([]ListVenueOptionsRow, error) {
 	rows, err := q.db.Query(ctx, listVenueOptions, arg.AreaID, arg.Categories, arg.MaxRows)
 	if err != nil {

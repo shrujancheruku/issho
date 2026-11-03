@@ -4,8 +4,7 @@ import { useEffect, useState } from 'react';
 
 import { placeholderProblems } from '../format';
 import { api } from '../lib';
-
-const pageSize = 100; // TranslationService.ListCatalogTranslations returns pages of 100
+import { LoadMore, rowsOf, usePaged } from '../paging';
 
 /**
  * The translation editor, for admins and translators (their languages only).
@@ -229,30 +228,30 @@ function Catalogue() {
   const [search, setSearch] = useState('');
   const [query, setQuery] = useState(''); // search, applied after a pause in typing
   const [unreviewedOnly, setUnreviewedOnly] = useState(true);
-  const [offset, setOffset] = useState(0);
 
   useEffect(() => {
-    const t = setTimeout(() => { setQuery(search.trim()); setOffset(0); }, 300);
+    const t = setTimeout(() => { setQuery(search.trim()); }, 300);
     return () => clearTimeout(t);
   }, [search]);
 
-  const list = useQuery({
-    queryKey: ['catalogue-translations', lang, unreviewedOnly, query, offset],
-    queryFn: () => api.translation.listCatalogTranslations({ lang, unreviewedOnly, search: query, offset }),
-    enabled: lang !== '',
-  });
+  const list = usePaged(
+    ['catalogue-translations', lang, unreviewedOnly, query],
+    (pageToken) => api.translation.listCatalogTranslations({ lang, unreviewedOnly, search: query, pageToken }),
+    lang !== '',
+  );
+  const rows = rowsOf(list.data, (p) => p.translations);
 
   return (
     <>
       <div className="toolbar">
-        <select value={lang} onChange={(e) => { setLang(e.target.value); setOffset(0); }}>
+        <select value={lang} onChange={(e) => setLang(e.target.value)}>
           {languages.data?.languages.map((l) => (
             <option key={l.lang} value={l.lang}>{l.lang} · {l.unreviewed} to check of {l.total}</option>
           ))}
         </select>
         <input type="search" placeholder="Search English or translation" value={search} onChange={(e) => setSearch(e.target.value)} />
         <label className="check">
-          <input type="checkbox" checked={unreviewedOnly} onChange={(e) => { setUnreviewedOnly(e.target.checked); setOffset(0); }} />
+          <input type="checkbox" checked={unreviewedOnly} onChange={(e) => setUnreviewedOnly(e.target.checked)} />
           Unchecked only
         </label>
       </div>
@@ -264,15 +263,9 @@ function Catalogue() {
       {languages.data?.languages.length === 0 && <p className="empty">No machine translations yet.</p>}
       {(languages.error || list.error) && <p className="error">{ConnectError.from(languages.error ?? list.error).message}</p>}
       {list.isFetching && !list.data && <p className="muted">Loading…</p>}
-      {list.data?.translations.length === 0 && <p className="empty">Nothing here.</p>}
-      {list.data?.translations.map((t) => <CatalogueRow key={`${t.sourceHash}/${t.lang}`} translation={t} />)}
-      {list.data && (offset > 0 || list.data.translations.length === pageSize) && (
-        <div className="row pager">
-          <button className="secondary" disabled={offset === 0} onClick={() => setOffset(Math.max(0, offset - pageSize))}>Previous</button>
-          <span className="muted">{offset + 1}–{offset + list.data.translations.length}</span>
-          <button className="secondary" disabled={list.data.translations.length < pageSize} onClick={() => setOffset(offset + pageSize)}>Next</button>
-        </div>
-      )}
+      {list.data && rows.length === 0 && <p className="empty">Nothing here.</p>}
+      {rows.map((t) => <CatalogueRow key={`${t.sourceHash}/${t.lang}`} translation={t} />)}
+      <LoadMore query={list} />
     </>
   );
 }

@@ -6,6 +6,11 @@
 -- newest first. @status '' = every status; @reported_id narrows to one
 -- person. Each row says how many reports that person has in all, so a
 -- pattern shows without opening each one.
+-- Keyset paging (AIP-158): the page after the row (@after_open: it was an
+-- open report, @after_ts its created_at, @after_id its id) when @has_after.
+-- Open reports come first, oldest first; the rest newest first, so a
+-- cursor in the open part continues into the rest. @max_rows is the page
+-- size plus one, to tell whether there is a next page.
 -- name: ListReports :many
 select r.id, r.reporter_id, r.reported_id, r.event_id, r.crew_id, r.reason, r.details,
        r.status, r.note, r.created_at, r.updated_at, r.reviewed_at, r.reviewed_by,
@@ -27,8 +32,15 @@ left join app.activities ca on ca.id = c.activity_id
 left join app.areas cr on cr.id = c.area_id
 where (@status::text = '' or r.status = @status)
   and (@reported_id::uuid = '00000000-0000-0000-0000-000000000000' or r.reported_id = @reported_id)
-order by case when r.status = 'open' then r.created_at end asc,
-         r.created_at desc
+  and (not @has_after::boolean
+       or (r.status = 'open' and @after_open::boolean
+           and (r.created_at, r.id) > (@after_ts::timestamptz, @after_id::uuid))
+       or (r.status <> 'open'
+           and (@after_open::boolean or (r.created_at, r.id) < (@after_ts::timestamptz, @after_id::uuid))))
+order by (r.status <> 'open'),
+         case when r.status = 'open' then r.created_at end asc,
+         case when r.status = 'open' then r.id end asc,
+         r.created_at desc, r.id desc
 limit @max_rows;
 
 -- updated_at stays the reporter's: a report changed after review shows it.
@@ -37,15 +49,21 @@ update app.reports
 set status = @status, note = @note, reviewed_by = @reviewed_by, reviewed_at = @at
 where id = @id;
 
--- Flags: open ones oldest first, else resolved ones newest first.
+-- Flags: open ones oldest first (by created_at), else resolved ones newest
+-- first (by resolved_at). Keyset: @after_ts is the last row's created_at
+-- (open) or resolved_at (resolved), with its @after_id.
 -- name: ListModerationFlags :many
 select f.id, f.user_id, f.kind, f.details, f.created_at, f.updated_at, f.resolved_at, f.resolved_by, f.note,
        coalesce(p.display_name, '')::text as user_name
 from app.moderation_flags f
 left join app.profiles p on p.user_id = f.user_id
-where (@open::boolean and f.resolved_at is null) or (not @open::boolean and f.resolved_at is not null)
+where ((@open::boolean and f.resolved_at is null) or (not @open::boolean and f.resolved_at is not null))
+  and (not @has_after::boolean
+       or (@open::boolean and (f.created_at, f.id) > (@after_ts::timestamptz, @after_id::bigint))
+       or (not @open::boolean and (f.resolved_at, f.id) < (@after_ts::timestamptz, @after_id::bigint)))
 order by case when f.resolved_at is null then f.created_at end asc,
-         f.resolved_at desc
+         case when f.resolved_at is null then f.id end asc,
+         f.resolved_at desc, f.id desc
 limit @max_rows;
 
 -- Resolving closes the flag; the next signal opens a new one.
@@ -66,6 +84,7 @@ left join app.profiles p on p.user_id = l.user_id
 left join app.activities ca on ca.id = c.activity_id
 left join app.areas cr on cr.id = c.area_id
 where (@reason::text = '' or l.reason = @reason)
+  and (not @has_after::boolean or (l.created_at, l.id) < (@after_ts::timestamptz, @after_id::bigint))
 order by l.created_at desc, l.id desc
 limit @max_rows;
 
@@ -92,14 +111,16 @@ from app.suspensions
 where user_id = $1
 order by created_at desc;
 
--- Everyone suspended now, most recent first.
+-- Everyone suspended now, most recent first (user_id breaks ties: a person
+-- has one open suspension at a time).
 -- name: ListOpenSuspensions :many
 select s.user_id, s.reason, s.created_at, s.created_by,
        coalesce(p.display_name, '')::text as display_name
 from app.suspensions s
 left join app.profiles p on p.user_id = s.user_id
 where s.lifted_at is null
-order by s.created_at desc
+  and (not @has_after::boolean or (s.created_at, s.user_id) < (@after_ts::timestamptz, @after_id::uuid))
+order by s.created_at desc, s.user_id desc
 limit @max_rows;
 
 -- One person, for the person view. No profile = not onboarded.
@@ -119,20 +140,26 @@ left join app.areas a on a.id = p.home_area_id
 where u.id = $1;
 
 -- People by name or email (contains, any case) or exact id, for finding
--- someone to look at. Suspended people say so.
+-- someone to look at. Suspended people say so. By name, people without one
+-- last, then id. Keyset on that same triple: @after_unnamed, @after_name,
+-- @after_id.
 -- name: SearchPeople :many
 select u.id, coalesce(u.email, '')::text as email,
        coalesce(p.display_name, '')::text as display_name,
        exists (select 1 from app.suspensions s where s.user_id = u.id and s.lifted_at is null) as suspended
 from app.users u
 left join app.profiles p on p.user_id = u.id
-where u.id::text = @query::text
-   or p.display_name ilike '%' || @query || '%'
-   or u.email ilike '%' || @query || '%'
-order by p.display_name nulls last, u.id
+where (u.id::text = @query::text
+       or p.display_name ilike '%' || @query || '%'
+       or u.email ilike '%' || @query || '%')
+  and (not @has_after::boolean
+       or (coalesce(p.display_name, '') = '', coalesce(p.display_name, ''), u.id)
+          > (@after_unnamed::boolean, @after_name::text, @after_id::uuid))
+order by (coalesce(p.display_name, '') = ''), coalesce(p.display_name, ''), u.id
 limit @max_rows;
 
--- Their outings, newest first: how they answered, and whether they went
+-- Their outings, newest first, the latest @max_rows (not paged: see
+-- Person.outings in the proto): how they answered, and whether they went
 -- (checked in, or said so in their feedback).
 -- name: ListPersonOutings :many
 select e.id as event_id, e.date, e.block, e.status as event_status,
@@ -148,7 +175,8 @@ where m.user_id = $1
 order by e.date desc, e.id
 limit @max_rows;
 
--- Every flag about one person, open ones first.
+-- Every flag about one person, open ones first. Not paged: flags are rare
+-- (see Person.flags in the proto).
 -- name: ListPersonFlags :many
 select id, kind, details, created_at, updated_at, resolved_at, resolved_by, note
 from app.moderation_flags

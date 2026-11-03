@@ -40,7 +40,7 @@ describe('People', () => {
     await user.type(screen.getByPlaceholderText('Name, email or user id'), 'aoi');
 
     expect(await screen.findByText('aoi@example.com')).toBeTruthy();
-    expect(fake.requests('moderation.searchPeople')).toEqual([{ query: 'aoi' }]);
+    expect(fake.requests('moderation.searchPeople')).toEqual([{ query: 'aoi', pageToken: '' }]);
     expect(screen.getAllByText('Suspended').length).toBeGreaterThan(0);
   });
 

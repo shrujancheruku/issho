@@ -1,13 +1,15 @@
 import { ConnectError, FlagKind, type ModerationFlag } from '@issho/api-client';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
 import { formatTime, leanSummary, personHref } from '../format';
 import { api } from '../lib';
+import { LoadMore, rowsOf, usePaged } from '../paging';
 
 export function Flags() {
   const [resolved, setResolved] = useState(false);
-  const flags = useQuery({ queryKey: ['flags', resolved], queryFn: () => api.moderation.listFlags({ resolved }) });
+  const flags = usePaged(['flags', resolved], (pageToken) => api.moderation.listFlags({ resolved, pageToken }));
+  const rows = rowsOf(flags.data, (p) => p.flags);
 
   return (
     <section>
@@ -23,8 +25,9 @@ export function Flags() {
       </p>
       {flags.isPending && <p className="muted">Loading…</p>}
       {flags.error && <p className="error">{ConnectError.from(flags.error).message}</p>}
-      {flags.data?.flags.length === 0 && <p className="empty">Nothing here.</p>}
-      {flags.data?.flags.map((f) => <FlagCard key={f.id.toString()} flag={f} />)}
+      {flags.data && rows.length === 0 && <p className="empty">Nothing here.</p>}
+      {rows.map((f) => <FlagCard key={f.id.toString()} flag={f} />)}
+      <LoadMore query={flags} />
     </section>
   );
 }

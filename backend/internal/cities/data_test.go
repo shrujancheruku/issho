@@ -42,6 +42,7 @@ func TestDataFiles(t *testing.T) {
 	if len(packs) < 2 {
 		t.Fatalf("expected at least 2 city packs, found %d", len(packs))
 	}
+	var all []Pack
 	for _, path := range packs {
 		var p Pack
 		if err := readJSON(path, &p); err != nil {
@@ -50,6 +51,7 @@ func TestDataFiles(t *testing.T) {
 		if want := filepath.Base(path); want != p.ID+".json" {
 			t.Errorf("%s: file name should be %s.json", path, p.ID)
 		}
+		all = append(all, p)
 		if err := ValidatePack(p, ids); err != nil {
 			t.Errorf("%s:\n%v", path, err)
 		}
@@ -62,6 +64,9 @@ func TestDataFiles(t *testing.T) {
 		if enc, err := EncodePack(p); err != nil || string(enc) != string(raw) {
 			t.Errorf("%s: EncodePack doesn't reproduce the file (%v); keep packs in its format", path, err)
 		}
+	}
+	if err := ValidatePacks(all); err != nil {
+		t.Errorf("packs together:\n%v", err)
 	}
 }
 
@@ -96,6 +101,13 @@ func TestValidatePackRejects(t *testing.T) {
 		"duplicate area":    func(p *Pack) { p.Areas = append(p.Areas, p.Areas[0]) },
 		"bad boundary":      func(p *Pack) { p.Areas[0].Boundary = []string{"_p~iF"} },
 		"negative osm id":   func(p *Pack) { p.Areas[0].OSMID = -1 },
+		"replaced id is still an area": func(p *Pack) {
+			p.Areas = append(p.Areas, Area{ID: "x-b", Name: Text{"en": "B"}, Lat: 2, Lng: 2, Replaces: []string{"x-a"}})
+		},
+		"area replaced twice": func(p *Pack) {
+			p.Areas[0].Replaces = []string{"x-old"}
+			p.Areas = append(p.Areas, Area{ID: "x-b", Name: Text{"en": "B"}, Lat: 2, Lng: 2, Replaces: []string{"x-old"}})
+		},
 		"point outside its boundary": func(p *Pack) {
 			p.Areas[0].Boundary = []string{maps.EncodePolyline([]maps.LatLng{{Lat: 2, Lng: 2}, {Lat: 2, Lng: 3}, {Lat: 3, Lng: 3}, {Lat: 3, Lng: 2}})}
 		},
@@ -111,6 +123,22 @@ func TestValidatePackRejects(t *testing.T) {
 		if err := ValidatePack(p, map[string]bool{"hike": true}); err == nil {
 			t.Errorf("%s: expected an error", name)
 		}
+	}
+}
+
+func TestValidatePacks(t *testing.T) {
+	pack := func(id string, areas ...Area) Pack { return Pack{ID: id, Areas: areas} }
+	a := func(id string, replaces ...string) Area { return Area{ID: id, Replaces: replaces} }
+	if err := ValidatePacks([]Pack{pack("x", a("x-a", "x-old")), pack("y", a("y-a", "y-old"))}); err != nil {
+		t.Errorf("valid packs rejected: %v", err)
+	}
+	// A replaced id that is an area of another pack.
+	if err := ValidatePacks([]Pack{pack("x", a("x-a", "y-a")), pack("y", a("y-a"))}); err == nil {
+		t.Error("a replaced id that is another pack's area was accepted")
+	}
+	// The same id replaced in two packs.
+	if err := ValidatePacks([]Pack{pack("x", a("x-a", "z-old")), pack("y", a("y-a", "z-old"))}); err == nil {
+		t.Error("an id replaced by two packs was accepted")
 	}
 }
 
