@@ -97,6 +97,7 @@ func TestValidatePackRejects(t *testing.T) {
 		"area prefix":       func(p *Pack) { p.Areas[0].ID = "a" },
 		"null island":       func(p *Pack) { p.Areas[0].Lat, p.Areas[0].Lng = 0, 0 },
 		"bad month":         func(p *Pack) { p.ActivityOverrides = []ActivityOverride{{ActivityID: "hike", Months: []int16{13}}} },
+		"empty months":      func(p *Pack) { p.ActivityOverrides = []ActivityOverride{{ActivityID: "hike", Months: []int16{}}} },
 		"unknown act":       func(p *Pack) { p.ActivityOverrides = []ActivityOverride{{ActivityID: "nope"}} },
 		"duplicate area":    func(p *Pack) { p.Areas = append(p.Areas, p.Areas[0]) },
 		"bad boundary":      func(p *Pack) { p.Areas[0].Boundary = []string{"_p~iF"} },
