@@ -43,3 +43,7 @@ _Avoid_: know each other, been grouped together
 **Lapsed**:
 A crew offer that someone never answered before it was decided.
 _Avoid_: expired, ignored
+
+**Pending change**:
+An edit to a city's pack or to a language's human translations, saved in the admin SPA, that waits for the owner's approval before it takes effect. A city or language has at most one pending change at a time; later saves add to it.
+_Avoid_: proposal (a plan's group review), draft, suggestion
