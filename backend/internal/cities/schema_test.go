@@ -67,6 +67,31 @@ func TestIntegrationBaselineSchema(t *testing.T) {
 		}
 	})
 
+	t.Run("River's Down guard refuses with accounts and passes once app is gone", func(t *testing.T) {
+		tx, err := f.Pool.Begin(ctx)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer tx.Rollback(ctx) //nolint:errcheck // always rolled back
+		if _, err := tx.Exec(ctx, db.RollbackGuard); err == nil || !strings.Contains(err.Error(), "refusing") {
+			t.Fatalf("guard with app.users rows: err = %v, want a refusal", err)
+		}
+		// The failed statement aborted the transaction; use a fresh one for the
+		// state where app doesn't exist (as after the baseline's Down).
+		_ = tx.Rollback(ctx)
+		tx, err = f.Pool.Begin(ctx)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer tx.Rollback(ctx) //nolint:errcheck // always rolled back
+		if _, err := tx.Exec(ctx, "drop schema app cascade"); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := tx.Exec(ctx, db.RollbackGuard); err != nil {
+			t.Errorf("guard without the app schema: %v", err)
+		}
+	})
+
 	t.Run("Down refuses while accounts exist", func(t *testing.T) {
 		src, err := db.Migrations.ReadFile("migrations/00001_baseline.sql")
 		if err != nil {

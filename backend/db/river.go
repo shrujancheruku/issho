@@ -28,6 +28,18 @@ func init() {
 	goose.AddNamedMigrationNoTxContext("00002_river.go", riverUp, riverDown)
 }
 
+// RollbackGuard refuses (raises) while app.users has rows, and passes when app
+// is already gone. The checks are nested: PL/pgSQL plans a whole IF condition
+// as one query, so `to_regclass(...) is not null and exists (select ... from
+// app.users)` fails to resolve app.users when it doesn't exist.
+const RollbackGuard = `do $$ begin
+  if to_regclass('app.users') is not null then
+    if exists (select 1 from app.users) then
+      raise exception 'refusing to roll back: app.users has rows (production only migrates forward)';
+    end if;
+  end if;
+end $$`
+
 func riverUp(ctx context.Context, db *sql.DB) error {
 	// Revoked as in 00001_baseline: Supabase's default privileges would otherwise
 	// let anon/authenticated reach the job tables through the Data API.
@@ -59,13 +71,7 @@ func riverDown(ctx context.Context, db *sql.DB) error {
 	// first, and dropping the schema can't be undone by a failure after it:
 	// make the same check here. Jobs are recreated by the next up, accounts
 	// aren't.
-	// A DO block, not one expression: Postgres resolves app.users before it
-	// short-circuits, so a plain query fails when app is already gone.
-	if _, err := db.ExecContext(ctx, `do $$ begin
-	  if to_regclass('app.users') is not null and exists (select 1 from app.users) then
-	    raise exception 'refusing to roll back: app.users has rows (production only migrates forward)';
-	  end if;
-	end $$`); err != nil {
+	if _, err := db.ExecContext(ctx, RollbackGuard); err != nil {
 		return err
 	}
 	// Dropping the schema removes River's tables and its own version table,
