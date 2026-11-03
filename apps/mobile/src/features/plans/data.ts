@@ -3,15 +3,13 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { GetPlanResponse, ListFeedResponse } from '@issho/api-client';
 
 import { api } from '@/lib/api';
+import { keys, signupChanged } from '@/lib/queries';
 
 import type { toSignup } from './signup';
 
-export const feedKey = ['feed'] as const;
-const planKey = (id: string) => ['plan', id] as const;
-
 /** Every open plan in the person's city, best for them first. */
 export function useFeed() {
-  return useQuery({ queryKey: feedKey, queryFn: () => api.plans.listFeed({}), select: (r) => r.plans });
+  return useQuery({ queryKey: keys.feed, queryFn: () => api.plans.listFeed({}), select: (r) => r.plans });
 }
 
 /**
@@ -24,11 +22,11 @@ export function useFeed() {
 export function usePlan(id: string) {
   const queryClient = useQueryClient();
   return useQuery({
-    queryKey: planKey(id),
+    queryKey: keys.plan(id),
     queryFn: () => api.plans.getPlan({ planId: id }),
     enabled: !!id,
     placeholderData: () => {
-      const plan = queryClient.getQueryData<ListFeedResponse>(feedKey)?.plans.find((p) => p.id === id);
+      const plan = queryClient.getQueryData<ListFeedResponse>(keys.feed)?.plans.find((p) => p.id === id);
       if (!plan || plan.signedUp) return undefined;
       return { $typeName: 'issho.v1.GetPlanResponse', plan, steps: [], routePolyline: '', summary: '', secondarySummary: '' } as GetPlanResponse;
     },
@@ -38,11 +36,7 @@ export function usePlan(id: string) {
 /** Signs up or withdraws, then refreshes the plan and the feed (counts change). */
 export function useSignupActions(id: string) {
   const queryClient = useQueryClient();
-  const refresh = () =>
-    Promise.all([
-      queryClient.invalidateQueries({ queryKey: planKey(id) }),
-      queryClient.invalidateQueries({ queryKey: feedKey }),
-    ]);
+  const refresh = () => signupChanged(queryClient, id);
   const signUp = useMutation({
     mutationFn: (signup: ReturnType<typeof toSignup>) => api.plans.signUp({ planId: id, signup }),
     onSuccess: refresh,

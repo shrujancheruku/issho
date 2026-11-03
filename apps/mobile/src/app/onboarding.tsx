@@ -1,4 +1,3 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View, type ScrollViewInstance } from 'react-native';
 
@@ -9,10 +8,10 @@ import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useAuth } from '@/features/auth/auth-provider';
 import { ConductVersion, emptyDraft, steps, stepValid, toProfile } from '@/features/profile/draft';
+import { useSaveProfile } from '@/features/profile/data';
 import { saveErrorMessage } from '@/features/profile/save-error';
 import { StepView, stepTitles } from '@/features/profile/steps';
 import { useI18n } from '@/i18n/i18n-provider';
-import { api } from '@/lib/api';
 
 /**
  * Shown to signed-in users without a profile: one step at a time, saved in a
@@ -22,7 +21,6 @@ import { api } from '@/lib/api';
 export default function OnboardingScreen() {
   const { t, device, previewLanguages } = useI18n();
   const { signOut } = useAuth();
-  const queryClient = useQueryClient();
   // Start from the device's languages: its first as the main language, its
   // second (if any) as the suggested second language.
   const [draft, setDraft] = useState(() => emptyDraft(device.primary, device.secondary));
@@ -36,11 +34,8 @@ export default function OnboardingScreen() {
   }, [draft.primaryLanguage, draft.secondaryLanguage, previewLanguages]);
   useEffect(() => () => previewLanguages(null), [previewLanguages]);
 
-  const save = useMutation({
-    mutationFn: () => api.profile.saveProfile({ profile: toProfile(draft, ConductVersion) }),
-    // GetMe now reports onboarded (and the saved languages).
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['me'] }),
-  });
+  // GetMe then reports onboarded (and the saved languages).
+  const save = useSaveProfile();
 
   const go = (to: number) => {
     setIndex(to);
@@ -82,7 +77,7 @@ export default function OnboardingScreen() {
           label={last ? t('onboarding.finish') : t('common.continue')}
           disabled={!valid}
           busy={save.isPending}
-          onPress={() => (last ? save.mutate() : go(index + 1))}
+          onPress={() => (last ? save.mutate(toProfile(draft, ConductVersion)) : go(index + 1))}
         />
       </View>
     </ScreenFrame>

@@ -19,13 +19,14 @@ import { AuthProvider, isSuspendedError, useAuth } from '@/features/auth/auth-pr
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { I18nProvider, useI18n } from '@/i18n/i18n-provider';
 import { withMonitoring } from '@/lib/monitoring';
+import { accountChanged } from '@/lib/queries';
 
 SplashScreen.preventAutoHideAsync();
 
 // Suspended mid-session: every call is refused, so load the account again
 // and the navigator shows the suspended screen.
 const onError = (err: unknown) => {
-  if (isSuspendedError(err)) void queryClient.invalidateQueries({ queryKey: ['me'] });
+  if (isSuspendedError(err)) void accountChanged(queryClient);
 };
 const queryClient = new QueryClient({
   queryCache: new QueryCache({ onError }),
