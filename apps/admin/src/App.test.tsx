@@ -85,7 +85,7 @@ describe('the hash router', () => {
     expect(await screen.findByText(text)).toBeTruthy();
   });
 
-  it.each(['', '#/nonsense', '#/person/not-a-uuid', '#/reports?about=nope'])('an unknown hash (%j) falls back to Reports', async (hash) => {
+  it.each(['', '#/nonsense', '#/constructor', '#/toString', '#/__proto__', '#/hasOwnProperty', '#/person/not-a-uuid', '#/reports?about=nope'])('an unknown hash (%j) falls back to Reports', async (hash) => {
     open(hash);
     expect(await screen.findByText('page:reports about=none')).toBeTruthy();
   });
