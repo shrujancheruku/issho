@@ -47,7 +47,12 @@ function packFrom(d: Draft): PackInit {
   };
 }
 
-/** Edits a city pack (or makes a new one) and proposes it as a GitHub pull request. */
+/**
+ * Edits a city pack (or makes a new one) and saves it to the city's pending
+ * change: one rolling pull request per city. When the city already has an
+ * open one, the editor starts from its version of the pack and saving adds a
+ * commit to it instead of opening another.
+ */
 export function CityEditor({ cityId }: { cityId: string }) {
   const isNew = cityId === 'new';
   const res = useQuery({
@@ -58,10 +63,10 @@ export function CityEditor({ cityId }: { cityId: string }) {
   });
   if (res.isPending) return <p className="muted">Loading…</p>;
   if (res.error) return <p className="error">{ConnectError.from(res.error).message}</p>;
-  return <Editor key={cityId} isNew={isNew} pack={res.data.pack} activities={res.data.activities} />;
+  return <Editor key={cityId} isNew={isNew} pack={res.data.pack} pending={res.data.pullRequest} activities={res.data.activities} />;
 }
 
-function Editor({ isNew, pack, activities }: { isNew: boolean; pack?: CityPack; activities: PackActivity[] }) {
+function Editor({ isNew, pack, pending, activities }: { isNew: boolean; pack?: CityPack; pending?: CityPackPullRequest; activities: PackActivity[] }) {
   const [d, setD] = useState<Draft>(() => draftFrom(pack));
   const [note, setNote] = useState('');
   const [pr, setPr] = useState<CityPackPullRequest | null>(null);
@@ -84,7 +89,7 @@ function Editor({ isNew, pack, activities }: { isNew: boolean; pack?: CityPack; 
       <section>
         <p><a href="#/cities">← Cities</a></p>
         <div className="card">
-          <h1>Pull request opened</h1>
+          <h1>{pending ? 'Added to the pull request' : 'Pull request opened'}</h1>
           <p><a href={pr.url} target="_blank" rel="noreferrer">#{pr.number} {pr.title}</a></p>
           <p className="muted">Once it's reviewed and merged, apply the city on the Cities page to load it, then find venues for new or moved areas.</p>
         </div>
@@ -96,6 +101,13 @@ function Editor({ isNew, pack, activities }: { isNew: boolean; pack?: CityPack; 
     <section className="city-editor">
       <p><a href="#/cities">← Cities</a></p>
       <h1>{isNew ? 'New city' : `Edit ${d.name.en || d.id}`}</h1>
+      {pending && (
+        <p className="card pending">
+          Editing a pending change: this is the pack as it stands in{' '}
+          <a href={pending.url} target="_blank" rel="noreferrer">pull request #{pending.number}</a>
+          , not yet on main. Saving adds to that pull request.
+        </p>
+      )}
 
       <div className="card">
         <h2>City</h2>
@@ -198,8 +210,8 @@ function Editor({ isNew, pack, activities }: { isNew: boolean; pack?: CityPack; 
           <textarea rows={2} value={note} onChange={(e) => setNote(e.target.value)} />
         </label>
         <div className="row">
-          <button disabled={propose.isPending} onClick={() => propose.mutate()}>{propose.isPending ? 'Opening…' : 'Open a pull request'}</button>
-          <span className="muted">Checked as CI checks packs. Nothing changes in the app until it's merged and applied.</span>
+          <button disabled={propose.isPending} onClick={() => propose.mutate()}>{propose.isPending ? 'Saving…' : pending ? 'Save to the pull request' : 'Open a pull request'}</button>
+          <span className="muted">Checked as CI checks packs, and against main: areas can't be removed. Nothing changes in the app until it's merged and applied.</span>
         </div>
         {propose.error && <pre className="error">{ConnectError.from(propose.error).rawMessage}</pre>}
       </div>
