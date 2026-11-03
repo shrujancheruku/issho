@@ -86,7 +86,7 @@ describe('step 1: the email', () => {
 });
 
 describe('step 2: the code', () => {
-  it('signs in as soon as the sixth digit is in, with the digits only, and navigates nowhere itself', async () => {
+  it('signs in as soon as the sixth digit is in, with the digits only, and shows no error', async () => {
     await toCodeStep();
     await typeCode('123');
     expect(auth.verifyOtp).not.toHaveBeenCalled();

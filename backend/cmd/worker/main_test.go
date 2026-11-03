@@ -56,24 +56,37 @@ func definedKinds(t *testing.T) []string {
 					}
 				}
 			case *ast.FuncDecl:
-				if d.Name.Name != "Kind" || d.Recv == nil || len(d.Recv.List) != 1 || d.Body == nil || len(d.Body.List) != 1 {
+				if d.Name.Name != "Kind" || d.Recv == nil || len(d.Recv.List) != 1 {
 					continue
 				}
-				recv, ok := d.Recv.List[0].Type.(*ast.Ident)
+				recvType := d.Recv.List[0].Type
+				if star, ok := recvType.(*ast.StarExpr); ok { // func (*XArgs) Kind()
+					recvType = star.X
+				}
+				recv, ok := recvType.(*ast.Ident)
 				if !ok || !strings.HasSuffix(recv.Name, "Args") {
 					continue
 				}
-				ret, ok := d.Body.List[0].(*ast.ReturnStmt)
-				if !ok || len(ret.Results) != 1 {
-					continue
+				// From here on it is a job kind: if the scan cannot read it, fail
+				// rather than let a kind escape the check unnoticed.
+				var ret *ast.ReturnStmt
+				if d.Body != nil && len(d.Body.List) == 1 {
+					ret, _ = d.Body.List[0].(*ast.ReturnStmt)
+				}
+				if ret == nil || len(ret.Results) != 1 {
+					t.Fatalf("%s: %s.Kind() is not a single return the scan can read", path, recv.Name)
 				}
 				switch r := ret.Results[0].(type) {
 				case *ast.BasicLit:
-					if s, err := strconv.Unquote(r.Value); err == nil {
-						found = append(found, returned{dir: dir, lit: s})
+					s, err := strconv.Unquote(r.Value)
+					if r.Kind != token.STRING || err != nil {
+						t.Fatalf("%s: %s.Kind() returns %s, not a string", path, recv.Name, r.Value)
 					}
+					found = append(found, returned{dir: dir, lit: s})
 				case *ast.Ident:
 					found = append(found, returned{dir: dir, ident: r.Name})
+				default:
+					t.Fatalf("%s: %s.Kind() returns something other than a string literal or constant", path, recv.Name)
 				}
 			}
 		}
