@@ -3,7 +3,8 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Pressable } from 'react-native';
 
-import { ChipChoice, DetailsInput, FormError, FormScreen } from '@/components/form-screen';
+import { ErrorLine } from '@/components/error-line';
+import { ChipChoice, DetailsInput, FormScreen } from '@/components/form-screen';
 import { PrimaryButton } from '@/components/primary-button';
 import { ThemedText } from '@/components/themed-text';
 import { useLeaveCrew } from '@/features/crews/data';
@@ -35,7 +36,7 @@ export default function LeaveCrewScreen() {
       hint={t('leave.hint')}
       footer={
         <>
-          {leaveCrew.isError && <FormError>{t('error.network')}</FormError>}
+          <ErrorLine error={leaveCrew.error} center />
           <PrimaryButton
             label={t('leave.confirm')}
             disabled={reason === LeaveReason.UNSPECIFIED}

@@ -10,7 +10,7 @@ it('never shows the server text for a rejected profile', () => {
   expect(saveErrorMessage(err, t as never)).toBe('error.saveRejected');
 });
 
-it('treats anything else as a connection problem', () => {
+it('words anything else as errorText does', () => {
   expect(saveErrorMessage(new ConnectError('x', Code.Unavailable), t as never)).toBe('error.network');
-  expect(saveErrorMessage(new Error('boom'), t as never)).toBe('error.network');
+  expect(saveErrorMessage(new Error('boom'), t as never)).toBe('error.generic');
 });

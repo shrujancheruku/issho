@@ -3,12 +3,14 @@ import { useMutation } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
+import { ErrorLine } from '@/components/error-line';
 import { Chip } from '@/components/chip';
 import { PrimaryButton } from '@/components/primary-button';
 import { ThemedText } from '@/components/themed-text';
 import { BodyFont, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useI18n } from '@/i18n/i18n-provider';
+import { errorText } from '@/lib/error-text';
 import { api } from '@/lib/api';
 
 import { addSuggestions, cycleSuggestion, type Draft } from './draft';
@@ -73,11 +75,7 @@ export function SuggestActivities({
         disabled={!text.trim() || !draft.cityId}
         busy={suggest.isPending}
       />
-      {suggest.isError && (
-        <ThemedText type="small" themeColor="error">
-          {unavailable ? t('suggest.unavailable') : t('error.network')}
-        </ThemedText>
-      )}
+      <ErrorLine error={suggest.error} type="small" text={(e, tr) => (unavailable ? tr('suggest.unavailable') : errorText(e, tr))} />
       {added !== null && (
         <ThemedText type="small" themeColor="textSecondary">
           {t('suggest.added', { count: added })}

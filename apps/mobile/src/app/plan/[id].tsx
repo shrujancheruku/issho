@@ -2,6 +2,7 @@ import { PlanClosedReason, PlanLevel, type GetPlanResponse } from '@issho/api-cl
 import { router, useLocalSearchParams } from 'expo-router';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
+import { ErrorLine } from '@/components/error-line';
 import { weekdayName, blockKeys } from '@/components/availability-grid';
 import { PrimaryButton } from '@/components/primary-button';
 import { LoadState, QueryScreen } from '@/components/query-screen';
@@ -215,7 +216,7 @@ function SignedUp({ data, times, names }: { data: GetPlanResponse; times: Times;
         <TextLink label={t('plan.update')} onPress={() => openSignup(p.id)} />
       </View>
       <StopsToggle steps={data.steps} routePolyline={data.routePolyline} names={names} />
-      {withdraw.isError && <ThemedText themeColor="error">{t('error.network')}</ThemedText>}
+      <ErrorLine error={withdraw.error} />
       <TextLink label={t('plan.withdraw')} muted disabled={withdraw.isPending} onPress={() => withdraw.mutate()} />
     </>
   );
