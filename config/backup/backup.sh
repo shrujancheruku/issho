@@ -36,10 +36,11 @@ if [ -n "${SENTRY_DSN:-}" ]; then
   scheme=${SENTRY_DSN%%://*}
   rest=${SENTRY_DSN#*://}
   key=${rest%%@*}
+  key=${key%%:*} # a legacy DSN has a :secret after the key
   hostpath=${rest#*@}
   host=${hostpath%%/*}
   project=${hostpath#*/}
-  if [ "$rest" != "$SENTRY_DSN" ] && [ "$hostpath" != "$rest" ] && [ "$project" != "$hostpath" ] && [ -n "$key" ] && [ -n "$host" ] && [ -n "$project" ]; then
+  if [ "$rest" != "$SENTRY_DSN" ] && [ "$hostpath" != "$rest" ] && [ "$project" != "$hostpath" ] && [ -n "$key" ] && [ -n "$host" ] && [ -n "$project" ] && [ "${project#*/}" = "$project" ]; then
     sentry_base="$scheme://$host/api/$project/cron/$monitor/$key/"
   else
     echo "backup: SENTRY_DSN is malformed, skipping check-ins" >&2
@@ -59,7 +60,9 @@ checkin() {
     # The reply is {"id":"<check-in id>",...}; later calls update that check-in.
     checkin_id=$(printf '%s' "$resp" | sed -n 's/.*"id" *: *"\([^"]*\)".*/\1/p' | head -n 1)
     [ -n "$checkin_id" ] || echo "backup: sentry check-in (in_progress) failed" >&2
-  else
+  elif [ -n "$checkin_id" ]; then
+    # No id means the in_progress call failed; an update without one would
+    # create a stray check-in.
     curl --silent --fail --max-time 10 --connect-timeout 5 -X POST \
       -H "Content-Type: application/json" \
       -d '{"status":"'"$1"'","environment":"'"$env_name"'"}' \
