@@ -11,7 +11,6 @@ import (
 	"errors"
 	"fmt"
 	"maps"
-	"regexp"
 	"slices"
 	"strings"
 	"time"
@@ -89,12 +88,6 @@ func githubError(ctx context.Context, err error) error {
 	}
 	return errs.Upstream("github", err)
 }
-
-// Compiled once: check runs on every proposal and apply.
-var (
-	cityID   = regexp.MustCompile(`^[a-z][a-z0-9-]{1,30}$`)
-	currency = regexp.MustCompile(`^[A-Z]{3}$`)
-)
 
 func path(id string) string { return Dir + "/" + id + ".json" }
 
@@ -193,32 +186,6 @@ func (h *Handler) GetCityPack(ctx context.Context, req *connect.Request[isshov1.
 	return connect.NewResponse(out), nil
 }
 
-// check validates a pack as CI does, plus what CI can't know: the time zone
-// loads and the currency looks like one.
-func (h *Handler) check(ctx context.Context, p cities.Pack) error {
-	if !cityID.MatchString(p.ID) {
-		return errs.Invalid("id: lowercase letters, digits and dashes, starting with a letter")
-	}
-	acts, err := cities.CatalogActivities(ctx, h.DB)
-	if err != nil {
-		return err
-	}
-	ids := map[string]bool{}
-	for _, a := range acts {
-		ids[a.ID] = true
-	}
-	if err := cities.ValidatePack(p, ids); err != nil {
-		return errs.Invalid("%v", err)
-	}
-	if _, err := time.LoadLocation(p.Timezone); err != nil || !strings.Contains(p.Timezone, "/") {
-		return errs.Invalid("timezone %q: an IANA name like Asia/Tokyo", p.Timezone)
-	}
-	if !currency.MatchString(p.Currency) {
-		return errs.Invalid("currency %q: an ISO 4217 code like JPY", p.Currency)
-	}
-	return nil
-}
-
 func (h *Handler) ProposeCityPack(ctx context.Context, req *connect.Request[isshov1.ProposeCityPackRequest]) (*connect.Response[isshov1.ProposeCityPackResponse], error) {
 	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
@@ -235,49 +202,17 @@ func (h *Handler) ProposeCityPack(ctx context.Context, req *connect.Request[issh
 	if err != nil {
 		return nil, err
 	}
-	keepFileOnly(&p, base)
-	keepOverrideNames(&p, base)
-	if err := h.check(ctx, p); err != nil {
-		return nil, err
-	}
 	var old *cities.Pack
 	if exists {
 		old = &base
-		// Area ids are referenced by profiles, plans and venues: an area
-		// can be renamed or moved, never removed (seeding keeps it anyway).
-		for _, a := range base.Areas {
-			if !slices.ContainsFunc(p.Areas, func(b cities.Area) bool { return b.ID == a.ID }) {
-				return nil, errs.Invalid("area %s: areas can't be removed or have their id changed", a.ID)
-			}
-		}
 	}
-	changes := Changes(old, p)
-	if len(changes) == 0 {
-		return nil, errs.Invalid("nothing changed")
-	}
-	content, err := cities.EncodePack(p)
+	prop, err := cities.Propose(ctx, h.DB, p, old, req.Msg.Note)
 	if err != nil {
 		return nil, err
 	}
-	name := p.Name["en"]
-	title := fmt.Sprintf("feat(data): update the %s city pack", name)
-	if !exists {
-		title = fmt.Sprintf("feat(data): add the %s city pack", name)
-	}
-	var body strings.Builder
-	// The repository is public: the pull request says what changed, never
-	// who proposed it.
-	body.WriteString("Proposed from the admin SPA's city-pack editor.\n\n")
-	if note := strings.TrimSpace(req.Msg.Note); note != "" {
-		fmt.Fprintf(&body, "%s\n\n", note)
-	}
-	body.WriteString("**Changes**\n")
-	for _, ch := range changes {
-		fmt.Fprintf(&body, "- %s\n", ch)
-	}
-	body.WriteString("\n**After merging:** apply the pack on the admin SPA's Cities page (it seeds the database and rebuilds travel times when areas changed), then find venues for new or moved areas.\n")
+	p = prop.Pack
 	branch := fmt.Sprintf("%s%s-%d", BranchPrefix, p.ID, h.now().Unix())
-	pr, err := repo.Propose(ctx, branch, path(p.ID), content, sha, title, title, body.String())
+	pr, err := repo.Propose(ctx, branch, path(p.ID), prop.Content, sha, prop.Title, prop.Title, prop.Body)
 	if err != nil {
 		return nil, githubError(ctx, err)
 	}
@@ -300,7 +235,7 @@ func (h *Handler) ApplyCityPack(ctx context.Context, req *connect.Request[isshov
 	if !ok {
 		return nil, errs.NotFound("no such city pack on the default branch")
 	}
-	if err := h.check(ctx, p); err != nil {
+	if err := cities.CheckPack(ctx, h.DB, p); err != nil {
 		return nil, err
 	}
 	// The same pack applied again while one is queued or running is skipped
@@ -356,92 +291,6 @@ func (h *Handler) insert(ctx context.Context, args river.JobArgs) (int64, error)
 	return res.Job.ID, nil
 }
 
-// Changes describes a pack's changes from the default branch's (nil for a
-// new city), in words for the pull request; none = nothing changed.
-func Changes(old *cities.Pack, p cities.Pack) []string {
-	if old == nil {
-		return []string{fmt.Sprintf("New city %s (%s): %d areas, languages %s, %s, %s",
-			p.Name["en"], p.ID, len(p.Areas), strings.Join(p.Languages, ", "), p.Timezone, p.Currency)}
-	}
-	var out []string
-	add := func(format string, a ...any) { out = append(out, fmt.Sprintf(format, a...)) }
-	if !maps.Equal(old.Name, p.Name) {
-		add("Name: %v → %v", old.Name, p.Name)
-	}
-	if old.Timezone != p.Timezone {
-		add("Time zone: %s → %s", old.Timezone, p.Timezone)
-	}
-	if old.Currency != p.Currency {
-		add("Currency: %s → %s", old.Currency, p.Currency)
-	}
-	if !slices.Equal(old.Languages, p.Languages) {
-		add("Languages: %s → %s", strings.Join(old.Languages, ", "), strings.Join(p.Languages, ", "))
-	}
-	if !slices.Equal(old.TravelModes, p.TravelModes) {
-		add("Travel modes: %s → %s", strings.Join(old.TravelModes, ", "), strings.Join(p.TravelModes, ", "))
-	}
-	if old.Comment != p.Comment {
-		add("Comment changed")
-	}
-	oldAreas := map[string]cities.Area{}
-	for _, a := range old.Areas {
-		oldAreas[a.ID] = a
-	}
-	for _, a := range p.Areas {
-		o, ok := oldAreas[a.ID]
-		switch {
-		case !ok:
-			add("New area %s (%s) at %.5f, %.5f", a.Name["en"], a.ID, a.Lat, a.Lng)
-		default:
-			if !maps.Equal(o.Name, a.Name) {
-				add("Area %s renamed: %v → %v", a.ID, o.Name, a.Name)
-			}
-			if d := gmaps.DistanceM(gmaps.LatLng{Lat: o.Lat, Lng: o.Lng}, gmaps.LatLng{Lat: a.Lat, Lng: a.Lng}); d > 0 {
-				add("Area %s moved %.0f m", a.ID, d)
-			}
-		}
-	}
-	oldOv := map[string]cities.ActivityOverride{}
-	for _, o := range old.ActivityOverrides {
-		oldOv[o.ActivityID] = o
-	}
-	seen := map[string]bool{}
-	for _, o := range p.ActivityOverrides {
-		seen[o.ActivityID] = true
-		was, ok := oldOv[o.ActivityID]
-		if !ok || was.Disabled != o.Disabled || !maps.Equal(was.Name, o.Name) || !slices.Equal(was.Months, o.Months) {
-			add("Activity %s: %s", o.ActivityID, describe(o))
-		}
-	}
-	for _, o := range old.ActivityOverrides {
-		if !seen[o.ActivityID] {
-			add("Activity %s: back to the catalogue's defaults", o.ActivityID)
-		}
-	}
-	return out
-}
-
-func describe(o cities.ActivityOverride) string {
-	if o.Disabled {
-		return "not offered"
-	}
-	var parts []string
-	if o.Name["en"] != "" {
-		parts = append(parts, fmt.Sprintf("called %q", o.Name["en"]))
-	}
-	if len(o.Months) > 0 {
-		ms := make([]string, len(o.Months))
-		for i, m := range o.Months {
-			ms[i] = time.Month(m).String()[:3]
-		}
-		parts = append(parts, "in season "+strings.Join(ms, ", "))
-	}
-	if len(parts) == 0 {
-		return "offered, as in the catalogue"
-	}
-	return strings.Join(parts, ", ")
-}
-
 func toProto(p cities.Pack) *isshov1.CityPack {
 	out := &isshov1.CityPack{
 		Id: p.ID, Comment: p.Comment, Name: p.Name, Timezone: p.Timezone, Currency: p.Currency,
@@ -458,44 +307,6 @@ func toProto(p cities.Pack) *isshov1.CityPack {
 		out.ActivityOverrides = append(out.ActivityOverrides, po)
 	}
 	return out
-}
-
-// keepFileOnly copies the fields the editor doesn't show from the default
-// branch's pack, or its pull requests would drop them: each area's osm_id and
-// boundary (`tool area-boundaries` writes them) and replaces (written by hand
-// when an area is retired). An area moved out of its boundary then fails
-// validation, which is the point. The pack's matching overlay and
-// meeting_places are hand edits in a pull request too.
-func keepFileOnly(p *cities.Pack, base cities.Pack) {
-	p.Matching, p.MeetingPlaces = base.Matching, base.MeetingPlaces
-	for i, a := range p.Areas {
-		if j := slices.IndexFunc(base.Areas, func(b cities.Area) bool { return b.ID == a.ID }); j >= 0 {
-			p.Areas[i].OSMID, p.Areas[i].Boundary, p.Areas[i].Replaces = base.Areas[j].OSMID, base.Areas[j].Boundary, base.Areas[j].Replaces
-		}
-	}
-}
-
-// keepOverrideNames carries an override's non-English names over from the
-// default branch's pack: the editor shows and sends only the English one
-// (PackOverride.name), so saving would otherwise drop e.g. a Japanese name.
-// They are kept only while the override still has an English name; clearing
-// it means the admin is removing the custom name, and an English-less name
-// would fail validation. The editor's English name always wins.
-func keepOverrideNames(p *cities.Pack, base cities.Pack) {
-	for i, o := range p.ActivityOverrides {
-		if o.Name["en"] == "" {
-			continue
-		}
-		j := slices.IndexFunc(base.ActivityOverrides, func(b cities.ActivityOverride) bool { return b.ActivityID == o.ActivityID })
-		if j < 0 {
-			continue
-		}
-		for lang, name := range base.ActivityOverrides[j].Name {
-			if _, ok := o.Name[lang]; !ok {
-				p.ActivityOverrides[i].Name[lang] = name
-			}
-		}
-	}
 }
 
 // fromProto builds a pack from the editor's, trimming text; empty names
