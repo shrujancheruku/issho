@@ -92,7 +92,7 @@ func (q *Queries) InsertSuspension(ctx context.Context, arg InsertSuspensionPara
 const liftSuspension = `-- name: LiftSuspension :execrows
 update app.suspensions
 set lifted_at = $1, lifted_by = $2, lift_note = $3
-where user_id = $4 and lifted_at is null
+where id in (select su.suspension_id from app.suspended_users su where su.user_id = $4)
 `
 
 type LiftSuspensionParams struct {
@@ -267,10 +267,10 @@ func (q *Queries) ListModerationFlags(ctx context.Context, arg ListModerationFla
 const listOpenSuspensions = `-- name: ListOpenSuspensions :many
 select s.user_id, s.reason, s.created_at, s.created_by,
        coalesce(p.display_name, '')::text as display_name
-from app.suspensions s
+from app.suspended_users su
+join app.suspensions s on s.id = su.suspension_id
 left join app.profiles p on p.user_id = s.user_id
-where s.lifted_at is null
-  and (not $1::boolean or (s.created_at, s.user_id) < ($2::timestamptz, $3::uuid))
+where (not $1::boolean or (s.created_at, s.user_id) < ($2::timestamptz, $3::uuid))
 order by s.created_at desc, s.user_id desc
 limit $4
 `
@@ -610,10 +610,10 @@ func (q *Queries) ListReports(ctx context.Context, arg ListReportsParams) ([]Lis
 }
 
 const listSuspendedIDs = `-- name: ListSuspendedIDs :many
-select user_id from app.suspensions where lifted_at is null
+select user_id from app.suspended_users
 `
 
-// Suspensions (00020). Everyone suspended now: the API's check
+// Suspensions. Everyone suspended now (app.suspended_users): the API's check
 // (moderation.Suspensions) keeps this set in memory.
 func (q *Queries) ListSuspendedIDs(ctx context.Context) ([]uuid.UUID, error) {
 	rows, err := q.db.Query(ctx, listSuspendedIDs)
@@ -694,7 +694,7 @@ func (q *Queries) ResolveReport(ctx context.Context, arg ResolveReportParams) (i
 const searchPeople = `-- name: SearchPeople :many
 select u.id, coalesce(u.email, '')::text as email,
        coalesce(p.display_name, '')::text as display_name,
-       exists (select 1 from app.suspensions s where s.user_id = u.id and s.lifted_at is null) as suspended
+       exists (select 1 from app.suspended_users s where s.user_id = u.id) as suspended
 from app.users u
 left join app.profiles p on p.user_id = u.id
 where (u.id::text = $1::text

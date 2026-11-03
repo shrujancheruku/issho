@@ -8,7 +8,7 @@ on conflict (id) do update set email = coalesce(excluded.email, app.users.email)
 returning id, email, created_at;
 
 -- name: IsSuspended :one
-select exists (select 1 from app.suspensions where user_id = $1 and lifted_at is null);
+select exists (select 1 from app.suspended_users where user_id = $1);
 
 -- No row = not onboarded yet. With the home city, so the app can load the
 -- city's catalogue straight after GetMe instead of waiting for GetProfile.

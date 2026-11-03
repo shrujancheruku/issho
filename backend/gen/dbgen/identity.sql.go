@@ -44,7 +44,7 @@ func (q *Queries) GetDisplayLanguages(ctx context.Context, userID uuid.UUID) (Ge
 }
 
 const isSuspended = `-- name: IsSuspended :one
-select exists (select 1 from app.suspensions where user_id = $1 and lifted_at is null)
+select exists (select 1 from app.suspended_users where user_id = $1)
 `
 
 func (q *Queries) IsSuspended(ctx context.Context, userID uuid.UUID) (bool, error) {

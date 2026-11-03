@@ -61,7 +61,7 @@ join app.plans pl on pl.id = s.plan_id
 join app.profiles p on p.user_id = s.user_id
 join app.areas a on a.id = p.home_area_id and a.city_id = pl.city_id
 where s.plan_id = $1
-  and not exists (select 1 from app.suspensions x where x.user_id = s.user_id and x.lifted_at is null)
+  and not exists (select 1 from app.suspended_users x where x.user_id = s.user_id)
 `
 
 // People still waiting for a plan whom matching would still place: they

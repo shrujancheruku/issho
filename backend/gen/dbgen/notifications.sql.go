@@ -213,7 +213,7 @@ func (q *Queries) ListPendingNotifications(ctx context.Context, max int32) ([]Li
 const listPushTokens = `-- name: ListPushTokens :many
 select t.user_id, t.token from app.push_tokens t
 where t.user_id = any($1::uuid[])
-  and not exists (select 1 from app.suspensions s where s.user_id = t.user_id and s.lifted_at is null)
+  and not exists (select 1 from app.suspended_users s where s.user_id = t.user_id)
 order by t.user_id, t.token
 `
 
