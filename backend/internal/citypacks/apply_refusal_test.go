@@ -12,6 +12,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/adminjobs"
 	"github.com/shrujancheruku/issho/backend/internal/cities"
 	"github.com/shrujancheruku/issho/backend/internal/platform/auth"
+	"github.com/shrujancheruku/issho/backend/internal/repoedit"
 	"github.com/shrujancheruku/issho/backend/internal/testfixture"
 )
 
@@ -28,7 +29,7 @@ func TestIntegrationApplyRefusesInUseArea(t *testing.T) {
 		TravelModes: []string{"walk"}, Areas: []cities.Area{area("a", 35.70), area("b", 35.71)},
 		ActivityOverrides: []cities.ActivityOverride{{ActivityID: f.Act, Disabled: true}},
 	}
-	repo := &fakeRepo{files: map[string][]byte{}}
+	repo := newRepo(map[string][]byte{})
 	publish := func() {
 		t.Helper()
 		b, err := cities.EncodePack(pack)
@@ -38,7 +39,7 @@ func TestIntegrationApplyRefusesInUseArea(t *testing.T) {
 		repo.files["data/citypacks/"+f.City+".json"] = b
 	}
 	jobs := &inlineJobs{pool: f.Pool}
-	h := &Handler{DB: f.Pool, GitHub: repo, Base: "main", Jobs: jobs}
+	h := &Handler{DB: f.Pool, Repo: repoedit.New(repo, "main"), Jobs: jobs}
 	adminCtx := auth.WithCaller(ctx, auth.Caller{UserID: uuid.New(), Email: "admin@example.com", Admin: true})
 	// apply queues the apply and returns the job's failure, if it failed.
 	apply := func() *adminjobs.Failure {
