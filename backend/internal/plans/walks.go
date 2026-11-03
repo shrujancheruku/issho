@@ -186,6 +186,7 @@ func (r *Runner) suggest(ctx context.Context, q *dbgen.Queries, c *City, in matc
 	var errs []error
 	for range suggestRounds {
 		var walkIdx []int
+		outOfTime := false // a walk was deferred for lack of time
 		suggestions := matching.Suggest(in, c.Config)
 		for i, s := range suggestions {
 			if a := acts[s.Activity]; a != nil && a.Walk {
@@ -202,6 +203,14 @@ func (r *Runner) suggest(ctx context.Context, q *dbgen.Queries, c *City, in matc
 		for _, i := range walkIdx {
 			if r.Walks == nil || composed == maxWalksPerPass {
 				results[i].skip = true
+				continue
+			}
+			// Too little of the job's time left for a model call that can take
+			// minutes: leave the walk for the next run (a deferral, not a failure).
+			if !r.Walks.HasBudget(ctx) {
+				results[i].skip = true
+				rep.Deferred++
+				outOfTime = true
 				continue
 			}
 			composed++
@@ -243,6 +252,13 @@ func (r *Runner) suggest(ctx context.Context, q *dbgen.Queries, c *City, in matc
 				skipped = true
 				in.Skip = append(in.Skip, s.Plan)
 				continue
+			case errors.Is(res.err, walks.ErrNoBudget):
+				// The job's time ran out between attempts: next run, no rest.
+				rep.Deferred++
+				outOfTime = true
+				skipped = true
+				in.Skip = append(in.Skip, s.Plan)
+				continue
 			case res.err != nil:
 				// The model or Maps failing isn't the area's fault: no rest.
 				r.Log.Warn("walk compose", "city", c.ID, "area", s.Area, "activity", s.Activity, "err", res.err)
@@ -280,7 +296,8 @@ func (r *Runner) suggest(ctx context.Context, q *dbgen.Queries, c *City, in matc
 			rep.Opened++
 			in.Open = append(in.Open, s.Plan)
 		}
-		if !skipped {
+		// Out of time: another round would only defer more walks.
+		if !skipped || outOfTime {
 			break
 		}
 	}

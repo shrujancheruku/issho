@@ -15,6 +15,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	"github.com/shrujancheruku/issho/backend/internal/maps"
 	"github.com/shrujancheruku/issho/backend/internal/matching"
+	"github.com/shrujancheruku/issho/backend/internal/platform/pgconv"
 	"github.com/shrujancheruku/issho/backend/internal/platform/sentry"
 	"github.com/shrujancheruku/issho/backend/internal/walks"
 )
@@ -214,6 +215,9 @@ func (r *Runner) checkPlace(ctx context.Context, p Open, venue string, times []t
 type SuggestReport struct {
 	Opened int // plans opened
 	Failed int // suggestions that could not be opened
+	// Deferred: walks left for the next run because the job's context had
+	// less than walks.MinBudget left. Not a failure.
+	Deferred int
 }
 
 // Suggest loads the city and opens new plans in it, up to its cap
@@ -261,7 +265,7 @@ func (r *Runner) suggestIn(ctx context.Context, all *City, now time.Time) (Sugge
 	for _, d := range drafts {
 		in.Open = append(in.Open, matching.Plan{
 			Area: matching.AreaID(d.AreaID), Activity: matching.ActivityID(d.ActivityID),
-			FollowUp: matching.ActivityID(deref(d.FollowUpID)), Primary: d.PrimaryLanguage, Secondary: deref(d.SecondaryLanguage),
+			FollowUp: matching.ActivityID(pgconv.Deref(d.FollowUpID)), Primary: d.PrimaryLanguage, Secondary: pgconv.Deref(d.SecondaryLanguage),
 		})
 	}
 	// Recently failed plans (and rejected drafts) count as open, so they
@@ -270,7 +274,7 @@ func (r *Runner) suggestIn(ctx context.Context, all *City, now time.Time) (Sugge
 	for _, f := range failed {
 		in.Open = append(in.Open, matching.Plan{
 			Area: matching.AreaID(f.AreaID), Activity: matching.ActivityID(f.ActivityID),
-			FollowUp: matching.ActivityID(deref(f.FollowUpID)), Primary: f.PrimaryLanguage, Secondary: deref(f.SecondaryLanguage),
+			FollowUp: matching.ActivityID(pgconv.Deref(f.FollowUpID)), Primary: f.PrimaryLanguage, Secondary: pgconv.Deref(f.SecondaryLanguage),
 		})
 	}
 	return r.suggest(ctx, q, c, in, w, now)
