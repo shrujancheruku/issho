@@ -9,6 +9,7 @@ import (
 	"slices"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 
@@ -328,6 +329,19 @@ func (r *Runner) scheduleIn(ctx context.Context, c *City, now time.Time) (Schedu
 	}
 	open = slices.DeleteFunc(open, func(p Open) bool { return slices.Contains(held, p.ID) })
 	slices.SortStableFunc(open, func(a, b Open) int { return cmp.Compare(b.Signups, a.Signups) })
+	// Everyone waiting for any of the plans, in three queries instead of
+	// three per plan (#185). Scheduling a plan only changes its own signups
+	// (the people it places leave its list), so a later plan's are still
+	// current when its turn comes; what other plans do to a person's time
+	// is read fresh per plan (AddBusy in schedulePlan).
+	planIDs := make([]uuid.UUID, len(open))
+	for i, p := range open {
+		planIDs[i] = p.ID
+	}
+	waiting, err := LoadWaiting(ctx, q, planIDs)
+	if err != nil {
+		return rep, err
+	}
 	var errs []error
 	for _, p := range open {
 		// Cancelled (timeout, shutdown): stop, don't count the rest as failed.
@@ -335,7 +349,7 @@ func (r *Runner) scheduleIn(ctx context.Context, c *City, now time.Time) (Schedu
 			return rep, err
 		}
 		rep.Checked++
-		closed, scheduled, err := r.schedulePlan(ctx, q, c, users, acts, p, now)
+		closed, scheduled, err := r.schedulePlan(ctx, q, c, users, acts, p, waiting[p.ID], now)
 		if err != nil {
 			rep.Failed++
 			errs = append(errs, fmt.Errorf("plan %s: %w", p.ID, err))
@@ -353,7 +367,7 @@ func (r *Runner) scheduleIn(ctx context.Context, c *City, now time.Time) (Schedu
 }
 
 func (r *Runner) schedulePlan(ctx context.Context, q *dbgen.Queries, c *City, users map[matching.UserID]*matching.User,
-	acts map[matching.ActivityID]*matching.Activity, p Open, now time.Time) (closed, scheduled int, err error) {
+	acts map[matching.ActivityID]*matching.Activity, p Open, signups []matching.Signup, now time.Time) (closed, scheduled int, err error) {
 	closeAs := func(reason string) (int, int, error) {
 		r.Log.Info("plan closed", "city", c.ID, "plan", p.ID, "reason", reason)
 		if reason == ClosedNoGroup {
@@ -372,7 +386,7 @@ func (r *Runner) schedulePlan(ctx context.Context, q *dbgen.Queries, c *City, us
 	tm := TimingOf(c.Config)
 	window := tm.occasions(p.Window, now, c.Location)
 	force := !now.Before(p.Window.Deadline) || len(window) == 0
-	signups, err := LoadSignups(ctx, q, p.ID, p.Window.Start)
+	signups, err = AddBusy(ctx, q, signups, p.Window.Start)
 	if err != nil {
 		return 0, 0, err
 	}
