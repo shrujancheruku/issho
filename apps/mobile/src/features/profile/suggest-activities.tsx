@@ -1,4 +1,4 @@
-import { Code, ConnectError, type Activity, type Interest } from '@issho/api-client';
+import { type Activity, type Interest } from '@issho/api-client';
 import { useMutation } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
@@ -10,7 +10,6 @@ import { ThemedText } from '@/components/themed-text';
 import { BodyFont, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useI18n } from '@/i18n/i18n-provider';
-import { errorText } from '@/lib/error-text';
 import { api } from '@/lib/api';
 
 import { addSuggestions, cycleSuggestion, type Draft } from './draft';
@@ -47,7 +46,6 @@ export function SuggestActivities({
       setSuggestions(res.suggestions.filter((s) => byId.has(s.activityId)));
     },
   });
-  const unavailable = suggest.error instanceof ConnectError && suggest.error.code === Code.FailedPrecondition;
 
   const add = () => {
     const result = addSuggestions(draft, suggestions ?? []);
@@ -75,7 +73,7 @@ export function SuggestActivities({
         disabled={!text.trim() || !draft.cityId}
         busy={suggest.isPending}
       />
-      <ErrorLine error={suggest.error} type="small" text={(e, tr) => (unavailable ? tr('suggest.unavailable') : errorText(e, tr))} />
+      <ErrorLine error={suggest.error} type="small" />
       {added !== null && (
         <ThemedText type="small" themeColor="textSecondary">
           {t('suggest.added', { count: added })}
