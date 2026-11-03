@@ -25,7 +25,8 @@ func (h *Handler) SuggestActivities(ctx context.Context, req *connect.Request[is
 	case errors.As(err, &invalid):
 		return nil, errs.Invalid("%s", err)
 	case errors.Is(err, tagging.ErrUnavailable):
-		return nil, errs.Refused("%s", err)
+		// A reason so the app words it without reading the code.
+		return nil, errs.Precondition(isshov1.ErrorReason_ERROR_REASON_FEATURE_UNAVAILABLE, "%s", err)
 	case errors.Is(err, tagging.ErrNoSuggestion):
 		// The model declined; to the person that's just "nothing matched".
 		tags = nil

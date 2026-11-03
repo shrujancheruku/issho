@@ -11,6 +11,7 @@ const REASON_KEYS: Partial<Record<ErrorReason, StringKey>> = {
   [ErrorReason.NOT_NOW]: 'error.notNow',
   [ErrorReason.CHECK_IN_CLOSED]: 'error.checkInClosed',
   [ErrorReason.FEEDBACK_CLOSED]: 'feedback.closed',
+  [ErrorReason.FEATURE_UNAVAILABLE]: 'suggest.unavailable',
 };
 
 /** The request never got an answer: the server is unreachable, or fetch itself failed. */
