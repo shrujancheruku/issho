@@ -2,6 +2,7 @@ package crews
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -42,6 +43,12 @@ func failWhen(t *testing.T, f *testfixture.Fixture, name, table, cond string) {
 	})
 }
 
+// cancelledCtx reports itself cancelled (Err) but leaves queries working
+// (Done), so the pass's setup succeeds and only its per-crew check sees it.
+type cancelledCtx struct{ context.Context }
+
+func (cancelledCtx) Err() error { return context.Canceled }
+
 // TestIntegrationPassSkipsFailedCrew: with two offers ready to be decided,
 // one failing is rolled back and not counted, the other forms, and the pass
 // succeeds. Every crew of the stage failing is an error.
@@ -79,6 +86,12 @@ func TestIntegrationPassSkipsFailedCrew(t *testing.T) {
 			t.Fatal(err)
 		}
 		return s
+	}
+
+	// A cancelled pass stops with the context's error; the crews it never
+	// reached aren't counted as failed.
+	if rep, err := r.Pass(cancelledCtx{ctx}, f.City, day(21)); !errors.Is(err, context.Canceled) || rep != (PassReport{}) {
+		t.Errorf("cancelled Pass = %+v, %v; want context.Canceled and nothing counted", rep, err)
 	}
 
 	// Forming the first crew fails after the decision would have been counted.

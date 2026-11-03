@@ -182,7 +182,7 @@ func (r *Runner) suggest(ctx context.Context, q *dbgen.Queries, c *City, in matc
 	}
 	var places *walkPlaces
 	var rep SuggestReport
-	composed := 0
+	composed, attempts := 0, 0 // attempts: suggestions we tried to store
 	var errs []error
 	for range suggestRounds {
 		var walkIdx []int
@@ -220,6 +220,10 @@ func (r *Runner) suggest(ctx context.Context, q *dbgen.Queries, c *City, in matc
 
 		skipped := false
 		for i, s := range suggestions {
+			// Cancelled (timeout, shutdown): stop, don't count the rest as failed.
+			if err := ctx.Err(); err != nil {
+				return rep, err
+			}
 			res := results[i]
 			var rejected *walks.Rejected
 			switch {
@@ -246,6 +250,7 @@ func (r *Runner) suggest(ctx context.Context, q *dbgen.Queries, c *City, in matc
 				in.Skip = append(in.Skip, s.Plan)
 				continue
 			}
+			attempts++
 			var id uuid.UUID
 			// In a city under review the plan waits as a draft (00021).
 			status := PlanOpen
@@ -279,7 +284,10 @@ func (r *Runner) suggest(ctx context.Context, q *dbgen.Queries, c *City, in matc
 			break
 		}
 	}
-	if rep.Failed > 0 && rep.Opened == 0 {
+	// Only when every suggestion we tried to store hit a database error: a
+	// walk the composer couldn't make says nothing about the database, and
+	// retrying would run the paid composer again.
+	if attempts > 0 && rep.Failed == attempts {
 		return rep, allFailed("suggest", errs)
 	}
 	return rep, nil
@@ -390,6 +398,9 @@ func (r *Runner) refreshWalkRoutes(ctx context.Context, q *dbgen.Queries, cityID
 	}
 	var errs []error
 	for _, p := range plans {
+		if err := ctx.Err(); err != nil {
+			return computed, failed, err
+		}
 		walk, err := r.WalkRoutes.WalkThrough(ctx, p.PlaceIds, false)
 		if err != nil {
 			failed++

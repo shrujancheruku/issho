@@ -389,6 +389,10 @@ func (r *Runner) Settle(ctx context.Context, cityID string, now time.Time) (Sett
 	}
 	var errs []error
 	for _, g := range groups {
+		// Cancelled (timeout, shutdown): stop, don't count the rest as failed.
+		if err := ctx.Err(); err != nil {
+			return rep, err
+		}
 		// Counted only after the transaction commits: a rollback must not
 		// leave a group counted as decided.
 		var outcome string

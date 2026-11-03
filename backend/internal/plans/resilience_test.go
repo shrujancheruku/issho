@@ -2,6 +2,7 @@ package plans
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -43,6 +44,12 @@ func failWhen(t *testing.T, pool *pgxpool.Pool, name, event, table, cond string)
 	})
 }
 
+// cancelledCtx reports itself cancelled (Err) but leaves queries working
+// (Done), so a pass's setup succeeds and only its per-item check sees it.
+type cancelledCtx struct{ context.Context }
+
+func (cancelledCtx) Err() error { return context.Canceled }
+
 func quiet() *slog.Logger { return slog.New(slog.NewTextHandler(io.Discard, nil)) }
 
 // threePlans opens three plans in the city, each with three people signed
@@ -81,6 +88,12 @@ func TestIntegrationScheduleSkipsFailedPlan(t *testing.T) {
 	ctx := context.Background()
 	r := &Runner{DB: f.pool, Timing: DefaultTiming(), Log: quiet()}
 	ids, due := threePlans(t, f, r)
+
+	// A cancelled pass (River timeout or shutdown) stops with the context's
+	// error, and doesn't count the plans it never reached as failed.
+	if rep, err := r.Schedule(cancelledCtx{ctx}, f.city, due); !errors.Is(err, context.Canceled) || rep.Failed != 0 || rep.Scheduled != 0 {
+		t.Errorf("cancelled Schedule = %+v, %v; want context.Canceled and nothing failed", rep, err)
+	}
 
 	failWhen(t, f.pool, "event", "insert", "app.events", fmt.Sprintf("new.plan_id = '%s'", ids[1]))
 	rep, err := r.Schedule(ctx, f.city, due)
@@ -156,6 +169,10 @@ func TestIntegrationSettleSkipsFailedGroup(t *testing.T) {
 	rows.Close()
 	if len(groups) != 2 {
 		t.Fatalf("%d groups", len(groups))
+	}
+
+	if rep, err := (&Runner{DB: f.pool, Timing: DefaultTiming(), Log: quiet()}).Settle(cancelledCtx{ctx}, f.city, day(11, 0)); !errors.Is(err, context.Canceled) || rep != (SettleReport{}) {
+		t.Errorf("cancelled Settle = %+v, %v; want context.Canceled, nothing counted or failed", rep, err)
 	}
 
 	// Nobody confirmed, so both would be cancelled at the deadline. The
@@ -260,5 +277,23 @@ func TestIntegrationSeasonalActivity(t *testing.T) {
 	}
 	if m.Opened != 0 {
 		t.Errorf("Match after the season opened %d plans; the activity is out of season", m.Opened)
+	}
+}
+
+// TestIntegrationSuggestFailedItem: opening a suggestion that fails in the
+// database is counted in Failed, and when every suggestion tried failed the
+// pass is an error. (Walks the composer couldn't make don't count: see
+// Runner.suggest.)
+func TestIntegrationSuggestFailedItem(t *testing.T) {
+	f := newFixture(t, "zz-plans-suggestfail", "UTC", 8)
+	ctx := context.Background()
+	for _, u := range f.users {
+		f.addProfile(t, u, "ja")
+	}
+	r := &Runner{DB: f.pool, Timing: DefaultTiming(), Log: quiet()}
+	failWhen(t, f.pool, "plan", "insert", "app.plans", fmt.Sprintf("new.city_id = '%s'", f.city))
+	rep, err := r.Suggest(ctx, f.city, time.Date(2030, 1, 1, 9, 0, 0, 0, time.UTC))
+	if err == nil || rep.Failed != 1 || rep.Opened != 0 {
+		t.Errorf("Suggest = %+v, %v; want one failed and an error, as every suggestion tried failed", rep, err)
 	}
 }

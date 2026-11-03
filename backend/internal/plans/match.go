@@ -6,6 +6,8 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgtype"
+
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 )
 
@@ -71,13 +73,28 @@ func (r *Runner) Match(ctx context.Context, cityID string, now time.Time) (Match
 	if err != nil {
 		return rep, fmt.Errorf("load city %s: %w", cityID, err)
 	}
+	// A stage that failed outright still lets the Maps caching-terms cleanup
+	// run (routes older than RouteMaxAge are cleared) before the error ends
+	// the job; the cleanup's own error is only logged.
+	var stageErr error
 	if rep.Scheduled, err = r.scheduleIn(ctx, c, now); err != nil {
-		return rep, fmt.Errorf("schedule %s: %w", cityID, err)
+		stageErr = fmt.Errorf("schedule %s: %w", cityID, err)
+	} else {
+		suggested, err := r.suggestIn(ctx, c, now)
+		rep.Opened, rep.SuggestFailed = suggested.Opened, suggested.Failed
+		if err != nil {
+			stageErr = fmt.Errorf("suggest %s: %w", cityID, err)
+		}
 	}
-	suggested, err := r.suggestIn(ctx, c, now)
-	rep.Opened, rep.SuggestFailed = suggested.Opened, suggested.Failed
-	if err != nil {
-		return rep, fmt.Errorf("suggest %s: %w", cityID, err)
+	if stageErr != nil {
+		if ctx.Err() == nil {
+			if n, err := dbgen.New(r.DB).ClearStaleRoutes(ctx, dbgen.ClearStaleRoutesParams{CityID: cityID, Cutoff: pgtype.Timestamptz{Time: now.Add(-RouteMaxAge), Valid: true}}); err != nil {
+				r.Log.Warn("clear stale routes", "city", cityID, "err", err)
+			} else {
+				rep.RoutesCleared = int(n)
+			}
+		}
+		return rep, stageErr
 	}
 	meeting, err := r.RefreshMeetingPlaces(ctx, cityID)
 	rep.MeetingPlaces, rep.MeetingPlacesFailed = meeting.Found, meeting.Failed

@@ -321,6 +321,10 @@ func (r *Runner) scheduleIn(ctx context.Context, c *City, now time.Time) (Schedu
 	slices.SortStableFunc(open, func(a, b Open) int { return cmp.Compare(b.Signups, a.Signups) })
 	var errs []error
 	for _, p := range open {
+		// Cancelled (timeout, shutdown): stop, don't count the rest as failed.
+		if err := ctx.Err(); err != nil {
+			return rep, err
+		}
 		rep.Checked++
 		closed, scheduled, err := r.schedulePlan(ctx, q, c, users, acts, p, now)
 		if err != nil {

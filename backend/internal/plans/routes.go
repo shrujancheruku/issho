@@ -83,6 +83,10 @@ func (r *Runner) RefreshRoutes(ctx context.Context, cityID string, now time.Time
 		return rep, errors.Join(append(errs, err)...)
 	}
 	for _, p := range plans {
+		// Cancelled (timeout, shutdown): stop, don't count the rest as failed.
+		if err := ctx.Err(); err != nil {
+			return rep, err
+		}
 		route, err := r.Routes.WalkingRoute(ctx, p.FromPlace, deref(p.FollowUpVenuePlaceID))
 		if err == nil {
 			err = q.SetPlanRoute(ctx, dbgen.SetPlanRouteParams{
@@ -126,6 +130,10 @@ func (r *Runner) RefreshMeetingPlaces(ctx context.Context, cityID string) (Meeti
 	}
 	var errs []error
 	for _, p := range plans {
+		// Cancelled (timeout, shutdown): stop, don't count the rest as failed.
+		if err := ctx.Err(); err != nil {
+			return rep, err
+		}
 		var place string
 		var searchErr error
 		for _, s := range meetingSearches {

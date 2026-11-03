@@ -53,6 +53,10 @@ func (r *Runner) Pass(ctx context.Context, cityID string, now time.Time) (PassRe
 	}
 	var stageErrs []error
 	for _, id := range offers {
+		// Cancelled (timeout, shutdown): stop, don't count the rest as failed.
+		if err := ctx.Err(); err != nil {
+			return rep, err
+		}
 		var status string
 		err := pgx.BeginFunc(ctx, r.DB, func(tx pgx.Tx) error {
 			var err error
@@ -82,6 +86,9 @@ func (r *Runner) Pass(ctx context.Context, cityID string, now time.Time) (PassRe
 	stageErrs = nil
 	tried := 0
 	for _, id := range due {
+		if err := ctx.Err(); err != nil {
+			return rep, err
+		}
 		plan, err := q.GetCrewPlanSuggestion(ctx, dbgen.GetCrewPlanSuggestionParams{CrewID: id, After: pgtype.Timestamptz{Time: now.Add(suggestMinNotice), Valid: true}})
 		if errors.Is(err, pgx.ErrNoRows) {
 			continue // nothing fits this week; try again next pass
@@ -181,6 +188,9 @@ func (r *Runner) offer(ctx context.Context, q *dbgen.Queries, cityID string, now
 	var errs []error
 	tried := 0
 	for _, c := range matching.FindCrews(city.Users, g, city.Relations, offered) {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
 		members := make([]uuid.UUID, len(c.Members))
 		for i, id := range c.Members {
 			members[i] = uuid.MustParse(string(id))
