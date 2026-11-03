@@ -137,12 +137,26 @@ type Runner struct {
 	WalkRoutes maps.WalkRouter
 }
 
-// When venues must be open, from an event's start. Activities have no
-// stored duration, so this assumes about two hours, then the follow-up.
-var (
-	activityOpen = []time.Duration{0, 90 * time.Minute}
-	followUpOpen = []time.Duration{2 * time.Hour, 3 * time.Hour}
-)
+// stayChecks is how often, inside a stay, a venue is checked to be open, so
+// a break in the middle of a long stay (a lunch closure) is noticed too.
+// Sampling can't see a closure shorter than this that falls between two
+// samples; that's accepted, since real breaks are an hour or more.
+const stayChecks = 30 * time.Minute
+
+// stayTimes are the times to check a venue is open for a stay of length d
+// from start: the start, every stayChecks after it, and the last minute
+// (the end itself is closing time, not part of the stay).
+func stayTimes(start time.Time, d time.Duration) []time.Time {
+	last := start.Add(max(d-time.Minute, 0))
+	out := []time.Time{start}
+	for t := start.Add(stayChecks); t.Before(last); t = t.Add(stayChecks) {
+		out = append(out, t)
+	}
+	if last.After(start) {
+		out = append(out, last)
+	}
+	return out
+}
 
 // venueProblem is why a scheduled time doesn't work for a plan's venues.
 type venueProblem int
@@ -155,26 +169,23 @@ const (
 
 // checkVenues looks up the plan's venues' opening hours (once per venue per
 // pass; cache) and says whether they're open around an event starting at
-// start. Lookup failures don't block scheduling: they're logged and the
-// venue is assumed open.
-func (r *Runner) checkVenues(ctx context.Context, p Open, start time.Time, cache map[string]*maps.Hours) venueProblem {
+// start: the activity's venue from the start for the activity's own hours,
+// then the follow-up's from where the activity ends for its own hours (acts
+// holds the plan's activity and its follow-up; a missing one counts as the
+// default length). Lookup failures don't block scheduling: they're logged
+// and the venue is assumed open.
+func (r *Runner) checkVenues(ctx context.Context, p Open, acts map[matching.ActivityID]*matching.Activity, start time.Time, cache map[string]*maps.Hours) venueProblem {
 	if r.Hours == nil {
 		return venuesOK
 	}
 	if p.Walk {
 		return r.checkWalk(ctx, p, start, cache)
 	}
-	at := func(offsets []time.Duration) []time.Time {
-		var out []time.Time
-		for _, o := range offsets {
-			out = append(out, start.Add(o))
-		}
-		return out
-	}
-	if v := r.checkPlace(ctx, p, p.Venue, at(activityOpen), cache); v != venuesOK {
+	first := acts[p.Activity].Length()
+	if v := r.checkPlace(ctx, p, p.Venue, stayTimes(start, first), cache); v != venuesOK {
 		return v
 	}
-	return r.checkPlace(ctx, p, p.FollowUpVenue, at(followUpOpen), cache)
+	return r.checkPlace(ctx, p, p.FollowUpVenue, stayTimes(start.Add(first), acts[p.FollowUp].Length()), cache)
 }
 
 // checkPlace says whether a venue ("" = none) is open at every given time.
@@ -393,7 +404,7 @@ func (r *Runner) schedulePlan(ctx context.Context, q *dbgen.Queries, c *City, us
 			}
 			return 0, 0, nil
 		}
-		problem := r.checkVenues(ctx, p, r.Timing.startsAt(res.Occasion, c.Location), hours)
+		problem := r.checkVenues(ctx, p, acts, r.Timing.startsAt(res.Occasion, c.Location), hours)
 		if problem == venuesOK {
 			break
 		}

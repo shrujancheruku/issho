@@ -193,16 +193,16 @@ func TestIntegrationWalks(t *testing.T) {
 	p.Walk = true
 	start := time.Date(2030, 1, 12, 14, 0, 0, 0, time.FixedZone("JST", 9*3600))
 	r.Hours = &fakeHours{h: everyDay(9, 16)}
-	if v := r.checkVenues(ctx, p, start, map[string]*maps.Hours{}); v != venueClosedAt {
+	if v := r.checkVenues(ctx, p, nil, start, map[string]*maps.Hours{}); v != venueClosedAt {
 		t.Errorf("tea house closing at 16:00: %v", v)
 	}
 	r.Hours = &fakeHours{h: everyDay(9, 18)}
-	if v := r.checkVenues(ctx, p, start, map[string]*maps.Hours{}); v != venuesOK {
+	if v := r.checkVenues(ctx, p, nil, start, map[string]*maps.Hours{}); v != venuesOK {
 		t.Errorf("open until 18:00: %v", v)
 	}
 	gone := &fakeHours{h: maps.Hours{Closed: true}}
 	r.Hours = gone
-	if v := r.checkVenues(ctx, p, start, map[string]*maps.Hours{}); v != venueGone || gone.calls != 1 {
+	if v := r.checkVenues(ctx, p, nil, start, map[string]*maps.Hours{}); v != venueGone || gone.calls != 1 {
 		t.Errorf("closed stop: %v after %d lookups", v, gone.calls)
 	}
 }
