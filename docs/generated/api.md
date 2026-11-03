@@ -156,6 +156,11 @@
   
     - [CurationService](#issho-v1-CurationService)
   
+- [issho/v1/errors.proto](#issho_v1_errors-proto)
+    - [ErrorReasonDetail](#issho-v1-ErrorReasonDetail)
+  
+    - [ErrorReason](#issho-v1-ErrorReason)
+  
 - [issho/v1/health.proto](#issho_v1_health-proto)
     - [CheckRequest](#issho-v1-CheckRequest)
     - [CheckResponse](#issho-v1-CheckResponse)
@@ -2540,6 +2545,59 @@ HTTP: POST /issho.v1.CurationService/&lt;Method&gt;
 | SetVenueStatus | [SetVenueStatusRequest](#issho-v1-SetVenueStatusRequest) | [SetVenueStatusResponse](#issho-v1-SetVenueStatusResponse) | SetVenueStatus approves, rejects or resets (to candidate) up to 100 places of a city. A rejected place is never picked again; plans that already use it keep it (withdraw them on the Plans page). |
 | SearchVenues | [SearchVenuesRequest](#issho-v1-SearchVenuesRequest) | [SearchVenuesResponse](#issho-v1-SearchVenuesResponse) | SearchVenues looks places up by name with Google, in one area or each area of the city (one search per area), and says which the city already has. FAILED_PRECONDITION without a Google Maps key. |
 | AddVenue | [AddVenueRequest](#issho-v1-AddVenueRequest) | [AddVenueResponse](#issho-v1-AddVenueResponse) | AddVenue adds a place, approved, in one category. Its Google types must include one of the category&#39;s, and it must be within the category&#39;s search radius of one of the city&#39;s areas (it&#39;s put in the nearest). INVALID_ARGUMENT otherwise, or if it&#39;s closed. |
+
+ 
+
+
+
+<a name="issho_v1_errors-proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## issho/v1/errors.proto
+
+
+
+<a name="issho-v1-ErrorReasonDetail"></a>
+
+### ErrorReasonDetail
+ErrorReasonDetail rides on a Connect error as a detail (not a service
+message). It names why a call was refused when a screen branches on the
+reason or words it differently; the Connect code and message stay as they
+were, so builds that ignore the detail keep working. Clients read it with
+errorReason() in @issho/api-client.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| reason | [ErrorReason](#issho-v1-ErrorReason) |  |  |
+
+
+
+
+
+ 
+
+
+<a name="issho-v1-ErrorReason"></a>
+
+### ErrorReason
+ErrorReason is added to only when a screen needs the distinction.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| ERROR_REASON_UNSPECIFIED | 0 |  |
+| ERROR_REASON_SUSPENDED | 1 | The account is suspended (PERMISSION_DENIED). |
+| ERROR_REASON_NO_PROFILE | 2 | The caller hasn&#39;t made a profile yet (FAILED_PRECONDITION). |
+| ERROR_REASON_EVENT_OVER | 3 | The event is cancelled or over (FAILED_PRECONDITION). |
+| ERROR_REASON_TOO_LATE | 4 | Too late to respond (FAILED_PRECONDITION). |
+| ERROR_REASON_NOT_NOW | 5 | Check-in isn&#39;t open yet, or the answer doesn&#39;t apply now (FAILED_PRECONDITION). |
+| ERROR_REASON_CHECK_IN_CLOSED | 6 | Check-in is closed (FAILED_PRECONDITION). |
+| ERROR_REASON_FEEDBACK_CLOSED | 7 | Feedback isn&#39;t open (FAILED_PRECONDITION). |
+
+
+ 
+
+ 
 
  
 
