@@ -9,7 +9,7 @@ import (
 )
 
 // Config holds the engine's tunable settings. A city overrides any subset of
-// them with JSON in app.cities.matching_weights; see ParseConfig.
+// them with JSON in app.cities.matching; see ParseConfig.
 type Config struct {
 	// MinGroupSize is the only hard size limit: below it there's no group,
 	// so smaller pools are dropped too.
@@ -134,7 +134,7 @@ func DefaultConfig() Config {
 	}
 }
 
-// ParseConfig applies a city's overrides (app.cities.matching_weights) on top
+// ParseConfig applies a city's overrides (app.cities.matching) on top
 // of DefaultConfig. Unknown keys are rejected so a typo doesn't silently
 // leave a weight at its default. Nested objects (weights, size_targets)
 // override key by key.

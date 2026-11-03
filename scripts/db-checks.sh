@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # The backend's database checks, run by CI's `backend` job and by `make test-db`
 # so the steps and the package list exist once. Needs DATABASE_URL pointing at a
-# migrated-or-empty PostGIS that is already accepting connections. Never reads .env*.
+# migrated-or-empty Supabase Postgres (PostGIS in `extensions`) that is already accepting connections. Never reads .env*.
 set -euo pipefail
 cd "$(dirname "$0")/../backend"
 

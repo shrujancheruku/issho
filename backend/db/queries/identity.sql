@@ -5,7 +5,7 @@
 insert into app.users (id, email)
 values ($1, $2)
 on conflict (id) do update set email = coalesce(excluded.email, app.users.email)
-returning id, email, verified_at, deleted_at, created_at;
+returning id, email, created_at;
 
 -- name: IsSuspended :one
 select exists (select 1 from app.suspensions where user_id = $1 and lifted_at is null);

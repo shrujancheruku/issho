@@ -14,12 +14,13 @@
 └──────────────────────┘                                                       ▼
                                                      ┌───────────────────────────────┐
   backend/cmd/worker (River jobs) ──────────────────▶ │ Postgres + PostGIS (Supabase) │
+                                                     │  `extensions` (PostGIS)       │
                                                      │  schema `app` (ours)          │
                                                      │  schema `auth` (Supabase)     │
                                                      └───────────────────────────────┘
 ```
 
-- **Clients never talk to the database directly.** The `app` schema is revoked from Supabase's `anon` and `authenticated` roles (see migration `00001`). All reads and writes go through Go services. PostgREST and Realtime are unused. Supabase's Data API (PostgREST) is **disabled**, locally and on the hosted project, so `anon` can't reach any table, including PostGIS's `public.spatial_ref_sys`, whose grants we can't revoke. goose's version table lives in its own `goose` schema.
+- **Clients never talk to the database directly.** The `app` schema is revoked from Supabase's `anon` and `authenticated` roles (see migration `00001_baseline`). All reads and writes go through Go services. PostgREST and Realtime are unused. Supabase's Data API (PostgREST) is **disabled**, locally and on the hosted project, so `anon` can't reach any table, including PostGIS's `spatial_ref_sys`, whose grants we can't revoke. PostGIS lives in the `extensions` schema, as on hosted Supabase. goose's version table lives in its own `goose` schema.
 - **Supabase Auth issues the identity.** The app signs in with Supabase and gets a short-lived access JWT. The Go API verifies that JWT against the project's public JWKS. It never holds a signing secret.
 - **The app user row is created lazily.** The first authenticated `GetMe` creates `app.users` with the same UUID as `auth.users`. On Supabase, a foreign key ties the two together and cascades deletes.
 
@@ -79,7 +80,7 @@ Defined in `backend/db/migrations/`. All app tables live in the `app` schema. Th
 | `area_travel_times` | Area-to-area minutes per mode, from the Routes API (`tool build-matrix`). A cache: rows older than 30 days are deleted. |
 | `activities` | The global catalogue. `name` is JSON keyed by language (`{"en": …, "ja": …}`); `venue_categories` lists where it can happen; `blocks` the parts of the day it suits |
 | `venue_categories` | Our venue kinds (cafe, park, karaoke …) mapped to Google place types, with a search radius |
-| `venues` | Discovered places: `google_place_id` + category, area (the one containing it when areas have boundaries, else the nearest), curation status (per place, set by admins: who and when, or who added it), our tags. A city's `approved_venues_only` makes the matcher use only approved ones. **No Google content** (names, addresses, locations) is stored; see [google-maps.md](google-maps.md#5-terms-what-we-may-store). |
+| `venues` | Discovered places: `google_place_id` + category, area (the one containing it when areas have boundaries, else the nearest), curation status (per place, set by admins: who and when, or who added it). A city's `approved_venues_only` makes the matcher use only approved ones. **No Google content** (names, addresses, locations) is stored; see [google-maps.md](google-maps.md#5-terms-what-we-may-store). |
 | `city_activity_overrides` | A city can rename, disable or set seasonal months for an activity |
 | `users` | App account; `id` = Supabase `auth.users.id` |
 | `profiles` | Matching preferences (home area, travel time, group size, gender rules, …), display languages (`primary_language`, optional `secondary_language`) and the accepted code-of-conduct version. Written only whole, by `ProfileService.SaveProfile` (onboarding and settings) |
