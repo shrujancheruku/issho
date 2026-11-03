@@ -367,12 +367,15 @@ type SettleReport struct {
 	Confirmed, Cancelled, Finished int
 	ChatMessagesDeleted            int
 	FeedbackAsked                  int // people asked how it was
+	Failed                         int // groups that could not be decided
 }
 
 // Settle decides every group in a city whose confirmation deadline has
 // passed: it goes ahead with at least `min_attendance` confirmations, and
 // is cancelled otherwise. Events that have happened are marked done, and
-// the people who went are asked for feedback once it opens.
+// the people who went are asked for feedback once it opens. A group that
+// fails is logged and counted in Failed while the others are still decided
+// (the failure policy is on Runner.Match).
 func (r *Runner) Settle(ctx context.Context, cityID string, now time.Time) (SettleReport, error) {
 	var rep SettleReport
 	q := dbgen.New(r.DB)
@@ -384,8 +387,13 @@ func (r *Runner) Settle(ctx context.Context, cityID string, now time.Time) (Sett
 	if err != nil {
 		return rep, err
 	}
+	var errs []error
 	for _, g := range groups {
+		// Counted only after the transaction commits: a rollback must not
+		// leave a group counted as decided.
+		var outcome string
 		err := pgx.BeginFunc(ctx, r.DB, func(tx pgx.Tx) error {
+			outcome = ""
 			q := dbgen.New(tx)
 			locked, err := q.LockGroup(ctx, g.ID)
 			if err != nil {
@@ -399,7 +407,6 @@ func (r *Runner) Settle(ctx context.Context, cityID string, now time.Time) (Sett
 				return err
 			}
 			if confirmed >= int32(locked.MinAttendance) {
-				rep.Confirmed++
 				if err := q.SetGroupStatus(ctx, dbgen.SetGroupStatusParams{ID: g.ID, Status: GroupConfirmed}); err != nil {
 					return err
 				}
@@ -407,15 +414,28 @@ func (r *Runner) Settle(ctx context.Context, cityID string, now time.Time) (Sett
 				if err != nil {
 					return err
 				}
+				outcome = GroupConfirmed
 				return notify(ctx, q, NotifyConfirmed, locked.EventID, users)
 			}
-			rep.Cancelled++
+			outcome = GroupCancelled
 			r.Log.Info("group cancelled at its deadline", "city", cityID, "event", locked.EventID, "group", g.ID, "confirmed", confirmed)
 			return cancelGroup(ctx, q, g.ID, locked.PlanID, locked.EventID)
 		})
 		if err != nil {
-			return rep, fmt.Errorf("group %s: %w", g.ID, err)
+			rep.Failed++
+			errs = append(errs, fmt.Errorf("group %s: %w", g.ID, err))
+			r.itemFailed(ctx, "settle", cityID, "group", g.ID, err)
+			continue
 		}
+		switch outcome {
+		case GroupConfirmed:
+			rep.Confirmed++
+		case GroupCancelled:
+			rep.Cancelled++
+		}
+	}
+	if len(groups) > 0 && rep.Failed == len(groups) {
+		return rep, allFailed("settle", errs)
 	}
 	finished, err := q.FinishPastEvents(ctx, dbgen.FinishPastEventsParams{CityID: cityID, Today: date(today(now, loc))})
 	if err != nil {

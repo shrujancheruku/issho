@@ -169,19 +169,21 @@ func loadWalkPlaces(ctx context.Context, q *dbgen.Queries, cityID string) (*walk
 // suggest opens plans for a city's suggestions. Walks are composed first
 // (a few at a time, at once); a walk that can't be composed isn't opened,
 // and matching is asked again for the next best plan in its place.
-func (r *Runner) suggest(ctx context.Context, q *dbgen.Queries, c *City, in matching.SuggestInput, w Window, now time.Time) (int, error) {
+func (r *Runner) suggest(ctx context.Context, q *dbgen.Queries, c *City, in matching.SuggestInput, w Window, now time.Time) (SuggestReport, error) {
 	acts := c.ActivitiesByID()
 	failures, err := q.ListRecentWalkFailures(ctx, dbgen.ListRecentWalkFailuresParams{
 		CityID: c.ID, Since: pgtype.Timestamptz{Time: now.Add(-WalkRetryAfter), Valid: true},
 	})
 	if err != nil {
-		return 0, err
+		return SuggestReport{}, err
 	}
 	for _, f := range failures {
 		in.Skip = append(in.Skip, matching.Plan{Area: matching.AreaID(f.AreaID), Activity: matching.ActivityID(f.ActivityID)})
 	}
 	var places *walkPlaces
-	opened, composed := 0, 0
+	var rep SuggestReport
+	composed := 0
+	var errs []error
 	for range suggestRounds {
 		var walkIdx []int
 		suggestions := matching.Suggest(in, c.Config)
@@ -193,7 +195,7 @@ func (r *Runner) suggest(ctx context.Context, q *dbgen.Queries, c *City, in matc
 		results := make([]walkResult, len(suggestions))
 		if len(walkIdx) > 0 && r.Walks != nil && places == nil {
 			if places, err = loadWalkPlaces(ctx, q, c.ID); err != nil {
-				return opened, err
+				return rep, err
 			}
 		}
 		var wg sync.WaitGroup
@@ -232,7 +234,7 @@ func (r *Runner) suggest(ctx context.Context, q *dbgen.Queries, c *City, in matc
 					AreaID: string(s.Area), ActivityID: string(s.Activity),
 					FailedAt: pgtype.Timestamptz{Time: now, Valid: true}, Reason: rejected.Error(),
 				}); err != nil {
-					return opened, err
+					return rep, err
 				}
 				skipped = true
 				in.Skip = append(in.Skip, s.Plan)
@@ -256,20 +258,31 @@ func (r *Runner) suggest(ctx context.Context, q *dbgen.Queries, c *City, in matc
 				id, err = create(ctx, q, c.ID, s, w, acts, status)
 			}
 			if err != nil {
-				return opened, fmt.Errorf("open plan %s in %s: %w", s.Activity, s.Area, err)
+				// One suggestion failing never stops the others (the policy on
+				// Match); another is asked for in its place.
+				err = fmt.Errorf("open plan %s in %s: %w", s.Activity, s.Area, err)
+				rep.Failed++
+				errs = append(errs, err)
+				r.itemFailed(ctx, "suggest", c.ID, "suggestion", fmt.Sprintf("%s@%s", s.Activity, s.Area), err)
+				skipped = true
+				in.Skip = append(in.Skip, s.Plan)
+				continue
 			}
 			if acts[s.Activity] != nil && acts[s.Activity].Walk {
 				r.Log.Info("walk opened", "city", c.ID, "plan", id, "status", status, "area", s.Area, "activity", s.Activity,
 					"title", res.walk.Title, "stops", len(res.walk.Stops), "minutes", res.walk.Minutes())
 			}
-			opened++
+			rep.Opened++
 			in.Open = append(in.Open, s.Plan)
 		}
 		if !skipped {
 			break
 		}
 	}
-	return opened, nil
+	if rep.Failed > 0 && rep.Opened == 0 {
+		return rep, allFailed("suggest", errs)
+	}
+	return rep, nil
 }
 
 // Contexts tell the translator what a walk's text is.
@@ -368,19 +381,20 @@ func (r *Runner) checkWalk(ctx context.Context, p Open, start time.Time, cache m
 // refreshWalkRoutes is RefreshRoutes for composed walks: their route goes
 // through every stop, in the stored order (Google isn't asked to reorder
 // them again: the stops and notes are written for that order).
-func (r *Runner) refreshWalkRoutes(ctx context.Context, q *dbgen.Queries, cityID string, now time.Time) (int, error) {
+func (r *Runner) refreshWalkRoutes(ctx context.Context, q *dbgen.Queries, cityID string, now time.Time) (computed, failed int, err error) {
 	plans, err := q.ListWalksNeedingRoute(ctx, dbgen.ListWalksNeedingRouteParams{
 		CityID: cityID, OlderThan: pgtype.Timestamptz{Time: now.Add(-RouteRefreshAge), Valid: true}, Max: routeBatch,
 	})
 	if err != nil {
-		return 0, err
+		return 0, 0, err
 	}
-	computed := 0
 	var errs []error
 	for _, p := range plans {
 		walk, err := r.WalkRoutes.WalkThrough(ctx, p.PlaceIds, false)
 		if err != nil {
+			failed++
 			errs = append(errs, fmt.Errorf("walk %s: %w", p.ID, err))
+			r.itemFailed(ctx, "routes", cityID, "walk", p.ID, err)
 			continue
 		}
 		legs := dbgen.SetWalkLegsParams{PlanID: p.ID}
@@ -399,9 +413,12 @@ func (r *Runner) refreshWalkRoutes(ctx context.Context, q *dbgen.Queries, cityID
 			})
 		})
 		if err != nil {
-			return computed, err
+			failed++
+			errs = append(errs, fmt.Errorf("walk %s: %w", p.ID, err))
+			r.itemFailed(ctx, "routes", cityID, "walk", p.ID, err)
+			continue
 		}
 		computed++
 	}
-	return computed, errors.Join(errs...)
+	return computed, failed, errors.Join(errs...)
 }
