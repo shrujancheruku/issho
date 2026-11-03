@@ -73,9 +73,11 @@ describe('approve a draft plan', () => {
     fake.on('review.approvePlan', async () => { await gate.promise; state.status = ReviewPlanStatus.OPEN; return {}; });
     const { user } = renderPage(<PlanDetail planId={planId} />);
     await user.click(await screen.findByRole('button', { name: 'Approve' }));
-    const yes = screen.getByRole('button', { name: 'Yes, open this plan' });
-    await user.click(yes);
-    await user.click(yes); // the RPC hasn't answered yet
+    await user.click(screen.getByRole('button', { name: 'Yes, open this plan' }));
+    expect(screen.queryByRole('button', { name: 'Yes, open this plan' })).toBeNull(); // folded back
+    const again = screen.getByRole('button', { name: 'Approve' });
+    expect((again as HTMLButtonElement).disabled).toBe(true); // the RPC hasn't answered yet
+    await user.click(again);
     gate.release();
 
     expect(await screen.findByText('Open')).toBeTruthy();
@@ -113,9 +115,11 @@ describe('reject a draft plan', () => {
     fake.on('review.rejectPlan', async () => { await gate.promise; state.status = ReviewPlanStatus.CLOSED; state.closedReason = 'rejected'; return {}; });
     const { user } = renderPage(<PlanDetail planId={planId} />);
     await user.click(await screen.findByRole('button', { name: 'Reject' }));
-    const yes = screen.getByRole('button', { name: 'Yes, reject this plan' });
-    await user.click(yes);
-    await user.click(yes); // the RPC hasn't answered yet
+    await user.click(screen.getByRole('button', { name: 'Yes, reject this plan' }));
+    expect(screen.queryByRole('button', { name: 'Yes, reject this plan' })).toBeNull(); // folded back
+    const again = screen.getByRole('button', { name: 'Reject' });
+    expect((again as HTMLButtonElement).disabled).toBe(true); // the RPC hasn't answered yet
+    await user.click(again);
     gate.release();
 
     expect(await screen.findByText('Closed: rejected')).toBeTruthy();
@@ -170,9 +174,11 @@ describe('withdraw double submit', () => {
     fake.on('review.withdrawPlan', async () => { await gate.promise; state.status = ReviewPlanStatus.CLOSED; state.closedReason = 'withdrawn'; return {}; });
     const { user } = renderPage(<PlanDetail planId={planId} />);
     await user.click(await screen.findByRole('button', { name: 'Withdraw plan' }));
-    const yes = screen.getByRole('button', { name: 'Yes, withdraw this plan' });
-    await user.click(yes);
-    await user.click(yes);
+    await user.click(screen.getByRole('button', { name: 'Yes, withdraw this plan' }));
+    expect(screen.queryByRole('button', { name: 'Yes, withdraw this plan' })).toBeNull(); // folded back
+    const again = screen.getByRole('button', { name: 'Withdraw plan' });
+    expect((again as HTMLButtonElement).disabled).toBe(true); // the RPC hasn't answered yet
+    await user.click(again);
     gate.release();
 
     expect(await screen.findByText('Closed: withdrawn')).toBeTruthy();

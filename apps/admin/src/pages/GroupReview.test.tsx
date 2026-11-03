@@ -62,9 +62,11 @@ describe('approve a proposed round', () => {
     fake.on('review.approveProposal', async () => { await gate.promise; state.status = ReviewEventStatus.SCHEDULED; return {}; });
     const { user } = renderPage(<GroupReview eventId={eventId} />);
     await user.click(await screen.findByRole('button', { name: 'Approve and send invitations' }));
-    const yes = screen.getByRole('button', { name: 'Yes, invite everyone' });
-    await user.click(yes);
-    await user.click(yes); // the RPC hasn't answered yet
+    await user.click(screen.getByRole('button', { name: 'Yes, invite everyone' }));
+    expect(screen.queryByRole('button', { name: 'Yes, invite everyone' })).toBeNull(); // folded back
+    const again = screen.getByRole('button', { name: 'Approve and send invitations' });
+    expect((again as HTMLButtonElement).disabled).toBe(true); // the RPC hasn't answered yet
+    await user.click(again);
     gate.release();
 
     expect(await screen.findByText('Scheduled')).toBeTruthy();
@@ -103,9 +105,11 @@ describe('reject a proposed round', () => {
     fake.on('review.rejectProposal', async () => { await gate.promise; state.gone = true; return {}; });
     const { user } = renderPage(<GroupReview eventId={eventId} />);
     await user.click(await screen.findByRole('button', { name: 'Reject' }));
-    const yes = screen.getByRole('button', { name: 'Yes, reject this round' });
-    await user.click(yes);
-    await user.click(yes); // the RPC hasn't answered yet
+    await user.click(screen.getByRole('button', { name: 'Yes, reject this round' }));
+    expect(screen.queryByRole('button', { name: 'Yes, reject this round' })).toBeNull(); // folded back
+    const again = screen.getByRole('button', { name: 'Reject' });
+    expect((again as HTMLButtonElement).disabled).toBe(true); // the RPC hasn't answered yet
+    await user.click(again);
     gate.release();
 
     expect(await screen.findByText(/no such event/)).toBeTruthy();

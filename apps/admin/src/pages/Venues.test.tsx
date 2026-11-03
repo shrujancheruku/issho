@@ -34,9 +34,9 @@ const rowOf = async (placeId: string) => within((await screen.findByText(`Cafe $
 // In the review list every status change asks first (ConfirmButton), and the
 // bulk buttons ask once for the whole selection, naming how many.
 describe.each([
-  ['approve', 'Approve', 'Yes, approve', 'Yes, approve 2 venues', VenueStatus.APPROVED],
-  ['reject', 'Reject', 'Yes, reject', 'Yes, reject 2 venues', VenueStatus.REJECTED],
-] as const)('%s a venue', (_, label, yes, yesBulk, status) => {
+  ['approve', 'Approve', 'Yes, approve Cafe place-a', 'Cancel approving Cafe place-a', 'Yes, approve 2 venues', VenueStatus.APPROVED],
+  ['reject', 'Reject', 'Yes, reject Cafe place-a', 'Cancel rejecting Cafe place-a', 'Yes, reject 2 venues', VenueStatus.REJECTED],
+] as const)('%s a venue', (_, label, yes, cancel, yesBulk, status) => {
   it('sends the city, the place and the status once confirmed, then drops it from the list', async () => {
     serve();
     const { user } = renderPage(<Venues />);
@@ -55,7 +55,7 @@ describe.each([
     const { user } = renderPage(<Venues />);
     const row = await rowOf('place-a');
     await user.click(row.getByRole('button', { name: label }));
-    await user.click(row.getByRole('button', { name: 'Cancel' }));
+    await user.click(row.getByRole('button', { name: cancel }));
 
     expect(fake.requests('curation.setVenueStatus')).toEqual([]);
     expect(row.getByRole('button', { name: label })).toBeTruthy();
@@ -81,9 +81,11 @@ describe.each([
     const { user } = renderPage(<Venues />);
     const row = await rowOf('place-a');
     await user.click(row.getByRole('button', { name: label }));
-    const confirm = row.getByRole('button', { name: yes });
-    await user.click(confirm);
-    await user.click(confirm); // the RPC hasn't answered yet
+    await user.click(row.getByRole('button', { name: yes }));
+    expect(row.queryByRole('button', { name: yes })).toBeNull(); // folded back
+    const again = row.getByRole('button', { name: label });
+    expect((again as HTMLButtonElement).disabled).toBe(true); // the RPC hasn't answered yet
+    await user.click(again);
     gate.release();
 
     await vi.waitFor(() => expect(screen.queryByText('Cafe place-a')).toBeNull());

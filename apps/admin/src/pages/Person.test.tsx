@@ -77,7 +77,8 @@ describe('suspend a person', () => {
     await user.click(screen.getByRole('button', { name: 'Suspend…' }));
     const yes = screen.getByRole('button', { name: 'Yes, suspend Aoi' });
     await user.click(yes);
-    await user.click(yes); // the RPC hasn't answered yet
+    expect((yes as HTMLButtonElement).disabled).toBe(true); // in flight
+    await user.click(yes);
     expect(fake.requests('moderation.suspendPerson')).toHaveLength(1);
     gate.release();
     expect(await screen.findByText('Suspended')).toBeTruthy();
@@ -92,7 +93,7 @@ describe('lift a suspension', () => {
     await user.type(await screen.findByLabelText('Note'), 'appealed');
     await user.click(screen.getByRole('button', { name: 'Lift suspension' }));
     expect(fake.requests('moderation.liftSuspension')).toEqual([]); // the first click only asks
-    await user.click(screen.getByRole('button', { name: 'Yes, lift Aoi suspension' }));
+    await user.click(screen.getByRole('button', { name: "Yes, lift Aoi's suspension" }));
 
     expect(fake.requests('moderation.liftSuspension')).toEqual([{ userId, note: 'appealed' }]);
     expect(await screen.findByText('Suspend', { selector: 'h2' })).toBeTruthy();
@@ -115,7 +116,7 @@ describe('lift a suspension', () => {
     fake.on('moderation.liftSuspension', () => { throw new ConnectError('try again later', Code.Unavailable); });
     const { user } = renderPage(<Person userId={userId} />);
     await user.click(await screen.findByRole('button', { name: 'Lift suspension' }));
-    await user.click(screen.getByRole('button', { name: 'Yes, lift Aoi suspension' }));
+    await user.click(screen.getByRole('button', { name: "Yes, lift Aoi's suspension" }));
 
     expect(await screen.findByText(/try again later/)).toBeTruthy();
     expect(screen.getByText('Suspended')).toBeTruthy();
@@ -127,9 +128,11 @@ describe('lift a suspension', () => {
     fake.on('moderation.liftSuspension', async () => { await gate.promise; state.suspended = false; return {}; });
     const { user } = renderPage(<Person userId={userId} />);
     await user.click(await screen.findByRole('button', { name: 'Lift suspension' }));
-    const yes = screen.getByRole('button', { name: 'Yes, lift Aoi suspension' });
-    await user.click(yes);
-    await user.click(yes); // the RPC hasn't answered yet
+    await user.click(screen.getByRole('button', { name: "Yes, lift Aoi's suspension" }));
+    expect(screen.queryByRole('button', { name: "Yes, lift Aoi's suspension" })).toBeNull(); // folded back
+    const again = screen.getByRole('button', { name: 'Lift suspension' });
+    expect((again as HTMLButtonElement).disabled).toBe(true); // the RPC hasn't answered yet
+    await user.click(again);
     expect(fake.requests('moderation.liftSuspension')).toHaveLength(1);
     gate.release();
     expect(await screen.findByText('Suspend', { selector: 'h2' })).toBeTruthy();

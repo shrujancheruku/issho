@@ -182,8 +182,8 @@ function VenueRow({ venue: v, checked, onCheck, categoryName, busy, onSet }: {
       <td>{v.plans || ''}</td>
       <td className="nowrap muted">{v.reviewedAt ? formatTime(v.reviewedAt) : ''}</td>
       <td className="nowrap">
-        {v.status !== VenueStatus.APPROVED && <ConfirmButton className="small" label="Approve" confirmLabel="Yes, approve" disabled={busy} onConfirm={() => onSet(VenueStatus.APPROVED)} />}{' '}
-        {v.status !== VenueStatus.REJECTED && <ConfirmButton className="small secondary" label="Reject" confirmLabel="Yes, reject" disabled={busy} onConfirm={() => onSet(VenueStatus.REJECTED)} />}
+        {v.status !== VenueStatus.APPROVED && <ConfirmButton className="small" label="Approve" confirmLabel={`Yes, approve ${v.name || v.placeId}`} cancelLabel={`Cancel approving ${v.name || v.placeId}`} disabled={busy} onConfirm={() => onSet(VenueStatus.APPROVED)} />}{' '}
+        {v.status !== VenueStatus.REJECTED && <ConfirmButton className="small secondary" label="Reject" confirmLabel={`Yes, reject ${v.name || v.placeId}`} cancelLabel={`Cancel rejecting ${v.name || v.placeId}`} disabled={busy} onConfirm={() => onSet(VenueStatus.REJECTED)} />}
       </td>
     </tr>
   );
