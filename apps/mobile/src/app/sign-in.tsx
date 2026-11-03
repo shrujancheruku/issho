@@ -1,11 +1,10 @@
 import { Image } from 'expo-image';
 import { useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Pressable, StyleSheet, TextInput, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
+import { ScreenFrame } from '@/components/screen-frame';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { BodyFont, FormWidth, Spacing } from '@/constants/theme';
+import { BodyFont, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { PrimaryButton } from '@/components/primary-button';
 import { useI18n } from '@/i18n/i18n-provider';
@@ -68,70 +67,71 @@ export default function SignInScreen() {
   const validEmail = /^\S+@\S+\.\S+$/.test(email.trim());
 
   return (
-    <ThemedView style={styles.fill}>
-      <SafeAreaView style={styles.fill}>
-        {/* Padding on both platforms: SDK 58 Android apps are edge-to-edge, so the window no
-            longer resizes for the keyboard and the code field would sit behind it. */}
-        <KeyboardAvoidingView behavior="padding" style={styles.content}>
-          <Image source={require('@/assets/images/logo.png')} style={styles.logo} contentFit="contain" accessibilityLabel="Issho" />
+    // The frame keeps the keyboard off the code field (SDK 58 Android apps are edge-to-edge,
+    // so the window no longer resizes for it) and gives the form column.
+    <ScreenFrame>
+      <View style={styles.content}>
+        <Image source={require('@/assets/images/logo.png')} style={styles.logo} contentFit="contain" accessibilityLabel="Issho" />
 
-          {step === 'email' ? (
-            <View style={styles.form}>
-              <ThemedText type="subtitle">{t('signIn.title')}</ThemedText>
-              <TextInput
-                style={inputStyle}
-                value={email}
-                onChangeText={setEmail}
-                placeholder="you@example.com"
-                placeholderTextColor={theme.textSecondary}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-                autoComplete="email"
-                textContentType="emailAddress"
-                returnKeyType="send"
-                onSubmitEditing={() => validEmail && void sendCode()}
-              />
-              <PrimaryButton label={t('signIn.sendCode')} onPress={sendCode} disabled={!validEmail} busy={busy} />
+        {step === 'email' ? (
+          <View style={styles.form}>
+            <ThemedText type="subtitle">{t('signIn.title')}</ThemedText>
+            <TextInput
+              style={inputStyle}
+              value={email}
+              onChangeText={setEmail}
+              placeholder="you@example.com"
+              placeholderTextColor={theme.textSecondary}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              autoComplete="email"
+              textContentType="emailAddress"
+              returnKeyType="send"
+              onSubmitEditing={() => validEmail && void sendCode()}
+            />
+            <PrimaryButton label={t('signIn.sendCode')} onPress={sendCode} disabled={!validEmail} busy={busy} />
+          </View>
+        ) : (
+          <View style={styles.form}>
+            <ThemedText type="subtitle">{t('signIn.checkEmail')}</ThemedText>
+            <ThemedText themeColor="textSecondary">{t('signIn.codeSent', { email: email.trim() })}</ThemedText>
+            <TextInput
+              style={[inputStyle, styles.code]}
+              value={code}
+              onChangeText={onCodeChange}
+              keyboardType="number-pad"
+              autoComplete="one-time-code"
+              textContentType="oneTimeCode"
+              maxLength={CODE_LENGTH}
+              autoFocus
+              editable={!busy}
+              accessibilityLabel={t('signIn.codeLabel')}
+            />
+            {busy && <ActivityIndicator />}
+            <View style={styles.row}>
+              <Pressable onPress={sendCode} disabled={busy}>
+                <ThemedText type="link">{t('signIn.resend')}</ThemedText>
+              </Pressable>
+              <Pressable onPress={() => setStep('email')} disabled={busy}>
+                <ThemedText type="link">{t('signIn.differentEmail')}</ThemedText>
+              </Pressable>
             </View>
-          ) : (
-            <View style={styles.form}>
-              <ThemedText type="subtitle">{t('signIn.checkEmail')}</ThemedText>
-              <ThemedText themeColor="textSecondary">{t('signIn.codeSent', { email: email.trim() })}</ThemedText>
-              <TextInput
-                style={[inputStyle, styles.code]}
-                value={code}
-                onChangeText={onCodeChange}
-                keyboardType="number-pad"
-                autoComplete="one-time-code"
-                textContentType="oneTimeCode"
-                maxLength={CODE_LENGTH}
-                autoFocus
-                editable={!busy}
-                accessibilityLabel={t('signIn.codeLabel')}
-              />
-              {busy && <ActivityIndicator />}
-              <View style={styles.row}>
-                <Pressable onPress={sendCode} disabled={busy}>
-                  <ThemedText type="link">{t('signIn.resend')}</ThemedText>
-                </Pressable>
-                <Pressable onPress={() => setStep('email')} disabled={busy}>
-                  <ThemedText type="link">{t('signIn.differentEmail')}</ThemedText>
-                </Pressable>
-              </View>
-            </View>
-          )}
+          </View>
+        )}
 
-          {error && <ThemedText themeColor="error" style={styles.error}>{error}</ThemedText>}
-        </KeyboardAvoidingView>
-      </SafeAreaView>
-    </ThemedView>
+        {error && (
+          <ThemedText themeColor="error" style={styles.error}>
+            {error}
+          </ThemedText>
+        )}
+      </View>
+    </ScreenFrame>
   );
 }
 
 const styles = StyleSheet.create({
-  fill: { flex: 1 },
-  content: { flex: 1, justifyContent: 'center', padding: Spacing.four, gap: Spacing.four, width: '100%', maxWidth: FormWidth, alignSelf: 'center' },
+  content: { flex: 1, justifyContent: 'center', padding: Spacing.four, gap: Spacing.four },
   // Capped so the logo stays a logo on wide screens instead of filling them.
   logo: { width: '70%', maxWidth: 280, aspectRatio: 900 / 598, alignSelf: 'center' },
   form: { gap: Spacing.three },

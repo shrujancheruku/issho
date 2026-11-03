@@ -2,16 +2,14 @@ import { Code, ConnectError } from '@issho/api-client';
 import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AvailabilityGrid } from '@/components/availability-grid';
 import { Chip } from '@/components/chip';
 import { PrimaryButton } from '@/components/primary-button';
-import { LoadState } from '@/components/query-screen';
+import { LoadState, QueryScreen } from '@/components/query-screen';
 import { useLeave } from '@/components/screen-frame';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { FormWidth, Spacing } from '@/constants/theme';
+import { Spacing } from '@/constants/theme';
 import { useAuth } from '@/features/auth/auth-provider';
 import { useSignupActions } from '@/features/plans/data';
 import { Heading } from '@/features/plans/fact';
@@ -42,107 +40,128 @@ export default function SignupSheet() {
   const p = plan.data?.plan;
   const close = useLeave({ pathname: '/plan/[id]', params: { id } });
 
-  if (!p || !times) {
-    return (
-      <ThemedView style={[styles.fill, styles.center]}>
-        <LoadState queries={[plan, profile]} notFound={t('plan.notFound')} center />
-      </ThemedView>
-    );
-  }
-  const dates = windowDates(p.windowStart, p.windowDays);
   const error = signUp.error;
 
+  const head = (
+    <View style={styles.head}>
+      <View style={styles.fill}>
+        <ThemedText type="subtitle" style={styles.title} accessibilityRole="header">
+          {t('plan.times')}
+        </ThemedText>
+        <ThemedText type="small" themeColor="textSecondary">
+          {t('plan.timesHint')}
+        </ThemedText>
+      </View>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={t('common.close')}
+        onPress={close}
+        hitSlop={8}
+        style={[styles.close, { backgroundColor: theme.backgroundElement }]}>
+        <ThemedText style={styles.closeMark}>×</ThemedText>
+      </Pressable>
+    </View>
+  );
+
+  // The head, with its close button, stays in every state: a failed load can be closed.
   return (
-    <ThemedView style={[styles.fill, { backgroundColor: theme.surface }]}>
-      <SafeAreaView style={styles.fill} edges={['bottom', 'left', 'right']}>
-        <View style={[styles.fill, styles.column]}>
-          <View style={styles.head}>
-            <View style={styles.fill}>
-              <ThemedText type="subtitle" style={styles.title} accessibilityRole="header">
-                {t('plan.times')}
-              </ThemedText>
-              <ThemedText type="small" themeColor="textSecondary">
-                {t('plan.timesHint')}
-              </ThemedText>
-            </View>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={t('common.close')}
-              onPress={close}
-              hitSlop={8}
-              style={[styles.close, { backgroundColor: theme.backgroundElement }]}>
-              <ThemedText style={styles.closeMark}>×</ThemedText>
-            </Pressable>
-          </View>
-          <ScrollView contentContainerStyle={styles.content}>
-            <AvailabilityGrid
-              selected={times.pattern}
-              onToggle={(day, b) => setTimes({ ...times, pattern: toggle(times.pattern, slotKey(day, b)) })}
-            />
-            <View style={styles.section}>
-              <Heading title={t('plan.blockOut')} hint={t('plan.blockOutHint')} />
-              <View style={styles.wrap}>
-                {dates.map((d) => (
-                  <Chip
-                    key={d}
-                    label={formatDate(d, lang)}
-                    selected={times.blocked.includes(d)}
-                    selectedColors={{ background: theme.text, text: theme.background }}
-                    onPress={() => {
-                      haptics.selection();
-                      setTimes({ ...times, blocked: toggle(times.blocked, d) });
-                    }}
-                  />
-                ))}
+    <QueryScreen sheet header={head} queries={[plan, profile]} notFound={t('plan.notFound')}>
+      {() =>
+        !p || !times ? (
+          <LoadState queries={[]} />
+        ) : (
+          <>
+            <ScrollView contentContainerStyle={styles.content}>
+              <AvailabilityGrid
+                selected={times.pattern}
+                onToggle={(day, b) =>
+                  setTimes({
+                    ...times,
+                    pattern: toggle(times.pattern, slotKey(day, b)),
+                  })
+                }
+              />
+              <View style={styles.section}>
+                <Heading title={t('plan.blockOut')} hint={t('plan.blockOutHint')} />
+                <View style={styles.wrap}>
+                  {windowDates(p.windowStart, p.windowDays).map((d) => (
+                    <Chip
+                      key={d}
+                      label={formatDate(d, lang)}
+                      selected={times.blocked.includes(d)}
+                      selectedColors={{
+                        background: theme.text,
+                        text: theme.background,
+                      }}
+                      onPress={() => {
+                        haptics.selection();
+                        setTimes({
+                          ...times,
+                          blocked: toggle(times.blocked, d),
+                        });
+                      }}
+                    />
+                  ))}
+                </View>
               </View>
+            </ScrollView>
+            <View style={styles.footer}>
+              {times.pattern.length === 0 && (
+                <ThemedText themeColor="error" style={styles.centerText}>
+                  {t('plan.pickTime')}
+                </ThemedText>
+              )}
+              {error && (
+                <ThemedText themeColor="error" style={styles.centerText}>
+                  {error instanceof ConnectError && error.code === Code.NotFound ? t('plan.notFound') : t('error.network')}
+                </ThemedText>
+              )}
+              <PrimaryButton
+                label={p.signedUp ? t('plan.update') : t('plan.signUp')}
+                disabled={times.pattern.length === 0}
+                busy={signUp.isPending}
+                onPress={() =>
+                  signUp.mutate(toSignup(times, usual), {
+                    // Back to the plan, which useSignupActions has refreshed by
+                    // now, so it shows the thread at "Signed up". Then ask for
+                    // notifications: this is when they're worth having ("we'll
+                    // tell you when there's a date").
+                    onSuccess: () => {
+                      haptics.success();
+                      close();
+                      if (userId) void registerForPush({ ask: true, userId });
+                    },
+                  })
+                }
+              />
+              <ThemedText type="small" themeColor="textSecondary" style={styles.centerText}>
+                {t('plan.signUpHint')}
+              </ThemedText>
             </View>
-          </ScrollView>
-          <View style={styles.footer}>
-            {times.pattern.length === 0 && (
-              <ThemedText themeColor="error" style={styles.centerText}>
-                {t('plan.pickTime')}
-              </ThemedText>
-            )}
-            {error && (
-              <ThemedText themeColor="error" style={styles.centerText}>
-                {error instanceof ConnectError && error.code === Code.NotFound ? t('plan.notFound') : t('error.network')}
-              </ThemedText>
-            )}
-            <PrimaryButton
-              label={p.signedUp ? t('plan.update') : t('plan.signUp')}
-              disabled={times.pattern.length === 0}
-              busy={signUp.isPending}
-              onPress={() =>
-                signUp.mutate(toSignup(times, usual), {
-                  // Back to the plan, which useSignupActions has refreshed by
-                  // now, so it shows the thread at "Signed up". Then ask for
-                  // notifications: this is when they're worth having ("we'll
-                  // tell you when there's a date").
-                  onSuccess: () => {
-                    haptics.success();
-                    close();
-                    if (userId) void registerForPush({ ask: true, userId });
-                  },
-                })
-              }
-            />
-            <ThemedText type="small" themeColor="textSecondary" style={styles.centerText}>
-              {t('plan.signUpHint')}
-            </ThemedText>
-          </View>
-        </View>
-      </SafeAreaView>
-    </ThemedView>
+          </>
+        )
+      }
+    </QueryScreen>
   );
 }
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },
-  center: { alignItems: 'center', justifyContent: 'center' },
-  column: { width: '100%', maxWidth: FormWidth, alignSelf: 'center' },
-  head: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.three, padding: Spacing.three, paddingTop: Spacing.four },
+  head: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: Spacing.three,
+    padding: Spacing.three,
+    paddingTop: Spacing.four,
+  },
   title: { fontSize: 22, lineHeight: 32 },
-  close: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+  close: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   closeMark: { fontSize: 24, lineHeight: 28 },
   content: { padding: Spacing.three, gap: Spacing.four },
   section: { gap: Spacing.three },

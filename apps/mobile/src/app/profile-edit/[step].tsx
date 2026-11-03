@@ -1,8 +1,7 @@
 import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { LanguageSwitch } from '@/components/language-switch';
 import { PrimaryButton } from '@/components/primary-button';
 import { LoadState } from '@/components/query-screen';
 import { ScreenFrame, useLeave } from '@/components/screen-frame';
@@ -39,23 +38,18 @@ export default function ProfileEditScreen() {
 
   // While editing languages, show the screen in the ones being chosen.
   useEffect(() => {
-    if (step === 'languages' && draft) previewLanguages({ primary: draft.primaryLanguage, secondary: draft.secondaryLanguage });
+    if (step === 'languages' && draft)
+      previewLanguages({
+        primary: draft.primaryLanguage,
+        secondary: draft.secondaryLanguage,
+      });
   }, [step, draft, previewLanguages]);
   useEffect(() => () => previewLanguages(null), [previewLanguages]);
 
   const save = useSaveProfile();
 
-  const header = (
-    <View style={styles.header}>
-      <Pressable accessibilityRole="button" onPress={leave} hitSlop={8} style={styles.grow}>
-        <ThemedText type="link">‹ {t('common.back')}</ThemedText>
-      </Pressable>
-      <LanguageSwitch />
-    </View>
-  );
-
   return (
-    <ScreenFrame header={header}>
+    <ScreenFrame onBack={leave}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <ThemedText type="subtitle">{t(stepTitles[step])}</ThemedText>
         {draft ? (
@@ -67,7 +61,11 @@ export default function ProfileEditScreen() {
           </View>
         )}
       </ScrollView>
-      {save.isError && <ThemedText themeColor="error" style={styles.error}>{saveErrorMessage(save.error, t)}</ThemedText>}
+      {save.isError && (
+        <ThemedText themeColor="error" style={styles.error}>
+          {saveErrorMessage(save.error, t)}
+        </ThemedText>
+      )}
       <View style={styles.footer}>
         <PrimaryButton
           label={next ? t('common.continue') : t('common.save')}
@@ -76,7 +74,8 @@ export default function ProfileEditScreen() {
           onPress={() => {
             if (!draft) return;
             if (next) setStep(next);
-            else if (canSave(draft)) save.mutate(
+            else if (canSave(draft))
+              save.mutate(
                 // Settings never accepts a code of conduct on the person's behalf: it
                 // sends the version they accepted, and the server refuses an outdated one.
                 toProfile(draft, profile.data?.profile?.conductVersion ?? 0),
@@ -90,8 +89,6 @@ export default function ProfileEditScreen() {
 }
 
 const styles = StyleSheet.create({
-  grow: { flex: 1 },
-  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: Spacing.four, paddingTop: Spacing.three },
   content: { padding: Spacing.four, gap: Spacing.four },
   footer: { padding: Spacing.four },
   error: { textAlign: 'center', paddingHorizontal: Spacing.four },
