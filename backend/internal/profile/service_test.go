@@ -3,22 +3,20 @@ package profile
 import (
 	"context"
 	"errors"
-	"os"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/shrujancheruku/issho/backend/internal/testfixture"
 )
 
 // TestIntegrationSave runs Save and Get against a real, migrated and seeded
 // database (the Tokyo pack). It's skipped unless TEST_DATABASE_URL is set (CI
 // sets it). It creates its own throwaway user and deletes it afterwards.
 func TestIntegrationSave(t *testing.T) {
-	url := os.Getenv("TEST_DATABASE_URL")
-	if url == "" {
-		t.Skip("TEST_DATABASE_URL not set")
-	}
+	url := testfixture.DatabaseURL(t)
 	ctx := context.Background()
 	pool, err := pgxpool.New(ctx, url)
 	if err != nil {
