@@ -200,24 +200,13 @@ func SeedCatalog(ctx context.Context, pool *pgxpool.Pool, venueCategoriesPath, a
 	return len(acts), err
 }
 
-// SeedPack upserts a city pack in one transaction, so a bad pack never leaves a
-// half-seeded city. The catalogue must be seeded first because overrides
-// reference activity ids. Seeding is idempotent: re-running updates in place.
-// Areas or overrides removed from the JSON are not deleted from the database.
-func SeedPack(ctx context.Context, pool *pgxpool.Pool, path string) (Pack, error) {
-	var p Pack
-	if err := readJSON(path, &p); err != nil {
-		return p, err
-	}
-	if err := ValidatePack(p, nil); err != nil {
-		return p, fmt.Errorf("%s: %w", path, err)
-	}
-	return p, SeedPackData(ctx, pool, p)
-}
-
-// SeedPackData seeds a pack already read and validated (the admin SPA reads
-// it from GitHub), as SeedPack does.
-func SeedPackData(ctx context.Context, pool *pgxpool.Pool, p Pack) error {
+// seedPack upserts a validated pack in one transaction, so a bad pack never
+// leaves a half-seeded city. The catalogue must be seeded first because
+// overrides reference activity ids. Seeding is idempotent: re-running updates
+// in place. Areas or overrides removed from the JSON are not deleted from the
+// database. It is private so that Apply is the one way to write a pack: it
+// also works out what needs Google again.
+func seedPack(ctx context.Context, pool *pgxpool.Pool, p Pack) error {
 	return pgx.BeginFunc(ctx, pool, func(tx pgx.Tx) error {
 		q := dbgen.New(tx)
 		name, _ := json.Marshal(p.Name)

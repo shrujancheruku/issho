@@ -10,7 +10,7 @@ Seed data that makes Issho location-agnostic. Code never hard-codes a city, so a
 
 City packs can also be edited (or created) in the admin SPA's **Cities** page, which opens a pull request with the change; once merged, the page loads it into the database. Keep hand edits in the same format (`cities.EncodePack`: two-space indents, unescaped non-ASCII; a test checks it) so the editor's pull requests change only what was edited.
 
-Load with `make seed` (everything) or `cd backend && go run ./cmd/tool seed ../data/citypacks/<city>.json`.
+Load with `make seed` (everything) or `cd backend && go run ./cmd/tool seed ../data/citypacks/<city>.json`. Each pack goes through `cities.Apply`: with `GOOGLE_MAPS_API_KEY` set, new or moved areas get their travel times; without it the pack is seeded and the travel times are skipped (run `build-matrix` later).
 
 **Validation:** `go test ./internal/cities/` (part of `make test` and CI) checks every file here: required fields, ranges, duplicate ids, references between files, and that every Google type is a valid Places API (New) type. Seeding validates too. Seeding runs in a transaction and is idempotent (upserts). **Removing** an entry from the JSON does not delete it from the database; disable it with an override, or merge it into another activity with `replaces` (below).
 
