@@ -2,21 +2,11 @@
 /// <reference types="jest" />
 import { QueryClient } from '@tanstack/react-query';
 
+import { goKinds } from '../test-support/go-kinds';
 import { keys, pushKinds, pushReceived } from '../queries';
-
-// The app has no Node types; jest runs in Node, so declare the two things used.
-declare const __dirname: string;
-declare function require(id: string): any;
-const { readFileSync } = require('fs') as { readFileSync(path: string, encoding: string): string };
 
 // The backend's notification kinds are read from the Go source, so adding a
 // Notify* constant without a row in `pushKinds` fails here.
-const goFiles = ['plans/events.go', 'crews/notifications.go'].map((f) =>
-  `${__dirname}/../../../../../backend/internal/${f}`,
-);
-const goKinds = goFiles.flatMap((f) =>
-  [...readFileSync(f, 'utf8').matchAll(/^\s*Notify\w+\s*=\s*"([a-z_]+)"/gm)].map((m) => m[1]),
-);
 
 test('every kind the backend queues has a row in the push table, and the table has no stranger', () => {
   expect(goKinds.length).toBeGreaterThanOrEqual(8); // the parse found them

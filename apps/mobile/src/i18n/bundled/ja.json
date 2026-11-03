@@ -150,7 +150,6 @@
     "interest.howTitle": "アクティビティの選び方",
     "interest.like": "好き",
     "interest.love": "大好き",
-    "interest.minimum": "アクティビティを{count}個以上選んでください。",
     "interest.openToTry": "やってみたい",
     "interest.tapClear": "4回タップすると解除できます。",
     "interest.tapOnce": "1回タップ",
@@ -241,7 +240,6 @@
     "plans.title": "プラン",
     "profile.about": "あなたについて",
     "profile.activities": "アクティビティ",
-    "profile.activitiesPicked": "{count}個選択中",
     "profile.area": "お住まいの地域",
     "profile.areaHint": "普段出発するエリアを選んでください。無理なく行けるプランをご提案します。",
     "profile.availability": "空いている時間",
@@ -353,7 +351,6 @@
     "you.appearanceSystem": "端末の設定に合わせる",
     "you.crews": "{count, plural, other {#個の仲間に参加中}}",
     "you.howYouMeet": "出会いの設定",
-    "you.secondLanguage": "第2言語",
     "you.slots": "{count, plural, other {週に#回}}",
     "you.title": "マイページ"
   }

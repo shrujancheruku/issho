@@ -191,11 +191,9 @@ function Pinned({ ctx }: { ctx: Ctx }) {
   const attendees = ctx.data.attendees;
   return (
     <View style={[styles.pinned, { backgroundColor: theme.surface }]}>
-      <ThemedText type="smallBold">
-        {t('event.meetingPoint')}: {meetingPoint(ctx, t)}
-      </ThemedText>
+      <ThemedText type="smallBold">{t('event.meetingPointLine', { place: meetingPoint(ctx, t) })}</ThemedText>
       <ThemedText type="small" themeColor="textSecondary">
-        {t('event.going')}: {attendees.length ? attendees.join(', ') : t('event.confirmedCount', { count: ctx.e.confirmed })}
+        {t('event.goingLine', { names: attendees.length ? attendees.join(', ') : t('event.confirmedCount', { count: ctx.e.confirmed }) })}
       </ThemedText>
     </View>
   );
@@ -278,9 +276,7 @@ function OnTheDay({ ctx }: { ctx: Ctx }) {
           </ThemedText>
         </View>
         {minutes > 0 && minutes <= 180 && <RollingText value={t('event.startsIn', { minutes })} />}
-        <ThemedText style={styles.bold}>
-          {t('event.meetingPoint')}: {meetingPoint(ctx, t)}
-        </ThemedText>
+        <ThemedText style={styles.bold}>{t('event.meetingPointLine', { place: meetingPoint(ctx, t) })}</ThemedText>
         <View style={styles.gapAbove}>
           <ErrorLine error={respond.error} />
           {ctx.o.canCheckIn ? (

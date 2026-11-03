@@ -169,7 +169,7 @@ function timesText(pattern: string[], t: ReturnType<typeof useI18n>['t'], lang: 
   return pattern
     .map(parseSlotKey)
     .sort((a, b) => a.weekday - b.weekday || a.block - b.block)
-    .map((s) => `${weekdayName(s.weekday, lang)} ${t(blockKeys[s.block])}`)
+    .map((s) => t('plan.slot', { day: weekdayName(s.weekday, lang), block: t(blockKeys[s.block]) }))
     .join(', ');
 }
 
@@ -185,7 +185,7 @@ function SignedUp({ data, times, names }: { data: GetPlanResponse; times: Times;
       <View style={styles.titleBlock}>
         <TitleBlock data={data} size="medium" />
         <ThemedText type="small" themeColor="textSecondary">
-          {pairText(names.area(p.areaId))}, {distanceText(t, p.travelMinutes)}
+          {t('plan.areaDistance', { area: pairText(names.area(p.areaId)), distance: distanceText(t, p.travelMinutes) })}
         </ThemedText>
       </View>
       <Thread stage={0} id={`plan:${p.id}`} />
@@ -194,10 +194,10 @@ function SignedUp({ data, times, names }: { data: GetPlanResponse; times: Times;
           {t('plan.signedUp')}
         </ThemedText>
         <ThemedText>
-          {t('plan.interested', { count: p.signups })}. {t('plan.whenHint')}
+          {t('plan.interestedWhen', { count: p.signups })}
         </ThemedText>
         <ThemedText type="small" themeColor="textSecondary">
-          {t('plan.signupBy')}: {lastSignupDay(p.signupDeadline, lang)}
+          {t('plan.signupByDate', { date: lastSignupDay(p.signupDeadline, lang) })}
         </ThemedText>
         {p.friendsInterested > 0 && (
           <ThemedText type="smallBold" themeColor="goldText">

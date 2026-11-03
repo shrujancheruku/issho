@@ -81,8 +81,11 @@ export function PlanCard({
       )}
       <View style={styles.bottom}>
         <ThemedText type="small" themeColor="textSecondary" style={styles.grow}>
-          {pairText(names.area(plan.areaId))}, {distanceText(t, plan.travelMinutes)}
-          {language ? `. ${language}` : ''}
+          {t(language ? 'plan.areaDistanceLanguage' : 'plan.areaDistance', {
+            area: pairText(names.area(plan.areaId)),
+            distance: distanceText(t, plan.travelMinutes),
+            language,
+          })}
         </ThemedText>
         <ThemedText type="smallBold">{t('plan.interested', { count: plan.signups })}</ThemedText>
       </View>

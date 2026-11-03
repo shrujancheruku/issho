@@ -231,7 +231,7 @@ function WaitingRow({ plan, names }: { plan: FeedPlan; names: Names }) {
       <View style={styles.rowText}>
         <ThemedText style={styles.rowTitle}>{pick(plan.title, plan.secondaryTitle).name}</ThemedText>
         <ThemedText type="small" themeColor="textSecondary">
-          {pairText(names.area(plan.areaId))}. {t('plan.interested', { count: plan.signups })}
+          {t('plan.areaInterested', { area: pairText(names.area(plan.areaId)), count: plan.signups })}
         </ThemedText>
         {plan.friendsInterested > 0 && (
           <ThemedText type="smallBold" themeColor="goldText">
@@ -239,7 +239,7 @@ function WaitingRow({ plan, names }: { plan: FeedPlan; names: Names }) {
           </ThemedText>
         )}
         <ThemedText type="small" themeColor="textSecondary" style={styles.extra}>
-          {t('plan.signupBy')}: {lastSignupDay(plan.signupDeadline, lang)}
+          {t('plan.signupByDate', { date: lastSignupDay(plan.signupDeadline, lang) })}
         </ThemedText>
       </View>
     </ListRow>
@@ -305,7 +305,7 @@ function FirstWeek({ plans, names }: { plans: FeedPlan[]; names: Names }) {
                   <View style={styles.rowText}>
                     <ThemedText style={styles.rowTitle}>{pick(p.title, p.secondaryTitle).name}</ThemedText>
                     <ThemedText type="small" themeColor="textSecondary">
-                      {pairText(names.area(p.areaId))}. {t('plan.interested', { count: p.signups })}
+                      {t('plan.areaInterested', { area: pairText(names.area(p.areaId)), count: p.signups })}
                     </ThemedText>
                   </View>
                 </Pressable>

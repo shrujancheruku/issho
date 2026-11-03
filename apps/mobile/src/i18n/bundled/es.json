@@ -150,7 +150,6 @@
     "interest.howTitle": "Cómo elegir actividades",
     "interest.like": "Me gusta",
     "interest.love": "Me encanta",
-    "interest.minimum": "Elige al menos {count} actividades.",
     "interest.openToTry": "Me animo a probar",
     "interest.tapClear": "Toca una cuarta vez para quitarla.",
     "interest.tapOnce": "Toca una vez",
@@ -241,7 +240,6 @@
     "plans.title": "Planes",
     "profile.about": "Sobre ti",
     "profile.activities": "Actividades",
-    "profile.activitiesPicked": "{count} elegidas",
     "profile.area": "Dónde estás",
     "profile.areaHint": "Elige la zona desde donde sueles salir. Te sugeriremos planes a los que puedas llegar.",
     "profile.availability": "Cuándo tienes tiempo libre",
@@ -353,7 +351,6 @@
     "you.appearanceSystem": "Usar el del teléfono",
     "you.crews": "{count, plural, one {En 1 círculo} other {En # círculos}}",
     "you.howYouMeet": "Tus preferencias para quedar",
-    "you.secondLanguage": "Segundo idioma",
     "you.slots": "{count, plural, one {1 momento por semana} other {# momentos por semana}}",
     "you.title": "Tú"
   }

@@ -126,7 +126,7 @@ function Person({ member, index, hop, label }: { member: CrewMember; index: numb
     transform: [{ translateY: lift.value }, { scale: scale.value }],
   }));
   return (
-    <View style={styles.person} accessible accessibilityLabel={`${label}, ${member.accepted ? t('crew.saidYes') : t('crew.deciding')}`}>
+    <View style={styles.person} accessible accessibilityLabel={t(member.accepted ? 'crew.personSaidYes' : 'crew.personDeciding', { name: label })}>
       <Animated.View style={style}>
         <Avatar
           name={member.name}
