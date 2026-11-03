@@ -1,9 +1,10 @@
-import { create } from '@bufbuild/protobuf';
+import { create, type MessageInitShape } from '@bufbuild/protobuf';
 import {
-  ApplyCityPackResponseSchema, CityPackSummarySchema, ListCityPacksResponseSchema, ReplacedAreaSchema,
+  AdminJobFailureSchema, AdminJobState, ApplyCityPackResponseSchema, CityPackSummarySchema, Code, ConnectError, DiscoverAreaVenuesResponseSchema,
+  GetAdminJobResponseSchema, ListCityPacksResponseSchema, ReplacedAreaSchema,
 } from '@issho/api-client';
 import { screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { fake } from '../test/fakeApi';
 import { renderPage } from '../test/render';
@@ -56,5 +57,105 @@ describe('applying a city pack', () => {
     await user.click(await screen.findByRole('button', { name: 'Apply from main' }));
     expect(await screen.findByText(/^Applied; new areas tokyo-x/)).toBeTruthy();
     expect(screen.queryByText(/Removed areas|Replaced |Removed activity overrides/)).toBeNull();
+  });
+});
+
+// The apply and the venue search are jobs: the page shows "Running…" and asks
+// GetAdminJob every 2 s until the job ends. Timers are faked and advanced
+// by hand; real time still passes (shouldAdvanceTime) so user-event works.
+describe('long operations run as jobs', () => {
+  beforeEach(() => {
+    fake.reset();
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+  });
+  afterEach(() => vi.useRealTimers());
+
+  const job = (state: AdminJobState, extra: Pick<MessageInitShape<typeof GetAdminJobResponseSchema>, 'result' | 'failure'> = {}) =>
+    create(GetAdminJobResponseSchema, { jobId: 5n, state, ...extra });
+  const list = (areasWithoutVenues: string[] = []) => create(ListCityPacksResponseSchema, {
+    configured: true,
+    packs: [create(CityPackSummarySchema, { id: 'tokyo', name: 'Tokyo', inRepo: true, seeded: true, areas: 3, areasWithoutVenues })],
+  });
+  const polls = () => fake.requests('admin.getAdminJob').length;
+
+  it('shows Running…, polls every 2 s, then the report, and stops', async () => {
+    let state = AdminJobState.QUEUED;
+    fake
+      .on('cityPacks.listCityPacks', () => list())
+      .on('cityPacks.applyCityPack', () => create(ApplyCityPackResponseSchema, { jobId: 5n }))
+      .on('admin.getAdminJob', () => (state === AdminJobState.SUCCEEDED
+        ? job(state, { result: { case: 'applyCityPack', value: create(ApplyCityPackResponseSchema, { newAreas: ['tokyo-x'], travelTimesRebuilt: true, travelTimes: 12 }) } })
+        : job(state)));
+    const { user } = renderPage(<Cities />);
+    await user.click(await screen.findByRole('button', { name: 'Apply from main' }));
+
+    const running = await screen.findByRole('button', { name: 'Running…' });
+    expect((running as HTMLButtonElement).disabled).toBe(true);
+    expect(fake.requests('cityPacks.applyCityPack')).toEqual([{ cityId: 'tokyo' }]);
+    expect(fake.requests('admin.getAdminJob')[0]).toEqual({ jobId: 5n });
+    expect(screen.queryByText(/^Applied/)).toBeNull();
+
+    // Still running after two seconds: asked again, nothing shown yet.
+    const before = polls();
+    state = AdminJobState.RUNNING;
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(polls()).toBeGreaterThan(before);
+    expect(screen.getByRole('button', { name: 'Running…' })).toBeTruthy();
+
+    state = AdminJobState.SUCCEEDED;
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(await screen.findByText(/^Applied; new areas tokyo-x; 12 travel times rebuilt/)).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Apply from main' })).toBeTruthy();
+    // The list was refetched for the new state, and polling stopped.
+    expect(fake.requests('cityPacks.listCityPacks').length).toBeGreaterThanOrEqual(2);
+    const after = polls();
+    await vi.advanceTimersByTimeAsync(6000);
+    expect(polls()).toBe(after);
+  });
+
+  it('shows why a job failed', async () => {
+    fake
+      .on('cityPacks.listCityPacks', () => list())
+      .on('cityPacks.applyCityPack', () => create(ApplyCityPackResponseSchema, { jobId: 5n }))
+      .on('admin.getAdminJob', () => job(AdminJobState.FAILED, {
+        failure: create(AdminJobFailureSchema, { message: 'pack not applied: area tokyo-b: 1 people' }),
+      }));
+    const { user } = renderPage(<Cities />);
+    await user.click(await screen.findByRole('button', { name: 'Apply from main' }));
+
+    expect(await screen.findByText('Failed: pack not applied: area tokyo-b: 1 people')).toBeTruthy();
+    expect(screen.queryByText(/^Applied/)).toBeNull();
+    expect(screen.getByRole('button', { name: 'Apply from main' })).toBeTruthy();
+    const after = polls();
+    await vi.advanceTimersByTimeAsync(4000);
+    expect(polls()).toBe(after);
+  });
+
+  it('follows the venue search the same way', async () => {
+    let state = AdminJobState.RUNNING;
+    fake
+      .on('cityPacks.listCityPacks', () => list(['tokyo-a']))
+      .on('cityPacks.discoverAreaVenues', () => create(DiscoverAreaVenuesResponseSchema, { jobId: 5n }))
+      .on('admin.getAdminJob', () => (state === AdminJobState.SUCCEEDED
+        ? job(state, { result: { case: 'discoverAreaVenues', value: create(DiscoverAreaVenuesResponseSchema, { searches: 9, venues: 31 }) } })
+        : job(state)));
+    const { user } = renderPage(<Cities />);
+    await user.click(await screen.findByRole('button', { name: 'Find venues' }));
+
+    expect(await screen.findByText(/^Running…/)).toBeTruthy();
+    expect(fake.requests('cityPacks.discoverAreaVenues')).toEqual([{ cityId: 'tokyo', areaId: 'tokyo-a' }]);
+    state = AdminJobState.SUCCEEDED;
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(await screen.findByText('31 venues from 9 searches.')).toBeTruthy();
+  });
+
+  it('shows the error when the call itself is refused, with no job to follow', async () => {
+    fake
+      .on('cityPacks.listCityPacks', () => list())
+      .on('cityPacks.applyCityPack', () => { throw new ConnectError('timezone "Mars/Olympus": an IANA name like Asia/Tokyo', Code.InvalidArgument); });
+    const { user } = renderPage(<Cities />);
+    await user.click(await screen.findByRole('button', { name: 'Apply from main' }));
+    expect(await screen.findByText(/timezone "Mars\/Olympus"/)).toBeTruthy();
+    expect(polls()).toBe(0);
   });
 });
