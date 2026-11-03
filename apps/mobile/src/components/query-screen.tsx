@@ -1,6 +1,8 @@
 import { Code, ConnectError } from '@issho/api-client';
 import type { ReactNode } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
+
+import { ErrorLine, refreshFailedText } from '@/components/error-line';
 
 import { ScreenFrame, type FrameProps } from '@/components/screen-frame';
 import { TextLink } from '@/components/text-link';
@@ -10,8 +12,9 @@ import { useI18n } from '@/i18n/i18n-provider';
 
 /** What a screen needs from a React Query result; any `useQuery` result fits. */
 export type QueryLike = {
-  isSuccess: boolean;
   isError: boolean;
+  /** The last refetch failed (React Query keeps the data from before). Optional: absent means false. */
+  isRefetchError?: boolean;
   error: unknown;
   data: unknown;
   refetch: () => unknown;
@@ -35,6 +38,21 @@ export function LoadFailed({ onRetry, center }: { onRetry: () => void; center?: 
 }
 
 /**
+ * A small "Couldn't refresh" line for when the data on screen is older than
+ * it should be because the last refetch failed; nothing otherwise, and gone
+ * on the next success. The rule for every screen that has its data: keep
+ * showing it, and say so here, rather than swap it for the failed state.
+ */
+export function RefreshFailed({ queries }: { queries: readonly QueryLike[] }) {
+  const failed = queries.find((q) => q.isRefetchError);
+  return failed ? (
+    <View style={styles.refresh}>
+      <ErrorLine type="small" error={failed.error} text={refreshFailedText} />
+    </View>
+  ) : null;
+}
+
+/**
  * What to show while `queries` haven't all loaded: `notFound` if one of
  * them says the thing doesn't exist, a retry (of every failed query) if
  * one failed, otherwise a spinner. Renders no layout of its own; the
@@ -51,8 +69,12 @@ export function LoadState({ queries, notFound, center }: { queries: readonly Que
 
 /**
  * A screen that loads data: its frame with the not-found / failed /
- * spinner state until every query has succeeded, then `children` with the
- * data, in the same order as `queries`. `children` renders the body (and
+ * spinner state until every query has data, then `children` with the
+ * data, in the same order as `queries`. Having data is what counts, not
+ * the last fetch: when a refetch fails the data stays, with a "Couldn't
+ * refresh" line above it (the failed state is only for a screen with no
+ * data yet). `notFound` likewise applies only while a query has no data: a
+ * refetch that fails with NotFound keeps the stale body. `children` renders the body (and
  * its own scrolling), because the success layouts differ screen to screen.
  */
 export function QueryScreen<const Q extends readonly QueryLike[]>({
@@ -68,8 +90,11 @@ export function QueryScreen<const Q extends readonly QueryLike[]>({
 }) {
   return (
     <ScreenFrame {...frame}>
-      {queries.every((q) => q.isSuccess) ? (
-        children(queries.map((q) => q.data) as Loaded<Q>)
+      {queries.every((q) => q.data !== undefined) ? (
+        <>
+          <RefreshFailed queries={queries} />
+          {children(queries.map((q) => q.data) as Loaded<Q>)}
+        </>
       ) : (
         <ScrollView contentContainerStyle={styles.state}>
           <LoadState queries={queries} notFound={notFound} />
@@ -81,5 +106,6 @@ export function QueryScreen<const Q extends readonly QueryLike[]>({
 
 const styles = StyleSheet.create({
   state: { padding: Spacing.three, paddingTop: Spacing.two, gap: Spacing.three },
+  refresh: { paddingHorizontal: Spacing.three, paddingBottom: Spacing.two },
   center: { textAlign: 'center' },
 });

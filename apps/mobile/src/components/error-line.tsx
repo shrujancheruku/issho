@@ -16,6 +16,9 @@ type Props = {
   style?: StyleProp<TextStyle>;
 };
 
+/** Words for a refetch that failed while the data stays on screen (see QueryScreen). */
+export const refreshFailedText: NonNullable<Props['text']> = (_, t) => t('common.refreshFailed');
+
 /** The one error line: form footers, a button's result, chat. */
 export function ErrorLine({ error, text = errorText, type, center, style }: Props) {
   const { t } = useI18n();

@@ -5,8 +5,7 @@ import Svg, { Circle, Path } from 'react-native-svg';
 import { Chip } from '@/components/chip';
 import { MapSheet } from '@/components/map-sheet';
 import { PressableScale } from '@/components/pressable-scale';
-import { LoadState } from '@/components/query-screen';
-import { ScreenFrame } from '@/components/screen-frame';
+import { LoadState, QueryScreen } from '@/components/query-screen';
 import { ScreenHeader, SectionTitle } from '@/components/screen-header';
 import { TabIcon } from '@/components/tab-icons';
 import { ThemedText } from '@/components/themed-text';
@@ -34,10 +33,9 @@ export default function PlansScreen() {
   const { t } = useI18n();
   const [view, setView] = useState<'list' | 'map'>('list');
 
-  const loading = feed.isPending || !names.ready;
-
   return (
-    <ScreenFrame
+    <QueryScreen
+      queries={[feed]}
       tab
       wide
       header={
@@ -46,16 +44,19 @@ export default function PlansScreen() {
           end={<ViewToggle to={view === 'map' ? 'list' : 'map'} onPress={() => setView(view === 'map' ? 'list' : 'map')} />}
         />
       }>
-      {feed.isError || loading ? (
-        <View style={styles.center}>
-          <LoadState queries={[feed]} center />
-        </View>
-      ) : view === 'map' ? (
-        <MapView />
-      ) : (
-        <ListView />
-      )}
-    </ScreenFrame>
+      {/* The feed's data is kept when a refetch fails (QueryScreen says so above it). */}
+      {() =>
+        !names.ready ? (
+          <View style={styles.center}>
+            <LoadState queries={[]} center />
+          </View>
+        ) : view === 'map' ? (
+          <MapView />
+        ) : (
+          <ListView />
+        )
+      }
+    </QueryScreen>
   );
 }
 

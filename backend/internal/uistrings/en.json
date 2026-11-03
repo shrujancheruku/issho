@@ -35,6 +35,7 @@
   "common.continue": "Continue",
   "common.loadFailed": "Couldn't load this. Check your connection.",
   "common.none": "None",
+  "common.refreshFailed": "Couldn't refresh. Showing what we had.",
   "common.retry": "Try again",
   "common.save": "Save",
   "common.saved": "Saved",
