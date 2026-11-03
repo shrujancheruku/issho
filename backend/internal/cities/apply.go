@@ -68,7 +68,7 @@ func Apply(ctx context.Context, pool *pgxpool.Pool, router maps.Router, p Pack) 
 	for _, a := range before {
 		was[a.ID] = maps.LatLng{Lat: a.Lat, Lng: a.Lng}
 	}
-	if err := SeedPackData(ctx, pool, p); err != nil {
+	if err := seedPack(ctx, pool, p); err != nil {
 		return Diff{}, err
 	}
 	var d Diff
