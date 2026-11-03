@@ -18,6 +18,7 @@ import (
 
 	"github.com/shrujancheruku/issho/backend/db"
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
+	"github.com/shrujancheruku/issho/backend/internal/chat"
 	"github.com/shrujancheruku/issho/backend/internal/crews"
 	"github.com/shrujancheruku/issho/backend/internal/geo"
 	"github.com/shrujancheruku/issho/backend/internal/maps"
@@ -209,6 +210,33 @@ func (w *refreshMapsWorker) Work(ctx context.Context, _ *river.Job[RefreshMapsAr
 	return errors.Join(errs...)
 }
 
+// RetentionEvery is how often old notifications and crew chats are deleted.
+const RetentionEvery = 24 * time.Hour
+
+// RetentionArgs deletes what's past its retention (privacy).
+type RetentionArgs struct{}
+
+func (RetentionArgs) Kind() string { return "retention" }
+
+type retentionWorker struct {
+	river.WorkerDefaults[RetentionArgs]
+	pool *pgxpool.Pool
+	log  *slog.Logger
+	now  func() time.Time
+}
+
+// Work deletes finished notifications and the chats of closed crews, both
+// past 30 days, and logs the counts. One failing doesn't stop the other;
+// the joined error fails the job so River retries and Sentry hears of it.
+func (w *retentionWorker) Work(ctx context.Context, _ *river.Job[RetentionArgs]) error {
+	q := dbgen.New(w.pool)
+	now := w.now()
+	notes, nErr := notifications.DeleteOld(ctx, q, now)
+	crewChats, cErr := chat.DeleteOldCrewChats(ctx, q, now)
+	w.log.Info("retention", "notifications_deleted", notes, "crew_chat_messages_deleted", crewChats)
+	return errors.Join(nErr, cErr)
+}
+
 // NotifyEvery is how often queued push notifications are sent.
 const NotifyEvery = time.Minute
 
@@ -271,6 +299,7 @@ func NewClient(pool *pgxpool.Pool, log *slog.Logger, timing plans.Timing, notifi
 	}, now: time.Now})
 	river.AddWorker(workers, &crewsCityWorker{crews: &crews.Runner{DB: pool, Log: log}, now: time.Now})
 	river.AddWorker(workers, &refreshMapsWorker{pool: pool, router: m.Router, log: log})
+	river.AddWorker(workers, &retentionWorker{pool: pool, log: log, now: time.Now})
 	river.AddWorker(workers, &sendNotificationsWorker{notifier: notifier, now: time.Now})
 	return river.NewClient(riverpgxv5.New(pool), &river.Config{
 		Schema: db.RiverSchema,
@@ -288,6 +317,9 @@ func NewClient(pool *pgxpool.Pool, log *slog.Logger, timing plans.Timing, notifi
 			river.NewPeriodicJob(river.PeriodicInterval(RefreshMapsEvery),
 				func() (river.JobArgs, *river.InsertOpts) { return RefreshMapsArgs{}, nil },
 				&river.PeriodicJobOpts{ID: "refresh_maps", RunOnStart: true}),
+			river.NewPeriodicJob(river.PeriodicInterval(RetentionEvery),
+				func() (river.JobArgs, *river.InsertOpts) { return RetentionArgs{}, nil },
+				&river.PeriodicJobOpts{ID: "retention", RunOnStart: true}),
 		},
 		Workers: workers,
 	})

@@ -67,6 +67,23 @@ using app.event_groups g, app.events e, app.plans p
 where g.id = c.group_id and e.id = g.event_id and p.id = e.plan_id
   and p.city_id = @city_id and e.date < @before;
 
+-- Crew chats of crews closed more than 30 days ago (privacy). A crew that
+-- lapsed or closed has closed_at set (UpdateCrewStatus), so one rule covers
+-- both; someone leaving an active crew doesn't delete their messages. At
+-- most @max rows per call so the daily run never holds a long lock: the
+-- caller repeats until fewer come back. crew_messages_crew_idx finds a
+-- crew's messages; the few closed crews are filtered from the small
+-- crews table.
+-- name: DeleteOldCrewChats :execrows
+delete from app.crew_messages
+where id in (
+  select m.id from app.crew_messages m
+  join app.crews c on c.id = m.crew_id
+  where c.closed_at < @before
+  order by m.id
+  limit @max
+);
+
 -- A crew's chat. A message is someone's text, or a plan Issho suggested
 -- (plan_id, no author).
 -- name: InsertCrewMessage :one
