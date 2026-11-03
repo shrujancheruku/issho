@@ -30,7 +30,7 @@ Kamal has one **destination**, `production` (there is one deployed API and no st
 
 **M11 (the production Supabase project)** changes `SUPABASE_URL` and `APP_ENV` in `config/deploy.production.yml`, and the Supabase values and secrets in `.env.issho-prod` (and the server's copy); nothing else in the deploy config names the project.
 
-**Moving to the destination (owner, once, after the PR merges).** The server's `deploy.sh` is its own installed copy, so the merge's own deploy fails until it is reinstalled. That failure is safe: the old `deploy.sh` calls Kamal without `-d`, and Kamal refuses a call without a destination (`require_destination` in `config/deploy.yml`) at `registry login`, before any host is touched, so the running API and worker stay up. Nothing on the server moves: `/opt/issho/kamal-secrets` keeps its content (the new template is the old one, renamed) and `deploy.sh` mounts it at the new name. In order:
+**Moving to the destination (owner, once, after the PR merges).** The server's `deploy.sh` is its own installed copy, so the merge's own deploy fails until it is reinstalled. That failure is safe: the old `deploy.sh` calls Kamal without `-d`, and Kamal refuses at config load, before any host is touched: the base config has no host, and `require_destination` in `config/deploy.yml` also rejects a call without `-d`, so the running API and worker stay up. Nothing on the server moves: `/opt/issho/kamal-secrets` keeps its content (the new template is the old one, renamed) and `deploy.sh` mounts it at the new name. In order:
 
 1. Let the merge's deploy run and fail (or skip it; the checkout on the server still moves to the merge commit either way).
 2. Reinstall `deploy.sh` as in *Automatic deploys* below.
