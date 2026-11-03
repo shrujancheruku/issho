@@ -32,7 +32,8 @@ kamal() {
   # (.kamal/secrets.production, which `-d production` reads, and the env file
   # it points at) mounted from /opt/issho.
   # safe.directory: the checkout belongs to kamal, the container runs as root.
-  docker run --rm -i \
+  # The token goes in through the environment, not argv (`ps` shows argv).
+  KAMAL_REGISTRY_PASSWORD="$token" docker run --rm -i \
     -v /opt/issho/repo:/workdir \
     -v /opt/issho/kamal-secrets:/workdir/.kamal/secrets.production:ro \
     -v /opt/issho/env:/workdir/.env.issho-prod:ro \
@@ -40,7 +41,7 @@ kamal() {
     -v /home/kamal/.ssh/id_self:/root/.ssh/id_ed25519:ro \
     -v /home/kamal/.ssh/known_hosts:/root/.ssh/known_hosts:ro \
     -v /var/run/docker.sock:/var/run/docker.sock \
-    -e KAMAL_REGISTRY_PASSWORD="$token" \
+    -e KAMAL_REGISTRY_PASSWORD \
     -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0='*' \
     "$kamal_image" "$@"
 }
@@ -51,6 +52,21 @@ kamal() {
 # in kamal's Docker config.
 trap 'docker logout ghcr.io >/dev/null 2>&1 || true' EXIT
 kamal registry login -d production
+
+# `kamal migrate` reads the role env files that only `kamal deploy` writes, so
+# a host that has never deployed this service has none yet. Write the missing
+# ones first (no container starts; docs/deploy.md, "Automatic deploys").
+# Fails closed: set -e stops the deploy before migrate if this fails.
+KAMAL_REGISTRY_PASSWORD="$token" docker run --rm \
+  -v /opt/issho/repo:/workdir \
+  -v /opt/issho/kamal-secrets:/workdir/.kamal/secrets.production:ro \
+  -v /opt/issho/env:/workdir/.env.issho-prod:ro \
+  -v /opt/issho/certs:/root/.config/issho:ro \
+  -v /home/kamal:/home/kamal \
+  -e KAMAL_REGISTRY_PASSWORD \
+  -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0='*' \
+  --entrypoint ruby \
+  "$kamal_image" config/server/kamal-role-env.rb production /home/kamal "$(id -u)" "$(id -g)"
 # Migrations first, with the new image (they're additive; docs/deploy.md).
 kamal migrate -d production --version "$sha"
 kamal deploy -d production --skip-push --version "$sha"
