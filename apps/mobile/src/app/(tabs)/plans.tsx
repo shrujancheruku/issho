@@ -1,17 +1,16 @@
 import { useMemo, useState } from 'react';
-import { ActivityIndicator, RefreshControl, ScrollView, SectionList, StyleSheet, TextInput, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { RefreshControl, ScrollView, SectionList, StyleSheet, TextInput, View } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
 
 import { Chip } from '@/components/chip';
 import { MapSheet } from '@/components/map-sheet';
 import { PressableScale } from '@/components/pressable-scale';
-import { LoadFailed } from '@/components/query-screen';
+import { LoadState } from '@/components/query-screen';
+import { ScreenFrame } from '@/components/screen-frame';
 import { ScreenHeader, SectionTitle } from '@/components/screen-header';
 import { TabIcon } from '@/components/tab-icons';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { BodyFont, BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { BodyFont, BottomTabInset, Spacing } from '@/constants/theme';
 import { useFeed } from '@/features/plans/data';
 import { levelColors } from '@/features/plans/level';
 import { pinsFor } from '@/features/plans/map-data';
@@ -32,26 +31,31 @@ import { haptics } from '@/lib/haptics';
 export default function PlansScreen() {
   const feed = useFeed();
   const names = usePlanNames();
+  const { t } = useI18n();
   const [view, setView] = useState<'list' | 'map'>('list');
 
+  const loading = feed.isPending || !names.ready;
+
   return (
-    <ThemedView style={styles.fill}>
-      <SafeAreaView style={styles.fill} edges={['top', 'left', 'right']}>
-        {feed.isError ? (
-          <View style={styles.center}>
-            <LoadFailed onRetry={() => void feed.refetch()} center />
-          </View>
-        ) : feed.isPending || !names.ready ? (
-          <View style={styles.center}>
-            <ActivityIndicator />
-          </View>
-        ) : view === 'map' ? (
-          <MapView onList={() => setView('list')} />
-        ) : (
-          <ListView onMap={() => setView('map')} />
-        )}
-      </SafeAreaView>
-    </ThemedView>
+    <ScreenFrame
+      tab
+      wide
+      header={
+        <ScreenHeader
+          title={t('plans.title')}
+          end={<ViewToggle to={view === 'map' ? 'list' : 'map'} onPress={() => setView(view === 'map' ? 'list' : 'map')} />}
+        />
+      }>
+      {feed.isError || loading ? (
+        <View style={styles.center}>
+          <LoadState queries={[feed]} center />
+        </View>
+      ) : view === 'map' ? (
+        <MapView />
+      ) : (
+        <ListView />
+      )}
+    </ScreenFrame>
   );
 }
 
@@ -70,7 +74,14 @@ function SearchField({ value, onChange }: { value: string; onChange: (v: string)
   const theme = useTheme();
   const { t } = useI18n();
   return (
-    <View style={[styles.search, { backgroundColor: theme.surface, borderColor: theme.backgroundSelected }]}>
+    <View
+      style={[
+        styles.search,
+        {
+          backgroundColor: theme.surface,
+          borderColor: theme.backgroundSelected,
+        },
+      ]}>
       <Svg width={18} height={18} viewBox="0 0 20 20" fill="none" stroke={theme.textSecondary} strokeWidth={2}>
         <Circle cx={8.5} cy={8.5} r={6} />
         <Path d="M13 13l5 5" />
@@ -95,19 +106,22 @@ function categoryLabel(t: (k: StringKey) => string, category: string) {
   return key in english ? t(key as StringKey) : category;
 }
 
-function ListView({ onMap }: { onMap: () => void }) {
+function ListView() {
   const { t } = useI18n();
   const theme = useTheme();
   const feed = useFeed();
   const names = usePlanNames();
-  const [filter, setFilter] = useState<PlanFilter>({ query: '', nearby: false, category: null });
+  const [filter, setFilter] = useState<PlanFilter>({
+    query: '',
+    nearby: false,
+    category: null,
+  });
   const sections = useMemo(() => planSections(feed.data ?? [], filter, names), [feed.data, filter, names]);
   const categories = useMemo(() => planCategories(feed.data ?? [], names.category), [feed.data, names]);
   const filtering = !!filter.query.trim() || filter.nearby || !!filter.category;
 
   const header = (
     <View style={styles.header}>
-      <ScreenHeader title={t('plans.title')} end={<ViewToggle to="map" onPress={onMap} />} />
       <SearchField value={filter.query} onChange={(query) => setFilter((f) => ({ ...f, query }))} />
       <View style={styles.chips}>
         <Chip
@@ -125,7 +139,10 @@ function ListView({ onMap }: { onMap: () => void }) {
             selected={filter.category === c}
             onPress={() => {
               haptics.selection();
-              setFilter((f) => ({ ...f, category: f.category === c ? null : c }));
+              setFilter((f) => ({
+                ...f,
+                category: f.category === c ? null : c,
+              }));
             }}
           />
         ))}
@@ -137,9 +154,7 @@ function ListView({ onMap }: { onMap: () => void }) {
     <SectionList<PlanSection['data'][number], PlanSection>
       sections={sections}
       keyExtractor={(p) => p.id}
-      renderItem={({ item, section }) => (
-        <PlanCard plan={item} names={names} showFriends={section.key === 'friends'} />
-      )}
+      renderItem={({ item, section }) => <PlanCard plan={item} names={names} showFriends={section.key === 'friends'} />}
       renderSectionHeader={({ section }) => {
         const mark = section.level ? levelColors(section.level, theme) : null;
         return (
@@ -168,7 +183,6 @@ function ListView({ onMap }: { onMap: () => void }) {
       ItemSeparatorComponent={Gap}
       refreshControl={<RefreshControl refreshing={feed.isRefetching} onRefresh={() => void feed.refetch()} />}
       contentContainerStyle={styles.list}
-      style={styles.column}
       initialNumToRender={8}
       windowSize={7}
     />
@@ -184,7 +198,7 @@ function Gap() {
  * picked area's plans in a sheet over the map that drags between low, half
  * and nearly full.
  */
-function MapView({ onList }: { onList: () => void }) {
+function MapView() {
   const { t } = useI18n();
   const feed = useFeed();
   const names = usePlanNames();
@@ -194,10 +208,7 @@ function MapView({ onList }: { onList: () => void }) {
   const pins = useMemo(() => pinsFor(feed.data ?? [], names.coords), [feed.data, names.coords]);
   const pin = pins.find((p) => p.areaId === selected);
   return (
-    <View style={[styles.fill, styles.column]}>
-      <View style={styles.mapHeader}>
-        <ScreenHeader title={t('plans.title')} end={<ViewToggle to="list" onPress={onList} />} />
-      </View>
+    <View style={styles.fill}>
       <View style={styles.fill} onLayout={(e) => setHeight(e.nativeEvent.layout.height)}>
         {height > 0 && (
           <>
@@ -247,19 +258,48 @@ function MapView({ onList }: { onList: () => void }) {
 const styles = StyleSheet.create({
   fill: { flex: 1 },
   bold: { fontWeight: 700 },
-  // Plans can use more width than forms (FormWidth) on tablets and the web.
-  column: { width: '100%', maxWidth: MaxContentWidth, alignSelf: 'center' },
-  list: { padding: Spacing.three, paddingTop: Spacing.four, paddingBottom: BottomTabInset + Spacing.four },
+  list: {
+    padding: Spacing.three,
+    paddingBottom: BottomTabInset + Spacing.four,
+  },
   header: { gap: Spacing.three, marginBottom: Spacing.two },
-  toggle: { flexDirection: 'row', alignItems: 'center', gap: Spacing.one + 2, minHeight: 44, paddingHorizontal: Spacing.three, borderRadius: 999 },
-  search: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two, minHeight: 48, borderRadius: 12, borderWidth: 1, paddingHorizontal: Spacing.three },
-  searchInput: { flex: 1, fontFamily: BodyFont.regular, fontSize: 16, paddingVertical: Spacing.two },
+  toggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.one + 2,
+    minHeight: 44,
+    paddingHorizontal: Spacing.three,
+    borderRadius: 999,
+  },
+  search: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+    minHeight: 48,
+    borderRadius: 12,
+    borderWidth: 1,
+    paddingHorizontal: Spacing.three,
+  },
+  searchInput: {
+    flex: 1,
+    fontFamily: BodyFont.regular,
+    fontSize: 16,
+    paddingVertical: Spacing.two,
+  },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
   sectionHeader: { paddingTop: Spacing.four, paddingBottom: Spacing.two },
   swatch: { width: 14, height: 14, borderRadius: 4 },
   gap: { height: Spacing.two },
   empty: { gap: Spacing.one, paddingVertical: Spacing.four },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: Spacing.two },
-  mapHeader: { paddingHorizontal: Spacing.three, paddingTop: Spacing.four, paddingBottom: Spacing.three },
-  panel: { paddingHorizontal: Spacing.three, paddingBottom: BottomTabInset + Spacing.four, gap: Spacing.two },
+  center: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
+  panel: {
+    paddingHorizontal: Spacing.three,
+    paddingBottom: BottomTabInset + Spacing.four,
+    gap: Spacing.two,
+  },
 });
