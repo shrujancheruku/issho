@@ -44,6 +44,14 @@ _Avoid_: went, showed up, turned up (as separate rules)
 Two people have met when they both attended the same group at an outing.
 _Avoid_: know each other, been grouped together
 
+**Suspended**:
+Someone is suspended while they have a suspension that hasn't been lifted. Suspended people aren't matched, offered crews or sent pushes.
+_Avoid_: banned, blocked (that is kept apart)
+
+**Kept apart**:
+Two people who are never grouped or offered a crew together again: one reported the other, or said they'd rather not be in a group with them again. Whatever a moderator decides about the report, the pair stays apart.
+_Avoid_: blocked (as a separate rule), blacklisted
+
 **Lapsed**:
 A crew offer that someone never answered before it was decided.
 _Avoid_: expired, ignored

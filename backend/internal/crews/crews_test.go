@@ -54,6 +54,11 @@ func outing(t *testing.T, f *testfixture.Fixture, people []uuid.UUID) (uuid.UUID
 			t.Fatal(err)
 		}
 	}
+	// The worker marks an outing done once it is over; people only count as
+	// having met (app.attendance) at a finished outing.
+	if _, err := f.Pool.Exec(ctx, `update app.events set status = 'done' where id = $1`, eventID); err != nil {
+		t.Fatal(err)
+	}
 	return eventID, starts
 }
 

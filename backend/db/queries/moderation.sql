@@ -88,10 +88,10 @@ where (@reason::text = '' or l.reason = @reason)
 order by l.created_at desc, l.id desc
 limit @max_rows;
 
--- Suspensions (00020). Everyone suspended now: the API's check
+-- Suspensions. Everyone suspended now (app.suspended_users): the API's check
 -- (moderation.Suspensions) keeps this set in memory.
 -- name: ListSuspendedIDs :many
-select user_id from app.suspensions where lifted_at is null;
+select user_id from app.suspended_users;
 
 -- Suspending someone already suspended changes nothing.
 -- name: InsertSuspension :execrows
@@ -102,7 +102,7 @@ on conflict (user_id) where lifted_at is null do nothing;
 -- name: LiftSuspension :execrows
 update app.suspensions
 set lifted_at = @at, lifted_by = @lifted_by, lift_note = @note
-where user_id = @user_id and lifted_at is null;
+where id in (select su.suspension_id from app.suspended_users su where su.user_id = @user_id);
 
 -- One person's suspensions, newest first.
 -- name: ListPersonSuspensions :many
@@ -116,10 +116,10 @@ order by created_at desc;
 -- name: ListOpenSuspensions :many
 select s.user_id, s.reason, s.created_at, s.created_by,
        coalesce(p.display_name, '')::text as display_name
-from app.suspensions s
+from app.suspended_users su
+join app.suspensions s on s.id = su.suspension_id
 left join app.profiles p on p.user_id = s.user_id
-where s.lifted_at is null
-  and (not @has_after::boolean or (s.created_at, s.user_id) < (@after_ts::timestamptz, @after_id::uuid))
+where (not @has_after::boolean or (s.created_at, s.user_id) < (@after_ts::timestamptz, @after_id::uuid))
 order by s.created_at desc, s.user_id desc
 limit @max_rows;
 
@@ -146,7 +146,7 @@ where u.id = $1;
 -- name: SearchPeople :many
 select u.id, coalesce(u.email, '')::text as email,
        coalesce(p.display_name, '')::text as display_name,
-       exists (select 1 from app.suspensions s where s.user_id = u.id and s.lifted_at is null) as suspended
+       exists (select 1 from app.suspended_users s where s.user_id = u.id) as suspended
 from app.users u
 left join app.profiles p on p.user_id = u.id
 where (u.id::text = @query::text

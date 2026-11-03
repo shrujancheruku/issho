@@ -357,21 +357,19 @@ func (q *Queries) ListMatchingPrefs(ctx context.Context, cityID string) ([]AppUs
 const listMatchingUsers = `-- name: ListMatchingUsers :many
 select p.user_id, p.home_area_id, p.max_travel_min, p.gender, p.same_gender_only, p.size_pref,
        p.budget,
-       (select count(*) from app.group_members m join app.events e on e.id = m.event_id
-        where m.user_id = p.user_id and e.status = 'done' and m.response = 'confirmed'
-          and (m.checked_in_at is not null or exists (
-            select 1 from app.event_feedback f where f.group_id = m.group_id and f.user_id = m.user_id and f.attended)))::int as done_attended,
+       att.n as done_attended,
        (select count(*) from app.group_members m join app.events e on e.id = m.event_id
         where m.user_id = p.user_id and e.status = 'done' and m.response = 'confirmed')::int as done_confirmed,
-       (select count(*) from app.group_members m
-        where m.user_id = p.user_id
-          and (m.checked_in_at is not null or exists (
-            select 1 from app.event_feedback f where f.group_id = m.group_id and f.user_id = m.user_id and f.attended)))::int as events_attended
+       -- Same count as done_attended (attended implies a confirmed place at a
+       -- finished outing); its own column for the newcomer check
+       -- (matching.User.EventsAttended).
+       att.n as events_attended
 from app.profiles p
 join app.areas a on a.id = p.home_area_id
+cross join lateral (select count(*)::int as n from app.attendance t where t.user_id = p.user_id and t.attended) att
 where a.city_id = $1
   -- Suspended people aren't matched (ModerationService.SuspendPerson).
-  and not exists (select 1 from app.suspensions s where s.user_id = p.user_id and s.lifted_at is null)
+  and not exists (select 1 from app.suspended_users s where s.user_id = p.user_id)
 order by p.user_id
 `
 
@@ -390,8 +388,8 @@ type ListMatchingUsersRow struct {
 
 // Turnout (plans.reliability): of their confirmed places at finished events,
 // how many they attended. Cancelling in advance (dropped) isn't a miss.
-// Attended = checked in, or said so in their feedback afterwards (people
-// forget to check in).
+// Attended is app.attendance's rule (checked in or said so in feedback;
+// feedback saying no wins; the group went ahead).
 func (q *Queries) ListMatchingUsers(ctx context.Context, cityID string) ([]ListMatchingUsersRow, error) {
 	rows, err := q.db.Query(ctx, listMatchingUsers, cityID)
 	if err != nil {

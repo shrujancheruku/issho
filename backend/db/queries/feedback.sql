@@ -70,33 +70,27 @@ join app.areas a on a.id = p.home_area_id
 where a.city_id = $1 and k.pick = 'again'
 order by k.picker_id, k.picked_id;
 
--- Pairs never to group again: someone reported the other, or said they'd
--- rather not be in a group with them again. Whatever a moderator decides,
--- they shouldn't meet again.
+-- Pairs never to group again (app.kept_apart: a report, or a "rather not"),
+-- where either person lives in the city. A pair with someone elsewhere only
+-- matters to that city's own pass, so the extra rows are harmless.
 -- name: ListCityBlocks :many
-select r.reporter_id::uuid as reporter_id, r.reported_id as other_id
-from app.reports r
-join app.profiles p on p.user_id = r.reported_id
-join app.areas a on a.id = p.home_area_id
-where a.city_id = @city_id and r.reporter_id is not null
-union
-select k.picker_id, k.picked_id
-from app.mate_picks k
-join app.profiles p on p.user_id = k.picker_id
-join app.areas a on a.id = p.home_area_id
-where a.city_id = @city_id and k.pick = 'avoid'
+select k.user_id::uuid as reporter_id, k.other_id
+from app.kept_apart k
+where exists (select 1 from app.profiles p join app.areas a on a.id = p.home_area_id
+              where p.user_id in (k.user_id, k.other_id) and a.city_id = @city_id)
 order by 1, 2;
 
--- Pairs in the city who have met: both said they went to the same outing.
+-- Pairs in the city who have met: both attended the same group
+-- (app.attendance).
 -- name: ListCityMetPairs :many
-select distinct fa.user_id as a_id, fb.user_id as b_id
-from app.event_feedback fa
-join app.event_feedback fb on fb.group_id = fa.group_id and fb.user_id > fa.user_id and fb.attended
-join app.profiles p on p.user_id = fa.user_id
+select distinct ta.user_id as a_id, tb.user_id as b_id
+from app.attendance ta
+join app.attendance tb on tb.group_id = ta.group_id and tb.user_id > ta.user_id and tb.attended
+join app.profiles p on p.user_id = ta.user_id
 join app.areas a on a.id = p.home_area_id
-where a.city_id = @city_id and fa.attended
+where a.city_id = @city_id and ta.attended
   -- Nobody is offered a crew with someone suspended.
-  and not exists (select 1 from app.suspensions s where s.user_id in (fa.user_id, fb.user_id) and s.lifted_at is null)
+  and not exists (select 1 from app.suspended_users s where s.user_id in (ta.user_id, tb.user_id))
 order by 1, 2;
 
 -- "How was it?" for the people who went ahead with a group, once per
@@ -125,10 +119,8 @@ with friends as (
   from app.mate_picks k
   where k.picker_id = @user_id and k.pick = 'again'
     and exists (select 1 from app.mate_picks r where r.picker_id = k.picked_id and r.picked_id = @user_id and r.pick = 'again')
-    and not exists (select 1 from app.mate_picks x
-                    where x.pick = 'avoid' and ((x.picker_id = @user_id and x.picked_id = k.picked_id) or (x.picker_id = k.picked_id and x.picked_id = @user_id)))
-    and not exists (select 1 from app.reports x
-                    where (x.reporter_id = @user_id and x.reported_id = k.picked_id) or (x.reporter_id = k.picked_id and x.reported_id = @user_id))
+    and not exists (select 1 from app.kept_apart x
+                    where (x.user_id = @user_id and x.other_id = k.picked_id) or (x.user_id = k.picked_id and x.other_id = @user_id))
 )
 select distinct k.picker_id, k.picked_id
 from app.mate_picks k
