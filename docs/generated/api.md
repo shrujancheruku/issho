@@ -881,7 +881,7 @@ a crew&#39;s.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | room | [ChatRoom](#issho-v1-ChatRoom) |  |  |
-| body | [string](#string) |  | 1 to 1000 characters once trimmed (the server trims, then rejects an empty message). |
+| body | [string](#string) |  | 1 to 1000 characters as sent; the server then trims it and rejects an empty message. |
 
 
 
@@ -1756,7 +1756,7 @@ One event as the caller sees it.
 | event_id | [string](#string) |  |  |
 | mate_id | [string](#string) |  | GroupMate.id. |
 | reason | [ReportReason](#issho-v1-ReportReason) |  |  |
-| details | [string](#string) |  | Optional, up to 1000 characters. |
+| details | [string](#string) |  | Optional, up to 1000 characters as sent (the server then trims it). |
 
 
 
@@ -2031,7 +2031,7 @@ A crew, or an offer of one, as the caller sees it.
 | ----- | ---- | ----- | ----------- |
 | crew_id | [string](#string) |  |  |
 | reason | [LeaveReason](#issho-v1-LeaveReason) |  |  |
-| details | [string](#string) |  | Optional, up to 1000 characters. |
+| details | [string](#string) |  | Optional, up to 1000 characters as sent (the server then trims it). |
 
 
 
@@ -2084,7 +2084,7 @@ A crew, or an offer of one, as the caller sees it.
 | crew_id | [string](#string) |  |  |
 | member_id | [string](#string) |  | CrewMember.id. |
 | reason | [ReportReason](#issho-v1-ReportReason) |  |  |
-| details | [string](#string) |  | Optional, up to 1000 characters. |
+| details | [string](#string) |  | Optional, up to 1000 characters as sent (the server then trims it). |
 
 
 

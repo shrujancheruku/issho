@@ -451,7 +451,7 @@ type LeaveCrewRequest struct {
 	state  protoimpl.MessageState `protogen:"open.v1"`
 	CrewId string                 `protobuf:"bytes,1,opt,name=crew_id,json=crewId,proto3" json:"crew_id,omitempty"`
 	Reason LeaveReason            `protobuf:"varint,2,opt,name=reason,proto3,enum=issho.v1.LeaveReason" json:"reason,omitempty"`
-	// Optional, up to 1000 characters.
+	// Optional, up to 1000 characters as sent (the server then trims it).
 	Details       string `protobuf:"bytes,3,opt,name=details,proto3" json:"details,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -550,7 +550,7 @@ type ReportCrewMemberRequest struct {
 	// CrewMember.id.
 	MemberId string       `protobuf:"bytes,2,opt,name=member_id,json=memberId,proto3" json:"member_id,omitempty"`
 	Reason   ReportReason `protobuf:"varint,3,opt,name=reason,proto3,enum=issho.v1.ReportReason" json:"reason,omitempty"`
-	// Optional, up to 1000 characters.
+	// Optional, up to 1000 characters as sent (the server then trims it).
 	Details       string `protobuf:"bytes,4,opt,name=details,proto3" json:"details,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache

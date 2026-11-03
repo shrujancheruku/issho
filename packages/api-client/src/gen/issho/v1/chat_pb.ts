@@ -119,8 +119,8 @@ export type SendMessageRequest = Message<"issho.v1.SendMessageRequest"> & {
   room?: ChatRoom | undefined;
 
   /**
-   * 1 to 1000 characters once trimmed (the server trims, then rejects an empty
-   * message).
+   * 1 to 1000 characters as sent; the server then trims it and rejects an
+   * empty message.
    *
    * @generated from field: string body = 2;
    */

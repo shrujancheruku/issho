@@ -240,7 +240,7 @@ export type ReportPersonRequest = Message<"issho.v1.ReportPersonRequest"> & {
   reason: ReportReason;
 
   /**
-   * Optional, up to 1000 characters.
+   * Optional, up to 1000 characters as sent (the server then trims it).
    *
    * @generated from field: string details = 4;
    */

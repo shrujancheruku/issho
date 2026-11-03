@@ -135,7 +135,7 @@ export type LeaveCrewRequest = Message<"issho.v1.LeaveCrewRequest"> & {
   reason: LeaveReason;
 
   /**
-   * Optional, up to 1000 characters.
+   * Optional, up to 1000 characters as sent (the server then trims it).
    *
    * @generated from field: string details = 3;
    */
@@ -184,7 +184,7 @@ export type ReportCrewMemberRequest = Message<"issho.v1.ReportCrewMemberRequest"
   reason: ReportReason;
 
   /**
-   * Optional, up to 1000 characters.
+   * Optional, up to 1000 characters as sent (the server then trims it).
    *
    * @generated from field: string details = 4;
    */

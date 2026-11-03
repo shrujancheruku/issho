@@ -76,6 +76,11 @@ func TestIntegrationChat(t *testing.T) {
 			t.Errorf("%s message: %v, want ErrBadMessage", name, err)
 		}
 	}
+	// A third stored message: the retention checks below count it. (The length
+	// boundary is the validate interceptor's, tested there.)
+	if _, err := rooms.Send(ctx, a, room, "third", open); err != nil {
+		t.Fatal(err)
+	}
 	// Only people going.
 	if _, _, err := rooms.Latest(ctx, c, room, open); !errors.Is(err, chat.ErrForbidden) {
 		t.Errorf("someone only invited: %v, want ErrForbidden", err)

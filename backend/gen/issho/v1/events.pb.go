@@ -676,7 +676,7 @@ type ReportPersonRequest struct {
 	// GroupMate.id.
 	MateId string       `protobuf:"bytes,2,opt,name=mate_id,json=mateId,proto3" json:"mate_id,omitempty"`
 	Reason ReportReason `protobuf:"varint,3,opt,name=reason,proto3,enum=issho.v1.ReportReason" json:"reason,omitempty"`
-	// Optional, up to 1000 characters.
+	// Optional, up to 1000 characters as sent (the server then trims it).
 	Details       string `protobuf:"bytes,4,opt,name=details,proto3" json:"details,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache

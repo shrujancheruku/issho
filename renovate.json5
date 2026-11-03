@@ -1,0 +1,109 @@
+// Renovate config. See docs/onboarding.md ("Dependency updates") for how it runs.
+{
+  $schema: "https://docs.renovatebot.com/renovate-schema.json",
+  extends: [
+    "config:recommended",
+    // Pins every `uses:` to a commit SHA with a version comment. Third-party actions
+    // run next to CLOUDFLARE_API_TOKEN and `packages: write`.
+    "helpers:pinGitHubActionDigests",
+    // `chore(deps): …` / `fix(deps): …`, which commitlint accepts (scope `deps`).
+    ":semanticCommits",
+    ":dependencyDashboard",
+  ],
+  timezone: "Europe/London",
+  schedule: ["before 7am on monday"],
+  lockFileMaintenance: {
+    enabled: true,
+    schedule: ["before 7am on the first day of the month"],
+    automerge: false,
+  },
+  // Same release-age gate as pnpm-workspace.yaml (1440 minutes = 1 day), so Renovate
+  // never opens a PR for a version pnpm would refuse to install.
+  minimumReleaseAge: "1 day",
+  prConcurrentLimit: 5,
+  // gomod covers backend/go.mod, including its `tool` directives (gitleaks, buf, sqlc,
+  // goose, ...). go.work is kept and go.work.sum is committed.
+  postUpdateOptions: ["gomodTidy"],
+  packageRules: [
+    {
+      // Runtime dependencies bump the patch version through release-please (`fix(deps)`).
+      matchDepTypes: ["dependencies", "require"],
+      semanticCommitType: "fix",
+    },
+    {
+      // Dev tooling releases nothing (`chore(deps)`).
+      matchDepTypes: ["devDependencies"],
+      semanticCommitType: "chore",
+    },
+    {
+      // Automerge only patch and minor updates of dev tooling, once the required
+      // checks pass (the `main` ruleset enforces them). Everything else waits for review.
+      matchDepTypes: ["devDependencies"],
+      matchUpdateTypes: ["patch", "minor"],
+      // Wrangler deploys the admin and the site: review it.
+      matchPackageNames: ["!wrangler"],
+      automerge: true,
+    },
+    {
+      // The build-only `tool` dependencies in backend/go.mod (codegen, migrations, secrets
+      // scan). connect and protobuf are also runtime libraries, so they are not listed.
+      matchManagers: ["gomod"],
+      matchPackageNames: [
+        "github.com/bufbuild/buf",
+        "github.com/pressly/goose/v3",
+        "github.com/pseudomuto/protoc-gen-doc",
+        "github.com/sqlc-dev/sqlc",
+        "github.com/zricethezav/gitleaks/v8",
+      ],
+      matchUpdateTypes: ["patch", "minor"],
+      semanticCommitType: "chore",
+      automerge: true,
+    },
+    {
+      // Supabase's Postgres image must match the tag the Supabase CLI runs (see the
+      // comment in ci.yml), so a person checks each bump against the CLI.
+      matchPackageNames: ["public.ecr.aws/supabase/postgres"],
+      automerge: false,
+    },
+    {
+      // Expo moves as one SDK: never automerged. `expo install --fix` picks the
+      // versions each SDK expects, which Renovate can't, so a person aligns them.
+      // Keep this rule LAST: later packageRules win, and an earlier position would let
+      // the devDependencies automerge rule override `automerge: false` for
+      // jest-expo and eslint-config-expo.
+      groupName: "expo",
+      matchPackageNames: [
+        "expo",
+        "expo-*",
+        "react-native",
+        "@react-native/*",
+        "@expo/*",
+        "jest-expo",
+        "eslint-config-expo",
+      ],
+      automerge: false,
+      prBodyNotes: [
+        "Align the SDK-pinned packages before merging: from `apps/mobile` run `npx expo install --fix` and `npx expo-doctor`, and commit the result. Follow `apps/mobile/AGENTS.md` (read the versioned Expo docs; don't rely on memory).",
+      ],
+    },
+  ],
+  customManagers: [
+    {
+      // config/kamal-image holds the Kamal image reference alone (one source: deploy-api.yml
+      // and config/server/deploy.sh both read it).
+      customType: "regex",
+      managerFilePatterns: ["/^config/kamal-image$/"],
+      matchStrings: ["^(?<depName>[^:\\s]+):(?<currentValue>v?[\\w.-]+)\\s*$"],
+      datasourceTemplate: "docker",
+    },
+    {
+      // The Postgres image in ci.yml's `docker run`, which the dockerfile manager can't see.
+      // scripts/test-db.sh reads it from there.
+      customType: "regex",
+      managerFilePatterns: ["/^\\.github/workflows/ci\\.yml$/"],
+      matchStrings: ["(?<depName>public\\.ecr\\.aws/supabase/postgres):(?<currentValue>[\\w.-]+)"],
+      datasourceTemplate: "docker",
+      versioningTemplate: "loose",
+    },
+  ],
+}

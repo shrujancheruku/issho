@@ -60,8 +60,8 @@ message ListMessagesResponse {
 
 message SendMessageRequest {
   ChatRoom room = 1;
-  // 1 to 1000 characters once trimmed (the server trims, then rejects an empty
-  // message).
+  // 1 to 1000 characters as sent; the server then trims it and rejects an
+  // empty message.
   string body = 2 [(buf.validate.field).string = {min_len: 1, max_len: 1000}];
 }
 

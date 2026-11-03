@@ -235,8 +235,8 @@ func (x *ListMessagesResponse) GetClosesAt() *timestamppb.Timestamp {
 type SendMessageRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	Room  *ChatRoom              `protobuf:"bytes,1,opt,name=room,proto3" json:"room,omitempty"`
-	// 1 to 1000 characters once trimmed (the server trims, then rejects an empty
-	// message).
+	// 1 to 1000 characters as sent; the server then trims it and rejects an
+	// empty message.
 	Body          string `protobuf:"bytes,2,opt,name=body,proto3" json:"body,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache

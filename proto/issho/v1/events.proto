@@ -124,7 +124,7 @@ message ReportPersonRequest {
   // GroupMate.id.
   string mate_id = 2;
   ReportReason reason = 3;
-  // Optional, up to 1000 characters.
+  // Optional, up to 1000 characters as sent (the server then trims it).
   string details = 4 [(buf.validate.field).string.max_len = 1000];
 }
 

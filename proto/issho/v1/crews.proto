@@ -66,7 +66,7 @@ message RespondToCrewResponse {
 message LeaveCrewRequest {
   string crew_id = 1;
   LeaveReason reason = 2;
-  // Optional, up to 1000 characters.
+  // Optional, up to 1000 characters as sent (the server then trims it).
   string details = 3 [(buf.validate.field).string.max_len = 1000];
 }
 
@@ -77,7 +77,7 @@ message ReportCrewMemberRequest {
   // CrewMember.id.
   string member_id = 2;
   ReportReason reason = 3;
-  // Optional, up to 1000 characters.
+  // Optional, up to 1000 characters as sent (the server then trims it).
   string details = 4 [(buf.validate.field).string.max_len = 1000];
 }
 

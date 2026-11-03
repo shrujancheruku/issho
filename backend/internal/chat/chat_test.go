@@ -148,6 +148,11 @@ func TestIntegrationRooms(t *testing.T) {
 					t.Errorf("%s message: %v, want ErrBadMessage", what, err)
 				}
 			}
+			// A third stored message: the retention checks below count it. (The
+			// length boundary is the validate interceptor's, tested there.)
+			if _, err := r.svc.Send(ctx, a, room, "third", now); err != nil {
+				t.Fatal(err)
+			}
 
 			// Someone the owner doesn't let in can't read, write or type.
 			if _, _, err := r.svc.Latest(ctx, c, room, now); !errors.Is(err, ErrForbidden) {
