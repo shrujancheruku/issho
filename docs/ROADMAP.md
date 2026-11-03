@@ -304,7 +304,7 @@ Clears every tier of the 2026-11-02 audit before the deferred release items (M11
 
 **Wave 2 · resilience and shared rules** (Tier 2)
 - ⬜ db: [domain rules as views](https://github.com/shrujancheruku/issho/issues/186) M (after #160)
-- ⬜ backend: [worker queues and timeouts](https://github.com/shrujancheruku/issho/issues/183) L (after #180) → [admin operations as River jobs](https://github.com/shrujancheruku/issho/issues/184) L · [httpjson client policy](https://github.com/shrujancheruku/issho/issues/182) M (after #162) · [moderation service](https://github.com/shrujancheruku/issho/issues/187) M · [withdraw/chat races, conduct guard](https://github.com/shrujancheruku/issho/issues/188) M · [simulator on production input](https://github.com/shrujancheruku/issho/issues/189) S
+- ⬜ backend: [worker queues and timeouts](https://github.com/shrujancheruku/issho/issues/183) L (after #180) → [admin operations as River jobs](https://github.com/shrujancheruku/issho/issues/184) L (after #162) · [httpjson client policy](https://github.com/shrujancheruku/issho/issues/182) M (after #162) · [moderation service](https://github.com/shrujancheruku/issho/issues/187) M · [withdraw/chat races, conduct guard](https://github.com/shrujancheruku/issho/issues/188) M · [simulator on production input](https://github.com/shrujancheruku/issho/issues/189) S
 - ⬜ cities: [per-city matching, timing, meeting places](https://github.com/shrujancheruku/issho/issues/167) M (after #160, #166) · [opening window from activity hours](https://github.com/shrujancheruku/issho/issues/168) S
 - ⬜ mobile/api: [crewView and quorum from the API](https://github.com/shrujancheruku/issho/issues/173) S · [GetPlanCards batch RPC](https://github.com/shrujancheruku/issho/issues/174) M
 
