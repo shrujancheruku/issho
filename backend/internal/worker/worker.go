@@ -22,6 +22,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/crews"
 	"github.com/shrujancheruku/issho/backend/internal/geo"
 	"github.com/shrujancheruku/issho/backend/internal/maps"
+	"github.com/shrujancheruku/issho/backend/internal/moderation"
 	"github.com/shrujancheruku/issho/backend/internal/notifications"
 	"github.com/shrujancheruku/issho/backend/internal/plans"
 	"github.com/shrujancheruku/issho/backend/internal/platform/sentry"
@@ -42,7 +43,7 @@ const (
 	QueueNotify = "notify"
 	// QueuePasses: match_all, match_city and crews_city.
 	QueuePasses = "passes"
-	// QueueMaintenance: refresh_maps, retention and the admin SPA's long
+	// QueueMaintenance: refresh_maps, retention, remove_suspended and the admin SPA's long
 	// operations (apply_city_pack, discover_area_venues).
 	QueueMaintenance = adminjobs.Queue
 )
@@ -441,6 +442,22 @@ func (w *discoverAreaVenuesWorker) Work(ctx context.Context, job *river.Job[admi
 	return record(ctx, w.log, job.Args.City, out, err)
 }
 
+// remove_suspended takes a suspended person out of what they'd joined
+// (moderation.Service.Suspend queues it in the suspension's transaction).
+
+type removeSuspendedWorker struct {
+	river.WorkerDefaults[moderation.RemoveSuspendedArgs]
+	remover *moderation.Remover
+}
+
+func (w *removeSuspendedWorker) Timeout(*river.Job[moderation.RemoveSuspendedArgs]) time.Duration {
+	return moderation.RemoveSuspendedTimeout
+}
+
+func (w *removeSuspendedWorker) Work(ctx context.Context, job *river.Job[moderation.RemoveSuspendedArgs]) error {
+	return w.remover.Run(ctx, job.Args)
+}
+
 // record stores an admin job's output on the job (for GetAdminJob) and
 // returns the run's error, which decides whether River retries.
 func record(ctx context.Context, log *slog.Logger, city string, out adminjobs.Output, err error) error {
@@ -480,6 +497,9 @@ func NewClient(pool *pgxpool.Pool, log *slog.Logger, timing plans.Timing, notifi
 	}})
 	river.AddWorker(workers, &applyCityPackWorker{pool: pool, router: m.Router, log: log})
 	river.AddWorker(workers, &discoverAreaVenuesWorker{pool: pool, places: m.Places, log: log})
+	river.AddWorker(workers, &removeSuspendedWorker{remover: &moderation.Remover{
+		Q: dbgen.New(pool), Plans: &plans.Service{DB: pool}, Crews: &crews.Service{DB: pool},
+	}})
 	river.AddWorker(workers, &retentionWorker{pool: pool, log: log, now: time.Now})
 	river.AddWorker(workers, &sendNotificationsWorker{notifier: notifier, now: time.Now})
 	return river.NewClient(riverpgxv5.New(pool), &river.Config{

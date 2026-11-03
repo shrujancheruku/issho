@@ -68,7 +68,7 @@ func pagingEnv(t *testing.T, name string, n int) (context.Context, *pgxpool.Pool
 			t.Fatal(err)
 		}
 	}
-	h := &Handler{Q: dbgen.New(pool), Suspensions: &Suspensions{Q: dbgen.New(pool)}}
+	h := &Handler{Q: dbgen.New(pool)}
 	ctx = auth.WithCaller(ctx, auth.Caller{UserID: uuid.New(), Email: "admin@example.com", Admin: true})
 	return ctx, pool, h, users
 }

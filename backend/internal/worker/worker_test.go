@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/riverqueue/river"
 	"github.com/riverqueue/river/riverdriver/riverpgxv5"
@@ -17,6 +18,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	"github.com/shrujancheruku/issho/backend/internal/adminjobs"
 	"github.com/shrujancheruku/issho/backend/internal/maps"
+	"github.com/shrujancheruku/issho/backend/internal/moderation"
 	"github.com/shrujancheruku/issho/backend/internal/plans"
 	"github.com/shrujancheruku/issho/backend/internal/testfixture"
 	"github.com/shrujancheruku/issho/backend/internal/walks"
@@ -39,6 +41,7 @@ var jobKinds = []struct {
 	{RetentionArgs{}, RetentionTimeout, QueueMaintenance, RetentionMaxAttempts},
 	{adminjobs.ApplyCityPackArgs{City: "x"}, adminjobs.ApplyCityPackTimeout, QueueMaintenance, adminjobs.ApplyCityPackMaxAttempts},
 	{adminjobs.DiscoverAreaVenuesArgs{City: "x", Area: "x-a"}, adminjobs.DiscoverAreaVenuesTimeout, QueueMaintenance, adminjobs.DiscoverAreaVenuesMaxAttempts},
+	{moderation.RemoveSuspendedArgs{UserID: uuid.MustParse("00000000-0000-0000-0000-000000000187")}, moderation.RemoveSuspendedTimeout, QueueMaintenance, moderation.RemoveSuspendedMaxAttempts},
 }
 
 // timeoutOf asks the registered worker for the job's time limit.
@@ -63,6 +66,8 @@ func timeoutOf(t *testing.T, a river.JobArgs) time.Duration {
 		return (&applyCityPackWorker{}).Timeout(nil)
 	case adminjobs.DiscoverAreaVenuesArgs:
 		return (&discoverAreaVenuesWorker{}).Timeout(nil)
+	case moderation.RemoveSuspendedArgs:
+		return (&removeSuspendedWorker{}).Timeout(nil)
 	}
 	t.Fatalf("no worker for %T", a)
 	return 0
@@ -103,7 +108,7 @@ func testPool(t *testing.T) *pgxpool.Pool {
 func cleanJobs(t *testing.T, pool *pgxpool.Pool) {
 	t.Helper()
 	del := func() {
-		if _, err := pool.Exec(context.Background(), `delete from river.river_job where kind like 'test\_%' or kind in ('match_all','match_city','crews_city','send_notifications','refresh_maps','refresh_maps_city','retention','apply_city_pack','discover_area_venues')`); err != nil {
+		if _, err := pool.Exec(context.Background(), `delete from river.river_job where kind like 'test\_%' or kind in ('match_all','match_city','crews_city','send_notifications','refresh_maps','refresh_maps_city','retention','apply_city_pack','discover_area_venues') or (kind = 'remove_suspended' and args->>'user_id' = '00000000-0000-0000-0000-000000000187')`); err != nil {
 			t.Errorf("clean jobs: %v", err)
 		}
 	}
