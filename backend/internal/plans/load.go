@@ -11,6 +11,7 @@ import (
 
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	"github.com/shrujancheruku/issho/backend/internal/matching"
+	"github.com/shrujancheruku/issho/backend/internal/platform/pgconv"
 )
 
 // City is everything matching needs about one city.
@@ -168,7 +169,8 @@ func loadPlaces(ctx context.Context, q *dbgen.Queries, cityID string, month time
 // their matching profile.
 type Caller struct {
 	City string
-	// Display languages (i18n.ForApp): what plan titles are shown in.
+	// Display languages (the profile's primary and secondary): what plan
+	// titles are shown in, resolved by translate.Service.ResolvePair.
 	Primary, Secondary string
 }
 
@@ -182,7 +184,7 @@ func loadCaller(ctx context.Context, q *dbgen.Queries, userID uuid.UUID) (Caller
 	if err != nil {
 		return Caller{}, err
 	}
-	return Caller{City: r.CityID, Primary: r.PrimaryLanguage, Secondary: deref(r.SecondaryLanguage)}, nil
+	return Caller{City: r.CityID, Primary: r.PrimaryLanguage, Secondary: pgconv.Deref(r.SecondaryLanguage)}, nil
 }
 
 // LoadUser reads one person for their feed, with their city and display
@@ -193,7 +195,7 @@ func LoadUser(ctx context.Context, q *dbgen.Queries, userID uuid.UUID) (*matchin
 	if err != nil {
 		return nil, Caller{}, err
 	}
-	caller := Caller{City: r.CityID, Primary: r.PrimaryLanguage, Secondary: deref(r.SecondaryLanguage)}
+	caller := Caller{City: r.CityID, Primary: r.PrimaryLanguage, Secondary: pgconv.Deref(r.SecondaryLanguage)}
 	u := newUser(userID, r.HomeAreaID, r.MaxTravelMin, r.Gender, r.SameGenderOnly, r.SizePref, r.Budget)
 	for i, code := range r.LangCodes {
 		u.Languages = append(u.Languages, matching.Language{Code: code, Fluent: r.LangFluent[i], Level: int(r.LangLevels[i])})

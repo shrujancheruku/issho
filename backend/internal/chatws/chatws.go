@@ -311,6 +311,9 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, stop := context.WithCancel(ctx)
 	defer stop()
 	typed := make(chan struct{}, 1)
+	// suspended is signalled when a send finds the person suspended since
+	// they connected; the loop below closes the socket.
+	suspended := make(chan struct{}, 1)
 	go func() {
 		defer stop()
 		for {
@@ -320,6 +323,18 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			}
 			var f struct {
 				Type string `json:"type"`
+			}
+			// Every send (a typing notice is all a socket sends) is checked
+			// against the suspended list the API gate uses, which is cached in
+			// memory, so this costs no query. The hub never pushes a close.
+			if h.Suspended != nil {
+				if sus, err := h.Suspended(ctx, caller.UserID); err == nil && sus {
+					select {
+					case suspended <- struct{}{}:
+					default:
+					}
+					continue // the loop below closes the socket
+				}
 			}
 			if json.Unmarshal(raw, &f) == nil && f.Type == "typing" {
 				select {
@@ -417,6 +432,9 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				end(err)
 				return
 			}
+		case <-suspended:
+			ws.Close(closeForbidden, "account suspended")
+			return
 		case <-typed:
 			now := h.now()
 			if now.Sub(lastTyped) < typingEvery {

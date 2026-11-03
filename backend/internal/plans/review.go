@@ -24,6 +24,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/platform/errs"
 	"github.com/shrujancheruku/issho/backend/internal/platform/i18n"
 	"github.com/shrujancheruku/issho/backend/internal/platform/paging"
+	"github.com/shrujancheruku/issho/backend/internal/platform/pgconv"
 )
 
 // Limits on what admins write and read in plan review.
@@ -163,7 +164,7 @@ func (h *ReviewHandler) GetReviewPlan(ctx context.Context, req *connect.Request[
 	caller := Caller{City: r.CityID, Primary: i18n.Authoring}
 	var steps []Step
 	out := &isshov1.GetReviewPlanResponse{
-		VenuePlaceId: deref(r.VenuePlaceID), FollowUpVenuePlaceId: deref(r.FollowUpVenuePlaceID), UpcomingEvents: r.UpcomingEvents,
+		VenuePlaceId: pgconv.Deref(r.VenuePlaceID), FollowUpVenuePlaceId: pgconv.Deref(r.FollowUpVenuePlaceID), UpcomingEvents: r.UpcomingEvents,
 	}
 	if r.Walk {
 		steps, err = h.Svc.walkSteps(ctx, q, id, caller)
@@ -177,10 +178,10 @@ func (h *ReviewHandler) GetReviewPlan(ctx context.Context, req *connect.Request[
 		out.Stops = reviewStops(stops)
 	} else {
 		plan := matching.Plan{
-			Area: matching.AreaID(r.AreaID), Activity: matching.ActivityID(r.ActivityID), FollowUp: matching.ActivityID(deref(r.FollowUpID)),
-			Primary: r.PrimaryLanguage, Secondary: deref(r.SecondaryLanguage),
+			Area: matching.AreaID(r.AreaID), Activity: matching.ActivityID(r.ActivityID), FollowUp: matching.ActivityID(pgconv.Deref(r.FollowUpID)),
+			Primary: r.PrimaryLanguage, Secondary: pgconv.Deref(r.SecondaryLanguage),
 		}
-		steps = h.Svc.steps(ctx, plan, deref(r.VenuePlaceID), deref(r.FollowUpVenuePlaceID), deref(r.MeetingPlaceID),
+		steps = h.Svc.steps(ctx, plan, pgconv.Deref(r.VenuePlaceID), pgconv.Deref(r.FollowUpVenuePlaceID), pgconv.Deref(r.MeetingPlaceID),
 			routeFrom(r.RoutePolyline, r.RouteSeconds), caller)
 	}
 	out.Plan, out.Steps = reviewPlanToProto(r, names), stepsToProto(steps)
@@ -440,9 +441,9 @@ func reviewPlanToProto(r dbgen.GetReviewPlanRow, names map[string]string) *issho
 		AreaId:            r.AreaID,
 		AreaName:          r.AreaName,
 		ActivityId:        r.ActivityID,
-		FollowUpId:        deref(r.FollowUpID),
+		FollowUpId:        pgconv.Deref(r.FollowUpID),
 		PrimaryLanguage:   r.PrimaryLanguage,
-		SecondaryLanguage: deref(r.SecondaryLanguage),
+		SecondaryLanguage: pgconv.Deref(r.SecondaryLanguage),
 		Walk:              r.Walk,
 		Audience:          r.Audience,
 		Score:             r.Score,
@@ -460,7 +461,7 @@ func reviewPlanToProto(r dbgen.GetReviewPlanRow, names map[string]string) *issho
 		out.StoredTitle = i18n.Pick(r.Title, i18n.Authoring)
 		out.Title = out.StoredTitle
 	} else {
-		out.Title = Title(names[r.ActivityID], names[deref(r.FollowUpID)])
+		out.Title = Title(names[r.ActivityID], names[pgconv.Deref(r.FollowUpID)])
 	}
 	if r.Description != nil {
 		out.Summary = i18n.Pick(r.Description, i18n.Authoring)

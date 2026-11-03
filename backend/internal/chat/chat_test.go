@@ -346,6 +346,44 @@ func TestIntegrationPostsWaitForTheRoomLock(t *testing.T) {
 	}
 }
 
+// TestIntegrationSendChecksAccessUnderTheLock: someone removed from the room
+// while their post waits for the room's lock can't post. Without checking
+// after taking the lock, the insert goes through on the earlier access check.
+func TestIntegrationSendChecksAccessUnderTheLock(t *testing.T) {
+	r := newRooms(t, "zz-chat-revoke")
+	ctx := context.Background()
+	a := r.f.Users[0]
+	now := time.Now()
+	for _, kind := range []Kind{EventRoom, CrewRoom} {
+		room := r.room(kind)
+		tx, err := r.f.Pool.Begin(ctx)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer tx.Rollback(ctx) //nolint:errcheck // frees the lock if the test fails
+		if err := lock(ctx, dbgen.New(tx), kind, room.ID); err != nil {
+			t.Fatal(err)
+		}
+		done := make(chan error, 1)
+		go func() {
+			_, err := r.svc.Send(ctx, a, room, "late", now)
+			done <- err
+		}()
+		select {
+		case err := <-done:
+			t.Fatalf("kind %d: Send finished while the room was locked: %v", kind, err)
+		case <-time.After(300 * time.Millisecond):
+		}
+		r.access(kind).set(a, false) // removed while Send waits
+		if err := tx.Commit(ctx); err != nil {
+			t.Fatal(err)
+		}
+		if err := <-done; !errors.Is(err, ErrForbidden) {
+			t.Errorf("kind %d: Send after being removed = %v, want ErrForbidden", kind, err)
+		}
+	}
+}
+
 // TestIntegrationConcurrentPostsAreAllRead: many people posting at once
 // while a reader follows its cursor never misses one. (Without the room
 // lock this fails only now and then; TestIntegrationPostsWaitForTheRoomLock

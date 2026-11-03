@@ -23,6 +23,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
+	"github.com/shrujancheruku/issho/backend/internal/platform/pgconv"
 )
 
 const (
@@ -193,7 +194,7 @@ func listEvent(ctx context.Context, q *dbgen.Queries, groupID, userID uuid.UUID,
 	}
 	out := make([]Message, len(rows))
 	for i, r := range rows {
-		out[i] = Message{ID: r.ID, UserID: r.UserID, Name: deref(r.DisplayName), Body: r.Body, At: r.CreatedAt.Time, Mine: r.UserID == userID}
+		out[i] = Message{ID: r.ID, UserID: r.UserID, Name: pgconv.Deref(r.DisplayName), Body: r.Body, At: r.CreatedAt.Time, Mine: r.UserID == userID}
 	}
 	return out, nil
 }
@@ -217,7 +218,7 @@ func listCrew(ctx context.Context, q *dbgen.Queries, crewID, userID uuid.UUID, a
 	out := make([]Message, len(rows))
 	for i, r := range rows {
 		out[i] = Message{
-			ID: r.ID, UserID: r.UserID.Bytes, Name: deref(r.DisplayName), Body: r.Body, At: r.CreatedAt.Time,
+			ID: r.ID, UserID: r.UserID.Bytes, Name: pgconv.Deref(r.DisplayName), Body: r.Body, At: r.CreatedAt.Time,
 			Mine: r.UserID.Valid && r.UserID.Bytes == userID, PlanID: r.PlanID.Bytes,
 		}
 	}
@@ -234,15 +235,23 @@ func (s *Service) Send(ctx context.Context, userID uuid.UUID, room Room, body st
 	var msg Message
 	err := pgx.BeginFunc(ctx, s.DB, func(tx pgx.Tx) error {
 		q := dbgen.New(tx)
+		// The room's lock is keyed by its topic, which only the owner's
+		// Access knows, so the first call finds the topic (and refuses
+		// strangers early). The decision is the second call, under the lock:
+		// someone removed from the room while this waited for the lock
+		// (or whose access a concurrent change ended) can't post.
 		st, err := s.state(ctx, q, userID, room, now)
 		if err != nil {
 			return err
 		}
-		if !st.Open {
-			return ErrClosed
-		}
 		if err := lock(ctx, q, room.Kind, st.Topic); err != nil {
 			return err
+		}
+		if st, err = s.state(ctx, q, userID, room, now); err != nil {
+			return err
+		}
+		if !st.Open {
+			return ErrClosed
 		}
 		switch room.Kind {
 		case EventRoom:
@@ -342,11 +351,4 @@ func DeleteOldCrewChats(ctx context.Context, q *dbgen.Queries, now time.Time) (i
 			return total, err
 		}
 	}
-}
-
-func deref(s *string) string {
-	if s == nil {
-		return ""
-	}
-	return *s
 }

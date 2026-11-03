@@ -145,3 +145,12 @@ func TestTraditionalChinese(t *testing.T) {
 		t.Error("zh twice must be refused")
 	}
 }
+
+// TestConductVersionIsOne guards the version until the re-accept flow exists.
+// Raising ConductVersion makes every settings save fail validation (an old
+// accepted version is rejected), and the app has no screen to accept again.
+func TestConductVersionIsOne(t *testing.T) {
+	if ConductVersion != 1 {
+		t.Fatalf("ConductVersion = %d: the re-accept screen must exist before it is raised (see profile-edit/[step].tsx in the mobile app; saves sending an older version fail validation)", ConductVersion)
+	}
+}

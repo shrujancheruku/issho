@@ -27,6 +27,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/platform/auth"
 	"github.com/shrujancheruku/issho/backend/internal/platform/errs"
 	"github.com/shrujancheruku/issho/backend/internal/platform/paging"
+	"github.com/shrujancheruku/issho/backend/internal/platform/pgconv"
 )
 
 // MaxNote matches the database check on notes.
@@ -108,7 +109,7 @@ func (h *Handler) ListReports(ctx context.Context, req *connect.Request[isshov1.
 	if err != nil {
 		return nil, err
 	}
-	arg.HasAfter, arg.AfterOpen, arg.AfterTs, arg.AfterID = k.Present, k.Bool(), pgTime(k.Time()), k.UUID()
+	arg.HasAfter, arg.AfterOpen, arg.AfterTs, arg.AfterID = k.Present, k.Bool(), pgconv.Time(k.Time()), k.UUID()
 	if err := k.Err(); err != nil {
 		return nil, err
 	}
@@ -179,7 +180,7 @@ func (h *Handler) ResolveReport(ctx context.Context, req *connect.Request[isshov
 		return nil, err
 	}
 	n, err := h.Q.ResolveReport(ctx, dbgen.ResolveReportParams{
-		ID: id, Status: status, Note: note, ReviewedBy: pgUUID(c.UserID), At: pgTime(h.now()),
+		ID: id, Status: status, Note: note, ReviewedBy: pgUUID(c.UserID), At: pgconv.Time(h.now()),
 	})
 	if err != nil {
 		return nil, err
@@ -204,7 +205,7 @@ func (h *Handler) ListFlags(ctx context.Context, req *connect.Request[isshov1.Li
 		return nil, err
 	}
 	arg := dbgen.ListModerationFlagsParams{Open: !req.Msg.Resolved, MaxRows: size + 1}
-	arg.HasAfter, arg.AfterTs, arg.AfterID = k.Present, pgTime(k.Time()), k.Int()
+	arg.HasAfter, arg.AfterTs, arg.AfterID = k.Present, pgconv.Time(k.Time()), k.Int()
 	if err := k.Err(); err != nil {
 		return nil, err
 	}
@@ -250,7 +251,7 @@ func (h *Handler) ResolveFlag(ctx context.Context, req *connect.Request[isshov1.
 		return nil, err
 	}
 	n, err := h.Q.ResolveModerationFlag(ctx, dbgen.ResolveModerationFlagParams{
-		ID: req.Msg.FlagId, Note: note, ResolvedBy: pgUUID(c.UserID), At: pgTime(h.now()),
+		ID: req.Msg.FlagId, Note: note, ResolvedBy: pgUUID(c.UserID), At: pgconv.Time(h.now()),
 	})
 	if err != nil {
 		return nil, err
@@ -282,7 +283,7 @@ func (h *Handler) ListCrewLeaves(ctx context.Context, req *connect.Request[issho
 	if err != nil {
 		return nil, err
 	}
-	arg.HasAfter, arg.AfterTs, arg.AfterID = k.Present, pgTime(k.Time()), k.Int()
+	arg.HasAfter, arg.AfterTs, arg.AfterID = k.Present, pgconv.Time(k.Time()), k.Int()
 	if err := k.Err(); err != nil {
 		return nil, err
 	}
@@ -342,5 +343,3 @@ func uuidString(id pgtype.UUID) string {
 }
 
 func pgUUID(id uuid.UUID) pgtype.UUID { return pgtype.UUID{Bytes: id, Valid: true} }
-
-func pgTime(t time.Time) pgtype.Timestamptz { return pgtype.Timestamptz{Time: t, Valid: true} }
