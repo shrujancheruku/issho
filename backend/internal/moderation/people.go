@@ -72,7 +72,7 @@ func (h *Handler) GetPerson(ctx context.Context, req *connect.Request[isshov1.Ge
 	}
 	p, err := h.Q.GetPerson(ctx, id)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return nil, connect.NewError(connect.CodeNotFound, errors.New("no such person"))
+		return nil, errs.NotFound("no such person")
 	}
 	if err != nil {
 		return nil, err
@@ -154,7 +154,7 @@ func (h *Handler) SuspendPerson(ctx context.Context, req *connect.Request[isshov
 		return nil, errs.Invalid("reason: 1-2000 characters")
 	}
 	if _, err := h.Q.GetPerson(ctx, id); errors.Is(err, pgx.ErrNoRows) {
-		return nil, connect.NewError(connect.CodeNotFound, errors.New("no such person"))
+		return nil, errs.NotFound("no such person")
 	} else if err != nil {
 		return nil, err
 	}
@@ -196,7 +196,7 @@ func (h *Handler) LiftSuspension(ctx context.Context, req *connect.Request[issho
 		return nil, err
 	}
 	if n == 0 {
-		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("not suspended"))
+		return nil, errs.Refused("not suspended")
 	}
 	h.Suspensions.Invalidate()
 	return connect.NewResponse(&isshov1.LiftSuspensionResponse{}), nil

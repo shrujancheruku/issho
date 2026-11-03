@@ -12,6 +12,7 @@ import (
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
 	"github.com/shrujancheruku/issho/backend/internal/plans"
 	"github.com/shrujancheruku/issho/backend/internal/platform/auth"
+	"github.com/shrujancheruku/issho/backend/internal/platform/errs"
 )
 
 // Handler serves CrewService.
@@ -88,7 +89,7 @@ func (h *Handler) LeaveCrew(ctx context.Context, req *connect.Request[isshov1.Le
 	}
 	reason, ok := leaveReasons[req.Msg.Reason]
 	if !ok {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("reason: required"))
+		return nil, errs.Invalid("reason: required")
 	}
 	if err := h.Svc.Leave(ctx, userID, crewID, reason, req.Msg.Details, h.now()); err != nil {
 		return nil, crewError(err)
@@ -103,11 +104,11 @@ func (h *Handler) ReportCrewMember(ctx context.Context, req *connect.Request[iss
 	}
 	mateID, err := uuid.Parse(req.Msg.MemberId)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("member_id: not a crew member id"))
+		return nil, errs.Invalid("member_id: not a crew member id")
 	}
 	reason, ok := plans.ReportReasons[req.Msg.Reason]
 	if !ok {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("reason: required"))
+		return nil, errs.Invalid("reason: required")
 	}
 	if err := h.Svc.ReportMember(ctx, userID, crewID, mateID, reason, req.Msg.Details, h.now()); err != nil {
 		return nil, crewError(err)
@@ -122,7 +123,7 @@ func crewCall(ctx context.Context, rawID string) (uuid.UUID, uuid.UUID, error) {
 	}
 	crewID, err := uuid.Parse(rawID)
 	if err != nil {
-		return uuid.Nil, uuid.Nil, connect.NewError(connect.CodeInvalidArgument, errors.New("crew_id: not a crew id"))
+		return uuid.Nil, uuid.Nil, errs.Invalid("crew_id: not a crew id")
 	}
 	return c.UserID, crewID, nil
 }
@@ -131,13 +132,13 @@ func crewError(err error) error {
 	var inv *plans.InvalidError
 	switch {
 	case errors.As(err, &inv):
-		return connect.NewError(connect.CodeInvalidArgument, err)
+		return errs.Invalid("%s", err)
 	case errors.Is(err, ErrNoCrew):
-		return connect.NewError(connect.CodeNotFound, err)
+		return errs.NotFound("%s", err)
 	case errors.Is(err, ErrNotMember):
-		return connect.NewError(connect.CodePermissionDenied, err)
+		return errs.Forbidden("%s", err)
 	case errors.Is(err, ErrOver):
-		return connect.NewError(connect.CodeFailedPrecondition, err)
+		return errs.Refused("%s", err)
 	}
 	return err
 }

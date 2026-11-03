@@ -285,7 +285,7 @@ func TestIntegrationCityPacks(t *testing.T) {
 	}
 	repo.files["data/citypacks/zz-packs.json"] = raw
 	fm.MatrixErr = errors.New("quota exceeded for key AIza-secret")
-	if _, err := h.ApplyCityPack(adminCtx, connect.NewRequest(&isshov1.ApplyCityPackRequest{CityId: city})); connect.CodeOf(err) != connect.CodeUnavailable || strings.Contains(err.Error(), "AIza") {
+	if _, err := h.ApplyCityPack(adminCtx, connect.NewRequest(&isshov1.ApplyCityPackRequest{CityId: city})); connect.CodeOf(err) != connect.CodeUnavailable || strings.Contains(err.Error(), "AIza") || !strings.Contains(err.Error(), "seeded") {
 		t.Errorf("apply with Google down: %v", err)
 	}
 	fm.MatrixErr = nil

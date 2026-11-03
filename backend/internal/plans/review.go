@@ -83,7 +83,7 @@ func (h *ReviewHandler) SetCityReview(ctx context.Context, req *connect.Request[
 		return nil, err
 	}
 	if n == 0 {
-		return nil, connect.NewError(connect.CodeNotFound, errors.New("no such city"))
+		return nil, errs.NotFound("no such city")
 	}
 	return connect.NewResponse(&isshov1.SetCityReviewResponse{}), nil
 }
@@ -148,7 +148,7 @@ func (h *ReviewHandler) GetReviewPlan(ctx context.Context, req *connect.Request[
 	q := dbgen.New(h.Svc.DB)
 	r, err := q.GetReviewPlan(ctx, id)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return nil, connect.NewError(connect.CodeNotFound, errors.New("no such plan"))
+		return nil, errs.NotFound("no such plan")
 	}
 	if err != nil {
 		return nil, err
@@ -219,9 +219,9 @@ func (h *ReviewHandler) RejectPlan(ctx context.Context, req *connect.Request[iss
 func roundError(err error) error {
 	switch {
 	case errors.Is(err, ErrNotFound):
-		return connect.NewError(connect.CodeNotFound, errors.New("no such plan"))
+		return errs.NotFound("no such plan")
 	case errors.Is(err, ErrNotDraft), errors.Is(err, ErrNotOpen):
-		return connect.NewError(connect.CodeFailedPrecondition, err)
+		return errs.Refused("%s", err)
 	}
 	return err
 }
@@ -243,7 +243,7 @@ func (h *ReviewHandler) EditPlan(ctx context.Context, req *connect.Request[issho
 		return nil, err
 	}
 	if n == 0 {
-		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("no draft or open plan with that id"))
+		return nil, errs.Refused("no draft or open plan with that id")
 	}
 	return connect.NewResponse(&isshov1.EditPlanResponse{}), nil
 }

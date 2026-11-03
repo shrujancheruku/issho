@@ -17,6 +17,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
 	"github.com/shrujancheruku/issho/backend/internal/platform/auth"
+	"github.com/shrujancheruku/issho/backend/internal/platform/errs"
 )
 
 // DefaultWeeks is how many weeks GetCityMetrics returns when asked for 0.
@@ -39,18 +40,18 @@ func (h *Handler) GetCityMetrics(ctx context.Context, req *connect.Request[issho
 		return nil, err
 	}
 	if !c.Admin {
-		return nil, connect.NewError(connect.CodePermissionDenied, errors.New("admins only"))
+		return nil, errs.Forbidden("admins only")
 	}
 	weeks := int(req.Msg.Weeks)
 	if weeks == 0 {
 		weeks = DefaultWeeks
 	}
 	if weeks < 1 || weeks > MaxWeeks {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("weeks: 1 to 52"))
+		return nil, errs.Invalid("weeks: 1 to 52")
 	}
 	city, err := h.Q.GetCityMatching(ctx, req.Msg.CityId)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return nil, connect.NewError(connect.CodeNotFound, errors.New("no such city"))
+		return nil, errs.NotFound("no such city")
 	}
 	if err != nil {
 		return nil, err

@@ -12,6 +12,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
 	"github.com/shrujancheruku/issho/backend/internal/platform/auth"
+	"github.com/shrujancheruku/issho/backend/internal/platform/errs"
 )
 
 // Handler serves PushService.
@@ -36,16 +37,16 @@ func (h *Handler) RegisterPushToken(ctx context.Context, req *connect.Request[is
 		return nil, err
 	}
 	if !expoToken.MatchString(req.Msg.Token) {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("token: not an Expo push token"))
+		return nil, errs.Invalid("token: not an Expo push token")
 	}
 	platform, ok := platforms[req.Msg.Platform]
 	if !ok {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("platform: ios, android or web"))
+		return nil, errs.Invalid("platform: ios, android or web")
 	}
 	err = h.Q.UpsertPushToken(ctx, dbgen.UpsertPushTokenParams{Token: req.Msg.Token, UserID: c.UserID, Platform: platform})
 	var pgErr *pgconn.PgError
 	if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.ForeignKeyViolation {
-		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("no account: call IdentityService.GetMe first"))
+		return nil, errs.Refused("no account: call IdentityService.GetMe first")
 	}
 	if err != nil {
 		return nil, err

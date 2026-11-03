@@ -3,11 +3,11 @@ package catalog
 import (
 	"context"
 	"encoding/json"
-	"errors"
 
 	"connectrpc.com/connect"
 
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
+	"github.com/shrujancheruku/issho/backend/internal/platform/errs"
 	"github.com/shrujancheruku/issho/backend/internal/platform/i18n"
 	"github.com/shrujancheruku/issho/backend/internal/translate"
 )
@@ -58,10 +58,10 @@ func (h *Handler) ListCities(ctx context.Context, req *connect.Request[isshov1.L
 func displayLanguages(locale, secondaryLanguage string) (string, string, error) {
 	primary, secondary := baseLang(locale), baseLang(secondaryLanguage)
 	if !i18n.ValidDisplay(primary) {
-		return "", "", connect.NewError(connect.CodeInvalidArgument, errors.New("locale must be a language code such as \"ja\""))
+		return "", "", errs.Invalid("locale must be a language code such as \"ja\"")
 	}
 	if secondary != "" && !i18n.ValidDisplay(secondary) {
-		return "", "", connect.NewError(connect.CodeInvalidArgument, errors.New("secondary_language must be a language code such as \"es\""))
+		return "", "", errs.Invalid("secondary_language must be a language code such as \"es\"")
 	}
 	return primary, secondary, nil
 }

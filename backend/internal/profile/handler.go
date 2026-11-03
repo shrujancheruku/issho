@@ -10,6 +10,7 @@ import (
 
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
 	"github.com/shrujancheruku/issho/backend/internal/platform/auth"
+	"github.com/shrujancheruku/issho/backend/internal/platform/errs"
 )
 
 type Handler struct {
@@ -23,7 +24,7 @@ func (h *Handler) GetProfile(ctx context.Context, _ *connect.Request[isshov1.Get
 	}
 	p, err := h.Svc.Get(ctx, c.UserID)
 	if errors.Is(err, ErrNotFound) {
-		return nil, connect.NewError(connect.CodeNotFound, err)
+		return nil, errs.NotFound("%s", err)
 	}
 	if err != nil {
 		return nil, err
@@ -37,18 +38,18 @@ func (h *Handler) SaveProfile(ctx context.Context, req *connect.Request[isshov1.
 		return nil, err
 	}
 	if req.Msg.Profile == nil {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("profile: required"))
+		return nil, errs.Invalid("profile: required")
 	}
 	in, err := fromProto(req.Msg.Profile)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeInvalidArgument, err)
+		return nil, errs.Invalid("%s", err)
 	}
 	p, err := h.Svc.Save(ctx, c.UserID, in)
 	switch {
 	case IsInvalid(err):
-		return nil, connect.NewError(connect.CodeInvalidArgument, err)
+		return nil, errs.Invalid("%s", err)
 	case errors.Is(err, ErrNoAccount):
-		return nil, connect.NewError(connect.CodeFailedPrecondition, err)
+		return nil, errs.Refused("%s", err)
 	case err != nil:
 		return nil, err
 	}

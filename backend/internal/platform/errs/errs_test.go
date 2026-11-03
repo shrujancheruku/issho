@@ -32,3 +32,17 @@ func TestInterceptor(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }
+
+// Refused is the reasonless Precondition modules use for "right call, wrong
+// state"; it must reach the client as FailedPrecondition with no reason.
+func TestRefused(t *testing.T) {
+	log := slog.New(slog.NewTextHandler(io.Discard, nil))
+	next := func(context.Context, connect.AnyRequest) (connect.AnyResponse, error) {
+		return nil, Refused("not now: %d", 1)
+	}
+	_, err := Interceptor(log)(next)(context.Background(), connect.NewRequest(&struct{}{}))
+	var ce *connect.Error
+	if !errors.As(err, &ce) || ce.Code() != connect.CodeFailedPrecondition || ce.Message() != "not now: 1" || len(ce.Details()) != 0 {
+		t.Fatalf("got %v", err)
+	}
+}
