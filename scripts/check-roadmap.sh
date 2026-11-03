@@ -13,6 +13,14 @@ if [[ "$base" =~ ^0+$ ]] || ! git cat-file -e "$base^{commit}" 2>/dev/null; then
   exit 0
 fi
 
+# Renovate's dependency PRs (branch renovate/*) change lockfiles, pins and workflows
+# but are not build-plan progress. HEAD_REF is the PR's head branch (empty on pushes,
+# where main only receives squash merges that already passed this check).
+if [[ "${HEAD_REF:-}" == renovate/* ]]; then
+  echo "Renovate branch; roadmap update not required."
+  exit 0
+fi
+
 changed=$(git diff --name-only "$base" HEAD)
 [[ -z "$changed" ]] && exit 0
 
