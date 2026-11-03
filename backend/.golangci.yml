@@ -16,6 +16,3 @@ formatters:
     generated: strict
     paths:
       - gen
-      # Held by #167 while it is in flight (one misformatted line). Drop this
-      # line and gofmt the file once #167 merges.
-      - internal/cities/schema_test.go
