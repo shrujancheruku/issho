@@ -4,7 +4,6 @@ package auth
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"slices"
 	"strings"
@@ -13,6 +12,8 @@ import (
 	"github.com/MicahParks/keyfunc/v3"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
+
+	"github.com/shrujancheruku/issho/backend/internal/platform/errs"
 )
 
 // Caller is the authenticated user making a request.
@@ -125,11 +126,11 @@ func Interceptor(v *Verifier, public ...string) connect.UnaryInterceptorFunc {
 			}
 			token, ok := strings.CutPrefix(req.Header().Get("Authorization"), "Bearer ")
 			if !ok || token == "" {
-				return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("missing bearer token"))
+				return nil, errs.Unauthenticated("missing bearer token")
 			}
 			caller, err := v.Verify(token)
 			if err != nil {
-				return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("invalid token"))
+				return nil, errs.Unauthenticated("invalid token")
 			}
 			return next(WithCaller(ctx, caller), req)
 		}
@@ -164,7 +165,7 @@ func guard(services []string, refusal string, allowed func(Caller) bool) connect
 			for _, p := range prefixes {
 				if strings.HasPrefix(req.Spec().Procedure, p) {
 					if c, ok := FromContext(ctx); !ok || !allowed(c) {
-						return nil, connect.NewError(connect.CodePermissionDenied, errors.New(refusal))
+						return nil, errs.Forbidden("%s", refusal)
 					}
 					break
 				}
@@ -179,7 +180,7 @@ func guard(services []string, refusal string, allowed func(Caller) bool) connect
 func Require(ctx context.Context) (Caller, error) {
 	c, ok := FromContext(ctx)
 	if !ok {
-		return c, connect.NewError(connect.CodeUnauthenticated, errors.New("no caller"))
+		return c, errs.Unauthenticated("no caller")
 	}
 	return c, nil
 }
@@ -193,7 +194,7 @@ func RequireAdmin(ctx context.Context) (Caller, error) {
 		return c, err
 	}
 	if !c.Admin {
-		return c, connect.NewError(connect.CodePermissionDenied, errors.New("admins only"))
+		return c, errs.Forbidden("admins only")
 	}
 	return c, nil
 }
