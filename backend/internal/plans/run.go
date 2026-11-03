@@ -15,6 +15,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	"github.com/shrujancheruku/issho/backend/internal/maps"
 	"github.com/shrujancheruku/issho/backend/internal/matching"
+	"github.com/shrujancheruku/issho/backend/internal/platform/sentry"
 	"github.com/shrujancheruku/issho/backend/internal/walks"
 )
 
@@ -209,29 +210,41 @@ func (r *Runner) checkPlace(ctx context.Context, p Open, venue string, times []t
 	return venuesOK
 }
 
-// Suggest opens new plans in a city, up to its cap (matching.Suggest),
-// and returns how many it opened.
-func (r *Runner) Suggest(ctx context.Context, cityID string, now time.Time) (int, error) {
-	q := dbgen.New(r.DB)
-	loc, err := location(ctx, q, cityID)
+// SuggestReport counts what a suggesting pass did.
+type SuggestReport struct {
+	Opened int // plans opened
+	Failed int // suggestions that could not be opened
+}
+
+// Suggest loads the city and opens new plans in it, up to its cap
+// (matching.Suggest). Match loads the city once and calls suggestIn instead.
+func (r *Runner) Suggest(ctx context.Context, cityID string, now time.Time) (SuggestReport, error) {
+	c, err := LoadCity(ctx, dbgen.New(r.DB), cityID, 0)
 	if err != nil {
-		return 0, err
+		return SuggestReport{}, err
 	}
-	w := r.Timing.Round(now, loc)
+	return r.suggestIn(ctx, c, now)
+}
+
+// suggestIn is Suggest for a city loaded with every activity (month 0).
+func (r *Runner) suggestIn(ctx context.Context, all *City, now time.Time) (SuggestReport, error) {
+	q := dbgen.New(r.DB)
+	cityID := all.ID
+	w := r.Timing.Round(now, all.Location)
 	// Seasonal activities are judged by the month the round starts in.
-	c, err := LoadCity(ctx, q, cityID, w.Start.Month())
+	c, err := all.InSeason(ctx, q, w.Start.Month())
 	if err != nil {
-		return 0, err
+		return SuggestReport{}, err
 	}
 	open, err := ListOpen(ctx, q, cityID)
 	if err != nil {
-		return 0, err
+		return SuggestReport{}, err
 	}
 	failed, err := q.ListRecentlyFailedPlans(ctx, dbgen.ListRecentlyFailedPlansParams{
 		CityID: cityID, Reasons: failedReasons, Since: pgtype.Timestamptz{Time: now.Add(-r.Timing.Cooldown), Valid: true},
 	})
 	if err != nil {
-		return 0, err
+		return SuggestReport{}, err
 	}
 	in := matching.SuggestInput{
 		Users: c.Users, Areas: c.Areas, Travel: c.Travel, Activities: c.Activities, Venues: c.Venues,
@@ -243,7 +256,7 @@ func (r *Runner) Suggest(ctx context.Context, cityID string, now time.Time) (int
 	// the city's cap.
 	drafts, err := q.ListDraftPlanKeys(ctx, cityID)
 	if err != nil {
-		return 0, err
+		return SuggestReport{}, err
 	}
 	for _, d := range drafts {
 		in.Open = append(in.Open, matching.Plan{
@@ -266,22 +279,31 @@ func (r *Runner) Suggest(ctx context.Context, cityID string, now time.Time) (int
 // ScheduleReport counts what a scheduling pass did.
 type ScheduleReport struct {
 	Checked, Scheduled, Closed int
+	Failed                     int // plans that could not be checked
 }
 
-// Schedule checks every open plan in a city (matching.Schedule): a plan
-// whose signups can make a good group gets an event; at its signup deadline
-// it goes ahead with whatever groups can form, or closes. Plans with the
-// most signups go first, since each event blocks its occasion for the
-// people invited.
+// Schedule loads the city and checks every open plan in it
+// (matching.Schedule): a plan whose signups can make a good group gets an
+// event; at its signup deadline it goes ahead with whatever groups can form,
+// or closes. Plans with the most signups go first, since each event blocks
+// its occasion for the people invited. A plan that fails is logged and
+// counted in Failed; the others are still checked (Match has the policy).
+// Match loads the city once and calls scheduleIn instead.
 func (r *Runner) Schedule(ctx context.Context, cityID string, now time.Time) (ScheduleReport, error) {
-	var rep ScheduleReport
 	// Any month: a plan opened for a season keeps its round even if the
 	// month ends; only disabling the activity withdraws it.
-	q := dbgen.New(r.DB)
-	c, err := LoadCity(ctx, q, cityID, 0)
+	c, err := LoadCity(ctx, dbgen.New(r.DB), cityID, 0)
 	if err != nil {
-		return rep, err
+		return ScheduleReport{}, err
 	}
+	return r.scheduleIn(ctx, c, now)
+}
+
+// scheduleIn is Schedule for a city loaded with every activity (month 0).
+func (r *Runner) scheduleIn(ctx context.Context, c *City, now time.Time) (ScheduleReport, error) {
+	var rep ScheduleReport
+	cityID := c.ID
+	q := dbgen.New(r.DB)
 	users, acts := c.UsersByID(), c.ActivitiesByID()
 	open, err := ListOpen(ctx, q, cityID)
 	if err != nil {
@@ -297,14 +319,26 @@ func (r *Runner) Schedule(ctx context.Context, cityID string, now time.Time) (Sc
 	}
 	open = slices.DeleteFunc(open, func(p Open) bool { return slices.Contains(held, p.ID) })
 	slices.SortStableFunc(open, func(a, b Open) int { return cmp.Compare(b.Signups, a.Signups) })
+	var errs []error
 	for _, p := range open {
+		// Cancelled (timeout, shutdown): stop, don't count the rest as failed.
+		if err := ctx.Err(); err != nil {
+			return rep, err
+		}
 		rep.Checked++
 		closed, scheduled, err := r.schedulePlan(ctx, q, c, users, acts, p, now)
 		if err != nil {
-			return rep, fmt.Errorf("plan %s: %w", p.ID, err)
+			rep.Failed++
+			errs = append(errs, fmt.Errorf("plan %s: %w", p.ID, err))
+			r.itemFailed(ctx, "schedule", cityID, "plan", p.ID, err)
+			continue
 		}
+		// Counted once the plan is done, not while it is in progress.
 		rep.Closed += closed
 		rep.Scheduled += scheduled
+	}
+	if rep.Checked > 0 && rep.Failed == rep.Checked {
+		return rep, allFailed("schedule", errs)
 	}
 	return rep, nil
 }
@@ -405,6 +439,20 @@ func (r *Runner) schedulePlan(ctx context.Context, q *dbgen.Queries, c *City, us
 		return 1, 1, nil
 	}
 	return 0, 1, nil
+}
+
+// itemFailed records one item's failure under the policy on Runner.Match:
+// logged with its id and reported to Sentry. The caller counts it in Failed
+// and carries on.
+func (r *Runner) itemFailed(ctx context.Context, stage, cityID, item string, id any, err error) {
+	r.Log.Error("item failed", "stage", stage, "city", cityID, item, id, "err", err)
+	sentry.Report(ctx, fmt.Errorf("%s %s %v: %w", stage, item, id, err), map[string]string{"stage": stage, "city": cityID})
+}
+
+// allFailed is the error for a stage where every item failed: that is
+// more likely a shared fault than bad items, so the job is retried.
+func allFailed(stage string, errs []error) error {
+	return fmt.Errorf("%s: every item failed: %w", stage, errors.Join(errs...))
 }
 
 // location returns the city's time zone.

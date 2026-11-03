@@ -71,8 +71,8 @@ func TestIntegrationRunner(t *testing.T) {
 		t.Fatal(err)
 	}
 	// One plan: the city's cap is one per ten people.
-	if opened != 1 || len(open) != 1 || open[0].Activity != matching.ActivityID(f.act) || open[0].Primary != "ja" {
-		t.Fatalf("Suggest opened %d: %+v", opened, open)
+	if opened.Opened != 1 || len(open) != 1 || open[0].Activity != matching.ActivityID(f.act) || open[0].Primary != "ja" {
+		t.Fatalf("Suggest opened %d: %+v", opened.Opened, open)
 	}
 	plan := open[0]
 
@@ -120,8 +120,8 @@ func TestIntegrationRunner(t *testing.T) {
 		t.Fatalf("after scheduling: %+v, want round 2 with 2 waiting", open)
 	}
 	// The city's cap is reached, so nothing new opens.
-	if opened, err := r.Suggest(ctx, f.city, now); err != nil || opened != 0 {
-		t.Fatalf("second Suggest opened %d, %v", opened, err)
+	if opened, err := r.Suggest(ctx, f.city, now); err != nil || opened.Opened != 0 {
+		t.Fatalf("second Suggest opened %d, %v", opened.Opened, err)
 	}
 
 	// One of the two withdraws; at the deadline one person can't make a group.

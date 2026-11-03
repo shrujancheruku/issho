@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 
 import { useAuth } from '@/features/auth/auth-provider';
 import { languageLabel, useActivities, useCities, useLanguages } from '@/features/profile/data';
-import { useProfile } from '@/features/profile/use-profile';
+import { useProfile } from '@/features/profile/data';
 import { useI18n } from '@/i18n/i18n-provider';
 
 export type Names = { name: string; secondary: string };

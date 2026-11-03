@@ -1,10 +1,12 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
 import { useI18n } from '@/i18n/i18n-provider';
 import { api } from '@/lib/api';
+import { keys, profileSaved } from '@/lib/queries';
 
 import { readStored, writeStored } from './catalog-cache';
+import type { toProfile } from './draft';
 
 // Reference data for the profile steps, named in the current display
 // languages. Keyed by language so a language change refetches.
@@ -20,12 +22,30 @@ function useStored<T>(key: string) {
   return { initialData: stored?.value, initialDataUpdatedAt: stored?.at };
 }
 
+/** The caller's saved profile (settings). Cleared with the cache on sign-out. */
+export function useProfile() {
+  return useQuery({ queryKey: keys.profile, queryFn: () => api.profile.getProfile({}) });
+}
+
+/**
+ * Saves the profile (onboarding and settings), then refreshes what depends on
+ * it (profileSaved). Settles after the refresh, so a caller's own onSuccess
+ * runs with fresh data.
+ */
+export function useSaveProfile() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (profile: ReturnType<typeof toProfile>) => api.profile.saveProfile({ profile }),
+    onSuccess: () => profileSaved(queryClient),
+  });
+}
+
 export function useCities() {
   const { languages } = useI18n();
   const key = `cities-${languages.primary}-${languages.secondary}`;
   const stored = useStored<Awaited<ReturnType<typeof api.catalog.listCities>>>(key);
   return useQuery({
-    queryKey: ['cities', languages.primary, languages.secondary],
+    queryKey: keys.cities(languages.primary, languages.secondary),
     queryFn: async () => {
       const res = await api.catalog.listCities({ locale: languages.primary, secondaryLanguage: languages.secondary });
       writeStored(key, res);
@@ -42,7 +62,7 @@ export function useActivities(cityId: string) {
   const key = `activities-${cityId}-${languages.primary}-${languages.secondary}`;
   const stored = useStored<Awaited<ReturnType<typeof api.catalog.listActivities>>>(key);
   return useQuery({
-    queryKey: ['activities', cityId, languages.primary, languages.secondary],
+    queryKey: keys.activities(cityId, languages.primary, languages.secondary),
     queryFn: async () => {
       const res = await api.catalog.listActivities({ cityId, locale: languages.primary, secondaryLanguage: languages.secondary });
       writeStored(key, res);
@@ -63,7 +83,7 @@ export function useActivities(cityId: string) {
 export function useLanguages(display = false) {
   const { languages } = useI18n();
   return useQuery({
-    queryKey: ['languages', languages.primary, display],
+    queryKey: keys.languages(languages.primary, display),
     queryFn: () => api.catalog.listLanguages({ locale: languages.primary, display }),
     select: (r) => r.languages,
     staleTime: Infinity,
