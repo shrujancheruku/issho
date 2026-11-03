@@ -3,7 +3,7 @@ import {
   type GetAdminJobResponse,
 } from '@issho/api-client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 import { api } from '../lib';
 
@@ -58,15 +58,42 @@ const finished = (j?: GetAdminJobResponse) => j?.state === AdminJobState.SUCCEED
  * asking every JOB_POLL_MS. `jobId` is undefined before the job is queued and
  * 0n from an API that still ran the operation inside the request.
  */
+/** Failed polls in a row before the page gives up and shows the error. */
+export const POLL_FAILURES_SHOWN = 3;
+
+class FailedPolls {
+  failed = 0;
+  ok() { this.failed = 0; }
+  fail() { this.failed += 1; }
+}
+
 function useAdminJob(jobId: bigint | undefined) {
-  return useQuery({
+  // Consecutive failed polls (react-query's own failureCount restarts with
+  // every fetch). The query re-renders after each failure, so reading it then
+  // is current.
+  const [polls] = useState(() => new FailedPolls());
+  const query = useQuery({
     queryKey: ['admin-job', String(jobId)],
-    queryFn: () => api.admin.getAdminJob({ jobId: jobId! }),
+    queryFn: async () => {
+      try {
+        const j = await api.admin.getAdminJob({ jobId: jobId! });
+        polls.ok();
+        return j;
+      } catch (e) {
+        polls.fail();
+        throw e;
+      }
+    },
     enabled: !!jobId,
     // Stop when it is done, or gone (River clears finished jobs after a day
     // or a week); keep asking through a failed poll, which is usually a blip.
     refetchInterval: (q) => (finished(q.state.data) || (q.state.error && ConnectError.from(q.state.error).code === Code.NotFound) ? false : JOB_POLL_MS),
   });
+  // A job that is gone (NotFound) is final at once; any other error counts
+  // only once it persists and until then the job is still running.
+  const gone = !!query.error && ConnectError.from(query.error).code === Code.NotFound;
+  const persistent = gone || (!!query.error && polls.failed >= POLL_FAILURES_SHOWN);
+  return { ...query, shownError: persistent ? query.error : null };
 }
 
 /**
@@ -82,9 +109,9 @@ function progress<R extends ApplyCityPackResponse | DiscoverAreaVenuesResponse>(
   return {
     result,
     // Starting the job, or waiting for it to end.
-    running: starting || (queued && !finished(job.data) && !job.error),
+    running: starting || (queued && !finished(job.data) && !job.shownError),
     failure: job.data?.state === AdminJobState.FAILED ? (job.data.failure?.message ?? 'The job failed.') : undefined,
-    error: job.error,
+    error: job.shownError,
   };
 }
 

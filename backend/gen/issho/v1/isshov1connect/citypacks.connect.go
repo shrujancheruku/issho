@@ -76,8 +76,8 @@ type CityPackServiceClient interface {
 	// The apply is a background job (one at a time per city): the call
 	// validates the pack as ProposeCityPack does (INVALID_ARGUMENT, NOT_FOUND
 	// for no such pack) and returns the job's id; the report is the result of
-	// AdminService.GetAdminJob. Applying a city while its apply is queued or
-	// running returns that job's id.
+	// AdminService.GetAdminJob. Applying the same pack again while its apply is
+	// queued or running returns that job's id; a changed pack queues behind it.
 	ApplyCityPack(context.Context, *connect.Request[v1.ApplyCityPackRequest]) (*connect.Response[v1.ApplyCityPackResponse], error)
 	// DiscoverAreaVenues finds venues for one area with Google (one Nearby
 	// Search per venue category the city's activities use; the city-wide
@@ -191,8 +191,8 @@ type CityPackServiceHandler interface {
 	// The apply is a background job (one at a time per city): the call
 	// validates the pack as ProposeCityPack does (INVALID_ARGUMENT, NOT_FOUND
 	// for no such pack) and returns the job's id; the report is the result of
-	// AdminService.GetAdminJob. Applying a city while its apply is queued or
-	// running returns that job's id.
+	// AdminService.GetAdminJob. Applying the same pack again while its apply is
+	// queued or running returns that job's id; a changed pack queues behind it.
 	ApplyCityPack(context.Context, *connect.Request[v1.ApplyCityPackRequest]) (*connect.Response[v1.ApplyCityPackResponse], error)
 	// DiscoverAreaVenues finds venues for one area with Google (one Nearby
 	// Search per venue category the city's activities use; the city-wide

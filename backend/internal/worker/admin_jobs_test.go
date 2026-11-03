@@ -11,6 +11,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/riverqueue/river"
 	"github.com/riverqueue/river/riverdriver/riverpgxv5"
+	"github.com/riverqueue/river/rivertype"
 
 	"github.com/shrujancheruku/issho/backend/db"
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
@@ -95,22 +96,38 @@ func TestIntegrationAdminJobsLifecycle(t *testing.T) {
 		}
 	}
 
-	first, err := api.Insert(ctx, adminjobs.ApplyCityPackArgs{City: city, Pack: pack("a", "b")}, nil)
-	if err != nil || first.UniqueSkippedAsDuplicate {
-		t.Fatalf("first apply: %v", err)
+	ins := func(p cities.Pack) *rivertype.JobInsertResult {
+		t.Helper()
+		args, err := adminjobs.NewApplyCityPackArgs(p)
+		if err != nil {
+			t.Fatal(err)
+		}
+		res, err := api.Insert(ctx, args, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return res
+	}
+	first := ins(pack("a", "b"))
+	if first.UniqueSkippedAsDuplicate {
+		t.Fatal("first apply was skipped")
 	}
 	// Queued: nothing is serving the queue yet.
 	if j := get(first.Job.ID); j.State != isshov1.AdminJobState_ADMIN_JOB_STATE_QUEUED || j.QueuedAt == nil || j.StartedAt != nil || j.FinishedAt != nil || j.Result != nil || j.Failure != nil {
 		t.Fatalf("queued job = %v", j)
 	}
-	// A second apply of the same city (even with other contents) is skipped,
-	// and its id is the first's, so the two can never run at once.
-	second, err := api.Insert(ctx, adminjobs.ApplyCityPackArgs{City: city, Pack: pack("a", "b", "c")}, nil)
-	if err != nil || !second.UniqueSkippedAsDuplicate || second.Job.ID != first.Job.ID {
-		t.Fatalf("second apply = %+v, %v", second, err)
+	// The same pack again is skipped and gets the first job's id. A changed
+	// pack (main moved on) is a job of its own, queued behind the first: it
+	// must not be dropped. They never run at once: the queue has one worker.
+	if same := ins(pack("a", "b")); !same.UniqueSkippedAsDuplicate || same.Job.ID != first.Job.ID {
+		t.Fatalf("the same pack twice = %+v", same)
+	}
+	changed := ins(pack("a", "b", "c"))
+	if changed.UniqueSkippedAsDuplicate || changed.Job.ID == first.Job.ID {
+		t.Fatalf("a changed pack = %+v, want a second job", changed)
 	}
 	// Another city is another job.
-	other, err := api.Insert(ctx, adminjobs.ApplyCityPackArgs{City: "zz-admin-other", Pack: cities.Pack{ID: "zz-admin-other"}}, nil)
+	other, err := api.Insert(ctx, adminjobs.ApplyCityPackArgs{City: "zz-admin-other", Hash: "x", Pack: cities.Pack{ID: "zz-admin-other"}}, nil)
 	if err != nil || other.UniqueSkippedAsDuplicate {
 		t.Fatalf("another city's apply was skipped: %v", err)
 	}
@@ -128,7 +145,7 @@ func TestIntegrationAdminJobsLifecycle(t *testing.T) {
 	river.AddWorker(workers, &discoverAreaVenuesWorker{pool: pool, places: nil, log: log})
 	c, err := river.NewClient(riverpgxv5.New(pool), &river.Config{
 		Schema: db.RiverSchema, Workers: workers,
-		Queues: map[string]river.QueueConfig{QueueMaintenance: {MaxWorkers: 2}},
+		Queues: map[string]river.QueueConfig{QueueMaintenance: {MaxWorkers: 1}},
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -152,8 +169,8 @@ func TestIntegrationAdminJobsLifecycle(t *testing.T) {
 		t.Fatalf("running job = %v", running)
 	}
 	// Still one job while it runs.
-	if dup, err := api.Insert(ctx, adminjobs.ApplyCityPackArgs{City: city, Pack: pack("a", "b")}, nil); err != nil || !dup.UniqueSkippedAsDuplicate || dup.Job.ID != first.Job.ID {
-		t.Errorf("an apply during the apply: %+v, %v", dup, err)
+	if dup := ins(pack("a", "b")); !dup.UniqueSkippedAsDuplicate || dup.Job.ID != first.Job.ID {
+		t.Errorf("an apply during the apply: %+v", dup)
 	}
 	close(gate.release)
 	done := waitFor(first.Job.ID, isshov1.AdminJobState_ADMIN_JOB_STATE_SUCCEEDED)
@@ -161,10 +178,15 @@ func TestIntegrationAdminJobsLifecycle(t *testing.T) {
 	if rep == nil || len(rep.NewAreas) != 2 || rep.NewAreas[0] != city+"-a" || !rep.TravelTimesRebuilt || done.FinishedAt == nil || done.Failure != nil {
 		t.Fatalf("succeeded job = %v", done)
 	}
-	// Applied once the first has finished, a new job is accepted.
-	third, err := api.Insert(ctx, adminjobs.ApplyCityPackArgs{City: city, Pack: pack("a", "b")}, nil)
-	if err != nil || third.UniqueSkippedAsDuplicate || third.Job.ID == first.Job.ID {
-		t.Fatalf("apply after the first finished = %+v, %v", third, err)
+	// The changed pack runs after the first has finished, and adds area c.
+	ch := waitFor(changed.Job.ID, isshov1.AdminJobState_ADMIN_JOB_STATE_SUCCEEDED)
+	if got := ch.GetApplyCityPack(); got == nil || len(got.NewAreas) != 1 || got.NewAreas[0] != city+"-c" || ch.StartedAt.AsTime().Before(done.FinishedAt.AsTime()) {
+		t.Fatalf("changed pack's job = %v (first finished %v)", ch, done.FinishedAt)
+	}
+	// Applied once the others have finished, a new job is accepted.
+	third := ins(pack("a", "b", "c"))
+	if third.UniqueSkippedAsDuplicate || third.Job.ID == first.Job.ID {
+		t.Fatalf("apply after the others finished = %+v", third)
 	}
 	if got := waitFor(third.Job.ID, isshov1.AdminJobState_ADMIN_JOB_STATE_SUCCEEDED).GetApplyCityPack(); got == nil || len(got.NewAreas) != 0 || got.TravelTimesRebuilt {
 		t.Errorf("a repeat apply reports %v, want nothing new", got)

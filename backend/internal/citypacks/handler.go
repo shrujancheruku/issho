@@ -303,9 +303,14 @@ func (h *Handler) ApplyCityPack(ctx context.Context, req *connect.Request[isshov
 	if err := h.check(ctx, p); err != nil {
 		return nil, err
 	}
-	// A second apply of this city while one is queued or running is skipped
-	// (unique jobs), and the caller follows the first.
-	id, err := h.insert(ctx, adminjobs.ApplyCityPackArgs{City: p.ID, Pack: p})
+	// The same pack applied again while one is queued or running is skipped
+	// (unique jobs) and the caller follows the first; a changed pack queues
+	// behind it.
+	args, err := adminjobs.NewApplyCityPackArgs(p)
+	if err != nil {
+		return nil, err
+	}
+	id, err := h.insert(ctx, args)
 	if err != nil {
 		return nil, err
 	}

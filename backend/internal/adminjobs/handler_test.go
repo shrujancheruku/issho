@@ -195,6 +195,19 @@ func TestDiscoverWithoutPlacesKey(t *testing.T) {
 	}
 }
 
+// The same pack hashes the same and a changed one differently, so only the
+// same pack is deduplicated (a job's uniqueness is its city and this hash).
+func TestApplyHash(t *testing.T) {
+	p := cities.Pack{ID: "x", Name: cities.Text{"en": "X"}}
+	a, err := NewApplyCityPackArgs(p)
+	b, _ := NewApplyCityPackArgs(p)
+	p.Name["en"] = "Y"
+	c, _ := NewApplyCityPackArgs(p)
+	if err != nil || a.City != "x" || a.Hash == "" || a.Hash != b.Hash || a.Hash == c.Hash {
+		t.Errorf("hashes %q %q %q, %v", a.Hash, b.Hash, c.Hash, err)
+	}
+}
+
 // Both kinds go to the maintenance queue with explicit attempts and are unique
 // while live (the queue itself is tested in internal/worker).
 func TestInsertOpts(t *testing.T) {

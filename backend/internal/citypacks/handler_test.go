@@ -408,6 +408,7 @@ func TestIntegrationCityPacks(t *testing.T) {
 	repo.files["data/citypacks/zz-packs.json"] = raw
 	fm.MatrixErr = errors.New("quota exceeded for key AIza-secret")
 	if out := applyJob(); out.Failure == nil || strings.Contains(out.Failure.Message, "AIza") || !strings.Contains(out.Failure.Message, "seeded") ||
+		!strings.Contains(out.Failure.Message, "Moved areas: "+city+"-a") ||
 		out.ApplyCityPack == nil || len(out.ApplyCityPack.MovedAreas) != 1 {
 		t.Errorf("apply with Google down: %+v", out)
 	}

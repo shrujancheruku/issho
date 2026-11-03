@@ -76,6 +76,8 @@ kamal logs-api -d production          # or logs-worker
 
 **Seeding and Google tools** run the same way, inside the image: `kamal app exec -d production --primary "tool seed /data/citypacks/tokyo.json"` (the catalogue is seeded too).
 
+**During a deploy:** don't start an apply or a venue search on the admin Cities page (they are jobs on the worker, and the web and worker roles roll one after the other, so a job queued mid-roll may wait for the new worker or be cut off by the old one stopping).
+
 **Rolling back:** `kamal rollback -d production <version>` (versions are commit hashes; `kamal app containers -d production` lists them). Migrations aren't rolled back.
 
 ## Automatic deploys

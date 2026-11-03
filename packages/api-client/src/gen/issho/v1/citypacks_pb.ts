@@ -629,8 +629,8 @@ export const CityPackService: GenService<{
    * The apply is a background job (one at a time per city): the call
    * validates the pack as ProposeCityPack does (INVALID_ARGUMENT, NOT_FOUND
    * for no such pack) and returns the job's id; the report is the result of
-   * AdminService.GetAdminJob. Applying a city while its apply is queued or
-   * running returns that job's id.
+   * AdminService.GetAdminJob. Applying the same pack again while its apply is
+   * queued or running returns that job's id; a changed pack queues behind it.
    *
    * @generated from rpc issho.v1.CityPackService.ApplyCityPack
    */

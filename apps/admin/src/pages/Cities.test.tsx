@@ -149,6 +149,51 @@ describe('long operations run as jobs', () => {
     expect(await screen.findByText('31 venues from 9 searches.')).toBeTruthy();
   });
 
+  it('treats a failed poll as still running, and shows the error only once it persists', async () => {
+    let calls = 0;
+    fake
+      .on('cityPacks.listCityPacks', () => list())
+      .on('cityPacks.applyCityPack', () => create(ApplyCityPackResponseSchema, { jobId: 5n }))
+      .on('admin.getAdminJob', () => {
+        calls += 1;
+        throw new ConnectError('upstream hiccup', Code.Unavailable);
+      });
+    const { user } = renderPage(<Cities />);
+    await user.click(await screen.findByRole('button', { name: 'Apply from main' }));
+
+    // Two failed polls: still Running…, nothing on screen about it.
+    await vi.waitFor(() => expect(calls).toBe(1));
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(calls).toBe(2);
+    expect(screen.getByRole('button', { name: 'Running…' })).toBeTruthy();
+    expect(screen.queryByText(/upstream hiccup/)).toBeNull();
+    // The third in a row is shown, and the button is back.
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(await screen.findByText(/upstream hiccup/)).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Apply from main' })).toBeTruthy();
+  });
+
+  it('a blip between good polls never shows an error', async () => {
+    let calls = 0;
+    fake
+      .on('cityPacks.listCityPacks', () => list())
+      .on('cityPacks.applyCityPack', () => create(ApplyCityPackResponseSchema, { jobId: 5n }))
+      .on('admin.getAdminJob', () => {
+        calls += 1;
+        if (calls === 2 || calls === 3) throw new ConnectError('blip', Code.Unavailable);
+        return job(calls < 5 ? AdminJobState.RUNNING : AdminJobState.SUCCEEDED, calls < 5 ? {} : {
+          result: { case: 'applyCityPack', value: create(ApplyCityPackResponseSchema, { newAreas: ['tokyo-x'] }) },
+        });
+      });
+    const { user } = renderPage(<Cities />);
+    await user.click(await screen.findByRole('button', { name: 'Apply from main' }));
+    for (let i = 0; i < 5; i += 1) {
+      await vi.advanceTimersByTimeAsync(2000);
+      expect(screen.queryByText(/blip/)).toBeNull();
+    }
+    expect(await screen.findByText(/^Applied; new areas tokyo-x/)).toBeTruthy();
+  });
+
   it('shows the error when the call itself is refused, with no job to follow', async () => {
     fake
       .on('cityPacks.listCityPacks', () => list())

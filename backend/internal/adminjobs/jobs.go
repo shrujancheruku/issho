@@ -13,8 +13,11 @@ package adminjobs
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -69,12 +72,27 @@ const (
 
 // ApplyCityPackArgs applies a validated pack. The pack rides in the args
 // because the worker has no GitHub client: the API read it from the default
-// branch and checked it, and the job applies exactly that. Only the city
-// counts for uniqueness (river:"unique"), so a second apply of a city while
-// one is queued or running is skipped and gets the first job's id.
+// branch and checked it, and the job applies exactly that. The city and the
+// pack's hash make a job unique (river:"unique"): the same pack applied again
+// while one is queued or running is skipped and gets the first job's id,
+// while a changed pack (main moved on) is a job of its own, queued behind it.
+// Two applies of one city never run at once because the maintenance queue has
+// a single worker (worker.queues); raise that and this needs a lock per city.
 type ApplyCityPackArgs struct {
 	City string      `json:"city" river:"unique"`
+	Hash string      `json:"hash" river:"unique"`
 	Pack cities.Pack `json:"pack"`
+}
+
+// NewApplyCityPackArgs builds the args for a pack, hashing its canonical JSON
+// (cities.EncodePack, the file format).
+func NewApplyCityPackArgs(p cities.Pack) (ApplyCityPackArgs, error) {
+	raw, err := cities.EncodePack(p)
+	if err != nil {
+		return ApplyCityPackArgs{}, err
+	}
+	sum := sha256.Sum256(raw)
+	return ApplyCityPackArgs{City: p.ID, Hash: hex.EncodeToString(sum[:]), Pack: p}, nil
 }
 
 func (ApplyCityPackArgs) Kind() string { return KindApplyCityPack }
@@ -161,8 +179,11 @@ func ApplyCityPack(ctx context.Context, pool *pgxpool.Pool, router maps.Router, 
 	d, err := cities.Apply(ctx, pool, router, a.Pack, cities.Options{})
 	if err != nil {
 		f, jobErr := classify(err)
-		// The pack is seeded when only Google failed: say what changed too.
+		// The pack is seeded when only Google failed: name what changed, so
+		// the admin knows which areas still need travel times.
 		if errors.Is(err, cities.ErrTravelTimes) {
+			f.Message = fmt.Sprintf("%s. New areas: %s. Moved areas: %s. Removed areas: %s.", msgTravel,
+				listOrNone(d.NewAreas), listOrNone(d.MovedAreas), listOrNone(d.RemovedAreas))
 			return Output{ApplyCityPack: &d, Failure: f}, jobErr
 		}
 		return Output{Failure: f}, jobErr
@@ -184,6 +205,13 @@ func DiscoverAreaVenues(ctx context.Context, pool *pgxpool.Pool, places maps.Pla
 		return Output{Failure: f}, jobErr
 	}
 	return Output{DiscoverAreaVenues: &VenuesFound{Searches: searches, Venues: venues}}, nil
+}
+
+func listOrNone(l []string) string {
+	if len(l) == 0 {
+		return "none"
+	}
+	return strings.Join(l, ", ")
 }
 
 // NewClient is the API's River client: it only inserts jobs (no queues, no
