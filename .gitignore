@@ -39,3 +39,4 @@ GoogleService-Info.plist
 # .claude/orchestration.md are shared; agent worktrees are throwaway checkouts
 .claude/settings.local.json
 .claude/worktrees/
+.claude/orchestrate-state.json
