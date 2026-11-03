@@ -8,64 +8,19 @@ import (
 	"sync"
 	"time"
 
-	"github.com/jackc/pgx/v5/pgtype"
-
-	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	"github.com/shrujancheruku/issho/backend/internal/maps"
 	"github.com/shrujancheruku/issho/backend/internal/platform/httpjson"
 )
 
-// DiscoverJobs runs jobs (a PlanVenues plan, perhaps with finished work
-// removed by Searched.Skip) as DiscoverVenues does. When a search fails it
+// DiscoverJobs runs a PlanVenues plan as DiscoverVenues does, skipping the
+// searches prog lists as finished (prog may be nil). When a search fails it
 // returns the venues found so far along with the error, so the caller can
-// save what was paid for.
-func DiscoverJobs(ctx context.Context, s maps.PlaceSearcher, areas []Area, jobs []VenueJob, language string, budget int) ([]Venue, Searches, error) {
+// save what was paid for, then call prog.Commit.
+func DiscoverJobs(ctx context.Context, s maps.PlaceSearcher, areas []Area, jobs []VenueJob, language string, budget int, prog *Progress) ([]Venue, Searches, error) {
 	if len(areas) == 0 {
 		return nil, Searches{}, nil
 	}
-	return runVenueJobs(ctx, s, areas, jobs, language, budget)
-}
-
-// Searched is the set of area × category pairs already searched.
-type Searched struct {
-	pairs map[[2]string]bool // area id, category id
-	cats  map[string]bool    // categories with a venue anywhere (for city-wide searches)
-}
-
-// LoadSearched reads the pairs that have venues discovered since the cut-off.
-// A pair counts as searched when discovery found a venue in the area for the
-// category: the database keeps no record of a search itself, and a search
-// that found nothing is cheap to repeat. A neighbour's search can spill into
-// the area, so this can skip an area whose own search never ran; rerun with
-// a zero window to search everything.
-func LoadSearched(ctx context.Context, q *dbgen.Queries, cityID string, since time.Time) (Searched, error) {
-	rows, err := q.ListDiscoveredVenuePairs(ctx, dbgen.ListDiscoveredVenuePairsParams{CityID: cityID, Since: pgtype.Timestamptz{Time: since, Valid: true}})
-	if err != nil {
-		return Searched{}, err
-	}
-	s := Searched{pairs: map[[2]string]bool{}, cats: map[string]bool{}}
-	for _, r := range rows {
-		s.pairs[[2]string{r.AreaID, r.CategoryID}] = true
-		s.cats[r.CategoryID] = true
-	}
-	return s, nil
-}
-
-// Skip returns the jobs not yet done, and how many it dropped. A city-wide
-// search (no area) is done once its category has a venue anywhere.
-func (s Searched) Skip(jobs []VenueJob) (todo []VenueJob, skipped int) {
-	for _, j := range jobs {
-		done := s.cats[j.Category.ID]
-		if j.From != "" {
-			done = s.pairs[[2]string{j.From, j.Category.ID}]
-		}
-		if done {
-			skipped++
-			continue
-		}
-		todo = append(todo, j)
-	}
-	return todo, skipped
+	return runVenueJobs(ctx, s, areas, jobs, language, budget, prog)
 }
 
 // IsQuotaError reports whether err is Google refusing a request for quota

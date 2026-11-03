@@ -6,18 +6,15 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"path/filepath"
 	"sync/atomic"
 	"testing"
 	"time"
 
-	"github.com/jackc/pgx/v5/pgxpool"
-
-	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	"github.com/shrujancheruku/issho/backend/internal/maps"
 	"github.com/shrujancheruku/issho/backend/internal/maps/google"
 	"github.com/shrujancheruku/issho/backend/internal/platform/errs"
 	"github.com/shrujancheruku/issho/backend/internal/platform/httpjson"
-	"github.com/shrujancheruku/issho/backend/internal/testfixture"
 )
 
 // quota429 is what Places answers when a quota is used up: the limit is
@@ -45,7 +42,7 @@ func (s *scripted) Nearby(_ context.Context, r maps.NearbyRequest) ([]maps.Place
 func TestDiscoverJobsKeepsFoundVenuesOnFailure(t *testing.T) {
 	cats := []VenueCategory{{ID: "cafe", GoogleTypes: []string{"cafe"}, RadiusM: 1500}}
 	s := &scripted{answers: []error{nil, nil, quota429("SearchNearbyRequest per day")}}
-	got, n, err := DiscoverJobs(context.Background(), s, areas, PlanVenues(areas, cats), "ja", 100)
+	got, n, err := DiscoverJobs(context.Background(), s, areas, PlanVenues(areas, cats), "ja", 100, nil)
 	if err == nil {
 		t.Fatal("a failed search was not reported")
 	}
@@ -152,80 +149,115 @@ func TestPacerWithPlacesServer(t *testing.T) {
 	}
 }
 
-func TestSearchedSkip(t *testing.T) {
+// failingAt answers like a working searcher except for the nth call (from 1).
+type failingAt struct {
+	n, calls int
+	reqs     []maps.NearbyRequest
+}
+
+func (f *failingAt) Nearby(_ context.Context, r maps.NearbyRequest) ([]maps.Place, error) {
+	f.calls++
+	f.reqs = append(f.reqs, r)
+	if f.calls == f.n {
+		return nil, quota429("SearchNearbyRequest per day")
+	}
+	return []maps.Place{{ID: fmt.Sprintf("p%v", r.Center), PrimaryType: r.Types[0], Location: r.Center}}, nil
+}
+
+// A run fails midway; its venues are saved (here: kept) and committed; the
+// rerun searches exactly what was left, and -fresh searches everything.
+func TestProgressRerunSkipsFinishedSearches(t *testing.T) {
 	cats := []VenueCategory{
 		{ID: "cafe", GoogleTypes: []string{"cafe"}, RadiusM: 1500},
 		{ID: "beach", GoogleTypes: []string{"beach"}, RadiusM: 50000},
 	}
-	done := Searched{
-		pairs: map[[2]string]bool{{"x-a", "cafe"}: true, {"x-b", "cafe"}: true},
-		cats:  map[string]bool{"cafe": true},
+	jobs := PlanVenues(areas, cats) // 3 cafes + 1 beach
+	path := filepath.Join(t.TempDir(), "sub", "venues-x.json")
+	ctx := context.Background()
+
+	prog, err := LoadProgress(path, false)
+	if err != nil {
+		t.Fatal(err)
 	}
-	todo, skipped := done.Skip(PlanVenues(areas, cats))
-	if skipped != 2 || len(todo) != 2 { // cafe in x-c, and the beach
-		t.Fatalf("skipped %d, %d left: %+v", skipped, len(todo), todo)
+	first := &failingAt{n: 3} // two searches finish, the third fails
+	got, n, err := DiscoverJobs(ctx, first, areas, jobs, "ja", 100, prog)
+	if err == nil || n.Made != 3 || len(got) != 2 {
+		t.Fatalf("first run: %d venues, %+v, %v", len(got), n, err)
 	}
-	if todo[0].From != "x-c" || todo[1].Category.ID != "beach" {
-		t.Errorf("left %+v", todo)
+	if err := prog.Commit(); err != nil { // the venues were saved
+		t.Fatal(err)
 	}
-	beach := Searched{cats: map[string]bool{"beach": true}}
-	if todo, _ := beach.Skip(PlanVenues(areas, cats)); len(todo) != 3 {
-		t.Errorf("a done city-wide search left %d jobs, want only the cafes", len(todo))
+
+	prog, err = LoadProgress(path, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if prog.Finished(jobs) != 2 {
+		t.Errorf("dry run counts %d finished, want 2", prog.Finished(jobs))
+	}
+	second := &failingAt{}
+	_, n, err = DiscoverJobs(ctx, second, areas, jobs, "ja", 100, prog)
+	if err != nil || n.Made != 2 || n.Resumed != 2 || len(second.reqs) != 2 {
+		t.Fatalf("rerun: %+v, %d requests, %v; want the other 2 searches only", n, len(second.reqs), err)
+	}
+	for _, r := range second.reqs {
+		if r.Center == areas[0].LatLng || r.Center == areas[1].LatLng {
+			t.Errorf("rerun repeated the search at %v", r.Center)
+		}
+	}
+
+	// Not committed (saving failed): nothing new is listed.
+	prog, _ = LoadProgress(path, false)
+	if prog.Finished(jobs) != 2 {
+		t.Errorf("uncommitted rerun listed %d, want still 2", prog.Finished(jobs))
+	}
+
+	fresh, err := LoadProgress(path, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	all := &failingAt{}
+	if _, n, err = DiscoverJobs(ctx, all, areas, jobs, "ja", 100, fresh); err != nil || n.Made != 4 || n.Resumed != 0 {
+		t.Errorf("fresh: %+v, %v; want all 4 searches", n, err)
+	}
+
+	if err := prog.Clear(); err != nil {
+		t.Fatal(err)
+	}
+	if prog, _ = LoadProgress(path, false); prog.Finished(jobs) != 0 {
+		t.Error("a cleared progress file still lists searches")
 	}
 }
 
-// A failed run's saved venues make a rerun skip their pairs, and only those
-// newer than the cut-off.
-func TestIntegrationLoadSearched(t *testing.T) {
-	ctx := context.Background()
-	pool, err := pgxpool.New(ctx, testfixture.DatabaseURL(t))
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(pool.Close)
-	q := dbgen.New(pool)
+// A finished search that came back full still leads to its finer searches,
+// which are searched on the rerun without repeating the parent.
+func TestProgressKeepsSplitsOfFinishedSearches(t *testing.T) {
+	wc := maps.LatLng{Lat: 16.0, Lng: 108.2}
+	wards := []Area{{ID: "x-w", LatLng: wc, Boundary: square(wc, 3000)}}
+	cats := []VenueCategory{{ID: "cafe", GoogleTypes: []string{"cafe"}, RadiusM: 800}}
+	jobs := PlanVenues(wards, cats)
+	dense := &denseSearcher{dense: wc}
+	path := filepath.Join(t.TempDir(), "p.json")
 
-	const city = "zz-geo-resume"
-	cleanup := func() {
-		if _, err := pool.Exec(ctx, "delete from app.cities where id = $1", city); err != nil {
-			t.Errorf("cleanup: %v", err)
-		}
+	// Run one stops after the first search (budget): the children are skipped.
+	prog, _ := LoadProgress(path, false)
+	_, n, err := DiscoverJobs(context.Background(), dense, wards, jobs, "vi", 1, prog)
+	if err != nil || n.Made != 1 || n.Skipped == 0 {
+		t.Fatalf("%+v, %v", n, err)
 	}
-	cleanup()
-	t.Cleanup(cleanup)
-	if err := q.UpsertCity(ctx, dbgen.UpsertCityParams{
-		ID: city, Name: []byte(`{"en":"Test"}`), Timezone: "UTC", Currency: "USD",
-		Languages: []string{"en"}, TravelModes: []string{"walk"},
-	}); err != nil {
-		t.Fatal(err)
-	}
-	var rows []Area
-	for _, a := range areas[:2] {
-		id := city + a.ID
-		if err := q.UpsertArea(ctx, dbgen.UpsertAreaParams{ID: id, CityID: city, Name: []byte(`{"en":"A"}`), Lat: a.Lat, Lng: a.Lng}); err != nil {
-			t.Fatal(err)
-		}
-		rows = append(rows, Area{ID: id, LatLng: a.LatLng})
-	}
-	cat := "cafe"
-	if err := SaveVenues(ctx, pool, city, []Venue{{PlaceID: "zz-p1", AreaID: rows[0].ID, CategoryID: cat}}); err != nil {
-		t.Fatal(err)
-	}
-	// The second area's venue was last seen long ago.
-	if err := SaveVenues(ctx, pool, city, []Venue{{PlaceID: "zz-p2", AreaID: rows[1].ID, CategoryID: cat}}); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := pool.Exec(ctx, "update app.venues set last_seen_at = now() - interval '30 days' where google_place_id = 'zz-p2'"); err != nil {
+	if err := prog.Commit(); err != nil {
 		t.Fatal(err)
 	}
 
-	s, err := LoadSearched(ctx, q, city, time.Now().Add(-7*24*time.Hour))
-	if err != nil {
-		t.Fatal(err)
+	prog, _ = LoadProgress(path, false)
+	again := &denseSearcher{dense: wc}
+	_, n, err = DiscoverJobs(context.Background(), again, wards, jobs, "vi", 1000, prog)
+	if err != nil || n.Resumed != 1 || n.Made != len(again.reqs) || n.Made < 2 {
+		t.Fatalf("%+v, %d requests, %v; want the parent resumed and its children searched", n, len(again.reqs), err)
 	}
-	jobs := PlanVenues(rows, []VenueCategory{{ID: cat, GoogleTypes: []string{"cafe"}, RadiusM: 1500}})
-	todo, skipped := s.Skip(jobs)
-	if skipped != 1 || len(todo) != 1 || todo[0].From != rows[1].ID {
-		t.Errorf("skipped %d, left %+v; want only the first area skipped", skipped, todo)
+	for _, r := range again.reqs {
+		if r.Center == jobs[0].Center && r.RadiusM == jobs[0].RadiusM {
+			t.Error("the finished parent search was repeated")
+		}
 	}
 }

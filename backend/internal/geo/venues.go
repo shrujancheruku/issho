@@ -128,6 +128,9 @@ type Searches struct {
 	// Skipped is how many finer searches the budget left out: parts of
 	// bounded areas whose search came back full and weren't split.
 	Skipped int
+	// Resumed is how many searches a progress file said were already done:
+	// not repeated, not billed, not counted in Made.
+	Resumed int
 }
 
 // DiscoverVenues runs the plan, making at most budget searches. Each place
@@ -147,7 +150,7 @@ func DiscoverVenues(ctx context.Context, s maps.PlaceSearcher, areas []Area, cat
 	if len(areas) == 0 {
 		return nil, Searches{}, nil
 	}
-	return runVenueJobs(ctx, s, areas, PlanVenues(areas, cats), language, budget)
+	return runVenueJobs(ctx, s, areas, PlanVenues(areas, cats), language, budget, nil)
 }
 
 // PlanAreaVenues lists the Nearby Search calls for one area added to a city
@@ -166,10 +169,10 @@ func PlanAreaVenues(areas []Area, areaID string, cats []VenueCategory, wide bool
 // DiscoverAreaVenues runs PlanAreaVenues within budget, as DiscoverVenues.
 // Places are still assigned among all the city's areas.
 func DiscoverAreaVenues(ctx context.Context, s maps.PlaceSearcher, areas []Area, areaID string, cats []VenueCategory, wide bool, language string, budget int) ([]Venue, Searches, error) {
-	return runVenueJobs(ctx, s, areas, PlanAreaVenues(areas, areaID, cats, wide), language, budget)
+	return runVenueJobs(ctx, s, areas, PlanAreaVenues(areas, areaID, cats, wide), language, budget, nil)
 }
 
-func runVenueJobs(ctx context.Context, s maps.PlaceSearcher, areas []Area, jobs []VenueJob, language string, budget int) ([]Venue, Searches, error) {
+func runVenueJobs(ctx context.Context, s maps.PlaceSearcher, areas []Area, jobs []VenueJob, language string, budget int, prog *Progress) ([]Venue, Searches, error) {
 	var n Searches
 	if len(jobs) > budget {
 		return nil, n, fmt.Errorf("a budget of %d searches is less than the %d first ones", budget, len(jobs))
@@ -179,6 +182,16 @@ func runVenueJobs(ctx context.Context, s maps.PlaceSearcher, areas []Area, jobs 
 	for len(jobs) > 0 {
 		j := jobs[0]
 		jobs = jobs[1:]
+		key := searchKey(j)
+		if full, done := prog.finished(key); done {
+			// Searched and saved by an earlier run: its venues are in the
+			// database. Only its children may be missing.
+			n.Resumed++
+			if full {
+				jobs, n.Skipped = queueKids(j, jobs, n, budget)
+			}
+			continue
+		}
 		places, err := s.Nearby(ctx, maps.NearbyRequest{
 			Center: j.Center, RadiusM: j.RadiusM, Types: j.Category.GoogleTypes, Max: pageSize, Language: language,
 		})
@@ -195,11 +208,7 @@ func runVenueJobs(ctx context.Context, s maps.PlaceSearcher, areas []Area, jobs 
 		if len(places) >= pageSize {
 			// All of a circle's children or none, so what is searched
 			// finely is searched completely.
-			if kids := split(j); n.Made+len(jobs)+len(kids) <= budget {
-				jobs = append(jobs, kids...)
-			} else {
-				n.Skipped += len(kids)
-			}
+			jobs, n.Skipped = queueKids(j, jobs, n, budget)
 		}
 		for _, p := range places {
 			k := [2]string{p.ID, j.Category.ID}
@@ -221,8 +230,22 @@ func runVenueJobs(ctx context.Context, s maps.PlaceSearcher, areas []Area, jobs 
 			seen[k] = true
 			out = append(out, Venue{PlaceID: p.ID, AreaID: a.ID, CategoryID: j.Category.ID})
 		}
+		// Only now, with its venues in out: the caller commits the progress
+		// after saving them, so a listed search always has its venues stored.
+		prog.record(key, len(places) >= pageSize)
 	}
 	return out, n, nil
+}
+
+// queueKids adds a full search's children to the queue if the budget has
+// room for all of them, else counts them as skipped (all or none, so what is
+// searched finely is searched completely).
+func queueKids(j VenueJob, jobs []VenueJob, n Searches, budget int) ([]VenueJob, int) {
+	kids := split(j)
+	if n.Made+len(jobs)+len(kids) <= budget {
+		return append(jobs, kids...), n.Skipped
+	}
+	return jobs, n.Skipped + len(kids)
 }
 
 // Locate returns the area p is in: the first whose boundary contains it,
