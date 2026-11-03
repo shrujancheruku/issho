@@ -79,7 +79,7 @@ Every process reads its environment through `internal/platform/config` (`Load` f
 | `GOOGLE_TRANSLATE_API_KEY` | with `TRANSLATOR=google` | with `TRANSLATOR=google` | Translator |
 | `EXPO_ACCESS_TOKEN` | | required | Push delivery |
 
-`SENTRY_ENVIRONMENT` defaults to `APP_ENV`. Set `APP_ENV` in each deployment: `config/deploy.yml` sets `preview` for the hosted API and worker, which point at `issho-dev`; `production` is for a future real production environment.
+`SENTRY_ENVIRONMENT` defaults to `APP_ENV`. Set `APP_ENV` in each deployment: `config/deploy.production.yml` sets `preview` for the hosted API and worker, which point at `issho-dev`; `production` is for a future real production environment.
 
 | Variable | Required | Example (local) | Notes |
 |---|---|---|---|
