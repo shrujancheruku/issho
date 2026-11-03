@@ -53,7 +53,7 @@ message Profile {
   bool same_gender_only = 4;
   // Read-only: the city of home_area_id.
   string city_id = 5;
-  // Area id from CatalogService.ListCities, e.g. "tokyo-kichijoji".
+  // Area id from CatalogService.ListCities, e.g. "tokyo-musashino".
   string home_area_id = 6;
   // Longest trip from home_area_id they'll make, 5–180 minutes.
   int32 max_travel_min = 7;
