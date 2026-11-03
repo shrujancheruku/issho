@@ -17,6 +17,7 @@ import (
 
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	"github.com/shrujancheruku/issho/backend/internal/matching"
+	"github.com/shrujancheruku/issho/backend/internal/platform/pgconv"
 )
 
 // ErrClosed means the plan doesn't exist or no longer takes signups.
@@ -84,18 +85,18 @@ func openFromRow(r dbgen.ListOpenPlansRow) Open {
 			Plan: matching.Plan{
 				Area:      matching.AreaID(r.AreaID),
 				Activity:  matching.ActivityID(r.ActivityID),
-				FollowUp:  matching.ActivityID(deref(r.FollowUpID)),
+				FollowUp:  matching.ActivityID(pgconv.Deref(r.FollowUpID)),
 				Primary:   r.PrimaryLanguage,
-				Secondary: deref(r.SecondaryLanguage),
+				Secondary: pgconv.Deref(r.SecondaryLanguage),
 			},
 			Signups: int(r.Signups),
 		},
 		Round:         int(r.Round),
 		Window:        Window{Start: r.WindowStart.Time, Days: int(r.WindowDays), Deadline: r.SignupDeadline.Time},
-		Venue:         deref(r.VenuePlaceID),
-		FollowUpVenue: deref(r.FollowUpVenuePlaceID),
+		Venue:         pgconv.Deref(r.VenuePlaceID),
+		FollowUpVenue: pgconv.Deref(r.FollowUpVenuePlaceID),
 		Route:         routeFrom(r.RoutePolyline, r.RouteSeconds),
-		MeetingPlace:  deref(r.MeetingPlaceID),
+		MeetingPlace:  pgconv.Deref(r.MeetingPlaceID),
 		Walk:          r.Walk,
 		WalkTitle:     r.Title,
 		WalkSummary:   r.Description,
@@ -213,9 +214,27 @@ func SaveSignup(ctx context.Context, pool *pgxpool.Pool, planID uuid.UUID, s mat
 	})
 }
 
-// Withdraw removes a person's signup. Doing it twice is fine.
+// Withdraw removes a person's signup. Doing it twice is fine. Run it in a
+// transaction (WithdrawSignup starts one): it takes the plan's lock like
+// SaveSignup, so a withdrawal waits for a scheduling pass on the plan
+// instead of interleaving with it (the pass would otherwise place or invite
+// someone who has just withdrawn). A plan that has closed holds its signups
+// as a record, so there is nothing to withdraw from.
 func Withdraw(ctx context.Context, q *dbgen.Queries, planID, userID uuid.UUID) error {
+	if _, err := q.LockOpenPlan(ctx, planID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil
+		}
+		return err
+	}
 	return q.DeleteSignup(ctx, dbgen.DeleteSignupParams{PlanID: planID, UserID: userID})
+}
+
+// WithdrawSignup is Withdraw in its own transaction.
+func WithdrawSignup(ctx context.Context, pool *pgxpool.Pool, planID, userID uuid.UUID) error {
+	return pgx.BeginFunc(ctx, pool, func(tx pgx.Tx) error {
+		return Withdraw(ctx, dbgen.New(tx), planID, userID)
+	})
 }
 
 // LoadSignups returns a plan's waiting signups, sorted by user, with
@@ -372,6 +391,8 @@ func ptr(s string) *string {
 	return &s
 }
 
+// deref stays only because plans/run.go (held by #183 when this was written)
+// still calls it; move that to pgconv.Deref, then delete this.
 func deref(s *string) string {
 	if s == nil {
 		return ""

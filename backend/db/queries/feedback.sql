@@ -72,12 +72,23 @@ order by k.picker_id, k.picked_id;
 
 -- Pairs never to group again (app.kept_apart: a report, or a "rather not"),
 -- where either person lives in the city. A pair with someone elsewhere only
--- matters to that city's own pass, so the extra rows are harmless.
+-- matters to that city's own pass, so the extra rows are harmless. Each side
+-- is looked up by the city's people first (one branch per side, so each can
+-- use the underlying indexes), not by scanning every pair.
 -- name: ListCityBlocks :many
+with city_people as (
+  select p.user_id
+  from app.profiles p
+  join app.areas a on a.id = p.home_area_id
+  where a.city_id = @city_id
+)
 select k.user_id::uuid as reporter_id, k.other_id
 from app.kept_apart k
-where exists (select 1 from app.profiles p join app.areas a on a.id = p.home_area_id
-              where p.user_id in (k.user_id, k.other_id) and a.city_id = @city_id)
+where k.user_id in (select user_id from city_people)
+union
+select k.user_id, k.other_id
+from app.kept_apart k
+where k.other_id in (select user_id from city_people)
 order by 1, 2;
 
 -- Pairs in the city who have met: both attended the same group

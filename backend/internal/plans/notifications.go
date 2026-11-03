@@ -4,13 +4,12 @@ import (
 	"context"
 	"errors"
 
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgtype"
 
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	"github.com/shrujancheruku/issho/backend/internal/matching"
 	"github.com/shrujancheruku/issho/backend/internal/notifications"
+	"github.com/shrujancheruku/issho/backend/internal/platform/pgconv"
 	"github.com/shrujancheruku/issho/backend/internal/uistrings"
 )
 
@@ -78,22 +77,20 @@ func (r *NotificationRenderer) Render(ctx context.Context, items []notifications
 // title is the plan's title in the person's language; gone is true if the
 // plan was deleted (nothing to say, so the notification is skipped).
 func (r *NotificationRenderer) title(ctx context.Context, q *dbgen.Queries, p notifications.Pending) (title string, gone bool, err error) {
-	pl, err := q.GetNotificationPlan(ctx, dbgen.GetNotificationPlanParams{EventID: nullable(p.Ref.EventID), PlanID: nullable(p.Ref.PlanID)})
+	pl, err := q.GetNotificationPlan(ctx, dbgen.GetNotificationPlanParams{EventID: pgconv.Nullable(p.Ref.EventID), PlanID: pgconv.Nullable(p.Ref.PlanID)})
 	if errors.Is(err, pgx.ErrNoRows) {
 		return "", true, nil
 	}
 	if err != nil {
 		return "", false, err
 	}
-	plan := titled{matching.Plan{Activity: matching.ActivityID(pl.ActivityID), FollowUp: matching.ActivityID(deref(pl.FollowUpID))}, pl.Title}
+	plan := titled{matching.Plan{Activity: matching.ActivityID(pl.ActivityID), FollowUp: matching.ActivityID(pgconv.Deref(pl.FollowUpID))}, pl.Title}
 	t, _, err := r.Plans.titles(ctx, q, pl.CityID, Caller{Primary: p.Language}, []titled{plan})
 	if err != nil {
 		return "", false, err
 	}
 	return t[0], false, nil
 }
-
-func nullable(id uuid.UUID) pgtype.UUID { return pgtype.UUID{Bytes: id, Valid: id != uuid.Nil} }
 
 // ActivityTitle is an activity's name in a language, translated like plan
 // titles; other modules (crews) title their notifications with it.

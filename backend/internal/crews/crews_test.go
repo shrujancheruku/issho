@@ -55,7 +55,9 @@ func outing(t *testing.T, f *testfixture.Fixture, people []uuid.UUID) (uuid.UUID
 		}
 	}
 	// The worker marks an outing done once it is over; people only count as
-	// having met (app.attendance) at a finished outing.
+	// having met (app.attendance) at a finished outing. So a pair who meet
+	// today isn't offered a crew until the event is done: feedback opens 3 h
+	// after the start, but FinishPastEvents sets done on the next local day.
 	if _, err := f.Pool.Exec(ctx, `update app.events set status = 'done' where id = $1`, eventID); err != nil {
 		t.Fatal(err)
 	}

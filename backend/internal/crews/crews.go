@@ -19,6 +19,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/matching"
 	"github.com/shrujancheruku/issho/backend/internal/plans"
 	"github.com/shrujancheruku/issho/backend/internal/platform/bound"
+	"github.com/shrujancheruku/issho/backend/internal/platform/pgconv"
 )
 
 // A crew's state (app.crews.status).
@@ -110,7 +111,7 @@ func (s *Service) List(ctx context.Context, userID uuid.UUID) ([]Item, error) {
 	Cap.Check(ctx, nil, len(rows))
 	items := make([]Item, len(rows))
 	for i, r := range rows {
-		items[i] = Item{ID: r.ID, Status: r.Status, Activity: deref(r.ActivityID), Area: deref(r.AreaID), OfferUntil: r.OfferUntil.Time, Response: r.Response}
+		items[i] = Item{ID: r.ID, Status: r.Status, Activity: pgconv.Deref(r.ActivityID), Area: pgconv.Deref(r.AreaID), OfferUntil: r.OfferUntil.Time, Response: r.Response}
 		if items[i].Members, err = mates(ctx, q, r.ID, userID); err != nil {
 			return nil, err
 		}
@@ -131,7 +132,7 @@ func (s *Service) Get(ctx context.Context, userID, crewID uuid.UUID) (Item, erro
 	if !newMembership(r.Status, r.Response, r.OfferUntil).Visible() {
 		return Item{}, ErrNoCrew
 	}
-	it := Item{ID: crewID, Status: r.Status, Activity: deref(r.ActivityID), Area: deref(r.AreaID), OfferUntil: r.OfferUntil.Time, Response: r.Response}
+	it := Item{ID: crewID, Status: r.Status, Activity: pgconv.Deref(r.ActivityID), Area: pgconv.Deref(r.AreaID), OfferUntil: r.OfferUntil.Time, Response: r.Response}
 	it.Members, err = mates(ctx, q, crewID, userID)
 	return it, err
 }
@@ -351,11 +352,4 @@ func (s *Service) ReportMember(ctx context.Context, userID, crewID, mateID uuid.
 		CrewID: pgtype.UUID{Bytes: crewID, Valid: true}, Reason: reason, Details: details,
 		At: pgtype.Timestamptz{Time: now, Valid: true},
 	})
-}
-
-func deref(s *string) string {
-	if s == nil {
-		return ""
-	}
-	return *s
 }

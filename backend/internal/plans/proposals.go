@@ -14,6 +14,7 @@ import (
 
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	"github.com/shrujancheruku/issho/backend/internal/matching"
+	"github.com/shrujancheruku/issho/backend/internal/platform/pgconv"
 )
 
 // Group review (00022): in a city under review the scheduler's round waits
@@ -275,7 +276,7 @@ func (s *Service) SetMeetingPoint(ctx context.Context, groupID uuid.UUID, text s
 	if text != "" {
 		raw = english(text)
 		if s.Translations != nil && s.Translations.Translator != nil {
-			if filled, err := s.Translations.Prefill(ctx, text, meetingPointContext, []string{g.PrimaryLanguage, deref(g.SecondaryLanguage)}); err == nil {
+			if filled, err := s.Translations.Prefill(ctx, text, meetingPointContext, []string{g.PrimaryLanguage, pgconv.Deref(g.SecondaryLanguage)}); err == nil {
 				raw = filled
 			}
 		}

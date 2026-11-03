@@ -20,6 +20,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
+	"github.com/shrujancheruku/issho/backend/internal/platform/pgconv"
 	"github.com/shrujancheruku/issho/backend/internal/platform/sentry"
 	"github.com/shrujancheruku/issho/backend/internal/push"
 )
@@ -29,8 +30,6 @@ import (
 type Ref struct {
 	EventID, PlanID, CrewID uuid.UUID
 }
-
-func nullable(id uuid.UUID) pgtype.UUID { return pgtype.UUID{Bytes: id, Valid: id != uuid.Nil} }
 
 func fromNullable(id pgtype.UUID) uuid.UUID {
 	if !id.Valid {
@@ -48,7 +47,7 @@ func Enqueue(ctx context.Context, q *dbgen.Queries, kind string, users []uuid.UU
 	}
 	return q.InsertNotifications(ctx, dbgen.InsertNotificationsParams{
 		UserIds: users, Kind: kind,
-		EventID: nullable(ref.EventID), PlanID: nullable(ref.PlanID), CrewID: nullable(ref.CrewID),
+		EventID: pgconv.Nullable(ref.EventID), PlanID: pgconv.Nullable(ref.PlanID), CrewID: pgconv.Nullable(ref.CrewID),
 	})
 }
 
