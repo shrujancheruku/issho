@@ -28,6 +28,9 @@ gid = Integer(gid)
 config = Kamal::Configuration.create_from(config_file: Pathname.new("config/deploy.yml"), destination: destination)
 
 config.roles.each do |role|
+  # This writes to the machine it runs on, so a role on several hosts (each
+  # with its own env file) is beyond it.
+  abort "#{role.name}: #{role.hosts.size} hosts; kamal-role-env.rb supports one host per role" unless role.hosts.size == 1
   host = role.primary_host
   # secrets_path is relative to the SSH user's home, as Kamal uses it.
   path = File.join(home, role.secrets_path)

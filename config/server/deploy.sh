@@ -26,6 +26,8 @@ git checkout --quiet --detach "$sha"
 [ -s config/kamal-image ] || { echo "deploy: $sha has no config/kamal-image (it predates the pin); deploy a newer commit" >&2; exit 1; }
 kamal_image=$(cat config/kamal-image)
 [ -n "$kamal_image" ] || { echo "deploy: config/kamal-image is blank" >&2; exit 1; }
+# Likewise the script that writes the role env files (below).
+[ -s config/server/kamal-role-env.rb ] || { echo "deploy: $sha has no config/server/kamal-role-env.rb (it predates the bootstrap); deploy a newer commit" >&2; exit 1; }
 
 kamal() {
   # The repo checkout as the workdir, with the gitignored files Kamal reads
@@ -57,12 +59,14 @@ kamal registry login -d production
 # a host that has never deployed this service has none yet. Write the missing
 # ones first (no container starts; docs/deploy.md, "Automatic deploys").
 # Fails closed: set -e stops the deploy before migrate if this fails.
+# Only ~kamal/.kamal is writable, and the checkout is read-only.
+mkdir -p /home/kamal/.kamal
 KAMAL_REGISTRY_PASSWORD="$token" docker run --rm \
-  -v /opt/issho/repo:/workdir \
+  -v /opt/issho/repo:/workdir:ro \
   -v /opt/issho/kamal-secrets:/workdir/.kamal/secrets.production:ro \
   -v /opt/issho/env:/workdir/.env.issho-prod:ro \
   -v /opt/issho/certs:/root/.config/issho:ro \
-  -v /home/kamal:/home/kamal \
+  -v /home/kamal/.kamal:/home/kamal/.kamal \
   -e KAMAL_REGISTRY_PASSWORD \
   -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0='*' \
   --entrypoint ruby \
