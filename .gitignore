@@ -33,7 +33,7 @@ google-services.json
 *firebase-adminsdk*.json
 GoogleService-Info.plist
 .kamal/secrets*
-!.kamal/secrets.example
+!.kamal/secrets.production.example
 
 # Claude Code: per-user settings stay local; .claude/skills and
 # .claude/orchestration.md are shared; agent worktrees are throwaway checkouts

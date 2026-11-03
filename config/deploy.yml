@@ -5,8 +5,18 @@
 # The domain is joinissho.com (api.joinissho.com for the API); the server is
 # a Google Compute Engine VM in Tokyo (issho-api, project issho-dev-512213).
 # See docs/deploy.md for the one-time setup and the deploy steps.
+#
+# This file holds what every environment shares. What names an environment
+# (the server, the API's host, the Supabase project, the allowed origins, the
+# backup bucket) lives in deploy.<destination>.yml, merged over this file by
+# `kamal -d <destination>`; today only deploy.production.yml. Every Kamal call
+# passes `-d production`: require_destination (below) makes Kamal refuse any
+# call without one.
 
 service: issho
+
+# A call without -d raises at config load, before any host work.
+require_destination: true
 
 # GitHub Container Registry, under the repository's owner (private package).
 # The deploy workflow created it (2026-10-26), so it's linked to the repository
@@ -16,18 +26,16 @@ image: shrujancheruku/issho
 
 servers:
   web:
-    hosts:
-      - 35.243.76.67 # GCE issho-api, asia-northeast1-b (static address)
+    hosts: [] # per destination
   # The worker runs on the same server. It has no proxy: it serves no HTTP,
   # and River's leader election means a second worker would be safe but idle.
   worker:
-    hosts:
-      - 35.243.76.67
+    hosts: [] # per destination
     cmd: worker
     proxy: false
 
 proxy:
-  host: api.joinissho.com # proxied by Cloudflare
+  # host: per destination
   app_port: 8080
   # Cloudflare terminates TLS for clients and connects to the server over
   # HTTPS with a Cloudflare origin certificate (SSL mode "Full (strict)").
@@ -69,16 +77,7 @@ builder:
 env:
   clear:
     API_ADDR: ":8080"
-    # issho-dev for now (owner's decision, 2026-10-26: pre-release, only the
-    # owner and testers); a production project in Tokyo before real users.
-    SUPABASE_URL: https://yjnzrhusfxilktbjrzsw.supabase.co
-    # The sites on joinissho.com, plus their workers.dev addresses while both work.
-    ALLOWED_ORIGINS: https://admin.joinissho.com,https://app.joinissho.com,https://issho-admin.shrujancheruku.workers.dev,https://issho-web.shrujancheruku.workers.dev
-    # preview while this deploy points at issho-dev: it keeps the optional-key
-    # behaviour. Switch to production when a real production environment exists;
-    # that refuses to start without its keys (backend/README.md). Also the
-    # default for SENTRY_ENVIRONMENT.
-    APP_ENV: preview
+    # SUPABASE_URL, ALLOWED_ORIGINS, APP_ENV: per destination.
   secret:
     # A session-mode connection (direct or the session pooler), never the
     # transaction pooler: the API LISTENs for chat and the worker for River.
@@ -98,16 +97,14 @@ accessories:
   # curl; its major version matches the database's), built and pushed by hand.
   backup:
     image: ghcr.io/shrujancheruku/issho-backup:17
-    host: 35.243.76.67
+    # host: per destination
     cmd: sh /backup/backup.sh
     files:
       - config/backup/backup.sh:/backup/backup.sh
     env:
       clear:
-        R2_ENDPOINT: https://b6f3e52f2491d38421018e275ef7896b.r2.cloudflarestorage.com
-        R2_BUCKET: issho-backups # 30-day lifecycle rule
+        # R2_ENDPOINT, R2_BUCKET, SENTRY_ENVIRONMENT: per destination.
         BACKUP_AT: "18" # UTC hour: 03:00 in Tokyo, the quietest time for the main city
-        SENTRY_ENVIRONMENT: production
       secret:
         - DATABASE_URL
         - R2_ACCESS_KEY_ID

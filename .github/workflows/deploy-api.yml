@@ -113,7 +113,7 @@ jobs:
             files=$(git diff --name-only "$base" "$SHA")  # grep -q reads a here-string, not a pipe: no SIGPIPE under pipefail
             grep -qE "$3" <<<"$files" && echo true || echo false
           }
-          echo "api=$(changed deploy-api.yml deploy '^(backend/|data/|config/deploy\.yml$|config/server/|config/kamal-image$|\.github/workflows/deploy-api\.yml$)')" >> "$GITHUB_OUTPUT"
+          echo "api=$(changed deploy-api.yml deploy '^(backend/|data/|config/deploy(\.[a-z]+)?\.yml$|config/server/|config/kamal-image$|\.github/workflows/deploy-api\.yml$)')" >> "$GITHUB_OUTPUT"
 
   deploy:
     needs: changes
@@ -132,11 +132,11 @@ jobs:
         # password only through a secrets file: one that points at the
         # environment, holding no value itself.
         run: |
-          printf '%s\n' 'KAMAL_REGISTRY_PASSWORD=$KAMAL_REGISTRY_PASSWORD' > .kamal/secrets
+          printf '%s\n' 'KAMAL_REGISTRY_PASSWORD=$KAMAL_REGISTRY_PASSWORD' > .kamal/secrets.production
           docker run --rm -v "$PWD:/workdir" -v /var/run/docker.sock:/var/run/docker.sock \
             -e KAMAL_REGISTRY_PASSWORD \
             -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0='*' \
-            "$(cat config/kamal-image)" build push
+            "$(cat config/kamal-image)" build push -d production
       - name: Deploy on the server
         env:
           DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
