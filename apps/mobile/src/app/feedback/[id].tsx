@@ -15,6 +15,7 @@ import { ThemedText } from '@/components/themed-text';
 import { Thread } from '@/components/thread';
 import { Spacing } from '@/constants/theme';
 import { useEvent, useFeedback, useSubmitFeedback, type FeedbackAnswer } from '@/features/events/data';
+import { submittedAnswer, toggleMate, type MateList } from '@/features/events/feedback';
 import { Heading } from '@/features/plans/fact';
 import { formatStart } from '@/features/plans/format';
 import { useNow } from '@/hooks/use-now';
@@ -99,15 +100,7 @@ export default function FeedbackScreen() {
   const rated = answer.planRating > 0 && answer.groupRating > 0;
   const mates = f?.mates.filter((m) => !m.cancelled) ?? [];
   // Someone is in at most one of the two lists: choosing one clears the other.
-  const toggle = (list: 'picks' | 'avoid', mate: string) => {
-    const other = list === 'picks' ? 'avoid' : 'picks';
-    const on = answer[list].includes(mate);
-    setAnswer({
-      ...answer,
-      [list]: on ? answer[list].filter((p) => p !== mate) : [...answer[list], mate],
-      [other]: answer[other].filter((p) => p !== mate),
-    });
-  };
+  const toggle = (list: MateList, mate: string) => setAnswer(toggleMate(answer, list, mate));
 
   let body;
   if (denied) {
@@ -218,7 +211,7 @@ export default function FeedbackScreen() {
             label={t('feedback.send')}
             disabled={answer.attended && !rated}
             busy={submit.isPending}
-            onPress={() => submit.mutate(answer.attended ? answer : { attended: false, planRating: 0, groupRating: 0, picks: [], avoid: [] }, {
+            onPress={() => submit.mutate(submittedAnswer(answer), {
                 onSuccess: () => {
                   haptics.success();
                   leave();
