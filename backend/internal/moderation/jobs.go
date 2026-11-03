@@ -55,7 +55,9 @@ type Remover struct {
 // started and crews. It's safe to run again (both steps only touch what's
 // still there), so River's retries finish a partial run. If the suspension
 // was lifted before the job ran, it does nothing: the person is back in good
-// standing, and nothing is removed after the fact.
+// standing, and nothing is removed after the fact. Removal is judged as of
+// the suspension (now = args.At), not as of the run, so a retry hours later
+// decides "hasn't started" exactly as the first attempt would have.
 func (r *Remover) Run(ctx context.Context, args RemoveSuspendedArgs) error {
 	suspended, err := r.Q.IsSuspended(ctx, args.UserID)
 	if err != nil {

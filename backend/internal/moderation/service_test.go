@@ -236,3 +236,26 @@ func TestIntegrationSuspendPersonValidation(t *testing.T) {
 		t.Errorf("%d suspensions made by refused calls", n)
 	}
 }
+
+// Uniqueness only holds while a job is live: once the first has finished, a
+// later suspension (after a lift) queues a new one.
+func TestIntegrationResuspendAfterFinishedJobQueuesAnother(t *testing.T) {
+	f := newModFixture(t, "zz-mod-resuspend")
+	ctx := context.Background()
+	user, admin := f.Users[0], f.Users[2]
+	if err := f.svc.Suspend(ctx, admin, user, "reason", day(8, 0)); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.Pool.Exec(ctx, `update river.river_job set state = 'completed', finalized_at = now() where kind = $1 and args->>'user_id' = $2`, KindRemoveSuspended, user.String()); err != nil {
+		t.Fatal(err)
+	}
+	if err := f.svc.Lift(ctx, admin, user, "appeal", day(8, 1)); err != nil {
+		t.Fatal(err)
+	}
+	if err := f.svc.Suspend(ctx, admin, user, "again", day(9, 0)); err != nil {
+		t.Fatal(err)
+	}
+	if n := f.queued(t, user); n != 2 {
+		t.Errorf("%d jobs, want 2 (the finished one and a new one)", n)
+	}
+}
