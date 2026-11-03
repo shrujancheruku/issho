@@ -11,7 +11,6 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"connectrpc.com/connect"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -61,7 +60,7 @@ type area struct {
 	Name string
 }
 
-var errNoCity = connect.NewError(connect.CodeNotFound, errors.New("no such city"))
+var errNoCity = errs.NotFound("no such city")
 
 // cityAreas returns a city's areas; NOT_FOUND for an unknown city.
 func cityAreas(ctx context.Context, q *dbgen.Queries, cityID string) ([]area, error) {
@@ -286,7 +285,7 @@ func (s *Service) Search(ctx context.Context, p SearchParams) (Searched, error) 
 		return Searched{}, errs.Invalid("query: 1 to %d characters", MaxQuery)
 	}
 	if s.Places == nil {
-		return Searched{}, connect.NewError(connect.CodeFailedPrecondition, errors.New("searching needs GOOGLE_MAPS_API_KEY"))
+		return Searched{}, errs.Refused("searching needs GOOGLE_MAPS_API_KEY")
 	}
 	q := dbgen.New(s.DB)
 	areas, err := cityAreas(ctx, q, p.CityID)
@@ -328,7 +327,7 @@ func (s *Service) Search(ctx context.Context, p SearchParams) (Searched, error) 
 	if err := errors.Join(failures...); err != nil {
 		// Google's text stays in the log, not in the response.
 		slog.ErrorContext(ctx, "venue search failed", "city", p.CityID, "err", err)
-		return Searched{}, connect.NewError(connect.CodeUnavailable, errors.New("Google search failed; try again"))
+		return Searched{}, errs.Upstream("google", err)
 	}
 	var found []maps.SearchResult
 	seen := map[string]bool{}
@@ -386,7 +385,7 @@ func (s *Service) Search(ctx context.Context, p SearchParams) (Searched, error) 
 // returns the area it went to.
 func (s *Service) Add(ctx context.Context, cityID, placeID, categoryID string, by uuid.UUID) (string, error) {
 	if s.Places == nil {
-		return "", connect.NewError(connect.CodeFailedPrecondition, errors.New("adding needs GOOGLE_MAPS_API_KEY"))
+		return "", errs.Refused("adding needs GOOGLE_MAPS_API_KEY")
 	}
 	if placeID == "" || strings.ContainsAny(placeID, "/?#") {
 		return "", errs.Invalid("place_id: a Google place id")
@@ -430,7 +429,7 @@ func (s *Service) Add(ctx context.Context, cityID, placeID, categoryID string, b
 		})
 		if err == nil && len(changed) == 0 {
 			// AddVenue skipped it: another city has the place in that category.
-			return connect.NewError(connect.CodeFailedPrecondition, errors.New("another city already has this place"))
+			return errs.Refused("another city already has this place")
 		}
 		return err
 	})

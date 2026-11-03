@@ -173,3 +173,9 @@ func WithCause(err, cause error) error {
 	}
 	return err
 }
+
+// Refused is Precondition without a reason: FailedPrecondition for a call
+// that's right but not now, where no screen words it differently.
+func Refused(format string, a ...any) error {
+	return &Error{Kind: KindPrecondition, msg: fmt.Sprintf(format, a...)}
+}

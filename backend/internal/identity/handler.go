@@ -8,6 +8,7 @@ import (
 
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
 	"github.com/shrujancheruku/issho/backend/internal/platform/auth"
+	"github.com/shrujancheruku/issho/backend/internal/platform/errs"
 )
 
 type Handler struct {
@@ -22,7 +23,7 @@ func (h *Handler) GetMe(ctx context.Context, _ *connect.Request[isshov1.GetMeReq
 	acct, err := h.Svc.Me(ctx, c)
 	if err != nil {
 		if errors.Is(err, ErrAccountDeleted) {
-			return nil, connect.NewError(connect.CodeUnauthenticated, err)
+			return nil, errs.Unauthenticated("%s", err)
 		}
 		return nil, err
 	}
@@ -47,7 +48,7 @@ func (h *Handler) DeleteAccount(ctx context.Context, _ *connect.Request[isshov1.
 	}
 	if err := h.Svc.DeleteAccount(ctx, c); err != nil {
 		if errors.Is(err, ErrDeletionUnavailable) {
-			return nil, connect.NewError(connect.CodeFailedPrecondition, err)
+			return nil, errs.Refused("%s", err)
 		}
 		return nil, err
 	}

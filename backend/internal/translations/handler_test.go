@@ -438,7 +438,7 @@ func TestDraftAppString(t *testing.T) {
 		t.Errorf("another language: %v", err)
 	}
 	d.answer = "ログイン中" // lost {email}
-	if _, err := draft(japanese, "ja", "who", ""); connect.CodeOf(err) != connect.CodeUnavailable {
+	if _, err := draft(japanese, "ja", "who", ""); connect.CodeOf(err) != connect.CodeFailedPrecondition {
 		t.Errorf("lost placeholder: %v", err)
 	}
 }

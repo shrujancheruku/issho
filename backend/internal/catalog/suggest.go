@@ -7,6 +7,7 @@ import (
 	"connectrpc.com/connect"
 
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
+	"github.com/shrujancheruku/issho/backend/internal/platform/errs"
 	"github.com/shrujancheruku/issho/backend/internal/tagging"
 )
 
@@ -22,9 +23,9 @@ func (h *Handler) SuggestActivities(ctx context.Context, req *connect.Request[is
 	var invalid *tagging.InvalidError
 	switch {
 	case errors.As(err, &invalid):
-		return nil, connect.NewError(connect.CodeInvalidArgument, err)
+		return nil, errs.Invalid("%s", err)
 	case errors.Is(err, tagging.ErrUnavailable):
-		return nil, connect.NewError(connect.CodeFailedPrecondition, err)
+		return nil, errs.Refused("%s", err)
 	case errors.Is(err, tagging.ErrNoSuggestion):
 		// The model declined; to the person that's just "nothing matched".
 		tags = nil

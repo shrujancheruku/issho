@@ -66,7 +66,7 @@ func (h *Handler) now() time.Time {
 
 func (h *Handler) repo() (Repo, error) {
 	if h.GitHub == nil {
-		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("the city-pack editor needs GITHUB_TOKEN on the API"))
+		return nil, errs.Refused("the city-pack editor needs GITHUB_TOKEN on the API")
 	}
 	return h.GitHub, nil
 }
@@ -75,10 +75,10 @@ func (h *Handler) repo() (Repo, error) {
 // (URLs, rate-limit details) stays in the log, not in the response.
 func githubError(ctx context.Context, err error) error {
 	if errors.Is(err, github.ErrNotFound) {
-		return connect.NewError(connect.CodeNotFound, errors.New("no such city pack on the default branch"))
+		return errs.NotFound("no such city pack on the default branch")
 	}
 	slog.ErrorContext(ctx, "github request failed", "err", err)
-	return connect.NewError(connect.CodeUnavailable, errors.New("GitHub is unavailable; try again"))
+	return errs.Upstream("github", err)
 }
 
 // Compiled once: check runs on every proposal and apply.
@@ -175,7 +175,7 @@ func (h *Handler) GetCityPack(ctx context.Context, req *connect.Request[isshov1.
 			return nil, err
 		}
 		if !ok {
-			return nil, connect.NewError(connect.CodeNotFound, errors.New("no such city pack on the default branch"))
+			return nil, errs.NotFound("no such city pack on the default branch")
 		}
 		out.Pack = toProto(p)
 	} else if _, err := h.repo(); err != nil {
@@ -286,7 +286,7 @@ func (h *Handler) ApplyCityPack(ctx context.Context, req *connect.Request[isshov
 		return nil, err
 	}
 	if !ok {
-		return nil, connect.NewError(connect.CodeNotFound, errors.New("no such city pack on the default branch"))
+		return nil, errs.NotFound("no such city pack on the default branch")
 	}
 	if err := h.check(ctx, p); err != nil {
 		return nil, err
@@ -296,13 +296,13 @@ func (h *Handler) ApplyCityPack(ctx context.Context, req *connect.Request[isshov
 	d, err := cities.Apply(ctx, h.DB, h.Router, p, cities.Options{})
 	if errors.Is(err, cities.ErrRefused) {
 		// Names areas and counts only, nothing was written.
-		return nil, connect.NewError(connect.CodeFailedPrecondition, err)
+		return nil, errs.Refused("%s", err)
 	}
 	if errors.Is(err, cities.ErrTravelTimes) {
 		// The pack is seeded; only Google's answer is missing, and the
 		// worker's refresh retries within a day. Google's text stays in the log.
 		slog.ErrorContext(ctx, "applied a city pack but its travel times failed", "city", p.ID, "err", err)
-		return nil, connect.NewError(connect.CodeUnavailable, errors.New("seeded, but Google's travel times failed (the worker retries within a day)"))
+		return nil, errs.Upstream("google", err)
 	}
 	if err != nil {
 		return nil, err
@@ -317,18 +317,18 @@ func (h *Handler) DiscoverAreaVenues(ctx context.Context, req *connect.Request[i
 		return nil, err
 	}
 	if h.Places == nil {
-		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("finding venues needs GOOGLE_MAPS_API_KEY"))
+		return nil, errs.Refused("finding venues needs GOOGLE_MAPS_API_KEY")
 	}
 	searches, venues, err := cities.DiscoverAreaVenues(ctx, h.DB, h.Places, req.Msg.CityId, req.Msg.AreaId)
 	switch {
 	case errors.Is(err, geo.ErrCityNotFound):
 		// Only "not seeded" is NotFound: a database failure must not look like it.
-		return nil, connect.NewError(connect.CodeNotFound, errors.New("no such city"))
+		return nil, errs.NotFound("no such city")
 	case errors.Is(err, cities.ErrAreaNotInCity):
 		return nil, errs.Invalid("area_id: not in that city")
 	case errors.Is(err, cities.ErrSearch):
 		slog.ErrorContext(ctx, "area venue search failed", "city", req.Msg.CityId, "area", req.Msg.AreaId, "err", err)
-		return nil, connect.NewError(connect.CodeUnavailable, errors.New("Google search failed; try again"))
+		return nil, errs.Upstream("google", err)
 	case err != nil:
 		return nil, err
 	}

@@ -11,6 +11,7 @@ import (
 
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
 	"github.com/shrujancheruku/issho/backend/internal/platform/auth"
+	"github.com/shrujancheruku/issho/backend/internal/platform/errs"
 )
 
 // Handler serves ChatService.
@@ -88,7 +89,7 @@ func call(ctx context.Context, r *isshov1.ChatRoom) (uuid.UUID, Room, error) {
 	}
 	room, err := ParseRoom(r.GetEventId(), r.GetCrewId())
 	if err != nil {
-		return uuid.Nil, Room{}, connect.NewError(connect.CodeInvalidArgument, errors.New("room: exactly one of event_id or crew_id, as an id"))
+		return uuid.Nil, Room{}, errs.Invalid("room: exactly one of event_id or crew_id, as an id")
 	}
 	return c.UserID, room, nil
 }
@@ -96,13 +97,13 @@ func call(ctx context.Context, r *isshov1.ChatRoom) (uuid.UUID, Room, error) {
 func roomError(err error) error {
 	switch {
 	case errors.Is(err, ErrBadMessage):
-		return connect.NewError(connect.CodeInvalidArgument, err)
+		return errs.Invalid("%s", err)
 	case errors.Is(err, ErrNoRoom):
-		return connect.NewError(connect.CodeNotFound, err)
+		return errs.NotFound("%s", err)
 	case errors.Is(err, ErrForbidden):
-		return connect.NewError(connect.CodePermissionDenied, err)
+		return errs.Forbidden("%s", err)
 	case errors.Is(err, ErrClosed):
-		return connect.NewError(connect.CodeFailedPrecondition, err)
+		return errs.Refused("%s", err)
 	}
 	return err
 }

@@ -87,7 +87,7 @@ func (h *ReviewHandler) GetReviewEvent(ctx context.Context, req *connect.Request
 	q := dbgen.New(h.Svc.DB)
 	ev, err := q.GetReviewEvent(ctx, id)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return nil, connect.NewError(connect.CodeNotFound, ErrNoProposal)
+		return nil, errs.NotFound("%s", ErrNoProposal)
 	}
 	if err != nil {
 		return nil, err
@@ -233,11 +233,11 @@ func proposalError(err error) error {
 	var small ErrGroupTooSmall
 	switch {
 	case errors.Is(err, ErrNoProposal), errors.Is(err, ErrNoSuchGroup), errors.Is(err, ErrNotInProposal):
-		return connect.NewError(connect.CodeNotFound, err)
+		return errs.NotFound("%s", err)
 	case errors.Is(err, ErrNotProposal), errors.Is(err, ErrProposalStale), errors.Is(err, ErrProposalTooLate), errors.As(err, &small):
-		return connect.NewError(connect.CodeFailedPrecondition, err)
+		return errs.Refused("%s", err)
 	case errors.Is(err, ErrBadStart), errors.Is(err, ErrMeetingPointTooLong):
-		return connect.NewError(connect.CodeInvalidArgument, err)
+		return errs.Invalid("%s", err)
 	}
 	return err
 }
