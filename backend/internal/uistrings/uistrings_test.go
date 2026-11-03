@@ -383,6 +383,13 @@ func TestStartRefusedToken(t *testing.T) {
 			t.Errorf("%d: non-strict: %v", code, err)
 		}
 	}
+	// GitHub answers a rate limit with 403 too: that says nothing about the token.
+	for _, msg := range []string{"API rate limit exceeded for 1.2.3.4", "You have exceeded a secondary rate limit"} {
+		src := fakeSource{err: fmt.Errorf("list: %w", &github.APIError{StatusCode: http.StatusForbidden, Message: msg})}
+		if err := newCatalog().Start(ctx, src, "main", time.Hour, log, true); err != nil {
+			t.Errorf("rate limited (%q): %v", msg, err)
+		}
+	}
 	// An outage is not a bad token.
 	if err := newCatalog().Start(ctx, fakeSource{err: errors.New("down")}, "main", time.Hour, log, true); err != nil {
 		t.Errorf("outage: %v", err)

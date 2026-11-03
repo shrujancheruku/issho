@@ -420,14 +420,16 @@ func (c *Catalog) LoadHuman(ctx context.Context, src HumanSource, branch string)
 }
 
 // Start reads the human versions once, then follows branch in the
-// background (Follow). A bad token (GitHub's 401 or 403) is a startup error
-// when strict, which production sets, so a rotated or mistyped GITHUB_TOKEN
+// background (Follow). A bad token (GitHub's 401, or a 403 that is not a rate limit: GitHub
+// answers both its primary and secondary limits with 403, and a limit says
+// nothing about the token) is a startup error when strict, which production sets, so a rotated or mistyped GITHUB_TOKEN
 // is found by the deploy rather than after the fact; elsewhere, and for any
 // other failure, it only warns and the built-in copies stay.
 func (c *Catalog) Start(ctx context.Context, src HumanSource, branch string, every time.Duration, log *slog.Logger, strict bool) error {
 	if err := c.LoadHuman(ctx, src, branch); err != nil {
 		var apiErr *github.APIError
-		if strict && errors.As(err, &apiErr) && (apiErr.StatusCode == http.StatusUnauthorized || apiErr.StatusCode == http.StatusForbidden) {
+		if strict && errors.As(err, &apiErr) && (apiErr.StatusCode == http.StatusUnauthorized ||
+			(apiErr.StatusCode == http.StatusForbidden && !strings.Contains(strings.ToLower(apiErr.Message), "rate limit"))) {
 			return fmt.Errorf("ui strings: GITHUB_TOKEN was refused: %w", err)
 		}
 		if ctx.Err() == nil {
