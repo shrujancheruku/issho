@@ -1,13 +1,12 @@
 import { AdvancedMarker, APIProvider, Map } from '@vis.gl/react-google-maps';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { ThemedText } from '@/components/themed-text';
-import { Brand } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { useI18n } from '@/i18n/i18n-provider';
 
 import { dropDelay, DropIn } from './drop-in';
 import { bounds } from './map-data';
+import { MapUnavailable } from './map-unavailable';
+import { pinStyles } from './map-pins';
 import { pinColors } from './pin-color';
 import type { PlansMapProps } from './plans-map';
 
@@ -23,17 +22,10 @@ const mapId = process.env.EXPO_PUBLIC_GOOGLE_MAPS_WEB_MAP_ID ?? 'DEMO_MAP_ID';
  * pins as on phones, dropping in the same way.
  */
 export function PlansMap({ pins, selected, onSelect, home, bottomInset = 0 }: PlansMapProps) {
-  const { t } = useI18n();
   const theme = useTheme();
   const box = bounds(pins);
   if (!apiKey) {
-    return (
-      <View style={styles.missing}>
-        <ThemedText type="small" themeColor="textSecondary">
-          {t('map.unavailable')}
-        </ThemedText>
-      </View>
-    );
+    return <MapUnavailable />;
   }
   return (
     <APIProvider apiKey={apiKey}>
@@ -53,8 +45,8 @@ export function PlansMap({ pins, selected, onSelect, home, bottomInset = 0 }: Pl
           return (
             <AdvancedMarker key={p.areaId} position={{ lat: p.lat, lng: p.lng }} onClick={() => onSelect(p.areaId)}>
               <DropIn id={`area:${p.areaId}`} delay={dropDelay(i)}>
-                <View style={[styles.pin, { backgroundColor: c.background }, on && styles.selected]}>
-                  <Text style={[styles.count, { color: c.text }]}>{p.plans.length}</Text>
+                <View style={[pinStyles.countPin, { backgroundColor: c.background }, on && pinStyles.selectedWeb]}>
+                  <Text style={[pinStyles.label, { color: c.text }]}>{p.plans.length}</Text>
                 </View>
               </DropIn>
             </AdvancedMarker>
@@ -64,19 +56,3 @@ export function PlansMap({ pins, selected, onSelect, home, bottomInset = 0 }: Pl
     </APIProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  missing: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center', padding: 24 },
-  pin: {
-    minWidth: 30,
-    height: 30,
-    borderRadius: 15,
-    paddingHorizontal: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: '#ffffff',
-  },
-  selected: { borderColor: Brand.ink, transform: [{ scale: 1.2 }] },
-  count: { fontSize: 13, fontWeight: '700' },
-});

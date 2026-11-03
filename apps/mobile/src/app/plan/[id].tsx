@@ -16,7 +16,7 @@ import { Fact, Facts } from '@/features/plans/fact';
 import { formatDate, lastSignupDay, walkHours } from '@/features/plans/format';
 import { levelColors, levelLabels } from '@/features/plans/level';
 import { usePlanNames } from '@/features/plans/names';
-import { distanceText, friendsText, pairText } from '@/features/plans/plan-card';
+import { distanceText, friendsText, pairText } from '@/features/plans/text';
 import { PlanStops, StopsToggle } from '@/features/plans/plan-stops';
 import { windowDates, type Times } from '@/features/plans/signup';
 import { usePlanTimes } from '@/features/plans/use-plan-times';

@@ -1,30 +1,20 @@
 // Package translations serves TranslationService: the admin SPA's
 // translation editor, for admins and translators.
 //
-// UI strings are edited as human versions in the repository
-// (uistrings.HumanDir), like city packs (owner's decision): every save is a
-// commit to one rolling pull request per language, which the owner merges;
-// the API then serves it without a deploy (uistrings.Catalog.Follow).
-// Catalogue text (activity and city names) has no file in the repository,
-// so its machine translations are corrected in app.translations instead.
+// The handler checks the caller and the language and maps protos; the work
+// is done by two services. UI strings are human versions in the repository
+// (uistrings.Editor); catalogue text (activity and city names) has no file,
+// so its machine translations are corrected in app.translations
+// (translate.Reviewer).
 package translations
 
 import (
 	"context"
-	"encoding/json"
-	"errors"
-	"fmt"
 	"maps"
 	"slices"
 	"strings"
-	"sync"
-	"time"
 
 	"connectrpc.com/connect"
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgtype"
-	"golang.org/x/text/language"
-	"golang.org/x/text/language/display"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
@@ -38,57 +28,12 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/uistrings"
 )
 
-// BranchPrefix marks the editor's branches: translations/<lang>-<unix time>.
-const BranchPrefix = "translations/"
-
-// Repo is the GitHub repository the human versions live in (*github.Client).
-type Repo interface {
-	File(ctx context.Context, path, branch string) ([]byte, string, error)
-	OpenPRs(ctx context.Context, prefix string) ([]github.PR, error)
-	CreateBranch(ctx context.Context, branch string) error
-	CommitFiles(ctx context.Context, branch string, files map[string][]byte, message string) error
-	OpenPR(ctx context.Context, branch, title, body string) (github.PR, error)
-}
-
-// Drafter proposes a better version of a string (*gemini.Translator).
-type Drafter interface {
-	Draft(ctx context.Context, lang string, d translate.Draft) (string, error)
-}
-
-// Store is the catalogue translations' part of the database (*dbgen.Queries).
-type Store interface {
-	ListTranslationLanguages(ctx context.Context) ([]dbgen.ListTranslationLanguagesRow, error)
-	ListCatalogLanguages(ctx context.Context, uiContext string) ([]dbgen.ListCatalogLanguagesRow, error)
-	ListCatalogTranslations(ctx context.Context, arg dbgen.ListCatalogTranslationsParams) ([]dbgen.ListCatalogTranslationsRow, error)
-	GetTranslation(ctx context.Context, arg dbgen.GetTranslationParams) (dbgen.GetTranslationRow, error)
-	ReviewTranslation(ctx context.Context, arg dbgen.ReviewTranslationParams) (int64, error)
-}
-
 // Handler serves TranslationService. cmd/api lets only admins and
 // translators in (auth.TranslatorsOnly); caller() checks again, and every
 // RPC checks the language, so a wiring mistake fails closed.
 type Handler struct {
-	Q            Store
-	Catalog      *uistrings.Catalog
-	Translations *translate.Service
-	// GitHub is nil without GITHUB_TOKEN: UI strings can be read, not saved.
-	// Base is the branch pull requests target.
-	GitHub Repo
-	Base   string
-	// Drafter is nil without GOOGLE_GEMINI_API_KEY: no suggestions.
-	Drafter Drafter
-	Now     func() time.Time // nil = time.Now
-
-	// One save at a time: two saves for a language would otherwise race to
-	// open its pull request, or to commit on top of the same tip.
-	mu sync.Mutex
-}
-
-func (h *Handler) now() time.Time {
-	if h.Now != nil {
-		return h.Now()
-	}
-	return time.Now()
+	Editor  *uistrings.Editor
+	Reviews *translate.Reviewer
 }
 
 func caller(ctx context.Context) (auth.Caller, error) {
@@ -117,65 +62,17 @@ func forLang(ctx context.Context, lang string) (auth.Caller, error) {
 	return c, nil
 }
 
-// githubError keeps GitHub's own message off the wire (logs and Sentry only).
-func githubError(err error) error { return errs.Upstream("github", err) }
-
 func (h *Handler) GetTranslator(ctx context.Context, _ *connect.Request[isshov1.GetTranslatorRequest]) (*connect.Response[isshov1.GetTranslatorResponse], error) {
 	c, err := caller(ctx)
 	if err != nil {
 		return nil, err
 	}
 	return connect.NewResponse(&isshov1.GetTranslatorResponse{
-		UserId: c.UserID.String(), Admin: c.Admin, Languages: slices.Sorted(slices.Values(c.TranslatorLangs)), CanPropose: h.GitHub != nil,
+		UserId: c.UserID.String(), Admin: c.Admin, Languages: slices.Sorted(slices.Values(c.TranslatorLangs)), CanPropose: h.Editor.CanPropose(),
 	}), nil
 }
 
 // UI strings.
-
-func humanPath(lang string) string { return uistrings.HumanDir + "/" + lang + ".json" }
-
-// openPRs maps each language to its editor pull request.
-func (h *Handler) openPRs(ctx context.Context) (map[string]github.PR, error) {
-	out := map[string]github.PR{}
-	if h.GitHub == nil {
-		return out, nil
-	}
-	prs, err := h.GitHub.OpenPRs(ctx, BranchPrefix)
-	if err != nil {
-		return nil, githubError(err)
-	}
-	for _, pr := range prs {
-		// <lang>-<unix time>; the language may contain a dash (zh-Hant).
-		rest := strings.TrimPrefix(pr.Branch, BranchPrefix)
-		if i := strings.LastIndex(rest, "-"); i > 0 {
-			lang := rest[:i]
-			if _, seen := out[lang]; !seen {
-				out[lang] = pr
-			}
-		}
-	}
-	return out, nil
-}
-
-// branchVersions reads lang's human versions on branch; none when the file
-// isn't there yet.
-func (h *Handler) branchVersions(ctx context.Context, lang, branch string) (map[string]uistrings.Human, error) {
-	raw, _, err := h.GitHub.File(ctx, humanPath(lang), branch)
-	if errors.Is(err, github.ErrNotFound) {
-		return map[string]uistrings.Human{}, nil
-	}
-	if err != nil {
-		return nil, githubError(err)
-	}
-	var m map[string]uistrings.Human
-	if err := json.Unmarshal(raw, &m); err != nil {
-		return nil, fmt.Errorf("%s on %s: %w", humanPath(lang), branch, err)
-	}
-	if m == nil {
-		m = map[string]uistrings.Human{}
-	}
-	return m, nil
-}
 
 func prToProto(pr *github.PR) *isshov1.TranslationPullRequest {
 	if pr == nil {
@@ -184,12 +81,19 @@ func prToProto(pr *github.PR) *isshov1.TranslationPullRequest {
 	return &isshov1.TranslationPullRequest{Number: int32(pr.Number), Url: pr.URL}
 }
 
+func appString(r uistrings.Row) *isshov1.AppString {
+	return &isshov1.AppString{
+		Key: r.Key, English: r.English, Note: r.Note, Machine: r.Machine, EnglishVoice: r.EnglishVoice,
+		Human: r.Human, HumanStale: r.HumanStale, Pending: r.Pending, PendingText: r.PendingText,
+	}
+}
+
 func (h *Handler) ListAppLanguages(ctx context.Context, _ *connect.Request[isshov1.ListAppLanguagesRequest]) (*connect.Response[isshov1.ListAppLanguagesResponse], error) {
 	c, err := caller(ctx)
 	if err != nil {
 		return nil, err
 	}
-	prs, err := h.openPRs(ctx)
+	prs, err := h.Editor.OpenPRs(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -200,13 +104,13 @@ func (h *Handler) ListAppLanguages(ctx context.Context, _ *connect.Request[issho
 		langs[l] = true
 	}
 	if c.Admin {
-		for _, l := range h.Catalog.HumanLanguages() {
+		for _, l := range h.Editor.Catalog.HumanLanguages() {
 			langs[l] = true
 		}
 		for l := range prs {
 			langs[l] = true
 		}
-		rows, err := h.Q.ListTranslationLanguages(ctx)
+		rows, err := h.Reviews.CachedLanguages(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -220,17 +124,8 @@ func (h *Handler) ListAppLanguages(ctx context.Context, _ *connect.Request[issho
 		if !i18n.ValidDisplay(l) || !c.Translates(l) {
 			continue
 		}
-		al := &isshov1.AppLanguage{Lang: l, Total: int32(len(h.Catalog.Keys()))}
-		for key, v := range h.Catalog.HumanVersions(l) {
-			if _, ok := h.Catalog.English(key); !ok {
-				continue
-			}
-			if h.Catalog.Current(key, v) {
-				al.Human++
-			} else {
-				al.Stale++
-			}
-		}
+		total, human, stale := h.Editor.Progress(l)
+		al := &isshov1.AppLanguage{Lang: l, Total: int32(total), Human: int32(human), Stale: int32(stale)}
 		if pr, ok := prs[l]; ok {
 			al.PullRequest = prToProto(&pr)
 		}
@@ -239,237 +134,52 @@ func (h *Handler) ListAppLanguages(ctx context.Context, _ *connect.Request[issho
 	return connect.NewResponse(out), nil
 }
 
-// appString builds one row: main's human version (as followed), the open
-// pull request's (branch, nil without one) and the machine translation.
-func (h *Handler) appString(lang, key, machine string, branch map[string]uistrings.Human) *isshov1.AppString {
-	english, _ := h.Catalog.English(key)
-	s := &isshov1.AppString{Key: key, English: english, Note: h.Catalog.Note(key), Machine: machine}
-	if v, ok := h.Catalog.HumanVersions(i18n.Authoring)[key]; ok && h.Catalog.Current(key, v) {
-		s.EnglishVoice = v.Text
-	}
-	main, onMain := h.Catalog.HumanVersions(lang)[key]
-	if onMain {
-		s.Human, s.HumanStale = main.Text, !h.Catalog.Current(key, main)
-	}
-	if branch != nil {
-		pr, inPR := branch[key]
-		if inPR != onMain || pr != main {
-			s.Pending = true
-			if inPR {
-				s.PendingText = pr.Text
-			}
-		}
-	}
-	return s
-}
-
 func (h *Handler) ListAppStrings(ctx context.Context, req *connect.Request[isshov1.ListAppStringsRequest]) (*connect.Response[isshov1.ListAppStringsResponse], error) {
-	lang := req.Msg.Lang
-	if _, err := forLang(ctx, lang); err != nil {
+	if _, err := forLang(ctx, req.Msg.Lang); err != nil {
 		return nil, err
 	}
-	machine, complete := map[string]string{}, true
-	if lang != i18n.Authoring {
-		machine, complete = h.Catalog.Machine(ctx, h.Translations, lang)
-	}
-	prs, err := h.openPRs(ctx)
+	list, err := h.Editor.List(ctx, req.Msg.Lang)
 	if err != nil {
 		return nil, err
 	}
-	out := &isshov1.ListAppStringsResponse{Complete: complete}
-	var branch map[string]uistrings.Human
-	if pr, ok := prs[lang]; ok {
-		out.PullRequest = prToProto(&pr)
-		if branch, err = h.branchVersions(ctx, lang, pr.Branch); err != nil {
-			return nil, err
-		}
-	}
-	for _, key := range h.Catalog.Keys() {
-		out.Strings = append(out.Strings, h.appString(lang, key, machine[key], branch))
+	out := &isshov1.ListAppStringsResponse{Complete: list.Complete, PullRequest: prToProto(list.PR)}
+	for _, r := range list.Rows {
+		out.Strings = append(out.Strings, appString(r))
 	}
 	return connect.NewResponse(out), nil
 }
 
-func languageName(lang string) string {
-	if n := display.English.Languages().Name(language.Make(lang)); n != "" {
-		return n
-	}
-	return lang
-}
-
-// change commits edit (which changes a language's human versions; false
-// when there's nothing to change) to lang's open pull request, opening one
-// on a new branch when there's none. It retries once if the branch moved.
-func (h *Handler) change(ctx context.Context, lang, message string, edit func(map[string]uistrings.Human) bool) (*github.PR, map[string]uistrings.Human, error) {
-	if h.GitHub == nil {
-		return nil, nil, errs.Precondition(isshov1.ErrorReason_ERROR_REASON_UNSPECIFIED, "saving translations needs GITHUB_TOKEN on the API")
-	}
-	h.mu.Lock()
-	defer h.mu.Unlock()
-	for attempt := 0; ; attempt++ {
-		prs, err := h.openPRs(ctx)
-		if err != nil {
-			return nil, nil, err
-		}
-		// Without a pull request, start from the base branch's file and only
-		// branch off once there's something to commit.
-		pr, open := prs[lang]
-		from := h.Base
-		if open {
-			from = pr.Branch
-		}
-		versions, err := h.branchVersions(ctx, lang, from)
-		if err != nil {
-			return nil, nil, err
-		}
-		if !edit(versions) {
-			if !open {
-				return nil, nil, nil
-			}
-			return &pr, versions, nil
-		}
-		branch := pr.Branch
-		if !open {
-			branch = fmt.Sprintf("%s%s-%d", BranchPrefix, lang, h.now().Unix())
-			if err := h.GitHub.CreateBranch(ctx, branch); err != nil {
-				return nil, nil, githubError(err)
-			}
-		}
-		content := uistrings.EncodeHuman(versions)
-		err = h.GitHub.CommitFiles(ctx, branch, map[string][]byte{
-			humanPath(lang): content,
-			uistrings.HumanCopyDir + "/" + lang + ".json": content,
-		}, message)
-		if errors.Is(err, github.ErrConflict) && attempt == 0 {
-			continue
-		}
-		if err != nil {
-			return nil, nil, githubError(err)
-		}
-		if !open {
-			name := languageName(lang)
-			// The repository is public: the pull request says what changed,
-			// never who changed it.
-			body := fmt.Sprintf("Human versions of the app's %s text, from the admin SPA's translation editor. Each commit is one string.\n\n"+
-				"**After merging:** the API serves them within a few minutes, without a deploy, and phones pick them up at their next hourly check. "+
-				"English ones reach the app with its next build (English is bundled).\n", name)
-			if pr, err = h.GitHub.OpenPR(ctx, branch, fmt.Sprintf("feat(data): update the %s translations", name), body); err != nil {
-				return nil, nil, githubError(err)
-			}
-		}
-		return &pr, versions, nil
-	}
-}
-
 func (h *Handler) SaveAppString(ctx context.Context, req *connect.Request[isshov1.SaveAppStringRequest]) (*connect.Response[isshov1.SaveAppStringResponse], error) {
-	lang, key := req.Msg.Lang, req.Msg.Key
-	if _, err := forLang(ctx, lang); err != nil {
+	if _, err := forLang(ctx, req.Msg.Lang); err != nil {
 		return nil, err
 	}
-	english, ok := h.Catalog.English(key)
-	if !ok {
-		return nil, errs.Invalid("key: no such UI string")
-	}
-	text := strings.TrimSpace(req.Msg.Text)
-	if text == "" {
-		return nil, errs.Invalid("text: required")
-	}
-	// A livelier English identical to the plain one would only duplicate it.
-	if lang == i18n.Authoring && text == english {
-		return nil, errs.Invalid("text: the same as the plain English; remove the livelier version instead")
-	}
-	// A lost placeholder would never be shown (uistrings.Catalog.Current).
-	if !uistrings.SamePlaceholders(english, text) {
-		return nil, errs.Invalid("text: keep every {placeholder} of the English text, unchanged")
-	}
-	v := uistrings.Human{Text: text, Source: uistrings.SourceHash(english)}
-	pr, branch, err := h.change(ctx, lang, fmt.Sprintf("feat(data): set the %s text of %s", lang, key), func(m map[string]uistrings.Human) bool {
-		if m[key] == v {
-			return false
-		}
-		m[key] = v
-		return true
-	})
+	saved, err := h.Editor.Save(ctx, req.Msg.Lang, req.Msg.Key, req.Msg.Text)
 	if err != nil {
 		return nil, err
 	}
-	return connect.NewResponse(&isshov1.SaveAppStringResponse{
-		AppString: h.appString(lang, key, h.machineText(ctx, lang, key), branch), PullRequest: prToProto(pr),
-	}), nil
+	return connect.NewResponse(&isshov1.SaveAppStringResponse{AppString: appString(saved.Row), PullRequest: prToProto(saved.PR)}), nil
 }
 
 func (h *Handler) RemoveAppString(ctx context.Context, req *connect.Request[isshov1.RemoveAppStringRequest]) (*connect.Response[isshov1.RemoveAppStringResponse], error) {
-	lang, key := req.Msg.Lang, req.Msg.Key
-	if _, err := forLang(ctx, lang); err != nil {
+	if _, err := forLang(ctx, req.Msg.Lang); err != nil {
 		return nil, err
 	}
-	if _, ok := h.Catalog.English(key); !ok {
-		return nil, errs.Invalid("key: no such UI string")
-	}
-	pr, branch, err := h.change(ctx, lang, fmt.Sprintf("feat(data): remove the %s human version of %s", lang, key), func(m map[string]uistrings.Human) bool {
-		if _, ok := m[key]; !ok {
-			return false
-		}
-		delete(m, key)
-		return true
-	})
+	saved, err := h.Editor.Remove(ctx, req.Msg.Lang, req.Msg.Key)
 	if err != nil {
 		return nil, err
 	}
-	return connect.NewResponse(&isshov1.RemoveAppStringResponse{
-		AppString: h.appString(lang, key, h.machineText(ctx, lang, key), branch), PullRequest: prToProto(pr),
-	}), nil
+	return connect.NewResponse(&isshov1.RemoveAppStringResponse{AppString: appString(saved.Row), PullRequest: prToProto(saved.PR)}), nil
 }
 
 func (h *Handler) DraftAppString(ctx context.Context, req *connect.Request[isshov1.DraftAppStringRequest]) (*connect.Response[isshov1.DraftAppStringResponse], error) {
-	lang, key := req.Msg.Lang, req.Msg.Key
-	if _, err := forLang(ctx, lang); err != nil {
+	if _, err := forLang(ctx, req.Msg.Lang); err != nil {
 		return nil, err
 	}
-	english, ok := h.Catalog.English(key)
-	if !ok {
-		return nil, errs.Invalid("key: no such UI string")
-	}
-	if h.Drafter == nil {
-		return nil, errs.Precondition(isshov1.ErrorReason_ERROR_REASON_UNSPECIFIED, "suggestions need GOOGLE_GEMINI_API_KEY on the API")
-	}
-	d := translate.Draft{English: english, Context: h.Catalog.Note(key), Current: strings.TrimSpace(req.Msg.Current)}
-	if v, ok := h.Catalog.HumanVersions(i18n.Authoring)[key]; ok && h.Catalog.Current(key, v) {
-		d.Voice = v.Text
-	}
-	if d.Current == "" {
-		if v, ok := h.Catalog.HumanVersions(lang)[key]; ok && h.Catalog.Current(key, v) {
-			d.Current = v.Text
-		} else if lang != i18n.Authoring {
-			d.Current = h.machineText(ctx, lang, key)
-		}
-	}
-	if lang == i18n.Authoring {
-		d.Voice = "" // the draft is the livelier English itself
-	}
-	text, err := h.Drafter.Draft(ctx, lang, d)
-	if errors.Is(err, translate.ErrBudget) {
-		return nil, errs.UpstreamReason("gemini", isshov1.ErrorReason_ERROR_REASON_TIMED_OUT, "gemini took too long; try again", err)
-	}
+	text, err := h.Editor.Draft(ctx, req.Msg.Lang, req.Msg.Key, req.Msg.Current)
 	if err != nil {
-		return nil, errs.Upstream("gemini", err)
-	}
-	// A draft that lost a placeholder couldn't be saved anyway.
-	if !uistrings.SamePlaceholders(english, text) {
-		return nil, errs.Refused("the suggestion changed a {placeholder}; ask again")
+		return nil, err
 	}
 	return connect.NewResponse(&isshov1.DraftAppStringResponse{Text: text}), nil
-}
-
-// machineText is one string's machine translation, normally cached
-// already (ListAppStrings asked for it).
-func (h *Handler) machineText(ctx context.Context, lang, key string) string {
-	if lang == i18n.Authoring {
-		return ""
-	}
-	english, _ := h.Catalog.English(key)
-	raw, _ := json.Marshal(map[string]string{i18n.Authoring: english})
-	return h.Translations.Resolve(ctx, lang, []translate.Text{{Raw: raw, Context: h.Catalog.Context(key)}})[0]
 }
 
 // Catalogue text.
@@ -479,7 +189,7 @@ func (h *Handler) ListCatalogLanguages(ctx context.Context, _ *connect.Request[i
 	if err != nil {
 		return nil, err
 	}
-	rows, err := h.Q.ListCatalogLanguages(ctx, uistrings.ContextPrefix)
+	rows, err := h.Reviews.CatalogLanguages(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -507,14 +217,14 @@ func (h *Handler) ListCatalogTranslations(ctx context.Context, req *connect.Requ
 		return nil, err
 	}
 	arg := dbgen.ListCatalogTranslationsParams{
-		Lang: req.Msg.Lang, UiContext: uistrings.ContextPrefix, UnreviewedOnly: req.Msg.UnreviewedOnly,
+		Lang: req.Msg.Lang, UnreviewedOnly: req.Msg.UnreviewedOnly,
 		Search: search, MaxRows: size + 1,
 	}
 	arg.HasAfter, arg.AfterReviewed, arg.AfterSource, arg.AfterContext, arg.AfterHash = k.Present, k.Bool(), k.String(), k.String(), k.String()
 	if err := k.Err(); err != nil {
 		return nil, err
 	}
-	rows, err := h.Q.ListCatalogTranslations(ctx, arg)
+	rows, err := h.Reviews.CatalogTranslations(ctx, arg)
 	if err != nil {
 		return nil, err
 	}
@@ -535,33 +245,8 @@ func (h *Handler) ReviewCatalogTranslation(ctx context.Context, req *connect.Req
 	if err != nil {
 		return nil, err
 	}
-	key := dbgen.GetTranslationParams{SourceHash: req.Msg.SourceHash, Lang: req.Msg.Lang}
-	text := strings.TrimSpace(req.Msg.Text)
-	if text == "" {
-		return nil, errs.Invalid("text: required")
-	}
-	t, err := h.Q.GetTranslation(ctx, key)
-	if errors.Is(err, pgx.ErrNoRows) {
-		return nil, errs.NotFound("no such translation")
-	}
+	t, err := h.Reviews.Review(ctx, c.UserID, req.Msg.Lang, req.Msg.SourceHash, req.Msg.Text)
 	if err != nil {
-		return nil, err
-	}
-	// UI strings are edited as human versions (SaveAppString): a correction
-	// here would be hidden by them and lost when machines redo the cache.
-	if strings.HasPrefix(t.Context, uistrings.ContextPrefix) {
-		return nil, errs.Invalid("this is a UI string: edit it with SaveAppString")
-	}
-	if !uistrings.SamePlaceholders(t.Source, text) {
-		return nil, errs.Invalid("text: keep every {placeholder} of the English text, unchanged")
-	}
-	if _, err := h.Q.ReviewTranslation(ctx, dbgen.ReviewTranslationParams{
-		SourceHash: key.SourceHash, Lang: key.Lang, Text: text,
-		ReviewedBy: pgtype.UUID{Bytes: c.UserID, Valid: true}, At: pgtype.Timestamptz{Time: h.now(), Valid: true},
-	}); err != nil {
-		return nil, err
-	}
-	if t, err = h.Q.GetTranslation(ctx, key); err != nil {
 		return nil, err
 	}
 	return connect.NewResponse(&isshov1.ReviewCatalogTranslationResponse{Translation: translationToProto(t)}), nil

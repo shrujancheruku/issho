@@ -6,16 +6,14 @@ import type MapViewType from 'react-native-maps';
 import { Brand } from '@/constants/theme';
 
 import { initialRegion, routeMinDelta, routeView } from './map-data';
-import { BadgeMarker, MapUnavailable, maps } from './native-maps';
+import { pinStyles, stopColors } from './map-pins';
+import { MapUnavailable } from './map-unavailable';
+import { BadgeMarker, maps } from './native-maps';
 import { decodePolyline } from './polyline';
 import type { MeasuredPath } from './route-path';
 import { useRouteDraw, useWalker } from './use-route-motion';
 
 export type RouteMapProps = { steps: PlanStep[]; routePolyline: string };
-
-// The stops are numbered as in the timeline, on the gold of its thread. The
-// route is deep gold: plain gold is too faint on Google's pale map tiles.
-const stopColors = { background: Brand.gold, text: Brand.ink };
 
 /**
  * A plan's (or event's) map on phones: Google Maps with a numbered pin at
@@ -30,7 +28,7 @@ export function RouteMap({ steps, routePolyline }: RouteMapProps) {
   // Memoised: the route is measured for drawing, once per route.
   const view = useMemo(() => routeView(steps, routePolyline, decodePolyline), [steps, routePolyline]);
   if (!view.stops.length) return null;
-  return <View style={styles.frame}>{maps ? <NativeRouteMap view={view} routeKey={routePolyline} /> : <MapUnavailable />}</View>;
+  return <View style={pinStyles.routeFrame}>{maps ? <NativeRouteMap view={view} routeKey={routePolyline} /> : <MapUnavailable />}</View>;
 }
 
 function NativeRouteMap({ view, routeKey }: { view: ReturnType<typeof routeView>; routeKey: string }) {
@@ -101,17 +99,9 @@ function WalkerMarker({ lat, lng }: { lat: number; lng: number }) {
   }, []);
   return (
     <Marker coordinate={{ latitude: lat, longitude: lng }} anchor={{ x: 0.5, y: 0.5 }} tracksViewChanges={!frozen} tappable={false} zIndex={1}>
-      <View style={styles.halo} collapsable={false}>
-        <View style={styles.walker} />
+      <View style={pinStyles.halo} collapsable={false}>
+        <View style={pinStyles.walker} />
       </View>
     </Marker>
   );
 }
-
-const styles = StyleSheet.create({
-  // Tall enough for a walk's stops (a kilometre or two, often north to
-  // south) to show apart rather than stacked at district scale.
-  frame: { height: 320, borderRadius: 16, overflow: 'hidden' },
-  halo: { width: 20, height: 20, borderRadius: 10, backgroundColor: 'rgba(222, 169, 44, 0.3)', alignItems: 'center', justifyContent: 'center' },
-  walker: { width: 10, height: 10, borderRadius: 5, backgroundColor: Brand.gold },
-});

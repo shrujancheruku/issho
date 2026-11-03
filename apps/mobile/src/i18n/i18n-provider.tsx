@@ -101,7 +101,7 @@ export function I18nProvider({ children }: PropsWithChildren) {
 
   const value = useMemo<I18nState>(
     () => ({
-      languages,
+      languages: { primary: languages.primary, secondary: languages.secondary },
       device: { primary: devicePrimary, secondary: deviceSecondary },
       showing: shown,
       lang,
@@ -111,8 +111,8 @@ export function I18nProvider({ children }: PropsWithChildren) {
       t,
       pair,
     }),
-    // languages is rebuilt each render; its fields are what matter.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // `languages` is rebuilt each render, so the value rebuilds its copy from
+    // the two strings, which are what the memo depends on.
     [languages.primary, languages.secondary, devicePrimary, deviceSecondary, shown, lang, pick, t, pair, previewLanguages],
   );
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
