@@ -18,6 +18,7 @@ import (
 
 	"github.com/shrujancheruku/issho/backend/internal/cities"
 	"github.com/shrujancheruku/issho/backend/internal/matching"
+	"github.com/shrujancheruku/issho/backend/internal/plans"
 )
 
 // Options control generation.
@@ -74,7 +75,7 @@ func Generate(pack cities.Pack, catalogue []cities.Activity, opt Options) City {
 		}
 	}
 
-	in.Activities = activities(pack, catalogue, opt.Month)
+	in.Activities = plans.Activities(pack, catalogue, opt.Month)
 	categories := map[matching.CategoryID]bool{}
 	for _, a := range in.Activities {
 		for _, c := range a.VenueCategories {
@@ -175,34 +176,6 @@ func user(r *rand.Rand, id string, pack cities.Pack, areas []matching.AreaID, ac
 	return u
 }
 
-// activities converts the catalogue as enabled in the city and month.
-func activities(pack cities.Pack, catalogue []cities.Activity, month time.Month) []matching.Activity {
-	overrides := map[string]cities.ActivityOverride{}
-	for _, o := range pack.ActivityOverrides {
-		overrides[o.ActivityID] = o
-	}
-	var out []matching.Activity
-	for _, a := range catalogue {
-		o := overrides[a.ID]
-		if o.Disabled || (month != 0 && len(o.Months) > 0 && !slices.Contains(o.Months, int16(month))) {
-			continue
-		}
-		m := matching.Activity{
-			ID: matching.ActivityID(a.ID), Category: a.Category, CostLevel: int(a.CostLevel),
-			Conversational: a.Conversational, MinSize: int(a.MinGroupSize), MaxSize: int(a.MaxGroupSize),
-			Walk: a.WalkTheme != "", Hours: a.Hours, Energy: int(a.Energy),
-		}
-		for _, c := range a.VenueCategories {
-			m.VenueCategories = append(m.VenueCategories, matching.CategoryID(c))
-		}
-		for _, b := range a.Blocks {
-			m.Blocks = append(m.Blocks, matching.Block(b))
-		}
-		out = append(out, m)
-	}
-	return out
-}
-
 // travelMinutes estimates the fastest trip: walking at 12 min/km (only under
 // 4 km, as tool build-matrix does) or driving at 3 min/km plus 8 minutes to
 // get going and park.
@@ -284,6 +257,15 @@ type Stats struct {
 // are scheduled most-signups first; each scheduled event blocks its
 // occasion in its people's other signups. Plans not ready are then
 // scheduled at their deadline (force) if any group can form.
+//
+// It models only the pure engine calls (matching.Suggest, Feed, Schedule).
+// The activities come from plans.Activities, the same conversion the worker's
+// database query is tested against. What the worker's Runner does around
+// them is not modelled, because it needs the database or the clock: rounds
+// and their settling, the waiting list, proposals and invitations, the
+// reliability and relations read from past events, suspensions, venue
+// discovery and review, and notifications. Travel times, venue counts and
+// signup behaviour are guesses (see the package comment).
 func Run(pack cities.Pack, catalogue []cities.Activity, opt Options, cfg matching.Config) Stats {
 	if opt.Start.IsZero() {
 		opt.Start = time.Date(2026, 11, 2, 0, 0, 0, 0, time.UTC)
