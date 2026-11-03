@@ -1,4 +1,4 @@
-import { ConnectError } from '@issho/api-client';
+import { ConnectError, VenueStatus } from '@issho/api-client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 
@@ -66,8 +66,8 @@ export function NewPlan({ cityId, onCreated }: { cityId: string; onCreated: () =
           <select value={venue} onChange={(e) => setVenue(e.target.value)} disabled={!venues.data?.venues.length}>
             <option value="">{venues.data && !venues.data.venues.length ? 'None needed or none found: meeting point later' : 'Pick one for me'}</option>
             {/* Approved venues first, then by name (the API returns them by id). */}
-            {[...(venues.data?.venues ?? [])].sort((a, b) => Number(b.status === 'approved') - Number(a.status === 'approved') || (a.name || a.placeId).localeCompare(b.name || b.placeId)).map((v) => (
-              <option key={v.placeId} value={v.placeId}>{v.name || v.placeId}{v.status === 'approved' ? ' ✓' : ''} ({v.categoryId})</option>
+            {[...(venues.data?.venues ?? [])].sort((a, b) => Number(b.status === VenueStatus.APPROVED) - Number(a.status === VenueStatus.APPROVED) || (a.name || a.placeId).localeCompare(b.name || b.placeId)).map((v) => (
+              <option key={v.placeId} value={v.placeId}>{v.name || v.placeId}{v.status === VenueStatus.APPROVED ? ' ✓' : ''} ({v.categoryId})</option>
             ))}
           </select>
         </label>

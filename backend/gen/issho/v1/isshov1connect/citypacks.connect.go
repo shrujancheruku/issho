@@ -64,8 +64,11 @@ type CityPackServiceClient interface {
 	ProposeCityPack(context.Context, *connect.Request[v1.ProposeCityPackRequest]) (*connect.Response[v1.ProposeCityPackResponse], error)
 	// ApplyCityPack seeds the pack on the default branch into the database
 	// (as `tool seed` would) and, when areas were added or moved, rebuilds the
-	// city's travel times with Google. Areas removed from the file are kept,
-	// as seeding always does.
+	// city's travel times with Google. The pack is authoritative: areas it no
+	// longer lists are deleted (when nothing references them), areas named by
+	// an area's `replaces` are retired (their people, crews and plans move to
+	// the new area) and activity overrides the pack removed are dropped. The
+	// response reports all of these.
 	ApplyCityPack(context.Context, *connect.Request[v1.ApplyCityPackRequest]) (*connect.Response[v1.ApplyCityPackResponse], error)
 	// DiscoverAreaVenues finds venues for one area with Google (one Nearby
 	// Search per venue category the city's activities use; the city-wide
@@ -165,8 +168,11 @@ type CityPackServiceHandler interface {
 	ProposeCityPack(context.Context, *connect.Request[v1.ProposeCityPackRequest]) (*connect.Response[v1.ProposeCityPackResponse], error)
 	// ApplyCityPack seeds the pack on the default branch into the database
 	// (as `tool seed` would) and, when areas were added or moved, rebuilds the
-	// city's travel times with Google. Areas removed from the file are kept,
-	// as seeding always does.
+	// city's travel times with Google. The pack is authoritative: areas it no
+	// longer lists are deleted (when nothing references them), areas named by
+	// an area's `replaces` are retired (their people, crews and plans move to
+	// the new area) and activity overrides the pack removed are dropped. The
+	// response reports all of these.
 	ApplyCityPack(context.Context, *connect.Request[v1.ApplyCityPackRequest]) (*connect.Response[v1.ApplyCityPackResponse], error)
 	// DiscoverAreaVenues finds venues for one area with Google (one Nearby
 	// Search per venue category the city's activities use; the city-wide

@@ -1289,7 +1289,7 @@ HTTP: POST /issho.v1.CityPackService/&lt;Method&gt;
 | ListCityPacks | [ListCityPacksRequest](#issho-v1-ListCityPacksRequest) | [ListCityPacksResponse](#issho-v1-ListCityPacksResponse) | ListCityPacks returns the packs on the default branch, the cities in the database, and open pull requests from the editor. |
 | GetCityPack | [GetCityPackRequest](#issho-v1-GetCityPackRequest) | [GetCityPackResponse](#issho-v1-GetCityPackResponse) | GetCityPack returns a pack from the default branch, with the activity catalogue for its overrides. NOT_FOUND if there&#39;s no such file. |
 | ProposeCityPack | [ProposeCityPackRequest](#issho-v1-ProposeCityPackRequest) | [ProposeCityPackResponse](#issho-v1-ProposeCityPackResponse) | ProposeCityPack opens a pull request with a new or changed pack. INVALID_ARGUMENT if it fails validation (as in CI), removes or renames an area of the pack on the default branch, or changes nothing. |
-| ApplyCityPack | [ApplyCityPackRequest](#issho-v1-ApplyCityPackRequest) | [ApplyCityPackResponse](#issho-v1-ApplyCityPackResponse) | ApplyCityPack seeds the pack on the default branch into the database (as `tool seed` would) and, when areas were added or moved, rebuilds the city&#39;s travel times with Google. Areas removed from the file are kept, as seeding always does. |
+| ApplyCityPack | [ApplyCityPackRequest](#issho-v1-ApplyCityPackRequest) | [ApplyCityPackResponse](#issho-v1-ApplyCityPackResponse) | ApplyCityPack seeds the pack on the default branch into the database (as `tool seed` would) and, when areas were added or moved, rebuilds the city&#39;s travel times with Google. The pack is authoritative: areas it no longer lists are deleted (when nothing references them), areas named by an area&#39;s `replaces` are retired (their people, crews and plans move to the new area) and activity overrides the pack removed are dropped. The response reports all of these. |
 | DiscoverAreaVenues | [DiscoverAreaVenuesRequest](#issho-v1-DiscoverAreaVenuesRequest) | [DiscoverAreaVenuesResponse](#issho-v1-DiscoverAreaVenuesResponse) | DiscoverAreaVenues finds venues for one area with Google (one Nearby Search per venue category the city&#39;s activities use; the city-wide categories too when the city has no venues yet). |
 
  
@@ -1897,6 +1897,7 @@ One event as the caller sees it.
 | EVENT_STATUS_SCHEDULED | 1 |  |
 | EVENT_STATUS_DONE | 2 |  |
 | EVENT_STATUS_CANCELLED | 3 |  |
+| EVENT_STATUS_PROPOSED | 4 | Waiting for an admin to approve. Only the admin SPA sees this. |
 
 
 
@@ -2192,6 +2193,8 @@ returning the whole bounded list, per AIP-158 (proto/README.md).
 | CREW_STATUS_UNSPECIFIED | 0 |  |
 | CREW_STATUS_OFFERED | 1 | Offered: waiting for answers. |
 | CREW_STATUS_ACTIVE | 2 |  |
+| CREW_STATUS_LAPSED | 3 | Too few accepted in time. Only the admin SPA sees this. |
+| CREW_STATUS_CLOSED | 4 | Fewer than 2 members left. Only the admin SPA sees this. |
 
 
 
@@ -2925,7 +2928,7 @@ HTTP: POST /issho.v1.MetricsService/&lt;Method&gt;
 | id | [int64](#int64) |  |  |
 | crew_id | [string](#string) |  |  |
 | crew_name | [string](#string) |  | &#34;Football&#34; or &#34;Kichijoji&#34;: what the crew shares. |
-| crew_status | [string](#string) |  | offered, active, lapsed or closed. |
+| crew_status | [CrewStatus](#issho-v1-CrewStatus) |  |  |
 | user_id | [string](#string) |  | Empty if they&#39;ve deleted their account. |
 | user_name | [string](#string) |  |  |
 | reason | [LeaveReason](#issho-v1-LeaveReason) |  |  |
@@ -3170,7 +3173,7 @@ HTTP: POST /issho.v1.MetricsService/&lt;Method&gt;
 | event_id | [string](#string) |  | Where they met: an outing (event_*) or a crew (crew_*), if still there. |
 | event_title | [string](#string) |  |  |
 | event_date | [string](#string) |  | The outing&#39;s date (YYYY-MM-DD, in the city&#39;s time zone) and part of the day (morning, afternoon, evening). |
-| event_block | [string](#string) |  |  |
+| event_block | [TimeBlock](#issho-v1-TimeBlock) |  |  |
 | crew_id | [string](#string) |  |  |
 | crew_name | [string](#string) |  |  |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
@@ -3222,10 +3225,10 @@ HTTP: POST /issho.v1.MetricsService/&lt;Method&gt;
 | ----- | ---- | ----- | ----------- |
 | event_id | [string](#string) |  |  |
 | title | [string](#string) |  |  |
-| date | [string](#string) |  | YYYY-MM-DD in the city&#39;s time zone, and morning, afternoon or evening. |
-| block | [string](#string) |  |  |
-| event_status | [string](#string) |  | scheduled, done or cancelled. |
-| response | [string](#string) |  | invited, confirmed, declined or dropped (confirmed, then cancelled). |
+| date | [string](#string) |  | YYYY-MM-DD in the city&#39;s time zone, and the part of the day. |
+| block | [TimeBlock](#issho-v1-TimeBlock) |  |  |
+| event_status | [EventStatus](#issho-v1-EventStatus) |  |  |
+| response | [InviteResponse](#issho-v1-InviteResponse) |  |  |
 | checked_in | [bool](#bool) |  |  |
 | feedback | [OutingFeedback](#issho-v1-OutingFeedback) |  | Their feedback: SAID_WENT, SAID_DIDNT_GO, or UNSPECIFIED (none). |
 
@@ -4078,7 +4081,7 @@ HTTP: POST /issho.v1.PushService/&lt;Method&gt;
 | title | [string](#string) |  | English: the plan&#39;s stored title, or made from its activities. |
 | area_name | [string](#string) |  |  |
 | date | [string](#string) |  | Local date (YYYY-MM-DD) and part of the day; the start time. |
-| block | [string](#string) |  |  |
+| block | [TimeBlock](#issho-v1-TimeBlock) |  |  |
 | starts_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 | confirm_by | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | Invitees answer by then. |
 | forced | [bool](#bool) |  | Scheduled at the signup deadline with whoever could go, rather than because a group reached its target size. |
@@ -4104,7 +4107,7 @@ HTTP: POST /issho.v1.PushService/&lt;Method&gt;
 | quorum | [int32](#int32) |  | Confirmed straight away at quorum; at the deadline it goes ahead with at least min_attendance. |
 | min_attendance | [int32](#int32) |  |  |
 | score | [float](#float) |  |  |
-| status | [string](#string) |  | inviting, confirmed or cancelled. |
+| status | [GroupStatus](#issho-v1-GroupStatus) |  |  |
 | meeting_point | [string](#string) |  | English; &#34;&#34; for none. |
 | members | [ReviewMember](#issho-v1-ReviewMember) | repeated |  |
 
@@ -4125,7 +4128,7 @@ HTTP: POST /issho.v1.PushService/&lt;Method&gt;
 | name | [string](#string) |  |  |
 | gender | [string](#string) |  | woman, man, nonbinary or unspecified. |
 | birth_year | [int32](#int32) |  |  |
-| response | [string](#string) |  | invited, confirmed, declined or dropped. |
+| response | [InviteResponse](#issho-v1-InviteResponse) |  |  |
 | signed_up | [bool](#bool) |  | Still signed up for the plan: in a proposal, someone who withdrew since (false) is left out when it&#39;s approved. |
 
 
@@ -4340,8 +4343,8 @@ last, &#34;stop&#34; between.
 | name | [string](#string) |  | From Google, in English; &#34;&#34; without GOOGLE_MAPS_API_KEY or if it failed. |
 | address | [string](#string) |  |  |
 | maps_url | [string](#string) |  |  |
-| category_id | [string](#string) |  | Our venue category, and candidate or approved. |
-| status | [string](#string) |  |  |
+| category_id | [string](#string) |  | Our venue category. |
+| status | [VenueStatus](#issho-v1-VenueStatus) |  |  |
 
 
 

@@ -324,7 +324,7 @@ type ModerationReport struct {
 	// The outing's date (YYYY-MM-DD, in the city's time zone) and part of the
 	// day (morning, afternoon, evening).
 	EventDate  string                 `protobuf:"bytes,13,opt,name=event_date,json=eventDate,proto3" json:"event_date,omitempty"`
-	EventBlock string                 `protobuf:"bytes,14,opt,name=event_block,json=eventBlock,proto3" json:"event_block,omitempty"`
+	EventBlock TimeBlock              `protobuf:"varint,21,opt,name=event_block,json=eventBlock,proto3,enum=issho.v1.TimeBlock" json:"event_block,omitempty"`
 	CrewId     string                 `protobuf:"bytes,15,opt,name=crew_id,json=crewId,proto3" json:"crew_id,omitempty"`
 	CrewName   string                 `protobuf:"bytes,16,opt,name=crew_name,json=crewName,proto3" json:"crew_name,omitempty"`
 	CreatedAt  *timestamppb.Timestamp `protobuf:"bytes,17,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
@@ -458,11 +458,11 @@ func (x *ModerationReport) GetEventDate() string {
 	return ""
 }
 
-func (x *ModerationReport) GetEventBlock() string {
+func (x *ModerationReport) GetEventBlock() TimeBlock {
 	if x != nil {
 		return x.EventBlock
 	}
-	return ""
+	return TimeBlock_TIME_BLOCK_UNSPECIFIED
 }
 
 func (x *ModerationReport) GetCrewId() string {
@@ -1054,9 +1054,8 @@ type CrewLeave struct {
 	Id     int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	CrewId string                 `protobuf:"bytes,2,opt,name=crew_id,json=crewId,proto3" json:"crew_id,omitempty"`
 	// "Football" or "Kichijoji": what the crew shares.
-	CrewName string `protobuf:"bytes,3,opt,name=crew_name,json=crewName,proto3" json:"crew_name,omitempty"`
-	// offered, active, lapsed or closed.
-	CrewStatus string `protobuf:"bytes,4,opt,name=crew_status,json=crewStatus,proto3" json:"crew_status,omitempty"`
+	CrewName   string     `protobuf:"bytes,3,opt,name=crew_name,json=crewName,proto3" json:"crew_name,omitempty"`
+	CrewStatus CrewStatus `protobuf:"varint,10,opt,name=crew_status,json=crewStatus,proto3,enum=issho.v1.CrewStatus" json:"crew_status,omitempty"`
 	// Empty if they've deleted their account.
 	UserId        string                 `protobuf:"bytes,5,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	UserName      string                 `protobuf:"bytes,6,opt,name=user_name,json=userName,proto3" json:"user_name,omitempty"`
@@ -1118,11 +1117,11 @@ func (x *CrewLeave) GetCrewName() string {
 	return ""
 }
 
-func (x *CrewLeave) GetCrewStatus() string {
+func (x *CrewLeave) GetCrewStatus() CrewStatus {
 	if x != nil {
 		return x.CrewStatus
 	}
-	return ""
+	return CrewStatus_CREW_STATUS_UNSPECIFIED
 }
 
 func (x *CrewLeave) GetUserId() string {
@@ -1698,14 +1697,12 @@ type PersonOuting struct {
 	state   protoimpl.MessageState `protogen:"open.v1"`
 	EventId string                 `protobuf:"bytes,1,opt,name=event_id,json=eventId,proto3" json:"event_id,omitempty"`
 	Title   string                 `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
-	// YYYY-MM-DD in the city's time zone, and morning, afternoon or evening.
-	Date  string `protobuf:"bytes,3,opt,name=date,proto3" json:"date,omitempty"`
-	Block string `protobuf:"bytes,4,opt,name=block,proto3" json:"block,omitempty"`
-	// scheduled, done or cancelled.
-	EventStatus string `protobuf:"bytes,5,opt,name=event_status,json=eventStatus,proto3" json:"event_status,omitempty"`
-	// invited, confirmed, declined or dropped (confirmed, then cancelled).
-	Response  string `protobuf:"bytes,6,opt,name=response,proto3" json:"response,omitempty"`
-	CheckedIn bool   `protobuf:"varint,7,opt,name=checked_in,json=checkedIn,proto3" json:"checked_in,omitempty"`
+	// YYYY-MM-DD in the city's time zone, and the part of the day.
+	Date        string         `protobuf:"bytes,3,opt,name=date,proto3" json:"date,omitempty"`
+	Block       TimeBlock      `protobuf:"varint,9,opt,name=block,proto3,enum=issho.v1.TimeBlock" json:"block,omitempty"`
+	EventStatus EventStatus    `protobuf:"varint,10,opt,name=event_status,json=eventStatus,proto3,enum=issho.v1.EventStatus" json:"event_status,omitempty"`
+	Response    InviteResponse `protobuf:"varint,11,opt,name=response,proto3,enum=issho.v1.InviteResponse" json:"response,omitempty"`
+	CheckedIn   bool           `protobuf:"varint,7,opt,name=checked_in,json=checkedIn,proto3" json:"checked_in,omitempty"`
 	// Their feedback: SAID_WENT, SAID_DIDNT_GO, or UNSPECIFIED (none).
 	Feedback      OutingFeedback `protobuf:"varint,8,opt,name=feedback,proto3,enum=issho.v1.OutingFeedback" json:"feedback,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -1763,25 +1760,25 @@ func (x *PersonOuting) GetDate() string {
 	return ""
 }
 
-func (x *PersonOuting) GetBlock() string {
+func (x *PersonOuting) GetBlock() TimeBlock {
 	if x != nil {
 		return x.Block
 	}
-	return ""
+	return TimeBlock_TIME_BLOCK_UNSPECIFIED
 }
 
-func (x *PersonOuting) GetEventStatus() string {
+func (x *PersonOuting) GetEventStatus() EventStatus {
 	if x != nil {
 		return x.EventStatus
 	}
-	return ""
+	return EventStatus_EVENT_STATUS_UNSPECIFIED
 }
 
-func (x *PersonOuting) GetResponse() string {
+func (x *PersonOuting) GetResponse() InviteResponse {
 	if x != nil {
 		return x.Response
 	}
-	return ""
+	return InviteResponse_INVITE_RESPONSE_UNSPECIFIED
 }
 
 func (x *PersonOuting) GetCheckedIn() bool {
@@ -2165,7 +2162,7 @@ var File_issho_v1_moderation_proto protoreflect.FileDescriptor
 
 const file_issho_v1_moderation_proto_rawDesc = "" +
 	"\n" +
-	"\x19issho/v1/moderation.proto\x12\bissho.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x14issho/v1/crews.proto\x1a\x15issho/v1/events.proto\"\xa1\x01\n" +
+	"\x19issho/v1/moderation.proto\x12\bissho.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x14issho/v1/crews.proto\x1a\x15issho/v1/events.proto\x1a\x16issho/v1/profile.proto\"\xa1\x01\n" +
 	"\x12ListReportsRequest\x12.\n" +
 	"\x06status\x18\x01 \x01(\x0e2\x16.issho.v1.ReportStatusR\x06status\x12\x1f\n" +
 	"\vreported_id\x18\x02 \x01(\tR\n" +
@@ -2175,7 +2172,7 @@ const file_issho_v1_moderation_proto_rawDesc = "" +
 	"page_token\x18\x04 \x01(\tR\tpageToken\"s\n" +
 	"\x13ListReportsResponse\x124\n" +
 	"\areports\x18\x01 \x03(\v2\x1a.issho.v1.ModerationReportR\areports\x12&\n" +
-	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\xf8\x05\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\x93\x06\n" +
 	"\x10ModerationReport\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1f\n" +
 	"\vreporter_id\x18\x02 \x01(\tR\n" +
@@ -2194,8 +2191,8 @@ const file_issho_v1_moderation_proto_rawDesc = "" +
 	"\vevent_title\x18\f \x01(\tR\n" +
 	"eventTitle\x12\x1d\n" +
 	"\n" +
-	"event_date\x18\r \x01(\tR\teventDate\x12\x1f\n" +
-	"\vevent_block\x18\x0e \x01(\tR\n" +
+	"event_date\x18\r \x01(\tR\teventDate\x124\n" +
+	"\vevent_block\x18\x15 \x01(\x0e2\x13.issho.v1.TimeBlockR\n" +
 	"eventBlock\x12\x17\n" +
 	"\acrew_id\x18\x0f \x01(\tR\x06crewId\x12\x1b\n" +
 	"\tcrew_name\x18\x10 \x01(\tR\bcrewName\x129\n" +
@@ -2206,7 +2203,7 @@ const file_issho_v1_moderation_proto_rawDesc = "" +
 	"\vreviewed_at\x18\x13 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"reviewedAt\x12\x1f\n" +
 	"\vreviewed_by\x18\x14 \x01(\tR\n" +
-	"reviewedBy\"w\n" +
+	"reviewedByJ\x04\b\x0e\x10\x0f\"w\n" +
 	"\x14ResolveReportRequest\x12\x1b\n" +
 	"\treport_id\x18\x01 \x01(\tR\breportId\x12.\n" +
 	"\x06status\x18\x02 \x01(\x0e2\x16.issho.v1.ReportStatusR\x06status\x12\x12\n" +
@@ -2247,19 +2244,20 @@ const file_issho_v1_moderation_proto_rawDesc = "" +
 	"page_token\x18\x03 \x01(\tR\tpageToken\"m\n" +
 	"\x16ListCrewLeavesResponse\x12+\n" +
 	"\x06leaves\x18\x01 \x03(\v2\x13.issho.v1.CrewLeaveR\x06leaves\x12&\n" +
-	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\xac\x02\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\xc8\x02\n" +
 	"\tCrewLeave\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x17\n" +
 	"\acrew_id\x18\x02 \x01(\tR\x06crewId\x12\x1b\n" +
-	"\tcrew_name\x18\x03 \x01(\tR\bcrewName\x12\x1f\n" +
-	"\vcrew_status\x18\x04 \x01(\tR\n" +
+	"\tcrew_name\x18\x03 \x01(\tR\bcrewName\x125\n" +
+	"\vcrew_status\x18\n" +
+	" \x01(\x0e2\x14.issho.v1.CrewStatusR\n" +
 	"crewStatus\x12\x17\n" +
 	"\auser_id\x18\x05 \x01(\tR\x06userId\x12\x1b\n" +
 	"\tuser_name\x18\x06 \x01(\tR\buserName\x12-\n" +
 	"\x06reason\x18\a \x01(\x0e2\x15.issho.v1.LeaveReasonR\x06reason\x12\x18\n" +
 	"\adetails\x18\b \x01(\tR\adetails\x129\n" +
 	"\n" +
-	"created_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"g\n" +
+	"created_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAtJ\x04\b\x04\x10\x05\"g\n" +
 	"\x13SearchPeopleRequest\x12\x14\n" +
 	"\x05query\x18\x01 \x01(\tR\x05query\x12\x1b\n" +
 	"\tpage_size\x18\x02 \x01(\x05R\bpageSize\x12\x1d\n" +
@@ -2305,17 +2303,18 @@ const file_issho_v1_moderation_proto_rawDesc = "" +
 	"created_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x127\n" +
 	"\tlifted_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\bliftedAt\x12\x1b\n" +
 	"\tlifted_by\x18\x06 \x01(\tR\bliftedBy\x12\x1b\n" +
-	"\tlift_note\x18\a \x01(\tR\bliftNote\"\xfd\x01\n" +
+	"\tlift_note\x18\a \x01(\tR\bliftNote\"\xd5\x02\n" +
 	"\fPersonOuting\x12\x19\n" +
 	"\bevent_id\x18\x01 \x01(\tR\aeventId\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x12\x12\n" +
-	"\x04date\x18\x03 \x01(\tR\x04date\x12\x14\n" +
-	"\x05block\x18\x04 \x01(\tR\x05block\x12!\n" +
-	"\fevent_status\x18\x05 \x01(\tR\veventStatus\x12\x1a\n" +
-	"\bresponse\x18\x06 \x01(\tR\bresponse\x12\x1d\n" +
+	"\x04date\x18\x03 \x01(\tR\x04date\x12)\n" +
+	"\x05block\x18\t \x01(\x0e2\x13.issho.v1.TimeBlockR\x05block\x128\n" +
+	"\fevent_status\x18\n" +
+	" \x01(\x0e2\x15.issho.v1.EventStatusR\veventStatus\x124\n" +
+	"\bresponse\x18\v \x01(\x0e2\x18.issho.v1.InviteResponseR\bresponse\x12\x1d\n" +
 	"\n" +
 	"checked_in\x18\a \x01(\bR\tcheckedIn\x124\n" +
-	"\bfeedback\x18\b \x01(\x0e2\x18.issho.v1.OutingFeedbackR\bfeedback\"G\n" +
+	"\bfeedback\x18\b \x01(\x0e2\x18.issho.v1.OutingFeedbackR\bfeedbackJ\x04\b\x04\x10\x05J\x04\b\x05\x10\x06J\x04\b\x06\x10\a\"G\n" +
 	"\x14SuspendPersonRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x16\n" +
 	"\x06reason\x18\x02 \x01(\tR\x06reason\"\x17\n" +
@@ -2408,63 +2407,72 @@ var file_issho_v1_moderation_proto_goTypes = []any{
 	(*ListSuspendedResponse)(nil),  // 29: issho.v1.ListSuspendedResponse
 	(*SuspendedPerson)(nil),        // 30: issho.v1.SuspendedPerson
 	(ReportReason)(0),              // 31: issho.v1.ReportReason
-	(*timestamppb.Timestamp)(nil),  // 32: google.protobuf.Timestamp
-	(LeaveReason)(0),               // 33: issho.v1.LeaveReason
+	(TimeBlock)(0),                 // 32: issho.v1.TimeBlock
+	(*timestamppb.Timestamp)(nil),  // 33: google.protobuf.Timestamp
+	(LeaveReason)(0),               // 34: issho.v1.LeaveReason
+	(CrewStatus)(0),                // 35: issho.v1.CrewStatus
+	(EventStatus)(0),               // 36: issho.v1.EventStatus
+	(InviteResponse)(0),            // 37: issho.v1.InviteResponse
 }
 var file_issho_v1_moderation_proto_depIdxs = []int32{
 	0,  // 0: issho.v1.ListReportsRequest.status:type_name -> issho.v1.ReportStatus
 	5,  // 1: issho.v1.ListReportsResponse.reports:type_name -> issho.v1.ModerationReport
 	31, // 2: issho.v1.ModerationReport.reason:type_name -> issho.v1.ReportReason
 	0,  // 3: issho.v1.ModerationReport.status:type_name -> issho.v1.ReportStatus
-	32, // 4: issho.v1.ModerationReport.created_at:type_name -> google.protobuf.Timestamp
-	32, // 5: issho.v1.ModerationReport.updated_at:type_name -> google.protobuf.Timestamp
-	32, // 6: issho.v1.ModerationReport.reviewed_at:type_name -> google.protobuf.Timestamp
-	0,  // 7: issho.v1.ResolveReportRequest.status:type_name -> issho.v1.ReportStatus
-	10, // 8: issho.v1.ListFlagsResponse.flags:type_name -> issho.v1.ModerationFlag
-	1,  // 9: issho.v1.ModerationFlag.kind:type_name -> issho.v1.FlagKind
-	32, // 10: issho.v1.ModerationFlag.created_at:type_name -> google.protobuf.Timestamp
-	32, // 11: issho.v1.ModerationFlag.updated_at:type_name -> google.protobuf.Timestamp
-	32, // 12: issho.v1.ModerationFlag.resolved_at:type_name -> google.protobuf.Timestamp
-	33, // 13: issho.v1.ListCrewLeavesRequest.reason:type_name -> issho.v1.LeaveReason
-	15, // 14: issho.v1.ListCrewLeavesResponse.leaves:type_name -> issho.v1.CrewLeave
-	33, // 15: issho.v1.CrewLeave.reason:type_name -> issho.v1.LeaveReason
-	32, // 16: issho.v1.CrewLeave.created_at:type_name -> google.protobuf.Timestamp
-	18, // 17: issho.v1.SearchPeopleResponse.people:type_name -> issho.v1.PersonSummary
-	21, // 18: issho.v1.GetPersonResponse.person:type_name -> issho.v1.Person
-	32, // 19: issho.v1.Person.joined_at:type_name -> google.protobuf.Timestamp
-	22, // 20: issho.v1.Person.suspensions:type_name -> issho.v1.Suspension
-	10, // 21: issho.v1.Person.flags:type_name -> issho.v1.ModerationFlag
-	23, // 22: issho.v1.Person.outings:type_name -> issho.v1.PersonOuting
-	32, // 23: issho.v1.Suspension.created_at:type_name -> google.protobuf.Timestamp
-	32, // 24: issho.v1.Suspension.lifted_at:type_name -> google.protobuf.Timestamp
-	2,  // 25: issho.v1.PersonOuting.feedback:type_name -> issho.v1.OutingFeedback
-	30, // 26: issho.v1.ListSuspendedResponse.people:type_name -> issho.v1.SuspendedPerson
-	32, // 27: issho.v1.SuspendedPerson.since:type_name -> google.protobuf.Timestamp
-	3,  // 28: issho.v1.ModerationService.ListReports:input_type -> issho.v1.ListReportsRequest
-	6,  // 29: issho.v1.ModerationService.ResolveReport:input_type -> issho.v1.ResolveReportRequest
-	8,  // 30: issho.v1.ModerationService.ListFlags:input_type -> issho.v1.ListFlagsRequest
-	11, // 31: issho.v1.ModerationService.ResolveFlag:input_type -> issho.v1.ResolveFlagRequest
-	13, // 32: issho.v1.ModerationService.ListCrewLeaves:input_type -> issho.v1.ListCrewLeavesRequest
-	16, // 33: issho.v1.ModerationService.SearchPeople:input_type -> issho.v1.SearchPeopleRequest
-	19, // 34: issho.v1.ModerationService.GetPerson:input_type -> issho.v1.GetPersonRequest
-	24, // 35: issho.v1.ModerationService.SuspendPerson:input_type -> issho.v1.SuspendPersonRequest
-	26, // 36: issho.v1.ModerationService.LiftSuspension:input_type -> issho.v1.LiftSuspensionRequest
-	28, // 37: issho.v1.ModerationService.ListSuspended:input_type -> issho.v1.ListSuspendedRequest
-	4,  // 38: issho.v1.ModerationService.ListReports:output_type -> issho.v1.ListReportsResponse
-	7,  // 39: issho.v1.ModerationService.ResolveReport:output_type -> issho.v1.ResolveReportResponse
-	9,  // 40: issho.v1.ModerationService.ListFlags:output_type -> issho.v1.ListFlagsResponse
-	12, // 41: issho.v1.ModerationService.ResolveFlag:output_type -> issho.v1.ResolveFlagResponse
-	14, // 42: issho.v1.ModerationService.ListCrewLeaves:output_type -> issho.v1.ListCrewLeavesResponse
-	17, // 43: issho.v1.ModerationService.SearchPeople:output_type -> issho.v1.SearchPeopleResponse
-	20, // 44: issho.v1.ModerationService.GetPerson:output_type -> issho.v1.GetPersonResponse
-	25, // 45: issho.v1.ModerationService.SuspendPerson:output_type -> issho.v1.SuspendPersonResponse
-	27, // 46: issho.v1.ModerationService.LiftSuspension:output_type -> issho.v1.LiftSuspensionResponse
-	29, // 47: issho.v1.ModerationService.ListSuspended:output_type -> issho.v1.ListSuspendedResponse
-	38, // [38:48] is the sub-list for method output_type
-	28, // [28:38] is the sub-list for method input_type
-	28, // [28:28] is the sub-list for extension type_name
-	28, // [28:28] is the sub-list for extension extendee
-	0,  // [0:28] is the sub-list for field type_name
+	32, // 4: issho.v1.ModerationReport.event_block:type_name -> issho.v1.TimeBlock
+	33, // 5: issho.v1.ModerationReport.created_at:type_name -> google.protobuf.Timestamp
+	33, // 6: issho.v1.ModerationReport.updated_at:type_name -> google.protobuf.Timestamp
+	33, // 7: issho.v1.ModerationReport.reviewed_at:type_name -> google.protobuf.Timestamp
+	0,  // 8: issho.v1.ResolveReportRequest.status:type_name -> issho.v1.ReportStatus
+	10, // 9: issho.v1.ListFlagsResponse.flags:type_name -> issho.v1.ModerationFlag
+	1,  // 10: issho.v1.ModerationFlag.kind:type_name -> issho.v1.FlagKind
+	33, // 11: issho.v1.ModerationFlag.created_at:type_name -> google.protobuf.Timestamp
+	33, // 12: issho.v1.ModerationFlag.updated_at:type_name -> google.protobuf.Timestamp
+	33, // 13: issho.v1.ModerationFlag.resolved_at:type_name -> google.protobuf.Timestamp
+	34, // 14: issho.v1.ListCrewLeavesRequest.reason:type_name -> issho.v1.LeaveReason
+	15, // 15: issho.v1.ListCrewLeavesResponse.leaves:type_name -> issho.v1.CrewLeave
+	35, // 16: issho.v1.CrewLeave.crew_status:type_name -> issho.v1.CrewStatus
+	34, // 17: issho.v1.CrewLeave.reason:type_name -> issho.v1.LeaveReason
+	33, // 18: issho.v1.CrewLeave.created_at:type_name -> google.protobuf.Timestamp
+	18, // 19: issho.v1.SearchPeopleResponse.people:type_name -> issho.v1.PersonSummary
+	21, // 20: issho.v1.GetPersonResponse.person:type_name -> issho.v1.Person
+	33, // 21: issho.v1.Person.joined_at:type_name -> google.protobuf.Timestamp
+	22, // 22: issho.v1.Person.suspensions:type_name -> issho.v1.Suspension
+	10, // 23: issho.v1.Person.flags:type_name -> issho.v1.ModerationFlag
+	23, // 24: issho.v1.Person.outings:type_name -> issho.v1.PersonOuting
+	33, // 25: issho.v1.Suspension.created_at:type_name -> google.protobuf.Timestamp
+	33, // 26: issho.v1.Suspension.lifted_at:type_name -> google.protobuf.Timestamp
+	32, // 27: issho.v1.PersonOuting.block:type_name -> issho.v1.TimeBlock
+	36, // 28: issho.v1.PersonOuting.event_status:type_name -> issho.v1.EventStatus
+	37, // 29: issho.v1.PersonOuting.response:type_name -> issho.v1.InviteResponse
+	2,  // 30: issho.v1.PersonOuting.feedback:type_name -> issho.v1.OutingFeedback
+	30, // 31: issho.v1.ListSuspendedResponse.people:type_name -> issho.v1.SuspendedPerson
+	33, // 32: issho.v1.SuspendedPerson.since:type_name -> google.protobuf.Timestamp
+	3,  // 33: issho.v1.ModerationService.ListReports:input_type -> issho.v1.ListReportsRequest
+	6,  // 34: issho.v1.ModerationService.ResolveReport:input_type -> issho.v1.ResolveReportRequest
+	8,  // 35: issho.v1.ModerationService.ListFlags:input_type -> issho.v1.ListFlagsRequest
+	11, // 36: issho.v1.ModerationService.ResolveFlag:input_type -> issho.v1.ResolveFlagRequest
+	13, // 37: issho.v1.ModerationService.ListCrewLeaves:input_type -> issho.v1.ListCrewLeavesRequest
+	16, // 38: issho.v1.ModerationService.SearchPeople:input_type -> issho.v1.SearchPeopleRequest
+	19, // 39: issho.v1.ModerationService.GetPerson:input_type -> issho.v1.GetPersonRequest
+	24, // 40: issho.v1.ModerationService.SuspendPerson:input_type -> issho.v1.SuspendPersonRequest
+	26, // 41: issho.v1.ModerationService.LiftSuspension:input_type -> issho.v1.LiftSuspensionRequest
+	28, // 42: issho.v1.ModerationService.ListSuspended:input_type -> issho.v1.ListSuspendedRequest
+	4,  // 43: issho.v1.ModerationService.ListReports:output_type -> issho.v1.ListReportsResponse
+	7,  // 44: issho.v1.ModerationService.ResolveReport:output_type -> issho.v1.ResolveReportResponse
+	9,  // 45: issho.v1.ModerationService.ListFlags:output_type -> issho.v1.ListFlagsResponse
+	12, // 46: issho.v1.ModerationService.ResolveFlag:output_type -> issho.v1.ResolveFlagResponse
+	14, // 47: issho.v1.ModerationService.ListCrewLeaves:output_type -> issho.v1.ListCrewLeavesResponse
+	17, // 48: issho.v1.ModerationService.SearchPeople:output_type -> issho.v1.SearchPeopleResponse
+	20, // 49: issho.v1.ModerationService.GetPerson:output_type -> issho.v1.GetPersonResponse
+	25, // 50: issho.v1.ModerationService.SuspendPerson:output_type -> issho.v1.SuspendPersonResponse
+	27, // 51: issho.v1.ModerationService.LiftSuspension:output_type -> issho.v1.LiftSuspensionResponse
+	29, // 52: issho.v1.ModerationService.ListSuspended:output_type -> issho.v1.ListSuspendedResponse
+	43, // [43:53] is the sub-list for method output_type
+	33, // [33:43] is the sub-list for method input_type
+	33, // [33:33] is the sub-list for extension type_name
+	33, // [33:33] is the sub-list for extension extendee
+	0,  // [0:33] is the sub-list for field type_name
 }
 
 func init() { file_issho_v1_moderation_proto_init() }
@@ -2474,6 +2482,7 @@ func file_issho_v1_moderation_proto_init() {
 	}
 	file_issho_v1_crews_proto_init()
 	file_issho_v1_events_proto_init()
+	file_issho_v1_profile_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

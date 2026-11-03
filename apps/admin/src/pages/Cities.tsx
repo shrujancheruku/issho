@@ -44,6 +44,8 @@ export function Cities() {
   );
 }
 
+const count = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
+
 function PackRow({ pack: p, configured }: { pack: CityPackSummary; configured: boolean }) {
   const queryClient = useQueryClient();
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['city-packs'] });
@@ -80,7 +82,7 @@ function PackRow({ pack: p, configured }: { pack: CityPackSummary; configured: b
         {a?.removedAreas.length ? <div className="muted">Removed areas: {a.removedAreas.join(', ')}.</div> : null}
         {a?.replacedAreas.map((r) => (
           <div key={r.oldAreaId} className="muted">
-            Replaced {r.oldAreaId} with {r.newAreaId}: moved {r.people} people, {r.crews} crews, {r.plans} plans.
+            Replaced {r.oldAreaId} with {r.newAreaId}: moved {count(r.people, 'person', 'people')}, {count(r.crews, 'crew')}, {count(r.plans, 'plan')}.
           </div>
         ))}
         {a?.removedOverrides.length ? <div className="muted">Removed activity overrides: {a.removedOverrides.join(', ')}.</div> : null}

@@ -1774,9 +1774,9 @@ type VenueOption struct {
 	Name    string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	Address string `protobuf:"bytes,3,opt,name=address,proto3" json:"address,omitempty"`
 	MapsUrl string `protobuf:"bytes,4,opt,name=maps_url,json=mapsUrl,proto3" json:"maps_url,omitempty"`
-	// Our venue category, and candidate or approved.
-	CategoryId    string `protobuf:"bytes,5,opt,name=category_id,json=categoryId,proto3" json:"category_id,omitempty"`
-	Status        string `protobuf:"bytes,6,opt,name=status,proto3" json:"status,omitempty"`
+	// Our venue category.
+	CategoryId    string      `protobuf:"bytes,5,opt,name=category_id,json=categoryId,proto3" json:"category_id,omitempty"`
+	Status        VenueStatus `protobuf:"varint,7,opt,name=status,proto3,enum=issho.v1.VenueStatus" json:"status,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1846,11 +1846,11 @@ func (x *VenueOption) GetCategoryId() string {
 	return ""
 }
 
-func (x *VenueOption) GetStatus() string {
+func (x *VenueOption) GetStatus() VenueStatus {
 	if x != nil {
 		return x.Status
 	}
-	return ""
+	return VenueStatus_VENUE_STATUS_UNSPECIFIED
 }
 
 type CreatePlanRequest struct {
@@ -2154,7 +2154,7 @@ type ReviewEvent struct {
 	AreaName string `protobuf:"bytes,5,opt,name=area_name,json=areaName,proto3" json:"area_name,omitempty"`
 	// Local date (YYYY-MM-DD) and part of the day; the start time.
 	Date     string                 `protobuf:"bytes,6,opt,name=date,proto3" json:"date,omitempty"`
-	Block    string                 `protobuf:"bytes,7,opt,name=block,proto3" json:"block,omitempty"`
+	Block    TimeBlock              `protobuf:"varint,15,opt,name=block,proto3,enum=issho.v1.TimeBlock" json:"block,omitempty"`
 	StartsAt *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=starts_at,json=startsAt,proto3" json:"starts_at,omitempty"`
 	// Invitees answer by then.
 	ConfirmBy *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=confirm_by,json=confirmBy,proto3" json:"confirm_by,omitempty"`
@@ -2243,11 +2243,11 @@ func (x *ReviewEvent) GetDate() string {
 	return ""
 }
 
-func (x *ReviewEvent) GetBlock() string {
+func (x *ReviewEvent) GetBlock() TimeBlock {
 	if x != nil {
 		return x.Block
 	}
-	return ""
+	return TimeBlock_TIME_BLOCK_UNSPECIFIED
 }
 
 func (x *ReviewEvent) GetStartsAt() *timestamppb.Timestamp {
@@ -2400,11 +2400,10 @@ type ReviewGroup struct {
 	Id    string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	// Confirmed straight away at quorum; at the deadline it goes ahead with
 	// at least min_attendance.
-	Quorum        int32   `protobuf:"varint,2,opt,name=quorum,proto3" json:"quorum,omitempty"`
-	MinAttendance int32   `protobuf:"varint,3,opt,name=min_attendance,json=minAttendance,proto3" json:"min_attendance,omitempty"`
-	Score         float32 `protobuf:"fixed32,4,opt,name=score,proto3" json:"score,omitempty"`
-	// inviting, confirmed or cancelled.
-	Status string `protobuf:"bytes,5,opt,name=status,proto3" json:"status,omitempty"`
+	Quorum        int32       `protobuf:"varint,2,opt,name=quorum,proto3" json:"quorum,omitempty"`
+	MinAttendance int32       `protobuf:"varint,3,opt,name=min_attendance,json=minAttendance,proto3" json:"min_attendance,omitempty"`
+	Score         float32     `protobuf:"fixed32,4,opt,name=score,proto3" json:"score,omitempty"`
+	Status        GroupStatus `protobuf:"varint,8,opt,name=status,proto3,enum=issho.v1.GroupStatus" json:"status,omitempty"`
 	// English; "" for none.
 	MeetingPoint  string          `protobuf:"bytes,6,opt,name=meeting_point,json=meetingPoint,proto3" json:"meeting_point,omitempty"`
 	Members       []*ReviewMember `protobuf:"bytes,7,rep,name=members,proto3" json:"members,omitempty"`
@@ -2470,11 +2469,11 @@ func (x *ReviewGroup) GetScore() float32 {
 	return 0
 }
 
-func (x *ReviewGroup) GetStatus() string {
+func (x *ReviewGroup) GetStatus() GroupStatus {
 	if x != nil {
 		return x.Status
 	}
-	return ""
+	return GroupStatus_GROUP_STATUS_UNSPECIFIED
 }
 
 func (x *ReviewGroup) GetMeetingPoint() string {
@@ -2496,10 +2495,9 @@ type ReviewMember struct {
 	UserId string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	Name   string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	// woman, man, nonbinary or unspecified.
-	Gender    string `protobuf:"bytes,3,opt,name=gender,proto3" json:"gender,omitempty"`
-	BirthYear int32  `protobuf:"varint,4,opt,name=birth_year,json=birthYear,proto3" json:"birth_year,omitempty"`
-	// invited, confirmed, declined or dropped.
-	Response string `protobuf:"bytes,5,opt,name=response,proto3" json:"response,omitempty"`
+	Gender    string         `protobuf:"bytes,3,opt,name=gender,proto3" json:"gender,omitempty"`
+	BirthYear int32          `protobuf:"varint,4,opt,name=birth_year,json=birthYear,proto3" json:"birth_year,omitempty"`
+	Response  InviteResponse `protobuf:"varint,7,opt,name=response,proto3,enum=issho.v1.InviteResponse" json:"response,omitempty"`
 	// Still signed up for the plan: in a proposal, someone who withdrew
 	// since (false) is left out when it's approved.
 	SignedUp      bool `protobuf:"varint,6,opt,name=signed_up,json=signedUp,proto3" json:"signed_up,omitempty"`
@@ -2565,11 +2563,11 @@ func (x *ReviewMember) GetBirthYear() int32 {
 	return 0
 }
 
-func (x *ReviewMember) GetResponse() string {
+func (x *ReviewMember) GetResponse() InviteResponse {
 	if x != nil {
 		return x.Response
 	}
-	return ""
+	return InviteResponse_INVITE_RESPONSE_UNSPECIFIED
 }
 
 func (x *ReviewMember) GetSignedUp() bool {
@@ -3113,7 +3111,7 @@ var File_issho_v1_review_proto protoreflect.FileDescriptor
 
 const file_issho_v1_review_proto_rawDesc = "" +
 	"\n" +
-	"\x15issho/v1/review.proto\x12\bissho.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x14issho/v1/plans.proto\"\x19\n" +
+	"\x15issho/v1/review.proto\x12\bissho.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17issho/v1/curation.proto\x1a\x15issho/v1/events.proto\x1a\x14issho/v1/plans.proto\x1a\x16issho/v1/profile.proto\"\x19\n" +
 	"\x17ListReviewCitiesRequest\"H\n" +
 	"\x18ListReviewCitiesResponse\x12,\n" +
 	"\x06cities\x18\x01 \x03(\v2\x14.issho.v1.ReviewCityR\x06cities\"t\n" +
@@ -3230,15 +3228,15 @@ const file_issho_v1_review_proto_rawDesc = "" +
 	"\vactivity_id\x18\x02 \x01(\tR\n" +
 	"activityId\"I\n" +
 	"\x18ListVenueOptionsResponse\x12-\n" +
-	"\x06venues\x18\x01 \x03(\v2\x15.issho.v1.VenueOptionR\x06venues\"\xaa\x01\n" +
+	"\x06venues\x18\x01 \x03(\v2\x15.issho.v1.VenueOptionR\x06venues\"\xc7\x01\n" +
 	"\vVenueOption\x12\x19\n" +
 	"\bplace_id\x18\x01 \x01(\tR\aplaceId\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x18\n" +
 	"\aaddress\x18\x03 \x01(\tR\aaddress\x12\x19\n" +
 	"\bmaps_url\x18\x04 \x01(\tR\amapsUrl\x12\x1f\n" +
 	"\vcategory_id\x18\x05 \x01(\tR\n" +
-	"categoryId\x12\x16\n" +
-	"\x06status\x18\x06 \x01(\tR\x06status\"\xf0\x02\n" +
+	"categoryId\x12-\n" +
+	"\x06status\x18\a \x01(\x0e2\x15.issho.v1.VenueStatusR\x06statusJ\x04\b\x06\x10\a\"\xf0\x02\n" +
 	"\x11CreatePlanRequest\x12\x17\n" +
 	"\acity_id\x18\x01 \x01(\tR\x06cityId\x12\x17\n" +
 	"\aarea_id\x18\x02 \x01(\tR\x06areaId\x12\x1f\n" +
@@ -3263,15 +3261,15 @@ const file_issho_v1_review_proto_rawDesc = "" +
 	"page_token\x18\x04 \x01(\tR\tpageToken\"q\n" +
 	"\x18ListReviewEventsResponse\x12-\n" +
 	"\x06events\x18\x01 \x03(\v2\x15.issho.v1.ReviewEventR\x06events\x12&\n" +
-	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\xdc\x03\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\xf7\x03\n" +
 	"\vReviewEvent\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
 	"\aplan_id\x18\x02 \x01(\tR\x06planId\x123\n" +
 	"\x06status\x18\x03 \x01(\x0e2\x1b.issho.v1.ReviewEventStatusR\x06status\x12\x14\n" +
 	"\x05title\x18\x04 \x01(\tR\x05title\x12\x1b\n" +
 	"\tarea_name\x18\x05 \x01(\tR\bareaName\x12\x12\n" +
-	"\x04date\x18\x06 \x01(\tR\x04date\x12\x14\n" +
-	"\x05block\x18\a \x01(\tR\x05block\x127\n" +
+	"\x04date\x18\x06 \x01(\tR\x04date\x12)\n" +
+	"\x05block\x18\x0f \x01(\x0e2\x13.issho.v1.TimeBlockR\x05block\x127\n" +
 	"\tstarts_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\bstartsAt\x129\n" +
 	"\n" +
 	"confirm_by\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tconfirmBy\x12\x16\n" +
@@ -3281,28 +3279,28 @@ const file_issho_v1_review_proto_rawDesc = "" +
 	"\x06people\x18\f \x01(\x05R\x06people\x129\n" +
 	"\n" +
 	"created_at\x18\r \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x12\x1b\n" +
-	"\ttime_zone\x18\x0e \x01(\tR\btimeZone\"2\n" +
+	"\ttime_zone\x18\x0e \x01(\tR\btimeZoneJ\x04\b\a\x10\b\"2\n" +
 	"\x15GetReviewEventRequest\x12\x19\n" +
 	"\bevent_id\x18\x01 \x01(\tR\aeventId\"t\n" +
 	"\x16GetReviewEventResponse\x12+\n" +
 	"\x05event\x18\x01 \x01(\v2\x15.issho.v1.ReviewEventR\x05event\x12-\n" +
-	"\x06groups\x18\x02 \x03(\v2\x15.issho.v1.ReviewGroupR\x06groups\"\xe1\x01\n" +
+	"\x06groups\x18\x02 \x03(\v2\x15.issho.v1.ReviewGroupR\x06groups\"\xfe\x01\n" +
 	"\vReviewGroup\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x16\n" +
 	"\x06quorum\x18\x02 \x01(\x05R\x06quorum\x12%\n" +
 	"\x0emin_attendance\x18\x03 \x01(\x05R\rminAttendance\x12\x14\n" +
-	"\x05score\x18\x04 \x01(\x02R\x05score\x12\x16\n" +
-	"\x06status\x18\x05 \x01(\tR\x06status\x12#\n" +
+	"\x05score\x18\x04 \x01(\x02R\x05score\x12-\n" +
+	"\x06status\x18\b \x01(\x0e2\x15.issho.v1.GroupStatusR\x06status\x12#\n" +
 	"\rmeeting_point\x18\x06 \x01(\tR\fmeetingPoint\x120\n" +
-	"\amembers\x18\a \x03(\v2\x16.issho.v1.ReviewMemberR\amembers\"\xab\x01\n" +
+	"\amembers\x18\a \x03(\v2\x16.issho.v1.ReviewMemberR\amembersJ\x04\b\x05\x10\x06\"\xcb\x01\n" +
 	"\fReviewMember\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x16\n" +
 	"\x06gender\x18\x03 \x01(\tR\x06gender\x12\x1d\n" +
 	"\n" +
-	"birth_year\x18\x04 \x01(\x05R\tbirthYear\x12\x1a\n" +
-	"\bresponse\x18\x05 \x01(\tR\bresponse\x12\x1b\n" +
-	"\tsigned_up\x18\x06 \x01(\bR\bsignedUp\"j\n" +
+	"birth_year\x18\x04 \x01(\x05R\tbirthYear\x124\n" +
+	"\bresponse\x18\a \x01(\x0e2\x18.issho.v1.InviteResponseR\bresponse\x12\x1b\n" +
+	"\tsigned_up\x18\x06 \x01(\bR\bsignedUpJ\x04\b\x05\x10\x06\"j\n" +
 	"\x19MoveProposalMemberRequest\x12\x19\n" +
 	"\bevent_id\x18\x01 \x01(\tR\aeventId\x12\x17\n" +
 	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x19\n" +
@@ -3430,6 +3428,10 @@ var file_issho_v1_review_proto_goTypes = []any{
 	(*RejectProposalResponse)(nil),       // 51: issho.v1.RejectProposalResponse
 	(*timestamppb.Timestamp)(nil),        // 52: google.protobuf.Timestamp
 	(*PlanStep)(nil),                     // 53: issho.v1.PlanStep
+	(VenueStatus)(0),                     // 54: issho.v1.VenueStatus
+	(TimeBlock)(0),                       // 55: issho.v1.TimeBlock
+	(GroupStatus)(0),                     // 56: issho.v1.GroupStatus
+	(InviteResponse)(0),                  // 57: issho.v1.InviteResponse
 }
 var file_issho_v1_review_proto_depIdxs = []int32{
 	4,  // 0: issho.v1.ListReviewCitiesResponse.cities:type_name -> issho.v1.ReviewCity
@@ -3445,62 +3447,66 @@ var file_issho_v1_review_proto_depIdxs = []int32{
 	15, // 10: issho.v1.FindPlanPlacesResponse.places:type_name -> issho.v1.FoundPlace
 	12, // 11: issho.v1.SetPlanStopsRequest.stops:type_name -> issho.v1.ReviewStop
 	30, // 12: issho.v1.ListVenueOptionsResponse.venues:type_name -> issho.v1.VenueOption
-	1,  // 13: issho.v1.ListReviewEventsRequest.status:type_name -> issho.v1.ReviewEventStatus
-	35, // 14: issho.v1.ListReviewEventsResponse.events:type_name -> issho.v1.ReviewEvent
-	1,  // 15: issho.v1.ReviewEvent.status:type_name -> issho.v1.ReviewEventStatus
-	52, // 16: issho.v1.ReviewEvent.starts_at:type_name -> google.protobuf.Timestamp
-	52, // 17: issho.v1.ReviewEvent.confirm_by:type_name -> google.protobuf.Timestamp
-	52, // 18: issho.v1.ReviewEvent.created_at:type_name -> google.protobuf.Timestamp
-	35, // 19: issho.v1.GetReviewEventResponse.event:type_name -> issho.v1.ReviewEvent
-	38, // 20: issho.v1.GetReviewEventResponse.groups:type_name -> issho.v1.ReviewGroup
-	39, // 21: issho.v1.ReviewGroup.members:type_name -> issho.v1.ReviewMember
-	2,  // 22: issho.v1.ReviewService.ListReviewCities:input_type -> issho.v1.ListReviewCitiesRequest
-	5,  // 23: issho.v1.ReviewService.SetCityReview:input_type -> issho.v1.SetCityReviewRequest
-	7,  // 24: issho.v1.ReviewService.ListReviewPlans:input_type -> issho.v1.ListReviewPlansRequest
-	10, // 25: issho.v1.ReviewService.GetReviewPlan:input_type -> issho.v1.GetReviewPlanRequest
-	20, // 26: issho.v1.ReviewService.ApprovePlan:input_type -> issho.v1.ApprovePlanRequest
-	22, // 27: issho.v1.ReviewService.RejectPlan:input_type -> issho.v1.RejectPlanRequest
-	24, // 28: issho.v1.ReviewService.EditPlan:input_type -> issho.v1.EditPlanRequest
-	26, // 29: issho.v1.ReviewService.WithdrawPlan:input_type -> issho.v1.WithdrawPlanRequest
-	28, // 30: issho.v1.ReviewService.ListVenueOptions:input_type -> issho.v1.ListVenueOptionsRequest
-	31, // 31: issho.v1.ReviewService.CreatePlan:input_type -> issho.v1.CreatePlanRequest
-	13, // 32: issho.v1.ReviewService.FindPlanPlaces:input_type -> issho.v1.FindPlanPlacesRequest
-	16, // 33: issho.v1.ReviewService.SetPlanStops:input_type -> issho.v1.SetPlanStopsRequest
-	18, // 34: issho.v1.ReviewService.SetPlanVenue:input_type -> issho.v1.SetPlanVenueRequest
-	33, // 35: issho.v1.ReviewService.ListReviewEvents:input_type -> issho.v1.ListReviewEventsRequest
-	36, // 36: issho.v1.ReviewService.GetReviewEvent:input_type -> issho.v1.GetReviewEventRequest
-	40, // 37: issho.v1.ReviewService.MoveProposalMember:input_type -> issho.v1.MoveProposalMemberRequest
-	42, // 38: issho.v1.ReviewService.RemoveProposalMember:input_type -> issho.v1.RemoveProposalMemberRequest
-	44, // 39: issho.v1.ReviewService.SetProposalStart:input_type -> issho.v1.SetProposalStartRequest
-	46, // 40: issho.v1.ReviewService.SetGroupMeetingPoint:input_type -> issho.v1.SetGroupMeetingPointRequest
-	48, // 41: issho.v1.ReviewService.ApproveProposal:input_type -> issho.v1.ApproveProposalRequest
-	50, // 42: issho.v1.ReviewService.RejectProposal:input_type -> issho.v1.RejectProposalRequest
-	3,  // 43: issho.v1.ReviewService.ListReviewCities:output_type -> issho.v1.ListReviewCitiesResponse
-	6,  // 44: issho.v1.ReviewService.SetCityReview:output_type -> issho.v1.SetCityReviewResponse
-	8,  // 45: issho.v1.ReviewService.ListReviewPlans:output_type -> issho.v1.ListReviewPlansResponse
-	11, // 46: issho.v1.ReviewService.GetReviewPlan:output_type -> issho.v1.GetReviewPlanResponse
-	21, // 47: issho.v1.ReviewService.ApprovePlan:output_type -> issho.v1.ApprovePlanResponse
-	23, // 48: issho.v1.ReviewService.RejectPlan:output_type -> issho.v1.RejectPlanResponse
-	25, // 49: issho.v1.ReviewService.EditPlan:output_type -> issho.v1.EditPlanResponse
-	27, // 50: issho.v1.ReviewService.WithdrawPlan:output_type -> issho.v1.WithdrawPlanResponse
-	29, // 51: issho.v1.ReviewService.ListVenueOptions:output_type -> issho.v1.ListVenueOptionsResponse
-	32, // 52: issho.v1.ReviewService.CreatePlan:output_type -> issho.v1.CreatePlanResponse
-	14, // 53: issho.v1.ReviewService.FindPlanPlaces:output_type -> issho.v1.FindPlanPlacesResponse
-	17, // 54: issho.v1.ReviewService.SetPlanStops:output_type -> issho.v1.SetPlanStopsResponse
-	19, // 55: issho.v1.ReviewService.SetPlanVenue:output_type -> issho.v1.SetPlanVenueResponse
-	34, // 56: issho.v1.ReviewService.ListReviewEvents:output_type -> issho.v1.ListReviewEventsResponse
-	37, // 57: issho.v1.ReviewService.GetReviewEvent:output_type -> issho.v1.GetReviewEventResponse
-	41, // 58: issho.v1.ReviewService.MoveProposalMember:output_type -> issho.v1.MoveProposalMemberResponse
-	43, // 59: issho.v1.ReviewService.RemoveProposalMember:output_type -> issho.v1.RemoveProposalMemberResponse
-	45, // 60: issho.v1.ReviewService.SetProposalStart:output_type -> issho.v1.SetProposalStartResponse
-	47, // 61: issho.v1.ReviewService.SetGroupMeetingPoint:output_type -> issho.v1.SetGroupMeetingPointResponse
-	49, // 62: issho.v1.ReviewService.ApproveProposal:output_type -> issho.v1.ApproveProposalResponse
-	51, // 63: issho.v1.ReviewService.RejectProposal:output_type -> issho.v1.RejectProposalResponse
-	43, // [43:64] is the sub-list for method output_type
-	22, // [22:43] is the sub-list for method input_type
-	22, // [22:22] is the sub-list for extension type_name
-	22, // [22:22] is the sub-list for extension extendee
-	0,  // [0:22] is the sub-list for field type_name
+	54, // 13: issho.v1.VenueOption.status:type_name -> issho.v1.VenueStatus
+	1,  // 14: issho.v1.ListReviewEventsRequest.status:type_name -> issho.v1.ReviewEventStatus
+	35, // 15: issho.v1.ListReviewEventsResponse.events:type_name -> issho.v1.ReviewEvent
+	1,  // 16: issho.v1.ReviewEvent.status:type_name -> issho.v1.ReviewEventStatus
+	55, // 17: issho.v1.ReviewEvent.block:type_name -> issho.v1.TimeBlock
+	52, // 18: issho.v1.ReviewEvent.starts_at:type_name -> google.protobuf.Timestamp
+	52, // 19: issho.v1.ReviewEvent.confirm_by:type_name -> google.protobuf.Timestamp
+	52, // 20: issho.v1.ReviewEvent.created_at:type_name -> google.protobuf.Timestamp
+	35, // 21: issho.v1.GetReviewEventResponse.event:type_name -> issho.v1.ReviewEvent
+	38, // 22: issho.v1.GetReviewEventResponse.groups:type_name -> issho.v1.ReviewGroup
+	56, // 23: issho.v1.ReviewGroup.status:type_name -> issho.v1.GroupStatus
+	39, // 24: issho.v1.ReviewGroup.members:type_name -> issho.v1.ReviewMember
+	57, // 25: issho.v1.ReviewMember.response:type_name -> issho.v1.InviteResponse
+	2,  // 26: issho.v1.ReviewService.ListReviewCities:input_type -> issho.v1.ListReviewCitiesRequest
+	5,  // 27: issho.v1.ReviewService.SetCityReview:input_type -> issho.v1.SetCityReviewRequest
+	7,  // 28: issho.v1.ReviewService.ListReviewPlans:input_type -> issho.v1.ListReviewPlansRequest
+	10, // 29: issho.v1.ReviewService.GetReviewPlan:input_type -> issho.v1.GetReviewPlanRequest
+	20, // 30: issho.v1.ReviewService.ApprovePlan:input_type -> issho.v1.ApprovePlanRequest
+	22, // 31: issho.v1.ReviewService.RejectPlan:input_type -> issho.v1.RejectPlanRequest
+	24, // 32: issho.v1.ReviewService.EditPlan:input_type -> issho.v1.EditPlanRequest
+	26, // 33: issho.v1.ReviewService.WithdrawPlan:input_type -> issho.v1.WithdrawPlanRequest
+	28, // 34: issho.v1.ReviewService.ListVenueOptions:input_type -> issho.v1.ListVenueOptionsRequest
+	31, // 35: issho.v1.ReviewService.CreatePlan:input_type -> issho.v1.CreatePlanRequest
+	13, // 36: issho.v1.ReviewService.FindPlanPlaces:input_type -> issho.v1.FindPlanPlacesRequest
+	16, // 37: issho.v1.ReviewService.SetPlanStops:input_type -> issho.v1.SetPlanStopsRequest
+	18, // 38: issho.v1.ReviewService.SetPlanVenue:input_type -> issho.v1.SetPlanVenueRequest
+	33, // 39: issho.v1.ReviewService.ListReviewEvents:input_type -> issho.v1.ListReviewEventsRequest
+	36, // 40: issho.v1.ReviewService.GetReviewEvent:input_type -> issho.v1.GetReviewEventRequest
+	40, // 41: issho.v1.ReviewService.MoveProposalMember:input_type -> issho.v1.MoveProposalMemberRequest
+	42, // 42: issho.v1.ReviewService.RemoveProposalMember:input_type -> issho.v1.RemoveProposalMemberRequest
+	44, // 43: issho.v1.ReviewService.SetProposalStart:input_type -> issho.v1.SetProposalStartRequest
+	46, // 44: issho.v1.ReviewService.SetGroupMeetingPoint:input_type -> issho.v1.SetGroupMeetingPointRequest
+	48, // 45: issho.v1.ReviewService.ApproveProposal:input_type -> issho.v1.ApproveProposalRequest
+	50, // 46: issho.v1.ReviewService.RejectProposal:input_type -> issho.v1.RejectProposalRequest
+	3,  // 47: issho.v1.ReviewService.ListReviewCities:output_type -> issho.v1.ListReviewCitiesResponse
+	6,  // 48: issho.v1.ReviewService.SetCityReview:output_type -> issho.v1.SetCityReviewResponse
+	8,  // 49: issho.v1.ReviewService.ListReviewPlans:output_type -> issho.v1.ListReviewPlansResponse
+	11, // 50: issho.v1.ReviewService.GetReviewPlan:output_type -> issho.v1.GetReviewPlanResponse
+	21, // 51: issho.v1.ReviewService.ApprovePlan:output_type -> issho.v1.ApprovePlanResponse
+	23, // 52: issho.v1.ReviewService.RejectPlan:output_type -> issho.v1.RejectPlanResponse
+	25, // 53: issho.v1.ReviewService.EditPlan:output_type -> issho.v1.EditPlanResponse
+	27, // 54: issho.v1.ReviewService.WithdrawPlan:output_type -> issho.v1.WithdrawPlanResponse
+	29, // 55: issho.v1.ReviewService.ListVenueOptions:output_type -> issho.v1.ListVenueOptionsResponse
+	32, // 56: issho.v1.ReviewService.CreatePlan:output_type -> issho.v1.CreatePlanResponse
+	14, // 57: issho.v1.ReviewService.FindPlanPlaces:output_type -> issho.v1.FindPlanPlacesResponse
+	17, // 58: issho.v1.ReviewService.SetPlanStops:output_type -> issho.v1.SetPlanStopsResponse
+	19, // 59: issho.v1.ReviewService.SetPlanVenue:output_type -> issho.v1.SetPlanVenueResponse
+	34, // 60: issho.v1.ReviewService.ListReviewEvents:output_type -> issho.v1.ListReviewEventsResponse
+	37, // 61: issho.v1.ReviewService.GetReviewEvent:output_type -> issho.v1.GetReviewEventResponse
+	41, // 62: issho.v1.ReviewService.MoveProposalMember:output_type -> issho.v1.MoveProposalMemberResponse
+	43, // 63: issho.v1.ReviewService.RemoveProposalMember:output_type -> issho.v1.RemoveProposalMemberResponse
+	45, // 64: issho.v1.ReviewService.SetProposalStart:output_type -> issho.v1.SetProposalStartResponse
+	47, // 65: issho.v1.ReviewService.SetGroupMeetingPoint:output_type -> issho.v1.SetGroupMeetingPointResponse
+	49, // 66: issho.v1.ReviewService.ApproveProposal:output_type -> issho.v1.ApproveProposalResponse
+	51, // 67: issho.v1.ReviewService.RejectProposal:output_type -> issho.v1.RejectProposalResponse
+	47, // [47:68] is the sub-list for method output_type
+	26, // [26:47] is the sub-list for method input_type
+	26, // [26:26] is the sub-list for extension type_name
+	26, // [26:26] is the sub-list for extension extendee
+	0,  // [0:26] is the sub-list for field type_name
 }
 
 func init() { file_issho_v1_review_proto_init() }
@@ -3508,7 +3514,10 @@ func file_issho_v1_review_proto_init() {
 	if File_issho_v1_review_proto != nil {
 		return
 	}
+	file_issho_v1_curation_proto_init()
+	file_issho_v1_events_proto_init()
 	file_issho_v1_plans_proto_init()
+	file_issho_v1_profile_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

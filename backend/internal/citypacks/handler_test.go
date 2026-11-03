@@ -255,8 +255,8 @@ func TestIntegrationCityPacks(t *testing.T) {
 	}
 
 	// An authoritative apply reports what it took away: Gamma is replaced by
-	// Delta (nothing references it, so zero rows move), the override the pack
-	// dropped, and then Delta itself, deleted outright.
+	// Delta (its people, crews and plans move), the override the pack
+	// dropped, and then Epsilon, an unreferenced area, deleted outright.
 	edit := func(change func(p *cities.Pack)) {
 		t.Helper()
 		cur := cities.Pack{}
@@ -270,18 +270,40 @@ func TestIntegrationCityPacks(t *testing.T) {
 		}
 		repo.files["data/citypacks/zz-packs.json"] = raw
 	}
+	// Gamma has 1 person, 2 crews and 3 plans, so the counts are distinct.
+	fx := testfixture.New(t, "zz-packs-fx", "Asia/Tokyo", 1)
+	fx.AddProfile(t, fx.Users[0], "ja")
+	seed := []string{"update app.profiles set home_area_id = '" + city + "-c' where user_id = '" + fx.Users[0].String() + "'"}
+	for range 2 {
+		seed = append(seed, "insert into app.crews (city_id, area_id, offer_until) values ('"+city+"', '"+city+"-c', now())")
+	}
+	for range 3 {
+		seed = append(seed, `insert into app.plans (city_id, area_id, activity_id, primary_language, audience, score, window_start, window_days, signup_deadline)
+		   values ('`+city+`', '`+city+`-c', '`+act+`', 'ja', 1, 1, current_date, 7, now())`)
+	}
+	for _, q := range seed {
+		if _, err := pool.Exec(ctx, q); err != nil {
+			t.Fatal(err)
+		}
+	}
 	edit(func(p *cities.Pack) {
 		p.Areas[2] = cities.Area{ID: city + "-d", Name: cities.Text{"en": "Delta"}, Lat: 35.72, Lng: 139.62, Replaces: []string{city + "-c"}}
+		p.Areas = append(p.Areas, cities.Area{ID: city + "-e", Name: cities.Text{"en": "Epsilon"}, Lat: 35.73, Lng: 139.63})
 		p.ActivityOverrides = nil
 	})
 	rem := apply()
 	if len(rem.ReplacedAreas) != 1 || rem.ReplacedAreas[0].OldAreaId != city+"-c" || rem.ReplacedAreas[0].NewAreaId != city+"-d" ||
-		rem.ReplacedAreas[0].People+rem.ReplacedAreas[0].Crews+rem.ReplacedAreas[0].Plans != 0 ||
+		rem.ReplacedAreas[0].People != 1 || rem.ReplacedAreas[0].Crews != 2 || rem.ReplacedAreas[0].Plans != 3 ||
 		len(rem.RemovedOverrides) != 1 || len(rem.RemovedAreas) != 0 {
 		t.Errorf("replacing apply = %v", rem)
 	}
-	edit(func(p *cities.Pack) { p.Areas = p.Areas[:2] })
-	if rem := apply(); !slices.Equal(rem.RemovedAreas, []string{city + "-d"}) || len(rem.ReplacedAreas) != 0 {
+	// edit starts from the proposed pack, so Delta (with its replaces) is
+	// restated; Epsilon is the one that goes.
+	edit(func(p *cities.Pack) {
+		p.Areas[2] = cities.Area{ID: city + "-d", Name: cities.Text{"en": "Delta"}, Lat: 35.72, Lng: 139.62, Replaces: []string{city + "-c"}}
+		p.ActivityOverrides = nil
+	})
+	if rem := apply(); !slices.Equal(rem.RemovedAreas, []string{city + "-e"}) || len(rem.ReplacedAreas) != 0 {
 		t.Errorf("removing apply = %v", rem)
 	}
 	if _, err := h.ApplyCityPack(adminCtx, connect.NewRequest(&isshov1.ApplyCityPackRequest{CityId: "nowhere"})); connect.CodeOf(err) != connect.CodeNotFound {
@@ -308,6 +330,8 @@ func TestIntegrationCityPacks(t *testing.T) {
 	if err := json.Unmarshal(repo.content, &moved); err != nil {
 		t.Fatal(err)
 	}
+	// Gamma is gone from the database (replaced above), so keep Delta.
+	moved.Areas[2] = cities.Area{ID: city + "-d", Name: cities.Text{"en": "Delta"}, Lat: 35.72, Lng: 139.62, Replaces: []string{city + "-c"}}
 	moved.Areas[0].Lat += 0.02
 	moved.Areas[0].Boundary, moved.Areas[0].OSMID = nil, 0
 	raw, err := cities.EncodePack(moved)

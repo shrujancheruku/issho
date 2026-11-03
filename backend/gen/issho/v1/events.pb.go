@@ -147,6 +147,8 @@ const (
 	EventStatus_EVENT_STATUS_SCHEDULED   EventStatus = 1
 	EventStatus_EVENT_STATUS_DONE        EventStatus = 2
 	EventStatus_EVENT_STATUS_CANCELLED   EventStatus = 3
+	// Waiting for an admin to approve. Only the admin SPA sees this.
+	EventStatus_EVENT_STATUS_PROPOSED EventStatus = 4
 )
 
 // Enum value maps for EventStatus.
@@ -156,12 +158,14 @@ var (
 		1: "EVENT_STATUS_SCHEDULED",
 		2: "EVENT_STATUS_DONE",
 		3: "EVENT_STATUS_CANCELLED",
+		4: "EVENT_STATUS_PROPOSED",
 	}
 	EventStatus_value = map[string]int32{
 		"EVENT_STATUS_UNSPECIFIED": 0,
 		"EVENT_STATUS_SCHEDULED":   1,
 		"EVENT_STATUS_DONE":        2,
 		"EVENT_STATUS_CANCELLED":   3,
+		"EVENT_STATUS_PROPOSED":    4,
 	}
 )
 
@@ -1565,12 +1569,13 @@ const file_issho_v1_events_proto_rawDesc = "" +
 	"\x18EVENT_ACTION_UNSPECIFIED\x10\x00\x12\x18\n" +
 	"\x14EVENT_ACTION_CONFIRM\x10\x01\x12\x18\n" +
 	"\x14EVENT_ACTION_DECLINE\x10\x02\x12\x17\n" +
-	"\x13EVENT_ACTION_CANCEL\x10\x03*z\n" +
+	"\x13EVENT_ACTION_CANCEL\x10\x03*\x95\x01\n" +
 	"\vEventStatus\x12\x1c\n" +
 	"\x18EVENT_STATUS_UNSPECIFIED\x10\x00\x12\x1a\n" +
 	"\x16EVENT_STATUS_SCHEDULED\x10\x01\x12\x15\n" +
 	"\x11EVENT_STATUS_DONE\x10\x02\x12\x1a\n" +
-	"\x16EVENT_STATUS_CANCELLED\x10\x03*~\n" +
+	"\x16EVENT_STATUS_CANCELLED\x10\x03\x12\x19\n" +
+	"\x15EVENT_STATUS_PROPOSED\x10\x04*~\n" +
 	"\vGroupStatus\x12\x1c\n" +
 	"\x18GROUP_STATUS_UNSPECIFIED\x10\x00\x12\x19\n" +
 	"\x15GROUP_STATUS_INVITING\x10\x01\x12\x1a\n" +

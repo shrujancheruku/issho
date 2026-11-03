@@ -3,6 +3,7 @@ package crews
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"connectrpc.com/connect"
@@ -144,15 +145,30 @@ func crewError(err error) error {
 }
 
 var (
+	// LAPSED and CLOSED are for the admin SPA only: the app never sees them
+	// because ListUserCrews returns only offered/active crews and
+	// Membership.Visible() gates Get. If a query there changes, installed
+	// builds would get values they don't know.
 	statusPB = map[string]isshov1.CrewStatus{
 		Offered: isshov1.CrewStatus_CREW_STATUS_OFFERED,
 		Active:  isshov1.CrewStatus_CREW_STATUS_ACTIVE,
+		Lapsed:  isshov1.CrewStatus_CREW_STATUS_LAPSED, // admin SPA only
+		Closed:  isshov1.CrewStatus_CREW_STATUS_CLOSED, // admin SPA only
 	}
 	responsePB = map[string]isshov1.CrewResponse{
 		Undecided: isshov1.CrewResponse_CREW_RESPONSE_OFFERED,
 		Accepted:  isshov1.CrewResponse_CREW_RESPONSE_ACCEPTED,
 	}
 )
+
+// StatusProto converts a crew's status for the admin protos; unlike statusPB
+// an unknown value is an error, not UNSPECIFIED.
+func StatusProto(s string) (isshov1.CrewStatus, error) {
+	if v, ok := statusPB[s]; ok {
+		return v, nil
+	}
+	return 0, fmt.Errorf("unknown crew status %q", s)
+}
 
 func crewToProto(it Item) *isshov1.Crew {
 	out := &isshov1.Crew{

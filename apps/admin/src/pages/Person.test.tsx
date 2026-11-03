@@ -1,5 +1,5 @@
 import { create } from '@bufbuild/protobuf';
-import { Code, ConnectError, GetPersonResponseSchema, PersonSchema } from '@issho/api-client';
+import { Code, ConnectError, EventStatus, GetPersonResponseSchema, InviteResponse, PersonOutingSchema, PersonSchema, TimeBlock } from '@issho/api-client';
 import { screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -21,6 +21,26 @@ function serve(suspended: boolean) {
     .on('moderation.liftSuspension', () => { state.suspended = false; return {}; });
   return state;
 }
+
+describe('outings', () => {
+  it('shows the block, a status unless done, and the answer as the same words as before the enums', async () => {
+    fake.on('moderation.getPerson', () => create(GetPersonResponseSchema, {
+      person: create(PersonSchema, {
+        userId, name: 'Aoi',
+        outings: [
+          create(PersonOutingSchema, { eventId: 'e1', title: 'Ramen', date: '2030-01-06', block: TimeBlock.EVENING, eventStatus: EventStatus.CANCELLED, response: InviteResponse.DROPPED }),
+          create(PersonOutingSchema, { eventId: 'e2', title: 'Walk', date: '2030-01-07', block: TimeBlock.MORNING, eventStatus: EventStatus.DONE, response: InviteResponse.CONFIRMED }),
+        ],
+      }),
+    }));
+    renderPage(<Person userId={userId} />);
+    expect(await screen.findByText('2030-01-06 evening')).toBeTruthy();
+    expect(screen.getByText('(cancelled)')).toBeTruthy();
+    expect(screen.getByText('dropped')).toBeTruthy();
+    expect(screen.getByText('2030-01-07 morning')).toBeTruthy();
+    expect(screen.queryByText('(done)')).toBeNull();
+  });
+});
 
 describe('suspend a person', () => {
   it('asks to confirm, sends the reason once confirmed, and shows the suspension', async () => {

@@ -1,5 +1,5 @@
 import { create } from '@bufbuild/protobuf';
-import { ListReportsResponseSchema, ModerationReportSchema, ReportStatus } from '@issho/api-client';
+import { ListReportsResponseSchema, ModerationReportSchema, ReportStatus, TimeBlock } from '@issho/api-client';
 import { screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -34,6 +34,14 @@ describe('paging a list', () => {
       { status: ReportStatus.OPEN, reportedId: '', pageToken: 'after-r2' },
     ]);
     expect(screen.queryByRole('button', { name: 'Load more' })).toBeNull();
+  });
+
+  it('names the outing\'s part of the day', async () => {
+    fake.on('moderation.listReports', () => create(ListReportsResponseSchema, {
+      reports: [create(ModerationReportSchema, { id: 'r1', reportedName: 'Person r1', eventId: 'e1', eventTitle: 'Ramen', eventDate: '2030-01-06', eventBlock: TimeBlock.AFTERNOON })],
+    }));
+    renderPage(<Reports />);
+    expect(await screen.findByText(/Outing: Ramen · 2030-01-06 afternoon/)).toBeTruthy();
   });
 
   it('shows no button when everything fits in one page', async () => {

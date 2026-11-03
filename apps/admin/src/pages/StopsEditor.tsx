@@ -1,4 +1,4 @@
-import { ConnectError, type FoundPlace, type GetReviewPlanResponse, type ReviewPlan } from '@issho/api-client';
+import { ConnectError, VenueStatus, type FoundPlace, type GetReviewPlanResponse, type ReviewPlan } from '@issho/api-client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 
@@ -159,7 +159,7 @@ function VenuePicker({ plan, activityId, current, followUp }: { plan: ReviewPlan
       <label>{followUp ? 'Then' : 'Venue'} ({activityId})
         <select value={placeId} onChange={(e) => setPlaceId(e.target.value)} disabled={!venues.length}>
           <option value="">{options.data && !venues.length ? 'None found: a meeting point instead' : 'Pick one for me'}</option>
-          {venues.map((v) => <option key={v.placeId} value={v.placeId}>{v.name || v.placeId}{v.status === 'approved' ? ' ✓' : ''}</option>)}
+          {venues.map((v) => <option key={v.placeId} value={v.placeId}>{v.name || v.placeId}{v.status === VenueStatus.APPROVED ? ' ✓' : ''}</option>)}
           {/* The current venue may no longer be among the options (rejected since). */}
           {current && !venues.some((v) => v.placeId === current) && <option value={current}>Current venue</option>}
         </select>

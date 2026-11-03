@@ -2,7 +2,7 @@ import { ConnectError, ReviewEventStatus, type ReviewEvent } from '@issho/api-cl
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 
-import { eventHref, localTime } from '../format';
+import { blockLabels, eventHref, localTime } from '../format';
 import { useRememberedCity } from '../city';
 import { api } from '../lib';
 import { LoadMore, rowsOf, usePaged } from '../paging';
@@ -59,7 +59,7 @@ export function Groups() {
 function EventRow({ event: e }: { event: ReviewEvent }) {
   return (
     <tr>
-      <td className="nowrap"><a href={eventHref(e.id)}>{localTime(e.startsAt, e.timeZone) || `${e.date} ${e.block}`}</a></td>
+      <td className="nowrap"><a href={eventHref(e.id)}>{localTime(e.startsAt, e.timeZone) || `${e.date} ${blockLabels[e.block]}`}</a></td>
       <td>{e.title}{e.forced && <span className="badge small-badge">at deadline</span>}</td>
       <td>{e.areaName}</td>
       <td>{e.groups}</td>
