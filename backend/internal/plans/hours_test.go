@@ -8,18 +8,13 @@ import (
 	"time"
 
 	"github.com/shrujancheruku/issho/backend/internal/maps"
+	"github.com/shrujancheruku/issho/backend/internal/maps/mapstest"
 	"github.com/shrujancheruku/issho/backend/internal/matching"
 )
 
-// fakeHours answers every venue with the same hours and counts lookups.
-type fakeHours struct {
-	h     maps.Hours
-	calls int
-}
-
-func (f *fakeHours) Hours(context.Context, string) (maps.Hours, error) {
-	f.calls++
-	return f.h, nil
+// sameHours answers every venue with the same hours.
+func sameHours(h maps.Hours) func(string) maps.Hours {
+	return func(string) maps.Hours { return h }
 }
 
 // everyDay is open the same hours every day.
@@ -59,7 +54,7 @@ func TestIntegrationVenueHours(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	hours := &fakeHours{h: everyDay(8, 12)}
+	hours := &mapstest.Fake{HoursFunc: sameHours(everyDay(8, 12))}
 	r := &Runner{DB: f.pool, Log: slog.New(slog.NewTextHandler(io.Discard, nil)), Hours: hours}
 
 	// Open 8–12 only: neither Saturday afternoon works. Hours are looked up
@@ -67,11 +62,11 @@ func TestIntegrationVenueHours(t *testing.T) {
 	if rep, err := r.Schedule(ctx, f.city, now); err != nil || rep != (ScheduleReport{Checked: 1}) {
 		t.Fatalf("café closed in the afternoon: %+v, %v", rep, err)
 	}
-	if hours.calls != 1 {
-		t.Errorf("hours looked up %d times in one pass, want 1", hours.calls)
+	if hours.HoursCalls() != 1 {
+		t.Errorf("hours looked up %d times in one pass, want 1", hours.HoursCalls())
 	}
 
-	hours.h = everyDay(10, 22)
+	hours.HoursFunc = sameHours(everyDay(10, 22))
 	if rep, err := r.Schedule(ctx, f.city, now); err != nil || rep.Scheduled != 1 {
 		t.Fatalf("café open: %+v, %v", rep, err)
 	}
@@ -81,7 +76,7 @@ func TestIntegrationVenueHours(t *testing.T) {
 	if err != nil || len(open) != 1 {
 		t.Fatalf("round 2: %+v, %v", open, err)
 	}
-	hours.h = maps.Hours{Closed: true, PermanentlyClosed: true}
+	hours.HoursFunc = sameHours(maps.Hours{Closed: true, PermanentlyClosed: true})
 	if rep, err := r.Schedule(ctx, f.city, open[0].Window.Deadline); err != nil || rep != (ScheduleReport{Checked: 1, Closed: 1}) {
 		t.Fatalf("café closed for good: %+v, %v", rep, err)
 	}

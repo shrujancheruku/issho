@@ -12,6 +12,7 @@ import (
 
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
 	"github.com/shrujancheruku/issho/backend/internal/maps"
+	"github.com/shrujancheruku/issho/backend/internal/maps/mapstest"
 	"github.com/shrujancheruku/issho/backend/internal/matching"
 )
 
@@ -62,16 +63,6 @@ func TestSignupFromProto(t *testing.T) {
 	}
 }
 
-// fakePlaces answers Place Details from a map of id → language → details.
-type fakePlaces map[string]map[string]maps.PlaceDetails
-
-func (f fakePlaces) Details(_ context.Context, id, lang string) (maps.PlaceDetails, error) {
-	if d, ok := f[id][lang]; ok {
-		return d, nil
-	}
-	return maps.PlaceDetails{}, errors.New("not found")
-}
-
 // TestIntegrationService runs PlanService's logic for three people: one who
 // speaks the plan's language, one who doesn't, and one without a profile.
 // The plan has a follow-up, and venues are picked for both.
@@ -99,7 +90,7 @@ func TestIntegrationService(t *testing.T) {
 		t.Fatal(err)
 	}
 	cafe := maps.PlaceDetails{Name: "カフェ", Address: "吉祥寺1-1", MapsURL: "https://maps.example/1", Location: maps.LatLng{Lat: 35.7, Lng: 139.58}}
-	svc := &Service{DB: f.pool, Places: fakePlaces{"zz-cafe-approved": {"ja": cafe}}}
+	svc := &Service{DB: f.pool, Places: &mapstest.Fake{Localized: map[string]map[string]maps.PlaceDetails{"zz-cafe-approved": {"ja": cafe}}}}
 
 	feed, err := svc.Feed(ctx, ja)
 	if err != nil {

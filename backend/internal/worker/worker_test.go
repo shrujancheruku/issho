@@ -17,7 +17,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/db"
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	"github.com/shrujancheruku/issho/backend/internal/adminjobs"
-	"github.com/shrujancheruku/issho/backend/internal/maps"
+	"github.com/shrujancheruku/issho/backend/internal/maps/mapstest"
 	"github.com/shrujancheruku/issho/backend/internal/moderation"
 	"github.com/shrujancheruku/issho/backend/internal/testfixture"
 	"github.com/shrujancheruku/issho/backend/internal/walks"
@@ -241,7 +241,7 @@ func TestIntegrationRefreshMapsQueuesOneJobPerCity(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	w := &refreshMapsWorker{pool: pool, router: fakeRouter{}, log: slog.New(slog.NewTextHandler(io.Discard, nil))}
+	w := &refreshMapsWorker{pool: pool, router: &mapstest.Fake{}, log: slog.New(slog.NewTextHandler(io.Discard, nil))}
 	rw := rivertest.NewWorker(t, riverpgxv5.New(pool), &river.Config{Schema: db.RiverSchema}, w)
 	tx, err := pool.Begin(ctx)
 	if err != nil {
@@ -282,5 +282,3 @@ func TestRefreshMapsCityFailureIsItsOwn(t *testing.T) {
 		t.Errorf("good city: %v", err)
 	}
 }
-
-type fakeRouter struct{ maps.Router }
