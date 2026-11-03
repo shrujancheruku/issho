@@ -64,7 +64,7 @@ func TestWebSocketOutlivesServerTimeouts(t *testing.T) {
 		if err != nil {
 			return
 		}
-		defer ws.CloseNow()
+		defer func() { _ = ws.CloseNow() }()
 		// Write after every timeout would have fired, as the hub does.
 		time.Sleep(time.Second)
 		_ = ws.Write(r.Context(), websocket.MessageText, []byte("late"))
@@ -87,7 +87,7 @@ func TestWebSocketOutlivesServerTimeouts(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer ws.CloseNow()
+	defer func() { _ = ws.CloseNow() }()
 	_, msg, err := ws.Read(ctx)
 	if err != nil || string(msg) != "late" {
 		t.Fatalf("read after the timeouts: %q, %v", msg, err)

@@ -250,11 +250,15 @@ jobs:
             ~/.cache/go-build
           key: go-${{ runner.os }}-backend-${{ hashFiles('backend/go.sum') }}
           restore-keys: go-${{ runner.os }}-backend-
+      # The same Go checks as `make lint` (golangci-lint, which includes go vet,
+      # and sqlc vet); the Makefile target is the single definition.
+      - name: Lint
+        run: make lint-go
       # Integration tests are skipped here (the database isn't up yet, and CI=true
       # makes them fail rather than skip); "Database checks" runs them.
-      - name: Vet and test
+      - name: Test
         working-directory: backend
-        run: go vet ./... && go test ./... -skip Integration
+        run: go test ./... -skip Integration
       - name: Wait for PostGIS
         run: |
           for _ in $(seq 90); do

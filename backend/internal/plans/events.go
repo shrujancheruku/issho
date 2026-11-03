@@ -345,7 +345,7 @@ func (s *Service) CheckIn(ctx context.Context, userID, eventID uuid.UUID, now ti
 	if err != nil {
 		return err
 	}
-	if err := it.Membership.CheckIn(now); err != nil {
+	if err := it.CheckIn(now); err != nil {
 		return err
 	}
 	_, err = q.CheckIn(ctx, dbgen.CheckInParams{EventID: eventID, UserID: userID, At: pgtype.Timestamptz{Time: now, Valid: true}})

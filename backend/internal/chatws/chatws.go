@@ -160,7 +160,7 @@ func (h *Hub) listen(ctx context.Context, pool *pgxpool.Pool) error {
 	// it out (Hijack) before using it. (Not `defer pooled.Hijack().Close()`:
 	// that would hijack it right here, before the LISTEN below.)
 	conn := pooled.Hijack()
-	defer conn.Close(context.Background())
+	defer func() { _ = conn.Close(context.Background()) }()
 	for _, ch := range []string{channel, typingChannel} {
 		if _, err := conn.Exec(ctx, "listen "+ch); err != nil {
 			return err
@@ -252,12 +252,12 @@ func (h *Handler) now() time.Time {
 func (h *Handler) closeFor(ws *websocket.Conn, err error) {
 	switch {
 	case errors.Is(err, chat.ErrNoRoom):
-		ws.Close(closeNotFound, "no such chat")
+		_ = ws.Close(closeNotFound, "no such chat")
 	case errors.Is(err, chat.ErrForbidden):
-		ws.Close(closeForbidden, "not allowed in this chat")
+		_ = ws.Close(closeForbidden, "not allowed in this chat")
 	default:
 		h.Log.Error("chat socket", "err", err)
-		ws.Close(websocket.StatusInternalError, "internal error")
+		_ = ws.Close(websocket.StatusInternalError, "internal error")
 	}
 }
 
@@ -266,7 +266,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		return // Accept has written the HTTP error
 	}
-	defer ws.CloseNow()
+	defer func() { _ = ws.CloseNow() }()
 	ctx := r.Context()
 
 	authCtx, cancel := context.WithTimeout(ctx, authTimeout)
@@ -274,25 +274,25 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	_, raw, err := ws.Read(authCtx)
 	cancel()
 	if err != nil || json.Unmarshal(raw, &first) != nil {
-		ws.Close(closeUnauthorized, `send {token, room: {eventId|crewId}, afterId} first`)
+		_ = ws.Close(closeUnauthorized, `send {token, room: {eventId|crewId}, afterId} first`)
 		return
 	}
 	caller, err := h.Verifier.Verify(first.Token)
 	if err != nil {
-		ws.Close(closeUnauthorized, "invalid token")
+		_ = ws.Close(closeUnauthorized, "invalid token")
 		return
 	}
 	// A socket already open when someone is suspended ends when they're
 	// taken out of the group or crew (the access check below, on each read).
 	if h.Suspended != nil {
 		if suspended, err := h.Suspended(ctx, caller.UserID); err != nil || suspended {
-			ws.Close(closeForbidden, "account suspended")
+			_ = ws.Close(closeForbidden, "account suspended")
 			return
 		}
 	}
 	room, err := chat.ParseRoom(first.Room.EventID, first.Room.CrewID)
 	if err != nil {
-		ws.Close(closeNotFound, "no such chat")
+		_ = ws.Close(closeNotFound, "no such chat")
 		return
 	}
 	// Subscribe before reading, so a message committed in between still
@@ -436,7 +436,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		case <-suspended:
-			ws.Close(closeForbidden, "account suspended")
+			_ = ws.Close(closeForbidden, "account suspended")
 			return
 		case <-typed:
 			now := h.now()

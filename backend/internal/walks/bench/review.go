@@ -87,12 +87,17 @@ type reviewData struct {
 	EmbedKey string
 }
 
-func writeReview(dir string, page reviewData) error {
+func writeReview(dir string, page reviewData) (err error) {
 	f, err := os.Create(filepath.Join(dir, "review.html"))
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+	// The file was just written, so a failed Close is a failed write.
+	defer func() {
+		if cerr := f.Close(); err == nil {
+			err = cerr
+		}
+	}()
 	return reviewPage.Execute(f, page)
 }
 

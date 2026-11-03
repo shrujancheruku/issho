@@ -120,8 +120,8 @@ func TestClientErrorsAreNotReported(t *testing.T) {
 	old := report
 	report = func(context.Context, error, map[string]string) { t.Error("client error reported") }
 	t.Cleanup(func() { report = old })
-	check(t, Invalid("x"))
-	check(t, Denied(isshov1.ErrorReason_ERROR_REASON_SUSPENDED, "account suspended"))
+	_ = check(t, Invalid("x"))
+	_ = check(t, Denied(isshov1.ErrorReason_ERROR_REASON_SUSPENDED, "account suspended"))
 }
 
 func TestCodeOfSeesHandlerErrors(t *testing.T) {
