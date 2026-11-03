@@ -12,6 +12,10 @@ _Avoid_: listing, activity (an activity is what a plan is about)
 A plan with a date and a group of people invited to it, from their invitation until the feedback window closes. The code and the API call it an event.
 _Avoid_: meetup, event (in the app's copy)
 
+**Area**:
+The place a person calls home and a plan is held in: one of the local government's units in a city pack (Tokyo's wards and cities such as Shinjuku-ku and Musashino-shi, Da Nang's wards), with its official boundary and its official name in the city's language. A city's areas are chosen this way unless there is a very good reason not to. Matching and travel times work between areas.
+_Avoid_: neighbourhood, district, station, region
+
 **Stage**:
 Where an outing stands for one person: *invited* (date set: can you go?), *going*, *on the day* (until check-in closes), and *after* (how was it). An outing that is over or that they're out of is *muted* rather than a stage.
 _Avoid_: step, phase, numbered stages

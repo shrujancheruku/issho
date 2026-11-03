@@ -124,7 +124,7 @@ export type Profile = Message<"issho.v1.Profile"> & {
   cityId: string;
 
   /**
-   * Area id from CatalogService.ListCities, e.g. "tokyo-kichijoji".
+   * Area id from CatalogService.ListCities, e.g. "tokyo-musashino".
    *
    * @generated from field: string home_area_id = 6;
    */

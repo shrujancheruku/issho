@@ -323,7 +323,7 @@ export type FeedPlan = Message<"issho.v1.FeedPlan"> & {
   id: string;
 
   /**
-   * Area id (CatalogService.ListCities), e.g. "tokyo-kichijoji".
+   * Area id (CatalogService.ListCities), e.g. "tokyo-musashino".
    *
    * @generated from field: string area_id = 2;
    */

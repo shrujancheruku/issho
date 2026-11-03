@@ -443,7 +443,7 @@ func (x *City) GetAreas() []*Area {
 
 type Area struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// e.g. "tokyo-kichijoji".
+	// e.g. "tokyo-musashino".
 	Id            string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	Name          string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	SecondaryName string `protobuf:"bytes,3,opt,name=secondary_name,json=secondaryName,proto3" json:"secondary_name,omitempty"`

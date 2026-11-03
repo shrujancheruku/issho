@@ -247,7 +247,7 @@ export const CitySchema: GenMessage<City> = /*@__PURE__*/
  */
 export type Area = Message<"issho.v1.Area"> & {
   /**
-   * e.g. "tokyo-kichijoji".
+   * e.g. "tokyo-musashino".
    *
    * @generated from field: string id = 1;
    */
