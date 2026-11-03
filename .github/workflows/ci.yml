@@ -57,7 +57,7 @@ jobs:
         id: filter
         run: |
           if [ "$EVENT" = pull_request ]; then
-            git diff --name-only "$PR_BASE" HEAD | scripts/ci-changes.sh | tee -a "$GITHUB_OUTPUT"
+            git diff --no-renames --name-only "$PR_BASE" HEAD | scripts/ci-changes.sh | tee -a "$GITHUB_OUTPUT"
           else
             scripts/ci-changes.sh --all | tee -a "$GITHUB_OUTPUT"
           fi
