@@ -7,6 +7,7 @@
 package isshov1
 
 import (
+	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
@@ -822,7 +823,7 @@ var File_issho_v1_crews_proto protoreflect.FileDescriptor
 
 const file_issho_v1_crews_proto_rawDesc = "" +
 	"\n" +
-	"\x14issho/v1/crews.proto\x12\bissho.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x15issho/v1/events.proto\"\x14\n" +
+	"\x14issho/v1/crews.proto\x12\bissho.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x15issho/v1/events.proto\"\x14\n" +
 	"\x12ListMyCrewsRequest\";\n" +
 	"\x13ListMyCrewsResponse\x12$\n" +
 	"\x05crews\x18\x01 \x03(\v2\x0e.issho.v1.CrewR\x05crews\")\n" +
@@ -834,17 +835,17 @@ const file_issho_v1_crews_proto_rawDesc = "" +
 	"\acrew_id\x18\x01 \x01(\tR\x06crewId\x12\x16\n" +
 	"\x06accept\x18\x02 \x01(\bR\x06accept\";\n" +
 	"\x15RespondToCrewResponse\x12\"\n" +
-	"\x04crew\x18\x01 \x01(\v2\x0e.issho.v1.CrewR\x04crew\"t\n" +
+	"\x04crew\x18\x01 \x01(\v2\x0e.issho.v1.CrewR\x04crew\"~\n" +
 	"\x10LeaveCrewRequest\x12\x17\n" +
 	"\acrew_id\x18\x01 \x01(\tR\x06crewId\x12-\n" +
-	"\x06reason\x18\x02 \x01(\x0e2\x15.issho.v1.LeaveReasonR\x06reason\x12\x18\n" +
-	"\adetails\x18\x03 \x01(\tR\adetails\"\x13\n" +
-	"\x11LeaveCrewResponse\"\x99\x01\n" +
+	"\x06reason\x18\x02 \x01(\x0e2\x15.issho.v1.LeaveReasonR\x06reason\x12\"\n" +
+	"\adetails\x18\x03 \x01(\tB\b\xbaH\x05r\x03\x18\xe8\aR\adetails\"\x13\n" +
+	"\x11LeaveCrewResponse\"\xa3\x01\n" +
 	"\x17ReportCrewMemberRequest\x12\x17\n" +
 	"\acrew_id\x18\x01 \x01(\tR\x06crewId\x12\x1b\n" +
 	"\tmember_id\x18\x02 \x01(\tR\bmemberId\x12.\n" +
-	"\x06reason\x18\x03 \x01(\x0e2\x16.issho.v1.ReportReasonR\x06reason\x12\x18\n" +
-	"\adetails\x18\x04 \x01(\tR\adetails\"\x1a\n" +
+	"\x06reason\x18\x03 \x01(\x0e2\x16.issho.v1.ReportReasonR\x06reason\x12\"\n" +
+	"\adetails\x18\x04 \x01(\tB\b\xbaH\x05r\x03\x18\xe8\aR\adetails\"\x1a\n" +
 	"\x18ReportCrewMemberResponse\"\x9f\x02\n" +
 	"\x04Crew\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12,\n" +

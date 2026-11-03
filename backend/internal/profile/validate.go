@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"slices"
 	"strings"
-	"unicode/utf8"
 
 	"github.com/shrujancheruku/issho/backend/internal/platform/i18n"
 )
@@ -24,7 +23,6 @@ const (
 	maxAge = 100
 	// MinActivities makes sure the feed has something to rank by.
 	MinActivities = 3
-	maxNameLen    = 40
 )
 
 // Profile is a whole profile as the app edits it: one row in app.profiles
@@ -88,9 +86,6 @@ func validate(p *Profile, year int) error {
 	p.DisplayName = strings.TrimSpace(p.DisplayName)
 	if p.DisplayName == "" {
 		return invalid("display_name", "required")
-	}
-	if utf8.RuneCountInString(p.DisplayName) > maxNameLen {
-		return invalid("display_name", "at most %d characters", maxNameLen)
 	}
 	if p.BirthYear > year-MinAge {
 		return invalid("birth_year", "must be at least %d", MinAge)

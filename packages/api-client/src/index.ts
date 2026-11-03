@@ -21,6 +21,7 @@ import { UIService } from "./gen/issho/v1/ui_pb";
 // don't need their own dependency on @connectrpc/connect.
 export { Code, ConnectError } from "@connectrpc/connect";
 export { errorReason } from "./errors";
+export { maxLen } from "./limits";
 export * from "./gen/issho/v1/catalog_pb";
 export * from "./gen/issho/v1/chat_pb";
 export * from "./gen/issho/v1/citypacks_pb";

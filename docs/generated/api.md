@@ -881,7 +881,7 @@ a crew&#39;s.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | room | [ChatRoom](#issho-v1-ChatRoom) |  |  |
-| body | [string](#string) |  |  |
+| body | [string](#string) |  | 1 to 1000 characters once trimmed (the server trims, then rejects an empty message). |
 
 
 

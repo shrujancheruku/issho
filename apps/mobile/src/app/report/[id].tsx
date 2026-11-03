@@ -1,4 +1,4 @@
-import { ReportReason } from '@issho/api-client';
+import { maxLen, ReportPersonRequestSchema, ReportReason } from '@issho/api-client';
 import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { View } from 'react-native';
@@ -66,7 +66,12 @@ export default function ReportScreen() {
           value={reason}
           onChange={setReason}
         />
-        <DetailsInput label={t('report.details')} value={details} onChange={setDetails} />
+        <DetailsInput
+          label={t('report.details')}
+          value={details}
+          onChange={setDetails}
+          maxLength={maxLen(ReportPersonRequestSchema, 'details')}
+        />
       </>
     );
   }

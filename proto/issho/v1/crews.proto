@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package issho.v1;
 
+import "buf/validate/validate.proto";
+
 import "google/protobuf/timestamp.proto";
 import "issho/v1/events.proto";
 
@@ -65,7 +67,7 @@ message LeaveCrewRequest {
   string crew_id = 1;
   LeaveReason reason = 2;
   // Optional, up to 1000 characters.
-  string details = 3;
+  string details = 3 [(buf.validate.field).string.max_len = 1000];
 }
 
 message LeaveCrewResponse {}
@@ -76,7 +78,7 @@ message ReportCrewMemberRequest {
   string member_id = 2;
   ReportReason reason = 3;
   // Optional, up to 1000 characters.
-  string details = 4;
+  string details = 4 [(buf.validate.field).string.max_len = 1000];
 }
 
 message ReportCrewMemberResponse {}

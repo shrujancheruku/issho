@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package issho.v1;
 
+import "buf/validate/validate.proto";
+
 import "google/protobuf/timestamp.proto";
 import "issho/v1/plans.proto";
 import "issho/v1/profile.proto";
@@ -123,7 +125,7 @@ message ReportPersonRequest {
   string mate_id = 2;
   ReportReason reason = 3;
   // Optional, up to 1000 characters.
-  string details = 4;
+  string details = 4 [(buf.validate.field).string.max_len = 1000];
 }
 
 message ReportPersonResponse {}

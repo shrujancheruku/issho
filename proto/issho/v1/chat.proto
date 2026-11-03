@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package issho.v1;
 
+import "buf/validate/validate.proto";
+
 import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/shrujancheruku/issho/backend/gen/issho/v1;isshov1";
@@ -58,7 +60,9 @@ message ListMessagesResponse {
 
 message SendMessageRequest {
   ChatRoom room = 1;
-  string body = 2;
+  // 1 to 1000 characters once trimmed (the server trims, then rejects an empty
+  // message).
+  string body = 2 [(buf.validate.field).string = {min_len: 1, max_len: 1000}];
 }
 
 message SendMessageResponse {

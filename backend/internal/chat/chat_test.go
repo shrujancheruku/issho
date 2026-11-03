@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -144,13 +143,10 @@ func TestIntegrationRooms(t *testing.T) {
 			if newer, _, err := r.svc.After(ctx, a, room, sent.ID, now); err != nil || len(newer) != 1 || newer[0].ID != second.ID {
 				t.Errorf("after the first = %+v, %v", newer, err)
 			}
-			for what, body := range map[string]string{"empty": "  ", "too long": strings.Repeat("あ", MaxMessage+1)} {
+			for what, body := range map[string]string{"empty": "  "} {
 				if _, err := r.svc.Send(ctx, a, room, body, now); !errors.Is(err, ErrBadMessage) {
 					t.Errorf("%s message: %v, want ErrBadMessage", what, err)
 				}
-			}
-			if _, err := r.svc.Send(ctx, a, room, strings.Repeat("あ", MaxMessage), now); err != nil {
-				t.Errorf("a message of exactly %d characters: %v", MaxMessage, err)
 			}
 
 			// Someone the owner doesn't let in can't read, write or type.

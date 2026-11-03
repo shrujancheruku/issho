@@ -4,6 +4,7 @@
 
 import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import { file_buf_validate_validate } from "../../buf/validate/validate_pb";
 import type { Timestamp } from "@bufbuild/protobuf/wkt";
 import { file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
 import type { Message } from "@bufbuild/protobuf";
@@ -12,7 +13,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file issho/v1/chat.proto.
  */
 export const file_issho_v1_chat: GenFile = /*@__PURE__*/
-  fileDesc("ChNpc3Noby92MS9jaGF0LnByb3RvEghpc3Noby52MSI5CghDaGF0Um9vbRISCghldmVudF9pZBgBIAEoCUgAEhEKB2NyZXdfaWQYAiABKAlIAEIGCgRyb29tIkkKE0xpc3RNZXNzYWdlc1JlcXVlc3QSIAoEcm9vbRgBIAEoCzISLmlzc2hvLnYxLkNoYXRSb29tEhAKCGFmdGVyX2lkGAIgASgDIqoBChRMaXN0TWVzc2FnZXNSZXNwb25zZRInCghtZXNzYWdlcxgBIAMoCzIVLmlzc2hvLnYxLkNoYXRNZXNzYWdlEgwKBG9wZW4YAiABKAgSLAoIb3BlbnNfYXQYAyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi0KCWNsb3Nlc19hdBgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiRAoSU2VuZE1lc3NhZ2VSZXF1ZXN0EiAKBHJvb20YASABKAsyEi5pc3Noby52MS5DaGF0Um9vbRIMCgRib2R5GAIgASgJIj0KE1NlbmRNZXNzYWdlUmVzcG9uc2USJgoHbWVzc2FnZRgBIAEoCzIVLmlzc2hvLnYxLkNoYXRNZXNzYWdlIo0BCgtDaGF0TWVzc2FnZRIKCgJpZBgBIAEoAxIPCgd1c2VyX2lkGAYgASgJEgwKBG5hbWUYAiABKAkSDAoEYm9keRgDIAEoCRImCgJhdBgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASDAoEbWluZRgFIAEoCBIPCgdwbGFuX2lkGAcgASgJMqwBCgtDaGF0U2VydmljZRJPCgxMaXN0TWVzc2FnZXMSHS5pc3Noby52MS5MaXN0TWVzc2FnZXNSZXF1ZXN0Gh4uaXNzaG8udjEuTGlzdE1lc3NhZ2VzUmVzcG9uc2UiABJMCgtTZW5kTWVzc2FnZRIcLmlzc2hvLnYxLlNlbmRNZXNzYWdlUmVxdWVzdBodLmlzc2hvLnYxLlNlbmRNZXNzYWdlUmVzcG9uc2UiAEI+WjxnaXRodWIuY29tL3NocnVqYW5jaGVydWt1L2lzc2hvL2JhY2tlbmQvZ2VuL2lzc2hvL3YxO2lzc2hvdjFiBnByb3RvMw", [file_google_protobuf_timestamp]);
+  fileDesc("ChNpc3Noby92MS9jaGF0LnByb3RvEghpc3Noby52MSI5CghDaGF0Um9vbRISCghldmVudF9pZBgBIAEoCUgAEhEKB2NyZXdfaWQYAiABKAlIAEIGCgRyb29tIkkKE0xpc3RNZXNzYWdlc1JlcXVlc3QSIAoEcm9vbRgBIAEoCzISLmlzc2hvLnYxLkNoYXRSb29tEhAKCGFmdGVyX2lkGAIgASgDIqoBChRMaXN0TWVzc2FnZXNSZXNwb25zZRInCghtZXNzYWdlcxgBIAMoCzIVLmlzc2hvLnYxLkNoYXRNZXNzYWdlEgwKBG9wZW4YAiABKAgSLAoIb3BlbnNfYXQYAyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi0KCWNsb3Nlc19hdBgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiUAoSU2VuZE1lc3NhZ2VSZXF1ZXN0EiAKBHJvb20YASABKAsyEi5pc3Noby52MS5DaGF0Um9vbRIYCgRib2R5GAIgASgJQgq6SAdyBRABGOgHIj0KE1NlbmRNZXNzYWdlUmVzcG9uc2USJgoHbWVzc2FnZRgBIAEoCzIVLmlzc2hvLnYxLkNoYXRNZXNzYWdlIo0BCgtDaGF0TWVzc2FnZRIKCgJpZBgBIAEoAxIPCgd1c2VyX2lkGAYgASgJEgwKBG5hbWUYAiABKAkSDAoEYm9keRgDIAEoCRImCgJhdBgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASDAoEbWluZRgFIAEoCBIPCgdwbGFuX2lkGAcgASgJMqwBCgtDaGF0U2VydmljZRJPCgxMaXN0TWVzc2FnZXMSHS5pc3Noby52MS5MaXN0TWVzc2FnZXNSZXF1ZXN0Gh4uaXNzaG8udjEuTGlzdE1lc3NhZ2VzUmVzcG9uc2UiABJMCgtTZW5kTWVzc2FnZRIcLmlzc2hvLnYxLlNlbmRNZXNzYWdlUmVxdWVzdBodLmlzc2hvLnYxLlNlbmRNZXNzYWdlUmVzcG9uc2UiAEI+WjxnaXRodWIuY29tL3NocnVqYW5jaGVydWt1L2lzc2hvL2JhY2tlbmQvZ2VuL2lzc2hvL3YxO2lzc2hvdjFiBnByb3RvMw", [file_buf_validate_validate, file_google_protobuf_timestamp]);
 
 /**
  * A chat room: an event's group chat (the caller's group of that event) or
@@ -118,6 +119,9 @@ export type SendMessageRequest = Message<"issho.v1.SendMessageRequest"> & {
   room?: ChatRoom | undefined;
 
   /**
+   * 1 to 1000 characters once trimmed (the server trims, then rejects an empty
+   * message).
+   *
    * @generated from field: string body = 2;
    */
   body: string;

@@ -7,6 +7,7 @@
 package isshov1
 
 import (
+	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -769,7 +770,7 @@ var File_issho_v1_profile_proto protoreflect.FileDescriptor
 
 const file_issho_v1_profile_proto_rawDesc = "" +
 	"\n" +
-	"\x16issho/v1/profile.proto\x12\bissho.v1\"\x13\n" +
+	"\x16issho/v1/profile.proto\x12\bissho.v1\x1a\x1bbuf/validate/validate.proto\"\x13\n" +
 	"\x11GetProfileRequest\"y\n" +
 	"\x12GetProfileResponse\x12+\n" +
 	"\aprofile\x18\x01 \x01(\v2\x11.issho.v1.ProfileR\aprofile\x126\n" +
@@ -777,9 +778,9 @@ const file_issho_v1_profile_proto_rawDesc = "" +
 	"\x12SaveProfileRequest\x12+\n" +
 	"\aprofile\x18\x01 \x01(\v2\x11.issho.v1.ProfileR\aprofile\"B\n" +
 	"\x13SaveProfileResponse\x12+\n" +
-	"\aprofile\x18\x01 \x01(\v2\x11.issho.v1.ProfileR\aprofile\"\xaa\x05\n" +
-	"\aProfile\x12!\n" +
-	"\fdisplay_name\x18\x01 \x01(\tR\vdisplayName\x12\x1d\n" +
+	"\aprofile\x18\x01 \x01(\v2\x11.issho.v1.ProfileR\aprofile\"\xb3\x05\n" +
+	"\aProfile\x12*\n" +
+	"\fdisplay_name\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x18(R\vdisplayName\x12\x1d\n" +
 	"\n" +
 	"birth_year\x18\x02 \x01(\x05R\tbirthYear\x12(\n" +
 	"\x06gender\x18\x03 \x01(\x0e2\x10.issho.v1.GenderR\x06gender\x12(\n" +

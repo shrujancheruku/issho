@@ -13,9 +13,12 @@ tool (
 )
 
 require (
+	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.12-20260825204119-511051f7f437.2
+	buf.build/go/protovalidate v1.4.0
 	connectrpc.com/connect v1.21.1
 	connectrpc.com/cors v0.1.0
 	github.com/MicahParks/keyfunc/v3 v3.8.2
+	github.com/anthropics/anthropic-sdk-go v1.84.0
 	github.com/coder/websocket v1.8.15
 	github.com/getsentry/sentry-go v0.50.0
 	github.com/golang-jwt/jwt/v5 v5.3.1
@@ -36,7 +39,6 @@ require (
 require (
 	buf.build/gen/go/bufbuild/bufplugin/protocolbuffers/go v1.36.12-20261002170247-538130002972.2 // indirect
 	buf.build/gen/go/bufbuild/protodescriptor/protocolbuffers/go v1.36.12-20250109164928-1da0de137947.2 // indirect
-	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.12-20260825204119-511051f7f437.2 // indirect
 	buf.build/gen/go/bufbuild/registry/connectrpc/go/v2 v2.0.0-20261009230124-4d217860dade.1 // indirect
 	buf.build/gen/go/bufbuild/registry/protocolbuffers/go v1.36.12-20261009230124-4d217860dade.2 // indirect
 	buf.build/gen/go/pluginrpc/pluginrpc/protocolbuffers/go v1.36.12-20241007202033-cf42259fcbfc.2 // indirect
@@ -44,7 +46,6 @@ require (
 	buf.build/go/bufplugin v0.11.1 // indirect
 	buf.build/go/bufprivateusage v0.1.0 // indirect
 	buf.build/go/interrupt v1.1.0 // indirect
-	buf.build/go/protovalidate v1.4.0 // indirect
 	buf.build/go/protoyaml v0.7.0 // indirect
 	buf.build/go/spdx v0.3.0 // indirect
 	buf.build/go/standard v0.1.1-0.20260325175353-2b287e071df5 // indirect
@@ -70,7 +71,6 @@ require (
 	github.com/Microsoft/go-winio v0.6.3 // indirect
 	github.com/STARRY-S/zip v0.2.1 // indirect
 	github.com/andybalholm/brotli v1.2.6 // indirect
-	github.com/anthropics/anthropic-sdk-go v1.84.0 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
 	github.com/aokoli/goutils v1.0.1 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
