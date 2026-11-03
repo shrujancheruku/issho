@@ -76,6 +76,17 @@ type Meta struct {
 	CostUSD float64
 }
 
+// MinBudget is the time a job must have left to start composing a walk:
+// the Gemini call is capped at 5 minutes, and Maps checks follow.
+const MinBudget = 6 * time.Minute
+
+// HasBudget reports whether ctx has at least MinBudget left (no deadline
+// means unlimited).
+func HasBudget(ctx context.Context) bool {
+	dl, ok := ctx.Deadline()
+	return !ok || time.Until(dl) >= MinBudget
+}
+
 // Proposer proposes walks. feedback lists what was wrong with its previous
 // proposal for the same request (empty the first time).
 type Proposer interface {

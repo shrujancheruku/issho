@@ -214,6 +214,9 @@ func (r *Runner) checkPlace(ctx context.Context, p Open, venue string, times []t
 type SuggestReport struct {
 	Opened int // plans opened
 	Failed int // suggestions that could not be opened
+	// Deferred: walks left for the next run because the job's context had
+	// less than walks.MinBudget left. Not a failure.
+	Deferred int
 }
 
 // Suggest loads the city and opens new plans in it, up to its cap

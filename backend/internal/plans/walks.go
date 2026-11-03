@@ -204,6 +204,13 @@ func (r *Runner) suggest(ctx context.Context, q *dbgen.Queries, c *City, in matc
 				results[i].skip = true
 				continue
 			}
+			// Too little of the job's time left for a model call that can take
+			// minutes: leave the walk for the next run (a deferral, not a failure).
+			if !walks.HasBudget(ctx) {
+				results[i].skip = true
+				rep.Deferred++
+				continue
+			}
 			composed++
 			s := suggestions[i]
 			area := places.areas[s.Area]
