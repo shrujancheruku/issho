@@ -183,7 +183,7 @@ function Offer({ crew, onBack, onOpenChat }: { crew: Crew; onBack: () => void; o
         <ThemedText type="small" style={{ color: theme.onAccent }}>
           {started ? t('crew.yourCrew') : t('crew.offerEyebrow')}
         </ThemedText>
-        <ThemedText type="title" style={{ color: theme.onAccent }} accessibilityRole="header">
+        <ThemedText type="subtitle" style={{ color: theme.onAccent }} accessibilityRole="header">
           {name.name}
         </ThemedText>
         {!!name.secondary && (
