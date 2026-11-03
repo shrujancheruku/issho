@@ -62,20 +62,6 @@ func TimingOf(c matching.Config) Timing {
 	return t
 }
 
-// Validate reports a timing that would leave no occasion at the deadline.
-func (t Timing) Validate() error {
-	if t.LeadDays < 1 || t.SignupDays < 1 || t.SignupDays+t.LeadDays >= t.WindowDays {
-		return fmt.Errorf("timing: need lead ≥ 1, signup ≥ 1 and signup + lead < window days (got %d, %d, %d)",
-			t.LeadDays, t.SignupDays, t.WindowDays)
-	}
-	for _, b := range matching.Blocks {
-		if d, ok := t.BlockStarts[b]; !ok || d < 0 || d >= 24*time.Hour {
-			return fmt.Errorf("timing: no start time of day for %s", b)
-		}
-	}
-	return nil
-}
-
 // Round returns the window of a round opened at now in the given city time
 // zone: it starts LeadDays from today, and signups close at the start of
 // day SignupDays.

@@ -62,3 +62,7 @@ on conflict (user_id, activity_id) do update set weight = greatest(app.user_acti
 
 -- name: DeleteActivities :exec
 delete from app.activities where id = any(@ids::text[]);
+
+-- What a pack writes to the city, to report a change before Apply overwrites it.
+-- name: GetCityPackSettings :one
+select matching, meeting_places from app.cities where id = $1;

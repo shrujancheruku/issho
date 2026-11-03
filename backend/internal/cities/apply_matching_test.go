@@ -39,16 +39,19 @@ func TestIntegrationApplyMatching(t *testing.T) {
 	if err := ValidatePack(pack, nil); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := Apply(ctx, pool, nil, pack, Options{}); err != nil {
-		t.Fatal(err)
+	if d, err := Apply(ctx, pool, nil, pack, Options{}); err != nil || !d.MatchingChanged || !d.MeetingPlacesChanged {
+		t.Fatalf("first apply = %+v, %v; want both reported as changed", d, err)
+	}
+	if d, err := Apply(ctx, pool, nil, pack, Options{}); err != nil || d.MatchingChanged || d.MeetingPlacesChanged {
+		t.Fatalf("unchanged apply = %+v, %v; want no change reported", d, err)
 	}
 	// An admin turns review on; later applies must leave it alone.
 	if _, err := pool.Exec(ctx, "update app.cities set review = true, approved_venues_only = true where id = $1", city); err != nil {
 		t.Fatal(err)
 	}
 	pack.Matching = []byte(`{"timing": {"block_starts": {"evening": "21:30"}}}`)
-	if _, err := Apply(ctx, pool, nil, pack, Options{}); err != nil {
-		t.Fatal(err)
+	if d, err := Apply(ctx, pool, nil, pack, Options{}); err != nil || !d.MatchingChanged || d.MeetingPlacesChanged {
+		t.Fatalf("matching edit = %+v, %v; want only matching reported", d, err)
 	}
 	var raw, places []byte
 	var review, approved bool
@@ -73,8 +76,11 @@ func TestIntegrationApplyMatching(t *testing.T) {
 
 	// Dropping both fields from the pack puts the city back on the defaults.
 	pack.Matching, pack.MeetingPlaces = nil, nil
-	if _, err := Apply(ctx, pool, nil, pack, Options{}); err != nil {
-		t.Fatal(err)
+	if d, err := Apply(ctx, pool, nil, pack, Options{}); err != nil || !d.MatchingChanged || !d.MeetingPlacesChanged {
+		t.Fatalf("reset = %+v, %v; want both reported", d, err)
+	}
+	if d, err := Apply(ctx, pool, nil, pack, Options{}); err != nil || d.MatchingChanged || d.MeetingPlacesChanged {
+		t.Fatalf("second reset = %+v, %v; want nothing to report", d, err)
 	}
 	read()
 	if cfg, err = matching.ParseConfig(raw); err != nil || cfg.Timing.BlockStarts[matching.Evening] != "18:30" {

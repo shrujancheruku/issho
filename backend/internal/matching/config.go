@@ -114,6 +114,14 @@ type Timing struct {
 	BlockStarts map[Block]string `json:"block_starts"`
 }
 
+// Upper bounds of Timing's day counts.
+const (
+	MaxWindowDays   = 60
+	MaxLeadDays     = 14
+	MaxSignupDays   = 30
+	MaxCooldownDays = 365
+)
+
 // BlockStart returns when the block starts, as time since midnight.
 func (t Timing) BlockStart(b Block) (time.Duration, error) {
 	h, m, ok := strings.Cut(t.BlockStarts[b], ":")
@@ -132,13 +140,31 @@ func (t Timing) Validate() error {
 		errs = append(errs, fmt.Errorf("timing: need lead_days ≥ 1, signup_days ≥ 1 and signup_days + lead_days < window_days (got %d, %d, %d)",
 			t.LeadDays, t.SignupDays, t.WindowDays))
 	}
-	if t.CooldownDays < 0 {
-		errs = append(errs, fmt.Errorf("timing: cooldown_days %d: must not be negative", t.CooldownDays))
+	// Upper bounds catch a typo (140 for 14) before it sends events a year out.
+	if t.WindowDays > MaxWindowDays || t.LeadDays > MaxLeadDays || t.SignupDays > MaxSignupDays {
+		errs = append(errs, fmt.Errorf("timing: at most window_days %d, lead_days %d, signup_days %d (got %d, %d, %d)",
+			MaxWindowDays, MaxLeadDays, MaxSignupDays, t.WindowDays, t.LeadDays, t.SignupDays))
+	}
+	if t.CooldownDays < 0 || t.CooldownDays > MaxCooldownDays {
+		errs = append(errs, fmt.Errorf("timing: cooldown_days %d: need 0..%d", t.CooldownDays, MaxCooldownDays))
 	}
 	for _, b := range Blocks {
 		if _, err := t.BlockStart(b); err != nil {
 			errs = append(errs, fmt.Errorf("timing: %w", err))
 		}
+	}
+	// Parts of the day come in order: an evening before the afternoon would
+	// schedule backwards.
+	var prev time.Duration = -1
+	for _, b := range Blocks {
+		d, err := t.BlockStart(b)
+		if err != nil {
+			break // reported above
+		}
+		if d <= prev {
+			errs = append(errs, fmt.Errorf("timing: block_starts must be in order, morning < afternoon < evening (%s %q is not after the one before)", b, t.BlockStarts[b]))
+		}
+		prev = d
 	}
 	for b := range t.BlockStarts {
 		if !slices.Contains(Blocks, b) {

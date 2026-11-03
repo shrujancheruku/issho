@@ -7,8 +7,10 @@ import (
 	"cmp"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
+	"reflect"
 	"strings"
 
 	"github.com/jackc/pgx/v5"
@@ -304,6 +306,14 @@ func seedPack(ctx context.Context, pool *pgxpool.Pool, p Pack, opts Options) (Di
 		if len(p.MeetingPlaces) > 0 {
 			places, _ = json.Marshal(p.MeetingPlaces)
 		}
+		// Compare before overwriting, so a change (or a reset to the defaults)
+		// shows in the apply report instead of passing silently.
+		stored, err := q.GetCityPackSettings(ctx, p.ID)
+		if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+			return err
+		}
+		d.MatchingChanged = !sameJSON(stored.Matching, matchingJSON, "{}")
+		d.MeetingPlacesChanged = !sameJSON(stored.MeetingPlaces, places, "[]")
 		if err := q.UpsertCity(ctx, dbgen.UpsertCityParams{
 			ID: p.ID, Name: name, Timezone: p.Timezone, Currency: p.Currency, Languages: p.Languages,
 			TravelModes: p.TravelModes, Matching: matchingJSON, MeetingPlaces: places,
@@ -400,4 +410,20 @@ func EncodePack(p Pack) ([]byte, error) {
 		return nil, err
 	}
 	return b.Bytes(), nil
+}
+
+// sameJSON compares two JSON documents by value (key order and spacing
+// don't matter); an empty or missing one is empty.
+func sameJSON(a, b []byte, empty string) bool {
+	norm := func(raw []byte) any {
+		if len(bytes.TrimSpace(raw)) == 0 {
+			raw = []byte(empty)
+		}
+		var v any
+		if json.Unmarshal(raw, &v) != nil {
+			return string(raw)
+		}
+		return v
+	}
+	return reflect.DeepEqual(norm(a), norm(b))
 }

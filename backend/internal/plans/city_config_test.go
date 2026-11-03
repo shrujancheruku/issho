@@ -20,7 +20,7 @@ func TestIntegrationCityTiming(t *testing.T) {
 	for _, id := range f.users {
 		f.addProfile(t, id, "ja")
 	}
-	if tm, _, err := cityTiming(ctx, f.q, f.city); err != nil || tm.Validate() != nil ||
+	if tm, _, err := cityTiming(ctx, f.q, f.city); err != nil ||
 		tm.LeadDays != DefaultTiming().LeadDays || tm.BlockStarts[matching.Evening] != DefaultTiming().BlockStarts[matching.Evening] {
 		t.Fatalf("city without an override: %+v, %v; want DefaultTiming", tm, err)
 	}

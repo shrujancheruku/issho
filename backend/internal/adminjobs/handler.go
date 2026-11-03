@@ -116,5 +116,6 @@ func ApplyReport(d cities.Diff) *isshov1.ApplyCityPackResponse {
 	return &isshov1.ApplyCityPackResponse{
 		NewAreas: d.NewAreas, MovedAreas: d.MovedAreas, TravelTimesRebuilt: d.TravelTimesRebuilt, TravelTimes: int32(d.TravelTimes),
 		RemovedAreas: d.RemovedAreas, ReplacedAreas: replaced, RemovedOverrides: d.RemovedOverrides,
+		MatchingChanged: d.MatchingChanged, MeetingPlacesChanged: d.MeetingPlacesChanged,
 	}
 }

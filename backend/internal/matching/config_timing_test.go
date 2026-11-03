@@ -40,6 +40,13 @@ func TestParseConfigTiming(t *testing.T) {
 		"bad time":           `{"timing": {"block_starts": {"evening": "25:00"}}}`,
 		"unpadded time":      `{"timing": {"block_starts": {"evening": "9:00"}}}`,
 		"no room to confirm": `{"timing": {"signup_days": 12}}`,
+		"window too long":    `{"timing": {"window_days": 61}}`,
+		"lead too long":      `{"timing": {"lead_days": 15, "window_days": 60}}`,
+		"signup too long":    `{"timing": {"signup_days": 31, "window_days": 60}}`,
+		"cooldown too long":  `{"timing": {"cooldown_days": 366}}`,
+		"negative cooldown":  `{"timing": {"cooldown_days": -1}}`,
+		"evening first":      `{"timing": {"block_starts": {"evening": "09:00"}}}`,
+		"blocks equal":       `{"timing": {"block_starts": {"afternoon": "10:00"}}}`,
 		"zero lead":          `{"timing": {"lead_days": 0}}`,
 		"bad value":          `{"min_group_size": 1}`,
 	} {

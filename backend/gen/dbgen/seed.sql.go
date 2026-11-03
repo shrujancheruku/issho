@@ -18,6 +18,23 @@ func (q *Queries) DeleteActivities(ctx context.Context, ids []string) error {
 	return err
 }
 
+const getCityPackSettings = `-- name: GetCityPackSettings :one
+select matching, meeting_places from app.cities where id = $1
+`
+
+type GetCityPackSettingsRow struct {
+	Matching      []byte
+	MeetingPlaces []byte
+}
+
+// What a pack writes to the city, to report a change before Apply overwrites it.
+func (q *Queries) GetCityPackSettings(ctx context.Context, id string) (GetCityPackSettingsRow, error) {
+	row := q.db.QueryRow(ctx, getCityPackSettings, id)
+	var i GetCityPackSettingsRow
+	err := row.Scan(&i.Matching, &i.MeetingPlaces)
+	return i, err
+}
+
 const mergeActivityPrefs = `-- name: MergeActivityPrefs :exec
 insert into app.user_activity_prefs (user_id, activity_id, weight)
 select user_id, $1::text, max(weight)

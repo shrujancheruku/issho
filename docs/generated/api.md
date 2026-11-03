@@ -375,6 +375,8 @@
 | replaced_areas | [ReplacedArea](#issho-v1-ReplacedArea) | repeated |  |
 | removed_overrides | [string](#string) | repeated |  |
 | job_id | [int64](#int64) |  | The job applying the pack (see AdminService.GetAdminJob); the fields above are empty in this response and filled in the job&#39;s result. 0 from an API that still applies synchronously (the previous release), which fills the fields instead. |
+| matching_changed | [bool](#bool) |  | The city&#39;s matching overlay or meeting-place searches changed (including being reset to the defaults because the pack no longer has them). |
+| meeting_places_changed | [bool](#bool) |  |  |
 
 
 
