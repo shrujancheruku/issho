@@ -21,13 +21,13 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/platform/auth"
 	"github.com/shrujancheruku/issho/backend/internal/platform/errs"
 	"github.com/shrujancheruku/issho/backend/internal/platform/i18n"
+	"github.com/shrujancheruku/issho/backend/internal/platform/paging"
 )
 
 // Limits on what admins write and read in plan review.
 const (
 	MaxTitle        = 80
 	MaxSummary      = 500
-	reviewRows      = 200
 	venueOptionRows = 20
 )
 
@@ -96,16 +96,35 @@ func (h *ReviewHandler) ListReviewPlans(ctx context.Context, req *connect.Reques
 	if !ok {
 		return nil, errs.Invalid("status: draft, open or closed")
 	}
-	q := dbgen.New(h.Svc.DB)
-	rows, err := q.ListReviewPlans(ctx, dbgen.ListReviewPlansParams{CityID: req.Msg.CityId, Status: status, MaxRows: reviewRows})
+	size, err := paging.Size(req.Msg.PageSize)
 	if err != nil {
 		return nil, err
 	}
+	scope := paging.Scope("ListReviewPlans", req.Msg.CityId, status)
+	k, err := paging.Open(req.Msg.PageToken, scope, 2)
+	if err != nil {
+		return nil, err
+	}
+	arg := dbgen.ListReviewPlansParams{CityID: req.Msg.CityId, Status: status, MaxRows: size + 1}
+	arg.HasAfter, arg.AfterTs, arg.AfterID = k.Present, pgtype.Timestamptz{Time: k.Time(), Valid: true}, k.UUID()
+	if err := k.Err(); err != nil {
+		return nil, err
+	}
+	q := dbgen.New(h.Svc.DB)
+	rows, err := q.ListReviewPlans(ctx, arg)
+	if err != nil {
+		return nil, err
+	}
+	rows, more := paging.Trim(rows, size)
 	names, err := h.Svc.activityNames(ctx, q, req.Msg.CityId)
 	if err != nil {
 		return nil, err
 	}
 	out := &isshov1.ListReviewPlansResponse{Plans: make([]*isshov1.ReviewPlan, len(rows))}
+	if more {
+		last := rows[len(rows)-1]
+		out.NextPageToken = paging.Encode(scope, paging.Time(last.CreatedAt.Time), paging.UUID(last.ID))
+	}
 	for i, r := range rows {
 		out.Plans[i] = reviewPlanToProto(dbgen.GetReviewPlanRow{
 			ID: r.ID, CityID: r.CityID, Status: r.Status, ClosedReason: r.ClosedReason, Title: r.Title, Description: r.Description,

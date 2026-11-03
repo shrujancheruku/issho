@@ -98,14 +98,24 @@ message ListVenuesRequest {
   // Optional filters.
   string area_id = 3;
   string category_id = 4;
-  // Places to skip, for the next page.
-  int32 offset = 5;
+  // Replaced by page_token (paging by offset skipped and repeated places
+  // when the list changed).
+  reserved 5;
+  reserved "offset";
+  // How many to return; 0 = 50, at most 200 (more is clamped).
+  int32 page_size = 6;
+  // From a previous response's next_page_token for the same request;
+  // empty = the first page. Opaque. INVALID_ARGUMENT if it is not from this
+  // list with these filters.
+  string page_token = 7;
 }
 
 message ListVenuesResponse {
   repeated Venue venues = 1;
   // How many places match, over all pages.
   int32 total = 2;
+  // Pass as page_token for the next page; empty on the last page.
+  string next_page_token = 3;
 }
 
 message Venue {

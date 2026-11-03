@@ -15,13 +15,13 @@ import (
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
 	"github.com/shrujancheruku/issho/backend/internal/platform/auth"
 	"github.com/shrujancheruku/issho/backend/internal/platform/errs"
+	"github.com/shrujancheruku/issho/backend/internal/platform/paging"
 )
 
-const (
-	// searchRows and outingRows bound the person search and outing list.
-	searchRows = 50
-	outingRows = 50
-)
+// outingRows is how many of a person's latest outings GetPerson shows. A
+// real bound, not a hidden remainder: a moderator reads the recent past to
+// decide (see Person.outings in the proto).
+const outingRows = 50
 
 func (h *Handler) SearchPeople(ctx context.Context, req *connect.Request[isshov1.SearchPeopleRequest]) (*connect.Response[isshov1.SearchPeopleResponse], error) {
 	if _, err := auth.RequireAdmin(ctx); err != nil {
@@ -31,11 +31,31 @@ func (h *Handler) SearchPeople(ctx context.Context, req *connect.Request[isshov1
 	if utf8.RuneCountInString(query) < 2 {
 		return nil, errs.Invalid("query: at least 2 characters")
 	}
-	rows, err := h.Q.SearchPeople(ctx, dbgen.SearchPeopleParams{Query: query, MaxRows: searchRows})
+	size, err := paging.Size(req.Msg.PageSize)
 	if err != nil {
 		return nil, err
 	}
+	scope := paging.Scope("SearchPeople", query)
+	k, err := paging.Open(req.Msg.PageToken, scope, 3)
+	if err != nil {
+		return nil, err
+	}
+	arg := dbgen.SearchPeopleParams{Query: query, MaxRows: size + 1}
+	arg.HasAfter, arg.AfterUnnamed, arg.AfterName, arg.AfterID = k.Present, k.Bool(), k.String(), k.UUID()
+	if err := k.Err(); err != nil {
+		return nil, err
+	}
+	rows, err := h.Q.SearchPeople(ctx, arg)
+	if err != nil {
+		return nil, err
+	}
+	rows, more := paging.Trim(rows, size)
 	out := &isshov1.SearchPeopleResponse{People: make([]*isshov1.PersonSummary, len(rows))}
+	if more {
+		// The query orders by (no name, name, id): the cursor is that triple.
+		last := rows[len(rows)-1]
+		out.NextPageToken = paging.Encode(scope, paging.Bool(last.DisplayName == ""), last.DisplayName, paging.UUID(last.ID))
+	}
 	for i, r := range rows {
 		out.People[i] = &isshov1.PersonSummary{UserId: r.ID.String(), Name: r.DisplayName, Email: r.Email, Suspended: r.Suspended}
 	}
@@ -182,15 +202,34 @@ func (h *Handler) LiftSuspension(ctx context.Context, req *connect.Request[issho
 	return connect.NewResponse(&isshov1.LiftSuspensionResponse{}), nil
 }
 
-func (h *Handler) ListSuspended(ctx context.Context, _ *connect.Request[isshov1.ListSuspendedRequest]) (*connect.Response[isshov1.ListSuspendedResponse], error) {
+func (h *Handler) ListSuspended(ctx context.Context, req *connect.Request[isshov1.ListSuspendedRequest]) (*connect.Response[isshov1.ListSuspendedResponse], error) {
 	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
-	rows, err := h.Q.ListOpenSuspensions(ctx, maxRows)
+	size, err := paging.Size(req.Msg.PageSize)
 	if err != nil {
 		return nil, err
 	}
+	scope := paging.Scope("ListSuspended")
+	k, err := paging.Open(req.Msg.PageToken, scope, 2)
+	if err != nil {
+		return nil, err
+	}
+	arg := dbgen.ListOpenSuspensionsParams{MaxRows: size + 1}
+	arg.HasAfter, arg.AfterTs, arg.AfterID = k.Present, pgTime(k.Time()), k.UUID()
+	if err := k.Err(); err != nil {
+		return nil, err
+	}
+	rows, err := h.Q.ListOpenSuspensions(ctx, arg)
+	if err != nil {
+		return nil, err
+	}
+	rows, more := paging.Trim(rows, size)
 	out := &isshov1.ListSuspendedResponse{People: make([]*isshov1.SuspendedPerson, len(rows))}
+	if more {
+		last := rows[len(rows)-1]
+		out.NextPageToken = paging.Encode(scope, paging.Time(last.CreatedAt.Time), paging.UUID(last.UserID))
+	}
 	for i, r := range rows {
 		out.People[i] = &isshov1.SuspendedPerson{
 			UserId: r.UserID.String(), Name: r.DisplayName, Reason: r.Reason,

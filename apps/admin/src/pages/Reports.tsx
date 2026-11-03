@@ -1,9 +1,10 @@
 import { ConnectError, ReportStatus, type ModerationReport } from '@issho/api-client';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
 import { formatTime, personHref, reportReasons } from '../format';
 import { api } from '../lib';
+import { LoadMore, rowsOf, usePaged } from '../paging';
 
 const filters: { label: string; status: ReportStatus }[] = [
   { label: 'Open', status: ReportStatus.OPEN },
@@ -24,10 +25,8 @@ export function Reports({ about }: { about?: string } = {}) {
   const [status, setStatus] = useState(about ? ReportStatus.UNSPECIFIED : ReportStatus.OPEN);
   // One person's reports, from "N reports" on a card or their person view.
   const [person, setPerson] = useState<{ id: string; name: string } | null>(about ? { id: about, name: '' } : null);
-  const reports = useQuery({
-    queryKey: ['reports', status, person?.id],
-    queryFn: () => api.moderation.listReports({ status, reportedId: person?.id ?? '' }),
-  });
+  const reports = usePaged(['reports', status, person?.id], (pageToken) => api.moderation.listReports({ status, reportedId: person?.id ?? '', pageToken }));
+  const rows = rowsOf(reports.data, (p) => p.reports);
 
   return (
     <section>
@@ -40,7 +39,7 @@ export function Reports({ about }: { about?: string } = {}) {
         </div>
         {person && (
           <span className="chip">
-            About {person.name || reports.data?.reports[0]?.reportedName || 'someone'} <button className="link" onClick={() => setPerson(null)}>× everyone</button>
+            About {person.name || rows[0]?.reportedName || 'someone'} <button className="link" onClick={() => setPerson(null)}>× everyone</button>
           </span>
         )}
       </div>
@@ -49,10 +48,11 @@ export function Reports({ about }: { about?: string } = {}) {
       </p>
       {reports.isPending && <p className="muted">Loading…</p>}
       {reports.error && <p className="error">{ConnectError.from(reports.error).message}</p>}
-      {reports.data?.reports.length === 0 && <p className="empty">Nothing here.</p>}
-      {reports.data?.reports.map((r) => (
+      {reports.data && rows.length === 0 && <p className="empty">Nothing here.</p>}
+      {rows.map((r) => (
         <ReportCard key={r.id} report={r} onPerson={() => { setPerson({ id: r.reportedId, name: r.reportedName }); setStatus(ReportStatus.UNSPECIFIED); }} />
       ))}
+      <LoadMore query={reports} />
     </section>
   );
 }

@@ -18,9 +18,12 @@ order by c.id;
 update app.cities set approved_venues_only = @approved_venues_only where id = @id;
 
 -- A city's places in one status, optionally in one area or category, a
--- page at a time: by area, then place id (a stable order to page through).
+-- page at a time: by area name, area id, then place id (a total order to
+-- page through). Keyset after (@after_area_name, @after_area_id,
+-- @after_place_id) when @has_after; total counts every match, before the
+-- cursor cuts it, so the page can say "N in all".
 -- plans = draft or open plans that use the place, which rejecting it
--- doesn't change. total = how many places match, for paging.
+-- doesn't change.
 -- name: ListCurationVenues :many
 with places as (
   select v.google_place_id, v.area_id,
@@ -42,16 +45,21 @@ with places as (
   where pl.city_id = @city_id and pl.status in ('draft', 'open') and pl.follow_up_venue_place_id is not null
 ), uses as (
   select place_id, count(*)::int as plans from used group by place_id
+), listed as (
+  select p.google_place_id, p.area_id, coalesce(a.name->>'en', p.area_id)::text as area_name,
+         p.categories, p.status, p.added, p.reviewed_at, coalesce(u.plans, 0)::int as plans,
+         count(*) over ()::int as total
+  from places p
+  join app.areas a on a.id = p.area_id
+  left join uses u on u.place_id = p.google_place_id
+  where p.status = @status::text
 )
-select p.google_place_id, p.area_id, coalesce(a.name->>'en', p.area_id)::text as area_name,
-       p.categories, p.status, p.added, p.reviewed_at, coalesce(u.plans, 0)::int as plans,
-       count(*) over ()::int as total
-from places p
-join app.areas a on a.id = p.area_id
-left join uses u on u.place_id = p.google_place_id
-where p.status = @status::text
-order by area_name, p.google_place_id
-limit @max_rows offset @skip;
+select google_place_id, area_id, area_name, categories, status, added, reviewed_at, plans, total
+from listed
+where not @has_after::boolean
+   or (area_name, area_id, google_place_id) > (@after_area_name::text, @after_area_id::text, @after_place_id::text)
+order by area_name, area_id, google_place_id
+limit @max_rows;
 
 -- Returns the place id of each row changed (a place has a row per category,
 -- so callers count the distinct ones).

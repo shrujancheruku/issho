@@ -181,7 +181,13 @@ type ListReportsRequest struct {
 	// UNSPECIFIED = every status.
 	Status ReportStatus `protobuf:"varint,1,opt,name=status,proto3,enum=issho.v1.ReportStatus" json:"status,omitempty"`
 	// Only reports about this person; empty = everyone.
-	ReportedId    string `protobuf:"bytes,2,opt,name=reported_id,json=reportedId,proto3" json:"reported_id,omitempty"`
+	ReportedId string `protobuf:"bytes,2,opt,name=reported_id,json=reportedId,proto3" json:"reported_id,omitempty"`
+	// How many to return; 0 = 50, at most 200 (more is clamped).
+	PageSize int32 `protobuf:"varint,3,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	// From a previous response's next_page_token for the same request;
+	// empty = the first page. Opaque. INVALID_ARGUMENT if it is not from this
+	// list with these filters.
+	PageToken     string `protobuf:"bytes,4,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -230,9 +236,25 @@ func (x *ListReportsRequest) GetReportedId() string {
 	return ""
 }
 
+func (x *ListReportsRequest) GetPageSize() int32 {
+	if x != nil {
+		return x.PageSize
+	}
+	return 0
+}
+
+func (x *ListReportsRequest) GetPageToken() string {
+	if x != nil {
+		return x.PageToken
+	}
+	return ""
+}
+
 type ListReportsResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Reports       []*ModerationReport    `protobuf:"bytes,1,rep,name=reports,proto3" json:"reports,omitempty"`
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	Reports []*ModerationReport    `protobuf:"bytes,1,rep,name=reports,proto3" json:"reports,omitempty"`
+	// Pass as page_token for the next page; empty on the last page.
+	NextPageToken string `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -272,6 +294,13 @@ func (x *ListReportsResponse) GetReports() []*ModerationReport {
 		return x.Reports
 	}
 	return nil
+}
+
+func (x *ListReportsResponse) GetNextPageToken() string {
+	if x != nil {
+		return x.NextPageToken
+	}
+	return ""
 }
 
 type ModerationReport struct {
@@ -579,7 +608,13 @@ func (*ResolveReportResponse) Descriptor() ([]byte, []int) {
 type ListFlagsRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// false = open flags; true = resolved ones.
-	Resolved      bool `protobuf:"varint,1,opt,name=resolved,proto3" json:"resolved,omitempty"`
+	Resolved bool `protobuf:"varint,1,opt,name=resolved,proto3" json:"resolved,omitempty"`
+	// How many to return; 0 = 50, at most 200 (more is clamped).
+	PageSize int32 `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	// From a previous response's next_page_token for the same request;
+	// empty = the first page. Opaque. INVALID_ARGUMENT if it is not from this
+	// list with these filters.
+	PageToken     string `protobuf:"bytes,3,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -621,9 +656,25 @@ func (x *ListFlagsRequest) GetResolved() bool {
 	return false
 }
 
+func (x *ListFlagsRequest) GetPageSize() int32 {
+	if x != nil {
+		return x.PageSize
+	}
+	return 0
+}
+
+func (x *ListFlagsRequest) GetPageToken() string {
+	if x != nil {
+		return x.PageToken
+	}
+	return ""
+}
+
 type ListFlagsResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Flags         []*ModerationFlag      `protobuf:"bytes,1,rep,name=flags,proto3" json:"flags,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Flags []*ModerationFlag      `protobuf:"bytes,1,rep,name=flags,proto3" json:"flags,omitempty"`
+	// Pass as page_token for the next page; empty on the last page.
+	NextPageToken string `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -663,6 +714,13 @@ func (x *ListFlagsResponse) GetFlags() []*ModerationFlag {
 		return x.Flags
 	}
 	return nil
+}
+
+func (x *ListFlagsResponse) GetNextPageToken() string {
+	if x != nil {
+		return x.NextPageToken
+	}
+	return ""
 }
 
 type ModerationFlag struct {
@@ -876,7 +934,13 @@ func (*ResolveFlagResponse) Descriptor() ([]byte, []int) {
 type ListCrewLeavesRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// UNSPECIFIED = every reason.
-	Reason        LeaveReason `protobuf:"varint,1,opt,name=reason,proto3,enum=issho.v1.LeaveReason" json:"reason,omitempty"`
+	Reason LeaveReason `protobuf:"varint,1,opt,name=reason,proto3,enum=issho.v1.LeaveReason" json:"reason,omitempty"`
+	// How many to return; 0 = 50, at most 200 (more is clamped).
+	PageSize int32 `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	// From a previous response's next_page_token for the same request;
+	// empty = the first page. Opaque. INVALID_ARGUMENT if it is not from this
+	// list with these filters.
+	PageToken     string `protobuf:"bytes,3,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -918,9 +982,25 @@ func (x *ListCrewLeavesRequest) GetReason() LeaveReason {
 	return LeaveReason_LEAVE_REASON_UNSPECIFIED
 }
 
+func (x *ListCrewLeavesRequest) GetPageSize() int32 {
+	if x != nil {
+		return x.PageSize
+	}
+	return 0
+}
+
+func (x *ListCrewLeavesRequest) GetPageToken() string {
+	if x != nil {
+		return x.PageToken
+	}
+	return ""
+}
+
 type ListCrewLeavesResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Leaves        []*CrewLeave           `protobuf:"bytes,1,rep,name=leaves,proto3" json:"leaves,omitempty"`
+	state  protoimpl.MessageState `protogen:"open.v1"`
+	Leaves []*CrewLeave           `protobuf:"bytes,1,rep,name=leaves,proto3" json:"leaves,omitempty"`
+	// Pass as page_token for the next page; empty on the last page.
+	NextPageToken string `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -960,6 +1040,13 @@ func (x *ListCrewLeavesResponse) GetLeaves() []*CrewLeave {
 		return x.Leaves
 	}
 	return nil
+}
+
+func (x *ListCrewLeavesResponse) GetNextPageToken() string {
+	if x != nil {
+		return x.NextPageToken
+	}
+	return ""
 }
 
 type CrewLeave struct {
@@ -1076,7 +1163,13 @@ func (x *CrewLeave) GetCreatedAt() *timestamppb.Timestamp {
 type SearchPeopleRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// At least 2 characters.
-	Query         string `protobuf:"bytes,1,opt,name=query,proto3" json:"query,omitempty"`
+	Query string `protobuf:"bytes,1,opt,name=query,proto3" json:"query,omitempty"`
+	// How many to return; 0 = 50, at most 200 (more is clamped).
+	PageSize int32 `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	// From a previous response's next_page_token for the same request;
+	// empty = the first page. Opaque. INVALID_ARGUMENT if it is not from this
+	// list with these filters.
+	PageToken     string `protobuf:"bytes,3,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1118,9 +1211,25 @@ func (x *SearchPeopleRequest) GetQuery() string {
 	return ""
 }
 
+func (x *SearchPeopleRequest) GetPageSize() int32 {
+	if x != nil {
+		return x.PageSize
+	}
+	return 0
+}
+
+func (x *SearchPeopleRequest) GetPageToken() string {
+	if x != nil {
+		return x.PageToken
+	}
+	return ""
+}
+
 type SearchPeopleResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	People        []*PersonSummary       `protobuf:"bytes,1,rep,name=people,proto3" json:"people,omitempty"`
+	state  protoimpl.MessageState `protogen:"open.v1"`
+	People []*PersonSummary       `protobuf:"bytes,1,rep,name=people,proto3" json:"people,omitempty"`
+	// Pass as page_token for the next page; empty on the last page.
+	NextPageToken string `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1160,6 +1269,13 @@ func (x *SearchPeopleResponse) GetPeople() []*PersonSummary {
 		return x.People
 	}
 	return nil
+}
+
+func (x *SearchPeopleResponse) GetNextPageToken() string {
+	if x != nil {
+		return x.NextPageToken
+	}
+	return ""
 }
 
 type PersonSummary struct {
@@ -1339,9 +1455,12 @@ type Person struct {
 	Suspended        bool  `protobuf:"varint,12,opt,name=suspended,proto3" json:"suspended,omitempty"`
 	// Newest first.
 	Suspensions []*Suspension `protobuf:"bytes,13,rep,name=suspensions,proto3" json:"suspensions,omitempty"`
-	// Open ones first.
+	// Open ones first. Not paged: there is at most one open flag per kind, and
+	// flags are rare (a person gets one only from a system signal).
 	Flags []*ModerationFlag `protobuf:"bytes,14,rep,name=flags,proto3" json:"flags,omitempty"`
-	// Newest first, at most 50.
+	// Newest first, the latest 50. Not paged on purpose: a moderator reads
+	// the recent past to decide, and 50 outings is a real bound on what that
+	// takes (the full history is not a moderation question).
 	Outings       []*PersonOuting `protobuf:"bytes,15,rep,name=outings,proto3" json:"outings,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1858,7 +1977,13 @@ func (*LiftSuspensionResponse) Descriptor() ([]byte, []int) {
 }
 
 type ListSuspendedRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// How many to return; 0 = 50, at most 200 (more is clamped).
+	PageSize int32 `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	// From a previous response's next_page_token for the same request;
+	// empty = the first page. Opaque. INVALID_ARGUMENT if it is not from this
+	// list with these filters.
+	PageToken     string `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1893,9 +2018,25 @@ func (*ListSuspendedRequest) Descriptor() ([]byte, []int) {
 	return file_issho_v1_moderation_proto_rawDescGZIP(), []int{25}
 }
 
+func (x *ListSuspendedRequest) GetPageSize() int32 {
+	if x != nil {
+		return x.PageSize
+	}
+	return 0
+}
+
+func (x *ListSuspendedRequest) GetPageToken() string {
+	if x != nil {
+		return x.PageToken
+	}
+	return ""
+}
+
 type ListSuspendedResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	People        []*SuspendedPerson     `protobuf:"bytes,1,rep,name=people,proto3" json:"people,omitempty"`
+	state  protoimpl.MessageState `protogen:"open.v1"`
+	People []*SuspendedPerson     `protobuf:"bytes,1,rep,name=people,proto3" json:"people,omitempty"`
+	// Pass as page_token for the next page; empty on the last page.
+	NextPageToken string `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1935,6 +2076,13 @@ func (x *ListSuspendedResponse) GetPeople() []*SuspendedPerson {
 		return x.People
 	}
 	return nil
+}
+
+func (x *ListSuspendedResponse) GetNextPageToken() string {
+	if x != nil {
+		return x.NextPageToken
+	}
+	return ""
 }
 
 type SuspendedPerson struct {
@@ -2017,13 +2165,17 @@ var File_issho_v1_moderation_proto protoreflect.FileDescriptor
 
 const file_issho_v1_moderation_proto_rawDesc = "" +
 	"\n" +
-	"\x19issho/v1/moderation.proto\x12\bissho.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x14issho/v1/crews.proto\x1a\x15issho/v1/events.proto\"e\n" +
+	"\x19issho/v1/moderation.proto\x12\bissho.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x14issho/v1/crews.proto\x1a\x15issho/v1/events.proto\"\xa1\x01\n" +
 	"\x12ListReportsRequest\x12.\n" +
 	"\x06status\x18\x01 \x01(\x0e2\x16.issho.v1.ReportStatusR\x06status\x12\x1f\n" +
 	"\vreported_id\x18\x02 \x01(\tR\n" +
-	"reportedId\"K\n" +
+	"reportedId\x12\x1b\n" +
+	"\tpage_size\x18\x03 \x01(\x05R\bpageSize\x12\x1d\n" +
+	"\n" +
+	"page_token\x18\x04 \x01(\tR\tpageToken\"s\n" +
 	"\x13ListReportsResponse\x124\n" +
-	"\areports\x18\x01 \x03(\v2\x1a.issho.v1.ModerationReportR\areports\"\xf8\x05\n" +
+	"\areports\x18\x01 \x03(\v2\x1a.issho.v1.ModerationReportR\areports\x12&\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\xf8\x05\n" +
 	"\x10ModerationReport\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1f\n" +
 	"\vreporter_id\x18\x02 \x01(\tR\n" +
@@ -2059,11 +2211,15 @@ const file_issho_v1_moderation_proto_rawDesc = "" +
 	"\treport_id\x18\x01 \x01(\tR\breportId\x12.\n" +
 	"\x06status\x18\x02 \x01(\x0e2\x16.issho.v1.ReportStatusR\x06status\x12\x12\n" +
 	"\x04note\x18\x03 \x01(\tR\x04note\"\x17\n" +
-	"\x15ResolveReportResponse\".\n" +
+	"\x15ResolveReportResponse\"j\n" +
 	"\x10ListFlagsRequest\x12\x1a\n" +
-	"\bresolved\x18\x01 \x01(\bR\bresolved\"C\n" +
+	"\bresolved\x18\x01 \x01(\bR\bresolved\x12\x1b\n" +
+	"\tpage_size\x18\x02 \x01(\x05R\bpageSize\x12\x1d\n" +
+	"\n" +
+	"page_token\x18\x03 \x01(\tR\tpageToken\"k\n" +
 	"\x11ListFlagsResponse\x12.\n" +
-	"\x05flags\x18\x01 \x03(\v2\x18.issho.v1.ModerationFlagR\x05flags\"\x89\x03\n" +
+	"\x05flags\x18\x01 \x03(\v2\x18.issho.v1.ModerationFlagR\x05flags\x12&\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\x89\x03\n" +
 	"\x0eModerationFlag\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x17\n" +
 	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x1b\n" +
@@ -2083,11 +2239,15 @@ const file_issho_v1_moderation_proto_rawDesc = "" +
 	"\x12ResolveFlagRequest\x12\x17\n" +
 	"\aflag_id\x18\x01 \x01(\x03R\x06flagId\x12\x12\n" +
 	"\x04note\x18\x02 \x01(\tR\x04note\"\x15\n" +
-	"\x13ResolveFlagResponse\"F\n" +
+	"\x13ResolveFlagResponse\"\x82\x01\n" +
 	"\x15ListCrewLeavesRequest\x12-\n" +
-	"\x06reason\x18\x01 \x01(\x0e2\x15.issho.v1.LeaveReasonR\x06reason\"E\n" +
+	"\x06reason\x18\x01 \x01(\x0e2\x15.issho.v1.LeaveReasonR\x06reason\x12\x1b\n" +
+	"\tpage_size\x18\x02 \x01(\x05R\bpageSize\x12\x1d\n" +
+	"\n" +
+	"page_token\x18\x03 \x01(\tR\tpageToken\"m\n" +
 	"\x16ListCrewLeavesResponse\x12+\n" +
-	"\x06leaves\x18\x01 \x03(\v2\x13.issho.v1.CrewLeaveR\x06leaves\"\xac\x02\n" +
+	"\x06leaves\x18\x01 \x03(\v2\x13.issho.v1.CrewLeaveR\x06leaves\x12&\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\xac\x02\n" +
 	"\tCrewLeave\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x17\n" +
 	"\acrew_id\x18\x02 \x01(\tR\x06crewId\x12\x1b\n" +
@@ -2099,11 +2259,15 @@ const file_issho_v1_moderation_proto_rawDesc = "" +
 	"\x06reason\x18\a \x01(\x0e2\x15.issho.v1.LeaveReasonR\x06reason\x12\x18\n" +
 	"\adetails\x18\b \x01(\tR\adetails\x129\n" +
 	"\n" +
-	"created_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"+\n" +
+	"created_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"g\n" +
 	"\x13SearchPeopleRequest\x12\x14\n" +
-	"\x05query\x18\x01 \x01(\tR\x05query\"G\n" +
+	"\x05query\x18\x01 \x01(\tR\x05query\x12\x1b\n" +
+	"\tpage_size\x18\x02 \x01(\x05R\bpageSize\x12\x1d\n" +
+	"\n" +
+	"page_token\x18\x03 \x01(\tR\tpageToken\"o\n" +
 	"\x14SearchPeopleResponse\x12/\n" +
-	"\x06people\x18\x01 \x03(\v2\x17.issho.v1.PersonSummaryR\x06people\"p\n" +
+	"\x06people\x18\x01 \x03(\v2\x17.issho.v1.PersonSummaryR\x06people\x12&\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"p\n" +
 	"\rPersonSummary\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x14\n" +
@@ -2159,10 +2323,14 @@ const file_issho_v1_moderation_proto_rawDesc = "" +
 	"\x15LiftSuspensionRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x12\n" +
 	"\x04note\x18\x02 \x01(\tR\x04note\"\x18\n" +
-	"\x16LiftSuspensionResponse\"\x16\n" +
-	"\x14ListSuspendedRequest\"J\n" +
+	"\x16LiftSuspensionResponse\"R\n" +
+	"\x14ListSuspendedRequest\x12\x1b\n" +
+	"\tpage_size\x18\x01 \x01(\x05R\bpageSize\x12\x1d\n" +
+	"\n" +
+	"page_token\x18\x02 \x01(\tR\tpageToken\"r\n" +
 	"\x15ListSuspendedResponse\x121\n" +
-	"\x06people\x18\x01 \x03(\v2\x19.issho.v1.SuspendedPersonR\x06people\"\xab\x01\n" +
+	"\x06people\x18\x01 \x03(\v2\x19.issho.v1.SuspendedPersonR\x06people\x12&\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\xab\x01\n" +
 	"\x0fSuspendedPerson\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x16\n" +

@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { formatTime, planHref } from '../format';
 import { useRememberedCity } from '../city';
 import { api } from '../lib';
+import { LoadMore, rowsOf, usePaged } from '../paging';
 import { NewPlan } from './NewPlan';
 
 const tabs: { label: string; status: ReviewPlanStatus }[] = [
@@ -21,11 +22,8 @@ export function Plans() {
   const [status, setStatus] = useState(ReviewPlanStatus.DRAFT);
   const [creating, setCreating] = useState(false);
   const city = cities.data?.cities.find((c) => c.id === cityId);
-  const plans = useQuery({
-    queryKey: ['review-plans', cityId, status],
-    queryFn: () => api.review.listReviewPlans({ cityId, status }),
-    enabled: cityId !== '',
-  });
+  const plans = usePaged(['review-plans', cityId, status], (pageToken) => api.review.listReviewPlans({ cityId, status, pageToken }), cityId !== '');
+  const rows = rowsOf(plans.data, (p) => p.plans);
   const toggle = useMutation({
     mutationFn: (review: boolean) => api.review.setCityReview({ cityId, review }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['review-cities'] }),
@@ -65,15 +63,16 @@ export function Plans() {
       {creating && city && <NewPlan cityId={city.id} onCreated={() => { setCreating(false); setStatus(ReviewPlanStatus.OPEN); }} />}
       {plans.isPending && cityId && <p className="muted">Loading…</p>}
       {(cities.error || plans.error) && <p className="error">{ConnectError.from(cities.error ?? plans.error).message}</p>}
-      {plans.data?.plans.length === 0 && <p className="empty">Nothing here.</p>}
-      {plans.data && plans.data.plans.length > 0 && (
+      {plans.data && rows.length === 0 && <p className="empty">Nothing here.</p>}
+      {rows.length > 0 && (
         <div className="table-wrap">
           <table>
             <thead><tr><th>Plan</th><th>Area</th><th>Languages</th><th>{status === ReviewPlanStatus.DRAFT ? 'Suits' : 'Signed up'}</th><th>Created</th></tr></thead>
-            <tbody>{plans.data.plans.map((p) => <PlanRow key={p.id} plan={p} />)}</tbody>
+            <tbody>{rows.map((p) => <PlanRow key={p.id} plan={p} />)}</tbody>
           </table>
         </div>
       )}
+      <LoadMore query={plans} />
     </section>
   );
 }

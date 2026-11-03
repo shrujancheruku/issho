@@ -457,8 +457,12 @@ type ListVenuesRequest struct {
 	// Optional filters.
 	AreaId     string `protobuf:"bytes,3,opt,name=area_id,json=areaId,proto3" json:"area_id,omitempty"`
 	CategoryId string `protobuf:"bytes,4,opt,name=category_id,json=categoryId,proto3" json:"category_id,omitempty"`
-	// Places to skip, for the next page.
-	Offset        int32 `protobuf:"varint,5,opt,name=offset,proto3" json:"offset,omitempty"`
+	// How many to return; 0 = 50, at most 200 (more is clamped).
+	PageSize int32 `protobuf:"varint,6,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	// From a previous response's next_page_token for the same request;
+	// empty = the first page. Opaque. INVALID_ARGUMENT if it is not from this
+	// list with these filters.
+	PageToken     string `protobuf:"bytes,7,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -521,18 +525,27 @@ func (x *ListVenuesRequest) GetCategoryId() string {
 	return ""
 }
 
-func (x *ListVenuesRequest) GetOffset() int32 {
+func (x *ListVenuesRequest) GetPageSize() int32 {
 	if x != nil {
-		return x.Offset
+		return x.PageSize
 	}
 	return 0
+}
+
+func (x *ListVenuesRequest) GetPageToken() string {
+	if x != nil {
+		return x.PageToken
+	}
+	return ""
 }
 
 type ListVenuesResponse struct {
 	state  protoimpl.MessageState `protogen:"open.v1"`
 	Venues []*Venue               `protobuf:"bytes,1,rep,name=venues,proto3" json:"venues,omitempty"`
 	// How many places match, over all pages.
-	Total         int32 `protobuf:"varint,2,opt,name=total,proto3" json:"total,omitempty"`
+	Total int32 `protobuf:"varint,2,opt,name=total,proto3" json:"total,omitempty"`
+	// Pass as page_token for the next page; empty on the last page.
+	NextPageToken string `protobuf:"bytes,3,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -579,6 +592,13 @@ func (x *ListVenuesResponse) GetTotal() int32 {
 		return x.Total
 	}
 	return 0
+}
+
+func (x *ListVenuesResponse) GetNextPageToken() string {
+	if x != nil {
+		return x.NextPageToken
+	}
+	return ""
 }
 
 type Venue struct {
@@ -1209,17 +1229,20 @@ const file_issho_v1_curation_proto_rawDesc = "" +
 	"\x1cSetApprovedVenuesOnlyRequest\x12\x17\n" +
 	"\acity_id\x18\x01 \x01(\tR\x06cityId\x120\n" +
 	"\x14approved_venues_only\x18\x02 \x01(\bR\x12approvedVenuesOnly\"\x1f\n" +
-	"\x1dSetApprovedVenuesOnlyResponse\"\xad\x01\n" +
+	"\x1dSetApprovedVenuesOnlyResponse\"\xdf\x01\n" +
 	"\x11ListVenuesRequest\x12\x17\n" +
 	"\acity_id\x18\x01 \x01(\tR\x06cityId\x12-\n" +
 	"\x06status\x18\x02 \x01(\x0e2\x15.issho.v1.VenueStatusR\x06status\x12\x17\n" +
 	"\aarea_id\x18\x03 \x01(\tR\x06areaId\x12\x1f\n" +
 	"\vcategory_id\x18\x04 \x01(\tR\n" +
-	"categoryId\x12\x16\n" +
-	"\x06offset\x18\x05 \x01(\x05R\x06offset\"S\n" +
+	"categoryId\x12\x1b\n" +
+	"\tpage_size\x18\x06 \x01(\x05R\bpageSize\x12\x1d\n" +
+	"\n" +
+	"page_token\x18\a \x01(\tR\tpageTokenJ\x04\b\x05\x10\x06R\x06offset\"{\n" +
 	"\x12ListVenuesResponse\x12'\n" +
 	"\x06venues\x18\x01 \x03(\v2\x0f.issho.v1.VenueR\x06venues\x12\x14\n" +
-	"\x05total\x18\x02 \x01(\x05R\x05total\"\xf0\x02\n" +
+	"\x05total\x18\x02 \x01(\x05R\x05total\x12&\n" +
+	"\x0fnext_page_token\x18\x03 \x01(\tR\rnextPageToken\"\xf0\x02\n" +
 	"\x05Venue\x12\x19\n" +
 	"\bplace_id\x18\x01 \x01(\tR\aplaceId\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x18\n" +

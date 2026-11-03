@@ -180,12 +180,21 @@ message ListCatalogTranslationsRequest {
   bool unreviewed_only = 2;
   // Matches the English source or the translation; empty = all.
   string search = 3;
-  // How many to skip (pages of 100).
-  int32 offset = 4;
+  // Replaced by page_token.
+  reserved 4;
+  reserved "offset";
+  // How many to return; 0 = 50, at most 200 (more is clamped).
+  int32 page_size = 5;
+  // From a previous response's next_page_token for the same request;
+  // empty = the first page. Opaque. INVALID_ARGUMENT if it is not from this
+  // list with these filters.
+  string page_token = 6;
 }
 
 message ListCatalogTranslationsResponse {
   repeated Translation translations = 1;
+  // Pass as page_token for the next page; empty on the last page.
+  string next_page_token = 2;
 }
 
 message ReviewCatalogTranslationRequest {

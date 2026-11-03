@@ -15,6 +15,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/platform/auth"
 	"github.com/shrujancheruku/issho/backend/internal/platform/errs"
 	"github.com/shrujancheruku/issho/backend/internal/platform/i18n"
+	"github.com/shrujancheruku/issho/backend/internal/platform/paging"
 )
 
 // Group review in ReviewService (proposals.go has the rules).
@@ -32,18 +33,38 @@ func (h *ReviewHandler) ListReviewEvents(ctx context.Context, req *connect.Reque
 	if !ok {
 		return nil, errs.Invalid("status: proposed or scheduled")
 	}
-	q := dbgen.New(h.Svc.DB)
-	rows, err := q.ListReviewEvents(ctx, dbgen.ListReviewEventsParams{
-		CityID: req.Msg.CityId, Status: status, FromDate: date(h.now().UTC().Truncate(24 * time.Hour)), MaxRows: reviewRows,
-	})
+	size, err := paging.Size(req.Msg.PageSize)
 	if err != nil {
 		return nil, err
 	}
+	scope := paging.Scope("ListReviewEvents", req.Msg.CityId, status)
+	k, err := paging.Open(req.Msg.PageToken, scope, 3)
+	if err != nil {
+		return nil, err
+	}
+	arg := dbgen.ListReviewEventsParams{
+		CityID: req.Msg.CityId, Status: status, FromDate: date(h.now().UTC().Truncate(24 * time.Hour)), MaxRows: size + 1,
+	}
+	arg.HasAfter, arg.AfterDate, arg.AfterBlock = k.Present, date(k.Date()), k.String()
+	arg.AfterID = k.UUID()
+	if err := k.Err(); err != nil {
+		return nil, err
+	}
+	q := dbgen.New(h.Svc.DB)
+	rows, err := q.ListReviewEvents(ctx, arg)
+	if err != nil {
+		return nil, err
+	}
+	rows, more := paging.Trim(rows, size)
 	names, err := h.Svc.activityNames(ctx, q, req.Msg.CityId)
 	if err != nil {
 		return nil, err
 	}
 	out := &isshov1.ListReviewEventsResponse{Events: make([]*isshov1.ReviewEvent, len(rows))}
+	if more {
+		last := rows[len(rows)-1]
+		out.NextPageToken = paging.Encode(scope, paging.Date(last.Date.Time), last.Block, paging.UUID(last.ID))
+	}
 	for i, r := range rows {
 		out.Events[i] = reviewEventToProto(dbgen.GetReviewEventRow{
 			ID: r.ID, PlanID: r.PlanID, Status: r.Status, Date: r.Date, Block: r.Block, StartsAt: r.StartsAt,

@@ -33,15 +33,13 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/platform/errs"
 	"github.com/shrujancheruku/issho/backend/internal/platform/github"
 	"github.com/shrujancheruku/issho/backend/internal/platform/i18n"
+	"github.com/shrujancheruku/issho/backend/internal/platform/paging"
 	"github.com/shrujancheruku/issho/backend/internal/translate"
 	"github.com/shrujancheruku/issho/backend/internal/uistrings"
 )
 
 // BranchPrefix marks the editor's branches: translations/<lang>-<unix time>.
 const BranchPrefix = "translations/"
-
-// catalogPage is how many catalogue translations ListCatalogTranslations returns.
-const catalogPage = 100
 
 // Repo is the GitHub repository the human versions live in (*github.Client).
 type Repo interface {
@@ -495,17 +493,34 @@ func (h *Handler) ListCatalogTranslations(ctx context.Context, req *connect.Requ
 	if _, err := forLang(ctx, req.Msg.Lang); err != nil {
 		return nil, err
 	}
-	if req.Msg.Offset < 0 {
-		return nil, errs.Invalid("offset: not negative")
-	}
-	rows, err := h.Q.ListCatalogTranslations(ctx, dbgen.ListCatalogTranslationsParams{
-		Lang: req.Msg.Lang, UiContext: uistrings.ContextPrefix, UnreviewedOnly: req.Msg.UnreviewedOnly,
-		Search: strings.TrimSpace(req.Msg.Search), SkipRows: req.Msg.Offset, MaxRows: catalogPage,
-	})
+	size, err := paging.Size(req.Msg.PageSize)
 	if err != nil {
 		return nil, err
 	}
+	search := strings.TrimSpace(req.Msg.Search)
+	scope := paging.Scope("ListCatalogTranslations", req.Msg.Lang, paging.Bool(req.Msg.UnreviewedOnly), search)
+	k, err := paging.Open(req.Msg.PageToken, scope, 4)
+	if err != nil {
+		return nil, err
+	}
+	arg := dbgen.ListCatalogTranslationsParams{
+		Lang: req.Msg.Lang, UiContext: uistrings.ContextPrefix, UnreviewedOnly: req.Msg.UnreviewedOnly,
+		Search: search, MaxRows: size + 1,
+	}
+	arg.HasAfter, arg.AfterReviewed, arg.AfterSource, arg.AfterContext, arg.AfterHash = k.Present, k.Bool(), k.String(), k.String(), k.String()
+	if err := k.Err(); err != nil {
+		return nil, err
+	}
+	rows, err := h.Q.ListCatalogTranslations(ctx, arg)
+	if err != nil {
+		return nil, err
+	}
+	rows, more := paging.Trim(rows, size)
 	out := &isshov1.ListCatalogTranslationsResponse{Translations: make([]*isshov1.Translation, len(rows))}
+	if more {
+		last := rows[len(rows)-1]
+		out.NextPageToken = paging.Encode(scope, paging.Bool(last.Reviewed), last.Source, last.Context, last.SourceHash)
+	}
 	for i, r := range rows {
 		out.Translations[i] = translationToProto(dbgen.GetTranslationRow(r))
 	}

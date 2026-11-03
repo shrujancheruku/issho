@@ -126,13 +126,17 @@ left join app.profiles p on p.user_id = l.user_id
 left join app.activities ca on ca.id = c.activity_id
 left join app.areas cr on cr.id = c.area_id
 where ($1::text = '' or l.reason = $1)
+  and (not $2::boolean or (l.created_at, l.id) < ($3::timestamptz, $4::bigint))
 order by l.created_at desc, l.id desc
-limit $2
+limit $5
 `
 
 type ListCrewLeavesParams struct {
-	Reason  string
-	MaxRows int32
+	Reason   string
+	HasAfter bool
+	AfterTs  pgtype.Timestamptz
+	AfterID  int64
+	MaxRows  int32
 }
 
 type ListCrewLeavesRow struct {
@@ -149,7 +153,13 @@ type ListCrewLeavesRow struct {
 
 // Why people left crews, newest first. @reason ” = every reason.
 func (q *Queries) ListCrewLeaves(ctx context.Context, arg ListCrewLeavesParams) ([]ListCrewLeavesRow, error) {
-	rows, err := q.db.Query(ctx, listCrewLeaves, arg.Reason, arg.MaxRows)
+	rows, err := q.db.Query(ctx, listCrewLeaves,
+		arg.Reason,
+		arg.HasAfter,
+		arg.AfterTs,
+		arg.AfterID,
+		arg.MaxRows,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -183,15 +193,22 @@ select f.id, f.user_id, f.kind, f.details, f.created_at, f.updated_at, f.resolve
        coalesce(p.display_name, '')::text as user_name
 from app.moderation_flags f
 left join app.profiles p on p.user_id = f.user_id
-where ($1::boolean and f.resolved_at is null) or (not $1::boolean and f.resolved_at is not null)
+where (($1::boolean and f.resolved_at is null) or (not $1::boolean and f.resolved_at is not null))
+  and (not $2::boolean
+       or ($1::boolean and (f.created_at, f.id) > ($3::timestamptz, $4::bigint))
+       or (not $1::boolean and (f.resolved_at, f.id) < ($3::timestamptz, $4::bigint)))
 order by case when f.resolved_at is null then f.created_at end asc,
-         f.resolved_at desc
-limit $2
+         case when f.resolved_at is null then f.id end asc,
+         f.resolved_at desc, f.id desc
+limit $5
 `
 
 type ListModerationFlagsParams struct {
-	Open    bool
-	MaxRows int32
+	Open     bool
+	HasAfter bool
+	AfterTs  pgtype.Timestamptz
+	AfterID  int64
+	MaxRows  int32
 }
 
 type ListModerationFlagsRow struct {
@@ -207,9 +224,17 @@ type ListModerationFlagsRow struct {
 	UserName   string
 }
 
-// Flags: open ones oldest first, else resolved ones newest first.
+// Flags: open ones oldest first (by created_at), else resolved ones newest
+// first (by resolved_at). Keyset: @after_ts is the last row's created_at
+// (open) or resolved_at (resolved), with its @after_id.
 func (q *Queries) ListModerationFlags(ctx context.Context, arg ListModerationFlagsParams) ([]ListModerationFlagsRow, error) {
-	rows, err := q.db.Query(ctx, listModerationFlags, arg.Open, arg.MaxRows)
+	rows, err := q.db.Query(ctx, listModerationFlags,
+		arg.Open,
+		arg.HasAfter,
+		arg.AfterTs,
+		arg.AfterID,
+		arg.MaxRows,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -245,9 +270,17 @@ select s.user_id, s.reason, s.created_at, s.created_by,
 from app.suspensions s
 left join app.profiles p on p.user_id = s.user_id
 where s.lifted_at is null
-order by s.created_at desc
-limit $1
+  and (not $1::boolean or (s.created_at, s.user_id) < ($2::timestamptz, $3::uuid))
+order by s.created_at desc, s.user_id desc
+limit $4
 `
+
+type ListOpenSuspensionsParams struct {
+	HasAfter bool
+	AfterTs  pgtype.Timestamptz
+	AfterID  uuid.UUID
+	MaxRows  int32
+}
 
 type ListOpenSuspensionsRow struct {
 	UserID      uuid.UUID
@@ -257,9 +290,15 @@ type ListOpenSuspensionsRow struct {
 	DisplayName string
 }
 
-// Everyone suspended now, most recent first.
-func (q *Queries) ListOpenSuspensions(ctx context.Context, maxRows int32) ([]ListOpenSuspensionsRow, error) {
-	rows, err := q.db.Query(ctx, listOpenSuspensions, maxRows)
+// Everyone suspended now, most recent first (user_id breaks ties: a person
+// has one open suspension at a time).
+func (q *Queries) ListOpenSuspensions(ctx context.Context, arg ListOpenSuspensionsParams) ([]ListOpenSuspensionsRow, error) {
+	rows, err := q.db.Query(ctx, listOpenSuspensions,
+		arg.HasAfter,
+		arg.AfterTs,
+		arg.AfterID,
+		arg.MaxRows,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -302,7 +341,8 @@ type ListPersonFlagsRow struct {
 	Note       string
 }
 
-// Every flag about one person, open ones first.
+// Every flag about one person, open ones first. Not paged: flags are rare
+// (see Person.flags in the proto).
 func (q *Queries) ListPersonFlags(ctx context.Context, userID uuid.UUID) ([]ListPersonFlagsRow, error) {
 	rows, err := q.db.Query(ctx, listPersonFlags, userID)
 	if err != nil {
@@ -363,7 +403,8 @@ type ListPersonOutingsRow struct {
 	SaidAttended *bool
 }
 
-// Their outings, newest first: how they answered, and whether they went
+// Their outings, newest first, the latest @max_rows (not paged: see
+// Person.outings in the proto): how they answered, and whether they went
 // (checked in, or said so in their feedback).
 func (q *Queries) ListPersonOutings(ctx context.Context, arg ListPersonOutingsParams) ([]ListPersonOutingsRow, error) {
 	rows, err := q.db.Query(ctx, listPersonOutings, arg.UserID, arg.MaxRows)
@@ -462,14 +503,25 @@ left join app.activities ca on ca.id = c.activity_id
 left join app.areas cr on cr.id = c.area_id
 where ($1::text = '' or r.status = $1)
   and ($2::uuid = '00000000-0000-0000-0000-000000000000' or r.reported_id = $2)
-order by case when r.status = 'open' then r.created_at end asc,
-         r.created_at desc
-limit $3
+  and (not $3::boolean
+       or (r.status = 'open' and $4::boolean
+           and (r.created_at, r.id) > ($5::timestamptz, $6::uuid))
+       or (r.status <> 'open'
+           and ($4::boolean or (r.created_at, r.id) < ($5::timestamptz, $6::uuid))))
+order by (r.status <> 'open'),
+         case when r.status = 'open' then r.created_at end asc,
+         case when r.status = 'open' then r.id end asc,
+         r.created_at desc, r.id desc
+limit $7
 `
 
 type ListReportsParams struct {
 	Status     string
 	ReportedID uuid.UUID
+	HasAfter   bool
+	AfterOpen  bool
+	AfterTs    pgtype.Timestamptz
+	AfterID    uuid.UUID
 	MaxRows    int32
 }
 
@@ -503,8 +555,21 @@ type ListReportsRow struct {
 // newest first. @status ” = every status; @reported_id narrows to one
 // person. Each row says how many reports that person has in all, so a
 // pattern shows without opening each one.
+// Keyset paging (AIP-158): the page after the row (@after_open: it was an
+// open report, @after_ts its created_at, @after_id its id) when @has_after.
+// Open reports come first, oldest first; the rest newest first, so a
+// cursor in the open part continues into the rest. @max_rows is the page
+// size plus one, to tell whether there is a next page.
 func (q *Queries) ListReports(ctx context.Context, arg ListReportsParams) ([]ListReportsRow, error) {
-	rows, err := q.db.Query(ctx, listReports, arg.Status, arg.ReportedID, arg.MaxRows)
+	rows, err := q.db.Query(ctx, listReports,
+		arg.Status,
+		arg.ReportedID,
+		arg.HasAfter,
+		arg.AfterOpen,
+		arg.AfterTs,
+		arg.AfterID,
+		arg.MaxRows,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -632,16 +697,23 @@ select u.id, coalesce(u.email, '')::text as email,
        exists (select 1 from app.suspensions s where s.user_id = u.id and s.lifted_at is null) as suspended
 from app.users u
 left join app.profiles p on p.user_id = u.id
-where u.id::text = $1::text
-   or p.display_name ilike '%' || $1 || '%'
-   or u.email ilike '%' || $1 || '%'
-order by p.display_name nulls last, u.id
-limit $2
+where (u.id::text = $1::text
+       or p.display_name ilike '%' || $1 || '%'
+       or u.email ilike '%' || $1 || '%')
+  and (not $2::boolean
+       or (coalesce(p.display_name, '') = '', coalesce(p.display_name, ''), u.id)
+          > ($3::boolean, $4::text, $5::uuid))
+order by (coalesce(p.display_name, '') = ''), coalesce(p.display_name, ''), u.id
+limit $6
 `
 
 type SearchPeopleParams struct {
-	Query   string
-	MaxRows int32
+	Query        string
+	HasAfter     bool
+	AfterUnnamed bool
+	AfterName    string
+	AfterID      uuid.UUID
+	MaxRows      int32
 }
 
 type SearchPeopleRow struct {
@@ -652,9 +724,18 @@ type SearchPeopleRow struct {
 }
 
 // People by name or email (contains, any case) or exact id, for finding
-// someone to look at. Suspended people say so.
+// someone to look at. Suspended people say so. By name, people without one
+// last, then id. Keyset on that same triple: @after_unnamed, @after_name,
+// @after_id.
 func (q *Queries) SearchPeople(ctx context.Context, arg SearchPeopleParams) ([]SearchPeopleRow, error) {
-	rows, err := q.db.Query(ctx, searchPeople, arg.Query, arg.MaxRows)
+	rows, err := q.db.Query(ctx, searchPeople,
+		arg.Query,
+		arg.HasAfter,
+		arg.AfterUnnamed,
+		arg.AfterName,
+		arg.AfterID,
+		arg.MaxRows,
+	)
 	if err != nil {
 		return nil, err
 	}

@@ -1,15 +1,16 @@
 import { ConnectError, LeaveReason } from '@issho/api-client';
-import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 
 import { formatTime, leaveReasons } from '../format';
 import { api } from '../lib';
+import { LoadMore, rowsOf, usePaged } from '../paging';
 
 const reasons = [LeaveReason.UNSPECIFIED, LeaveReason.UNCOMFORTABLE, LeaveReason.NOT_INTERESTED, LeaveReason.INACTIVE, LeaveReason.TOO_MANY_MESSAGES, LeaveReason.OTHER];
 
 export function CrewLeaves() {
   const [reason, setReason] = useState(LeaveReason.UNSPECIFIED);
-  const leaves = useQuery({ queryKey: ['leaves', reason], queryFn: () => api.moderation.listCrewLeaves({ reason }) });
+  const leaves = usePaged(['leaves', reason], (pageToken) => api.moderation.listCrewLeaves({ reason, pageToken }));
+  const rows = rowsOf(leaves.data, (p) => p.leaves);
 
   return (
     <section>
@@ -24,13 +25,13 @@ export function CrewLeaves() {
       </p>
       {leaves.isPending && <p className="muted">Loading…</p>}
       {leaves.error && <p className="error">{ConnectError.from(leaves.error).message}</p>}
-      {leaves.data?.leaves.length === 0 && <p className="empty">Nothing here.</p>}
-      {leaves.data && leaves.data.leaves.length > 0 && (
+      {leaves.data && rows.length === 0 && <p className="empty">Nothing here.</p>}
+      {rows.length > 0 && (
         <div className="table-wrap">
           <table>
             <thead><tr><th>When</th><th>Crew</th><th>Who</th><th>Reason</th><th>Details</th></tr></thead>
             <tbody>
-              {leaves.data.leaves.map((l) => (
+              {rows.map((l) => (
                 <tr key={l.id.toString()} className={l.reason === LeaveReason.UNCOMFORTABLE ? 'attention' : undefined}>
                   <td className="nowrap">{formatTime(l.createdAt)}</td>
                   <td>{l.crewName} <span className="muted">({l.crewStatus})</span></td>
@@ -43,6 +44,7 @@ export function CrewLeaves() {
           </table>
         </div>
       )}
+      <LoadMore query={leaves} />
     </section>
   );
 }

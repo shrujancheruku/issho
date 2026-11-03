@@ -26,15 +26,11 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/plans"
 	"github.com/shrujancheruku/issho/backend/internal/platform/auth"
 	"github.com/shrujancheruku/issho/backend/internal/platform/errs"
+	"github.com/shrujancheruku/issho/backend/internal/platform/paging"
 )
 
-const (
-	// maxRows bounds each list. The queue is small at launch; paging can
-	// come when it isn't.
-	maxRows = 200
-	// MaxNote matches the database check on notes.
-	MaxNote = 2000
-)
+// MaxNote matches the database check on notes.
+const MaxNote = 2000
 
 // Handler serves ModerationService.
 type Handler struct {
@@ -86,7 +82,11 @@ func (h *Handler) ListReports(ctx context.Context, req *connect.Request[isshov1.
 	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
-	arg := dbgen.ListReportsParams{MaxRows: maxRows}
+	size, err := paging.Size(req.Msg.PageSize)
+	if err != nil {
+		return nil, err
+	}
+	arg := dbgen.ListReportsParams{MaxRows: size + 1}
 	if req.Msg.Status != isshov1.ReportStatus_REPORT_STATUS_UNSPECIFIED {
 		s, ok := reportStatuses[req.Msg.Status]
 		if !ok {
@@ -101,11 +101,27 @@ func (h *Handler) ListReports(ctx context.Context, req *connect.Request[isshov1.
 		}
 		arg.ReportedID = id
 	}
+	// Open reports (oldest first) come before the rest (newest first), so the
+	// cursor says which part it was in.
+	scope := paging.Scope("ListReports", arg.Status, arg.ReportedID.String())
+	k, err := paging.Open(req.Msg.PageToken, scope, 3)
+	if err != nil {
+		return nil, err
+	}
+	arg.HasAfter, arg.AfterOpen, arg.AfterTs, arg.AfterID = k.Present, k.Bool(), pgTime(k.Time()), k.UUID()
+	if err := k.Err(); err != nil {
+		return nil, err
+	}
 	rows, err := h.Q.ListReports(ctx, arg)
 	if err != nil {
 		return nil, err
 	}
+	rows, more := paging.Trim(rows, size)
 	out := &isshov1.ListReportsResponse{Reports: make([]*isshov1.ModerationReport, len(rows))}
+	if more {
+		last := rows[len(rows)-1]
+		out.NextPageToken = paging.Encode(scope, paging.Bool(last.Status == "open"), paging.Time(last.CreatedAt.Time), paging.UUID(last.ID))
+	}
 	for i, r := range rows {
 		m := &isshov1.ModerationReport{
 			Id:                   r.ID.String(),
@@ -173,11 +189,35 @@ func (h *Handler) ListFlags(ctx context.Context, req *connect.Request[isshov1.Li
 	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
-	rows, err := h.Q.ListModerationFlags(ctx, dbgen.ListModerationFlagsParams{Open: !req.Msg.Resolved, MaxRows: maxRows})
+	size, err := paging.Size(req.Msg.PageSize)
 	if err != nil {
 		return nil, err
 	}
+	scope := paging.Scope("ListFlags", paging.Bool(req.Msg.Resolved))
+	k, err := paging.Open(req.Msg.PageToken, scope, 2)
+	if err != nil {
+		return nil, err
+	}
+	arg := dbgen.ListModerationFlagsParams{Open: !req.Msg.Resolved, MaxRows: size + 1}
+	arg.HasAfter, arg.AfterTs, arg.AfterID = k.Present, pgTime(k.Time()), k.Int()
+	if err := k.Err(); err != nil {
+		return nil, err
+	}
+	rows, err := h.Q.ListModerationFlags(ctx, arg)
+	if err != nil {
+		return nil, err
+	}
+	rows, more := paging.Trim(rows, size)
 	out := &isshov1.ListFlagsResponse{Flags: make([]*isshov1.ModerationFlag, len(rows))}
+	if more {
+		// Open flags are ordered by created_at, resolved ones by resolved_at.
+		last := rows[len(rows)-1]
+		at := last.CreatedAt
+		if req.Msg.Resolved {
+			at = last.ResolvedAt
+		}
+		out.NextPageToken = paging.Encode(scope, paging.Time(at.Time), paging.Int(last.ID))
+	}
 	for i, f := range rows {
 		out.Flags[i] = &isshov1.ModerationFlag{
 			Id:          f.ID,
@@ -220,7 +260,11 @@ func (h *Handler) ListCrewLeaves(ctx context.Context, req *connect.Request[issho
 	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
-	arg := dbgen.ListCrewLeavesParams{MaxRows: maxRows}
+	size, err := paging.Size(req.Msg.PageSize)
+	if err != nil {
+		return nil, err
+	}
+	arg := dbgen.ListCrewLeavesParams{MaxRows: size + 1}
 	if req.Msg.Reason != isshov1.LeaveReason_LEAVE_REASON_UNSPECIFIED {
 		r, ok := leaveReasons[req.Msg.Reason]
 		if !ok {
@@ -228,11 +272,25 @@ func (h *Handler) ListCrewLeaves(ctx context.Context, req *connect.Request[issho
 		}
 		arg.Reason = r
 	}
+	scope := paging.Scope("ListCrewLeaves", arg.Reason)
+	k, err := paging.Open(req.Msg.PageToken, scope, 2)
+	if err != nil {
+		return nil, err
+	}
+	arg.HasAfter, arg.AfterTs, arg.AfterID = k.Present, pgTime(k.Time()), k.Int()
+	if err := k.Err(); err != nil {
+		return nil, err
+	}
 	rows, err := h.Q.ListCrewLeaves(ctx, arg)
 	if err != nil {
 		return nil, err
 	}
+	rows, more := paging.Trim(rows, size)
 	out := &isshov1.ListCrewLeavesResponse{Leaves: make([]*isshov1.CrewLeave, len(rows))}
+	if more {
+		last := rows[len(rows)-1]
+		out.NextPageToken = paging.Encode(scope, paging.Time(last.CreatedAt.Time), paging.Int(last.ID))
+	}
 	for i, l := range rows {
 		m := &isshov1.CrewLeave{
 			Id:         l.ID,
