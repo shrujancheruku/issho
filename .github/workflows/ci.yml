@@ -256,9 +256,17 @@ jobs:
         run: make lint-go
       # Integration tests are skipped here (the database isn't up yet, and CI=true
       # makes them fail rather than skip); "Database checks" runs them.
+      # Coverage is reported in the job summary, never gated (#192).
       - name: Test
         working-directory: backend
-        run: go test ./... -skip Integration
+        # pipefail: without it `tee` would hide a failing test.
+        run: |
+          set -o pipefail
+          go test ./... -skip Integration -coverprofile="$RUNNER_TEMP/cover.out" | tee "$RUNNER_TEMP/go-test.log"
+      - name: Go coverage summary
+        if: ${{ !cancelled() }}
+        working-directory: backend
+        run: ../scripts/go-coverage-summary.sh "$RUNNER_TEMP/go-test.log" "$RUNNER_TEMP/cover.out" >> "$GITHUB_STEP_SUMMARY" || true
       - name: Wait for PostGIS
         run: |
           for _ in $(seq 90); do
@@ -291,7 +299,7 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      # One turbo run so the three tasks run in parallel; turbo prefixes each line with its task.
+      # One turbo run so the three tasks run in parallel (`test:coverage` is `test` plus a coverage report); turbo prefixes each line with its task.
       - name: Typecheck, lint and test
         # On a PR that touches only apps/ and packages/, `--affected` limits
         # turbo to the changed packages and their dependents (ts_filter is
@@ -299,10 +307,14 @@ jobs:
         # PR's base, which a depth-1 checkout doesn't have.
         run: |
           if [ -n "$TS_FILTER" ]; then git fetch --no-tags --unshallow; fi
-          pnpm turbo run typecheck lint test $TS_FILTER
+          pnpm turbo run typecheck lint test:coverage $TS_FILTER
         env:
           TS_FILTER: ${{ needs.changes.outputs.ts_filter }}
           TURBO_SCM_BASE: ${{ github.event.pull_request.base.sha }}
+      # Totals in the job summary; reported only, never gated (#192).
+      - name: Coverage summary
+        if: ${{ !cancelled() }}
+        run: node scripts/ts-coverage-summary.mjs >> "$GITHUB_STEP_SUMMARY" || true
       # Skipped only when `changes` succeeded and says this app is untouched
       # (an empty output, from a failed `changes`, still builds).
       - name: Admin SPA builds
