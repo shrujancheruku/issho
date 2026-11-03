@@ -1,10 +1,10 @@
 import { PlanClosedReason, PlanLevel, type GetPlanResponse } from '@issho/api-client';
 import { router, useLocalSearchParams } from 'expo-router';
-import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { weekdayName, blockKeys } from '@/components/availability-grid';
 import { PrimaryButton } from '@/components/primary-button';
-import { QueryScreen } from '@/components/query-screen';
+import { LoadState, QueryScreen } from '@/components/query-screen';
 import { useLeave } from '@/components/screen-frame';
 import { TextLink } from '@/components/text-link';
 import { ThemedText } from '@/components/themed-text';
@@ -158,7 +158,7 @@ function Before({ data, names, closed, loading }: { data: GetPlanResponse; names
       </Facts>
       {p.level === PlanLevel.NOT_FOR_YOU && !closed && <ThemedText>{t('plan.notForYouBody')}</ThemedText>}
       {/* While the feed's copy stands in, the stops and map are still on their way. */}
-      {loading ? <ActivityIndicator /> : <PlanStops steps={data.steps} routePolyline={data.routePolyline} names={names} closed={!!closed} />}
+      {loading ? <LoadState queries={[]} /> : <PlanStops steps={data.steps} routePolyline={data.routePolyline} names={names} closed={!!closed} />}
     </>
   );
 }
