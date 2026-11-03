@@ -2,6 +2,8 @@
 -- EventService change about them. One row per (event, person): a person is
 -- in at most one group per event.
 
+-- @max caps ListMyEvents (internal/platform/bound); GetEvent and CheckIn pass
+-- null.
 -- name: ListUserEvents :many
 select e.id, e.date, e.block, e.starts_at, e.confirm_by, e.status,
        p.id as plan_id, p.city_id, p.area_id, p.activity_id, p.follow_up_id, p.primary_language,
@@ -27,7 +29,8 @@ where m.user_id = @user_id
         or (e.starts_at > @feedback_since and m.response = 'confirmed' and g.status = 'confirmed' and e.status <> 'cancelled'
             and not exists (select 1 from app.event_feedback f where f.group_id = g.id and f.user_id = m.user_id))
       end
-order by e.date, e.block, e.id;
+order by e.date, e.block, e.id
+limit sqlc.narg('max')::int;
 
 -- People who confirmed for a group, for its attendee list (first names
 -- only; shown only to people who confirmed themselves).

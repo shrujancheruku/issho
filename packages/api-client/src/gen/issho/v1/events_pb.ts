@@ -302,6 +302,12 @@ export const CheckInResponseSchema: GenMessage<CheckInResponse> = /*@__PURE__*/
   messageDesc(file_issho_v1_events, 8);
 
 /**
+ * No paging fields: the list is bounded by what one person has (recent
+ * events plus older ones awaiting feedback), and the server returns at most
+ * 200, soonest first. The response is the same shape either way.
+ * If paging is ever added, page_size 0 (what today's builds send) keeps
+ * returning the whole bounded list, per AIP-158 (proto/README.md).
+ *
  * @generated from message issho.v1.ListMyEventsRequest
  */
 export type ListMyEventsRequest = Message<"issho.v1.ListMyEventsRequest"> & {

@@ -22,6 +22,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	"github.com/shrujancheruku/issho/backend/internal/maps"
 	"github.com/shrujancheruku/issho/backend/internal/matching"
+	"github.com/shrujancheruku/issho/backend/internal/platform/bound"
 	"github.com/shrujancheruku/issho/backend/internal/platform/i18n"
 	"github.com/shrujancheruku/issho/backend/internal/translate"
 )
@@ -45,6 +46,11 @@ func (e *InvalidError) Error() string { return e.msg }
 func Invalid(format string, a ...any) error { return &InvalidError{fmt.Sprintf(format, a...)} }
 
 func invalid(format string, a ...any) error { return Invalid(format, a...) }
+
+// FeedCap bounds ListFeed: a city's open plans. A city runs a few dozen at a
+// time (one per area and activity worth suggesting), so 200 leaves room for
+// growth. The oldest plans win, so a cut drops the newest from the feed.
+var FeedCap = &bound.List{Name: "ListFeed", Max: 200}
 
 // Service is what PlanService does for one caller.
 type Service struct {
@@ -299,10 +305,11 @@ func (s *Service) Feed(ctx context.Context, userID uuid.UUID) ([]FeedItem, error
 	if err != nil {
 		return nil, err
 	}
-	open, err := ListOpen(ctx, q, v.caller.City)
+	open, err := listOpen(ctx, q, v.caller.City, FeedCap.Limit())
 	if err != nil {
 		return nil, err
 	}
+	FeedCap.Check(ctx, s.Log, len(open), slog.String("city", v.caller.City))
 	return s.see(ctx, q, v, userID, open)
 }
 

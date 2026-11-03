@@ -183,6 +183,11 @@ func (LeaveReason) EnumDescriptor() ([]byte, []int) {
 	return file_issho_v1_crews_proto_rawDescGZIP(), []int{2}
 }
 
+// No paging fields: the list is bounded by the crews and open offers one
+// person has, and the server returns at most 50, newest first. The response
+// is the same shape either way.
+// If paging is ever added, page_size 0 (what today's builds send) keeps
+// returning the whole bounded list, per AIP-158 (proto/README.md).
 type ListMyCrewsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields

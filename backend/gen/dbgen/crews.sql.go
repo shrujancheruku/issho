@@ -458,7 +458,13 @@ join app.crews c on c.id = m.crew_id
 where m.user_id = $1
   and ((c.status = 'offered' and m.response in ('offered', 'accepted')) or (c.status = 'active' and m.response = 'accepted'))
 order by c.created_at desc, c.id
+limit $2::int
 `
+
+type ListUserCrewsParams struct {
+	UserID uuid.UUID
+	Max    *int32
+}
 
 type ListUserCrewsRow struct {
 	ID         uuid.UUID
@@ -471,8 +477,9 @@ type ListUserCrewsRow struct {
 }
 
 // The caller's crews: offers still open to them, and crews they're in.
-func (q *Queries) ListUserCrews(ctx context.Context, userID uuid.UUID) ([]ListUserCrewsRow, error) {
-	rows, err := q.db.Query(ctx, listUserCrews, userID)
+// @max caps ListMyCrews (internal/platform/bound).
+func (q *Queries) ListUserCrews(ctx context.Context, arg ListUserCrewsParams) ([]ListUserCrewsRow, error) {
+	rows, err := q.db.Query(ctx, listUserCrews, arg.UserID, arg.Max)
 	if err != nil {
 		return nil, err
 	}

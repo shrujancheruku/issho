@@ -196,6 +196,7 @@ where m.user_id = $1
             and not exists (select 1 from app.event_feedback f where f.group_id = g.id and f.user_id = m.user_id))
       end
 order by e.date, e.block, e.id
+limit $5::int
 `
 
 type ListUserEventsParams struct {
@@ -203,6 +204,7 @@ type ListUserEventsParams struct {
 	EventID       pgtype.UUID
 	Since         pgtype.Date
 	FeedbackSince pgtype.Timestamptz
+	Max           *int32
 }
 
 type ListUserEventsRow struct {
@@ -242,12 +244,15 @@ type ListUserEventsRow struct {
 // Scheduled events as their invitees see them, and what the worker and
 // EventService change about them. One row per (event, person): a person is
 // in at most one group per event.
+// @max caps ListMyEvents (internal/platform/bound); GetEvent and CheckIn pass
+// null.
 func (q *Queries) ListUserEvents(ctx context.Context, arg ListUserEventsParams) ([]ListUserEventsRow, error) {
 	rows, err := q.db.Query(ctx, listUserEvents,
 		arg.UserID,
 		arg.EventID,
 		arg.Since,
 		arg.FeedbackSince,
+		arg.Max,
 	)
 	if err != nil {
 		return nil, err
