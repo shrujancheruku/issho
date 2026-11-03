@@ -78,7 +78,7 @@ func loadPlaces(ctx context.Context, q *dbgen.Queries, cityID string, month time
 	if c.Location, err = time.LoadLocation(row.Timezone); err != nil {
 		return nil, fmt.Errorf("city %s: %w", cityID, err)
 	}
-	if c.Config, err = matching.ParseConfig(row.MatchingWeights); err != nil {
+	if c.Config, err = matching.ParseConfig(row.Matching); err != nil {
 		return nil, fmt.Errorf("city %s: %w", cityID, err)
 	}
 

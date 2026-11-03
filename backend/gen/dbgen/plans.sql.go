@@ -60,8 +60,7 @@ from app.plan_signups s
 join app.plans pl on pl.id = s.plan_id
 join app.profiles p on p.user_id = s.user_id
 join app.areas a on a.id = p.home_area_id and a.city_id = pl.city_id
-join app.users u on u.id = s.user_id
-where s.plan_id = $1 and u.deleted_at is null
+where s.plan_id = $1
   and not exists (select 1 from app.suspensions x where x.user_id = s.user_id and x.lifted_at is null)
 `
 

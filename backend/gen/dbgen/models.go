@@ -63,11 +63,12 @@ type AppCity struct {
 	Currency string
 	// Languages commonly used in the city, most common first (suggestions only)
 	Languages          []string
-	MatchingWeights    []byte
+	Matching           []byte
 	CreatedAt          pgtype.Timestamptz
 	TravelModes        []string
 	Review             bool
 	ApprovedVenuesOnly bool
+	MeetingPlaces      []byte
 }
 
 type AppCityActivityOverride struct {
@@ -267,7 +268,6 @@ type AppProfile struct {
 	Energy            int16
 	Budget            int16
 	SizePref          string
-	Reliability       float32
 	UpdatedAt         pgtype.Timestamptz
 	PrimaryLanguage   string
 	SecondaryLanguage *string
@@ -330,11 +330,9 @@ type AppTranslation struct {
 }
 
 type AppUser struct {
-	ID         uuid.UUID
-	Email      *string
-	VerifiedAt pgtype.Timestamptz
-	DeletedAt  pgtype.Timestamptz
-	CreatedAt  pgtype.Timestamptz
+	ID        uuid.UUID
+	Email     *string
+	CreatedAt pgtype.Timestamptz
 }
 
 type AppUserActivityPref struct {
@@ -355,9 +353,7 @@ type AppVenue struct {
 	CityID        string
 	AreaID        string
 	CategoryID    string
-	Tags          []string
 	Status        string
-	DiscoveredAt  pgtype.Timestamptz
 	LastSeenAt    pgtype.Timestamptz
 	ReviewedBy    pgtype.UUID
 	ReviewedAt    pgtype.Timestamptz

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# `make test-db`: scripts/db-checks.sh against a throwaway PostGIS container of
+# `make test-db`: scripts/db-checks.sh against a throwaway Supabase Postgres container of
 # its own (one per run, named after the worktree, on a free port), removed on
 # exit, failure or Ctrl-C. Never reads .env* (those point at the hosted
 # issho-dev); it sets its own URL for the container only.
@@ -10,17 +10,17 @@ root="$(cd "$(dirname "$0")/.." && pwd)"
   { echo "make test-db needs Docker running (see docs/onboarding.md)." >&2; exit 1; }
 
 # Same image as CI's backend job, read from ci.yml so the two can't drift.
-image="$(grep -o 'postgis/postgis:[A-Za-z0-9.-]*' "$root/.github/workflows/ci.yml" | head -1)"
-[ -n "$image" ] || { echo "no postgis image found in .github/workflows/ci.yml" >&2; exit 1; }
+image="$(grep -o 'public.ecr.aws/supabase/postgres:[A-Za-z0-9.-]*' "$root/.github/workflows/ci.yml" | head -1)"
+[ -n "$image" ] || { echo "no Supabase postgres image found in .github/workflows/ci.yml" >&2; exit 1; }
 
 # Worktree name plus the pid, so two runs in one directory can't collide either.
 name="issho-testdb-$(basename "$root" | tr -c 'A-Za-z0-9_.\n-' '-')-$$"
 trap 'docker rm -f "$name" >/dev/null 2>&1 || true' EXIT
 trap 'exit 130' INT TERM
 
-# --platform: the image is amd64-only; OrbStack emulates it on Apple silicon.
+# The image is multi-arch, so it runs natively on Apple silicon.
 # -p 127.0.0.1::5432 lets Docker pick a free host port, reachable only locally.
-docker run -d --name "$name" --platform linux/amd64 -p 127.0.0.1::5432 -e POSTGRES_PASSWORD=postgres \
+docker run -d --name "$name" -p 127.0.0.1::5432 -e POSTGRES_PASSWORD=postgres \
   --health-cmd "pg_isready -h 127.0.0.1 -U postgres" --health-interval 2s --health-timeout 5s --health-retries 30 \
   "$image" >/dev/null
 
