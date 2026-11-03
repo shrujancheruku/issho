@@ -33,6 +33,50 @@ type Pack struct {
 	TravelModes       []string           `json:"travel_modes"`
 	Areas             []Area             `json:"areas"`
 	ActivityOverrides []ActivityOverride `json:"activity_overrides"`
+	// Matching is a partial matching.Config overlaid on the defaults: weights,
+	// group sizes and timing (block start times, signup days). Optional;
+	// checked with matching.ParseConfig. Edited in the file, not in the admin
+	// SPA.
+	Matching json.RawMessage `json:"matching,omitempty"`
+	// MeetingPlaces is the ordered search for a meeting place near an area's
+	// point when a plan starts without a venue; the first search that finds a
+	// place wins. Empty = DefaultMeetingPlaces. Edited in the file, not in the
+	// admin SPA.
+	MeetingPlaces []MeetingPlace `json:"meeting_places,omitempty"`
+}
+
+// MeetingPlace is one search for a meeting place: places of these provider
+// types within RadiusM metres of an area's point.
+type MeetingPlace struct {
+	Types   []string `json:"types"`
+	RadiusM int      `json:"radius_m"`
+}
+
+// DefaultMeetingPlaces is the search of a city that sets none: a station,
+// then a park. (Tokyo's areas are named after stations; a car-based or
+// ward-based city can lead with parks or cafés instead.)
+func DefaultMeetingPlaces() []MeetingPlace {
+	return []MeetingPlace{
+		{Types: []string{"train_station", "subway_station"}, RadiusM: 1000},
+		{Types: []string{"park"}, RadiusM: 1500},
+	}
+}
+
+// ParseMeetingPlaces reads cities.meeting_places; an empty list is the
+// defaults.
+func ParseMeetingPlaces(raw []byte) ([]MeetingPlace, error) {
+	var m []MeetingPlace
+	if len(bytes.TrimSpace(raw)) > 0 {
+		dec := json.NewDecoder(bytes.NewReader(raw))
+		dec.DisallowUnknownFields()
+		if err := dec.Decode(&m); err != nil {
+			return nil, fmt.Errorf("meeting_places: %w", err)
+		}
+	}
+	if len(m) == 0 {
+		return DefaultMeetingPlaces(), nil
+	}
+	return m, nil
 }
 
 type Area struct {
@@ -252,9 +296,17 @@ func seedPack(ctx context.Context, pool *pgxpool.Pool, p Pack, opts Options) (Di
 		d.RemovedAreas, d.ReplacedAreas = removed, replaced
 
 		name, _ := json.Marshal(p.Name)
+		// Absent = the defaults, so removing a block from the pack resets it.
+		matchingJSON, places := []byte("{}"), []byte("[]")
+		if len(bytes.TrimSpace(p.Matching)) > 0 {
+			matchingJSON = p.Matching
+		}
+		if len(p.MeetingPlaces) > 0 {
+			places, _ = json.Marshal(p.MeetingPlaces)
+		}
 		if err := q.UpsertCity(ctx, dbgen.UpsertCityParams{
 			ID: p.ID, Name: name, Timezone: p.Timezone, Currency: p.Currency, Languages: p.Languages,
-			TravelModes: p.TravelModes,
+			TravelModes: p.TravelModes, Matching: matchingJSON, MeetingPlaces: places,
 		}); err != nil {
 			return err
 		}

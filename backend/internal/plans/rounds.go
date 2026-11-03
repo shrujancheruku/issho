@@ -97,7 +97,7 @@ func closePlan(ctx context.Context, q *dbgen.Queries, planID uuid.UUID, reason s
 
 // ApproveDraft opens a draft by an admin. A draft may have waited days, so
 // its round starts now, as if just suggested.
-func (s *Service) ApproveDraft(ctx context.Context, planID, by uuid.UUID, t Timing, now time.Time) error {
+func (s *Service) ApproveDraft(ctx context.Context, planID, by uuid.UUID, now time.Time) error {
 	q := dbgen.New(s.DB)
 	p, err := q.GetReviewPlan(ctx, planID)
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -106,7 +106,7 @@ func (s *Service) ApproveDraft(ctx context.Context, planID, by uuid.UUID, t Timi
 	if err != nil {
 		return err
 	}
-	loc, err := location(ctx, q, p.CityID)
+	t, loc, err := cityTiming(ctx, q, p.CityID)
 	if err != nil {
 		return err
 	}

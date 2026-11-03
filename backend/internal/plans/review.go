@@ -39,10 +39,7 @@ const (
 // again (auth.RequireAdmin) so a wiring mistake fails closed.
 type ReviewHandler struct {
 	Svc *Service
-	// Timing sets a round's window when a plan opens (approved or made by
-	// hand); the worker's, so both agree.
-	Timing Timing
-	Now    func() time.Time // nil = time.Now
+	Now func() time.Time // nil = time.Now
 	// For editing stops (stops.go): finding and checking places, and the
 	// walk through them. nil without GOOGLE_MAPS_API_KEY.
 	Places maps.PlaceSearch
@@ -197,7 +194,7 @@ func (h *ReviewHandler) ApprovePlan(ctx context.Context, req *connect.Request[is
 	if err != nil {
 		return nil, err
 	}
-	if err := h.Svc.ApproveDraft(ctx, id, c.UserID, h.Timing, h.now()); err != nil {
+	if err := h.Svc.ApproveDraft(ctx, id, c.UserID, h.now()); err != nil {
 		return nil, roundError(err)
 	}
 	return connect.NewResponse(&isshov1.ApprovePlanResponse{}), nil
@@ -340,7 +337,8 @@ func (h *ReviewHandler) CreatePlan(ctx context.Context, req *connect.Request[iss
 		return nil, errs.Invalid("follow_up_venue_place_id: no follow-up activity")
 	}
 	now := h.now()
-	w := h.Timing.Round(now, city.Location)
+	// The city's own timing, as the worker uses, so both agree.
+	w := TimingOf(city.Config).Round(now, city.Location)
 	id, err := q.InsertPlan(ctx, dbgen.InsertPlanParams{
 		Status:               PlanOpen,
 		CreatedBy:            pgtype.UUID{Bytes: c.UserID, Valid: true},

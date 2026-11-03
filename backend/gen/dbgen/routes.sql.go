@@ -37,6 +37,19 @@ func (q *Queries) ClearStaleRoutes(ctx context.Context, arg ClearStaleRoutesPara
 	return column_1, err
 }
 
+const getCityMeetingPlaces = `-- name: GetCityMeetingPlaces :one
+select meeting_places from app.cities where id = $1
+`
+
+// The city's ordered meeting-place searches (cities.meeting_places, from its
+// pack); '[]' = the defaults (cities.DefaultMeetingPlaces).
+func (q *Queries) GetCityMeetingPlaces(ctx context.Context, id string) ([]byte, error) {
+	row := q.db.QueryRow(ctx, getCityMeetingPlaces, id)
+	var meeting_places []byte
+	err := row.Scan(&meeting_places)
+	return meeting_places, err
+}
+
 const listPlansNeedingMeetingPlace = `-- name: ListPlansNeedingMeetingPlace :many
 select p.id, st_y(a.centroid::geometry)::float8 as lat, st_x(a.centroid::geometry)::float8 as lng
 from app.plans p

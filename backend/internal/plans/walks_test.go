@@ -93,7 +93,7 @@ func TestIntegrationWalks(t *testing.T) {
 	now := time.Date(2030, 1, 1, 9, 0, 0, 0, time.UTC)
 
 	// No composer (no Gemini key): the walk isn't opened in another form.
-	r := &Runner{DB: f.pool, Timing: DefaultTiming(), Log: log}
+	r := &Runner{DB: f.pool, Log: log}
 	if opened, err := r.Suggest(ctx, f.city, now); err != nil || opened.Opened != 0 {
 		t.Fatalf("Suggest without a composer opened %d, %v", opened, err)
 	}

@@ -1,10 +1,13 @@
 -- name: UpsertCity :exec
-insert into app.cities (id, name, timezone, currency, languages, travel_modes)
-values ($1, $2, $3, $4, $5, $6)
+-- matching and meeting_places come from the pack too ('{}' and '[]' = the
+-- defaults). review and approved_venues_only are admin toggles: never written.
+insert into app.cities (id, name, timezone, currency, languages, travel_modes, matching, meeting_places)
+values ($1, $2, $3, $4, $5, $6, $7, $8)
 on conflict (id) do update set
   name = excluded.name, timezone = excluded.timezone,
   currency = excluded.currency, languages = excluded.languages,
-  travel_modes = excluded.travel_modes;
+  travel_modes = excluded.travel_modes,
+  matching = excluded.matching, meeting_places = excluded.meeting_places;
 
 -- name: UpsertArea :exec
 -- boundary is WKT (a MULTIPOLYGON), or '' for an area without one.

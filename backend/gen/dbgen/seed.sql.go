@@ -155,23 +155,28 @@ func (q *Queries) UpsertArea(ctx context.Context, arg UpsertAreaParams) error {
 }
 
 const upsertCity = `-- name: UpsertCity :exec
-insert into app.cities (id, name, timezone, currency, languages, travel_modes)
-values ($1, $2, $3, $4, $5, $6)
+insert into app.cities (id, name, timezone, currency, languages, travel_modes, matching, meeting_places)
+values ($1, $2, $3, $4, $5, $6, $7, $8)
 on conflict (id) do update set
   name = excluded.name, timezone = excluded.timezone,
   currency = excluded.currency, languages = excluded.languages,
-  travel_modes = excluded.travel_modes
+  travel_modes = excluded.travel_modes,
+  matching = excluded.matching, meeting_places = excluded.meeting_places
 `
 
 type UpsertCityParams struct {
-	ID          string
-	Name        []byte
-	Timezone    string
-	Currency    string
-	Languages   []string
-	TravelModes []string
+	ID            string
+	Name          []byte
+	Timezone      string
+	Currency      string
+	Languages     []string
+	TravelModes   []string
+	Matching      []byte
+	MeetingPlaces []byte
 }
 
+// matching and meeting_places come from the pack too ('{}' and '[]' = the
+// defaults). review and approved_venues_only are admin toggles: never written.
 func (q *Queries) UpsertCity(ctx context.Context, arg UpsertCityParams) error {
 	_, err := q.db.Exec(ctx, upsertCity,
 		arg.ID,
@@ -180,6 +185,8 @@ func (q *Queries) UpsertCity(ctx context.Context, arg UpsertCityParams) error {
 		arg.Currency,
 		arg.Languages,
 		arg.TravelModes,
+		arg.Matching,
+		arg.MeetingPlaces,
 	)
 	return err
 }

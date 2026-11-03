@@ -10,6 +10,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
+	"github.com/shrujancheruku/issho/backend/internal/cities"
 	"github.com/shrujancheruku/issho/backend/internal/maps"
 	"github.com/shrujancheruku/issho/backend/internal/platform/pgconv"
 )
@@ -108,13 +109,6 @@ func (r *Runner) RefreshRoutes(ctx context.Context, cityID string, now time.Time
 
 func ptrInt32(v int32) *int32 { return &v }
 
-// Meeting places are searched for near the area's centre: a station first
-// (in Tokyo every area is named after one), then a park.
-var meetingSearches = []maps.NearbyRequest{
-	{RadiusM: 1000, Types: []string{"train_station", "subway_station"}, Max: 1},
-	{RadiusM: 1500, Types: []string{"park"}, Max: 1},
-}
-
 // RefreshMeetingPlaces finds a meeting place for a city's plans whose first
 // activity has no venue (a photo walk): one Nearby Search per plan, once.
 // Only the place id is stored. Without a searcher (no Maps key) it does
@@ -125,6 +119,16 @@ func (r *Runner) RefreshMeetingPlaces(ctx context.Context, cityID string) (Meeti
 		return rep, nil
 	}
 	q := dbgen.New(r.DB)
+	// The city's order of searches (its pack's meeting_places), or the
+	// station-then-park default.
+	raw, err := q.GetCityMeetingPlaces(ctx, cityID)
+	if err != nil {
+		return rep, fmt.Errorf("city %q: %w", cityID, err)
+	}
+	searches, err := cities.ParseMeetingPlaces(raw)
+	if err != nil {
+		return rep, fmt.Errorf("city %q: %w", cityID, err)
+	}
 	plans, err := q.ListPlansNeedingMeetingPlace(ctx, dbgen.ListPlansNeedingMeetingPlaceParams{CityID: cityID, Max: routeBatch})
 	if err != nil {
 		return rep, err
@@ -137,9 +141,10 @@ func (r *Runner) RefreshMeetingPlaces(ctx context.Context, cityID string) (Meeti
 		}
 		var place string
 		var searchErr error
-		for _, s := range meetingSearches {
-			s.Center = maps.LatLng{Lat: p.Lat, Lng: p.Lng}
-			got, err := r.Places.Nearby(ctx, s)
+		for _, s := range searches {
+			got, err := r.Places.Nearby(ctx, maps.NearbyRequest{
+				Center: maps.LatLng{Lat: p.Lat, Lng: p.Lng}, RadiusM: float64(s.RadiusM), Types: s.Types, Max: 1,
+			})
 			if err != nil {
 				searchErr = err
 				break

@@ -58,7 +58,7 @@ func TestIntegrationRunner(t *testing.T) {
 	for _, id := range f.users {
 		f.addProfile(t, id, "ja")
 	}
-	r := &Runner{DB: f.pool, Timing: DefaultTiming(), Log: slog.New(slog.NewTextHandler(io.Discard, nil))}
+	r := &Runner{DB: f.pool, Log: slog.New(slog.NewTextHandler(io.Discard, nil))}
 	// Tuesday 1 January, 18:00 in Tokyo: the window runs 3–16 January.
 	now := time.Date(2030, 1, 1, 9, 0, 0, 0, time.UTC)
 

@@ -41,17 +41,25 @@ type Timing struct {
 	BlockStarts map[matching.Block]time.Duration
 }
 
-// DefaultTiming: rounds open for signups for a week, then pick a date in
-// the week after.
-func DefaultTiming() Timing {
-	return Timing{
-		LeadDays: 2, WindowDays: 14, SignupDays: 7, Cooldown: 14 * 24 * time.Hour,
-		BlockStarts: map[matching.Block]time.Duration{
-			matching.Morning:   10 * time.Hour,
-			matching.Afternoon: 14 * time.Hour,
-			matching.Evening:   18*time.Hour + 30*time.Minute,
-		},
+// DefaultTiming is the timing of a city that doesn't override it
+// (matching.DefaultConfig): rounds open for signups for a week, then pick a
+// date in the week after.
+func DefaultTiming() Timing { return TimingOf(matching.DefaultConfig()) }
+
+// TimingOf is a city's timing, from its validated config (the matching block
+// of its pack): the config holds days and "HH:MM" clock times, this the
+// durations the runner works in.
+func TimingOf(c matching.Config) Timing {
+	t := Timing{
+		LeadDays: c.Timing.LeadDays, WindowDays: c.Timing.WindowDays, SignupDays: c.Timing.SignupDays,
+		Cooldown:    time.Duration(c.Timing.CooldownDays) * 24 * time.Hour,
+		BlockStarts: map[matching.Block]time.Duration{},
 	}
+	for _, b := range matching.Blocks {
+		// Config.Validate has checked these; a malformed one reads as midnight.
+		t.BlockStarts[b], _ = c.Timing.BlockStart(b)
+	}
+	return t
 }
 
 // Validate reports a timing that would leave no occasion at the deadline.
@@ -117,9 +125,8 @@ func today(now time.Time, loc *time.Location) time.Time {
 
 // Runner runs the matching passes for a city against the database.
 type Runner struct {
-	DB     *pgxpool.Pool
-	Timing Timing
-	Log    *slog.Logger
+	DB  *pgxpool.Pool
+	Log *slog.Logger
 	// Hours checks venues are open before a round is scheduled; nil skips
 	// the check (no Maps key).
 	Hours maps.HoursLookup
@@ -245,7 +252,8 @@ func (r *Runner) Suggest(ctx context.Context, cityID string, now time.Time) (Sug
 func (r *Runner) suggestIn(ctx context.Context, all *City, now time.Time) (SuggestReport, error) {
 	q := dbgen.New(r.DB)
 	cityID := all.ID
-	w := r.Timing.Round(now, all.Location)
+	tm := TimingOf(all.Config)
+	w := tm.Round(now, all.Location)
 	// Seasonal activities are judged by the month the round starts in.
 	c, err := all.InSeason(ctx, q, w.Start.Month())
 	if err != nil {
@@ -256,7 +264,7 @@ func (r *Runner) suggestIn(ctx context.Context, all *City, now time.Time) (Sugge
 		return SuggestReport{}, err
 	}
 	failed, err := q.ListRecentlyFailedPlans(ctx, dbgen.ListRecentlyFailedPlansParams{
-		CityID: cityID, Reasons: failedReasons, Since: pgtype.Timestamptz{Time: now.Add(-r.Timing.Cooldown), Valid: true},
+		CityID: cityID, Reasons: failedReasons, Since: pgtype.Timestamptz{Time: now.Add(-tm.Cooldown), Valid: true},
 	})
 	if err != nil {
 		return SuggestReport{}, err
@@ -375,7 +383,8 @@ func (r *Runner) schedulePlan(ctx context.Context, q *dbgen.Queries, c *City, us
 		// Disabled in the city since the plan opened.
 		return closeAs(ClosedWithdrawn)
 	}
-	window := r.Timing.occasions(p.Window, now, c.Location)
+	tm := TimingOf(c.Config)
+	window := tm.occasions(p.Window, now, c.Location)
 	force := !now.Before(p.Window.Deadline) || len(window) == 0
 	signups, err := LoadSignups(ctx, q, p.ID, p.Window.Start)
 	if err != nil {
@@ -404,7 +413,7 @@ func (r *Runner) schedulePlan(ctx context.Context, q *dbgen.Queries, c *City, us
 			}
 			return 0, 0, nil
 		}
-		problem := r.checkVenues(ctx, p, acts, r.Timing.startsAt(res.Occasion, c.Location), hours)
+		problem := r.checkVenues(ctx, p, acts, tm.startsAt(res.Occasion, c.Location), hours)
 		if problem == venuesOK {
 			break
 		}
@@ -427,9 +436,9 @@ func (r *Runner) schedulePlan(ctx context.Context, q *dbgen.Queries, c *City, us
 		PlanID: p.ID, Round: p.Round, Scheduled: res, Forced: force, Now: now,
 		// In a city under review the round waits for an admin (00022).
 		Propose:   c.Review,
-		StartsAt:  r.Timing.startsAt(res.Occasion, c.Location),
+		StartsAt:  tm.startsAt(res.Occasion, c.Location),
 		ConfirmBy: confirmBy(res.Occasion, c.Location),
-		Next:      r.Timing.Round(now, c.Location),
+		Next:      tm.Round(now, c.Location),
 	}
 	invited := 0
 	for _, g := range res.Groups {
@@ -468,6 +477,24 @@ func (r *Runner) itemFailed(ctx context.Context, stage, cityID, item string, id 
 // more likely a shared fault than bad items, so the job is retried.
 func allFailed(stage string, errs []error) error {
 	return fmt.Errorf("%s: every item failed: %w", stage, errors.Join(errs...))
+}
+
+// cityTiming is the city's local time zone and timing, from its matching
+// config.
+func cityTiming(ctx context.Context, q *dbgen.Queries, cityID string) (Timing, *time.Location, error) {
+	row, err := q.GetCityMatching(ctx, cityID)
+	if err != nil {
+		return Timing{}, nil, fmt.Errorf("city %q: %w", cityID, err)
+	}
+	loc, err := time.LoadLocation(row.Timezone)
+	if err != nil {
+		return Timing{}, nil, fmt.Errorf("city %s: %w", cityID, err)
+	}
+	cfg, err := matching.ParseConfig(row.Matching)
+	if err != nil {
+		return Timing{}, nil, fmt.Errorf("city %s: %w", cityID, err)
+	}
+	return TimingOf(cfg), loc, nil
 }
 
 // location returns the city's time zone.

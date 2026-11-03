@@ -60,7 +60,7 @@ func TestIntegrationVenueHours(t *testing.T) {
 		}
 	}
 	hours := &fakeHours{h: everyDay(8, 12)}
-	r := &Runner{DB: f.pool, Timing: tm, Log: slog.New(slog.NewTextHandler(io.Discard, nil)), Hours: hours}
+	r := &Runner{DB: f.pool, Log: slog.New(slog.NewTextHandler(io.Discard, nil)), Hours: hours}
 
 	// Open 8–12 only: neither Saturday afternoon works. Hours are looked up
 	// once for the pass, not once per occasion tried.

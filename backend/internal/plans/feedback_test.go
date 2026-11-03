@@ -82,7 +82,7 @@ func TestIntegrationFeedback(t *testing.T) {
 	}
 
 	// The worker asks the three who went, once.
-	r := &Runner{DB: f.pool, Timing: DefaultTiming(), Log: slog.New(slog.NewTextHandler(io.Discard, nil))}
+	r := &Runner{DB: f.pool, Log: slog.New(slog.NewTextHandler(io.Discard, nil))}
 	for i, want := range []int{3, 0} {
 		rep, err := r.Settle(ctx, f.city, open.Add(time.Minute))
 		if err != nil || rep.FeedbackAsked != want {
