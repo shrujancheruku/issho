@@ -62,7 +62,7 @@ test:
 # or ENV_FILE) are stripped and replaced with the container's.
 # Runs the same script as CI's backend job (scripts/db-checks.sh).
 test-db:
-	env -u ENV_FILE -u DATABASE_URL -u TEST_DATABASE_URL scripts/test-db.sh
+	env -u ENV_FILE -u DATABASE_URL -u TEST_DATABASE_URL -u WORKER_DATABASE_URL scripts/test-db.sh
 
 migrate-up:
 	cd backend && go run ./cmd/tool migrate up

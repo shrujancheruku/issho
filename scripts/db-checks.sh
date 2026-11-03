@@ -7,11 +7,15 @@ cd "$(dirname "$0")/../backend"
 
 : "${DATABASE_URL:?DATABASE_URL must point at a throwaway PostGIS}"
 
-# Down-migrations are destructive: only ever run against a local database.
-case "$DATABASE_URL" in
-  postgres://*@localhost:*|postgres://*@localhost/*|postgres://*@127.0.0.1:*|postgres://*@127.0.0.1/*) ;;
-  *) echo "db-checks.sh refuses a non-local DATABASE_URL (host must be localhost or 127.0.0.1)." >&2; exit 1 ;;
-esac
+# Down-migrations are destructive: only ever run against a local database. Only
+# postgres:// URLs with userinfo on localhost/127.0.0.1 are accepted (percent-encode
+# an '@' in a password), and query parameters other than sslmode=disable are refused:
+# pgx lets host=/hostaddr= in the query override the host.
+re='^postgres://[^/?@]*@(localhost|127\.0\.0\.1)(:[0-9]+)?(/[^?]*)?(\?sslmode=disable)?$'
+if ! [[ "$DATABASE_URL" =~ $re ]]; then
+  echo "db-checks.sh refuses this DATABASE_URL (must be postgres://user:pass@localhost or 127.0.0.1, no query but sslmode=disable)." >&2
+  exit 1
+fi
 
 # Migrations apply, roll back and re-apply; the seed loads. The glob is deliberate:
 # new city packs get seeded (and tested) without editing this script.
