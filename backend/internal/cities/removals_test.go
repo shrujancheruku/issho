@@ -170,4 +170,24 @@ func TestIntegrationAuthoritative(t *testing.T) {
 	if d, err := apply(pack, Options{DropCuratedVenues: true}); err != nil || !slices.Equal(d.RemovedAreas, []string{city + "-d"}) {
 		t.Errorf("allowed: %+v, %v", d, err)
 	}
+
+	// The same holds for a *replaced* area: its approved venue would cascade.
+	pack.Areas = append(pack.Areas, area("e", 35.74))
+	if _, err := apply(pack, Options{}); err != nil {
+		t.Fatal(err)
+	}
+	exec(`insert into app.venues (google_place_id, city_id, area_id, category_id, status) values ('zz-auth-p3', $1, $2, $3, 'approved')`, city, city+"-e", cat)
+	pack.Areas = append(pack.Areas[:2], area("f", 35.75, city+"-e"))
+	if _, err := apply(pack, Options{}); !errors.Is(err, ErrRefused) || !strings.Contains(err.Error(), city+"-e: 1 curated venues") {
+		t.Fatalf("curated venues of a replaced area: %v", err)
+	}
+	if n := count("select count(*) from app.areas where id = $1", city+"-e") + count("select count(*) from app.venues where area_id = $1", city+"-e"); n != 2 {
+		t.Errorf("a refused apply deleted the replaced area or its venue (%d)", n)
+	}
+	if d, err := apply(pack, Options{DropCuratedVenues: true}); err != nil || len(d.ReplacedAreas) != 1 || d.ReplacedAreas[0].Old != city+"-e" {
+		t.Errorf("allowed: %+v, %v", d, err)
+	}
+	if n := count("select count(*) from app.areas where id = $1", city+"-e"); n != 0 {
+		t.Errorf("the replaced area is still there")
+	}
 }

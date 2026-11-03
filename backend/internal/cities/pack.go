@@ -237,6 +237,12 @@ func seedPack(ctx context.Context, pool *pgxpool.Pool, p Pack, opts Options) (Di
 		for _, a := range before {
 			was[a.ID] = maps.LatLng{Lat: a.Lat, Lng: a.Lng}
 		}
+		// The counts (people, crews, plans, curated venues) are read without a
+		// row lock. A reference added between this read and the delete is caught
+		// by the foreign keys (people, crews, plans: the transaction fails and
+		// rolls back). A venue curated in that instant is the one gap we accept:
+		// the window is milliseconds, only an admin curating that very area
+		// could hit it, and discovery brings the place back as a candidate.
 		plan := planAreas(was, p)
 		replaced, removed, err := checkRemovals(ctx, q, p.ID, plan, opts)
 		if err != nil {
