@@ -6,6 +6,9 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"strconv"
+	"strings"
+	"time"
 )
 
 // Config holds the engine's tunable settings. A city overrides any subset of
@@ -83,6 +86,92 @@ type Config struct {
 	// size, since some will drop out. The event confirms early at the
 	// target (Group.Quorum), or at the deadline with at least MinGroupSize.
 	ExtraInvites int `json:"extra_invites"`
+
+	// Timing is when rounds happen in the city: how long signups stay open
+	// and at what time of day each block starts.
+	Timing Timing `json:"timing"`
+}
+
+// Timing sets when a city's rounds can happen. Whole days and clock times,
+// so a city's pack can write them down; internal/plans turns them into dates.
+type Timing struct {
+	// LeadDays: the earliest possible occasion is this many days after
+	// today, so invitees have at least a day to confirm.
+	LeadDays int `json:"lead_days"`
+	// WindowDays: how many days a round's occasions span.
+	WindowDays int `json:"window_days"`
+	// SignupDays: the signup deadline is this many days into the window.
+	// At the deadline the round is scheduled with whoever can go, on a date
+	// at least LeadDays later, so it must leave room for that.
+	SignupDays int `json:"signup_days"`
+	// CooldownDays: a plan that closed without a group isn't suggested again
+	// for this long.
+	CooldownDays int `json:"cooldown_days"`
+	// BlockStarts is when an event starts in each part of the day, as local
+	// "HH:MM" (an 18:30 dinner in Tokyo, 21:00 in Spain). The venue's hours
+	// aren't known in advance, so this is a sensible default people can plan
+	// around; the meeting time can be refined later.
+	BlockStarts map[Block]string `json:"block_starts"`
+}
+
+// Upper bounds of Timing's day counts.
+const (
+	MaxWindowDays   = 60
+	MaxLeadDays     = 14
+	MaxSignupDays   = 30
+	MaxCooldownDays = 365
+)
+
+// BlockStart returns when the block starts, as time since midnight.
+func (t Timing) BlockStart(b Block) (time.Duration, error) {
+	h, m, ok := strings.Cut(t.BlockStarts[b], ":")
+	hh, err1 := strconv.Atoi(h)
+	mm, err2 := strconv.Atoi(m)
+	if !ok || err1 != nil || err2 != nil || len(h) != 2 || len(m) != 2 || hh < 0 || hh > 23 || mm < 0 || mm > 59 {
+		return 0, fmt.Errorf("block_starts[%s] %q: need a time like \"18:30\"", b, t.BlockStarts[b])
+	}
+	return time.Duration(hh)*time.Hour + time.Duration(mm)*time.Minute, nil
+}
+
+// Validate reports a timing that would leave no occasion at the deadline.
+func (t Timing) Validate() error {
+	var errs []error
+	if t.LeadDays < 1 || t.SignupDays < 1 || t.SignupDays+t.LeadDays >= t.WindowDays {
+		errs = append(errs, fmt.Errorf("timing: need lead_days ≥ 1, signup_days ≥ 1 and signup_days + lead_days < window_days (got %d, %d, %d)",
+			t.LeadDays, t.SignupDays, t.WindowDays))
+	}
+	// Upper bounds catch a typo (140 for 14) before it sends events a year out.
+	if t.WindowDays > MaxWindowDays || t.LeadDays > MaxLeadDays || t.SignupDays > MaxSignupDays {
+		errs = append(errs, fmt.Errorf("timing: at most window_days %d, lead_days %d, signup_days %d (got %d, %d, %d)",
+			MaxWindowDays, MaxLeadDays, MaxSignupDays, t.WindowDays, t.LeadDays, t.SignupDays))
+	}
+	if t.CooldownDays < 0 || t.CooldownDays > MaxCooldownDays {
+		errs = append(errs, fmt.Errorf("timing: cooldown_days %d: need 0..%d", t.CooldownDays, MaxCooldownDays))
+	}
+	for _, b := range Blocks {
+		if _, err := t.BlockStart(b); err != nil {
+			errs = append(errs, fmt.Errorf("timing: %w", err))
+		}
+	}
+	// Parts of the day come in order: an evening before the afternoon would
+	// schedule backwards.
+	var prev time.Duration = -1
+	for _, b := range Blocks {
+		d, err := t.BlockStart(b)
+		if err != nil {
+			break // reported above
+		}
+		if d <= prev {
+			errs = append(errs, fmt.Errorf("timing: block_starts must be in order, morning < afternoon < evening (%s %q is not after the one before)", b, t.BlockStarts[b]))
+		}
+		prev = d
+	}
+	for b := range t.BlockStarts {
+		if !slices.Contains(Blocks, b) {
+			errs = append(errs, fmt.Errorf("timing: block_starts: unknown block %q", b))
+		}
+	}
+	return errors.Join(errs...)
 }
 
 // Weights of the group score's parts, each of which is between 0 and 1,
@@ -131,6 +220,12 @@ func DefaultConfig() Config {
 		Weights:          Weights{Interest: 3, SizeFit: 1, MinSize: 1, Balance: 2, Mutual: 2, Newcomers: 1, Reliability: 1, Momentum: 0.5, Friends: 1.5},
 		SearchPasses:     5,
 		ExtraInvites:     2,
+		// Rounds open for signups for a week, then pick a date in the week
+		// after.
+		Timing: Timing{
+			LeadDays: 2, WindowDays: 14, SignupDays: 7, CooldownDays: 14,
+			BlockStarts: map[Block]string{Morning: "10:00", Afternoon: "14:00", Evening: "18:30"},
+		},
 	}
 }
 
@@ -184,6 +279,9 @@ func (c Config) Validate() error {
 	w := c.Weights
 	if min(w.Interest, w.SizeFit, w.MinSize, w.Balance, w.Mutual, w.Newcomers, w.Reliability, w.Momentum, w.Friends) < 0 {
 		bad("weights must be non-negative")
+	}
+	if err := c.Timing.Validate(); err != nil {
+		errs = append(errs, err)
 	}
 	return errors.Join(errs...)
 }

@@ -1,14 +1,19 @@
 package cities
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"slices"
 	"strings"
 
 	"github.com/shrujancheruku/issho/backend/internal/maps"
+	"github.com/shrujancheruku/issho/backend/internal/matching"
 	"github.com/shrujancheruku/issho/backend/internal/platform/i18n"
 )
+
+// maxMeetingRadiusM is the largest Nearby Search radius Google accepts.
+const maxMeetingRadiusM = 50000
 
 // Walking and driving only; public transport isn't calculated (see 00002_geo.sql).
 var travelModes = map[string]bool{"walk": true, "drive": true}
@@ -122,6 +127,16 @@ func ValidatePack(p Pack, activityIDs map[string]bool) error {
 	}
 	if err := checkName(p.Name, p.Languages); err != nil {
 		bad("name: %v", err)
+	}
+	if len(bytes.TrimSpace(p.Matching)) > 0 {
+		if _, err := matching.ParseConfig(p.Matching); err != nil {
+			bad("%v", err)
+		}
+	}
+	for i, m := range p.MeetingPlaces {
+		if len(m.Types) == 0 || slices.Contains(m.Types, "") || m.RadiusM <= 0 || m.RadiusM > maxMeetingRadiusM {
+			bad("meeting_places[%d]: need place types and a radius_m within 1..%d", i, maxMeetingRadiusM)
+		}
 	}
 	// languages = the languages commonly used in the city, most common first.
 	// Any language is allowed: they're suggestions for onboarding and events.

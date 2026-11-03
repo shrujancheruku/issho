@@ -481,14 +481,11 @@ type Maps struct {
 // NewClient builds the River client with every job and its schedule. The
 // pool must be a direct or session-pooler connection: River needs
 // LISTEN/NOTIFY, which the transaction pooler doesn't support.
-func NewClient(pool *pgxpool.Pool, log *slog.Logger, timing plans.Timing, notifier *notifications.Notifier, m Maps) (*river.Client[pgx.Tx], error) {
-	if err := timing.Validate(); err != nil {
-		return nil, err
-	}
+func NewClient(pool *pgxpool.Pool, log *slog.Logger, notifier *notifications.Notifier, m Maps) (*river.Client[pgx.Tx], error) {
 	workers := river.NewWorkers()
 	river.AddWorker(workers, &matchAllWorker{q: dbgen.New(pool)})
 	river.AddWorker(workers, &matchCityWorker{runner: &plans.Runner{
-		DB: pool, Timing: timing, Log: log, Hours: m.Hours, Routes: m.Routes, Places: m.Places, Walks: m.Walks, WalkRoutes: m.WalkRoutes,
+		DB: pool, Log: log, Hours: m.Hours, Routes: m.Routes, Places: m.Places, Walks: m.Walks, WalkRoutes: m.WalkRoutes,
 	}, now: time.Now})
 	river.AddWorker(workers, &crewsCityWorker{crews: &crews.Runner{DB: pool, Log: log}, now: time.Now})
 	river.AddWorker(workers, &refreshMapsWorker{pool: pool, router: m.Router, log: log})

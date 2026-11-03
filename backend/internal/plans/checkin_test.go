@@ -75,7 +75,7 @@ func TestIntegrationCheckIn(t *testing.T) {
 
 	// The day after, the event is done: a attended (and stays reliable), b
 	// didn't turn up.
-	r := &Runner{DB: f.pool, Timing: DefaultTiming(), Log: slog.New(slog.NewTextHandler(io.Discard, nil))}
+	r := &Runner{DB: f.pool, Log: slog.New(slog.NewTextHandler(io.Discard, nil))}
 	if _, err := r.Settle(ctx, f.city, day(13)); err != nil {
 		t.Fatal(err)
 	}

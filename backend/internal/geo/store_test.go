@@ -38,7 +38,7 @@ func TestIntegrationStore(t *testing.T) {
 	t.Cleanup(cleanup)
 	if err := q.UpsertCity(ctx, dbgen.UpsertCityParams{
 		ID: city, Name: []byte(`{"en":"Test"}`), Timezone: "UTC", Currency: "USD",
-		Languages: []string{"en"}, TravelModes: []string{"walk"},
+		Languages: []string{"en"}, TravelModes: []string{"walk"}, Matching: []byte("{}"), MeetingPlaces: []byte("[]"),
 	}); err != nil {
 		t.Fatal(err)
 	}

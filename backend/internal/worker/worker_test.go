@@ -19,7 +19,6 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/adminjobs"
 	"github.com/shrujancheruku/issho/backend/internal/maps"
 	"github.com/shrujancheruku/issho/backend/internal/moderation"
-	"github.com/shrujancheruku/issho/backend/internal/plans"
 	"github.com/shrujancheruku/issho/backend/internal/testfixture"
 	"github.com/shrujancheruku/issho/backend/internal/walks"
 )
@@ -122,7 +121,7 @@ func TestIntegrationEveryKindIsRegisteredAndUnique(t *testing.T) {
 	pool := testPool(t)
 	cleanJobs(t, pool)
 	ctx := context.Background()
-	c, err := NewClient(pool, slog.New(slog.NewTextHandler(io.Discard, nil)), plans.DefaultTiming(), nil, Maps{})
+	c, err := NewClient(pool, slog.New(slog.NewTextHandler(io.Discard, nil)), nil, Maps{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -242,7 +241,7 @@ func TestIntegrationRefreshMapsQueuesOneJobPerCity(t *testing.T) {
 		t.Cleanup(cleanup)
 		if err := q.UpsertCity(ctx, dbgen.UpsertCityParams{
 			ID: id, Name: []byte(`{"en":"T"}`), Timezone: "UTC", Currency: "USD",
-			Languages: []string{"en"}, TravelModes: []string{"walk"},
+			Languages: []string{"en"}, TravelModes: []string{"walk"}, Matching: []byte("{}"), MeetingPlaces: []byte("[]"),
 		}); err != nil {
 			t.Fatal(err)
 		}

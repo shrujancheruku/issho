@@ -172,6 +172,10 @@ message ApplyCityPackResponse {
   // an API that still applies synchronously (the previous release), which
   // fills the fields instead.
   int64 job_id = 8;
+  // The city's matching overlay or meeting-place searches changed (including
+  // being reset to the defaults because the pack no longer has them).
+  bool matching_changed = 9;
+  bool meeting_places_changed = 10;
 }
 
 message ReplacedArea {

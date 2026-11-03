@@ -18,6 +18,23 @@ func (q *Queries) DeleteActivities(ctx context.Context, ids []string) error {
 	return err
 }
 
+const getCityPackSettings = `-- name: GetCityPackSettings :one
+select matching, meeting_places from app.cities where id = $1
+`
+
+type GetCityPackSettingsRow struct {
+	Matching      []byte
+	MeetingPlaces []byte
+}
+
+// What a pack writes to the city, to report a change before Apply overwrites it.
+func (q *Queries) GetCityPackSettings(ctx context.Context, id string) (GetCityPackSettingsRow, error) {
+	row := q.db.QueryRow(ctx, getCityPackSettings, id)
+	var i GetCityPackSettingsRow
+	err := row.Scan(&i.Matching, &i.MeetingPlaces)
+	return i, err
+}
+
 const mergeActivityPrefs = `-- name: MergeActivityPrefs :exec
 insert into app.user_activity_prefs (user_id, activity_id, weight)
 select user_id, $1::text, max(weight)
@@ -155,23 +172,28 @@ func (q *Queries) UpsertArea(ctx context.Context, arg UpsertAreaParams) error {
 }
 
 const upsertCity = `-- name: UpsertCity :exec
-insert into app.cities (id, name, timezone, currency, languages, travel_modes)
-values ($1, $2, $3, $4, $5, $6)
+insert into app.cities (id, name, timezone, currency, languages, travel_modes, matching, meeting_places)
+values ($1, $2, $3, $4, $5, $6, $7, $8)
 on conflict (id) do update set
   name = excluded.name, timezone = excluded.timezone,
   currency = excluded.currency, languages = excluded.languages,
-  travel_modes = excluded.travel_modes
+  travel_modes = excluded.travel_modes,
+  matching = excluded.matching, meeting_places = excluded.meeting_places
 `
 
 type UpsertCityParams struct {
-	ID          string
-	Name        []byte
-	Timezone    string
-	Currency    string
-	Languages   []string
-	TravelModes []string
+	ID            string
+	Name          []byte
+	Timezone      string
+	Currency      string
+	Languages     []string
+	TravelModes   []string
+	Matching      []byte
+	MeetingPlaces []byte
 }
 
+// matching and meeting_places come from the pack too ('{}' and '[]' = the
+// defaults). review and approved_venues_only are admin toggles: never written.
 func (q *Queries) UpsertCity(ctx context.Context, arg UpsertCityParams) error {
 	_, err := q.db.Exec(ctx, upsertCity,
 		arg.ID,
@@ -180,6 +202,8 @@ func (q *Queries) UpsertCity(ctx context.Context, arg UpsertCityParams) error {
 		arg.Currency,
 		arg.Languages,
 		arg.TravelModes,
+		arg.Matching,
+		arg.MeetingPlaces,
 	)
 	return err
 }

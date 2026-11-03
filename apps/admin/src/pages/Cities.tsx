@@ -175,6 +175,8 @@ function PackRow({ pack: p, configured }: { pack: CityPackSummary; configured: b
           </div>
         ))}
         {a?.removedOverrides.length ? <div className="muted">Removed activity overrides: {a.removedOverrides.join(', ')}.</div> : null}
+        {a?.matchingChanged ? <div className="muted">City matching settings changed (a pack without a matching block resets them to the defaults).</div> : null}
+        {a?.meetingPlacesChanged ? <div className="muted">Meeting-place searches changed (a pack without meeting_places resets them to the defaults).</div> : null}
         {applying.running && <div className="muted">Running… applying the pack (rebuilding travel times can take a few minutes)</div>}
         {failure && <div className="error">Failed: {failure}</div>}
         {error && <div className="error">{ConnectError.from(error).message}</div>}

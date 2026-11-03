@@ -846,9 +846,13 @@ type ApplyCityPackResponse struct {
 	// above are empty in this response and filled in the job's result. 0 from
 	// an API that still applies synchronously (the previous release), which
 	// fills the fields instead.
-	JobId         int64 `protobuf:"varint,8,opt,name=job_id,json=jobId,proto3" json:"job_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	JobId int64 `protobuf:"varint,8,opt,name=job_id,json=jobId,proto3" json:"job_id,omitempty"`
+	// The city's matching overlay or meeting-place searches changed (including
+	// being reset to the defaults because the pack no longer has them).
+	MatchingChanged      bool `protobuf:"varint,9,opt,name=matching_changed,json=matchingChanged,proto3" json:"matching_changed,omitempty"`
+	MeetingPlacesChanged bool `protobuf:"varint,10,opt,name=meeting_places_changed,json=meetingPlacesChanged,proto3" json:"meeting_places_changed,omitempty"`
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
 }
 
 func (x *ApplyCityPackResponse) Reset() {
@@ -935,6 +939,20 @@ func (x *ApplyCityPackResponse) GetJobId() int64 {
 		return x.JobId
 	}
 	return 0
+}
+
+func (x *ApplyCityPackResponse) GetMatchingChanged() bool {
+	if x != nil {
+		return x.MatchingChanged
+	}
+	return false
+}
+
+func (x *ApplyCityPackResponse) GetMeetingPlacesChanged() bool {
+	if x != nil {
+		return x.MeetingPlacesChanged
+	}
+	return false
 }
 
 type ReplacedArea struct {
@@ -1197,7 +1215,7 @@ const file_issho_v1_citypacks_proto_rawDesc = "" +
 	"\x17ProposeCityPackResponse\x12@\n" +
 	"\fpull_request\x18\x01 \x01(\v2\x1d.issho.v1.CityPackPullRequestR\vpullRequest\"/\n" +
 	"\x14ApplyCityPackRequest\x12\x17\n" +
-	"\acity_id\x18\x01 \x01(\tR\x06cityId\"\xd2\x02\n" +
+	"\acity_id\x18\x01 \x01(\tR\x06cityId\"\xb3\x03\n" +
 	"\x15ApplyCityPackResponse\x12\x1b\n" +
 	"\tnew_areas\x18\x01 \x03(\tR\bnewAreas\x12\x1f\n" +
 	"\vmoved_areas\x18\x02 \x03(\tR\n" +
@@ -1207,7 +1225,10 @@ const file_issho_v1_citypacks_proto_rawDesc = "" +
 	"\rremoved_areas\x18\x05 \x03(\tR\fremovedAreas\x12=\n" +
 	"\x0ereplaced_areas\x18\x06 \x03(\v2\x16.issho.v1.ReplacedAreaR\rreplacedAreas\x12+\n" +
 	"\x11removed_overrides\x18\a \x03(\tR\x10removedOverrides\x12\x15\n" +
-	"\x06job_id\x18\b \x01(\x03R\x05jobId\"\x92\x01\n" +
+	"\x06job_id\x18\b \x01(\x03R\x05jobId\x12)\n" +
+	"\x10matching_changed\x18\t \x01(\bR\x0fmatchingChanged\x124\n" +
+	"\x16meeting_places_changed\x18\n" +
+	" \x01(\bR\x14meetingPlacesChanged\"\x92\x01\n" +
 	"\fReplacedArea\x12\x1e\n" +
 	"\vold_area_id\x18\x01 \x01(\tR\toldAreaId\x12\x1e\n" +
 	"\vnew_area_id\x18\x02 \x01(\tR\tnewAreaId\x12\x16\n" +

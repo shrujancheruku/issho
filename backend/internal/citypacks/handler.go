@@ -464,8 +464,10 @@ func toProto(p cities.Pack) *isshov1.CityPack {
 // branch's pack, or its pull requests would drop them: each area's osm_id and
 // boundary (`tool area-boundaries` writes them) and replaces (written by hand
 // when an area is retired). An area moved out of its boundary then fails
-// validation, which is the point.
+// validation, which is the point. The pack's matching overlay and
+// meeting_places are hand edits in a pull request too.
 func keepFileOnly(p *cities.Pack, base cities.Pack) {
+	p.Matching, p.MeetingPlaces = base.Matching, base.MeetingPlaces
 	for i, a := range p.Areas {
 		if j := slices.IndexFunc(base.Areas, func(b cities.Area) bool { return b.ID == a.ID }); j >= 0 {
 			p.Areas[i].OSMID, p.Areas[i].Boundary, p.Areas[i].Replaces = base.Areas[j].OSMID, base.Areas[j].Boundary, base.Areas[j].Replaces

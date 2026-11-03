@@ -53,7 +53,7 @@ func TestIntegrationPagingReviewPlans(t *testing.T) {
 	insert("closed", "done", 11)
 	insert("open", "", 3)
 
-	h := &ReviewHandler{Svc: &Service{DB: f.pool}, Timing: DefaultTiming(), Now: func() time.Time { return base }}
+	h := &ReviewHandler{Svc: &Service{DB: f.pool}, Now: func() time.Time { return base }}
 	admin := auth.WithCaller(ctx, auth.Caller{UserID: uuid.New(), Admin: true})
 	list := func(status isshov1.ReviewPlanStatus, size int32, token string) (*isshov1.ListReviewPlansResponse, error) {
 		res, err := h.ListReviewPlans(admin, connect.NewRequest(&isshov1.ListReviewPlansRequest{CityId: f.city, Status: status, PageSize: size, PageToken: token}))
@@ -124,7 +124,7 @@ func TestIntegrationPagingReviewEvents(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	h := &ReviewHandler{Svc: &Service{DB: f.pool}, Timing: DefaultTiming(), Now: func() time.Time { return now }}
+	h := &ReviewHandler{Svc: &Service{DB: f.pool}, Now: func() time.Time { return now }}
 	admin := auth.WithCaller(ctx, auth.Caller{UserID: uuid.New(), Admin: true})
 	status := isshov1.ReviewEventStatus_REVIEW_EVENT_STATUS_PROPOSED
 	var got []string

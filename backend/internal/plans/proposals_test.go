@@ -32,9 +32,9 @@ func TestIntegrationProposals(t *testing.T) {
 		t.Fatal(err)
 	}
 	svc := &Service{DB: f.pool}
-	r := &Runner{DB: f.pool, Timing: DefaultTiming(), Log: slog.New(slog.NewTextHandler(io.Discard, nil))}
+	r := &Runner{DB: f.pool, Log: slog.New(slog.NewTextHandler(io.Discard, nil))}
 	now := time.Date(2030, 1, 1, 9, 0, 0, 0, time.UTC) // Tuesday 18:00 in Tokyo
-	h := &ReviewHandler{Svc: svc, Timing: DefaultTiming(), Now: func() time.Time { return now }}
+	h := &ReviewHandler{Svc: svc, Now: func() time.Time { return now }}
 	adminID := uuid.New()
 	adminCtx := auth.WithCaller(ctx, auth.Caller{UserID: adminID, Admin: true})
 

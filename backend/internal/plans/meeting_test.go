@@ -70,7 +70,7 @@ func TestIntegrationMeetingPlace(t *testing.T) {
 	}
 
 	search, routes := &fakeSearch{}, &recordingRoutes{}
-	r := &Runner{DB: f.pool, Timing: DefaultTiming(), Log: slog.New(slog.NewTextHandler(io.Discard, nil)), Places: search, Routes: routes}
+	r := &Runner{DB: f.pool, Log: slog.New(slog.NewTextHandler(io.Discard, nil)), Places: search, Routes: routes}
 	if found, err := r.RefreshMeetingPlaces(ctx, f.city); err != nil || found.Found != 1 || len(search.reqs) != 1 {
 		t.Fatalf("found=%d searches=%d err=%v; want one station for the walk only", found, len(search.reqs), err)
 	}

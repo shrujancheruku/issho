@@ -54,7 +54,7 @@ func lockProposal(ctx context.Context, q *dbgen.Queries, eventID uuid.UUID) (dbg
 // just scheduled it: people who withdrew since (or were suspended) are left
 // out, everyone else is invited and told, their signups end, and the plan
 // moves to its next round for whoever is still waiting (or closes as done).
-func (s *Service) ApproveProposal(ctx context.Context, eventID, by uuid.UUID, t Timing, now time.Time) error {
+func (s *Service) ApproveProposal(ctx context.Context, eventID, by uuid.UUID, now time.Time) error {
 	return pgx.BeginFunc(ctx, s.DB, func(tx pgx.Tx) error {
 		q := dbgen.New(tx)
 		e, err := lockProposal(ctx, q, eventID)
@@ -94,7 +94,7 @@ func (s *Service) ApproveProposal(ctx context.Context, eventID, by uuid.UUID, t 
 			return err
 		}
 		_, err = startRound(ctx, q, e.PlanID, eventID, invited, func() (Window, error) {
-			loc, err := time.LoadLocation(ev.Timezone)
+			t, loc, err := cityTiming(ctx, q, ev.CityID)
 			if err != nil {
 				return Window{}, err
 			}

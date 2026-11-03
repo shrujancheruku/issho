@@ -62,7 +62,7 @@ func threePlans(t *testing.T, f *fixture, r *Runner) ([]uuid.UUID, time.Time) {
 		f.addProfile(t, u, "ja")
 	}
 	tokyo, _ := time.LoadLocation("Asia/Tokyo")
-	w := r.Timing.Round(time.Date(2030, 1, 1, 9, 0, 0, 0, time.UTC), tokyo)
+	w := DefaultTiming().Round(time.Date(2030, 1, 1, 9, 0, 0, 0, time.UTC), tokyo)
 	var ids []uuid.UUID
 	for i := range 3 {
 		plan := matching.Plan{Area: matching.AreaID(f.area), Activity: matching.ActivityID(f.act), Primary: "ja"}
@@ -86,7 +86,7 @@ func threePlans(t *testing.T, f *fixture, r *Runner) ([]uuid.UUID, time.Time) {
 func TestIntegrationScheduleSkipsFailedPlan(t *testing.T) {
 	f := newFixture(t, "zz-plans-skipfail", "Asia/Tokyo", 9)
 	ctx := context.Background()
-	r := &Runner{DB: f.pool, Timing: DefaultTiming(), Log: quiet()}
+	r := &Runner{DB: f.pool, Log: quiet()}
 	ids, due := threePlans(t, f, r)
 
 	// A cancelled pass (River timeout or shutdown) stops with the context's
@@ -171,13 +171,13 @@ func TestIntegrationSettleSkipsFailedGroup(t *testing.T) {
 		t.Fatalf("%d groups", len(groups))
 	}
 
-	if rep, err := (&Runner{DB: f.pool, Timing: DefaultTiming(), Log: quiet()}).Settle(cancelledCtx{ctx}, f.city, day(11, 0)); !errors.Is(err, context.Canceled) || rep != (SettleReport{}) {
+	if rep, err := (&Runner{DB: f.pool, Log: quiet()}).Settle(cancelledCtx{ctx}, f.city, day(11, 0)); !errors.Is(err, context.Canceled) || rep != (SettleReport{}) {
 		t.Errorf("cancelled Settle = %+v, %v; want context.Canceled, nothing counted or failed", rep, err)
 	}
 
 	// Nobody confirmed, so both would be cancelled at the deadline. The
 	// first one's cancelling fails after the counter would have gone up.
-	r := &Runner{DB: f.pool, Timing: DefaultTiming(), Log: quiet()}
+	r := &Runner{DB: f.pool, Log: quiet()}
 	failWhen(t, f.pool, "group", "update", "app.event_groups", fmt.Sprintf("new.id = '%s' and new.status = 'cancelled'", groups[0]))
 	rep, err := r.Settle(ctx, f.city, day(11, 0))
 	if err != nil {
@@ -213,7 +213,7 @@ func TestIntegrationSettleSkipsFailedGroup(t *testing.T) {
 func TestIntegrationSetupFailure(t *testing.T) {
 	f := newFixture(t, "zz-plans-setupfail", "UTC", 1)
 	ctx := context.Background()
-	r := &Runner{DB: f.pool, Timing: DefaultTiming(), Log: quiet()}
+	r := &Runner{DB: f.pool, Log: quiet()}
 	now := time.Date(2030, 1, 1, 0, 0, 0, 0, time.UTC)
 	if _, err := r.Match(ctx, "zz-no-such-city", now); err == nil {
 		t.Error("Match of an unknown city: no error")
@@ -242,7 +242,7 @@ func TestIntegrationSeasonalActivity(t *testing.T) {
 	if _, err := f.pool.Exec(ctx, `insert into app.city_activity_overrides (city_id, activity_id, enabled, months) values ($1, $2, true, '{6}')`, f.city, f.act); err != nil {
 		t.Fatal(err)
 	}
-	r := &Runner{DB: f.pool, Timing: DefaultTiming(), Log: quiet()}
+	r := &Runner{DB: f.pool, Log: quiet()}
 
 	// A January round: the activity is out of season, so nothing opens.
 	winter := time.Date(2030, 1, 1, 9, 0, 0, 0, time.UTC)
@@ -290,7 +290,7 @@ func TestIntegrationSuggestFailedItem(t *testing.T) {
 	for _, u := range f.users {
 		f.addProfile(t, u, "ja")
 	}
-	r := &Runner{DB: f.pool, Timing: DefaultTiming(), Log: quiet()}
+	r := &Runner{DB: f.pool, Log: quiet()}
 	failWhen(t, f.pool, "plan", "insert", "app.plans", fmt.Sprintf("new.city_id = '%s'", f.city))
 	rep, err := r.Suggest(ctx, f.city, time.Date(2030, 1, 1, 9, 0, 0, 0, time.UTC))
 	if err == nil || rep.Failed != 1 || rep.Opened != 0 {
