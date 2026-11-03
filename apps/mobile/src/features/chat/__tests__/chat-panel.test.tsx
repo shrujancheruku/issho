@@ -12,7 +12,7 @@ import { useRoom } from '../room';
 // The real panel, hook and socket code run; only the edges are faked: the
 // API client, the translations, navigation and WebSocket.
 jest.mock('@/lib/api', () => ({
-  api: { chat: { listMessages: jest.fn(), sendMessage: jest.fn() }, plans: { getPlan: jest.fn() } },
+  api: { chat: { listMessages: jest.fn(), sendMessage: jest.fn() }, plans: { getPlan: jest.fn(), getPlanCards: jest.fn() } },
   getAccessToken: jest.fn(async () => 'token'),
   wsBaseUrl: 'ws://test',
 }));
@@ -51,9 +51,11 @@ jest.mock('@/components/text-link', () => {
 });
 jest.mock('@/features/plans/plan-card', () => ({ pairText: () => '' }));
 jest.mock('@/features/plans/names', () => ({ usePlanNames: () => ({ area: () => ({ name: '' }) }) }));
-jest.mock('@/features/plans/data', () => ({ usePlan: () => ({ data: undefined }) }));
 
-const mockApi = api as unknown as { chat: { listMessages: jest.Mock } };
+const mockApi = api as unknown as {
+  chat: { listMessages: jest.Mock };
+  plans: { getPlan: jest.Mock; getPlanCards: jest.Mock };
+};
 
 const sockets: object[] = [];
 class FakeWebSocket {
@@ -153,4 +155,18 @@ it('opens one socket for the crew chat tab, though the screen and the panel both
   expect(await screen.findByText('hello')).toBeTruthy();
   expect(sockets).toHaveLength(1);
   expect(mockApi.chat.listMessages).toHaveBeenCalledTimes(1);
+});
+
+it('loads every suggested plan\'s card with one GetPlanCards call and no GetPlan', async () => {
+  const suggestion = (id: bigint, planId: string) => ({ id, userId: '', name: '', body: '', at: { seconds: 1000n }, mine: false, planId });
+  mockApi.chat.listMessages.mockResolvedValue(reply({ messages: [suggestion(1n, 'p1'), suggestion(2n, 'p2'), suggestion(3n, 'p3')] }));
+  mockApi.plans.getPlanCards.mockResolvedValue({
+    plans: ['p1', 'p2', 'p3'].map((id) => ({ id, title: `Title ${id}`, secondaryTitle: '', areaId: 'a', signupDeadline: undefined, signedUp: false })),
+  });
+  await renderPanel(<ChatPanel room={{ crewId: 'c1' }} />);
+  expect(await screen.findByText('Title p3')).toBeTruthy();
+  expect(screen.getByText('Title p1')).toBeTruthy();
+  expect(mockApi.plans.getPlanCards).toHaveBeenCalledTimes(1);
+  expect(mockApi.plans.getPlanCards).toHaveBeenCalledWith({ planIds: ['p1', 'p2', 'p3'] });
+  expect(mockApi.plans.getPlan).not.toHaveBeenCalled();
 });

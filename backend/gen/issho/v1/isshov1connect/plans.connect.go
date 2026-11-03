@@ -37,6 +37,9 @@ const (
 	PlanServiceListFeedProcedure = "/issho.v1.PlanService/ListFeed"
 	// PlanServiceGetPlanProcedure is the fully-qualified name of the PlanService's GetPlan RPC.
 	PlanServiceGetPlanProcedure = "/issho.v1.PlanService/GetPlan"
+	// PlanServiceGetPlanCardsProcedure is the fully-qualified name of the PlanService's GetPlanCards
+	// RPC.
+	PlanServiceGetPlanCardsProcedure = "/issho.v1.PlanService/GetPlanCards"
 	// PlanServiceSignUpProcedure is the fully-qualified name of the PlanService's SignUp RPC.
 	PlanServiceSignUpProcedure = "/issho.v1.PlanService/SignUp"
 	// PlanServiceWithdrawProcedure is the fully-qualified name of the PlanService's Withdraw RPC.
@@ -52,6 +55,13 @@ type PlanServiceClient interface {
 	// GetPlan returns one open plan with the caller's signup, if any.
 	// NOT_FOUND for an unknown or closed plan, or one in another city.
 	GetPlan(context.Context, *connect.Request[v1.GetPlanRequest]) (*connect.Response[v1.GetPlanResponse], error)
+	// GetPlanCards returns the feed's card (FeedPlan) for each of up to 50
+	// plans, in one call with no stops, route or Google lookups. Each id is
+	// judged as GetPlan would: an open plan in the caller's city, or one closed
+	// there in the last 14 days (with closed_reason). Unknown, other-city and
+	// older closed ids are left out, not an error. INVALID_ARGUMENT for more
+	// than 50 ids or one that isn't a plan id.
+	GetPlanCards(context.Context, *connect.Request[v1.GetPlanCardsRequest]) (*connect.Response[v1.GetPlanCardsResponse], error)
 	// SignUp signs the caller up for an open plan, or replaces the times they
 	// gave. FAILED_PRECONDITION when the plan has closed or they don't speak
 	// its language; INVALID_ARGUMENT for times outside the plan's window.
@@ -83,6 +93,12 @@ func NewPlanServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 			connect.WithSchema(planServiceMethods.ByName("GetPlan")),
 			connect.WithClientOptions(opts...),
 		),
+		getPlanCards: connect.NewClient[v1.GetPlanCardsRequest, v1.GetPlanCardsResponse](
+			httpClient,
+			baseURL+PlanServiceGetPlanCardsProcedure,
+			connect.WithSchema(planServiceMethods.ByName("GetPlanCards")),
+			connect.WithClientOptions(opts...),
+		),
 		signUp: connect.NewClient[v1.SignUpRequest, v1.SignUpResponse](
 			httpClient,
 			baseURL+PlanServiceSignUpProcedure,
@@ -100,10 +116,11 @@ func NewPlanServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 
 // planServiceClient implements PlanServiceClient.
 type planServiceClient struct {
-	listFeed *connect.Client[v1.ListFeedRequest, v1.ListFeedResponse]
-	getPlan  *connect.Client[v1.GetPlanRequest, v1.GetPlanResponse]
-	signUp   *connect.Client[v1.SignUpRequest, v1.SignUpResponse]
-	withdraw *connect.Client[v1.WithdrawRequest, v1.WithdrawResponse]
+	listFeed     *connect.Client[v1.ListFeedRequest, v1.ListFeedResponse]
+	getPlan      *connect.Client[v1.GetPlanRequest, v1.GetPlanResponse]
+	getPlanCards *connect.Client[v1.GetPlanCardsRequest, v1.GetPlanCardsResponse]
+	signUp       *connect.Client[v1.SignUpRequest, v1.SignUpResponse]
+	withdraw     *connect.Client[v1.WithdrawRequest, v1.WithdrawResponse]
 }
 
 // ListFeed calls issho.v1.PlanService.ListFeed.
@@ -114,6 +131,11 @@ func (c *planServiceClient) ListFeed(ctx context.Context, req *connect.Request[v
 // GetPlan calls issho.v1.PlanService.GetPlan.
 func (c *planServiceClient) GetPlan(ctx context.Context, req *connect.Request[v1.GetPlanRequest]) (*connect.Response[v1.GetPlanResponse], error) {
 	return c.getPlan.CallUnary(ctx, req)
+}
+
+// GetPlanCards calls issho.v1.PlanService.GetPlanCards.
+func (c *planServiceClient) GetPlanCards(ctx context.Context, req *connect.Request[v1.GetPlanCardsRequest]) (*connect.Response[v1.GetPlanCardsResponse], error) {
+	return c.getPlanCards.CallUnary(ctx, req)
 }
 
 // SignUp calls issho.v1.PlanService.SignUp.
@@ -135,6 +157,13 @@ type PlanServiceHandler interface {
 	// GetPlan returns one open plan with the caller's signup, if any.
 	// NOT_FOUND for an unknown or closed plan, or one in another city.
 	GetPlan(context.Context, *connect.Request[v1.GetPlanRequest]) (*connect.Response[v1.GetPlanResponse], error)
+	// GetPlanCards returns the feed's card (FeedPlan) for each of up to 50
+	// plans, in one call with no stops, route or Google lookups. Each id is
+	// judged as GetPlan would: an open plan in the caller's city, or one closed
+	// there in the last 14 days (with closed_reason). Unknown, other-city and
+	// older closed ids are left out, not an error. INVALID_ARGUMENT for more
+	// than 50 ids or one that isn't a plan id.
+	GetPlanCards(context.Context, *connect.Request[v1.GetPlanCardsRequest]) (*connect.Response[v1.GetPlanCardsResponse], error)
 	// SignUp signs the caller up for an open plan, or replaces the times they
 	// gave. FAILED_PRECONDITION when the plan has closed or they don't speak
 	// its language; INVALID_ARGUMENT for times outside the plan's window.
@@ -162,6 +191,12 @@ func NewPlanServiceHandler(svc PlanServiceHandler, opts ...connect.HandlerOption
 		connect.WithSchema(planServiceMethods.ByName("GetPlan")),
 		connect.WithHandlerOptions(opts...),
 	)
+	planServiceGetPlanCardsHandler := connect.NewUnaryHandler(
+		PlanServiceGetPlanCardsProcedure,
+		svc.GetPlanCards,
+		connect.WithSchema(planServiceMethods.ByName("GetPlanCards")),
+		connect.WithHandlerOptions(opts...),
+	)
 	planServiceSignUpHandler := connect.NewUnaryHandler(
 		PlanServiceSignUpProcedure,
 		svc.SignUp,
@@ -180,6 +215,8 @@ func NewPlanServiceHandler(svc PlanServiceHandler, opts ...connect.HandlerOption
 			planServiceListFeedHandler.ServeHTTP(w, r)
 		case PlanServiceGetPlanProcedure:
 			planServiceGetPlanHandler.ServeHTTP(w, r)
+		case PlanServiceGetPlanCardsProcedure:
+			planServiceGetPlanCardsHandler.ServeHTTP(w, r)
 		case PlanServiceSignUpProcedure:
 			planServiceSignUpHandler.ServeHTTP(w, r)
 		case PlanServiceWithdrawProcedure:
@@ -199,6 +236,10 @@ func (UnimplementedPlanServiceHandler) ListFeed(context.Context, *connect.Reques
 
 func (UnimplementedPlanServiceHandler) GetPlan(context.Context, *connect.Request[v1.GetPlanRequest]) (*connect.Response[v1.GetPlanResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.PlanService.GetPlan is not implemented"))
+}
+
+func (UnimplementedPlanServiceHandler) GetPlanCards(context.Context, *connect.Request[v1.GetPlanCardsRequest]) (*connect.Response[v1.GetPlanCardsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.PlanService.GetPlanCards is not implemented"))
 }
 
 func (UnimplementedPlanServiceHandler) SignUp(context.Context, *connect.Request[v1.SignUpRequest]) (*connect.Response[v1.SignUpResponse], error) {

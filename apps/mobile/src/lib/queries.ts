@@ -16,6 +16,10 @@ export const keys = {
   health: ['health'] as const,
   feed: ['feed'] as const,
   plan: (id: string) => ['plan', id] as const,
+  /** The feed cards of a batch of plans (GetPlanCards; ids sorted, at most `PlanCardsMax`). */
+  planCards: (ids: readonly string[]) => ['planCards', ...ids] as const,
+  /** Prefix of every `planCards(...)`. */
+  planCardsAll: ['planCards'] as const,
   events: ['events'] as const,
   event: (id: string) => ['event', id] as const,
   feedback: (id: string) => ['feedback', id] as const,
@@ -42,13 +46,14 @@ const refresh = (qc: QueryClient, ...queryKeys: readonly (readonly unknown[])[])
  * The profile was saved. GetMe carries the languages and home city; the feed
  * and activities are per city and language, so a new city must show on Plans.
  */
-export const profileSaved = (qc: QueryClient) => refresh(qc, keys.meAll, keys.profile, keys.feed, keys.activitiesAll);
+export const profileSaved = (qc: QueryClient) =>
+  refresh(qc, keys.meAll, keys.profile, keys.feed, keys.planCardsAll, keys.activitiesAll);
 
 /** The API said the account is suspended: ask GetMe again so the app shows it. */
 export const accountChanged = (qc: QueryClient) => refresh(qc, keys.meAll);
 
 /** The person signed up for a plan or withdrew: its counts and the feed change. */
-export const signupChanged = (qc: QueryClient, planId: string) => refresh(qc, keys.plan(planId), keys.feed);
+export const signupChanged = (qc: QueryClient, planId: string) => refresh(qc, keys.plan(planId), keys.feed, keys.planCardsAll);
 
 /**
  * An event changed (answered, cancelled, checked in, feedback sent). With
@@ -60,7 +65,7 @@ export const eventChanged = (qc: QueryClient, id: string, opts: { planId?: strin
     qc,
     keys.event(id),
     keys.events,
-    ...(opts.feed ? [keys.feed] : []),
+    ...(opts.feed ? [keys.feed, keys.planCardsAll] : []),
     ...(opts.planId ? [keys.plan(opts.planId)] : []),
   );
 

@@ -35,8 +35,9 @@ test('cancelling a place refreshes the event, the events, the feed and the plan'
 
 test('signing up refreshes the plan and the feed', async () => {
   const qc = new QueryClient();
-  seed(qc, keys.plan('p1'), keys.feed, keys.events);
+  seed(qc, keys.plan('p1'), keys.feed, keys.events, keys.planCards(['p1', 'p2']));
   await signupChanged(qc, 'p1');
+  expect(stale(qc, keys.planCards(['p1', 'p2']))).toBe(true);
   expect(stale(qc, keys.plan('p1'))).toBe(true);
   expect(stale(qc, keys.feed)).toBe(true);
   expect(stale(qc, keys.events)).toBe(false);

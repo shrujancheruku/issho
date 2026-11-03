@@ -1,6 +1,7 @@
 package plans
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -347,6 +348,77 @@ func (s *Service) Plan(ctx context.Context, userID, planID uuid.UUID, now time.T
 	}
 	signup, err := loadSignup(ctx, q, planID, userID)
 	return item, steps, signup, err
+}
+
+// MaxPlanCards bounds Cards (GetPlanCards): a crew room shows a handful of
+// suggestions, so this is generous while keeping the batch cheap.
+const MaxPlanCards = 50
+
+// Cards returns the feed card of each plan the caller could read through
+// Plan: open ones in their city, and ones closed there within ShowClosedFor.
+// Others (unknown, other city, older) are left out. It makes no Google calls
+// (no steps or venues) and a fixed number of queries however many ids.
+// Order is unspecified. At most MaxPlanCards distinct ids (an *InvalidError
+// beyond that).
+func (s *Service) Cards(ctx context.Context, userID uuid.UUID, ids []uuid.UUID, now time.Time) ([]FeedItem, error) {
+	ids = slices.Compact(slices.SortedFunc(slices.Values(ids), func(a, b uuid.UUID) int { return bytes.Compare(a[:], b[:]) }))
+	if len(ids) > MaxPlanCards {
+		return nil, invalid("plan_ids: at most %d plans per call", MaxPlanCards)
+	}
+	if len(ids) == 0 {
+		return nil, nil
+	}
+	q := dbgen.New(s.DB)
+	v, err := s.loadViewer(ctx, q, userID)
+	if err != nil {
+		return nil, err
+	}
+	city := v.caller.City
+	openRows, err := q.ListOpenPlansByIDs(ctx, dbgen.ListOpenPlansByIDsParams{Ids: ids, CityID: city})
+	if err != nil {
+		return nil, err
+	}
+	open := make([]Open, len(openRows))
+	for i, r := range openRows {
+		open[i] = openFromRow(dbgen.ListOpenPlansRow(r))
+	}
+	items, err := s.see(ctx, q, v, userID, open)
+	if err != nil {
+		return nil, err
+	}
+	closedRows, err := q.ListRecentlyClosedPlansByIDs(ctx, dbgen.ListRecentlyClosedPlansByIDsParams{
+		Ids: ids, CityID: city, UserID: userID,
+		Since: pgtype.Timestamptz{Time: now.Add(-ShowClosedFor), Valid: true},
+	})
+	if err != nil {
+		return nil, err
+	}
+	closed := make([]FeedItem, len(closedRows))
+	named := make([]titled, len(closedRows))
+	for i, r := range closedRows {
+		closed[i] = FeedItem{
+			Open: openFromRow(dbgen.ListOpenPlansRow{
+				ID: r.ID, AreaID: r.AreaID, ActivityID: r.ActivityID, FollowUpID: r.FollowUpID,
+				PrimaryLanguage: r.PrimaryLanguage, SecondaryLanguage: r.SecondaryLanguage, Round: r.Round,
+				WindowStart: r.WindowStart, WindowDays: r.WindowDays, SignupDeadline: r.SignupDeadline,
+				VenuePlaceID: r.VenuePlaceID, FollowUpVenuePlaceID: r.FollowUpVenuePlaceID,
+				RoutePolyline: r.RoutePolyline, RouteSeconds: r.RouteSeconds, MeetingPlaceID: r.MeetingPlaceID,
+				Title: r.Title, Description: r.Description, Walk: r.Walk, Signups: r.Signups,
+			}),
+			Minutes: -1, SignedUp: r.SignedUp, ClosedReason: r.ClosedReason, ClosedAt: r.ClosedAt.Time,
+		}
+		named[i] = titled{closed[i].Plan, closed[i].WalkTitle}
+	}
+	if len(closed) > 0 {
+		titles, secondary, err := s.titles(ctx, q, city, v.caller, named)
+		if err != nil {
+			return nil, err
+		}
+		for i := range closed {
+			closed[i].Title, closed[i].SecondaryTitle = titles[i], secondary[i]
+		}
+	}
+	return append(items, closed...), nil
 }
 
 // steps lists the plan's stops (activity, follow-up, a meeting place) with
