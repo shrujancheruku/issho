@@ -4,8 +4,8 @@ package uistrings
 // repository, like city packs (owner's decision). Every save is a commit to
 // one rolling pull request per language, which the owner merges; the API
 // then serves it without a deploy (Catalog.Follow). translations.Handler
-// checks the caller and the language and maps protos; the rules and the
-// GitHub calls are here (the repoedit follow-up moves the calls).
+// checks the caller and the language and maps protos; the rules are here and
+// the pull request is repoedit's (kind "translations", key = language).
 
 import (
 	"context"
@@ -13,30 +13,19 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"sync"
-	"time"
 
 	"golang.org/x/text/language"
 	"golang.org/x/text/language/display"
 
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
 	"github.com/shrujancheruku/issho/backend/internal/platform/errs"
-	"github.com/shrujancheruku/issho/backend/internal/platform/github"
 	"github.com/shrujancheruku/issho/backend/internal/platform/i18n"
+	"github.com/shrujancheruku/issho/backend/internal/repoedit"
 	"github.com/shrujancheruku/issho/backend/internal/translate"
 )
 
-// BranchPrefix marks the editor's branches: translations/<lang>-<unix time>.
-const BranchPrefix = "translations/"
-
-// Repo is the GitHub repository the human versions live in (*github.Client).
-type Repo interface {
-	File(ctx context.Context, path, branch string) ([]byte, string, error)
-	OpenPRs(ctx context.Context, prefix string) ([]github.PR, error)
-	CreateBranch(ctx context.Context, branch string) error
-	CommitFiles(ctx context.Context, branch string, files map[string][]byte, message string) error
-	OpenPR(ctx context.Context, branch, title, body string) (github.PR, error)
-}
+// Kind is the editor's pending-change kind: one pull request per language.
+const Kind = "translations"
 
 // Drafter proposes a better version of a string (*gemini.Translator).
 type Drafter interface {
@@ -48,33 +37,19 @@ type Drafter interface {
 type Editor struct {
 	Catalog      *Catalog
 	Translations *translate.Service
-	// GitHub is nil without GITHUB_TOKEN: UI strings can be read, not saved.
-	// Base is the branch pull requests target.
-	GitHub Repo
-	Base   string
+	// Repo is nil without GITHUB_TOKEN: UI strings can be read, not saved.
+	Repo *repoedit.Repo
 	// Drafter is nil without GOOGLE_GEMINI_API_KEY: no suggestions.
 	Drafter Drafter
-	Now     func() time.Time // nil = time.Now
-
-	// One save at a time: two saves for a language would otherwise race to
-	// open its pull request, or to commit on top of the same tip.
-	mu sync.Mutex
-}
-
-func (e *Editor) now() time.Time {
-	if e.Now != nil {
-		return e.Now()
-	}
-	return time.Now()
 }
 
 // CanPropose reports whether saving works (a GitHub token is set).
-func (e *Editor) CanPropose() bool { return e.GitHub != nil }
-
-// githubError keeps GitHub's own message off the wire (logs and Sentry only).
-func githubError(err error) error { return errs.Upstream("github", err) }
+func (e *Editor) CanPropose() bool { return e.Repo != nil }
 
 func humanPath(lang string) string { return HumanDir + "/" + lang + ".json" }
+
+// humanCopyPath is the copy the app bundles (HumanCopyDir).
+func humanCopyPath(lang string) string { return HumanCopyDir + "/" + lang + ".json" }
 
 // Row is one UI string as the editor shows it: main's human version (as
 // followed), the open pull request's and the machine translation.
@@ -91,41 +66,19 @@ type Row struct {
 }
 
 // OpenPRs maps each language to its editor pull request.
-func (e *Editor) OpenPRs(ctx context.Context) (map[string]github.PR, error) {
-	out := map[string]github.PR{}
-	if e.GitHub == nil {
-		return out, nil
-	}
-	prs, err := e.GitHub.OpenPRs(ctx, BranchPrefix)
-	if err != nil {
-		return nil, githubError(err)
-	}
-	for _, pr := range prs {
-		// <lang>-<unix time>; the language may contain a dash (zh-Hant).
-		rest := strings.TrimPrefix(pr.Branch, BranchPrefix)
-		if i := strings.LastIndex(rest, "-"); i > 0 {
-			lang := rest[:i]
-			if _, seen := out[lang]; !seen {
-				out[lang] = pr
-			}
-		}
-	}
-	return out, nil
+func (e *Editor) OpenPRs(ctx context.Context) (map[string]repoedit.PR, error) {
+	return e.Repo.Pending(ctx, Kind)
 }
 
-// branchVersions reads lang's human versions on branch; none when the file
-// isn't there yet.
-func (e *Editor) branchVersions(ctx context.Context, lang, branch string) (map[string]Human, error) {
-	raw, _, err := e.GitHub.File(ctx, humanPath(lang), branch)
-	if errors.Is(err, github.ErrNotFound) {
-		return map[string]Human{}, nil
+// decode reads lang's human versions out of the file's bytes; none when
+// the file isn't there yet.
+func decode(lang string, raw []byte) (map[string]Human, error) {
+	m := map[string]Human{}
+	if raw == nil {
+		return m, nil
 	}
-	if err != nil {
-		return nil, githubError(err)
-	}
-	var m map[string]Human
 	if err := json.Unmarshal(raw, &m); err != nil {
-		return nil, fmt.Errorf("%s on %s: %w", humanPath(lang), branch, err)
+		return nil, fmt.Errorf("%s: %w", humanPath(lang), err)
 	}
 	if m == nil {
 		m = map[string]Human{}
@@ -179,7 +132,7 @@ type Listing struct {
 	// Complete is false while machine translations are still to come.
 	Complete bool
 	// PR is the language's open pull request, if it has one.
-	PR *github.PR
+	PR *repoedit.PR
 }
 
 // List returns every UI string in lang with its human, pending and machine
@@ -189,16 +142,19 @@ func (e *Editor) List(ctx context.Context, lang string) (Listing, error) {
 	if lang != i18n.Authoring {
 		machine, complete = e.Catalog.Machine(ctx, e.Translations, lang)
 	}
-	prs, err := e.OpenPRs(ctx)
-	if err != nil {
-		return Listing{}, err
-	}
 	out := Listing{Complete: complete}
 	var branch map[string]Human
-	if pr, ok := prs[lang]; ok {
-		out.PR = &pr
-		if branch, err = e.branchVersions(ctx, lang, pr.Branch); err != nil {
+	if e.Repo != nil {
+		files, pr, err := e.Repo.Files(ctx, Kind, lang, []string{humanPath(lang)})
+		if err != nil {
 			return Listing{}, err
+		}
+		// Only an open pull request has "pending" strings to show.
+		if pr != nil {
+			out.PR = pr
+			if branch, err = decode(lang, files[humanPath(lang)]); err != nil {
+				return Listing{}, err
+			}
 		}
 	}
 	for _, key := range e.Catalog.Keys() {
@@ -214,75 +170,48 @@ func languageName(lang string) string {
 	return lang
 }
 
+// prBody is the pull request's text. The repository is public: it says what
+// changed, never who changed it.
+func prBody(lang string) string {
+	return fmt.Sprintf("Human versions of the app's %s text, from the admin SPA's translation editor. Each commit is one string.\n\n"+
+		"**After merging:** the API serves them within a few minutes, without a deploy, and phones pick them up at their next hourly check. "+
+		"English ones reach the app with its next build (English is bundled).\n", languageName(lang))
+}
+
 // change commits edit (which changes a language's human versions; false
-// when there's nothing to change) to lang's open pull request, opening one
-// on a new branch when there's none. It retries once if the branch moved.
-func (e *Editor) change(ctx context.Context, lang, message string, edit func(map[string]Human) bool) (*github.PR, map[string]Human, error) {
-	if e.GitHub == nil {
-		return nil, nil, errs.Precondition(isshov1.ErrorReason_ERROR_REASON_UNSPECIFIED, "saving translations needs GITHUB_TOKEN on the API")
-	}
-	e.mu.Lock()
-	defer e.mu.Unlock()
-	for attempt := 0; ; attempt++ {
-		prs, err := e.OpenPRs(ctx)
-		if err != nil {
-			return nil, nil, err
-		}
-		// Without a pull request, start from the base branch's file and only
-		// branch off once there's something to commit.
-		pr, open := prs[lang]
-		from := e.Base
-		if open {
-			from = pr.Branch
-		}
-		versions, err := e.branchVersions(ctx, lang, from)
-		if err != nil {
-			return nil, nil, err
+// when there's nothing to change) to lang's pending change. It returns the
+// pull request (nil when nothing was changed and none is open) and the
+// versions after the edit.
+func (e *Editor) change(ctx context.Context, lang, message string, edit func(map[string]Human) bool) (*repoedit.PR, map[string]Human, error) {
+	var versions map[string]Human
+	pr, ok, err := e.Repo.Change(ctx, repoedit.Edit{
+		Kind: Kind, Key: lang, Message: message,
+		Title: fmt.Sprintf("feat(data): update the %s translations", languageName(lang)),
+		Paths: []string{humanPath(lang), humanCopyPath(lang)},
+	}, func(files map[string][]byte) (bool, string, error) {
+		var err error
+		if versions, err = decode(lang, files[humanPath(lang)]); err != nil {
+			return false, "", err
 		}
 		if !edit(versions) {
-			if !open {
-				return nil, nil, nil
-			}
-			return &pr, versions, nil
+			return false, "", nil
 		}
-		branch := pr.Branch
-		if !open {
-			branch = fmt.Sprintf("%s%s-%d", BranchPrefix, lang, e.now().Unix())
-			if err := e.GitHub.CreateBranch(ctx, branch); err != nil {
-				return nil, nil, githubError(err)
-			}
-		}
+		// Both copies of the file, as `make gen` writes them.
 		content := EncodeHuman(versions)
-		err = e.GitHub.CommitFiles(ctx, branch, map[string][]byte{
-			humanPath(lang):                     content,
-			HumanCopyDir + "/" + lang + ".json": content,
-		}, message)
-		if errors.Is(err, github.ErrConflict) && attempt == 0 {
-			continue
-		}
-		if err != nil {
-			return nil, nil, githubError(err)
-		}
-		if !open {
-			name := languageName(lang)
-			// The repository is public: the pull request says what changed,
-			// never who changed it.
-			body := fmt.Sprintf("Human versions of the app's %s text, from the admin SPA's translation editor. Each commit is one string.\n\n"+
-				"**After merging:** the API serves them within a few minutes, without a deploy, and phones pick them up at their next hourly check. "+
-				"English ones reach the app with its next build (English is bundled).\n", name)
-			if pr, err = e.GitHub.OpenPR(ctx, branch, fmt.Sprintf("feat(data): update the %s translations", name), body); err != nil {
-				return nil, nil, githubError(err)
-			}
-		}
-		return &pr, versions, nil
+		files[humanPath(lang)], files[humanCopyPath(lang)] = content, content
+		return true, prBody(lang), nil
+	})
+	if err != nil || !ok {
+		return nil, versions, err
 	}
+	return &pr, versions, nil
 }
 
 // Saved is what a save or removal leaves: the string's row afterwards and
 // the language's pull request (nil when nothing was changed and none is open).
 type Saved struct {
 	Row Row
-	PR  *github.PR
+	PR  *repoedit.PR
 }
 
 // Save sets lang's human version of key to text.

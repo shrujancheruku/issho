@@ -516,8 +516,9 @@
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| pack | [CityPack](#issho-v1-CityPack) |  |  |
+| pack | [CityPack](#issho-v1-CityPack) |  | The pack as it stands in the city&#39;s pending change (its open pull request) when there is one, else on the default branch. |
 | activities | [PackActivity](#issho-v1-PackActivity) | repeated |  |
+| pull_request | [CityPackPullRequest](#issho-v1-CityPackPullRequest) |  | The city&#39;s open pull request, when the pack is its pending version: a proposal commits to it instead of opening another. |
 
 
 

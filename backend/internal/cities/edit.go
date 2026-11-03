@@ -52,6 +52,10 @@ func CheckPack(ctx context.Context, db *pgxpool.Pool, p Pack) error {
 	return nil
 }
 
+// ErrNothingChanged is Propose's refusal of a pack equal to the default
+// branch's (an errs.Invalid).
+var ErrNothingChanged = errs.Invalid("nothing changed")
+
 // Proposal is an edited pack ready to propose: the file's bytes and the
 // pull request's title and body.
 type Proposal struct {
@@ -86,7 +90,7 @@ func Propose(ctx context.Context, db *pgxpool.Pool, p Pack, base *Pack, note str
 	}
 	changes := Changes(base, p)
 	if len(changes) == 0 {
-		return Proposal{}, errs.Invalid("nothing changed")
+		return Proposal{}, ErrNothingChanged
 	}
 	content, err := EncodePack(p)
 	if err != nil {
