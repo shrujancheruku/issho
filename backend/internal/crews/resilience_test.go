@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
-	"os"
 	"strings"
 	"testing"
 
@@ -121,7 +120,7 @@ func TestIntegrationPassSkipsFailedCrew(t *testing.T) {
 // so River retries the job.
 func TestIntegrationPassSetupFailure(t *testing.T) {
 	f := testfixture.New(t, "zz-crews-setupfail", "UTC", 1)
-	down, err := pgxpool.New(context.Background(), os.Getenv("TEST_DATABASE_URL"))
+	down, err := pgxpool.New(context.Background(), testfixture.DatabaseURL(t))
 	if err != nil {
 		t.Fatal(err)
 	}

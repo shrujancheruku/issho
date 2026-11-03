@@ -3,7 +3,6 @@ package metrics
 import (
 	"context"
 	"fmt"
-	"os"
 	"testing"
 	"time"
 
@@ -14,6 +13,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
 	"github.com/shrujancheruku/issho/backend/internal/platform/auth"
+	"github.com/shrujancheruku/issho/backend/internal/testfixture"
 )
 
 func TestMonday(t *testing.T) {
@@ -42,10 +42,7 @@ func TestNonAdminRefused(t *testing.T) {
 // both), a cancelled group, a no-show, feedback and picks; the weekly
 // numbers and the city now. Skipped unless TEST_DATABASE_URL is set.
 func TestIntegrationMetrics(t *testing.T) {
-	url := os.Getenv("TEST_DATABASE_URL")
-	if url == "" {
-		t.Skip("TEST_DATABASE_URL not set")
-	}
+	url := testfixture.DatabaseURL(t)
 	ctx := context.Background()
 	pool, err := pgxpool.New(ctx, url)
 	if err != nil {

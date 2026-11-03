@@ -2,7 +2,6 @@ package moderation
 
 import (
 	"context"
-	"os"
 	"testing"
 	"time"
 
@@ -15,6 +14,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/crews"
 	"github.com/shrujancheruku/issho/backend/internal/plans"
 	"github.com/shrujancheruku/issho/backend/internal/platform/auth"
+	"github.com/shrujancheruku/issho/backend/internal/testfixture"
 )
 
 func TestNonAdminRefused(t *testing.T) {
@@ -32,10 +32,7 @@ func TestNonAdminRefused(t *testing.T) {
 // TestIntegrationQueue walks a report, a flag, a crew leave and a
 // translation through the queue. Skipped unless TEST_DATABASE_URL is set.
 func TestIntegrationQueue(t *testing.T) {
-	url := os.Getenv("TEST_DATABASE_URL")
-	if url == "" {
-		t.Skip("TEST_DATABASE_URL not set")
-	}
+	url := testfixture.DatabaseURL(t)
 	ctx := context.Background()
 	pool, err := pgxpool.New(ctx, url)
 	if err != nil {
