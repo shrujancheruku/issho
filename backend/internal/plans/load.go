@@ -131,19 +131,10 @@ func loadPlaces(ctx context.Context, q *dbgen.Queries, cityID string, month time
 		return nil, err
 	}
 	for _, a := range acts {
-		m := matching.Activity{
-			ID: matching.ActivityID(a.ID), Category: a.Category, CostLevel: int(a.CostLevel),
-			Conversational: a.Conversational, MinSize: int(a.MinGroupSize), MaxSize: int(a.MaxGroupSize),
-			Walk: a.WalkTheme != nil, Energy: int(a.Energy), Hours: a.Hours,
-		}
+		m := newActivity(a.ID, a.Category, a.CostLevel, a.Conversational, a.MinGroupSize, a.MaxGroupSize,
+			a.WalkTheme != nil, a.Energy, a.Hours, a.VenueCategories, a.Blocks)
 		if a.WalkTheme != nil {
 			c.WalkThemes[m.ID] = *a.WalkTheme
-		}
-		for _, v := range a.VenueCategories {
-			m.VenueCategories = append(m.VenueCategories, matching.CategoryID(v))
-		}
-		for _, b := range a.Blocks {
-			m.Blocks = append(m.Blocks, matching.Block(b))
 		}
 		c.Activities = append(c.Activities, m)
 	}

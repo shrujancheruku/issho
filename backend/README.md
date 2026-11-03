@@ -294,7 +294,7 @@ make sim                                           # 500 synthetic users per cit
 make sim ARGS="-users 1000 -seed 2 -config '{\"language_pairs\":[[\"ja\",\"en\"]]}'"
 ```
 
-The simulator runs the whole flow on synthetic users: suggest, signups from each person's feed (with varied availability), then scheduling (ready plans first, then the rest at their deadline), never double-booking anyone. It reports plans, signups, scheduling, group sizes, pairs, gender balance, who got invited by gender and language, and any rule violations, which fail the run. `go test ./internal/matching/sim` runs it for every pack in CI.
+The simulator runs the whole flow on synthetic users: suggest, signups from each person's feed (with varied availability), then scheduling (ready plans first, then the rest at their deadline), never double-booking anyone. It reports plans, signups, scheduling, group sizes, pairs, gender balance, who got invited by gender and language, and any rule violations, which fail the run. `go test ./internal/matching/sim` runs it for every pack in CI. The activities come from `plans.Activities`, the Go twin of the worker's `ListMatchingActivities` query (a database test keeps them agreeing). It does not model the worker's rounds, waiting list, relations, suspensions, venue review or notifications (see `sim.Run`).
 
 ## Testing
 
