@@ -2,7 +2,6 @@ package geo
 
 import (
 	"context"
-	"os"
 	"testing"
 	"time"
 
@@ -10,16 +9,14 @@ import (
 
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	"github.com/shrujancheruku/issho/backend/internal/maps"
+	"github.com/shrujancheruku/issho/backend/internal/testfixture"
 )
 
 // TestIntegrationStore runs the store queries against a real, migrated and
 // seeded database. It's skipped unless TEST_DATABASE_URL is set (CI sets it).
 // It creates its own throwaway city and deletes it afterwards.
 func TestIntegrationStore(t *testing.T) {
-	url := os.Getenv("TEST_DATABASE_URL")
-	if url == "" {
-		t.Skip("TEST_DATABASE_URL not set")
-	}
+	url := testfixture.DatabaseURL(t)
 	ctx := context.Background()
 	pool, err := pgxpool.New(ctx, url)
 	if err != nil {
