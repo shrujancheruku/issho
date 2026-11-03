@@ -3,7 +3,11 @@ name: deploy-web
 # Deploys the Cloudflare Workers when they change on main: the admin SPA
 # (issho-admin) and the app's web build (issho-web) with scripts/deploy-web.sh,
 # and the marketing site (issho-site, site/wrangler.jsonc, joinissho.com).
-# Each job only runs when its own files changed.
+# Each job only runs when its own files changed since the last successful run
+# of this workflow, and only after the ci workflow passed on the same commit
+# (workflow_run.head_sha, which is what gets built; a failed CI run leaves
+# everything skipped and its changes ride along with the next green commit).
+# A manual run deploys everything.
 #
 # Configured 2026-10-26 (Settings → Secrets and variables → Actions):
 #   variable API_URL                 https://api.joinissho.com
@@ -14,20 +18,20 @@ name: deploy-web
 # Without API_URL the apps job is skipped, not failed.
 
 on:
-  push:
+  workflow_run:
+    workflows: [ci]
+    types: [completed]
     branches: [main]
-    paths:
-      - site/**
-      - apps/admin/**
-      - apps/mobile/**
-      - packages/**
-      - pnpm-lock.yaml
-      - scripts/deploy-web.sh
-      - .github/workflows/deploy-web.yml
   workflow_dispatch:
 
 permissions:
   contents: read
+  # gh run list, to find the last successful deploy.
+  actions: read
+
+env:
+  # The commit to deploy: the one CI tested (a manual run uses its own).
+  SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
 
 # One deploy at a time; a newer push replaces a queued one.
 concurrency:
@@ -37,6 +41,12 @@ concurrency:
 jobs:
   # What changed, so a site-only push doesn't rebuild the apps and vice versa.
   changes:
+    # Only after a green ci run on a push to main (the event check keeps a
+    # fork's pull request from a branch named main out), or a manual run.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push')
     runs-on: ubuntu-latest
     outputs:
       site: ${{ steps.filter.outputs.site }}
@@ -44,14 +54,30 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          fetch-depth: 2
+          ref: ${{ env.SHA }}
+          fetch-depth: 0
       - id: filter
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
+          echo "deploying $SHA"
           # A manual run deploys everything.
           if [ "${{ github.event_name }}" = workflow_dispatch ]; then
             echo "site=true" >> "$GITHUB_OUTPUT"; echo "apps=true" >> "$GITHUB_OUTPUT"; exit 0
           fi
-          files=$(git diff --name-only "${{ github.event.before }}" "${{ github.sha }}" 2>/dev/null || git diff --name-only HEAD~1 HEAD)
+          # The last commit this workflow ran successfully for, not the
+          # parent: skipped runs (CI red) don't count, so their changes ride
+          # along with the next deploy. No earlier run, or one no longer in
+          # the history: deploy everything.
+          base=$(gh run list --workflow deploy-web.yml --branch main --status success \
+            --limit 1 --json headSha --jq '.[0].headSha // empty')
+          if [ -z "$base" ] || ! git cat-file -e "$base^{commit}" 2>/dev/null; then
+            echo "no earlier deploy to diff against; deploying"
+            echo "site=true" >> "$GITHUB_OUTPUT"; echo "apps=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          echo "last deployed: $base"
+          files=$(git diff --name-only "$base" "$SHA")
+          echo "$files"
           echo "site=$(echo "$files" | grep -qE '^(site/|\.github/workflows/deploy-web\.yml$)' && echo true || echo false)" >> "$GITHUB_OUTPUT"
           echo "apps=$(echo "$files" | grep -qE '^(apps/admin/|apps/mobile/|packages/|pnpm-lock\.yaml$|scripts/deploy-web\.sh$|\.github/workflows/deploy-web\.yml$)' && echo true || echo false)" >> "$GITHUB_OUTPUT"
 
@@ -64,6 +90,8 @@ jobs:
       CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ env.SHA }}
       - uses: actions/setup-node@v7
         with:
           node-version: 24
@@ -94,6 +122,8 @@ jobs:
           done
           if [ -n "$missing" ]; then echo "::error::API_URL is set but these aren't:$missing"; exit 1; fi
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ env.SHA }}
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with:

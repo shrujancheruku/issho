@@ -64,7 +64,10 @@ kamal logs-api          # or logs-worker
 
 ## Automatic deploys
 
-`.github/workflows/deploy-api.yml` deploys every change to `backend/`, `data/`, `config/deploy.yml` or `config/server/` on main (or on demand), without production secrets in GitHub:
+`.github/workflows/deploy-api.yml` deploys every change to `backend/`, `data/`, `config/deploy.yml` or `config/server/` on main (or on demand), without production secrets in GitHub.
+
+**Gated on CI.** Both deploy workflows (`deploy-api`, `deploy-web`) trigger on `workflow_run` of the `ci` workflow for main and run only when it concluded `success` for a push; when CI fails they show as skipped and nothing ships. They deploy `workflow_run.head_sha` (printed in the job log as `deploying <sha>`), the commit CI tested, not whatever main is by then. Since `workflow_run` has no path filter, each workflow's `changes` job diffs that commit against the head SHA of the workflow's latest successful run on main (`gh run list`), so a red commit's changes are deployed with the next green one; with no earlier run it deploys everything. Skipped runs don't count as successful. `workflow_dispatch` deploys everything, at the commit it is run on. `deploy-web` works the same way for the Workers (`site/`, `apps/`, `packages/`).
+
 
 1. The job builds and pushes the image with Kamal, using its own short-lived `GITHUB_TOKEN` (the workflow created the `issho` package, so it's linked to the repository; the image's `org.opencontainers.image.source` label says so too).
 2. It connects as `deploy@<server>` with the `DEPLOY_SSH_KEY` secret (host key pinned by the `DEPLOY_HOST_KEY` variable) and writes `<commit> <token>` to it. That key's `authorized_keys` line is `restrict,command="sudo -n -u kamal /opt/issho/deploy.sh"`, and `/etc/sudoers.d/issho-deploy` allows exactly that, so the key can do nothing else.
