@@ -18,7 +18,7 @@
 | Secret | Local dev | CI (GitHub Actions) | Production |
 |---|---|---|---|
 | Supabase JWT signing key | `supabase/signing_keys.json` (gitignored, generated per machine) | not needed | Supabase dashboard (never exported) |
-| `DATABASE_URL` (with password) | `.env.example` defaults are the well-known **local-only** Supabase credentials | throwaway PostGIS container in the `backend` job | Kamal secrets (`.kamal/secrets`, gitignored, filled from a password manager) |
+| `DATABASE_URL` (with password) | `.env.example` defaults are the well-known **local-only** Supabase credentials | throwaway PostGIS container in the `backend` job | Kamal secrets (`.kamal/secrets.production`, gitignored, filled from a password manager) |
 | Hosted DB URL for a Supabase project (with password) | `.env.<project>` (e.g. `.env.issho-dev`, gitignored), used via `make … ENV_FILE=` | not used | Kamal secrets (`DATABASE_URL`) |
 | SMTP password (Resend API key) | `supabase/.env` as `SUPABASE_SMTP_PASS` (gitignored); `config push` uploads it to Supabase as a masked secret | not used | Supabase project config |
 | Supabase CLI access token | macOS keychain, via `supabase login --token` with a **scoped** token run in your own terminal (the browser login grants full-account access) | not used | n/a |
@@ -36,12 +36,12 @@
 | Registry token for deploys (`KAMAL_REGISTRY_PASSWORD`) | a manual deploy: a GitHub token with `write:packages`, exported in your shell; log the server out afterwards (`ssh kamal@<server> docker logout ghcr.io`), as Kamal leaves the login there | `deploy-api`: the job's own `GITHUB_TOKEN` (`packages: write`), also passed to the server for the pull; it expires with the job, and the server logs out after each deploy | not stored |
 | Deploy key (`DEPLOY_SSH_KEY`, the server's `deploy` user) | not stored locally | GitHub secret; its `authorized_keys` line forces `config/server/deploy.sh` (`restrict`), so it can only deploy a commit on main | public half on the server only |
 | Production env on the server (`/opt/issho/env`, `kamal-secrets`, `certs/`) | the source is `.env.issho-prod` and `~/.config/issho/`; copy changes to the server by hand (docs/deploy.md) | never in GitHub | readable by `kamal` only; the same values are in the running containers' env files anyway |
-| Cloudflare origin certificate and key (the API's TLS behind Cloudflare) | saved outside the repo (e.g. `~/.config/issho/`), read by `.kamal/secrets` | not used | kamal-proxy, via Kamal secrets ([deploy.md](deploy.md)) |
+| Cloudflare origin certificate and key (the API's TLS behind Cloudflare) | saved outside the repo (e.g. `~/.config/issho/`), read by `.kamal/secrets.production` | not used | kamal-proxy, via Kamal secrets ([deploy.md](deploy.md)) |
 | Push credentials: APNs key, FCM V1 service account key | not stored locally; uploaded to EAS with `eas credentials` | n/a | EAS (Expo) credential store |
 | Apple `.p8` keys, Android keystores | not stored locally; EAS manages signing credentials | n/a | EAS (Expo) credential store |
 | SMTP relay credentials (M2) | not needed (Mailpit) | n/a | Supabase dashboard (custom SMTP) |
 
-**`APP_ENV` and missing keys.** `APP_ENV` (`development` by default, `preview` or `production`; not a secret) is set in each deployment's environment: `config/deploy.yml` sets `preview` for the hosted API and worker while they point at `issho-dev`; `production` is for a future real environment. With `APP_ENV=production` the API and worker refuse to start unless every key in the table in [backend/README.md](../backend/README.md#app_env-and-what-production-requires) is set, and the error names all that are missing. So before switching a deployment to production, make sure each of those secrets is non-empty in its env file (and the server's copy). A preview deployment such as the current one keeps the optional behaviour. A missing key never deletes data in any environment.
+**`APP_ENV` and missing keys.** `APP_ENV` (`development` by default, `preview` or `production`; not a secret) is set in each deployment's environment: `config/deploy.production.yml` sets `preview` for the hosted API and worker while they point at `issho-dev`; `production` is for a future real environment. With `APP_ENV=production` the API and worker refuse to start unless every key in the table in [backend/README.md](../backend/README.md#app_env-and-what-production-requires) is set, and the error names all that are missing. So before switching a deployment to production, make sure each of those secrets is non-empty in its env file (and the server's copy). A preview deployment such as the current one keeps the optional behaviour. A missing key never deletes data in any environment.
 
 `.env.example` files contain **only** local-only defaults or empty placeholders, and are committed on purpose. Any real `.env`/`.env.*` file is gitignored.
 
@@ -49,7 +49,7 @@
 
 | Layer | What | Where |
 |---|---|---|
-| `.gitignore` | Blocks `.env*`, `*.pem`, `*.p8`, `*.p12`, `*.key`, keystores, `credentials.json`, `google-services.json`, `GoogleService-Info.plist`, `supabase/signing_keys.json`, `supabase/.env`, `.kamal/secrets*` | repo root |
+| `.gitignore` | Blocks `.env*`, `*.pem`, `*.p8`, `*.p12`, `*.key`, keystores, `credentials.json`, `google-services.json`, `GoogleService-Info.plist`, `supabase/signing_keys.json`, `supabase/.env`, `.kamal/secrets*` (the template `.kamal/secrets.production.example` is committed) | repo root |
 | Pre-commit hook | gitleaks scans staged changes and blocks the commit if it finds a secret | `.githooks/pre-commit` (enabled by `make setup`) |
 | CI `secrets` job | gitleaks scans **all history on all branches** on every push and PR | `.github/workflows/ci.yml` |
 | Custom rules | JWK private keys (`"d"`), Supabase `sb_secret_…` keys, service_role JWTs, plus gitleaks' ~150 default rules (AWS, GCP, Stripe, Anthropic, private keys, …) | `.gitleaks.toml` |

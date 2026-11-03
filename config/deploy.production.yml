@@ -1,0 +1,42 @@
+# The production destination (`kamal -d production`): the values that name an
+# environment, merged over config/deploy.yml, which keeps what every
+# environment shares. There is one deployed API and no staging API is planned.
+# Secrets for it come from .kamal/secrets.production (docs/deploy.md,
+# "Environments").
+#
+# M11 (the production Supabase project) edits this file: SUPABASE_URL and
+# APP_ENV below, plus the matching values in .env.issho-prod (and the server's
+# copy, docs/deploy.md).
+
+servers:
+  web:
+    hosts:
+      - 35.243.76.67 # GCE issho-api, asia-northeast1-b (static address)
+  worker:
+    hosts:
+      - 35.243.76.67
+
+proxy:
+  host: api.joinissho.com # proxied by Cloudflare
+
+env:
+  clear:
+    # issho-dev for now (owner's decision, 2026-10-26: pre-release, only the
+    # owner and testers); M11 replaces it with a production project in Tokyo
+    # before real users.
+    SUPABASE_URL: https://yjnzrhusfxilktbjrzsw.supabase.co
+    # The sites on joinissho.com, plus their workers.dev addresses while both work.
+    ALLOWED_ORIGINS: https://admin.joinissho.com,https://app.joinissho.com,https://issho-admin.shrujancheruku.workers.dev,https://issho-web.shrujancheruku.workers.dev
+    # preview while this deploy points at issho-dev: it keeps the optional-key
+    # behaviour. M11 switches it to production, which refuses to start without
+    # its keys (backend/README.md). Also the default for SENTRY_ENVIRONMENT.
+    APP_ENV: preview
+
+accessories:
+  backup:
+    host: 35.243.76.67
+    env:
+      clear:
+        R2_ENDPOINT: https://b6f3e52f2491d38421018e275ef7896b.r2.cloudflarestorage.com
+        R2_BUCKET: issho-backups # 30-day lifecycle rule
+        SENTRY_ENVIRONMENT: production

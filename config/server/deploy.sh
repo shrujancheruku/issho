@@ -29,11 +29,12 @@ kamal_image=$(cat config/kamal-image)
 
 kamal() {
   # The repo checkout as the workdir, with the gitignored files Kamal reads
-  # (.kamal/secrets and the env file it points at) mounted from /opt/issho.
+  # (.kamal/secrets.production, which `-d production` reads, and the env file
+  # it points at) mounted from /opt/issho.
   # safe.directory: the checkout belongs to kamal, the container runs as root.
   docker run --rm -i \
     -v /opt/issho/repo:/workdir \
-    -v /opt/issho/kamal-secrets:/workdir/.kamal/secrets:ro \
+    -v /opt/issho/kamal-secrets:/workdir/.kamal/secrets.production:ro \
     -v /opt/issho/env:/workdir/.env.issho-prod:ro \
     -v /opt/issho/certs:/root/.config/issho:ro \
     -v /home/kamal/.ssh/id_self:/root/.ssh/id_ed25519:ro \
@@ -43,11 +44,13 @@ kamal() {
     -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0='*' \
     "$kamal_image" "$@"
 }
+# Every call below passes -d production (config/deploy.production.yml): the
+# base config has no host.
 
 # Log in for this deploy only; don't leave the token (short-lived as it is)
 # in kamal's Docker config.
 trap 'docker logout ghcr.io >/dev/null 2>&1 || true' EXIT
-kamal registry login
+kamal registry login -d production
 # Migrations first, with the new image (they're additive; docs/deploy.md).
-kamal migrate --version "$sha"
-kamal deploy --skip-push --version "$sha"
+kamal migrate -d production --version "$sha"
+kamal deploy -d production --skip-push --version "$sha"
