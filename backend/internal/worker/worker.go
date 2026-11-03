@@ -182,6 +182,16 @@ type refreshMapsWorker struct {
 // Work checks every city; one city failing doesn't stop the others, but
 // fails the job so River retries it.
 func (w *refreshMapsWorker) Work(ctx context.Context, _ *river.Job[RefreshMapsArgs]) error {
+	// A missing key never deletes data. Without a router, geo.Refresh would
+	// delete rows past the Maps caching limit; we skip it instead. The terms
+	// are still met by rebuilding, which is the fix: production can't start
+	// without GOOGLE_MAPS_API_KEY (platform/config), so this branch is a
+	// development or preview worker; its stale rows stay until a key is set
+	// and the next pass rebuilds them. Checked before any query.
+	if w.router == nil {
+		w.log.Error("travel times not checked: GOOGLE_MAPS_API_KEY is not set on the worker, so none can be rebuilt; none are deleted either")
+		return nil
+	}
 	cities, err := dbgen.New(w.pool).ListCities(ctx)
 	if err != nil {
 		return err
@@ -192,9 +202,6 @@ func (w *refreshMapsWorker) Work(ctx context.Context, _ *river.Job[RefreshMapsAr
 		switch {
 		case err != nil:
 			errs = append(errs, fmt.Errorf("%s: %w", c.ID, err))
-		case w.router == nil && deleted > 0:
-			w.log.Error("travel times past the Maps caching limit deleted; set GOOGLE_MAPS_API_KEY on the worker to rebuild them",
-				"city", c.ID, "deleted", deleted)
 		case rebuilt:
 			w.log.Info("travel times rebuilt", "city", c.ID, "stale_deleted", deleted)
 		}

@@ -59,11 +59,32 @@ The Go backend for Issho: a modular monolith serving a ConnectRPC API. It uses P
 
 ## Configuration
 
+Every process reads its environment through `internal/platform/config` (`Load` for the API, `LoadWorker`, `LoadTool`); `cmd/tool` has no `os.Getenv` of its own.
+
+### `APP_ENV` and what production requires
+
+`APP_ENV` is `development` (the default), `preview` or `production`; anything else is a startup error. Outside production every key below is optional and a missing one only warns. With `APP_ENV=production`, `Load` and `LoadWorker` fail with **one error naming every missing key**, so a deploy with a gap never starts (Kamal's `/up` health check keeps the old container). `tool` requires nothing: each subcommand checks the keys it uses.
+
+| Key | API | Worker | Why production needs it |
+|---|---|---|---|
+| `DATABASE_URL` (worker: `WORKER_DATABASE_URL` or `DATABASE_URL`) | required | required | Everything |
+| `SUPABASE_URL` | required | | Token verification (the JWKS) |
+| `SUPABASE_SECRET_KEY` | required | | Account deletion, roles |
+| `SENTRY_DSN` | required | required | Errors must not go unseen |
+| `GITHUB_TOKEN` | required | required | The editors propose changes by pull request; both processes follow merged UI translations. A refused token (401/403) is a startup error in production, a warning elsewhere. |
+| `GOOGLE_MAPS_API_KEY` | required | required | Venue names (API); travel-time rebuilds, opening hours (worker) |
+| `GOOGLE_GEMINI_API_KEY` | with `TRANSLATOR=gemini` (the default) | required | Translator; the worker also composes walks with it |
+| `GOOGLE_TRANSLATE_API_KEY` | with `TRANSLATOR=google` | with `TRANSLATOR=google` | Translator |
+| `EXPO_ACCESS_TOKEN` | | required | Push delivery |
+
+`SENTRY_ENVIRONMENT` defaults to `APP_ENV`. Set `APP_ENV` in each deployment: `config/deploy.yml` sets `production` for the hosted API and worker.
+
 | Variable | Required | Example (local) | Notes |
 |---|---|---|---|
+| `APP_ENV` | no | `development` | `development`, `preview` or `production` (see above). |
 | `DATABASE_URL` | yes | `postgres://postgres:postgres@127.0.0.1:54322/postgres?sslmode=disable` | Supabase local DB. In production, use the **session pooler** (port 5432) or the direct connection, with `sslmode=require`. **Not** the transaction pooler (port 6543): pgx's prepared statements and River's LISTEN/NOTIFY don't work through it. |
 | `WORKER_DATABASE_URL` | worker only; falls back to `DATABASE_URL` | same as `DATABASE_URL` | The worker's connection. River needs LISTEN/NOTIFY: direct connection or session pooler only. |
-| `GOOGLE_MAPS_API_KEY` (worker) | no | (empty) | The worker uses it to rebuild travel times before the 30-day Maps limit and to check venues are open before scheduling. Without it, travel times past 30 days are deleted (not rebuilt) and hours aren't checked. |
+| `GOOGLE_MAPS_API_KEY` (worker) | no | (empty) | The worker uses it to rebuild travel times before the 30-day Maps limit and to check venues are open before scheduling. Without it, hours aren't checked and travel times are neither rebuilt nor deleted (a missing key never deletes data; `refresh_maps` logs an error and leaves them). **Required in production.** |
 | `EXPO_ACCESS_TOKEN` | worker; only with enhanced push security | (empty) | **Secret.** Sent to Expo's push service when the Expo project requires it. |
 | `GOOGLE_TRANSLATE_API_KEY` (worker) | no | (empty) | With `TRANSLATOR=google`, the worker uses it for push notifications in each person's language. |
 | `SUPABASE_URL` | yes | `http://127.0.0.1:54321` | The JWKS is fetched from `$SUPABASE_URL/auth/v1/.well-known/jwks.json`. The token issuer must be `$SUPABASE_URL/auth/v1`. |
@@ -71,7 +92,7 @@ The Go backend for Issho: a modular monolith serving a ConnectRPC API. It uses P
 | `SUPABASE_SECRET_KEY` | no | `SECRET_KEY` from `supabase status` | **Server-only secret.** Enables admin calls (account deletion). Without it, `DeleteAccount` returns `failed_precondition`. Never commit it; see [secrets](../docs/secrets.md). |
 | `GOOGLE_MAPS_API_KEY` | for `tool build-matrix` / `discover-venues`; optional for the API | (empty) | **Server-only secret**, restricted to the Routes and Places APIs. Not needed for `-dry-run` or tests. The API uses it for venue names and addresses on plans (Place Details, fetched live); without it, plans show no venue names. See [google-maps](../docs/google-maps.md). |
 | `GITHUB_TOKEN` | no | (empty) | **Server-only secret** (see [secrets](../docs/secrets.md)): a fine-grained token for the repository with Contents and Pull requests write. Enables the admin SPA's city-pack editor (`CityPackService`), which proposes packs as pull requests, and the translation editor's saves (`TranslationService`); without it, those calls (except `ListCityPacks` and the translation editor's reads) return `failed_precondition`. With it, the API also reads the human versions of the UI text on `main` every 5 minutes, so merged translations are served without a deploy. The worker reads them the same way for push text. |
-| `SENTRY_DSN`, `SENTRY_ENVIRONMENT` | no | (empty), `development` | Error reporting for the API and the worker (`internal/platform/sentry`): unexpected RPC errors (not the ones handlers return on purpose), HTTP handler panics, and failed or panicking jobs. No personal data (IPs, headers). Empty = off. |
+| `SENTRY_DSN`, `SENTRY_ENVIRONMENT` | `SENTRY_DSN` in production | (empty), `APP_ENV` | Error reporting for the API and the worker (`internal/platform/sentry`): unexpected RPC errors (not the ones handlers return on purpose), HTTP handler panics, and failed or panicking jobs. No personal data (IPs, headers). Empty = off (outside production). `SENTRY_ENVIRONMENT` defaults to `APP_ENV`; an explicit value wins. |
 | `SENTRY_TRACES_SAMPLE_RATE` | no | `1` | Share of API requests traced (0 to 1) when Sentry is on: a transaction per request with a span per query (by its sqlc name), connection wait and outside API call (method, host and path; no headers or query string). Requests the app traced are always traced. Health checks, CORS preflights and the chat socket never are. The worker isn't traced. |
 | `GITHUB_REPO`, `GITHUB_API_URL` | no | `shrujancheruku/issho`, `https://api.github.com` | Where the city packs live (another API address for GitHub Enterprise or a local fake). |
 | `GOOGLE_GEMINI_API_KEY` | no | (empty) | **Server-only secret**: a Google Cloud API key for Agent Platform (created in Agent Platform; it starts `AQ.`). It only works on `aiplatform.googleapis.com`, not the Gemini Developer API (`API_KEY_SERVICE_BLOCKED`). Enables interest suggestions (`CatalogService.SuggestActivities`); without it, that RPC returns `failed_precondition` and the app says suggestions aren't available. **The worker** uses it too, with `GOOGLE_MAPS_API_KEY`, to compose walking plans; without both, no walks are opened. With the default `TRANSLATOR`, it's also the machine translator, for the API and for the worker's push notifications; without it, text is shown in the languages already stored. |

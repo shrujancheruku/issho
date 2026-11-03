@@ -38,7 +38,7 @@ func translateCompare(args []string) error {
 	langs := fs.String("langs", "ja,es,pl,zh", "languages to compare")
 	out := fs.String("out", "translate-compare.json", "where the comparison goes")
 	_ = fs.Parse(args)
-	gKey, mKey := os.Getenv("GOOGLE_TRANSLATE_API_KEY"), os.Getenv("GOOGLE_GEMINI_API_KEY")
+	gKey, mKey := toolCfg.GoogleTranslateAPIKey, toolCfg.GeminiAPIKey
 	if gKey == "" || mKey == "" {
 		return errors.New("GOOGLE_TRANSLATE_API_KEY and GOOGLE_GEMINI_API_KEY are both required")
 	}

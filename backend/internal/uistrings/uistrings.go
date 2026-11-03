@@ -25,6 +25,7 @@ import (
 	"io/fs"
 	"log/slog"
 	"maps"
+	"net/http"
 	"path"
 	"regexp"
 	"slices"
@@ -35,6 +36,7 @@ import (
 	"connectrpc.com/connect"
 
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
+	"github.com/shrujancheruku/issho/backend/internal/platform/github"
 	"github.com/shrujancheruku/issho/backend/internal/platform/i18n"
 	"github.com/shrujancheruku/issho/backend/internal/translate"
 )
@@ -417,6 +419,25 @@ func (c *Catalog) LoadHuman(ctx context.Context, src HumanSource, branch string)
 	return c.SetHuman(files)
 }
 
+// Start reads the human versions once, then follows branch in the
+// background (Follow). A bad token (GitHub's 401 or 403) is a startup error
+// when strict, which production sets, so a rotated or mistyped GITHUB_TOKEN
+// is found by the deploy rather than after the fact; elsewhere, and for any
+// other failure, it only warns and the built-in copies stay.
+func (c *Catalog) Start(ctx context.Context, src HumanSource, branch string, every time.Duration, log *slog.Logger, strict bool) error {
+	if err := c.LoadHuman(ctx, src, branch); err != nil {
+		var apiErr *github.APIError
+		if strict && errors.As(err, &apiErr) && (apiErr.StatusCode == http.StatusUnauthorized || apiErr.StatusCode == http.StatusForbidden) {
+			return fmt.Errorf("ui strings: GITHUB_TOKEN was refused: %w", err)
+		}
+		if ctx.Err() == nil {
+			log.Warn("ui strings: couldn't read the human versions on "+branch, "err", err)
+		}
+	}
+	go c.follow(ctx, src, branch, every, log, true)
+	return nil
+}
+
 // Follow keeps the human versions in step with branch, reading it every
 // interval until ctx ends, so a merged pull request from the translation
 // editor reaches the app (whose check runs hourly) without a deploy. A
@@ -424,10 +445,19 @@ func (c *Catalog) LoadHuman(ctx context.Context, src HumanSource, branch string)
 // this build's are stale here (Current) and skipped, so following a branch
 // ahead of the deployed API is safe.
 func (c *Catalog) Follow(ctx context.Context, src HumanSource, branch string, every time.Duration, log *slog.Logger) {
+	c.follow(ctx, src, branch, every, log, false)
+}
+
+// follow is Follow; skipFirst waits an interval before the first read
+// (Start has just made it).
+func (c *Catalog) follow(ctx context.Context, src HumanSource, branch string, every time.Duration, log *slog.Logger, skipFirst bool) {
 	for {
-		if err := c.LoadHuman(ctx, src, branch); err != nil && ctx.Err() == nil {
-			log.Warn("ui strings: couldn't read the human versions on "+branch, "err", err)
+		if !skipFirst {
+			if err := c.LoadHuman(ctx, src, branch); err != nil && ctx.Err() == nil {
+				log.Warn("ui strings: couldn't read the human versions on "+branch, "err", err)
+			}
 		}
+		skipFirst = false
 		select {
 		case <-ctx.Done():
 			return

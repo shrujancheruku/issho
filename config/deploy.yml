@@ -74,7 +74,9 @@ env:
     SUPABASE_URL: https://yjnzrhusfxilktbjrzsw.supabase.co
     # The sites on joinissho.com, plus their workers.dev addresses while both work.
     ALLOWED_ORIGINS: https://admin.joinissho.com,https://app.joinissho.com,https://issho-admin.shrujancheruku.workers.dev,https://issho-web.shrujancheruku.workers.dev
-    SENTRY_ENVIRONMENT: production
+    # Production refuses to start without its keys (backend/README.md); also the
+    # default for SENTRY_ENVIRONMENT.
+    APP_ENV: production
   secret:
     # A session-mode connection (direct or the session pooler), never the
     # transaction pooler: the API LISTENs for chat and the worker for River.

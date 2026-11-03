@@ -140,7 +140,7 @@ func walkBench(args []string) error {
 	case "review":
 		// The Maps Embed API (free) shows each route on the page; without a
 		// key with it enabled, the page links to Google Maps instead.
-		return bench.Review(*out, settings, *n, uint64(time.Now().UnixNano()), os.Getenv("GOOGLE_MAPS_EMBED_API_KEY"))
+		return bench.Review(*out, settings, *n, uint64(time.Now().UnixNano()), toolCfg.GoogleMapsEmbedAPIKey)
 	case "report":
 		md, err := bench.Summarize(*out, *human)
 		if err != nil {
@@ -215,7 +215,7 @@ func proposers(system string) (func(bench.Variant) (walks.Proposer, error), erro
 		case "claudecode":
 			return &bench.ClaudeCode{Model: v.Model, Effort: v.Effort, System: system}, nil
 		case "claude":
-			key := os.Getenv("ANTHROPIC_API_KEY")
+			key := toolCfg.AnthropicAPIKey
 			if key == "" {
 				return nil, errors.New("ANTHROPIC_API_KEY is required for claude variants (or use claudecode: with a Claude subscription)")
 			}
@@ -223,7 +223,7 @@ func proposers(system string) (func(bench.Variant) (walks.Proposer, error), erro
 			p.System = system
 			return p, nil
 		default:
-			key := os.Getenv("GOOGLE_GEMINI_API_KEY")
+			key := toolCfg.GeminiAPIKey
 			if key == "" {
 				return nil, errors.New("GOOGLE_GEMINI_API_KEY is required for gemini variants")
 			}
@@ -248,13 +248,13 @@ func judgeLLMs(s string) ([]bench.LLM, error) {
 		case "claudecode":
 			out = append(out, &bench.ClaudeCode{Model: v.Model, Effort: v.Effort})
 		case "claude":
-			key := os.Getenv("ANTHROPIC_API_KEY")
+			key := toolCfg.AnthropicAPIKey
 			if key == "" {
 				return nil, errors.New("ANTHROPIC_API_KEY is required for a claude judge (or use claudecode:)")
 			}
 			out = append(out, bench.NewClaudeLLM(key, v.Model, v.Effort))
 		default:
-			key := os.Getenv("GOOGLE_GEMINI_API_KEY")
+			key := toolCfg.GeminiAPIKey
 			if key == "" {
 				return nil, errors.New("GOOGLE_GEMINI_API_KEY is required for a gemini judge")
 			}

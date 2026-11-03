@@ -41,6 +41,8 @@
 | Apple `.p8` keys, Android keystores | not stored locally; EAS manages signing credentials | n/a | EAS (Expo) credential store |
 | SMTP relay credentials (M2) | not needed (Mailpit) | n/a | Supabase dashboard (custom SMTP) |
 
+**`APP_ENV` and missing keys.** `APP_ENV` (`development` by default, `preview` or `production`; not a secret) is set in each deployment's environment: `config/deploy.yml` sets `production` for the hosted API and worker. With `APP_ENV=production` the API and worker refuse to start unless every key in the table in [backend/README.md](../backend/README.md#app_env-and-what-production-requires) is set, and the error names all that are missing. So before deploying a production environment, make sure each of those secrets is non-empty in `.env.issho-prod` (and the server's copy). A preview deployment such as `issho-dev` keeps the optional behaviour. A missing key never deletes data in any environment.
+
 `.env.example` files contain **only** local-only defaults or empty placeholders, and are committed on purpose. Any real `.env`/`.env.*` file is gitignored.
 
 ## Automated protection

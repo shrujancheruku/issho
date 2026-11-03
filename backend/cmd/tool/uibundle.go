@@ -39,7 +39,7 @@ type bundledCatalog struct {
 // will use. English is bundled already and skipped.
 func uiBundle(args []string) error {
 	fs := flag.NewFlagSet("ui-bundle", flag.ExitOnError)
-	api := fs.String("api", os.Getenv("API_URL"), "the API to take the text from (default $API_URL)")
+	api := fs.String("api", toolCfg.APIURL, "the API to take the text from (default $API_URL)")
 	packs := fs.String("packs", "../data/citypacks", "city packs; their languages are bundled")
 	out := fs.String("out", "../apps/mobile/src/i18n/bundled", "where the files go")
 	wait := fs.Duration("wait", 3*time.Minute, "how long to wait for machine translations to finish")

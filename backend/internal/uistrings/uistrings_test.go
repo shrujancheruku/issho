@@ -4,16 +4,21 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
+	"log/slog"
 	"maps"
+	"net/http"
 	"slices"
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"connectrpc.com/connect"
 
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
+	"github.com/shrujancheruku/issho/backend/internal/platform/github"
 	"github.com/shrujancheruku/issho/backend/internal/platform/i18n"
 	"github.com/shrujancheruku/issho/backend/internal/translate"
 )
@@ -353,6 +358,34 @@ func TestLoadHuman(t *testing.T) {
 	}
 	if s := c.Text(ctx, nil, "ja", "hi"); s != "やあ" {
 		t.Errorf("a failed read must keep what's loaded: %q", s)
+	}
+}
+
+// A refused GitHub token stops production at startup; elsewhere, and for
+// any other failure, it only warns.
+func TestStartRefusedToken(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	log := slog.New(slog.NewTextHandler(io.Discard, nil))
+	newCatalog := func() *Catalog {
+		c, err := New([]byte(`{"hi":"Hello"}`), nil, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return c
+	}
+	for _, code := range []int{http.StatusUnauthorized, http.StatusForbidden} {
+		src := fakeSource{err: fmt.Errorf("list: %w", &github.APIError{StatusCode: code, Message: "Bad credentials"})}
+		if err := newCatalog().Start(ctx, src, "main", time.Hour, log, true); err == nil {
+			t.Errorf("%d: production started", code)
+		}
+		if err := newCatalog().Start(ctx, src, "main", time.Hour, log, false); err != nil {
+			t.Errorf("%d: non-strict: %v", code, err)
+		}
+	}
+	// An outage is not a bad token.
+	if err := newCatalog().Start(ctx, fakeSource{err: errors.New("down")}, "main", time.Hour, log, true); err != nil {
+		t.Errorf("outage: %v", err)
 	}
 }
 
