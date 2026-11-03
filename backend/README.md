@@ -187,7 +187,7 @@ go run ./cmd/tool migrate status
 
 ## Seeding
 
-`cmd/tool seed` validates and upserts `../data/venue-categories.json` and `../data/activities.json`, then each city pack given (`make seed` loads them all). It's idempotent. Note that removing an area from the JSON does **not** delete it from the database. See [../data/README.md](../data/README.md).
+`cmd/tool seed` validates and upserts `../data/venue-categories.json` and `../data/activities.json`, then each city pack given (`make seed` loads them all) through `cities.Apply`, the only way to write a pack. With `GOOGLE_MAPS_API_KEY` set it also builds the travel times of new or moved areas; without it they are skipped (logged). It's idempotent. Note that removing an area from the JSON does **not** delete it from the database. See [../data/README.md](../data/README.md).
 
 ## Geo data (Google Maps)
 
@@ -316,7 +316,7 @@ go test ./...          # or `make test` from the root
 | `internal/translate/translate_test.go` | Stored language wins, cache hits skip the translator, duplicates translated once, concurrent requests share one call, slow translations finish in the background after the request is gone, failures aren't cached, batching keeps positions, prefill fails loudly (run with `-race`) |
 | `internal/translate/google/google_test.go` | Key only in a header, source/format sent, batching by segment count and size, HTML entities unescaped, API errors and wrong result counts fail |
 
-CI also runs migrations up → down → up, seeds every city pack, runs the geo, profile, plans, crews, chat socket, moderation, translations, notifications, cities, city-pack and curation integration tests and dry-runs both geo tools against a PostGIS container. Tests must never call paid external APIs. Run the integration tests locally with `TEST_DATABASE_URL=$DATABASE_URL go test ./internal/geo/ ./internal/profile/ ./internal/plans/ ./internal/crews/ ./internal/chatws/ ./internal/moderation/ ./internal/translations/ ./internal/notifications/ ./internal/cities/ ./internal/citypacks/ ./internal/curation/ -run Integration`; they create and remove their own throwaway cities, activity and users (the profile test needs the Tokyo pack seeded).
+CI also runs migrations up → down → up, seeds every city pack, runs the geo, profile, plans, crews, chat, chat socket, moderation, translations, notifications, cities, city-pack and curation integration tests and dry-runs both geo tools against a PostGIS container. Tests must never call paid external APIs. Run the same checks locally with `make test-db`: it starts a throwaway PostGIS container of its own (named after the worktree, on a free port, the image CI uses), runs `scripts/db-checks.sh` (the script CI's `backend` job runs, so the steps and package list exist once) and removes the container afterwards, also on failure or Ctrl-C. It needs Docker, strips any hosted `DATABASE_URL` (from `.env*` or `ENV_FILE`) and replaces it with the container's, and `db-checks.sh` refuses a non-local host, so parallel worktrees don't clash. The tests create and remove their own throwaway cities, activity and users.
 
 ## Code generation
 

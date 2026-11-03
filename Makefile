@@ -11,7 +11,7 @@ include $(ENV_FILE)
 export
 endif
 
-.PHONY: setup secrets-scan docs gen gen-proto gen-sql gen-strings email-templates ui-bundle app-build app-icons readme-panels lint test migrate-up migrate-status api worker seed matrix venues boundaries sim
+.PHONY: setup secrets-scan docs gen gen-proto gen-sql gen-strings email-templates ui-bundle app-build app-icons readme-panels lint test test-db migrate-up migrate-status api worker seed matrix venues boundaries sim
 
 # One-time setup after cloning: install JS deps and enable the secret-scanning pre-commit hook.
 setup:
@@ -56,6 +56,13 @@ lint:
 test:
 	cd backend && go test ./...
 	pnpm test
+
+# The backend's database checks (migrations, seed, integration tests) on a
+# throwaway PostGIS container of its own; needs Docker. Hosted URLs (from .env*
+# or ENV_FILE) are stripped and replaced with the container's.
+# Runs the same script as CI's backend job (scripts/db-checks.sh).
+test-db:
+	env -u ENV_FILE -u DATABASE_URL -u TEST_DATABASE_URL -u WORKER_DATABASE_URL scripts/test-db.sh
 
 migrate-up:
 	cd backend && go run ./cmd/tool migrate up

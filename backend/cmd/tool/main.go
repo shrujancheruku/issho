@@ -3,6 +3,7 @@
 //
 //	tool migrate up|down|status|...
 //	tool seed [-catalog data/activities.json] [-venue-categories data/venue-categories.json] data/citypacks/tokyo.json ...
+//	  (seed applies packs with cities.Apply: GOOGLE_MAPS_API_KEY builds the travel times of new or moved areas, else they are skipped)
 //	tool build-matrix [-dry-run] <city>
 //	tool discover-venues [-dry-run] [-categories cafe,park] <city>
 //	tool area-boundaries [-threshold 0.0002] data/citypacks/<city>.json   (areas' outlines from OpenStreetMap, by osm_id)
@@ -31,6 +32,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	"github.com/shrujancheruku/issho/backend/internal/cities"
 	"github.com/shrujancheruku/issho/backend/internal/geo"
+	"github.com/shrujancheruku/issho/backend/internal/maps"
 	"github.com/shrujancheruku/issho/backend/internal/maps/google"
 	"github.com/shrujancheruku/issho/backend/internal/matching"
 	"github.com/shrujancheruku/issho/backend/internal/matching/sim"
@@ -94,14 +96,7 @@ func run(args []string) error {
 			return err
 		}
 		slog.Info("seeded catalogue", "activities", n)
-		for _, path := range fs.Args() {
-			p, err := cities.SeedPack(ctx, pool, path)
-			if err != nil {
-				return err
-			}
-			slog.Info("seeded city pack", "city", p.ID, "areas", len(p.Areas))
-		}
-		return nil
+		return seedPacks(ctx, pool, fs.Args())
 	case "build-matrix":
 		return buildMatrix(ctx, pool, args[1:])
 	case "discover-venues":
@@ -132,6 +127,56 @@ func cityArg(fs *flag.FlagSet) (string, error) {
 		return "", fmt.Errorf("usage: tool %s [flags] <city>", fs.Name())
 	}
 	return fs.Arg(0), nil
+}
+
+// seedPacks applies each pack with cities.Apply, the one way to write a pack,
+// so new or moved areas get their travel times. With GOOGLE_MAPS_API_KEY it
+// rebuilds the matrix; without, it seeds and says the travel times were skipped.
+func seedPacks(ctx context.Context, pool *pgxpool.Pool, paths []string) error {
+	// Left a nil interface (not a typed nil) without a key: Apply checks for nil.
+	var router maps.Router
+	if key := os.Getenv("GOOGLE_MAPS_API_KEY"); key != "" {
+		router = google.New(key)
+	}
+	// Read and validate every pack first, so a bad file stops the run before
+	// anything is seeded.
+	packs := make([]cities.Pack, 0, len(paths))
+	for _, path := range paths {
+		p, err := cities.ReadPack(path)
+		if err != nil {
+			return err
+		}
+		if err := cities.ValidatePack(p, nil); err != nil {
+			return fmt.Errorf("%s: %w", path, err)
+		}
+		packs = append(packs, p)
+	}
+	return applyPacks(ctx, packs, router != nil, func(ctx context.Context, p cities.Pack) (cities.Diff, error) {
+		return cities.Apply(ctx, pool, router, p)
+	})
+}
+
+// applyPacks runs apply on each pack and logs its Diff. apply is injected so
+// the error handling can be tested without a database. A failed travel-time
+// rebuild (cities.ErrTravelTimes) only warns, since the pack is seeded; any
+// other error stops the run.
+func applyPacks(ctx context.Context, packs []cities.Pack, haveRouter bool, apply func(context.Context, cities.Pack) (cities.Diff, error)) error {
+	for _, p := range packs {
+		d, err := apply(ctx, p)
+		if errors.Is(err, cities.ErrTravelTimes) {
+			// The pack is seeded; build-matrix or the worker's refresh retries.
+			slog.Warn("seeded city pack, but the travel times failed", "city", p.ID, "error", err)
+		} else if err != nil {
+			return err
+		}
+		slog.Info("seeded city pack", "city", p.ID, "areas", len(p.Areas),
+			"new_areas", d.NewAreas, "moved_areas", d.MovedAreas,
+			"travel_times_rebuilt", d.TravelTimesRebuilt, "travel_time_rows", d.TravelTimes)
+		if !haveRouter && len(d.NewAreas)+len(d.MovedAreas) > 0 {
+			slog.Warn("travel times skipped: GOOGLE_MAPS_API_KEY is not set; run build-matrix once it is", "city", p.ID)
+		}
+	}
+	return nil
 }
 
 func buildMatrix(ctx context.Context, pool *pgxpool.Pool, args []string) error {
