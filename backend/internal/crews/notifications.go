@@ -16,7 +16,9 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/uistrings"
 )
 
-// Crew notifications (app.notifications.kind).
+// Crew notifications (app.notifications.kind). The app refreshes the matching
+// queries when one arrives: add a row for every new kind to `pushKinds` in
+// apps/mobile/src/lib/queries.ts (a Jest test fails until you do).
 const (
 	NotifyCrewOffered    = "crew_offered"    // you got on well: keep meeting as a crew?
 	NotifyCrewFormed     = "crew_formed"     // enough people accepted

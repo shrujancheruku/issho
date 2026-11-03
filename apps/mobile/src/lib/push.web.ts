@@ -13,3 +13,5 @@ export async function registerForPush(_: { ask: boolean; userId: string }): Prom
 export async function unregisterPush() {}
 
 export function useNotificationTaps(_open: (target: NotificationTarget) => void) {}
+
+export function usePushRefresh() {}

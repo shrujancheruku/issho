@@ -4,7 +4,7 @@ import { useCallback, useEffect } from 'react';
 import AppTabs from '@/components/app-tabs';
 import { useAuth } from '@/features/auth/auth-provider';
 import type { NotificationTarget } from '@/lib/notification-target';
-import { registerForPush, useNotificationTaps } from '@/lib/push';
+import { registerForPush, useNotificationTaps, usePushRefresh } from '@/lib/push';
 
 // The main app, available once the user is signed in and onboarded (see app/_layout.tsx).
 export default function TabsLayout() {
@@ -14,6 +14,7 @@ export default function TabsLayout() {
   useEffect(() => {
     if (userId) void registerForPush({ ask: false, userId });
   }, [userId]);
+  usePushRefresh();
   useNotificationTaps(
     useCallback(
       (target: NotificationTarget) =>

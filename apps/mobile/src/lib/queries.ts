@@ -76,3 +76,33 @@ export function crewLeft(qc: QueryClient, id: string) {
   qc.removeQueries({ queryKey: keys.room({ crewId: id }) });
   return refresh(qc, keys.crews);
 }
+
+/** The ids a push carries in its data (`notifications.go` `data()`); each is set only when the kind has one. */
+export type PushRef = { eventId?: string; planId?: string; crewId?: string };
+
+/**
+ * What each push kind makes stale, keyed by the backend's notification kind.
+ * One place for both received pushes and taps. A test
+ * (`__tests__/push-kinds.test.ts`) reads the Go `Notify*` constants and fails
+ * when a kind has no row here; the Go files point back at this table.
+ */
+export const pushKinds: Record<string, (ref: PushRef) => readonly (readonly unknown[])[]> = {
+  event_invited: ({ eventId }) => [keys.events, ...(eventId ? [keys.event(eventId)] : []), keys.feed],
+  group_confirmed: ({ eventId }) => [...(eventId ? [keys.event(eventId)] : []), keys.events],
+  group_cancelled: ({ eventId }) => [...(eventId ? [keys.event(eventId)] : []), keys.events],
+  event_feedback: ({ eventId }) => [...(eventId ? [keys.event(eventId)] : []), keys.events],
+  plan_no_group: () => [keys.feed, keys.events],
+  crew_offered: ({ crewId }) => [keys.crews, ...(crewId ? [keys.crew(crewId)] : [])],
+  crew_formed: ({ crewId }) => [keys.crews, ...(crewId ? [keys.crew(crewId)] : [])],
+  // An open room gets the message over its socket; only the crew's own data changes.
+  crew_suggestion: ({ crewId }) => (crewId ? [keys.crew(crewId)] : []),
+};
+
+/**
+ * A push arrived (or was tapped): refresh what its kind changed. An unknown
+ * kind (a newer server than this app) refreshes nothing.
+ */
+export function pushReceived(qc: QueryClient, kind: unknown, ref: PushRef = {}) {
+  const affected = typeof kind === 'string' && Object.hasOwn(pushKinds, kind) ? pushKinds[kind] : undefined;
+  return refresh(qc, ...(affected?.(ref) ?? []));
+}

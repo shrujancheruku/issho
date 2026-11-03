@@ -42,6 +42,8 @@ go="backend=true codegen=true image=true proto=false ts=false ts_filter="
 check go-only "$go" backend/internal/walks/walks.go
 check data "backend=true codegen=true image=true proto=false ts=true ts_filter=" data/activities.json
 # Cross-tree reads (review round 1): each must keep its reader's job on.
+check push-kinds-plans "backend=true codegen=true image=true proto=false ts=true ts_filter=" backend/internal/plans/events.go
+check push-kinds-crews "backend=true codegen=true image=true proto=false ts=true ts_filter=" backend/internal/crews/notifications.go
 check embedded-markdown "$go" backend/internal/translate/guide.md
 check supabase-templates "backend=true codegen=false image=false proto=false ts=false ts_filter=" supabase/templates/source.json
 check supabase-config "backend=true codegen=false image=false proto=false ts=false ts_filter=" supabase/config.toml

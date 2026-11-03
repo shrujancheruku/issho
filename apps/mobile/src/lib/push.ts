@@ -1,4 +1,5 @@
 import { PushPlatform } from '@issho/api-client';
+import { useQueryClient } from '@tanstack/react-query';
 import Constants, { ExecutionEnvironment } from 'expo-constants';
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
@@ -8,6 +9,7 @@ import { Platform } from 'react-native';
 
 import { api } from '@/lib/api';
 import type { NotificationTarget } from '@/lib/notification-target';
+import { type PushRef, pushReceived } from '@/lib/queries';
 
 /**
  * Push notifications through Expo (a plan you signed up for has a date;
@@ -109,19 +111,49 @@ export async function unregisterPush() {
   }
 }
 
+/** The kind and ids a notification carries (`backend/internal/notifications` `data()`). */
+function pushData(data: Record<string, unknown> | undefined): { kind: unknown; ref: PushRef } {
+  const id = (v: unknown) => (typeof v === 'string' ? v : undefined);
+  return { kind: data?.kind, ref: { eventId: id(data?.eventId), planId: id(data?.planId), crewId: id(data?.crewId) } };
+}
+
+/**
+ * Refreshes what a push made stale while the app is open, without a tap
+ * (a confirmed group shows on the event and the list). The table is
+ * `pushKinds` in lib/queries.ts. Mount where the person is signed in.
+ */
+// Mounted only for a signed-in, onboarded person: a push that arrives while
+// signed out or in onboarding is deliberately ignored (nothing is cached yet).
+export function usePushRefresh() {
+  const qc = useQueryClient();
+  useEffect(() => {
+    const sub = Notifications.addNotificationReceivedListener((n) => {
+      const { kind, ref } = pushData(n.request.content.data);
+      void pushReceived(qc, kind, ref);
+    });
+    return () => sub.remove();
+  }, [qc]);
+}
+
 /**
  * Opens what a tapped notification is about, including the one that
  * launched the app. Mount where the person is signed in and onboarded.
  */
 export function useNotificationTaps(open: (target: NotificationTarget) => void) {
+  const qc = useQueryClient();
   const response = Notifications.useLastNotificationResponse();
   useEffect(() => {
     const data = response?.notification.request.content.data;
+    // A tap may be the first the app hears of it (it launched from the push): refresh too.
+    if (response) {
+      const { kind, ref } = pushData(data);
+      void pushReceived(qc, kind, ref);
+    }
     if (typeof data?.eventId === 'string') open({ eventId: data.eventId });
     else if (typeof data?.planId === 'string') open({ planId: data.planId });
     else if (typeof data?.crewId === 'string') open({ crewId: data.crewId });
     else return;
     // Otherwise the same notification would open the event again next launch.
     void Notifications.clearLastNotificationResponseAsync().catch(() => {});
-  }, [response, open]);
+  }, [response, open, qc]);
 }

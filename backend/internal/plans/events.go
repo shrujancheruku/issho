@@ -44,7 +44,9 @@ const (
 )
 
 // Notification kinds (app.notifications.kind) this package queues; it
-// renders them too (NotificationRenderer).
+// renders them too (NotificationRenderer). The app refreshes the matching
+// queries when one arrives: add a row for every new kind to `pushKinds` in
+// apps/mobile/src/lib/queries.ts (a Jest test fails until you do).
 const (
 	NotifyInvited   = "event_invited"   // a round you signed up for has a date: please answer
 	NotifyConfirmed = "group_confirmed" // your group is going ahead
