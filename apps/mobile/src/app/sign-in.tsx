@@ -6,7 +6,7 @@ import { ErrorLine } from '@/components/error-line';
 import { ScreenFrame } from '@/components/screen-frame';
 import { signInErrorText } from '@/features/auth/sign-in-error';
 import { ThemedText } from '@/components/themed-text';
-import { BodyFont, Spacing } from '@/constants/theme';
+import { BodyFont, FontSize, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { PrimaryButton } from '@/components/primary-button';
 import { useI18n } from '@/i18n/i18n-provider';
@@ -133,7 +133,9 @@ const styles = StyleSheet.create({
   // Capped so the logo stays a logo on wide screens instead of filling them.
   logo: { width: '70%', maxWidth: 280, aspectRatio: 900 / 598, alignSelf: 'center' },
   form: { gap: Spacing.three },
-  input: { fontFamily: BodyFont.regular, borderRadius: 12, paddingHorizontal: Spacing.three, paddingVertical: Spacing.three, fontSize: 17 },
+  input: { fontFamily: BodyFont.regular, borderRadius: 12, paddingHorizontal: Spacing.three, paddingVertical: Spacing.three, fontSize: FontSize.default },
+  // The six digits are the one thing on this screen, set large and spaced like a code, so they have a display size of their own.
+  // eslint-disable-next-line no-restricted-syntax
   code: { fontSize: 28, letterSpacing: 12, textAlign: 'center' },
   row: { flexDirection: 'row', justifyContent: 'space-between' },
   error: { textAlign: 'center' },

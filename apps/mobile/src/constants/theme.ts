@@ -48,6 +48,18 @@ export const Colors = {
     pinLow: '#C8CBD0',
     pinLowText: '#5E5E5E',
     pinNone: '#8A8F98',
+    /**
+     * White washes over the accent (the crew header and You's appearance
+     * switch sit on it): a faint bar, the selected segment, the unfilled
+     * stretch of a track. The same in both themes: the accent is dark in each.
+     */
+    onAccentWash: 'rgba(255,255,255,0.14)',
+    onAccentWashStrong: 'rgba(255,255,255,0.22)',
+    onAccentTrack: 'rgba(255,255,255,0.28)',
+    /** The small menu that drops from a header. Dark gets the surface, so link text stays readable. */
+    menuSurface: 'rgba(255,255,255,0.92)',
+    /** Google's required attribution on a map: grey on its pale tiles, white on the dark ones. */
+    mapAttribution: '#5E5E5E',
   },
   dark: {
     text: '#F1F3F8',
@@ -71,6 +83,11 @@ export const Colors = {
     pinLow: '#C8CBD0',
     pinLowText: '#5E5E5E',
     pinNone: '#8A8F98',
+    onAccentWash: 'rgba(255,255,255,0.14)',
+    onAccentWashStrong: 'rgba(255,255,255,0.22)',
+    onAccentTrack: 'rgba(255,255,255,0.28)',
+    menuSurface: 'rgba(22,30,64,0.96)',
+    mapAttribution: '#FFFFFF',
   },
 } as const;
 
@@ -143,6 +160,24 @@ export const Brand = {
   goldTint: '#F2E2B2',
   goldDeep: '#885716',
   ink: '#131B40',
+  /** Map pins' ring and the text on a grey pin. */
+  white: '#FFFFFF',
+  /** The soft glow under the walker on a drawn route. */
+  goldHalo: 'rgba(222,169,44,0.3)',
+} as const;
+
+/**
+ * The text sizes, one per ThemedText type (components/themed-text.tsx).
+ * Screens never write a fontSize of their own (lint bans it): pick a type.
+ * TextInputs, which aren't ThemedText, take FontSize.default.
+ */
+export const FontSize = {
+  caption: 12,
+  small: 14,
+  default: 16,
+  heading: 22,
+  subtitle: 26,
+  title: 44,
 } as const;
 
 export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;

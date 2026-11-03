@@ -7,7 +7,7 @@ import { ErrorLine } from '@/components/error-line';
 import { Chip } from '@/components/chip';
 import { PrimaryButton } from '@/components/primary-button';
 import { ThemedText } from '@/components/themed-text';
-import { BodyFont, Spacing } from '@/constants/theme';
+import { BodyFont, FontSize, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useI18n } from '@/i18n/i18n-provider';
 import { api } from '@/lib/api';
@@ -120,7 +120,7 @@ export function SuggestActivities({
 
 const styles = StyleSheet.create({
   box: { gap: Spacing.two },
-  input: { fontFamily: BodyFont.regular, borderRadius: 12, padding: Spacing.three, fontSize: 16, minHeight: 88, textAlignVertical: 'top' },
+  input: { fontFamily: BodyFont.regular, borderRadius: 12, padding: Spacing.three, fontSize: FontSize.default, minHeight: 88, textAlignVertical: 'top' },
   results: { gap: Spacing.two },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
   actions: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },

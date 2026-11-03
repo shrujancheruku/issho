@@ -9,7 +9,7 @@ import { LoadState, QueryScreen } from '@/components/query-screen';
 import { ScreenHeader, SectionTitle } from '@/components/screen-header';
 import { TabIcon } from '@/components/tab-icons';
 import { ThemedText } from '@/components/themed-text';
-import { BodyFont, BottomTabInset, Spacing } from '@/constants/theme';
+import { BodyFont, FontSize, BottomTabInset, Spacing } from '@/constants/theme';
 import { useFeed } from '@/features/plans/data';
 import { levelColors } from '@/features/plans/level';
 import { pinsFor } from '@/features/plans/map-data';
@@ -278,7 +278,7 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontFamily: BodyFont.regular,
-    fontSize: 16,
+    fontSize: FontSize.default,
     paddingVertical: Spacing.two,
   },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },

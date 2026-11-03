@@ -112,9 +112,17 @@ The app is written in English; every other language comes from the server (`UISe
 - **Weekday names** come from `Intl.DateTimeFormat`, not the catalogue.
 - **Sign-in emails** follow the same language: sign-up stores the screen's language as `user_metadata.lang`, and `AuthProvider` keeps it equal to the profile's main language (`supabase.auth.updateUser`). See `supabase/README.md`.
 
+## Theme
+
+Text sizes and colours come only from `constants/theme.ts`, and lint (`eslint.config.js`, tested in `src/lib/__tests__/theme-lint.test.ts`) fails the build otherwise.
+
+- **Sizes** are the `ThemedText` types: `caption` 12, `small` and `smallBold` 14, `default` 16, `heading` 22 (bold, body face), `subtitle` 26 and `title` 44 (display face, for names). Pick the nearest type; don't write a `fontSize` number (the `[font-size]` rule). A `TextInput` isn't `ThemedText`, so it sets `fontSize: FontSize.default`. A deliberate display size (a map pin's number, the sign-in code) stays with an `eslint-disable-next-line no-restricted-syntax` comment that gives the reason.
+- **Colours** come from `useTheme()` (`Colors`, light and dark) or `Brand` (fixed). A new colour is a token in `constants/theme.ts` with a value for each theme, checked against its background in light and dark; no `#hex`, `rgb(` or `rgba(` anywhere else (the `[colour-literal]` rule; tests are exempt).
+- **Shared pieces:** `components/card.tsx` is the one card (surface, radius 16, padding); `features/plans/level-tag.tsx` is the level pill and `features/plans/title-block.tsx` the name block of a plan or event.
+
 ## Typography
 
-- **Standout and hero text** (`ThemedText` types `title` and `subtitle`) uses **Dela Gothic One**, the face of the "ISSHO" wordmark (see `assets/brand`). It covers Latin and Japanese.
+- **Standout and hero text** (`ThemedText` types `title` and `subtitle`; `heading` is the bold body face) uses **Dela Gothic One**, the face of the "ISSHO" wordmark (see `assets/brand`). It covers Latin and Japanese.
 - Everything else (body text, buttons) uses **Zen Kaku Gothic New** in 400, 500 and 700. Each weight is its own family (`BodyFont`), because custom fonts ignore `fontWeight` on Android: `ThemedText` picks the family from the style's `fontWeight` (600 and up is bold) and drops the weight. Text outside `ThemedText` sets the family itself; every `TextInput` uses `BodyFont.regular`.
 - The fonts come from `@expo-google-fonts/dela-gothic-one` and `@expo-google-fonts/zen-kaku-gothic-new` (OFL) and are loaded at startup with `useFonts` in `app/_layout.tsx`, which also works in Expo Go. The splash screen stays up until they're loaded. If loading fails, the app falls back to the system font. The three body weights add about 7 MB to the app.
 - Use the `DisplayFont` constant (`constants/theme.ts`) rather than the family name. The face has a single weight, so **never set `fontWeight`** on display text: Android would fall back to the system font.
