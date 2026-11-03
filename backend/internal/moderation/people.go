@@ -13,6 +13,7 @@ import (
 
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
+	"github.com/shrujancheruku/issho/backend/internal/plans"
 	"github.com/shrujancheruku/issho/backend/internal/platform/auth"
 	"github.com/shrujancheruku/issho/backend/internal/platform/errs"
 	"github.com/shrujancheruku/issho/backend/internal/platform/paging"
@@ -119,9 +120,15 @@ func (h *Handler) GetPerson(ctx context.Context, req *connect.Request[isshov1.Ge
 		return nil, err
 	}
 	for _, o := range outings {
-		po := &isshov1.PersonOuting{
-			EventId: o.EventID.String(), Title: o.Title, Block: o.Block, EventStatus: o.EventStatus,
-			Response: o.Response, CheckedIn: o.CheckedIn,
+		po := &isshov1.PersonOuting{EventId: o.EventID.String(), Title: o.Title, CheckedIn: o.CheckedIn}
+		if po.Block, err = plans.BlockProto(o.Block); err != nil {
+			return nil, err
+		}
+		if po.EventStatus, err = plans.EventStatusProto(o.EventStatus); err != nil {
+			return nil, err
+		}
+		if po.Response, err = plans.ResponseProto(o.Response); err != nil {
+			return nil, err
 		}
 		if o.Date.Valid {
 			po.Date = o.Date.Time.Format(time.DateOnly)

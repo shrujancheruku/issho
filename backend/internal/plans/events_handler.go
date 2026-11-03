@@ -263,6 +263,7 @@ var (
 		EventScheduled: isshov1.EventStatus_EVENT_STATUS_SCHEDULED,
 		EventDone:      isshov1.EventStatus_EVENT_STATUS_DONE,
 		EventCancelled: isshov1.EventStatus_EVENT_STATUS_CANCELLED,
+		EventProposed:  isshov1.EventStatus_EVENT_STATUS_PROPOSED, // admin SPA only
 	}
 	groupStatusPB = map[string]isshov1.GroupStatus{
 		GroupInviting:  isshov1.GroupStatus_GROUP_STATUS_INVITING,

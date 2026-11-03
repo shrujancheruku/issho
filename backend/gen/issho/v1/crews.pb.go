@@ -30,6 +30,10 @@ const (
 	// Offered: waiting for answers.
 	CrewStatus_CREW_STATUS_OFFERED CrewStatus = 1
 	CrewStatus_CREW_STATUS_ACTIVE  CrewStatus = 2
+	// Too few accepted in time. Only the admin SPA sees this.
+	CrewStatus_CREW_STATUS_LAPSED CrewStatus = 3
+	// Fewer than 2 members left. Only the admin SPA sees this.
+	CrewStatus_CREW_STATUS_CLOSED CrewStatus = 4
 )
 
 // Enum value maps for CrewStatus.
@@ -38,11 +42,15 @@ var (
 		0: "CREW_STATUS_UNSPECIFIED",
 		1: "CREW_STATUS_OFFERED",
 		2: "CREW_STATUS_ACTIVE",
+		3: "CREW_STATUS_LAPSED",
+		4: "CREW_STATUS_CLOSED",
 	}
 	CrewStatus_value = map[string]int32{
 		"CREW_STATUS_UNSPECIFIED": 0,
 		"CREW_STATUS_OFFERED":     1,
 		"CREW_STATUS_ACTIVE":      2,
+		"CREW_STATUS_LAPSED":      3,
+		"CREW_STATUS_CLOSED":      4,
 	}
 )
 
@@ -862,12 +870,14 @@ const file_issho_v1_crews_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1a\n" +
 	"\baccepted\x18\x03 \x01(\bR\baccepted\x12\x0e\n" +
-	"\x02me\x18\x04 \x01(\bR\x02me*Z\n" +
+	"\x02me\x18\x04 \x01(\bR\x02me*\x8a\x01\n" +
 	"\n" +
 	"CrewStatus\x12\x1b\n" +
 	"\x17CREW_STATUS_UNSPECIFIED\x10\x00\x12\x17\n" +
 	"\x13CREW_STATUS_OFFERED\x10\x01\x12\x16\n" +
-	"\x12CREW_STATUS_ACTIVE\x10\x02*d\n" +
+	"\x12CREW_STATUS_ACTIVE\x10\x02\x12\x16\n" +
+	"\x12CREW_STATUS_LAPSED\x10\x03\x12\x16\n" +
+	"\x12CREW_STATUS_CLOSED\x10\x04*d\n" +
 	"\fCrewResponse\x12\x1d\n" +
 	"\x19CREW_RESPONSE_UNSPECIFIED\x10\x00\x12\x19\n" +
 	"\x15CREW_RESPONSE_OFFERED\x10\x01\x12\x1a\n" +

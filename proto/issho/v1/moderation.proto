@@ -5,6 +5,7 @@ package issho.v1;
 import "google/protobuf/timestamp.proto";
 import "issho/v1/crews.proto";
 import "issho/v1/events.proto";
+import "issho/v1/profile.proto";
 
 option go_package = "github.com/shrujancheruku/issho/backend/gen/issho/v1;isshov1";
 
@@ -115,7 +116,7 @@ message ModerationReport {
   // The outing's date (YYYY-MM-DD, in the city's time zone) and part of the
   // day (morning, afternoon, evening).
   string event_date = 13;
-  string event_block = 14;
+  TimeBlock event_block = 21;
   string crew_id = 15;
   string crew_name = 16;
   google.protobuf.Timestamp created_at = 17;
@@ -124,6 +125,8 @@ message ModerationReport {
   google.protobuf.Timestamp updated_at = 18;
   google.protobuf.Timestamp reviewed_at = 19;
   string reviewed_by = 20;
+  // event_block was a string at 14.
+  reserved 14;
 }
 
 message ResolveReportRequest {
@@ -208,14 +211,15 @@ message CrewLeave {
   string crew_id = 2;
   // "Football" or "Kichijoji": what the crew shares.
   string crew_name = 3;
-  // offered, active, lapsed or closed.
-  string crew_status = 4;
+  CrewStatus crew_status = 10;
   // Empty if they've deleted their account.
   string user_id = 5;
   string user_name = 6;
   LeaveReason reason = 7;
   string details = 8;
   google.protobuf.Timestamp created_at = 9;
+  // crew_status was a string at 4.
+  reserved 4;
 }
 
 message SearchPeopleRequest {
@@ -293,16 +297,16 @@ message Suspension {
 message PersonOuting {
   string event_id = 1;
   string title = 2;
-  // YYYY-MM-DD in the city's time zone, and morning, afternoon or evening.
+  // YYYY-MM-DD in the city's time zone, and the part of the day.
   string date = 3;
-  string block = 4;
-  // scheduled, done or cancelled.
-  string event_status = 5;
-  // invited, confirmed, declined or dropped (confirmed, then cancelled).
-  string response = 6;
+  TimeBlock block = 9;
+  EventStatus event_status = 10;
+  InviteResponse response = 11;
   bool checked_in = 7;
   // Their feedback: SAID_WENT, SAID_DIDNT_GO, or UNSPECIFIED (none).
   OutingFeedback feedback = 8;
+  // block, event_status and response were strings at 4, 5 and 6.
+  reserved 4, 5, 6;
 }
 
 enum OutingFeedback {

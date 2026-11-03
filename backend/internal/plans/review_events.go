@@ -66,11 +66,15 @@ func (h *ReviewHandler) ListReviewEvents(ctx context.Context, req *connect.Reque
 		out.NextPageToken = paging.Encode(scope, paging.Date(last.Date.Time), last.Block, paging.UUID(last.ID))
 	}
 	for i, r := range rows {
-		out.Events[i] = reviewEventToProto(dbgen.GetReviewEventRow{
+		ev, err := reviewEventToProto(dbgen.GetReviewEventRow{
 			ID: r.ID, PlanID: r.PlanID, Status: r.Status, Date: r.Date, Block: r.Block, StartsAt: r.StartsAt,
 			ConfirmBy: r.ConfirmBy, Forced: r.Forced, CreatedAt: r.CreatedAt, Title: r.Title, ActivityID: r.ActivityID,
 			FollowUpID: r.FollowUpID, AreaName: r.AreaName, Timezone: r.Timezone,
 		}, names)
+		if err != nil {
+			return nil, err
+		}
+		out.Events[i] = ev
 		out.Events[i].Groups, out.Events[i].People = r.Groups, r.People
 	}
 	return connect.NewResponse(out), nil
@@ -104,19 +108,31 @@ func (h *ReviewHandler) GetReviewEvent(ctx context.Context, req *connect.Request
 	if err != nil {
 		return nil, err
 	}
-	out := &isshov1.GetReviewEventResponse{Event: reviewEventToProto(ev, names)}
+	evPB, err := reviewEventToProto(ev, names)
+	if err != nil {
+		return nil, err
+	}
+	out := &isshov1.GetReviewEventResponse{Event: evPB}
 	for _, g := range groups {
+		gStatus, err := GroupStatusProto(g.Status)
+		if err != nil {
+			return nil, err
+		}
 		rg := &isshov1.ReviewGroup{
-			Id: g.ID.String(), Quorum: int32(g.Quorum), MinAttendance: int32(g.MinAttendance), Score: g.Score, Status: g.Status,
+			Id: g.ID.String(), Quorum: int32(g.Quorum), MinAttendance: int32(g.MinAttendance), Score: g.Score, Status: gStatus,
 		}
 		if len(g.MeetingPoint) > 0 {
 			rg.MeetingPoint = i18n.Pick(g.MeetingPoint, i18n.Authoring)
 		}
 		for _, m := range members {
 			if m.GroupID == g.ID {
+				response, err := ResponseProto(m.Response)
+				if err != nil {
+					return nil, err
+				}
 				rg.Members = append(rg.Members, &isshov1.ReviewMember{
 					UserId: m.UserID.String(), Name: m.Name, Gender: m.Gender, BirthYear: m.BirthYear,
-					Response: m.Response, SignedUp: m.SignedUp,
+					Response: response, SignedUp: m.SignedUp,
 				})
 			}
 		}
@@ -242,9 +258,13 @@ func proposalError(err error) error {
 	return err
 }
 
-func reviewEventToProto(e dbgen.GetReviewEventRow, names map[string]string) *isshov1.ReviewEvent {
+func reviewEventToProto(e dbgen.GetReviewEventRow, names map[string]string) (*isshov1.ReviewEvent, error) {
+	block, err := BlockProto(e.Block)
+	if err != nil {
+		return nil, err
+	}
 	out := &isshov1.ReviewEvent{
-		Id: e.ID.String(), PlanId: e.PlanID.String(), AreaName: e.AreaName, Block: e.Block, Forced: e.Forced,
+		Id: e.ID.String(), PlanId: e.PlanID.String(), AreaName: e.AreaName, Block: block, Forced: e.Forced,
 		CreatedAt: timestamppb.New(e.CreatedAt.Time), TimeZone: e.Timezone,
 	}
 	for k, v := range reviewEventStatuses {
@@ -266,5 +286,5 @@ func reviewEventToProto(e dbgen.GetReviewEventRow, names map[string]string) *iss
 	if e.ConfirmBy.Valid {
 		out.ConfirmBy = timestamppb.New(e.ConfirmBy.Time)
 	}
-	return out
+	return out, nil
 }
