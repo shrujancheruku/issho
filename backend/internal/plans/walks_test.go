@@ -94,7 +94,7 @@ func TestIntegrationWalks(t *testing.T) {
 
 	// No composer (no Gemini key): the walk isn't opened in another form.
 	r := &Runner{DB: f.pool, Timing: DefaultTiming(), Log: log}
-	if opened, err := r.Suggest(ctx, f.city, now); err != nil || opened != 0 {
+	if opened, err := r.Suggest(ctx, f.city, now); err != nil || opened.Opened != 0 {
 		t.Fatalf("Suggest without a composer opened %d, %v", opened, err)
 	}
 
@@ -102,10 +102,10 @@ func TestIntegrationWalks(t *testing.T) {
 	prop, router := &walkProposer{bad: true}, &walkRouter{}
 	r.Walks = &walks.Composer{Proposer: prop, Places: findAll{}, Routes: router, Rules: walks.DefaultRules(), Log: log}
 	r.WalkRoutes = router
-	if opened, err := r.Suggest(ctx, f.city, now); err != nil || opened != 0 || prop.calls != 2 {
+	if opened, err := r.Suggest(ctx, f.city, now); err != nil || opened.Opened != 0 || prop.calls != 2 {
 		t.Fatalf("Suggest with a bad walk opened %d after %d proposals, %v", opened, prop.calls, err)
 	}
-	if opened, _ := r.Suggest(ctx, f.city, now.Add(time.Hour)); opened != 0 || prop.calls != 2 {
+	if opened, _ := r.Suggest(ctx, f.city, now.Add(time.Hour)); opened.Opened != 0 || prop.calls != 2 {
 		t.Fatalf("the area was tried again during its rest (%d proposals)", prop.calls)
 	}
 	req := prop.reqs[0]
@@ -117,7 +117,7 @@ func TestIntegrationWalks(t *testing.T) {
 	// After the rest, a good walk opens.
 	prop.bad = false
 	later := now.Add(WalkRetryAfter + time.Hour)
-	if opened, err := r.Suggest(ctx, f.city, later); err != nil || opened != 1 {
+	if opened, err := r.Suggest(ctx, f.city, later); err != nil || opened.Opened != 1 {
 		t.Fatalf("Suggest opened %d, %v", opened, err)
 	}
 	open, err := ListOpen(ctx, f.q, f.city)
@@ -162,7 +162,7 @@ func TestIntegrationWalks(t *testing.T) {
 
 	// A walk never gets the old kind of meeting place: it starts at its own.
 	r.Places = &fakeSearch{}
-	if found, err := r.RefreshMeetingPlaces(ctx, f.city); err != nil || found != 0 {
+	if found, err := r.RefreshMeetingPlaces(ctx, f.city); err != nil || found.Found != 0 {
 		t.Errorf("meeting places for a walk: %d, %v", found, err)
 	}
 
@@ -173,13 +173,13 @@ func TestIntegrationWalks(t *testing.T) {
 	if _, err := f.pool.Exec(ctx, "update app.plans set route_computed_at = $2 where id = $1", plan.ID, later.Add(-26*24*time.Hour)); err != nil {
 		t.Fatal(err)
 	}
-	if computed, _, err := r.RefreshRoutes(ctx, f.city, later); err != nil || computed != 1 || len(router.calls) != 1 ||
+	if rr, err := r.RefreshRoutes(ctx, f.city, later); err != nil || rr.Computed != 1 || len(router.calls) != 1 ||
 		!slices.Equal(router.calls[0], []string{"zz-station", "zz-temple-a", "zz-temple-b", "zz-temple-c", "zz-tea-house"}) {
-		t.Fatalf("refresh computed %d with %q, %v", computed, router.calls, err)
+		t.Fatalf("refresh computed %d with %q, %v", rr.Computed, router.calls, err)
 	}
 	r.WalkRoutes = nil
-	if _, cleared, err := r.RefreshRoutes(ctx, f.city, later.Add(31*24*time.Hour)); err != nil || cleared != 1 {
-		t.Fatalf("cleared %d, %v", cleared, err)
+	if rr, err := r.RefreshRoutes(ctx, f.city, later.Add(31*24*time.Hour)); err != nil || rr.Cleared != 1 {
+		t.Fatalf("cleared %d, %v", rr.Cleared, err)
 	}
 	if stops, _ := LoadWalk(ctx, f.q, plan.ID); stops[1].Walk != 0 {
 		t.Errorf("legs kept after the route was cleared: %+v", stops)

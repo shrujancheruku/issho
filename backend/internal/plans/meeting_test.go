@@ -71,16 +71,16 @@ func TestIntegrationMeetingPlace(t *testing.T) {
 
 	search, routes := &fakeSearch{}, &recordingRoutes{}
 	r := &Runner{DB: f.pool, Timing: DefaultTiming(), Log: slog.New(slog.NewTextHandler(io.Discard, nil)), Places: search, Routes: routes}
-	if found, err := r.RefreshMeetingPlaces(ctx, f.city); err != nil || found != 1 || len(search.reqs) != 1 {
+	if found, err := r.RefreshMeetingPlaces(ctx, f.city); err != nil || found.Found != 1 || len(search.reqs) != 1 {
 		t.Fatalf("found=%d searches=%d err=%v; want one station for the walk only", found, len(search.reqs), err)
 	}
 	if c := search.reqs[0].Center; math.Abs(c.Lat-35.703) > 1e-9 || math.Abs(c.Lng-139.58) > 1e-9 {
 		t.Errorf("search centred on %v; want the area's centre", c)
 	}
-	if found, _ := r.RefreshMeetingPlaces(ctx, f.city); found != 0 || len(search.reqs) != 1 {
+	if found, _ := r.RefreshMeetingPlaces(ctx, f.city); found.Found != 0 || len(search.reqs) != 1 {
 		t.Errorf("second pass searched again (%d searches)", len(search.reqs))
 	}
-	if _, _, err := r.RefreshRoutes(ctx, f.city, time.Now()); err != nil {
+	if _, err := r.RefreshRoutes(ctx, f.city, time.Now()); err != nil {
 		t.Fatal(err)
 	}
 	if routes.from != "zz-station" || routes.to != "zz-meet-cafe" {

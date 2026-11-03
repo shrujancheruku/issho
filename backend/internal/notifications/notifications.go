@@ -20,6 +20,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
+	"github.com/shrujancheruku/issho/backend/internal/platform/sentry"
 	"github.com/shrujancheruku/issho/backend/internal/push"
 )
 
@@ -65,13 +66,25 @@ type Content struct {
 	Title, Body string
 }
 
+// Result is what rendering one notification came to: its content, a skip
+// (what it is about is gone, so there is nothing to say), or an error.
+type Result struct {
+	Content Content
+	// Skip: the subject (a plan, a crew) no longer exists. The notification
+	// is marked sent without a push.
+	Skip bool
+	// Err: this one could not be rendered. It is retried on a later pass
+	// (its attempts go up; ListPendingNotifications stops after 5).
+	Err error
+}
+
 // Renderer writes the notifications of the kinds it was registered for.
 // It gets every pending item of those kinds in a pass at once, so it can
 // look things up once for items about the same plan or crew, and returns
-// one Content per item, in order. An error stops the pass and leaves the
-// notifications queued.
+// one Result per item, in order. A failing item is its own Result.Err: it
+// never holds up the others, which are sent as usual.
 type Renderer interface {
-	Render(ctx context.Context, items []Pending) ([]Content, error)
+	Render(ctx context.Context, items []Pending) []Result
 }
 
 // Notifier sends the notifications queued in app.notifications.
@@ -102,9 +115,10 @@ func (n *Notifier) Register(r Renderer, kinds ...string) {
 
 // Report counts what a pass did: notifications sent, finished without a
 // device to send to, and to retry; and device tokens dropped because Expo
-// says the app is gone.
+// says the app is gone. Skipped are notifications whose subject (a plan or
+// crew) was deleted: finished without a push.
 type Report struct {
-	Sent, NoDevice, Failed, Unregistered int
+	Sent, NoDevice, Skipped, Failed, Unregistered int
 }
 
 // data is what the app gets with a notification: the kind and what it is
@@ -123,18 +137,26 @@ func data(p Pending) map[string]string {
 	return d
 }
 
+// outcome is how rendering went for the items of one pass, by index.
+type outcome struct {
+	content map[int]Content
+	skipped []int // subject gone: finished without a push
+	failed  []int // errored or no renderer: retried, within the attempts
+}
+
 // render writes the content of each item, asking each renderer once with
-// all its items. An item whose kind has no renderer is returned in
-// unrendered and logged; it counts as failed (a deploy that forgot to
-// register a kind shouldn't spin forever: the attempts run out).
-func (n *Notifier) render(ctx context.Context, items []Pending) (content map[int]Content, unrendered []int, err error) {
+// all its items. An item whose kind has no renderer fails and is logged
+// (a deploy that forgot to register a kind shouldn't spin forever: the
+// attempts run out). One item failing never stops the rest.
+func (n *Notifier) render(ctx context.Context, items []Pending) outcome {
 	byRenderer := map[Renderer][]int{}
 	var order []Renderer // first-seen, so passes behave the same each time
+	o := outcome{content: map[int]Content{}}
 	for i, p := range items {
 		r, ok := n.renderers[p.Kind]
 		if !ok {
 			n.Log.Error("no renderer for notification kind", "kind", p.Kind, "id", p.ID)
-			unrendered = append(unrendered, i)
+			o.failed = append(o.failed, i)
 			continue
 		}
 		if _, seen := byRenderer[r]; !seen {
@@ -142,25 +164,33 @@ func (n *Notifier) render(ctx context.Context, items []Pending) (content map[int
 		}
 		byRenderer[r] = append(byRenderer[r], i)
 	}
-	content = map[int]Content{}
 	for _, r := range order {
 		idx := byRenderer[r]
 		batch := make([]Pending, len(idx))
 		for j, i := range idx {
 			batch[j] = items[i]
 		}
-		out, err := r.Render(ctx, batch)
-		if err != nil {
-			return nil, nil, err
-		}
+		out := r.Render(ctx, batch)
 		if len(out) != len(batch) {
-			return nil, nil, fmt.Errorf("notifications: renderer returned %d contents for %d items", len(out), len(batch))
+			// A broken renderer: fail its items, not the pass.
+			n.Log.Error("renderer returned the wrong number of results", "got", len(out), "want", len(batch))
+			o.failed = append(o.failed, idx...)
+			continue
 		}
 		for j, i := range idx {
-			content[i] = out[j]
+			switch res := out[j]; {
+			case res.Err != nil:
+				n.Log.Error("render notification", "id", items[i].ID, "kind", items[i].Kind, "err", res.Err)
+				sentry.Report(ctx, fmt.Errorf("render notification %d: %w", items[i].ID, res.Err), map[string]string{"kind": items[i].Kind})
+				o.failed = append(o.failed, i)
+			case res.Skip:
+				o.skipped = append(o.skipped, i)
+			default:
+				o.content[i] = res.Content
+			}
 		}
 	}
-	return content, unrendered, nil
+	return o
 }
 
 // Send sends pending notifications, oldest first. A notification is marked
@@ -213,10 +243,8 @@ func (n *Notifier) Send(ctx context.Context, now time.Time) (Report, error) {
 		}
 		withDevice = append(withDevice, p)
 	}
-	content, unrendered, err := n.render(ctx, withDevice)
-	if err != nil {
-		return rep, err
-	}
+	rendered := n.render(ctx, withDevice)
+	content := rendered.content
 
 	var msgs []push.Message
 	var owner []int // index in withDevice of each message's notification
@@ -231,8 +259,13 @@ func (n *Notifier) Send(ctx context.Context, now time.Time) (Report, error) {
 			owner = append(owner, i)
 		}
 	}
-	for _, i := range unrendered {
+	for _, i := range rendered.failed {
 		failed = append(failed, withDevice[i].ID)
+	}
+	// The subject is gone: nothing to say and nothing to retry.
+	for _, i := range rendered.skipped {
+		done = append(done, withDevice[i].ID)
+		rep.Skipped++
 	}
 
 	at := pgtype.Timestamptz{Time: now, Valid: true}

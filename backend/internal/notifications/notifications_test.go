@@ -47,13 +47,13 @@ func (s *batchSender) Receipts(context.Context, []string) (map[string]push.Recei
 
 type fakeRenderer struct{ calls int }
 
-func (r *fakeRenderer) Render(_ context.Context, items []notifications.Pending) ([]notifications.Content, error) {
+func (r *fakeRenderer) Render(_ context.Context, items []notifications.Pending) []notifications.Result {
 	r.calls++
-	out := make([]notifications.Content, len(items))
+	out := make([]notifications.Result, len(items))
 	for i, p := range items {
-		out[i] = notifications.Content{Title: "T-" + p.Language, Body: "B"}
+		out[i].Content = notifications.Content{Title: "T-" + p.Language, Body: "B"}
 	}
-	return out, nil
+	return out
 }
 
 // setup makes n users with a profile and one device each, and a crew
