@@ -1,4 +1,4 @@
-import { Code, ConnectError, type GetEventResponse, type MyEvent } from '@issho/api-client';
+import { type GetEventResponse, type MyEvent } from '@issho/api-client';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState, type ReactNode } from 'react';
 import { Linking, ScrollView, Share, StyleSheet, View } from 'react-native';

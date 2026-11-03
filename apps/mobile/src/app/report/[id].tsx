@@ -1,4 +1,4 @@
-import { Code, ConnectError, ReportReason } from '@issho/api-client';
+import { ReportReason } from '@issho/api-client';
 import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { View } from 'react-native';

@@ -1,4 +1,4 @@
-import { Code, ConnectError, CrewResponse, CrewStatus, type Crew, type CrewMember } from '@issho/api-client';
+import { CrewResponse, CrewStatus, type Crew, type CrewMember } from '@issho/api-client';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
