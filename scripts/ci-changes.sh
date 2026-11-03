@@ -2,7 +2,9 @@
 # Decides which CI jobs a change needs. Reads the changed file paths on stdin
 # (one per line) and prints `name=value` lines for $GITHUB_OUTPUT:
 #   backend, codegen, image, proto, ts   true/false: run that job
-#   ts_filter                            "--affected" when turbo may test only
+#   admin, mobile                        true/false: rebuild that app (admin SPA
+#                                        build, mobile web export) in typescript
+#   ts_filter                          "--affected" when turbo may test only
 #                                        the packages a change reaches, else ""
 # `--all` ignores stdin and turns everything on (pushes to main, dispatches).
 #
@@ -18,7 +20,7 @@
 # Re-check when adding a go:embed or a test that reads outside its package.
 set -euo pipefail
 
-backend=false codegen=false image=false proto=false ts=false
+backend=false codegen=false image=false proto=false ts=false admin=false mobile=false
 # ts_pkgs: every TypeScript-relevant path was inside apps/ or packages/, where
 # turbo's own dependency graph can pick the packages.
 ts_pkgs=true
@@ -33,7 +35,7 @@ classify() {
     # by hand or goes stale. api-client's package.json pins protoc-gen-es.
     docs/generated/*) codegen=true ;;
     packages/api-client/src/gen/* | packages/api-client/package.json)
-      codegen=true ts=true ;;
+      codegen=true ts=true admin=true mobile=true ;;
 
     # --- Go dependencies. Besides backend, `go tool buf` and the generators
     # are pinned by tool directives here, so a bump can change the proto checks.
@@ -62,7 +64,7 @@ classify() {
     # --- The mobile app's strings. The ui-strings generator reads them (so
     # codegen), and i18n_test.go in the Go module parses i18n/device.ts (so
     # backend).
-    apps/mobile/src/i18n/*) ts=true codegen=true backend=true ;;
+    apps/mobile/src/i18n/*) ts=true codegen=true backend=true mobile=true ;;
 
     # --- Protobuf. Generates Go and TS code (codegen drift, api-client) and is
     # what `buf breaking` compares; the Go stubs compile in backend, and the
@@ -81,7 +83,11 @@ classify() {
       | .github/ISSUE_TEMPLATE/* | .github/CODEOWNERS | .github/dependabot.yml) ;;
 
     # --- TypeScript packages: turbo's graph picks the affected ones.
-    apps/* | packages/*) ts=true ;;
+    # The admin SPA build and the mobile web export (extra steps in that job)
+    # follow the app they build; both apps depend on packages/.
+    apps/admin/*) ts=true admin=true ;;
+    apps/mobile/*) ts=true mobile=true ;;
+    apps/* | packages/*) ts=true admin=true mobile=true ;;
 
     # --- Anything else (workflows, lockfile, workspace/turbo/tsconfig/eslint
     # roots, Makefile, scripts, unknown paths): everything on, and turbo gets
@@ -100,6 +106,9 @@ fi
 
 filter=""
 if $ts && $ts_pkgs; then filter="--affected"; fi
+# Any rule that turned turbo's filter off (toolchain, proto, data, unknown
+# paths) rebuilds both apps too.
+if $ts && ! $ts_pkgs; then admin=true mobile=true; fi
 
 echo "backend=$backend"
 echo "codegen=$codegen"
@@ -107,3 +116,5 @@ echo "image=$image"
 echo "proto=$proto"
 echo "ts=$ts"
 echo "ts_filter=$filter"
+echo "admin=$admin"
+echo "mobile=$mobile"

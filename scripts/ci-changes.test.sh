@@ -8,11 +8,31 @@ fail=0
 check() {
   local name=$1 want=$2; shift 2
   local got
-  got=$( { [[ $# -gt 0 ]] && printf '%s\n' "$@"; true; } | ./ci-changes.sh | tr '\n' ' ' | sed 's/ $//')
+  got=$( { [[ $# -gt 0 ]] && printf '%s\n' "$@"; true; } | ./ci-changes.sh | grep -Ev '^(admin|mobile)=' | tr '\n' ' ' | sed 's/ $//')
   if [[ "$got" != "$want" ]]; then
     echo "FAIL $name"; echo "  want: $want"; echo "  got:  $got"; fail=1
   fi
 }
+
+# checkapps <name> <"admin=x mobile=y"> <paths...>: which app builds run.
+checkapps() {
+  local name=$1 want=$2; shift 2
+  local got
+  got=$(printf '%s\n' "$@" | ./ci-changes.sh | grep -E '^(admin|mobile)=' | tr '\n' ' ' | sed 's/ $//')
+  if [[ "$got" != "$want" ]]; then
+    echo "FAIL apps $name"; echo "  want: $want"; echo "  got:  $got"; fail=1
+  fi
+}
+checkapps admin "admin=true mobile=false" apps/admin/src/a.ts
+checkapps mobile "admin=false mobile=true" apps/mobile/src/a.ts
+checkapps mobile-i18n "admin=false mobile=true" apps/mobile/src/i18n/en.json
+checkapps package "admin=true mobile=true" packages/api-client/src/index.ts
+checkapps api-gen "admin=true mobile=true" packages/api-client/src/gen/x_pb.ts
+checkapps go-only "admin=false mobile=false" backend/a.go
+checkapps docs "admin=false mobile=false" docs/a.md
+checkapps lockfile "admin=true mobile=true" pnpm-lock.yaml
+checkapps proto "admin=true mobile=true" proto/a.proto
+checkapps admin-and-go "admin=true mobile=false" apps/admin/src/a.ts backend/a.go
 
 none="backend=false codegen=false image=false proto=false ts=false ts_filter="
 check docs-only "$none" docs/ROADMAP.md README.md
@@ -63,8 +83,10 @@ trap 'rm -rf "$tmp"' EXIT
   git diff --no-renames --name-only HEAD~1 HEAD
 ) | { ./ci-changes.sh | grep -qx 'backend=true'; } || { echo "FAIL rename via git diff"; fail=1; }
 
-all_out=$(./ci-changes.sh --all </dev/null | tr '\n' ' ' | sed 's/ $//')
+all_out=$(./ci-changes.sh --all </dev/null | grep -Ev '^(admin|mobile)=' | tr '\n' ' ' | sed 's/ $//')
 [[ "$all_out" == "$all" ]] || { echo "FAIL --all: $all_out"; fail=1; }
+
+[[ "$(./ci-changes.sh --all </dev/null | grep -E '^(admin|mobile)=' | tr '\n' ' ')" == "admin=true mobile=true " ]] || { echo "FAIL --all apps"; fail=1; }
 
 [[ $fail == 0 ]] && echo "ci-changes: all passed"
 exit $fail
