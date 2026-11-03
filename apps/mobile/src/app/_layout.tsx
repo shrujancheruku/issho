@@ -4,7 +4,7 @@ import {
   ZenKakuGothicNew_500Medium,
   ZenKakuGothicNew_700Bold,
 } from '@expo-google-fonts/zen-kaku-gothic-new';
-import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { focusManager, MutationCache, QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StyleSheet } from 'react-native';
@@ -21,6 +21,7 @@ import { AccountActions } from '@/features/account/account-actions';
 import { AuthProvider, isSuspendedError, useAuth } from '@/features/auth/auth-provider';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { I18nProvider, useI18n } from '@/i18n/i18n-provider';
+import { bindFocusToAppState } from '@/lib/app-focus';
 import { withMonitoring } from '@/lib/monitoring';
 import { accountChanged } from '@/lib/queries';
 
@@ -40,6 +41,8 @@ const queryClient = new QueryClient({
   // invalidate what they affect, and pull to refresh still refetches.
   defaultOptions: { queries: { staleTime: 30_000 } },
 });
+
+bindFocusToAppState();
 
 // React Navigation paints screens, headers and the tab bar from its own theme,
 // so give it the app's grounds; otherwise screens flash white or black.
