@@ -33,9 +33,11 @@ jest.mock('@/components/text-link', () => {
   };
 });
 
-const pending = (): QueryLike => ({ isSuccess: false, isError: false, error: null, data: undefined, refetch: jest.fn() });
+const pending = (): QueryLike => ({ isError: false, error: null, data: undefined, refetch: jest.fn() });
 const failed = (error: unknown = new Error('down')): QueryLike => ({ ...pending(), isError: true, error });
-const loaded = (data: unknown): QueryLike => ({ ...pending(), isSuccess: true, data });
+const loaded = (data: unknown): QueryLike => ({ ...pending(), data });
+// A loaded query whose latest refetch failed: React Query keeps the data and sets the error.
+const refetchFailed = (data: unknown, error: unknown = new Error('offline')): QueryLike => ({ ...loaded(data), isError: true, isRefetchError: true, error });
 
 async function renderScreen(queries: readonly QueryLike[], notFound?: string) {
   return await render(
@@ -83,6 +85,26 @@ describe('QueryScreen', () => {
   it('retries a not-found error when the screen has no not-found message', async () => {
     await renderScreen([failed(new ConnectError('gone', Code.NotFound))]);
     expect(screen.getByText('common.retry')).toBeTruthy();
+  });
+
+  it('keeps the data and says so when a refetch failed', async () => {
+    const stale = refetchFailed('a');
+    await renderScreen([stale, loaded('b')]);
+    expect(screen.getByText('["a","b"]')).toBeTruthy();
+    expect(screen.getByText('common.refreshFailed')).toBeTruthy();
+    expect(screen.queryByText('common.loadFailed')).toBeNull();
+    expect(spinning()).toBe(false);
+  });
+
+  it('shows no refresh line while every query is fine', async () => {
+    await renderScreen([loaded('a')]);
+    expect(screen.queryByText('common.refreshFailed')).toBeNull();
+  });
+
+  it('shows the failed state, not the refresh line, when there is no data', async () => {
+    await renderScreen([failed()]);
+    expect(screen.getByText('common.loadFailed')).toBeTruthy();
+    expect(screen.queryByText('common.refreshFailed')).toBeNull();
   });
 
   it('renders the children with the data once every query succeeded', async () => {

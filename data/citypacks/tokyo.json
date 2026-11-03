@@ -16,112 +16,114 @@
   ],
   "areas": [
     {
-      "id": "tokyo-kichijoji",
+      "id": "tokyo-musashino",
       "name": {
-        "en": "Kichijoji",
-        "ja": "吉祥寺"
-      },
-      "lat": 35.703,
-      "lng": 139.5798
-    },
-    {
-      "id": "tokyo-ogikubo",
-      "name": {
-        "en": "Ogikubo",
-        "ja": "荻窪"
-      },
-      "lat": 35.7046,
-      "lng": 139.62
-    },
-    {
-      "id": "tokyo-asagaya",
-      "name": {
-        "en": "Asagaya",
-        "ja": "阿佐ヶ谷"
-      },
-      "lat": 35.7049,
-      "lng": 139.6359
-    },
-    {
-      "id": "tokyo-koenji",
-      "name": {
-        "en": "Koenji",
-        "ja": "高円寺"
+        "en": "Musashino",
+        "ja": "武蔵野市"
       },
       "lat": 35.7054,
-      "lng": 139.6497
+      "lng": 139.566,
+      "osm_id": 1761804,
+      "boundary": [
+        "eb~xE_|qrYT{PnN|AtAkCc@}@zBwYrj@l@F_AvDSMiD|LqAdAaLlTg@?{c@iJVfLmu@{y@hAcQxAfp@__CzCiG~FgE_IUoBaHiAB_CiDoCMaB_JpP{TnHyZhLiIhEmA_HwG~CkKee@oO{\\aPeGxLoZzb@_Tjk@mV`]kK|c@mFd`@Sfa@|EbX~Yvd@x^zbA`@tFn@a@_Gd\\m@`R_`@sBkElQ"
+      ],
+      "replaces": [
+        "tokyo-kichijoji"
+      ]
+    },
+    {
+      "id": "tokyo-suginami",
+      "name": {
+        "en": "Suginami",
+        "ja": "杉並区"
+      },
+      "lat": 35.6995,
+      "lng": 139.6364,
+      "osm_id": 1543055,
+      "boundary": [
+        "yd_yE_w}rYfJRvQ_JpHh@vMuVxMiPdGyLz\\`Pde@nO_DjK~GvG|DqFtIwSpO_O_@jEdEG`AbG~ChElDoFt@nA|@[v@qElDzA`E{DjAb@zB_FrA}\\vFiYjRcWpHeCCo@}@LOeDnGaClAr@GqApCM?xArVy@{Ac@e@wF~@GLwC`BT_CoMnCs@tCoDsA{DlBfA[uBoCiBuOi@q@hS{DOgFrK_IxFA}A~@qFnC?@_AkBkArBeCjPer@dFqInD@r@eIxEOpE}o@pHsYnBVn@uN_DmLkDXuB{XwKi\\qCy]wJ}f@qD{@yDvAaEqAeE_M}G|Bn@kFm@c@{DGJ~DuCMHnG_DjDnBpJe@nAgFkFg@nBoCF[`CcEPmEyFkCbA\\`AeANEjAuB[}DhAO_JeCeHiCaFuEsBsFkMwCgBe@mDqG`BqDQ\\bCcGfDZ|AgDdDfCtUkItBSiCaCJh@wDoJ{A_Bn@?`AiC_@m@bB}DGe@|CgFyAeM`@kAnQiXRh@nj@qALgMjr@kE~FoL[mIl[iBb^iGvDgH{A{DfFzArDgHpG_JtBgb@zRcDQgAtRf@xGkF_AzDdUzAaAr@|EsAb@`SpcAnF|PrAYNnBpHfItD~LdCdDX|D`BIrTxJ}@pEuJnONtGjD`N"
+      ],
+      "replaces": [
+        "tokyo-ogikubo",
+        "tokyo-asagaya",
+        "tokyo-koenji"
+      ]
     },
     {
       "id": "tokyo-nakano",
       "name": {
         "en": "Nakano",
-        "ja": "中野"
+        "ja": "中野区"
       },
-      "lat": 35.7058,
-      "lng": 139.6658
+      "lat": 35.7078,
+      "lng": 139.6638,
+      "osm_id": 1543056,
+      "boundary": [
+        "gmayEujesYdu@i[rBmC{AsDzDgFfHzAhGwDhBc^lIm[nLZjE_GfMkr@pAMi@oj@hXSjAoQdMa@fFxAd@}C|DFl@cBhC^?aA~Ao@nJzAi@vD`CKRhCjIuBgCuUfDeD[}AbGgD]cCpDPpGaBd@lDvCfBrFjMtErBhC`FdCdHN~I|DiAtBZDkAdAO]aAjCcAlExFbEQZaCnCGf@oBfFjFd@oAoBqJ~CkDIoGtCLK_EhFj@o@jF|G}BeB_GyPkL}HwW_I{IkBqE}NeL}c@mm@{Af@{GsJg_@oQuEPaGrCgGXsH[_OyCkM_UyA_GmGkF[zHtB`@yAdEjBvA{@nEeBKTbJjF|a@yCdEu@zIaMoKDnEsAMwA{CTlE_BKMpBnAbAwBzCsDBcCiA{B~AkFXGtBuGjHOhFoAfA~DBvBnJ}CcAmAdB}Du@d@_D_Em@?cFwDUqJ|AuIqAqJgEuLKbAmCsE{A}MbRsBzFWbNzEfDs@nCvCbAS~EjDl@BzQnTdJdEjHZtKnEEKdJiBhMl@dU{C`Jt@\\GnO|FACdVj@FiEzXwFQoB`BeBlGcP|FwCC}AhAp@vEkLhC\\zBeGzA|Ane@|DY~@lDhCMb@dB"
+      ]
     },
     {
       "id": "tokyo-shinjuku",
       "name": {
         "en": "Shinjuku",
-        "ja": "新宿"
+        "ja": "新宿区"
       },
-      "lat": 35.6896,
-      "lng": 139.7006
+      "lat": 35.6938,
+      "lng": 139.7035,
+      "osm_id": 1758858,
+      "boundary": [
+        "{n_yE}|nsYlAeB|CbAwBoJ_ECnAgANiFtGkHFuBjFYzB_BbChArDCvB{CoAcALqB~AJUmEvAzCrALEoE`MnKt@{IxCeEkF}a@UcJdBJz@oEkBwAxAeEuBa@Z{HlGjFxA~FjM~T~NxCrHZfGYlIgDnDJ`^dQzGrJzAg@IsCdAr@hAaCpPtInFmDcAuI~FT^|D|AQzMqE~IcIw]yk@uKs]f@cA{@VqBcNjEh@HwBhAq@]gMj@}AhI}FrHg@xAgMhDkKjIgNxD}ClZbJbKB_BmLtCkAn@^hCoF}C{MiGqFeSjC^sBuCGv@s@{@eC~@aCcAsGfBwGwCqJuBiCkOeH^qJrG}CaAcEkUfIkVkFyFyEoT{`@sh@q_@AwAwFgDaAjC{CcDKmCq^vIuBbCsE`l@xEn@]lE`Bh@|@zHwBbFaGk@\\vRc@zAcBBg@|FtAr@QlAbBa@A`Ac@vBiALYbHyCbBu@YoBbGsCkAu@xJm@{@I|@lBv@AlAqBK[|@jB|@CpD_BhIuAp@o@vCfBp@BhDqIzOr@lDbExCgAnDlAbT{@b@O`CWoBwAf@{@tGsIoBZqCyAPVs@sE`@iDy@wHvFsAcA}@\\JoAgCkCsCnHqBmAkBlMa@lNlCnAbCrHH|LqCzd@V``@uEb@b@rFsApATjA{Br@IeAuPvEuNlZtLJpJfEtIpApJ}AvDT?bF~Dl@e@~C"
+      ]
     },
     {
-      "id": "tokyo-shimokitazawa",
+      "id": "tokyo-setagaya",
       "name": {
-        "en": "Shimokitazawa",
-        "ja": "下北沢"
+        "en": "Setagaya",
+        "ja": "世田谷区"
       },
-      "lat": 35.6616,
-      "lng": 139.668
-    },
-    {
-      "id": "tokyo-sangenjaya",
-      "name": {
-        "en": "Sangenjaya",
-        "ja": "三軒茶屋"
-      },
-      "lat": 35.6436,
-      "lng": 139.6713
+      "lat": 35.6464,
+      "lng": 139.6532,
+      "osm_id": 1759474,
+      "boundary": [
+        "mmvxE}d}rY`Pmf@z[yGLbEjBrChCXzAxGvAO`FcCrAmInBGvAeDnArAzJDpNsAvFyD]wGlPuCnEUOrFdb@e@jCzJmAf@T`ArAi@Tt@_E~IKnCdAmBaBlE`CiCb@pA~AVrDs@|A~B|C\\?bCrCUrAtGr@SV`AdUyGjNqJzAeKlJwK|Cp@f@}@tDpAnBoFbD_BdD~BnAs@pDx@d@iAqAw@JqBpByCvAfClAs@zKvGvASPtEsEnH\\h@lGf@Ak@pHg@z@hC~Q_FhDmLo@gIuBmGi@eUrFeT|IoS{DmSvB}RbFwDjH_OsA_PjKcUvC_M~EiCtA_CfBcK`EyEs@c@dDsNxCqEbCnAzDoEbHaMLcFfBeDdPoPb_@uv@jNmIfOs^aSiHk@o@r@oD}@W}GlWc@SwDzHaG_DbDgKgDgBc@_BoAhAaCyFkBG}@mF}B{BnBoKhDoGiFaHjEoDiBiDo@kG~BPZ}FrBmBuEuDl\\{XjPmKmRg]cJGuDhAw@_A{@dBOoDkBNAnAs@Dn@xAsY@mBv@SdB_@y@eKrAaM~KyAzIt@tKdIr\\EpGeCbKyF~KcEEcAkCoDtCe@u@s@~@qBOG|AaBIu@{ABfCsOsA_GmHcA[{BfA{DsAg@{HeKfC_ASA_CkPjM}CjAgA_@mK|AkCfIyCeBmDb@gFeAmInDMaQ|Kin@|Nc\\bL}Hp@uEu]uJwY_QeV{K_HqAm@pB{Eb@aCpCcFnAG`Bq@{CeJlD{AyGiFjBj@`C{R~@yL_CoD|LaBQQ_Im@VDvEcHg@B`G}EPOhF}D@qBzEuNpIe@|E_QpCeFfFc@]iBpB}MlFkPnC_NeAfCvWo@x@bAx`@YtHsFPvJ|f@pCx]hKvZbClZjDY~ClLQjI]hDoBWqHrYqE|o@yENs@dIoDAeFpIkPdr@sBdCjBjAA~@oC?_ApF@|A~HyFfFsKzDNp@iStOh@nChBZtBmBgArAzDuCnDoCr@~BnMaBUMvC_AFd@vFzAb@sVx@?yAqCLFpAmAs@oG`CNdD|@MBn@qHdCkRbWiHtc@k@nOvAjFsAdGeCxa@p@vF`BcMVwZdAW]lZy@nMo@VhCy@pCwCH_GhIoFfF~CrAvElAd@fOoAfAwDtBv@aBtGhAzFaBnM"
+      ],
+      "replaces": [
+        "tokyo-shimokitazawa",
+        "tokyo-sangenjaya"
+      ]
     },
     {
       "id": "tokyo-shibuya",
       "name": {
         "en": "Shibuya",
-        "ja": "渋谷"
+        "ja": "渋谷区"
       },
-      "lat": 35.658,
-      "lng": 139.7016
+      "lat": 35.664,
+      "lng": 139.6982,
+      "osm_id": 1759477,
+      "boundary": [
+        "guvxEsrlsYxDwAvBdAlH[ZqNeA}Zn@y@gCwW~MdAjPoClPoHh@e^xD}O@cIfHySjBuBrDuAVh@xFeDn^c[lK{Lb@j@tCuBX_DtJeMt@r@rA}Dz@|@l@qCx@BvBuIjPmXQqAvBOhGeMxBeHiBk@_AsKhCoE_BwBR{DkEs@hGyGn@yN_McL[zAs@IeB_JsDOHcAgBAoCyC_FxEa[|BCtBo@eAgGt@iN{FzBnDgG~VbC|@aDxSqGjKOyCuEsBwEbJyLhJeFfIyJaJTcAsTeRd@_BqAiCoCxEeOgD~CgIw@i@}CrAiCnFo@_@uCjA~AlLcKCmZcJyD|CkIfNiDjKyAfMsHf@uJzI\\fMiAp@IvBkEi@pBbNz@Wg@bAtKr]v]xk@_JbI{MpE}AP_@}D_GUbAtIoFlDqPuIiA`CeAs@J~DbNtRfKpJnHxL|NdLjBpE~HzI|HvWxPjLvGlT"
+      ],
+      "replaces": [
+        "tokyo-ebisu"
+      ]
     },
     {
-      "id": "tokyo-ebisu",
+      "id": "tokyo-meguro",
       "name": {
-        "en": "Ebisu",
-        "ja": "恵比寿"
+        "en": "Meguro",
+        "ja": "目黒区"
       },
-      "lat": 35.6467,
-      "lng": 139.7101
-    },
-    {
-      "id": "tokyo-nakameguro",
-      "name": {
-        "en": "Naka-Meguro",
-        "ja": "中目黒"
-      },
-      "lat": 35.644,
-      "lng": 139.6988
-    },
-    {
-      "id": "tokyo-jiyugaoka",
-      "name": {
-        "en": "Jiyugaoka",
-        "ja": "自由が丘"
-      },
-      "lat": 35.6075,
-      "lng": 139.6688
+      "lat": 35.6414,
+      "lng": 139.6982,
+      "osm_id": 1758936,
+      "boundary": [
+        "ujnxEatlsYlIoDfFdAlDc@xCdBjCgIlK}AfA^|CkAjPkM@~B~@RdKgCf@zHzDrAzBgAbAZ~FlHrOrACgCt@zA`BHF}ApBNr@_Ad@t@nDuCbAjCbEDxF_LxCkPkIq^}@aMbAuHbPqNxHg@^x@ReBlBw@`NMHiBQeA}C~AwOJZ_MbAh@tEwAbAsFa\\oDgDnAqJC{TtBtGeKvB{_@`IoNpGaGIqAeOkAuFpAaIm@yCsBoDcKgJgI_@fAwRuPwFsAI_EiAa@wHfQsGf]k@cJoBcDmAwKvAkGdDu@cBqGtBm@wCcMCeEqBmAaCiLiEaLq@\\iFcPqAz@oAeE{GzBY~@mAmAaEnBkGiBaD`CR`AoBn@{AcBqHrBqBeBkB~BhBwC{NeIcCsLw@B]fEiGxGjEr@SzD~AvBiCnE~@rKhBj@yBdHiGdMwBNPpAkPlXwBtIy@Cm@pC{@}@sA|Du@s@uJdMY~CuCtBc@k@mKzLo^b[yFdDWi@sDtAkBtBgHxSAbIyD|OOt\\b@\\dFgF~PqCd@}EtNqIpB{E|DANiF|EQCaGbHf@EwEl@WP~H`BPnD}LxL~BzR_Ak@aChFkBzAxGdJmDp@zCFaBbFoA`CqCzEc@l@qB~GpA|p@z]t]tJq@tEcL|H}Nb\\}Khn@"
+      ],
+      "replaces": [
+        "tokyo-nakameguro",
+        "tokyo-jiyugaoka"
+      ]
     }
   ],
   "activity_overrides": [

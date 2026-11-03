@@ -711,7 +711,7 @@ func (*WithdrawResponse) Descriptor() ([]byte, []int) {
 type FeedPlan struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	Id    string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	// Area id (CatalogService.ListCities), e.g. "tokyo-kichijoji".
+	// Area id (CatalogService.ListCities), e.g. "tokyo-musashino".
 	AreaId string `protobuf:"bytes,2,opt,name=area_id,json=areaId,proto3" json:"area_id,omitempty"`
 	// Activity id (CatalogService.ListActivities).
 	ActivityId string `protobuf:"bytes,3,opt,name=activity_id,json=activityId,proto3" json:"activity_id,omitempty"`

@@ -23,7 +23,7 @@ const year = 2026;
 
 function complete(): Draft {
   let d = emptyDraft('ja');
-  d = { ...d, displayName: ' Aiko ', birthYear: '1995', gender: Gender.WOMAN, cityId: 'tokyo', homeAreaId: 'tokyo-kichijoji' };
+  d = { ...d, displayName: ' Aiko ', birthYear: '1995', gender: Gender.WOMAN, cityId: 'tokyo', homeAreaId: 'tokyo-musashino' };
   d = toggleSlot(d, 6, TimeBlock.MORNING);
   for (const id of ['hike', 'karaoke', 'pottery']) d = cycleInterest(d, id);
   return { ...d, conductAccepted: true };

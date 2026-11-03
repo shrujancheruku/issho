@@ -131,7 +131,7 @@ message WithdrawResponse {}
 // An open plan as the caller sees it.
 message FeedPlan {
   string id = 1;
-  // Area id (CatalogService.ListCities), e.g. "tokyo-kichijoji".
+  // Area id (CatalogService.ListCities), e.g. "tokyo-musashino".
   string area_id = 2;
   // Activity id (CatalogService.ListActivities).
   string activity_id = 3;
