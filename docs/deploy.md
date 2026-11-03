@@ -79,9 +79,20 @@ kamal logs-api          # or logs-worker
 
 ## Off-site backups
 
-A Kamal accessory, `backup` (`config/deploy.yml`), runs `config/backup/backup.sh` in the `postgres:17-alpine` image (the database's major version). Every night at `BACKUP_AT` (UTC hour, default 3) it `pg_dump`s the `app`, `goose`, `river` and `auth` schemas in the custom format and uploads the file to a Cloudflare R2 bucket, signed with `curl --aws-sigv4`. Live sessions and one-time tokens are left out, so a leaked dump can't open anyone's account. A failed night is logged and retried the next night.
+A Kamal accessory, `backup` (`config/deploy.yml`), runs `config/backup/backup.sh` in the `ghcr.io/shrujancheruku/issho-backup:17` image (`config/backup/Dockerfile`: `postgres:17-alpine`, the database's major version, with curl baked in so the container starts without Alpine's mirrors). Every night at `BACKUP_AT` (UTC hour, default 3) it `pg_dump`s the `app`, `goose`, `river` and `auth` schemas in the custom format and uploads the file to a Cloudflare R2 bucket, signed with `curl --aws-sigv4`. Live sessions and one-time tokens are left out, so a leaked dump can't open anyone's account. A failed night is logged and retried the next night.
 
-**Live since 2026-10-26:** bucket `issho-backups` (30-day lifecycle rule) in the Cloudflare account, `BACKUP_AT` 18 (03:00 in Tokyo). The server's copy of the env holds the R2 keys. `config/deploy.yml` changes to the accessory, or to `backup.sh`, need `kamal accessory reboot backup`; the deploy workflow doesn't touch accessories.
+**Alert:** each run checks in to a Sentry cron monitor, `issho-backup` (in the `issho-api` project), with `in_progress` first, then `ok` or `error`, using the server's `SENTRY_DSN` and curl. The first check-in of a run carries the monitor's config (daily at `BACKUP_AT` UTC, 60 minutes' margin, 60 minutes' maximum runtime), so Sentry creates and updates the monitor itself. A failed run (`error`), a run past its maximum, or a night with no check-in (missed) opens a monitor issue, and the alert rule below emails it. A failed check-in is logged and ignored: Sentry being unreachable never fails a backup. With no `SENTRY_DSN`, there are no check-ins.
+
+**Owner steps to turn the alert on** (the image is built and pushed by hand, and the Sentry side is the owner's):
+
+1. Build and push the image from the repo root (a classic PAT with `write:packages`, as for the first manual deploy; log out afterwards): `docker buildx build --platform linux/amd64 -t ghcr.io/shrujancheruku/issho-backup:17 --push config/backup`. Pushing again rebuilds on the latest `postgres:17-alpine`, so do it now and then.
+2. Make sure `SENTRY_DSN` (the `issho-api` project's) is in `.env.issho-prod`, and in the server's copy of the env.
+3. On the machine whose `.kamal/secrets` holds `SENTRY_DSN` (the one that deploys by hand): pulling the new private GHCR package needs `KAMAL_REGISTRY_PASSWORD` set to a PAT with `read:packages`. Run `kamal registry login` if the reboot doesn't log in itself, then `kamal accessory reboot backup` (it pulls the new image and mounts the new script). The check-in below creates the monitor.
+4. Check once: `kamal accessory exec backup "env BACKUP_ONCE=1 sh /backup/backup.sh"`. Sentry, *Insights > Crons*, now lists `issho-backup` with an `ok` check-in.
+5. Create the alert: in the monitor's page, *Alerts > Create alert* (or *Alerts > Create Alert > Issues*, project `issho-api`, filter *issue category is Cron*, monitor slug `issho-backup`), action *Send a notification to Member*, you, by email. Check that the monitor shows the issue-alert rule as attached.
+6. Test the failure: `kamal accessory exec backup "env BACKUP_ONCE=1 R2_SECRET_ACCESS_KEY=wrong sh /backup/backup.sh"` ends in an `error` check-in and an email. A missed night is the same alert (to try it, stop the accessory past `BACKUP_AT` plus the margin: `kamal accessory stop backup`, then `start` it again).
+
+**Live since 2026-10-26:** bucket `issho-backups` (30-day lifecycle rule) in the Cloudflare account, `BACKUP_AT` 18 (03:00 in Tokyo). The server's copy of the env holds the R2 keys. `config/deploy.yml` changes to the accessory, or to `backup.sh` or its Dockerfile, need `kamal accessory reboot backup`; the deploy workflow doesn't touch accessories.
 
 **One-time setup** (needs the Cloudflare account):
 

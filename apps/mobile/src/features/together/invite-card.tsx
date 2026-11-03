@@ -24,7 +24,7 @@ export function InviteCard({ event, names }: { event: MyEvent; names: ReturnType
   const otherLanguage = useOtherLanguage();
   const theme = useTheme();
   // Refresh after the button has shown "You are going"; the outing then moves to Your groups.
-  const respond = useRespond(event.id, { refreshAfter: 1400 });
+  const respond = useRespond(event.id, { refreshAfter: 1400, planId: event.planId });
   const going = respond.isSuccess && respond.variables === 'confirm';
   const { name: title, secondary } = pick(event.title, event.secondaryTitle);
   const open = () => router.push({ pathname: '/event/[id]', params: { id: event.id } });
