@@ -20,11 +20,13 @@ import { UIService } from "./gen/issho/v1/ui_pb";
 // Error types for callers (code checks like `err.code === Code.Unauthenticated`), so apps
 // don't need their own dependency on @connectrpc/connect.
 export { Code, ConnectError } from "@connectrpc/connect";
+export { errorReason } from "./errors";
 export * from "./gen/issho/v1/catalog_pb";
 export * from "./gen/issho/v1/chat_pb";
 export * from "./gen/issho/v1/citypacks_pb";
 export * from "./gen/issho/v1/crews_pb";
 export * from "./gen/issho/v1/curation_pb";
+export * from "./gen/issho/v1/errors_pb";
 export * from "./gen/issho/v1/events_pb";
 export * from "./gen/issho/v1/health_pb";
 export * from "./gen/issho/v1/identity_pb";

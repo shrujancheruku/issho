@@ -1,8 +1,13 @@
 name: deploy-api
 
 # Deploys the API and worker to the server when the backend changes on main
-# (docs/deploy.md, "Automatic deploys"): builds and pushes the image with
-# Kamal, then asks the server to deploy that commit. The server runs Kamal
+# (docs/deploy.md, "Automatic deploys"), once the ci workflow has passed on
+# that same commit: builds and pushes the image with Kamal, then asks the
+# server to deploy that commit (workflow_run.head_sha, the one CI tested, not
+# whatever main is by now). A failed CI run leaves the jobs skipped.
+# workflow_run has no paths filter, so the changes job diffs against the last
+# commit this workflow deployed successfully; a commit whose CI failed is
+# therefore picked up by the next green one. A manual run deploys everything. The server runs Kamal
 # itself with the production secrets it holds; GitHub holds only a deploy key
 # that can run nothing but config/server/deploy.sh.
 #
@@ -12,19 +17,23 @@ name: deploy-api
 #   secret   DEPLOY_SSH_KEY    the deploy user's private key
 # Without DEPLOY_HOST the job is skipped, not failed.
 
+# The run's title records the commit it deployed. The run's own head_sha is
+# main's tip when the run was created, not workflow_run.head_sha, so it can't
+# say what was deployed; changes reads this title back from the last run
+# whose deploy job succeeded instead.
+run-name: deploy ${{ github.event.workflow_run.head_sha || github.sha }}
+
 on:
-  push:
+  workflow_run:
+    workflows: [ci]
+    types: [completed]
     branches: [main]
-    paths:
-      - backend/**
-      - data/**
-      - config/deploy.yml
-      - config/server/**
-      - .github/workflows/deploy-api.yml
   workflow_dispatch:
 
 permissions:
   contents: read
+  # gh run list, to find the last successful deploy.
+  actions: read
   # Push the image to GHCR with this job's own token, which the server also
   # uses to pull it; it expires when the job ends.
   packages: write
@@ -34,12 +43,87 @@ concurrency:
   group: deploy-api
   cancel-in-progress: false
 
+env:
+  # The commit to deploy: the one CI tested (a manual run uses its own).
+  SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+
 jobs:
+  # What changed since the last successful deploy, since workflow_run can't
+  # filter by path.
+  changes:
+    # Only after a green ci run on a push to main (the event check keeps a
+    # fork's pull request from a branch named main out), or a manual run.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push')
+    runs-on: ubuntu-latest
+    outputs:
+      api: ${{ steps.filter.outputs.api }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ env.SHA }}
+          fetch-depth: 0
+      - id: filter
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "deploying $SHA"
+          # A manual run deploys everything.
+          if [ "${{ github.event_name }}" = workflow_dispatch ]; then
+            echo "api=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          # Out-of-order finish: if main has moved on, a newer commit's run
+          # deploys this one too (it diffs against the same bases). Without
+          # this, CI finish order would decide deploy order and an older
+          # commit could replace a newer one.
+          git fetch --quiet origin main
+          if [ "$(git rev-parse origin/main)" != "$SHA" ]; then
+            echo "main has moved on; the newer run deploys this"
+            echo "api=false" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          # The last commit a deploy job actually deployed, not the parent and
+          # not just the last successful run: runs for red CI are skipped, a
+          # run that skipped because main moved on or because the target isn't
+          # configured still concludes success, and none of those deployed
+          # anything. So walk the recent successful runs and take the first
+          # whose deploy job (arg 2) succeeded. The commit comes from the run
+          # title (run-name above), since the run's own head_sha isn't the
+          # deployed one. An old-format title (the first run after this
+          # change) isn't parsable and counts as no earlier deploy.
+          last_deployed() {
+            gh run list --workflow "$1" --branch main --status success --limit 100 \
+              --json databaseId,displayTitle --jq '.[] | "\(.databaseId) \(.displayTitle)"' |
+            while read -r id title; do
+              sha=$(echo "$title" | sed -n 's/^deploy \([0-9a-f]\{40\}\)$/\1/p')
+              [ -n "$sha" ] || continue
+              job=$(gh run view "$id" --json jobs --jq "[.jobs[] | select(.name == \"$2\") | .conclusion][0]")
+              if [ "$job" = success ]; then echo "$sha"; break; fi
+            done || true  # gh may get SIGPIPE after the break; pipefail would abort
+          }
+          # Has anything under the pattern changed since the target's last
+          # deploy? No earlier deploy, or one no longer in the history: yes.
+          changed() {
+            base=$(last_deployed "$1" "$2")
+            if [ -z "$base" ] || ! git cat-file -e "$base^{commit}" 2>/dev/null; then
+              echo "$2: no earlier deploy to diff against; deploying" >&2; echo true; return
+            fi
+            echo "$2: last deployed $base" >&2
+            files=$(git diff --name-only "$base" "$SHA")  # grep -q reads a here-string, not a pipe: no SIGPIPE under pipefail
+            grep -qE "$3" <<<"$files" && echo true || echo false
+          }
+          echo "api=$(changed deploy-api.yml deploy '^(backend/|data/|config/deploy\.yml$|config/server/|\.github/workflows/deploy-api\.yml$)')" >> "$GITHUB_OUTPUT"
+
   deploy:
-    if: vars.DEPLOY_HOST != ''
+    needs: changes
+    if: needs.changes.outputs.api == 'true' && vars.DEPLOY_HOST != ''
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ env.SHA }}
+      - run: echo "deploying $SHA"
       - name: Build and push the image
         env:
           KAMAL_REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
@@ -64,11 +148,11 @@ jobs:
           printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy && chmod 600 ~/.ssh/deploy
           printf '%s\n' "$DEPLOY_HOST_KEY" > ~/.ssh/known_hosts
           # The key's forced command reads "<commit> <token>" from stdin.
-          printf '%s %s\n' "$GITHUB_SHA" "$GITHUB_TOKEN" |
+          printf '%s %s\n' "$SHA" "$GITHUB_TOKEN" |
             ssh -i ~/.ssh/deploy -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes "deploy@$DEPLOY_HOST"
       - name: The API serves this commit
         run: |
-          want="${GITHUB_SHA::7}"
+          want="${SHA::7}"
           got="$(curl -fsS -X POST -H 'Content-Type: application/json' -d '{}' \
             https://api.joinissho.com/issho.v1.HealthService/Check | jq -r .version)"
           echo "serving $got"

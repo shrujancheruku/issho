@@ -71,6 +71,8 @@ kamal logs-api          # or logs-worker
 3. [`config/server/deploy.sh`](../config/server/deploy.sh) (installed root-owned at `/opt/issho/deploy.sh`) refuses a commit that isn't on `origin/main`, checks it out in `/opt/issho/repo`, and runs Kamal from its image against this server (`kamal` connects to itself with `~kamal/.ssh/id_self`, registered in the instance's SSH-key metadata): `registry login`, `migrate`, `deploy --skip-push`, then logs out of the registry.
 4. The job checks that `HealthService.Check` reports the new commit.
 
+**Gated on CI.** Both deploy workflows (`deploy-api`, `deploy-web`) trigger on `workflow_run` of the `ci` workflow for main and run only when it concluded `success` for a push; when CI fails they show as skipped and nothing ships. They deploy `workflow_run.head_sha` (printed in the job log as `deploying <sha>`), the commit CI tested, not whatever main is by then. Since `workflow_run` has no path filter, each workflow's `changes` job diffs that commit against the last commit the target actually deployed (the newest successful run on main whose deploy job succeeded, found with `gh run list` and `gh run view`; the commit is in the run's title, `deploy <sha>`). A red commit's changes are therefore deployed with the next green one; with no earlier deploy it deploys everything (the first run after this change, whose title has no commit, does too). Runs that skipped (red CI, main moved on, or `DEPLOY_HOST` / `API_URL` unset) deployed nothing and don't move the base. `workflow_dispatch` deploys everything, at the commit it is run on. `deploy-web` does the same for the Workers (`site/`, `apps/`, `packages/`), with one base for the site and one for the apps. A failed apps deploy fails the whole run, so the site's base falls back too and the site redeploys next time (safe). If main has moved on by the time a run starts, it skips: the newer commit's run deploys the same changes.
+
 **Changing a production secret:** edit `.env.issho-prod` (or the certificate), then copy it to the server, which deploys with its own copy: `grep -v '^CLOUDFLARE_DNS_TOKEN=' .env.issho-prod | ssh kamal@<server> 'cat > /opt/issho/env'` (and `.kamal/secrets` to `/opt/issho/kamal-secrets`, the certificate files to `/opt/issho/certs/`), then rerun the workflow. **Changing `deploy.sh`:** it runs from `/opt/issho/deploy.sh`, not the checkout, so reinstall it after merging: `scp config/server/deploy.sh kamal@<server>:/tmp/ && ssh kamal@<server> 'sudo install -o root -m 755 /tmp/deploy.sh /opt/issho/ && rm /tmp/deploy.sh'`.
 
 **Manual deploys** from a dev machine still work as above; Kamal then leaves your registry login on the server, so log it out afterwards (`ssh kamal@<server> docker logout ghcr.io`).
@@ -110,7 +112,7 @@ Run SQL with `supabase db query --linked "…"` or `psql "$DATABASE_URL"` (a ses
    kamal accessory exec backup "env BACKUP_ONCE=1 sh /backup/backup.sh"   # prints: backup: uploaded issho-….dump
    ```
    In R2, copy that object to `pre-baseline/issho-….dump` and check the lifecycle rule doesn't cover the prefix (or turn it into an object with its own retention). Delete it when the reset is verified: it holds people's data. If the backup accessory isn't running yet, `pg_dump --format=custom --no-owner --no-privileges --schema=app --schema=goose --schema=river --schema=auth` with the same exclusions as `config/backup/backup.sh`, to a file outside the repo.
-2. **Stop the API and worker**, so nothing writes while the schemas are swapped: `kamal app stop`.
+2. **Stop the API and worker**, so nothing writes while the schemas are swapped: `kamal app stop`. issho-dev's API stays down from here until the PR merges and deploys (step 4), so do steps 2 to 4 in one sitting and have the PR approved and green first.
 3. **Empty the database, keeping `app`'s old rows for step 6.** In one transaction:
    ```sql
    begin;
@@ -124,7 +126,7 @@ Run SQL with `supabase db query --linked "…"` or `psql "$DATABASE_URL"` (a ses
    commit;
    ```
    `auth.users` is not touched. Admin and translator roles live in `auth.users.raw_app_meta_data` (`admin`, `translator_langs`), so they survive as they are.
-4. **Deploy the baseline.** Merge the PR: the deploy workflow runs `kamal migrate` (which applies `00001_baseline` and `00002_river` from nothing, creating PostGIS in `extensions`) and `kamal deploy`. Or run `kamal build push && kamal migrate && kamal deploy --skip-push` from the PR's commit. `kamal app exec --primary "tool migrate status"` should show both migrations applied.
+4. **Deploy the baseline, right after step 3.** Merge the PR: the deploy workflow runs `kamal migrate` (which applies `00001_baseline` and `00002_river` from nothing, creating PostGIS in `extensions`) and `kamal deploy`. Or run `kamal build push && kamal migrate && kamal deploy --skip-push` from the PR's commit. `kamal app exec --primary "tool migrate status"` should show both migrations applied.
 5. **Seed every city pack and rebuild the travel times.** `tool seed` builds the matrix of new areas when `GOOGLE_MAPS_API_KEY` is set (about 554 elements across the three packs):
    ```sh
    kamal app exec --primary "tool seed /data/citypacks/tokyo.json /data/citypacks/austin.json /data/citypacks/da-nang-hoi-an.json"
@@ -146,12 +148,12 @@ Run SQL with `supabase db query --linked "…"` or `psql "$DATABASE_URL"` (a ses
    from app_old.translations
    on conflict do nothing;
 
+   -- Run everything above up to and including this select, and compare the counts. Only then run `commit;`.
    select (select count(*) from app_old.venues) as venues_before, (select count(*) from app.venues) as venues_after,
           (select count(*) from app_old.translations) as translations_before, (select count(*) from app.translations) as translations_after;
    -- Venues in cities or areas that no longer exist in the packs are the only ones allowed to be missing.
-   commit;
-   drop schema app_old cascade;
    ```
+   If the counts are right, run `commit;`, then `drop schema app_old cascade;`. If not, run `rollback;` and look again; `app_old` is untouched.
    Roles need nothing: check that the admins and translators you expect are still there, and re-run `tool set-admin <email>` / `tool set-translator <email> <langs>` for any that aren't (the dump from step 1 lists them: `auth.users.raw_app_meta_data`):
    ```sql
    select email, raw_app_meta_data->>'admin' as admin, raw_app_meta_data->>'translator_langs' as translator_langs

@@ -3,7 +3,6 @@ package db
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 
 	"github.com/pressly/goose/v3"
@@ -60,13 +59,14 @@ func riverDown(ctx context.Context, db *sql.DB) error {
 	// first, and dropping the schema can't be undone by a failure after it:
 	// make the same check here. Jobs are recreated by the next up, accounts
 	// aren't.
-	var hasUsers bool
-	if err := db.QueryRowContext(ctx,
-		"select to_regclass('app.users') is not null and exists (select 1 from app.users)").Scan(&hasUsers); err != nil {
+	// A DO block, not one expression: Postgres resolves app.users before it
+	// short-circuits, so a plain query fails when app is already gone.
+	if _, err := db.ExecContext(ctx, `do $$ begin
+	  if to_regclass('app.users') is not null and exists (select 1 from app.users) then
+	    raise exception 'refusing to roll back: app.users has rows (production only migrates forward)';
+	  end if;
+	end $$`); err != nil {
 		return err
-	}
-	if hasUsers {
-		return errors.New("refusing to roll back: app.users has rows (production only migrates forward)")
 	}
 	// Dropping the schema removes River's tables and its own version table,
 	// along with any jobs: they're all recreated by the next up.

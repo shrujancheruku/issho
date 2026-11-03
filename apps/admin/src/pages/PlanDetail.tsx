@@ -2,6 +2,7 @@ import { ConnectError, ReviewPlanStatus, type ReviewPlan } from '@issho/api-clie
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
+import { ConfirmButton } from '../Confirm';
 import { formatTime } from '../format';
 import { api } from '../lib';
 import { StopsEditor } from './StopsEditor';
@@ -101,14 +102,14 @@ function Actions({ plan: p }: { plan: ReviewPlan }) {
       <div className="row">
         {p.status === ReviewPlanStatus.DRAFT ? (
           <>
-            <button disabled={act.isPending} onClick={() => act.mutate('approve')}>{changed ? 'Save and approve' : 'Approve'}</button>
-            <button className="secondary" disabled={act.isPending} onClick={() => act.mutate('reject')}>Reject</button>
+            <ConfirmButton label={changed ? 'Save and approve' : 'Approve'} confirmLabel="Yes, open this plan" disabled={act.isPending} onConfirm={() => act.mutate('approve')} />
+            <ConfirmButton className="secondary" label="Reject" confirmLabel="Yes, reject this plan" disabled={act.isPending} onConfirm={() => act.mutate('reject')} />
             {changed && <button className="secondary" disabled={act.isPending} onClick={() => act.mutate('save')}>Save</button>}
           </>
         ) : (
           <>
             <button disabled={act.isPending || !changed} onClick={() => act.mutate('save')}>Save</button>
-            <button className="secondary" disabled={act.isPending} onClick={() => act.mutate('withdraw')}>Withdraw plan</button>
+            <ConfirmButton className="secondary" label="Withdraw plan" confirmLabel="Yes, withdraw this plan" disabled={act.isPending} onConfirm={() => act.mutate('withdraw')} />
           </>
         )}
       </div>

@@ -73,4 +73,12 @@ Anyone can open the page; data needs an admin token, which the API checks on eve
 
 ## Checks
 
-`pnpm --filter @issho/admin typecheck`, `lint` (ESLint with typescript-eslint and the React hooks rules, `eslint.config.mjs`), `test` (Vitest: flag wording, placeholder check) and `build`. CI runs all four.
+`pnpm --filter @issho/admin typecheck`, `lint` (ESLint with typescript-eslint and the React hooks rules, `eslint.config.mjs`), `test` (Vitest: flag wording, placeholder check, and the pages' irreversible flows) and `build`. CI runs all four.
+
+### Page tests
+
+`src/pages/*.test.tsx` render a page in jsdom with Testing Library and fake the API at the `@issho/api-client` boundary: `vi.mock('../lib', ...)` swaps the `api` export for `fake.api` from `src/test/fakeApi.ts`, which records each RPC with its exact request and answers only what the test set with `fake.on('service.method', ...)` (an RPC nobody set up fails). `fetch` is never mocked. `renderPage` (`src/test/render.tsx`) gives each test a fresh query cache without retries; `deferred()` holds an RPC open to click twice while it is in flight.
+
+`ConfirmButton` folds back to its first button as soon as Yes is clicked (the parent disables that button while the RPC is in flight, so a double click sends one RPC), whereas Person's suspend uses `keepOpen` and stays on Yes and Cancel after an error. Focus moves to Yes when the confirmation opens and back to the first button on Cancel or Yes (`src/Confirm.test.tsx`).
+
+Covered: suspending and lifting a person, approving and rejecting a proposed round, approving, rejecting and withdrawing a plan, and approving and rejecting venues (one row, or a selection), plus the People lists and the Venues search results. Each irreversible action asks first (`src/Confirm.tsx`'s `ConfirmButton`, the pattern of Person's suspend button: the first click only shows "Yes, …" and Cancel; the bulk venue buttons ask once and name the count), and each has a success test (exact RPC arguments, what the screen shows after), an error test, a cancel test (no RPC, nothing changed) and a one-RPC-for-a-double-click test on the Yes button. The Venues search results' Approve, Reject and "Add, approved" are reversible status sets and stay first-click; they have success and error tests. `Groups.tsx` and `Plans.tsx` are list and navigation pages with no irreversible actions (the decisions are on `GroupReview.tsx` and `PlanDetail.tsx`), so they have no tests of their own.

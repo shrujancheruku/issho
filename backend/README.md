@@ -19,7 +19,7 @@ The Go backend for Issho: a modular monolith serving a ConnectRPC API. It uses P
 | `internal/translate/translators` | Picks the translator from `TRANSLATOR` for the API, the worker and the tools |
 | `internal/platform/googleapi` | Shared transport for key-based Google APIs (Maps, Translation): key in a header, retries on 429/5xx |
 | `internal/platform/sentry` | Error reporting when `SENTRY_DSN` is set, a no-op otherwise: `Report`, `Handler` (panics), `JobErrors` (River) |
-| `internal/platform/errs` | Connect interceptor: logs unexpected errors and returns a generic `internal error` (no leaked details); `Invalid` for `invalid_argument` errors |
+| `internal/platform/errs` | The one error shape: `Invalid`, `NotFound`, `Precondition(reason, …)`, `Denied(reason, …)`/`Forbidden`, `Unauthenticated` and `Upstream(service, err)` build errors; `Interceptor` maps each kind to its Connect code, adds an `ErrorReasonDetail` when there is a reason, reports `Upstream` and `internal` errors to Sentry, and returns a generic `internal error` for anything else (no leaked details). Add a reason to `proto/issho/v1/errors.proto` only when a screen needs it. `*errs.Error` also answers `errors.As(…, *connect.Error)`, so `connect.CodeOf` works in handler tests |
 | `internal/platform/supabase` | Supabase admin API client (account deletion, the admin role), using the secret key |
 | `internal/moderation` | `ModerationService`: the admin SPA's moderation queue (reports, flags, crew leave reasons) and suspensions; admins only |
 | `internal/health` | `HealthService` |
@@ -272,7 +272,7 @@ go test ./...          # or `make test` from the root
 | `internal/moderation/handler_test.go` | Users refused before any query; **integration:** a report listed, dismissed with a note and reviewer, unknown report `not_found`; a flag resolved once, not twice; crew leaves by reason with the crew's name; people: search, the person view, suspending yourself or without a reason refused, suspending twice is fine, the API's check, `GetMe`'s query, matching and push tokens all see the suspension and its lifting |
 | `internal/platform/i18n/i18n_test.go` | Event and app language pairs (JP–ES exchange, single-language events, any language), text pairs (missing primary shows the secondary alone, identical text shown once, last-resort fallback), code validation |
 | `cmd/api/cors_test.go` | CORS allowlist; empty list denies all |
-| `internal/platform/errs/errs_test.go` | Raw errors become generic `internal`; Connect errors pass through |
+| `internal/platform/errs/errs_test.go`, `kinds_test.go` | Raw errors become generic `internal`; Connect errors pass through; each kind maps to its code; the reason arrives as a detail; `Upstream` hides its cause and reports to Sentry with `service` |
 | `internal/platform/supabase/admin_test.go` | Admin delete: request shape, 404 treated as already deleted, other errors surfaced; `SetAdmin` sends `{"admin": true}` or `null` (which removes the key) and surfaces errors |
 | `internal/identity/service_test.go` | Account creation keeps an existing email; onboarded and display languages once a profile exists; deletion order (auth first, app data kept if that fails) |
 | `internal/profile/validate_test.go` | Every profile rule (age 18+ this year, a fluent language, ≥ 3 activities, same-gender-only needs a gender, current code of conduct, …), normalisation, proto round trip, unknown enums and duplicates rejected |

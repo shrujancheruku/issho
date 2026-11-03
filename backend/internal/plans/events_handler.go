@@ -11,6 +11,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
+	"github.com/shrujancheruku/issho/backend/internal/platform/errs"
 )
 
 // EventHandler serves EventService.
@@ -229,19 +230,31 @@ func parseEventID(s string) (uuid.UUID, error) {
 	return id, nil
 }
 
+// eventError maps the event rules' sentinels to errs kinds. Codes and
+// messages are what installed builds match on; the reasons are additive.
 func eventError(err error) error {
 	var inv *InvalidError
+	msg := err.Error()
+	pre := func(r isshov1.ErrorReason) error { return errs.WithCause(errs.Precondition(r, "%s", msg), err) }
 	switch {
 	case errors.As(err, &inv):
-		return connect.NewError(connect.CodeInvalidArgument, err)
+		return errs.WithCause(errs.Invalid("%s", msg), err)
 	case errors.Is(err, ErrNoEvent):
-		return connect.NewError(connect.CodeNotFound, err)
+		return errs.WithCause(errs.NotFound("%s", msg), err)
 	case errors.Is(err, ErrNotGoing):
-		return connect.NewError(connect.CodePermissionDenied, err)
-	case errors.Is(err, ErrCheckInClosed), errors.Is(err, ErrFeedbackClosed):
-		return connect.NewError(connect.CodeFailedPrecondition, err)
-	case errors.Is(err, ErrNoProfile), errors.Is(err, ErrEventOver), errors.Is(err, ErrTooLate), errors.Is(err, ErrNotNow):
-		return connect.NewError(connect.CodeFailedPrecondition, err)
+		return errs.WithCause(errs.Forbidden("%s", msg), err)
+	case errors.Is(err, ErrCheckInClosed):
+		return pre(isshov1.ErrorReason_ERROR_REASON_CHECK_IN_CLOSED)
+	case errors.Is(err, ErrFeedbackClosed):
+		return pre(isshov1.ErrorReason_ERROR_REASON_FEEDBACK_CLOSED)
+	case errors.Is(err, ErrNoProfile):
+		return pre(isshov1.ErrorReason_ERROR_REASON_NO_PROFILE)
+	case errors.Is(err, ErrEventOver):
+		return pre(isshov1.ErrorReason_ERROR_REASON_EVENT_OVER)
+	case errors.Is(err, ErrTooLate):
+		return pre(isshov1.ErrorReason_ERROR_REASON_TOO_LATE)
+	case errors.Is(err, ErrNotNow):
+		return pre(isshov1.ErrorReason_ERROR_REASON_NOT_NOW)
 	}
 	return err
 }

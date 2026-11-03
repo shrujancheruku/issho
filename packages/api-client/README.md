@@ -20,7 +20,7 @@ const { user } = await api.identity.getMe({});
 
 - `getAccessToken` is called before **every** request. When it returns a token, the client sends `Authorization: Bearer <token>`.
 - The transport is Connect over HTTP/1.1 with **JSON** encoding (`useBinaryFormat: false`). JSON works with React Native's `fetch` and is readable in network inspectors.
-- Errors are thrown as `ConnectError`, with `.code` (e.g. `Code.Unauthenticated`).
+- Errors are thrown as `ConnectError`, with `.code` (e.g. `Code.Unauthenticated`). `errorReason(err)` returns the API's machine-readable `ErrorReason` (`SUSPENDED`, `NO_PROFILE`, `TOO_LATE`, ...) or `undefined`; branch on the code first, then the reason.
 
 ## Adding a service
 
@@ -29,4 +29,4 @@ const { user } = await api.identity.getMe({});
 
 ## Checks
 
-`pnpm typecheck` (root) or `pnpm --filter @issho/api-client typecheck`.
+`pnpm typecheck` and `pnpm test` (root) or `pnpm --filter @issho/api-client typecheck` / `test`.
