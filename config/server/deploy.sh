@@ -44,8 +44,8 @@ kamal() {
     -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0='*' \
     "$kamal_image" "$@"
 }
-# Every call below passes -d production (config/deploy.production.yml): the
-# base config has no host.
+# Every call below passes -d production (config/deploy.production.yml);
+# config/deploy.yml sets require_destination, so Kamal refuses a call without.
 
 # Log in for this deploy only; don't leave the token (short-lived as it is)
 # in kamal's Docker config.

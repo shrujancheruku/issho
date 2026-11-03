@@ -26,11 +26,11 @@ The Workers' `wrangler.jsonc` files claim their host names as custom domains, so
 
 ## Environments
 
-Kamal has one **destination**, `production` (there is one deployed API and no staging API is planned). [`config/deploy.yml`](../config/deploy.yml) holds what every environment shares; [`config/deploy.production.yml`](../config/deploy.production.yml) holds what names an environment: the server's address, the API's host, `SUPABASE_URL`, `ALLOWED_ORIGINS`, `APP_ENV`, and the backup accessory's host, bucket and `SENTRY_ENVIRONMENT`. Its secrets come from `.kamal/secrets.production` (gitignored; template `.kamal/secrets.production.example`), the only secrets file `-d production` reads. Every Kamal call passes `-d production`: the deploy workflow, `config/server/deploy.sh` and the commands here. The base config has no host, so a call without it fails instead of guessing.
+Kamal has one **destination**, `production` (there is one deployed API and no staging API is planned). [`config/deploy.yml`](../config/deploy.yml) holds what every environment shares; [`config/deploy.production.yml`](../config/deploy.production.yml) holds what names an environment: the server's address, the API's host, `SUPABASE_URL`, `ALLOWED_ORIGINS`, `APP_ENV`, and the backup accessory's host, bucket and `SENTRY_ENVIRONMENT`. Its secrets come from `.kamal/secrets.production` (gitignored; template `.kamal/secrets.production.example`), the only secrets file `-d production` reads. Every Kamal call passes `-d production`: the deploy workflow, `config/server/deploy.sh` and the commands here. `config/deploy.yml` sets `require_destination` (and has no host), so a call without it fails instead of guessing.
 
 **M11 (the production Supabase project)** changes `SUPABASE_URL` and `APP_ENV` in `config/deploy.production.yml`, and the Supabase values and secrets in `.env.issho-prod` (and the server's copy); nothing else in the deploy config names the project.
 
-**Moving to the destination (owner, once, after the PR merges).** The server's `deploy.sh` is its own installed copy, so the merge's own deploy fails until it is reinstalled. That failure is safe: the old `deploy.sh` mounts the secrets file where the new config no longer looks, so it stops at the registry login, before anything changes, and the running API and worker stay up. Nothing on the server moves: `/opt/issho/kamal-secrets` keeps its content (the new template is the old one, renamed) and `deploy.sh` mounts it at the new name. In order:
+**Moving to the destination (owner, once, after the PR merges).** The server's `deploy.sh` is its own installed copy, so the merge's own deploy fails until it is reinstalled. That failure is safe: the old `deploy.sh` calls Kamal without `-d`, and Kamal refuses a call without a destination (`require_destination` in `config/deploy.yml`) at `registry login`, before any host is touched, so the running API and worker stay up. Nothing on the server moves: `/opt/issho/kamal-secrets` keeps its content (the new template is the old one, renamed) and `deploy.sh` mounts it at the new name. In order:
 
 1. Let the merge's deploy run and fail (or skip it; the checkout on the server still moves to the merge commit either way).
 2. Reinstall `deploy.sh` as in *Automatic deploys* below.
@@ -48,7 +48,7 @@ Kamal has one **destination**, `production` (there is one deployed API and no st
 7. **Secrets:** `cp .kamal/secrets.production.example .kamal/secrets.production` (gitignored; the file `-d production` reads). It reads each value from `.env.issho-prod` and the certificate files, so the file itself holds no secrets. See [secrets.md](secrets.md).
    `config/deploy.production.yml` sets `APP_ENV=preview` while the deploy points at `issho-dev`, so missing optional keys only warn. When a real production environment exists, set `APP_ENV=production`: the API and worker then refuse to start unless every key in the table in [backend/README.md](../backend/README.md#app_env-and-what-production-requires) is non-empty in `.env.issho-prod`; the startup error names the missing ones, and the health check keeps the old container running.
 8. **Install Kamal** (Kamal 2 needs Ruby 3.2+; macOS ships 2.6, so the image is simpler; add `-v ~/.config/issho:/root/.config/issho:ro` so the secrets file finds the certificate, and on OrbStack or Docker Desktop pass the SSH agent as `-v /run/host-services/ssh-auth.sock:/run/host-services/ssh-auth.sock -e SSH_AUTH_SOCK=/run/host-services/ssh-auth.sock`): `gem install kamal`, or run it from its image: `alias kamal='docker run -it --rm -v "$PWD:/workdir" -v "$SSH_AUTH_SOCK:/ssh-agent" -e SSH_AUTH_SOCK=/ssh-agent -v /var/run/docker.sock:/var/run/docker.sock $(cat config/kamal-image)'` (from the repo root; [`config/kamal-image`](../config/kamal-image) is the one place the Kamal version is pinned, read by the deploy workflow and by the server's `deploy.sh`).
-9. **First deploy:** `kamal setup` (installs Docker, starts kamal-proxy, then deploys as below).
+9. **First deploy:** `kamal setup -d production` (installs Docker, starts kamal-proxy, then deploys as below).
 
 ## Deploying
 
@@ -60,7 +60,7 @@ kamal migrate -d production           # apply new migrations with that image (al
 kamal deploy -d production --skip-push
 ```
 
-Every Kamal command takes `-d production` (see *Environments*); the examples below leave it out for brevity, so add it. Without it Kamal has no host and refuses.
+Every Kamal command takes `-d production` (see *Environments*); without it Kamal refuses.
 
 Migrations run **before** the new code, so the old code must work with the new schema for the minute in between; keep migrations additive, as they already are. kamal-proxy only switches traffic once the new API container's `GET /up` answers 200, which needs the database, so a broken `DATABASE_URL` never replaces a working container.
 
@@ -69,14 +69,14 @@ Then check:
 ```sh
 curl https://<api host>/up                                     # ok
 curl -X POST -H 'Content-Type: application/json' -d '{}' https://<api host>/issho.v1.HealthService/Check   # the commit's version
-kamal logs-api          # or logs-worker
+kamal logs-api -d production          # or logs-worker
 ```
 
-**Checking Sentry:** `kamal app exec --primary "tool sentry-test"` sends one test error to the `issho-api` project (Sentry organisation `shrujan`, EU region), as the API and worker would. Events are tagged with `APP_ENV`, which is `preview` while this deploy points at `issho-dev` (#232; it was `production` before). **To check next time you work in Sentry:** any alert rule that filters on environment `production` no longer fires for the API and worker; add `preview`, then delete this note. The backup monitor still reports as `production`.
+**Checking Sentry:** `kamal app exec -d production --primary "tool sentry-test"` sends one test error to the `issho-api` project (Sentry organisation `shrujan`, EU region), as the API and worker would. Events are tagged with `APP_ENV`, which is `preview` while this deploy points at `issho-dev` (#232; it was `production` before). **To check next time you work in Sentry:** any alert rule that filters on environment `production` no longer fires for the API and worker; add `preview`, then delete this note. The backup monitor still reports as `production`.
 
-**Seeding and Google tools** run the same way, inside the image: `kamal app exec --primary "tool seed /data/citypacks/tokyo.json"` (the catalogue is seeded too).
+**Seeding and Google tools** run the same way, inside the image: `kamal app exec -d production --primary "tool seed /data/citypacks/tokyo.json"` (the catalogue is seeded too).
 
-**Rolling back:** `kamal rollback <version>` (versions are commit hashes; `kamal app containers` lists them). Migrations aren't rolled back.
+**Rolling back:** `kamal rollback -d production <version>` (versions are commit hashes; `kamal app containers -d production` lists them). Migrations aren't rolled back.
 
 ## Automatic deploys
 
@@ -105,18 +105,18 @@ A Kamal accessory, `backup` (`config/deploy.yml`), runs `config/backup/backup.sh
 
 1. Build and push the image from the repo root (a classic PAT with `write:packages`, as for the first manual deploy; log out afterwards): `docker buildx build --platform linux/amd64 -t ghcr.io/shrujancheruku/issho-backup:17 --push config/backup`. Pushing again rebuilds on the latest `postgres:17-alpine`, so do it now and then.
 2. Make sure `SENTRY_DSN` (the `issho-api` project's) is in `.env.issho-prod`, and in the server's copy of the env.
-3. On the machine whose `.kamal/secrets.production` holds `SENTRY_DSN` (the one that deploys by hand): pulling the new private GHCR package needs `KAMAL_REGISTRY_PASSWORD` set to a PAT with `read:packages`. Run `kamal registry login` if the reboot doesn't log in itself, then `kamal accessory reboot backup` (it pulls the new image and mounts the new script). The check-in below creates the monitor.
-4. Check once: `kamal accessory exec backup "env BACKUP_ONCE=1 sh /backup/backup.sh"`. Sentry, *Insights > Crons*, now lists `issho-backup` with an `ok` check-in.
+3. On the machine whose `.kamal/secrets.production` holds `SENTRY_DSN` (the one that deploys by hand): pulling the new private GHCR package needs `KAMAL_REGISTRY_PASSWORD` set to a PAT with `read:packages`. Run `kamal registry login -d production` if the reboot doesn't log in itself, then `kamal accessory reboot -d production backup` (it pulls the new image and mounts the new script). The check-in below creates the monitor.
+4. Check once: `kamal accessory exec -d production backup "env BACKUP_ONCE=1 sh /backup/backup.sh"`. Sentry, *Insights > Crons*, now lists `issho-backup` with an `ok` check-in.
 5. Create the alert: in the monitor's page, *Alerts > Create alert* (or *Alerts > Create Alert > Issues*, project `issho-api`, filter *issue category is Cron*, monitor slug `issho-backup`), action *Send a notification to Member*, you, by email. Check that the monitor shows the issue-alert rule as attached.
-6. Test the failure: `kamal accessory exec backup "env BACKUP_ONCE=1 R2_SECRET_ACCESS_KEY=wrong sh /backup/backup.sh"` ends in an `error` check-in and an email. A missed night is the same alert (to try it, stop the accessory past `BACKUP_AT` plus the margin: `kamal accessory stop backup`, then `start` it again).
+6. Test the failure: `kamal accessory exec -d production backup "env BACKUP_ONCE=1 R2_SECRET_ACCESS_KEY=wrong sh /backup/backup.sh"` ends in an `error` check-in and an email. A missed night is the same alert (to try it, stop the accessory past `BACKUP_AT` plus the margin: `kamal accessory stop -d production backup`, then `start` it again).
 
-**Live since 2026-10-26:** bucket `issho-backups` (30-day lifecycle rule) in the Cloudflare account, `BACKUP_AT` 18 (03:00 in Tokyo). The server's copy of the env holds the R2 keys. `config/deploy.yml` and `config/deploy.production.yml` changes to the accessory, or to `backup.sh` or its Dockerfile, need `kamal accessory reboot backup`; the deploy workflow doesn't touch accessories.
+**Live since 2026-10-26:** bucket `issho-backups` (30-day lifecycle rule) in the Cloudflare account, `BACKUP_AT` 18 (03:00 in Tokyo). The server's copy of the env holds the R2 keys. `config/deploy.yml` and `config/deploy.production.yml` changes to the accessory, or to `backup.sh` or its Dockerfile, need `kamal accessory reboot -d production backup`; the deploy workflow doesn't touch accessories.
 
 **One-time setup** (needs the Cloudflare account):
 
 1. Create an R2 bucket (e.g. `issho-backups`) and an **R2 API token** with *Object Read & Write* on that bucket only. Put its key pair in `.env.issho-prod` as `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` (`.kamal/secrets` reads them), and the account id and bucket in `config/deploy.production.yml` (`TODO`s).
 2. In the bucket's settings, add a **lifecycle rule** deleting objects after 30 days: that's the retention.
-3. `kamal accessory boot backup`, then check the setup once: `kamal accessory exec backup "env BACKUP_ONCE=1 sh /backup/backup.sh"`, which should print `backup: uploaded issho-….dump`. `kamal accessory logs backup` shows each night.
+3. `kamal accessory boot -d production backup`, then check the setup once: `kamal accessory exec -d production backup "env BACKUP_ONCE=1 sh /backup/backup.sh"`, which should print `backup: uploaded issho-….dump`. `kamal accessory logs -d production backup` shows each night.
 
 **Restore drill** (2026-10-26): the first dump (380 KB) was downloaded from R2 and restored in full into a throwaway plain PostGIS container (amd64 only: `--platform linux/amd64` on a Mac). Use the Supabase image CI runs instead (`public.ecr.aws/supabase/postgres`, tag in `ci.yml`): it's multi-arch and already has the `extensions` schema. That dump predates the baseline reset and holds PostGIS in `public`; later dumps hold it in `extensions`. It needs the extensions first: `create schema extensions; create extension postgis schema extensions; create extension pgcrypto schema extensions;`, then `pg_restore --no-owner --no-privileges -d postgres issho-….dump`. All 68 tables in `app`, `goose`, `river` and `auth` came back with the live row counts (7,139 rows), except the session tables, which are left out on purpose, and one River job queued after the dump. The drill found `auth.mfa_amr_claims` failing its foreign key without the sessions, so it's now left out too. Delete the dump afterwards: it holds people's data.
 
@@ -140,7 +140,7 @@ Run SQL with `supabase db query --linked "…"` or `psql "$DATABASE_URL"` (a ses
 
 ### When nothing in the database needs keeping
 
-1. Stop the API and worker (`kamal app stop`), then drop the old schemas in one transaction. `auth.users` is not touched, so admin and translator roles (`auth.users.raw_app_meta_data`) survive:
+1. Stop the API and worker (`kamal app stop -d production`), then drop the old schemas in one transaction. `auth.users` is not touched, so admin and translator roles (`auth.users.raw_app_meta_data`) survive:
    ```sql
    begin;
    drop schema app cascade;
@@ -149,8 +149,8 @@ Run SQL with `supabase db query --linked "…"` or `psql "$DATABASE_URL"` (a ses
    drop extension postgis cascade;   -- from public
    commit;
    ```
-2. Merge the PR. The deploy workflow runs `kamal migrate` (which applies `00001_baseline` and `00002_river` from nothing, creating PostGIS in `extensions`) and `kamal deploy`. `kamal app exec --primary "tool migrate status"` should show both applied.
-3. Seed the packs: `kamal app exec --primary "tool seed /data/citypacks/tokyo.json /data/citypacks/austin.json /data/citypacks/da-nang-hoi-an.json"`. With `GOOGLE_MAPS_API_KEY` set this also builds the travel times; if the log says they were skipped, run `kamal app exec --primary "tool build-matrix <city>"` for each city.
+2. Merge the PR. The deploy workflow runs `kamal migrate -d production` (which applies `00001_baseline` and `00002_river` from nothing, creating PostGIS in `extensions`) and `kamal deploy -d production`. `kamal app exec -d production --primary "tool migrate status"` should show both applied.
+3. Seed the packs: `kamal app exec -d production --primary "tool seed /data/citypacks/tokyo.json /data/citypacks/austin.json /data/citypacks/da-nang-hoi-an.json"`. With `GOOGLE_MAPS_API_KEY` set this also builds the travel times; if the log says they were skipped, run `kamal app exec -d production --primary "tool build-matrix <city>"` for each city.
 4. Run the checks in *Verify* below, and record `select extversion from pg_extension where extname = 'postgis';` in the PR.
 
 ### When the data matters (production with active users)
@@ -159,10 +159,10 @@ Keeps the old rows, renaming `app` to a scratch schema and copying the reference
 
 1. **Final dump, kept.** Take one on demand and copy it somewhere the 30-day lifecycle rule won't delete it:
    ```sh
-   kamal accessory exec --reuse backup "env BACKUP_ONCE=1 sh /backup/backup.sh"   # prints: backup: uploaded issho-….dump
+   kamal accessory exec -d production --reuse backup "env BACKUP_ONCE=1 sh /backup/backup.sh"   # prints: backup: uploaded issho-….dump
    `--reuse` runs it in the accessory's running container; without it Kamal starts a fresh container from the configured image, which may not be pushed yet.
    In R2, copy that object to `pre-baseline/issho-….dump` and check the lifecycle rule doesn't cover the prefix (or turn it into an object with its own retention). Delete it when the reset is verified: it holds people's data. If the backup accessory isn't running yet, `pg_dump --format=custom --no-owner --no-privileges --schema=app --schema=goose --schema=river --schema=auth` with the same exclusions as `config/backup/backup.sh`, to a file outside the repo.
-2. **Stop the API and worker**, so nothing writes while the schemas are swapped: `kamal app stop`. The API stays down from here until the PR merges and deploys (step 4), so do steps 2 to 4 in one sitting and have the PR approved and green first.
+2. **Stop the API and worker**, so nothing writes while the schemas are swapped: `kamal app stop -d production`. The API stays down from here until the PR merges and deploys (step 4), so do steps 2 to 4 in one sitting and have the PR approved and green first.
 3. **Empty the database, keeping `app`'s old rows for step 6.** In one transaction:
    ```sql
    begin;
@@ -176,11 +176,11 @@ Keeps the old rows, renaming `app` to a scratch schema and copying the reference
    commit;
    ```
    `auth.users` is not touched. Admin and translator roles live in `auth.users.raw_app_meta_data` (`admin`, `translator_langs`), so they survive as they are.
-4. **Deploy the baseline, right after step 3.** Merge the PR: the deploy workflow runs `kamal migrate` (which applies `00001_baseline` and `00002_river` from nothing, creating PostGIS in `extensions`) and `kamal deploy`. Or run `kamal build push && kamal migrate && kamal deploy --skip-push` from the PR's commit. `kamal app exec --primary "tool migrate status"` should show both migrations applied.
+4. **Deploy the baseline, right after step 3.** Merge the PR: the deploy workflow runs `kamal migrate -d production` (which applies `00001_baseline` and `00002_river` from nothing, creating PostGIS in `extensions`) and `kamal deploy -d production`. Or run `kamal build push -d production && kamal migrate -d production && kamal deploy -d production --skip-push` from the PR's commit. `kamal app exec -d production --primary "tool migrate status"` should show both migrations applied.
 5. **Seed every city pack and rebuild the travel times.** `tool seed` builds the matrix of new areas when `GOOGLE_MAPS_API_KEY` is set (about 554 elements across the three packs):
    ```sh
-   kamal app exec --primary "tool seed /data/citypacks/tokyo.json /data/citypacks/austin.json /data/citypacks/da-nang-hoi-an.json"
-   kamal app exec --primary "tool build-matrix tokyo"          # only if the seed log says the travel times were skipped; same for austin, da-nang-hoi-an
+   kamal app exec -d production --primary "tool seed /data/citypacks/tokyo.json /data/citypacks/austin.json /data/citypacks/da-nang-hoi-an.json"
+   kamal app exec -d production --primary "tool build-matrix tokyo"          # only if the seed log says the travel times were skipped; same for austin, da-nang-hoi-an
    ```
 6. **Carry the reference data over from `app_old`**, then drop it. Venues keep their curation status and who set it and when; `added_by` is kept only where that user still exists in `auth.users`. Translations keep their review. Accounts, profiles, plans, crews, chats, notifications and reports are **not** carried over.
    ```sql

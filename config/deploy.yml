@@ -10,9 +10,13 @@
 # (the server, the API's host, the Supabase project, the allowed origins, the
 # backup bucket) lives in deploy.<destination>.yml, merged over this file by
 # `kamal -d <destination>`; today only deploy.production.yml. Every Kamal call
-# passes `-d production`: without it there is no host, so Kamal refuses.
+# passes `-d production`: require_destination (below) makes Kamal refuse any
+# call without one.
 
 service: issho
+
+# A call without -d raises at config load, before any host work.
+require_destination: true
 
 # GitHub Container Registry, under the repository's owner (private package).
 # The deploy workflow created it (2026-10-26), so it's linked to the repository
