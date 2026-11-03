@@ -33,6 +33,37 @@ func (q *Queries) DeleteOldChats(ctx context.Context, arg DeleteOldChatsParams) 
 	return result.RowsAffected(), nil
 }
 
+const deleteOldCrewChats = `-- name: DeleteOldCrewChats :execrows
+delete from app.crew_messages
+where id in (
+  select m.id from app.crew_messages m
+  join app.crews c on c.id = m.crew_id
+  where c.closed_at < $1
+  order by m.id
+  limit $2
+)
+`
+
+type DeleteOldCrewChatsParams struct {
+	Before pgtype.Timestamptz
+	Max    int32
+}
+
+// Crew chats of crews closed more than 30 days ago (privacy). A crew that
+// lapsed or closed has closed_at set (UpdateCrewStatus), so one rule covers
+// both; someone leaving an active crew doesn't delete their messages. At
+// most @max rows per call so the daily run never holds a long lock: the
+// caller repeats until fewer come back. crew_messages_crew_idx finds a
+// crew's messages; the few closed crews are filtered from the small
+// crews table.
+func (q *Queries) DeleteOldCrewChats(ctx context.Context, arg DeleteOldCrewChatsParams) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteOldCrewChats, arg.Before, arg.Max)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const getChatAccess = `-- name: GetChatAccess :one
 select m.group_id, m.response, g.status as group_status, e.status as event_status, e.starts_at, e.confirm_by
 from app.group_members m

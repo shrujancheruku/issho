@@ -297,7 +297,7 @@ Clears every tier of the 2026-11-02 audit before the deferred release items (M11
 - ⬜ mobile: [query-key module](https://github.com/shrujancheruku/issho/issues/171) ✅ M · [one screen frame, tabs included](https://github.com/shrujancheruku/issho/issues/201) M (moved up from Tier 3: it blocks #170)
 
 **Wave 1b** (Tier 1)
-- ⬜ db: [retention](https://github.com/shrujancheruku/issho/issues/161) M (after #160)
+- ⬜ db: [retention](https://github.com/shrujancheruku/issho/issues/161) ✅ M (after #160)
 - ⬜ api: [modules return errs kinds](https://github.com/shrujancheruku/issho/issues/163) L (after #162) · [protovalidate limits](https://github.com/shrujancheruku/issho/issues/176) M (after #162) · [typed admin enums](https://github.com/shrujancheruku/issho/issues/178) M (after #177) · [bounded app lists](https://github.com/shrujancheruku/issho/issues/179) S
 - ⬜ backend: [authoritative city pack](https://github.com/shrujancheruku/issho/issues/166) L (after #165) → [Tokyo municipalities](https://github.com/shrujancheruku/issho/issues/169) M
 - ⬜ mobile: [errorText and ErrorLine](https://github.com/shrujancheruku/issho/issues/164) M (after #162) → [keep data on a failed refetch](https://github.com/shrujancheruku/issho/issues/170) S (after #201 too) · [refetch on foreground and pushes](https://github.com/shrujancheruku/issho/issues/172) M (after #171)
