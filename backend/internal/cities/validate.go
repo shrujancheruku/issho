@@ -112,7 +112,7 @@ func ValidateCatalog(cats []VenueCategory, acts []Activity) error {
 }
 
 // ValidatePack checks a city pack. activityIDs, when non-nil, is the catalogue
-// the overrides must refer to; SeedPack passes nil and relies on the foreign key.
+// the overrides must refer to; the tool passes nil and relies on the foreign key.
 func ValidatePack(p Pack, activityIDs map[string]bool) error {
 	var errs []error
 	bad := func(format string, a ...any) { errs = append(errs, fmt.Errorf(format, a...)) }
