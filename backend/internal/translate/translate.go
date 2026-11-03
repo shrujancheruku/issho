@@ -17,6 +17,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"sync"
@@ -40,6 +41,11 @@ type Translator interface {
 	// Name identifies the translator in app.translations.model.
 	Name() string
 }
+
+// ErrBudget is what an interactive translator call returns when it ran past
+// its time budget: a request can't wait for Gemini's retries, so the caller
+// answers Unavailable (with a reason) and the admin asks again.
+var ErrBudget = errors.New("translator ran past its time budget")
 
 // Store is the cache; *dbgen.Queries implements it.
 type Store interface {

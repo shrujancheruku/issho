@@ -66,7 +66,7 @@ export const eventChanged = (qc: QueryClient, id: string, opts: { planId?: strin
     keys.event(id),
     keys.events,
     ...(opts.feed ? [keys.feed, keys.planCardsAll] : []),
-    ...(opts.planId ? [keys.plan(opts.planId)] : []),
+    ...(opts.planId ? [keys.plan(opts.planId), keys.planCardsAll] : []),
   );
 
 /** A crew offer was answered. */
@@ -92,11 +92,11 @@ export type PushRef = { eventId?: string; planId?: string; crewId?: string };
  * when a kind has no row here; the Go files point back at this table.
  */
 export const pushKinds: Record<string, (ref: PushRef) => readonly (readonly unknown[])[]> = {
-  event_invited: ({ eventId }) => [keys.events, ...(eventId ? [keys.event(eventId)] : []), keys.feed],
+  event_invited: ({ eventId }) => [keys.events, ...(eventId ? [keys.event(eventId)] : []), keys.feed, keys.planCardsAll],
   group_confirmed: ({ eventId }) => [...(eventId ? [keys.event(eventId)] : []), keys.events],
   group_cancelled: ({ eventId }) => [...(eventId ? [keys.event(eventId)] : []), keys.events],
   event_feedback: ({ eventId }) => [...(eventId ? [keys.event(eventId)] : []), keys.events],
-  plan_no_group: () => [keys.feed, keys.events],
+  plan_no_group: () => [keys.feed, keys.planCardsAll, keys.events],
   crew_offered: ({ crewId }) => [keys.crews, ...(crewId ? [keys.crew(crewId)] : [])],
   crew_formed: ({ crewId }) => [keys.crews, ...(crewId ? [keys.crew(crewId)] : [])],
   // An open room gets the message over its socket; only the crew's own data changes.

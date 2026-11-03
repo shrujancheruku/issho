@@ -8,6 +8,8 @@ import (
 	"testing"
 
 	"connectrpc.com/connect"
+
+	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
 )
 
 func TestInterceptor(t *testing.T) {
@@ -44,5 +46,25 @@ func TestRefused(t *testing.T) {
 	var ce *connect.Error
 	if !errors.As(err, &ce) || ce.Code() != connect.CodeFailedPrecondition || ce.Message() != "not now: 1" || len(ce.Details()) != 0 {
 		t.Fatalf("got %v", err)
+	}
+}
+
+// UpstreamReason is Unavailable with its message and a reason detail.
+func TestUpstreamReason(t *testing.T) {
+	log := slog.New(slog.NewTextHandler(io.Discard, nil))
+	old := report
+	report = func(context.Context, error, map[string]string) {}
+	t.Cleanup(func() { report = old })
+	next := func(context.Context, connect.AnyRequest) (connect.AnyResponse, error) {
+		return nil, UpstreamReason("gemini", isshov1.ErrorReason_ERROR_REASON_TIMED_OUT, "took too long", context.DeadlineExceeded)
+	}
+	_, err := Interceptor(log)(next)(context.Background(), connect.NewRequest(&struct{}{}))
+	var ce *connect.Error
+	if !errors.As(err, &ce) || ce.Code() != connect.CodeUnavailable || ce.Message() != "took too long" || len(ce.Details()) != 1 {
+		t.Fatalf("got %v", err)
+	}
+	m, derr := ce.Details()[0].Value()
+	if derr != nil || m.(*isshov1.ErrorReasonDetail).Reason != isshov1.ErrorReason_ERROR_REASON_TIMED_OUT {
+		t.Fatalf("detail = %v, %v", m, derr)
 	}
 }

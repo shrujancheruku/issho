@@ -101,3 +101,20 @@ func TestIntegrationCards(t *testing.T) {
 		t.Errorf("no profile: %v, want ErrNoProfile", err)
 	}
 }
+
+// The cap counts distinct ids: 51 ids with repeats but 50 plans is allowed,
+// 51 different plans is not.
+func TestCardsCapCountsDistinctIDs(t *testing.T) {
+	distinct := make([]uuid.UUID, MaxPlanCards)
+	for i := range distinct {
+		distinct[i] = uuid.New()
+	}
+	withRepeat := append(append([]uuid.UUID{}, distinct...), distinct[0])
+	if got, err := distinctCardIDs(withRepeat); err != nil || len(got) != MaxPlanCards {
+		t.Errorf("%d ids, %d distinct: %d, %v; want allowed", len(withRepeat), MaxPlanCards, len(got), err)
+	}
+	var inv *InvalidError
+	if _, err := distinctCardIDs(append(distinct, uuid.New())); !errors.As(err, &inv) {
+		t.Errorf("51 distinct ids: %v, want InvalidError", err)
+	}
+}

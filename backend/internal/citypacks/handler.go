@@ -18,8 +18,12 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/riverqueue/river"
+	"github.com/riverqueue/river/rivertype"
 
+	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
+	"github.com/shrujancheruku/issho/backend/internal/adminjobs"
 	"github.com/shrujancheruku/issho/backend/internal/cities"
 	"github.com/shrujancheruku/issho/backend/internal/geo"
 	gmaps "github.com/shrujancheruku/issho/backend/internal/maps"
@@ -43,6 +47,11 @@ type Repo interface {
 	OpenPRs(ctx context.Context, prefix string) ([]github.PR, error)
 }
 
+// Inserter queues jobs (*river.Client).
+type Inserter interface {
+	Insert(ctx context.Context, args river.JobArgs, opts *river.InsertOpts) (*rivertype.JobInsertResult, error)
+}
+
 // Handler serves CityPackService. cmd/api limits the service to admins
 // (auth.AdminOnly); each call checks again (auth.RequireAdmin) so a wiring mistake fails closed.
 type Handler struct {
@@ -50,10 +59,12 @@ type Handler struct {
 	// GitHub is nil without GITHUB_TOKEN; Base is its default branch.
 	GitHub Repo
 	Base   string
-	// Router and Places are nil without GOOGLE_MAPS_API_KEY.
-	Router gmaps.Router
+	// Places is nil without GOOGLE_MAPS_API_KEY on the API; the worker (which
+	// runs the jobs) has a key of its own.
 	Places gmaps.PlaceSearcher
-	Now    func() time.Time // nil = time.Now
+	// Jobs queues the admin jobs (*river.Client, insert-only on the API).
+	Jobs Inserter
+	Now  func() time.Time // nil = time.Now
 }
 
 func (h *Handler) now() time.Time {
@@ -275,6 +286,9 @@ func (h *Handler) ProposeCityPack(ctx context.Context, req *connect.Request[issh
 	}}), nil
 }
 
+// ApplyCityPack validates the pack on the default branch, as before, then
+// queues the apply as a job (internal/adminjobs) and returns its id: the
+// apply may rebuild a city's travel times, which can outlast a request.
 func (h *Handler) ApplyCityPack(ctx context.Context, req *connect.Request[isshov1.ApplyCityPackRequest]) (*connect.Response[isshov1.ApplyCityPackResponse], error) {
 	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
@@ -289,33 +303,22 @@ func (h *Handler) ApplyCityPack(ctx context.Context, req *connect.Request[isshov
 	if err := h.check(ctx, p); err != nil {
 		return nil, err
 	}
-	// The admin never consents to losing curated venues; that is `tool seed
-	// -drop-curated-venues`.
-	d, err := cities.Apply(ctx, h.DB, h.Router, p, cities.Options{})
-	if errors.Is(err, cities.ErrRefused) {
-		// Names areas and counts only, nothing was written.
-		return nil, errs.Refused("%s", err)
-	}
-	if errors.Is(err, cities.ErrTravelTimes) {
-		// The pack is seeded; only Google's answer is missing, and the
-		// worker's refresh retries within a day. Google's text stays in the log.
-		return nil, errs.UpstreamMsg("google", "seeded, but Google's travel times failed (the worker retries within a day)", fmt.Errorf("city %s: %w", p.ID, err))
-	}
+	// The same pack applied again while one is queued or running is skipped
+	// (unique jobs) and the caller follows the first; a changed pack queues
+	// behind it.
+	args, err := adminjobs.NewApplyCityPackArgs(p)
 	if err != nil {
 		return nil, err
 	}
-	replaced := make([]*isshov1.ReplacedArea, 0, len(d.ReplacedAreas))
-	for _, r := range d.ReplacedAreas {
-		replaced = append(replaced, &isshov1.ReplacedArea{
-			OldAreaId: r.Old, NewAreaId: r.New, People: int32(r.People), Crews: int32(r.Crews), Plans: int32(r.Plans),
-		})
+	id, err := h.insert(ctx, args)
+	if err != nil {
+		return nil, err
 	}
-	return connect.NewResponse(&isshov1.ApplyCityPackResponse{
-		NewAreas: d.NewAreas, MovedAreas: d.MovedAreas, TravelTimesRebuilt: d.TravelTimesRebuilt, TravelTimes: int32(d.TravelTimes),
-		RemovedAreas: d.RemovedAreas, ReplacedAreas: replaced, RemovedOverrides: d.RemovedOverrides,
-	}), nil
+	return connect.NewResponse(&isshov1.ApplyCityPackResponse{JobId: id}), nil
 }
 
+// DiscoverAreaVenues checks the request (a key, a seeded city, an area in it)
+// and queues the search as a job: up to a few hundred Nearby Searches.
 func (h *Handler) DiscoverAreaVenues(ctx context.Context, req *connect.Request[isshov1.DiscoverAreaVenuesRequest]) (*connect.Response[isshov1.DiscoverAreaVenuesResponse], error) {
 	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
@@ -323,19 +326,34 @@ func (h *Handler) DiscoverAreaVenues(ctx context.Context, req *connect.Request[i
 	if h.Places == nil {
 		return nil, errs.Refused("finding venues needs GOOGLE_MAPS_API_KEY")
 	}
-	searches, venues, err := cities.DiscoverAreaVenues(ctx, h.DB, h.Places, req.Msg.CityId, req.Msg.AreaId)
+	areas, _, err := geo.LoadCity(ctx, dbgen.New(h.DB), req.Msg.CityId)
 	switch {
 	case errors.Is(err, geo.ErrCityNotFound):
 		// Only "not seeded" is NotFound: a database failure must not look like it.
 		return nil, errs.NotFound("no such city")
-	case errors.Is(err, cities.ErrAreaNotInCity):
-		return nil, errs.Invalid("area_id: not in that city")
-	case errors.Is(err, cities.ErrSearch):
-		return nil, errs.Upstream("google", fmt.Errorf("area venue search, city %s area %s: %w", req.Msg.CityId, req.Msg.AreaId, err))
 	case err != nil:
 		return nil, err
+	case !slices.ContainsFunc(areas, func(a geo.Area) bool { return a.ID == req.Msg.AreaId }):
+		return nil, errs.Invalid("area_id: not in that city")
 	}
-	return connect.NewResponse(&isshov1.DiscoverAreaVenuesResponse{Searches: int32(searches), Venues: int32(venues)}), nil
+	id, err := h.insert(ctx, adminjobs.DiscoverAreaVenuesArgs{City: req.Msg.CityId, Area: req.Msg.AreaId})
+	if err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(&isshov1.DiscoverAreaVenuesResponse{JobId: id}), nil
+}
+
+// insert queues a job and returns its id, or the id of the identical job
+// already queued or running.
+func (h *Handler) insert(ctx context.Context, args river.JobArgs) (int64, error) {
+	if h.Jobs == nil {
+		return 0, errs.Refused("the admin jobs are not set up on this API")
+	}
+	res, err := h.Jobs.Insert(ctx, args, nil)
+	if err != nil {
+		return 0, err
+	}
+	return res.Job.ID, nil
 }
 
 // Changes describes a pack's changes from the default branch's (nil for a

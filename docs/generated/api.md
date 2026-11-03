@@ -3,6 +3,43 @@
 
 ## Table of Contents
 
+- [issho/v1/citypacks.proto](#issho_v1_citypacks-proto)
+    - [ApplyCityPackRequest](#issho-v1-ApplyCityPackRequest)
+    - [ApplyCityPackResponse](#issho-v1-ApplyCityPackResponse)
+    - [CityPack](#issho-v1-CityPack)
+    - [CityPack.NameEntry](#issho-v1-CityPack-NameEntry)
+    - [CityPackPullRequest](#issho-v1-CityPackPullRequest)
+    - [CityPackSummary](#issho-v1-CityPackSummary)
+    - [DiscoverAreaVenuesRequest](#issho-v1-DiscoverAreaVenuesRequest)
+    - [DiscoverAreaVenuesResponse](#issho-v1-DiscoverAreaVenuesResponse)
+    - [GetCityPackRequest](#issho-v1-GetCityPackRequest)
+    - [GetCityPackResponse](#issho-v1-GetCityPackResponse)
+    - [ListCityPacksRequest](#issho-v1-ListCityPacksRequest)
+    - [ListCityPacksResponse](#issho-v1-ListCityPacksResponse)
+    - [PackActivity](#issho-v1-PackActivity)
+    - [PackArea](#issho-v1-PackArea)
+    - [PackArea.NameEntry](#issho-v1-PackArea-NameEntry)
+    - [PackOverride](#issho-v1-PackOverride)
+    - [ProposeCityPackRequest](#issho-v1-ProposeCityPackRequest)
+    - [ProposeCityPackResponse](#issho-v1-ProposeCityPackResponse)
+    - [ReplacedArea](#issho-v1-ReplacedArea)
+  
+    - [CityPackService](#issho-v1-CityPackService)
+  
+- [issho/v1/errors.proto](#issho_v1_errors-proto)
+    - [ErrorReasonDetail](#issho-v1-ErrorReasonDetail)
+  
+    - [ErrorReason](#issho-v1-ErrorReason)
+  
+- [issho/v1/admin.proto](#issho_v1_admin-proto)
+    - [AdminJobFailure](#issho-v1-AdminJobFailure)
+    - [GetAdminJobRequest](#issho-v1-GetAdminJobRequest)
+    - [GetAdminJobResponse](#issho-v1-GetAdminJobResponse)
+  
+    - [AdminJobState](#issho-v1-AdminJobState)
+  
+    - [AdminService](#issho-v1-AdminService)
+  
 - [issho/v1/profile.proto](#issho_v1_profile-proto)
     - [ActivityPreference](#issho-v1-ActivityPreference)
     - [AvailabilitySlot](#issho-v1-AvailabilitySlot)
@@ -45,29 +82,6 @@
     - [SendMessageResponse](#issho-v1-SendMessageResponse)
   
     - [ChatService](#issho-v1-ChatService)
-  
-- [issho/v1/citypacks.proto](#issho_v1_citypacks-proto)
-    - [ApplyCityPackRequest](#issho-v1-ApplyCityPackRequest)
-    - [ApplyCityPackResponse](#issho-v1-ApplyCityPackResponse)
-    - [CityPack](#issho-v1-CityPack)
-    - [CityPack.NameEntry](#issho-v1-CityPack-NameEntry)
-    - [CityPackPullRequest](#issho-v1-CityPackPullRequest)
-    - [CityPackSummary](#issho-v1-CityPackSummary)
-    - [DiscoverAreaVenuesRequest](#issho-v1-DiscoverAreaVenuesRequest)
-    - [DiscoverAreaVenuesResponse](#issho-v1-DiscoverAreaVenuesResponse)
-    - [GetCityPackRequest](#issho-v1-GetCityPackRequest)
-    - [GetCityPackResponse](#issho-v1-GetCityPackResponse)
-    - [ListCityPacksRequest](#issho-v1-ListCityPacksRequest)
-    - [ListCityPacksResponse](#issho-v1-ListCityPacksResponse)
-    - [PackActivity](#issho-v1-PackActivity)
-    - [PackArea](#issho-v1-PackArea)
-    - [PackArea.NameEntry](#issho-v1-PackArea-NameEntry)
-    - [PackOverride](#issho-v1-PackOverride)
-    - [ProposeCityPackRequest](#issho-v1-ProposeCityPackRequest)
-    - [ProposeCityPackResponse](#issho-v1-ProposeCityPackResponse)
-    - [ReplacedArea](#issho-v1-ReplacedArea)
-  
-    - [CityPackService](#issho-v1-CityPackService)
   
 - [issho/v1/plans.proto](#issho_v1_plans-proto)
     - [FeedPlan](#issho-v1-FeedPlan)
@@ -158,11 +172,6 @@
     - [VenueStatus](#issho-v1-VenueStatus)
   
     - [CurationService](#issho-v1-CurationService)
-  
-- [issho/v1/errors.proto](#issho_v1_errors-proto)
-    - [ErrorReasonDetail](#issho-v1-ErrorReasonDetail)
-  
-    - [ErrorReason](#issho-v1-ErrorReason)
   
 - [issho/v1/health.proto](#issho_v1_health-proto)
     - [CheckRequest](#issho-v1-CheckRequest)
@@ -325,6 +334,533 @@
     - [UIService](#issho-v1-UIService)
   
 - [Scalar Value Types](#scalar-value-types)
+
+
+
+<a name="issho_v1_citypacks-proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## issho/v1/citypacks.proto
+
+
+
+<a name="issho-v1-ApplyCityPackRequest"></a>
+
+### ApplyCityPackRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| city_id | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-ApplyCityPackResponse"></a>
+
+### ApplyCityPackResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| new_areas | [string](#string) | repeated | Areas new to the database, or whose centre moved more than 100 m: they need venues (DiscoverAreaVenues). |
+| moved_areas | [string](#string) | repeated |  |
+| travel_times_rebuilt | [bool](#bool) |  | Travel times rebuilt (the rows saved); false when no area changed or there&#39;s no Google Maps key. |
+| travel_times | [int32](#int32) |  |  |
+| removed_areas | [string](#string) | repeated | What an authoritative apply took away (the pack is the source of truth): areas deleted because nothing referenced them, areas retired by an area&#39;s `replaces` (their people, crews and plans moved to the new one), and the activity ids whose city override the pack dropped. |
+| replaced_areas | [ReplacedArea](#issho-v1-ReplacedArea) | repeated |  |
+| removed_overrides | [string](#string) | repeated |  |
+| job_id | [int64](#int64) |  | The job applying the pack (see AdminService.GetAdminJob); the fields above are empty in this response and filled in the job&#39;s result. 0 from an API that still applies synchronously (the previous release), which fills the fields instead. |
+
+
+
+
+
+
+<a name="issho-v1-CityPack"></a>
+
+### CityPack
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [string](#string) |  |  |
+| comment | [string](#string) |  | A note for people editing the file; kept as it is. |
+| name | [CityPack.NameEntry](#issho-v1-CityPack-NameEntry) | repeated | English, plus the city&#39;s own languages for real local names. |
+| timezone | [string](#string) |  | IANA, e.g. Asia/Tokyo. |
+| currency | [string](#string) |  | ISO 4217, e.g. JPY. |
+| languages | [string](#string) | repeated | ISO 639-1, most common first. |
+| travel_modes | [string](#string) | repeated | walk, drive. |
+| areas | [PackArea](#issho-v1-PackArea) | repeated |  |
+| activity_overrides | [PackOverride](#issho-v1-PackOverride) | repeated |  |
+
+
+
+
+
+
+<a name="issho-v1-CityPack-NameEntry"></a>
+
+### CityPack.NameEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-CityPackPullRequest"></a>
+
+### CityPackPullRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| number | [int32](#int32) |  |  |
+| title | [string](#string) |  |  |
+| url | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-CityPackSummary"></a>
+
+### CityPackSummary
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [string](#string) |  |  |
+| name | [string](#string) |  | English name, from the database (or the id when not seeded). |
+| in_repo | [bool](#bool) |  | A file on the default branch, and a city in the database. |
+| seeded | [bool](#bool) |  |  |
+| areas | [int32](#int32) |  |  |
+| areas_without_travel_times | [string](#string) | repeated | Areas in the database with no travel times, or no venues. |
+| areas_without_venues | [string](#string) | repeated |  |
+
+
+
+
+
+
+<a name="issho-v1-DiscoverAreaVenuesRequest"></a>
+
+### DiscoverAreaVenuesRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| city_id | [string](#string) |  |  |
+| area_id | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-DiscoverAreaVenuesResponse"></a>
+
+### DiscoverAreaVenuesResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| searches | [int32](#int32) |  |  |
+| venues | [int32](#int32) |  | Venues found and saved (a place in two categories counts twice). |
+| job_id | [int64](#int64) |  | The job finding them, as in ApplyCityPackResponse.job_id; searches and venues are empty in this response and filled in the job&#39;s result. |
+
+
+
+
+
+
+<a name="issho-v1-GetCityPackRequest"></a>
+
+### GetCityPackRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| city_id | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-GetCityPackResponse"></a>
+
+### GetCityPackResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| pack | [CityPack](#issho-v1-CityPack) |  |  |
+| activities | [PackActivity](#issho-v1-PackActivity) | repeated |  |
+
+
+
+
+
+
+<a name="issho-v1-ListCityPacksRequest"></a>
+
+### ListCityPacksRequest
+
+
+
+
+
+
+
+<a name="issho-v1-ListCityPacksResponse"></a>
+
+### ListCityPacksResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| configured | [bool](#bool) |  | GITHUB_TOKEN is set: packs can be read and proposed. |
+| packs | [CityPackSummary](#issho-v1-CityPackSummary) | repeated |  |
+| pull_requests | [CityPackPullRequest](#issho-v1-CityPackPullRequest) | repeated |  |
+
+
+
+
+
+
+<a name="issho-v1-PackActivity"></a>
+
+### PackActivity
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [string](#string) |  |  |
+| name | [string](#string) |  | English. |
+| category | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-PackArea"></a>
+
+### PackArea
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [string](#string) |  | &lt;city&gt;-&lt;slug&gt;; never changed once in the repository. |
+| name | [PackArea.NameEntry](#issho-v1-PackArea-NameEntry) | repeated |  |
+| lat | [double](#double) |  |  |
+| lng | [double](#double) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-PackArea-NameEntry"></a>
+
+### PackArea.NameEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-PackOverride"></a>
+
+### PackOverride
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| activity_id | [string](#string) |  |  |
+| disabled | [bool](#bool) |  | Not offered in the city. |
+| name | [string](#string) |  | A local English name replacing the catalogue&#39;s; &#34;&#34; = the catalogue&#39;s. |
+| months | [int32](#int32) | repeated | Months (1–12) it&#39;s in season; empty = all year. |
+
+
+
+
+
+
+<a name="issho-v1-ProposeCityPackRequest"></a>
+
+### ProposeCityPackRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| pack | [CityPack](#issho-v1-CityPack) |  |  |
+| note | [string](#string) |  | Why, for the pull request&#39;s description (optional). |
+
+
+
+
+
+
+<a name="issho-v1-ProposeCityPackResponse"></a>
+
+### ProposeCityPackResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| pull_request | [CityPackPullRequest](#issho-v1-CityPackPullRequest) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-ReplacedArea"></a>
+
+### ReplacedArea
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| old_area_id | [string](#string) |  |  |
+| new_area_id | [string](#string) |  |  |
+| people | [int32](#int32) |  | Rows moved from the old area to the new one. |
+| crews | [int32](#int32) |  |  |
+| plans | [int32](#int32) |  |  |
+
+
+
+
+
+ 
+
+ 
+
+ 
+
+
+<a name="issho-v1-CityPackService"></a>
+
+### CityPackService
+CityPackService: the city-pack editor in the admin SPA (M8). City packs
+are JSON files in the repository (data/citypacks/&lt;city&gt;.json, validated
+in CI), so an edit is proposed as a GitHub pull request (owner&#39;s
+decision): the editor reads the pack on the default branch, validates the
+change as CI would, and opens a pull request with it. Once it&#39;s merged,
+ApplyCityPack loads the merged pack into the database, rebuilding travel
+times when areas were added or moved; DiscoverAreaVenues then finds an
+area&#39;s venues.
+Needs GITHUB_TOKEN (and GITHUB_REPO) on the API: without them every call
+but ListCityPacks is FAILED_PRECONDITION.
+Admins only, like ModerationService: anyone else gets PERMISSION_DENIED.
+
+HTTP: POST /issho.v1.CityPackService/&lt;Method&gt;
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| ListCityPacks | [ListCityPacksRequest](#issho-v1-ListCityPacksRequest) | [ListCityPacksResponse](#issho-v1-ListCityPacksResponse) | ListCityPacks returns the packs on the default branch, the cities in the database, and open pull requests from the editor. |
+| GetCityPack | [GetCityPackRequest](#issho-v1-GetCityPackRequest) | [GetCityPackResponse](#issho-v1-GetCityPackResponse) | GetCityPack returns a pack from the default branch, with the activity catalogue for its overrides. NOT_FOUND if there&#39;s no such file. |
+| ProposeCityPack | [ProposeCityPackRequest](#issho-v1-ProposeCityPackRequest) | [ProposeCityPackResponse](#issho-v1-ProposeCityPackResponse) | ProposeCityPack opens a pull request with a new or changed pack. INVALID_ARGUMENT if it fails validation (as in CI), removes or renames an area of the pack on the default branch, or changes nothing. |
+| ApplyCityPack | [ApplyCityPackRequest](#issho-v1-ApplyCityPackRequest) | [ApplyCityPackResponse](#issho-v1-ApplyCityPackResponse) | ApplyCityPack seeds the pack on the default branch into the database (as `tool seed` would) and, when areas were added or moved, rebuilds the city&#39;s travel times with Google. The pack is authoritative: areas it no longer lists are deleted (when nothing references them; otherwise the apply is refused and nothing changes, as it is for removing curated venues, which needs the drop-curated-venues option the admin never sets), areas named by an area&#39;s `replaces` are retired (their people, crews and plans move to the new area) and activity overrides the pack removed are dropped. The response reports all of these.
+
+The apply is a background job (one at a time per city): the call validates the pack as ProposeCityPack does (INVALID_ARGUMENT, NOT_FOUND for no such pack) and returns the job&#39;s id; the report is the result of AdminService.GetAdminJob. Applying the same pack again while its apply is queued or running returns that job&#39;s id; a changed pack queues behind it. |
+| DiscoverAreaVenues | [DiscoverAreaVenuesRequest](#issho-v1-DiscoverAreaVenuesRequest) | [DiscoverAreaVenuesResponse](#issho-v1-DiscoverAreaVenuesResponse) | DiscoverAreaVenues finds venues for one area with Google (one Nearby Search per venue category the city&#39;s activities use; the city-wide categories too when the city has no venues yet). NOT_FOUND for an unknown city, INVALID_ARGUMENT for an area not in it. A background job like ApplyCityPack: the call returns the job&#39;s id. |
+
+ 
+
+
+
+<a name="issho_v1_errors-proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## issho/v1/errors.proto
+
+
+
+<a name="issho-v1-ErrorReasonDetail"></a>
+
+### ErrorReasonDetail
+ErrorReasonDetail rides on a Connect error as a detail (not a service
+message). It names why a call was refused when a screen branches on the
+reason or words it differently; the Connect code and message stay as they
+were, so builds that ignore the detail keep working. Clients read it with
+errorReason() in @issho/api-client.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| reason | [ErrorReason](#issho-v1-ErrorReason) |  |  |
+
+
+
+
+
+ 
+
+
+<a name="issho-v1-ErrorReason"></a>
+
+### ErrorReason
+ErrorReason is added to only when a screen needs the distinction.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| ERROR_REASON_UNSPECIFIED | 0 |  |
+| ERROR_REASON_SUSPENDED | 1 | The account is suspended (PERMISSION_DENIED). |
+| ERROR_REASON_NO_PROFILE | 2 | The caller hasn&#39;t made a profile yet (FAILED_PRECONDITION). |
+| ERROR_REASON_EVENT_OVER | 3 | The event is cancelled or over (FAILED_PRECONDITION). |
+| ERROR_REASON_TOO_LATE | 4 | Too late to respond (FAILED_PRECONDITION). |
+| ERROR_REASON_NOT_NOW | 5 | Check-in isn&#39;t open yet, or the answer doesn&#39;t apply now (FAILED_PRECONDITION). |
+| ERROR_REASON_CHECK_IN_CLOSED | 6 | Check-in is closed (FAILED_PRECONDITION). |
+| ERROR_REASON_FEEDBACK_CLOSED | 7 | Feedback isn&#39;t open (FAILED_PRECONDITION). |
+| ERROR_REASON_FEATURE_UNAVAILABLE | 8 | The feature isn&#39;t set up on this server, e.g. suggestions without a model key (FAILED_PRECONDITION). |
+| ERROR_REASON_TIMED_OUT | 9 | An outside call or a background job ran past its time limit; asking again may work (UNAVAILABLE for a call). |
+
+
+ 
+
+ 
+
+ 
+
+
+
+<a name="issho_v1_admin-proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## issho/v1/admin.proto
+
+
+
+<a name="issho-v1-AdminJobFailure"></a>
+
+### AdminJobFailure
+AdminJobFailure is why a job failed, in the shape of a failed call: a
+message for the admin (what was refused, or that Google failed) and the
+reason a screen can branch on (errors.proto). Internal details stay in the
+worker&#39;s log.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| message | [string](#string) |  |  |
+| reason | [ErrorReason](#issho-v1-ErrorReason) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-GetAdminJobRequest"></a>
+
+### GetAdminJobRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| job_id | [int64](#int64) |  |  |
+
+
+
+
+
+
+<a name="issho-v1-GetAdminJobResponse"></a>
+
+### GetAdminJobResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| job_id | [int64](#int64) |  |  |
+| state | [AdminJobState](#issho-v1-AdminJobState) |  |  |
+| queued_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | When the job was queued, when its latest attempt started (unset while queued) and when it finished (unset until succeeded or failed). |
+| started_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| finished_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| apply_city_pack | [ApplyCityPackResponse](#issho-v1-ApplyCityPackResponse) |  |  |
+| discover_area_venues | [DiscoverAreaVenuesResponse](#issho-v1-DiscoverAreaVenuesResponse) |  |  |
+| failure | [AdminJobFailure](#issho-v1-AdminJobFailure) |  | Set when state is FAILED. |
+
+
+
+
+
+ 
+
+
+<a name="issho-v1-AdminJobState"></a>
+
+### AdminJobState
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| ADMIN_JOB_STATE_UNSPECIFIED | 0 |  |
+| ADMIN_JOB_STATE_QUEUED | 1 | Waiting to run, or to be retried after a failed attempt. |
+| ADMIN_JOB_STATE_RUNNING | 2 |  |
+| ADMIN_JOB_STATE_SUCCEEDED | 3 |  |
+| ADMIN_JOB_STATE_FAILED | 4 | Out of attempts, or failed in a way a retry can&#39;t fix. |
+
+
+ 
+
+ 
+
+
+<a name="issho-v1-AdminService"></a>
+
+### AdminService
+AdminService: the long operations the admin SPA starts. A request can&#39;t
+outlast Cloudflare&#39;s 100 s cut-off, so an operation that may (applying a
+city pack, finding an area&#39;s venues) is a background job: the RPC that
+starts it validates its input at once, queues the job and returns a
+job_id, and the SPA polls GetAdminJob (every 2 s) until the job is done.
+Admins only, like ModerationService: anyone else gets PERMISSION_DENIED.
+
+HTTP: POST /issho.v1.AdminService/&lt;Method&gt;
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| GetAdminJob | [GetAdminJobRequest](#issho-v1-GetAdminJobRequest) | [GetAdminJobResponse](#issho-v1-GetAdminJobResponse) | GetAdminJob returns a job&#39;s state, times and, once it is done, its result or its failure. NOT_FOUND for an unknown id, and for a job that isn&#39;t an admin operation. River&#39;s cleaner deletes finished jobs (after a day for those that succeeded, a week for those that failed, by default), after which this is NOT_FOUND. |
+
+ 
 
 
 
@@ -929,370 +1465,6 @@ HTTP: POST /issho.v1.ChatService/&lt;Method&gt;
 | ----------- | ------------ | ------------- | ------------|
 | ListMessages | [ListMessagesRequest](#issho-v1-ListMessagesRequest) | [ListMessagesResponse](#issho-v1-ListMessagesResponse) | ListMessages returns the room&#39;s messages: the latest 100, or the 100 after after_id, oldest first, with whether the caller may write now. This is a sync cursor (catch up from the last message you hold), not AIP-158 paging: there is no page_token, and it never walks back through history. The admin lists page with page_size and page_token instead. NOT_FOUND for a room that doesn&#39;t exist or isn&#39;t the caller&#39;s to know about; PERMISSION_DENIED when they&#39;re not (or no longer) in it. |
 | SendMessage | [SendMessageRequest](#issho-v1-SendMessageRequest) | [SendMessageResponse](#issho-v1-SendMessageResponse) | SendMessage posts 1–1000 characters. FAILED_PRECONDITION while the room isn&#39;t open for writing. |
-
- 
-
-
-
-<a name="issho_v1_citypacks-proto"></a>
-<p align="right"><a href="#top">Top</a></p>
-
-## issho/v1/citypacks.proto
-
-
-
-<a name="issho-v1-ApplyCityPackRequest"></a>
-
-### ApplyCityPackRequest
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| city_id | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="issho-v1-ApplyCityPackResponse"></a>
-
-### ApplyCityPackResponse
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| new_areas | [string](#string) | repeated | Areas new to the database, or whose centre moved more than 100 m: they need venues (DiscoverAreaVenues). |
-| moved_areas | [string](#string) | repeated |  |
-| travel_times_rebuilt | [bool](#bool) |  | Travel times rebuilt (the rows saved); false when no area changed or there&#39;s no Google Maps key. |
-| travel_times | [int32](#int32) |  |  |
-| removed_areas | [string](#string) | repeated | What an authoritative apply took away (the pack is the source of truth): areas deleted because nothing referenced them, areas retired by an area&#39;s `replaces` (their people, crews and plans moved to the new one), and the activity ids whose city override the pack dropped. |
-| replaced_areas | [ReplacedArea](#issho-v1-ReplacedArea) | repeated |  |
-| removed_overrides | [string](#string) | repeated |  |
-
-
-
-
-
-
-<a name="issho-v1-CityPack"></a>
-
-### CityPack
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| id | [string](#string) |  |  |
-| comment | [string](#string) |  | A note for people editing the file; kept as it is. |
-| name | [CityPack.NameEntry](#issho-v1-CityPack-NameEntry) | repeated | English, plus the city&#39;s own languages for real local names. |
-| timezone | [string](#string) |  | IANA, e.g. Asia/Tokyo. |
-| currency | [string](#string) |  | ISO 4217, e.g. JPY. |
-| languages | [string](#string) | repeated | ISO 639-1, most common first. |
-| travel_modes | [string](#string) | repeated | walk, drive. |
-| areas | [PackArea](#issho-v1-PackArea) | repeated |  |
-| activity_overrides | [PackOverride](#issho-v1-PackOverride) | repeated |  |
-
-
-
-
-
-
-<a name="issho-v1-CityPack-NameEntry"></a>
-
-### CityPack.NameEntry
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| key | [string](#string) |  |  |
-| value | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="issho-v1-CityPackPullRequest"></a>
-
-### CityPackPullRequest
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| number | [int32](#int32) |  |  |
-| title | [string](#string) |  |  |
-| url | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="issho-v1-CityPackSummary"></a>
-
-### CityPackSummary
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| id | [string](#string) |  |  |
-| name | [string](#string) |  | English name, from the database (or the id when not seeded). |
-| in_repo | [bool](#bool) |  | A file on the default branch, and a city in the database. |
-| seeded | [bool](#bool) |  |  |
-| areas | [int32](#int32) |  |  |
-| areas_without_travel_times | [string](#string) | repeated | Areas in the database with no travel times, or no venues. |
-| areas_without_venues | [string](#string) | repeated |  |
-
-
-
-
-
-
-<a name="issho-v1-DiscoverAreaVenuesRequest"></a>
-
-### DiscoverAreaVenuesRequest
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| city_id | [string](#string) |  |  |
-| area_id | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="issho-v1-DiscoverAreaVenuesResponse"></a>
-
-### DiscoverAreaVenuesResponse
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| searches | [int32](#int32) |  |  |
-| venues | [int32](#int32) |  | Venues found and saved (a place in two categories counts twice). |
-
-
-
-
-
-
-<a name="issho-v1-GetCityPackRequest"></a>
-
-### GetCityPackRequest
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| city_id | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="issho-v1-GetCityPackResponse"></a>
-
-### GetCityPackResponse
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| pack | [CityPack](#issho-v1-CityPack) |  |  |
-| activities | [PackActivity](#issho-v1-PackActivity) | repeated |  |
-
-
-
-
-
-
-<a name="issho-v1-ListCityPacksRequest"></a>
-
-### ListCityPacksRequest
-
-
-
-
-
-
-
-<a name="issho-v1-ListCityPacksResponse"></a>
-
-### ListCityPacksResponse
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| configured | [bool](#bool) |  | GITHUB_TOKEN is set: packs can be read and proposed. |
-| packs | [CityPackSummary](#issho-v1-CityPackSummary) | repeated |  |
-| pull_requests | [CityPackPullRequest](#issho-v1-CityPackPullRequest) | repeated |  |
-
-
-
-
-
-
-<a name="issho-v1-PackActivity"></a>
-
-### PackActivity
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| id | [string](#string) |  |  |
-| name | [string](#string) |  | English. |
-| category | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="issho-v1-PackArea"></a>
-
-### PackArea
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| id | [string](#string) |  | &lt;city&gt;-&lt;slug&gt;; never changed once in the repository. |
-| name | [PackArea.NameEntry](#issho-v1-PackArea-NameEntry) | repeated |  |
-| lat | [double](#double) |  |  |
-| lng | [double](#double) |  |  |
-
-
-
-
-
-
-<a name="issho-v1-PackArea-NameEntry"></a>
-
-### PackArea.NameEntry
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| key | [string](#string) |  |  |
-| value | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="issho-v1-PackOverride"></a>
-
-### PackOverride
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| activity_id | [string](#string) |  |  |
-| disabled | [bool](#bool) |  | Not offered in the city. |
-| name | [string](#string) |  | A local English name replacing the catalogue&#39;s; &#34;&#34; = the catalogue&#39;s. |
-| months | [int32](#int32) | repeated | Months (1–12) it&#39;s in season; empty = all year. |
-
-
-
-
-
-
-<a name="issho-v1-ProposeCityPackRequest"></a>
-
-### ProposeCityPackRequest
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| pack | [CityPack](#issho-v1-CityPack) |  |  |
-| note | [string](#string) |  | Why, for the pull request&#39;s description (optional). |
-
-
-
-
-
-
-<a name="issho-v1-ProposeCityPackResponse"></a>
-
-### ProposeCityPackResponse
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| pull_request | [CityPackPullRequest](#issho-v1-CityPackPullRequest) |  |  |
-
-
-
-
-
-
-<a name="issho-v1-ReplacedArea"></a>
-
-### ReplacedArea
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| old_area_id | [string](#string) |  |  |
-| new_area_id | [string](#string) |  |  |
-| people | [int32](#int32) |  | Rows moved from the old area to the new one. |
-| crews | [int32](#int32) |  |  |
-| plans | [int32](#int32) |  |  |
-
-
-
-
-
- 
-
- 
-
- 
-
-
-<a name="issho-v1-CityPackService"></a>
-
-### CityPackService
-CityPackService: the city-pack editor in the admin SPA (M8). City packs
-are JSON files in the repository (data/citypacks/&lt;city&gt;.json, validated
-in CI), so an edit is proposed as a GitHub pull request (owner&#39;s
-decision): the editor reads the pack on the default branch, validates the
-change as CI would, and opens a pull request with it. Once it&#39;s merged,
-ApplyCityPack loads the merged pack into the database, rebuilding travel
-times when areas were added or moved; DiscoverAreaVenues then finds an
-area&#39;s venues.
-Needs GITHUB_TOKEN (and GITHUB_REPO) on the API: without them every call
-but ListCityPacks is FAILED_PRECONDITION.
-Admins only, like ModerationService: anyone else gets PERMISSION_DENIED.
-
-HTTP: POST /issho.v1.CityPackService/&lt;Method&gt;
-
-| Method Name | Request Type | Response Type | Description |
-| ----------- | ------------ | ------------- | ------------|
-| ListCityPacks | [ListCityPacksRequest](#issho-v1-ListCityPacksRequest) | [ListCityPacksResponse](#issho-v1-ListCityPacksResponse) | ListCityPacks returns the packs on the default branch, the cities in the database, and open pull requests from the editor. |
-| GetCityPack | [GetCityPackRequest](#issho-v1-GetCityPackRequest) | [GetCityPackResponse](#issho-v1-GetCityPackResponse) | GetCityPack returns a pack from the default branch, with the activity catalogue for its overrides. NOT_FOUND if there&#39;s no such file. |
-| ProposeCityPack | [ProposeCityPackRequest](#issho-v1-ProposeCityPackRequest) | [ProposeCityPackResponse](#issho-v1-ProposeCityPackResponse) | ProposeCityPack opens a pull request with a new or changed pack. INVALID_ARGUMENT if it fails validation (as in CI), removes or renames an area of the pack on the default branch, or changes nothing. |
-| ApplyCityPack | [ApplyCityPackRequest](#issho-v1-ApplyCityPackRequest) | [ApplyCityPackResponse](#issho-v1-ApplyCityPackResponse) | ApplyCityPack seeds the pack on the default branch into the database (as `tool seed` would) and, when areas were added or moved, rebuilds the city&#39;s travel times with Google. The pack is authoritative: areas it no longer lists are deleted (when nothing references them; otherwise the apply is refused and nothing changes, as it is for removing curated venues, which needs the drop-curated-venues option the admin never sets), areas named by an area&#39;s `replaces` are retired (their people, crews and plans move to the new area) and activity overrides the pack removed are dropped. The response reports all of these. |
-| DiscoverAreaVenues | [DiscoverAreaVenuesRequest](#issho-v1-DiscoverAreaVenuesRequest) | [DiscoverAreaVenuesResponse](#issho-v1-DiscoverAreaVenuesResponse) | DiscoverAreaVenues finds venues for one area with Google (one Nearby Search per venue category the city&#39;s activities use; the city-wide categories too when the city has no venues yet). |
 
  
 
@@ -2620,60 +2792,6 @@ HTTP: POST /issho.v1.CurationService/&lt;Method&gt;
 | SetVenueStatus | [SetVenueStatusRequest](#issho-v1-SetVenueStatusRequest) | [SetVenueStatusResponse](#issho-v1-SetVenueStatusResponse) | SetVenueStatus approves, rejects or resets (to candidate) up to 100 places of a city. A rejected place is never picked again; plans that already use it keep it (withdraw them on the Plans page). |
 | SearchVenues | [SearchVenuesRequest](#issho-v1-SearchVenuesRequest) | [SearchVenuesResponse](#issho-v1-SearchVenuesResponse) | SearchVenues looks places up by name with Google, in one area or each area of the city (one search per area), and says which the city already has. FAILED_PRECONDITION without a Google Maps key. |
 | AddVenue | [AddVenueRequest](#issho-v1-AddVenueRequest) | [AddVenueResponse](#issho-v1-AddVenueResponse) | AddVenue adds a place, approved, in one category. Its Google types must include one of the category&#39;s, and it must be within the category&#39;s search radius of one of the city&#39;s areas (it&#39;s put in the nearest). INVALID_ARGUMENT otherwise, or if it&#39;s closed. |
-
- 
-
-
-
-<a name="issho_v1_errors-proto"></a>
-<p align="right"><a href="#top">Top</a></p>
-
-## issho/v1/errors.proto
-
-
-
-<a name="issho-v1-ErrorReasonDetail"></a>
-
-### ErrorReasonDetail
-ErrorReasonDetail rides on a Connect error as a detail (not a service
-message). It names why a call was refused when a screen branches on the
-reason or words it differently; the Connect code and message stay as they
-were, so builds that ignore the detail keep working. Clients read it with
-errorReason() in @issho/api-client.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| reason | [ErrorReason](#issho-v1-ErrorReason) |  |  |
-
-
-
-
-
- 
-
-
-<a name="issho-v1-ErrorReason"></a>
-
-### ErrorReason
-ErrorReason is added to only when a screen needs the distinction.
-
-| Name | Number | Description |
-| ---- | ------ | ----------- |
-| ERROR_REASON_UNSPECIFIED | 0 |  |
-| ERROR_REASON_SUSPENDED | 1 | The account is suspended (PERMISSION_DENIED). |
-| ERROR_REASON_NO_PROFILE | 2 | The caller hasn&#39;t made a profile yet (FAILED_PRECONDITION). |
-| ERROR_REASON_EVENT_OVER | 3 | The event is cancelled or over (FAILED_PRECONDITION). |
-| ERROR_REASON_TOO_LATE | 4 | Too late to respond (FAILED_PRECONDITION). |
-| ERROR_REASON_NOT_NOW | 5 | Check-in isn&#39;t open yet, or the answer doesn&#39;t apply now (FAILED_PRECONDITION). |
-| ERROR_REASON_CHECK_IN_CLOSED | 6 | Check-in is closed (FAILED_PRECONDITION). |
-| ERROR_REASON_FEEDBACK_CLOSED | 7 | Feedback isn&#39;t open (FAILED_PRECONDITION). |
-| ERROR_REASON_FEATURE_UNAVAILABLE | 8 | The feature isn&#39;t set up on this server, e.g. suggestions without a model key (FAILED_PRECONDITION). |
-
-
- 
-
- 
 
  
 

@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
+	"github.com/shrujancheruku/issho/backend/internal/adminjobs"
 	"github.com/shrujancheruku/issho/backend/internal/cities"
 	"github.com/shrujancheruku/issho/backend/internal/platform/auth"
 	"github.com/shrujancheruku/issho/backend/internal/testfixture"
@@ -36,15 +37,20 @@ func TestIntegrationApplyRefusesInUseArea(t *testing.T) {
 		}
 		repo.files["data/citypacks/"+f.City+".json"] = b
 	}
-	h := &Handler{DB: f.Pool, GitHub: repo, Base: "main"}
+	jobs := &inlineJobs{pool: f.Pool}
+	h := &Handler{DB: f.Pool, GitHub: repo, Base: "main", Jobs: jobs}
 	adminCtx := auth.WithCaller(ctx, auth.Caller{UserID: uuid.New(), Email: "admin@example.com", Admin: true})
-	apply := func() error {
-		_, err := h.ApplyCityPack(adminCtx, connect.NewRequest(&isshov1.ApplyCityPackRequest{CityId: f.City}))
-		return err
+	// apply queues the apply and returns the job's failure, if it failed.
+	apply := func() *adminjobs.Failure {
+		res, err := h.ApplyCityPack(adminCtx, connect.NewRequest(&isshov1.ApplyCityPackRequest{CityId: f.City}))
+		if err != nil {
+			t.Fatal(err)
+		}
+		return jobs.out[res.Msg.JobId].Failure
 	}
 	publish()
-	if err := apply(); err != nil {
-		t.Fatal(err)
+	if fail := apply(); fail != nil {
+		t.Fatalf("first apply failed: %+v", fail)
 	}
 	f.AddProfile(t, f.Users[0], "en")
 	if _, err := f.Pool.Exec(ctx, "update app.profiles set home_area_id = $1 where user_id = $2", f.City+"-b", f.Users[0]); err != nil {
@@ -54,9 +60,9 @@ func TestIntegrationApplyRefusesInUseArea(t *testing.T) {
 	// Drops the in-use area b and the override.
 	pack.Areas, pack.ActivityOverrides = pack.Areas[:1], nil
 	publish()
-	err := apply()
-	if connect.CodeOf(err) != connect.CodeFailedPrecondition || !strings.Contains(err.Error(), f.City+"-b: 1 people") {
-		t.Fatalf("apply = %v", err)
+	// The refusal is the job's failure (not retried), naming the area.
+	if fail := apply(); fail == nil || !strings.Contains(fail.Message, f.City+"-b: 1 people") {
+		t.Fatalf("apply = %+v", fail)
 	}
 	var n int
 	if err := f.Pool.QueryRow(ctx, `select (select count(*) from app.areas where id = $1)

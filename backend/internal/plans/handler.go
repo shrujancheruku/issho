@@ -75,10 +75,8 @@ func (h *Handler) GetPlanCards(ctx context.Context, req *connect.Request[isshov1
 	if err != nil {
 		return nil, err
 	}
-	// Reject an oversized list before parsing it all.
-	if len(req.Msg.PlanIds) > MaxPlanCards {
-		return nil, errs.Invalid("plan_ids: at most %d plans per call", MaxPlanCards)
-	}
+	// The cap counts distinct ids, so Service.Cards checks it after
+	// de-duplicating, not on the raw list.
 	ids := make([]uuid.UUID, len(req.Msg.PlanIds))
 	for i, s := range req.Msg.PlanIds {
 		if ids[i], err = parsePlanID(s); err != nil {

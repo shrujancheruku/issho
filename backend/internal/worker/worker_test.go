@@ -15,6 +15,7 @@ import (
 
 	"github.com/shrujancheruku/issho/backend/db"
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
+	"github.com/shrujancheruku/issho/backend/internal/adminjobs"
 	"github.com/shrujancheruku/issho/backend/internal/maps"
 	"github.com/shrujancheruku/issho/backend/internal/plans"
 	"github.com/shrujancheruku/issho/backend/internal/testfixture"
@@ -36,6 +37,8 @@ var jobKinds = []struct {
 	{RefreshMapsArgs{}, RefreshMapsTimeout, QueueMaintenance, RefreshMapsMaxAttempts},
 	{RefreshMapsCityArgs{City: "x"}, RefreshMapsCityTimeout, QueueMaintenance, RefreshMapsCityMaxAttempts},
 	{RetentionArgs{}, RetentionTimeout, QueueMaintenance, RetentionMaxAttempts},
+	{adminjobs.ApplyCityPackArgs{City: "x"}, adminjobs.ApplyCityPackTimeout, QueueMaintenance, adminjobs.ApplyCityPackMaxAttempts},
+	{adminjobs.DiscoverAreaVenuesArgs{City: "x", Area: "x-a"}, adminjobs.DiscoverAreaVenuesTimeout, QueueMaintenance, adminjobs.DiscoverAreaVenuesMaxAttempts},
 }
 
 // timeoutOf asks the registered worker for the job's time limit.
@@ -56,6 +59,10 @@ func timeoutOf(t *testing.T, a river.JobArgs) time.Duration {
 		return (&refreshMapsCityWorker{}).Timeout(nil)
 	case RetentionArgs:
 		return (&retentionWorker{}).Timeout(nil)
+	case adminjobs.ApplyCityPackArgs:
+		return (&applyCityPackWorker{}).Timeout(nil)
+	case adminjobs.DiscoverAreaVenuesArgs:
+		return (&discoverAreaVenuesWorker{}).Timeout(nil)
 	}
 	t.Fatalf("no worker for %T", a)
 	return 0
@@ -96,7 +103,7 @@ func testPool(t *testing.T) *pgxpool.Pool {
 func cleanJobs(t *testing.T, pool *pgxpool.Pool) {
 	t.Helper()
 	del := func() {
-		if _, err := pool.Exec(context.Background(), `delete from river.river_job where kind like 'test\_%' or kind in ('match_all','match_city','crews_city','send_notifications','refresh_maps','refresh_maps_city','retention')`); err != nil {
+		if _, err := pool.Exec(context.Background(), `delete from river.river_job where kind like 'test\_%' or kind in ('match_all','match_city','crews_city','send_notifications','refresh_maps','refresh_maps_city','retention','apply_city_pack','discover_area_venues')`); err != nil {
 			t.Errorf("clean jobs: %v", err)
 		}
 	}

@@ -169,6 +169,12 @@ func UpstreamMsg(service, msg string, err error) error {
 	return &Error{Kind: KindUpstream, Service: service, cause: err, msg: msg}
 }
 
+// UpstreamReason is UpstreamMsg with a reason for a screen to branch on, such
+// as ERROR_REASON_TIMED_OUT when an outside call ran out of time.
+func UpstreamReason(service string, reason isshov1.ErrorReason, msg string, err error) error {
+	return &Error{Kind: KindUpstream, Reason: reason, Service: service, cause: err, msg: msg}
+}
+
 // WithCause keeps a lower-level error reachable with errors.Is/As (sentinels)
 // when a kind is built from one. The message is the kind's own.
 func WithCause(err, cause error) error {

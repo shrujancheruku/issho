@@ -40,9 +40,17 @@ func TestRequestSizeLimit(t *testing.T) {
 	}
 }
 
-func TestCityPackAppliesAreNotCutAtThirtySeconds(t *testing.T) {
-	if d, ok := rpcDeadlines[isshov1connect.CityPackServiceApplyCityPackProcedure]; !ok || d != 0 {
-		t.Errorf("ApplyCityPack deadline = %v (set %v), want opted out", d, ok)
+// The long admin operations are jobs: the RPCs that start them only validate
+// and queue, so they take the default deadline, and the draft call (a model
+// with its own 60 s budget) stays under Cloudflare's 100 s cut-off.
+func TestAdminJobRPCsTakeTheDefaultDeadline(t *testing.T) {
+	for _, p := range []string{isshov1connect.CityPackServiceApplyCityPackProcedure, isshov1connect.CityPackServiceDiscoverAreaVenuesProcedure} {
+		if d, ok := rpcDeadlines[p]; ok {
+			t.Errorf("%s has its own deadline %v; it only queues a job", p, d)
+		}
+	}
+	if d := rpcDeadlines[isshov1connect.TranslationServiceDraftAppStringProcedure]; d <= 0 || d >= 100*time.Second {
+		t.Errorf("DraftAppString deadline = %v, want under Cloudflare's 100 s", d)
 	}
 }
 

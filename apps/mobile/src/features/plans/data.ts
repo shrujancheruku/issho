@@ -52,9 +52,16 @@ export function usePlanCards(ids: readonly string[]): ReadonlyMap<string, FeedPl
     queries: chunks.map((chunk) => ({
       queryKey: keys.planCards(chunk),
       queryFn: () => api.plans.getPlanCards({ planIds: chunk }),
-      placeholderData: () => {
-        const feed = queryClient.getQueryData<ListFeedResponse>(keys.feed)?.plans ?? [];
-        return { $typeName: 'issho.v1.GetPlanCardsResponse', plans: feed.filter((p) => chunk.includes(p.id)) } as GetPlanCardsResponse;
+      // While this chunk loads: the cards already on screen (a new suggestion
+      // re-keys the chunk; don't blank or flash the others), else the feed's.
+      placeholderData: (previous: GetPlanCardsResponse | undefined) => {
+        const known = new Map<string, FeedPlan>();
+        for (const p of queryClient.getQueryData<ListFeedResponse>(keys.feed)?.plans ?? []) known.set(p.id, p);
+        for (const p of previous?.plans ?? []) known.set(p.id, p);
+        for (const [, d] of queryClient.getQueriesData<GetPlanCardsResponse>({ queryKey: keys.planCardsAll })) {
+          for (const p of d?.plans ?? []) known.set(p.id, p);
+        }
+        return { $typeName: 'issho.v1.GetPlanCardsResponse', plans: chunk.flatMap((id) => known.get(id) ?? []) } as GetPlanCardsResponse;
       },
     })),
   });

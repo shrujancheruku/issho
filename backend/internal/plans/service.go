@@ -361,9 +361,9 @@ const MaxPlanCards = 50
 // Order is unspecified. At most MaxPlanCards distinct ids (an *InvalidError
 // beyond that).
 func (s *Service) Cards(ctx context.Context, userID uuid.UUID, ids []uuid.UUID, now time.Time) ([]FeedItem, error) {
-	ids = slices.Compact(slices.SortedFunc(slices.Values(ids), func(a, b uuid.UUID) int { return bytes.Compare(a[:], b[:]) }))
-	if len(ids) > MaxPlanCards {
-		return nil, invalid("plan_ids: at most %d plans per call", MaxPlanCards)
+	ids, err := distinctCardIDs(ids)
+	if err != nil {
+		return nil, err
 	}
 	if len(ids) == 0 {
 		return nil, nil
@@ -419,6 +419,16 @@ func (s *Service) Cards(ctx context.Context, userID uuid.UUID, ids []uuid.UUID, 
 		}
 	}
 	return append(items, closed...), nil
+}
+
+// distinctCardIDs drops repeats, then applies MaxPlanCards to what is left:
+// the cap is on plans asked for, not on list length.
+func distinctCardIDs(ids []uuid.UUID) ([]uuid.UUID, error) {
+	ids = slices.Compact(slices.SortedFunc(slices.Values(ids), func(a, b uuid.UUID) int { return bytes.Compare(a[:], b[:]) }))
+	if len(ids) > MaxPlanCards {
+		return nil, invalid("plan_ids: at most %d plans per call", MaxPlanCards)
+	}
+	return ids, nil
 }
 
 // steps lists the plan's stops (activity, follow-up, a meeting place) with
