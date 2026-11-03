@@ -257,7 +257,9 @@ func (r *Repo) lock(kind, key string) *sync.Mutex {
 // one's body when it differs.
 //
 // The result is the pending change afterwards and whether there is one:
-// false only when nothing changed and none is open. A branch that moves
+// false only when nothing changed and none is open. edit may call Files,
+// Read and List but must not call Change for the same key: Change holds the
+// key's lock, so that would deadlock. A branch that moves
 // between the read and the commit is read again once; a second move fails.
 func (r *Repo) Change(ctx context.Context, e Edit, edit func(files map[string][]byte) (changed bool, body string, err error)) (PR, bool, error) {
 	if r == nil {

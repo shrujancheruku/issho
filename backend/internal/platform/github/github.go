@@ -162,7 +162,7 @@ type PR struct {
 }
 
 // maxPRPages bounds OpenPRs: 5,000 open pull requests is a runaway, not a
-// repository this editor serves.
+// repository this editor serves. Reaching it is an error.
 const maxPRPages = 50
 
 // OpenPRs lists every open pull request whose branch starts with prefix,
@@ -192,7 +192,9 @@ func (c *Client) OpenPRs(ctx context.Context, prefix string) ([]PR, error) {
 			return out, nil
 		}
 	}
-	return out, nil
+	// A partial list would let Change think a key has no pull request and
+	// open a duplicate, so the cap is an error, not a truncation.
+	return nil, errs.Upstream("github", fmt.Errorf("more than %d pages of open pull requests", maxPRPages))
 }
 
 // UpdatePR rewrites a pull request's body.

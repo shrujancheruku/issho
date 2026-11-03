@@ -6,6 +6,7 @@ import (
 	"errors"
 	"maps"
 	"slices"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -321,7 +322,10 @@ func TestIntegrationCityPacks(t *testing.T) {
 		t.Fatal(err)
 	}
 	p := got.Msg.Pack
-	if _, err := propose(p); connect.CodeOf(err) != connect.CodeInvalidArgument {
+	var mainPack isshov1.CityPack // main's, kept to revert to later
+	raw0, _ := json.Marshal(p)
+	_ = json.Unmarshal(raw0, &mainPack)
+	if _, err := propose(p); connect.CodeOf(err) != connect.CodeInvalidArgument || strings.Contains(err.Error(), "pull request") {
 		t.Errorf("no change: %v", err)
 	}
 	removed := &isshov1.CityPack{Id: p.Id, Name: p.Name, Timezone: p.Timezone, Currency: p.Currency, Languages: p.Languages, TravelModes: p.TravelModes, Areas: p.Areas[:1]}
@@ -353,6 +357,12 @@ func TestIntegrationCityPacks(t *testing.T) {
 	removedPending := &isshov1.CityPack{Id: p.Id, Name: p.Name, Timezone: p.Timezone, Currency: p.Currency, Languages: p.Languages, TravelModes: p.TravelModes, Areas: p.Areas[:1]}
 	if _, err := propose(removedPending); connect.CodeOf(err) != connect.CodeInvalidArgument {
 		t.Errorf("an area removed from main's pack, though the pending one has it: %v", err)
+	}
+	// Back to main's pack while a pending change holds edits: the editor can't
+	// revert it, and says to close the pull request.
+	if _, err := propose(&mainPack); connect.CodeOf(err) != connect.CodeInvalidArgument ||
+		!strings.Contains(err.Error(), "pull request #"+strconv.Itoa(repo.prs[0].Number)) || !strings.Contains(err.Error(), "close") {
+		t.Errorf("reverting to main with a pending change: %v", err)
 	}
 	repo.merge(t)
 	before := fm.Matrices()

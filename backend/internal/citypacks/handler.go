@@ -187,6 +187,17 @@ func (h *Handler) ProposeCityPack(ctx context.Context, req *connect.Request[issh
 		old = &base
 	}
 	prop, err := cities.Propose(ctx, h.DB, p, old, req.Msg.Note)
+	if errors.Is(err, cities.ErrNothingChanged) {
+		// The pack is back to main's, but a pending change would still hold
+		// the earlier edits: the editor can't revert it, so say how.
+		prs, perr := h.Repo.Pending(ctx, Kind)
+		if perr != nil {
+			return nil, perr
+		}
+		if pr, ok := prs[p.ID]; ok {
+			return nil, errs.Invalid("nothing changed: the pack already matches the default branch, and pull request #%d still holds the earlier edits; close that pull request on GitHub to drop the pending change", pr.Number)
+		}
+	}
 	if err != nil {
 		return nil, err
 	}

@@ -1,6 +1,6 @@
 import { create } from '@bufbuild/protobuf';
 import {
-  CityPackPullRequestSchema, CityPackSchema, GetCityPackResponseSchema, PackAreaSchema, ProposeCityPackResponseSchema,
+  CityPackPullRequestSchema, CityPackSchema, Code, ConnectError, GetCityPackResponseSchema, PackAreaSchema, ProposeCityPackResponseSchema,
 } from '@issho/api-client';
 import { screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -51,5 +51,15 @@ describe('editing a city pack', () => {
     expect(fake.requests('cityPacks.proposeCityPack')).toHaveLength(1);
     expect(sent.pack.id).toBe('tokyo');
     expect(sent.pack.areas.map((a) => a.id)).toEqual(['tokyo-a']);
+  });
+
+  it('shows the refusal when the pack is back to main but a pull request still holds edits', async () => {
+    const message = 'nothing changed: the pack already matches the default branch, and pull request #42 still holds the earlier edits; close that pull request on GitHub to drop the pending change';
+    fake
+      .on('cityPacks.getCityPack', () => create(GetCityPackResponseSchema, { pack, pullRequest: pr }))
+      .on('cityPacks.proposeCityPack', () => { throw new ConnectError(message, Code.InvalidArgument); });
+    const { user } = renderPage(<CityEditor cityId="tokyo" />);
+    await user.click(await screen.findByRole('button', { name: 'Save to the pull request' }));
+    expect(await screen.findByText(message)).toBeTruthy();
   });
 });
