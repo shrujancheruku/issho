@@ -73,4 +73,10 @@ Anyone can open the page; data needs an admin token, which the API checks on eve
 
 ## Checks
 
-`pnpm --filter @issho/admin typecheck`, `lint` (ESLint with typescript-eslint and the React hooks rules, `eslint.config.mjs`), `test` (Vitest: flag wording, placeholder check) and `build`. CI runs all four.
+`pnpm --filter @issho/admin typecheck`, `lint` (ESLint with typescript-eslint and the React hooks rules, `eslint.config.mjs`), `test` (Vitest: flag wording, placeholder check, and the pages' irreversible flows) and `build`. CI runs all four.
+
+### Page tests
+
+`src/pages/*.test.tsx` render a page in jsdom with Testing Library and fake the API at the `@issho/api-client` boundary: `vi.mock('../lib', ...)` swaps the `api` export for `fake.api` from `src/test/fakeApi.ts`, which records each RPC with its exact request and answers only what the test set with `fake.on('service.method', ...)` (an RPC nobody set up fails). `fetch` is never mocked. `renderPage` (`src/test/render.tsx`) gives each test a fresh query cache without retries; `deferred()` holds an RPC open to click twice while it is in flight.
+
+Covered: suspending (with its confirm step, and cancelling it) and lifting a person, approving and rejecting a proposed round, approving, rejecting and withdrawing a plan, approving and rejecting venues (one and several), and the People lists. Each has a success test, an error test and a one-RPC-for-a-double-click test. Only suspending asks for confirmation, so only it has a cancel test.
