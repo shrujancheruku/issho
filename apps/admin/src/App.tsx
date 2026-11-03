@@ -55,6 +55,7 @@ function routeFromHash(): { page: Page; personId?: string; about?: string; planI
   if (person) return { page: 'people', personId: person[1] };
   const about = new RegExp(`^reports\\?about=(${uuid})$`, 'i').exec(h);
   if (about) return { page: 'reports', about: about[1] };
+  // Own keys only: `in` also matches Object.prototype names (constructor, __proto__), which would crash the page lookup.
   return { page: Object.hasOwn(pages, h) ? (h as Page) : 'reports' };
 }
 
