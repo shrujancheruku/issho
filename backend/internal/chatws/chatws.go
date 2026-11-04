@@ -160,7 +160,9 @@ func (h *Hub) listen(ctx context.Context, pool *pgxpool.Pool) error {
 	// it out (Hijack) before using it. (Not `defer pooled.Hijack().Close()`:
 	// that would hijack it right here, before the LISTEN below.)
 	conn := pooled.Hijack()
-	defer func() { _ = conn.Close(context.Background()) }()
+	// Close even though ctx has ended (that is why Run called us back): keep
+	// ctx's values but drop its cancellation.
+	defer func() { _ = conn.Close(context.WithoutCancel(ctx)) }()
 	for _, ch := range []string{channel, typingChannel} {
 		if _, err := conn.Exec(ctx, "listen "+ch); err != nil {
 			return err
