@@ -38,6 +38,13 @@ func profileName(s string) connect.AnyRequest {
 	return connect.NewRequest(&isshov1.SaveProfileRequest{Profile: &isshov1.Profile{DisplayName: s}})
 }
 
+// packMonths is a city-pack proposal whose first override is in season in months.
+func packMonths(months ...int32) connect.AnyRequest {
+	return connect.NewRequest(&isshov1.ProposeCityPackRequest{Pack: &isshov1.CityPack{
+		ActivityOverrides: []*isshov1.PackOverride{{ActivityId: "a", Months: months}},
+	}})
+}
+
 func TestLimitsAreEnforcedAsInvalidArgument(t *testing.T) {
 	long := func(n int) string { return strings.Repeat("a", n) }
 	tests := []struct {
@@ -56,6 +63,11 @@ func TestLimitsAreEnforcedAsInvalidArgument(t *testing.T) {
 		{"leave details too long", connect.NewRequest(&isshov1.LeaveCrewRequest{Details: long(1001)}), "details"},
 		{"display name at the limit", profileName(long(40)), ""},
 		{"display name too long", profileName(long(41)), "profile.display_name"},
+		{"pack months 1 to 12", packMonths(1, 12), ""},
+		{"pack month 0", packMonths(0), "pack.activity_overrides[0].months[0]"},
+		{"pack month 13", packMonths(13), "pack.activity_overrides[0].months[0]"},
+		// 65537 wraps to 1 in int16, so the handler's own check would have passed it.
+		{"pack month 65537", packMonths(65537), "pack.activity_overrides[0].months[0]"},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {

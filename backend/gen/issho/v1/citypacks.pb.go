@@ -7,6 +7,7 @@
 package isshov1
 
 import (
+	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -1163,7 +1164,7 @@ var File_issho_v1_citypacks_proto protoreflect.FileDescriptor
 
 const file_issho_v1_citypacks_proto_rawDesc = "" +
 	"\n" +
-	"\x18issho/v1/citypacks.proto\x12\bissho.v1\"\x16\n" +
+	"\x18issho/v1/citypacks.proto\x12\bissho.v1\x1a\x1bbuf/validate/validate.proto\"\x16\n" +
 	"\x14ListCityPacksRequest\"\xac\x01\n" +
 	"\x15ListCityPacksResponse\x12\x1e\n" +
 	"\n" +
@@ -1203,13 +1204,13 @@ const file_issho_v1_citypacks_proto_rawDesc = "" +
 	"\x03lng\x18\x04 \x01(\x01R\x03lng\x1a7\n" +
 	"\tNameEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"w\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x87\x01\n" +
 	"\fPackOverride\x12\x1f\n" +
 	"\vactivity_id\x18\x01 \x01(\tR\n" +
 	"activityId\x12\x1a\n" +
 	"\bdisabled\x18\x02 \x01(\bR\bdisabled\x12\x12\n" +
-	"\x04name\x18\x03 \x01(\tR\x04name\x12\x16\n" +
-	"\x06months\x18\x04 \x03(\x05R\x06months\"-\n" +
+	"\x04name\x18\x03 \x01(\tR\x04name\x12&\n" +
+	"\x06months\x18\x04 \x03(\x05B\x0e\xbaH\v\x92\x01\b\"\x06\x1a\x04\x18\f(\x01R\x06months\"-\n" +
 	"\x12GetCityPackRequest\x12\x17\n" +
 	"\acity_id\x18\x01 \x01(\tR\x06cityId\"\xb7\x01\n" +
 	"\x13GetCityPackResponse\x12&\n" +

@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package issho.v1;
 
+import "buf/validate/validate.proto";
+
 option go_package = "github.com/shrujancheruku/issho/backend/gen/issho/v1;isshov1";
 
 // CityPackService: the city-pack editor in the admin SPA (M8). City packs
@@ -118,7 +120,7 @@ message PackOverride {
   // A local English name replacing the catalogue's; "" = the catalogue's.
   string name = 3;
   // Months (1–12) it's in season; empty = all year.
-  repeated int32 months = 4;
+  repeated int32 months = 4 [(buf.validate.field).repeated.items.int32 = {gte: 1, lte: 12}];
 }
 
 message GetCityPackRequest {
