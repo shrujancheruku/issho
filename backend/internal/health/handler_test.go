@@ -54,7 +54,7 @@ func TestUp(t *testing.T) {
 	}{{"ok", pinger{}, 200}, {"down", pinger{errors.New("x")}, 503}} {
 		t.Run(tt.name, func(t *testing.T) {
 			rec := httptest.NewRecorder()
-			(&Handler{Pool: tt.p}).Up(rec, httptest.NewRequest(http.MethodGet, "/up", nil))
+			(&Handler{Pool: tt.p}).Up(rec, httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/up", nil))
 			if rec.Code != tt.want {
 				t.Errorf("code = %d", rec.Code)
 			}

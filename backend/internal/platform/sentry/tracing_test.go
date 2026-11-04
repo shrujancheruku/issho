@@ -84,8 +84,8 @@ func TestRequestTransaction(t *testing.T) {
 		end := StartHTTP(r.Context(), "GET "+strings.TrimPrefix(google.URL, "http://")+"/v1/places/{id}")
 		end(http.StatusOK, nil)
 	}))
-	h.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest("POST", "/issho.v1.PlanService/GetPlan", nil))
-	h.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest("GET", "/up", nil))
+	h.ServeHTTP(httptest.NewRecorder(), httptest.NewRequestWithContext(t.Context(), "POST", "/issho.v1.PlanService/GetPlan", nil))
+	h.ServeHTTP(httptest.NewRecorder(), httptest.NewRequestWithContext(t.Context(), "GET", "/up", nil))
 
 	if len(sent.events) != 1 {
 		t.Fatalf("want one transaction (not /up), got %d", len(sent.events))
