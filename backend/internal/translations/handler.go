@@ -21,9 +21,9 @@ import (
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
 	"github.com/shrujancheruku/issho/backend/internal/platform/auth"
 	"github.com/shrujancheruku/issho/backend/internal/platform/errs"
-	"github.com/shrujancheruku/issho/backend/internal/platform/github"
 	"github.com/shrujancheruku/issho/backend/internal/platform/i18n"
 	"github.com/shrujancheruku/issho/backend/internal/platform/paging"
+	"github.com/shrujancheruku/issho/backend/internal/repoedit"
 	"github.com/shrujancheruku/issho/backend/internal/translate"
 	"github.com/shrujancheruku/issho/backend/internal/uistrings"
 )
@@ -74,7 +74,7 @@ func (h *Handler) GetTranslator(ctx context.Context, _ *connect.Request[isshov1.
 
 // UI strings.
 
-func prToProto(pr *github.PR) *isshov1.TranslationPullRequest {
+func prToProto(pr *repoedit.PR) *isshov1.TranslationPullRequest {
 	if pr == nil {
 		return nil
 	}

@@ -126,8 +126,13 @@ message GetCityPackRequest {
 }
 
 message GetCityPackResponse {
+  // The pack as it stands in the city's pending change (its open pull
+  // request) when there is one, else on the default branch.
   CityPack pack = 1;
   repeated PackActivity activities = 2;
+  // The city's open pull request, when the pack is its pending version: a
+  // proposal commits to it instead of opening another.
+  CityPackPullRequest pull_request = 3;
 }
 
 message PackActivity {

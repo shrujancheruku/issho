@@ -10,7 +10,7 @@ import (
 	"testing"
 )
 
-func TestProposeAndRead(t *testing.T) {
+func TestReadAndPullRequests(t *testing.T) {
 	var calls []string
 	var put map[string]string
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -34,7 +34,7 @@ func TestProposeAndRead(t *testing.T) {
 				t.Errorf("ref %v", b)
 			}
 			w.WriteHeader(http.StatusCreated)
-		case "PUT /repos/o/r/contents/data/citypacks/tokyo.json":
+		case "PATCH /repos/o/r/pulls/7":
 			_ = json.NewDecoder(r.Body).Decode(&put)
 			w.WriteHeader(http.StatusOK)
 		case "POST /repos/o/r/pulls":
@@ -61,20 +61,23 @@ func TestProposeAndRead(t *testing.T) {
 	if names, err := c.Dir(ctx, "data/citypacks", "main"); err != nil || len(names) != 1 || names[0] != "tokyo.json" {
 		t.Errorf("Dir = %v %v", names, err)
 	}
-	pr, err := c.Propose(ctx, "citypack/tokyo-1", "data/citypacks/tokyo.json", []byte("new"), "blob1", "feat(data): x", "title", "body")
-	if err != nil || pr.Number != 7 || pr.URL != "https://github.com/o/r/pull/7" {
-		t.Fatalf("Propose = %+v %v", pr, err)
+	if err := c.CreateBranch(ctx, "citypack/tokyo-1"); err != nil {
+		t.Fatal(err)
 	}
-	if put["branch"] != "citypack/tokyo-1" || put["sha"] != "blob1" || put["content"] != base64.StdEncoding.EncodeToString([]byte("new")) {
-		t.Errorf("put = %v", put)
+	pr, err := c.OpenPR(ctx, "citypack/tokyo-1", "title", "body")
+	if err != nil || pr.Number != 7 || pr.URL != "https://github.com/o/r/pull/7" {
+		t.Fatalf("OpenPR = %+v %v", pr, err)
+	}
+	if err := c.UpdatePR(ctx, 7, "new body"); err != nil || put["body"] != "new body" {
+		t.Errorf("UpdatePR = %v %v", err, put)
 	}
 	prs, err := c.OpenPRs(ctx, "citypack/")
 	if err != nil || len(prs) != 1 || prs[0].Number != 7 {
 		t.Errorf("OpenPRs = %v %v", prs, err)
 	}
 	var apiErr *APIError
-	if _, err := c.Propose(ctx, "x", "other.json", nil, "", "m", "t", "b"); !errors.As(err, &apiErr) || apiErr.Message != "nope" {
-		t.Errorf("a failing commit: %v", err)
+	if err := c.UpdatePR(ctx, 8, "x"); !errors.As(err, &apiErr) || apiErr.Message != "nope" {
+		t.Errorf("a failing update: %v", err)
 	}
 }
 

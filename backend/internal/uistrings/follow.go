@@ -2,27 +2,26 @@ package uistrings
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log/slog"
-	"net/http"
 	"strings"
 	"time"
 
-	"github.com/shrujancheruku/issho/backend/internal/platform/github"
 	"github.com/shrujancheruku/issho/backend/internal/platform/i18n"
+	"github.com/shrujancheruku/issho/backend/internal/repoedit"
 )
 
-// HumanSource reads the human-version files on a branch (*github.Client).
+// HumanSource reads the human-version files on the default branch
+// (*repoedit.Repo).
 type HumanSource interface {
-	Dir(ctx context.Context, path, branch string) ([]string, error)
-	File(ctx context.Context, path, branch string) ([]byte, string, error)
+	List(ctx context.Context, dir string) ([]string, error)
+	Read(ctx context.Context, path string) ([]byte, bool, error)
 }
 
-// LoadHuman replaces the human versions with branch's (HumanDir). On any
-// error nothing changes.
-func (c *Catalog) LoadHuman(ctx context.Context, src HumanSource, branch string) error {
-	names, err := src.Dir(ctx, HumanDir, branch)
+// LoadHuman replaces the human versions with the default branch's
+// (HumanDir). On any error nothing changes.
+func (c *Catalog) LoadHuman(ctx context.Context, src HumanSource) error {
+	names, err := src.List(ctx, HumanDir)
 	if err != nil {
 		return err
 	}
@@ -32,53 +31,52 @@ func (c *Catalog) LoadHuman(ctx context.Context, src HumanSource, branch string)
 		if !ok || !i18n.ValidDisplay(lang) {
 			continue
 		}
-		raw, _, err := src.File(ctx, HumanDir+"/"+name, branch)
+		raw, ok, err := src.Read(ctx, HumanDir+"/"+name)
 		if err != nil {
 			return err
 		}
-		files[lang] = raw
+		if ok { // merged away since the listing: nothing to load
+			files[lang] = raw
+		}
 	}
 	return c.SetHuman(files)
 }
 
-// Start reads the human versions once, then follows branch in the
-// background (Follow). A bad token (GitHub's 401, or a 403 that is not a rate limit: GitHub
-// answers both its primary and secondary limits with 403, and a limit says
-// nothing about the token) is a startup error when strict, which production sets, so a rotated or mistyped GITHUB_TOKEN
-// is found by the deploy rather than after the fact; elsewhere, and for any
-// other failure, it only warns and the built-in copies stay.
-func (c *Catalog) Start(ctx context.Context, src HumanSource, branch string, every time.Duration, log *slog.Logger, strict bool) error {
-	if err := c.LoadHuman(ctx, src, branch); err != nil {
-		var apiErr *github.APIError
-		if strict && errors.As(err, &apiErr) && (apiErr.StatusCode == http.StatusUnauthorized ||
-			(apiErr.StatusCode == http.StatusForbidden && !strings.Contains(strings.ToLower(apiErr.Message), "rate limit"))) {
+// Start reads the human versions once, then follows the default branch in
+// the background (Follow). A refused token (repoedit.TokenRefused) is a
+// startup error when strict, which production sets, so a rotated or mistyped
+// GITHUB_TOKEN is found by the deploy rather than after the fact; elsewhere,
+// and for any other failure, it only warns and the built-in copies stay.
+func (c *Catalog) Start(ctx context.Context, src HumanSource, every time.Duration, log *slog.Logger, strict bool) error {
+	if err := c.LoadHuman(ctx, src); err != nil {
+		if strict && repoedit.TokenRefused(err) {
 			return fmt.Errorf("ui strings: GITHUB_TOKEN was refused: %w", err)
 		}
 		if ctx.Err() == nil {
-			log.Warn("ui strings: couldn't read the human versions on "+branch, "err", err)
+			log.Warn("ui strings: couldn't read the human versions", "err", err)
 		}
 	}
-	go c.follow(ctx, src, branch, every, log, true)
+	go c.follow(ctx, src, every, log, true)
 	return nil
 }
 
-// Follow keeps the human versions in step with branch, reading it every
+// Follow keeps the human versions in step with the default branch, reading it every
 // interval until ctx ends, so a merged pull request from the translation
 // editor reaches the app (whose check runs hourly) without a deploy. A
 // failed read keeps what's loaded. Versions written for English newer than
 // this build's are stale here (Current) and skipped, so following a branch
 // ahead of the deployed API is safe.
-func (c *Catalog) Follow(ctx context.Context, src HumanSource, branch string, every time.Duration, log *slog.Logger) {
-	c.follow(ctx, src, branch, every, log, false)
+func (c *Catalog) Follow(ctx context.Context, src HumanSource, every time.Duration, log *slog.Logger) {
+	c.follow(ctx, src, every, log, false)
 }
 
 // follow is Follow; skipFirst waits an interval before the first read
 // (Start has just made it).
-func (c *Catalog) follow(ctx context.Context, src HumanSource, branch string, every time.Duration, log *slog.Logger, skipFirst bool) {
+func (c *Catalog) follow(ctx context.Context, src HumanSource, every time.Duration, log *slog.Logger, skipFirst bool) {
 	for {
 		if !skipFirst {
-			if err := c.LoadHuman(ctx, src, branch); err != nil && ctx.Err() == nil {
-				log.Warn("ui strings: couldn't read the human versions on "+branch, "err", err)
+			if err := c.LoadHuman(ctx, src); err != nil && ctx.Err() == nil {
+				log.Warn("ui strings: couldn't read the human versions", "err", err)
 			}
 		}
 		skipFirst = false

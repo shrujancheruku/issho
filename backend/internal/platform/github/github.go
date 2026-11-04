@@ -1,7 +1,7 @@
-// Package github is the small part of GitHub's REST API the admin SPA's
-// editors need: read files on a branch, commit files to a branch (the
-// city-pack editor's new branch per proposal; the translation editor's
-// rolling branch per language), open pull requests and list open ones.
+// Package github is the small part of GitHub's REST API internal/repoedit
+// needs: read files on a branch, commit files to a branch, open pull
+// requests, rewrite a pull request's body and list the open ones. Nothing
+// but repoedit and the wiring in cmd/ imports it.
 // The token is a fine-grained personal access token limited to the one
 // repository, with Contents and Pull requests write access.
 package github
@@ -158,63 +158,48 @@ type PR struct {
 	Title  string
 	URL    string
 	Branch string
+	Body   string
 }
 
-// Propose commits one file to a new branch made from Base and opens a pull
-// request for it. sha is the file's blob sha on Base ("" for a new file).
-func (c *Client) Propose(ctx context.Context, branch, path string, content []byte, sha, message, title, body string) (PR, error) {
-	var ref struct {
-		Object struct {
-			SHA string `json:"sha"`
-		} `json:"object"`
-	}
-	if err := c.do(ctx, http.MethodGet, c.repoPath("/git/ref/heads/%s", c.Base), nil, &ref); err != nil {
-		return PR{}, fmt.Errorf("base branch: %w", err)
-	}
-	if err := c.do(ctx, http.MethodPost, c.repoPath("/git/refs"), map[string]string{
-		"ref": "refs/heads/" + branch, "sha": ref.Object.SHA,
-	}, nil); err != nil {
-		return PR{}, fmt.Errorf("branch: %w", err)
-	}
-	put := map[string]string{"message": message, "content": base64.StdEncoding.EncodeToString(content), "branch": branch}
-	if sha != "" {
-		put["sha"] = sha
-	}
-	if err := c.do(ctx, http.MethodPut, c.repoPath("/contents/%s", path), put, nil); err != nil {
-		return PR{}, fmt.Errorf("commit: %w", err)
-	}
-	var pr struct {
-		Number  int    `json:"number"`
-		HTMLURL string `json:"html_url"`
-	}
-	if err := c.do(ctx, http.MethodPost, c.repoPath("/pulls"), map[string]string{
-		"title": title, "head": branch, "base": c.Base, "body": body,
-	}, &pr); err != nil {
-		return PR{}, fmt.Errorf("pull request: %w", err)
-	}
-	return PR{Number: pr.Number, Title: title, URL: pr.HTMLURL, Branch: branch}, nil
-}
+// maxPRPages bounds OpenPRs: 5,000 open pull requests is a runaway, not a
+// repository this editor serves. Reaching it is an error.
+const maxPRPages = 50
 
-// OpenPRs lists open pull requests whose branch starts with prefix.
+// OpenPRs lists every open pull request whose branch starts with prefix,
+// paging through all of them: other tools (Renovate) open pull requests
+// too, and a single page of 100 would let the editors' fall off it.
 func (c *Client) OpenPRs(ctx context.Context, prefix string) ([]PR, error) {
-	var res []struct {
-		Number  int    `json:"number"`
-		Title   string `json:"title"`
-		HTMLURL string `json:"html_url"`
-		Head    struct {
-			Ref string `json:"ref"`
-		} `json:"head"`
-	}
-	if err := c.do(ctx, http.MethodGet, c.repoPath("/pulls?state=open&per_page=100"), nil, &res); err != nil {
-		return nil, err
-	}
 	var out []PR
-	for _, p := range res {
-		if strings.HasPrefix(p.Head.Ref, prefix) {
-			out = append(out, PR{Number: p.Number, Title: p.Title, URL: p.HTMLURL, Branch: p.Head.Ref})
+	for page := 1; page <= maxPRPages; page++ {
+		var res []struct {
+			Number  int    `json:"number"`
+			Title   string `json:"title"`
+			HTMLURL string `json:"html_url"`
+			Body    string `json:"body"`
+			Head    struct {
+				Ref string `json:"ref"`
+			} `json:"head"`
+		}
+		if err := c.do(ctx, http.MethodGet, c.repoPath("/pulls?state=open&per_page=100&page=%d", page), nil, &res); err != nil {
+			return nil, err
+		}
+		for _, p := range res {
+			if strings.HasPrefix(p.Head.Ref, prefix) {
+				out = append(out, PR{Number: p.Number, Title: p.Title, URL: p.HTMLURL, Branch: p.Head.Ref, Body: p.Body})
+			}
+		}
+		if len(res) < 100 {
+			return out, nil
 		}
 	}
-	return out, nil
+	// A partial list would let Change think a key has no pull request and
+	// open a duplicate, so the cap is an error, not a truncation.
+	return nil, errs.Upstream("github", fmt.Errorf("more than %d pages of open pull requests", maxPRPages))
+}
+
+// UpdatePR rewrites a pull request's body.
+func (c *Client) UpdatePR(ctx context.Context, number int, body string) error {
+	return c.do(ctx, http.MethodPatch, c.repoPath("/pulls/%d", number), map[string]string{"body": body}, nil)
 }
 
 // ErrConflict means the branch moved while committing (someone else
@@ -303,5 +288,5 @@ func (c *Client) OpenPR(ctx context.Context, branch, title, body string) (PR, er
 	}, &pr); err != nil {
 		return PR{}, fmt.Errorf("pull request: %w", err)
 	}
-	return PR{Number: pr.Number, Title: title, URL: pr.HTMLURL, Branch: branch}, nil
+	return PR{Number: pr.Number, Title: title, URL: pr.HTMLURL, Branch: branch, Body: body}, nil
 }

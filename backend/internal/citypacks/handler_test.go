@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"maps"
 	"slices"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -22,20 +24,39 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/maps/mapstest"
 	"github.com/shrujancheruku/issho/backend/internal/platform/auth"
 	"github.com/shrujancheruku/issho/backend/internal/platform/github"
+	"github.com/shrujancheruku/issho/backend/internal/repoedit"
 	"github.com/shrujancheruku/issho/backend/internal/testfixture"
 )
 
-// fakeRepo is a repository with files on main and records proposals.
+// fakeRepo is the repository in memory (repoedit's Host): branches of files,
+// and open pull requests. files is main's.
 type fakeRepo struct {
 	files    map[string][]byte
-	proposed []string // branch, path, message, body per proposal, joined
-	content  []byte
-	sha      string
+	branches map[string]map[string][]byte
+	prs      []github.PR
+	commits  []string // messages
+	content  []byte   // the last pack file committed
+}
+
+func newRepo(files map[string][]byte) *fakeRepo {
+	return &fakeRepo{files: files, branches: map[string]map[string][]byte{"main": files}}
+}
+
+// merge lands a pull request's branch on main and closes it.
+func (f *fakeRepo) merge(t *testing.T) {
+	t.Helper()
+	if len(f.prs) != 1 {
+		t.Fatalf("merge: %d open pull requests", len(f.prs))
+	}
+	for p, c := range f.branches[f.prs[0].Branch] {
+		f.files[p] = c
+	}
+	f.prs = nil
 }
 
 func (f *fakeRepo) File(_ context.Context, path, branch string) ([]byte, string, error) {
-	b, ok := f.files[path]
-	if !ok || branch != "main" {
+	b, ok := f.branches[branch][path]
+	if !ok {
 		return nil, "", github.ErrNotFound
 	}
 	return b, "sha-" + path, nil
@@ -51,14 +72,43 @@ func (f *fakeRepo) Dir(_ context.Context, dir, _ string) ([]string, error) {
 	return out, nil
 }
 
-func (f *fakeRepo) Propose(_ context.Context, branch, path string, content []byte, sha, message, title, body string) (github.PR, error) {
-	f.proposed = append(f.proposed, strings.Join([]string{branch, path, message, body}, "|"))
-	f.content, f.sha = content, sha
-	return github.PR{Number: 42, Title: title, URL: "https://github.com/o/r/pull/42", Branch: branch}, nil
+func (f *fakeRepo) OpenPRs(_ context.Context, prefix string) ([]github.PR, error) {
+	var out []github.PR
+	for _, pr := range f.prs {
+		if strings.HasPrefix(pr.Branch, prefix) {
+			out = append(out, pr)
+		}
+	}
+	return out, nil
 }
 
-func (f *fakeRepo) OpenPRs(context.Context, string) ([]github.PR, error) {
-	return []github.PR{{Number: 42, Title: "t", URL: "u"}}, nil
+func (f *fakeRepo) CreateBranch(_ context.Context, branch string) error {
+	f.branches[branch] = maps.Clone(f.files)
+	return nil
+}
+
+func (f *fakeRepo) CommitFiles(_ context.Context, branch string, files map[string][]byte, message string) error {
+	for p, c := range files {
+		f.branches[branch][p] = c
+		f.content = c
+	}
+	f.commits = append(f.commits, message)
+	return nil
+}
+
+func (f *fakeRepo) OpenPR(_ context.Context, branch, title, body string) (github.PR, error) {
+	pr := github.PR{Number: 100 + len(f.prs), Title: title, URL: "https://github.com/o/r/pull/x", Branch: branch, Body: body}
+	f.prs = append(f.prs, pr)
+	return pr, nil
+}
+
+func (f *fakeRepo) UpdatePR(_ context.Context, number int, body string) error {
+	for i := range f.prs {
+		if f.prs[i].Number == number {
+			f.prs[i].Body = body
+		}
+	}
+	return nil
 }
 
 // inlineJobs is the River client with the queue taken out: Insert runs the
@@ -120,12 +170,14 @@ func TestIntegrationCityPacks(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	repo := &fakeRepo{files: map[string][]byte{"data/citypacks/other.json": []byte(`{"id":"other"}`)}}
+	repo := newRepo(map[string][]byte{"data/citypacks/other.json": []byte(`{"id":"other"}`)})
 	fm := &mapstest.Fake{NearbyFunc: func(r gmaps.NearbyRequest) []gmaps.Place {
 		return []gmaps.Place{{ID: "zz-packs-place-" + r.Types[0], PrimaryType: r.Types[0], Location: r.Center}}
 	}}
 	jobs := &inlineJobs{pool: pool, router: fm, places: fm}
-	h := &Handler{DB: pool, GitHub: repo, Base: "main", Places: fm, Jobs: jobs, Now: func() time.Time { return time.Unix(1900000000, 0) }}
+	ed := repoedit.New(repo, "main")
+	ed.Now = func() time.Time { return time.Unix(1900000000, 0) }
+	h := &Handler{DB: pool, Repo: ed, Places: fm, Jobs: jobs}
 	adminCtx := auth.WithCaller(ctx, auth.Caller{UserID: uuid.New(), Email: "admin@example.com", Admin: true})
 
 	pack := &isshov1.CityPack{
@@ -160,22 +212,45 @@ func TestIntegrationCityPacks(t *testing.T) {
 	bad("an unknown activity", func(p *isshov1.CityPack) { p.ActivityOverrides[0].ActivityId = "nope" })
 	bad("a name in another language", func(p *isshov1.CityPack) { p.Areas[0].Name["fr"] = "Alpha" })
 
-	// A new city: created as a new file on a new branch.
+	// A new city: a new file on a new branch, in a pull request.
 	res, err := propose(pack)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.PullRequest.Number != 42 || repo.sha != "" {
-		t.Errorf("new city: %v (sha %q)", res.PullRequest, repo.sha)
+	if res.PullRequest.Number != 100 || res.PullRequest.Title != "feat(data): add the Packs city pack" || len(repo.prs) != 1 {
+		t.Errorf("new city: %v %v", res.PullRequest, repo.prs)
 	}
-	parts := strings.Split(repo.proposed[0], "|")
-	if parts[0] != "citypack/zz-packs-1900000000" || parts[1] != "data/citypacks/zz-packs.json" || parts[2] != "feat(data): add the Packs city pack" ||
-		strings.Contains(parts[3], "admin@example.com") || !strings.Contains(parts[3], "Launching soon.") || !strings.Contains(parts[3], "New city Packs") {
-		t.Errorf("proposal = %q", parts)
+	pr, branch := repo.prs[0], "citypack/zz-packs-1900000000"
+	if pr.Branch != branch || repo.commits[0] != "feat(data): add the Packs city pack" ||
+		strings.Contains(pr.Body, "admin@example.com") || !strings.Contains(pr.Body, "Launching soon.") || !strings.Contains(pr.Body, "New city Packs") {
+		t.Errorf("proposal = %+v, commits %q", pr, repo.commits)
+	}
+	if _, onMain := repo.files["data/citypacks/zz-packs.json"]; onMain {
+		t.Error("a proposal must not touch the default branch")
 	}
 	var written cities.Pack
 	if err := json.Unmarshal(repo.content, &written); err != nil || written.Currency != "JPY" || written.ActivityOverrides[0].Name["en"] != "Kissa" {
 		t.Errorf("written = %+v, %v", written, err)
+	}
+	// The editor opens the pending pack, not main's (there is none yet).
+	pending, err := h.GetCityPack(adminCtx, connect.NewRequest(&isshov1.GetCityPackRequest{CityId: city}))
+	if err != nil || pending.Msg.PullRequest.GetNumber() != 100 || pending.Msg.Pack.GetCurrency() != "JPY" {
+		t.Errorf("GetCityPack of a pending new city: %+v %v", pending, err)
+	}
+	// Saving again commits to the same pull request, rewriting its body.
+	pack.Areas[1].Name["en"] = "Beta Town"
+	if res, err = propose(pack); err != nil || res.PullRequest.Number != 100 || len(repo.prs) != 1 || len(repo.commits) != 2 || len(repo.branches) != 2 {
+		t.Fatalf("a second proposal: %v %v (prs %d, commits %d, branches %d)", res, err, len(repo.prs), len(repo.commits), len(repo.branches))
+	}
+	if !strings.Contains(repo.prs[0].Body, "New city Packs") || !strings.Contains(string(repo.branches[branch]["data/citypacks/zz-packs.json"]), "Beta Town") {
+		t.Errorf("rolling pull request: %q", repo.prs[0].Body)
+	}
+	if lp, err := h.ListCityPacks(adminCtx, connect.NewRequest(&isshov1.ListCityPacksRequest{})); err != nil || len(lp.Msg.PullRequests) != 1 || lp.Msg.PullRequests[0].Number != 100 {
+		t.Errorf("list with a pending change: %v %v", lp, err)
+	}
+	pack.Areas[1].Name["en"] = "Beta"
+	if _, err := propose(pack); err != nil {
+		t.Fatal(err)
 	}
 
 	// An invalid pack on main fails the call at once, with the usual error
@@ -186,7 +261,7 @@ func TestIntegrationCityPacks(t *testing.T) {
 	}
 
 	// Merged: apply it. Both areas are new; travel times are built.
-	repo.files["data/citypacks/zz-packs.json"] = repo.content
+	repo.merge(t)
 	// applyJob queues the apply and returns what its job recorded; apply is
 	// the report of one that succeeded, the response the RPC returned
 	// before it became a job.
@@ -247,7 +322,10 @@ func TestIntegrationCityPacks(t *testing.T) {
 		t.Fatal(err)
 	}
 	p := got.Msg.Pack
-	if _, err := propose(p); connect.CodeOf(err) != connect.CodeInvalidArgument {
+	var mainPack isshov1.CityPack // main's, kept to revert to later
+	raw0, _ := json.Marshal(p)
+	_ = json.Unmarshal(raw0, &mainPack)
+	if _, err := propose(p); connect.CodeOf(err) != connect.CodeInvalidArgument || strings.Contains(err.Error(), "pull request") {
 		t.Errorf("no change: %v", err)
 	}
 	removed := &isshov1.CityPack{Id: p.Id, Name: p.Name, Timezone: p.Timezone, Currency: p.Currency, Languages: p.Languages, TravelModes: p.TravelModes, Areas: p.Areas[:1]}
@@ -260,12 +338,33 @@ func TestIntegrationCityPacks(t *testing.T) {
 	if _, err := propose(p); err != nil {
 		t.Fatal(err)
 	}
-	parts = strings.Split(repo.proposed[len(repo.proposed)-1], "|")
-	if parts[2] != "feat(data): update the Packs city pack" || repo.sha != "sha-data/citypacks/zz-packs.json" ||
-		!strings.Contains(parts[3], "Area zz-packs-b moved 1001 m") || !strings.Contains(parts[3], "New area Gamma") {
-		t.Errorf("change proposal = %q (sha %q)", parts, repo.sha)
+	if len(repo.prs) != 1 || repo.commits[len(repo.commits)-1] != "feat(data): update the Packs city pack" ||
+		!strings.Contains(repo.prs[0].Body, "Area zz-packs-b moved 1001 m") || !strings.Contains(repo.prs[0].Body, "New area Gamma") {
+		t.Errorf("change proposal = %+v, commits %q", repo.prs, repo.commits)
 	}
-	repo.files["data/citypacks/zz-packs.json"] = repo.content
+	// A further save rides on the same pull request. Its body is the whole
+	// change from the default branch, and the checks still run against it.
+	pend, err := h.GetCityPack(adminCtx, connect.NewRequest(&isshov1.GetCityPackRequest{CityId: city}))
+	if err != nil || int(pend.Msg.PullRequest.GetNumber()) != repo.prs[0].Number || len(pend.Msg.Pack.Areas) != 3 {
+		t.Fatalf("GetCityPack of a pending change: %+v %v", pend, err)
+	}
+	prs, commits := len(repo.prs), len(repo.commits)
+	pend.Msg.Pack.Areas[2].Lat += 0.001
+	if _, err := propose(pend.Msg.Pack); err != nil || len(repo.prs) != prs || len(repo.commits) != commits+1 ||
+		!strings.Contains(repo.prs[0].Body, "Area zz-packs-b moved 1001 m") || !strings.Contains(repo.prs[0].Body, "New area Gamma") {
+		t.Errorf("rolling change: %v prs %d, commits %d, body %q", err, len(repo.prs), len(repo.commits), repo.prs[0].Body)
+	}
+	removedPending := &isshov1.CityPack{Id: p.Id, Name: p.Name, Timezone: p.Timezone, Currency: p.Currency, Languages: p.Languages, TravelModes: p.TravelModes, Areas: p.Areas[:1]}
+	if _, err := propose(removedPending); connect.CodeOf(err) != connect.CodeInvalidArgument {
+		t.Errorf("an area removed from main's pack, though the pending one has it: %v", err)
+	}
+	// Back to main's pack while a pending change holds edits: the editor can't
+	// revert it, and says to close the pull request.
+	if _, err := propose(&mainPack); connect.CodeOf(err) != connect.CodeInvalidArgument ||
+		!strings.Contains(err.Error(), "pull request #"+strconv.Itoa(repo.prs[0].Number)) || !strings.Contains(err.Error(), "close") {
+		t.Errorf("reverting to main with a pending change: %v", err)
+	}
+	repo.merge(t)
 	before := fm.Matrices()
 	if a := apply(); len(a.NewAreas) != 1 || a.NewAreas[0] != city+"-c" || len(a.MovedAreas) != 1 || a.MovedAreas[0] != city+"-b" || fm.Matrices() == before {
 		t.Errorf("second apply = %v", a)
@@ -379,7 +478,7 @@ func TestIntegrationCityPacks(t *testing.T) {
 	fm.MatrixErr = nil
 
 	// Without a token, only the list works.
-	h.GitHub = nil
+	h.Repo = nil
 	if _, err := h.GetCityPack(adminCtx, connect.NewRequest(&isshov1.GetCityPackRequest{CityId: city})); connect.CodeOf(err) != connect.CodeFailedPrecondition {
 		t.Errorf("no token: %v", err)
 	}

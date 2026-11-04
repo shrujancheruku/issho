@@ -19,6 +19,7 @@ import (
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
 	"github.com/shrujancheruku/issho/backend/internal/platform/auth"
 	"github.com/shrujancheruku/issho/backend/internal/platform/github"
+	"github.com/shrujancheruku/issho/backend/internal/repoedit"
 	"github.com/shrujancheruku/issho/backend/internal/translate"
 	"github.com/shrujancheruku/issho/backend/internal/uistrings"
 )
@@ -72,6 +73,17 @@ func (r *fakeRepo) CommitFiles(_ context.Context, branch string, files map[strin
 	}
 	r.commits = append(r.commits, message)
 	return nil
+}
+
+func (r *fakeRepo) Dir(context.Context, string, string) ([]string, error) { return nil, nil }
+
+func (r *fakeRepo) UpdatePR(_ context.Context, number int, _ string) error {
+	for i := range r.prs {
+		if r.prs[i].Number == number {
+			return nil
+		}
+	}
+	return github.ErrNotFound
 }
 
 func (r *fakeRepo) OpenPR(_ context.Context, branch, title, _ string) (github.PR, error) {
@@ -179,13 +191,13 @@ func setup(t *testing.T, mainJa string) (*Handler, *fakeRepo) {
 		"ja/act": {SourceHash: "act", Lang: "ja", Source: "Pottery class", Context: "name of a group activity", Text: "陶芸"},
 	}}
 	now := func() time.Time { return time.Unix(1700000000, 0) }
+	ed := repoedit.New(repo, "main")
+	ed.Now = now
 	h := &Handler{
 		Editor: &uistrings.Editor{
 			Catalog:      cat,
 			Translations: &translate.Service{Store: &memCache{rows: map[string]string{}}, Translator: tagger{}},
-			GitHub:       repo,
-			Base:         "main",
-			Now:          now,
+			Repo:         ed,
 		},
 		Reviews: &translate.Reviewer{Q: q, UIContextPrefix: uistrings.ContextPrefix, SamePlaceholders: uistrings.SamePlaceholders, Now: now},
 	}
@@ -358,7 +370,7 @@ func TestSaveAndRemove(t *testing.T) {
 		}
 	}
 
-	h.Editor.GitHub = nil
+	h.Editor.Repo = nil
 	if _, err := h.SaveAppString(ctx, connect.NewRequest(&isshov1.SaveAppStringRequest{Lang: "ja", Key: "hi", Text: "やっほー"})); connect.CodeOf(err) != connect.CodeFailedPrecondition {
 		t.Errorf("without GitHub: %v", err)
 	}
