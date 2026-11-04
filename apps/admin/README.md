@@ -58,7 +58,8 @@ Local sign-in codes arrive in Mailpit (`supabase status` → `MAILPIT_URL`). `VI
 `issho-admin` is a Cloudflare Worker with static assets only (`wrangler.jsonc`: `dist/`, unknown paths get `index.html`), at https://admin.joinissho.com (its `workers.dev` address is switched off). The app's web build deploys the same way as `issho-web`, at https://app.joinissho.com. Both are built against `issho-dev` and the hosted API, https://api.joinissho.com.
 
 ```sh
-scripts/deploy-web.sh                              # both sites, against https://api.joinissho.com; add `admin` or `web` for one
+scripts/deploy-web.sh                                # both sites, against https://api.joinissho.com
+scripts/deploy-web.sh https://api.joinissho.com admin  # one site: the API URL comes first, then `admin` or `web`
 ```
 
 The API URL is baked into each build, so redeploy if it changes. `scripts/deploy-web.sh` takes the Supabase URL and publishable key from the environment (`EXPO_PUBLIC_*`) or else `apps/mobile/.env`, and deploys with your `wrangler login` (or `CLOUDFLARE_API_TOKEN`). `public/_headers` sets a strict Content-Security-Policy, `noindex` and no framing. Its `connect-src` allows Supabase and `https://api.joinissho.com`; the script swaps in the API origin it was given if that differs, so the page can't call any other origin.
