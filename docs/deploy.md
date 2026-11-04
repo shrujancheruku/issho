@@ -20,7 +20,7 @@ Registered at Porkbun (2026-10-26); its DNS is moved to Cloudflare, which also s
 | `admin.joinissho.com` | admin SPA | Worker `issho-admin` |
 | `api.joinissho.com` | Go API | the VPS, through Cloudflare (proxied) |
 
-The Workers' `wrangler.jsonc` files claim their host names as custom domains, so a deploy creates their DNS records. The `workers.dev` addresses keep working.
+The Workers' `wrangler.jsonc` files claim their host names as custom domains, so a deploy creates their DNS records. Their `workers.dev` addresses are switched off (`"workers_dev": false`), so the custom domains are the only way in, and the API's `ALLOWED_ORIGINS` lists only those.
 
 **Moving DNS to Cloudflare (owner, once):** in Cloudflare, *Add a domain* → `joinissho.com`, Free plan; delete the imported Porkbun parking records; at Porkbun, *Domain → Authoritative nameservers* → Cloudflare's two (and switch off Porkbun's DNSSEC first, if on). The zone is active once Cloudflare sees the change (usually under an hour). Then SSL/TLS mode **Full (strict)**.
 
