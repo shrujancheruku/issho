@@ -23,7 +23,7 @@ Every list loads a page at a time with **Load more** (`src/paging.tsx`: the resp
 
 ## Look
 
-`src/styles.css` follows [docs/design-system.md](../../docs/design-system.md), with the same values as the app: indigo ground, gold buttons, `--accent` for the active page and tab, `--error` for errors and moderation dangers (suspended, unsafe, open reports). Dela Gothic One (the `ISSHO` mark) and Zen Kaku Gothic New are bundled from `@fontsource` in `src/main.tsx`, because the CSP allows only `'self'`; only 400 and 700 of the body face are loaded, which keeps the CSS at about 195 kB gzipped. The metrics chart keeps its own validated series colours.
+`src/styles.css` follows [docs/design-system.md](../../docs/design-system.md), with the same values as the app: indigo ground, gold buttons, `--accent` for the active page and tab, `--error` for errors and moderation dangers (suspended, unsafe, open reports). Dela Gothic One (the `ISSHO` mark) and Zen Kaku Gothic New are bundled from `@fontsource` in `src/main.tsx`, because the CSP allows only `'self'`, and `vite.config.ts` stops Vite inlining the small subsets as `data:` URLs, which `default-src 'self'` would block; only 400 and 700 of the body face are loaded, which keeps the CSS at about 195 kB gzipped. The metrics chart keeps its own validated series colours.
 
 ## Admins
 
