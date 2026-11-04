@@ -25,9 +25,8 @@ func day(n int) time.Time { return time.Date(2030, 1, n, 0, 0, 0, 0, time.UTC) }
 
 // outing schedules an event on a new plan for the people invited, with
 // everyone confirmed, and returns it and its start.
-func outing(t *testing.T, f *testfixture.Fixture, people []uuid.UUID) (uuid.UUID, time.Time) {
+func outing(ctx context.Context, t *testing.T, f *testfixture.Fixture, people []uuid.UUID) (uuid.UUID, time.Time) {
 	t.Helper()
-	ctx := context.Background()
 	planID, err := plans.Create(ctx, f.Q, f.City, matching.Suggestion{Plan: matching.Plan{Area: matching.AreaID(f.Area), Activity: matching.ActivityID(f.Act), Primary: "ja"}, Audience: 6, Score: 1},
 		plans.Window{Start: day(7), Days: 14, Deadline: day(14)}, nil)
 	if err != nil {
@@ -105,7 +104,7 @@ func TestIntegrationCrews(t *testing.T) {
 		picks, avoid []uuid.UUID
 	}
 	met := func(people []uuid.UUID, answers ...answer) time.Time {
-		eventID, starts := outing(t, f, people)
+		eventID, starts := outing(ctx, t, f, people)
 		for _, an := range answers {
 			fb := plans.Feedback{Attended: true, PlanRating: 4, GroupRating: 4, Picks: an.picks, Avoid: an.avoid}
 			if err := plansSvc.SubmitFeedback(ctx, an.who, eventID, fb, starts.Add(plans.FeedbackAfter)); err != nil {
@@ -333,7 +332,7 @@ func TestIntegrationOfferSeasonUsesCityTimezone(t *testing.T) {
 		t.Fatal(err)
 	}
 	a, b, c := f.Users[0], f.Users[1], f.Users[2]
-	eventID, starts := outing(t, f, f.Users)
+	eventID, starts := outing(ctx, t, f, f.Users)
 	plansSvc := &plans.Service{DB: f.Pool}
 	for _, p := range []struct {
 		who   uuid.UUID

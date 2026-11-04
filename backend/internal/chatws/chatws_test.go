@@ -212,7 +212,8 @@ func seed(t *testing.T, ctx context.Context, pool *pgxpool.Pool, going, other, i
 	_, _ = pool.Exec(ctx, "delete from app.cities where id = 'zz-chatws'")
 	_, _ = pool.Exec(ctx, "delete from app.activities where id = 'zz-chatws'")
 	t.Cleanup(func() {
-		ctx := context.Background()
+		// Cleanups run after the test's context is cancelled.
+		ctx := context.WithoutCancel(ctx)
 		_, _ = pool.Exec(ctx, "delete from app.users where id = any($1)", users)
 		if supabase {
 			_, _ = pool.Exec(ctx, "delete from auth.users where id = any($1)", users)
