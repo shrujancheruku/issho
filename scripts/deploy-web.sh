@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
 # Builds and deploys the admin SPA (issho-admin) and the app's web build
 # (issho-web) to Cloudflare Workers, pointed at the given API.
-# Usage: scripts/deploy-web.sh <api-url> [admin|web]
+# Usage: scripts/deploy-web.sh [<api-url> [admin|web]]
 #
-# The API URL is baked into each build, so redeploy whenever it changes
-# (a Cloudflare quick tunnel gets a new URL every time it starts). The
+# The API URL is baked into each build, so redeploy whenever it changes.
+# It defaults to the hosted API, https://api.joinissho.com. The
 # Supabase URL, publishable key and web Maps key (all public) come from the
 # environment as EXPO_PUBLIC_* when set (CI: .github/workflows/deploy-web.yml),
 # otherwise from apps/mobile/.env (issho-dev). Needs `wrangler login` (or
 # CLOUDFLARE_API_TOKEN). See apps/admin/README.md.
 set -euo pipefail
 
-api="${1:?usage: deploy-web.sh <api-url> [admin|web]}"
+api="${1:-https://api.joinissho.com}"
 api="${api%/}"
 only="${2:-}"
 root="$(cd "$(dirname "$0")/.." && pwd)"
@@ -36,10 +36,10 @@ if [[ "$only" != web ]]; then
   (
     cd "$root/apps/admin"
     VITE_API_URL="$api" VITE_SUPABASE_URL="$supabase_url" VITE_SUPABASE_PUBLISHABLE_KEY="$publishable_key" pnpm exec vite build
-    # public/_headers lets the page call any quick tunnel; the deployed copy
-    # allows only this API's origin.
-    grep -q 'https://\*\.trycloudflare\.com' dist/_headers
-    sed -i.bak "s#https://\*\.trycloudflare\.com#$api#" dist/_headers && rm dist/_headers.bak
+    # public/_headers names the hosted API; the deployed copy allows only the
+    # origin this run was given (a no-op for the default).
+    grep -q 'https://api\.joinissho\.com' dist/_headers
+    sed -i.bak "s#https://api\.joinissho\.com#$api#" dist/_headers && rm dist/_headers.bak
     pnpm exec wrangler deploy
   )
 fi
@@ -50,6 +50,7 @@ if [[ "$only" != admin ]]; then
 fi
 cat <<MSG
 
-Deployed against $api. The API needs these origins in ALLOWED_ORIGINS:
-  https://issho-admin.shrujancheruku.workers.dev,https://issho-web.shrujancheruku.workers.dev
+Deployed against $api. The API needs these origins in ALLOWED_ORIGINS
+(config/deploy.production.yml):
+  https://admin.joinissho.com,https://app.joinissho.com
 MSG
