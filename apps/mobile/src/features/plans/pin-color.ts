@@ -1,6 +1,6 @@
 import { PlanLevel } from '@issho/api-client';
 
-import type { Palette } from '@/constants/theme';
+import { Brand, type Palette } from '@/constants/theme';
 
 import { levelColors } from './level';
 
@@ -14,5 +14,5 @@ export function pinColors(level: PlanLevel, theme: Palette): { background: strin
   if (c) return c;
   return level === PlanLevel.NOT_FOR_YOU
     ? { background: theme.pinLow, text: theme.pinLowText }
-    : { background: theme.pinNone, text: '#ffffff' };
+    : { background: theme.pinNone, text: Brand.white };
 }

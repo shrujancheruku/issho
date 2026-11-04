@@ -28,7 +28,7 @@ export function Segmented<T extends string>({
     <View
       accessibilityRole="tablist"
       accessibilityLabel={label}
-      style={[styles.bar, { backgroundColor: onAccent ? 'rgba(255,255,255,0.14)' : theme.backgroundElement }]}>
+      style={[styles.bar, { backgroundColor: onAccent ? theme.onAccentWash : theme.backgroundElement }]}>
       {options.map((o) => {
         const on = o.value === value;
         return (
@@ -41,7 +41,7 @@ export function Segmented<T extends string>({
               haptics.selection();
               onChange(o.value);
             }}
-            style={[styles.seg, on && { backgroundColor: onAccent ? 'rgba(255,255,255,0.22)' : theme.surface }]}>
+            style={[styles.seg, on && { backgroundColor: onAccent ? theme.onAccentWashStrong : theme.surface }]}>
             <ThemedText
               type="smallBold"
               style={{ color: onAccent ? theme.onAccent : on ? theme.text : theme.textSecondary, textAlign: 'center' }}>

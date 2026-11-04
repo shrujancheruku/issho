@@ -41,6 +41,7 @@ export function Avatar({
         },
         style,
       ]}>
+      {/* eslint-disable-next-line no-restricted-syntax -- the initial scales with the avatar's size, so it has no fixed text type */}
       <ThemedText style={{ fontSize: Math.round(size * 0.36), lineHeight: Math.round(size * 0.5), fontWeight: 700, color: fill?.text ?? theme.text }}>
         {initial}
       </ThemedText>

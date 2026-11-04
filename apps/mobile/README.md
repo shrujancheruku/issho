@@ -112,9 +112,17 @@ The app is written in English; every other language comes from the server (`UISe
 - **Weekday names** come from `Intl.DateTimeFormat`, not the catalogue.
 - **Sign-in emails** follow the same language: sign-up stores the screen's language as `user_metadata.lang`, and `AuthProvider` keeps it equal to the profile's main language (`supabase.auth.updateUser`). See `supabase/README.md`.
 
+## Theme
+
+Text sizes and colours come only from `constants/theme.ts`, and lint (`eslint.config.js`, tested in `src/lib/__tests__/theme-lint.test.ts`) fails the build otherwise.
+
+- **Sizes** are the `ThemedText` types: `caption` 12, `small` and `smallBold` 14, `default` 16, `heading` 22 (bold, body face), `subtitle` 26 and `title` 44 (display face, for names). Pick the nearest type; don't write a `fontSize` number (the `[font-size]` rule). A `TextInput` isn't `ThemedText`, so it sets `fontSize: FontSize.default`. A deliberate display size (a map pin's number, the sign-in code) stays with an `eslint-disable-next-line no-restricted-syntax` comment that gives the reason.
+- **Colours** come from `useTheme()` (`Colors`, light and dark) or `Brand` (fixed). A new colour is a token in `constants/theme.ts` with a value for each theme, checked against its background in light and dark; no `#hex`, `rgb(` or `rgba(` anywhere else (the `[colour-literal]` rule; tests are exempt).
+- **Shared pieces:** `components/card.tsx` is the one card (surface, radius 16, padding); `features/plans/level-tag.tsx` is the level pill and `features/plans/title-block.tsx` the name block of a plan or event.
+
 ## Typography
 
-- **Standout and hero text** (`ThemedText` types `title` and `subtitle`) uses **Dela Gothic One**, the face of the "ISSHO" wordmark (see `assets/brand`). It covers Latin and Japanese.
+- **Standout and hero text** (`ThemedText` types `title` and `subtitle`; `heading` is the bold body face) uses **Dela Gothic One**, the face of the "ISSHO" wordmark (see `assets/brand`). It covers Latin and Japanese.
 - Everything else (body text, buttons) uses **Zen Kaku Gothic New** in 400, 500 and 700. Each weight is its own family (`BodyFont`), because custom fonts ignore `fontWeight` on Android: `ThemedText` picks the family from the style's `fontWeight` (600 and up is bold) and drops the weight. Text outside `ThemedText` sets the family itself; every `TextInput` uses `BodyFont.regular`.
 - The fonts come from `@expo-google-fonts/dela-gothic-one` and `@expo-google-fonts/zen-kaku-gothic-new` (OFL) and are loaded at startup with `useFonts` in `app/_layout.tsx`, which also works in Expo Go. The splash screen stays up until they're loaded. If loading fails, the app falls back to the system font. The three body weights add about 7 MB to the app.
 - Use the `DisplayFont` constant (`constants/theme.ts`) rather than the family name. The face has a single weight, so **never set `fontWeight`** on display text: Android would fall back to the system font.
@@ -171,7 +179,7 @@ npx expo export -p web               # static build in dist/ (pnpm export:web)
 - **Wide screens:** form-like screens (sign-in, onboarding, profile editing, the language picker) keep their header, content and footer in one centred column at most `FormWidth` (560 px, `constants/theme.ts`) wide; the logo is capped too. Phones are narrower, so this only changes tablets and the web. `global.css` sets `color-scheme` so browser scrollbars follow the theme.
 - **The tab bar:** a tab is a `ScreenFrame` with `tab` (safe area on the top, left and right edges only), and its list adds `BottomTabInset` (`constants/theme.ts`) to its bottom padding so the last row clears the floating bar. Lists use `wide` (`MaxContentWidth`, 800 px) rather than the `FormWidth` column.
 - `Alert.alert` does nothing on web: use `lib/dialogs.ts` (`confirm`, `notify`), which uses the browser's dialogs there.
-- **Test deploy:** `scripts/deploy-web.sh <api-url> web` builds it and deploys it as a static-assets-only Cloudflare Worker, `issho-web` (`wrangler.jsonc`), at https://issho-web.shrujancheruku.workers.dev, against `issho-dev`. Unknown paths serve `index.html`. `public/_headers` sets basic security headers only: a full Content-Security-Policy is part of the session-security decision before release. Not linked anywhere and not a release; see [apps/admin/README.md](../admin/README.md#deploy) for running the API behind a tunnel.
+- **Test deploy:** `scripts/deploy-web.sh <api-url> web` (the URL defaults to `https://api.joinissho.com`) builds it and deploys it as a static-assets-only Cloudflare Worker, `issho-web` (`wrangler.jsonc`), at https://app.joinissho.com, against `issho-dev`. Unknown paths serve `index.html`. `public/_headers` sets basic security headers only: a full Content-Security-Policy is part of the session-security decision before release. Not linked anywhere and not a release; see [apps/admin/README.md](../admin/README.md#deploy).
 
 ## Push notifications
 
@@ -217,7 +225,7 @@ The feed has a **List | Map** toggle. The map shows one pin per area with open p
 **Keys (owner, one-time):** in the Google Cloud project, enable the **Maps SDK for Android** and the **Maps JavaScript API**, then create two keys:
 
 1. **Android key**, restricted to *Android apps*: package `com.joinissho.app` and the SHA-1 of the signing certificate (`npx eas-cli@latest credentials -p android` shows it, per build profile), API restriction *Maps SDK for Android*. Store it as the `GOOGLE_MAPS_ANDROID_API_KEY` EAS variable (`eas env:set --name GOOGLE_MAPS_ANDROID_API_KEY --visibility sensitive --environment development --environment preview --environment production`). It's in the app anyway; the restriction protects it. **Don't make it `secret`:** eas-cli can't read secret variables on your machine, so the app config computed locally (which includes the key) differs from the one on EAS, the fingerprint runtime versions don't match, and the build fails at *Configure expo-updates*. EAS can't change a secret variable to non-secret: delete it and create it again. `app.config.js` passes it to the `react-native-maps` plugin. Then **build a new development build**, since the plugin and native module changed.
-2. **Browser key**, restricted to *websites* (`http://localhost:8081/*` for development, plus `https://issho-web.shrujancheruku.workers.dev/*` for the test deploy), API restriction *Maps JavaScript API*. Put it in `apps/mobile/.env` as `EXPO_PUBLIC_GOOGLE_MAPS_WEB_API_KEY` (public by design). Optionally create a Map ID (Map management) for `EXPO_PUBLIC_GOOGLE_MAPS_WEB_MAP_ID`; without one the web map uses Google's `DEMO_MAP_ID`, fine for development.
+2. **Browser key**, restricted to *websites* (`http://localhost:8081/*` for development, plus `https://app.joinissho.com/*` for the deployed app), API restriction *Maps JavaScript API*. Put it in `apps/mobile/.env` as `EXPO_PUBLIC_GOOGLE_MAPS_WEB_API_KEY` (public by design). Optionally create a Map ID (Map management) for `EXPO_PUBLIC_GOOGLE_MAPS_WEB_MAP_ID`; without one the web map uses Google's `DEMO_MAP_ID`, fine for development.
 
 iOS (Maps SDK for iOS key) waits for M9 with the rest of iOS. Mobile map loads are free; web map loads are billed after a monthly free allowance.
 

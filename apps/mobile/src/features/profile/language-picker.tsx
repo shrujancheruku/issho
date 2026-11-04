@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { BodyFont, FormWidth, Spacing } from '@/constants/theme';
+import { BodyFont, FontSize, FormWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useI18n } from '@/i18n/i18n-provider';
 
@@ -96,6 +96,6 @@ const styles = StyleSheet.create({
   fill: { flex: 1 },
   column: { width: '100%', maxWidth: FormWidth, alignSelf: 'center' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: Spacing.three },
-  search: { fontFamily: BodyFont.regular, marginHorizontal: Spacing.three, borderRadius: 12, padding: Spacing.three, fontSize: 17 },
+  search: { fontFamily: BodyFont.regular, marginHorizontal: Spacing.three, borderRadius: 12, padding: Spacing.three, fontSize: FontSize.default },
   row: { paddingVertical: Spacing.three, paddingHorizontal: Spacing.four, gap: Spacing.half },
 });

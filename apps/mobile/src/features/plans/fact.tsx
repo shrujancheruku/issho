@@ -36,7 +36,7 @@ export function Fact({
       </ThemedText>
       <View style={styles.factBody}>
         <View style={styles.factValueRow}>
-          <ThemedText style={styles.factValue}>{value}</ThemedText>
+          <ThemedText>{value}</ThemedText>
           {info && (
             <Pressable
               accessibilityRole="button"
@@ -45,7 +45,7 @@ export function Fact({
               onPress={() => setOpen(!open)}
               hitSlop={10}
               style={[styles.info, { borderColor: open ? theme.text : theme.textSecondary }]}>
-              <ThemedText type="small" style={[styles.infoMark, { color: open ? theme.text : theme.textSecondary }]}>
+              <ThemedText type="caption" style={[styles.infoMark, { color: open ? theme.text : theme.textSecondary }]}>
                 i
               </ThemedText>
             </Pressable>
@@ -85,8 +85,7 @@ const styles = StyleSheet.create({
   factLabel: { width: 124, paddingTop: 1 },
   factBody: { flex: 1, gap: Spacing.half },
   factValueRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two, flexWrap: 'wrap' },
-  factValue: { fontSize: 16, lineHeight: 22 },
   info: { width: 20, height: 20, borderRadius: 10, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
-  infoMark: { fontSize: 12, lineHeight: 14, fontWeight: 700 },
+  infoMark: { fontWeight: 700 },
   heading: { gap: Spacing.half },
 });

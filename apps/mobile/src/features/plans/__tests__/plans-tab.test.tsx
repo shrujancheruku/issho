@@ -29,6 +29,7 @@ jest.mock('@/i18n/i18n-provider', () => ({ useI18n: () => ({ t: (key: string) =>
 jest.mock('@/i18n/strings', () => ({ english: {} }));
 jest.mock('@/constants/theme', () => ({
   BodyFont: { regular: 'x' },
+  FontSize: new Proxy({}, { get: () => 16 }),
   BottomTabInset: 0,
   FormWidth: 600,
   MaxContentWidth: 800,

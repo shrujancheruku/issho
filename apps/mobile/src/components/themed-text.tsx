@@ -6,6 +6,7 @@ import {
   DisplayFont,
   DisplayFontLanguages,
   Fonts,
+  FontSize,
   TallLineScale,
   TallScriptLanguages,
   ThemeColor,
@@ -16,7 +17,7 @@ import { useOptionalI18n } from '@/i18n/i18n-provider';
 import { baseLanguage } from '@/i18n/strings';
 
 type ThemedTextProps = TextProps & {
-  type?: 'default' | 'title' | 'small' | 'smallBold' | 'subtitle' | 'link' | 'linkPrimary' | 'code';
+  type?: 'default' | 'title' | 'small' | 'smallBold' | 'caption' | 'heading' | 'subtitle' | 'link' | 'linkPrimary' | 'code';
   themeColor?: ThemeColor;
   /**
    * The language of the text, which picks the typeface (see
@@ -64,46 +65,58 @@ export function ThemedText({ style, type = 'default', themeColor, lang, ...rest 
 }
 
 const styles = StyleSheet.create({
+  // Labels, tags, timestamps and small print.
+  caption: {
+    fontSize: FontSize.caption,
+    lineHeight: 16,
+    fontWeight: 500,
+  },
+  // A card's or screen's title in the body face, bold (the display face is for names).
+  heading: {
+    fontSize: FontSize.heading,
+    lineHeight: 32,
+    fontWeight: 700,
+  },
   small: {
-    fontSize: 14,
+    fontSize: FontSize.small,
     lineHeight: 20,
     fontWeight: 500,
   },
   smallBold: {
-    fontSize: 14,
+    fontSize: FontSize.small,
     lineHeight: 20,
     fontWeight: 700,
   },
   default: {
-    fontSize: 16,
+    fontSize: FontSize.default,
     lineHeight: 24,
     fontWeight: 500,
   },
   // Standout text (title, subtitle) uses the brand display face; see DisplayFont.
   title: {
     fontFamily: DisplayFont,
-    fontSize: 44,
+    fontSize: FontSize.title,
     // Display lines are at least 1.45 em: Dela Gothic's ascent and descent
     // need it, or Android cuts off descenders.
     lineHeight: 64,
   },
   subtitle: {
     fontFamily: DisplayFont,
-    fontSize: 26,
+    fontSize: FontSize.subtitle,
     lineHeight: 38,
   },
   link: {
     lineHeight: 30,
-    fontSize: 14,
+    fontSize: FontSize.small,
   },
   // Coloured theme.link in ThemedText.
   linkPrimary: {
     lineHeight: 30,
-    fontSize: 14,
+    fontSize: FontSize.small,
   },
   code: {
     fontFamily: Fonts.mono,
     fontWeight: Platform.select({ android: 700 }) ?? 500,
-    fontSize: 12,
+    fontSize: FontSize.caption,
   },
 });

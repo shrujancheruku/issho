@@ -73,5 +73,5 @@ export function ResultButton({
 const styles = StyleSheet.create({
   box: { minHeight: 56 },
   status: { borderRadius: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: Spacing.two, paddingHorizontal: Spacing.three },
-  statusText: { fontSize: 15, textAlign: 'center', flexShrink: 1 },
+  statusText: { textAlign: 'center', flexShrink: 1 },
 });
