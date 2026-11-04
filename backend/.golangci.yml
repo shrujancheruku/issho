@@ -7,6 +7,11 @@ linters:
     # Wrapped errors (pgx, River, Connect, context) break == and type
     # assertions; require errors.Is/As and %w.
     - errorlint
+    # HTTP response bodies must be closed or connections leak.
+    - bodyclose
+    # Outbound HTTP requests carry the caller's context so cancellation and
+    # deadlines reach them.
+    - noctx
     # Every //nolint names its linter and says why.
     - nolintlint
   settings:

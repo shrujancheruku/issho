@@ -59,7 +59,7 @@ func TestIntegrationSocketSuspendedOnNextSend(t *testing.T) {
 	})
 	defer srv.Close()
 
-	conn, _, err := websocket.Dial(ctx, "ws"+strings.TrimPrefix(srv.URL, "http"), nil)
+	conn, _, err := websocket.Dial(ctx, "ws"+strings.TrimPrefix(srv.URL, "http"), nil) //nolint:bodyclose // coder/websocket consumes the handshake response body itself
 	if err != nil {
 		t.Fatal(err)
 	}

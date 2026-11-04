@@ -20,7 +20,7 @@ func TestWithCORS(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			req := httptest.NewRequest(http.MethodOptions, "/issho.v1.HealthService/Check", nil)
+			req := httptest.NewRequestWithContext(t.Context(), http.MethodOptions, "/issho.v1.HealthService/Check", nil)
 			req.Header.Set("Origin", tt.origin)
 			req.Header.Set("Access-Control-Request-Method", http.MethodPost)
 			rec := httptest.NewRecorder()

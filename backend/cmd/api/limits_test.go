@@ -83,7 +83,7 @@ func TestWebSocketOutlivesServerTimeouts(t *testing.T) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	ws, _, err := websocket.Dial(ctx, "ws"+strings.TrimPrefix(srv.URL, "http")+"/ws", nil)
+	ws, _, err := websocket.Dial(ctx, "ws"+strings.TrimPrefix(srv.URL, "http")+"/ws", nil) //nolint:bodyclose // coder/websocket consumes the handshake response body itself
 	if err != nil {
 		t.Fatal(err)
 	}
