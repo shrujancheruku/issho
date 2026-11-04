@@ -17,6 +17,12 @@ linters:
     - rowserrcheck
     # Rows (pgx included) must be closed or the pooled connection stays busy.
     - sqlclosecheck
+    # `return nil` inside `if err != nil` swallows the error; make deliberate
+    # cases explicit.
+    - nilerr
+    # A function that has a ctx passes it on, so cancellation and deadlines
+    # reach the work it starts.
+    - contextcheck
     # Every //nolint names its linter and says why.
     - nolintlint
   settings:
