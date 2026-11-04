@@ -135,6 +135,9 @@ func TestIntegrationPagingReports(t *testing.T) {
 		want = append(want, id)
 	}
 	rows.Close()
+	if err := rows.Err(); err != nil {
+		t.Fatal(err)
+	}
 	if len(want) != 259 {
 		t.Fatalf("setup: %d reports", len(want))
 	}
@@ -230,6 +233,9 @@ func TestIntegrationPagingFlags(t *testing.T) {
 			want = append(want, id)
 		}
 		rows.Close()
+		if err := rows.Err(); err != nil {
+			t.Fatal(err)
+		}
 		got := walk(t, 3, func(size int32, token string) ([]string, string, error) {
 			res, err := h.ListFlags(ctx, connect.NewRequest(&isshov1.ListFlagsRequest{Resolved: resolved, PageSize: size, PageToken: token}))
 			if err != nil {
@@ -287,6 +293,9 @@ func TestIntegrationPagingCrewLeaves(t *testing.T) {
 		}
 	}
 	rows.Close()
+	if err := rows.Err(); err != nil {
+		t.Fatal(err)
+	}
 	list := func(reason isshov1.LeaveReason) func(int32, string) ([]string, string, error) {
 		return func(size int32, token string) ([]string, string, error) {
 			res, err := h.ListCrewLeaves(ctx, connect.NewRequest(&isshov1.ListCrewLeavesRequest{Reason: reason, PageSize: size, PageToken: token}))
@@ -395,6 +404,9 @@ func TestIntegrationPagingPeople(t *testing.T) {
 		want = append(want, id)
 	}
 	rows.Close()
+	if err := rows.Err(); err != nil {
+		t.Fatal(err)
+	}
 	if !slices.Equal(got, want) || len(got) != 8 {
 		t.Errorf("got %v, want %v", got, want)
 	}

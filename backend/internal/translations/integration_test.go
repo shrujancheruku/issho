@@ -130,6 +130,9 @@ func TestIntegrationCatalogPaging(t *testing.T) {
 		want = append(want, h)
 	}
 	rows.Close()
+	if err := rows.Err(); err != nil {
+		t.Fatal(err)
+	}
 	if len(want) != 12 {
 		t.Fatalf("setup: %d rows", len(want))
 	}

@@ -108,6 +108,9 @@ func TestIntegrationMatchingMeasure(t *testing.T) {
 			plan = append(plan, line)
 		}
 		rows.Close()
+		if err := rows.Err(); err != nil {
+			t.Fatal(err)
+		}
 		if run == 1 { // the second run is warm
 			t.Logf("EXPLAIN ANALYZE ListMatchingUsers:\n%s", strings.Join(plan, "\n"))
 		}
