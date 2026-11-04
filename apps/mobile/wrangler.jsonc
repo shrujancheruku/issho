@@ -1,7 +1,7 @@
 // The app's web build as a static-assets-only Worker (no Worker code):
 // `expo export -p web` writes dist/ ("output": "single"), and
 // `pnpm run deploy:web` uploads it. Not a public release yet (see
-// docs/ROADMAP.md, Web release).
+// issue #354, Web release).
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "issho-web",

@@ -3,13 +3,14 @@
 Project-specific rules for AI coding agents. They **take precedence over generic skills** in `.claude/skills/` (e.g. the Supabase skills) where they conflict. Humans: see [docs/onboarding.md](docs/onboarding.md).
 
 ## Read first
-- [docs/ROADMAP.md](docs/ROADMAP.md): plan, status and decision log
+- [GitHub Issues](https://github.com/shrujancheruku/issho/issues): plan and status (see `docs/agents/issue-tracker.md`)
+- [docs/adr/](docs/adr/) and the frozen [docs/decisions-2026.md](docs/decisions-2026.md): why things are the way they are
 - [docs/architecture.md](docs/architecture.md): how the pieces fit together
 - The README in the directory you're changing. `apps/mobile/AGENTS.md` has Expo-specific rules.
 - [.claude/orchestration.md](.claude/orchestration.md) when working through a backlog in parallel with the [orchestrate plugin](https://github.com/shrujancheruku/claude-orchestrate): lanes, verify commands, gates and the merge rule.
 
 ## Every change
-- Update **docs/ROADMAP.md** (a status line or a Decision-log row is enough; "Last updated" is optional). CI fails code changes without it.
+- Work from an issue and close it from the PR (`Closes #<n>`). Record a decision in the issue's resolution comment, or as an ADR in `docs/adr/` when it's hard to reverse, surprising without context and a real trade-off. `docs/ROADMAP.md` is retired; never recreate it or add rows to `docs/decisions-2026.md`.
 - Keep the directory READMEs accurate (endpoints, setup, testing).
 - Comment non-obvious logic with the *why*.
 - Run `make gen` after editing `proto/` or `backend/db/queries/`, then `make lint test`.
@@ -41,4 +42,4 @@ The five default labels: needs-triage, needs-info, ready-for-agent, ready-for-hu
 
 ### Domain docs
 
-Single-context: a root `GLOSSARY.md`; decisions live in the Decision log of `docs/ROADMAP.md`, not `docs/adr/`. See `docs/agents/domain.md`.
+Single-context: a root `GLOSSARY.md`; decisions in `docs/adr/` (from 2026-11-04) and the frozen `docs/decisions-2026.md` (before). See `docs/agents/domain.md`.

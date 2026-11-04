@@ -124,7 +124,6 @@ A pack is a matching pool: people are only grouped with others in the same pack,
 4. Add overrides for seasonal, local-name or not-applicable activities.
 5. `go test ./internal/cities/`, then `make seed`.
 6. Build its travel matrix and discover venues: `make matrix CITY=<city>` and `make venues CITY=<city>` (dry-run first with `ARGS=-dry-run`; with boundaries, discovery stops at `-max-requests`, 4,000 by default; see [../docs/google-maps.md](../docs/google-maps.md)). Rebuild the matrix at least every 30 days.
-7. Update [../docs/ROADMAP.md](../docs/ROADMAP.md).
 
 Languages (how they're shown: [../docs/architecture.md](../docs/architecture.md#languages)):
 - **English is the only language stored here.** Activity names, venue-category names and override names are English-only (validation rejects anything else). Every other language is machine-translated on demand and cached in the database, so there are no translations to maintain.

@@ -67,30 +67,6 @@ jobs:
           EVENT: ${{ github.event_name }}
           PR_BASE: ${{ github.event.pull_request.base.sha }}
 
-  # Every push/PR that changes code must also update docs/ROADMAP.md.
-  roadmap:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 0
-      - name: Roadmap updated with this change
-        # A dispatch has no event base: compare with where the branch left main.
-        run: |
-          case "$EVENT" in
-            pull_request) base="$PR_BASE" ;;
-            workflow_dispatch) git fetch --no-tags origin main && base=$(git merge-base origin/main HEAD) ;;
-            *) base="$BEFORE" ;;
-          esac
-          scripts/check-roadmap.sh "$base"
-        env:
-          EVENT: ${{ github.event_name }}
-          PR_BASE: ${{ github.event.pull_request.base.sha }}
-          BEFORE: ${{ github.event.before }}
-          # Lets scripts/check-roadmap.sh skip Renovate's renovate/* branches.
-          HEAD_REF: ${{ github.head_ref }}
-
   # Scans every commit in the push/PR for secrets (see .gitleaks.toml). Runs on
   # every event because the repo is public: a leaked key must fail loudly.
   secrets:

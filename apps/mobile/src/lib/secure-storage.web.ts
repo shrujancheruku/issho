@@ -7,7 +7,7 @@
  * script running on the page could read the refresh token. That's acceptable
  * for development builds; before a public web release, decide between this
  * plus a strict Content-Security-Policy (no third-party scripts) and
- * cookie-based sessions (see docs/ROADMAP.md, "Web release").
+ * cookie-based sessions (see issue #354, "Web release").
  *
  * Every call is guarded: localStorage is missing during a build and can throw
  * in private browsing. A failure reads as "no session", so the person signs in

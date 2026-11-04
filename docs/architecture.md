@@ -1,5 +1,21 @@
 # Architecture
 
+## Product
+
+Issho suggests outings to nearby people aged 18–40 who share interests, then turns them into small groups. An outing starts as a **plan** such as *"Photo walk from Kichijoji station, ending at Café X"*, with no date yet. People see the plans they'd most like first (in a feed and on a map), sign up and say which times suit them. Once enough people have signed up, the plan gets a **date and time** and they're split into groups, matched on interests, availability, a shared language and preferred group size.
+
+After each event, attendees **privately** pick who they'd meet again. **Mutual** picks make those people more likely to be grouped again. Groups that click are offered a recurring **crew**.
+
+- **Platonic only.** These rules discourage one-sided romantic pursuit:
+  - only mutual picks count
+  - no profile browsing and no 1:1 messages
+  - photos are shown only to confirmed attendees
+  - gender-composition rules
+  - a "here for dating" report option
+- **Any language, two at a time.** People can speak any language and events can be held in any language; nobody needs English. Everything, events included, is shown in the user's primary language plus their optional secondary choice; an event's own languages decide who it suits. Short text side by side, longer text behind a switch. Only English is stored for our own content; every other language is machine-translated on demand and cached.
+- **Location-agnostic.** Everything local (areas, travel times, languages, venues, activity names) is data in a **city pack**, not code. The first city is Tokyo.
+- **North-star metric:** weekly attendees who have been to more than one event.
+
 ## System overview
 
 ```
@@ -140,9 +156,23 @@ Run `make gen` after editing protos or queries. CI fails if the generated code i
 
 ## Key choices
 
-See the decision log in [ROADMAP.md](ROADMAP.md#4-decision-log). The most important ones:
+See the [decision log](decisions-2026.md) and the [ADRs](adr/). The most important ones:
 - Supabase for the database, auth and storage
 - Google Maps Platform for venues and travel times
 - Gemini on Google Cloud's Agent Platform for interest tagging and for composing walks (titles, summaries and notes included)
 - Kamal 2 on a VPS for deploys ([deploy.md](deploy.md))
 - Conventional Commits with release-please for versions and changelogs
+
+## Known risks
+
+Standing risks to watch. Gaps with a fix in mind are issues instead.
+
+- **Walks depend on the model knowing the area.** Places checks catch invented or wrong places, but not a dull choice of real ones; Tokyo's well-known areas did well, quieter areas and smaller cities may fail more often (and then simply get fewer walks). Watch `walk not composed` in the worker logs and the eval; manual review in the admin SPA is the fallback.
+- **Feedback depends on honesty.** "I went" counts as attending without proof, and a no-show could claim it to protect their reliability; check-in has the same weakness. If it's abused, count only check-ins plus feedback from people others didn't report as no-shows. Ratings are stored but not used yet.
+- **Machine-translation quality.** UI strings and catalogue names are machine-translated by Gemini with each string's context and the translation guide (Google's context-free Basic v2 was dropped 2026-10-26). A translation that's wrong but keeps its placeholders is cached and shown until an admin or translator corrects it (admin SPA, Translations), so spot-check each launch language.
+- **Matching untested on real behaviour.** The simulator's users, venues, travel times and signup behaviour (who signs up, how far they scroll) are guesses, so its numbers show the engine works, not that the density or conversion is enough. ~10% of simulated groups are pairs, effectively 1:1 meetings, which the platonic rules try to avoid; watch how pairs (especially mixed pairs) go and tune `min_size`/`balance`, or set `min_group_size` to 3 per city.
+- **Drop-off between signup and confirmation.** Signing up is cheap; some won't confirm the chosen time. Per-plan availability and extra invites reduce it; measure it and tune `extra_invites`, the window and deadlines.
+- **Not enough nearby users** is the main product risk. Plan-first scheduling pools interest over time, and the admin override lets the first city be hand-curated.
+- **Google Maps terms** restrict caching. What we do: store only place IDs plus our own data, use place locations in memory only, and delete travel times after 30 days ([google-maps.md](google-maps.md#5-terms-what-we-may-store)). The Routes policy says most content is cache-restricted but doesn't state a window for durations; 30 days follows the Service Specific Terms' limit for other content. Re-checking against the current terms before launch is [#359](https://github.com/shrujancheruku/issho/issues/359).
+- **Venue quality** comes from popularity ranking and primary-type matching only (ratings and "good for groups" are pricier Enterprise fields). Some unsuitable places still share a valid primary type: Japanese **snack bars (スナック, hostess bars) are typed `bar`**, and a tattoo studio appeared as `art_studio`. Every venue starts as `candidate`. Admin curation flags such names and can reject them, and a city can be set to use only approved venues. A Tokyo-wide search for スナック (2026-10-24) found none among our venues: popularity ranking keeps most out. Places added by hand bypass that ranking, so check the flag before adding.
+- **Local iOS builds need macOS 26.2+** (Xcode 26.4+ for SDK 58). The dev Mac is on macOS 15.7. Either upgrade, or build iOS in the cloud with EAS.

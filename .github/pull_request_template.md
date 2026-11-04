@@ -1,11 +1,11 @@
 ## What & why
 
-<!-- One or two sentences. Link the roadmap item (docs/ROADMAP.md). -->
+<!-- One or two sentences. `Closes #<n>` for the issue it resolves. -->
 
 ## Checklist
 
 - [ ] PR title / commits follow Conventional Commits (`feat(scope): …`)
-- [ ] `docs/ROADMAP.md` updated (a status line or a Decision-log row; "Last updated" is optional)
+- [ ] Linked to its issue; an ADR in `docs/adr/` if it settles a hard-to-reverse decision
 - [ ] Directory READMEs / docs updated if behaviour, setup or endpoints changed
 - [ ] `make gen` run if `proto/` or `backend/db/queries/` changed
 - [ ] `make lint test` pass locally

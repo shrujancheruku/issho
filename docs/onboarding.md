@@ -108,15 +108,14 @@ Read [contributing.md](contributing.md). In short:
 1. Branch from `main`.
 2. Make the change. If you edit a `.proto` or `.sql` query, run `make gen`.
 3. Run `make lint test`.
-4. **Update [ROADMAP.md](ROADMAP.md).** CI requires it for any code change.
-5. Commit with a Conventional Commit message (`feat(backend): …`).
-6. Open a PR. CI must be green.
+4. Commit with a Conventional Commit message (`feat(backend): …`).
+5. Open a PR. CI must be green.
 
 ## 7. Where to read next
 - [architecture.md](architecture.md): how the pieces fit together
 - [supabase-hosted.md](supabase-hosted.md): configuring a hosted Supabase project (dev/prod)
 - [deploy.md](deploy.md): the backend image and deploying with Kamal
-- [ROADMAP.md](ROADMAP.md): what's built, what's next, and why
+- [GitHub Issues](https://github.com/shrujancheruku/issho/issues): what's next; [adr/](adr/) and [decisions-2026.md](decisions-2026.md): why things are the way they are
 - [generated/api.md](generated/api.md): every API endpoint
 - READMEs in each directory: [backend](../backend/README.md), [mobile](../apps/mobile/README.md), [api-client](../packages/api-client/README.md), [proto](../proto/README.md), [data](../data/README.md), [supabase](../supabase/README.md)
 
@@ -129,7 +128,6 @@ Read [contributing.md](contributing.md). In short:
 - The Dependency Dashboard lists most pending updates under "Rate-Limited" because of `prConcurrentLimit: 5`; they open as earlier PRs merge or close.
 - Only patch and minor updates of dev tooling and the build-only Go tools (buf, goose, sqlc, protoc-gen-doc, gitleaks) automerge, after the required checks pass. Wrangler, runtime dependencies, majors and Docker images wait for review.
 - Expo (`expo`, `expo-*`, `react-native`, `@react-native/*`, `@expo/*`, `jest-expo`, `eslint-config-expo`) arrives as one `expo` PR, never automerged. Check out the branch, run `npx expo install --fix` and `npx expo-doctor` in `apps/mobile`, and commit the result.
-- The `roadmap` job skips `renovate/*` branches (`scripts/check-roadmap.sh`), so these PRs need no ROADMAP edit.
 - When you add a `uses:` line, pin it to a SHA with a version comment (`uses: owner/repo@<sha> # v1.2.3`); Renovate keeps both current.
 - **Owner setup (once):** install the Renovate GitHub App on `shrujancheruku/issho` (github.com/apps/renovate, "Only select repositories"), merge its onboarding PR or close it if `renovate.json5` is already on `main`, and turn off Dependabot version updates under Settings > Code security. The config was never run through Renovate's validator, so check the onboarding PR or the first Dependency Dashboard for config errors.
 
@@ -141,7 +139,6 @@ Read [contributing.md](contributing.md). In short:
 | API exits with `load jwks` | Supabase isn't running, `SUPABASE_URL` is wrong, or the signing keys aren't set up (step 3). |
 | `unauthenticated: invalid token` | Token expired (they're short-lived), was issued by a different Supabase project, or is HS256 (legacy keys). Sign in again. |
 | Pre-commit hook blocks a commit | It found a secret. Remove it from the staged files. If it's a confirmed false positive, add an allowlist entry to `.gitleaks.toml` in a reviewed PR. |
-| CI `roadmap` job fails | Your change touched code but not `docs/ROADMAP.md`. Update the status. |
 | CI "Generated code is up to date" fails | Run `make gen` and commit the result. |
 | CI "pnpm install" → `ERR_PNPM_IGNORED_BUILDS` | A new dependency has an install script. Run `pnpm approve-builds '<pkg>'` (allow) or `'!<pkg>'` (deny) and commit `pnpm-workspace.yaml`. |
 | `DeleteAccount` → `failed_precondition` | The API has no `SUPABASE_SECRET_KEY`. Export it (step 3) and restart the API. |

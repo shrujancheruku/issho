@@ -35,7 +35,7 @@ checkapps proto "admin=true mobile=true" proto/a.proto
 checkapps admin-and-go "admin=true mobile=false" apps/admin/src/a.ts backend/a.go
 
 none="backend=false codegen=false image=false proto=false ts=false ts_filter="
-check docs-only "$none" docs/ROADMAP.md README.md
+check docs-only "$none" docs/architecture.md README.md
 check no-files "$none"
 check claude-and-site "$none" .claude/orchestration.md site/index.html config/deploy.yml
 go="backend=true codegen=true image=true proto=false ts=false ts_filter="
@@ -58,7 +58,7 @@ ts="backend=false codegen=false image=false proto=false ts=true ts_filter=--affe
 check admin-only "$ts" apps/admin/src/main.tsx
 check mobile-only "$ts" apps/mobile/src/screens/Home.tsx
 check api-client "$ts" packages/api-client/src/index.ts
-check mixed-docs-and-admin "$ts" docs/ROADMAP.md apps/admin/src/a.ts
+check mixed-docs-and-admin "$ts" docs/architecture.md apps/admin/src/a.ts
 check mobile-i18n "backend=true codegen=true image=false proto=false ts=true ts_filter=--affected" apps/mobile/src/i18n/en.json
 check generated-docs "backend=false codegen=true image=false proto=false ts=false ts_filter=" docs/generated/api.md
 all="backend=true codegen=true image=true proto=true ts=true ts_filter="

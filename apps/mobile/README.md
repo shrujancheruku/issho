@@ -166,7 +166,7 @@ If installing a package fails with `ERR_PNPM_IGNORED_BUILDS`, approve or deny it
 
 ## Web
 
-The app also builds for the web (Expo Router + react-native-web) as a static single-page app. It isn't released yet; CI exports it on every PR so it keeps building. See the roadmap's "Web release" section for what's left before a launch.
+The app also builds for the web (Expo Router + react-native-web) as a static single-page app. It isn't released yet; CI exports it on every PR so it keeps building. See [Web release: what's left before a public web release](https://github.com/shrujancheruku/issho/issues/354).
 
 ```sh
 npx expo start --web                 # dev server at http://localhost:8081
