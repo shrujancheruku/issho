@@ -69,7 +69,7 @@ func TestIntegrationSocketDrainAndRevoke(t *testing.T) {
 	}
 	dial := func(afterID int64) *websocket.Conn {
 		t.Helper()
-		conn, _, err := websocket.Dial(ctx, wsURL, nil) //nolint:bodyclose // coder/websocket consumes the handshake response body itself
+		conn, _, err := websocket.Dial(ctx, wsURL, nil) //nolint:bodyclose // coder/websocket Dial: callers never close the handshake resp.Body
 		if err != nil {
 			t.Fatal(err)
 		}

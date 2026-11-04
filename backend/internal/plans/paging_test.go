@@ -29,6 +29,9 @@ func ids(t *testing.T, ctx context.Context, f *fixture, query string, args ...an
 		}
 		out = append(out, id)
 	}
+	if err := rows.Err(); err != nil {
+		t.Fatal(err)
+	}
 	return out
 }
 

@@ -167,6 +167,9 @@ func TestIntegrationSettleSkipsFailedGroup(t *testing.T) {
 		groups = append(groups, id)
 	}
 	rows.Close()
+	if err := rows.Err(); err != nil {
+		t.Fatal(err)
+	}
 	if len(groups) != 2 {
 		t.Fatalf("%d groups", len(groups))
 	}

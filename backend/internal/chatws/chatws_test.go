@@ -67,7 +67,7 @@ func TestIntegrationSocket(t *testing.T) {
 	if _, err := rooms.Send(ctx, other, room, "first", time.Now()); err != nil {
 		t.Fatal(err)
 	}
-	conn, _, err := websocket.Dial(ctx, wsURL, nil) //nolint:bodyclose // coder/websocket consumes the handshake response body itself
+	conn, _, err := websocket.Dial(ctx, wsURL, nil) //nolint:bodyclose // coder/websocket Dial: callers never close the handshake resp.Body
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -132,7 +132,7 @@ func TestIntegrationSocket(t *testing.T) {
 
 	// The other person types on their own socket: going is told who, and
 	// the other person isn't told about themselves.
-	otherConn, _, err := websocket.Dial(ctx, wsURL, nil) //nolint:bodyclose // coder/websocket consumes the handshake response body itself
+	otherConn, _, err := websocket.Dial(ctx, wsURL, nil) //nolint:bodyclose // coder/websocket Dial: callers never close the handshake resp.Body
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -178,7 +178,7 @@ func TestIntegrationSocket(t *testing.T) {
 		{"not an id", map[string]any{"token": token(going), "room": map[string]any{"eventId": "nope"}}, closeNotFound},
 		{"two rooms", map[string]any{"token": token(going), "room": map[string]any{"eventId": eventID.String(), "crewId": uuid.NewString()}}, closeNotFound},
 	} {
-		conn, _, err := websocket.Dial(ctx, wsURL, nil) //nolint:bodyclose // coder/websocket consumes the handshake response body itself
+		conn, _, err := websocket.Dial(ctx, wsURL, nil) //nolint:bodyclose // coder/websocket Dial: callers never close the handshake resp.Body
 		if err != nil {
 			t.Fatal(err)
 		}
