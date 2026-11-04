@@ -1,0 +1,5 @@
+# Issues replace the ROADMAP
+
+`docs/ROADMAP.md` held the plan, its status and a decision log, and CI failed any code change that didn't touch it. We retired it on 2026-11-04 for GitHub Issues as the mattpocock skills use them: open work is issues with triage labels, large efforts are parent issues with sub-issues (wayfinder maps), and a decision lives in the resolution comment of the issue that settled it, or in an ADR here when it's hard to reverse, surprising without context and the result of a real trade-off. The old decision log is frozen in [`docs/decisions-2026.md`](../decisions-2026.md).
+
+The ROADMAP had become a second tracker: by M10 most of its lines were links to issues, it ran past 700 lines, and the edit CI demanded with every PR was bookkeeping that conflicted between parallel orchestrated PRs. Issues give status, blocking and ownership natively, and the skills already read and write them. The `roadmap` check was removed rather than replaced: Conventional Commits and review cover what it was for.

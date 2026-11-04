@@ -5,7 +5,7 @@ import (
 )
 
 // flags are kinds of place discovery lets through under a valid primary
-// type (ROADMAP risks): Japanese snack bars and hostess bars are typed
+// type (docs/architecture.md, Known risks): Japanese snack bars and hostess bars are typed
 // `bar`, and a tattoo studio came in as `art_studio`. Google's English
 // name for a Japanese place is often still in Japanese, so both are
 // listed, with the hiragana and old-style (スナツク) spellings seen in

@@ -2,16 +2,12 @@
 
 ## Workflow
 
-1. Branch from `main`, e.g. `feat/sign-in`.
+1. Pick up an issue (or open one), then branch from `main`, e.g. `feat/sign-in`. Work is tracked in [GitHub Issues](https://github.com/shrujancheruku/issho/issues) with the triage labels in [agents/triage-labels.md](agents/triage-labels.md).
 2. Make your change and keep it focused.
 3. Run `make gen` if you touched `proto/` or `backend/db/queries/`.
 4. Run `make lint test` locally.
-5. **Update [ROADMAP.md](ROADMAP.md):**
-   - Update a status line or add a Decision-log row (either is enough).
-   - "Last updated" is optional.
-
-   CI's `roadmap` job fails for code changes that don't touch it.
-6. Open a PR using the template. Every CI job must pass.
+5. If the change settles a decision that's hard to reverse, surprising without context and a real trade-off, add an ADR in [adr/](adr/). Otherwise the issue's resolution or the PR description is the record.
+6. Open a PR using the template, with `Closes #<n>` for its issue. Every CI job must pass.
 
 ## Commit messages: Conventional Commits
 
@@ -72,11 +68,11 @@ See [../data/README.md](../data/README.md). It's a JSON file plus `make seed`, w
 
 `.github/workflows/ci.yml` runs on every push to `main`, every pull request, and on demand (`workflow_dispatch`). A new push to a PR cancels its earlier run; runs on `main` always finish, because the deploys wait for them. Every job has a 15-minute timeout. There is deliberately no Turbo cache (it would save about 20s of `typescript` and risks a cache hit skipping a check).
 
-- **What runs when:** a `changes` job (`scripts/ci-changes.sh`, tested by `scripts/ci-changes.test.sh`) maps the PR's changed paths to the jobs below, and `backend`, `codegen`, `image`, `typescript` and `proto-breaking` run only if their paths changed. A job skipped by its `if:` reports as skipped, which satisfies a required check (a workflow-level `paths:` filter would leave them pending and block the merge). `roadmap`, `secrets` and `commits` always run. Rough rules: docs and config only → none of the heavy jobs; `backend/`, `data/` → `backend`, `codegen`, `image`; `apps/` and `packages/` → `typescript`, with turbo `--affected` limiting it to the changed packages and their dependents (the mobile Jest suite doesn't run for an admin-only change); `proto/` → everything but a turbo filter; a change to the workflows, `Makefile`, `scripts/`, the lockfile or any path the script doesn't know → everything. Each group in the script says why its paths belong there. If you add a `go:embed` or a Go test or generator that reads files outside its own package, add those paths to the Go group in `scripts/ci-changes.sh` and a case to its test, or CI will skip the job that reads them. Pushes to `main` and dispatches run everything, so the deploy gate sees a full run. If `changes` itself fails, the other jobs run rather than skip.
+- **What runs when:** a `changes` job (`scripts/ci-changes.sh`, tested by `scripts/ci-changes.test.sh`) maps the PR's changed paths to the jobs below, and `backend`, `codegen`, `image`, `typescript` and `proto-breaking` run only if their paths changed. A job skipped by its `if:` reports as skipped, which satisfies a required check (a workflow-level `paths:` filter would leave them pending and block the merge). `secrets` and `commits` always run. Rough rules: docs and config only → none of the heavy jobs; `backend/`, `data/` → `backend`, `codegen`, `image`; `apps/` and `packages/` → `typescript`, with turbo `--affected` limiting it to the changed packages and their dependents (the mobile Jest suite doesn't run for an admin-only change); `proto/` → everything but a turbo filter; a change to the workflows, `Makefile`, `scripts/`, the lockfile or any path the script doesn't know → everything. Each group in the script says why its paths belong there. If you add a `go:embed` or a Go test or generator that reads files outside its own package, add those paths to the Go group in `scripts/ci-changes.sh` and a case to its test, or CI will skip the job that reads them. Pushes to `main` and dispatches run everything, so the deploy gate sees a full run. If `changes` itself fails, the other jobs run rather than skip.
 - **Coverage** is reported in the `backend` and `typescript` job summaries (Go per package and total; Jest and Vitest totals) and never gated. CI runs `test:coverage` where local runs use `test`, so a package with a `test` script also needs a `test:coverage` one, or CI will not run its tests.
-- **Required checks on `main`:** `roadmap`, `secrets`, `commits`, `codegen`, `backend`, `typescript`, `image`.
+- **Required checks on `main`:** `secrets`, `commits`, `codegen`, `backend`, `typescript`, `image`.
 - **`proto-breaking` is not required.** It runs `buf breaking` against `main`. A PR with the `breaking-ok` label skips it (a deliberate override); without the label it shows red. `codegen`'s drift check runs either way.
-- **Release PR:** a PR opened with `GITHUB_TOKEN` doesn't trigger workflows, so `release-please.yml` dispatches `ci.yml` on the release branch (`gh workflow run`, `actions: write`, no PAT or App). On a dispatch, `roadmap` compares against the merge-base with `main` and `commits` runs commitlint over the commits since `main`. A dispatched run is not a `push`, so it can't trigger a deploy.
+- **Release PR:** a PR opened with `GITHUB_TOKEN` doesn't trigger workflows, so `release-please.yml` dispatches `ci.yml` on the release branch (`gh workflow run`, `actions: write`, no PAT or App). On a dispatch, `commits` runs commitlint over the commits since `main`. A dispatched run is not a `push`, so it can't trigger a deploy.
 - **Integration tests** run as `go test ./... -run Integration`, so a new package is picked up. They call `testfixture.DatabaseURL(t)`, which skips without `TEST_DATABASE_URL` locally but fails when `CI=true`.
 
 ### Settings that live on GitHub, not in the repo
@@ -106,7 +102,7 @@ gh api -X POST repos/shrujancheruku/issho/rulesets --input - <<'JSON'
     { "type": "required_status_checks", "parameters": {
         "strict_required_status_checks_policy": true,
         "required_status_checks": [
-          { "context": "roadmap" }, { "context": "secrets" }, { "context": "commits" },
+          { "context": "secrets" }, { "context": "commits" },
           { "context": "codegen" }, { "context": "backend" }, { "context": "typescript" },
           { "context": "image" } ] } }
   ]

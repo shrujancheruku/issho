@@ -5,7 +5,9 @@ How the engineering skills should consume this repo's domain documentation when 
 ## Before exploring, read these
 
 - **`GLOSSARY.md`** at the repo root.
-- **The Decision log in [`docs/ROADMAP.md`](../ROADMAP.md)** (the table under "Decision log", newest at the bottom): read the entries that touch the area you're about to work in. This repo has no `docs/adr/`; the decision log is its record of decisions, and CI requires ROADMAP updates with every code change.
+- **ADRs in [`docs/adr/`](../adr/)**: read the ones that touch the area you're about to work in.
+- **The frozen decision log in [`docs/decisions-2026.md`](../decisions-2026.md)** (newest at the bottom): every decision made before 2026-11-04. Read the entries for your area too; don't add rows.
+- **Resolution comments on closed issues**, where wayfinder tickets and triaged issues record what was decided. Search the tracker when an area's history matters.
 
 If `GLOSSARY.md` doesn't exist, **proceed silently**. Don't flag its absence; don't suggest creating it upfront. The `/domain-modeling` skill (reached via `/grill-with-docs` and `/improve-codebase-architecture`) creates it lazily when terms actually get resolved.
 
@@ -16,13 +18,14 @@ Single-context:
 ```
 /
 ├── GLOSSARY.md
-├── docs/ROADMAP.md        ← Decision log (instead of docs/adr/)
+├── docs/adr/              ← decisions from 2026-11-04 on
+├── docs/decisions-2026.md ← frozen decision log (before 2026-11-04)
 ├── apps/  backend/  packages/
 ```
 
 ## Recording a decision
 
-Where a skill says to write an ADR, add a row to the Decision log table in `docs/ROADMAP.md` instead (date, decision, why), in the style of the rows around it. "Last updated" is optional. Don't create `docs/adr/`.
+Write ADRs in `docs/adr/` as the `/domain-modeling` skill describes, and only when its three tests hold (hard to reverse, surprising without context, a real trade-off). Most decisions don't need one: the resolution comment on the issue that settled it is enough. Never add rows to `docs/decisions-2026.md`.
 
 ## Use the glossary's vocabulary
 
@@ -32,6 +35,6 @@ If the concept you need isn't in the glossary yet, that's a signal: either you'r
 
 ## Flag decision conflicts
 
-If your output contradicts an entry in the decision log, surface it explicitly rather than silently overriding:
+If your output contradicts an ADR or an entry in the decision log, surface it explicitly rather than silently overriding:
 
 > _Contradicts the decision log entry of 2026-10-24 (city packs are edited through GitHub pull requests), but worth reopening because…_

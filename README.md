@@ -75,14 +75,15 @@ See you out there.
 
 [joinissho.com](https://joinissho.com)
 
-> 🚧 **Pre-release.** We're building it now: see the [roadmap & status](docs/ROADMAP.md).
+> 🚧 **Pre-release.** We're building it now: see the [open issues](https://github.com/shrujancheruku/issho/issues).
 
 ## Documentation
 
 | Doc | Read it for |
 |---|---|
 | [docs/onboarding.md](docs/onboarding.md) | **Start here.** Set up a machine from scratch and run everything locally. |
-| [docs/ROADMAP.md](docs/ROADMAP.md) | Full build plan, what's done and what isn't, and the decision log. Updated with every change. |
+| [GitHub Issues](https://github.com/shrujancheruku/issho/issues) | What's planned and in progress. Large efforts are parent issues with sub-issues. |
+| [docs/adr/](docs/adr/) · [docs/decisions-2026.md](docs/decisions-2026.md) | Why things are the way they are: ADRs from 2026-11-04 on, and the frozen decision log before that. |
 | [docs/architecture.md](docs/architecture.md) | System design, request lifecycle, data model, code generation |
 | [docs/generated/api.md](docs/generated/api.md) | API reference, generated from the protos |
 | [docs/contributing.md](docs/contributing.md) | Workflow, Conventional Commits, releases, testing, common tasks |
@@ -126,4 +127,4 @@ cd apps/mobile && cp .env.example .env && npx expo start
 
 ## Stack
 
-Expo / React Native · Go (ConnectRPC, pgx, sqlc, goose, River) · Supabase (Postgres + PostGIS, Auth, Storage) · Google Maps Platform · Cloudflare Workers · Sentry · Claude · GitHub Actions · release-please. The reasons for each choice are in the [decision log](docs/ROADMAP.md#4-decision-log).
+Expo / React Native · Go (ConnectRPC, pgx, sqlc, goose, River) · Supabase (Postgres + PostGIS, Auth, Storage) · Google Maps Platform · Cloudflare Workers · Sentry · Claude · GitHub Actions · release-please. The reasons for each choice are in the [decision log](docs/decisions-2026.md).

@@ -11,7 +11,7 @@ import (
 )
 
 // Mode is a travel mode. Values match app.area_travel_times.mode. Issho uses
-// walking and driving only (no public transport; see the ROADMAP decision log).
+// walking and driving only (no public transport; see docs/decisions-2026.md).
 type Mode string
 
 const (
