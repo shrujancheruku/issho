@@ -2,6 +2,7 @@ import { GroupSize, Interest } from '@issho/api-client';
 import { router } from 'expo-router';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
+import { Card } from '@/components/card';
 import { ListGroup, ListRow } from '@/components/list-group';
 import { LoadState } from '@/components/query-screen';
 import { ScreenFrame } from '@/components/screen-frame';
@@ -18,7 +19,6 @@ import { usePlanNames } from '@/features/plans/names';
 import { pairText } from '@/features/plans/text';
 import type { Step } from '@/features/profile/draft';
 import { useProfile } from '@/features/profile/data';
-import { useTheme } from '@/hooks/use-theme';
 import { useI18n } from '@/i18n/i18n-provider';
 import type { StringKey } from '@/i18n/strings';
 
@@ -37,7 +37,6 @@ const edit = (step: Step) => router.push({ pathname: '/profile-edit/[step]', par
  */
 export default function YouScreen() {
   const { t } = useI18n();
-  const theme = useTheme();
   const profile = useProfile();
   const crews = useMyCrews();
   const names = usePlanNames();
@@ -61,7 +60,7 @@ export default function YouScreen() {
           <LoadState queries={[profile]} />
         ) : (
           <>
-            <View style={[styles.card, { backgroundColor: theme.surface }]}>
+            <Card gap={Spacing.half}>
               <ThemedText type="subtitle">{p.displayName}</ThemedText>
               <ThemedText themeColor="textSecondary">{pairText(names.area(p.homeAreaId))}</ThemedText>
               {activeCrews > 0 && (
@@ -69,7 +68,7 @@ export default function YouScreen() {
                   {t('you.crews', { count: activeCrews })}
                 </ThemedText>
               )}
-            </View>
+            </Card>
 
             <View style={styles.section}>
               <SectionTitle>{t('you.howYouMeet')}</SectionTitle>
@@ -173,7 +172,6 @@ const styles = StyleSheet.create({
     paddingBottom: BottomTabInset + Spacing.four,
     gap: Spacing.four + 4,
   },
-  card: { borderRadius: 16, padding: Spacing.three, gap: Spacing.half },
   section: { gap: Spacing.two },
   rowText: { flex: 1, minWidth: 0 },
 });

@@ -71,6 +71,7 @@ function useCrewName(crew: Crew) {
 function People({ crew, hop }: { crew: Crew; hop: number }) {
   const { t, languages } = useI18n();
   const m = useMotion();
+  const theme = useTheme();
   const { yesShown, quorum } = crewView(crew);
   const fill = useSharedValue(yesShown / quorum);
   useEffect(() => {
@@ -82,7 +83,7 @@ function People({ crew, hop }: { crew: Crew; hop: number }) {
   const rtl = isRightToLeft(languages.primary);
   return (
     <View style={styles.people}>
-      <View style={[styles.peopleTrack, styles.peopleTrackBase]} />
+      <View style={[styles.peopleTrack, { backgroundColor: theme.onAccentTrack }]} />
       <Animated.View
         style={[
           styles.peopleTrack,
@@ -140,7 +141,7 @@ function Person({ member, index, hop, label }: { member: CrewMember; index: numb
       <ThemedText type="small" style={{ color: theme.onAccent }} numberOfLines={1}>
         {label}
       </ThemedText>
-      <ThemedText style={[styles.personState, { color: theme.onAccent }]}>
+      <ThemedText type="caption" style={[styles.personState, { color: theme.onAccent }]}>
         {member.accepted ? t('crew.saidYes') : t('crew.deciding')}
       </ThemedText>
     </View>
@@ -182,7 +183,7 @@ function Offer({ crew, onBack, onOpenChat }: { crew: Crew; onBack: () => void; o
         <ThemedText type="small" style={{ color: theme.onAccent }}>
           {started ? t('crew.yourCrew') : t('crew.offerEyebrow')}
         </ThemedText>
-        <ThemedText type="subtitle" style={[styles.crewName, { color: theme.onAccent }]} accessibilityRole="header">
+        <ThemedText type="subtitle" style={{ color: theme.onAccent }} accessibilityRole="header">
           {name.name}
         </ThemedText>
         {!!name.secondary && (
@@ -220,7 +221,7 @@ function Offer({ crew, onBack, onOpenChat }: { crew: Crew; onBack: () => void; o
           </View>
         </View>
         {started ? (
-          <ThemedText type="subtitle" themeColor="goldText" style={styles.started} accessibilityLiveRegion="polite">
+          <ThemedText type="heading" themeColor="goldText" accessibilityLiveRegion="polite">
             {t('push.crewFormed')}
           </ThemedText>
         ) : (
@@ -298,7 +299,7 @@ function Active({ crew, onBack }: { crew: Crew; onBack: () => void }) {
       onPress={() => setMenu(!menu)}
       hitSlop={8}
       style={styles.more}>
-      <ThemedText style={[styles.moreDots, { color: theme.onAccent }]}>⋯</ThemedText>
+      <ThemedText type="heading" style={{ color: theme.onAccent }}>⋯</ThemedText>
     </Pressable>
   );
   const head = (
@@ -317,7 +318,7 @@ function Active({ crew, onBack }: { crew: Crew; onBack: () => void }) {
         </ThemedText>
       </View>
       {menu && (
-        <View style={styles.menu}>
+        <View style={[styles.menu, { backgroundColor: theme.menuSurface }]}>
           <TextLink
             label={t('event.report')}
             onPress={() =>
@@ -389,7 +390,6 @@ const styles = StyleSheet.create({
     marginTop: Spacing.two,
     marginBottom: Spacing.four,
   },
-  crewName: { fontSize: 36, lineHeight: 52 },
   people: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -397,9 +397,8 @@ const styles = StyleSheet.create({
   },
   // From the first avatar's centre to the last one's (52 wide, 8 in).
   peopleTrack: { position: 'absolute', start: 34, end: 34, top: 25, height: 3 },
-  peopleTrackBase: { backgroundColor: 'rgba(255,255,255,0.28)' },
   person: { alignItems: 'center', gap: Spacing.one, width: 72 },
-  personState: { fontSize: 11, lineHeight: 14, opacity: 0.85 },
+  personState: { opacity: 0.85 },
   offerBody: {
     flexGrow: 1,
     padding: Spacing.three,
@@ -409,7 +408,6 @@ const styles = StyleSheet.create({
   counter: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
   bars: { flexDirection: 'row', gap: Spacing.one },
   bar: { width: 18, height: 6, borderRadius: 3 },
-  started: { fontSize: 22, lineHeight: 32 },
   lead: { fontWeight: 700 },
   facts: { gap: Spacing.half },
   factGap: { marginTop: Spacing.two },
@@ -419,11 +417,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  moreDots: { fontSize: 24, lineHeight: 28 },
   menu: {
     flexDirection: 'row',
     gap: Spacing.four,
-    backgroundColor: 'rgba(255,255,255,0.92)',
     borderRadius: 12,
     paddingHorizontal: Spacing.three,
   },

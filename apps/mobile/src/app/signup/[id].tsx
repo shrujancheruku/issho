@@ -47,7 +47,7 @@ export default function SignupSheet() {
   const head = (
     <View style={styles.head}>
       <View style={styles.fill}>
-        <ThemedText type="subtitle" style={styles.title} accessibilityRole="header">
+        <ThemedText type="heading" accessibilityRole="header">
           {t('plan.times')}
         </ThemedText>
         <ThemedText type="small" themeColor="textSecondary">
@@ -60,7 +60,7 @@ export default function SignupSheet() {
         onPress={close}
         hitSlop={8}
         style={[styles.close, { backgroundColor: theme.backgroundElement }]}>
-        <ThemedText style={styles.closeMark}>×</ThemedText>
+        <ThemedText type="heading">×</ThemedText>
       </Pressable>
     </View>
   );
@@ -156,7 +156,6 @@ const styles = StyleSheet.create({
     padding: Spacing.three,
     paddingTop: Spacing.four,
   },
-  title: { fontSize: 22, lineHeight: 32 },
   close: {
     width: 44,
     height: 44,
@@ -164,7 +163,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  closeMark: { fontSize: 24, lineHeight: 28 },
   content: { padding: Spacing.three, gap: Spacing.four },
   section: { gap: Spacing.three },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },

@@ -14,7 +14,7 @@ import { ThemedText } from '@/components/themed-text';
 import { BottomTabInset, Spacing } from '@/constants/theme';
 import { crewName } from '@/features/crews/name';
 import { formatStart, lastSignupDay } from '@/features/plans/format';
-import { levelColors, levelLabels } from '@/features/plans/level';
+import { LevelTag } from '@/features/plans/level-tag';
 import { usePlanNames } from '@/features/plans/names';
 import { friendsText, pairText } from '@/features/plans/text';
 import { useTogether, type NeedsYou } from '@/features/together/data';
@@ -151,7 +151,7 @@ function RowText({
         {detail}
       </ThemedText>
       {!!extra && (
-        <ThemedText type="smallBold" themeColor="link" style={styles.extra}>
+        <ThemedText type="caption" themeColor="link" style={styles.bold}>
           {extra}
         </ThemedText>
       )}
@@ -238,7 +238,7 @@ function WaitingRow({ plan, names }: { plan: FeedPlan; names: Names }) {
             {friendsText(t, plan.friendsInterested)}
           </ThemedText>
         )}
-        <ThemedText type="small" themeColor="textSecondary" style={styles.extra}>
+        <ThemedText type="caption" themeColor="textSecondary">
           {t('plan.signupByDate', { date: lastSignupDay(plan.signupDeadline, lang) })}
         </ThemedText>
       </View>
@@ -292,16 +292,13 @@ function FirstWeek({ plans, names }: { plans: FeedPlan[]; names: Names }) {
           <SectionTitle>{t('together.picks')}</SectionTitle>
           <ListGroup>
             {picks.map((p) => {
-              const colors = levelColors(p.level, theme)!;
               return (
                 <Pressable
                   key={p.id}
                   accessibilityRole="button"
                   onPress={() => openPlan(p.id)}
                   style={({ pressed }) => [styles.pickRow, pressed && { backgroundColor: theme.backgroundElement }]}>
-                  <View style={[styles.levelTag, { backgroundColor: colors.background }]}>
-                    <ThemedText style={[styles.levelTagText, { color: colors.text }]}>{t(levelLabels[p.level])}</ThemedText>
-                  </View>
+                  <LevelTag level={p.level} style={styles.levelTag} />
                   <View style={styles.rowText}>
                     <ThemedText style={styles.rowTitle}>{pick(p.title, p.secondaryTitle).name}</ThemedText>
                     <ThemedText type="small" themeColor="textSecondary">
@@ -335,7 +332,7 @@ const styles = StyleSheet.create({
   section: { gap: Spacing.two },
   rowText: { flex: 1, minWidth: 0 },
   rowTitle: { fontWeight: 700 },
-  extra: { fontSize: 12, lineHeight: 16 },
+  bold: { fontWeight: 700 },
   intro: { maxWidth: 420, lineHeight: 26 },
   step: { flexDirection: 'row', gap: Spacing.three },
   stepRail: { width: KNOT, alignItems: 'center' },
@@ -361,11 +358,5 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.one,
     borderRadius: 12,
     alignItems: 'center',
-  },
-  levelTagText: {
-    fontSize: 12,
-    lineHeight: 16,
-    fontWeight: 500,
-    textAlign: 'center',
   },
 });

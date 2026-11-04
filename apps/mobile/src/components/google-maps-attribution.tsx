@@ -1,6 +1,7 @@
 import { StyleSheet, Text } from 'react-native';
 
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { FontSize } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 
 /**
  * The attribution Google requires wherever Places data (venue names,
@@ -13,14 +14,14 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
  * https://developers.google.com/maps/documentation/places/web-service/policies
  */
 export function GoogleMapsAttribution() {
-  const dark = useColorScheme() === 'dark';
+  const theme = useTheme();
   return (
-    <Text accessibilityLabel="Google Maps" style={[styles.text, { color: dark ? '#FFFFFF' : '#5E5E5E' }]}>
+    <Text accessibilityLabel="Google Maps" style={[styles.text, { color: theme.mapAttribution }]}>
       Google Maps
     </Text>
   );
 }
 
 const styles = StyleSheet.create({
-  text: { fontSize: 12, lineHeight: 16, alignSelf: 'flex-end' },
+  text: { fontSize: FontSize.caption, lineHeight: 16, alignSelf: 'flex-end' },
 });

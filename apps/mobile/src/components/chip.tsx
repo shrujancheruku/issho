@@ -56,12 +56,12 @@ export function Chip({
           {label}
         </ThemedText>
         {!!secondary && (
-          <ThemedText type="small" style={[styles.secondary, { color: muted }]} lang={languages.secondary}>
+          <ThemedText type="caption" style={[styles.secondary, { color: muted }]} lang={languages.secondary}>
             {secondary}
           </ThemedText>
         )}
         {!!badge && (
-          <ThemedText type="small" style={[styles.badge, { color: colors.text }]}>
+          <ThemedText type="caption" style={[styles.badge, { color: colors.text }]}>
             {badge}
           </ThemedText>
         )}
@@ -73,6 +73,6 @@ export function Chip({
 const styles = StyleSheet.create({
   chip: { borderRadius: 12, paddingVertical: Spacing.two, paddingHorizontal: Spacing.three, maxWidth: '100%' },
   label: { flexShrink: 1 },
-  secondary: { fontSize: 12, lineHeight: 16, opacity: 0.85 },
-  badge: { fontSize: 11, lineHeight: 14, fontWeight: 700 },
+  secondary: { opacity: 0.85 },
+  badge: { fontWeight: 700 },
 });

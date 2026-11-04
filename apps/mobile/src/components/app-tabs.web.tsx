@@ -59,7 +59,7 @@ function TabButton({
           <CountBadge count={badge} label={badgeLabel} />
         </View>
       </View>
-      <ThemedText type="smallBold" style={[styles.label, { color }]}>
+      <ThemedText type="caption" style={[styles.label, { color }]}>
         {children}
       </ThemedText>
     </Pressable>
@@ -79,7 +79,7 @@ const styles = StyleSheet.create({
   bar: { position: 'absolute', start: 0, end: 0, bottom: 0, height: BottomTabInset, borderTopWidth: 1, alignItems: 'center' },
   inner: { flexDirection: 'row', justifyContent: 'space-around', width: '100%', maxWidth: MaxContentWidth, paddingTop: Spacing.two },
   tab: { alignItems: 'center', gap: Spacing.half, minWidth: 96, minHeight: 48 },
-  label: { fontSize: 12, lineHeight: 16 },
   badge: { position: 'absolute', top: -4, start: 18 },
   pressed: { opacity: 0.7 },
+  label: { fontWeight: 700 },
 });
