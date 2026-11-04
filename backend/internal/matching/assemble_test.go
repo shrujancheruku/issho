@@ -134,7 +134,7 @@ func TestParseConfig(t *testing.T) {
 	if len(cfg.LanguagePairs) != 1 {
 		t.Errorf("language pairs: %v", cfg.LanguagePairs)
 	}
-	for _, raw := range []string{`{"wieghts": {}}`, `{"min_group_size": 1}`, `{"language_pairs": [["ja", "ja"]]}`} {
+	for _, raw := range []string{`{"wieghts": {}}`, `{"min_group_size": 1}`, `{"language_pairs": [["ja", "ja"]]}`} { //nolint:misspell // deliberate typo: an unknown key must be rejected
 		if _, err := ParseConfig([]byte(raw)); err == nil {
 			t.Errorf("%s: accepted", raw)
 		}
