@@ -2,6 +2,7 @@ package moderation
 
 import (
 	"context"
+	"errors"
 	"io"
 	"log/slog"
 	"net/http"
@@ -36,7 +37,8 @@ func TestSuspendedErrorOnTheWire(t *testing.T) {
 
 	_, err := isshov1connect.NewPushServiceClient(srv.Client(), srv.URL).
 		RegisterPushToken(context.Background(), connect.NewRequest(&isshov1.RegisterPushTokenRequest{}))
-	ce, ok := err.(*connect.Error)
+	var ce *connect.Error
+	ok := errors.As(err, &ce)
 	if !ok || ce.Code() != connect.CodePermissionDenied || ce.Message() != "account suspended" {
 		t.Fatalf("got %v", err)
 	}
