@@ -324,6 +324,7 @@ Put off by the owner until they're needed: accounts and decisions (analytics and
 - ⬜ **Google Play internal testing:** the owner's Play developer account exists (2026-10-26) but waits on Google's identity verification. Then: create the app (Issho, `com.joinissho.app`), upload the first `production` AAB by hand (Google requires it), add testers; after that EAS Submit uploads with a service-account key.
 - ⬜ **Turn on the backup alert** ([#239](https://github.com/shrujancheruku/issho/issues/239)): push the `issho-backup` image, `SENTRY_DSN` on the server, reboot the accessory, then the Sentry monitor's alert rule (steps in docs/deploy.md). Backups run nightly meanwhile; only the alert is off.
 - ⬜ Stripe Identity verification behind a feature flag, for the public launch.
+- ⬜ **Owner steps left over from M10** (2026-11-04): [translate #202's 16 new catalogue keys and refresh the UI bundle](https://github.com/shrujancheruku/issho/issues/315) S (billed) · [rebuild dev clients built before react-native-maps](https://github.com/shrujancheruku/issho/issues/316) S · [venue discovery keeps results](https://github.com/shrujancheruku/issho/issues/290) M (parked, branch kept) → [rerun Tokyo venue discovery](https://github.com/shrujancheruku/issho/issues/317) S (billed) · [revisit the app's type scale](https://github.com/shrujancheruku/issho/issues/306) M (design decision)
 
 ### Web release (not scheduled): 🟡
 The app builds for the web and CI keeps it building. Before a public web release:
