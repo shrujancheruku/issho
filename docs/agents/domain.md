@@ -22,7 +22,7 @@ Single-context:
 
 ## Recording a decision
 
-Where a skill says to write an ADR, add a row to the Decision log table in `docs/ROADMAP.md` instead (date, decision, why), in the style of the rows around it, and update "Last updated". Don't create `docs/adr/`.
+Where a skill says to write an ADR, add a row to the Decision log table in `docs/ROADMAP.md` instead (date, decision, why), in the style of the rows around it. "Last updated" is optional. Don't create `docs/adr/`.
 
 ## Use the glossary's vocabulary
 
