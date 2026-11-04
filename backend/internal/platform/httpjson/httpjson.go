@@ -211,7 +211,7 @@ func (c *Client) attempts(ctx context.Context, r Request, payload []byte) (int, 
 			return status, err // the attempt timed out (the caller's context is still live)
 		}
 		wait := c.Backoff << attempt
-		wait = wait/2 + rand.N(wait/2+1) // jitter: 50-100% of the step
+		wait = wait/2 + rand.N(wait/2+1) //nolint:gosec // retry jitter (50-100% of the step), not a secret
 		if retryAfter > 0 {
 			if retryAfter > c.MaxRetryAfter {
 				return status, err // the server wants longer than we'll wait

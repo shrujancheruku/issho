@@ -23,6 +23,11 @@ linters:
     # A function that has a ctx passes it on, so cancellation and deadlines
     # reach the work it starts.
     - contextcheck
+    # Security smells: unbounded reads, loose file modes, missing server
+    # timeouts, SQL built by string. Rules that don't fit are excluded below.
+    - gosec
+    # Typos in comments and strings.
+    - misspell
     # Every //nolint names its linter and says why.
     - nolintlint
   settings:
@@ -33,11 +38,34 @@ linters:
     nolintlint:
       require-explanation: true
       require-specific: true
+    gosec:
+      excludes:
+        # int -> int32/int16 conversions: wire fields are int32 and the
+        # columns smallint, and the values are small by domain (page sizes,
+        # ratings, counts, enums), validated at the edge. 73 hits.
+        - G115
   exclusions:
     # Generated code: protobuf/Connect (gen/issho) and sqlc (gen/dbgen).
     generated: strict
     paths:
       - gen
+    rules:
+      # Operator tooling and the offline benchmark/simulator run on a
+      # developer's machine with paths and flags they supply; they write
+      # files meant for the repo (0644) and use math/rand for reproducible
+      # simulation, not secrets. The API server is still checked.
+      - linters: [gosec]
+        path: ^(cmd/tool|internal/walks/bench|internal/matching/sim)/
+        text: "G(203|204|301|302|304|306|404|703):"
+      # These read a file whose path cmd/tool takes from the operator.
+      - linters: [gosec]
+        path: ^internal/(cities/pack|emailtemplates/emailtemplates)\.go$
+        text: "G304:"
+      # Tests write fixtures to t.TempDir(), index slices they just built and
+      # use fake credentials as sample data.
+      - linters: [gosec]
+        path: _test\.go$
+        text: "G(101|301|304|306|602|703):"
 formatters:
   enable:
     - gofmt
