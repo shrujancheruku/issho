@@ -5,7 +5,7 @@
 ## Checklist
 
 - [ ] PR title / commits follow Conventional Commits (`feat(scope): …`)
-- [ ] `docs/ROADMAP.md` updated (status, decisions, "Last updated")
+- [ ] `docs/ROADMAP.md` updated (a status line or a Decision-log row; "Last updated" is optional)
 - [ ] Directory READMEs / docs updated if behaviour, setup or endpoints changed
 - [ ] `make gen` run if `proto/` or `backend/db/queries/` changed
 - [ ] `make lint test` pass locally
