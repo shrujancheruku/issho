@@ -40,9 +40,11 @@ linters:
       require-specific: true
     gosec:
       excludes:
-        # int -> int32/int16 conversions: wire fields are int32 and the
-        # columns smallint, and the values are small by domain (page sizes,
-        # ratings, counts, enums), validated at the edge. 73 hits.
+        # int -> int32/int16 conversions (73 hits). Request integers are
+        # bounded by protovalidate rules in proto/ (#262); the rest are
+        # database/domain values or durations. Trade-off: a new unchecked
+        # narrowing of a request integer is not flagged here, so a new request
+        # integer needs a proto bound.
         - G115
   exclusions:
     # Generated code: protobuf/Connect (gen/issho) and sqlc (gen/dbgen).
