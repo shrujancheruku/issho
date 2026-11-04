@@ -9,7 +9,7 @@ Project-specific rules for AI coding agents. They **take precedence over generic
 - [.claude/orchestration.md](.claude/orchestration.md) when working through a backlog in parallel with the [orchestrate plugin](https://github.com/shrujancheruku/claude-orchestrate): lanes, verify commands, gates and the merge rule.
 
 ## Every change
-- Update **docs/ROADMAP.md** (status, decision log, "Last updated"). CI fails code changes without it.
+- Update **docs/ROADMAP.md** (a status line or a Decision-log row is enough; "Last updated" is optional). CI fails code changes without it.
 - Keep the directory READMEs accurate (endpoints, setup, testing).
 - Comment non-obvious logic with the *why*.
 - Run `make gen` after editing `proto/` or `backend/db/queries/`, then `make lint test`.

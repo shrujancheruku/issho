@@ -7,9 +7,8 @@
 3. Run `make gen` if you touched `proto/` or `backend/db/queries/`.
 4. Run `make lint test` locally.
 5. **Update [ROADMAP.md](ROADMAP.md):**
-   - Flip status markers.
-   - Add a line to the Decision log if you made a choice.
-   - Bump "Last updated".
+   - Update a status line or add a Decision-log row (either is enough).
+   - "Last updated" is optional.
 
    CI's `roadmap` job fails for code changes that don't touch it.
 6. Open a PR using the template. Every CI job must pass.
