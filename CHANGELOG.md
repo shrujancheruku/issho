@@ -1,5 +1,90 @@
 # Changelog
 
+## [0.10.0](https://github.com/shrujancheruku/issho/compare/v0.9.0...v0.10.0) (2026-11-04)
+
+
+### ⚠ BREAKING CHANGES
+
+* **data:** tokyo's areas become its municipalities ([#272](https://github.com/shrujancheruku/issho/issues/272))
+* **api:** typed enums instead of strings in the admin protos ([#264](https://github.com/shrujancheruku/issho/issues/264))
+* **api:** page the admin lists with keyset tokens ([#233](https://github.com/shrujancheruku/issho/issues/233))
+* **backend:** a city pack is authoritative for its areas and overrides ([#235](https://github.com/shrujancheruku/issho/issues/235))
+* **db:** one baseline migration with the cleaned schema; reset issho-dev ([#224](https://github.com/shrujancheruku/issho/issues/224))
+* one chat module for outing and crew rooms; one socket per room in the app ([#138](https://github.com/shrujancheruku/issho/issues/138))
+* ModerationService no longer has GetModerator, ListTranslationLanguages, ListTranslations or ReviewTranslation. Only the admin SPA calls ModerationService, and it uses none of them.
+
+### Features
+
+* **admin:** confirm irreversible actions; tests for every flow ([#218](https://github.com/shrujancheruku/issho/issues/218)) ([1c5a008](https://github.com/shrujancheruku/issho/commit/1c5a0081de7908eda243c22aa83a8720cfe851b8))
+* **admin:** show what an authoritative city-pack apply removed ([#266](https://github.com/shrujancheruku/issho/issues/266)) ([36f4f31](https://github.com/shrujancheruku/issho/commit/36f4f319d142697842edaa0f2292fe6843d46ea5))
+* **api:** a reason for unavailable suggestions ([#270](https://github.com/shrujancheruku/issho/issues/270)) ([5e351fe](https://github.com/shrujancheruku/issho/commit/5e351fefa745eedc0165614d5ef4f1aff03a9353))
+* **api:** bound and cap the app's unpaged lists ([#265](https://github.com/shrujancheruku/issho/issues/265)) ([c3ce3f8](https://github.com/shrujancheruku/issho/commit/c3ce3f8c5cddc648a4edf9bf417108a738393f13))
+* **api:** error reasons as a Connect detail; one error shape in errs ([#219](https://github.com/shrujancheruku/issho/issues/219)) ([40a6b87](https://github.com/shrujancheruku/issho/commit/40a6b87b2e28abf2dcffa8551b3667b6173ac8ee))
+* **api:** page the admin lists with keyset tokens ([#233](https://github.com/shrujancheruku/issho/issues/233)) ([14be51d](https://github.com/shrujancheruku/issho/commit/14be51dbc2f7e3045ca212cffd0f1a19cbb640b8))
+* **api:** protovalidate annotations as the single source of field limits ([#262](https://github.com/shrujancheruku/issho/issues/262)) ([02ff837](https://github.com/shrujancheruku/issho/commit/02ff837ca7dd311d7ffb17248e260dea84eeea67))
+* **api:** request size limits, server timeouts and an RPC deadline ([#227](https://github.com/shrujancheruku/issho/issues/227)) ([350a15e](https://github.com/shrujancheruku/issho/commit/350a15edfc5ac96e7f2354b04352c96d1b57536b))
+* **backend:** a city pack is authoritative for its areas and overrides ([#235](https://github.com/shrujancheruku/issho/issues/235)) ([b4b4353](https://github.com/shrujancheruku/issho/commit/b4b43531679ab3d3139b5184389aec85898b4de6))
+* **backend:** admin apply and venue discovery as River jobs, GetAdminJob, 60 s interactive Gemini ([#281](https://github.com/shrujancheruku/issho/issues/281)) ([9d38aff](https://github.com/shrujancheruku/issho/commit/9d38affa900d23f88392cf6b2d1e599bef3ba2ef))
+* **backend:** fail fast in production with an app env, and no missing key deletes data ([#232](https://github.com/shrujancheruku/issho/issues/232)) ([490d974](https://github.com/shrujancheruku/issho/commit/490d9744856a5b561e6579ca1e99b51006930d7c))
+* **backend:** one httpjson client policy for Google, GitHub, Expo and Supabase ([#280](https://github.com/shrujancheruku/issho/issues/280)) ([424f0c8](https://github.com/shrujancheruku/issho/commit/424f0c8073a9db6e09a4ab3ca8a671b326d7882b))
+* **backend:** one pending-change module (repoedit) for the editors; rolling city-pack PRs ([#303](https://github.com/shrujancheruku/issho/issues/303)) ([c436dfe](https://github.com/shrujancheruku/issho/commit/c436dfe08242442c506d311e9909fc9f08f7eaa5))
+* **backend:** per-city matching config, timing and meeting places in the city pack ([#287](https://github.com/shrujancheruku/issho/issues/287)) ([93299c9](https://github.com/shrujancheruku/issho/commit/93299c9e52e1e54c5cbb7224e572924c7875e7a5))
+* **backend:** worker queues, per-kind timeouts and attempts, walk budget from the deadline ([#275](https://github.com/shrujancheruku/issho/issues/275)) ([e230bdb](https://github.com/shrujancheruku/issho/commit/e230bdbc876a41c862226ec4ae05059f33ac9ca2))
+* **data:** add Da Nang and Hoi An as one city pack, with ward boundaries ([#130](https://github.com/shrujancheruku/issho/issues/130)) ([2cd110a](https://github.com/shrujancheruku/issho/commit/2cd110aaa7c998f64b16936181f7fe4fae9d2c32))
+* **data:** tokyo's areas become its municipalities ([#272](https://github.com/shrujancheruku/issho/issues/272)) ([8a74180](https://github.com/shrujancheruku/issho/commit/8a741807de27f48ca3878f8d2d4b465acc20d1d1))
+* **db:** retention for notifications and crew chat ([#230](https://github.com/shrujancheruku/issho/issues/230)) ([3c9801b](https://github.com/shrujancheruku/issho/commit/3c9801b1d759f02a67e9d585a70fe5ee7d2cf135))
+* **infra:** seat the site's invite round a table that fills as people say yes ([#118](https://github.com/shrujancheruku/issho/issues/118)) ([5285533](https://github.com/shrujancheruku/issho/commit/5285533a7a8e78ee0d6433aacc1e16b68587e8e8))
+* **infra:** sentry cron monitor alert for failed or missed backups ([#222](https://github.com/shrujancheruku/issho/issues/222)) ([96295ba](https://github.com/shrujancheruku/issho/commit/96295ba8ab56733306164a770ac587b89847c8dc))
+* **infra:** show the site's app panels in the README, animated ([#128](https://github.com/shrujancheruku/issho/issues/128)) ([f1899aa](https://github.com/shrujancheruku/issho/commit/f1899aa6f9cfd3dda370204f2ced3911b158ba3d))
+* **infra:** site map, live chat and crew offer; deploy the site from CI ([#113](https://github.com/shrujancheruku/issho/issues/113)) ([b75e9d1](https://github.com/shrujancheruku/issho/commit/b75e9d15547c66786fd0197f72005e87b7fc23b5))
+* **mobile:** launch screen, round logos and favicons, site light and dark ([#112](https://github.com/shrujancheruku/issho/issues/112)) ([0ff5b1e](https://github.com/shrujancheruku/issho/commit/0ff5b1e425a8b6c615ccc56cd7c4742075c00628))
+* **mobile:** one errorText helper and ErrorLine; reasons on screens; sign-in error keys ([#234](https://github.com/shrujancheruku/issho/issues/234)) ([637e3cb](https://github.com/shrujancheruku/issho/commit/637e3cb68d790b674d11b10dab1e88c70c019e98))
+* **mobile:** redesign the app as Together, Plans and You ([#109](https://github.com/shrujancheruku/issho/issues/109)) ([acd3352](https://github.com/shrujancheruku/issho/commit/acd33526f1cb8fa9bf3c5dd2100a5e083a0556bc))
+* **mobile:** refetch on foreground and on received pushes ([#274](https://github.com/shrujancheruku/issho/issues/274)) ([b745ea0](https://github.com/shrujancheruku/issho/commit/b745ea0aa147d30abe3c17da5dfb266163449c21))
+
+
+### Bug Fixes
+
+* **admin:** a hash matching an Object prototype key no longer crashes the router ([#301](https://github.com/shrujancheruku/issho/issues/301)) ([7da69df](https://github.com/shrujancheruku/issho/commit/7da69dfd37cb76765e5210d3ee632dda920da280))
+* **admin:** stop inlining font subsets the csp blocks ([#313](https://github.com/shrujancheruku/issho/issues/313)) ([8b76f2d](https://github.com/shrujancheruku/issho/commit/8b76f2ddc54bd679def244ab87ae2e90b0271d76))
+* **backend:** close withdraw and chat-send races, check suspension per send ([#276](https://github.com/shrujancheruku/issho/issues/276)) ([faf3184](https://github.com/shrujancheruku/issho/commit/faf31849042ff380df872e4d689c535e4b8a2165))
+* **backend:** one item never stops a pass or a push batch ([#223](https://github.com/shrujancheruku/issho/issues/223)) ([dcdde08](https://github.com/shrujancheruku/issho/commit/dcdde08f9cf0e2b69da1586f6d6d25c4d9ad042a))
+* **backend:** venue opening window from the activity's hours ([#282](https://github.com/shrujancheruku/issho/issues/282)) ([58c2b37](https://github.com/shrujancheruku/issho/commit/58c2b372ff336c9a2c17c70f2de3179d73b32709))
+* **infra:** centre the text on the site's activity chips ([#126](https://github.com/shrujancheruku/issho/issues/126)) ([4330321](https://github.com/shrujancheruku/issho/commit/43303218f4036f944bd1981ce0690e55f6771bbf))
+* **infra:** change the follow-up in the site's group chat ([#124](https://github.com/shrujancheruku/issho/issues/124)) ([fd45efc](https://github.com/shrujancheruku/issho/commit/fd45efca8256d91d55a1e25c396e3c3550242bb1))
+* **infra:** darken the site's footer in light mode ([#125](https://github.com/shrujancheruku/issho/issues/125)) ([3971783](https://github.com/shrujancheruku/issho/commit/3971783da33a04840eed3448327a521b41b24d96))
+* **infra:** deploy writes the missing Kamal role env files before migrating ([#285](https://github.com/shrujancheruku/issho/issues/285)) ([96fd3b2](https://github.com/shrujancheruku/issho/commit/96fd3b213d546997888afb878b2586941f504434))
+* **infra:** drop the site's Love it chip from the top of the plan card ([#121](https://github.com/shrujancheruku/issho/issues/121)) ([f958029](https://github.com/shrujancheruku/issho/commit/f9580294da8b7f36f1ae3254a2d287525a26835c))
+* **infra:** keep the site's day-card buttons side by side on phones ([#127](https://github.com/shrujancheruku/issho/issues/127)) ([674cc47](https://github.com/shrujancheruku/issho/commit/674cc47b65d55116b19c51ef7a5ee2550804a57d))
+* **infra:** level the site's heading quotes; README follows the site ([#117](https://github.com/shrujancheruku/issho/issues/117)) ([1f82fdf](https://github.com/shrujancheruku/issho/commit/1f82fdf4ac1921fd5474576454825a84381dc7cf))
+* **infra:** play the site's panels when they reach mid-screen ([#123](https://github.com/shrujancheruku/issho/issues/123)) ([1170623](https://github.com/shrujancheruku/issho/commit/1170623cb0dcfc87dab0b30d7db15e88d3ba9cc9))
+* **infra:** run kamal migrate on the web role only ([#120](https://github.com/shrujancheruku/issho/issues/120)) ([09c74e3](https://github.com/shrujancheruku/issho/commit/09c74e39c1716431fe03cc64bce9b1e78b710009))
+* **infra:** show who's going on the site's plan card and even out its dashed rings ([#122](https://github.com/shrujancheruku/issho/issues/122)) ([f843701](https://github.com/shrujancheruku/issho/commit/f8437014a3098ebfe3fec805d5f3fc2cb1facfdc))
+* **infra:** smooth the site's picked-slot pop ([#114](https://github.com/shrujancheruku/issho/issues/114)) ([6f4bd08](https://github.com/shrujancheruku/issho/commit/6f4bd08f35694b4e04187eaafc2470ed71fa1d53))
+* **infra:** softer Japanese sign-off in the site footer ([#116](https://github.com/shrujancheruku/issho/issues/116)) ([c061f6e](https://github.com/shrujancheruku/issho/commit/c061f6ef5d83884be8cb2412c5892c59ed5066f0))
+* **mobile:** keep loaded data when a refetch fails ([#273](https://github.com/shrujancheruku/issho/issues/273)) ([2aa1d13](https://github.com/shrujancheruku/issho/commit/2aa1d13174ee31b044fbc3b0765f2893271c3221))
+* **mobile:** save a profile from settings only when every section is complete ([#133](https://github.com/shrujancheruku/issho/issues/133)) ([48258d9](https://github.com/shrujancheruku/issho/commit/48258d9799076f11f0e3094fe11d313ae9386849))
+* **mobile:** stop leaked query gc timers holding Jest open for 5 minutes ([#246](https://github.com/shrujancheruku/issho/issues/246)) ([1b67a0a](https://github.com/shrujancheruku/issho/commit/1b67a0a1cb7bf9bf1ee41158398878d8730bbb0c))
+* **mobile:** stop map crashes, load faster, trace performance ([#111](https://github.com/shrujancheruku/issho/issues/111)) ([3a37d0b](https://github.com/shrujancheruku/issho/commit/3a37d0bc33f6e5e2e5ee6dd5707d70f805f3f3fd))
+* **mobile:** unblock Android builds; smoother site copy and footer ([#115](https://github.com/shrujancheruku/issho/issues/115)) ([d16d642](https://github.com/shrujancheruku/issho/commit/d16d6427bdb2fc778504e83165ec73369f111c51))
+* shutdown drain, crews_city retries, worker UI strings and smaller review fixes ([#134](https://github.com/shrujancheruku/issho/issues/134)) ([9224ace](https://github.com/shrujancheruku/issho/commit/9224ace299546e269c39858a9313c21e030f5385))
+* update go work sum ([b953c2d](https://github.com/shrujancheruku/issho/commit/b953c2dbcd1ffa29035bc188562572066ed73e76))
+* Update README.md ([4fc3bdd](https://github.com/shrujancheruku/issho/commit/4fc3bdd064871ea6f1964fd47df062f7d45230ca))
+
+
+### Performance Improvements
+
+* **api:** batch rpc for crew suggestion cards, one call instead of a GetPlan each ([#284](https://github.com/shrujancheruku/issho/issues/284)) ([f30b312](https://github.com/shrujancheruku/issho/commit/f30b31277f23c1face2282047b440b58b6e6971e))
+* **backend:** batch the matching pass's turnout query, signup loads and matrix writes ([#294](https://github.com/shrujancheruku/issho/issues/294)) ([4cd1443](https://github.com/shrujancheruku/issho/commit/4cd144390a5d12f9ca5e6ce4c2ffa61275465460))
+
+
+### Code Refactoring
+
+* **api:** typed enums instead of strings in the admin protos ([#264](https://github.com/shrujancheruku/issho/issues/264)) ([fc2a621](https://github.com/shrujancheruku/issho/commit/fc2a62104e92e3fb0bf7c7e03f3fb540b57407d7))
+* clear technical debt; remove ModerationService's unused RPCs ([#119](https://github.com/shrujancheruku/issho/issues/119)) ([110a39f](https://github.com/shrujancheruku/issho/commit/110a39fcc2bf7a2ec12576082a7281bd6bc21363))
+* **db:** one baseline migration with the cleaned schema; reset issho-dev ([#224](https://github.com/shrujancheruku/issho/issues/224)) ([6e2219f](https://github.com/shrujancheruku/issho/commit/6e2219fa6af379ea6b75a59919e6cefcba6a1734))
+* one chat module for outing and crew rooms; one socket per room in the app ([#138](https://github.com/shrujancheruku/issho/issues/138)) ([e2b3d60](https://github.com/shrujancheruku/issho/commit/e2b3d605d24f921c879c80acd9b7a57538ab6324))
+
 ## [0.9.0](https://github.com/shrujancheruku/issho/compare/v0.8.0...v0.9.0) (2026-10-26)
 
 
