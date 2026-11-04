@@ -85,7 +85,7 @@ func TestKindsMapToCodes(t *testing.T) {
 			if connect.CodeOf(err) != tt.code {
 				t.Fatalf("code = %v, want %v", connect.CodeOf(err), tt.code)
 			}
-			if got := err.(*connect.Error).Message(); got != tt.msg {
+			if got := connectMessage(t, err); got != tt.msg {
 				t.Fatalf("message = %q, want %q", got, tt.msg)
 			}
 			if got := reasonOf(t, err); got != tt.reason {
@@ -107,11 +107,11 @@ func TestUpstreamHidesCauseAndReports(t *testing.T) {
 	if connect.CodeOf(err) != connect.CodeUnavailable {
 		t.Fatalf("code = %v", connect.CodeOf(err))
 	}
-	msg := err.(*connect.Error).Message()
+	msg := connectMessage(t, err)
 	if msg == "" || strings.Contains(msg, "API key") || strings.Contains(msg, "400") || strings.Contains(msg, "INVALID") {
 		t.Fatalf("upstream text leaked or message empty: %q", msg)
 	}
-	if gotErr != raw || gotTags["service"] != "gemini" || gotTags["procedure"] != isshov1connect.HealthServiceCheckProcedure {
+	if !errors.Is(gotErr, raw) || gotTags["service"] != "gemini" || gotTags["procedure"] != isshov1connect.HealthServiceCheckProcedure {
 		t.Fatalf("sentry got err=%v tags=%v", gotErr, gotTags)
 	}
 }
@@ -133,4 +133,30 @@ func TestCodeOfSeesHandlerErrors(t *testing.T) {
 	if !errors.Is(WithCause(Invalid("x"), cause), cause) {
 		t.Fatal("WithCause lost the sentinel")
 	}
+}
+
+func TestWithCauseOnWrappedKind(t *testing.T) {
+	cause := errors.New("sentinel")
+	got := WithCause(fmt.Errorf("outer context: %w", Invalid("x")), cause)
+	if !errors.Is(got, cause) {
+		t.Fatal("WithCause lost the sentinel on a wrapped kind")
+	}
+	if strings.Contains(got.Error(), "outer context") {
+		t.Fatalf("outer context kept: %v", got)
+	}
+	var e *Error
+	if !errors.As(got, &e) || e.Kind != KindInvalid {
+		t.Fatalf("kind lost: %v", got)
+	}
+}
+
+// connectMessage is the client-visible message of a *connect.Error, found with
+// errors.As so a wrapped error still reads.
+func connectMessage(t *testing.T, err error) string {
+	t.Helper()
+	var ce *connect.Error
+	if !errors.As(err, &ce) {
+		t.Fatalf("not a connect error: %v", err)
+	}
+	return ce.Message()
 }

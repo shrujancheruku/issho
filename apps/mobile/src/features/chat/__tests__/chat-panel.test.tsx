@@ -32,6 +32,7 @@ jest.mock('../typing-dots', () => ({ TypingDots: () => null }));
 // Styling and plain components are out of scope here (the theme module loads CSS).
 jest.mock('@/constants/theme', () => ({
   BodyFont: { regular: 'body' },
+  FontSize: new Proxy({}, { get: () => 16 }),
   Brand: { gold: 'gold', ink: 'ink' },
   Spacing: new Proxy({}, { get: () => 4 }),
 }));

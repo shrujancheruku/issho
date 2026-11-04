@@ -1,8 +1,9 @@
 import { type GetEventResponse, type MyEvent } from '@issho/api-client';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useState, type ReactNode } from 'react';
+import { useState } from 'react';
 import { Linking, ScrollView, Share, StyleSheet, View } from 'react-native';
 
+import { Card } from '@/components/card';
 import { ErrorLine } from '@/components/error-line';
 import { Avatar } from '@/components/avatar';
 import { LiveDot } from '@/components/live-dot';
@@ -25,10 +26,11 @@ import { Fact, Facts } from '@/features/plans/fact';
 import { formatStart, lastSignupDay, walkHours } from '@/features/plans/format';
 import { usePlanNames } from '@/features/plans/names';
 import { pairText } from '@/features/plans/text';
+import { TitleBlock } from '@/features/plans/title-block';
 import { PlanStops, StopsToggle } from '@/features/plans/plan-stops';
 import { useNow } from '@/hooks/use-now';
 import { useTheme } from '@/hooks/use-theme';
-import { useI18n, useOtherLanguage } from '@/i18n/i18n-provider';
+import { useI18n } from '@/i18n/i18n-provider';
 import { haptics } from '@/lib/haptics';
 import { ms } from '@/lib/time';
 
@@ -115,30 +117,8 @@ export default function EventScreen() {
 
 function Title({ e, detail }: { e: MyEvent; detail?: string }) {
   const { pick } = useI18n();
-  const otherLanguage = useOtherLanguage();
   const { name, secondary } = pick(e.title, e.secondaryTitle);
-  return (
-    <View style={styles.titleBlock}>
-      <ThemedText type="subtitle" accessibilityRole="header">
-        {name}
-      </ThemedText>
-      {!!secondary && !detail && (
-        <ThemedText themeColor="textSecondary" lang={otherLanguage}>
-          {secondary}
-        </ThemedText>
-      )}
-      {!!detail && (
-        <ThemedText type="smallBold" themeColor="link">
-          {detail}
-        </ThemedText>
-      )}
-    </View>
-  );
-}
-
-function Card({ children }: { children: ReactNode }) {
-  const theme = useTheme();
-  return <View style={[styles.card, { backgroundColor: theme.surface }]}>{children}</View>;
+  return <TitleBlock name={name} secondary={secondary} detail={detail} />;
 }
 
 function meetingPoint({ o, lang }: Ctx, t: ReturnType<typeof useI18n>['t']) {
@@ -158,7 +138,7 @@ function Invited({ ctx }: { ctx: Ctx }) {
         <ThemedText type="smallBold" themeColor="goldText">
           {t('event.state.answer', { date: lastSignupDay(e.confirmBy, lang) })}
         </ThemedText>
-        <ThemedText type="subtitle" style={styles.cardTitle}>
+        <ThemedText type="heading">
           {formatStart(e.startsAt, lang)}
         </ThemedText>
         <ThemedText>{pairText(names.area(e.areaId))}</ThemedText>
@@ -323,7 +303,7 @@ function HowWasIt({ ctx }: { ctx: Ctx }) {
   return (
     <>
       <Card>
-        <ThemedText type="subtitle" style={styles.cardTitle}>
+        <ThemedText type="heading">
           {e.feedbackGiven ? t('event.state.feedbackGiven') : t('feedback.title')}
         </ThemedText>
         {!e.feedbackGiven && <ThemedText themeColor="textSecondary">{t('event.state.feedback')}</ThemedText>}
@@ -364,9 +344,6 @@ const styles = StyleSheet.create({
   bold: { fontWeight: 700 },
   head: { paddingHorizontal: Spacing.three, paddingBottom: Spacing.two, gap: Spacing.three },
   content: { padding: Spacing.three, paddingTop: Spacing.two, gap: Spacing.four - 4, paddingBottom: Spacing.five },
-  titleBlock: { gap: Spacing.half },
-  card: { borderRadius: 16, padding: Spacing.three, gap: Spacing.one },
-  cardTitle: { fontSize: 24, lineHeight: 35 },
   gapBelow: { marginBottom: Spacing.two },
   gapAbove: { marginTop: Spacing.two, gap: Spacing.two },
   section: { gap: Spacing.two },

@@ -126,10 +126,10 @@ func TestMembership(t *testing.T) {
 		m := going
 		m.StartsAt = time.Time{}
 		later := starts.AddDate(1, 0, 0)
-		if from, until := m.CheckInWindow(); !from.IsZero() || !until.IsZero() || m.CheckIn(starts) != ErrCheckInClosed {
+		if from, until := m.CheckInWindow(); !from.IsZero() || !until.IsZero() || !errors.Is(m.CheckIn(starts), ErrCheckInClosed) {
 			t.Error("check-in without a start")
 		}
-		if _, _, err := m.FeedbackWindow(); err != ErrFeedbackClosed {
+		if _, _, err := m.FeedbackWindow(); !errors.Is(err, ErrFeedbackClosed) {
 			t.Errorf("feedback without a start: %v", err)
 		}
 		if m.Revealed(later) || !m.RevealAt().IsZero() || !m.ReportUntil().IsZero() || m.Report(later) != nil {

@@ -9,7 +9,7 @@ import { PressableScale } from '@/components/pressable-scale';
 import { LoadFailed } from '@/components/query-screen';
 import { ThemedText } from '@/components/themed-text';
 import { EaseOut, Motion } from '@/constants/motion';
-import { BodyFont, Brand, Spacing } from '@/constants/theme';
+import { BodyFont, FontSize, Brand, Spacing } from '@/constants/theme';
 import { usePlanCards } from '@/features/plans/data';
 import { formatMoment, lastSignupDay } from '@/features/plans/format';
 import { usePlanNames } from '@/features/plans/names';
@@ -48,7 +48,7 @@ export function SuggestedPlan({ planId, plan }: { planId: string; plan?: FeedPla
       </ThemedText>
       {plan && (
         <>
-          <ThemedText type="subtitle" style={styles.suggestionTitle}>
+          <ThemedText type="subtitle">
             {pick(plan.title, plan.secondaryTitle).name}
           </ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
@@ -73,7 +73,7 @@ function Bubble({ m }: { m: Message }) {
     </View>
   ) : (
     <View style={[styles.bubble, styles.theirs, { backgroundColor: theme.backgroundElement }]}>
-      <ThemedText type="smallBold" themeColor="textSecondary" style={styles.who}>
+      <ThemedText type="caption" themeColor="textSecondary" style={styles.who}>
         {m.name}
       </ThemedText>
       <ThemedText style={styles.body}>{m.body}</ThemedText>
@@ -197,15 +197,14 @@ const styles = StyleSheet.create({
   // The corner nearest the sender is the sharp one.
   mine: { alignSelf: 'flex-end', borderRadius: 16, borderBottomEndRadius: 4 },
   theirs: { alignSelf: 'flex-start', borderRadius: 16, borderBottomStartRadius: 4 },
-  who: { fontSize: 12, lineHeight: 16 },
-  body: { fontSize: 16, lineHeight: 22 },
+  who: { fontWeight: 700 },
+  body: { lineHeight: 22 },
   suggestion: { borderWidth: 2, borderColor: Brand.gold, borderRadius: 16, padding: Spacing.three, gap: Spacing.half },
-  suggestionTitle: { fontSize: 20, lineHeight: 29 },
   center: { textAlign: 'center' },
   failed: { justifyContent: 'center', padding: Spacing.three, gap: Spacing.two },
   note: { padding: Spacing.three },
   composer: { flexDirection: 'row', alignItems: 'flex-end', gap: Spacing.two, padding: Spacing.three, borderTopWidth: 1 },
-  input: { fontFamily: BodyFont.regular, flex: 1, borderRadius: 16, paddingHorizontal: Spacing.three, paddingVertical: Spacing.two, maxHeight: 120, fontSize: 16 },
+  input: { fontFamily: BodyFont.regular, flex: 1, borderRadius: 16, paddingHorizontal: Spacing.three, paddingVertical: Spacing.two, maxHeight: 120, fontSize: FontSize.default },
   send: { backgroundColor: Brand.gold, borderRadius: 16, paddingHorizontal: Spacing.three, minHeight: 44, justifyContent: 'center' },
   sendText: { color: Brand.ink, fontWeight: '700' },
   disabled: { opacity: 0.4 },

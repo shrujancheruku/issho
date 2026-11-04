@@ -6,7 +6,7 @@ import { AvailabilityGrid } from '@/components/availability-grid';
 import { Chip } from '@/components/chip';
 import { LoadState } from '@/components/query-screen';
 import { ThemedText } from '@/components/themed-text';
-import { BodyFont, Brand, Spacing } from '@/constants/theme';
+import { BodyFont, FontSize, Brand, Spacing } from '@/constants/theme';
 import { categoryLabel } from '@/features/plans/text';
 import { useTheme } from '@/hooks/use-theme';
 import { useI18n } from '@/i18n/i18n-provider';
@@ -434,7 +434,7 @@ function ConductStep({ draft, onChange }: StepProps) {
 const styles = StyleSheet.create({
   section: { gap: Spacing.two },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
-  input: { fontFamily: BodyFont.regular, borderRadius: 12, paddingHorizontal: Spacing.three, paddingVertical: Spacing.three, fontSize: 17 },
+  input: { fontFamily: BodyFont.regular, borderRadius: 12, paddingHorizontal: Spacing.three, paddingVertical: Spacing.three, fontSize: FontSize.default },
   switchRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three, paddingVertical: Spacing.two },
   grow: { flex: 1 },
   spoken: { gap: Spacing.two, paddingVertical: Spacing.two },

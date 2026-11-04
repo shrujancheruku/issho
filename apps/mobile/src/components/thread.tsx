@@ -93,7 +93,7 @@ export function Thread({ stage, id, live = true }: { stage: number; id: string; 
                 />
               </View>
               <ThemedText
-                type="small"
+                type="caption"
                 themeColor={i === current ? 'text' : 'textSecondary'}
                 style={[styles.label, i === current && styles.labelNow]}
                 numberOfLines={2}>
@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row' },
   cell: { flex: 1, alignItems: 'center', gap: Spacing.one + 2 },
   knotBox: { height: KNOT_BOX, alignItems: 'center', justifyContent: 'center' },
-  label: { fontSize: 12, lineHeight: 16, textAlign: 'center' },
+  label: { textAlign: 'center' },
   labelNow: { fontWeight: 700 },
   next: { width: 12, height: 12, borderRadius: 6, borderWidth: 2 },
   done: { width: 14, height: 14, borderRadius: 7 },

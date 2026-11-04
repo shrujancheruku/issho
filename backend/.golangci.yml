@@ -3,6 +3,16 @@
 version: "2"
 linters:
   default: standard # errcheck, govet, ineffassign, staticcheck, unused
+  enable:
+    # Wrapped errors (pgx, River, Connect, context) break == and type
+    # assertions; require errors.Is/As and %w.
+    - errorlint
+    # Every //nolint names its linter and says why.
+    - nolintlint
+  settings:
+    nolintlint:
+      require-explanation: true
+      require-specific: true
   exclusions:
     # Generated code: protobuf/Connect (gen/issho) and sqlc (gen/dbgen).
     generated: strict

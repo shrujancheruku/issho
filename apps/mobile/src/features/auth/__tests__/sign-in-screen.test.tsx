@@ -21,7 +21,7 @@ jest.mock('@/i18n/i18n-provider', () => {
 jest.mock('@/components/screen-frame', () => ({ ScreenFrame: ({ children }: { children: unknown }) => children }));
 jest.mock('expo-image', () => ({ Image: () => null }));
 // Styling and native chrome are not under test.
-jest.mock('@/constants/theme', () => ({ BodyFont: { regular: 'x' }, Spacing: new Proxy({}, { get: () => 4 }) }));
+jest.mock('@/constants/theme', () => ({ BodyFont: { regular: 'x' }, FontSize: new Proxy({}, { get: () => 16 }), Spacing: new Proxy({}, { get: () => 4 }) }));
 jest.mock('@/hooks/use-theme', () => ({ useTheme: () => new Proxy({}, { get: () => '#000' }) }));
 jest.mock('@/components/themed-text', () => {
   const { Text } = jest.requireActual('react-native');

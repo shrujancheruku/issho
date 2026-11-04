@@ -8,7 +8,7 @@ import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useI18n, useOtherLanguage } from '@/i18n/i18n-provider';
 
-import { levelColors, levelLabels } from './level';
+import { LevelTag } from './level-tag';
 import type { usePlanNames } from './names';
 import { distanceText, friendsText, pairText } from './text';
 
@@ -34,7 +34,6 @@ export function PlanCard({
   const theme = useTheme();
   const greyed = plan.level === PlanLevel.NOT_FOR_YOU;
   const title = pick(plan.title, plan.secondaryTitle);
-  const colors = showLevel ? levelColors(plan.level, theme) : null;
   const language = plan.secondaryLanguage
     ? [plan.primaryLanguage, plan.secondaryLanguage].map(names.language).join(' / ')
     : '';
@@ -46,17 +45,13 @@ export function PlanCard({
       accessibilityRole="button"
       onPress={() => router.push({ pathname: '/plan/[id]', params: { id: plan.id } })}
       style={[styles.card, { backgroundColor: theme.surface }, greyed && styles.greyed]}>
-      {colors && (
-        <View style={[styles.tag, { backgroundColor: colors.background }]}>
-          <ThemedText style={[styles.tagText, { color: colors.text }]}>{t(levelLabels[plan.level])}</ThemedText>
-        </View>
-      )}
+      {showLevel && <LevelTag level={plan.level} style={styles.tag} />}
       {showFriends && plan.friendsInterested > 0 && (
         <ThemedText type="smallBold" themeColor="goldText">
           {friendsText(t, plan.friendsInterested)}
         </ThemedText>
       )}
-      <ThemedText type="subtitle" style={styles.title}>
+      <ThemedText type="subtitle">
         {title.name}
       </ThemedText>
       {!!title.secondary && (
@@ -86,9 +81,7 @@ export function PlanCard({
 const styles = StyleSheet.create({
   card: { borderRadius: 16, paddingVertical: Spacing.three - 2, paddingHorizontal: Spacing.three, gap: Spacing.half },
   greyed: { opacity: 0.55 },
-  tag: { alignSelf: 'flex-start', borderRadius: 999, paddingVertical: Spacing.half, paddingHorizontal: Spacing.two, marginBottom: Spacing.one },
-  tagText: { fontSize: 12, lineHeight: 16, fontWeight: 500 },
-  title: { fontSize: 20, lineHeight: 29 },
+  tag: { alignSelf: 'flex-start', marginBottom: Spacing.one },
   bottom: { flexDirection: 'row', alignItems: 'flex-end', gap: Spacing.two, marginTop: Spacing.one },
   grow: { flex: 1 },
 });

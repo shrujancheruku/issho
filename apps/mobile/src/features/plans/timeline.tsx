@@ -74,14 +74,13 @@ export function Timeline({
             </View>
             <View style={[styles.body, !last && styles.bodyGap]}>
               {!!label && (
-                <ThemedText type="smallBold" style={styles.activity}>
+                <ThemedText style={styles.activity}>
                   {label}
                 </ThemedText>
               )}
               {venue ? (
                 <>
                   <ThemedText
-                    type={label ? "default" : "smallBold"}
                     style={!label && styles.activity}
                   >
                     {venue}
@@ -148,7 +147,7 @@ const styles = StyleSheet.create({
   line: { width: 2, flex: 1, marginTop: Spacing.one },
   body: { flex: 1, gap: Spacing.half },
   bodyGap: { paddingBottom: Spacing.four },
-  activity: { fontSize: 16, lineHeight: 22 },
+  activity: { fontWeight: 700, lineHeight: 22 },
   link: { marginTop: Spacing.half },
   note: { marginTop: Spacing.one },
   walk: { marginTop: Spacing.three, fontStyle: "italic" },

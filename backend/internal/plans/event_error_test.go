@@ -51,7 +51,7 @@ func TestEventErrorKeepsCodesAndMessages(t *testing.T) {
 		}
 	}
 	other := errors.New("db down")
-	if eventError(other) != other {
+	if !errors.Is(eventError(other), other) {
 		t.Error("unknown errors must pass through")
 	}
 }
