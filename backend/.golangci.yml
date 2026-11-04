@@ -15,6 +15,8 @@ linters:
     # A rows loop that stops early on error must not read as success; check
     # rows.Err() after iterating (the pgx package is set below).
     - rowserrcheck
+    # Rows (pgx included) must be closed or the pooled connection stays busy.
+    - sqlclosecheck
     # Every //nolint names its linter and says why.
     - nolintlint
   settings:
