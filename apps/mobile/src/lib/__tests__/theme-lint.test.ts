@@ -32,11 +32,26 @@ describe('inline font sizes are flagged', () => {
     expect(ids('export const X = () => <Text style={{ fontSize: 12 }}>a</Text>;')).toEqual(['font-size']);
   });
 
+  it('a quoted key', () => {
+    expect(ids("export const s = { 'fontSize': 12 };")).toEqual(['font-size']);
+  });
+
+  it('a value that is a member of anything but FontSize', () => {
+    expect(ids('export const s = { fontSize: sizes[0] };')).toEqual(['font-size']);
+    expect(ids('export const s = { fontSize: Other.default };')).toEqual(['font-size']);
+  });
+
   it('is allowed with a reasoned disable, from the theme, and in the theme itself', () => {
     expect(ids('// eslint-disable-next-line no-restricted-syntax\nexport const s = { code: { fontSize: 28 } };')).toEqual([]);
     expect(ids('export const s = { input: { fontSize: FontSize.default } };')).toEqual([]);
     expect(ids('export const s = { default: { fontSize: 16 } };', 'src/components/themed-text.tsx')).toEqual([]);
     expect(ids('export const s = { fontSize: 16 };', 'src/constants/theme.ts')).toEqual([]);
+  });
+});
+
+describe('the theme file keeps the other rules', () => {
+  it('flags a toSorted() call', () => {
+    expect(ids('export const a = [3, 1].toSorted();', 'src/constants/theme.ts')).toHaveLength(1);
   });
 });
 
@@ -49,6 +64,8 @@ describe('colour literals are flagged', () => {
     'long hex': "export const s = { borderColor: '#ffffff' };",
     'hex with alpha': "export const s = { a: '#ffffff80' };",
     'template literal': 'export const s = (a: number) => ({ a: `rgba(0,0,0,${a})` });',
+    'named white': "export const s = { color: 'white' };",
+    'named black, any case': "export const s = { color: 'Black' };",
     'in a prop': 'export const X = () => <Icon color="#5E5E5E" />;',
   };
   for (const [name, code] of Object.entries(bad)) {
@@ -60,6 +77,11 @@ describe('colour literals are flagged', () => {
   it('is allowed in the theme, and plain strings pass', () => {
     expect(ids("export const Colors = { text: '#131B40', wash: 'rgba(255,255,255,0.14)' };", 'src/constants/theme.ts')).toEqual([]);
     expect(ids("export const s = { a: 'transparent', b: '#', c: 'see #3 for rgba' };")).toEqual([]);
+    expect(ids("export const s = { a: 'white label', b: 'blackboard' }; const w = ['white'];")).toEqual([]);
+  });
+
+  it('is still enforced in themed-text.tsx, where only the sizes are exempt', () => {
+    expect(ids("export const s = { a: '#fff' };", 'src/components/themed-text.tsx')).toEqual(['colour-literal']);
   });
 
   it('is not enforced in tests', () => {

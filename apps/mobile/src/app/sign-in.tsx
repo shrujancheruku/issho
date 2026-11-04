@@ -134,8 +134,7 @@ const styles = StyleSheet.create({
   logo: { width: '70%', maxWidth: 280, aspectRatio: 900 / 598, alignSelf: 'center' },
   form: { gap: Spacing.three },
   input: { fontFamily: BodyFont.regular, borderRadius: 12, paddingHorizontal: Spacing.three, paddingVertical: Spacing.three, fontSize: FontSize.default },
-  // The six digits are the one thing on this screen, set large and spaced like a code, so they have a display size of their own.
-  // eslint-disable-next-line no-restricted-syntax
+  // eslint-disable-next-line no-restricted-syntax -- the six digits are the one thing on this screen, set large and spaced like a code
   code: { fontSize: 28, letterSpacing: 12, textAlign: 'center' },
   row: { flexDirection: 'row', justifyContent: 'space-between' },
   error: { textAlign: 'center' },

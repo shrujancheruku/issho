@@ -15,10 +15,12 @@ const glued = (id, selector) => ({
 
 // Text sizes and colours come from the theme, so a restyle (or a dark mode
 // fix) is one edit (docs/design-system.md, apps/mobile/README.md "Theme").
-// A fontSize written as a number is a size no ThemedText type has; a member
-// such as FontSize.default (a TextInput's size) is fine.
+// A fontSize written as a number (or computed, or from anywhere but FontSize)
+// is a size no ThemedText type has; FontSize.default (a TextInput's size) is
+// fine. A quoted key ('fontSize') counts too.
 const FONT_SIZE = {
-  selector: "Property[key.name='fontSize'][value.type!='MemberExpression']",
+  selector:
+    "Property:matches([key.name='fontSize'], [key.value='fontSize']):not([value.type='MemberExpression'][value.object.name='FontSize'])",
   message:
     '[font-size] Use a ThemedText type (caption, small, default, heading, subtitle, title) instead of an inline fontSize. A deliberate display size (a map pin, a code field) needs an eslint-disable comment that says why (apps/mobile/README.md, "Theme").',
 };
@@ -28,6 +30,8 @@ const COLOUR = [
   { selector: 'Literal[value=/^#[0-9a-fA-F]{3,8}$/]', message: COLOUR_MESSAGE },
   { selector: 'Literal[value=/^(rgba?|hsla?)\\(/]', message: COLOUR_MESSAGE },
   { selector: 'TemplateElement[value.raw=/(rgba?|hsla?)\\(/]', message: COLOUR_MESSAGE },
+  // Named colours only as a style value, so ordinary strings called "white" pass; 'transparent' stays allowed.
+  { selector: 'Property > Literal.value[value=/^(white|black)$/i]', message: COLOUR_MESSAGE },
 ];
 
 // Hermes (the engine on phones, including Expo Go) lacks these newer

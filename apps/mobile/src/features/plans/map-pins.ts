@@ -39,8 +39,7 @@ export const pinStyles = StyleSheet.create({
   selected: { width: PIN_SELECTED, height: PIN_SELECTED, borderRadius: PIN_SELECTED / 2, borderColor: Brand.ink },
   // The browser's selected pin: HTML can be scaled freely.
   selectedWeb: { borderColor: Brand.ink, transform: [{ scale: 1.2 }] },
-  // A pin's number sits in a fixed 30px badge, so it has a display size of its own, not a text type.
-  // eslint-disable-next-line no-restricted-syntax
+  // eslint-disable-next-line no-restricted-syntax -- a pin's number sits in a fixed 30px badge, so it has a display size of its own
   label: { fontSize: 13, fontWeight: '700' },
   // Tall enough for a walk's stops (a kilometre or two, often north to
   // south) to show apart rather than stacked at district scale.
