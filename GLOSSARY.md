@@ -48,6 +48,10 @@ _Avoid_: current language, active language
 A small standing group offered to people who got on well across outings; it suggests a plan each week and has its own chat.
 _Avoid_: club, circle
 
+**Join offer**:
+An offer to someone new to join an existing crew, because at least two of its members picked them to meet again. Before it's sent, any member can quietly turn it down, and the newcomer never learns of it.
+_Avoid_: invitation (that's an outing's), crew offer (that's a new crew)
+
 **Room**:
 One chat: an outing's group chat or a crew's chat.
 _Avoid_: channel, thread, conversation
