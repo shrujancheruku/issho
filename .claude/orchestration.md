@@ -23,11 +23,21 @@ Tickets run in parallel only when their touch maps don't overlap outside the sha
 
 ## Shared files
 
+A **shared file** is one many PRs edit. The `merge` script resolves collisions in the files listed here by replaying each PR's lines onto main, so nobody merges them by hand; a conflict in any other file is handed to the worker.
+
+- **Shared files:**
+  - `backend/README.md`: edit only the sections for what the PR changes (endpoints, setup, testing), as `CLAUDE.md` requires. Other directory READMEs follow the same rule but aren't replayed.
+- **Generated:** CI's `codegen` job fails on drift.
+  - `backend/gen/**`: `make gen`
+  - `packages/api-client/src/gen/**`: `make gen`
+  - `docs/generated/**`: `make gen`
+  - `backend/internal/uistrings/*.json`: `make gen`
+  - `backend/internal/uistrings/human/**`: `make gen`
+- **Orchestrator-owned edits:** the parent issue's body, and closing it once every sub-issue is closed.
+
+Not shared, but every PR follows these:
 - `docs/adr/`: a PR that settles a decision worth an ADR (see `docs/agents/domain.md`) adds the next number. Two PRs in one run can pick the same number; the second to merge renumbers. Never add rows to `docs/decisions-2026.md`.
-- **Orchestrator owns:** the parent issue's body and closing it once every sub-issue is closed.
-- Directory READMEs: update the one for the directory changed, as `CLAUDE.md` requires.
 - **Release-please files, never edited by hand:** `CHANGELOG.md`, `.release-please-manifest.json`, `release-please-config.json`, `version.txt`, `package.json` and `apps/mobile/package.json` versions, `apps/mobile/app.json` version.
-- **Generated, never merged by hand:** `backend/gen/**`, `packages/api-client/src/gen/**`, `docs/generated/**`, `backend/internal/uistrings/*.json`. After a rebase or merge, take either side, run `make gen`, and commit the result. CI's `codegen` job fails on drift.
 
 ## PRs and merging
 
@@ -40,7 +50,7 @@ Tickets run in parallel only when their touch maps don't overlap outside the sha
 ## Gates
 
 - **Start gates:** none.
-- **Merge gates:** any PR labelled `breaking-ok`, and the PRs closing #169 and #178 (breaking changes). They wait for the owner's go-ahead.
+- **Merge gates:** any PR labelled `breaking-ok` (a breaking change). It waits for the owner's go-ahead.
 
 ## Human-only steps
 
@@ -64,14 +74,14 @@ Workers stop and report when they reach one:
 | Role | Model | Effort |
 |---|---|---|
 | Orchestrator | the session's model | |
-| Worker | sonnet | medium |
-| Scout, mechanic | haiku | low |
-| Reviewer | S haiku · M sonnet · L sonnet, then an orchestrator read | medium |
+| Worker | sonnet; haiku for S tickets (at most 3 files, the **Tiers** file limit) | medium |
+| Scout | haiku | low |
+| Reviewer | S haiku · M sonnet · L sonnet (high effort) | medium |
 
 ## Review
 
 - **Instruction files:** `CLAUDE.md`, `apps/mobile/AGENTS.md`, `docs/contributing.md`, `.github/pull_request_template.md`, the README of each directory changed, `GLOSSARY.md` for domain terms.
-- **Risk paths** (any PR touching them is reviewed as L): `backend/db/migrations/**`, `proto/**`, `backend/internal/identity/**`, `backend/internal/platform/auth/**`, `config/**`, `.kamal/**`, `.github/workflows/deploy-*.yml`, `backend/Dockerfile`, `supabase/config.toml`, `apps/*/wrangler.jsonc`, `site/wrangler.jsonc`, `scripts/deploy-web.sh`, `.github/workflows/ci.yml`, `scripts/ci-changes.sh` (a wrong path filter silently skips required checks).
-- **Tiers:** S is at most 50 changed lines in at most 3 files, none on a risk path; L touches a risk path or changes more than 400 lines; M is everything else. A size (S/M/L) written in the ticket's or the parent's body overrides (the repo has no `size:` labels).
-- **Repo-specific checks:** `make gen` leaves no diff; `docs/decisions-2026.md` untouched; migrations are new files with a Down; RPC auth is deny-by-default; no `public` schema tables, PostgREST grants or RLS-as-exposure; no secrets or personal data; `buf breaking` passes unless the PR is `breaking-ok`.
-- **Post reviews:** yes. Every round is posted on its PR as one GitHub review with event `COMMENT` (the owner's account can't approve its own PR): the verdict first in the body, findings inline on diff lines, anything off the diff in the body. Reviewers are read-only (the plugin's guard blocks GitHub writes), so the reviewer returns the review as JSON and the orchestrator checks the line numbers and posts it. Public repo: no local paths or session details.
+- **Risk paths** (any PR touching them is reviewed as L): `backend/db/migrations/**`, `backend/internal/identity/**`, `backend/internal/platform/auth/**`, `config/**`, `.kamal/**`, `.github/workflows/deploy-*.yml`, `backend/Dockerfile`, `supabase/config.toml`, `apps/*/wrangler.jsonc`, `site/wrangler.jsonc`, `scripts/deploy-web.sh`, `.github/workflows/ci.yml`, `scripts/ci-changes.sh` (a wrong path filter silently skips required checks). `proto/**` is left out: `buf breaking` and the `breaking-ok` merge gate cover it.
+- **Tiers:** S is at most 50 changed lines in at most 3 files, none on a risk path; L touches a risk path or changes more than 400 lines; M is everything else. A `size:S|M|L` label on the ticket overrides.
+- **Repo-specific checks:** `make gen` leaves no diff (run: `make gen && git diff --exit-code`); `docs/decisions-2026.md` untouched (run: `git diff --quiet origin/main...HEAD -- docs/decisions-2026.md`); migrations are new files with a Down; RPC auth is deny-by-default; no `public` schema tables, PostgREST grants or RLS-as-exposure; no secrets or personal data; `buf breaking` passes unless the PR is `breaking-ok`.
+- **Post reviews:** yes. The reviewer posts each round on its PR as one GitHub review with event `COMMENT` (the owner's account can't approve its own PR): the verdict first in the body, findings inline on diff lines, anything off the diff in the body. Public repo: no local paths or session details.

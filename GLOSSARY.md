@@ -59,3 +59,11 @@ _Avoid_: expired, ignored
 **Pending change**:
 An edit to a city's pack or to a language's human translations, saved in the admin SPA, that waits for the owner's approval before it takes effect. A city or language has at most one pending change at a time; later saves add to it.
 _Avoid_: proposal (a plan's group review), draft, suggestion
+
+**Soft launch**:
+The first opening of Issho to real users: one city pack, with people admitted through the waitlist.
+_Avoid_: beta, public launch (that comes later)
+
+**Unlock**:
+An area opening to the people waiting in it, once enough of them have joined.
+_Avoid_: go live, activate
