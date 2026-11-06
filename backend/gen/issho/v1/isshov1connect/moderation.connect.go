@@ -5,91 +5,155 @@
 package isshov1connect
 
 import (
-	connect "connectrpc.com/connect"
+	connect "connectrpc.com/connect/v2"
 	context "context"
-	errors "errors"
 	v1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
-	http "net/http"
-	strings "strings"
+	sync "sync"
 )
-
-// This is a compile-time assertion to ensure that this generated file and the connect package are
-// compatible. If you get a compiler error that this constant is not defined, this code was
-// generated with a version of connect newer than the one compiled into your binary. You can fix the
-// problem by either regenerating this code with an older version of connect or updating the connect
-// version compiled into your binary.
-const _ = connect.IsAtLeastVersion1_13_0
 
 const (
 	// ModerationServiceName is the fully-qualified name of the ModerationService service.
 	ModerationServiceName = "issho.v1.ModerationService"
 )
 
-// These constants are the fully-qualified names of the RPCs defined in this package. They're
-// exposed at runtime as Spec.Procedure and as the final two segments of the HTTP route.
+// These constants are the procedure names of the RPCs defined in this package. They're exposed at
+// runtime as Spec.Procedure and as the final two segments of the HTTP route.
 //
 // Note that these are different from the fully-qualified method names used by
 // google.golang.org/protobuf/reflect/protoreflect. To convert from these constants to
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
-	// ModerationServiceListReportsProcedure is the fully-qualified name of the ModerationService's
+	// ModerationServiceListReportsProcedure is the procedure name of the ModerationService's
 	// ListReports RPC.
 	ModerationServiceListReportsProcedure = "/issho.v1.ModerationService/ListReports"
-	// ModerationServiceResolveReportProcedure is the fully-qualified name of the ModerationService's
+	// ModerationServiceResolveReportProcedure is the procedure name of the ModerationService's
 	// ResolveReport RPC.
 	ModerationServiceResolveReportProcedure = "/issho.v1.ModerationService/ResolveReport"
-	// ModerationServiceListFlagsProcedure is the fully-qualified name of the ModerationService's
-	// ListFlags RPC.
+	// ModerationServiceListFlagsProcedure is the procedure name of the ModerationService's ListFlags
+	// RPC.
 	ModerationServiceListFlagsProcedure = "/issho.v1.ModerationService/ListFlags"
-	// ModerationServiceResolveFlagProcedure is the fully-qualified name of the ModerationService's
+	// ModerationServiceResolveFlagProcedure is the procedure name of the ModerationService's
 	// ResolveFlag RPC.
 	ModerationServiceResolveFlagProcedure = "/issho.v1.ModerationService/ResolveFlag"
-	// ModerationServiceListCrewLeavesProcedure is the fully-qualified name of the ModerationService's
+	// ModerationServiceListCrewLeavesProcedure is the procedure name of the ModerationService's
 	// ListCrewLeaves RPC.
 	ModerationServiceListCrewLeavesProcedure = "/issho.v1.ModerationService/ListCrewLeaves"
-	// ModerationServiceSearchPeopleProcedure is the fully-qualified name of the ModerationService's
+	// ModerationServiceSearchPeopleProcedure is the procedure name of the ModerationService's
 	// SearchPeople RPC.
 	ModerationServiceSearchPeopleProcedure = "/issho.v1.ModerationService/SearchPeople"
-	// ModerationServiceGetPersonProcedure is the fully-qualified name of the ModerationService's
-	// GetPerson RPC.
+	// ModerationServiceGetPersonProcedure is the procedure name of the ModerationService's GetPerson
+	// RPC.
 	ModerationServiceGetPersonProcedure = "/issho.v1.ModerationService/GetPerson"
-	// ModerationServiceSuspendPersonProcedure is the fully-qualified name of the ModerationService's
+	// ModerationServiceSuspendPersonProcedure is the procedure name of the ModerationService's
 	// SuspendPerson RPC.
 	ModerationServiceSuspendPersonProcedure = "/issho.v1.ModerationService/SuspendPerson"
-	// ModerationServiceLiftSuspensionProcedure is the fully-qualified name of the ModerationService's
+	// ModerationServiceLiftSuspensionProcedure is the procedure name of the ModerationService's
 	// LiftSuspension RPC.
 	ModerationServiceLiftSuspensionProcedure = "/issho.v1.ModerationService/LiftSuspension"
-	// ModerationServiceListSuspendedProcedure is the fully-qualified name of the ModerationService's
+	// ModerationServiceListSuspendedProcedure is the procedure name of the ModerationService's
 	// ListSuspended RPC.
 	ModerationServiceListSuspendedProcedure = "/issho.v1.ModerationService/ListSuspended"
+)
+
+var (
+	moderationServiceListReportsSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_issho_v1_moderation_proto.Services().ByName("ModerationService").Methods().ByName("ListReports"),
+			Procedure:  ModerationServiceListReportsProcedure,
+		}
+	})
+	moderationServiceResolveReportSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_issho_v1_moderation_proto.Services().ByName("ModerationService").Methods().ByName("ResolveReport"),
+			Procedure:  ModerationServiceResolveReportProcedure,
+		}
+	})
+	moderationServiceListFlagsSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_issho_v1_moderation_proto.Services().ByName("ModerationService").Methods().ByName("ListFlags"),
+			Procedure:  ModerationServiceListFlagsProcedure,
+		}
+	})
+	moderationServiceResolveFlagSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_issho_v1_moderation_proto.Services().ByName("ModerationService").Methods().ByName("ResolveFlag"),
+			Procedure:  ModerationServiceResolveFlagProcedure,
+		}
+	})
+	moderationServiceListCrewLeavesSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_issho_v1_moderation_proto.Services().ByName("ModerationService").Methods().ByName("ListCrewLeaves"),
+			Procedure:  ModerationServiceListCrewLeavesProcedure,
+		}
+	})
+	moderationServiceSearchPeopleSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_issho_v1_moderation_proto.Services().ByName("ModerationService").Methods().ByName("SearchPeople"),
+			Procedure:  ModerationServiceSearchPeopleProcedure,
+		}
+	})
+	moderationServiceGetPersonSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_issho_v1_moderation_proto.Services().ByName("ModerationService").Methods().ByName("GetPerson"),
+			Procedure:  ModerationServiceGetPersonProcedure,
+		}
+	})
+	moderationServiceSuspendPersonSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_issho_v1_moderation_proto.Services().ByName("ModerationService").Methods().ByName("SuspendPerson"),
+			Procedure:  ModerationServiceSuspendPersonProcedure,
+		}
+	})
+	moderationServiceLiftSuspensionSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_issho_v1_moderation_proto.Services().ByName("ModerationService").Methods().ByName("LiftSuspension"),
+			Procedure:  ModerationServiceLiftSuspensionProcedure,
+		}
+	})
+	moderationServiceListSuspendedSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_issho_v1_moderation_proto.Services().ByName("ModerationService").Methods().ByName("ListSuspended"),
+			Procedure:  ModerationServiceListSuspendedProcedure,
+		}
+	})
 )
 
 // ModerationServiceClient is a client for the issho.v1.ModerationService service.
 type ModerationServiceClient interface {
 	// ListReports returns reports, open ones first (oldest first), then the
 	// rest newest first. Paged: page_size, page_token.
-	ListReports(context.Context, *connect.Request[v1.ListReportsRequest]) (*connect.Response[v1.ListReportsResponse], error)
+	ListReports(context.Context, *v1.ListReportsRequest) (*v1.ListReportsResponse, error)
 	// ResolveReport records the decision on a report. It can be changed
 	// later (resolve again). The pair stays apart in matching either way.
-	ResolveReport(context.Context, *connect.Request[v1.ResolveReportRequest]) (*connect.Response[v1.ResolveReportResponse], error)
+	ResolveReport(context.Context, *v1.ResolveReportRequest) (*v1.ResolveReportResponse, error)
 	// ListFlags returns open flags (oldest first) or resolved ones (newest
 	// first). Paged: page_size, page_token.
-	ListFlags(context.Context, *connect.Request[v1.ListFlagsRequest]) (*connect.Response[v1.ListFlagsResponse], error)
+	ListFlags(context.Context, *v1.ListFlagsRequest) (*v1.ListFlagsResponse, error)
 	// ResolveFlag closes an open flag with a note. FAILED_PRECONDITION if
 	// it's already resolved. A later signal opens a new flag.
-	ResolveFlag(context.Context, *connect.Request[v1.ResolveFlagRequest]) (*connect.Response[v1.ResolveFlagResponse], error)
+	ResolveFlag(context.Context, *v1.ResolveFlagRequest) (*v1.ResolveFlagResponse, error)
 	// ListCrewLeaves returns why people left crews, newest first. Paged: page_size,
 	// page_token.
-	ListCrewLeaves(context.Context, *connect.Request[v1.ListCrewLeavesRequest]) (*connect.Response[v1.ListCrewLeavesResponse], error)
+	ListCrewLeaves(context.Context, *v1.ListCrewLeavesRequest) (*v1.ListCrewLeavesResponse, error)
 	// SearchPeople finds people by name or email (contains, any case) or
 	// exact user id, by name (people without one last). Paged: page_size,
 	// page_token.
-	SearchPeople(context.Context, *connect.Request[v1.SearchPeopleRequest]) (*connect.Response[v1.SearchPeopleResponse], error)
+	SearchPeople(context.Context, *v1.SearchPeopleRequest) (*v1.SearchPeopleResponse, error)
 	// GetPerson returns what a moderator needs to decide about someone:
 	// who they are, report counts, flags, suspensions and recent outings.
 	// NOT_FOUND if there's no such account.
-	GetPerson(context.Context, *connect.Request[v1.GetPersonRequest]) (*connect.Response[v1.GetPersonResponse], error)
+	GetPerson(context.Context, *v1.GetPersonRequest) (*v1.GetPersonResponse, error)
 	// SuspendPerson keeps someone out of Issho until it's lifted: the API
 	// refuses their calls (GetMe says they're suspended; signing out and
 	// deleting the account still work), the chat socket refuses them,
@@ -97,179 +161,47 @@ type ModerationServiceClient interface {
 	// taken out of their open signups, outings that haven't started, and
 	// crews. Suspending someone already suspended only repeats that
 	// removal. INVALID_ARGUMENT for the caller's own account.
-	SuspendPerson(context.Context, *connect.Request[v1.SuspendPersonRequest]) (*connect.Response[v1.SuspendPersonResponse], error)
+	SuspendPerson(context.Context, *v1.SuspendPersonRequest) (*v1.SuspendPersonResponse, error)
 	// LiftSuspension ends someone's suspension. They can use Issho again,
 	// but aren't put back into what they were taken out of.
 	// FAILED_PRECONDITION if they aren't suspended.
-	LiftSuspension(context.Context, *connect.Request[v1.LiftSuspensionRequest]) (*connect.Response[v1.LiftSuspensionResponse], error)
+	LiftSuspension(context.Context, *v1.LiftSuspensionRequest) (*v1.LiftSuspensionResponse, error)
 	// ListSuspended returns everyone suspended now, most recent first.
 	// Paged: page_size, page_token.
-	ListSuspended(context.Context, *connect.Request[v1.ListSuspendedRequest]) (*connect.Response[v1.ListSuspendedResponse], error)
+	ListSuspended(context.Context, *v1.ListSuspendedRequest) (*v1.ListSuspendedResponse, error)
 }
 
-// NewModerationServiceClient constructs a client for the issho.v1.ModerationService service. By
-// default, it uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses,
-// and sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the
-// connect.WithGRPC() or connect.WithGRPCWeb() options.
-//
-// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
-// http://api.acme.com or https://acme.com/grpc).
-func NewModerationServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) ModerationServiceClient {
-	baseURL = strings.TrimRight(baseURL, "/")
-	moderationServiceMethods := v1.File_issho_v1_moderation_proto.Services().ByName("ModerationService").Methods()
-	return &moderationServiceClient{
-		listReports: connect.NewClient[v1.ListReportsRequest, v1.ListReportsResponse](
-			httpClient,
-			baseURL+ModerationServiceListReportsProcedure,
-			connect.WithSchema(moderationServiceMethods.ByName("ListReports")),
-			connect.WithClientOptions(opts...),
-		),
-		resolveReport: connect.NewClient[v1.ResolveReportRequest, v1.ResolveReportResponse](
-			httpClient,
-			baseURL+ModerationServiceResolveReportProcedure,
-			connect.WithSchema(moderationServiceMethods.ByName("ResolveReport")),
-			connect.WithClientOptions(opts...),
-		),
-		listFlags: connect.NewClient[v1.ListFlagsRequest, v1.ListFlagsResponse](
-			httpClient,
-			baseURL+ModerationServiceListFlagsProcedure,
-			connect.WithSchema(moderationServiceMethods.ByName("ListFlags")),
-			connect.WithClientOptions(opts...),
-		),
-		resolveFlag: connect.NewClient[v1.ResolveFlagRequest, v1.ResolveFlagResponse](
-			httpClient,
-			baseURL+ModerationServiceResolveFlagProcedure,
-			connect.WithSchema(moderationServiceMethods.ByName("ResolveFlag")),
-			connect.WithClientOptions(opts...),
-		),
-		listCrewLeaves: connect.NewClient[v1.ListCrewLeavesRequest, v1.ListCrewLeavesResponse](
-			httpClient,
-			baseURL+ModerationServiceListCrewLeavesProcedure,
-			connect.WithSchema(moderationServiceMethods.ByName("ListCrewLeaves")),
-			connect.WithClientOptions(opts...),
-		),
-		searchPeople: connect.NewClient[v1.SearchPeopleRequest, v1.SearchPeopleResponse](
-			httpClient,
-			baseURL+ModerationServiceSearchPeopleProcedure,
-			connect.WithSchema(moderationServiceMethods.ByName("SearchPeople")),
-			connect.WithClientOptions(opts...),
-		),
-		getPerson: connect.NewClient[v1.GetPersonRequest, v1.GetPersonResponse](
-			httpClient,
-			baseURL+ModerationServiceGetPersonProcedure,
-			connect.WithSchema(moderationServiceMethods.ByName("GetPerson")),
-			connect.WithClientOptions(opts...),
-		),
-		suspendPerson: connect.NewClient[v1.SuspendPersonRequest, v1.SuspendPersonResponse](
-			httpClient,
-			baseURL+ModerationServiceSuspendPersonProcedure,
-			connect.WithSchema(moderationServiceMethods.ByName("SuspendPerson")),
-			connect.WithClientOptions(opts...),
-		),
-		liftSuspension: connect.NewClient[v1.LiftSuspensionRequest, v1.LiftSuspensionResponse](
-			httpClient,
-			baseURL+ModerationServiceLiftSuspensionProcedure,
-			connect.WithSchema(moderationServiceMethods.ByName("LiftSuspension")),
-			connect.WithClientOptions(opts...),
-		),
-		listSuspended: connect.NewClient[v1.ListSuspendedRequest, v1.ListSuspendedResponse](
-			httpClient,
-			baseURL+ModerationServiceListSuspendedProcedure,
-			connect.WithSchema(moderationServiceMethods.ByName("ListSuspended")),
-			connect.WithClientOptions(opts...),
-		),
-	}
-}
-
-// moderationServiceClient implements ModerationServiceClient.
-type moderationServiceClient struct {
-	listReports    *connect.Client[v1.ListReportsRequest, v1.ListReportsResponse]
-	resolveReport  *connect.Client[v1.ResolveReportRequest, v1.ResolveReportResponse]
-	listFlags      *connect.Client[v1.ListFlagsRequest, v1.ListFlagsResponse]
-	resolveFlag    *connect.Client[v1.ResolveFlagRequest, v1.ResolveFlagResponse]
-	listCrewLeaves *connect.Client[v1.ListCrewLeavesRequest, v1.ListCrewLeavesResponse]
-	searchPeople   *connect.Client[v1.SearchPeopleRequest, v1.SearchPeopleResponse]
-	getPerson      *connect.Client[v1.GetPersonRequest, v1.GetPersonResponse]
-	suspendPerson  *connect.Client[v1.SuspendPersonRequest, v1.SuspendPersonResponse]
-	liftSuspension *connect.Client[v1.LiftSuspensionRequest, v1.LiftSuspensionResponse]
-	listSuspended  *connect.Client[v1.ListSuspendedRequest, v1.ListSuspendedResponse]
-}
-
-// ListReports calls issho.v1.ModerationService.ListReports.
-func (c *moderationServiceClient) ListReports(ctx context.Context, req *connect.Request[v1.ListReportsRequest]) (*connect.Response[v1.ListReportsResponse], error) {
-	return c.listReports.CallUnary(ctx, req)
-}
-
-// ResolveReport calls issho.v1.ModerationService.ResolveReport.
-func (c *moderationServiceClient) ResolveReport(ctx context.Context, req *connect.Request[v1.ResolveReportRequest]) (*connect.Response[v1.ResolveReportResponse], error) {
-	return c.resolveReport.CallUnary(ctx, req)
-}
-
-// ListFlags calls issho.v1.ModerationService.ListFlags.
-func (c *moderationServiceClient) ListFlags(ctx context.Context, req *connect.Request[v1.ListFlagsRequest]) (*connect.Response[v1.ListFlagsResponse], error) {
-	return c.listFlags.CallUnary(ctx, req)
-}
-
-// ResolveFlag calls issho.v1.ModerationService.ResolveFlag.
-func (c *moderationServiceClient) ResolveFlag(ctx context.Context, req *connect.Request[v1.ResolveFlagRequest]) (*connect.Response[v1.ResolveFlagResponse], error) {
-	return c.resolveFlag.CallUnary(ctx, req)
-}
-
-// ListCrewLeaves calls issho.v1.ModerationService.ListCrewLeaves.
-func (c *moderationServiceClient) ListCrewLeaves(ctx context.Context, req *connect.Request[v1.ListCrewLeavesRequest]) (*connect.Response[v1.ListCrewLeavesResponse], error) {
-	return c.listCrewLeaves.CallUnary(ctx, req)
-}
-
-// SearchPeople calls issho.v1.ModerationService.SearchPeople.
-func (c *moderationServiceClient) SearchPeople(ctx context.Context, req *connect.Request[v1.SearchPeopleRequest]) (*connect.Response[v1.SearchPeopleResponse], error) {
-	return c.searchPeople.CallUnary(ctx, req)
-}
-
-// GetPerson calls issho.v1.ModerationService.GetPerson.
-func (c *moderationServiceClient) GetPerson(ctx context.Context, req *connect.Request[v1.GetPersonRequest]) (*connect.Response[v1.GetPersonResponse], error) {
-	return c.getPerson.CallUnary(ctx, req)
-}
-
-// SuspendPerson calls issho.v1.ModerationService.SuspendPerson.
-func (c *moderationServiceClient) SuspendPerson(ctx context.Context, req *connect.Request[v1.SuspendPersonRequest]) (*connect.Response[v1.SuspendPersonResponse], error) {
-	return c.suspendPerson.CallUnary(ctx, req)
-}
-
-// LiftSuspension calls issho.v1.ModerationService.LiftSuspension.
-func (c *moderationServiceClient) LiftSuspension(ctx context.Context, req *connect.Request[v1.LiftSuspensionRequest]) (*connect.Response[v1.LiftSuspensionResponse], error) {
-	return c.liftSuspension.CallUnary(ctx, req)
-}
-
-// ListSuspended calls issho.v1.ModerationService.ListSuspended.
-func (c *moderationServiceClient) ListSuspended(ctx context.Context, req *connect.Request[v1.ListSuspendedRequest]) (*connect.Response[v1.ListSuspendedResponse], error) {
-	return c.listSuspended.CallUnary(ctx, req)
+// NewModerationServiceClient constructs a client for the issho.v1.ModerationService service.
+// Multiple service clients may share a single connect.Client.
+func NewModerationServiceClient(client *connect.Client) ModerationServiceClient {
+	return &moderationServiceClient{client: client}
 }
 
 // ModerationServiceHandler is an implementation of the issho.v1.ModerationService service.
 type ModerationServiceHandler interface {
 	// ListReports returns reports, open ones first (oldest first), then the
 	// rest newest first. Paged: page_size, page_token.
-	ListReports(context.Context, *connect.Request[v1.ListReportsRequest]) (*connect.Response[v1.ListReportsResponse], error)
+	ListReports(context.Context, *v1.ListReportsRequest) (*v1.ListReportsResponse, error)
 	// ResolveReport records the decision on a report. It can be changed
 	// later (resolve again). The pair stays apart in matching either way.
-	ResolveReport(context.Context, *connect.Request[v1.ResolveReportRequest]) (*connect.Response[v1.ResolveReportResponse], error)
+	ResolveReport(context.Context, *v1.ResolveReportRequest) (*v1.ResolveReportResponse, error)
 	// ListFlags returns open flags (oldest first) or resolved ones (newest
 	// first). Paged: page_size, page_token.
-	ListFlags(context.Context, *connect.Request[v1.ListFlagsRequest]) (*connect.Response[v1.ListFlagsResponse], error)
+	ListFlags(context.Context, *v1.ListFlagsRequest) (*v1.ListFlagsResponse, error)
 	// ResolveFlag closes an open flag with a note. FAILED_PRECONDITION if
 	// it's already resolved. A later signal opens a new flag.
-	ResolveFlag(context.Context, *connect.Request[v1.ResolveFlagRequest]) (*connect.Response[v1.ResolveFlagResponse], error)
+	ResolveFlag(context.Context, *v1.ResolveFlagRequest) (*v1.ResolveFlagResponse, error)
 	// ListCrewLeaves returns why people left crews, newest first. Paged: page_size,
 	// page_token.
-	ListCrewLeaves(context.Context, *connect.Request[v1.ListCrewLeavesRequest]) (*connect.Response[v1.ListCrewLeavesResponse], error)
+	ListCrewLeaves(context.Context, *v1.ListCrewLeavesRequest) (*v1.ListCrewLeavesResponse, error)
 	// SearchPeople finds people by name or email (contains, any case) or
 	// exact user id, by name (people without one last). Paged: page_size,
 	// page_token.
-	SearchPeople(context.Context, *connect.Request[v1.SearchPeopleRequest]) (*connect.Response[v1.SearchPeopleResponse], error)
+	SearchPeople(context.Context, *v1.SearchPeopleRequest) (*v1.SearchPeopleResponse, error)
 	// GetPerson returns what a moderator needs to decide about someone:
 	// who they are, report counts, flags, suspensions and recent outings.
 	// NOT_FOUND if there's no such account.
-	GetPerson(context.Context, *connect.Request[v1.GetPersonRequest]) (*connect.Response[v1.GetPersonResponse], error)
+	GetPerson(context.Context, *v1.GetPersonRequest) (*v1.GetPersonResponse, error)
 	// SuspendPerson keeps someone out of Issho until it's lifted: the API
 	// refuses their calls (GetMe says they're suspended; signing out and
 	// deleting the account still work), the chat socket refuses them,
@@ -277,150 +209,279 @@ type ModerationServiceHandler interface {
 	// taken out of their open signups, outings that haven't started, and
 	// crews. Suspending someone already suspended only repeats that
 	// removal. INVALID_ARGUMENT for the caller's own account.
-	SuspendPerson(context.Context, *connect.Request[v1.SuspendPersonRequest]) (*connect.Response[v1.SuspendPersonResponse], error)
+	SuspendPerson(context.Context, *v1.SuspendPersonRequest) (*v1.SuspendPersonResponse, error)
 	// LiftSuspension ends someone's suspension. They can use Issho again,
 	// but aren't put back into what they were taken out of.
 	// FAILED_PRECONDITION if they aren't suspended.
-	LiftSuspension(context.Context, *connect.Request[v1.LiftSuspensionRequest]) (*connect.Response[v1.LiftSuspensionResponse], error)
+	LiftSuspension(context.Context, *v1.LiftSuspensionRequest) (*v1.LiftSuspensionResponse, error)
 	// ListSuspended returns everyone suspended now, most recent first.
 	// Paged: page_size, page_token.
-	ListSuspended(context.Context, *connect.Request[v1.ListSuspendedRequest]) (*connect.Response[v1.ListSuspendedResponse], error)
+	ListSuspended(context.Context, *v1.ListSuspendedRequest) (*v1.ListSuspendedResponse, error)
 }
 
-// NewModerationServiceHandler builds an HTTP handler from the service implementation. It returns
-// the path on which to mount the handler and the handler itself.
-//
-// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
-// and JSON codecs. They also support gzip compression.
-func NewModerationServiceHandler(svc ModerationServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
-	moderationServiceMethods := v1.File_issho_v1_moderation_proto.Services().ByName("ModerationService").Methods()
-	moderationServiceListReportsHandler := connect.NewUnaryHandler(
-		ModerationServiceListReportsProcedure,
-		svc.ListReports,
-		connect.WithSchema(moderationServiceMethods.ByName("ListReports")),
-		connect.WithHandlerOptions(opts...),
+// RegisterModerationServiceHandler registers svc as the issho.v1.ModerationService implementation
+// on server.
+func RegisterModerationServiceHandler(server *connect.Server, svc ModerationServiceHandler) {
+	adapter := moderationServiceHandler{svc: svc}
+	server.Register(
+		connect.Method{Spec: moderationServiceListReportsSpec(), Handler: adapter.listReports},
+		connect.Method{Spec: moderationServiceResolveReportSpec(), Handler: adapter.resolveReport},
+		connect.Method{Spec: moderationServiceListFlagsSpec(), Handler: adapter.listFlags},
+		connect.Method{Spec: moderationServiceResolveFlagSpec(), Handler: adapter.resolveFlag},
+		connect.Method{Spec: moderationServiceListCrewLeavesSpec(), Handler: adapter.listCrewLeaves},
+		connect.Method{Spec: moderationServiceSearchPeopleSpec(), Handler: adapter.searchPeople},
+		connect.Method{Spec: moderationServiceGetPersonSpec(), Handler: adapter.getPerson},
+		connect.Method{Spec: moderationServiceSuspendPersonSpec(), Handler: adapter.suspendPerson},
+		connect.Method{Spec: moderationServiceLiftSuspensionSpec(), Handler: adapter.liftSuspension},
+		connect.Method{Spec: moderationServiceListSuspendedSpec(), Handler: adapter.listSuspended},
 	)
-	moderationServiceResolveReportHandler := connect.NewUnaryHandler(
-		ModerationServiceResolveReportProcedure,
-		svc.ResolveReport,
-		connect.WithSchema(moderationServiceMethods.ByName("ResolveReport")),
-		connect.WithHandlerOptions(opts...),
-	)
-	moderationServiceListFlagsHandler := connect.NewUnaryHandler(
-		ModerationServiceListFlagsProcedure,
-		svc.ListFlags,
-		connect.WithSchema(moderationServiceMethods.ByName("ListFlags")),
-		connect.WithHandlerOptions(opts...),
-	)
-	moderationServiceResolveFlagHandler := connect.NewUnaryHandler(
-		ModerationServiceResolveFlagProcedure,
-		svc.ResolveFlag,
-		connect.WithSchema(moderationServiceMethods.ByName("ResolveFlag")),
-		connect.WithHandlerOptions(opts...),
-	)
-	moderationServiceListCrewLeavesHandler := connect.NewUnaryHandler(
-		ModerationServiceListCrewLeavesProcedure,
-		svc.ListCrewLeaves,
-		connect.WithSchema(moderationServiceMethods.ByName("ListCrewLeaves")),
-		connect.WithHandlerOptions(opts...),
-	)
-	moderationServiceSearchPeopleHandler := connect.NewUnaryHandler(
-		ModerationServiceSearchPeopleProcedure,
-		svc.SearchPeople,
-		connect.WithSchema(moderationServiceMethods.ByName("SearchPeople")),
-		connect.WithHandlerOptions(opts...),
-	)
-	moderationServiceGetPersonHandler := connect.NewUnaryHandler(
-		ModerationServiceGetPersonProcedure,
-		svc.GetPerson,
-		connect.WithSchema(moderationServiceMethods.ByName("GetPerson")),
-		connect.WithHandlerOptions(opts...),
-	)
-	moderationServiceSuspendPersonHandler := connect.NewUnaryHandler(
-		ModerationServiceSuspendPersonProcedure,
-		svc.SuspendPerson,
-		connect.WithSchema(moderationServiceMethods.ByName("SuspendPerson")),
-		connect.WithHandlerOptions(opts...),
-	)
-	moderationServiceLiftSuspensionHandler := connect.NewUnaryHandler(
-		ModerationServiceLiftSuspensionProcedure,
-		svc.LiftSuspension,
-		connect.WithSchema(moderationServiceMethods.ByName("LiftSuspension")),
-		connect.WithHandlerOptions(opts...),
-	)
-	moderationServiceListSuspendedHandler := connect.NewUnaryHandler(
-		ModerationServiceListSuspendedProcedure,
-		svc.ListSuspended,
-		connect.WithSchema(moderationServiceMethods.ByName("ListSuspended")),
-		connect.WithHandlerOptions(opts...),
-	)
-	return "/issho.v1.ModerationService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.URL.Path {
-		case ModerationServiceListReportsProcedure:
-			moderationServiceListReportsHandler.ServeHTTP(w, r)
-		case ModerationServiceResolveReportProcedure:
-			moderationServiceResolveReportHandler.ServeHTTP(w, r)
-		case ModerationServiceListFlagsProcedure:
-			moderationServiceListFlagsHandler.ServeHTTP(w, r)
-		case ModerationServiceResolveFlagProcedure:
-			moderationServiceResolveFlagHandler.ServeHTTP(w, r)
-		case ModerationServiceListCrewLeavesProcedure:
-			moderationServiceListCrewLeavesHandler.ServeHTTP(w, r)
-		case ModerationServiceSearchPeopleProcedure:
-			moderationServiceSearchPeopleHandler.ServeHTTP(w, r)
-		case ModerationServiceGetPersonProcedure:
-			moderationServiceGetPersonHandler.ServeHTTP(w, r)
-		case ModerationServiceSuspendPersonProcedure:
-			moderationServiceSuspendPersonHandler.ServeHTTP(w, r)
-		case ModerationServiceLiftSuspensionProcedure:
-			moderationServiceLiftSuspensionHandler.ServeHTTP(w, r)
-		case ModerationServiceListSuspendedProcedure:
-			moderationServiceListSuspendedHandler.ServeHTTP(w, r)
-		default:
-			http.NotFound(w, r)
-		}
-	})
 }
 
 // UnimplementedModerationServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedModerationServiceHandler struct{}
 
-func (UnimplementedModerationServiceHandler) ListReports(context.Context, *connect.Request[v1.ListReportsRequest]) (*connect.Response[v1.ListReportsResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.ModerationService.ListReports is not implemented"))
+func (UnimplementedModerationServiceHandler) ListReports(context.Context, *v1.ListReportsRequest) (*v1.ListReportsResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "issho.v1.ModerationService.ListReports is not implemented")
 }
 
-func (UnimplementedModerationServiceHandler) ResolveReport(context.Context, *connect.Request[v1.ResolveReportRequest]) (*connect.Response[v1.ResolveReportResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.ModerationService.ResolveReport is not implemented"))
+func (UnimplementedModerationServiceHandler) ResolveReport(context.Context, *v1.ResolveReportRequest) (*v1.ResolveReportResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "issho.v1.ModerationService.ResolveReport is not implemented")
 }
 
-func (UnimplementedModerationServiceHandler) ListFlags(context.Context, *connect.Request[v1.ListFlagsRequest]) (*connect.Response[v1.ListFlagsResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.ModerationService.ListFlags is not implemented"))
+func (UnimplementedModerationServiceHandler) ListFlags(context.Context, *v1.ListFlagsRequest) (*v1.ListFlagsResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "issho.v1.ModerationService.ListFlags is not implemented")
 }
 
-func (UnimplementedModerationServiceHandler) ResolveFlag(context.Context, *connect.Request[v1.ResolveFlagRequest]) (*connect.Response[v1.ResolveFlagResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.ModerationService.ResolveFlag is not implemented"))
+func (UnimplementedModerationServiceHandler) ResolveFlag(context.Context, *v1.ResolveFlagRequest) (*v1.ResolveFlagResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "issho.v1.ModerationService.ResolveFlag is not implemented")
 }
 
-func (UnimplementedModerationServiceHandler) ListCrewLeaves(context.Context, *connect.Request[v1.ListCrewLeavesRequest]) (*connect.Response[v1.ListCrewLeavesResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.ModerationService.ListCrewLeaves is not implemented"))
+func (UnimplementedModerationServiceHandler) ListCrewLeaves(context.Context, *v1.ListCrewLeavesRequest) (*v1.ListCrewLeavesResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "issho.v1.ModerationService.ListCrewLeaves is not implemented")
 }
 
-func (UnimplementedModerationServiceHandler) SearchPeople(context.Context, *connect.Request[v1.SearchPeopleRequest]) (*connect.Response[v1.SearchPeopleResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.ModerationService.SearchPeople is not implemented"))
+func (UnimplementedModerationServiceHandler) SearchPeople(context.Context, *v1.SearchPeopleRequest) (*v1.SearchPeopleResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "issho.v1.ModerationService.SearchPeople is not implemented")
 }
 
-func (UnimplementedModerationServiceHandler) GetPerson(context.Context, *connect.Request[v1.GetPersonRequest]) (*connect.Response[v1.GetPersonResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.ModerationService.GetPerson is not implemented"))
+func (UnimplementedModerationServiceHandler) GetPerson(context.Context, *v1.GetPersonRequest) (*v1.GetPersonResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "issho.v1.ModerationService.GetPerson is not implemented")
 }
 
-func (UnimplementedModerationServiceHandler) SuspendPerson(context.Context, *connect.Request[v1.SuspendPersonRequest]) (*connect.Response[v1.SuspendPersonResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.ModerationService.SuspendPerson is not implemented"))
+func (UnimplementedModerationServiceHandler) SuspendPerson(context.Context, *v1.SuspendPersonRequest) (*v1.SuspendPersonResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "issho.v1.ModerationService.SuspendPerson is not implemented")
 }
 
-func (UnimplementedModerationServiceHandler) LiftSuspension(context.Context, *connect.Request[v1.LiftSuspensionRequest]) (*connect.Response[v1.LiftSuspensionResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.ModerationService.LiftSuspension is not implemented"))
+func (UnimplementedModerationServiceHandler) LiftSuspension(context.Context, *v1.LiftSuspensionRequest) (*v1.LiftSuspensionResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "issho.v1.ModerationService.LiftSuspension is not implemented")
 }
 
-func (UnimplementedModerationServiceHandler) ListSuspended(context.Context, *connect.Request[v1.ListSuspendedRequest]) (*connect.Response[v1.ListSuspendedResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.ModerationService.ListSuspended is not implemented"))
+func (UnimplementedModerationServiceHandler) ListSuspended(context.Context, *v1.ListSuspendedRequest) (*v1.ListSuspendedResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "issho.v1.ModerationService.ListSuspended is not implemented")
+}
+
+type moderationServiceClient struct {
+	client *connect.Client
+}
+
+func (c *moderationServiceClient) ListReports(ctx context.Context, req *v1.ListReportsRequest) (*v1.ListReportsResponse, error) {
+	var res v1.ListReportsResponse
+	if err := c.client.CallUnary(ctx, moderationServiceListReportsSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *moderationServiceClient) ResolveReport(ctx context.Context, req *v1.ResolveReportRequest) (*v1.ResolveReportResponse, error) {
+	var res v1.ResolveReportResponse
+	if err := c.client.CallUnary(ctx, moderationServiceResolveReportSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *moderationServiceClient) ListFlags(ctx context.Context, req *v1.ListFlagsRequest) (*v1.ListFlagsResponse, error) {
+	var res v1.ListFlagsResponse
+	if err := c.client.CallUnary(ctx, moderationServiceListFlagsSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *moderationServiceClient) ResolveFlag(ctx context.Context, req *v1.ResolveFlagRequest) (*v1.ResolveFlagResponse, error) {
+	var res v1.ResolveFlagResponse
+	if err := c.client.CallUnary(ctx, moderationServiceResolveFlagSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *moderationServiceClient) ListCrewLeaves(ctx context.Context, req *v1.ListCrewLeavesRequest) (*v1.ListCrewLeavesResponse, error) {
+	var res v1.ListCrewLeavesResponse
+	if err := c.client.CallUnary(ctx, moderationServiceListCrewLeavesSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *moderationServiceClient) SearchPeople(ctx context.Context, req *v1.SearchPeopleRequest) (*v1.SearchPeopleResponse, error) {
+	var res v1.SearchPeopleResponse
+	if err := c.client.CallUnary(ctx, moderationServiceSearchPeopleSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *moderationServiceClient) GetPerson(ctx context.Context, req *v1.GetPersonRequest) (*v1.GetPersonResponse, error) {
+	var res v1.GetPersonResponse
+	if err := c.client.CallUnary(ctx, moderationServiceGetPersonSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *moderationServiceClient) SuspendPerson(ctx context.Context, req *v1.SuspendPersonRequest) (*v1.SuspendPersonResponse, error) {
+	var res v1.SuspendPersonResponse
+	if err := c.client.CallUnary(ctx, moderationServiceSuspendPersonSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *moderationServiceClient) LiftSuspension(ctx context.Context, req *v1.LiftSuspensionRequest) (*v1.LiftSuspensionResponse, error) {
+	var res v1.LiftSuspensionResponse
+	if err := c.client.CallUnary(ctx, moderationServiceLiftSuspensionSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *moderationServiceClient) ListSuspended(ctx context.Context, req *v1.ListSuspendedRequest) (*v1.ListSuspendedResponse, error) {
+	var res v1.ListSuspendedResponse
+	if err := c.client.CallUnary(ctx, moderationServiceListSuspendedSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+type moderationServiceHandler struct{ svc ModerationServiceHandler }
+
+func (h moderationServiceHandler) listReports(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.ListReportsRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.ListReports(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h moderationServiceHandler) resolveReport(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.ResolveReportRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.ResolveReport(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h moderationServiceHandler) listFlags(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.ListFlagsRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.ListFlags(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h moderationServiceHandler) resolveFlag(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.ResolveFlagRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.ResolveFlag(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h moderationServiceHandler) listCrewLeaves(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.ListCrewLeavesRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.ListCrewLeaves(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h moderationServiceHandler) searchPeople(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.SearchPeopleRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.SearchPeople(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h moderationServiceHandler) getPerson(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.GetPersonRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.GetPerson(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h moderationServiceHandler) suspendPerson(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.SuspendPersonRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.SuspendPerson(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h moderationServiceHandler) liftSuspension(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.LiftSuspensionRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.LiftSuspension(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h moderationServiceHandler) listSuspended(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.ListSuspendedRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.ListSuspended(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
 }

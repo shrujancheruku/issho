@@ -8,7 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"connectrpc.com/connect"
+	"connectrpc.com/connect/v2"
+	"connectrpc.com/connect/v2/connecthttp"
 
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
 	"github.com/shrujancheruku/issho/backend/gen/issho/v1/isshov1connect"
@@ -20,23 +21,26 @@ type slow struct {
 	isshov1connect.UnimplementedHealthServiceHandler
 }
 
-func (slow) Check(ctx context.Context, _ *connect.Request[isshov1.CheckRequest]) (*connect.Response[isshov1.CheckResponse], error) {
+func (slow) Check(ctx context.Context, _ *isshov1.CheckRequest) (*isshov1.CheckResponse, error) {
 	select {
 	case <-ctx.Done():
 		return nil, ctx.Err() // a bare context error, as a database call returns it
 	case <-time.After(300 * time.Millisecond):
-		return connect.NewResponse(&isshov1.CheckResponse{DatabaseOk: true}), nil
+		return &isshov1.CheckResponse{DatabaseOk: true}, nil
 	}
 }
 
-func call(t *testing.T, i connect.UnaryInterceptorFunc) error {
+func call(t *testing.T, i connect.ServerInterceptor) error {
 	t.Helper()
 	mux := http.NewServeMux()
-	// errs outermost, as in main.
-	mux.Handle(isshov1connect.NewHealthServiceHandler(slow{}, connect.WithInterceptors(errs.Interceptor(slog.Default()), i)))
+	server :=
+		// errs outermost, as in main.
+		connect.NewServer(errs.Interceptor(slog.Default()), i)
+	isshov1connect.RegisterHealthServiceHandler(server, slow{})
+	connecthttp.Mount(mux, server)
 	srv := httptest.NewServer(mux)
 	t.Cleanup(srv.Close)
-	_, err := isshov1connect.NewHealthServiceClient(srv.Client(), srv.URL).Check(context.Background(), connect.NewRequest(&isshov1.CheckRequest{}))
+	_, err := isshov1connect.NewHealthServiceClient(connect.NewClient(connecthttp.NewTransport(srv.Client(), srv.URL))).Check(context.Background(), &isshov1.CheckRequest{})
 	return err
 }
 
@@ -63,14 +67,14 @@ func TestLongerOverride(t *testing.T) {
 
 func TestShorterCallerDeadlineWins(t *testing.T) {
 	var got time.Duration
-	next := func(ctx context.Context, _ connect.AnyRequest) (connect.AnyResponse, error) {
+	next := func(ctx context.Context, _ connect.Spec, _ connect.ServerStream) error {
 		dl, _ := ctx.Deadline()
 		got = time.Until(dl)
-		return nil, nil
+		return nil
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	_, _ = Interceptor(time.Minute, nil)(next)(ctx, connect.NewRequest(&isshov1.CheckRequest{}))
+	_ = Interceptor(time.Minute, nil)(next)(ctx, connect.Spec{}, nil)
 	if got > time.Second {
 		t.Fatalf("deadline %v, want the caller's 1s", got)
 	}

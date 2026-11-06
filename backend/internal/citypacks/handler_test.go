@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"connectrpc.com/connect"
+	"connectrpc.com/connect/v2"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/riverqueue/river"
@@ -190,11 +190,11 @@ func TestIntegrationCityPacks(t *testing.T) {
 		ActivityOverrides: []*isshov1.PackOverride{{ActivityId: act, Name: " Kissa ", Months: []int32{4, 5}}},
 	}
 	propose := func(p *isshov1.CityPack) (*isshov1.ProposeCityPackResponse, error) {
-		res, err := h.ProposeCityPack(adminCtx, connect.NewRequest(&isshov1.ProposeCityPackRequest{Pack: p, Note: "Launching soon."}))
+		res, err := h.ProposeCityPack(adminCtx, &isshov1.ProposeCityPackRequest{Pack: p, Note: "Launching soon."})
 		if err != nil {
 			return nil, err
 		}
-		return res.Msg, nil
+		return res, nil
 	}
 	bad := func(name string, change func(p *isshov1.CityPack)) {
 		t.Helper()
@@ -233,8 +233,8 @@ func TestIntegrationCityPacks(t *testing.T) {
 		t.Errorf("written = %+v, %v", written, err)
 	}
 	// The editor opens the pending pack, not main's (there is none yet).
-	pending, err := h.GetCityPack(adminCtx, connect.NewRequest(&isshov1.GetCityPackRequest{CityId: city}))
-	if err != nil || pending.Msg.PullRequest.GetNumber() != 100 || pending.Msg.Pack.GetCurrency() != "JPY" {
+	pending, err := h.GetCityPack(adminCtx, &isshov1.GetCityPackRequest{CityId: city})
+	if err != nil || pending.PullRequest.GetNumber() != 100 || pending.Pack.GetCurrency() != "JPY" {
 		t.Errorf("GetCityPack of a pending new city: %+v %v", pending, err)
 	}
 	// Saving again commits to the same pull request, rewriting its body.
@@ -245,7 +245,7 @@ func TestIntegrationCityPacks(t *testing.T) {
 	if !strings.Contains(repo.prs[0].Body, "New city Packs") || !strings.Contains(string(repo.branches[branch]["data/citypacks/zz-packs.json"]), "Beta Town") {
 		t.Errorf("rolling pull request: %q", repo.prs[0].Body)
 	}
-	if lp, err := h.ListCityPacks(adminCtx, connect.NewRequest(&isshov1.ListCityPacksRequest{})); err != nil || len(lp.Msg.PullRequests) != 1 || lp.Msg.PullRequests[0].Number != 100 {
+	if lp, err := h.ListCityPacks(adminCtx, &isshov1.ListCityPacksRequest{}); err != nil || len(lp.PullRequests) != 1 || lp.PullRequests[0].Number != 100 {
 		t.Errorf("list with a pending change: %v %v", lp, err)
 	}
 	pack.Areas[1].Name["en"] = "Beta"
@@ -256,7 +256,7 @@ func TestIntegrationCityPacks(t *testing.T) {
 	// An invalid pack on main fails the call at once, with the usual error
 	// and no job queued.
 	repo.files["data/citypacks/bad.json"] = []byte(`{"id":"bad","timezone":"Mars/Olympus","currency":"JPY"}`)
-	if _, err := h.ApplyCityPack(adminCtx, connect.NewRequest(&isshov1.ApplyCityPackRequest{CityId: "bad"})); connect.CodeOf(err) != connect.CodeInvalidArgument || len(jobs.args) != 0 {
+	if _, err := h.ApplyCityPack(adminCtx, &isshov1.ApplyCityPackRequest{CityId: "bad"}); connect.CodeOf(err) != connect.CodeInvalidArgument || len(jobs.args) != 0 {
 		t.Errorf("an invalid pack: %v (%d jobs queued)", err, len(jobs.args))
 	}
 
@@ -267,14 +267,14 @@ func TestIntegrationCityPacks(t *testing.T) {
 	// before it became a job.
 	applyJob := func() adminjobs.Output {
 		t.Helper()
-		res, err := h.ApplyCityPack(adminCtx, connect.NewRequest(&isshov1.ApplyCityPackRequest{CityId: city}))
-		if err != nil || res.Msg.JobId == 0 {
+		res, err := h.ApplyCityPack(adminCtx, &isshov1.ApplyCityPackRequest{CityId: city})
+		if err != nil || res.JobId == 0 {
 			t.Fatalf("apply = %v, %v", res, err)
 		}
-		if len(res.Msg.NewAreas) != 0 || res.Msg.TravelTimes != 0 {
-			t.Errorf("the RPC answered with a report; it belongs to the job: %v", res.Msg)
+		if len(res.NewAreas) != 0 || res.TravelTimes != 0 {
+			t.Errorf("the RPC answered with a report; it belongs to the job: %v", res)
 		}
-		return jobs.out[res.Msg.JobId]
+		return jobs.out[res.JobId]
 	}
 	apply := func() *isshov1.ApplyCityPackResponse {
 		t.Helper()
@@ -295,19 +295,19 @@ func TestIntegrationCityPacks(t *testing.T) {
 	// Venues for the first area of a new city: a search per kind of place
 	// its activities use (a seeded database has the whole catalogue, all
 	// enabled in a new city), each finding one place here.
-	disc, err := h.DiscoverAreaVenues(adminCtx, connect.NewRequest(&isshov1.DiscoverAreaVenuesRequest{CityId: city, AreaId: city + "-a"}))
-	if err != nil || disc.Msg.JobId == 0 {
+	disc, err := h.DiscoverAreaVenues(adminCtx, &isshov1.DiscoverAreaVenuesRequest{CityId: city, AreaId: city + "-a"})
+	if err != nil || disc.JobId == 0 {
 		t.Fatalf("discover = %v, %v", disc, err)
 	}
-	found := jobs.out[disc.Msg.JobId].DiscoverAreaVenues
+	found := jobs.out[disc.JobId].DiscoverAreaVenues
 	if found == nil || found.Searches < 1 || found.Venues != found.Searches || fm.Nearbys() != found.Searches {
-		t.Fatalf("discover job = %+v", jobs.out[disc.Msg.JobId])
+		t.Fatalf("discover job = %+v", jobs.out[disc.JobId])
 	}
-	list, err := h.ListCityPacks(adminCtx, connect.NewRequest(&isshov1.ListCityPacksRequest{}))
+	list, err := h.ListCityPacks(adminCtx, &isshov1.ListCityPacksRequest{})
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, p := range list.Msg.Packs {
+	for _, p := range list.Packs {
 		// Alpha has venues now (Beta may too: city-wide finds go to the
 		// nearest area).
 		if p.Id == city && (!p.InRepo || !p.Seeded || p.Name != "Packs" || p.Areas != 2 || len(p.AreasWithoutTravelTimes) != 0 ||
@@ -317,11 +317,11 @@ func TestIntegrationCityPacks(t *testing.T) {
 	}
 
 	// A change: refused when it removes an area or changes nothing.
-	got, err := h.GetCityPack(adminCtx, connect.NewRequest(&isshov1.GetCityPackRequest{CityId: city}))
+	got, err := h.GetCityPack(adminCtx, &isshov1.GetCityPackRequest{CityId: city})
 	if err != nil {
 		t.Fatal(err)
 	}
-	p := got.Msg.Pack
+	p := got.Pack
 	var mainPack isshov1.CityPack // main's, kept to revert to later
 	raw0, _ := json.Marshal(p)
 	_ = json.Unmarshal(raw0, &mainPack)
@@ -344,13 +344,13 @@ func TestIntegrationCityPacks(t *testing.T) {
 	}
 	// A further save rides on the same pull request. Its body is the whole
 	// change from the default branch, and the checks still run against it.
-	pend, err := h.GetCityPack(adminCtx, connect.NewRequest(&isshov1.GetCityPackRequest{CityId: city}))
-	if err != nil || int(pend.Msg.PullRequest.GetNumber()) != repo.prs[0].Number || len(pend.Msg.Pack.Areas) != 3 {
+	pend, err := h.GetCityPack(adminCtx, &isshov1.GetCityPackRequest{CityId: city})
+	if err != nil || int(pend.PullRequest.GetNumber()) != repo.prs[0].Number || len(pend.Pack.Areas) != 3 {
 		t.Fatalf("GetCityPack of a pending change: %+v %v", pend, err)
 	}
 	prs, commits := len(repo.prs), len(repo.commits)
-	pend.Msg.Pack.Areas[2].Lat += 0.001
-	if _, err := propose(pend.Msg.Pack); err != nil || len(repo.prs) != prs || len(repo.commits) != commits+1 ||
+	pend.Pack.Areas[2].Lat += 0.001
+	if _, err := propose(pend.Pack); err != nil || len(repo.prs) != prs || len(repo.commits) != commits+1 ||
 		!strings.Contains(repo.prs[0].Body, "Area zz-packs-b moved 1001 m") || !strings.Contains(repo.prs[0].Body, "New area Gamma") {
 		t.Errorf("rolling change: %v prs %d, commits %d, body %q", err, len(repo.prs), len(repo.commits), repo.prs[0].Body)
 	}
@@ -427,14 +427,14 @@ func TestIntegrationCityPacks(t *testing.T) {
 	if rem := apply(); !slices.Equal(rem.RemovedAreas, []string{city + "-e"}) || len(rem.ReplacedAreas) != 0 {
 		t.Errorf("removing apply = %v", rem)
 	}
-	if _, err := h.ApplyCityPack(adminCtx, connect.NewRequest(&isshov1.ApplyCityPackRequest{CityId: "nowhere"})); connect.CodeOf(err) != connect.CodeNotFound {
+	if _, err := h.ApplyCityPack(adminCtx, &isshov1.ApplyCityPackRequest{CityId: "nowhere"}); connect.CodeOf(err) != connect.CodeNotFound {
 		t.Errorf("no such pack: %v", err)
 	}
 	// Errors: only "not seeded" is NotFound, and Google's text stays out of
 	// what the admin sees. Bad input fails the call at once, with no job;
 	// Google failing fails the job.
 	discover := func(cityID, areaID string) error {
-		_, err := h.DiscoverAreaVenues(adminCtx, connect.NewRequest(&isshov1.DiscoverAreaVenuesRequest{CityId: cityID, AreaId: areaID}))
+		_, err := h.DiscoverAreaVenues(adminCtx, &isshov1.DiscoverAreaVenuesRequest{CityId: cityID, AreaId: areaID})
 		return err
 	}
 	if err := discover("nowhere", "x"); connect.CodeOf(err) != connect.CodeNotFound {
@@ -479,10 +479,10 @@ func TestIntegrationCityPacks(t *testing.T) {
 
 	// Without a token, only the list works.
 	h.Repo = nil
-	if _, err := h.GetCityPack(adminCtx, connect.NewRequest(&isshov1.GetCityPackRequest{CityId: city})); connect.CodeOf(err) != connect.CodeFailedPrecondition {
+	if _, err := h.GetCityPack(adminCtx, &isshov1.GetCityPackRequest{CityId: city}); connect.CodeOf(err) != connect.CodeFailedPrecondition {
 		t.Errorf("no token: %v", err)
 	}
-	if res, err := h.ListCityPacks(adminCtx, connect.NewRequest(&isshov1.ListCityPacksRequest{})); err != nil || res.Msg.Configured {
+	if res, err := h.ListCityPacks(adminCtx, &isshov1.ListCityPacksRequest{}); err != nil || res.Configured {
 		t.Errorf("list without a token: %v", err)
 	}
 }

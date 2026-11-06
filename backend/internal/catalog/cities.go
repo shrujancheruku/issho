@@ -4,16 +4,14 @@ import (
 	"context"
 	"encoding/json"
 
-	"connectrpc.com/connect"
-
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
 	"github.com/shrujancheruku/issho/backend/internal/platform/errs"
 	"github.com/shrujancheruku/issho/backend/internal/platform/i18n"
 	"github.com/shrujancheruku/issho/backend/internal/translate"
 )
 
-func (h *Handler) ListCities(ctx context.Context, req *connect.Request[isshov1.ListCitiesRequest]) (*connect.Response[isshov1.ListCitiesResponse], error) {
-	primary, secondary, err := displayLanguages(req.Msg.Locale, req.Msg.SecondaryLanguage)
+func (h *Handler) ListCities(ctx context.Context, req *isshov1.ListCitiesRequest) (*isshov1.ListCitiesResponse, error) {
+	primary, secondary, err := displayLanguages(req.Locale, req.SecondaryLanguage)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +48,7 @@ func (h *Handler) ListCities(ctx context.Context, req *connect.Request[isshov1.L
 			c.Areas = append(c.Areas, &isshov1.Area{Id: a.ID, Name: name, SecondaryName: sec, Lat: a.Lat, Lng: a.Lng})
 		}
 	}
-	return connect.NewResponse(&isshov1.ListCitiesResponse{Cities: out}), nil
+	return &isshov1.ListCitiesResponse{Cities: out}, nil
 }
 
 // displayLanguages validates a request's primary (required) and secondary

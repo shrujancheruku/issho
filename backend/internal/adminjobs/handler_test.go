@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"connectrpc.com/connect"
+	"connectrpc.com/connect/v2"
 	"github.com/google/uuid"
 	"github.com/riverqueue/river"
 	"github.com/riverqueue/river/rivertype"
@@ -134,7 +134,7 @@ func TestGetAdminJob(t *testing.T) {
 		8: row(t, "match_city", rivertype.JobStateRunning, nil),
 	}}
 	call := func(ctx context.Context, id int64) error {
-		_, err := h.GetAdminJob(ctx, connect.NewRequest(&isshov1.GetAdminJobRequest{JobId: id}))
+		_, err := h.GetAdminJob(ctx, &isshov1.GetAdminJobRequest{JobId: id})
 		return err
 	}
 	admin := auth.WithCaller(context.Background(), auth.Caller{UserID: uuid.New(), Email: "a@example.com", Admin: true})

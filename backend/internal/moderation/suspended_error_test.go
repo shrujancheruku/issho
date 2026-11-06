@@ -9,7 +9,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"connectrpc.com/connect"
+	"connectrpc.com/connect/v2"
+	"connectrpc.com/connect/v2/connecthttp"
+	"connectrpc.com/connect/v2/connectproto"
 	"github.com/google/uuid"
 
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
@@ -23,20 +25,22 @@ import (
 func TestSuspendedErrorOnTheWire(t *testing.T) {
 	id := uuid.New()
 	s := &Suspensions{Q: &fakeSuspended{ids: []uuid.UUID{id}}}
-	setCaller := connect.UnaryInterceptorFunc(func(next connect.UnaryFunc) connect.UnaryFunc {
-		return func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
-			return next(auth.WithCaller(ctx, auth.Caller{UserID: id}), req)
+	setCaller := connect.ServerInterceptor(func(next connect.ServerFunc) connect.ServerFunc {
+		return func(ctx context.Context, spec connect.Spec, stream connect.ServerStream) error {
+			return next(auth.WithCaller(ctx, auth.Caller{UserID: id}), spec, stream)
 		}
 	})
 	log := slog.New(slog.NewTextHandler(io.Discard, nil))
 	mux := http.NewServeMux()
-	mux.Handle(isshov1connect.NewPushServiceHandler(isshov1connect.UnimplementedPushServiceHandler{},
-		connect.WithInterceptors(errs.Interceptor(log), setCaller, Gate(s))))
+	server := connect.NewServer(errs.Interceptor(log), setCaller, Gate(s))
+	isshov1connect.RegisterPushServiceHandler(server, isshov1connect.UnimplementedPushServiceHandler{})
+	connecthttp.Mount(mux, server)
+
 	srv := httptest.NewServer(mux)
 	defer srv.Close()
 
-	_, err := isshov1connect.NewPushServiceClient(srv.Client(), srv.URL).
-		RegisterPushToken(context.Background(), connect.NewRequest(&isshov1.RegisterPushTokenRequest{}))
+	_, err := isshov1connect.NewPushServiceClient(connect.NewClient(connecthttp.NewTransport(srv.Client(), srv.URL))).
+		RegisterPushToken(context.Background(), &isshov1.RegisterPushTokenRequest{})
 	var ce *connect.Error
 	ok := errors.As(err, &ce)
 	if !ok || ce.Code() != connect.CodePermissionDenied || ce.Message() != "account suspended" {
@@ -45,7 +49,7 @@ func TestSuspendedErrorOnTheWire(t *testing.T) {
 	if len(ce.Details()) != 1 {
 		t.Fatalf("details = %d, want 1", len(ce.Details()))
 	}
-	m, verr := ce.Details()[0].Value()
+	m, verr := connectproto.UnmarshalErrorDetail(ce.Details()[0])
 	if rd, isRD := m.(*isshov1.ErrorReasonDetail); verr != nil || !isRD || rd.Reason != isshov1.ErrorReason_ERROR_REASON_SUSPENDED {
 		t.Fatalf("detail = %v, %v", m, verr)
 	}

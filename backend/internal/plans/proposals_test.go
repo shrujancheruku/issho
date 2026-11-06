@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"connectrpc.com/connect"
+	"connectrpc.com/connect/v2"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 
@@ -55,13 +55,13 @@ func TestIntegrationProposals(t *testing.T) {
 	}
 	list := func() []*isshov1.ReviewEvent {
 		t.Helper()
-		res, err := h.ListReviewEvents(adminCtx, connect.NewRequest(&isshov1.ListReviewEventsRequest{
+		res, err := h.ListReviewEvents(adminCtx, &isshov1.ListReviewEventsRequest{
 			CityId: f.city, Status: isshov1.ReviewEventStatus_REVIEW_EVENT_STATUS_PROPOSED,
-		}))
+		})
 		if err != nil {
 			t.Fatal(err)
 		}
-		return res.Msg.Events
+		return res.Events
 	}
 	proposals := list()
 	if len(proposals) != 1 || proposals[0].People != 6 || proposals[0].TimeZone != "Asia/Tokyo" {
@@ -84,11 +84,11 @@ func TestIntegrationProposals(t *testing.T) {
 	}
 	get := func() *isshov1.GetReviewEventResponse {
 		t.Helper()
-		res, err := h.GetReviewEvent(adminCtx, connect.NewRequest(&isshov1.GetReviewEventRequest{EventId: eventID.String()}))
+		res, err := h.GetReviewEvent(adminCtx, &isshov1.GetReviewEventRequest{EventId: eventID.String()})
 		if err != nil {
 			t.Fatal(err)
 		}
-		return res.Msg
+		return res
 	}
 	ev := get()
 	if len(ev.Groups) != 1 || len(ev.Groups[0].Members) != 6 {
@@ -109,14 +109,14 @@ func TestIntegrationProposals(t *testing.T) {
 
 	// Changes: take one out (still signed up), a move to a group that isn't
 	// the event's, a start too soon, then a good one, and a meeting point.
-	if _, err := h.RemoveProposalMember(adminCtx, connect.NewRequest(&isshov1.RemoveProposalMemberRequest{EventId: eventID.String(), UserId: member(1).String()})); err != nil {
+	if _, err := h.RemoveProposalMember(adminCtx, &isshov1.RemoveProposalMemberRequest{EventId: eventID.String(), UserId: member(1).String()}); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := h.MoveProposalMember(adminCtx, connect.NewRequest(&isshov1.MoveProposalMemberRequest{EventId: eventID.String(), UserId: first.String(), GroupId: uuid.NewString()})); connect.CodeOf(err) != connect.CodeNotFound {
+	if _, err := h.MoveProposalMember(adminCtx, &isshov1.MoveProposalMemberRequest{EventId: eventID.String(), UserId: first.String(), GroupId: uuid.NewString()}); connect.CodeOf(err) != connect.CodeNotFound {
 		t.Fatalf("moving to another event's group: %v", err)
 	}
 	start := func(day, clock string) error {
-		_, err := h.SetProposalStart(adminCtx, connect.NewRequest(&isshov1.SetProposalStartRequest{EventId: eventID.String(), Date: day, Time: clock}))
+		_, err := h.SetProposalStart(adminCtx, &isshov1.SetProposalStartRequest{EventId: eventID.String(), Date: day, Time: clock})
 		return err
 	}
 	if err := start("2030-01-02", "19:00"); connect.CodeOf(err) != connect.CodeFailedPrecondition {
@@ -128,7 +128,7 @@ func TestIntegrationProposals(t *testing.T) {
 	if err := start("2030-01-06", "10:30"); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := h.SetGroupMeetingPoint(adminCtx, connect.NewRequest(&isshov1.SetGroupMeetingPointRequest{GroupId: ev.Groups[0].Id, Text: "North exit, by the clock"})); err != nil {
+	if _, err := h.SetGroupMeetingPoint(adminCtx, &isshov1.SetGroupMeetingPointRequest{GroupId: ev.Groups[0].Id, Text: "North exit, by the clock"}); err != nil {
 		t.Fatal(err)
 	}
 	ev = get()
@@ -144,7 +144,7 @@ func TestIntegrationProposals(t *testing.T) {
 	if err := Withdraw(ctx, f.q, planID, withdrawn); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := h.ApproveProposal(adminCtx, connect.NewRequest(&isshov1.ApproveProposalRequest{EventId: eventID.String()})); err != nil {
+	if _, err := h.ApproveProposal(adminCtx, &isshov1.ApproveProposalRequest{EventId: eventID.String()}); err != nil {
 		t.Fatal(err)
 	}
 	if n := count("select count(*) from app.group_members where event_id = $1", eventID); n != 4 {
@@ -162,11 +162,11 @@ func TestIntegrationProposals(t *testing.T) {
 	if items, err := svc.Events(ctx, first, now); err != nil || len(items) != 1 {
 		t.Fatalf("an invited member's events = %d, %v", len(items), err)
 	}
-	if _, err := h.ApproveProposal(adminCtx, connect.NewRequest(&isshov1.ApproveProposalRequest{EventId: eventID.String()})); connect.CodeOf(err) != connect.CodeFailedPrecondition {
+	if _, err := h.ApproveProposal(adminCtx, &isshov1.ApproveProposalRequest{EventId: eventID.String()}); connect.CodeOf(err) != connect.CodeFailedPrecondition {
 		t.Fatalf("approving twice: %v", err)
 	}
 	// Scheduled events can still get a meeting point.
-	if _, err := h.SetGroupMeetingPoint(adminCtx, connect.NewRequest(&isshov1.SetGroupMeetingPointRequest{GroupId: ev.Groups[0].Id, Text: "South exit"})); err != nil {
+	if _, err := h.SetGroupMeetingPoint(adminCtx, &isshov1.SetGroupMeetingPointRequest{GroupId: ev.Groups[0].Id, Text: "South exit"}); err != nil {
 		t.Fatalf("meeting point on a scheduled event: %v", err)
 	}
 
@@ -191,7 +191,7 @@ func TestIntegrationProposals(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := h.RejectProposal(adminCtx, connect.NewRequest(&isshov1.RejectProposalRequest{EventId: second.String()})); err != nil {
+	if _, err := h.RejectProposal(adminCtx, &isshov1.RejectProposalRequest{EventId: second.String()}); err != nil {
 		t.Fatal(err)
 	}
 	if n := count("select count(*) from app.events where id = $1", second); n != 0 {

@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 
-	"connectrpc.com/connect"
-
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
 	"github.com/shrujancheruku/issho/backend/internal/platform/auth"
 	"github.com/shrujancheruku/issho/backend/internal/platform/errs"
@@ -15,7 +13,7 @@ type Handler struct {
 	Svc *Service
 }
 
-func (h *Handler) GetMe(ctx context.Context, _ *connect.Request[isshov1.GetMeRequest]) (*connect.Response[isshov1.GetMeResponse], error) {
+func (h *Handler) GetMe(ctx context.Context, _ *isshov1.GetMeRequest) (*isshov1.GetMeResponse, error) {
 	c, err := auth.Require(ctx)
 	if err != nil {
 		return nil, err
@@ -38,10 +36,10 @@ func (h *Handler) GetMe(ctx context.Context, _ *connect.Request[isshov1.GetMeReq
 	if acct.User.Email != nil {
 		u.Email = *acct.User.Email
 	}
-	return connect.NewResponse(&isshov1.GetMeResponse{User: u}), nil
+	return &isshov1.GetMeResponse{User: u}, nil
 }
 
-func (h *Handler) DeleteAccount(ctx context.Context, _ *connect.Request[isshov1.DeleteAccountRequest]) (*connect.Response[isshov1.DeleteAccountResponse], error) {
+func (h *Handler) DeleteAccount(ctx context.Context, _ *isshov1.DeleteAccountRequest) (*isshov1.DeleteAccountResponse, error) {
 	c, err := auth.Require(ctx)
 	if err != nil {
 		return nil, err
@@ -52,5 +50,5 @@ func (h *Handler) DeleteAccount(ctx context.Context, _ *connect.Request[isshov1.
 		}
 		return nil, err
 	}
-	return connect.NewResponse(&isshov1.DeleteAccountResponse{}), nil
+	return &isshov1.DeleteAccountResponse{}, nil
 }

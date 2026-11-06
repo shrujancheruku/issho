@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"connectrpc.com/connect"
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -30,7 +29,7 @@ func (h *Handler) now() time.Time {
 	return time.Now()
 }
 
-func (h *Handler) ListMyCrews(ctx context.Context, _ *connect.Request[isshov1.ListMyCrewsRequest]) (*connect.Response[isshov1.ListMyCrewsResponse], error) {
+func (h *Handler) ListMyCrews(ctx context.Context, _ *isshov1.ListMyCrewsRequest) (*isshov1.ListMyCrewsResponse, error) {
 	c, err := auth.Require(ctx)
 	if err != nil {
 		return nil, err
@@ -43,11 +42,11 @@ func (h *Handler) ListMyCrews(ctx context.Context, _ *connect.Request[isshov1.Li
 	for i, it := range items {
 		out.Crews[i] = crewToProto(it)
 	}
-	return connect.NewResponse(out), nil
+	return out, nil
 }
 
-func (h *Handler) GetCrew(ctx context.Context, req *connect.Request[isshov1.GetCrewRequest]) (*connect.Response[isshov1.GetCrewResponse], error) {
-	userID, crewID, err := crewCall(ctx, req.Msg.CrewId)
+func (h *Handler) GetCrew(ctx context.Context, req *isshov1.GetCrewRequest) (*isshov1.GetCrewResponse, error) {
+	userID, crewID, err := crewCall(ctx, req.CrewId)
 	if err != nil {
 		return nil, err
 	}
@@ -55,15 +54,15 @@ func (h *Handler) GetCrew(ctx context.Context, req *connect.Request[isshov1.GetC
 	if err != nil {
 		return nil, crewError(err)
 	}
-	return connect.NewResponse(&isshov1.GetCrewResponse{Crew: crewToProto(it)}), nil
+	return &isshov1.GetCrewResponse{Crew: crewToProto(it)}, nil
 }
 
-func (h *Handler) RespondToCrew(ctx context.Context, req *connect.Request[isshov1.RespondToCrewRequest]) (*connect.Response[isshov1.RespondToCrewResponse], error) {
-	userID, crewID, err := crewCall(ctx, req.Msg.CrewId)
+func (h *Handler) RespondToCrew(ctx context.Context, req *isshov1.RespondToCrewRequest) (*isshov1.RespondToCrewResponse, error) {
+	userID, crewID, err := crewCall(ctx, req.CrewId)
 	if err != nil {
 		return nil, err
 	}
-	if err := h.Svc.Respond(ctx, userID, crewID, req.Msg.Accept, h.now()); err != nil {
+	if err := h.Svc.Respond(ctx, userID, crewID, req.Accept, h.now()); err != nil {
 		return nil, crewError(err)
 	}
 	out := &isshov1.RespondToCrewResponse{}
@@ -73,7 +72,7 @@ func (h *Handler) RespondToCrew(ctx context.Context, req *connect.Request[isshov
 	} else if !errors.Is(err, ErrNoCrew) {
 		return nil, crewError(err)
 	}
-	return connect.NewResponse(out), nil
+	return out, nil
 }
 
 var leaveReasons = map[isshov1.LeaveReason]string{
@@ -84,38 +83,38 @@ var leaveReasons = map[isshov1.LeaveReason]string{
 	isshov1.LeaveReason_LEAVE_REASON_OTHER:             LeaveOther,
 }
 
-func (h *Handler) LeaveCrew(ctx context.Context, req *connect.Request[isshov1.LeaveCrewRequest]) (*connect.Response[isshov1.LeaveCrewResponse], error) {
-	userID, crewID, err := crewCall(ctx, req.Msg.CrewId)
+func (h *Handler) LeaveCrew(ctx context.Context, req *isshov1.LeaveCrewRequest) (*isshov1.LeaveCrewResponse, error) {
+	userID, crewID, err := crewCall(ctx, req.CrewId)
 	if err != nil {
 		return nil, err
 	}
-	reason, ok := leaveReasons[req.Msg.Reason]
+	reason, ok := leaveReasons[req.Reason]
 	if !ok {
 		return nil, errs.Invalid("reason: required")
 	}
-	if err := h.Svc.Leave(ctx, userID, crewID, reason, req.Msg.Details, h.now()); err != nil {
+	if err := h.Svc.Leave(ctx, userID, crewID, reason, req.Details, h.now()); err != nil {
 		return nil, crewError(err)
 	}
-	return connect.NewResponse(&isshov1.LeaveCrewResponse{}), nil
+	return &isshov1.LeaveCrewResponse{}, nil
 }
 
-func (h *Handler) ReportCrewMember(ctx context.Context, req *connect.Request[isshov1.ReportCrewMemberRequest]) (*connect.Response[isshov1.ReportCrewMemberResponse], error) {
-	userID, crewID, err := crewCall(ctx, req.Msg.CrewId)
+func (h *Handler) ReportCrewMember(ctx context.Context, req *isshov1.ReportCrewMemberRequest) (*isshov1.ReportCrewMemberResponse, error) {
+	userID, crewID, err := crewCall(ctx, req.CrewId)
 	if err != nil {
 		return nil, err
 	}
-	mateID, err := uuid.Parse(req.Msg.MemberId)
+	mateID, err := uuid.Parse(req.MemberId)
 	if err != nil {
 		return nil, errs.Invalid("member_id: not a crew member id")
 	}
-	reason, ok := plans.ReportReasons[req.Msg.Reason]
+	reason, ok := plans.ReportReasons[req.Reason]
 	if !ok {
 		return nil, errs.Invalid("reason: required")
 	}
-	if err := h.Svc.ReportMember(ctx, userID, crewID, mateID, reason, req.Msg.Details, h.now()); err != nil {
+	if err := h.Svc.ReportMember(ctx, userID, crewID, mateID, reason, req.Details, h.now()); err != nil {
 		return nil, crewError(err)
 	}
-	return connect.NewResponse(&isshov1.ReportCrewMemberResponse{}), nil
+	return &isshov1.ReportCrewMemberResponse{}, nil
 }
 
 func crewCall(ctx context.Context, rawID string) (uuid.UUID, uuid.UUID, error) {

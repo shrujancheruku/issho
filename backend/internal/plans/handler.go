@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"connectrpc.com/connect"
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -29,7 +28,7 @@ func (h *Handler) now() time.Time {
 	return time.Now()
 }
 
-func (h *Handler) ListFeed(ctx context.Context, _ *connect.Request[isshov1.ListFeedRequest]) (*connect.Response[isshov1.ListFeedResponse], error) {
+func (h *Handler) ListFeed(ctx context.Context, _ *isshov1.ListFeedRequest) (*isshov1.ListFeedResponse, error) {
 	userID, err := caller(ctx)
 	if err != nil {
 		return nil, err
@@ -42,15 +41,15 @@ func (h *Handler) ListFeed(ctx context.Context, _ *connect.Request[isshov1.ListF
 	for i, it := range items {
 		out.Plans[i] = planToProto(it)
 	}
-	return connect.NewResponse(out), nil
+	return out, nil
 }
 
-func (h *Handler) GetPlan(ctx context.Context, req *connect.Request[isshov1.GetPlanRequest]) (*connect.Response[isshov1.GetPlanResponse], error) {
+func (h *Handler) GetPlan(ctx context.Context, req *isshov1.GetPlanRequest) (*isshov1.GetPlanResponse, error) {
 	userID, err := caller(ctx)
 	if err != nil {
 		return nil, err
 	}
-	planID, err := parsePlanID(req.Msg.PlanId)
+	planID, err := parsePlanID(req.PlanId)
 	if err != nil {
 		return nil, err
 	}
@@ -67,18 +66,18 @@ func (h *Handler) GetPlan(ctx context.Context, req *connect.Request[isshov1.GetP
 	if signup != nil {
 		out.Signup = signupToProto(*signup)
 	}
-	return connect.NewResponse(out), nil
+	return out, nil
 }
 
-func (h *Handler) GetPlanCards(ctx context.Context, req *connect.Request[isshov1.GetPlanCardsRequest]) (*connect.Response[isshov1.GetPlanCardsResponse], error) {
+func (h *Handler) GetPlanCards(ctx context.Context, req *isshov1.GetPlanCardsRequest) (*isshov1.GetPlanCardsResponse, error) {
 	userID, err := caller(ctx)
 	if err != nil {
 		return nil, err
 	}
 	// The cap counts distinct ids, so Service.Cards checks it after
 	// de-duplicating, not on the raw list.
-	ids := make([]uuid.UUID, len(req.Msg.PlanIds))
-	for i, s := range req.Msg.PlanIds {
+	ids := make([]uuid.UUID, len(req.PlanIds))
+	for i, s := range req.PlanIds {
 		if ids[i], err = parsePlanID(s); err != nil {
 			return nil, err
 		}
@@ -91,19 +90,19 @@ func (h *Handler) GetPlanCards(ctx context.Context, req *connect.Request[isshov1
 	for i, it := range items {
 		out.Plans[i] = planToProto(it)
 	}
-	return connect.NewResponse(out), nil
+	return out, nil
 }
 
-func (h *Handler) SignUp(ctx context.Context, req *connect.Request[isshov1.SignUpRequest]) (*connect.Response[isshov1.SignUpResponse], error) {
+func (h *Handler) SignUp(ctx context.Context, req *isshov1.SignUpRequest) (*isshov1.SignUpResponse, error) {
 	userID, err := caller(ctx)
 	if err != nil {
 		return nil, err
 	}
-	planID, err := parsePlanID(req.Msg.PlanId)
+	planID, err := parsePlanID(req.PlanId)
 	if err != nil {
 		return nil, err
 	}
-	signup, err := signupFromProto(req.Msg.Signup)
+	signup, err := signupFromProto(req.Signup)
 	if err != nil {
 		return nil, errs.Invalid("%s", err)
 	}
@@ -111,22 +110,22 @@ func (h *Handler) SignUp(ctx context.Context, req *connect.Request[isshov1.SignU
 	if err != nil {
 		return nil, connectError(err)
 	}
-	return connect.NewResponse(&isshov1.SignUpResponse{Plan: planToProto(item)}), nil
+	return &isshov1.SignUpResponse{Plan: planToProto(item)}, nil
 }
 
-func (h *Handler) Withdraw(ctx context.Context, req *connect.Request[isshov1.WithdrawRequest]) (*connect.Response[isshov1.WithdrawResponse], error) {
+func (h *Handler) Withdraw(ctx context.Context, req *isshov1.WithdrawRequest) (*isshov1.WithdrawResponse, error) {
 	userID, err := caller(ctx)
 	if err != nil {
 		return nil, err
 	}
-	planID, err := parsePlanID(req.Msg.PlanId)
+	planID, err := parsePlanID(req.PlanId)
 	if err != nil {
 		return nil, err
 	}
 	if err := h.Svc.Withdraw(ctx, userID, planID); err != nil {
 		return nil, err
 	}
-	return connect.NewResponse(&isshov1.WithdrawResponse{}), nil
+	return &isshov1.WithdrawResponse{}, nil
 }
 
 func caller(ctx context.Context) (uuid.UUID, error) {

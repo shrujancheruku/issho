@@ -83,6 +83,15 @@
       automerge: false,
     },
     {
+      // The mobile app lints through eslint-config-expo, whose eslint-plugin-react fails
+      // to load on ESLint 10 ("contextOrFilename.getFilename is not a function"), so
+      // mobile stays on 9 while the admin moves on. Drop this rule once an Expo SDK's
+      // eslint-config-expo supports ESLint 10.
+      matchFileNames: ["apps/mobile/package.json"],
+      matchPackageNames: ["eslint", "@eslint/js"],
+      allowedVersions: "<10",
+    },
+    {
       // Expo moves as one SDK: never automerged. `expo install --fix` picks the
       // versions each SDK expects, which Renovate can't, so a person aligns them.
       // Keep this rule LAST: later packageRules win, and an earlier position would let

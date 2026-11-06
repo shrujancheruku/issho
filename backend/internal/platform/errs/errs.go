@@ -11,7 +11,8 @@ import (
 	"fmt"
 	"log/slog"
 
-	"connectrpc.com/connect"
+	"connectrpc.com/connect/v2"
+	"connectrpc.com/connect/v2/connectproto"
 
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
 	"github.com/shrujancheruku/issho/backend/internal/platform/sentry"
@@ -68,10 +69,10 @@ func (e *Error) connectError() *connect.Error {
 	if !ok {
 		code = connect.CodeInternal // a zero or unknown Kind is a bug, not Code(0)
 	}
-	ce := connect.NewError(code, errors.New(e.msg))
+	ce := connect.NewError(code, e.msg)
 	if e.Reason != isshov1.ErrorReason_ERROR_REASON_UNSPECIFIED {
-		if d, err := connect.NewErrorDetail(&isshov1.ErrorReasonDetail{Reason: e.Reason}); err == nil {
-			ce.AddDetail(d)
+		if d, err := connectproto.NewErrorDetail(&isshov1.ErrorReasonDetail{Reason: e.Reason}); err == nil {
+			ce = ce.WithDetail(d)
 		}
 	}
 	return ce
@@ -95,30 +96,30 @@ var report = sentry.Report
 // error, leaking database messages (table and constraint names, SQLSTATEs) and
 // upstream responses to anyone calling a public API. Handlers and services
 // should return errs constructors, not connect.NewError.
-func Interceptor(log *slog.Logger) connect.UnaryInterceptorFunc {
-	return func(next connect.UnaryFunc) connect.UnaryFunc {
-		return func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
-			resp, err := next(ctx, req)
+func Interceptor(log *slog.Logger) connect.ServerInterceptor {
+	return func(next connect.ServerFunc) connect.ServerFunc {
+		return func(ctx context.Context, spec connect.Spec, stream connect.ServerStream) error {
+			err := next(ctx, spec, stream)
 			if err == nil {
-				return resp, nil
+				return nil
 			}
 			// Ours first: *Error also answers errors.As for *connect.Error.
 			var e *Error
 			if errors.As(err, &e) {
 				if e.Kind == KindUpstream {
-					tags := map[string]string{"procedure": req.Spec().Procedure, "service": e.Service}
+					tags := map[string]string{"procedure": spec.Procedure, "service": e.Service}
 					log.ErrorContext(ctx, "upstream error", "procedure", tags["procedure"], "service", e.Service, "err", e.cause)
 					report(ctx, e.cause, tags)
 				}
-				return nil, e.connectError()
+				return e.connectError()
 			}
 			var ce *connect.Error
 			if errors.As(err, &ce) {
-				return resp, err
+				return err
 			}
-			log.ErrorContext(ctx, "unhandled error", "procedure", req.Spec().Procedure, "err", err)
-			sentry.Report(ctx, err, map[string]string{"procedure": req.Spec().Procedure})
-			return nil, connect.NewError(connect.CodeInternal, errors.New("internal error"))
+			log.ErrorContext(ctx, "unhandled error", "procedure", spec.Procedure, "err", err)
+			sentry.Report(ctx, err, map[string]string{"procedure": spec.Procedure})
+			return connect.NewError(connect.CodeInternal, "internal error")
 		}
 	}
 }

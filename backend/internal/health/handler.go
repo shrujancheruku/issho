@@ -6,8 +6,6 @@ import (
 	"net/http"
 	"time"
 
-	"connectrpc.com/connect"
-
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
 )
 
@@ -37,11 +35,11 @@ func (h *Handler) ping(ctx context.Context) error {
 	return h.Pool.Ping(ctx)
 }
 
-func (h *Handler) Check(ctx context.Context, _ *connect.Request[isshov1.CheckRequest]) (*connect.Response[isshov1.CheckResponse], error) {
-	return connect.NewResponse(&isshov1.CheckResponse{
+func (h *Handler) Check(ctx context.Context, _ *isshov1.CheckRequest) (*isshov1.CheckResponse, error) {
+	return &isshov1.CheckResponse{
 		DatabaseOk: h.ping(ctx) == nil,
 		Version:    h.Version,
-	}), nil
+	}, nil
 }
 
 // Up answers GET /up with 200 when the database answers, 503 otherwise.

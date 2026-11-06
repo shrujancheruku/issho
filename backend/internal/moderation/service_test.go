@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"connectrpc.com/connect"
+	"connectrpc.com/connect/v2"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/riverqueue/river"
@@ -228,7 +228,7 @@ func TestIntegrationSuspendPersonValidation(t *testing.T) {
 		{"not an id", &isshov1.SuspendPersonRequest{UserId: "nope", Reason: "x"}, connect.CodeInvalidArgument},
 		{"unknown person", &isshov1.SuspendPersonRequest{UserId: uuid.NewString(), Reason: "x"}, connect.CodeNotFound},
 	} {
-		if _, err := h.SuspendPerson(ctx, connect.NewRequest(c.req)); connect.CodeOf(err) != c.want {
+		if _, err := h.SuspendPerson(ctx, c.req); connect.CodeOf(err) != c.want {
 			t.Errorf("%s: %v, want %v", c.name, err, c.want)
 		}
 	}
