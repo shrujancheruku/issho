@@ -5,7 +5,7 @@ import (
 	"slices"
 	"testing"
 
-	"connectrpc.com/connect"
+	"connectrpc.com/connect/v2"
 	"github.com/google/uuid"
 
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
@@ -16,10 +16,10 @@ func TestNonAdminRefused(t *testing.T) {
 	// The admin check runs before the service is touched, so none is needed.
 	h := &Handler{}
 	ctx := auth.WithCaller(context.Background(), auth.Caller{UserID: uuid.New()})
-	if _, err := h.ListVenues(ctx, connect.NewRequest(&isshov1.ListVenuesRequest{})); connect.CodeOf(err) != connect.CodePermissionDenied {
+	if _, err := h.ListVenues(ctx, &isshov1.ListVenuesRequest{}); connect.CodeOf(err) != connect.CodePermissionDenied {
 		t.Fatalf("ListVenues as a user: %v", err)
 	}
-	if _, err := h.AddVenue(context.Background(), connect.NewRequest(&isshov1.AddVenueRequest{})); connect.CodeOf(err) != connect.CodeUnauthenticated {
+	if _, err := h.AddVenue(context.Background(), &isshov1.AddVenueRequest{}); connect.CodeOf(err) != connect.CodeUnauthenticated {
 		t.Fatalf("AddVenue without a caller: %v", err)
 	}
 }
@@ -33,29 +33,29 @@ func TestIntegrationHandler(t *testing.T) {
 	h := &Handler{Svc: f.svc}
 	adminCtx := auth.WithCaller(context.Background(), auth.Caller{UserID: f.adminID, Admin: true})
 
-	cities, err := h.ListVenueCities(adminCtx, connect.NewRequest(&isshov1.ListVenueCitiesRequest{}))
+	cities, err := h.ListVenueCities(adminCtx, &isshov1.ListVenueCitiesRequest{})
 	if err != nil {
 		t.Fatal(err)
 	}
 	var city *isshov1.VenueCity
-	for _, c := range cities.Msg.Cities {
+	for _, c := range cities.Cities {
 		if c.Id == f.city {
 			city = c
 		}
 	}
-	if city == nil || city.Candidates != 3 || len(city.Areas) != 2 || city.Areas[0].Name != "Alpha" || len(cities.Msg.Categories) < 2 {
+	if city == nil || city.Candidates != 3 || len(city.Areas) != 2 || city.Areas[0].Name != "Alpha" || len(cities.Categories) < 2 {
 		t.Fatalf("city = %v", city)
 	}
 
 	list := func(status isshov1.VenueStatus) *isshov1.ListVenuesResponse {
 		t.Helper()
-		res, err := h.ListVenues(adminCtx, connect.NewRequest(&isshov1.ListVenuesRequest{CityId: f.city, Status: status}))
+		res, err := h.ListVenues(adminCtx, &isshov1.ListVenuesRequest{CityId: f.city, Status: status})
 		if err != nil {
 			t.Fatal(err)
 		}
-		return res.Msg
+		return res
 	}
-	if _, err := h.ListVenues(adminCtx, connect.NewRequest(&isshov1.ListVenuesRequest{CityId: f.city})); connect.CodeOf(err) != connect.CodeInvalidArgument {
+	if _, err := h.ListVenues(adminCtx, &isshov1.ListVenuesRequest{CityId: f.city}); connect.CodeOf(err) != connect.CodeInvalidArgument {
 		t.Errorf("no status: %v", err)
 	}
 	cands := list(isshov1.VenueStatus_VENUE_STATUS_CANDIDATE)
@@ -64,29 +64,29 @@ func TestIntegrationHandler(t *testing.T) {
 		t.Errorf("first candidate = %v (total %d)", cands.Venues[0], cands.Total)
 	}
 
-	set, err := h.SetVenueStatus(adminCtx, connect.NewRequest(&isshov1.SetVenueStatusRequest{
+	set, err := h.SetVenueStatus(adminCtx, &isshov1.SetVenueStatusRequest{
 		CityId: f.city, PlaceIds: []string{"zz-p1", "elsewhere"}, Status: isshov1.VenueStatus_VENUE_STATUS_REJECTED,
-	}))
-	if err != nil || set.Msg.Changed != 1 {
+	})
+	if err != nil || set.Changed != 1 {
 		t.Fatalf("set = %v, %v", set, err)
 	}
 	if rej := list(isshov1.VenueStatus_VENUE_STATUS_REJECTED); len(rej.Venues) != 1 || rej.Venues[0].ReviewedAt == nil {
 		t.Errorf("rejected = %v", rej)
 	}
-	if _, err := h.SetVenueStatus(adminCtx, connect.NewRequest(&isshov1.SetVenueStatusRequest{CityId: f.city, PlaceIds: []string{"zz-p2"}})); connect.CodeOf(err) != connect.CodeInvalidArgument {
+	if _, err := h.SetVenueStatus(adminCtx, &isshov1.SetVenueStatusRequest{CityId: f.city, PlaceIds: []string{"zz-p2"}}); connect.CodeOf(err) != connect.CodeInvalidArgument {
 		t.Errorf("no status: %v", err)
 	}
 
-	if _, err := h.SetApprovedVenuesOnly(adminCtx, connect.NewRequest(&isshov1.SetApprovedVenuesOnlyRequest{CityId: "nowhere"})); connect.CodeOf(err) != connect.CodeNotFound {
+	if _, err := h.SetApprovedVenuesOnly(adminCtx, &isshov1.SetApprovedVenuesOnlyRequest{CityId: "nowhere"}); connect.CodeOf(err) != connect.CodeNotFound {
 		t.Errorf("an unknown city: %v", err)
 	}
 
-	res, err := h.SearchVenues(adminCtx, connect.NewRequest(&isshov1.SearchVenuesRequest{CityId: f.city, Query: "snack"}))
-	if err != nil || res.Msg.Searches != 2 {
+	res, err := h.SearchVenues(adminCtx, &isshov1.SearchVenuesRequest{CityId: f.city, Query: "snack"})
+	if err != nil || res.Searches != 2 {
 		t.Fatalf("search = %v, %v", res, err)
 	}
 	found := map[string]*isshov1.FoundVenue{}
-	for _, v := range res.Msg.Venues {
+	for _, v := range res.Venues {
 		found[v.PlaceId] = v
 	}
 	if v := found["zz-p1"]; !v.Known || v.Status != isshov1.VenueStatus_VENUE_STATUS_REJECTED || v.Flag != "snack bar?" {
@@ -99,8 +99,8 @@ func TestIntegrationHandler(t *testing.T) {
 		t.Errorf("closed p5 = %v", v)
 	}
 
-	add, err := h.AddVenue(adminCtx, connect.NewRequest(&isshov1.AddVenueRequest{CityId: f.city, PlaceId: "zz-p4", CategoryId: f.bar}))
-	if err != nil || add.Msg.AreaId != f.areaA {
+	add, err := h.AddVenue(adminCtx, &isshov1.AddVenueRequest{CityId: f.city, PlaceId: "zz-p4", CategoryId: f.bar})
+	if err != nil || add.AreaId != f.areaA {
 		t.Fatalf("add = %v, %v", add, err)
 	}
 	if v := list(isshov1.VenueStatus_VENUE_STATUS_APPROVED).Venues; len(v) != 1 || v[0].PlaceId != "zz-p4" || !v[0].Added {

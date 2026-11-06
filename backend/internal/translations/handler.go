@@ -14,7 +14,6 @@ import (
 	"slices"
 	"strings"
 
-	"connectrpc.com/connect"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
@@ -62,14 +61,14 @@ func forLang(ctx context.Context, lang string) (auth.Caller, error) {
 	return c, nil
 }
 
-func (h *Handler) GetTranslator(ctx context.Context, _ *connect.Request[isshov1.GetTranslatorRequest]) (*connect.Response[isshov1.GetTranslatorResponse], error) {
+func (h *Handler) GetTranslator(ctx context.Context, _ *isshov1.GetTranslatorRequest) (*isshov1.GetTranslatorResponse, error) {
 	c, err := caller(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return connect.NewResponse(&isshov1.GetTranslatorResponse{
+	return &isshov1.GetTranslatorResponse{
 		UserId: c.UserID.String(), Admin: c.Admin, Languages: slices.Sorted(slices.Values(c.TranslatorLangs)), CanPropose: h.Editor.CanPropose(),
-	}), nil
+	}, nil
 }
 
 // UI strings.
@@ -88,7 +87,7 @@ func appString(r uistrings.Row) *isshov1.AppString {
 	}
 }
 
-func (h *Handler) ListAppLanguages(ctx context.Context, _ *connect.Request[isshov1.ListAppLanguagesRequest]) (*connect.Response[isshov1.ListAppLanguagesResponse], error) {
+func (h *Handler) ListAppLanguages(ctx context.Context, _ *isshov1.ListAppLanguagesRequest) (*isshov1.ListAppLanguagesResponse, error) {
 	c, err := caller(ctx)
 	if err != nil {
 		return nil, err
@@ -131,14 +130,14 @@ func (h *Handler) ListAppLanguages(ctx context.Context, _ *connect.Request[issho
 		}
 		out.Languages = append(out.Languages, al)
 	}
-	return connect.NewResponse(out), nil
+	return out, nil
 }
 
-func (h *Handler) ListAppStrings(ctx context.Context, req *connect.Request[isshov1.ListAppStringsRequest]) (*connect.Response[isshov1.ListAppStringsResponse], error) {
-	if _, err := forLang(ctx, req.Msg.Lang); err != nil {
+func (h *Handler) ListAppStrings(ctx context.Context, req *isshov1.ListAppStringsRequest) (*isshov1.ListAppStringsResponse, error) {
+	if _, err := forLang(ctx, req.Lang); err != nil {
 		return nil, err
 	}
-	list, err := h.Editor.List(ctx, req.Msg.Lang)
+	list, err := h.Editor.List(ctx, req.Lang)
 	if err != nil {
 		return nil, err
 	}
@@ -146,45 +145,45 @@ func (h *Handler) ListAppStrings(ctx context.Context, req *connect.Request[issho
 	for _, r := range list.Rows {
 		out.Strings = append(out.Strings, appString(r))
 	}
-	return connect.NewResponse(out), nil
+	return out, nil
 }
 
-func (h *Handler) SaveAppString(ctx context.Context, req *connect.Request[isshov1.SaveAppStringRequest]) (*connect.Response[isshov1.SaveAppStringResponse], error) {
-	if _, err := forLang(ctx, req.Msg.Lang); err != nil {
+func (h *Handler) SaveAppString(ctx context.Context, req *isshov1.SaveAppStringRequest) (*isshov1.SaveAppStringResponse, error) {
+	if _, err := forLang(ctx, req.Lang); err != nil {
 		return nil, err
 	}
-	saved, err := h.Editor.Save(ctx, req.Msg.Lang, req.Msg.Key, req.Msg.Text)
+	saved, err := h.Editor.Save(ctx, req.Lang, req.Key, req.Text)
 	if err != nil {
 		return nil, err
 	}
-	return connect.NewResponse(&isshov1.SaveAppStringResponse{AppString: appString(saved.Row), PullRequest: prToProto(saved.PR)}), nil
+	return &isshov1.SaveAppStringResponse{AppString: appString(saved.Row), PullRequest: prToProto(saved.PR)}, nil
 }
 
-func (h *Handler) RemoveAppString(ctx context.Context, req *connect.Request[isshov1.RemoveAppStringRequest]) (*connect.Response[isshov1.RemoveAppStringResponse], error) {
-	if _, err := forLang(ctx, req.Msg.Lang); err != nil {
+func (h *Handler) RemoveAppString(ctx context.Context, req *isshov1.RemoveAppStringRequest) (*isshov1.RemoveAppStringResponse, error) {
+	if _, err := forLang(ctx, req.Lang); err != nil {
 		return nil, err
 	}
-	saved, err := h.Editor.Remove(ctx, req.Msg.Lang, req.Msg.Key)
+	saved, err := h.Editor.Remove(ctx, req.Lang, req.Key)
 	if err != nil {
 		return nil, err
 	}
-	return connect.NewResponse(&isshov1.RemoveAppStringResponse{AppString: appString(saved.Row), PullRequest: prToProto(saved.PR)}), nil
+	return &isshov1.RemoveAppStringResponse{AppString: appString(saved.Row), PullRequest: prToProto(saved.PR)}, nil
 }
 
-func (h *Handler) DraftAppString(ctx context.Context, req *connect.Request[isshov1.DraftAppStringRequest]) (*connect.Response[isshov1.DraftAppStringResponse], error) {
-	if _, err := forLang(ctx, req.Msg.Lang); err != nil {
+func (h *Handler) DraftAppString(ctx context.Context, req *isshov1.DraftAppStringRequest) (*isshov1.DraftAppStringResponse, error) {
+	if _, err := forLang(ctx, req.Lang); err != nil {
 		return nil, err
 	}
-	text, err := h.Editor.Draft(ctx, req.Msg.Lang, req.Msg.Key, req.Msg.Current)
+	text, err := h.Editor.Draft(ctx, req.Lang, req.Key, req.Current)
 	if err != nil {
 		return nil, err
 	}
-	return connect.NewResponse(&isshov1.DraftAppStringResponse{Text: text}), nil
+	return &isshov1.DraftAppStringResponse{Text: text}, nil
 }
 
 // Catalogue text.
 
-func (h *Handler) ListCatalogLanguages(ctx context.Context, _ *connect.Request[isshov1.ListCatalogLanguagesRequest]) (*connect.Response[isshov1.ListCatalogLanguagesResponse], error) {
+func (h *Handler) ListCatalogLanguages(ctx context.Context, _ *isshov1.ListCatalogLanguagesRequest) (*isshov1.ListCatalogLanguagesResponse, error) {
 	c, err := caller(ctx)
 	if err != nil {
 		return nil, err
@@ -199,25 +198,25 @@ func (h *Handler) ListCatalogLanguages(ctx context.Context, _ *connect.Request[i
 			out.Languages = append(out.Languages, &isshov1.TranslationLanguage{Lang: r.Lang, Total: r.Total, Unreviewed: r.Unreviewed})
 		}
 	}
-	return connect.NewResponse(out), nil
+	return out, nil
 }
 
-func (h *Handler) ListCatalogTranslations(ctx context.Context, req *connect.Request[isshov1.ListCatalogTranslationsRequest]) (*connect.Response[isshov1.ListCatalogTranslationsResponse], error) {
-	if _, err := forLang(ctx, req.Msg.Lang); err != nil {
+func (h *Handler) ListCatalogTranslations(ctx context.Context, req *isshov1.ListCatalogTranslationsRequest) (*isshov1.ListCatalogTranslationsResponse, error) {
+	if _, err := forLang(ctx, req.Lang); err != nil {
 		return nil, err
 	}
-	size, err := paging.Size(req.Msg.PageSize)
+	size, err := paging.Size(req.PageSize)
 	if err != nil {
 		return nil, err
 	}
-	search := strings.TrimSpace(req.Msg.Search)
-	scope := paging.Scope("ListCatalogTranslations", req.Msg.Lang, paging.Bool(req.Msg.UnreviewedOnly), search)
-	k, err := paging.Open(req.Msg.PageToken, scope, 4)
+	search := strings.TrimSpace(req.Search)
+	scope := paging.Scope("ListCatalogTranslations", req.Lang, paging.Bool(req.UnreviewedOnly), search)
+	k, err := paging.Open(req.PageToken, scope, 4)
 	if err != nil {
 		return nil, err
 	}
 	arg := dbgen.ListCatalogTranslationsParams{
-		Lang: req.Msg.Lang, UnreviewedOnly: req.Msg.UnreviewedOnly,
+		Lang: req.Lang, UnreviewedOnly: req.UnreviewedOnly,
 		Search: search, MaxRows: size + 1,
 	}
 	arg.HasAfter, arg.AfterReviewed, arg.AfterSource, arg.AfterContext, arg.AfterHash = k.Present, k.Bool(), k.String(), k.String(), k.String()
@@ -237,19 +236,19 @@ func (h *Handler) ListCatalogTranslations(ctx context.Context, req *connect.Requ
 	for i, r := range rows {
 		out.Translations[i] = translationToProto(dbgen.GetTranslationRow(r))
 	}
-	return connect.NewResponse(out), nil
+	return out, nil
 }
 
-func (h *Handler) ReviewCatalogTranslation(ctx context.Context, req *connect.Request[isshov1.ReviewCatalogTranslationRequest]) (*connect.Response[isshov1.ReviewCatalogTranslationResponse], error) {
-	c, err := forLang(ctx, req.Msg.Lang)
+func (h *Handler) ReviewCatalogTranslation(ctx context.Context, req *isshov1.ReviewCatalogTranslationRequest) (*isshov1.ReviewCatalogTranslationResponse, error) {
+	c, err := forLang(ctx, req.Lang)
 	if err != nil {
 		return nil, err
 	}
-	t, err := h.Reviews.Review(ctx, c.UserID, req.Msg.Lang, req.Msg.SourceHash, req.Msg.Text)
+	t, err := h.Reviews.Review(ctx, c.UserID, req.Lang, req.SourceHash, req.Text)
 	if err != nil {
 		return nil, err
 	}
-	return connect.NewResponse(&isshov1.ReviewCatalogTranslationResponse{Translation: translationToProto(t)}), nil
+	return &isshov1.ReviewCatalogTranslationResponse{Translation: translationToProto(t)}, nil
 }
 
 func translationToProto(t dbgen.GetTranslationRow) *isshov1.Translation {

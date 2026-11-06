@@ -5,8 +5,6 @@ package catalog
 import (
 	"context"
 
-	"connectrpc.com/connect"
-
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
 	"github.com/shrujancheruku/issho/backend/internal/platform/errs"
@@ -23,15 +21,15 @@ type Handler struct {
 	Suggestions *tagging.Service
 }
 
-func (h *Handler) ListActivities(ctx context.Context, req *connect.Request[isshov1.ListActivitiesRequest]) (*connect.Response[isshov1.ListActivitiesResponse], error) {
-	if req.Msg.CityId == "" {
+func (h *Handler) ListActivities(ctx context.Context, req *isshov1.ListActivitiesRequest) (*isshov1.ListActivitiesResponse, error) {
+	if req.CityId == "" {
 		return nil, errs.Invalid("city_id is required")
 	}
-	primary, secondary, err := displayLanguages(req.Msg.Locale, req.Msg.SecondaryLanguage)
+	primary, secondary, err := displayLanguages(req.Locale, req.SecondaryLanguage)
 	if err != nil {
 		return nil, err
 	}
-	rows, err := h.Q.ListCityActivities(ctx, req.Msg.CityId)
+	rows, err := h.Q.ListCityActivities(ctx, req.CityId)
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +54,7 @@ func (h *Handler) ListActivities(ctx context.Context, req *connect.Request[issho
 			MaxGroupSize:   int32(r.MaxGroupSize),
 		})
 	}
-	return connect.NewResponse(&isshov1.ListActivitiesResponse{Activities: out}), nil
+	return &isshov1.ListActivitiesResponse{Activities: out}, nil
 }
 
 // baseLang reduces a BCP 47 tag to a display language ("ja-JP" -> "ja",

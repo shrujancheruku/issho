@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 
-	"connectrpc.com/connect"
-
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
 	"github.com/shrujancheruku/issho/backend/internal/platform/errs"
 	"github.com/shrujancheruku/issho/backend/internal/tagging"
@@ -18,8 +16,8 @@ var interestByWeight = []isshov1.Interest{
 	isshov1.Interest_INTEREST_LOVE,
 }
 
-func (h *Handler) SuggestActivities(ctx context.Context, req *connect.Request[isshov1.SuggestActivitiesRequest]) (*connect.Response[isshov1.SuggestActivitiesResponse], error) {
-	tags, err := h.Suggestions.Suggest(ctx, req.Msg.CityId, req.Msg.Text)
+func (h *Handler) SuggestActivities(ctx context.Context, req *isshov1.SuggestActivitiesRequest) (*isshov1.SuggestActivitiesResponse, error) {
+	tags, err := h.Suggestions.Suggest(ctx, req.CityId, req.Text)
 	var invalid *tagging.InvalidError
 	switch {
 	case errors.As(err, &invalid):
@@ -37,5 +35,5 @@ func (h *Handler) SuggestActivities(ctx context.Context, req *connect.Request[is
 	for i, t := range tags {
 		out[i] = &isshov1.ActivityPreference{ActivityId: t.ActivityID, Interest: interestByWeight[t.Weight]}
 	}
-	return connect.NewResponse(&isshov1.SuggestActivitiesResponse{Suggestions: out}), nil
+	return &isshov1.SuggestActivitiesResponse{Suggestions: out}, nil
 }

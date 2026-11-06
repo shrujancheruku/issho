@@ -3,8 +3,6 @@ package uistrings
 import (
 	"context"
 
-	"connectrpc.com/connect"
-
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
 	"github.com/shrujancheruku/issho/backend/internal/platform/errs"
 	"github.com/shrujancheruku/issho/backend/internal/platform/i18n"
@@ -17,8 +15,8 @@ type Handler struct {
 	Translations *translate.Service
 }
 
-func (h *Handler) GetStrings(ctx context.Context, req *connect.Request[isshov1.GetStringsRequest]) (*connect.Response[isshov1.GetStringsResponse], error) {
-	lang := i18n.Display(req.Msg.Language)
+func (h *Handler) GetStrings(ctx context.Context, req *isshov1.GetStringsRequest) (*isshov1.GetStringsResponse, error) {
+	lang := i18n.Display(req.Language)
 	if !i18n.ValidDisplay(lang) {
 		return nil, errs.Invalid("language must be a language code such as \"ja\"")
 	}
@@ -26,12 +24,12 @@ func (h *Handler) GetStrings(ctx context.Context, req *connect.Request[isshov1.G
 	version := Version(strs)
 	// The app checks a complete copy every so often; most checks find it
 	// current, and then there's no need to send ~300 strings again.
-	if complete && req.Msg.KnownVersion == version {
-		return connect.NewResponse(&isshov1.GetStringsResponse{Complete: true, CatalogVersion: version, Unchanged: true}), nil
+	if complete && req.KnownVersion == version {
+		return &isshov1.GetStringsResponse{Complete: true, CatalogVersion: version, Unchanged: true}, nil
 	}
-	return connect.NewResponse(&isshov1.GetStringsResponse{
+	return &isshov1.GetStringsResponse{
 		Strings:        strs,
 		Complete:       complete,
 		CatalogVersion: version,
-	}), nil
+	}, nil
 }

@@ -5,7 +5,7 @@ import (
 	"slices"
 	"testing"
 
-	"connectrpc.com/connect"
+	"connectrpc.com/connect/v2"
 
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
@@ -44,15 +44,15 @@ func TestIntegrationCatalogReview(t *testing.T) {
 
 	h := &Handler{Reviews: &translate.Reviewer{Q: q, UIContextPrefix: uistrings.ContextPrefix, SamePlaceholders: uistrings.SamePlaceholders}}
 	ctx2 := as(japanese)
-	list, err := h.ListCatalogTranslations(ctx2, connect.NewRequest(&isshov1.ListCatalogTranslationsRequest{Lang: "ja", UnreviewedOnly: true, Search: "Translations test"}))
+	list, err := h.ListCatalogTranslations(ctx2, &isshov1.ListCatalogTranslationsRequest{Lang: "ja", UnreviewedOnly: true, Search: "Translations test"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(list.Msg.Translations) != 1 || list.Msg.Translations[0].SourceHash != hash {
-		t.Fatalf("translations = %v", list.Msg.Translations)
+	if len(list.Translations) != 1 || list.Translations[0].SourceHash != hash {
+		t.Fatalf("translations = %v", list.Translations)
 	}
-	review := func(h2, text string) (*connect.Response[isshov1.ReviewCatalogTranslationResponse], error) {
-		return h.ReviewCatalogTranslation(ctx2, connect.NewRequest(&isshov1.ReviewCatalogTranslationRequest{SourceHash: h2, Lang: "ja", Text: text}))
+	review := func(h2, text string) (*isshov1.ReviewCatalogTranslationResponse, error) {
+		return h.ReviewCatalogTranslation(ctx2, &isshov1.ReviewCatalogTranslationRequest{SourceHash: h2, Lang: "ja", Text: text})
 	}
 	if _, err := review(uiHash, "保存"); connect.CodeOf(err) != connect.CodeInvalidArgument {
 		t.Fatalf("a UI string: %v", err)
@@ -64,7 +64,7 @@ func TestIntegrationCatalogReview(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if tr := res.Msg.Translation; !tr.Reviewed || tr.Text != "{email} にコードを送信しました" || tr.ReviewedAt == nil {
+	if tr := res.Translation; !tr.Reviewed || tr.Text != "{email} にコードを送信しました" || tr.ReviewedAt == nil {
 		t.Fatalf("reviewed = %v", tr)
 	}
 	if err := q.InsertTranslations(ctx, dbgen.InsertTranslationsParams{
@@ -76,9 +76,9 @@ func TestIntegrationCatalogReview(t *testing.T) {
 	if got, _ := q.GetTranslation(ctx, dbgen.GetTranslationParams{SourceHash: hash, Lang: "ja"}); got.Text != "{email} にコードを送信しました" {
 		t.Fatalf("machine translation overwrote the review: %q", got.Text)
 	}
-	langs, err := h.ListCatalogLanguages(ctx2, connect.NewRequest(&isshov1.ListCatalogLanguagesRequest{}))
-	if err != nil || len(langs.Msg.Languages) != 1 || langs.Msg.Languages[0].Lang != "ja" {
-		t.Fatalf("languages = %v, %v", langs.Msg.GetLanguages(), err)
+	langs, err := h.ListCatalogLanguages(ctx2, &isshov1.ListCatalogLanguagesRequest{})
+	if err != nil || len(langs.Languages) != 1 || langs.Languages[0].Lang != "ja" {
+		t.Fatalf("languages = %v, %v", langs.GetLanguages(), err)
 	}
 }
 
@@ -140,13 +140,13 @@ func TestIntegrationCatalogPaging(t *testing.T) {
 	h := &Handler{Reviews: &translate.Reviewer{Q: q, UIContextPrefix: uistrings.ContextPrefix, SamePlaceholders: uistrings.SamePlaceholders}}
 	ctx2 := as(japanese)
 	page := func(search string, size int32, token string) (*isshov1.ListCatalogTranslationsResponse, error) {
-		res, err := h.ListCatalogTranslations(ctx2, connect.NewRequest(&isshov1.ListCatalogTranslationsRequest{
+		res, err := h.ListCatalogTranslations(ctx2, &isshov1.ListCatalogTranslationsRequest{
 			Lang: "ja", Search: search, PageSize: size, PageToken: token,
-		}))
+		})
 		if err != nil {
 			return nil, err
 		}
-		return res.Msg, nil
+		return res, nil
 	}
 	for _, size := range []int32{5, 0, 1000} {
 		var got []string
@@ -178,9 +178,9 @@ func TestIntegrationCatalogPaging(t *testing.T) {
 		t.Errorf("garbage token: %v", err)
 	}
 	// The translator's language check runs first, token or not.
-	if _, err := h.ListCatalogTranslations(ctx2, connect.NewRequest(&isshov1.ListCatalogTranslationsRequest{
+	if _, err := h.ListCatalogTranslations(ctx2, &isshov1.ListCatalogTranslationsRequest{
 		Lang: "es", Search: "Translations paging test", PageToken: first.NextPageToken,
-	})); connect.CodeOf(err) != connect.CodePermissionDenied {
+	}); connect.CodeOf(err) != connect.CodePermissionDenied {
 		t.Errorf("a Japanese translator reading Spanish with a token: %v", err)
 	}
 }

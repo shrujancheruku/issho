@@ -5,53 +5,93 @@
 package isshov1connect
 
 import (
-	connect "connectrpc.com/connect"
+	connect "connectrpc.com/connect/v2"
 	context "context"
-	errors "errors"
 	v1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
-	http "net/http"
-	strings "strings"
+	sync "sync"
 )
-
-// This is a compile-time assertion to ensure that this generated file and the connect package are
-// compatible. If you get a compiler error that this constant is not defined, this code was
-// generated with a version of connect newer than the one compiled into your binary. You can fix the
-// problem by either regenerating this code with an older version of connect or updating the connect
-// version compiled into your binary.
-const _ = connect.IsAtLeastVersion1_13_0
 
 const (
 	// EventServiceName is the fully-qualified name of the EventService service.
 	EventServiceName = "issho.v1.EventService"
 )
 
-// These constants are the fully-qualified names of the RPCs defined in this package. They're
-// exposed at runtime as Spec.Procedure and as the final two segments of the HTTP route.
+// These constants are the procedure names of the RPCs defined in this package. They're exposed at
+// runtime as Spec.Procedure and as the final two segments of the HTTP route.
 //
 // Note that these are different from the fully-qualified method names used by
 // google.golang.org/protobuf/reflect/protoreflect. To convert from these constants to
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
-	// EventServiceListMyEventsProcedure is the fully-qualified name of the EventService's ListMyEvents
-	// RPC.
+	// EventServiceListMyEventsProcedure is the procedure name of the EventService's ListMyEvents RPC.
 	EventServiceListMyEventsProcedure = "/issho.v1.EventService/ListMyEvents"
-	// EventServiceGetEventProcedure is the fully-qualified name of the EventService's GetEvent RPC.
+	// EventServiceGetEventProcedure is the procedure name of the EventService's GetEvent RPC.
 	EventServiceGetEventProcedure = "/issho.v1.EventService/GetEvent"
-	// EventServiceRespondToEventProcedure is the fully-qualified name of the EventService's
-	// RespondToEvent RPC.
+	// EventServiceRespondToEventProcedure is the procedure name of the EventService's RespondToEvent
+	// RPC.
 	EventServiceRespondToEventProcedure = "/issho.v1.EventService/RespondToEvent"
-	// EventServiceCheckInProcedure is the fully-qualified name of the EventService's CheckIn RPC.
+	// EventServiceCheckInProcedure is the procedure name of the EventService's CheckIn RPC.
 	EventServiceCheckInProcedure = "/issho.v1.EventService/CheckIn"
-	// EventServiceGetFeedbackProcedure is the fully-qualified name of the EventService's GetFeedback
-	// RPC.
+	// EventServiceGetFeedbackProcedure is the procedure name of the EventService's GetFeedback RPC.
 	EventServiceGetFeedbackProcedure = "/issho.v1.EventService/GetFeedback"
-	// EventServiceSubmitFeedbackProcedure is the fully-qualified name of the EventService's
-	// SubmitFeedback RPC.
-	EventServiceSubmitFeedbackProcedure = "/issho.v1.EventService/SubmitFeedback"
-	// EventServiceReportPersonProcedure is the fully-qualified name of the EventService's ReportPerson
+	// EventServiceSubmitFeedbackProcedure is the procedure name of the EventService's SubmitFeedback
 	// RPC.
+	EventServiceSubmitFeedbackProcedure = "/issho.v1.EventService/SubmitFeedback"
+	// EventServiceReportPersonProcedure is the procedure name of the EventService's ReportPerson RPC.
 	EventServiceReportPersonProcedure = "/issho.v1.EventService/ReportPerson"
+)
+
+var (
+	eventServiceListMyEventsSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_issho_v1_events_proto.Services().ByName("EventService").Methods().ByName("ListMyEvents"),
+			Procedure:  EventServiceListMyEventsProcedure,
+		}
+	})
+	eventServiceGetEventSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_issho_v1_events_proto.Services().ByName("EventService").Methods().ByName("GetEvent"),
+			Procedure:  EventServiceGetEventProcedure,
+		}
+	})
+	eventServiceRespondToEventSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_issho_v1_events_proto.Services().ByName("EventService").Methods().ByName("RespondToEvent"),
+			Procedure:  EventServiceRespondToEventProcedure,
+		}
+	})
+	eventServiceCheckInSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_issho_v1_events_proto.Services().ByName("EventService").Methods().ByName("CheckIn"),
+			Procedure:  EventServiceCheckInProcedure,
+		}
+	})
+	eventServiceGetFeedbackSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_issho_v1_events_proto.Services().ByName("EventService").Methods().ByName("GetFeedback"),
+			Procedure:  EventServiceGetFeedbackProcedure,
+		}
+	})
+	eventServiceSubmitFeedbackSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_issho_v1_events_proto.Services().ByName("EventService").Methods().ByName("SubmitFeedback"),
+			Procedure:  EventServiceSubmitFeedbackProcedure,
+		}
+	})
+	eventServiceReportPersonSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_issho_v1_events_proto.Services().ByName("EventService").Methods().ByName("ReportPerson"),
+			Procedure:  EventServiceReportPersonProcedure,
+		}
+	})
 )
 
 // EventServiceClient is a client for the issho.v1.EventService service.
@@ -59,140 +99,44 @@ type EventServiceClient interface {
 	// ListMyEvents returns the caller's events from yesterday on, soonest
 	// first, whatever their answer, and older ones still waiting for their
 	// feedback.
-	ListMyEvents(context.Context, *connect.Request[v1.ListMyEventsRequest]) (*connect.Response[v1.ListMyEventsResponse], error)
+	ListMyEvents(context.Context, *v1.ListMyEventsRequest) (*v1.ListMyEventsResponse, error)
 	// GetEvent returns one of the caller's events with its stops and, if the
 	// caller confirmed, who else is going. NOT_FOUND unless the caller is
 	// invited to it.
-	GetEvent(context.Context, *connect.Request[v1.GetEventRequest]) (*connect.Response[v1.GetEventResponse], error)
+	GetEvent(context.Context, *v1.GetEventRequest) (*v1.GetEventResponse, error)
 	// RespondToEvent confirms, declines or cancels the caller's place.
 	// FAILED_PRECONDITION when it's too late, the event is cancelled or over,
 	// or the answer doesn't apply (e.g. cancelling a place not confirmed).
-	RespondToEvent(context.Context, *connect.Request[v1.RespondToEventRequest]) (*connect.Response[v1.RespondToEventResponse], error)
+	RespondToEvent(context.Context, *v1.RespondToEventRequest) (*v1.RespondToEventResponse, error)
 	// CheckIn records that the caller has arrived: only people who confirmed
 	// (PERMISSION_DENIED otherwise), from 30 minutes before the start until 3
 	// hours after (FAILED_PRECONDITION otherwise). Checking in again is fine.
-	CheckIn(context.Context, *connect.Request[v1.CheckInRequest]) (*connect.Response[v1.CheckInResponse], error)
+	CheckIn(context.Context, *v1.CheckInRequest) (*v1.CheckInResponse, error)
 	// GetFeedback returns the caller's feedback form for an outing: the
 	// others in their group (first names), and what the caller already said.
 	// For anyone who confirmed, even if they cancelled since (to report
 	// someone); PERMISSION_DENIED otherwise. Feedback itself is `open` only to
 	// people who went ahead with their group, from 3 hours after the start
 	// for 14 days.
-	GetFeedback(context.Context, *connect.Request[v1.GetFeedbackRequest]) (*connect.Response[v1.GetFeedbackResponse], error)
+	GetFeedback(context.Context, *v1.GetFeedbackRequest) (*v1.GetFeedbackResponse, error)
 	// SubmitFeedback records whether the caller went, their ratings, who
 	// they'd meet again and who they'd rather not, replacing anything sent
 	// before. Both are private: nobody is told who picked them; two people
 	// who picked each other are more likely to be grouped again (and may be
 	// offered a crew); "rather not" keeps the two apart for good.
 	// FAILED_PRECONDITION outside the window.
-	SubmitFeedback(context.Context, *connect.Request[v1.SubmitFeedbackRequest]) (*connect.Response[v1.SubmitFeedbackResponse], error)
+	SubmitFeedback(context.Context, *v1.SubmitFeedbackRequest) (*v1.SubmitFeedbackResponse, error)
 	// ReportPerson reports someone from the caller's group to the moderators,
 	// from the time the caller confirmed until 30 days after the start. The
 	// two are never grouped together again. Reporting the same person about
 	// the same outing again replaces the report.
-	ReportPerson(context.Context, *connect.Request[v1.ReportPersonRequest]) (*connect.Response[v1.ReportPersonResponse], error)
+	ReportPerson(context.Context, *v1.ReportPersonRequest) (*v1.ReportPersonResponse, error)
 }
 
-// NewEventServiceClient constructs a client for the issho.v1.EventService service. By default, it
-// uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses, and sends
-// uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the connect.WithGRPC() or
-// connect.WithGRPCWeb() options.
-//
-// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
-// http://api.acme.com or https://acme.com/grpc).
-func NewEventServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) EventServiceClient {
-	baseURL = strings.TrimRight(baseURL, "/")
-	eventServiceMethods := v1.File_issho_v1_events_proto.Services().ByName("EventService").Methods()
-	return &eventServiceClient{
-		listMyEvents: connect.NewClient[v1.ListMyEventsRequest, v1.ListMyEventsResponse](
-			httpClient,
-			baseURL+EventServiceListMyEventsProcedure,
-			connect.WithSchema(eventServiceMethods.ByName("ListMyEvents")),
-			connect.WithClientOptions(opts...),
-		),
-		getEvent: connect.NewClient[v1.GetEventRequest, v1.GetEventResponse](
-			httpClient,
-			baseURL+EventServiceGetEventProcedure,
-			connect.WithSchema(eventServiceMethods.ByName("GetEvent")),
-			connect.WithClientOptions(opts...),
-		),
-		respondToEvent: connect.NewClient[v1.RespondToEventRequest, v1.RespondToEventResponse](
-			httpClient,
-			baseURL+EventServiceRespondToEventProcedure,
-			connect.WithSchema(eventServiceMethods.ByName("RespondToEvent")),
-			connect.WithClientOptions(opts...),
-		),
-		checkIn: connect.NewClient[v1.CheckInRequest, v1.CheckInResponse](
-			httpClient,
-			baseURL+EventServiceCheckInProcedure,
-			connect.WithSchema(eventServiceMethods.ByName("CheckIn")),
-			connect.WithClientOptions(opts...),
-		),
-		getFeedback: connect.NewClient[v1.GetFeedbackRequest, v1.GetFeedbackResponse](
-			httpClient,
-			baseURL+EventServiceGetFeedbackProcedure,
-			connect.WithSchema(eventServiceMethods.ByName("GetFeedback")),
-			connect.WithClientOptions(opts...),
-		),
-		submitFeedback: connect.NewClient[v1.SubmitFeedbackRequest, v1.SubmitFeedbackResponse](
-			httpClient,
-			baseURL+EventServiceSubmitFeedbackProcedure,
-			connect.WithSchema(eventServiceMethods.ByName("SubmitFeedback")),
-			connect.WithClientOptions(opts...),
-		),
-		reportPerson: connect.NewClient[v1.ReportPersonRequest, v1.ReportPersonResponse](
-			httpClient,
-			baseURL+EventServiceReportPersonProcedure,
-			connect.WithSchema(eventServiceMethods.ByName("ReportPerson")),
-			connect.WithClientOptions(opts...),
-		),
-	}
-}
-
-// eventServiceClient implements EventServiceClient.
-type eventServiceClient struct {
-	listMyEvents   *connect.Client[v1.ListMyEventsRequest, v1.ListMyEventsResponse]
-	getEvent       *connect.Client[v1.GetEventRequest, v1.GetEventResponse]
-	respondToEvent *connect.Client[v1.RespondToEventRequest, v1.RespondToEventResponse]
-	checkIn        *connect.Client[v1.CheckInRequest, v1.CheckInResponse]
-	getFeedback    *connect.Client[v1.GetFeedbackRequest, v1.GetFeedbackResponse]
-	submitFeedback *connect.Client[v1.SubmitFeedbackRequest, v1.SubmitFeedbackResponse]
-	reportPerson   *connect.Client[v1.ReportPersonRequest, v1.ReportPersonResponse]
-}
-
-// ListMyEvents calls issho.v1.EventService.ListMyEvents.
-func (c *eventServiceClient) ListMyEvents(ctx context.Context, req *connect.Request[v1.ListMyEventsRequest]) (*connect.Response[v1.ListMyEventsResponse], error) {
-	return c.listMyEvents.CallUnary(ctx, req)
-}
-
-// GetEvent calls issho.v1.EventService.GetEvent.
-func (c *eventServiceClient) GetEvent(ctx context.Context, req *connect.Request[v1.GetEventRequest]) (*connect.Response[v1.GetEventResponse], error) {
-	return c.getEvent.CallUnary(ctx, req)
-}
-
-// RespondToEvent calls issho.v1.EventService.RespondToEvent.
-func (c *eventServiceClient) RespondToEvent(ctx context.Context, req *connect.Request[v1.RespondToEventRequest]) (*connect.Response[v1.RespondToEventResponse], error) {
-	return c.respondToEvent.CallUnary(ctx, req)
-}
-
-// CheckIn calls issho.v1.EventService.CheckIn.
-func (c *eventServiceClient) CheckIn(ctx context.Context, req *connect.Request[v1.CheckInRequest]) (*connect.Response[v1.CheckInResponse], error) {
-	return c.checkIn.CallUnary(ctx, req)
-}
-
-// GetFeedback calls issho.v1.EventService.GetFeedback.
-func (c *eventServiceClient) GetFeedback(ctx context.Context, req *connect.Request[v1.GetFeedbackRequest]) (*connect.Response[v1.GetFeedbackResponse], error) {
-	return c.getFeedback.CallUnary(ctx, req)
-}
-
-// SubmitFeedback calls issho.v1.EventService.SubmitFeedback.
-func (c *eventServiceClient) SubmitFeedback(ctx context.Context, req *connect.Request[v1.SubmitFeedbackRequest]) (*connect.Response[v1.SubmitFeedbackResponse], error) {
-	return c.submitFeedback.CallUnary(ctx, req)
-}
-
-// ReportPerson calls issho.v1.EventService.ReportPerson.
-func (c *eventServiceClient) ReportPerson(ctx context.Context, req *connect.Request[v1.ReportPersonRequest]) (*connect.Response[v1.ReportPersonResponse], error) {
-	return c.reportPerson.CallUnary(ctx, req)
+// NewEventServiceClient constructs a client for the issho.v1.EventService service. Multiple service
+// clients may share a single connect.Client.
+func NewEventServiceClient(client *connect.Client) EventServiceClient {
+	return &eventServiceClient{client: client}
 }
 
 // EventServiceHandler is an implementation of the issho.v1.EventService service.
@@ -200,138 +144,227 @@ type EventServiceHandler interface {
 	// ListMyEvents returns the caller's events from yesterday on, soonest
 	// first, whatever their answer, and older ones still waiting for their
 	// feedback.
-	ListMyEvents(context.Context, *connect.Request[v1.ListMyEventsRequest]) (*connect.Response[v1.ListMyEventsResponse], error)
+	ListMyEvents(context.Context, *v1.ListMyEventsRequest) (*v1.ListMyEventsResponse, error)
 	// GetEvent returns one of the caller's events with its stops and, if the
 	// caller confirmed, who else is going. NOT_FOUND unless the caller is
 	// invited to it.
-	GetEvent(context.Context, *connect.Request[v1.GetEventRequest]) (*connect.Response[v1.GetEventResponse], error)
+	GetEvent(context.Context, *v1.GetEventRequest) (*v1.GetEventResponse, error)
 	// RespondToEvent confirms, declines or cancels the caller's place.
 	// FAILED_PRECONDITION when it's too late, the event is cancelled or over,
 	// or the answer doesn't apply (e.g. cancelling a place not confirmed).
-	RespondToEvent(context.Context, *connect.Request[v1.RespondToEventRequest]) (*connect.Response[v1.RespondToEventResponse], error)
+	RespondToEvent(context.Context, *v1.RespondToEventRequest) (*v1.RespondToEventResponse, error)
 	// CheckIn records that the caller has arrived: only people who confirmed
 	// (PERMISSION_DENIED otherwise), from 30 minutes before the start until 3
 	// hours after (FAILED_PRECONDITION otherwise). Checking in again is fine.
-	CheckIn(context.Context, *connect.Request[v1.CheckInRequest]) (*connect.Response[v1.CheckInResponse], error)
+	CheckIn(context.Context, *v1.CheckInRequest) (*v1.CheckInResponse, error)
 	// GetFeedback returns the caller's feedback form for an outing: the
 	// others in their group (first names), and what the caller already said.
 	// For anyone who confirmed, even if they cancelled since (to report
 	// someone); PERMISSION_DENIED otherwise. Feedback itself is `open` only to
 	// people who went ahead with their group, from 3 hours after the start
 	// for 14 days.
-	GetFeedback(context.Context, *connect.Request[v1.GetFeedbackRequest]) (*connect.Response[v1.GetFeedbackResponse], error)
+	GetFeedback(context.Context, *v1.GetFeedbackRequest) (*v1.GetFeedbackResponse, error)
 	// SubmitFeedback records whether the caller went, their ratings, who
 	// they'd meet again and who they'd rather not, replacing anything sent
 	// before. Both are private: nobody is told who picked them; two people
 	// who picked each other are more likely to be grouped again (and may be
 	// offered a crew); "rather not" keeps the two apart for good.
 	// FAILED_PRECONDITION outside the window.
-	SubmitFeedback(context.Context, *connect.Request[v1.SubmitFeedbackRequest]) (*connect.Response[v1.SubmitFeedbackResponse], error)
+	SubmitFeedback(context.Context, *v1.SubmitFeedbackRequest) (*v1.SubmitFeedbackResponse, error)
 	// ReportPerson reports someone from the caller's group to the moderators,
 	// from the time the caller confirmed until 30 days after the start. The
 	// two are never grouped together again. Reporting the same person about
 	// the same outing again replaces the report.
-	ReportPerson(context.Context, *connect.Request[v1.ReportPersonRequest]) (*connect.Response[v1.ReportPersonResponse], error)
+	ReportPerson(context.Context, *v1.ReportPersonRequest) (*v1.ReportPersonResponse, error)
 }
 
-// NewEventServiceHandler builds an HTTP handler from the service implementation. It returns the
-// path on which to mount the handler and the handler itself.
-//
-// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
-// and JSON codecs. They also support gzip compression.
-func NewEventServiceHandler(svc EventServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
-	eventServiceMethods := v1.File_issho_v1_events_proto.Services().ByName("EventService").Methods()
-	eventServiceListMyEventsHandler := connect.NewUnaryHandler(
-		EventServiceListMyEventsProcedure,
-		svc.ListMyEvents,
-		connect.WithSchema(eventServiceMethods.ByName("ListMyEvents")),
-		connect.WithHandlerOptions(opts...),
+// RegisterEventServiceHandler registers svc as the issho.v1.EventService implementation on server.
+func RegisterEventServiceHandler(server *connect.Server, svc EventServiceHandler) {
+	adapter := eventServiceHandler{svc: svc}
+	server.Register(
+		connect.Method{Spec: eventServiceListMyEventsSpec(), Handler: adapter.listMyEvents},
+		connect.Method{Spec: eventServiceGetEventSpec(), Handler: adapter.getEvent},
+		connect.Method{Spec: eventServiceRespondToEventSpec(), Handler: adapter.respondToEvent},
+		connect.Method{Spec: eventServiceCheckInSpec(), Handler: adapter.checkIn},
+		connect.Method{Spec: eventServiceGetFeedbackSpec(), Handler: adapter.getFeedback},
+		connect.Method{Spec: eventServiceSubmitFeedbackSpec(), Handler: adapter.submitFeedback},
+		connect.Method{Spec: eventServiceReportPersonSpec(), Handler: adapter.reportPerson},
 	)
-	eventServiceGetEventHandler := connect.NewUnaryHandler(
-		EventServiceGetEventProcedure,
-		svc.GetEvent,
-		connect.WithSchema(eventServiceMethods.ByName("GetEvent")),
-		connect.WithHandlerOptions(opts...),
-	)
-	eventServiceRespondToEventHandler := connect.NewUnaryHandler(
-		EventServiceRespondToEventProcedure,
-		svc.RespondToEvent,
-		connect.WithSchema(eventServiceMethods.ByName("RespondToEvent")),
-		connect.WithHandlerOptions(opts...),
-	)
-	eventServiceCheckInHandler := connect.NewUnaryHandler(
-		EventServiceCheckInProcedure,
-		svc.CheckIn,
-		connect.WithSchema(eventServiceMethods.ByName("CheckIn")),
-		connect.WithHandlerOptions(opts...),
-	)
-	eventServiceGetFeedbackHandler := connect.NewUnaryHandler(
-		EventServiceGetFeedbackProcedure,
-		svc.GetFeedback,
-		connect.WithSchema(eventServiceMethods.ByName("GetFeedback")),
-		connect.WithHandlerOptions(opts...),
-	)
-	eventServiceSubmitFeedbackHandler := connect.NewUnaryHandler(
-		EventServiceSubmitFeedbackProcedure,
-		svc.SubmitFeedback,
-		connect.WithSchema(eventServiceMethods.ByName("SubmitFeedback")),
-		connect.WithHandlerOptions(opts...),
-	)
-	eventServiceReportPersonHandler := connect.NewUnaryHandler(
-		EventServiceReportPersonProcedure,
-		svc.ReportPerson,
-		connect.WithSchema(eventServiceMethods.ByName("ReportPerson")),
-		connect.WithHandlerOptions(opts...),
-	)
-	return "/issho.v1.EventService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.URL.Path {
-		case EventServiceListMyEventsProcedure:
-			eventServiceListMyEventsHandler.ServeHTTP(w, r)
-		case EventServiceGetEventProcedure:
-			eventServiceGetEventHandler.ServeHTTP(w, r)
-		case EventServiceRespondToEventProcedure:
-			eventServiceRespondToEventHandler.ServeHTTP(w, r)
-		case EventServiceCheckInProcedure:
-			eventServiceCheckInHandler.ServeHTTP(w, r)
-		case EventServiceGetFeedbackProcedure:
-			eventServiceGetFeedbackHandler.ServeHTTP(w, r)
-		case EventServiceSubmitFeedbackProcedure:
-			eventServiceSubmitFeedbackHandler.ServeHTTP(w, r)
-		case EventServiceReportPersonProcedure:
-			eventServiceReportPersonHandler.ServeHTTP(w, r)
-		default:
-			http.NotFound(w, r)
-		}
-	})
 }
 
 // UnimplementedEventServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedEventServiceHandler struct{}
 
-func (UnimplementedEventServiceHandler) ListMyEvents(context.Context, *connect.Request[v1.ListMyEventsRequest]) (*connect.Response[v1.ListMyEventsResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.EventService.ListMyEvents is not implemented"))
+func (UnimplementedEventServiceHandler) ListMyEvents(context.Context, *v1.ListMyEventsRequest) (*v1.ListMyEventsResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "issho.v1.EventService.ListMyEvents is not implemented")
 }
 
-func (UnimplementedEventServiceHandler) GetEvent(context.Context, *connect.Request[v1.GetEventRequest]) (*connect.Response[v1.GetEventResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.EventService.GetEvent is not implemented"))
+func (UnimplementedEventServiceHandler) GetEvent(context.Context, *v1.GetEventRequest) (*v1.GetEventResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "issho.v1.EventService.GetEvent is not implemented")
 }
 
-func (UnimplementedEventServiceHandler) RespondToEvent(context.Context, *connect.Request[v1.RespondToEventRequest]) (*connect.Response[v1.RespondToEventResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.EventService.RespondToEvent is not implemented"))
+func (UnimplementedEventServiceHandler) RespondToEvent(context.Context, *v1.RespondToEventRequest) (*v1.RespondToEventResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "issho.v1.EventService.RespondToEvent is not implemented")
 }
 
-func (UnimplementedEventServiceHandler) CheckIn(context.Context, *connect.Request[v1.CheckInRequest]) (*connect.Response[v1.CheckInResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.EventService.CheckIn is not implemented"))
+func (UnimplementedEventServiceHandler) CheckIn(context.Context, *v1.CheckInRequest) (*v1.CheckInResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "issho.v1.EventService.CheckIn is not implemented")
 }
 
-func (UnimplementedEventServiceHandler) GetFeedback(context.Context, *connect.Request[v1.GetFeedbackRequest]) (*connect.Response[v1.GetFeedbackResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.EventService.GetFeedback is not implemented"))
+func (UnimplementedEventServiceHandler) GetFeedback(context.Context, *v1.GetFeedbackRequest) (*v1.GetFeedbackResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "issho.v1.EventService.GetFeedback is not implemented")
 }
 
-func (UnimplementedEventServiceHandler) SubmitFeedback(context.Context, *connect.Request[v1.SubmitFeedbackRequest]) (*connect.Response[v1.SubmitFeedbackResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.EventService.SubmitFeedback is not implemented"))
+func (UnimplementedEventServiceHandler) SubmitFeedback(context.Context, *v1.SubmitFeedbackRequest) (*v1.SubmitFeedbackResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "issho.v1.EventService.SubmitFeedback is not implemented")
 }
 
-func (UnimplementedEventServiceHandler) ReportPerson(context.Context, *connect.Request[v1.ReportPersonRequest]) (*connect.Response[v1.ReportPersonResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.EventService.ReportPerson is not implemented"))
+func (UnimplementedEventServiceHandler) ReportPerson(context.Context, *v1.ReportPersonRequest) (*v1.ReportPersonResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "issho.v1.EventService.ReportPerson is not implemented")
+}
+
+type eventServiceClient struct {
+	client *connect.Client
+}
+
+func (c *eventServiceClient) ListMyEvents(ctx context.Context, req *v1.ListMyEventsRequest) (*v1.ListMyEventsResponse, error) {
+	var res v1.ListMyEventsResponse
+	if err := c.client.CallUnary(ctx, eventServiceListMyEventsSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *eventServiceClient) GetEvent(ctx context.Context, req *v1.GetEventRequest) (*v1.GetEventResponse, error) {
+	var res v1.GetEventResponse
+	if err := c.client.CallUnary(ctx, eventServiceGetEventSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *eventServiceClient) RespondToEvent(ctx context.Context, req *v1.RespondToEventRequest) (*v1.RespondToEventResponse, error) {
+	var res v1.RespondToEventResponse
+	if err := c.client.CallUnary(ctx, eventServiceRespondToEventSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *eventServiceClient) CheckIn(ctx context.Context, req *v1.CheckInRequest) (*v1.CheckInResponse, error) {
+	var res v1.CheckInResponse
+	if err := c.client.CallUnary(ctx, eventServiceCheckInSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *eventServiceClient) GetFeedback(ctx context.Context, req *v1.GetFeedbackRequest) (*v1.GetFeedbackResponse, error) {
+	var res v1.GetFeedbackResponse
+	if err := c.client.CallUnary(ctx, eventServiceGetFeedbackSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *eventServiceClient) SubmitFeedback(ctx context.Context, req *v1.SubmitFeedbackRequest) (*v1.SubmitFeedbackResponse, error) {
+	var res v1.SubmitFeedbackResponse
+	if err := c.client.CallUnary(ctx, eventServiceSubmitFeedbackSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *eventServiceClient) ReportPerson(ctx context.Context, req *v1.ReportPersonRequest) (*v1.ReportPersonResponse, error) {
+	var res v1.ReportPersonResponse
+	if err := c.client.CallUnary(ctx, eventServiceReportPersonSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+type eventServiceHandler struct{ svc EventServiceHandler }
+
+func (h eventServiceHandler) listMyEvents(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.ListMyEventsRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.ListMyEvents(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h eventServiceHandler) getEvent(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.GetEventRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.GetEvent(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h eventServiceHandler) respondToEvent(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.RespondToEventRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.RespondToEvent(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h eventServiceHandler) checkIn(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.CheckInRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.CheckIn(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h eventServiceHandler) getFeedback(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.GetFeedbackRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.GetFeedback(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h eventServiceHandler) submitFeedback(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.SubmitFeedbackRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.SubmitFeedback(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h eventServiceHandler) reportPerson(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.ReportPersonRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.ReportPerson(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
 }

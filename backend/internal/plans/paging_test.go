@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"connectrpc.com/connect"
+	"connectrpc.com/connect/v2"
 	"github.com/google/uuid"
 
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
@@ -59,11 +59,11 @@ func TestIntegrationPagingReviewPlans(t *testing.T) {
 	h := &ReviewHandler{Svc: &Service{DB: f.pool}, Now: func() time.Time { return base }}
 	admin := auth.WithCaller(ctx, auth.Caller{UserID: uuid.New(), Admin: true})
 	list := func(status isshov1.ReviewPlanStatus, size int32, token string) (*isshov1.ListReviewPlansResponse, error) {
-		res, err := h.ListReviewPlans(admin, connect.NewRequest(&isshov1.ListReviewPlansRequest{CityId: f.city, Status: status, PageSize: size, PageToken: token}))
+		res, err := h.ListReviewPlans(admin, &isshov1.ListReviewPlansRequest{CityId: f.city, Status: status, PageSize: size, PageToken: token})
 		if err != nil {
 			return nil, err
 		}
-		return res.Msg, nil
+		return res, nil
 	}
 	walk := func(status isshov1.ReviewPlanStatus, size int32) []string {
 		t.Helper()
@@ -133,14 +133,14 @@ func TestIntegrationPagingReviewEvents(t *testing.T) {
 	var got []string
 	token := ""
 	for range 100 {
-		res, err := h.ListReviewEvents(admin, connect.NewRequest(&isshov1.ListReviewEventsRequest{CityId: f.city, Status: status, PageSize: 4, PageToken: token}))
+		res, err := h.ListReviewEvents(admin, &isshov1.ListReviewEventsRequest{CityId: f.city, Status: status, PageSize: 4, PageToken: token})
 		if err != nil {
 			t.Fatal(err)
 		}
-		for _, e := range res.Msg.Events {
+		for _, e := range res.Events {
 			got = append(got, e.Id)
 		}
-		if token = res.Msg.NextPageToken; token == "" {
+		if token = res.NextPageToken; token == "" {
 			break
 		}
 	}
@@ -149,17 +149,17 @@ func TestIntegrationPagingReviewEvents(t *testing.T) {
 	if len(want) != 11 || !slices.Equal(got, want) {
 		t.Errorf("got %v, want %v", got, want)
 	}
-	if _, err := h.ListReviewEvents(admin, connect.NewRequest(&isshov1.ListReviewEventsRequest{CityId: f.city, Status: status, PageToken: "garbage"})); connect.CodeOf(err) != connect.CodeInvalidArgument {
+	if _, err := h.ListReviewEvents(admin, &isshov1.ListReviewEventsRequest{CityId: f.city, Status: status, PageToken: "garbage"}); connect.CodeOf(err) != connect.CodeInvalidArgument {
 		t.Errorf("garbage token: %v", err)
 	}
 	// The same token for scheduled events (another status) is refused.
-	first, err := h.ListReviewEvents(admin, connect.NewRequest(&isshov1.ListReviewEventsRequest{CityId: f.city, Status: status, PageSize: 2}))
-	if err != nil || first.Msg.NextPageToken == "" {
+	first, err := h.ListReviewEvents(admin, &isshov1.ListReviewEventsRequest{CityId: f.city, Status: status, PageSize: 2})
+	if err != nil || first.NextPageToken == "" {
 		t.Fatalf("first page: %v", err)
 	}
-	if _, err := h.ListReviewEvents(admin, connect.NewRequest(&isshov1.ListReviewEventsRequest{
-		CityId: f.city, Status: isshov1.ReviewEventStatus_REVIEW_EVENT_STATUS_SCHEDULED, PageToken: first.Msg.NextPageToken,
-	})); connect.CodeOf(err) != connect.CodeInvalidArgument {
+	if _, err := h.ListReviewEvents(admin, &isshov1.ListReviewEventsRequest{
+		CityId: f.city, Status: isshov1.ReviewEventStatus_REVIEW_EVENT_STATUS_SCHEDULED, PageToken: first.NextPageToken,
+	}); connect.CodeOf(err) != connect.CodeInvalidArgument {
 		t.Errorf("token for another status: %v", err)
 	}
 }
