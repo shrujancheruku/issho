@@ -5,236 +5,255 @@
 package isshov1connect
 
 import (
-	connect "connectrpc.com/connect"
+	connect "connectrpc.com/connect/v2"
 	context "context"
-	errors "errors"
 	v1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
-	http "net/http"
-	strings "strings"
+	sync "sync"
 )
-
-// This is a compile-time assertion to ensure that this generated file and the connect package are
-// compatible. If you get a compiler error that this constant is not defined, this code was
-// generated with a version of connect newer than the one compiled into your binary. You can fix the
-// problem by either regenerating this code with an older version of connect or updating the connect
-// version compiled into your binary.
-const _ = connect.IsAtLeastVersion1_13_0
 
 const (
 	// CrewServiceName is the fully-qualified name of the CrewService service.
 	CrewServiceName = "issho.v1.CrewService"
 )
 
-// These constants are the fully-qualified names of the RPCs defined in this package. They're
-// exposed at runtime as Spec.Procedure and as the final two segments of the HTTP route.
+// These constants are the procedure names of the RPCs defined in this package. They're exposed at
+// runtime as Spec.Procedure and as the final two segments of the HTTP route.
 //
 // Note that these are different from the fully-qualified method names used by
 // google.golang.org/protobuf/reflect/protoreflect. To convert from these constants to
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
-	// CrewServiceListMyCrewsProcedure is the fully-qualified name of the CrewService's ListMyCrews RPC.
+	// CrewServiceListMyCrewsProcedure is the procedure name of the CrewService's ListMyCrews RPC.
 	CrewServiceListMyCrewsProcedure = "/issho.v1.CrewService/ListMyCrews"
-	// CrewServiceGetCrewProcedure is the fully-qualified name of the CrewService's GetCrew RPC.
+	// CrewServiceGetCrewProcedure is the procedure name of the CrewService's GetCrew RPC.
 	CrewServiceGetCrewProcedure = "/issho.v1.CrewService/GetCrew"
-	// CrewServiceRespondToCrewProcedure is the fully-qualified name of the CrewService's RespondToCrew
-	// RPC.
+	// CrewServiceRespondToCrewProcedure is the procedure name of the CrewService's RespondToCrew RPC.
 	CrewServiceRespondToCrewProcedure = "/issho.v1.CrewService/RespondToCrew"
-	// CrewServiceLeaveCrewProcedure is the fully-qualified name of the CrewService's LeaveCrew RPC.
+	// CrewServiceLeaveCrewProcedure is the procedure name of the CrewService's LeaveCrew RPC.
 	CrewServiceLeaveCrewProcedure = "/issho.v1.CrewService/LeaveCrew"
-	// CrewServiceReportCrewMemberProcedure is the fully-qualified name of the CrewService's
-	// ReportCrewMember RPC.
+	// CrewServiceReportCrewMemberProcedure is the procedure name of the CrewService's ReportCrewMember
+	// RPC.
 	CrewServiceReportCrewMemberProcedure = "/issho.v1.CrewService/ReportCrewMember"
+)
+
+var (
+	crewServiceListMyCrewsSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_issho_v1_crews_proto.Services().ByName("CrewService").Methods().ByName("ListMyCrews"),
+			Procedure:  CrewServiceListMyCrewsProcedure,
+		}
+	})
+	crewServiceGetCrewSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_issho_v1_crews_proto.Services().ByName("CrewService").Methods().ByName("GetCrew"),
+			Procedure:  CrewServiceGetCrewProcedure,
+		}
+	})
+	crewServiceRespondToCrewSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_issho_v1_crews_proto.Services().ByName("CrewService").Methods().ByName("RespondToCrew"),
+			Procedure:  CrewServiceRespondToCrewProcedure,
+		}
+	})
+	crewServiceLeaveCrewSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_issho_v1_crews_proto.Services().ByName("CrewService").Methods().ByName("LeaveCrew"),
+			Procedure:  CrewServiceLeaveCrewProcedure,
+		}
+	})
+	crewServiceReportCrewMemberSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_issho_v1_crews_proto.Services().ByName("CrewService").Methods().ByName("ReportCrewMember"),
+			Procedure:  CrewServiceReportCrewMemberProcedure,
+		}
+	})
 )
 
 // CrewServiceClient is a client for the issho.v1.CrewService service.
 type CrewServiceClient interface {
 	// ListMyCrews returns the caller's crews and the offers still open to
 	// them, newest first.
-	ListMyCrews(context.Context, *connect.Request[v1.ListMyCrewsRequest]) (*connect.Response[v1.ListMyCrewsResponse], error)
+	ListMyCrews(context.Context, *v1.ListMyCrewsRequest) (*v1.ListMyCrewsResponse, error)
 	// GetCrew returns one of them. NOT_FOUND otherwise.
-	GetCrew(context.Context, *connect.Request[v1.GetCrewRequest]) (*connect.Response[v1.GetCrewResponse], error)
+	GetCrew(context.Context, *v1.GetCrewRequest) (*v1.GetCrewResponse, error)
 	// RespondToCrew accepts or declines an offer while it's open (the answer
 	// can be changed until then). FAILED_PRECONDITION once it has closed.
-	RespondToCrew(context.Context, *connect.Request[v1.RespondToCrewRequest]) (*connect.Response[v1.RespondToCrewResponse], error)
+	RespondToCrew(context.Context, *v1.RespondToCrewRequest) (*v1.RespondToCrewResponse, error)
 	// LeaveCrew takes the caller out of a crew, with why. The reason is
 	// private: the crew isn't told why, or that they left.
-	LeaveCrew(context.Context, *connect.Request[v1.LeaveCrewRequest]) (*connect.Response[v1.LeaveCrewResponse], error)
+	LeaveCrew(context.Context, *v1.LeaveCrewRequest) (*v1.LeaveCrewResponse, error)
 	// ReportCrewMember reports someone in (or who was in) the caller's crew
 	// to the moderators, as EventService.ReportPerson does for an outing.
-	ReportCrewMember(context.Context, *connect.Request[v1.ReportCrewMemberRequest]) (*connect.Response[v1.ReportCrewMemberResponse], error)
+	ReportCrewMember(context.Context, *v1.ReportCrewMemberRequest) (*v1.ReportCrewMemberResponse, error)
 }
 
-// NewCrewServiceClient constructs a client for the issho.v1.CrewService service. By default, it
-// uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses, and sends
-// uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the connect.WithGRPC() or
-// connect.WithGRPCWeb() options.
-//
-// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
-// http://api.acme.com or https://acme.com/grpc).
-func NewCrewServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) CrewServiceClient {
-	baseURL = strings.TrimRight(baseURL, "/")
-	crewServiceMethods := v1.File_issho_v1_crews_proto.Services().ByName("CrewService").Methods()
-	return &crewServiceClient{
-		listMyCrews: connect.NewClient[v1.ListMyCrewsRequest, v1.ListMyCrewsResponse](
-			httpClient,
-			baseURL+CrewServiceListMyCrewsProcedure,
-			connect.WithSchema(crewServiceMethods.ByName("ListMyCrews")),
-			connect.WithClientOptions(opts...),
-		),
-		getCrew: connect.NewClient[v1.GetCrewRequest, v1.GetCrewResponse](
-			httpClient,
-			baseURL+CrewServiceGetCrewProcedure,
-			connect.WithSchema(crewServiceMethods.ByName("GetCrew")),
-			connect.WithClientOptions(opts...),
-		),
-		respondToCrew: connect.NewClient[v1.RespondToCrewRequest, v1.RespondToCrewResponse](
-			httpClient,
-			baseURL+CrewServiceRespondToCrewProcedure,
-			connect.WithSchema(crewServiceMethods.ByName("RespondToCrew")),
-			connect.WithClientOptions(opts...),
-		),
-		leaveCrew: connect.NewClient[v1.LeaveCrewRequest, v1.LeaveCrewResponse](
-			httpClient,
-			baseURL+CrewServiceLeaveCrewProcedure,
-			connect.WithSchema(crewServiceMethods.ByName("LeaveCrew")),
-			connect.WithClientOptions(opts...),
-		),
-		reportCrewMember: connect.NewClient[v1.ReportCrewMemberRequest, v1.ReportCrewMemberResponse](
-			httpClient,
-			baseURL+CrewServiceReportCrewMemberProcedure,
-			connect.WithSchema(crewServiceMethods.ByName("ReportCrewMember")),
-			connect.WithClientOptions(opts...),
-		),
-	}
-}
-
-// crewServiceClient implements CrewServiceClient.
-type crewServiceClient struct {
-	listMyCrews      *connect.Client[v1.ListMyCrewsRequest, v1.ListMyCrewsResponse]
-	getCrew          *connect.Client[v1.GetCrewRequest, v1.GetCrewResponse]
-	respondToCrew    *connect.Client[v1.RespondToCrewRequest, v1.RespondToCrewResponse]
-	leaveCrew        *connect.Client[v1.LeaveCrewRequest, v1.LeaveCrewResponse]
-	reportCrewMember *connect.Client[v1.ReportCrewMemberRequest, v1.ReportCrewMemberResponse]
-}
-
-// ListMyCrews calls issho.v1.CrewService.ListMyCrews.
-func (c *crewServiceClient) ListMyCrews(ctx context.Context, req *connect.Request[v1.ListMyCrewsRequest]) (*connect.Response[v1.ListMyCrewsResponse], error) {
-	return c.listMyCrews.CallUnary(ctx, req)
-}
-
-// GetCrew calls issho.v1.CrewService.GetCrew.
-func (c *crewServiceClient) GetCrew(ctx context.Context, req *connect.Request[v1.GetCrewRequest]) (*connect.Response[v1.GetCrewResponse], error) {
-	return c.getCrew.CallUnary(ctx, req)
-}
-
-// RespondToCrew calls issho.v1.CrewService.RespondToCrew.
-func (c *crewServiceClient) RespondToCrew(ctx context.Context, req *connect.Request[v1.RespondToCrewRequest]) (*connect.Response[v1.RespondToCrewResponse], error) {
-	return c.respondToCrew.CallUnary(ctx, req)
-}
-
-// LeaveCrew calls issho.v1.CrewService.LeaveCrew.
-func (c *crewServiceClient) LeaveCrew(ctx context.Context, req *connect.Request[v1.LeaveCrewRequest]) (*connect.Response[v1.LeaveCrewResponse], error) {
-	return c.leaveCrew.CallUnary(ctx, req)
-}
-
-// ReportCrewMember calls issho.v1.CrewService.ReportCrewMember.
-func (c *crewServiceClient) ReportCrewMember(ctx context.Context, req *connect.Request[v1.ReportCrewMemberRequest]) (*connect.Response[v1.ReportCrewMemberResponse], error) {
-	return c.reportCrewMember.CallUnary(ctx, req)
+// NewCrewServiceClient constructs a client for the issho.v1.CrewService service. Multiple service
+// clients may share a single connect.Client.
+func NewCrewServiceClient(client *connect.Client) CrewServiceClient {
+	return &crewServiceClient{client: client}
 }
 
 // CrewServiceHandler is an implementation of the issho.v1.CrewService service.
 type CrewServiceHandler interface {
 	// ListMyCrews returns the caller's crews and the offers still open to
 	// them, newest first.
-	ListMyCrews(context.Context, *connect.Request[v1.ListMyCrewsRequest]) (*connect.Response[v1.ListMyCrewsResponse], error)
+	ListMyCrews(context.Context, *v1.ListMyCrewsRequest) (*v1.ListMyCrewsResponse, error)
 	// GetCrew returns one of them. NOT_FOUND otherwise.
-	GetCrew(context.Context, *connect.Request[v1.GetCrewRequest]) (*connect.Response[v1.GetCrewResponse], error)
+	GetCrew(context.Context, *v1.GetCrewRequest) (*v1.GetCrewResponse, error)
 	// RespondToCrew accepts or declines an offer while it's open (the answer
 	// can be changed until then). FAILED_PRECONDITION once it has closed.
-	RespondToCrew(context.Context, *connect.Request[v1.RespondToCrewRequest]) (*connect.Response[v1.RespondToCrewResponse], error)
+	RespondToCrew(context.Context, *v1.RespondToCrewRequest) (*v1.RespondToCrewResponse, error)
 	// LeaveCrew takes the caller out of a crew, with why. The reason is
 	// private: the crew isn't told why, or that they left.
-	LeaveCrew(context.Context, *connect.Request[v1.LeaveCrewRequest]) (*connect.Response[v1.LeaveCrewResponse], error)
+	LeaveCrew(context.Context, *v1.LeaveCrewRequest) (*v1.LeaveCrewResponse, error)
 	// ReportCrewMember reports someone in (or who was in) the caller's crew
 	// to the moderators, as EventService.ReportPerson does for an outing.
-	ReportCrewMember(context.Context, *connect.Request[v1.ReportCrewMemberRequest]) (*connect.Response[v1.ReportCrewMemberResponse], error)
+	ReportCrewMember(context.Context, *v1.ReportCrewMemberRequest) (*v1.ReportCrewMemberResponse, error)
 }
 
-// NewCrewServiceHandler builds an HTTP handler from the service implementation. It returns the path
-// on which to mount the handler and the handler itself.
-//
-// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
-// and JSON codecs. They also support gzip compression.
-func NewCrewServiceHandler(svc CrewServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
-	crewServiceMethods := v1.File_issho_v1_crews_proto.Services().ByName("CrewService").Methods()
-	crewServiceListMyCrewsHandler := connect.NewUnaryHandler(
-		CrewServiceListMyCrewsProcedure,
-		svc.ListMyCrews,
-		connect.WithSchema(crewServiceMethods.ByName("ListMyCrews")),
-		connect.WithHandlerOptions(opts...),
+// RegisterCrewServiceHandler registers svc as the issho.v1.CrewService implementation on server.
+func RegisterCrewServiceHandler(server *connect.Server, svc CrewServiceHandler) {
+	adapter := crewServiceHandler{svc: svc}
+	server.Register(
+		connect.Method{Spec: crewServiceListMyCrewsSpec(), Handler: adapter.listMyCrews},
+		connect.Method{Spec: crewServiceGetCrewSpec(), Handler: adapter.getCrew},
+		connect.Method{Spec: crewServiceRespondToCrewSpec(), Handler: adapter.respondToCrew},
+		connect.Method{Spec: crewServiceLeaveCrewSpec(), Handler: adapter.leaveCrew},
+		connect.Method{Spec: crewServiceReportCrewMemberSpec(), Handler: adapter.reportCrewMember},
 	)
-	crewServiceGetCrewHandler := connect.NewUnaryHandler(
-		CrewServiceGetCrewProcedure,
-		svc.GetCrew,
-		connect.WithSchema(crewServiceMethods.ByName("GetCrew")),
-		connect.WithHandlerOptions(opts...),
-	)
-	crewServiceRespondToCrewHandler := connect.NewUnaryHandler(
-		CrewServiceRespondToCrewProcedure,
-		svc.RespondToCrew,
-		connect.WithSchema(crewServiceMethods.ByName("RespondToCrew")),
-		connect.WithHandlerOptions(opts...),
-	)
-	crewServiceLeaveCrewHandler := connect.NewUnaryHandler(
-		CrewServiceLeaveCrewProcedure,
-		svc.LeaveCrew,
-		connect.WithSchema(crewServiceMethods.ByName("LeaveCrew")),
-		connect.WithHandlerOptions(opts...),
-	)
-	crewServiceReportCrewMemberHandler := connect.NewUnaryHandler(
-		CrewServiceReportCrewMemberProcedure,
-		svc.ReportCrewMember,
-		connect.WithSchema(crewServiceMethods.ByName("ReportCrewMember")),
-		connect.WithHandlerOptions(opts...),
-	)
-	return "/issho.v1.CrewService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.URL.Path {
-		case CrewServiceListMyCrewsProcedure:
-			crewServiceListMyCrewsHandler.ServeHTTP(w, r)
-		case CrewServiceGetCrewProcedure:
-			crewServiceGetCrewHandler.ServeHTTP(w, r)
-		case CrewServiceRespondToCrewProcedure:
-			crewServiceRespondToCrewHandler.ServeHTTP(w, r)
-		case CrewServiceLeaveCrewProcedure:
-			crewServiceLeaveCrewHandler.ServeHTTP(w, r)
-		case CrewServiceReportCrewMemberProcedure:
-			crewServiceReportCrewMemberHandler.ServeHTTP(w, r)
-		default:
-			http.NotFound(w, r)
-		}
-	})
 }
 
 // UnimplementedCrewServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedCrewServiceHandler struct{}
 
-func (UnimplementedCrewServiceHandler) ListMyCrews(context.Context, *connect.Request[v1.ListMyCrewsRequest]) (*connect.Response[v1.ListMyCrewsResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.CrewService.ListMyCrews is not implemented"))
+func (UnimplementedCrewServiceHandler) ListMyCrews(context.Context, *v1.ListMyCrewsRequest) (*v1.ListMyCrewsResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "issho.v1.CrewService.ListMyCrews is not implemented")
 }
 
-func (UnimplementedCrewServiceHandler) GetCrew(context.Context, *connect.Request[v1.GetCrewRequest]) (*connect.Response[v1.GetCrewResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.CrewService.GetCrew is not implemented"))
+func (UnimplementedCrewServiceHandler) GetCrew(context.Context, *v1.GetCrewRequest) (*v1.GetCrewResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "issho.v1.CrewService.GetCrew is not implemented")
 }
 
-func (UnimplementedCrewServiceHandler) RespondToCrew(context.Context, *connect.Request[v1.RespondToCrewRequest]) (*connect.Response[v1.RespondToCrewResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.CrewService.RespondToCrew is not implemented"))
+func (UnimplementedCrewServiceHandler) RespondToCrew(context.Context, *v1.RespondToCrewRequest) (*v1.RespondToCrewResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "issho.v1.CrewService.RespondToCrew is not implemented")
 }
 
-func (UnimplementedCrewServiceHandler) LeaveCrew(context.Context, *connect.Request[v1.LeaveCrewRequest]) (*connect.Response[v1.LeaveCrewResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.CrewService.LeaveCrew is not implemented"))
+func (UnimplementedCrewServiceHandler) LeaveCrew(context.Context, *v1.LeaveCrewRequest) (*v1.LeaveCrewResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "issho.v1.CrewService.LeaveCrew is not implemented")
 }
 
-func (UnimplementedCrewServiceHandler) ReportCrewMember(context.Context, *connect.Request[v1.ReportCrewMemberRequest]) (*connect.Response[v1.ReportCrewMemberResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.CrewService.ReportCrewMember is not implemented"))
+func (UnimplementedCrewServiceHandler) ReportCrewMember(context.Context, *v1.ReportCrewMemberRequest) (*v1.ReportCrewMemberResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "issho.v1.CrewService.ReportCrewMember is not implemented")
+}
+
+type crewServiceClient struct {
+	client *connect.Client
+}
+
+func (c *crewServiceClient) ListMyCrews(ctx context.Context, req *v1.ListMyCrewsRequest) (*v1.ListMyCrewsResponse, error) {
+	var res v1.ListMyCrewsResponse
+	if err := c.client.CallUnary(ctx, crewServiceListMyCrewsSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *crewServiceClient) GetCrew(ctx context.Context, req *v1.GetCrewRequest) (*v1.GetCrewResponse, error) {
+	var res v1.GetCrewResponse
+	if err := c.client.CallUnary(ctx, crewServiceGetCrewSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *crewServiceClient) RespondToCrew(ctx context.Context, req *v1.RespondToCrewRequest) (*v1.RespondToCrewResponse, error) {
+	var res v1.RespondToCrewResponse
+	if err := c.client.CallUnary(ctx, crewServiceRespondToCrewSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *crewServiceClient) LeaveCrew(ctx context.Context, req *v1.LeaveCrewRequest) (*v1.LeaveCrewResponse, error) {
+	var res v1.LeaveCrewResponse
+	if err := c.client.CallUnary(ctx, crewServiceLeaveCrewSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *crewServiceClient) ReportCrewMember(ctx context.Context, req *v1.ReportCrewMemberRequest) (*v1.ReportCrewMemberResponse, error) {
+	var res v1.ReportCrewMemberResponse
+	if err := c.client.CallUnary(ctx, crewServiceReportCrewMemberSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+type crewServiceHandler struct{ svc CrewServiceHandler }
+
+func (h crewServiceHandler) listMyCrews(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.ListMyCrewsRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.ListMyCrews(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h crewServiceHandler) getCrew(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.GetCrewRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.GetCrew(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h crewServiceHandler) respondToCrew(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.RespondToCrewRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.RespondToCrew(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h crewServiceHandler) leaveCrew(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.LeaveCrewRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.LeaveCrew(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h crewServiceHandler) reportCrewMember(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.ReportCrewMemberRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.ReportCrewMember(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
 }

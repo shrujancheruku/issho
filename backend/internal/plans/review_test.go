@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"connectrpc.com/connect"
+	"connectrpc.com/connect/v2"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 
@@ -35,10 +35,10 @@ func TestIntegrationReview(t *testing.T) {
 	h := &ReviewHandler{Svc: svc, Now: func() time.Time { return now }}
 	adminCtx := auth.WithCaller(ctx, auth.Caller{UserID: adminID, Admin: true})
 
-	if _, err := h.SetCityReview(adminCtx, connect.NewRequest(&isshov1.SetCityReviewRequest{CityId: f.city, Review: true})); err != nil {
+	if _, err := h.SetCityReview(adminCtx, &isshov1.SetCityReviewRequest{CityId: f.city, Review: true}); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := h.SetCityReview(auth.WithCaller(ctx, auth.Caller{UserID: f.users[0]}), connect.NewRequest(&isshov1.SetCityReviewRequest{CityId: f.city})); connect.CodeOf(err) != connect.CodePermissionDenied {
+	if _, err := h.SetCityReview(auth.WithCaller(ctx, auth.Caller{UserID: f.users[0]}), &isshov1.SetCityReviewRequest{CityId: f.city}); connect.CodeOf(err) != connect.CodePermissionDenied {
 		t.Fatalf("a user setting review: %v", err)
 	}
 
@@ -58,11 +58,11 @@ func TestIntegrationReview(t *testing.T) {
 	}
 	list := func(status isshov1.ReviewPlanStatus) []*isshov1.ReviewPlan {
 		t.Helper()
-		res, err := h.ListReviewPlans(adminCtx, connect.NewRequest(&isshov1.ListReviewPlansRequest{CityId: f.city, Status: status}))
+		res, err := h.ListReviewPlans(adminCtx, &isshov1.ListReviewPlansRequest{CityId: f.city, Status: status})
 		if err != nil {
 			t.Fatal(err)
 		}
-		return res.Msg.Plans
+		return res.Plans
 	}
 	drafts := list(isshov1.ReviewPlanStatus_REVIEW_PLAN_STATUS_DRAFT)
 	if len(drafts) != 1 || drafts[0].Title != "Test" || drafts[0].StoredTitle != "" || drafts[0].Audience == 0 {
@@ -71,17 +71,17 @@ func TestIntegrationReview(t *testing.T) {
 	draft := drafts[0].Id
 
 	// Edit, approve two days later: open, in the feed, with a window from then.
-	if _, err := h.EditPlan(adminCtx, connect.NewRequest(&isshov1.EditPlanRequest{PlanId: draft, Title: strings.Repeat("x", 81)})); connect.CodeOf(err) != connect.CodeInvalidArgument {
+	if _, err := h.EditPlan(adminCtx, &isshov1.EditPlanRequest{PlanId: draft, Title: strings.Repeat("x", 81)}); connect.CodeOf(err) != connect.CodeInvalidArgument {
 		t.Fatalf("an 81-character title: %v", err)
 	}
-	if _, err := h.EditPlan(adminCtx, connect.NewRequest(&isshov1.EditPlanRequest{PlanId: draft, Title: "Kichijoji board games", Summary: "Games and tea."})); err != nil {
+	if _, err := h.EditPlan(adminCtx, &isshov1.EditPlanRequest{PlanId: draft, Title: "Kichijoji board games", Summary: "Games and tea."}); err != nil {
 		t.Fatal(err)
 	}
 	now = now.Add(48 * time.Hour)
-	if _, err := h.ApprovePlan(adminCtx, connect.NewRequest(&isshov1.ApprovePlanRequest{PlanId: draft})); err != nil {
+	if _, err := h.ApprovePlan(adminCtx, &isshov1.ApprovePlanRequest{PlanId: draft}); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := h.ApprovePlan(adminCtx, connect.NewRequest(&isshov1.ApprovePlanRequest{PlanId: draft})); connect.CodeOf(err) != connect.CodeFailedPrecondition {
+	if _, err := h.ApprovePlan(adminCtx, &isshov1.ApprovePlanRequest{PlanId: draft}); connect.CodeOf(err) != connect.CodeFailedPrecondition {
 		t.Fatalf("approving twice: %v", err)
 	}
 	open := list(isshov1.ReviewPlanStatus_REVIEW_PLAN_STATUS_OPEN)
@@ -108,7 +108,7 @@ func TestIntegrationReview(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := h.RejectPlan(adminCtx, connect.NewRequest(&isshov1.RejectPlanRequest{PlanId: other.String()})); err != nil {
+	if _, err := h.RejectPlan(adminCtx, &isshov1.RejectPlanRequest{PlanId: other.String()}); err != nil {
 		t.Fatal(err)
 	}
 	failed, err := f.q.ListRecentlyFailedPlans(ctx, dbgen.ListRecentlyFailedPlansParams{CityID: f.city, Reasons: failedReasons, Since: pgtype.Timestamptz{Time: now.Add(-time.Hour), Valid: true}})
@@ -120,8 +120,8 @@ func TestIntegrationReview(t *testing.T) {
 	}
 
 	// A plan made by hand opens at once, even under review.
-	create := func(m *isshov1.CreatePlanRequest) (*connect.Response[isshov1.CreatePlanResponse], error) {
-		return h.CreatePlan(adminCtx, connect.NewRequest(m))
+	create := func(m *isshov1.CreatePlanRequest) (*isshov1.CreatePlanResponse, error) {
+		return h.CreatePlan(adminCtx, m)
 	}
 	if _, err := create(&isshov1.CreatePlanRequest{CityId: f.city, AreaId: "nowhere", ActivityId: f.act, PrimaryLanguage: "ja"}); connect.CodeOf(err) != connect.CodeInvalidArgument {
 		t.Fatalf("unknown area: %v", err)
@@ -136,27 +136,27 @@ func TestIntegrationReview(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	got, err := h.GetReviewPlan(adminCtx, connect.NewRequest(&isshov1.GetReviewPlanRequest{PlanId: made.Msg.PlanId}))
+	got, err := h.GetReviewPlan(adminCtx, &isshov1.GetReviewPlanRequest{PlanId: made.PlanId})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if p := got.Msg.Plan; p.Status != isshov1.ReviewPlanStatus_REVIEW_PLAN_STATUS_OPEN || p.CreatedBy != adminID.String() || p.Title != "Launch night" || p.SecondaryLanguage != "en" {
+	if p := got.Plan; p.Status != isshov1.ReviewPlanStatus_REVIEW_PLAN_STATUS_OPEN || p.CreatedBy != adminID.String() || p.Title != "Launch night" || p.SecondaryLanguage != "en" {
 		t.Fatalf("made by hand = %v", p)
 	}
 
 	// Withdrawing closes an open plan, once.
-	withdraw := &isshov1.WithdrawPlanRequest{PlanId: made.Msg.PlanId}
-	if _, err := h.WithdrawPlan(adminCtx, connect.NewRequest(withdraw)); err != nil {
+	withdraw := &isshov1.WithdrawPlanRequest{PlanId: made.PlanId}
+	if _, err := h.WithdrawPlan(adminCtx, withdraw); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := h.WithdrawPlan(adminCtx, connect.NewRequest(withdraw)); connect.CodeOf(err) != connect.CodeFailedPrecondition {
+	if _, err := h.WithdrawPlan(adminCtx, withdraw); connect.CodeOf(err) != connect.CodeFailedPrecondition {
 		t.Fatalf("withdrawing twice: %v", err)
 	}
-	cities, err := h.ListReviewCities(adminCtx, connect.NewRequest(&isshov1.ListReviewCitiesRequest{}))
+	cities, err := h.ListReviewCities(adminCtx, &isshov1.ListReviewCitiesRequest{})
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, c := range cities.Msg.Cities {
+	for _, c := range cities.Cities {
 		if c.Id == f.city && (!c.Review || c.Drafts != 0 || c.Open != 1) {
 			t.Errorf("city = %v, want review on, 0 drafts, 1 open", c)
 		}

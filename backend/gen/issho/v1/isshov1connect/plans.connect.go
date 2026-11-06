@@ -5,45 +5,73 @@
 package isshov1connect
 
 import (
-	connect "connectrpc.com/connect"
+	connect "connectrpc.com/connect/v2"
 	context "context"
-	errors "errors"
 	v1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
-	http "net/http"
-	strings "strings"
+	sync "sync"
 )
-
-// This is a compile-time assertion to ensure that this generated file and the connect package are
-// compatible. If you get a compiler error that this constant is not defined, this code was
-// generated with a version of connect newer than the one compiled into your binary. You can fix the
-// problem by either regenerating this code with an older version of connect or updating the connect
-// version compiled into your binary.
-const _ = connect.IsAtLeastVersion1_13_0
 
 const (
 	// PlanServiceName is the fully-qualified name of the PlanService service.
 	PlanServiceName = "issho.v1.PlanService"
 )
 
-// These constants are the fully-qualified names of the RPCs defined in this package. They're
-// exposed at runtime as Spec.Procedure and as the final two segments of the HTTP route.
+// These constants are the procedure names of the RPCs defined in this package. They're exposed at
+// runtime as Spec.Procedure and as the final two segments of the HTTP route.
 //
 // Note that these are different from the fully-qualified method names used by
 // google.golang.org/protobuf/reflect/protoreflect. To convert from these constants to
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
-	// PlanServiceListFeedProcedure is the fully-qualified name of the PlanService's ListFeed RPC.
+	// PlanServiceListFeedProcedure is the procedure name of the PlanService's ListFeed RPC.
 	PlanServiceListFeedProcedure = "/issho.v1.PlanService/ListFeed"
-	// PlanServiceGetPlanProcedure is the fully-qualified name of the PlanService's GetPlan RPC.
+	// PlanServiceGetPlanProcedure is the procedure name of the PlanService's GetPlan RPC.
 	PlanServiceGetPlanProcedure = "/issho.v1.PlanService/GetPlan"
-	// PlanServiceGetPlanCardsProcedure is the fully-qualified name of the PlanService's GetPlanCards
-	// RPC.
+	// PlanServiceGetPlanCardsProcedure is the procedure name of the PlanService's GetPlanCards RPC.
 	PlanServiceGetPlanCardsProcedure = "/issho.v1.PlanService/GetPlanCards"
-	// PlanServiceSignUpProcedure is the fully-qualified name of the PlanService's SignUp RPC.
+	// PlanServiceSignUpProcedure is the procedure name of the PlanService's SignUp RPC.
 	PlanServiceSignUpProcedure = "/issho.v1.PlanService/SignUp"
-	// PlanServiceWithdrawProcedure is the fully-qualified name of the PlanService's Withdraw RPC.
+	// PlanServiceWithdrawProcedure is the procedure name of the PlanService's Withdraw RPC.
 	PlanServiceWithdrawProcedure = "/issho.v1.PlanService/Withdraw"
+)
+
+var (
+	planServiceListFeedSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_issho_v1_plans_proto.Services().ByName("PlanService").Methods().ByName("ListFeed"),
+			Procedure:  PlanServiceListFeedProcedure,
+		}
+	})
+	planServiceGetPlanSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_issho_v1_plans_proto.Services().ByName("PlanService").Methods().ByName("GetPlan"),
+			Procedure:  PlanServiceGetPlanProcedure,
+		}
+	})
+	planServiceGetPlanCardsSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_issho_v1_plans_proto.Services().ByName("PlanService").Methods().ByName("GetPlanCards"),
+			Procedure:  PlanServiceGetPlanCardsProcedure,
+		}
+	})
+	planServiceSignUpSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_issho_v1_plans_proto.Services().ByName("PlanService").Methods().ByName("SignUp"),
+			Procedure:  PlanServiceSignUpProcedure,
+		}
+	})
+	planServiceWithdrawSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_issho_v1_plans_proto.Services().ByName("PlanService").Methods().ByName("Withdraw"),
+			Procedure:  PlanServiceWithdrawProcedure,
+		}
+	})
 )
 
 // PlanServiceClient is a client for the issho.v1.PlanService service.
@@ -51,101 +79,29 @@ type PlanServiceClient interface {
 	// ListFeed returns every open plan in the caller's city, best for them
 	// first, so scrolling far enough shows everything. Each plan's level also
 	// colours the map.
-	ListFeed(context.Context, *connect.Request[v1.ListFeedRequest]) (*connect.Response[v1.ListFeedResponse], error)
+	ListFeed(context.Context, *v1.ListFeedRequest) (*v1.ListFeedResponse, error)
 	// GetPlan returns one open plan with the caller's signup, if any.
 	// NOT_FOUND for an unknown or closed plan, or one in another city.
-	GetPlan(context.Context, *connect.Request[v1.GetPlanRequest]) (*connect.Response[v1.GetPlanResponse], error)
+	GetPlan(context.Context, *v1.GetPlanRequest) (*v1.GetPlanResponse, error)
 	// GetPlanCards returns the feed's card (FeedPlan) for each of up to 50
 	// plans, in one call with no stops, route or Google lookups. Each id is
 	// judged as GetPlan would: an open plan in the caller's city, or one closed
 	// there in the last 14 days (with closed_reason). Unknown, other-city and
 	// older closed ids are left out, not an error. INVALID_ARGUMENT for more
 	// than 50 ids or one that isn't a plan id.
-	GetPlanCards(context.Context, *connect.Request[v1.GetPlanCardsRequest]) (*connect.Response[v1.GetPlanCardsResponse], error)
+	GetPlanCards(context.Context, *v1.GetPlanCardsRequest) (*v1.GetPlanCardsResponse, error)
 	// SignUp signs the caller up for an open plan, or replaces the times they
 	// gave. FAILED_PRECONDITION when the plan has closed or they don't speak
 	// its language; INVALID_ARGUMENT for times outside the plan's window.
-	SignUp(context.Context, *connect.Request[v1.SignUpRequest]) (*connect.Response[v1.SignUpResponse], error)
+	SignUp(context.Context, *v1.SignUpRequest) (*v1.SignUpResponse, error)
 	// Withdraw removes the caller's signup. Withdrawing twice is fine.
-	Withdraw(context.Context, *connect.Request[v1.WithdrawRequest]) (*connect.Response[v1.WithdrawResponse], error)
+	Withdraw(context.Context, *v1.WithdrawRequest) (*v1.WithdrawResponse, error)
 }
 
-// NewPlanServiceClient constructs a client for the issho.v1.PlanService service. By default, it
-// uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses, and sends
-// uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the connect.WithGRPC() or
-// connect.WithGRPCWeb() options.
-//
-// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
-// http://api.acme.com or https://acme.com/grpc).
-func NewPlanServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) PlanServiceClient {
-	baseURL = strings.TrimRight(baseURL, "/")
-	planServiceMethods := v1.File_issho_v1_plans_proto.Services().ByName("PlanService").Methods()
-	return &planServiceClient{
-		listFeed: connect.NewClient[v1.ListFeedRequest, v1.ListFeedResponse](
-			httpClient,
-			baseURL+PlanServiceListFeedProcedure,
-			connect.WithSchema(planServiceMethods.ByName("ListFeed")),
-			connect.WithClientOptions(opts...),
-		),
-		getPlan: connect.NewClient[v1.GetPlanRequest, v1.GetPlanResponse](
-			httpClient,
-			baseURL+PlanServiceGetPlanProcedure,
-			connect.WithSchema(planServiceMethods.ByName("GetPlan")),
-			connect.WithClientOptions(opts...),
-		),
-		getPlanCards: connect.NewClient[v1.GetPlanCardsRequest, v1.GetPlanCardsResponse](
-			httpClient,
-			baseURL+PlanServiceGetPlanCardsProcedure,
-			connect.WithSchema(planServiceMethods.ByName("GetPlanCards")),
-			connect.WithClientOptions(opts...),
-		),
-		signUp: connect.NewClient[v1.SignUpRequest, v1.SignUpResponse](
-			httpClient,
-			baseURL+PlanServiceSignUpProcedure,
-			connect.WithSchema(planServiceMethods.ByName("SignUp")),
-			connect.WithClientOptions(opts...),
-		),
-		withdraw: connect.NewClient[v1.WithdrawRequest, v1.WithdrawResponse](
-			httpClient,
-			baseURL+PlanServiceWithdrawProcedure,
-			connect.WithSchema(planServiceMethods.ByName("Withdraw")),
-			connect.WithClientOptions(opts...),
-		),
-	}
-}
-
-// planServiceClient implements PlanServiceClient.
-type planServiceClient struct {
-	listFeed     *connect.Client[v1.ListFeedRequest, v1.ListFeedResponse]
-	getPlan      *connect.Client[v1.GetPlanRequest, v1.GetPlanResponse]
-	getPlanCards *connect.Client[v1.GetPlanCardsRequest, v1.GetPlanCardsResponse]
-	signUp       *connect.Client[v1.SignUpRequest, v1.SignUpResponse]
-	withdraw     *connect.Client[v1.WithdrawRequest, v1.WithdrawResponse]
-}
-
-// ListFeed calls issho.v1.PlanService.ListFeed.
-func (c *planServiceClient) ListFeed(ctx context.Context, req *connect.Request[v1.ListFeedRequest]) (*connect.Response[v1.ListFeedResponse], error) {
-	return c.listFeed.CallUnary(ctx, req)
-}
-
-// GetPlan calls issho.v1.PlanService.GetPlan.
-func (c *planServiceClient) GetPlan(ctx context.Context, req *connect.Request[v1.GetPlanRequest]) (*connect.Response[v1.GetPlanResponse], error) {
-	return c.getPlan.CallUnary(ctx, req)
-}
-
-// GetPlanCards calls issho.v1.PlanService.GetPlanCards.
-func (c *planServiceClient) GetPlanCards(ctx context.Context, req *connect.Request[v1.GetPlanCardsRequest]) (*connect.Response[v1.GetPlanCardsResponse], error) {
-	return c.getPlanCards.CallUnary(ctx, req)
-}
-
-// SignUp calls issho.v1.PlanService.SignUp.
-func (c *planServiceClient) SignUp(ctx context.Context, req *connect.Request[v1.SignUpRequest]) (*connect.Response[v1.SignUpResponse], error) {
-	return c.signUp.CallUnary(ctx, req)
-}
-
-// Withdraw calls issho.v1.PlanService.Withdraw.
-func (c *planServiceClient) Withdraw(ctx context.Context, req *connect.Request[v1.WithdrawRequest]) (*connect.Response[v1.WithdrawResponse], error) {
-	return c.withdraw.CallUnary(ctx, req)
+// NewPlanServiceClient constructs a client for the issho.v1.PlanService service. Multiple service
+// clients may share a single connect.Client.
+func NewPlanServiceClient(client *connect.Client) PlanServiceClient {
+	return &planServiceClient{client: client}
 }
 
 // PlanServiceHandler is an implementation of the issho.v1.PlanService service.
@@ -153,99 +109,162 @@ type PlanServiceHandler interface {
 	// ListFeed returns every open plan in the caller's city, best for them
 	// first, so scrolling far enough shows everything. Each plan's level also
 	// colours the map.
-	ListFeed(context.Context, *connect.Request[v1.ListFeedRequest]) (*connect.Response[v1.ListFeedResponse], error)
+	ListFeed(context.Context, *v1.ListFeedRequest) (*v1.ListFeedResponse, error)
 	// GetPlan returns one open plan with the caller's signup, if any.
 	// NOT_FOUND for an unknown or closed plan, or one in another city.
-	GetPlan(context.Context, *connect.Request[v1.GetPlanRequest]) (*connect.Response[v1.GetPlanResponse], error)
+	GetPlan(context.Context, *v1.GetPlanRequest) (*v1.GetPlanResponse, error)
 	// GetPlanCards returns the feed's card (FeedPlan) for each of up to 50
 	// plans, in one call with no stops, route or Google lookups. Each id is
 	// judged as GetPlan would: an open plan in the caller's city, or one closed
 	// there in the last 14 days (with closed_reason). Unknown, other-city and
 	// older closed ids are left out, not an error. INVALID_ARGUMENT for more
 	// than 50 ids or one that isn't a plan id.
-	GetPlanCards(context.Context, *connect.Request[v1.GetPlanCardsRequest]) (*connect.Response[v1.GetPlanCardsResponse], error)
+	GetPlanCards(context.Context, *v1.GetPlanCardsRequest) (*v1.GetPlanCardsResponse, error)
 	// SignUp signs the caller up for an open plan, or replaces the times they
 	// gave. FAILED_PRECONDITION when the plan has closed or they don't speak
 	// its language; INVALID_ARGUMENT for times outside the plan's window.
-	SignUp(context.Context, *connect.Request[v1.SignUpRequest]) (*connect.Response[v1.SignUpResponse], error)
+	SignUp(context.Context, *v1.SignUpRequest) (*v1.SignUpResponse, error)
 	// Withdraw removes the caller's signup. Withdrawing twice is fine.
-	Withdraw(context.Context, *connect.Request[v1.WithdrawRequest]) (*connect.Response[v1.WithdrawResponse], error)
+	Withdraw(context.Context, *v1.WithdrawRequest) (*v1.WithdrawResponse, error)
 }
 
-// NewPlanServiceHandler builds an HTTP handler from the service implementation. It returns the path
-// on which to mount the handler and the handler itself.
-//
-// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
-// and JSON codecs. They also support gzip compression.
-func NewPlanServiceHandler(svc PlanServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
-	planServiceMethods := v1.File_issho_v1_plans_proto.Services().ByName("PlanService").Methods()
-	planServiceListFeedHandler := connect.NewUnaryHandler(
-		PlanServiceListFeedProcedure,
-		svc.ListFeed,
-		connect.WithSchema(planServiceMethods.ByName("ListFeed")),
-		connect.WithHandlerOptions(opts...),
+// RegisterPlanServiceHandler registers svc as the issho.v1.PlanService implementation on server.
+func RegisterPlanServiceHandler(server *connect.Server, svc PlanServiceHandler) {
+	adapter := planServiceHandler{svc: svc}
+	server.Register(
+		connect.Method{Spec: planServiceListFeedSpec(), Handler: adapter.listFeed},
+		connect.Method{Spec: planServiceGetPlanSpec(), Handler: adapter.getPlan},
+		connect.Method{Spec: planServiceGetPlanCardsSpec(), Handler: adapter.getPlanCards},
+		connect.Method{Spec: planServiceSignUpSpec(), Handler: adapter.signUp},
+		connect.Method{Spec: planServiceWithdrawSpec(), Handler: adapter.withdraw},
 	)
-	planServiceGetPlanHandler := connect.NewUnaryHandler(
-		PlanServiceGetPlanProcedure,
-		svc.GetPlan,
-		connect.WithSchema(planServiceMethods.ByName("GetPlan")),
-		connect.WithHandlerOptions(opts...),
-	)
-	planServiceGetPlanCardsHandler := connect.NewUnaryHandler(
-		PlanServiceGetPlanCardsProcedure,
-		svc.GetPlanCards,
-		connect.WithSchema(planServiceMethods.ByName("GetPlanCards")),
-		connect.WithHandlerOptions(opts...),
-	)
-	planServiceSignUpHandler := connect.NewUnaryHandler(
-		PlanServiceSignUpProcedure,
-		svc.SignUp,
-		connect.WithSchema(planServiceMethods.ByName("SignUp")),
-		connect.WithHandlerOptions(opts...),
-	)
-	planServiceWithdrawHandler := connect.NewUnaryHandler(
-		PlanServiceWithdrawProcedure,
-		svc.Withdraw,
-		connect.WithSchema(planServiceMethods.ByName("Withdraw")),
-		connect.WithHandlerOptions(opts...),
-	)
-	return "/issho.v1.PlanService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.URL.Path {
-		case PlanServiceListFeedProcedure:
-			planServiceListFeedHandler.ServeHTTP(w, r)
-		case PlanServiceGetPlanProcedure:
-			planServiceGetPlanHandler.ServeHTTP(w, r)
-		case PlanServiceGetPlanCardsProcedure:
-			planServiceGetPlanCardsHandler.ServeHTTP(w, r)
-		case PlanServiceSignUpProcedure:
-			planServiceSignUpHandler.ServeHTTP(w, r)
-		case PlanServiceWithdrawProcedure:
-			planServiceWithdrawHandler.ServeHTTP(w, r)
-		default:
-			http.NotFound(w, r)
-		}
-	})
 }
 
 // UnimplementedPlanServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedPlanServiceHandler struct{}
 
-func (UnimplementedPlanServiceHandler) ListFeed(context.Context, *connect.Request[v1.ListFeedRequest]) (*connect.Response[v1.ListFeedResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.PlanService.ListFeed is not implemented"))
+func (UnimplementedPlanServiceHandler) ListFeed(context.Context, *v1.ListFeedRequest) (*v1.ListFeedResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "issho.v1.PlanService.ListFeed is not implemented")
 }
 
-func (UnimplementedPlanServiceHandler) GetPlan(context.Context, *connect.Request[v1.GetPlanRequest]) (*connect.Response[v1.GetPlanResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.PlanService.GetPlan is not implemented"))
+func (UnimplementedPlanServiceHandler) GetPlan(context.Context, *v1.GetPlanRequest) (*v1.GetPlanResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "issho.v1.PlanService.GetPlan is not implemented")
 }
 
-func (UnimplementedPlanServiceHandler) GetPlanCards(context.Context, *connect.Request[v1.GetPlanCardsRequest]) (*connect.Response[v1.GetPlanCardsResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.PlanService.GetPlanCards is not implemented"))
+func (UnimplementedPlanServiceHandler) GetPlanCards(context.Context, *v1.GetPlanCardsRequest) (*v1.GetPlanCardsResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "issho.v1.PlanService.GetPlanCards is not implemented")
 }
 
-func (UnimplementedPlanServiceHandler) SignUp(context.Context, *connect.Request[v1.SignUpRequest]) (*connect.Response[v1.SignUpResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.PlanService.SignUp is not implemented"))
+func (UnimplementedPlanServiceHandler) SignUp(context.Context, *v1.SignUpRequest) (*v1.SignUpResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "issho.v1.PlanService.SignUp is not implemented")
 }
 
-func (UnimplementedPlanServiceHandler) Withdraw(context.Context, *connect.Request[v1.WithdrawRequest]) (*connect.Response[v1.WithdrawResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.PlanService.Withdraw is not implemented"))
+func (UnimplementedPlanServiceHandler) Withdraw(context.Context, *v1.WithdrawRequest) (*v1.WithdrawResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "issho.v1.PlanService.Withdraw is not implemented")
+}
+
+type planServiceClient struct {
+	client *connect.Client
+}
+
+func (c *planServiceClient) ListFeed(ctx context.Context, req *v1.ListFeedRequest) (*v1.ListFeedResponse, error) {
+	var res v1.ListFeedResponse
+	if err := c.client.CallUnary(ctx, planServiceListFeedSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *planServiceClient) GetPlan(ctx context.Context, req *v1.GetPlanRequest) (*v1.GetPlanResponse, error) {
+	var res v1.GetPlanResponse
+	if err := c.client.CallUnary(ctx, planServiceGetPlanSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *planServiceClient) GetPlanCards(ctx context.Context, req *v1.GetPlanCardsRequest) (*v1.GetPlanCardsResponse, error) {
+	var res v1.GetPlanCardsResponse
+	if err := c.client.CallUnary(ctx, planServiceGetPlanCardsSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *planServiceClient) SignUp(ctx context.Context, req *v1.SignUpRequest) (*v1.SignUpResponse, error) {
+	var res v1.SignUpResponse
+	if err := c.client.CallUnary(ctx, planServiceSignUpSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *planServiceClient) Withdraw(ctx context.Context, req *v1.WithdrawRequest) (*v1.WithdrawResponse, error) {
+	var res v1.WithdrawResponse
+	if err := c.client.CallUnary(ctx, planServiceWithdrawSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+type planServiceHandler struct{ svc PlanServiceHandler }
+
+func (h planServiceHandler) listFeed(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.ListFeedRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.ListFeed(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h planServiceHandler) getPlan(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.GetPlanRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.GetPlan(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h planServiceHandler) getPlanCards(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.GetPlanCardsRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.GetPlanCards(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h planServiceHandler) signUp(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.SignUpRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.SignUp(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h planServiceHandler) withdraw(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.WithdrawRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.Withdraw(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
 }

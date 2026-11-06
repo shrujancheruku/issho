@@ -11,7 +11,8 @@ import (
 	"testing"
 	"time"
 
-	"connectrpc.com/connect"
+	"connectrpc.com/connect/v2"
+	"connectrpc.com/connect/v2/connecthttp"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 
@@ -120,22 +121,24 @@ func TestAdminOnly(t *testing.T) {
 	// A real Connect server with unimplemented handlers: a call the
 	// interceptor lets through comes back UNIMPLEMENTED.
 	var caller *Caller
-	setCaller := connect.UnaryInterceptorFunc(func(next connect.UnaryFunc) connect.UnaryFunc {
-		return func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
+	setCaller := connect.ServerInterceptor(func(next connect.ServerFunc) connect.ServerFunc {
+		return func(ctx context.Context, spec connect.Spec, stream connect.ServerStream) error {
 			if caller != nil {
 				ctx = WithCaller(ctx, *caller)
 			}
-			return next(ctx, req)
+			return next(ctx, spec, stream)
 		}
 	})
-	opts := connect.WithInterceptors(setCaller, AdminOnly(isshov1connect.ModerationServiceName))
 	mux := http.NewServeMux()
-	mux.Handle(isshov1connect.NewModerationServiceHandler(isshov1connect.UnimplementedModerationServiceHandler{}, opts))
-	mux.Handle(isshov1connect.NewPushServiceHandler(isshov1connect.UnimplementedPushServiceHandler{}, opts))
+	server := connect.NewServer(setCaller, AdminOnly(isshov1connect.ModerationServiceName))
+	isshov1connect.RegisterModerationServiceHandler(server, isshov1connect.UnimplementedModerationServiceHandler{})
+	isshov1connect.RegisterPushServiceHandler(server, isshov1connect.UnimplementedPushServiceHandler{})
+	connecthttp.Mount(mux, server)
+
 	srv := httptest.NewServer(mux)
 	defer srv.Close()
-	moderation := isshov1connect.NewModerationServiceClient(srv.Client(), srv.URL)
-	push := isshov1connect.NewPushServiceClient(srv.Client(), srv.URL)
+	moderation := isshov1connect.NewModerationServiceClient(connect.NewClient(connecthttp.NewTransport(srv.Client(), srv.URL)))
+	push := isshov1connect.NewPushServiceClient(connect.NewClient(connecthttp.NewTransport(srv.Client(), srv.URL)))
 
 	user, admin := &Caller{UserID: uuid.New()}, &Caller{UserID: uuid.New(), Admin: true}
 	for _, tt := range []struct {
@@ -145,19 +148,19 @@ func TestAdminOnly(t *testing.T) {
 		want   connect.Code
 	}{
 		{"admin", admin, func() error {
-			_, err := moderation.ListReports(context.Background(), connect.NewRequest(&isshov1.ListReportsRequest{}))
+			_, err := moderation.ListReports(context.Background(), &isshov1.ListReportsRequest{})
 			return err
 		}, connect.CodeUnimplemented},
 		{"user", user, func() error {
-			_, err := moderation.ListReports(context.Background(), connect.NewRequest(&isshov1.ListReportsRequest{}))
+			_, err := moderation.ListReports(context.Background(), &isshov1.ListReportsRequest{})
 			return err
 		}, connect.CodePermissionDenied},
 		{"no caller", nil, func() error {
-			_, err := moderation.ListFlags(context.Background(), connect.NewRequest(&isshov1.ListFlagsRequest{}))
+			_, err := moderation.ListFlags(context.Background(), &isshov1.ListFlagsRequest{})
 			return err
 		}, connect.CodePermissionDenied},
 		{"other service", user, func() error {
-			_, err := push.RegisterPushToken(context.Background(), connect.NewRequest(&isshov1.RegisterPushTokenRequest{}))
+			_, err := push.RegisterPushToken(context.Background(), &isshov1.RegisterPushTokenRequest{})
 			return err
 		}, connect.CodeUnimplemented},
 	} {
@@ -204,20 +207,21 @@ func TestVerifyTranslator(t *testing.T) {
 
 func TestTranslatorsOnly(t *testing.T) {
 	var caller *Caller
-	setCaller := connect.UnaryInterceptorFunc(func(next connect.UnaryFunc) connect.UnaryFunc {
-		return func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
+	setCaller := connect.ServerInterceptor(func(next connect.ServerFunc) connect.ServerFunc {
+		return func(ctx context.Context, spec connect.Spec, stream connect.ServerStream) error {
 			if caller != nil {
 				ctx = WithCaller(ctx, *caller)
 			}
-			return next(ctx, req)
+			return next(ctx, spec, stream)
 		}
 	})
-	opts := connect.WithInterceptors(setCaller, TranslatorsOnly(isshov1connect.TranslationServiceName))
 	mux := http.NewServeMux()
-	mux.Handle(isshov1connect.NewTranslationServiceHandler(isshov1connect.UnimplementedTranslationServiceHandler{}, opts))
+	server := connect.NewServer(setCaller, TranslatorsOnly(isshov1connect.TranslationServiceName))
+	isshov1connect.RegisterTranslationServiceHandler(server, isshov1connect.UnimplementedTranslationServiceHandler{})
+	connecthttp.Mount(mux, server)
 	srv := httptest.NewServer(mux)
 	defer srv.Close()
-	client := isshov1connect.NewTranslationServiceClient(srv.Client(), srv.URL)
+	client := isshov1connect.NewTranslationServiceClient(connect.NewClient(connecthttp.NewTransport(srv.Client(), srv.URL)))
 	for _, tt := range []struct {
 		name   string
 		caller *Caller
@@ -230,7 +234,7 @@ func TestTranslatorsOnly(t *testing.T) {
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			caller = tt.caller
-			_, err := client.ListAppLanguages(context.Background(), connect.NewRequest(&isshov1.ListAppLanguagesRequest{}))
+			_, err := client.ListAppLanguages(context.Background(), &isshov1.ListAppLanguagesRequest{})
 			if got := connect.CodeOf(err); got != tt.want {
 				t.Fatalf("code = %v, want %v", got, tt.want)
 			}

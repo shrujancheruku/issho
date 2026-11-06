@@ -8,7 +8,7 @@ import (
 	"slices"
 	"strings"
 
-	"connectrpc.com/connect"
+	"connectrpc.com/connect/v2"
 	"github.com/MicahParks/keyfunc/v3"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
@@ -114,25 +114,29 @@ func WithCaller(ctx context.Context, c Caller) context.Context {
 // Auth is deny-by-default: a newly added RPC requires a valid token unless it is
 // explicitly listed as public where the interceptor is constructed (cmd/api).
 // Error messages are intentionally generic so callers can't probe why a token failed.
-func Interceptor(v *Verifier, public ...string) connect.UnaryInterceptorFunc {
+func Interceptor(v *Verifier, public ...string) connect.ServerInterceptor {
 	open := make(map[string]bool, len(public))
 	for _, p := range public {
 		open[p] = true
 	}
-	return func(next connect.UnaryFunc) connect.UnaryFunc {
-		return func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
-			if open[req.Spec().Procedure] {
-				return next(ctx, req)
+	return func(next connect.ServerFunc) connect.ServerFunc {
+		return func(ctx context.Context, spec connect.Spec, stream connect.ServerStream) error {
+			if open[spec.Procedure] {
+				return next(ctx, spec, stream)
 			}
-			token, ok := strings.CutPrefix(req.Header().Get("Authorization"), "Bearer ")
+			var header string
+			if info, ok := connect.CallInfoForServerContext(ctx); ok {
+				header = info.RequestHeader().Get("Authorization")
+			}
+			token, ok := strings.CutPrefix(header, "Bearer ")
 			if !ok || token == "" {
-				return nil, errs.Unauthenticated("missing bearer token")
+				return errs.Unauthenticated("missing bearer token")
 			}
 			caller, err := v.Verify(token)
 			if err != nil {
-				return nil, errs.Unauthenticated("invalid token")
+				return errs.Unauthenticated("invalid token")
 			}
-			return next(WithCaller(ctx, caller), req)
+			return next(WithCaller(ctx, caller), spec, stream)
 		}
 	}
 }
@@ -141,7 +145,7 @@ func Interceptor(v *Verifier, public ...string) connect.UnaryInterceptorFunc {
 // unless the caller is an admin. It runs after Interceptor; listing the
 // services where cmd/api builds it keeps every admin RPC covered, new ones
 // included, without each handler having to remember a check.
-func AdminOnly(services ...string) connect.UnaryInterceptorFunc {
+func AdminOnly(services ...string) connect.ServerInterceptor {
 	return guard(services, "admins only", func(c Caller) bool { return c.Admin })
 }
 
@@ -149,28 +153,28 @@ func AdminOnly(services ...string) connect.UnaryInterceptorFunc {
 // an admin or a translator (has at least one language). Which languages a
 // translator may edit is checked by the handler (Caller.Translates); this
 // keeps everyone else out of the whole service, new RPCs included.
-func TranslatorsOnly(services ...string) connect.UnaryInterceptorFunc {
+func TranslatorsOnly(services ...string) connect.ServerInterceptor {
 	return guard(services, "translators only", func(c Caller) bool { return c.Admin || len(c.TranslatorLangs) > 0 })
 }
 
 // guard refuses calls to the services unless there's a caller that allowed
 // accepts.
-func guard(services []string, refusal string, allowed func(Caller) bool) connect.UnaryInterceptorFunc {
+func guard(services []string, refusal string, allowed func(Caller) bool) connect.ServerInterceptor {
 	prefixes := make([]string, len(services))
 	for i, s := range services {
 		prefixes[i] = "/" + s + "/"
 	}
-	return func(next connect.UnaryFunc) connect.UnaryFunc {
-		return func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
+	return func(next connect.ServerFunc) connect.ServerFunc {
+		return func(ctx context.Context, spec connect.Spec, stream connect.ServerStream) error {
 			for _, p := range prefixes {
-				if strings.HasPrefix(req.Spec().Procedure, p) {
+				if strings.HasPrefix(spec.Procedure, p) {
 					if c, ok := FromContext(ctx); !ok || !allowed(c) {
-						return nil, errs.Forbidden("%s", refusal)
+						return errs.Forbidden("%s", refusal)
 					}
 					break
 				}
 			}
-			return next(ctx, req)
+			return next(ctx, spec, stream)
 		}
 	}
 }

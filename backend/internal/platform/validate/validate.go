@@ -13,32 +13,44 @@ import (
 	"errors"
 
 	"buf.build/go/protovalidate"
-	"connectrpc.com/connect"
+	"connectrpc.com/connect/v2"
 	"google.golang.org/protobuf/proto"
 
 	"github.com/shrujancheruku/issho/backend/internal/platform/errs"
 )
 
-// Interceptor validates every unary request before its handler runs. Put it
+// Interceptor validates every request message before its handler runs. Put it
 // inside auth (after it in the chain) so a caller who is not signed in hears
 // Unauthenticated rather than a hint about the request's rules. Rules are
 // compiled once per message type, on first use.
-func Interceptor() connect.UnaryInterceptorFunc {
+func Interceptor() connect.ServerInterceptor {
 	v, err := protovalidate.New()
 	if err != nil {
 		// Only bad options fail here, and there are none: a bug caught at startup.
 		panic("validate: " + err.Error())
 	}
-	return func(next connect.UnaryFunc) connect.UnaryFunc {
-		return func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
-			if msg, ok := req.Any().(proto.Message); ok {
-				if err := Check(v, msg); err != nil {
-					return nil, err
-				}
-			}
-			return next(ctx, req)
+	return func(next connect.ServerFunc) connect.ServerFunc {
+		return func(ctx context.Context, spec connect.Spec, stream connect.ServerStream) error {
+			return next(ctx, spec, checkedStream{ServerStream: stream, v: v})
 		}
 	}
+}
+
+// checkedStream validates each request message as it is read. A generated
+// handler reads its request before calling ours, so a bad one never reaches it.
+type checkedStream struct {
+	connect.ServerStream
+	v protovalidate.Validator
+}
+
+func (s checkedStream) Receive(msg any) error {
+	if err := s.ServerStream.Receive(msg); err != nil {
+		return err
+	}
+	if m, ok := msg.(proto.Message); ok {
+		return Check(s.v, m)
+	}
+	return nil
 }
 
 // Check validates msg and returns the first violation as errs.Invalid, or nil.

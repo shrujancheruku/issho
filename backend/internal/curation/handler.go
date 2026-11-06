@@ -10,7 +10,6 @@ import (
 	"context"
 	"fmt"
 
-	"connectrpc.com/connect"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
@@ -48,7 +47,7 @@ func VenueStatusProto(s string) (isshov1.VenueStatus, error) {
 	return 0, fmt.Errorf("unknown venue status %q", s)
 }
 
-func (h *Handler) ListVenueCities(ctx context.Context, _ *connect.Request[isshov1.ListVenueCitiesRequest]) (*connect.Response[isshov1.ListVenueCitiesResponse], error) {
+func (h *Handler) ListVenueCities(ctx context.Context, _ *isshov1.ListVenueCitiesRequest) (*isshov1.ListVenueCitiesResponse, error) {
 	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
@@ -72,24 +71,24 @@ func (h *Handler) ListVenueCities(ctx context.Context, _ *connect.Request[isshov
 	for _, c := range cats {
 		out.Categories = append(out.Categories, &isshov1.VenueCategory{Id: c.ID, Name: c.Name})
 	}
-	return connect.NewResponse(out), nil
+	return out, nil
 }
 
-func (h *Handler) SetApprovedVenuesOnly(ctx context.Context, req *connect.Request[isshov1.SetApprovedVenuesOnlyRequest]) (*connect.Response[isshov1.SetApprovedVenuesOnlyResponse], error) {
+func (h *Handler) SetApprovedVenuesOnly(ctx context.Context, req *isshov1.SetApprovedVenuesOnlyRequest) (*isshov1.SetApprovedVenuesOnlyResponse, error) {
 	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
-	if err := h.Svc.SetApprovedOnly(ctx, req.Msg.CityId, req.Msg.ApprovedVenuesOnly); err != nil {
+	if err := h.Svc.SetApprovedOnly(ctx, req.CityId, req.ApprovedVenuesOnly); err != nil {
 		return nil, err
 	}
-	return connect.NewResponse(&isshov1.SetApprovedVenuesOnlyResponse{}), nil
+	return &isshov1.SetApprovedVenuesOnlyResponse{}, nil
 }
 
-func (h *Handler) ListVenues(ctx context.Context, req *connect.Request[isshov1.ListVenuesRequest]) (*connect.Response[isshov1.ListVenuesResponse], error) {
+func (h *Handler) ListVenues(ctx context.Context, req *isshov1.ListVenuesRequest) (*isshov1.ListVenuesResponse, error) {
 	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
-	m := req.Msg
+	m := req
 	status, ok := statuses[m.Status]
 	if !ok {
 		return nil, errs.Invalid("status: candidate, approved or rejected")
@@ -113,15 +112,15 @@ func (h *Handler) ListVenues(ctx context.Context, req *connect.Request[isshov1.L
 		}
 		out.Venues[i] = v
 	}
-	return connect.NewResponse(out), nil
+	return out, nil
 }
 
-func (h *Handler) SetVenueStatus(ctx context.Context, req *connect.Request[isshov1.SetVenueStatusRequest]) (*connect.Response[isshov1.SetVenueStatusResponse], error) {
+func (h *Handler) SetVenueStatus(ctx context.Context, req *isshov1.SetVenueStatusRequest) (*isshov1.SetVenueStatusResponse, error) {
 	c, err := auth.RequireAdmin(ctx)
 	if err != nil {
 		return nil, err
 	}
-	m := req.Msg
+	m := req
 	status, ok := statuses[m.Status]
 	if !ok {
 		return nil, errs.Invalid("status: candidate, approved or rejected")
@@ -130,14 +129,14 @@ func (h *Handler) SetVenueStatus(ctx context.Context, req *connect.Request[issho
 	if err != nil {
 		return nil, err
 	}
-	return connect.NewResponse(&isshov1.SetVenueStatusResponse{Changed: int32(n)}), nil
+	return &isshov1.SetVenueStatusResponse{Changed: int32(n)}, nil
 }
 
-func (h *Handler) SearchVenues(ctx context.Context, req *connect.Request[isshov1.SearchVenuesRequest]) (*connect.Response[isshov1.SearchVenuesResponse], error) {
+func (h *Handler) SearchVenues(ctx context.Context, req *isshov1.SearchVenuesRequest) (*isshov1.SearchVenuesResponse, error) {
 	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
-	m := req.Msg
+	m := req
 	res, err := h.Svc.Search(ctx, SearchParams{CityID: m.CityId, AreaID: m.AreaId, Query: m.Query})
 	if err != nil {
 		return nil, err
@@ -150,18 +149,18 @@ func (h *Handler) SearchVenues(ctx context.Context, req *connect.Request[isshov1
 			Known: f.Known, Status: statusOf(f.Status), CategoryIds: f.CategoryIDs, AddableCategoryIds: f.Addable,
 		})
 	}
-	return connect.NewResponse(out), nil
+	return out, nil
 }
 
-func (h *Handler) AddVenue(ctx context.Context, req *connect.Request[isshov1.AddVenueRequest]) (*connect.Response[isshov1.AddVenueResponse], error) {
+func (h *Handler) AddVenue(ctx context.Context, req *isshov1.AddVenueRequest) (*isshov1.AddVenueResponse, error) {
 	c, err := auth.RequireAdmin(ctx)
 	if err != nil {
 		return nil, err
 	}
-	m := req.Msg
+	m := req
 	areaID, err := h.Svc.Add(ctx, m.CityId, m.PlaceId, m.CategoryId, c.UserID)
 	if err != nil {
 		return nil, err
 	}
-	return connect.NewResponse(&isshov1.AddVenueResponse{AreaId: areaID}), nil
+	return &isshov1.AddVenueResponse{AreaId: areaID}, nil
 }

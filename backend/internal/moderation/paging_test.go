@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"connectrpc.com/connect"
+	"connectrpc.com/connect/v2"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 
@@ -144,17 +144,17 @@ func TestIntegrationPagingReports(t *testing.T) {
 
 	list := func(status isshov1.ReportStatus) func(int32, string) ([]string, string, error) {
 		return func(size int32, token string) ([]string, string, error) {
-			res, err := h.ListReports(ctx, connect.NewRequest(&isshov1.ListReportsRequest{
+			res, err := h.ListReports(ctx, &isshov1.ListReportsRequest{
 				ReportedId: reported.String(), Status: status, PageSize: size, PageToken: token,
-			}))
+			})
 			if err != nil {
 				return nil, "", err
 			}
 			var ids []string
-			for _, r := range res.Msg.Reports {
+			for _, r := range res.Reports {
 				ids = append(ids, r.Id)
 			}
-			return ids, res.Msg.NextPageToken, nil
+			return ids, res.NextPageToken, nil
 		}
 	}
 	unspecified := isshov1.ReportStatus_REPORT_STATUS_UNSPECIFIED
@@ -186,14 +186,14 @@ func TestIntegrationPagingReports(t *testing.T) {
 	wantInvalid(t, "garbage token", err)
 	_, _, err = list(isshov1.ReportStatus_REPORT_STATUS_OPEN)(10, next)
 	wantInvalid(t, "token with another status", err)
-	_, err = h.ListFlags(ctx, connect.NewRequest(&isshov1.ListFlagsRequest{PageToken: next}))
+	_, err = h.ListFlags(ctx, &isshov1.ListFlagsRequest{PageToken: next})
 	wantInvalid(t, "reports token on flags", err)
 	_, _, err = list(unspecified)(-1, "")
 	wantInvalid(t, "negative page_size", err)
 
 	// A non-admin gets nothing, token or not.
 	user := auth.WithCaller(context.Background(), auth.Caller{UserID: uuid.New()})
-	if _, err := h.ListReports(user, connect.NewRequest(&isshov1.ListReportsRequest{PageToken: next})); connect.CodeOf(err) != connect.CodePermissionDenied {
+	if _, err := h.ListReports(user, &isshov1.ListReportsRequest{PageToken: next}); connect.CodeOf(err) != connect.CodePermissionDenied {
 		t.Errorf("non-admin with a token: %v", err)
 	}
 }
@@ -237,17 +237,17 @@ func TestIntegrationPagingFlags(t *testing.T) {
 			t.Fatal(err)
 		}
 		got := walk(t, 3, func(size int32, token string) ([]string, string, error) {
-			res, err := h.ListFlags(ctx, connect.NewRequest(&isshov1.ListFlagsRequest{Resolved: resolved, PageSize: size, PageToken: token}))
+			res, err := h.ListFlags(ctx, &isshov1.ListFlagsRequest{Resolved: resolved, PageSize: size, PageToken: token})
 			if err != nil {
 				return nil, "", err
 			}
 			var ids []string
-			for _, f := range res.Msg.Flags {
+			for _, f := range res.Flags {
 				if slices.Contains(users, uuid.MustParse(f.UserId)) {
 					ids = append(ids, fmt.Sprint(f.Id))
 				}
 			}
-			return ids, res.Msg.NextPageToken, nil
+			return ids, res.NextPageToken, nil
 		})
 		// Other rows in the database may share the list, so compare ours in order.
 		if !slices.Equal(got, want) {
@@ -255,11 +255,11 @@ func TestIntegrationPagingFlags(t *testing.T) {
 		}
 	}
 	// An open-flags token doesn't work for resolved flags.
-	res, err := h.ListFlags(ctx, connect.NewRequest(&isshov1.ListFlagsRequest{PageSize: 1}))
-	if err != nil || res.Msg.NextPageToken == "" {
+	res, err := h.ListFlags(ctx, &isshov1.ListFlagsRequest{PageSize: 1})
+	if err != nil || res.NextPageToken == "" {
 		t.Fatalf("first page: %v", err)
 	}
-	_, err = h.ListFlags(ctx, connect.NewRequest(&isshov1.ListFlagsRequest{Resolved: true, PageToken: res.Msg.NextPageToken}))
+	_, err = h.ListFlags(ctx, &isshov1.ListFlagsRequest{Resolved: true, PageToken: res.NextPageToken})
 	wantInvalid(t, "open token on resolved flags", err)
 }
 
@@ -298,17 +298,17 @@ func TestIntegrationPagingCrewLeaves(t *testing.T) {
 	}
 	list := func(reason isshov1.LeaveReason) func(int32, string) ([]string, string, error) {
 		return func(size int32, token string) ([]string, string, error) {
-			res, err := h.ListCrewLeaves(ctx, connect.NewRequest(&isshov1.ListCrewLeavesRequest{Reason: reason, PageSize: size, PageToken: token}))
+			res, err := h.ListCrewLeaves(ctx, &isshov1.ListCrewLeavesRequest{Reason: reason, PageSize: size, PageToken: token})
 			if err != nil {
 				return nil, "", err
 			}
 			var ids []string
-			for _, l := range res.Msg.Leaves {
+			for _, l := range res.Leaves {
 				if l.CrewId != "" && l.UserId == users[0].String() {
 					ids = append(ids, fmt.Sprint(l.Id))
 				}
 			}
-			return ids, res.Msg.NextPageToken, nil
+			return ids, res.NextPageToken, nil
 		}
 	}
 	if got := walk(t, 5, list(isshov1.LeaveReason_LEAVE_REASON_UNSPECIFIED)); !slices.Equal(got, want) {
@@ -342,17 +342,17 @@ func TestIntegrationPagingSuspended(t *testing.T) {
 		return -slices.Compare(a[:], b[:]) // then higher user id first
 	})
 	got := walk(t, 3, func(size int32, token string) ([]string, string, error) {
-		res, err := h.ListSuspended(ctx, connect.NewRequest(&isshov1.ListSuspendedRequest{PageSize: size, PageToken: token}))
+		res, err := h.ListSuspended(ctx, &isshov1.ListSuspendedRequest{PageSize: size, PageToken: token})
 		if err != nil {
 			return nil, "", err
 		}
 		var ids []string
-		for _, p := range res.Msg.People {
+		for _, p := range res.People {
 			if slices.Contains(users, uuid.MustParse(p.UserId)) {
 				ids = append(ids, p.UserId)
 			}
 		}
-		return ids, res.Msg.NextPageToken, nil
+		return ids, res.NextPageToken, nil
 	})
 	var wantIDs []string
 	for _, u := range want {
@@ -380,15 +380,15 @@ func TestIntegrationPagingPeople(t *testing.T) {
 	// Matches every one of them by email.
 	const query = "paging-people-"
 	got := walk(t, 3, func(size int32, token string) ([]string, string, error) {
-		res, err := h.SearchPeople(ctx, connect.NewRequest(&isshov1.SearchPeopleRequest{Query: query, PageSize: size, PageToken: token}))
+		res, err := h.SearchPeople(ctx, &isshov1.SearchPeopleRequest{Query: query, PageSize: size, PageToken: token})
 		if err != nil {
 			return nil, "", err
 		}
 		var ids []string
-		for _, p := range res.Msg.People {
+		for _, p := range res.People {
 			ids = append(ids, p.UserId)
 		}
-		return ids, res.Msg.NextPageToken, nil
+		return ids, res.NextPageToken, nil
 	})
 	var want []string
 	rows, err := pool.Query(ctx, `select u.id::text from app.users u left join app.profiles p on p.user_id = u.id
@@ -415,10 +415,10 @@ func TestIntegrationPagingPeople(t *testing.T) {
 		t.Error("unnamed people are not last")
 	}
 	// A token is for one query.
-	res, err := h.SearchPeople(ctx, connect.NewRequest(&isshov1.SearchPeopleRequest{Query: query, PageSize: 1}))
+	res, err := h.SearchPeople(ctx, &isshov1.SearchPeopleRequest{Query: query, PageSize: 1})
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, err = h.SearchPeople(ctx, connect.NewRequest(&isshov1.SearchPeopleRequest{Query: "Pagetest", PageToken: res.Msg.NextPageToken}))
+	_, err = h.SearchPeople(ctx, &isshov1.SearchPeopleRequest{Query: "Pagetest", PageToken: res.NextPageToken})
 	wantInvalid(t, "token with another query", err)
 }

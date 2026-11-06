@@ -6,8 +6,6 @@ import (
 	"maps"
 	"slices"
 
-	"connectrpc.com/connect"
-
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
 	"github.com/shrujancheruku/issho/backend/internal/platform/auth"
 	"github.com/shrujancheruku/issho/backend/internal/platform/errs"
@@ -17,7 +15,7 @@ type Handler struct {
 	Svc *Service
 }
 
-func (h *Handler) GetProfile(ctx context.Context, _ *connect.Request[isshov1.GetProfileRequest]) (*connect.Response[isshov1.GetProfileResponse], error) {
+func (h *Handler) GetProfile(ctx context.Context, _ *isshov1.GetProfileRequest) (*isshov1.GetProfileResponse, error) {
 	c, err := auth.Require(ctx)
 	if err != nil {
 		return nil, err
@@ -29,18 +27,18 @@ func (h *Handler) GetProfile(ctx context.Context, _ *connect.Request[isshov1.Get
 	if err != nil {
 		return nil, err
 	}
-	return connect.NewResponse(&isshov1.GetProfileResponse{Profile: toProto(p), CurrentConductVersion: ConductVersion}), nil
+	return &isshov1.GetProfileResponse{Profile: toProto(p), CurrentConductVersion: ConductVersion}, nil
 }
 
-func (h *Handler) SaveProfile(ctx context.Context, req *connect.Request[isshov1.SaveProfileRequest]) (*connect.Response[isshov1.SaveProfileResponse], error) {
+func (h *Handler) SaveProfile(ctx context.Context, req *isshov1.SaveProfileRequest) (*isshov1.SaveProfileResponse, error) {
 	c, err := auth.Require(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if req.Msg.Profile == nil {
+	if req.Profile == nil {
 		return nil, errs.Invalid("profile: required")
 	}
-	in, err := fromProto(req.Msg.Profile)
+	in, err := fromProto(req.Profile)
 	if err != nil {
 		return nil, errs.Invalid("%s", err)
 	}
@@ -53,7 +51,7 @@ func (h *Handler) SaveProfile(ctx context.Context, req *connect.Request[isshov1.
 	case err != nil:
 		return nil, err
 	}
-	return connect.NewResponse(&isshov1.SaveProfileResponse{Profile: toProto(p)}), nil
+	return &isshov1.SaveProfileResponse{Profile: toProto(p)}, nil
 }
 
 var (

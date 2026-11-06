@@ -5,37 +5,38 @@
 package isshov1connect
 
 import (
-	connect "connectrpc.com/connect"
+	connect "connectrpc.com/connect/v2"
 	context "context"
-	errors "errors"
 	v1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
-	http "net/http"
-	strings "strings"
+	sync "sync"
 )
-
-// This is a compile-time assertion to ensure that this generated file and the connect package are
-// compatible. If you get a compiler error that this constant is not defined, this code was
-// generated with a version of connect newer than the one compiled into your binary. You can fix the
-// problem by either regenerating this code with an older version of connect or updating the connect
-// version compiled into your binary.
-const _ = connect.IsAtLeastVersion1_13_0
 
 const (
 	// MetricsServiceName is the fully-qualified name of the MetricsService service.
 	MetricsServiceName = "issho.v1.MetricsService"
 )
 
-// These constants are the fully-qualified names of the RPCs defined in this package. They're
-// exposed at runtime as Spec.Procedure and as the final two segments of the HTTP route.
+// These constants are the procedure names of the RPCs defined in this package. They're exposed at
+// runtime as Spec.Procedure and as the final two segments of the HTTP route.
 //
 // Note that these are different from the fully-qualified method names used by
 // google.golang.org/protobuf/reflect/protoreflect. To convert from these constants to
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
-	// MetricsServiceGetCityMetricsProcedure is the fully-qualified name of the MetricsService's
+	// MetricsServiceGetCityMetricsProcedure is the procedure name of the MetricsService's
 	// GetCityMetrics RPC.
 	MetricsServiceGetCityMetricsProcedure = "/issho.v1.MetricsService/GetCityMetrics"
+)
+
+var (
+	metricsServiceGetCityMetricsSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_issho_v1_metrics_proto.Services().ByName("MetricsService").Methods().ByName("GetCityMetrics"),
+			Procedure:  MetricsServiceGetCityMetricsProcedure,
+		}
+	})
 )
 
 // MetricsServiceClient is a client for the issho.v1.MetricsService service.
@@ -43,37 +44,13 @@ type MetricsServiceClient interface {
 	// GetCityMetrics returns the last `weeks` weeks (1 to 52; 0 = 12), the
 	// current week last (still in progress), and the city now.
 	// NOT_FOUND for an unknown city.
-	GetCityMetrics(context.Context, *connect.Request[v1.GetCityMetricsRequest]) (*connect.Response[v1.GetCityMetricsResponse], error)
+	GetCityMetrics(context.Context, *v1.GetCityMetricsRequest) (*v1.GetCityMetricsResponse, error)
 }
 
-// NewMetricsServiceClient constructs a client for the issho.v1.MetricsService service. By default,
-// it uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses, and
-// sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the connect.WithGRPC()
-// or connect.WithGRPCWeb() options.
-//
-// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
-// http://api.acme.com or https://acme.com/grpc).
-func NewMetricsServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) MetricsServiceClient {
-	baseURL = strings.TrimRight(baseURL, "/")
-	metricsServiceMethods := v1.File_issho_v1_metrics_proto.Services().ByName("MetricsService").Methods()
-	return &metricsServiceClient{
-		getCityMetrics: connect.NewClient[v1.GetCityMetricsRequest, v1.GetCityMetricsResponse](
-			httpClient,
-			baseURL+MetricsServiceGetCityMetricsProcedure,
-			connect.WithSchema(metricsServiceMethods.ByName("GetCityMetrics")),
-			connect.WithClientOptions(opts...),
-		),
-	}
-}
-
-// metricsServiceClient implements MetricsServiceClient.
-type metricsServiceClient struct {
-	getCityMetrics *connect.Client[v1.GetCityMetricsRequest, v1.GetCityMetricsResponse]
-}
-
-// GetCityMetrics calls issho.v1.MetricsService.GetCityMetrics.
-func (c *metricsServiceClient) GetCityMetrics(ctx context.Context, req *connect.Request[v1.GetCityMetricsRequest]) (*connect.Response[v1.GetCityMetricsResponse], error) {
-	return c.getCityMetrics.CallUnary(ctx, req)
+// NewMetricsServiceClient constructs a client for the issho.v1.MetricsService service. Multiple
+// service clients may share a single connect.Client.
+func NewMetricsServiceClient(client *connect.Client) MetricsServiceClient {
+	return &metricsServiceClient{client: client}
 }
 
 // MetricsServiceHandler is an implementation of the issho.v1.MetricsService service.
@@ -81,35 +58,47 @@ type MetricsServiceHandler interface {
 	// GetCityMetrics returns the last `weeks` weeks (1 to 52; 0 = 12), the
 	// current week last (still in progress), and the city now.
 	// NOT_FOUND for an unknown city.
-	GetCityMetrics(context.Context, *connect.Request[v1.GetCityMetricsRequest]) (*connect.Response[v1.GetCityMetricsResponse], error)
+	GetCityMetrics(context.Context, *v1.GetCityMetricsRequest) (*v1.GetCityMetricsResponse, error)
 }
 
-// NewMetricsServiceHandler builds an HTTP handler from the service implementation. It returns the
-// path on which to mount the handler and the handler itself.
-//
-// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
-// and JSON codecs. They also support gzip compression.
-func NewMetricsServiceHandler(svc MetricsServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
-	metricsServiceMethods := v1.File_issho_v1_metrics_proto.Services().ByName("MetricsService").Methods()
-	metricsServiceGetCityMetricsHandler := connect.NewUnaryHandler(
-		MetricsServiceGetCityMetricsProcedure,
-		svc.GetCityMetrics,
-		connect.WithSchema(metricsServiceMethods.ByName("GetCityMetrics")),
-		connect.WithHandlerOptions(opts...),
+// RegisterMetricsServiceHandler registers svc as the issho.v1.MetricsService implementation on
+// server.
+func RegisterMetricsServiceHandler(server *connect.Server, svc MetricsServiceHandler) {
+	adapter := metricsServiceHandler{svc: svc}
+	server.Register(
+		connect.Method{Spec: metricsServiceGetCityMetricsSpec(), Handler: adapter.getCityMetrics},
 	)
-	return "/issho.v1.MetricsService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.URL.Path {
-		case MetricsServiceGetCityMetricsProcedure:
-			metricsServiceGetCityMetricsHandler.ServeHTTP(w, r)
-		default:
-			http.NotFound(w, r)
-		}
-	})
 }
 
 // UnimplementedMetricsServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedMetricsServiceHandler struct{}
 
-func (UnimplementedMetricsServiceHandler) GetCityMetrics(context.Context, *connect.Request[v1.GetCityMetricsRequest]) (*connect.Response[v1.GetCityMetricsResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.MetricsService.GetCityMetrics is not implemented"))
+func (UnimplementedMetricsServiceHandler) GetCityMetrics(context.Context, *v1.GetCityMetricsRequest) (*v1.GetCityMetricsResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "issho.v1.MetricsService.GetCityMetrics is not implemented")
+}
+
+type metricsServiceClient struct {
+	client *connect.Client
+}
+
+func (c *metricsServiceClient) GetCityMetrics(ctx context.Context, req *v1.GetCityMetricsRequest) (*v1.GetCityMetricsResponse, error) {
+	var res v1.GetCityMetricsResponse
+	if err := c.client.CallUnary(ctx, metricsServiceGetCityMetricsSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+type metricsServiceHandler struct{ svc MetricsServiceHandler }
+
+func (h metricsServiceHandler) getCityMetrics(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.GetCityMetricsRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.GetCityMetrics(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
 }

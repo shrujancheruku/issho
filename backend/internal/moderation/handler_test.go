@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"connectrpc.com/connect"
+	"connectrpc.com/connect/v2"
 	"github.com/google/uuid"
 
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
@@ -19,10 +19,10 @@ func TestNonAdminRefused(t *testing.T) {
 	// auth.RequireAdmin runs before any query, so no database is needed.
 	h := &Handler{}
 	ctx := auth.WithCaller(context.Background(), auth.Caller{UserID: uuid.New()})
-	if _, err := h.ListReports(ctx, connect.NewRequest(&isshov1.ListReportsRequest{})); connect.CodeOf(err) != connect.CodePermissionDenied {
+	if _, err := h.ListReports(ctx, &isshov1.ListReportsRequest{}); connect.CodeOf(err) != connect.CodePermissionDenied {
 		t.Fatalf("ListReports as a user: %v", err)
 	}
-	if _, err := h.ListReports(context.Background(), connect.NewRequest(&isshov1.ListReportsRequest{})); connect.CodeOf(err) != connect.CodeUnauthenticated {
+	if _, err := h.ListReports(context.Background(), &isshov1.ListReportsRequest{}); connect.CodeOf(err) != connect.CodeUnauthenticated {
 		t.Fatalf("ListReports without a caller: %v", err)
 	}
 }
@@ -106,19 +106,19 @@ func TestIntegrationQueue(t *testing.T) {
 	// Reports: open, then dismissed with a note.
 	reports := func(status isshov1.ReportStatus) []*isshov1.ModerationReport {
 		t.Helper()
-		res, err := h.ListReports(ctx, connect.NewRequest(&isshov1.ListReportsRequest{Status: status, ReportedId: reported.String()}))
+		res, err := h.ListReports(ctx, &isshov1.ListReportsRequest{Status: status, ReportedId: reported.String()})
 		if err != nil {
 			t.Fatal(err)
 		}
-		return res.Msg.Reports
+		return res.Reports
 	}
 	open := reports(isshov1.ReportStatus_REPORT_STATUS_OPEN)
 	if len(open) != 1 || open[0].Reason != isshov1.ReportReason_REPORT_REASON_DATING || open[0].ReportsAboutReported != 1 || open[0].ReporterId != reporter.String() {
 		t.Fatalf("open reports = %v", open)
 	}
-	if _, err := h.ResolveReport(ctx, connect.NewRequest(&isshov1.ResolveReportRequest{
+	if _, err := h.ResolveReport(ctx, &isshov1.ResolveReportRequest{
 		ReportId: open[0].Id, Status: isshov1.ReportStatus_REPORT_STATUS_DISMISSED, Note: " Spoke to both ",
-	})); err != nil {
+	}); err != nil {
 		t.Fatal(err)
 	}
 	if got := reports(isshov1.ReportStatus_REPORT_STATUS_OPEN); len(got) != 0 {
@@ -128,19 +128,19 @@ func TestIntegrationQueue(t *testing.T) {
 	if len(done) != 1 || done[0].Note != "Spoke to both" || done[0].ReviewedBy != adminID.String() || !done[0].ReviewedAt.AsTime().Equal(now) {
 		t.Fatalf("dismissed reports = %v", done)
 	}
-	if _, err := h.ResolveReport(ctx, connect.NewRequest(&isshov1.ResolveReportRequest{
+	if _, err := h.ResolveReport(ctx, &isshov1.ResolveReportRequest{
 		ReportId: uuid.NewString(), Status: isshov1.ReportStatus_REPORT_STATUS_ACTIONED,
-	})); connect.CodeOf(err) != connect.CodeNotFound {
+	}); connect.CodeOf(err) != connect.CodeNotFound {
 		t.Fatalf("unknown report: %v", err)
 	}
 
 	// Flags: resolved once; resolving again is refused.
-	flags, err := h.ListFlags(ctx, connect.NewRequest(&isshov1.ListFlagsRequest{}))
+	flags, err := h.ListFlags(ctx, &isshov1.ListFlagsRequest{})
 	if err != nil {
 		t.Fatal(err)
 	}
 	var flagID int64
-	for _, f := range flags.Msg.Flags {
+	for _, f := range flags.Flags {
 		if f.UserId == reporter.String() {
 			flagID = f.Id
 			if f.Kind != isshov1.FlagKind_FLAG_KIND_PICK_GENDER_LEAN || f.DetailsJson != `{"gender": "woman"}` {
@@ -152,57 +152,57 @@ func TestIntegrationQueue(t *testing.T) {
 		t.Fatal("open flag not listed")
 	}
 	resolve := &isshov1.ResolveFlagRequest{FlagId: flagID, Note: "Picks were fine"}
-	if _, err := h.ResolveFlag(ctx, connect.NewRequest(resolve)); err != nil {
+	if _, err := h.ResolveFlag(ctx, resolve); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := h.ResolveFlag(ctx, connect.NewRequest(resolve)); connect.CodeOf(err) != connect.CodeFailedPrecondition {
+	if _, err := h.ResolveFlag(ctx, resolve); connect.CodeOf(err) != connect.CodeFailedPrecondition {
 		t.Fatalf("resolving twice: %v", err)
 	}
 
 	// Crew leaves, filtered by reason, named after the crew's area.
-	leaves, err := h.ListCrewLeaves(ctx, connect.NewRequest(&isshov1.ListCrewLeavesRequest{Reason: isshov1.LeaveReason_LEAVE_REASON_UNCOMFORTABLE}))
+	leaves, err := h.ListCrewLeaves(ctx, &isshov1.ListCrewLeavesRequest{Reason: isshov1.LeaveReason_LEAVE_REASON_UNCOMFORTABLE})
 	if err != nil {
 		t.Fatal(err)
 	}
 	var found bool
-	for _, l := range leaves.Msg.Leaves {
+	for _, l := range leaves.Leaves {
 		if l.UserId == reporter.String() {
 			found = l.CrewName == "Testville" && l.Details == "Too pushy" && l.Reason == isshov1.LeaveReason_LEAVE_REASON_UNCOMFORTABLE &&
 				l.CrewStatus != isshov1.CrewStatus_CREW_STATUS_UNSPECIFIED // typed, never a string
 		}
 	}
 	if !found {
-		t.Fatalf("crew leave not listed: %v", leaves.Msg.Leaves)
+		t.Fatalf("crew leave not listed: %v", leaves.Leaves)
 	}
 
 	// People: found by name, then their view; suspended (not themselves),
 	// which the API's check, GetMe's query, matching and push all see;
 	// then lifted.
-	people, err := h.SearchPeople(ctx, connect.NewRequest(&isshov1.SearchPeopleRequest{Query: "modtest b"}))
-	if err != nil || len(people.Msg.People) != 1 || people.Msg.People[0].UserId != reported.String() || people.Msg.People[0].Suspended {
-		t.Fatalf("SearchPeople = %v, %v", people.Msg.GetPeople(), err)
+	people, err := h.SearchPeople(ctx, &isshov1.SearchPeopleRequest{Query: "modtest b"})
+	if err != nil || len(people.People) != 1 || people.People[0].UserId != reported.String() || people.People[0].Suspended {
+		t.Fatalf("SearchPeople = %v, %v", people.GetPeople(), err)
 	}
-	if _, err := h.SearchPeople(ctx, connect.NewRequest(&isshov1.SearchPeopleRequest{Query: "b"})); connect.CodeOf(err) != connect.CodeInvalidArgument {
+	if _, err := h.SearchPeople(ctx, &isshov1.SearchPeopleRequest{Query: "b"}); connect.CodeOf(err) != connect.CodeInvalidArgument {
 		t.Fatalf("one-letter search: %v", err)
 	}
 	person := func() *isshov1.Person {
 		t.Helper()
-		res, err := h.GetPerson(ctx, connect.NewRequest(&isshov1.GetPersonRequest{UserId: reported.String()}))
+		res, err := h.GetPerson(ctx, &isshov1.GetPersonRequest{UserId: reported.String()})
 		if err != nil {
 			t.Fatal(err)
 		}
-		return res.Msg.Person
+		return res.Person
 	}
 	if p := person(); p.Name != "Modtest Ben" || p.HomeArea != "Testville" || p.ReportsAbout != 1 || p.OpenReportsAbout != 0 || p.Suspended {
 		t.Fatalf("person = %v", p)
 	}
-	if _, err := h.SuspendPerson(ctx, connect.NewRequest(&isshov1.SuspendPersonRequest{UserId: adminID.String(), Reason: "x"})); connect.CodeOf(err) != connect.CodeInvalidArgument {
+	if _, err := h.SuspendPerson(ctx, &isshov1.SuspendPersonRequest{UserId: adminID.String(), Reason: "x"}); connect.CodeOf(err) != connect.CodeInvalidArgument {
 		t.Fatalf("suspending yourself: %v", err)
 	}
-	if _, err := h.SuspendPerson(ctx, connect.NewRequest(&isshov1.SuspendPersonRequest{UserId: reported.String(), Reason: " "})); connect.CodeOf(err) != connect.CodeInvalidArgument {
+	if _, err := h.SuspendPerson(ctx, &isshov1.SuspendPersonRequest{UserId: reported.String(), Reason: " "}); connect.CodeOf(err) != connect.CodeInvalidArgument {
 		t.Fatalf("no reason: %v", err)
 	}
-	if _, err := h.LiftSuspension(ctx, connect.NewRequest(&isshov1.LiftSuspensionRequest{UserId: reported.String()})); connect.CodeOf(err) != connect.CodeFailedPrecondition {
+	if _, err := h.LiftSuspension(ctx, &isshov1.LiftSuspensionRequest{UserId: reported.String()}); connect.CodeOf(err) != connect.CodeFailedPrecondition {
 		t.Fatalf("lifting before suspending: %v", err)
 	}
 	isSuspended := func() bool {
@@ -216,7 +216,7 @@ func TestIntegrationQueue(t *testing.T) {
 	isSuspended() // load the cache: the suspension must invalidate it
 	suspend := &isshov1.SuspendPersonRequest{UserId: reported.String(), Reason: "Repeated dating reports"}
 	for range 2 { // again: no error, still one suspension
-		if _, err := h.SuspendPerson(ctx, connect.NewRequest(suspend)); err != nil {
+		if _, err := h.SuspendPerson(ctx, suspend); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -253,19 +253,19 @@ func TestIntegrationQueue(t *testing.T) {
 	if inMatching() || tokens() != 0 {
 		t.Errorf("while suspended: in matching %v, push tokens %d", inMatching(), tokens())
 	}
-	listed, err := h.ListSuspended(ctx, connect.NewRequest(&isshov1.ListSuspendedRequest{}))
+	listed, err := h.ListSuspended(ctx, &isshov1.ListSuspendedRequest{})
 	if err != nil {
 		t.Fatal(err)
 	}
 	var onList bool
-	for _, p := range listed.Msg.People {
+	for _, p := range listed.People {
 		onList = onList || (p.UserId == reported.String() && p.Name == "Modtest Ben")
 	}
 	if !onList {
-		t.Errorf("not in ListSuspended: %v", listed.Msg.People)
+		t.Errorf("not in ListSuspended: %v", listed.People)
 	}
 
-	if _, err := h.LiftSuspension(ctx, connect.NewRequest(&isshov1.LiftSuspensionRequest{UserId: reported.String(), Note: "Appeal accepted"})); err != nil {
+	if _, err := h.LiftSuspension(ctx, &isshov1.LiftSuspensionRequest{UserId: reported.String(), Note: "Appeal accepted"}); err != nil {
 		t.Fatal(err)
 	}
 	if p := person(); p.Suspended || p.Suspensions[0].LiftNote != "Appeal accepted" || p.Suspensions[0].LiftedAt == nil {

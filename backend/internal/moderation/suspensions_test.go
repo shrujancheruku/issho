@@ -7,7 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"connectrpc.com/connect"
+	"connectrpc.com/connect/v2"
+	"connectrpc.com/connect/v2/connecthttp"
 	"github.com/google/uuid"
 
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
@@ -51,28 +52,30 @@ func TestGate(t *testing.T) {
 	suspended, other := uuid.New(), uuid.New()
 	s := &Suspensions{Q: &fakeSuspended{ids: []uuid.UUID{suspended}}}
 	var caller *auth.Caller
-	setCaller := connect.UnaryInterceptorFunc(func(next connect.UnaryFunc) connect.UnaryFunc {
-		return func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
+	setCaller := connect.ServerInterceptor(func(next connect.ServerFunc) connect.ServerFunc {
+		return func(ctx context.Context, spec connect.Spec, stream connect.ServerStream) error {
 			if caller != nil {
 				ctx = auth.WithCaller(ctx, *caller)
 			}
-			return next(ctx, req)
+			return next(ctx, spec, stream)
 		}
 	})
-	opts := connect.WithInterceptors(setCaller, Gate(s, isshov1connect.IdentityServiceGetMeProcedure))
 	mux := http.NewServeMux()
-	mux.Handle(isshov1connect.NewIdentityServiceHandler(isshov1connect.UnimplementedIdentityServiceHandler{}, opts))
-	mux.Handle(isshov1connect.NewPushServiceHandler(isshov1connect.UnimplementedPushServiceHandler{}, opts))
+	server := connect.NewServer(setCaller, Gate(s, isshov1connect.IdentityServiceGetMeProcedure))
+	isshov1connect.RegisterIdentityServiceHandler(server, isshov1connect.UnimplementedIdentityServiceHandler{})
+	isshov1connect.RegisterPushServiceHandler(server, isshov1connect.UnimplementedPushServiceHandler{})
+	connecthttp.Mount(mux, server)
+
 	srv := httptest.NewServer(mux)
 	defer srv.Close()
-	identity := isshov1connect.NewIdentityServiceClient(srv.Client(), srv.URL)
-	push := isshov1connect.NewPushServiceClient(srv.Client(), srv.URL)
+	identity := isshov1connect.NewIdentityServiceClient(connect.NewClient(connecthttp.NewTransport(srv.Client(), srv.URL)))
+	push := isshov1connect.NewPushServiceClient(connect.NewClient(connecthttp.NewTransport(srv.Client(), srv.URL)))
 	getMe := func() error {
-		_, err := identity.GetMe(context.Background(), connect.NewRequest(&isshov1.GetMeRequest{}))
+		_, err := identity.GetMe(context.Background(), &isshov1.GetMeRequest{})
 		return err
 	}
 	register := func() error {
-		_, err := push.RegisterPushToken(context.Background(), connect.NewRequest(&isshov1.RegisterPushTokenRequest{}))
+		_, err := push.RegisterPushToken(context.Background(), &isshov1.RegisterPushTokenRequest{})
 		return err
 	}
 	// Unimplemented = the gate let the call through.

@@ -115,8 +115,8 @@ func run() error {
 	q := dbgen.New(pool)
 	suspensions := &moderation.Suspensions{Q: q}
 	// errs runs outermost so it also sanitises errors returned by the auth interceptor.
-	// handlerOptions puts errs outermost, then the deadline, then these.
-	opts := handlerOptions(slog.Default(),
+	// newRPCServer puts errs outermost, then the deadline, then these.
+	rpc := newRPCServer(slog.Default(),
 		// UIService is public because the sign-in screens need their text
 		// before anyone is signed in; it only translates the server's own
 		// copy of the UI catalogue.
@@ -134,7 +134,7 @@ func run() error {
 
 	mux := http.NewServeMux()
 	healthH := &health.Handler{Pool: pool, Version: version}
-	mux.Handle(isshov1connect.NewHealthServiceHandler(healthH, opts))
+	isshov1connect.RegisterHealthServiceHandler(rpc, healthH)
 	mux.HandleFunc("GET /up", healthH.Up)
 	identitySvc := &identity.Service{Store: q}
 	if cfg.SupabaseSecretKey != "" {
@@ -142,7 +142,7 @@ func run() error {
 	} else {
 		slog.Warn("SUPABASE_SECRET_KEY not set; account deletion disabled")
 	}
-	mux.Handle(isshov1connect.NewIdentityServiceHandler(&identity.Handler{Svc: identitySvc}, opts))
+	isshov1connect.RegisterIdentityServiceHandler(rpc, &identity.Handler{Svc: identitySvc})
 	translations := &translate.Service{Store: q}
 	if translations.Translator, err = translators.New(cfg.Translator, cfg.GoogleTranslateAPIKey, cfg.GeminiAPIKey); err != nil {
 		return err
@@ -155,8 +155,8 @@ func run() error {
 	} else {
 		slog.Warn("GOOGLE_GEMINI_API_KEY not set: interest suggestions off")
 	}
-	mux.Handle(isshov1connect.NewCatalogServiceHandler(&catalog.Handler{Q: q, Translations: translations, Suggestions: suggestions}, opts))
-	mux.Handle(isshov1connect.NewProfileServiceHandler(&profile.Handler{Svc: &profile.Service{DB: pool}}, opts))
+	isshov1connect.RegisterCatalogServiceHandler(rpc, &catalog.Handler{Q: q, Translations: translations, Suggestions: suggestions})
+	isshov1connect.RegisterProfileServiceHandler(rpc, &profile.Handler{Svc: &profile.Service{DB: pool}})
 	planSvc := &plans.Service{DB: pool, Translations: translations}
 	venueSvc := &curation.Service{DB: pool}
 	venues := &curation.Handler{Svc: venueSvc}
@@ -186,26 +186,26 @@ func run() error {
 	} else {
 		slog.Warn("GOOGLE_MAPS_API_KEY not set: plans show no venue names")
 	}
-	mux.Handle(isshov1connect.NewPlanServiceHandler(&plans.Handler{Svc: planSvc}, opts))
-	mux.Handle(isshov1connect.NewEventServiceHandler(&plans.EventHandler{Svc: planSvc}, opts))
+	isshov1connect.RegisterPlanServiceHandler(rpc, &plans.Handler{Svc: planSvc})
+	isshov1connect.RegisterEventServiceHandler(rpc, &plans.EventHandler{Svc: planSvc})
 	crewSvc := &crews.Service{DB: pool}
-	mux.Handle(isshov1connect.NewCrewServiceHandler(&crews.Handler{Svc: crewSvc}, opts))
+	isshov1connect.RegisterCrewServiceHandler(rpc, &crews.Handler{Svc: crewSvc})
 	// One chat module serves both kinds of room; each owner decides who may
 	// use its rooms.
 	chatSvc := &chat.Service{DB: pool, Event: plans.ChatAccess{}, Crew: crews.ChatAccess{}}
-	mux.Handle(isshov1connect.NewChatServiceHandler(&chat.Handler{Svc: chatSvc}, opts))
-	mux.Handle(isshov1connect.NewPushServiceHandler(&push.Handler{Q: q}, opts))
-	mux.Handle(isshov1connect.NewReviewServiceHandler(review, opts))
-	mux.Handle(isshov1connect.NewCurationServiceHandler(venues, opts))
-	mux.Handle(isshov1connect.NewMetricsServiceHandler(&metrics.Handler{Q: q}, opts))
-	mux.Handle(isshov1connect.NewCityPackServiceHandler(packs, opts))
-	mux.Handle(isshov1connect.NewAdminServiceHandler(&adminjobs.Handler{Jobs: jobs}, opts))
-	mux.Handle(isshov1connect.NewModerationServiceHandler(&moderation.Handler{Q: q, Svc: &moderation.Service{DB: pool, Jobs: jobs, Suspensions: suspensions}}, opts))
+	isshov1connect.RegisterChatServiceHandler(rpc, &chat.Handler{Svc: chatSvc})
+	isshov1connect.RegisterPushServiceHandler(rpc, &push.Handler{Q: q})
+	isshov1connect.RegisterReviewServiceHandler(rpc, review)
+	isshov1connect.RegisterCurationServiceHandler(rpc, venues)
+	isshov1connect.RegisterMetricsServiceHandler(rpc, &metrics.Handler{Q: q})
+	isshov1connect.RegisterCityPackServiceHandler(rpc, packs)
+	isshov1connect.RegisterAdminServiceHandler(rpc, &adminjobs.Handler{Jobs: jobs})
+	isshov1connect.RegisterModerationServiceHandler(rpc, &moderation.Handler{Q: q, Svc: &moderation.Service{DB: pool, Jobs: jobs, Suspensions: suspensions}})
 	uiCatalog, err := uistrings.Load()
 	if err != nil {
 		return err
 	}
-	mux.Handle(isshov1connect.NewUIServiceHandler(&uistrings.Handler{Catalog: uiCatalog, Translations: translations}, opts))
+	isshov1connect.RegisterUIServiceHandler(rpc, &uistrings.Handler{Catalog: uiCatalog, Translations: translations})
 	uiEditor := &uistrings.Editor{Catalog: uiCatalog, Translations: translations, Repo: pending}
 	translationEditor := &translationeditor.Handler{
 		Editor:  uiEditor,
@@ -221,7 +221,8 @@ func run() error {
 			return err
 		}
 	}
-	mux.Handle(isshov1connect.NewTranslationServiceHandler(translationEditor, opts))
+	isshov1connect.RegisterTranslationServiceHandler(rpc, translationEditor)
+	mountRPC(mux, rpc)
 
 	// Group chat pushes new messages over WebSocket (internal/chatws); one
 	// LISTEN connection per process wakes the sockets.
