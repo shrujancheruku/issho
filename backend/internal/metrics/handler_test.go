@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"connectrpc.com/connect"
+	"connectrpc.com/connect/v2"
 	"github.com/google/uuid"
 
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
@@ -32,7 +32,7 @@ func TestMonday(t *testing.T) {
 func TestNonAdminRefused(t *testing.T) {
 	h := &Handler{}
 	ctx := auth.WithCaller(context.Background(), auth.Caller{UserID: uuid.New()})
-	if _, err := h.GetCityMetrics(ctx, connect.NewRequest(&isshov1.GetCityMetricsRequest{})); connect.CodeOf(err) != connect.CodePermissionDenied {
+	if _, err := h.GetCityMetrics(ctx, &isshov1.GetCityMetricsRequest{}); connect.CodeOf(err) != connect.CodePermissionDenied {
 		t.Fatalf("as a user: %v", err)
 	}
 }
@@ -117,11 +117,11 @@ func TestIntegrationMetrics(t *testing.T) {
 
 	h := &Handler{Q: dbgen.New(pool), Now: func() time.Time { return time.Date(2030, 1, 16, 3, 0, 0, 0, time.UTC) }}
 	adminCtx := auth.WithCaller(ctx, auth.Caller{UserID: uuid.New(), Admin: true})
-	res, err := h.GetCityMetrics(adminCtx, connect.NewRequest(&isshov1.GetCityMetricsRequest{CityId: city, Weeks: 3}))
+	res, err := h.GetCityMetrics(adminCtx, &isshov1.GetCityMetricsRequest{CityId: city, Weeks: 3})
 	if err != nil {
 		t.Fatal(err)
 	}
-	w := res.Msg.Weeks
+	w := res.Weeks
 	if len(w) != 3 || w[0].Week != "2029-12-31" || w[2].Week != "2030-01-14" {
 		t.Fatalf("weeks = %v", w)
 	}
@@ -139,13 +139,13 @@ func TestIntegrationMetrics(t *testing.T) {
 			t.Errorf("week %s:\n got %s\nwant %s", w[i].Week, got, want)
 		}
 	}
-	if n := res.Msg.Now; n.People != 1 || n.OpenPlans != 1 || n.UpcomingOutings != 0 {
+	if n := res.Now; n.People != 1 || n.OpenPlans != 1 || n.UpcomingOutings != 0 {
 		t.Errorf("now = %v", n)
 	}
-	if _, err := h.GetCityMetrics(adminCtx, connect.NewRequest(&isshov1.GetCityMetricsRequest{CityId: "nowhere"})); connect.CodeOf(err) != connect.CodeNotFound {
+	if _, err := h.GetCityMetrics(adminCtx, &isshov1.GetCityMetricsRequest{CityId: "nowhere"}); connect.CodeOf(err) != connect.CodeNotFound {
 		t.Errorf("an unknown city: %v", err)
 	}
-	if _, err := h.GetCityMetrics(adminCtx, connect.NewRequest(&isshov1.GetCityMetricsRequest{CityId: city, Weeks: 53})); connect.CodeOf(err) != connect.CodeInvalidArgument {
+	if _, err := h.GetCityMetrics(adminCtx, &isshov1.GetCityMetricsRequest{CityId: city, Weeks: 53}); connect.CodeOf(err) != connect.CodeInvalidArgument {
 		t.Errorf("53 weeks: %v", err)
 	}
 }

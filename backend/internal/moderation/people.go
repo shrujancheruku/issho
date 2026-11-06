@@ -8,7 +8,6 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"connectrpc.com/connect"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 
@@ -26,20 +25,20 @@ import (
 // decide (see Person.outings in the proto).
 const outingRows = 50
 
-func (h *Handler) SearchPeople(ctx context.Context, req *connect.Request[isshov1.SearchPeopleRequest]) (*connect.Response[isshov1.SearchPeopleResponse], error) {
+func (h *Handler) SearchPeople(ctx context.Context, req *isshov1.SearchPeopleRequest) (*isshov1.SearchPeopleResponse, error) {
 	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
-	query := strings.TrimSpace(req.Msg.Query)
+	query := strings.TrimSpace(req.Query)
 	if utf8.RuneCountInString(query) < 2 {
 		return nil, errs.Invalid("query: at least 2 characters")
 	}
-	size, err := paging.Size(req.Msg.PageSize)
+	size, err := paging.Size(req.PageSize)
 	if err != nil {
 		return nil, err
 	}
 	scope := paging.Scope("SearchPeople", query)
-	k, err := paging.Open(req.Msg.PageToken, scope, 3)
+	k, err := paging.Open(req.PageToken, scope, 3)
 	if err != nil {
 		return nil, err
 	}
@@ -62,14 +61,14 @@ func (h *Handler) SearchPeople(ctx context.Context, req *connect.Request[isshov1
 	for i, r := range rows {
 		out.People[i] = &isshov1.PersonSummary{UserId: r.ID.String(), Name: r.DisplayName, Email: r.Email, Suspended: r.Suspended}
 	}
-	return connect.NewResponse(out), nil
+	return out, nil
 }
 
-func (h *Handler) GetPerson(ctx context.Context, req *connect.Request[isshov1.GetPersonRequest]) (*connect.Response[isshov1.GetPersonResponse], error) {
+func (h *Handler) GetPerson(ctx context.Context, req *isshov1.GetPersonRequest) (*isshov1.GetPersonResponse, error) {
 	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
-	id, err := parseUser(req.Msg.UserId)
+	id, err := parseUser(req.UserId)
 	if err != nil {
 		return nil, err
 	}
@@ -143,22 +142,22 @@ func (h *Handler) GetPerson(ctx context.Context, req *connect.Request[isshov1.Ge
 		}
 		out.Outings = append(out.Outings, po)
 	}
-	return connect.NewResponse(&isshov1.GetPersonResponse{Person: out}), nil
+	return &isshov1.GetPersonResponse{Person: out}, nil
 }
 
-func (h *Handler) SuspendPerson(ctx context.Context, req *connect.Request[isshov1.SuspendPersonRequest]) (*connect.Response[isshov1.SuspendPersonResponse], error) {
+func (h *Handler) SuspendPerson(ctx context.Context, req *isshov1.SuspendPersonRequest) (*isshov1.SuspendPersonResponse, error) {
 	c, err := auth.RequireAdmin(ctx)
 	if err != nil {
 		return nil, err
 	}
-	id, err := parseUser(req.Msg.UserId)
+	id, err := parseUser(req.UserId)
 	if err != nil {
 		return nil, err
 	}
 	if id == c.UserID {
 		return nil, errs.Invalid("user_id: you can't suspend yourself")
 	}
-	reason := strings.TrimSpace(req.Msg.Reason)
+	reason := strings.TrimSpace(req.Reason)
 	if reason == "" || utf8.RuneCountInString(reason) > MaxNote {
 		return nil, errs.Invalid("reason: 1-2000 characters")
 	}
@@ -167,38 +166,38 @@ func (h *Handler) SuspendPerson(ctx context.Context, req *connect.Request[isshov
 	if err := h.Svc.Suspend(ctx, c.UserID, id, reason, h.now()); err != nil {
 		return nil, err
 	}
-	return connect.NewResponse(&isshov1.SuspendPersonResponse{}), nil
+	return &isshov1.SuspendPersonResponse{}, nil
 }
 
-func (h *Handler) LiftSuspension(ctx context.Context, req *connect.Request[isshov1.LiftSuspensionRequest]) (*connect.Response[isshov1.LiftSuspensionResponse], error) {
+func (h *Handler) LiftSuspension(ctx context.Context, req *isshov1.LiftSuspensionRequest) (*isshov1.LiftSuspensionResponse, error) {
 	c, err := auth.RequireAdmin(ctx)
 	if err != nil {
 		return nil, err
 	}
-	id, err := parseUser(req.Msg.UserId)
+	id, err := parseUser(req.UserId)
 	if err != nil {
 		return nil, err
 	}
-	note, err := cleanNote(req.Msg.Note)
+	note, err := cleanNote(req.Note)
 	if err != nil {
 		return nil, err
 	}
 	if err := h.Svc.Lift(ctx, c.UserID, id, note, h.now()); err != nil {
 		return nil, err
 	}
-	return connect.NewResponse(&isshov1.LiftSuspensionResponse{}), nil
+	return &isshov1.LiftSuspensionResponse{}, nil
 }
 
-func (h *Handler) ListSuspended(ctx context.Context, req *connect.Request[isshov1.ListSuspendedRequest]) (*connect.Response[isshov1.ListSuspendedResponse], error) {
+func (h *Handler) ListSuspended(ctx context.Context, req *isshov1.ListSuspendedRequest) (*isshov1.ListSuspendedResponse, error) {
 	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
-	size, err := paging.Size(req.Msg.PageSize)
+	size, err := paging.Size(req.PageSize)
 	if err != nil {
 		return nil, err
 	}
 	scope := paging.Scope("ListSuspended")
-	k, err := paging.Open(req.Msg.PageToken, scope, 2)
+	k, err := paging.Open(req.PageToken, scope, 2)
 	if err != nil {
 		return nil, err
 	}
@@ -223,7 +222,7 @@ func (h *Handler) ListSuspended(ctx context.Context, req *connect.Request[isshov
 			Since: timestamp(r.CreatedAt), SuspendedBy: r.CreatedBy.String(),
 		}
 	}
-	return connect.NewResponse(out), nil
+	return out, nil
 }
 
 func parseUser(s string) (uuid.UUID, error) {

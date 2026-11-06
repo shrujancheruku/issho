@@ -10,7 +10,6 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"connectrpc.com/connect"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -69,18 +68,18 @@ func lockEditable(ctx context.Context, q *dbgen.Queries, id uuid.UUID, walk bool
 	return nil
 }
 
-func (h *ReviewHandler) FindPlanPlaces(ctx context.Context, req *connect.Request[isshov1.FindPlanPlacesRequest]) (*connect.Response[isshov1.FindPlanPlacesResponse], error) {
+func (h *ReviewHandler) FindPlanPlaces(ctx context.Context, req *isshov1.FindPlanPlacesRequest) (*isshov1.FindPlanPlacesResponse, error) {
 	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
-	query := strings.TrimSpace(req.Msg.Query)
+	query := strings.TrimSpace(req.Query)
 	if query == "" || utf8.RuneCountInString(query) > maxPlaceQuery {
 		return nil, errs.Invalid("query: 1 to 100 characters")
 	}
 	if h.Places == nil {
 		return nil, errs.Precondition(isshov1.ErrorReason_ERROR_REASON_UNSPECIFIED, "searching needs GOOGLE_MAPS_API_KEY")
 	}
-	_, r, err := reviewPlan(ctx, dbgen.New(h.Svc.DB), req.Msg.PlanId)
+	_, r, err := reviewPlan(ctx, dbgen.New(h.Svc.DB), req.PlanId)
 	if err != nil {
 		return nil, err
 	}
@@ -96,14 +95,14 @@ func (h *ReviewHandler) FindPlanPlaces(ctx context.Context, req *connect.Request
 			PrimaryType: f.PrimaryType, Meters: int32(maps.DistanceM(centre, f.Location)), Closed: f.Closed,
 		})
 	}
-	return connect.NewResponse(out), nil
+	return out, nil
 }
 
-func (h *ReviewHandler) SetPlanStops(ctx context.Context, req *connect.Request[isshov1.SetPlanStopsRequest]) (*connect.Response[isshov1.SetPlanStopsResponse], error) {
+func (h *ReviewHandler) SetPlanStops(ctx context.Context, req *isshov1.SetPlanStopsRequest) (*isshov1.SetPlanStopsResponse, error) {
 	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
-	in := req.Msg.Stops
+	in := req.Stops
 	if len(in) < MinWalkPlaces || len(in) > MaxWalkPlaces {
 		return nil, errs.Invalid("stops: %d to %d places, where to meet first and where to finish last", MinWalkPlaces, MaxWalkPlaces)
 	}
@@ -139,7 +138,7 @@ func (h *ReviewHandler) SetPlanStops(ctx context.Context, req *connect.Request[i
 		return nil, errs.Precondition(isshov1.ErrorReason_ERROR_REASON_UNSPECIFIED, "editing stops needs GOOGLE_MAPS_API_KEY")
 	}
 	q := dbgen.New(h.Svc.DB)
-	id, r, err := reviewPlan(ctx, q, req.Msg.PlanId)
+	id, r, err := reviewPlan(ctx, q, req.PlanId)
 	if err != nil {
 		return nil, err
 	}
@@ -209,7 +208,7 @@ func (h *ReviewHandler) SetPlanStops(ctx context.Context, req *connect.Request[i
 	if err != nil {
 		return nil, err
 	}
-	return connect.NewResponse(out), nil
+	return out, nil
 }
 
 // checkPlaces checks each stop's place with Google, a few at a time: it
@@ -274,11 +273,11 @@ func walkWarnings(stops []WalkStop, walking time.Duration) []string {
 	return out
 }
 
-func (h *ReviewHandler) SetPlanVenue(ctx context.Context, req *connect.Request[isshov1.SetPlanVenueRequest]) (*connect.Response[isshov1.SetPlanVenueResponse], error) {
+func (h *ReviewHandler) SetPlanVenue(ctx context.Context, req *isshov1.SetPlanVenueRequest) (*isshov1.SetPlanVenueResponse, error) {
 	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
-	m := req.Msg
+	m := req
 	q := dbgen.New(h.Svc.DB)
 	id, r, err := reviewPlan(ctx, q, m.PlanId)
 	if err != nil {
@@ -341,7 +340,7 @@ func (h *ReviewHandler) SetPlanVenue(ctx context.Context, req *connect.Request[i
 	if err != nil {
 		return nil, err
 	}
-	return connect.NewResponse(&isshov1.SetPlanVenueResponse{}), nil
+	return &isshov1.SetPlanVenueResponse{}, nil
 }
 
 // reviewStops are a walk's stops as stored, with their English notes.

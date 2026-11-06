@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"connectrpc.com/connect"
+	"connectrpc.com/connect/v2"
 	"github.com/google/uuid"
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
 
@@ -67,25 +67,25 @@ var ErrSuspended = errs.Denied(isshov1.ErrorReason_ERROR_REASON_SUSPENDED, "acco
 // allowed (GetMe, so the app can say so; signing out; deleting the
 // account). It runs after auth.Interceptor; public procedures have no
 // caller and pass.
-func Gate(s *Suspensions, allowed ...string) connect.UnaryInterceptorFunc {
+func Gate(s *Suspensions, allowed ...string) connect.ServerInterceptor {
 	ok := make(map[string]bool, len(allowed))
 	for _, p := range allowed {
 		ok[p] = true
 	}
-	return func(next connect.UnaryFunc) connect.UnaryFunc {
-		return func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
+	return func(next connect.ServerFunc) connect.ServerFunc {
+		return func(ctx context.Context, spec connect.Spec, stream connect.ServerStream) error {
 			c, signedIn := auth.FromContext(ctx)
-			if !signedIn || ok[req.Spec().Procedure] {
-				return next(ctx, req)
+			if !signedIn || ok[spec.Procedure] {
+				return next(ctx, spec, stream)
 			}
 			suspended, err := s.Suspended(ctx, c.UserID)
 			if err != nil {
-				return nil, err
+				return err
 			}
 			if suspended {
-				return nil, ErrSuspended
+				return ErrSuspended
 			}
-			return next(ctx, req)
+			return next(ctx, spec, stream)
 		}
 	}
 }

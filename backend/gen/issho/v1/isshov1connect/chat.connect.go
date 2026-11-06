@@ -5,39 +5,46 @@
 package isshov1connect
 
 import (
-	connect "connectrpc.com/connect"
+	connect "connectrpc.com/connect/v2"
 	context "context"
-	errors "errors"
 	v1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
-	http "net/http"
-	strings "strings"
+	sync "sync"
 )
-
-// This is a compile-time assertion to ensure that this generated file and the connect package are
-// compatible. If you get a compiler error that this constant is not defined, this code was
-// generated with a version of connect newer than the one compiled into your binary. You can fix the
-// problem by either regenerating this code with an older version of connect or updating the connect
-// version compiled into your binary.
-const _ = connect.IsAtLeastVersion1_13_0
 
 const (
 	// ChatServiceName is the fully-qualified name of the ChatService service.
 	ChatServiceName = "issho.v1.ChatService"
 )
 
-// These constants are the fully-qualified names of the RPCs defined in this package. They're
-// exposed at runtime as Spec.Procedure and as the final two segments of the HTTP route.
+// These constants are the procedure names of the RPCs defined in this package. They're exposed at
+// runtime as Spec.Procedure and as the final two segments of the HTTP route.
 //
 // Note that these are different from the fully-qualified method names used by
 // google.golang.org/protobuf/reflect/protoreflect. To convert from these constants to
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
-	// ChatServiceListMessagesProcedure is the fully-qualified name of the ChatService's ListMessages
-	// RPC.
+	// ChatServiceListMessagesProcedure is the procedure name of the ChatService's ListMessages RPC.
 	ChatServiceListMessagesProcedure = "/issho.v1.ChatService/ListMessages"
-	// ChatServiceSendMessageProcedure is the fully-qualified name of the ChatService's SendMessage RPC.
+	// ChatServiceSendMessageProcedure is the procedure name of the ChatService's SendMessage RPC.
 	ChatServiceSendMessageProcedure = "/issho.v1.ChatService/SendMessage"
+)
+
+var (
+	chatServiceListMessagesSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_issho_v1_chat_proto.Services().ByName("ChatService").Methods().ByName("ListMessages"),
+			Procedure:  ChatServiceListMessagesProcedure,
+		}
+	})
+	chatServiceSendMessageSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_issho_v1_chat_proto.Services().ByName("ChatService").Methods().ByName("SendMessage"),
+			Procedure:  ChatServiceSendMessageProcedure,
+		}
+	})
 )
 
 // ChatServiceClient is a client for the issho.v1.ChatService service.
@@ -49,52 +56,16 @@ type ChatServiceClient interface {
 	// history. The admin lists page with page_size and page_token instead.
 	// NOT_FOUND for a room that doesn't exist or isn't the caller's to know
 	// about; PERMISSION_DENIED when they're not (or no longer) in it.
-	ListMessages(context.Context, *connect.Request[v1.ListMessagesRequest]) (*connect.Response[v1.ListMessagesResponse], error)
+	ListMessages(context.Context, *v1.ListMessagesRequest) (*v1.ListMessagesResponse, error)
 	// SendMessage posts 1–1000 characters. FAILED_PRECONDITION while the
 	// room isn't open for writing.
-	SendMessage(context.Context, *connect.Request[v1.SendMessageRequest]) (*connect.Response[v1.SendMessageResponse], error)
+	SendMessage(context.Context, *v1.SendMessageRequest) (*v1.SendMessageResponse, error)
 }
 
-// NewChatServiceClient constructs a client for the issho.v1.ChatService service. By default, it
-// uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses, and sends
-// uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the connect.WithGRPC() or
-// connect.WithGRPCWeb() options.
-//
-// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
-// http://api.acme.com or https://acme.com/grpc).
-func NewChatServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) ChatServiceClient {
-	baseURL = strings.TrimRight(baseURL, "/")
-	chatServiceMethods := v1.File_issho_v1_chat_proto.Services().ByName("ChatService").Methods()
-	return &chatServiceClient{
-		listMessages: connect.NewClient[v1.ListMessagesRequest, v1.ListMessagesResponse](
-			httpClient,
-			baseURL+ChatServiceListMessagesProcedure,
-			connect.WithSchema(chatServiceMethods.ByName("ListMessages")),
-			connect.WithClientOptions(opts...),
-		),
-		sendMessage: connect.NewClient[v1.SendMessageRequest, v1.SendMessageResponse](
-			httpClient,
-			baseURL+ChatServiceSendMessageProcedure,
-			connect.WithSchema(chatServiceMethods.ByName("SendMessage")),
-			connect.WithClientOptions(opts...),
-		),
-	}
-}
-
-// chatServiceClient implements ChatServiceClient.
-type chatServiceClient struct {
-	listMessages *connect.Client[v1.ListMessagesRequest, v1.ListMessagesResponse]
-	sendMessage  *connect.Client[v1.SendMessageRequest, v1.SendMessageResponse]
-}
-
-// ListMessages calls issho.v1.ChatService.ListMessages.
-func (c *chatServiceClient) ListMessages(ctx context.Context, req *connect.Request[v1.ListMessagesRequest]) (*connect.Response[v1.ListMessagesResponse], error) {
-	return c.listMessages.CallUnary(ctx, req)
-}
-
-// SendMessage calls issho.v1.ChatService.SendMessage.
-func (c *chatServiceClient) SendMessage(ctx context.Context, req *connect.Request[v1.SendMessageRequest]) (*connect.Response[v1.SendMessageResponse], error) {
-	return c.sendMessage.CallUnary(ctx, req)
+// NewChatServiceClient constructs a client for the issho.v1.ChatService service. Multiple service
+// clients may share a single connect.Client.
+func NewChatServiceClient(client *connect.Client) ChatServiceClient {
+	return &chatServiceClient{client: client}
 }
 
 // ChatServiceHandler is an implementation of the issho.v1.ChatService service.
@@ -106,50 +77,74 @@ type ChatServiceHandler interface {
 	// history. The admin lists page with page_size and page_token instead.
 	// NOT_FOUND for a room that doesn't exist or isn't the caller's to know
 	// about; PERMISSION_DENIED when they're not (or no longer) in it.
-	ListMessages(context.Context, *connect.Request[v1.ListMessagesRequest]) (*connect.Response[v1.ListMessagesResponse], error)
+	ListMessages(context.Context, *v1.ListMessagesRequest) (*v1.ListMessagesResponse, error)
 	// SendMessage posts 1–1000 characters. FAILED_PRECONDITION while the
 	// room isn't open for writing.
-	SendMessage(context.Context, *connect.Request[v1.SendMessageRequest]) (*connect.Response[v1.SendMessageResponse], error)
+	SendMessage(context.Context, *v1.SendMessageRequest) (*v1.SendMessageResponse, error)
 }
 
-// NewChatServiceHandler builds an HTTP handler from the service implementation. It returns the path
-// on which to mount the handler and the handler itself.
-//
-// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
-// and JSON codecs. They also support gzip compression.
-func NewChatServiceHandler(svc ChatServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
-	chatServiceMethods := v1.File_issho_v1_chat_proto.Services().ByName("ChatService").Methods()
-	chatServiceListMessagesHandler := connect.NewUnaryHandler(
-		ChatServiceListMessagesProcedure,
-		svc.ListMessages,
-		connect.WithSchema(chatServiceMethods.ByName("ListMessages")),
-		connect.WithHandlerOptions(opts...),
+// RegisterChatServiceHandler registers svc as the issho.v1.ChatService implementation on server.
+func RegisterChatServiceHandler(server *connect.Server, svc ChatServiceHandler) {
+	adapter := chatServiceHandler{svc: svc}
+	server.Register(
+		connect.Method{Spec: chatServiceListMessagesSpec(), Handler: adapter.listMessages},
+		connect.Method{Spec: chatServiceSendMessageSpec(), Handler: adapter.sendMessage},
 	)
-	chatServiceSendMessageHandler := connect.NewUnaryHandler(
-		ChatServiceSendMessageProcedure,
-		svc.SendMessage,
-		connect.WithSchema(chatServiceMethods.ByName("SendMessage")),
-		connect.WithHandlerOptions(opts...),
-	)
-	return "/issho.v1.ChatService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.URL.Path {
-		case ChatServiceListMessagesProcedure:
-			chatServiceListMessagesHandler.ServeHTTP(w, r)
-		case ChatServiceSendMessageProcedure:
-			chatServiceSendMessageHandler.ServeHTTP(w, r)
-		default:
-			http.NotFound(w, r)
-		}
-	})
 }
 
 // UnimplementedChatServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedChatServiceHandler struct{}
 
-func (UnimplementedChatServiceHandler) ListMessages(context.Context, *connect.Request[v1.ListMessagesRequest]) (*connect.Response[v1.ListMessagesResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.ChatService.ListMessages is not implemented"))
+func (UnimplementedChatServiceHandler) ListMessages(context.Context, *v1.ListMessagesRequest) (*v1.ListMessagesResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "issho.v1.ChatService.ListMessages is not implemented")
 }
 
-func (UnimplementedChatServiceHandler) SendMessage(context.Context, *connect.Request[v1.SendMessageRequest]) (*connect.Response[v1.SendMessageResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.ChatService.SendMessage is not implemented"))
+func (UnimplementedChatServiceHandler) SendMessage(context.Context, *v1.SendMessageRequest) (*v1.SendMessageResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "issho.v1.ChatService.SendMessage is not implemented")
+}
+
+type chatServiceClient struct {
+	client *connect.Client
+}
+
+func (c *chatServiceClient) ListMessages(ctx context.Context, req *v1.ListMessagesRequest) (*v1.ListMessagesResponse, error) {
+	var res v1.ListMessagesResponse
+	if err := c.client.CallUnary(ctx, chatServiceListMessagesSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *chatServiceClient) SendMessage(ctx context.Context, req *v1.SendMessageRequest) (*v1.SendMessageResponse, error) {
+	var res v1.SendMessageResponse
+	if err := c.client.CallUnary(ctx, chatServiceSendMessageSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+type chatServiceHandler struct{ svc ChatServiceHandler }
+
+func (h chatServiceHandler) listMessages(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.ListMessagesRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.ListMessages(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h chatServiceHandler) sendMessage(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.SendMessageRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.SendMessage(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
 }

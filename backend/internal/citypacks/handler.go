@@ -15,7 +15,6 @@ import (
 	"slices"
 	"strings"
 
-	"connectrpc.com/connect"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/riverqueue/river"
 	"github.com/riverqueue/river/rivertype"
@@ -81,7 +80,7 @@ func prProto(pr repoedit.PR) *isshov1.CityPackPullRequest {
 	return &isshov1.CityPackPullRequest{Number: int32(pr.Number), Title: pr.Title, Url: pr.URL}
 }
 
-func (h *Handler) ListCityPacks(ctx context.Context, _ *connect.Request[isshov1.ListCityPacksRequest]) (*connect.Response[isshov1.ListCityPacksResponse], error) {
+func (h *Handler) ListCityPacks(ctx context.Context, _ *isshov1.ListCityPacksRequest) (*isshov1.ListCityPacksResponse, error) {
 	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
@@ -125,10 +124,10 @@ func (h *Handler) ListCityPacks(ctx context.Context, _ *connect.Request[isshov1.
 	for _, id := range slices.Sorted(maps.Keys(byID)) {
 		out.Packs = append(out.Packs, byID[id])
 	}
-	return connect.NewResponse(out), nil
+	return out, nil
 }
 
-func (h *Handler) GetCityPack(ctx context.Context, req *connect.Request[isshov1.GetCityPackRequest]) (*connect.Response[isshov1.GetCityPackResponse], error) {
+func (h *Handler) GetCityPack(ctx context.Context, req *isshov1.GetCityPackRequest) (*isshov1.GetCityPackResponse, error) {
 	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
@@ -141,23 +140,23 @@ func (h *Handler) GetCityPack(ctx context.Context, req *connect.Request[isshov1.
 		out.Activities = append(out.Activities, &isshov1.PackActivity{Id: a.ID, Name: a.Name, Category: a.Category})
 	}
 	// "" = only the catalogue, for a new city.
-	if req.Msg.CityId == "" {
+	if req.CityId == "" {
 		if h.Repo == nil {
 			return nil, errs.Refused("the city-pack editor needs GITHUB_TOKEN on the API")
 		}
-		return connect.NewResponse(out), nil
+		return out, nil
 	}
 	// The city's pending change when it has one, so the editor continues it
 	// rather than starting from the default branch's pack.
-	files, pr, err := h.Repo.Files(ctx, Kind, req.Msg.CityId, []string{path(req.Msg.CityId)})
+	files, pr, err := h.Repo.Files(ctx, Kind, req.CityId, []string{path(req.CityId)})
 	if err != nil {
 		return nil, err
 	}
-	raw, ok := files[path(req.Msg.CityId)]
+	raw, ok := files[path(req.CityId)]
 	if !ok {
 		return nil, errs.NotFound("no such city pack")
 	}
-	p, err := parse(req.Msg.CityId, raw)
+	p, err := parse(req.CityId, raw)
 	if err != nil {
 		return nil, err
 	}
@@ -165,17 +164,17 @@ func (h *Handler) GetCityPack(ctx context.Context, req *connect.Request[isshov1.
 	if pr != nil {
 		out.PullRequest = prProto(*pr)
 	}
-	return connect.NewResponse(out), nil
+	return out, nil
 }
 
-func (h *Handler) ProposeCityPack(ctx context.Context, req *connect.Request[isshov1.ProposeCityPackRequest]) (*connect.Response[isshov1.ProposeCityPackResponse], error) {
+func (h *Handler) ProposeCityPack(ctx context.Context, req *isshov1.ProposeCityPackRequest) (*isshov1.ProposeCityPackResponse, error) {
 	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
-	if req.Msg.Pack == nil {
+	if req.Pack == nil {
 		return nil, errs.Invalid("pack: required")
 	}
-	p := fromProto(req.Msg.Pack)
+	p := fromProto(req.Pack)
 	// The checks (areas can't be removed, what the editor doesn't show is
 	// kept) are against the default branch's pack, not the pending one.
 	base, exists, err := h.basePack(ctx, p.ID)
@@ -186,7 +185,7 @@ func (h *Handler) ProposeCityPack(ctx context.Context, req *connect.Request[issh
 	if exists {
 		old = &base
 	}
-	prop, err := cities.Propose(ctx, h.DB, p, old, req.Msg.Note)
+	prop, err := cities.Propose(ctx, h.DB, p, old, req.Note)
 	if errors.Is(err, cities.ErrNothingChanged) {
 		// The pack is back to main's, but a pending change would still hold
 		// the earlier edits: the editor can't revert it, so say how.
@@ -216,17 +215,17 @@ func (h *Handler) ProposeCityPack(ctx context.Context, req *connect.Request[issh
 	if !ok {
 		return nil, errs.Invalid("nothing changed")
 	}
-	return connect.NewResponse(&isshov1.ProposeCityPackResponse{PullRequest: prProto(pr)}), nil
+	return &isshov1.ProposeCityPackResponse{PullRequest: prProto(pr)}, nil
 }
 
 // ApplyCityPack validates the pack on the default branch, as before, then
 // queues the apply as a job (internal/adminjobs) and returns its id: the
 // apply may rebuild a city's travel times, which can outlast a request.
-func (h *Handler) ApplyCityPack(ctx context.Context, req *connect.Request[isshov1.ApplyCityPackRequest]) (*connect.Response[isshov1.ApplyCityPackResponse], error) {
+func (h *Handler) ApplyCityPack(ctx context.Context, req *isshov1.ApplyCityPackRequest) (*isshov1.ApplyCityPackResponse, error) {
 	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
-	p, ok, err := h.basePack(ctx, req.Msg.CityId)
+	p, ok, err := h.basePack(ctx, req.CityId)
 	if err != nil {
 		return nil, err
 	}
@@ -247,33 +246,33 @@ func (h *Handler) ApplyCityPack(ctx context.Context, req *connect.Request[isshov
 	if err != nil {
 		return nil, err
 	}
-	return connect.NewResponse(&isshov1.ApplyCityPackResponse{JobId: id}), nil
+	return &isshov1.ApplyCityPackResponse{JobId: id}, nil
 }
 
 // DiscoverAreaVenues checks the request (a key, a seeded city, an area in it)
 // and queues the search as a job: up to a few hundred Nearby Searches.
-func (h *Handler) DiscoverAreaVenues(ctx context.Context, req *connect.Request[isshov1.DiscoverAreaVenuesRequest]) (*connect.Response[isshov1.DiscoverAreaVenuesResponse], error) {
+func (h *Handler) DiscoverAreaVenues(ctx context.Context, req *isshov1.DiscoverAreaVenuesRequest) (*isshov1.DiscoverAreaVenuesResponse, error) {
 	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
 	if h.Places == nil {
 		return nil, errs.Refused("finding venues needs GOOGLE_MAPS_API_KEY")
 	}
-	areas, _, err := geo.LoadCity(ctx, dbgen.New(h.DB), req.Msg.CityId)
+	areas, _, err := geo.LoadCity(ctx, dbgen.New(h.DB), req.CityId)
 	switch {
 	case errors.Is(err, geo.ErrCityNotFound):
 		// Only "not seeded" is NotFound: a database failure must not look like it.
 		return nil, errs.NotFound("no such city")
 	case err != nil:
 		return nil, err
-	case !slices.ContainsFunc(areas, func(a geo.Area) bool { return a.ID == req.Msg.AreaId }):
+	case !slices.ContainsFunc(areas, func(a geo.Area) bool { return a.ID == req.AreaId }):
 		return nil, errs.Invalid("area_id: not in that city")
 	}
-	id, err := h.insert(ctx, adminjobs.DiscoverAreaVenuesArgs{City: req.Msg.CityId, Area: req.Msg.AreaId})
+	id, err := h.insert(ctx, adminjobs.DiscoverAreaVenuesArgs{City: req.CityId, Area: req.AreaId})
 	if err != nil {
 		return nil, err
 	}
-	return connect.NewResponse(&isshov1.DiscoverAreaVenuesResponse{JobId: id}), nil
+	return &isshov1.DiscoverAreaVenuesResponse{JobId: id}, nil
 }
 
 // insert queues a job and returns its id, or the id of the identical job

@@ -6,7 +6,7 @@ import (
 	"errors"
 	"time"
 
-	"connectrpc.com/connect"
+	"connectrpc.com/connect/v2"
 )
 
 // Default is the deadline of a unary RPC, unless the caller's is shorter.
@@ -21,20 +21,24 @@ const Default = 30 * time.Second
 //
 // Streaming RPCs and /ws/chat (a plain HTTP handler) are not unary and are
 // not touched.
-func Interceptor(def time.Duration, overrides map[string]time.Duration) connect.UnaryInterceptorFunc {
-	return func(next connect.UnaryFunc) connect.UnaryFunc {
-		return func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
+func Interceptor(def time.Duration, overrides map[string]time.Duration) connect.ServerInterceptor {
+	return func(next connect.ServerFunc) connect.ServerFunc {
+		return func(ctx context.Context, spec connect.Spec, stream connect.ServerStream) error {
+			// v2 interceptors see every RPC type; keep streams out, as the doc says.
+			if spec.StreamType != connect.StreamTypeUnary {
+				return next(ctx, spec, stream)
+			}
 			d := def
-			if o, ok := overrides[req.Spec().Procedure]; ok {
+			if o, ok := overrides[spec.Procedure]; ok {
 				d = o
 			}
 			if d <= 0 {
-				return next(ctx, req)
+				return next(ctx, spec, stream)
 			}
 			// WithTimeout keeps the earlier of this and the caller's deadline.
 			ctx, cancel := context.WithTimeout(ctx, d)
 			defer cancel()
-			resp, err := next(ctx, req)
+			err := next(ctx, spec, stream)
 			if err != nil && errors.Is(ctx.Err(), context.DeadlineExceeded) {
 				// An *errs.Error (say Upstream wrapping a deadline) also answers
 				// errors.As for *connect.Error and keeps its own kind on purpose.
@@ -42,10 +46,10 @@ func Interceptor(def time.Duration, overrides map[string]time.Duration) connect.
 				// context error from a database or HTTP call becomes ours.
 				var ce *connect.Error
 				if !errors.As(err, &ce) {
-					return nil, connect.NewError(connect.CodeDeadlineExceeded, errors.New("request took too long"))
+					return connect.NewError(connect.CodeDeadlineExceeded, "request took too long")
 				}
 			}
-			return resp, err
+			return err
 		}
 	}
 }

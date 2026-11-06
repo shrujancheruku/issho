@@ -5,282 +5,309 @@
 package isshov1connect
 
 import (
-	connect "connectrpc.com/connect"
+	connect "connectrpc.com/connect/v2"
 	context "context"
-	errors "errors"
 	v1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
-	http "net/http"
-	strings "strings"
+	sync "sync"
 )
-
-// This is a compile-time assertion to ensure that this generated file and the connect package are
-// compatible. If you get a compiler error that this constant is not defined, this code was
-// generated with a version of connect newer than the one compiled into your binary. You can fix the
-// problem by either regenerating this code with an older version of connect or updating the connect
-// version compiled into your binary.
-const _ = connect.IsAtLeastVersion1_13_0
 
 const (
 	// CurationServiceName is the fully-qualified name of the CurationService service.
 	CurationServiceName = "issho.v1.CurationService"
 )
 
-// These constants are the fully-qualified names of the RPCs defined in this package. They're
-// exposed at runtime as Spec.Procedure and as the final two segments of the HTTP route.
+// These constants are the procedure names of the RPCs defined in this package. They're exposed at
+// runtime as Spec.Procedure and as the final two segments of the HTTP route.
 //
 // Note that these are different from the fully-qualified method names used by
 // google.golang.org/protobuf/reflect/protoreflect. To convert from these constants to
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
-	// CurationServiceListVenueCitiesProcedure is the fully-qualified name of the CurationService's
+	// CurationServiceListVenueCitiesProcedure is the procedure name of the CurationService's
 	// ListVenueCities RPC.
 	CurationServiceListVenueCitiesProcedure = "/issho.v1.CurationService/ListVenueCities"
-	// CurationServiceSetApprovedVenuesOnlyProcedure is the fully-qualified name of the
-	// CurationService's SetApprovedVenuesOnly RPC.
+	// CurationServiceSetApprovedVenuesOnlyProcedure is the procedure name of the CurationService's
+	// SetApprovedVenuesOnly RPC.
 	CurationServiceSetApprovedVenuesOnlyProcedure = "/issho.v1.CurationService/SetApprovedVenuesOnly"
-	// CurationServiceListVenuesProcedure is the fully-qualified name of the CurationService's
-	// ListVenues RPC.
+	// CurationServiceListVenuesProcedure is the procedure name of the CurationService's ListVenues RPC.
 	CurationServiceListVenuesProcedure = "/issho.v1.CurationService/ListVenues"
-	// CurationServiceSetVenueStatusProcedure is the fully-qualified name of the CurationService's
+	// CurationServiceSetVenueStatusProcedure is the procedure name of the CurationService's
 	// SetVenueStatus RPC.
 	CurationServiceSetVenueStatusProcedure = "/issho.v1.CurationService/SetVenueStatus"
-	// CurationServiceSearchVenuesProcedure is the fully-qualified name of the CurationService's
-	// SearchVenues RPC.
-	CurationServiceSearchVenuesProcedure = "/issho.v1.CurationService/SearchVenues"
-	// CurationServiceAddVenueProcedure is the fully-qualified name of the CurationService's AddVenue
+	// CurationServiceSearchVenuesProcedure is the procedure name of the CurationService's SearchVenues
 	// RPC.
+	CurationServiceSearchVenuesProcedure = "/issho.v1.CurationService/SearchVenues"
+	// CurationServiceAddVenueProcedure is the procedure name of the CurationService's AddVenue RPC.
 	CurationServiceAddVenueProcedure = "/issho.v1.CurationService/AddVenue"
+)
+
+var (
+	curationServiceListVenueCitiesSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_issho_v1_curation_proto.Services().ByName("CurationService").Methods().ByName("ListVenueCities"),
+			Procedure:  CurationServiceListVenueCitiesProcedure,
+		}
+	})
+	curationServiceSetApprovedVenuesOnlySpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_issho_v1_curation_proto.Services().ByName("CurationService").Methods().ByName("SetApprovedVenuesOnly"),
+			Procedure:  CurationServiceSetApprovedVenuesOnlyProcedure,
+		}
+	})
+	curationServiceListVenuesSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_issho_v1_curation_proto.Services().ByName("CurationService").Methods().ByName("ListVenues"),
+			Procedure:  CurationServiceListVenuesProcedure,
+		}
+	})
+	curationServiceSetVenueStatusSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_issho_v1_curation_proto.Services().ByName("CurationService").Methods().ByName("SetVenueStatus"),
+			Procedure:  CurationServiceSetVenueStatusProcedure,
+		}
+	})
+	curationServiceSearchVenuesSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_issho_v1_curation_proto.Services().ByName("CurationService").Methods().ByName("SearchVenues"),
+			Procedure:  CurationServiceSearchVenuesProcedure,
+		}
+	})
+	curationServiceAddVenueSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_issho_v1_curation_proto.Services().ByName("CurationService").Methods().ByName("AddVenue"),
+			Procedure:  CurationServiceAddVenueProcedure,
+		}
+	})
 )
 
 // CurationServiceClient is a client for the issho.v1.CurationService service.
 type CurationServiceClient interface {
 	// ListVenueCities returns every city with its switch and how many
 	// places are in each status, and the venue categories.
-	ListVenueCities(context.Context, *connect.Request[v1.ListVenueCitiesRequest]) (*connect.Response[v1.ListVenueCitiesResponse], error)
+	ListVenueCities(context.Context, *v1.ListVenueCitiesRequest) (*v1.ListVenueCitiesResponse, error)
 	// SetApprovedVenuesOnly turns the switch on or off. On, the matcher
 	// uses only approved venues in the city, for new plans and to decide
 	// which plans are possible; plans already made keep their venues.
-	SetApprovedVenuesOnly(context.Context, *connect.Request[v1.SetApprovedVenuesOnlyRequest]) (*connect.Response[v1.SetApprovedVenuesOnlyResponse], error)
+	SetApprovedVenuesOnly(context.Context, *v1.SetApprovedVenuesOnlyRequest) (*v1.SetApprovedVenuesOnlyResponse, error)
 	// ListVenues returns a city's places in one status, 50 at a time.
-	ListVenues(context.Context, *connect.Request[v1.ListVenuesRequest]) (*connect.Response[v1.ListVenuesResponse], error)
+	ListVenues(context.Context, *v1.ListVenuesRequest) (*v1.ListVenuesResponse, error)
 	// SetVenueStatus approves, rejects or resets (to candidate) up to 100
 	// places of a city. A rejected place is never picked again; plans that
 	// already use it keep it (withdraw them on the Plans page).
-	SetVenueStatus(context.Context, *connect.Request[v1.SetVenueStatusRequest]) (*connect.Response[v1.SetVenueStatusResponse], error)
+	SetVenueStatus(context.Context, *v1.SetVenueStatusRequest) (*v1.SetVenueStatusResponse, error)
 	// SearchVenues looks places up by name with Google, in one area or each
 	// area of the city (one search per area), and says which the city
 	// already has. FAILED_PRECONDITION without a Google Maps key.
-	SearchVenues(context.Context, *connect.Request[v1.SearchVenuesRequest]) (*connect.Response[v1.SearchVenuesResponse], error)
+	SearchVenues(context.Context, *v1.SearchVenuesRequest) (*v1.SearchVenuesResponse, error)
 	// AddVenue adds a place, approved, in one category. Its Google types
 	// must include one of the category's, and it must be within the
 	// category's search radius of one of the city's areas (it's put in the
 	// nearest). INVALID_ARGUMENT otherwise, or if it's closed.
-	AddVenue(context.Context, *connect.Request[v1.AddVenueRequest]) (*connect.Response[v1.AddVenueResponse], error)
+	AddVenue(context.Context, *v1.AddVenueRequest) (*v1.AddVenueResponse, error)
 }
 
-// NewCurationServiceClient constructs a client for the issho.v1.CurationService service. By
-// default, it uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses,
-// and sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the
-// connect.WithGRPC() or connect.WithGRPCWeb() options.
-//
-// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
-// http://api.acme.com or https://acme.com/grpc).
-func NewCurationServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) CurationServiceClient {
-	baseURL = strings.TrimRight(baseURL, "/")
-	curationServiceMethods := v1.File_issho_v1_curation_proto.Services().ByName("CurationService").Methods()
-	return &curationServiceClient{
-		listVenueCities: connect.NewClient[v1.ListVenueCitiesRequest, v1.ListVenueCitiesResponse](
-			httpClient,
-			baseURL+CurationServiceListVenueCitiesProcedure,
-			connect.WithSchema(curationServiceMethods.ByName("ListVenueCities")),
-			connect.WithClientOptions(opts...),
-		),
-		setApprovedVenuesOnly: connect.NewClient[v1.SetApprovedVenuesOnlyRequest, v1.SetApprovedVenuesOnlyResponse](
-			httpClient,
-			baseURL+CurationServiceSetApprovedVenuesOnlyProcedure,
-			connect.WithSchema(curationServiceMethods.ByName("SetApprovedVenuesOnly")),
-			connect.WithClientOptions(opts...),
-		),
-		listVenues: connect.NewClient[v1.ListVenuesRequest, v1.ListVenuesResponse](
-			httpClient,
-			baseURL+CurationServiceListVenuesProcedure,
-			connect.WithSchema(curationServiceMethods.ByName("ListVenues")),
-			connect.WithClientOptions(opts...),
-		),
-		setVenueStatus: connect.NewClient[v1.SetVenueStatusRequest, v1.SetVenueStatusResponse](
-			httpClient,
-			baseURL+CurationServiceSetVenueStatusProcedure,
-			connect.WithSchema(curationServiceMethods.ByName("SetVenueStatus")),
-			connect.WithClientOptions(opts...),
-		),
-		searchVenues: connect.NewClient[v1.SearchVenuesRequest, v1.SearchVenuesResponse](
-			httpClient,
-			baseURL+CurationServiceSearchVenuesProcedure,
-			connect.WithSchema(curationServiceMethods.ByName("SearchVenues")),
-			connect.WithClientOptions(opts...),
-		),
-		addVenue: connect.NewClient[v1.AddVenueRequest, v1.AddVenueResponse](
-			httpClient,
-			baseURL+CurationServiceAddVenueProcedure,
-			connect.WithSchema(curationServiceMethods.ByName("AddVenue")),
-			connect.WithClientOptions(opts...),
-		),
-	}
-}
-
-// curationServiceClient implements CurationServiceClient.
-type curationServiceClient struct {
-	listVenueCities       *connect.Client[v1.ListVenueCitiesRequest, v1.ListVenueCitiesResponse]
-	setApprovedVenuesOnly *connect.Client[v1.SetApprovedVenuesOnlyRequest, v1.SetApprovedVenuesOnlyResponse]
-	listVenues            *connect.Client[v1.ListVenuesRequest, v1.ListVenuesResponse]
-	setVenueStatus        *connect.Client[v1.SetVenueStatusRequest, v1.SetVenueStatusResponse]
-	searchVenues          *connect.Client[v1.SearchVenuesRequest, v1.SearchVenuesResponse]
-	addVenue              *connect.Client[v1.AddVenueRequest, v1.AddVenueResponse]
-}
-
-// ListVenueCities calls issho.v1.CurationService.ListVenueCities.
-func (c *curationServiceClient) ListVenueCities(ctx context.Context, req *connect.Request[v1.ListVenueCitiesRequest]) (*connect.Response[v1.ListVenueCitiesResponse], error) {
-	return c.listVenueCities.CallUnary(ctx, req)
-}
-
-// SetApprovedVenuesOnly calls issho.v1.CurationService.SetApprovedVenuesOnly.
-func (c *curationServiceClient) SetApprovedVenuesOnly(ctx context.Context, req *connect.Request[v1.SetApprovedVenuesOnlyRequest]) (*connect.Response[v1.SetApprovedVenuesOnlyResponse], error) {
-	return c.setApprovedVenuesOnly.CallUnary(ctx, req)
-}
-
-// ListVenues calls issho.v1.CurationService.ListVenues.
-func (c *curationServiceClient) ListVenues(ctx context.Context, req *connect.Request[v1.ListVenuesRequest]) (*connect.Response[v1.ListVenuesResponse], error) {
-	return c.listVenues.CallUnary(ctx, req)
-}
-
-// SetVenueStatus calls issho.v1.CurationService.SetVenueStatus.
-func (c *curationServiceClient) SetVenueStatus(ctx context.Context, req *connect.Request[v1.SetVenueStatusRequest]) (*connect.Response[v1.SetVenueStatusResponse], error) {
-	return c.setVenueStatus.CallUnary(ctx, req)
-}
-
-// SearchVenues calls issho.v1.CurationService.SearchVenues.
-func (c *curationServiceClient) SearchVenues(ctx context.Context, req *connect.Request[v1.SearchVenuesRequest]) (*connect.Response[v1.SearchVenuesResponse], error) {
-	return c.searchVenues.CallUnary(ctx, req)
-}
-
-// AddVenue calls issho.v1.CurationService.AddVenue.
-func (c *curationServiceClient) AddVenue(ctx context.Context, req *connect.Request[v1.AddVenueRequest]) (*connect.Response[v1.AddVenueResponse], error) {
-	return c.addVenue.CallUnary(ctx, req)
+// NewCurationServiceClient constructs a client for the issho.v1.CurationService service. Multiple
+// service clients may share a single connect.Client.
+func NewCurationServiceClient(client *connect.Client) CurationServiceClient {
+	return &curationServiceClient{client: client}
 }
 
 // CurationServiceHandler is an implementation of the issho.v1.CurationService service.
 type CurationServiceHandler interface {
 	// ListVenueCities returns every city with its switch and how many
 	// places are in each status, and the venue categories.
-	ListVenueCities(context.Context, *connect.Request[v1.ListVenueCitiesRequest]) (*connect.Response[v1.ListVenueCitiesResponse], error)
+	ListVenueCities(context.Context, *v1.ListVenueCitiesRequest) (*v1.ListVenueCitiesResponse, error)
 	// SetApprovedVenuesOnly turns the switch on or off. On, the matcher
 	// uses only approved venues in the city, for new plans and to decide
 	// which plans are possible; plans already made keep their venues.
-	SetApprovedVenuesOnly(context.Context, *connect.Request[v1.SetApprovedVenuesOnlyRequest]) (*connect.Response[v1.SetApprovedVenuesOnlyResponse], error)
+	SetApprovedVenuesOnly(context.Context, *v1.SetApprovedVenuesOnlyRequest) (*v1.SetApprovedVenuesOnlyResponse, error)
 	// ListVenues returns a city's places in one status, 50 at a time.
-	ListVenues(context.Context, *connect.Request[v1.ListVenuesRequest]) (*connect.Response[v1.ListVenuesResponse], error)
+	ListVenues(context.Context, *v1.ListVenuesRequest) (*v1.ListVenuesResponse, error)
 	// SetVenueStatus approves, rejects or resets (to candidate) up to 100
 	// places of a city. A rejected place is never picked again; plans that
 	// already use it keep it (withdraw them on the Plans page).
-	SetVenueStatus(context.Context, *connect.Request[v1.SetVenueStatusRequest]) (*connect.Response[v1.SetVenueStatusResponse], error)
+	SetVenueStatus(context.Context, *v1.SetVenueStatusRequest) (*v1.SetVenueStatusResponse, error)
 	// SearchVenues looks places up by name with Google, in one area or each
 	// area of the city (one search per area), and says which the city
 	// already has. FAILED_PRECONDITION without a Google Maps key.
-	SearchVenues(context.Context, *connect.Request[v1.SearchVenuesRequest]) (*connect.Response[v1.SearchVenuesResponse], error)
+	SearchVenues(context.Context, *v1.SearchVenuesRequest) (*v1.SearchVenuesResponse, error)
 	// AddVenue adds a place, approved, in one category. Its Google types
 	// must include one of the category's, and it must be within the
 	// category's search radius of one of the city's areas (it's put in the
 	// nearest). INVALID_ARGUMENT otherwise, or if it's closed.
-	AddVenue(context.Context, *connect.Request[v1.AddVenueRequest]) (*connect.Response[v1.AddVenueResponse], error)
+	AddVenue(context.Context, *v1.AddVenueRequest) (*v1.AddVenueResponse, error)
 }
 
-// NewCurationServiceHandler builds an HTTP handler from the service implementation. It returns the
-// path on which to mount the handler and the handler itself.
-//
-// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
-// and JSON codecs. They also support gzip compression.
-func NewCurationServiceHandler(svc CurationServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
-	curationServiceMethods := v1.File_issho_v1_curation_proto.Services().ByName("CurationService").Methods()
-	curationServiceListVenueCitiesHandler := connect.NewUnaryHandler(
-		CurationServiceListVenueCitiesProcedure,
-		svc.ListVenueCities,
-		connect.WithSchema(curationServiceMethods.ByName("ListVenueCities")),
-		connect.WithHandlerOptions(opts...),
+// RegisterCurationServiceHandler registers svc as the issho.v1.CurationService implementation on
+// server.
+func RegisterCurationServiceHandler(server *connect.Server, svc CurationServiceHandler) {
+	adapter := curationServiceHandler{svc: svc}
+	server.Register(
+		connect.Method{Spec: curationServiceListVenueCitiesSpec(), Handler: adapter.listVenueCities},
+		connect.Method{Spec: curationServiceSetApprovedVenuesOnlySpec(), Handler: adapter.setApprovedVenuesOnly},
+		connect.Method{Spec: curationServiceListVenuesSpec(), Handler: adapter.listVenues},
+		connect.Method{Spec: curationServiceSetVenueStatusSpec(), Handler: adapter.setVenueStatus},
+		connect.Method{Spec: curationServiceSearchVenuesSpec(), Handler: adapter.searchVenues},
+		connect.Method{Spec: curationServiceAddVenueSpec(), Handler: adapter.addVenue},
 	)
-	curationServiceSetApprovedVenuesOnlyHandler := connect.NewUnaryHandler(
-		CurationServiceSetApprovedVenuesOnlyProcedure,
-		svc.SetApprovedVenuesOnly,
-		connect.WithSchema(curationServiceMethods.ByName("SetApprovedVenuesOnly")),
-		connect.WithHandlerOptions(opts...),
-	)
-	curationServiceListVenuesHandler := connect.NewUnaryHandler(
-		CurationServiceListVenuesProcedure,
-		svc.ListVenues,
-		connect.WithSchema(curationServiceMethods.ByName("ListVenues")),
-		connect.WithHandlerOptions(opts...),
-	)
-	curationServiceSetVenueStatusHandler := connect.NewUnaryHandler(
-		CurationServiceSetVenueStatusProcedure,
-		svc.SetVenueStatus,
-		connect.WithSchema(curationServiceMethods.ByName("SetVenueStatus")),
-		connect.WithHandlerOptions(opts...),
-	)
-	curationServiceSearchVenuesHandler := connect.NewUnaryHandler(
-		CurationServiceSearchVenuesProcedure,
-		svc.SearchVenues,
-		connect.WithSchema(curationServiceMethods.ByName("SearchVenues")),
-		connect.WithHandlerOptions(opts...),
-	)
-	curationServiceAddVenueHandler := connect.NewUnaryHandler(
-		CurationServiceAddVenueProcedure,
-		svc.AddVenue,
-		connect.WithSchema(curationServiceMethods.ByName("AddVenue")),
-		connect.WithHandlerOptions(opts...),
-	)
-	return "/issho.v1.CurationService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.URL.Path {
-		case CurationServiceListVenueCitiesProcedure:
-			curationServiceListVenueCitiesHandler.ServeHTTP(w, r)
-		case CurationServiceSetApprovedVenuesOnlyProcedure:
-			curationServiceSetApprovedVenuesOnlyHandler.ServeHTTP(w, r)
-		case CurationServiceListVenuesProcedure:
-			curationServiceListVenuesHandler.ServeHTTP(w, r)
-		case CurationServiceSetVenueStatusProcedure:
-			curationServiceSetVenueStatusHandler.ServeHTTP(w, r)
-		case CurationServiceSearchVenuesProcedure:
-			curationServiceSearchVenuesHandler.ServeHTTP(w, r)
-		case CurationServiceAddVenueProcedure:
-			curationServiceAddVenueHandler.ServeHTTP(w, r)
-		default:
-			http.NotFound(w, r)
-		}
-	})
 }
 
 // UnimplementedCurationServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedCurationServiceHandler struct{}
 
-func (UnimplementedCurationServiceHandler) ListVenueCities(context.Context, *connect.Request[v1.ListVenueCitiesRequest]) (*connect.Response[v1.ListVenueCitiesResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.CurationService.ListVenueCities is not implemented"))
+func (UnimplementedCurationServiceHandler) ListVenueCities(context.Context, *v1.ListVenueCitiesRequest) (*v1.ListVenueCitiesResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "issho.v1.CurationService.ListVenueCities is not implemented")
 }
 
-func (UnimplementedCurationServiceHandler) SetApprovedVenuesOnly(context.Context, *connect.Request[v1.SetApprovedVenuesOnlyRequest]) (*connect.Response[v1.SetApprovedVenuesOnlyResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.CurationService.SetApprovedVenuesOnly is not implemented"))
+func (UnimplementedCurationServiceHandler) SetApprovedVenuesOnly(context.Context, *v1.SetApprovedVenuesOnlyRequest) (*v1.SetApprovedVenuesOnlyResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "issho.v1.CurationService.SetApprovedVenuesOnly is not implemented")
 }
 
-func (UnimplementedCurationServiceHandler) ListVenues(context.Context, *connect.Request[v1.ListVenuesRequest]) (*connect.Response[v1.ListVenuesResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.CurationService.ListVenues is not implemented"))
+func (UnimplementedCurationServiceHandler) ListVenues(context.Context, *v1.ListVenuesRequest) (*v1.ListVenuesResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "issho.v1.CurationService.ListVenues is not implemented")
 }
 
-func (UnimplementedCurationServiceHandler) SetVenueStatus(context.Context, *connect.Request[v1.SetVenueStatusRequest]) (*connect.Response[v1.SetVenueStatusResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.CurationService.SetVenueStatus is not implemented"))
+func (UnimplementedCurationServiceHandler) SetVenueStatus(context.Context, *v1.SetVenueStatusRequest) (*v1.SetVenueStatusResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "issho.v1.CurationService.SetVenueStatus is not implemented")
 }
 
-func (UnimplementedCurationServiceHandler) SearchVenues(context.Context, *connect.Request[v1.SearchVenuesRequest]) (*connect.Response[v1.SearchVenuesResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.CurationService.SearchVenues is not implemented"))
+func (UnimplementedCurationServiceHandler) SearchVenues(context.Context, *v1.SearchVenuesRequest) (*v1.SearchVenuesResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "issho.v1.CurationService.SearchVenues is not implemented")
 }
 
-func (UnimplementedCurationServiceHandler) AddVenue(context.Context, *connect.Request[v1.AddVenueRequest]) (*connect.Response[v1.AddVenueResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.CurationService.AddVenue is not implemented"))
+func (UnimplementedCurationServiceHandler) AddVenue(context.Context, *v1.AddVenueRequest) (*v1.AddVenueResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "issho.v1.CurationService.AddVenue is not implemented")
+}
+
+type curationServiceClient struct {
+	client *connect.Client
+}
+
+func (c *curationServiceClient) ListVenueCities(ctx context.Context, req *v1.ListVenueCitiesRequest) (*v1.ListVenueCitiesResponse, error) {
+	var res v1.ListVenueCitiesResponse
+	if err := c.client.CallUnary(ctx, curationServiceListVenueCitiesSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *curationServiceClient) SetApprovedVenuesOnly(ctx context.Context, req *v1.SetApprovedVenuesOnlyRequest) (*v1.SetApprovedVenuesOnlyResponse, error) {
+	var res v1.SetApprovedVenuesOnlyResponse
+	if err := c.client.CallUnary(ctx, curationServiceSetApprovedVenuesOnlySpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *curationServiceClient) ListVenues(ctx context.Context, req *v1.ListVenuesRequest) (*v1.ListVenuesResponse, error) {
+	var res v1.ListVenuesResponse
+	if err := c.client.CallUnary(ctx, curationServiceListVenuesSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *curationServiceClient) SetVenueStatus(ctx context.Context, req *v1.SetVenueStatusRequest) (*v1.SetVenueStatusResponse, error) {
+	var res v1.SetVenueStatusResponse
+	if err := c.client.CallUnary(ctx, curationServiceSetVenueStatusSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *curationServiceClient) SearchVenues(ctx context.Context, req *v1.SearchVenuesRequest) (*v1.SearchVenuesResponse, error) {
+	var res v1.SearchVenuesResponse
+	if err := c.client.CallUnary(ctx, curationServiceSearchVenuesSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *curationServiceClient) AddVenue(ctx context.Context, req *v1.AddVenueRequest) (*v1.AddVenueResponse, error) {
+	var res v1.AddVenueResponse
+	if err := c.client.CallUnary(ctx, curationServiceAddVenueSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+type curationServiceHandler struct{ svc CurationServiceHandler }
+
+func (h curationServiceHandler) listVenueCities(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.ListVenueCitiesRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.ListVenueCities(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h curationServiceHandler) setApprovedVenuesOnly(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.SetApprovedVenuesOnlyRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.SetApprovedVenuesOnly(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h curationServiceHandler) listVenues(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.ListVenuesRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.ListVenues(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h curationServiceHandler) setVenueStatus(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.SetVenueStatusRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.SetVenueStatus(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h curationServiceHandler) searchVenues(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.SearchVenuesRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.SearchVenues(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h curationServiceHandler) addVenue(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.AddVenueRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.AddVenue(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
 }

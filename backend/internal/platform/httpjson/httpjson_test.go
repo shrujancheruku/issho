@@ -14,7 +14,7 @@ import (
 	"testing"
 	"time"
 
-	"connectrpc.com/connect"
+	"connectrpc.com/connect/v2"
 
 	"github.com/shrujancheruku/issho/backend/internal/platform/errs"
 )
@@ -189,8 +189,8 @@ func TestUpstreamBodyNeverReachesClient(t *testing.T) {
 	c.Log = slog.New(slog.NewTextHandler(&logs, nil))
 	err := c.Do(context.Background(), Request{Method: http.MethodGet, URL: srv.URL + "/v1/things?key=SECRETKEY"})
 
-	next := func(context.Context, connect.AnyRequest) (connect.AnyResponse, error) { return nil, err }
-	_, cerr := errs.Interceptor(slog.New(slog.NewTextHandler(io.Discard, nil)))(next)(context.Background(), connect.NewRequest(&struct{}{}))
+	next := func(context.Context, connect.Spec, connect.ServerStream) error { return err }
+	cerr := errs.Interceptor(slog.New(slog.NewTextHandler(io.Discard, nil)))(next)(context.Background(), connect.Spec{}, nil)
 	if connect.CodeOf(cerr) != connect.CodeUnavailable {
 		t.Fatalf("code = %v", connect.CodeOf(cerr))
 	}

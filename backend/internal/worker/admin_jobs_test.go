@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"connectrpc.com/connect"
+	"connectrpc.com/connect/v2"
 	"github.com/google/uuid"
 	"github.com/riverqueue/river"
 	"github.com/riverqueue/river/riverdriver/riverpgxv5"
@@ -77,11 +77,11 @@ func TestIntegrationAdminJobsLifecycle(t *testing.T) {
 	adminCtx := auth.WithCaller(ctx, auth.Caller{UserID: uuid.New(), Email: "admin@example.com", Admin: true})
 	get := func(id int64) *isshov1.GetAdminJobResponse {
 		t.Helper()
-		res, err := h.GetAdminJob(adminCtx, connect.NewRequest(&isshov1.GetAdminJobRequest{JobId: id}))
+		res, err := h.GetAdminJob(adminCtx, &isshov1.GetAdminJobRequest{JobId: id})
 		if err != nil {
 			t.Fatal(err)
 		}
-		return res.Msg
+		return res
 	}
 	waitFor := func(id int64, want isshov1.AdminJobState) *isshov1.GetAdminJobResponse {
 		t.Helper()
@@ -207,7 +207,7 @@ func TestIntegrationAdminJobsLifecycle(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := h.GetAdminJob(adminCtx, connect.NewRequest(&isshov1.GetAdminJobRequest{JobId: notAdmin.Job.ID})); connect.CodeOf(err) != connect.CodeNotFound {
+	if _, err := h.GetAdminJob(adminCtx, &isshov1.GetAdminJobRequest{JobId: notAdmin.Job.ID}); connect.CodeOf(err) != connect.CodeNotFound {
 		t.Errorf("a retention job: %v", err)
 	}
 }

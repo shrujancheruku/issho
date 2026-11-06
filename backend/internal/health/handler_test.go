@@ -8,8 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"connectrpc.com/connect"
-
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
 )
 
@@ -26,11 +24,11 @@ func (p pinger) Ping(context.Context) error { return p.err }
 func TestCheckReturnsWhenThePingHangs(t *testing.T) {
 	h := &Handler{Pool: hung{}, Version: "v", PingTimeout: 50 * time.Millisecond}
 	start := time.Now()
-	resp, err := h.Check(context.Background(), connect.NewRequest(&isshov1.CheckRequest{}))
+	resp, err := h.Check(context.Background(), &isshov1.CheckRequest{})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if resp.Msg.DatabaseOk {
+	if resp.DatabaseOk {
 		t.Error("database_ok = true, want false")
 	}
 	if d := time.Since(start); d > time.Second {
@@ -40,9 +38,9 @@ func TestCheckReturnsWhenThePingHangs(t *testing.T) {
 
 func TestCheckReportsAHealthyDatabase(t *testing.T) {
 	h := &Handler{Pool: pinger{}, Version: "v"}
-	resp, _ := h.Check(context.Background(), connect.NewRequest(&isshov1.CheckRequest{}))
-	if !resp.Msg.DatabaseOk || resp.Msg.Version != "v" {
-		t.Errorf("resp = %v", resp.Msg)
+	resp, _ := h.Check(context.Background(), &isshov1.CheckRequest{})
+	if !resp.DatabaseOk || resp.Version != "v" {
+		t.Errorf("resp = %v", resp)
 	}
 }
 

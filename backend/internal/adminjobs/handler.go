@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 
-	"connectrpc.com/connect"
 	"github.com/riverqueue/river"
 	"github.com/riverqueue/river/rivertype"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -27,11 +26,11 @@ type Handler struct {
 	Jobs Jobs
 }
 
-func (h *Handler) GetAdminJob(ctx context.Context, req *connect.Request[isshov1.GetAdminJobRequest]) (*connect.Response[isshov1.GetAdminJobResponse], error) {
+func (h *Handler) GetAdminJob(ctx context.Context, req *isshov1.GetAdminJobRequest) (*isshov1.GetAdminJobResponse, error) {
 	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
-	row, err := h.Jobs.JobGet(ctx, req.Msg.JobId)
+	row, err := h.Jobs.JobGet(ctx, req.JobId)
 	if errors.Is(err, river.ErrNotFound) {
 		return nil, errs.NotFound("no such job")
 	}
@@ -47,7 +46,7 @@ func (h *Handler) GetAdminJob(ctx context.Context, req *connect.Request[isshov1.
 	if err != nil {
 		return nil, err
 	}
-	return connect.NewResponse(out), nil
+	return out, nil
 }
 
 // State is a River job state as the admin sees it. A job waiting to retry is

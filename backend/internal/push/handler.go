@@ -5,7 +5,6 @@ import (
 	"errors"
 	"regexp"
 
-	"connectrpc.com/connect"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
 
@@ -31,19 +30,19 @@ var platforms = map[isshov1.PushPlatform]string{
 	isshov1.PushPlatform_PUSH_PLATFORM_WEB:     "web",
 }
 
-func (h *Handler) RegisterPushToken(ctx context.Context, req *connect.Request[isshov1.RegisterPushTokenRequest]) (*connect.Response[isshov1.RegisterPushTokenResponse], error) {
+func (h *Handler) RegisterPushToken(ctx context.Context, req *isshov1.RegisterPushTokenRequest) (*isshov1.RegisterPushTokenResponse, error) {
 	c, err := auth.Require(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if !expoToken.MatchString(req.Msg.Token) {
+	if !expoToken.MatchString(req.Token) {
 		return nil, errs.Invalid("token: not an Expo push token")
 	}
-	platform, ok := platforms[req.Msg.Platform]
+	platform, ok := platforms[req.Platform]
 	if !ok {
 		return nil, errs.Invalid("platform: ios, android or web")
 	}
-	err = h.Q.UpsertPushToken(ctx, dbgen.UpsertPushTokenParams{Token: req.Msg.Token, UserID: c.UserID, Platform: platform})
+	err = h.Q.UpsertPushToken(ctx, dbgen.UpsertPushTokenParams{Token: req.Token, UserID: c.UserID, Platform: platform})
 	var pgErr *pgconn.PgError
 	if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.ForeignKeyViolation {
 		return nil, errs.Refused("no account: call IdentityService.GetMe first")
@@ -51,16 +50,16 @@ func (h *Handler) RegisterPushToken(ctx context.Context, req *connect.Request[is
 	if err != nil {
 		return nil, err
 	}
-	return connect.NewResponse(&isshov1.RegisterPushTokenResponse{}), nil
+	return &isshov1.RegisterPushTokenResponse{}, nil
 }
 
-func (h *Handler) UnregisterPushToken(ctx context.Context, req *connect.Request[isshov1.UnregisterPushTokenRequest]) (*connect.Response[isshov1.UnregisterPushTokenResponse], error) {
+func (h *Handler) UnregisterPushToken(ctx context.Context, req *isshov1.UnregisterPushTokenRequest) (*isshov1.UnregisterPushTokenResponse, error) {
 	c, err := auth.Require(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if err := h.Q.DeletePushToken(ctx, dbgen.DeletePushTokenParams{Token: req.Msg.Token, UserID: c.UserID}); err != nil {
+	if err := h.Q.DeletePushToken(ctx, dbgen.DeletePushTokenParams{Token: req.Token, UserID: c.UserID}); err != nil {
 		return nil, err
 	}
-	return connect.NewResponse(&isshov1.UnregisterPushTokenResponse{}), nil
+	return &isshov1.UnregisterPushTokenResponse{}, nil
 }

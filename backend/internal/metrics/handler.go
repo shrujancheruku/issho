@@ -10,7 +10,6 @@ import (
 	"errors"
 	"time"
 
-	"connectrpc.com/connect"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 
@@ -34,7 +33,7 @@ type Handler struct {
 	Now func() time.Time // nil = time.Now
 }
 
-func (h *Handler) GetCityMetrics(ctx context.Context, req *connect.Request[isshov1.GetCityMetricsRequest]) (*connect.Response[isshov1.GetCityMetricsResponse], error) {
+func (h *Handler) GetCityMetrics(ctx context.Context, req *isshov1.GetCityMetricsRequest) (*isshov1.GetCityMetricsResponse, error) {
 	c, err := auth.Require(ctx)
 	if err != nil {
 		return nil, err
@@ -42,14 +41,14 @@ func (h *Handler) GetCityMetrics(ctx context.Context, req *connect.Request[issho
 	if !c.Admin {
 		return nil, errs.Forbidden("admins only")
 	}
-	weeks := int(req.Msg.Weeks)
+	weeks := int(req.Weeks)
 	if weeks == 0 {
 		weeks = DefaultWeeks
 	}
 	if weeks < 1 || weeks > MaxWeeks {
 		return nil, errs.Invalid("weeks: 1 to 52")
 	}
-	city, err := h.Q.GetCityMatching(ctx, req.Msg.CityId)
+	city, err := h.Q.GetCityMatching(ctx, req.CityId)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, errs.NotFound("no such city")
 	}
@@ -67,12 +66,12 @@ func (h *Handler) GetCityMetrics(ctx context.Context, req *connect.Request[issho
 	last := Monday(now.In(loc))
 	first := last.AddDate(0, 0, -7*(weeks-1))
 	rows, err := h.Q.WeeklyMetrics(ctx, dbgen.WeeklyMetricsParams{
-		CityID: req.Msg.CityId, First: pgtype.Date{Time: first, Valid: true}, Last: pgtype.Date{Time: last, Valid: true},
+		CityID: req.CityId, First: pgtype.Date{Time: first, Valid: true}, Last: pgtype.Date{Time: last, Valid: true},
 	})
 	if err != nil {
 		return nil, err
 	}
-	cur, err := h.Q.CityNow(ctx, req.Msg.CityId)
+	cur, err := h.Q.CityNow(ctx, req.CityId)
 	if err != nil {
 		return nil, err
 	}
@@ -87,7 +86,7 @@ func (h *Handler) GetCityMetrics(ctx context.Context, req *connect.Request[issho
 			NewPeople: r.NewPeople, CrewsFormed: r.CrewsFormed, Reports: r.Reports,
 		})
 	}
-	return connect.NewResponse(out), nil
+	return out, nil
 }
 
 // Monday is the local date (as midnight UTC, how dates are passed to
