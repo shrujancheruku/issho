@@ -42,19 +42,27 @@ func TestEval(t *testing.T) {
 		byID[a.ID] = a
 	}
 	areas := map[string]struct {
-		city string
-		area cities.Area
+		city  string
+		area  cities.Area
+		names map[string]string // the pack's activity renames, as the app shows them
 	}{}
-	for _, f := range []string{"tokyo", "austin"} {
+	for _, f := range []string{"tokyo", "austin", "da-nang-hoi-an"} {
 		p, err := cities.ReadPack("../../../../data/citypacks/" + f + ".json")
 		if err != nil {
 			t.Fatal(err)
 		}
+		names := map[string]string{}
+		for _, o := range p.ActivityOverrides {
+			if o.Name["en"] != "" {
+				names[o.ActivityID] = o.Name["en"]
+			}
+		}
 		for _, a := range p.Areas {
 			areas[a.ID] = struct {
-				city string
-				area cities.Area
-			}{p.Name["en"], a}
+				city  string
+				area  cities.Area
+				names map[string]string
+			}{p.Name["en"], a, names}
 		}
 	}
 	// Every walking theme, in areas known for it and in ones that aren't.
@@ -85,9 +93,13 @@ func TestEval(t *testing.T) {
 		if !ok || !ok2 || act.WalkTheme == "" {
 			t.Fatalf("%s: unknown area or not a walking activity", cs)
 		}
+		name := act.Name["en"]
+		if n, ok := a.names[actID]; ok {
+			name = n
+		}
 		req := walks.Request{
 			City: a.city, Area: a.area.Name["en"], Center: maps.LatLng{Lat: a.area.Lat, Lng: a.area.Lng},
-			Activity: act.Name["en"], Theme: act.WalkTheme, Month: time.November, Blocks: act.Blocks,
+			Activity: name, Theme: act.WalkTheme, Month: time.November, Blocks: act.Blocks,
 		}
 		wg.Go(func() {
 			start := time.Now()
