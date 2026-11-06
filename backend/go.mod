@@ -19,7 +19,8 @@ require (
 	connectrpc.com/connect v1.21.1
 	connectrpc.com/cors v0.1.0
 	github.com/MicahParks/keyfunc/v3 v3.8.2
-	github.com/anthropics/anthropic-sdk-go v1.84.0
+	github.com/anthropics/anthropic-sdk-go v1.66.0
+	github.com/anthropics/anthropic-sdk-go/v2 v2.6.0
 	github.com/coder/websocket v1.8.15
 	github.com/getsentry/sentry-go v0.50.0
 	github.com/golang-jwt/jwt/v5 v5.3.1
