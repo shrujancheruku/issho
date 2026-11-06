@@ -77,7 +77,7 @@ Someone is suspended while they have a suspension that hasn't been lifted. Suspe
 _Avoid_: banned, blocked (that is kept apart)
 
 **Kept apart**:
-Two people who are never grouped or offered a crew together again: one reported the other, or said they'd rather not be in a group with them again. Whatever a moderator decides about the report, the pair stays apart.
+Two people who are never grouped or offered a crew together again: one reported the other, or said they'd rather not be in a group with them again. It's for good: whatever a moderator decides about the report, and even if the person changes their feedback later, the pair stays apart. Becoming kept apart also takes the person reported (or not wanted) out of any upcoming outing or crew the two share, without telling them why.
 _Avoid_: blocked (as a separate rule), blacklisted
 
 **Lapsed**:
