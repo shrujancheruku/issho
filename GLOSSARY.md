@@ -5,8 +5,16 @@ Issho brings small groups of people together for outings in their city, across t
 ## Language
 
 **Plan**:
-An outing people can sign up for, before it has a date or a group: an activity (or a walk of stops) in an area.
+An outing people can sign up for, before it has a date or a group: an activity or a set of activities in an area.
 _Avoid_: listing, activity (an activity is what a plan is about)
+
+**Walk**:
+A plan whose stops are all within walking distance of each other. In a city where people ride between stops, a plan with a ride in it is not a walk.
+_Avoid_: trail, route, tour
+
+**Ride**:
+Getting from one stop of a plan to the next by motorbike or car, however the group chooses (their own bikes, giving each other lifts, Grab). Only cities whose people don't walk far allow rides.
+_Avoid_: drive, transfer, leg (in the app's copy)
 
 **Outing**:
 A plan with a date and a group of people invited to it, from their invitation until the feedback window closes. The code and the API call it an event.
