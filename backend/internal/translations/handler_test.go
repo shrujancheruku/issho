@@ -11,7 +11,8 @@ import (
 	"testing"
 	"time"
 
-	"connectrpc.com/connect"
+	"connectrpc.com/connect/v2"
+	"connectrpc.com/connect/v2/connectproto"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 
@@ -217,7 +218,7 @@ func as(c auth.Caller) context.Context { return auth.WithCaller(context.Backgrou
 func TestPermissions(t *testing.T) {
 	h, _ := setup(t, mainJaFile)
 	list := func(c auth.Caller, lang string) connect.Code {
-		_, err := h.ListAppStrings(as(c), connect.NewRequest(&isshov1.ListAppStringsRequest{Lang: lang}))
+		_, err := h.ListAppStrings(as(c), &isshov1.ListAppStringsRequest{Lang: lang})
 		return connect.CodeOf(err)
 	}
 	if got := list(japanese, "es"); got != connect.CodePermissionDenied {
@@ -229,20 +230,20 @@ func TestPermissions(t *testing.T) {
 	if got := list(admin, "xx"); got != connect.CodeInvalidArgument {
 		t.Errorf("bad code: %v", got)
 	}
-	if _, err := h.ListAppStrings(as(japanese), connect.NewRequest(&isshov1.ListAppStringsRequest{Lang: "ja"})); err != nil {
+	if _, err := h.ListAppStrings(as(japanese), &isshov1.ListAppStringsRequest{Lang: "ja"}); err != nil {
 		t.Errorf("own language: %v", err)
 	}
-	_, err := h.SaveAppString(as(japanese), connect.NewRequest(&isshov1.SaveAppStringRequest{Lang: "es", Key: "hi", Text: "Hola"}))
+	_, err := h.SaveAppString(as(japanese), &isshov1.SaveAppStringRequest{Lang: "es", Key: "hi", Text: "Hola"})
 	if connect.CodeOf(err) != connect.CodePermissionDenied {
 		t.Errorf("save another language: %v", err)
 	}
-	_, err = h.ReviewCatalogTranslation(as(japanese), connect.NewRequest(&isshov1.ReviewCatalogTranslationRequest{Lang: "es", SourceHash: "act", Text: "x"}))
+	_, err = h.ReviewCatalogTranslation(as(japanese), &isshov1.ReviewCatalogTranslationRequest{Lang: "es", SourceHash: "act", Text: "x"})
 	if connect.CodeOf(err) != connect.CodePermissionDenied {
 		t.Errorf("review another language: %v", err)
 	}
 
-	me, err := h.GetTranslator(as(japanese), connect.NewRequest(&isshov1.GetTranslatorRequest{}))
-	if err != nil || me.Msg.Admin || len(me.Msg.Languages) != 1 || me.Msg.Languages[0] != "ja" || !me.Msg.CanPropose {
+	me, err := h.GetTranslator(as(japanese), &isshov1.GetTranslatorRequest{})
+	if err != nil || me.Admin || len(me.Languages) != 1 || me.Languages[0] != "ja" || !me.CanPropose {
 		t.Errorf("GetTranslator: %+v %v", me, err)
 	}
 }
@@ -251,24 +252,24 @@ func TestListAppLanguages(t *testing.T) {
 	h, repo := setup(t, mainJaFile)
 	repo.prs = []github.PR{{Number: 7, URL: "u", Branch: "translations/ja-1"}}
 	repo.branches["translations/ja-1"] = repo.branches["main"]
-	res, err := h.ListAppLanguages(as(japanese), connect.NewRequest(&isshov1.ListAppLanguagesRequest{}))
+	res, err := h.ListAppLanguages(as(japanese), &isshov1.ListAppLanguagesRequest{})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(res.Msg.Languages) != 1 {
-		t.Fatalf("a translator sees their languages only: %+v", res.Msg.Languages)
+	if len(res.Languages) != 1 {
+		t.Fatalf("a translator sees their languages only: %+v", res.Languages)
 	}
-	ja := res.Msg.Languages[0]
+	ja := res.Languages[0]
 	// "who" is current; "bye" was written for older English.
 	if ja.Lang != "ja" || ja.Human != 1 || ja.Stale != 1 || ja.Total != 3 || ja.PullRequest.GetNumber() != 7 {
 		t.Errorf("ja: %+v", ja)
 	}
-	res, err = h.ListAppLanguages(as(admin), connect.NewRequest(&isshov1.ListAppLanguagesRequest{}))
+	res, err = h.ListAppLanguages(as(admin), &isshov1.ListAppLanguagesRequest{})
 	if err != nil {
 		t.Fatal(err)
 	}
 	var langs []string
-	for _, l := range res.Msg.Languages {
+	for _, l := range res.Languages {
 		langs = append(langs, l.Lang)
 	}
 	// Human files (en, ja) and cached machine translations (es).
@@ -279,15 +280,15 @@ func TestListAppLanguages(t *testing.T) {
 
 func rows(t *testing.T, h *Handler, lang string) (map[string]*isshov1.AppString, *isshov1.ListAppStringsResponse) {
 	t.Helper()
-	res, err := h.ListAppStrings(as(admin), connect.NewRequest(&isshov1.ListAppStringsRequest{Lang: lang}))
+	res, err := h.ListAppStrings(as(admin), &isshov1.ListAppStringsRequest{Lang: lang})
 	if err != nil {
 		t.Fatal(err)
 	}
 	out := map[string]*isshov1.AppString{}
-	for _, s := range res.Msg.Strings {
+	for _, s := range res.Strings {
 		out[s.Key] = s
 	}
-	return out, res.Msg
+	return out, res
 }
 
 func TestSaveAndRemove(t *testing.T) {
@@ -307,22 +308,22 @@ func TestSaveAndRemove(t *testing.T) {
 	}
 
 	// Saving the same text as main changes nothing: no branch, no PR.
-	same, err := h.SaveAppString(ctx, connect.NewRequest(&isshov1.SaveAppStringRequest{Lang: "ja", Key: "who", Text: "{email} でログイン中"}))
-	if err != nil || same.Msg.PullRequest != nil || len(repo.branches) != 1 {
+	same, err := h.SaveAppString(ctx, &isshov1.SaveAppStringRequest{Lang: "ja", Key: "who", Text: "{email} でログイン中"})
+	if err != nil || same.PullRequest != nil || len(repo.branches) != 1 {
 		t.Fatalf("no-op save: %+v %v (branches %d)", same, err, len(repo.branches))
 	}
 
 	// The first change opens the language's pull request, committing both
 	// copies of the file in the format `make gen` writes.
-	saved, err := h.SaveAppString(ctx, connect.NewRequest(&isshov1.SaveAppStringRequest{Lang: "ja", Key: "hi", Text: " やあ "}))
+	saved, err := h.SaveAppString(ctx, &isshov1.SaveAppStringRequest{Lang: "ja", Key: "hi", Text: " やあ "})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if saved.Msg.PullRequest.GetNumber() != 100 || len(repo.prs) != 1 || repo.prs[0].Title != "feat(data): update the Japanese translations" ||
+	if saved.PullRequest.GetNumber() != 100 || len(repo.prs) != 1 || repo.prs[0].Title != "feat(data): update the Japanese translations" ||
 		repo.prs[0].Branch != "translations/ja-1700000000" {
-		t.Errorf("pull request: %+v %+v", saved.Msg.PullRequest, repo.prs)
+		t.Errorf("pull request: %+v %+v", saved.PullRequest, repo.prs)
 	}
-	if s := saved.Msg.AppString; !s.Pending || s.PendingText != "やあ" || s.Machine != "[ja] Hello" {
+	if s := saved.AppString; !s.Pending || s.PendingText != "やあ" || s.Machine != "[ja] Hello" {
 		t.Errorf("saved row: %+v", s)
 	}
 	branch := repo.branches["translations/ja-1700000000"]
@@ -343,7 +344,7 @@ func TestSaveAndRemove(t *testing.T) {
 	// The next change goes to the same pull request, retrying once when the
 	// branch moved.
 	repo.conflict = 1
-	if _, err := h.SaveAppString(ctx, connect.NewRequest(&isshov1.SaveAppStringRequest{Lang: "ja", Key: "bye", Text: "またね"})); err != nil {
+	if _, err := h.SaveAppString(ctx, &isshov1.SaveAppStringRequest{Lang: "ja", Key: "bye", Text: "またね"}); err != nil {
 		t.Fatal(err)
 	}
 	if len(repo.prs) != 1 || len(repo.commits) != 2 || repo.commits[1] != "feat(data): set the ja text of bye" {
@@ -355,8 +356,8 @@ func TestSaveAndRemove(t *testing.T) {
 	}
 
 	// Removing a human version: pending with no text.
-	rm, err := h.RemoveAppString(ctx, connect.NewRequest(&isshov1.RemoveAppStringRequest{Lang: "ja", Key: "who"}))
-	if err != nil || !rm.Msg.AppString.Pending || rm.Msg.AppString.PendingText != "" || repo.commits[2] != "feat(data): remove the ja human version of who" {
+	rm, err := h.RemoveAppString(ctx, &isshov1.RemoveAppStringRequest{Lang: "ja", Key: "who"})
+	if err != nil || !rm.AppString.Pending || rm.AppString.PendingText != "" || repo.commits[2] != "feat(data): remove the ja human version of who" {
 		t.Errorf("remove: %+v %v %v", rm, err, repo.commits)
 	}
 
@@ -365,13 +366,13 @@ func TestSaveAndRemove(t *testing.T) {
 		{Lang: "ja", Key: "nope", Text: "x"},    // no such key
 		{Lang: "ja", Key: "hi", Text: "   "},    // empty
 	} {
-		if _, err := h.SaveAppString(ctx, connect.NewRequest(bad)); connect.CodeOf(err) != connect.CodeInvalidArgument {
+		if _, err := h.SaveAppString(ctx, bad); connect.CodeOf(err) != connect.CodeInvalidArgument {
 			t.Errorf("%+v: %v", bad, err)
 		}
 	}
 
 	h.Editor.Repo = nil
-	if _, err := h.SaveAppString(ctx, connect.NewRequest(&isshov1.SaveAppStringRequest{Lang: "ja", Key: "hi", Text: "やっほー"})); connect.CodeOf(err) != connect.CodeFailedPrecondition {
+	if _, err := h.SaveAppString(ctx, &isshov1.SaveAppStringRequest{Lang: "ja", Key: "hi", Text: "やっほー"}); connect.CodeOf(err) != connect.CodeFailedPrecondition {
 		t.Errorf("without GitHub: %v", err)
 	}
 }
@@ -382,7 +383,7 @@ func TestEnglish(t *testing.T) {
 	if got["hi"].Machine != "" || got["hi"].Human != "Hey there" || got["hi"].EnglishVoice != "Hey there" {
 		t.Errorf("en hi: %+v", got["hi"])
 	}
-	_, err := h.SaveAppString(as(admin), connect.NewRequest(&isshov1.SaveAppStringRequest{Lang: "en", Key: "bye", Text: "Goodbye"}))
+	_, err := h.SaveAppString(as(admin), &isshov1.SaveAppStringRequest{Lang: "en", Key: "bye", Text: "Goodbye"})
 	if connect.CodeOf(err) != connect.CodeInvalidArgument {
 		t.Errorf("livelier English identical to the plain one: %v", err)
 	}
@@ -390,20 +391,20 @@ func TestEnglish(t *testing.T) {
 
 func TestCatalog(t *testing.T) {
 	h, _ := setup(t, mainJaFile)
-	langs, err := h.ListCatalogLanguages(as(japanese), connect.NewRequest(&isshov1.ListCatalogLanguagesRequest{}))
-	if err != nil || len(langs.Msg.Languages) != 1 || langs.Msg.Languages[0].Lang != "ja" {
+	langs, err := h.ListCatalogLanguages(as(japanese), &isshov1.ListCatalogLanguagesRequest{})
+	if err != nil || len(langs.Languages) != 1 || langs.Languages[0].Lang != "ja" {
 		t.Fatalf("languages: %+v %v", langs, err)
 	}
-	list, err := h.ListCatalogTranslations(as(japanese), connect.NewRequest(&isshov1.ListCatalogTranslationsRequest{Lang: "ja"}))
-	if err != nil || len(list.Msg.Translations) != 1 || list.Msg.Translations[0].SourceHash != "act" {
+	list, err := h.ListCatalogTranslations(as(japanese), &isshov1.ListCatalogTranslationsRequest{Lang: "ja"})
+	if err != nil || len(list.Translations) != 1 || list.Translations[0].SourceHash != "act" {
 		t.Fatalf("UI strings must be left out: %+v %v", list, err)
 	}
-	_, err = h.ReviewCatalogTranslation(as(japanese), connect.NewRequest(&isshov1.ReviewCatalogTranslationRequest{Lang: "ja", SourceHash: "ui", Text: "保存"}))
+	_, err = h.ReviewCatalogTranslation(as(japanese), &isshov1.ReviewCatalogTranslationRequest{Lang: "ja", SourceHash: "ui", Text: "保存"})
 	if connect.CodeOf(err) != connect.CodeInvalidArgument {
 		t.Errorf("a UI string through the catalogue review: %v", err)
 	}
-	res, err := h.ReviewCatalogTranslation(as(japanese), connect.NewRequest(&isshov1.ReviewCatalogTranslationRequest{Lang: "ja", SourceHash: "act", Text: "陶芸教室"}))
-	if err != nil || !res.Msg.Translation.Reviewed || res.Msg.Translation.Text != "陶芸教室" {
+	res, err := h.ReviewCatalogTranslation(as(japanese), &isshov1.ReviewCatalogTranslationRequest{Lang: "ja", SourceHash: "act", Text: "陶芸教室"})
+	if err != nil || !res.Translation.Reviewed || res.Translation.Text != "陶芸教室" {
 		t.Errorf("review: %+v %v", res, err)
 	}
 }
@@ -423,8 +424,8 @@ func (d *drafter) Draft(_ context.Context, lang string, in translate.Draft) (str
 
 func TestDraftAppString(t *testing.T) {
 	h, _ := setup(t, mainJaFile)
-	draft := func(c auth.Caller, lang, key, current string) (*connect.Response[isshov1.DraftAppStringResponse], error) {
-		return h.DraftAppString(as(c), connect.NewRequest(&isshov1.DraftAppStringRequest{Lang: lang, Key: key, Current: current}))
+	draft := func(c auth.Caller, lang, key, current string) (*isshov1.DraftAppStringResponse, error) {
+		return h.DraftAppString(as(c), &isshov1.DraftAppStringRequest{Lang: lang, Key: key, Current: current})
 	}
 	if _, err := draft(japanese, "ja", "hi", ""); connect.CodeOf(err) != connect.CodeFailedPrecondition {
 		t.Errorf("without a drafter: %v", err)
@@ -432,7 +433,7 @@ func TestDraftAppString(t *testing.T) {
 	d := &drafter{answer: "やっほー"}
 	h.Editor.Drafter = d
 	res, err := draft(japanese, "ja", "hi", "")
-	if err != nil || res.Msg.Text != "やっほー" {
+	if err != nil || res.Text != "やっほー" {
 		t.Fatalf("draft: %+v %v", res, err)
 	}
 	// It gets the plain English, the note, the livelier English as the tone
@@ -468,7 +469,7 @@ func TestDraftAppString(t *testing.T) {
 	if !errors.As(err, &ce) || ce.Code() != connect.CodeUnavailable || len(ce.Details()) != 1 {
 		t.Fatalf("over budget: %v", err)
 	}
-	if m, derr := ce.Details()[0].Value(); derr != nil || m.(*isshov1.ErrorReasonDetail).Reason != isshov1.ErrorReason_ERROR_REASON_TIMED_OUT {
+	if m, derr := connectproto.UnmarshalErrorDetail(ce.Details()[0]); derr != nil || m.(*isshov1.ErrorReasonDetail).Reason != isshov1.ErrorReason_ERROR_REASON_TIMED_OUT {
 		t.Errorf("reason = %v, %v", m, derr)
 	}
 }

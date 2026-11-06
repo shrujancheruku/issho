@@ -15,7 +15,6 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"connectrpc.com/connect"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -76,24 +75,24 @@ var flagKinds = map[string]isshov1.FlagKind{
 	"pick_gender_lean": isshov1.FlagKind_FLAG_KIND_PICK_GENDER_LEAN,
 }
 
-func (h *Handler) ListReports(ctx context.Context, req *connect.Request[isshov1.ListReportsRequest]) (*connect.Response[isshov1.ListReportsResponse], error) {
+func (h *Handler) ListReports(ctx context.Context, req *isshov1.ListReportsRequest) (*isshov1.ListReportsResponse, error) {
 	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
-	size, err := paging.Size(req.Msg.PageSize)
+	size, err := paging.Size(req.PageSize)
 	if err != nil {
 		return nil, err
 	}
 	arg := dbgen.ListReportsParams{MaxRows: size + 1}
-	if req.Msg.Status != isshov1.ReportStatus_REPORT_STATUS_UNSPECIFIED {
-		s, ok := reportStatuses[req.Msg.Status]
+	if req.Status != isshov1.ReportStatus_REPORT_STATUS_UNSPECIFIED {
+		s, ok := reportStatuses[req.Status]
 		if !ok {
 			return nil, errs.Invalid("status: unknown")
 		}
 		arg.Status = s
 	}
-	if req.Msg.ReportedId != "" {
-		id, err := uuid.Parse(req.Msg.ReportedId)
+	if req.ReportedId != "" {
+		id, err := uuid.Parse(req.ReportedId)
 		if err != nil {
 			return nil, errs.Invalid("reported_id: not a user id")
 		}
@@ -102,7 +101,7 @@ func (h *Handler) ListReports(ctx context.Context, req *connect.Request[isshov1.
 	// Open reports (oldest first) come before the rest (newest first), so the
 	// cursor says which part it was in.
 	scope := paging.Scope("ListReports", arg.Status, arg.ReportedID.String())
-	k, err := paging.Open(req.Msg.PageToken, scope, 3)
+	k, err := paging.Open(req.PageToken, scope, 3)
 	if err != nil {
 		return nil, err
 	}
@@ -156,23 +155,23 @@ func (h *Handler) ListReports(ctx context.Context, req *connect.Request[isshov1.
 		}
 		out.Reports[i] = m
 	}
-	return connect.NewResponse(out), nil
+	return out, nil
 }
 
-func (h *Handler) ResolveReport(ctx context.Context, req *connect.Request[isshov1.ResolveReportRequest]) (*connect.Response[isshov1.ResolveReportResponse], error) {
+func (h *Handler) ResolveReport(ctx context.Context, req *isshov1.ResolveReportRequest) (*isshov1.ResolveReportResponse, error) {
 	c, err := auth.RequireAdmin(ctx)
 	if err != nil {
 		return nil, err
 	}
-	id, err := uuid.Parse(req.Msg.ReportId)
+	id, err := uuid.Parse(req.ReportId)
 	if err != nil {
 		return nil, errs.Invalid("report_id: not a report id")
 	}
-	status, ok := reportStatuses[req.Msg.Status]
+	status, ok := reportStatuses[req.Status]
 	if !ok {
 		return nil, errs.Invalid("status: open, actioned or dismissed")
 	}
-	note, err := cleanNote(req.Msg.Note)
+	note, err := cleanNote(req.Note)
 	if err != nil {
 		return nil, err
 	}
@@ -185,23 +184,23 @@ func (h *Handler) ResolveReport(ctx context.Context, req *connect.Request[isshov
 	if n == 0 {
 		return nil, errs.NotFound("no such report")
 	}
-	return connect.NewResponse(&isshov1.ResolveReportResponse{}), nil
+	return &isshov1.ResolveReportResponse{}, nil
 }
 
-func (h *Handler) ListFlags(ctx context.Context, req *connect.Request[isshov1.ListFlagsRequest]) (*connect.Response[isshov1.ListFlagsResponse], error) {
+func (h *Handler) ListFlags(ctx context.Context, req *isshov1.ListFlagsRequest) (*isshov1.ListFlagsResponse, error) {
 	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
-	size, err := paging.Size(req.Msg.PageSize)
+	size, err := paging.Size(req.PageSize)
 	if err != nil {
 		return nil, err
 	}
-	scope := paging.Scope("ListFlags", paging.Bool(req.Msg.Resolved))
-	k, err := paging.Open(req.Msg.PageToken, scope, 2)
+	scope := paging.Scope("ListFlags", paging.Bool(req.Resolved))
+	k, err := paging.Open(req.PageToken, scope, 2)
 	if err != nil {
 		return nil, err
 	}
-	arg := dbgen.ListModerationFlagsParams{Open: !req.Msg.Resolved, MaxRows: size + 1}
+	arg := dbgen.ListModerationFlagsParams{Open: !req.Resolved, MaxRows: size + 1}
 	arg.HasAfter, arg.AfterTs, arg.AfterID = k.Present, pgconv.Time(k.Time()), k.Int()
 	if err := k.Err(); err != nil {
 		return nil, err
@@ -216,7 +215,7 @@ func (h *Handler) ListFlags(ctx context.Context, req *connect.Request[isshov1.Li
 		// Open flags are ordered by created_at, resolved ones by resolved_at.
 		last := rows[len(rows)-1]
 		at := last.CreatedAt
-		if req.Msg.Resolved {
+		if req.Resolved {
 			at = last.ResolvedAt
 		}
 		out.NextPageToken = paging.Encode(scope, paging.Time(at.Time), paging.Int(last.ID))
@@ -235,20 +234,20 @@ func (h *Handler) ListFlags(ctx context.Context, req *connect.Request[isshov1.Li
 			ResolvedBy:  uuidString(f.ResolvedBy),
 		}
 	}
-	return connect.NewResponse(out), nil
+	return out, nil
 }
 
-func (h *Handler) ResolveFlag(ctx context.Context, req *connect.Request[isshov1.ResolveFlagRequest]) (*connect.Response[isshov1.ResolveFlagResponse], error) {
+func (h *Handler) ResolveFlag(ctx context.Context, req *isshov1.ResolveFlagRequest) (*isshov1.ResolveFlagResponse, error) {
 	c, err := auth.RequireAdmin(ctx)
 	if err != nil {
 		return nil, err
 	}
-	note, err := cleanNote(req.Msg.Note)
+	note, err := cleanNote(req.Note)
 	if err != nil {
 		return nil, err
 	}
 	n, err := h.Q.ResolveModerationFlag(ctx, dbgen.ResolveModerationFlagParams{
-		ID: req.Msg.FlagId, Note: note, ResolvedBy: pgUUID(c.UserID), At: pgconv.Time(h.now()),
+		ID: req.FlagId, Note: note, ResolvedBy: pgUUID(c.UserID), At: pgconv.Time(h.now()),
 	})
 	if err != nil {
 		return nil, err
@@ -256,27 +255,27 @@ func (h *Handler) ResolveFlag(ctx context.Context, req *connect.Request[isshov1.
 	if n == 0 {
 		return nil, errs.Refused("no open flag with that id")
 	}
-	return connect.NewResponse(&isshov1.ResolveFlagResponse{}), nil
+	return &isshov1.ResolveFlagResponse{}, nil
 }
 
-func (h *Handler) ListCrewLeaves(ctx context.Context, req *connect.Request[isshov1.ListCrewLeavesRequest]) (*connect.Response[isshov1.ListCrewLeavesResponse], error) {
+func (h *Handler) ListCrewLeaves(ctx context.Context, req *isshov1.ListCrewLeavesRequest) (*isshov1.ListCrewLeavesResponse, error) {
 	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
-	size, err := paging.Size(req.Msg.PageSize)
+	size, err := paging.Size(req.PageSize)
 	if err != nil {
 		return nil, err
 	}
 	arg := dbgen.ListCrewLeavesParams{MaxRows: size + 1}
-	if req.Msg.Reason != isshov1.LeaveReason_LEAVE_REASON_UNSPECIFIED {
-		r, ok := leaveReasons[req.Msg.Reason]
+	if req.Reason != isshov1.LeaveReason_LEAVE_REASON_UNSPECIFIED {
+		r, ok := leaveReasons[req.Reason]
 		if !ok {
 			return nil, errs.Invalid("reason: unknown")
 		}
 		arg.Reason = r
 	}
 	scope := paging.Scope("ListCrewLeaves", arg.Reason)
-	k, err := paging.Open(req.Msg.PageToken, scope, 2)
+	k, err := paging.Open(req.PageToken, scope, 2)
 	if err != nil {
 		return nil, err
 	}
@@ -314,7 +313,7 @@ func (h *Handler) ListCrewLeaves(ctx context.Context, req *connect.Request[issho
 		}
 		out.Leaves[i] = m
 	}
-	return connect.NewResponse(out), nil
+	return out, nil
 }
 
 func cleanNote(s string) (string, error) {

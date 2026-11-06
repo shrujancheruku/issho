@@ -5,383 +5,436 @@
 package isshov1connect
 
 import (
-	connect "connectrpc.com/connect"
+	connect "connectrpc.com/connect/v2"
 	context "context"
-	errors "errors"
 	v1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
-	http "net/http"
-	strings "strings"
+	sync "sync"
 )
-
-// This is a compile-time assertion to ensure that this generated file and the connect package are
-// compatible. If you get a compiler error that this constant is not defined, this code was
-// generated with a version of connect newer than the one compiled into your binary. You can fix the
-// problem by either regenerating this code with an older version of connect or updating the connect
-// version compiled into your binary.
-const _ = connect.IsAtLeastVersion1_13_0
 
 const (
 	// TranslationServiceName is the fully-qualified name of the TranslationService service.
 	TranslationServiceName = "issho.v1.TranslationService"
 )
 
-// These constants are the fully-qualified names of the RPCs defined in this package. They're
-// exposed at runtime as Spec.Procedure and as the final two segments of the HTTP route.
+// These constants are the procedure names of the RPCs defined in this package. They're exposed at
+// runtime as Spec.Procedure and as the final two segments of the HTTP route.
 //
 // Note that these are different from the fully-qualified method names used by
 // google.golang.org/protobuf/reflect/protoreflect. To convert from these constants to
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
-	// TranslationServiceGetTranslatorProcedure is the fully-qualified name of the TranslationService's
+	// TranslationServiceGetTranslatorProcedure is the procedure name of the TranslationService's
 	// GetTranslator RPC.
 	TranslationServiceGetTranslatorProcedure = "/issho.v1.TranslationService/GetTranslator"
-	// TranslationServiceListAppLanguagesProcedure is the fully-qualified name of the
-	// TranslationService's ListAppLanguages RPC.
+	// TranslationServiceListAppLanguagesProcedure is the procedure name of the TranslationService's
+	// ListAppLanguages RPC.
 	TranslationServiceListAppLanguagesProcedure = "/issho.v1.TranslationService/ListAppLanguages"
-	// TranslationServiceListAppStringsProcedure is the fully-qualified name of the TranslationService's
+	// TranslationServiceListAppStringsProcedure is the procedure name of the TranslationService's
 	// ListAppStrings RPC.
 	TranslationServiceListAppStringsProcedure = "/issho.v1.TranslationService/ListAppStrings"
-	// TranslationServiceSaveAppStringProcedure is the fully-qualified name of the TranslationService's
+	// TranslationServiceSaveAppStringProcedure is the procedure name of the TranslationService's
 	// SaveAppString RPC.
 	TranslationServiceSaveAppStringProcedure = "/issho.v1.TranslationService/SaveAppString"
-	// TranslationServiceRemoveAppStringProcedure is the fully-qualified name of the
-	// TranslationService's RemoveAppString RPC.
+	// TranslationServiceRemoveAppStringProcedure is the procedure name of the TranslationService's
+	// RemoveAppString RPC.
 	TranslationServiceRemoveAppStringProcedure = "/issho.v1.TranslationService/RemoveAppString"
-	// TranslationServiceDraftAppStringProcedure is the fully-qualified name of the TranslationService's
+	// TranslationServiceDraftAppStringProcedure is the procedure name of the TranslationService's
 	// DraftAppString RPC.
 	TranslationServiceDraftAppStringProcedure = "/issho.v1.TranslationService/DraftAppString"
-	// TranslationServiceListCatalogLanguagesProcedure is the fully-qualified name of the
-	// TranslationService's ListCatalogLanguages RPC.
+	// TranslationServiceListCatalogLanguagesProcedure is the procedure name of the TranslationService's
+	// ListCatalogLanguages RPC.
 	TranslationServiceListCatalogLanguagesProcedure = "/issho.v1.TranslationService/ListCatalogLanguages"
-	// TranslationServiceListCatalogTranslationsProcedure is the fully-qualified name of the
+	// TranslationServiceListCatalogTranslationsProcedure is the procedure name of the
 	// TranslationService's ListCatalogTranslations RPC.
 	TranslationServiceListCatalogTranslationsProcedure = "/issho.v1.TranslationService/ListCatalogTranslations"
-	// TranslationServiceReviewCatalogTranslationProcedure is the fully-qualified name of the
+	// TranslationServiceReviewCatalogTranslationProcedure is the procedure name of the
 	// TranslationService's ReviewCatalogTranslation RPC.
 	TranslationServiceReviewCatalogTranslationProcedure = "/issho.v1.TranslationService/ReviewCatalogTranslation"
+)
+
+var (
+	translationServiceGetTranslatorSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_issho_v1_translation_proto.Services().ByName("TranslationService").Methods().ByName("GetTranslator"),
+			Procedure:  TranslationServiceGetTranslatorProcedure,
+		}
+	})
+	translationServiceListAppLanguagesSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_issho_v1_translation_proto.Services().ByName("TranslationService").Methods().ByName("ListAppLanguages"),
+			Procedure:  TranslationServiceListAppLanguagesProcedure,
+		}
+	})
+	translationServiceListAppStringsSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_issho_v1_translation_proto.Services().ByName("TranslationService").Methods().ByName("ListAppStrings"),
+			Procedure:  TranslationServiceListAppStringsProcedure,
+		}
+	})
+	translationServiceSaveAppStringSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_issho_v1_translation_proto.Services().ByName("TranslationService").Methods().ByName("SaveAppString"),
+			Procedure:  TranslationServiceSaveAppStringProcedure,
+		}
+	})
+	translationServiceRemoveAppStringSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_issho_v1_translation_proto.Services().ByName("TranslationService").Methods().ByName("RemoveAppString"),
+			Procedure:  TranslationServiceRemoveAppStringProcedure,
+		}
+	})
+	translationServiceDraftAppStringSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_issho_v1_translation_proto.Services().ByName("TranslationService").Methods().ByName("DraftAppString"),
+			Procedure:  TranslationServiceDraftAppStringProcedure,
+		}
+	})
+	translationServiceListCatalogLanguagesSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_issho_v1_translation_proto.Services().ByName("TranslationService").Methods().ByName("ListCatalogLanguages"),
+			Procedure:  TranslationServiceListCatalogLanguagesProcedure,
+		}
+	})
+	translationServiceListCatalogTranslationsSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_issho_v1_translation_proto.Services().ByName("TranslationService").Methods().ByName("ListCatalogTranslations"),
+			Procedure:  TranslationServiceListCatalogTranslationsProcedure,
+		}
+	})
+	translationServiceReviewCatalogTranslationSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_issho_v1_translation_proto.Services().ByName("TranslationService").Methods().ByName("ReviewCatalogTranslation"),
+			Procedure:  TranslationServiceReviewCatalogTranslationProcedure,
+		}
+	})
 )
 
 // TranslationServiceClient is a client for the issho.v1.TranslationService service.
 type TranslationServiceClient interface {
 	// GetTranslator says who the caller is and which languages they edit.
-	GetTranslator(context.Context, *connect.Request[v1.GetTranslatorRequest]) (*connect.Response[v1.GetTranslatorResponse], error)
+	GetTranslator(context.Context, *v1.GetTranslatorRequest) (*v1.GetTranslatorResponse, error)
 	// ListAppLanguages returns the languages the caller may edit, with how
 	// many UI strings have human versions and the open pull request, if any.
-	ListAppLanguages(context.Context, *connect.Request[v1.ListAppLanguagesRequest]) (*connect.Response[v1.ListAppLanguagesResponse], error)
+	ListAppLanguages(context.Context, *v1.ListAppLanguagesRequest) (*v1.ListAppLanguagesResponse, error)
 	// ListAppStrings returns every UI string in one language: the English,
 	// the machine translation, the human version on the default branch and
 	// what the open pull request changes.
-	ListAppStrings(context.Context, *connect.Request[v1.ListAppStringsRequest]) (*connect.Response[v1.ListAppStringsResponse], error)
+	ListAppStrings(context.Context, *v1.ListAppStringsRequest) (*v1.ListAppStringsResponse, error)
 	// SaveAppString sets a string's human version in the language's open pull
 	// request (opening one if there's none). Saving the machine translation
 	// unchanged approves it. INVALID_ARGUMENT if the text drops or adds a
 	// {placeholder} of the English; FAILED_PRECONDITION without GITHUB_TOKEN.
-	SaveAppString(context.Context, *connect.Request[v1.SaveAppStringRequest]) (*connect.Response[v1.SaveAppStringResponse], error)
+	SaveAppString(context.Context, *v1.SaveAppStringRequest) (*v1.SaveAppStringResponse, error)
 	// RemoveAppString removes a string's human version in the open pull
 	// request, so the machine translation is shown again.
-	RemoveAppString(context.Context, *connect.Request[v1.RemoveAppStringRequest]) (*connect.Response[v1.RemoveAppStringResponse], error)
+	RemoveAppString(context.Context, *v1.RemoveAppStringRequest) (*v1.RemoveAppStringResponse, error)
 	// DraftAppString asks Gemini for a better version of a string, for the
 	// reviewer to edit before saving; nothing is stored. In English it's a
 	// livelier version of the plain text. FAILED_PRECONDITION without
 	// GOOGLE_GEMINI_API_KEY; UNAVAILABLE if the draft lost a {placeholder}
 	// (ask again).
-	DraftAppString(context.Context, *connect.Request[v1.DraftAppStringRequest]) (*connect.Response[v1.DraftAppStringResponse], error)
+	DraftAppString(context.Context, *v1.DraftAppStringRequest) (*v1.DraftAppStringResponse, error)
 	// ListCatalogLanguages returns the languages with machine translations
 	// of catalogue text the caller may edit, with how many need a look.
-	ListCatalogLanguages(context.Context, *connect.Request[v1.ListCatalogLanguagesRequest]) (*connect.Response[v1.ListCatalogLanguagesResponse], error)
+	ListCatalogLanguages(context.Context, *v1.ListCatalogLanguagesRequest) (*v1.ListCatalogLanguagesResponse, error)
 	// ListCatalogTranslations returns one language's catalogue translations
 	// (not UI strings), unreviewed ones first, 100 at a time.
-	ListCatalogTranslations(context.Context, *connect.Request[v1.ListCatalogTranslationsRequest]) (*connect.Response[v1.ListCatalogTranslationsResponse], error)
+	ListCatalogTranslations(context.Context, *v1.ListCatalogTranslationsRequest) (*v1.ListCatalogTranslationsResponse, error)
 	// ReviewCatalogTranslation corrects (or confirms) a catalogue
 	// translation; it's never replaced by a machine one after that.
-	ReviewCatalogTranslation(context.Context, *connect.Request[v1.ReviewCatalogTranslationRequest]) (*connect.Response[v1.ReviewCatalogTranslationResponse], error)
+	ReviewCatalogTranslation(context.Context, *v1.ReviewCatalogTranslationRequest) (*v1.ReviewCatalogTranslationResponse, error)
 }
 
-// NewTranslationServiceClient constructs a client for the issho.v1.TranslationService service. By
-// default, it uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses,
-// and sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the
-// connect.WithGRPC() or connect.WithGRPCWeb() options.
-//
-// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
-// http://api.acme.com or https://acme.com/grpc).
-func NewTranslationServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) TranslationServiceClient {
-	baseURL = strings.TrimRight(baseURL, "/")
-	translationServiceMethods := v1.File_issho_v1_translation_proto.Services().ByName("TranslationService").Methods()
-	return &translationServiceClient{
-		getTranslator: connect.NewClient[v1.GetTranslatorRequest, v1.GetTranslatorResponse](
-			httpClient,
-			baseURL+TranslationServiceGetTranslatorProcedure,
-			connect.WithSchema(translationServiceMethods.ByName("GetTranslator")),
-			connect.WithClientOptions(opts...),
-		),
-		listAppLanguages: connect.NewClient[v1.ListAppLanguagesRequest, v1.ListAppLanguagesResponse](
-			httpClient,
-			baseURL+TranslationServiceListAppLanguagesProcedure,
-			connect.WithSchema(translationServiceMethods.ByName("ListAppLanguages")),
-			connect.WithClientOptions(opts...),
-		),
-		listAppStrings: connect.NewClient[v1.ListAppStringsRequest, v1.ListAppStringsResponse](
-			httpClient,
-			baseURL+TranslationServiceListAppStringsProcedure,
-			connect.WithSchema(translationServiceMethods.ByName("ListAppStrings")),
-			connect.WithClientOptions(opts...),
-		),
-		saveAppString: connect.NewClient[v1.SaveAppStringRequest, v1.SaveAppStringResponse](
-			httpClient,
-			baseURL+TranslationServiceSaveAppStringProcedure,
-			connect.WithSchema(translationServiceMethods.ByName("SaveAppString")),
-			connect.WithClientOptions(opts...),
-		),
-		removeAppString: connect.NewClient[v1.RemoveAppStringRequest, v1.RemoveAppStringResponse](
-			httpClient,
-			baseURL+TranslationServiceRemoveAppStringProcedure,
-			connect.WithSchema(translationServiceMethods.ByName("RemoveAppString")),
-			connect.WithClientOptions(opts...),
-		),
-		draftAppString: connect.NewClient[v1.DraftAppStringRequest, v1.DraftAppStringResponse](
-			httpClient,
-			baseURL+TranslationServiceDraftAppStringProcedure,
-			connect.WithSchema(translationServiceMethods.ByName("DraftAppString")),
-			connect.WithClientOptions(opts...),
-		),
-		listCatalogLanguages: connect.NewClient[v1.ListCatalogLanguagesRequest, v1.ListCatalogLanguagesResponse](
-			httpClient,
-			baseURL+TranslationServiceListCatalogLanguagesProcedure,
-			connect.WithSchema(translationServiceMethods.ByName("ListCatalogLanguages")),
-			connect.WithClientOptions(opts...),
-		),
-		listCatalogTranslations: connect.NewClient[v1.ListCatalogTranslationsRequest, v1.ListCatalogTranslationsResponse](
-			httpClient,
-			baseURL+TranslationServiceListCatalogTranslationsProcedure,
-			connect.WithSchema(translationServiceMethods.ByName("ListCatalogTranslations")),
-			connect.WithClientOptions(opts...),
-		),
-		reviewCatalogTranslation: connect.NewClient[v1.ReviewCatalogTranslationRequest, v1.ReviewCatalogTranslationResponse](
-			httpClient,
-			baseURL+TranslationServiceReviewCatalogTranslationProcedure,
-			connect.WithSchema(translationServiceMethods.ByName("ReviewCatalogTranslation")),
-			connect.WithClientOptions(opts...),
-		),
-	}
-}
-
-// translationServiceClient implements TranslationServiceClient.
-type translationServiceClient struct {
-	getTranslator            *connect.Client[v1.GetTranslatorRequest, v1.GetTranslatorResponse]
-	listAppLanguages         *connect.Client[v1.ListAppLanguagesRequest, v1.ListAppLanguagesResponse]
-	listAppStrings           *connect.Client[v1.ListAppStringsRequest, v1.ListAppStringsResponse]
-	saveAppString            *connect.Client[v1.SaveAppStringRequest, v1.SaveAppStringResponse]
-	removeAppString          *connect.Client[v1.RemoveAppStringRequest, v1.RemoveAppStringResponse]
-	draftAppString           *connect.Client[v1.DraftAppStringRequest, v1.DraftAppStringResponse]
-	listCatalogLanguages     *connect.Client[v1.ListCatalogLanguagesRequest, v1.ListCatalogLanguagesResponse]
-	listCatalogTranslations  *connect.Client[v1.ListCatalogTranslationsRequest, v1.ListCatalogTranslationsResponse]
-	reviewCatalogTranslation *connect.Client[v1.ReviewCatalogTranslationRequest, v1.ReviewCatalogTranslationResponse]
-}
-
-// GetTranslator calls issho.v1.TranslationService.GetTranslator.
-func (c *translationServiceClient) GetTranslator(ctx context.Context, req *connect.Request[v1.GetTranslatorRequest]) (*connect.Response[v1.GetTranslatorResponse], error) {
-	return c.getTranslator.CallUnary(ctx, req)
-}
-
-// ListAppLanguages calls issho.v1.TranslationService.ListAppLanguages.
-func (c *translationServiceClient) ListAppLanguages(ctx context.Context, req *connect.Request[v1.ListAppLanguagesRequest]) (*connect.Response[v1.ListAppLanguagesResponse], error) {
-	return c.listAppLanguages.CallUnary(ctx, req)
-}
-
-// ListAppStrings calls issho.v1.TranslationService.ListAppStrings.
-func (c *translationServiceClient) ListAppStrings(ctx context.Context, req *connect.Request[v1.ListAppStringsRequest]) (*connect.Response[v1.ListAppStringsResponse], error) {
-	return c.listAppStrings.CallUnary(ctx, req)
-}
-
-// SaveAppString calls issho.v1.TranslationService.SaveAppString.
-func (c *translationServiceClient) SaveAppString(ctx context.Context, req *connect.Request[v1.SaveAppStringRequest]) (*connect.Response[v1.SaveAppStringResponse], error) {
-	return c.saveAppString.CallUnary(ctx, req)
-}
-
-// RemoveAppString calls issho.v1.TranslationService.RemoveAppString.
-func (c *translationServiceClient) RemoveAppString(ctx context.Context, req *connect.Request[v1.RemoveAppStringRequest]) (*connect.Response[v1.RemoveAppStringResponse], error) {
-	return c.removeAppString.CallUnary(ctx, req)
-}
-
-// DraftAppString calls issho.v1.TranslationService.DraftAppString.
-func (c *translationServiceClient) DraftAppString(ctx context.Context, req *connect.Request[v1.DraftAppStringRequest]) (*connect.Response[v1.DraftAppStringResponse], error) {
-	return c.draftAppString.CallUnary(ctx, req)
-}
-
-// ListCatalogLanguages calls issho.v1.TranslationService.ListCatalogLanguages.
-func (c *translationServiceClient) ListCatalogLanguages(ctx context.Context, req *connect.Request[v1.ListCatalogLanguagesRequest]) (*connect.Response[v1.ListCatalogLanguagesResponse], error) {
-	return c.listCatalogLanguages.CallUnary(ctx, req)
-}
-
-// ListCatalogTranslations calls issho.v1.TranslationService.ListCatalogTranslations.
-func (c *translationServiceClient) ListCatalogTranslations(ctx context.Context, req *connect.Request[v1.ListCatalogTranslationsRequest]) (*connect.Response[v1.ListCatalogTranslationsResponse], error) {
-	return c.listCatalogTranslations.CallUnary(ctx, req)
-}
-
-// ReviewCatalogTranslation calls issho.v1.TranslationService.ReviewCatalogTranslation.
-func (c *translationServiceClient) ReviewCatalogTranslation(ctx context.Context, req *connect.Request[v1.ReviewCatalogTranslationRequest]) (*connect.Response[v1.ReviewCatalogTranslationResponse], error) {
-	return c.reviewCatalogTranslation.CallUnary(ctx, req)
+// NewTranslationServiceClient constructs a client for the issho.v1.TranslationService service.
+// Multiple service clients may share a single connect.Client.
+func NewTranslationServiceClient(client *connect.Client) TranslationServiceClient {
+	return &translationServiceClient{client: client}
 }
 
 // TranslationServiceHandler is an implementation of the issho.v1.TranslationService service.
 type TranslationServiceHandler interface {
 	// GetTranslator says who the caller is and which languages they edit.
-	GetTranslator(context.Context, *connect.Request[v1.GetTranslatorRequest]) (*connect.Response[v1.GetTranslatorResponse], error)
+	GetTranslator(context.Context, *v1.GetTranslatorRequest) (*v1.GetTranslatorResponse, error)
 	// ListAppLanguages returns the languages the caller may edit, with how
 	// many UI strings have human versions and the open pull request, if any.
-	ListAppLanguages(context.Context, *connect.Request[v1.ListAppLanguagesRequest]) (*connect.Response[v1.ListAppLanguagesResponse], error)
+	ListAppLanguages(context.Context, *v1.ListAppLanguagesRequest) (*v1.ListAppLanguagesResponse, error)
 	// ListAppStrings returns every UI string in one language: the English,
 	// the machine translation, the human version on the default branch and
 	// what the open pull request changes.
-	ListAppStrings(context.Context, *connect.Request[v1.ListAppStringsRequest]) (*connect.Response[v1.ListAppStringsResponse], error)
+	ListAppStrings(context.Context, *v1.ListAppStringsRequest) (*v1.ListAppStringsResponse, error)
 	// SaveAppString sets a string's human version in the language's open pull
 	// request (opening one if there's none). Saving the machine translation
 	// unchanged approves it. INVALID_ARGUMENT if the text drops or adds a
 	// {placeholder} of the English; FAILED_PRECONDITION without GITHUB_TOKEN.
-	SaveAppString(context.Context, *connect.Request[v1.SaveAppStringRequest]) (*connect.Response[v1.SaveAppStringResponse], error)
+	SaveAppString(context.Context, *v1.SaveAppStringRequest) (*v1.SaveAppStringResponse, error)
 	// RemoveAppString removes a string's human version in the open pull
 	// request, so the machine translation is shown again.
-	RemoveAppString(context.Context, *connect.Request[v1.RemoveAppStringRequest]) (*connect.Response[v1.RemoveAppStringResponse], error)
+	RemoveAppString(context.Context, *v1.RemoveAppStringRequest) (*v1.RemoveAppStringResponse, error)
 	// DraftAppString asks Gemini for a better version of a string, for the
 	// reviewer to edit before saving; nothing is stored. In English it's a
 	// livelier version of the plain text. FAILED_PRECONDITION without
 	// GOOGLE_GEMINI_API_KEY; UNAVAILABLE if the draft lost a {placeholder}
 	// (ask again).
-	DraftAppString(context.Context, *connect.Request[v1.DraftAppStringRequest]) (*connect.Response[v1.DraftAppStringResponse], error)
+	DraftAppString(context.Context, *v1.DraftAppStringRequest) (*v1.DraftAppStringResponse, error)
 	// ListCatalogLanguages returns the languages with machine translations
 	// of catalogue text the caller may edit, with how many need a look.
-	ListCatalogLanguages(context.Context, *connect.Request[v1.ListCatalogLanguagesRequest]) (*connect.Response[v1.ListCatalogLanguagesResponse], error)
+	ListCatalogLanguages(context.Context, *v1.ListCatalogLanguagesRequest) (*v1.ListCatalogLanguagesResponse, error)
 	// ListCatalogTranslations returns one language's catalogue translations
 	// (not UI strings), unreviewed ones first, 100 at a time.
-	ListCatalogTranslations(context.Context, *connect.Request[v1.ListCatalogTranslationsRequest]) (*connect.Response[v1.ListCatalogTranslationsResponse], error)
+	ListCatalogTranslations(context.Context, *v1.ListCatalogTranslationsRequest) (*v1.ListCatalogTranslationsResponse, error)
 	// ReviewCatalogTranslation corrects (or confirms) a catalogue
 	// translation; it's never replaced by a machine one after that.
-	ReviewCatalogTranslation(context.Context, *connect.Request[v1.ReviewCatalogTranslationRequest]) (*connect.Response[v1.ReviewCatalogTranslationResponse], error)
+	ReviewCatalogTranslation(context.Context, *v1.ReviewCatalogTranslationRequest) (*v1.ReviewCatalogTranslationResponse, error)
 }
 
-// NewTranslationServiceHandler builds an HTTP handler from the service implementation. It returns
-// the path on which to mount the handler and the handler itself.
-//
-// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
-// and JSON codecs. They also support gzip compression.
-func NewTranslationServiceHandler(svc TranslationServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
-	translationServiceMethods := v1.File_issho_v1_translation_proto.Services().ByName("TranslationService").Methods()
-	translationServiceGetTranslatorHandler := connect.NewUnaryHandler(
-		TranslationServiceGetTranslatorProcedure,
-		svc.GetTranslator,
-		connect.WithSchema(translationServiceMethods.ByName("GetTranslator")),
-		connect.WithHandlerOptions(opts...),
+// RegisterTranslationServiceHandler registers svc as the issho.v1.TranslationService implementation
+// on server.
+func RegisterTranslationServiceHandler(server *connect.Server, svc TranslationServiceHandler) {
+	adapter := translationServiceHandler{svc: svc}
+	server.Register(
+		connect.Method{Spec: translationServiceGetTranslatorSpec(), Handler: adapter.getTranslator},
+		connect.Method{Spec: translationServiceListAppLanguagesSpec(), Handler: adapter.listAppLanguages},
+		connect.Method{Spec: translationServiceListAppStringsSpec(), Handler: adapter.listAppStrings},
+		connect.Method{Spec: translationServiceSaveAppStringSpec(), Handler: adapter.saveAppString},
+		connect.Method{Spec: translationServiceRemoveAppStringSpec(), Handler: adapter.removeAppString},
+		connect.Method{Spec: translationServiceDraftAppStringSpec(), Handler: adapter.draftAppString},
+		connect.Method{Spec: translationServiceListCatalogLanguagesSpec(), Handler: adapter.listCatalogLanguages},
+		connect.Method{Spec: translationServiceListCatalogTranslationsSpec(), Handler: adapter.listCatalogTranslations},
+		connect.Method{Spec: translationServiceReviewCatalogTranslationSpec(), Handler: adapter.reviewCatalogTranslation},
 	)
-	translationServiceListAppLanguagesHandler := connect.NewUnaryHandler(
-		TranslationServiceListAppLanguagesProcedure,
-		svc.ListAppLanguages,
-		connect.WithSchema(translationServiceMethods.ByName("ListAppLanguages")),
-		connect.WithHandlerOptions(opts...),
-	)
-	translationServiceListAppStringsHandler := connect.NewUnaryHandler(
-		TranslationServiceListAppStringsProcedure,
-		svc.ListAppStrings,
-		connect.WithSchema(translationServiceMethods.ByName("ListAppStrings")),
-		connect.WithHandlerOptions(opts...),
-	)
-	translationServiceSaveAppStringHandler := connect.NewUnaryHandler(
-		TranslationServiceSaveAppStringProcedure,
-		svc.SaveAppString,
-		connect.WithSchema(translationServiceMethods.ByName("SaveAppString")),
-		connect.WithHandlerOptions(opts...),
-	)
-	translationServiceRemoveAppStringHandler := connect.NewUnaryHandler(
-		TranslationServiceRemoveAppStringProcedure,
-		svc.RemoveAppString,
-		connect.WithSchema(translationServiceMethods.ByName("RemoveAppString")),
-		connect.WithHandlerOptions(opts...),
-	)
-	translationServiceDraftAppStringHandler := connect.NewUnaryHandler(
-		TranslationServiceDraftAppStringProcedure,
-		svc.DraftAppString,
-		connect.WithSchema(translationServiceMethods.ByName("DraftAppString")),
-		connect.WithHandlerOptions(opts...),
-	)
-	translationServiceListCatalogLanguagesHandler := connect.NewUnaryHandler(
-		TranslationServiceListCatalogLanguagesProcedure,
-		svc.ListCatalogLanguages,
-		connect.WithSchema(translationServiceMethods.ByName("ListCatalogLanguages")),
-		connect.WithHandlerOptions(opts...),
-	)
-	translationServiceListCatalogTranslationsHandler := connect.NewUnaryHandler(
-		TranslationServiceListCatalogTranslationsProcedure,
-		svc.ListCatalogTranslations,
-		connect.WithSchema(translationServiceMethods.ByName("ListCatalogTranslations")),
-		connect.WithHandlerOptions(opts...),
-	)
-	translationServiceReviewCatalogTranslationHandler := connect.NewUnaryHandler(
-		TranslationServiceReviewCatalogTranslationProcedure,
-		svc.ReviewCatalogTranslation,
-		connect.WithSchema(translationServiceMethods.ByName("ReviewCatalogTranslation")),
-		connect.WithHandlerOptions(opts...),
-	)
-	return "/issho.v1.TranslationService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.URL.Path {
-		case TranslationServiceGetTranslatorProcedure:
-			translationServiceGetTranslatorHandler.ServeHTTP(w, r)
-		case TranslationServiceListAppLanguagesProcedure:
-			translationServiceListAppLanguagesHandler.ServeHTTP(w, r)
-		case TranslationServiceListAppStringsProcedure:
-			translationServiceListAppStringsHandler.ServeHTTP(w, r)
-		case TranslationServiceSaveAppStringProcedure:
-			translationServiceSaveAppStringHandler.ServeHTTP(w, r)
-		case TranslationServiceRemoveAppStringProcedure:
-			translationServiceRemoveAppStringHandler.ServeHTTP(w, r)
-		case TranslationServiceDraftAppStringProcedure:
-			translationServiceDraftAppStringHandler.ServeHTTP(w, r)
-		case TranslationServiceListCatalogLanguagesProcedure:
-			translationServiceListCatalogLanguagesHandler.ServeHTTP(w, r)
-		case TranslationServiceListCatalogTranslationsProcedure:
-			translationServiceListCatalogTranslationsHandler.ServeHTTP(w, r)
-		case TranslationServiceReviewCatalogTranslationProcedure:
-			translationServiceReviewCatalogTranslationHandler.ServeHTTP(w, r)
-		default:
-			http.NotFound(w, r)
-		}
-	})
 }
 
 // UnimplementedTranslationServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedTranslationServiceHandler struct{}
 
-func (UnimplementedTranslationServiceHandler) GetTranslator(context.Context, *connect.Request[v1.GetTranslatorRequest]) (*connect.Response[v1.GetTranslatorResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.TranslationService.GetTranslator is not implemented"))
+func (UnimplementedTranslationServiceHandler) GetTranslator(context.Context, *v1.GetTranslatorRequest) (*v1.GetTranslatorResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "issho.v1.TranslationService.GetTranslator is not implemented")
 }
 
-func (UnimplementedTranslationServiceHandler) ListAppLanguages(context.Context, *connect.Request[v1.ListAppLanguagesRequest]) (*connect.Response[v1.ListAppLanguagesResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.TranslationService.ListAppLanguages is not implemented"))
+func (UnimplementedTranslationServiceHandler) ListAppLanguages(context.Context, *v1.ListAppLanguagesRequest) (*v1.ListAppLanguagesResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "issho.v1.TranslationService.ListAppLanguages is not implemented")
 }
 
-func (UnimplementedTranslationServiceHandler) ListAppStrings(context.Context, *connect.Request[v1.ListAppStringsRequest]) (*connect.Response[v1.ListAppStringsResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.TranslationService.ListAppStrings is not implemented"))
+func (UnimplementedTranslationServiceHandler) ListAppStrings(context.Context, *v1.ListAppStringsRequest) (*v1.ListAppStringsResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "issho.v1.TranslationService.ListAppStrings is not implemented")
 }
 
-func (UnimplementedTranslationServiceHandler) SaveAppString(context.Context, *connect.Request[v1.SaveAppStringRequest]) (*connect.Response[v1.SaveAppStringResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.TranslationService.SaveAppString is not implemented"))
+func (UnimplementedTranslationServiceHandler) SaveAppString(context.Context, *v1.SaveAppStringRequest) (*v1.SaveAppStringResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "issho.v1.TranslationService.SaveAppString is not implemented")
 }
 
-func (UnimplementedTranslationServiceHandler) RemoveAppString(context.Context, *connect.Request[v1.RemoveAppStringRequest]) (*connect.Response[v1.RemoveAppStringResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.TranslationService.RemoveAppString is not implemented"))
+func (UnimplementedTranslationServiceHandler) RemoveAppString(context.Context, *v1.RemoveAppStringRequest) (*v1.RemoveAppStringResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "issho.v1.TranslationService.RemoveAppString is not implemented")
 }
 
-func (UnimplementedTranslationServiceHandler) DraftAppString(context.Context, *connect.Request[v1.DraftAppStringRequest]) (*connect.Response[v1.DraftAppStringResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.TranslationService.DraftAppString is not implemented"))
+func (UnimplementedTranslationServiceHandler) DraftAppString(context.Context, *v1.DraftAppStringRequest) (*v1.DraftAppStringResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "issho.v1.TranslationService.DraftAppString is not implemented")
 }
 
-func (UnimplementedTranslationServiceHandler) ListCatalogLanguages(context.Context, *connect.Request[v1.ListCatalogLanguagesRequest]) (*connect.Response[v1.ListCatalogLanguagesResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.TranslationService.ListCatalogLanguages is not implemented"))
+func (UnimplementedTranslationServiceHandler) ListCatalogLanguages(context.Context, *v1.ListCatalogLanguagesRequest) (*v1.ListCatalogLanguagesResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "issho.v1.TranslationService.ListCatalogLanguages is not implemented")
 }
 
-func (UnimplementedTranslationServiceHandler) ListCatalogTranslations(context.Context, *connect.Request[v1.ListCatalogTranslationsRequest]) (*connect.Response[v1.ListCatalogTranslationsResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.TranslationService.ListCatalogTranslations is not implemented"))
+func (UnimplementedTranslationServiceHandler) ListCatalogTranslations(context.Context, *v1.ListCatalogTranslationsRequest) (*v1.ListCatalogTranslationsResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "issho.v1.TranslationService.ListCatalogTranslations is not implemented")
 }
 
-func (UnimplementedTranslationServiceHandler) ReviewCatalogTranslation(context.Context, *connect.Request[v1.ReviewCatalogTranslationRequest]) (*connect.Response[v1.ReviewCatalogTranslationResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.TranslationService.ReviewCatalogTranslation is not implemented"))
+func (UnimplementedTranslationServiceHandler) ReviewCatalogTranslation(context.Context, *v1.ReviewCatalogTranslationRequest) (*v1.ReviewCatalogTranslationResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "issho.v1.TranslationService.ReviewCatalogTranslation is not implemented")
+}
+
+type translationServiceClient struct {
+	client *connect.Client
+}
+
+func (c *translationServiceClient) GetTranslator(ctx context.Context, req *v1.GetTranslatorRequest) (*v1.GetTranslatorResponse, error) {
+	var res v1.GetTranslatorResponse
+	if err := c.client.CallUnary(ctx, translationServiceGetTranslatorSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *translationServiceClient) ListAppLanguages(ctx context.Context, req *v1.ListAppLanguagesRequest) (*v1.ListAppLanguagesResponse, error) {
+	var res v1.ListAppLanguagesResponse
+	if err := c.client.CallUnary(ctx, translationServiceListAppLanguagesSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *translationServiceClient) ListAppStrings(ctx context.Context, req *v1.ListAppStringsRequest) (*v1.ListAppStringsResponse, error) {
+	var res v1.ListAppStringsResponse
+	if err := c.client.CallUnary(ctx, translationServiceListAppStringsSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *translationServiceClient) SaveAppString(ctx context.Context, req *v1.SaveAppStringRequest) (*v1.SaveAppStringResponse, error) {
+	var res v1.SaveAppStringResponse
+	if err := c.client.CallUnary(ctx, translationServiceSaveAppStringSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *translationServiceClient) RemoveAppString(ctx context.Context, req *v1.RemoveAppStringRequest) (*v1.RemoveAppStringResponse, error) {
+	var res v1.RemoveAppStringResponse
+	if err := c.client.CallUnary(ctx, translationServiceRemoveAppStringSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *translationServiceClient) DraftAppString(ctx context.Context, req *v1.DraftAppStringRequest) (*v1.DraftAppStringResponse, error) {
+	var res v1.DraftAppStringResponse
+	if err := c.client.CallUnary(ctx, translationServiceDraftAppStringSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *translationServiceClient) ListCatalogLanguages(ctx context.Context, req *v1.ListCatalogLanguagesRequest) (*v1.ListCatalogLanguagesResponse, error) {
+	var res v1.ListCatalogLanguagesResponse
+	if err := c.client.CallUnary(ctx, translationServiceListCatalogLanguagesSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *translationServiceClient) ListCatalogTranslations(ctx context.Context, req *v1.ListCatalogTranslationsRequest) (*v1.ListCatalogTranslationsResponse, error) {
+	var res v1.ListCatalogTranslationsResponse
+	if err := c.client.CallUnary(ctx, translationServiceListCatalogTranslationsSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *translationServiceClient) ReviewCatalogTranslation(ctx context.Context, req *v1.ReviewCatalogTranslationRequest) (*v1.ReviewCatalogTranslationResponse, error) {
+	var res v1.ReviewCatalogTranslationResponse
+	if err := c.client.CallUnary(ctx, translationServiceReviewCatalogTranslationSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+type translationServiceHandler struct{ svc TranslationServiceHandler }
+
+func (h translationServiceHandler) getTranslator(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.GetTranslatorRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.GetTranslator(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h translationServiceHandler) listAppLanguages(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.ListAppLanguagesRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.ListAppLanguages(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h translationServiceHandler) listAppStrings(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.ListAppStringsRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.ListAppStrings(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h translationServiceHandler) saveAppString(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.SaveAppStringRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.SaveAppString(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h translationServiceHandler) removeAppString(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.RemoveAppStringRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.RemoveAppString(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h translationServiceHandler) draftAppString(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.DraftAppStringRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.DraftAppString(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h translationServiceHandler) listCatalogLanguages(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.ListCatalogLanguagesRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.ListCatalogLanguages(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h translationServiceHandler) listCatalogTranslations(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.ListCatalogTranslationsRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.ListCatalogTranslations(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h translationServiceHandler) reviewCatalogTranslation(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.ReviewCatalogTranslationRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.ReviewCatalogTranslation(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
 }

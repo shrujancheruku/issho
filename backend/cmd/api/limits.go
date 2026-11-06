@@ -7,7 +7,8 @@ import (
 	"net/http"
 	"time"
 
-	"connectrpc.com/connect"
+	"connectrpc.com/connect/v2"
+	"connectrpc.com/connect/v2/connecthttp"
 
 	"github.com/shrujancheruku/issho/backend/gen/issho/v1/isshov1connect"
 	"github.com/shrujancheruku/issho/backend/internal/platform/deadline"
@@ -54,18 +55,24 @@ type serverTimeouts struct{ ReadHeader, Read, Idle time.Duration }
 
 var prodTimeouts = serverTimeouts{ReadHeader: readHeaderTimeout, Read: readTimeout, Idle: idleTimeout}
 
-// handlerOptions is the option set of every Connect handler: errs outermost
-// (so it also sanitises what the others return), the deadline inside it (so
-// its DeadlineExceeded passes through as is), then the caller's interceptors
-// (auth and so on), then request validation (so a caller who isn't signed in
-// hears Unauthenticated, not the rules), and the request size cap.
-func handlerOptions(log *slog.Logger, inner ...connect.Interceptor) connect.HandlerOption {
-	chain := append([]connect.Interceptor{
+// newRPCServer is the Connect server every service registers on. Its chain:
+// errs outermost (so it also sanitises what the others return), the deadline
+// inside it (so its DeadlineExceeded passes through as is), then the caller's
+// interceptors (auth and so on), then request validation (so a caller who
+// isn't signed in hears Unauthenticated, not the rules).
+func newRPCServer(log *slog.Logger, inner ...connect.ServerInterceptor) *connect.Server {
+	chain := append([]connect.ServerInterceptor{
 		errs.Interceptor(log),
 		deadline.Interceptor(deadline.Default, rpcDeadlines),
 	}, inner...)
 	chain = append(chain, validate.Interceptor())
-	return connect.WithOptions(connect.WithInterceptors(chain...), connect.WithReadMaxBytes(maxRequestBytes))
+	return connect.NewServer(chain...)
+}
+
+// mountRPC serves rpc's services on mux with the request size cap. Mount
+// routes only the services registered so far, so it runs after the last one.
+func mountRPC(mux *http.ServeMux, rpc *connect.Server) {
+	connecthttp.Mount(mux, rpc, connecthttp.WithReadMaxBytes(maxRequestBytes))
 }
 
 func newServer(addr string, h http.Handler, protocols *http.Protocols, baseCtx context.Context, t serverTimeouts) *http.Server {

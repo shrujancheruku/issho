@@ -5,7 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	"connectrpc.com/connect"
+	"connectrpc.com/connect/v2"
+	"connectrpc.com/connect/v2/connectproto"
 
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
 	"github.com/shrujancheruku/issho/backend/internal/tagging"
@@ -15,7 +16,7 @@ import (
 // the code) and adds the reason newer builds word it by.
 func TestSuggestActivitiesUnavailableNamesItsReason(t *testing.T) {
 	h := &Handler{Suggestions: &tagging.Service{}}
-	_, err := h.SuggestActivities(context.Background(), connect.NewRequest(&isshov1.SuggestActivitiesRequest{CityId: "tokyo", Text: "hiking"}))
+	_, err := h.SuggestActivities(context.Background(), &isshov1.SuggestActivitiesRequest{CityId: "tokyo", Text: "hiking"})
 	var ce *connect.Error
 	if !errors.As(err, &ce) {
 		t.Fatalf("not a connect error: %v", err)
@@ -25,7 +26,7 @@ func TestSuggestActivitiesUnavailableNamesItsReason(t *testing.T) {
 	}
 	var got isshov1.ErrorReason
 	for _, d := range ce.Details() {
-		m, verr := d.Value()
+		m, verr := connectproto.UnmarshalErrorDetail(d)
 		if verr != nil {
 			t.Fatal(verr)
 		}

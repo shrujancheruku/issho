@@ -80,8 +80,12 @@ _Avoid_: expired, ignored
 An edit to a city's pack or to a language's human translations, saved in the admin SPA, that waits for the owner's approval before it takes effect. A city or language has at most one pending change at a time; later saves add to it.
 _Avoid_: proposal (a plan's group review), draft, suggestion
 
+**Pilot**:
+An invite-only trial in one city pack before the soft launch, with people the owner invites and the people they invite in turn. It runs until the owner ends it, and its participants stay on when the soft launch opens.
+_Avoid_: beta, test, trial run
+
 **Soft launch**:
-The first opening of Issho to real users: one city pack, with people admitted through the waitlist.
+The first opening of Issho beyond the Pilot's invitees: one city pack, with people admitted through the waitlist.
 _Avoid_: beta, public launch (that comes later)
 
 **Unlock**:

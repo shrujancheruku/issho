@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"connectrpc.com/connect"
+	"connectrpc.com/connect/v2"
 	"github.com/google/uuid"
 
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
@@ -105,11 +105,11 @@ func TestIntegrationEditStops(t *testing.T) {
 	}
 	get := func(id uuid.UUID) *isshov1.GetReviewPlanResponse {
 		t.Helper()
-		res, err := h.GetReviewPlan(adminCtx, connect.NewRequest(&isshov1.GetReviewPlanRequest{PlanId: id.String()}))
+		res, err := h.GetReviewPlan(adminCtx, &isshov1.GetReviewPlanRequest{PlanId: id.String()})
 		if err != nil {
 			t.Fatal(err)
 		}
-		return res.Msg
+		return res
 	}
 	got := get(planID)
 	if len(got.Stops) != 4 || got.Stops[1].PlaceId != "temple" || got.Stops[1].Note != "Old wood" || got.Stops[3].Role != "finish" {
@@ -117,20 +117,20 @@ func TestIntegrationEditStops(t *testing.T) {
 	}
 
 	// Found near the area, with the distance.
-	found, err := h.FindPlanPlaces(adminCtx, connect.NewRequest(&isshov1.FindPlanPlacesRequest{PlanId: planID.String(), Query: "shrine"}))
+	found, err := h.FindPlanPlaces(adminCtx, &isshov1.FindPlanPlacesRequest{PlanId: planID.String(), Query: "shrine"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if p := found.Msg.Places[1]; p.Name != "Shrine" || p.Meters < 1000 || p.Meters > 1200 || p.PrimaryType != "shinto_shrine" {
+	if p := found.Places[1]; p.Name != "Shrine" || p.Meters < 1000 || p.Meters > 1200 || p.PrimaryType != "shinto_shrine" {
 		t.Errorf("found = %v", p)
 	}
 
 	set := func(stops ...*isshov1.ReviewStop) (*isshov1.SetPlanStopsResponse, error) {
-		res, err := h.SetPlanStops(adminCtx, connect.NewRequest(&isshov1.SetPlanStopsRequest{PlanId: planID.String(), Stops: stops}))
+		res, err := h.SetPlanStops(adminCtx, &isshov1.SetPlanStopsRequest{PlanId: planID.String(), Stops: stops})
 		if err != nil {
 			return nil, err
 		}
-		return res.Msg, nil
+		return res, nil
 	}
 	stop := func(id string, minutes int32, note string) *isshov1.ReviewStop {
 		return &isshov1.ReviewStop{PlaceId: id, Minutes: minutes, Note: note}
@@ -206,7 +206,7 @@ func TestIntegrationEditStops(t *testing.T) {
 		t.Fatal(err)
 	}
 	venue := func(id string, followUp bool) error {
-		_, err := h.SetPlanVenue(adminCtx, connect.NewRequest(&isshov1.SetPlanVenueRequest{PlanId: other.String(), PlaceId: id, FollowUp: followUp}))
+		_, err := h.SetPlanVenue(adminCtx, &isshov1.SetPlanVenueRequest{PlanId: other.String(), PlaceId: id, FollowUp: followUp})
 		return err
 	}
 	if err := venue("cafe2", false); err != nil {
@@ -221,7 +221,7 @@ func TestIntegrationEditStops(t *testing.T) {
 	if err := venue("cafe", true); connect.CodeOf(err) != connect.CodeInvalidArgument {
 		t.Errorf("a follow-up the plan doesn't have: %v", err)
 	}
-	if _, err := h.SetPlanVenue(adminCtx, connect.NewRequest(&isshov1.SetPlanVenueRequest{PlanId: planID.String(), PlaceId: "cafe"})); connect.CodeOf(err) != connect.CodeInvalidArgument {
+	if _, err := h.SetPlanVenue(adminCtx, &isshov1.SetPlanVenueRequest{PlanId: planID.String(), PlaceId: "cafe"}); connect.CodeOf(err) != connect.CodeInvalidArgument {
 		t.Errorf("a walk's venue: %v", err)
 	}
 	if _, err := set(); connect.CodeOf(err) != connect.CodeInvalidArgument {

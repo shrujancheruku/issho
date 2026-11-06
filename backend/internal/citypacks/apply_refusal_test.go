@@ -5,7 +5,6 @@ import (
 	"strings"
 	"testing"
 
-	"connectrpc.com/connect"
 	"github.com/google/uuid"
 
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
@@ -43,11 +42,11 @@ func TestIntegrationApplyRefusesInUseArea(t *testing.T) {
 	adminCtx := auth.WithCaller(ctx, auth.Caller{UserID: uuid.New(), Email: "admin@example.com", Admin: true})
 	// apply queues the apply and returns the job's failure, if it failed.
 	apply := func() *adminjobs.Failure {
-		res, err := h.ApplyCityPack(adminCtx, connect.NewRequest(&isshov1.ApplyCityPackRequest{CityId: f.City}))
+		res, err := h.ApplyCityPack(adminCtx, &isshov1.ApplyCityPackRequest{CityId: f.City})
 		if err != nil {
 			t.Fatal(err)
 		}
-		return jobs.out[res.Msg.JobId].Failure
+		return jobs.out[res.JobId].Failure
 	}
 	publish()
 	if fail := apply(); fail != nil {

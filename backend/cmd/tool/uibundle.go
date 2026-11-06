@@ -16,7 +16,8 @@ import (
 	"strings"
 	"time"
 
-	"connectrpc.com/connect"
+	"connectrpc.com/connect/v2"
+	"connectrpc.com/connect/v2/connecthttp"
 
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
 	"github.com/shrujancheruku/issho/backend/gen/issho/v1/isshov1connect"
@@ -67,19 +68,19 @@ func uiBundle(args []string) error {
 		return errors.New("no languages other than English in the city packs")
 	}
 
-	client := isshov1connect.NewUIServiceClient(http.DefaultClient, strings.TrimRight(*api, "/"))
+	client := isshov1connect.NewUIServiceClient(connect.NewClient(connecthttp.NewTransport(http.DefaultClient, strings.TrimRight(*api, "/"))))
 	ctx := context.Background()
 	bundles := map[string]bundledCatalog{}
 	for _, lang := range slices.Sorted(maps.Keys(langs)) {
 		deadline := time.Now().Add(*wait)
 		for {
-			res, err := client.GetStrings(ctx, connect.NewRequest(&isshov1.GetStringsRequest{Language: lang}))
+			res, err := client.GetStrings(ctx, &isshov1.GetStringsRequest{Language: lang})
 			if err != nil {
 				return fmt.Errorf("%s: %w", lang, err)
 			}
-			if res.Msg.Complete {
-				bundles[lang] = bundledCatalog{CatalogVersion: res.Msg.CatalogVersion, Strings: res.Msg.Strings}
-				slog.Info("bundled", "lang", lang, "strings", len(res.Msg.Strings), "version", res.Msg.CatalogVersion)
+			if res.Complete {
+				bundles[lang] = bundledCatalog{CatalogVersion: res.CatalogVersion, Strings: res.Strings}
+				slog.Info("bundled", "lang", lang, "strings", len(res.Strings), "version", res.CatalogVersion)
 				break
 			}
 			if time.Now().After(deadline) {

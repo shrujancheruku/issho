@@ -14,8 +14,6 @@ import (
 	"testing"
 	"time"
 
-	"connectrpc.com/connect"
-
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
 	"github.com/shrujancheruku/issho/backend/internal/platform/github"
@@ -218,11 +216,11 @@ func TestGetStringsKnownVersion(t *testing.T) {
 	h := &Handler{Catalog: c, Translations: &translate.Service{Store: store, Translator: mangler{}}}
 	get := func(known string) *isshov1.GetStringsResponse {
 		t.Helper()
-		res, err := h.GetStrings(context.Background(), connect.NewRequest(&isshov1.GetStringsRequest{Language: "ja", KnownVersion: known}))
+		res, err := h.GetStrings(context.Background(), &isshov1.GetStringsRequest{Language: "ja", KnownVersion: known})
 		if err != nil {
 			t.Fatal(err)
 		}
-		return res.Msg
+		return res
 	}
 
 	first := get("")
@@ -248,9 +246,9 @@ func TestGetStringsKnownVersion(t *testing.T) {
 
 	// An incomplete catalogue is never "unchanged": the app keeps asking.
 	slow := &Handler{Catalog: c, Translations: &translate.Service{Store: &memStore{rows: map[string]string{}}}}
-	res, err := slow.GetStrings(context.Background(), connect.NewRequest(&isshov1.GetStringsRequest{Language: "ja", KnownVersion: Version(map[string]string{})}))
-	if err != nil || res.Msg.Unchanged || res.Msg.Complete {
-		t.Errorf("incomplete: %+v %v", res.Msg, err)
+	res, err := slow.GetStrings(context.Background(), &isshov1.GetStringsRequest{Language: "ja", KnownVersion: Version(map[string]string{})})
+	if err != nil || res.Unchanged || res.Complete {
+		t.Errorf("incomplete: %+v %v", res, err)
 	}
 }
 

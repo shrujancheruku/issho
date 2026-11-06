@@ -5,7 +5,6 @@ import (
 	"errors"
 	"time"
 
-	"connectrpc.com/connect"
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -26,7 +25,7 @@ func (h *EventHandler) now() time.Time {
 	return time.Now()
 }
 
-func (h *EventHandler) ListMyEvents(ctx context.Context, _ *connect.Request[isshov1.ListMyEventsRequest]) (*connect.Response[isshov1.ListMyEventsResponse], error) {
+func (h *EventHandler) ListMyEvents(ctx context.Context, _ *isshov1.ListMyEventsRequest) (*isshov1.ListMyEventsResponse, error) {
 	userID, err := caller(ctx)
 	if err != nil {
 		return nil, err
@@ -39,15 +38,15 @@ func (h *EventHandler) ListMyEvents(ctx context.Context, _ *connect.Request[issh
 	for i, it := range items {
 		out.Events[i] = eventToProto(it)
 	}
-	return connect.NewResponse(out), nil
+	return out, nil
 }
 
-func (h *EventHandler) GetEvent(ctx context.Context, req *connect.Request[isshov1.GetEventRequest]) (*connect.Response[isshov1.GetEventResponse], error) {
+func (h *EventHandler) GetEvent(ctx context.Context, req *isshov1.GetEventRequest) (*isshov1.GetEventResponse, error) {
 	userID, err := caller(ctx)
 	if err != nil {
 		return nil, err
 	}
-	eventID, err := parseEventID(req.Msg.EventId)
+	eventID, err := parseEventID(req.EventId)
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +61,7 @@ func (h *EventHandler) GetEvent(ctx context.Context, req *connect.Request[isshov
 	if it.Route != nil {
 		out.RoutePolyline = it.Route.Polyline
 	}
-	return connect.NewResponse(out), nil
+	return out, nil
 }
 
 var actions = map[isshov1.EventAction]Action{
@@ -71,16 +70,16 @@ var actions = map[isshov1.EventAction]Action{
 	isshov1.EventAction_EVENT_ACTION_CANCEL:  Cancel,
 }
 
-func (h *EventHandler) RespondToEvent(ctx context.Context, req *connect.Request[isshov1.RespondToEventRequest]) (*connect.Response[isshov1.RespondToEventResponse], error) {
+func (h *EventHandler) RespondToEvent(ctx context.Context, req *isshov1.RespondToEventRequest) (*isshov1.RespondToEventResponse, error) {
 	userID, err := caller(ctx)
 	if err != nil {
 		return nil, err
 	}
-	eventID, err := parseEventID(req.Msg.EventId)
+	eventID, err := parseEventID(req.EventId)
 	if err != nil {
 		return nil, err
 	}
-	action, ok := actions[req.Msg.Action]
+	action, ok := actions[req.Action]
 	if !ok {
 		return nil, errs.Invalid("action: confirm, decline or cancel")
 	}
@@ -92,15 +91,15 @@ func (h *EventHandler) RespondToEvent(ctx context.Context, req *connect.Request[
 	if err != nil {
 		return nil, eventError(err)
 	}
-	return connect.NewResponse(&isshov1.RespondToEventResponse{Event: eventToProto(it)}), nil
+	return &isshov1.RespondToEventResponse{Event: eventToProto(it)}, nil
 }
 
-func (h *EventHandler) CheckIn(ctx context.Context, req *connect.Request[isshov1.CheckInRequest]) (*connect.Response[isshov1.CheckInResponse], error) {
+func (h *EventHandler) CheckIn(ctx context.Context, req *isshov1.CheckInRequest) (*isshov1.CheckInResponse, error) {
 	userID, err := caller(ctx)
 	if err != nil {
 		return nil, err
 	}
-	eventID, err := parseEventID(req.Msg.EventId)
+	eventID, err := parseEventID(req.EventId)
 	if err != nil {
 		return nil, err
 	}
@@ -112,15 +111,15 @@ func (h *EventHandler) CheckIn(ctx context.Context, req *connect.Request[isshov1
 	if err != nil {
 		return nil, eventError(err)
 	}
-	return connect.NewResponse(&isshov1.CheckInResponse{Event: eventToProto(it)}), nil
+	return &isshov1.CheckInResponse{Event: eventToProto(it)}, nil
 }
 
-func (h *EventHandler) GetFeedback(ctx context.Context, req *connect.Request[isshov1.GetFeedbackRequest]) (*connect.Response[isshov1.GetFeedbackResponse], error) {
+func (h *EventHandler) GetFeedback(ctx context.Context, req *isshov1.GetFeedbackRequest) (*isshov1.GetFeedbackResponse, error) {
 	userID, err := caller(ctx)
 	if err != nil {
 		return nil, err
 	}
-	eventID, err := parseEventID(req.Msg.EventId)
+	eventID, err := parseEventID(req.EventId)
 	if err != nil {
 		return nil, err
 	}
@@ -128,23 +127,23 @@ func (h *EventHandler) GetFeedback(ctx context.Context, req *connect.Request[iss
 	if err != nil {
 		return nil, eventError(err)
 	}
-	return connect.NewResponse(feedbackToProto(f)), nil
+	return feedbackToProto(f), nil
 }
 
-func (h *EventHandler) SubmitFeedback(ctx context.Context, req *connect.Request[isshov1.SubmitFeedbackRequest]) (*connect.Response[isshov1.SubmitFeedbackResponse], error) {
+func (h *EventHandler) SubmitFeedback(ctx context.Context, req *isshov1.SubmitFeedbackRequest) (*isshov1.SubmitFeedbackResponse, error) {
 	userID, err := caller(ctx)
 	if err != nil {
 		return nil, err
 	}
-	eventID, err := parseEventID(req.Msg.EventId)
+	eventID, err := parseEventID(req.EventId)
 	if err != nil {
 		return nil, err
 	}
-	fb := Feedback{Attended: req.Msg.Attended, PlanRating: int(req.Msg.PlanRating), GroupRating: int(req.Msg.GroupRating)}
-	if fb.Picks, err = parseIDs("picks", req.Msg.Picks); err != nil {
+	fb := Feedback{Attended: req.Attended, PlanRating: int(req.PlanRating), GroupRating: int(req.GroupRating)}
+	if fb.Picks, err = parseIDs("picks", req.Picks); err != nil {
 		return nil, err
 	}
-	if fb.Avoid, err = parseIDs("avoid", req.Msg.Avoid); err != nil {
+	if fb.Avoid, err = parseIDs("avoid", req.Avoid); err != nil {
 		return nil, err
 	}
 	now := h.now()
@@ -155,7 +154,7 @@ func (h *EventHandler) SubmitFeedback(ctx context.Context, req *connect.Request[
 	if err != nil {
 		return nil, eventError(err)
 	}
-	return connect.NewResponse(&isshov1.SubmitFeedbackResponse{Feedback: feedbackToProto(f)}), nil
+	return &isshov1.SubmitFeedbackResponse{Feedback: feedbackToProto(f)}, nil
 }
 
 // ReportReasons maps the API's report reasons to stored ones (also used by
@@ -168,27 +167,27 @@ var ReportReasons = map[isshov1.ReportReason]string{
 	isshov1.ReportReason_REPORT_REASON_OTHER:      ReportOther,
 }
 
-func (h *EventHandler) ReportPerson(ctx context.Context, req *connect.Request[isshov1.ReportPersonRequest]) (*connect.Response[isshov1.ReportPersonResponse], error) {
+func (h *EventHandler) ReportPerson(ctx context.Context, req *isshov1.ReportPersonRequest) (*isshov1.ReportPersonResponse, error) {
 	userID, err := caller(ctx)
 	if err != nil {
 		return nil, err
 	}
-	eventID, err := parseEventID(req.Msg.EventId)
+	eventID, err := parseEventID(req.EventId)
 	if err != nil {
 		return nil, err
 	}
-	mateID, err := uuid.Parse(req.Msg.MateId)
+	mateID, err := uuid.Parse(req.MateId)
 	if err != nil {
 		return nil, errs.Invalid("mate_id: not a group mate id")
 	}
-	reason, ok := ReportReasons[req.Msg.Reason]
+	reason, ok := ReportReasons[req.Reason]
 	if !ok {
 		return nil, errs.Invalid("reason: required")
 	}
-	if err := h.Svc.Report(ctx, userID, eventID, mateID, reason, req.Msg.Details, h.now()); err != nil {
+	if err := h.Svc.Report(ctx, userID, eventID, mateID, reason, req.Details, h.now()); err != nil {
 		return nil, eventError(err)
 	}
-	return connect.NewResponse(&isshov1.ReportPersonResponse{}), nil
+	return &isshov1.ReportPersonResponse{}, nil
 }
 
 func feedbackToProto(f FeedbackForm) *isshov1.GetFeedbackResponse {

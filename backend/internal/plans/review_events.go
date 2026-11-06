@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"connectrpc.com/connect"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -27,25 +26,25 @@ var reviewEventStatuses = map[isshov1.ReviewEventStatus]string{
 	isshov1.ReviewEventStatus_REVIEW_EVENT_STATUS_SCHEDULED: EventScheduled,
 }
 
-func (h *ReviewHandler) ListReviewEvents(ctx context.Context, req *connect.Request[isshov1.ListReviewEventsRequest]) (*connect.Response[isshov1.ListReviewEventsResponse], error) {
+func (h *ReviewHandler) ListReviewEvents(ctx context.Context, req *isshov1.ListReviewEventsRequest) (*isshov1.ListReviewEventsResponse, error) {
 	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
-	status, ok := reviewEventStatuses[req.Msg.Status]
+	status, ok := reviewEventStatuses[req.Status]
 	if !ok {
 		return nil, errs.Invalid("status: proposed or scheduled")
 	}
-	size, err := paging.Size(req.Msg.PageSize)
+	size, err := paging.Size(req.PageSize)
 	if err != nil {
 		return nil, err
 	}
-	scope := paging.Scope("ListReviewEvents", req.Msg.CityId, status)
-	k, err := paging.Open(req.Msg.PageToken, scope, 3)
+	scope := paging.Scope("ListReviewEvents", req.CityId, status)
+	k, err := paging.Open(req.PageToken, scope, 3)
 	if err != nil {
 		return nil, err
 	}
 	arg := dbgen.ListReviewEventsParams{
-		CityID: req.Msg.CityId, Status: status, FromDate: date(h.now().UTC().Truncate(24 * time.Hour)), MaxRows: size + 1,
+		CityID: req.CityId, Status: status, FromDate: date(h.now().UTC().Truncate(24 * time.Hour)), MaxRows: size + 1,
 	}
 	arg.HasAfter, arg.AfterDate, arg.AfterBlock = k.Present, date(k.Date()), k.String()
 	arg.AfterID = k.UUID()
@@ -58,7 +57,7 @@ func (h *ReviewHandler) ListReviewEvents(ctx context.Context, req *connect.Reque
 		return nil, err
 	}
 	rows, more := paging.Trim(rows, size)
-	names, err := h.Svc.activityNames(ctx, q, req.Msg.CityId)
+	names, err := h.Svc.activityNames(ctx, q, req.CityId)
 	if err != nil {
 		return nil, err
 	}
@@ -79,14 +78,14 @@ func (h *ReviewHandler) ListReviewEvents(ctx context.Context, req *connect.Reque
 		out.Events[i] = ev
 		out.Events[i].Groups, out.Events[i].People = r.Groups, r.People
 	}
-	return connect.NewResponse(out), nil
+	return out, nil
 }
 
-func (h *ReviewHandler) GetReviewEvent(ctx context.Context, req *connect.Request[isshov1.GetReviewEventRequest]) (*connect.Response[isshov1.GetReviewEventResponse], error) {
+func (h *ReviewHandler) GetReviewEvent(ctx context.Context, req *isshov1.GetReviewEventRequest) (*isshov1.GetReviewEventResponse, error) {
 	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
-	id, err := parseEventID(req.Msg.EventId)
+	id, err := parseEventID(req.EventId)
 	if err != nil {
 		return nil, err
 	}
@@ -142,96 +141,96 @@ func (h *ReviewHandler) GetReviewEvent(ctx context.Context, req *connect.Request
 		out.Groups = append(out.Groups, rg)
 	}
 	out.Event.Groups = int32(len(out.Groups))
-	return connect.NewResponse(out), nil
+	return out, nil
 }
 
-func (h *ReviewHandler) MoveProposalMember(ctx context.Context, req *connect.Request[isshov1.MoveProposalMemberRequest]) (*connect.Response[isshov1.MoveProposalMemberResponse], error) {
+func (h *ReviewHandler) MoveProposalMember(ctx context.Context, req *isshov1.MoveProposalMemberRequest) (*isshov1.MoveProposalMemberResponse, error) {
 	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
-	eventID, userID, err := eventAndUser(req.Msg.EventId, req.Msg.UserId)
+	eventID, userID, err := eventAndUser(req.EventId, req.UserId)
 	if err != nil {
 		return nil, err
 	}
-	groupID, err := uuid.Parse(req.Msg.GroupId)
+	groupID, err := uuid.Parse(req.GroupId)
 	if err != nil {
 		return nil, errs.Invalid("group_id: not a group id")
 	}
 	if err := h.Svc.MoveProposalMember(ctx, eventID, userID, groupID); err != nil {
 		return nil, proposalError(err)
 	}
-	return connect.NewResponse(&isshov1.MoveProposalMemberResponse{}), nil
+	return &isshov1.MoveProposalMemberResponse{}, nil
 }
 
-func (h *ReviewHandler) RemoveProposalMember(ctx context.Context, req *connect.Request[isshov1.RemoveProposalMemberRequest]) (*connect.Response[isshov1.RemoveProposalMemberResponse], error) {
+func (h *ReviewHandler) RemoveProposalMember(ctx context.Context, req *isshov1.RemoveProposalMemberRequest) (*isshov1.RemoveProposalMemberResponse, error) {
 	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
-	eventID, userID, err := eventAndUser(req.Msg.EventId, req.Msg.UserId)
+	eventID, userID, err := eventAndUser(req.EventId, req.UserId)
 	if err != nil {
 		return nil, err
 	}
 	if err := h.Svc.RemoveProposalMember(ctx, eventID, userID); err != nil {
 		return nil, proposalError(err)
 	}
-	return connect.NewResponse(&isshov1.RemoveProposalMemberResponse{}), nil
+	return &isshov1.RemoveProposalMemberResponse{}, nil
 }
 
-func (h *ReviewHandler) SetProposalStart(ctx context.Context, req *connect.Request[isshov1.SetProposalStartRequest]) (*connect.Response[isshov1.SetProposalStartResponse], error) {
+func (h *ReviewHandler) SetProposalStart(ctx context.Context, req *isshov1.SetProposalStartRequest) (*isshov1.SetProposalStartResponse, error) {
 	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
-	id, err := parseEventID(req.Msg.EventId)
+	id, err := parseEventID(req.EventId)
 	if err != nil {
 		return nil, err
 	}
-	if err := h.Svc.SetProposalStart(ctx, id, req.Msg.Date, req.Msg.Time, h.now()); err != nil {
+	if err := h.Svc.SetProposalStart(ctx, id, req.Date, req.Time, h.now()); err != nil {
 		return nil, proposalError(err)
 	}
-	return connect.NewResponse(&isshov1.SetProposalStartResponse{}), nil
+	return &isshov1.SetProposalStartResponse{}, nil
 }
 
-func (h *ReviewHandler) SetGroupMeetingPoint(ctx context.Context, req *connect.Request[isshov1.SetGroupMeetingPointRequest]) (*connect.Response[isshov1.SetGroupMeetingPointResponse], error) {
+func (h *ReviewHandler) SetGroupMeetingPoint(ctx context.Context, req *isshov1.SetGroupMeetingPointRequest) (*isshov1.SetGroupMeetingPointResponse, error) {
 	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
-	id, err := uuid.Parse(req.Msg.GroupId)
+	id, err := uuid.Parse(req.GroupId)
 	if err != nil {
 		return nil, errs.Invalid("group_id: not a group id")
 	}
-	if err := h.Svc.SetMeetingPoint(ctx, id, req.Msg.Text); err != nil {
+	if err := h.Svc.SetMeetingPoint(ctx, id, req.Text); err != nil {
 		return nil, proposalError(err)
 	}
-	return connect.NewResponse(&isshov1.SetGroupMeetingPointResponse{}), nil
+	return &isshov1.SetGroupMeetingPointResponse{}, nil
 }
 
-func (h *ReviewHandler) ApproveProposal(ctx context.Context, req *connect.Request[isshov1.ApproveProposalRequest]) (*connect.Response[isshov1.ApproveProposalResponse], error) {
+func (h *ReviewHandler) ApproveProposal(ctx context.Context, req *isshov1.ApproveProposalRequest) (*isshov1.ApproveProposalResponse, error) {
 	c, err := auth.RequireAdmin(ctx)
 	if err != nil {
 		return nil, err
 	}
-	id, err := parseEventID(req.Msg.EventId)
+	id, err := parseEventID(req.EventId)
 	if err != nil {
 		return nil, err
 	}
 	if err := h.Svc.ApproveProposal(ctx, id, c.UserID, h.now()); err != nil {
 		return nil, proposalError(err)
 	}
-	return connect.NewResponse(&isshov1.ApproveProposalResponse{}), nil
+	return &isshov1.ApproveProposalResponse{}, nil
 }
 
-func (h *ReviewHandler) RejectProposal(ctx context.Context, req *connect.Request[isshov1.RejectProposalRequest]) (*connect.Response[isshov1.RejectProposalResponse], error) {
+func (h *ReviewHandler) RejectProposal(ctx context.Context, req *isshov1.RejectProposalRequest) (*isshov1.RejectProposalResponse, error) {
 	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
-	id, err := parseEventID(req.Msg.EventId)
+	id, err := parseEventID(req.EventId)
 	if err != nil {
 		return nil, err
 	}
 	if err := h.Svc.RejectProposal(ctx, id, h.now()); err != nil {
 		return nil, proposalError(err)
 	}
-	return connect.NewResponse(&isshov1.RejectProposalResponse{}), nil
+	return &isshov1.RejectProposalResponse{}, nil
 }
 
 func eventAndUser(event, user string) (uuid.UUID, uuid.UUID, error) {

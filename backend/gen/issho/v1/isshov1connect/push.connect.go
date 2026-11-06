@@ -5,40 +5,48 @@
 package isshov1connect
 
 import (
-	connect "connectrpc.com/connect"
+	connect "connectrpc.com/connect/v2"
 	context "context"
-	errors "errors"
 	v1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
-	http "net/http"
-	strings "strings"
+	sync "sync"
 )
-
-// This is a compile-time assertion to ensure that this generated file and the connect package are
-// compatible. If you get a compiler error that this constant is not defined, this code was
-// generated with a version of connect newer than the one compiled into your binary. You can fix the
-// problem by either regenerating this code with an older version of connect or updating the connect
-// version compiled into your binary.
-const _ = connect.IsAtLeastVersion1_13_0
 
 const (
 	// PushServiceName is the fully-qualified name of the PushService service.
 	PushServiceName = "issho.v1.PushService"
 )
 
-// These constants are the fully-qualified names of the RPCs defined in this package. They're
-// exposed at runtime as Spec.Procedure and as the final two segments of the HTTP route.
+// These constants are the procedure names of the RPCs defined in this package. They're exposed at
+// runtime as Spec.Procedure and as the final two segments of the HTTP route.
 //
 // Note that these are different from the fully-qualified method names used by
 // google.golang.org/protobuf/reflect/protoreflect. To convert from these constants to
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
-	// PushServiceRegisterPushTokenProcedure is the fully-qualified name of the PushService's
+	// PushServiceRegisterPushTokenProcedure is the procedure name of the PushService's
 	// RegisterPushToken RPC.
 	PushServiceRegisterPushTokenProcedure = "/issho.v1.PushService/RegisterPushToken"
-	// PushServiceUnregisterPushTokenProcedure is the fully-qualified name of the PushService's
+	// PushServiceUnregisterPushTokenProcedure is the procedure name of the PushService's
 	// UnregisterPushToken RPC.
 	PushServiceUnregisterPushTokenProcedure = "/issho.v1.PushService/UnregisterPushToken"
+)
+
+var (
+	pushServiceRegisterPushTokenSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_issho_v1_push_proto.Services().ByName("PushService").Methods().ByName("RegisterPushToken"),
+			Procedure:  PushServiceRegisterPushTokenProcedure,
+		}
+	})
+	pushServiceUnregisterPushTokenSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_issho_v1_push_proto.Services().ByName("PushService").Methods().ByName("UnregisterPushToken"),
+			Procedure:  PushServiceUnregisterPushTokenProcedure,
+		}
+	})
 )
 
 // PushServiceClient is a client for the issho.v1.PushService service.
@@ -46,52 +54,16 @@ type PushServiceClient interface {
 	// RegisterPushToken stores the device's token for the caller. A token
 	// registered by another account moves to the caller (the last person to
 	// sign in on a device gets its notifications).
-	RegisterPushToken(context.Context, *connect.Request[v1.RegisterPushTokenRequest]) (*connect.Response[v1.RegisterPushTokenResponse], error)
+	RegisterPushToken(context.Context, *v1.RegisterPushTokenRequest) (*v1.RegisterPushTokenResponse, error)
 	// UnregisterPushToken stops notifications to the device for the caller.
 	// Unknown tokens are ignored.
-	UnregisterPushToken(context.Context, *connect.Request[v1.UnregisterPushTokenRequest]) (*connect.Response[v1.UnregisterPushTokenResponse], error)
+	UnregisterPushToken(context.Context, *v1.UnregisterPushTokenRequest) (*v1.UnregisterPushTokenResponse, error)
 }
 
-// NewPushServiceClient constructs a client for the issho.v1.PushService service. By default, it
-// uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses, and sends
-// uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the connect.WithGRPC() or
-// connect.WithGRPCWeb() options.
-//
-// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
-// http://api.acme.com or https://acme.com/grpc).
-func NewPushServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) PushServiceClient {
-	baseURL = strings.TrimRight(baseURL, "/")
-	pushServiceMethods := v1.File_issho_v1_push_proto.Services().ByName("PushService").Methods()
-	return &pushServiceClient{
-		registerPushToken: connect.NewClient[v1.RegisterPushTokenRequest, v1.RegisterPushTokenResponse](
-			httpClient,
-			baseURL+PushServiceRegisterPushTokenProcedure,
-			connect.WithSchema(pushServiceMethods.ByName("RegisterPushToken")),
-			connect.WithClientOptions(opts...),
-		),
-		unregisterPushToken: connect.NewClient[v1.UnregisterPushTokenRequest, v1.UnregisterPushTokenResponse](
-			httpClient,
-			baseURL+PushServiceUnregisterPushTokenProcedure,
-			connect.WithSchema(pushServiceMethods.ByName("UnregisterPushToken")),
-			connect.WithClientOptions(opts...),
-		),
-	}
-}
-
-// pushServiceClient implements PushServiceClient.
-type pushServiceClient struct {
-	registerPushToken   *connect.Client[v1.RegisterPushTokenRequest, v1.RegisterPushTokenResponse]
-	unregisterPushToken *connect.Client[v1.UnregisterPushTokenRequest, v1.UnregisterPushTokenResponse]
-}
-
-// RegisterPushToken calls issho.v1.PushService.RegisterPushToken.
-func (c *pushServiceClient) RegisterPushToken(ctx context.Context, req *connect.Request[v1.RegisterPushTokenRequest]) (*connect.Response[v1.RegisterPushTokenResponse], error) {
-	return c.registerPushToken.CallUnary(ctx, req)
-}
-
-// UnregisterPushToken calls issho.v1.PushService.UnregisterPushToken.
-func (c *pushServiceClient) UnregisterPushToken(ctx context.Context, req *connect.Request[v1.UnregisterPushTokenRequest]) (*connect.Response[v1.UnregisterPushTokenResponse], error) {
-	return c.unregisterPushToken.CallUnary(ctx, req)
+// NewPushServiceClient constructs a client for the issho.v1.PushService service. Multiple service
+// clients may share a single connect.Client.
+func NewPushServiceClient(client *connect.Client) PushServiceClient {
+	return &pushServiceClient{client: client}
 }
 
 // PushServiceHandler is an implementation of the issho.v1.PushService service.
@@ -99,50 +71,74 @@ type PushServiceHandler interface {
 	// RegisterPushToken stores the device's token for the caller. A token
 	// registered by another account moves to the caller (the last person to
 	// sign in on a device gets its notifications).
-	RegisterPushToken(context.Context, *connect.Request[v1.RegisterPushTokenRequest]) (*connect.Response[v1.RegisterPushTokenResponse], error)
+	RegisterPushToken(context.Context, *v1.RegisterPushTokenRequest) (*v1.RegisterPushTokenResponse, error)
 	// UnregisterPushToken stops notifications to the device for the caller.
 	// Unknown tokens are ignored.
-	UnregisterPushToken(context.Context, *connect.Request[v1.UnregisterPushTokenRequest]) (*connect.Response[v1.UnregisterPushTokenResponse], error)
+	UnregisterPushToken(context.Context, *v1.UnregisterPushTokenRequest) (*v1.UnregisterPushTokenResponse, error)
 }
 
-// NewPushServiceHandler builds an HTTP handler from the service implementation. It returns the path
-// on which to mount the handler and the handler itself.
-//
-// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
-// and JSON codecs. They also support gzip compression.
-func NewPushServiceHandler(svc PushServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
-	pushServiceMethods := v1.File_issho_v1_push_proto.Services().ByName("PushService").Methods()
-	pushServiceRegisterPushTokenHandler := connect.NewUnaryHandler(
-		PushServiceRegisterPushTokenProcedure,
-		svc.RegisterPushToken,
-		connect.WithSchema(pushServiceMethods.ByName("RegisterPushToken")),
-		connect.WithHandlerOptions(opts...),
+// RegisterPushServiceHandler registers svc as the issho.v1.PushService implementation on server.
+func RegisterPushServiceHandler(server *connect.Server, svc PushServiceHandler) {
+	adapter := pushServiceHandler{svc: svc}
+	server.Register(
+		connect.Method{Spec: pushServiceRegisterPushTokenSpec(), Handler: adapter.registerPushToken},
+		connect.Method{Spec: pushServiceUnregisterPushTokenSpec(), Handler: adapter.unregisterPushToken},
 	)
-	pushServiceUnregisterPushTokenHandler := connect.NewUnaryHandler(
-		PushServiceUnregisterPushTokenProcedure,
-		svc.UnregisterPushToken,
-		connect.WithSchema(pushServiceMethods.ByName("UnregisterPushToken")),
-		connect.WithHandlerOptions(opts...),
-	)
-	return "/issho.v1.PushService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.URL.Path {
-		case PushServiceRegisterPushTokenProcedure:
-			pushServiceRegisterPushTokenHandler.ServeHTTP(w, r)
-		case PushServiceUnregisterPushTokenProcedure:
-			pushServiceUnregisterPushTokenHandler.ServeHTTP(w, r)
-		default:
-			http.NotFound(w, r)
-		}
-	})
 }
 
 // UnimplementedPushServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedPushServiceHandler struct{}
 
-func (UnimplementedPushServiceHandler) RegisterPushToken(context.Context, *connect.Request[v1.RegisterPushTokenRequest]) (*connect.Response[v1.RegisterPushTokenResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.PushService.RegisterPushToken is not implemented"))
+func (UnimplementedPushServiceHandler) RegisterPushToken(context.Context, *v1.RegisterPushTokenRequest) (*v1.RegisterPushTokenResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "issho.v1.PushService.RegisterPushToken is not implemented")
 }
 
-func (UnimplementedPushServiceHandler) UnregisterPushToken(context.Context, *connect.Request[v1.UnregisterPushTokenRequest]) (*connect.Response[v1.UnregisterPushTokenResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.PushService.UnregisterPushToken is not implemented"))
+func (UnimplementedPushServiceHandler) UnregisterPushToken(context.Context, *v1.UnregisterPushTokenRequest) (*v1.UnregisterPushTokenResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "issho.v1.PushService.UnregisterPushToken is not implemented")
+}
+
+type pushServiceClient struct {
+	client *connect.Client
+}
+
+func (c *pushServiceClient) RegisterPushToken(ctx context.Context, req *v1.RegisterPushTokenRequest) (*v1.RegisterPushTokenResponse, error) {
+	var res v1.RegisterPushTokenResponse
+	if err := c.client.CallUnary(ctx, pushServiceRegisterPushTokenSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *pushServiceClient) UnregisterPushToken(ctx context.Context, req *v1.UnregisterPushTokenRequest) (*v1.UnregisterPushTokenResponse, error) {
+	var res v1.UnregisterPushTokenResponse
+	if err := c.client.CallUnary(ctx, pushServiceUnregisterPushTokenSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+type pushServiceHandler struct{ svc PushServiceHandler }
+
+func (h pushServiceHandler) registerPushToken(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.RegisterPushTokenRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.RegisterPushToken(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h pushServiceHandler) unregisterPushToken(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.UnregisterPushTokenRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.UnregisterPushToken(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
 }

@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"testing"
 
-	"connectrpc.com/connect"
+	"connectrpc.com/connect/v2"
+	"connectrpc.com/connect/v2/connectproto"
 
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
 )
@@ -14,7 +15,7 @@ import (
 func TestEventErrorKeepsCodesAndMessages(t *testing.T) {
 	reasonOf := func(ce *connect.Error) isshov1.ErrorReason {
 		for _, d := range ce.Details() {
-			if m, err := d.Value(); err == nil {
+			if m, err := connectproto.UnmarshalErrorDetail(d); err == nil {
 				if rd, ok := m.(*isshov1.ErrorReasonDetail); ok {
 					return rd.Reason
 				}

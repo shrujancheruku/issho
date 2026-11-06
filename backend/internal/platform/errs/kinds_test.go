@@ -11,7 +11,9 @@ import (
 	"strings"
 	"testing"
 
-	"connectrpc.com/connect"
+	"connectrpc.com/connect/v2"
+	"connectrpc.com/connect/v2/connecthttp"
+	"connectrpc.com/connect/v2/connectproto"
 
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
 	"github.com/shrujancheruku/issho/backend/gen/issho/v1/isshov1connect"
@@ -23,21 +25,23 @@ func serve(t *testing.T, handlerErr error) isshov1connect.HealthServiceClient {
 	t.Helper()
 	log := slog.New(slog.NewTextHandler(io.Discard, nil))
 	mux := http.NewServeMux()
-	mux.Handle(isshov1connect.NewHealthServiceHandler(failingHealth{handlerErr}, connect.WithInterceptors(Interceptor(log))))
+	server := connect.NewServer(Interceptor(log))
+	isshov1connect.RegisterHealthServiceHandler(server, failingHealth{handlerErr})
+	connecthttp.Mount(mux, server)
 	srv := httptest.NewServer(mux)
 	t.Cleanup(srv.Close)
-	return isshov1connect.NewHealthServiceClient(srv.Client(), srv.URL)
+	return isshov1connect.NewHealthServiceClient(connect.NewClient(connecthttp.NewTransport(srv.Client(), srv.URL)))
 }
 
 type failingHealth struct{ err error }
 
-func (f failingHealth) Check(context.Context, *connect.Request[isshov1.CheckRequest]) (*connect.Response[isshov1.CheckResponse], error) {
+func (f failingHealth) Check(context.Context, *isshov1.CheckRequest) (*isshov1.CheckResponse, error) {
 	return nil, f.err
 }
 
 func check(t *testing.T, err error) error {
 	t.Helper()
-	_, got := serve(t, err).Check(context.Background(), connect.NewRequest(&isshov1.CheckRequest{}))
+	_, got := serve(t, err).Check(context.Background(), &isshov1.CheckRequest{})
 	return got
 }
 
@@ -49,7 +53,7 @@ func reasonOf(t *testing.T, err error) isshov1.ErrorReason {
 		t.Fatalf("not a connect error: %v", err)
 	}
 	for _, d := range ce.Details() {
-		m, verr := d.Value()
+		m, verr := connectproto.UnmarshalErrorDetail(d)
 		if verr != nil {
 			t.Fatal(verr)
 		}

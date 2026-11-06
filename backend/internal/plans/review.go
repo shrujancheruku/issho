@@ -9,7 +9,6 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"connectrpc.com/connect"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -59,7 +58,7 @@ var reviewStatuses = map[isshov1.ReviewPlanStatus]string{
 	isshov1.ReviewPlanStatus_REVIEW_PLAN_STATUS_CLOSED: PlanClosed,
 }
 
-func (h *ReviewHandler) ListReviewCities(ctx context.Context, _ *connect.Request[isshov1.ListReviewCitiesRequest]) (*connect.Response[isshov1.ListReviewCitiesResponse], error) {
+func (h *ReviewHandler) ListReviewCities(ctx context.Context, _ *isshov1.ListReviewCitiesRequest) (*isshov1.ListReviewCitiesResponse, error) {
 	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
@@ -71,41 +70,41 @@ func (h *ReviewHandler) ListReviewCities(ctx context.Context, _ *connect.Request
 	for i, r := range rows {
 		out.Cities[i] = &isshov1.ReviewCity{Id: r.ID, Name: r.Name, Review: r.Review, Drafts: r.Drafts, Open: r.Open}
 	}
-	return connect.NewResponse(out), nil
+	return out, nil
 }
 
-func (h *ReviewHandler) SetCityReview(ctx context.Context, req *connect.Request[isshov1.SetCityReviewRequest]) (*connect.Response[isshov1.SetCityReviewResponse], error) {
+func (h *ReviewHandler) SetCityReview(ctx context.Context, req *isshov1.SetCityReviewRequest) (*isshov1.SetCityReviewResponse, error) {
 	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
-	n, err := dbgen.New(h.Svc.DB).SetCityReview(ctx, dbgen.SetCityReviewParams{ID: req.Msg.CityId, Review: req.Msg.Review})
+	n, err := dbgen.New(h.Svc.DB).SetCityReview(ctx, dbgen.SetCityReviewParams{ID: req.CityId, Review: req.Review})
 	if err != nil {
 		return nil, err
 	}
 	if n == 0 {
 		return nil, errs.NotFound("no such city")
 	}
-	return connect.NewResponse(&isshov1.SetCityReviewResponse{}), nil
+	return &isshov1.SetCityReviewResponse{}, nil
 }
 
-func (h *ReviewHandler) ListReviewPlans(ctx context.Context, req *connect.Request[isshov1.ListReviewPlansRequest]) (*connect.Response[isshov1.ListReviewPlansResponse], error) {
+func (h *ReviewHandler) ListReviewPlans(ctx context.Context, req *isshov1.ListReviewPlansRequest) (*isshov1.ListReviewPlansResponse, error) {
 	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
-	status, ok := reviewStatuses[req.Msg.Status]
+	status, ok := reviewStatuses[req.Status]
 	if !ok {
 		return nil, errs.Invalid("status: draft, open or closed")
 	}
-	size, err := paging.Size(req.Msg.PageSize)
+	size, err := paging.Size(req.PageSize)
 	if err != nil {
 		return nil, err
 	}
-	scope := paging.Scope("ListReviewPlans", req.Msg.CityId, status)
-	k, err := paging.Open(req.Msg.PageToken, scope, 2)
+	scope := paging.Scope("ListReviewPlans", req.CityId, status)
+	k, err := paging.Open(req.PageToken, scope, 2)
 	if err != nil {
 		return nil, err
 	}
-	arg := dbgen.ListReviewPlansParams{CityID: req.Msg.CityId, Status: status, MaxRows: size + 1}
+	arg := dbgen.ListReviewPlansParams{CityID: req.CityId, Status: status, MaxRows: size + 1}
 	arg.HasAfter, arg.AfterTs, arg.AfterID = k.Present, pgtype.Timestamptz{Time: k.Time(), Valid: true}, k.UUID()
 	if err := k.Err(); err != nil {
 		return nil, err
@@ -116,7 +115,7 @@ func (h *ReviewHandler) ListReviewPlans(ctx context.Context, req *connect.Reques
 		return nil, err
 	}
 	rows, more := paging.Trim(rows, size)
-	names, err := h.Svc.activityNames(ctx, q, req.Msg.CityId)
+	names, err := h.Svc.activityNames(ctx, q, req.CityId)
 	if err != nil {
 		return nil, err
 	}
@@ -134,14 +133,14 @@ func (h *ReviewHandler) ListReviewPlans(ctx context.Context, req *connect.Reques
 			SignupDeadline: r.SignupDeadline, CreatedAt: r.CreatedAt, CreatedBy: r.CreatedBy, ReviewedBy: r.ReviewedBy, ReviewedAt: r.ReviewedAt,
 		}, names)
 	}
-	return connect.NewResponse(out), nil
+	return out, nil
 }
 
-func (h *ReviewHandler) GetReviewPlan(ctx context.Context, req *connect.Request[isshov1.GetReviewPlanRequest]) (*connect.Response[isshov1.GetReviewPlanResponse], error) {
+func (h *ReviewHandler) GetReviewPlan(ctx context.Context, req *isshov1.GetReviewPlanRequest) (*isshov1.GetReviewPlanResponse, error) {
 	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
-	id, err := parsePlanID(req.Msg.PlanId)
+	id, err := parsePlanID(req.PlanId)
 	if err != nil {
 		return nil, err
 	}
@@ -182,37 +181,37 @@ func (h *ReviewHandler) GetReviewPlan(ctx context.Context, req *connect.Request[
 			routeFrom(r.RoutePolyline, r.RouteSeconds), caller)
 	}
 	out.Plan, out.Steps = reviewPlanToProto(r, names), stepsToProto(steps)
-	return connect.NewResponse(out), nil
+	return out, nil
 }
 
-func (h *ReviewHandler) ApprovePlan(ctx context.Context, req *connect.Request[isshov1.ApprovePlanRequest]) (*connect.Response[isshov1.ApprovePlanResponse], error) {
+func (h *ReviewHandler) ApprovePlan(ctx context.Context, req *isshov1.ApprovePlanRequest) (*isshov1.ApprovePlanResponse, error) {
 	c, err := auth.RequireAdmin(ctx)
 	if err != nil {
 		return nil, err
 	}
-	id, err := parsePlanID(req.Msg.PlanId)
+	id, err := parsePlanID(req.PlanId)
 	if err != nil {
 		return nil, err
 	}
 	if err := h.Svc.ApproveDraft(ctx, id, c.UserID, h.now()); err != nil {
 		return nil, roundError(err)
 	}
-	return connect.NewResponse(&isshov1.ApprovePlanResponse{}), nil
+	return &isshov1.ApprovePlanResponse{}, nil
 }
 
-func (h *ReviewHandler) RejectPlan(ctx context.Context, req *connect.Request[isshov1.RejectPlanRequest]) (*connect.Response[isshov1.RejectPlanResponse], error) {
+func (h *ReviewHandler) RejectPlan(ctx context.Context, req *isshov1.RejectPlanRequest) (*isshov1.RejectPlanResponse, error) {
 	c, err := auth.RequireAdmin(ctx)
 	if err != nil {
 		return nil, err
 	}
-	id, err := parsePlanID(req.Msg.PlanId)
+	id, err := parsePlanID(req.PlanId)
 	if err != nil {
 		return nil, err
 	}
 	if err := h.Svc.RejectDraft(ctx, id, c.UserID, h.now()); err != nil {
 		return nil, roundError(err)
 	}
-	return connect.NewResponse(&isshov1.RejectPlanResponse{}), nil
+	return &isshov1.RejectPlanResponse{}, nil
 }
 
 // roundError maps a plan transition's errors (rounds.go) to codes.
@@ -226,15 +225,15 @@ func roundError(err error) error {
 	return err
 }
 
-func (h *ReviewHandler) EditPlan(ctx context.Context, req *connect.Request[isshov1.EditPlanRequest]) (*connect.Response[isshov1.EditPlanResponse], error) {
+func (h *ReviewHandler) EditPlan(ctx context.Context, req *isshov1.EditPlanRequest) (*isshov1.EditPlanResponse, error) {
 	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
-	id, err := parsePlanID(req.Msg.PlanId)
+	id, err := parsePlanID(req.PlanId)
 	if err != nil {
 		return nil, err
 	}
-	title, summary, err := planText(req.Msg.Title, req.Msg.Summary)
+	title, summary, err := planText(req.Title, req.Summary)
 	if err != nil {
 		return nil, err
 	}
@@ -245,33 +244,33 @@ func (h *ReviewHandler) EditPlan(ctx context.Context, req *connect.Request[issho
 	if n == 0 {
 		return nil, errs.Refused("no draft or open plan with that id")
 	}
-	return connect.NewResponse(&isshov1.EditPlanResponse{}), nil
+	return &isshov1.EditPlanResponse{}, nil
 }
 
-func (h *ReviewHandler) WithdrawPlan(ctx context.Context, req *connect.Request[isshov1.WithdrawPlanRequest]) (*connect.Response[isshov1.WithdrawPlanResponse], error) {
+func (h *ReviewHandler) WithdrawPlan(ctx context.Context, req *isshov1.WithdrawPlanRequest) (*isshov1.WithdrawPlanResponse, error) {
 	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
-	id, err := parsePlanID(req.Msg.PlanId)
+	id, err := parsePlanID(req.PlanId)
 	if err != nil {
 		return nil, err
 	}
 	if err := h.Svc.WithdrawPlan(ctx, id, h.now()); err != nil {
 		return nil, roundError(err)
 	}
-	return connect.NewResponse(&isshov1.WithdrawPlanResponse{}), nil
+	return &isshov1.WithdrawPlanResponse{}, nil
 }
 
-func (h *ReviewHandler) ListVenueOptions(ctx context.Context, req *connect.Request[isshov1.ListVenueOptionsRequest]) (*connect.Response[isshov1.ListVenueOptionsResponse], error) {
+func (h *ReviewHandler) ListVenueOptions(ctx context.Context, req *isshov1.ListVenueOptionsRequest) (*isshov1.ListVenueOptionsResponse, error) {
 	if _, err := auth.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
 	q := dbgen.New(h.Svc.DB)
-	_, act, err := cityActivity(ctx, q, req.Msg.AreaId, req.Msg.ActivityId)
+	_, act, err := cityActivity(ctx, q, req.AreaId, req.ActivityId)
 	if err != nil {
 		return nil, err
 	}
-	rows, err := venueOptions(ctx, q, req.Msg.AreaId, act, venueOptionRows)
+	rows, err := venueOptions(ctx, q, req.AreaId, act, venueOptionRows)
 	if err != nil {
 		return nil, err
 	}
@@ -294,15 +293,15 @@ func (h *ReviewHandler) ListVenueOptions(ctx context.Context, req *connect.Reque
 		})
 	}
 	wg.Wait()
-	return connect.NewResponse(out), nil
+	return out, nil
 }
 
-func (h *ReviewHandler) CreatePlan(ctx context.Context, req *connect.Request[isshov1.CreatePlanRequest]) (*connect.Response[isshov1.CreatePlanResponse], error) {
+func (h *ReviewHandler) CreatePlan(ctx context.Context, req *isshov1.CreatePlanRequest) (*isshov1.CreatePlanResponse, error) {
 	c, err := auth.RequireAdmin(ctx)
 	if err != nil {
 		return nil, err
 	}
-	m := req.Msg
+	m := req
 	q := dbgen.New(h.Svc.DB)
 	city, act, err := cityActivity(ctx, q, m.AreaId, m.ActivityId)
 	if err != nil {
@@ -359,7 +358,7 @@ func (h *ReviewHandler) CreatePlan(ctx context.Context, req *connect.Request[iss
 	if err != nil {
 		return nil, err
 	}
-	return connect.NewResponse(&isshov1.CreatePlanResponse{PlanId: id.String()}), nil
+	return &isshov1.CreatePlanResponse{PlanId: id.String()}, nil
 }
 
 // cityActivity finds an area's city and an activity enabled there.

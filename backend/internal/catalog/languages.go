@@ -3,7 +3,6 @@ package catalog
 import (
 	"context"
 
-	"connectrpc.com/connect"
 	"golang.org/x/text/language"
 	"golang.org/x/text/language/display"
 
@@ -13,16 +12,16 @@ import (
 
 // ListLanguages names languages from CLDR data (golang.org/x/text), not
 // machine translation: language names are exactly what CLDR exists for.
-func (h *Handler) ListLanguages(_ context.Context, req *connect.Request[isshov1.ListLanguagesRequest]) (*connect.Response[isshov1.ListLanguagesResponse], error) {
-	locale, _, err := displayLanguages(req.Msg.Locale, "")
+func (h *Handler) ListLanguages(_ context.Context, req *isshov1.ListLanguagesRequest) (*isshov1.ListLanguagesResponse, error) {
+	locale, _, err := displayLanguages(req.Locale, "")
 	if err != nil {
 		return nil, err
 	}
 	out := Languages(locale)
-	if req.Msg.Display {
+	if req.Display {
 		out = withTraditionalChinese(out, locale)
 	}
-	return connect.NewResponse(&isshov1.ListLanguagesResponse{Languages: out}), nil
+	return &isshov1.ListLanguagesResponse{Languages: out}, nil
 }
 
 // Languages lists every ISO 639-1 language, named in itself and in locale.
