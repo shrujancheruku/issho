@@ -12,6 +12,22 @@ _Avoid_: listing, activity (an activity is what a plan is about)
 A plan with a date and a group of people invited to it, from their invitation until the feedback window closes. The code and the API call it an event.
 _Avoid_: meetup, event (in the app's copy)
 
+**Meeting place**:
+Where an outing's group gathers when its first activity has no venue of its own, such as the start of a walk. Each city has its own preference: a station in Tokyo, a café in Da Nang.
+_Avoid_: meeting point, rendezvous
+
+**Beverage**:
+A low-investment, non-alcoholic drink out: a café, a tea house, a juice bar. It can be a meeting place or a wind-down. Not a word the app shows.
+_Avoid_: coffee (too narrow), drinks (drinks out, with alcohol, is an activity)
+
+**Meal**:
+Sitting down to eat together: brunch, lunch or dinner, depending on the time. Only ever a wind-down, never an activity of its own.
+_Avoid_: food activity, dinner meetup
+
+**Wind-down**:
+The optional beverage or meal an outing ends with, near where its activities finish and open at that time. Anyone can skip it; it isn't part of what people sign up for, check in to or give feedback on.
+_Avoid_: follow-up (that's a second activity), afterparty
+
 **Area**:
 The place a person calls home and a plan is held in: one of the local government's units in a city pack (Tokyo's wards and cities such as Shinjuku-ku and Musashino-shi, Da Nang's wards), with its official boundary and its official name in the city's language. A city's areas are chosen this way unless there is a very good reason not to. Matching and travel times work between areas.
 _Avoid_: neighbourhood, district, station, region
@@ -31,6 +47,10 @@ _Avoid_: current language, active language
 **Crew**:
 A small standing group offered to people who got on well across outings; it suggests a plan each week and has its own chat.
 _Avoid_: club, circle
+
+**Join offer**:
+An offer to someone new to join an existing crew, because at least two of its members picked them to meet again. Before it's sent, any member can quietly turn it down, and the newcomer never learns of it.
+_Avoid_: invitation (that's an outing's), crew offer (that's a new crew)
 
 **Room**:
 One chat: an outing's group chat or a crew's chat.
