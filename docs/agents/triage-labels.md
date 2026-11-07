@@ -10,6 +10,8 @@ The skills speak in terms of five canonical triage roles. This file maps those r
 | `ready-for-human`          | `ready-for-human`    | Requires human implementation            |
 | `wontfix`                  | `wontfix`            | Will not be actioned                     |
 
+Related labels: `size:S`, `size:M` and `size:L` are required before `ready-for-agent`. The PR-only labels `go` and `breaking-ok` never go on issues. See "Planning rules" in `docs/agents/issue-tracker.md`.
+
 When a skill mentions a role (e.g. "apply the AFK-ready triage label"), use the corresponding label string from this table.
 
 Edit the "Label in our tracker" column to match whatever vocabulary you actually use.

@@ -16,6 +16,18 @@ Infer the repo from `git remote -v`; `gh` does this automatically when run insid
 
 The repository is public: an issue says what and why, never who, and never includes secrets, personal data or user content.
 
+## Planning rules
+
+How work is planned and tracked. The decision is in the resolution comment of #418.
+
+- **Work parent.** One parent issue is active at a time, and every `ready-for-agent` or `ready-for-human` ticket is a sub-issue of it. Sub-issue order is run order; the owner reorders it on the parent. It is the only target for orchestrate runs. Tickets reach it only through triage. No orphan tickets, except the Pilot-bug exception below.
+- **Ticket shape.** Use `.github/ISSUE_TEMPLATE/ticket.md`: what and why; acceptance criteria as behaviour you can observe; expected paths; a required `size:S|M|L` label; blockers wired as native dependencies (see **Blocking**); no references to retired docs. A ticket fits one worker session; an L that isn't on a risk path gets split. The PR-only labels `go` and `breaking-ok` never go on issues.
+- **When a ticket is ready.** Label it `ready-for-agent` only when no decision is left open in it (open decisions go to a wayfinder ticket first), its criteria can be tested, and it has a size label, a parent and wired blockers.
+- **Pilot-bug exception.** A bug found during the Pilot may stand alone, without a parent, and goes to the front of the run order.
+- **Fog and deferred ideas.** In-scope fog stays in the active map's **Not yet specified** section. Ideas beyond any current destination go as bullets in the one pinned Ideas issue (#360), not as an issue each. An idea becomes an issue only when the owner makes it a destination or pulls it into a plan.
+- **Reviews file findings for triage.** A review never files `ready-for-agent` tickets directly. It opens one parent issue of its own, with its findings as sub-issues labelled `needs-triage`. The owner moves each into the work parent (shaped and labelled ready), into the Ideas list, or closes it.
+- **When to re-plan.** At each Pilot checkpoint, reorder open tickets and close stale ones. Before the Pilot, review the plan when each audit-driven milestone finishes.
+
 ## Pull requests as a triage surface
 
 **PRs as a request surface: no.** _(Set to `yes` if this repo treats external PRs as feature requests; `/triage` reads this flag.)_
