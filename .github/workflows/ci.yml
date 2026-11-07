@@ -55,6 +55,8 @@ jobs:
           fetch-depth: 0
       - name: The path rules behave
         run: scripts/ci-changes.test.sh
+      - name: The tracker check behaves
+        run: scripts/tracker-check.test.sh
       - name: Which jobs does this change need
         id: filter
         run: |
