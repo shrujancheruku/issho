@@ -5,8 +5,8 @@
 // rooms, crews for crew rooms). chat imports neither; cmd/api wires them.
 //
 // A message posted to either kind NOTIFYs the "chat" channel with the
-// room's Topic (the event group's or the crew's id), which internal/chatws
-// relays to open sockets.
+// room's Topic (its app.rooms id), which internal/chatws relays to open
+// sockets. Both kinds are rows of app.rooms and app.messages.
 package chat
 
 import (
@@ -33,8 +33,8 @@ const (
 	// messages are deleted (Keep).
 	OpensBefore = 48 * time.Hour
 	ClosesAfter = 24 * time.Hour
-	// Keep is how long after the event its group's messages are kept, and
-	// after a crew closes its chat.
+	// Keep is how long after the event its room's messages are kept, and
+	// after a crew closes its room.
 	Keep = 30 * 24 * time.Hour
 	// DeleteBatch is how many rows one retention delete removes at most.
 	DeleteBatch = 1000
@@ -72,9 +72,9 @@ type Room struct {
 
 // State is what a room's owner says about the caller's use of it right now.
 type State struct {
-	// Topic is what the room's messages are stored under and NOTIFY names:
-	// the event's group id, or the crew's id. Both are uuids, so they never
-	// collide.
+	// Topic is the room's id in app.rooms: what its messages are stored
+	// under and NOTIFY names. The owner's Access resolves its event or crew
+	// id to it.
 	Topic uuid.UUID
 	// Open is whether the caller may write now. Reading is allowed whenever
 	// Access returns no error.
@@ -166,52 +166,23 @@ func (s *Service) list(ctx context.Context, userID uuid.UUID, room Room, afterID
 	if err != nil {
 		return nil, st, err
 	}
-	var msgs []Message
-	switch room.Kind {
-	case EventRoom:
-		msgs, err = listEvent(ctx, q, st.Topic, userID, afterID, latest)
-	case CrewRoom:
-		msgs, err = listCrew(ctx, q, st.Topic, userID, afterID, latest)
-	}
+	msgs, err := listMessages(ctx, q, st.Topic, userID, afterID, latest)
 	return msgs, st, err
 }
 
-func listEvent(ctx context.Context, q *dbgen.Queries, groupID, userID uuid.UUID, afterID int64, latest bool) ([]Message, error) {
-	var rows []dbgen.ListChatMessagesRow
+func listMessages(ctx context.Context, q *dbgen.Queries, roomID, userID uuid.UUID, afterID int64, latest bool) ([]Message, error) {
+	var rows []dbgen.ListMessagesRow
 	if latest {
-		rs, err := q.ListLatestChatMessages(ctx, dbgen.ListLatestChatMessagesParams{GroupID: groupID, Max: Page})
+		rs, err := q.ListLatestMessages(ctx, dbgen.ListLatestMessagesParams{RoomID: roomID, Max: Page})
 		if err != nil {
 			return nil, err
 		}
 		for _, r := range rs {
-			rows = append(rows, dbgen.ListChatMessagesRow(r))
+			rows = append(rows, dbgen.ListMessagesRow(r))
 		}
 	} else {
 		var err error
-		if rows, err = q.ListChatMessages(ctx, dbgen.ListChatMessagesParams{GroupID: groupID, AfterID: afterID, Max: Page}); err != nil {
-			return nil, err
-		}
-	}
-	out := make([]Message, len(rows))
-	for i, r := range rows {
-		out[i] = Message{ID: r.ID, UserID: r.UserID, Name: pgconv.Deref(r.DisplayName), Body: r.Body, At: r.CreatedAt.Time, Mine: r.UserID == userID}
-	}
-	return out, nil
-}
-
-func listCrew(ctx context.Context, q *dbgen.Queries, crewID, userID uuid.UUID, afterID int64, latest bool) ([]Message, error) {
-	var rows []dbgen.ListCrewMessagesRow
-	if latest {
-		rs, err := q.ListLatestCrewMessages(ctx, dbgen.ListLatestCrewMessagesParams{CrewID: crewID, Max: Page})
-		if err != nil {
-			return nil, err
-		}
-		for _, r := range rs {
-			rows = append(rows, dbgen.ListCrewMessagesRow(r))
-		}
-	} else {
-		var err error
-		if rows, err = q.ListCrewMessages(ctx, dbgen.ListCrewMessagesParams{CrewID: crewID, AfterID: afterID, Max: Page}); err != nil {
+		if rows, err = q.ListMessages(ctx, dbgen.ListMessagesParams{RoomID: roomID, AfterID: afterID, Max: Page}); err != nil {
 			return nil, err
 		}
 	}
@@ -244,7 +215,7 @@ func (s *Service) Send(ctx context.Context, userID uuid.UUID, room Room, body st
 		if err != nil {
 			return err
 		}
-		if err := lock(ctx, q, room.Kind, st.Topic); err != nil {
+		if err := lock(ctx, q, st.Topic); err != nil {
 			return err
 		}
 		if st, err = s.state(ctx, q, userID, room, now); err != nil {
@@ -253,20 +224,11 @@ func (s *Service) Send(ctx context.Context, userID uuid.UUID, room Room, body st
 		if !st.Open {
 			return ErrClosed
 		}
-		switch room.Kind {
-		case EventRoom:
-			r, err := q.InsertChatMessage(ctx, dbgen.InsertChatMessageParams{GroupID: st.Topic, UserID: userID, Body: body})
-			if err != nil {
-				return err
-			}
-			msg = Message{ID: r.ID, At: r.CreatedAt.Time}
-		case CrewRoom:
-			r, err := q.InsertCrewMessage(ctx, dbgen.InsertCrewMessageParams{CrewID: st.Topic, UserID: pgtype.UUID{Bytes: userID, Valid: true}, Body: body})
-			if err != nil {
-				return err
-			}
-			msg = Message{ID: r.ID, At: r.CreatedAt.Time}
+		r, err := q.InsertMessage(ctx, dbgen.InsertMessageParams{RoomID: st.Topic, UserID: pgtype.UUID{Bytes: userID, Valid: true}, Body: body})
+		if err != nil {
+			return err
 		}
+		msg = Message{ID: r.ID, At: r.CreatedAt.Time}
 		msg.UserID, msg.Body, msg.Mine = userID, body, true
 		return q.NotifyChat(ctx, st.Topic.String())
 	})
@@ -278,14 +240,8 @@ func (s *Service) Send(ctx context.Context, userID uuid.UUID, room Room, body st
 // commits, so two posters could commit out of order, and a reader that
 // had already moved its cursor past the higher id would never see the lower
 // one. One poster at a time per room makes ids commit in order.
-func lock(ctx context.Context, q *dbgen.Queries, kind Kind, topic uuid.UUID) error {
-	var err error
-	switch kind {
-	case EventRoom:
-		_, err = q.LockEventRoom(ctx, topic)
-	case CrewRoom:
-		_, err = q.LockCrewRoom(ctx, topic)
-	}
+func lock(ctx context.Context, q *dbgen.Queries, roomID uuid.UUID) error {
+	_, err := q.LockRoom(ctx, roomID)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return ErrNoRoom
 	}
@@ -296,15 +252,19 @@ func lock(ctx context.Context, q *dbgen.Queries, kind Kind, topic uuid.UUID) err
 // and tells every API instance. Run it in the transaction that decided to
 // suggest it; it takes the same lock as Send.
 func PostPlan(ctx context.Context, q *dbgen.Queries, crewID, planID uuid.UUID, at time.Time) error {
-	if err := lock(ctx, q, CrewRoom, crewID); err != nil {
+	roomID, err := q.LockCrewRoomByCrew(ctx, pgtype.UUID{Bytes: crewID, Valid: true})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return ErrNoRoom
+	}
+	if err != nil {
 		return err
 	}
-	if err := q.InsertCrewPlanMessage(ctx, dbgen.InsertCrewPlanMessageParams{
-		CrewID: crewID, PlanID: pgtype.UUID{Bytes: planID, Valid: true}, At: pgtype.Timestamptz{Time: at, Valid: true},
+	if err := q.InsertPlanMessage(ctx, dbgen.InsertPlanMessageParams{
+		RoomID: roomID, PlanID: pgtype.UUID{Bytes: planID, Valid: true}, At: pgtype.Timestamptz{Time: at, Valid: true},
 	}); err != nil {
 		return err
 	}
-	return q.NotifyChat(ctx, crewID.String())
+	return q.NotifyChat(ctx, roomID.String())
 }
 
 // Typed tells the room's other sockets that the caller is typing. It
@@ -330,21 +290,18 @@ func (s *Service) Typed(ctx context.Context, userID uuid.UUID, room Room, now ti
 	return q.NotifyTyping(ctx, string(payload))
 }
 
-// DeleteOld deletes the group chats of a city's events that ended more
-// than Keep ago. Run by the worker's settle pass.
-func DeleteOld(ctx context.Context, q *dbgen.Queries, cityID string, now time.Time) (int64, error) {
-	return q.DeleteOldChats(ctx, dbgen.DeleteOldChatsParams{CityID: cityID, Before: pgtype.Date{Time: now.Add(-Keep), Valid: true}})
-}
-
-// DeleteOldCrewChats deletes the chats of crews that closed or lapsed
-// (closed_at) more than Keep ago, for privacy. It deletes in batches of
-// DeleteBatch, so a pass never holds a long lock, and returns the total.
-// An active crew's chat is kept, whoever has left it.
-func DeleteOldCrewChats(ctx context.Context, q *dbgen.Queries, now time.Time) (int64, error) {
+// DeleteOld deletes the messages of rooms whose owner finished more than
+// Keep ago, for privacy: an outing's by its event's date, a crew's by when it
+// closed or lapsed (closed_at). An active crew's room is kept, whoever has
+// left it. It deletes in batches of DeleteBatch, so a pass never holds a long
+// lock, and returns the total. Run by the worker's daily retention job.
+func DeleteOld(ctx context.Context, q *dbgen.Queries, now time.Time) (int64, error) {
 	var total int64
 	for {
-		n, err := q.DeleteOldCrewChats(ctx, dbgen.DeleteOldCrewChatsParams{
-			Before: pgtype.Timestamptz{Time: now.Add(-Keep), Valid: true}, Max: DeleteBatch,
+		n, err := q.DeleteOldMessages(ctx, dbgen.DeleteOldMessagesParams{
+			BeforeDate: pgtype.Date{Time: now.Add(-Keep), Valid: true},
+			BeforeAt:   pgtype.Timestamptz{Time: now.Add(-Keep), Valid: true},
+			Max:        DeleteBatch,
 		})
 		total += n
 		if err != nil || n < DeleteBatch {

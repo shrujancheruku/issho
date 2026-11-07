@@ -13,9 +13,16 @@ where c.city_id = @city_id and m.response in ('declined', 'left')
 order by 1, 2;
 
 -- name: CreateCrew :one
-insert into app.crews (city_id, activity_id, area_id, offer_until, created_at)
-values (@city_id, @activity_id, @area_id, @offer_until, @at)
-returning id;
+-- Its chat room is written in the same statement, so a crew never exists
+-- without one (and a rolled-back offer leaves no room).
+with c as (
+  insert into app.crews (city_id, activity_id, area_id, offer_until, created_at)
+  values (@city_id, @activity_id, @area_id, @offer_until, @at)
+  returning id
+), r as (
+  insert into app.rooms (kind, crew_id) select 'crew', id from c
+)
+select id from c;
 
 -- name: InsertCrewMembers :exec
 insert into app.crew_members (crew_id, user_id) select @crew_id, unnest(@user_ids::uuid[]);
@@ -56,7 +63,7 @@ select p.id from app.plans p
 join app.crews c on c.id = @crew_id
 where p.city_id = c.city_id and p.status = 'open' and p.signup_deadline > @after
   and (p.activity_id = c.activity_id or p.follow_up_id = c.activity_id or p.area_id = c.area_id)
-  and not exists (select 1 from app.crew_messages m where m.crew_id = c.id and m.plan_id = p.id)
+  and not exists (select 1 from app.messages m join app.rooms r on r.id = m.room_id where r.crew_id = c.id and m.plan_id = p.id)
   and not exists (
     select 1 from app.crew_members cm
     where cm.crew_id = c.id and cm.response = 'accepted'

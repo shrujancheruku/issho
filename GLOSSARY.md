@@ -61,7 +61,7 @@ An offer to someone new to join an existing crew, because at least two of its me
 _Avoid_: invitation (that's an outing's), crew offer (that's a new crew)
 
 **Room**:
-One chat: an outing's group chat or a crew's chat.
+One chat: an outing's group chat or a crew's chat. Stored as one row in a single rooms table (one per group or crew, made with it) whose messages share a single messages table.
 _Avoid_: channel, thread, conversation
 
 **Attended**:

@@ -29,9 +29,14 @@ func (q *Queries) CountCrewMembers(ctx context.Context, arg CountCrewMembersPara
 }
 
 const createCrew = `-- name: CreateCrew :one
-insert into app.crews (city_id, activity_id, area_id, offer_until, created_at)
-values ($1, $2, $3, $4, $5)
-returning id
+with c as (
+  insert into app.crews (city_id, activity_id, area_id, offer_until, created_at)
+  values ($1, $2, $3, $4, $5)
+  returning id
+), r as (
+  insert into app.rooms (kind, crew_id) select 'crew', id from c
+)
+select id from c
 `
 
 type CreateCrewParams struct {
@@ -42,6 +47,8 @@ type CreateCrewParams struct {
 	At         pgtype.Timestamptz
 }
 
+// Its chat room is written in the same statement, so a crew never exists
+// without one (and a rolled-back offer leaves no room).
 func (q *Queries) CreateCrew(ctx context.Context, arg CreateCrewParams) (uuid.UUID, error) {
 	row := q.db.QueryRow(ctx, createCrew,
 		arg.CityID,
@@ -179,7 +186,7 @@ select p.id from app.plans p
 join app.crews c on c.id = $1
 where p.city_id = c.city_id and p.status = 'open' and p.signup_deadline > $2
   and (p.activity_id = c.activity_id or p.follow_up_id = c.activity_id or p.area_id = c.area_id)
-  and not exists (select 1 from app.crew_messages m where m.crew_id = c.id and m.plan_id = p.id)
+  and not exists (select 1 from app.messages m join app.rooms r on r.id = m.room_id where r.crew_id = c.id and m.plan_id = p.id)
   and not exists (
     select 1 from app.crew_members cm
     where cm.crew_id = c.id and cm.response = 'accepted'

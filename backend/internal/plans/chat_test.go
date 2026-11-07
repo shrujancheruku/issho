@@ -109,10 +109,10 @@ func TestIntegrationChat(t *testing.T) {
 	}
 
 	// Deleted 30 days after the event, not before.
-	if n, err := chat.DeleteOld(ctx, f.q, f.city, day(12).Add(chat.Keep)); err != nil || n != 0 {
+	if n, err := chat.DeleteOld(ctx, f.q, day(12).Add(chat.Keep)); err != nil || n != 0 {
 		t.Errorf("at 30 days: deleted %d, %v; want 0", n, err)
 	}
-	if n, err := chat.DeleteOld(ctx, f.q, f.city, day(13).Add(chat.Keep)); err != nil || n != 3 {
+	if n, err := chat.DeleteOld(ctx, f.q, day(13).Add(chat.Keep)); err != nil || n != 3 {
 		t.Errorf("after 30 days: deleted %d, %v; want 3", n, err)
 	}
 }

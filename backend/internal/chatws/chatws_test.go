@@ -255,6 +255,8 @@ func seed(t *testing.T, ctx context.Context, pool *pgxpool.Pool, going, other, i
 	if err := pool.QueryRow(ctx, `insert into app.event_groups (event_id, quorum, min_attendance, score, status) values ($1, 2, 2, 1, 'confirmed') returning id`, eventID).Scan(&groupID); err != nil {
 		t.Fatal(err)
 	}
+	// Written with the group in production (InsertEventGroup).
+	exec("insert into app.rooms (kind, group_id) values ('outing', $1)", groupID)
 	for u, r := range map[uuid.UUID]string{going: "confirmed", other: "confirmed", invited: "invited"} {
 		at := any(time.Now())
 		if r == "invited" {

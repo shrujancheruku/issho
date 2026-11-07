@@ -56,14 +56,14 @@ func TestIntegrationSocketDrainAndRevoke(t *testing.T) {
 	defer srv.Close()
 	wsURL := "ws" + strings.TrimPrefix(srv.URL, "http")
 
-	var groupID uuid.UUID
-	if err := pool.QueryRow(ctx, "select id from app.event_groups where event_id = $1", eventID).Scan(&groupID); err != nil {
+	var roomID uuid.UUID
+	if err := pool.QueryRow(ctx, "select r.id from app.rooms r join app.event_groups g on g.id = r.group_id where g.event_id = $1", eventID).Scan(&roomID); err != nil {
 		t.Fatal(err)
 	}
 	add := func(n int, prefix string) {
 		t.Helper()
-		if _, err := pool.Exec(ctx, `insert into app.chat_messages (group_id, user_id, body) select $1, $2, $3 || g from generate_series(1, $4) g`,
-			groupID, other, prefix, n); err != nil {
+		if _, err := pool.Exec(ctx, `insert into app.messages (room_id, user_id, body) select $1, $2, $3 || g from generate_series(1, $4) g`,
+			roomID, other, prefix, n); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -111,7 +111,7 @@ func TestIntegrationSocketDrainAndRevoke(t *testing.T) {
 	// 250 waiting, asked for from before the first: pages of 100, in order.
 	add(250, "old")
 	var before int64
-	if err := pool.QueryRow(ctx, "select min(id) - 1 from app.chat_messages where group_id = $1", groupID).Scan(&before); err != nil {
+	if err := pool.QueryRow(ctx, "select min(id) - 1 from app.messages where room_id = $1", roomID).Scan(&before); err != nil {
 		t.Fatal(err)
 	}
 	conn := dial(before)
@@ -136,7 +136,7 @@ func TestIntegrationSocketDrainAndRevoke(t *testing.T) {
 	if f := readFrame(t, ctx, typer); f.Type != "ready" {
 		t.Fatalf("typer's first frame = %+v", f)
 	}
-	if _, err := pool.Exec(ctx, "update app.group_members set response = 'dropped' where group_id = $1 and user_id = $2", groupID, going); err != nil {
+	if _, err := pool.Exec(ctx, "update app.group_members set response = 'dropped' where group_id = (select group_id from app.rooms where id = $1) and user_id = $2", roomID, going); err != nil {
 		t.Fatal(err)
 	}
 	typingFrame, _ := json.Marshal(map[string]string{"type": "typing"})

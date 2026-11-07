@@ -58,6 +58,7 @@ type rooms struct {
 	event  *fakeAccess
 	crew   *fakeAccess
 	plan   uuid.UUID
+	crewID uuid.UUID
 	groups map[Kind]uuid.UUID
 }
 
@@ -94,14 +95,24 @@ func newRooms(t *testing.T, city string) *rooms {
 	if err := f.Pool.QueryRow(ctx, `insert into app.crews (city_id, activity_id, offer_until, status) values ($1, $2, now(), 'active') returning id`, f.City, f.Act).Scan(&crewID); err != nil {
 		t.Fatal(err)
 	}
+	// Rooms are written with their group or crew in production (the
+	// InsertEventGroup and CreateCrew queries); these tests insert both by hand.
+	var groupRoom, crewRoom uuid.UUID
+	if err := f.Pool.QueryRow(ctx, `insert into app.rooms (kind, group_id) values ('outing', $1) returning id`, groupID).Scan(&groupRoom); err != nil {
+		t.Fatal(err)
+	}
+	if err := f.Pool.QueryRow(ctx, `insert into app.rooms (kind, crew_id) values ('crew', $1) returning id`, crewID).Scan(&crewRoom); err != nil {
+		t.Fatal(err)
+	}
 	a, b := f.Users[0], f.Users[1] // the third user is in neither room
 	in := func() map[uuid.UUID]bool { return map[uuid.UUID]bool{a: true, b: true} }
 	r := &rooms{
 		f:      f,
-		event:  &fakeAccess{topic: groupID, in: in(), open: true, opens: time.Unix(1000, 0), closes: time.Unix(2000, 0)},
-		crew:   &fakeAccess{topic: crewID, in: in(), open: true},
+		event:  &fakeAccess{topic: groupRoom, in: in(), open: true, opens: time.Unix(1000, 0), closes: time.Unix(2000, 0)},
+		crew:   &fakeAccess{topic: crewRoom, in: in(), open: true},
 		plan:   planID,
-		groups: map[Kind]uuid.UUID{EventRoom: groupID, CrewRoom: crewID},
+		crewID: crewID,
+		groups: map[Kind]uuid.UUID{EventRoom: groupRoom, CrewRoom: crewRoom},
 	}
 	r.svc = &Service{DB: f.Pool, Event: r.event, Crew: r.crew}
 	return r
@@ -202,13 +213,11 @@ func TestIntegrationDrain(t *testing.T) {
 	a := r.f.Users[0]
 	now := time.Now()
 	const n = 2*Page + 37
-	if _, err := r.f.Pool.Exec(ctx, `insert into app.chat_messages (group_id, user_id, body) select $1, $2, 'm' || g from generate_series(1, $3) g`,
-		r.groups[EventRoom], a, n); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := r.f.Pool.Exec(ctx, `insert into app.crew_messages (crew_id, user_id, body) select $1, $2, 'm' || g from generate_series(1, $3) g`,
-		r.groups[CrewRoom], a, n); err != nil {
-		t.Fatal(err)
+	for _, kind := range []Kind{EventRoom, CrewRoom} {
+		if _, err := r.f.Pool.Exec(ctx, `insert into app.messages (room_id, user_id, body) select $1, $2, 'm' || g from generate_series(1, $3) g`,
+			r.groups[kind], a, n); err != nil {
+			t.Fatal(err)
+		}
 	}
 	for _, kind := range []Kind{EventRoom, CrewRoom} {
 		room := r.room(kind)
@@ -265,23 +274,14 @@ func TestIntegrationPostsWaitForTheRoomLock(t *testing.T) {
 		}
 		defer tx.Rollback(ctx) //nolint:errcheck // a no-op once committed; frees the lock if the test fails
 		q := dbgen.New(tx)
-		if err := lock(ctx, q, kind, room.ID); err != nil {
+		if err := lock(ctx, q, room.ID); err != nil {
 			t.Fatal(err)
 		}
-		var firstID int64
-		if kind == EventRoom {
-			row, err := q.InsertChatMessage(ctx, dbgen.InsertChatMessageParams{GroupID: room.ID, UserID: a, Body: "first"})
-			if err != nil {
-				t.Fatal(err)
-			}
-			firstID = row.ID
-		} else {
-			row, err := q.InsertCrewMessage(ctx, dbgen.InsertCrewMessageParams{CrewID: room.ID, UserID: pgtype.UUID{Bytes: a, Valid: true}, Body: "first"})
-			if err != nil {
-				t.Fatal(err)
-			}
-			firstID = row.ID
+		row, err := q.InsertMessage(ctx, dbgen.InsertMessageParams{RoomID: room.ID, UserID: pgtype.UUID{Bytes: a, Valid: true}, Body: "first"})
+		if err != nil {
+			t.Fatal(err)
 		}
+		firstID := row.ID
 
 		type result struct {
 			m   Message
@@ -315,14 +315,14 @@ func TestIntegrationPostsWaitForTheRoomLock(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer tx.Rollback(ctx) //nolint:errcheck // as above
-	if err := lock(ctx, dbgen.New(tx), CrewRoom, r.groups[CrewRoom]); err != nil {
+	if err := lock(ctx, dbgen.New(tx), r.groups[CrewRoom]); err != nil {
 		t.Fatal(err)
 	}
 	done := make(chan error, 1)
 	go func() {
 		ptx, err := r.f.Pool.Begin(ctx)
 		if err == nil {
-			err = PostPlan(ctx, dbgen.New(ptx), r.groups[CrewRoom], r.plan, now)
+			err = PostPlan(ctx, dbgen.New(ptx), r.crewID, r.plan, now)
 		}
 		if err == nil {
 			err = ptx.Commit(ctx)
@@ -361,7 +361,7 @@ func TestIntegrationSendChecksAccessUnderTheLock(t *testing.T) {
 			t.Fatal(err)
 		}
 		defer tx.Rollback(ctx) //nolint:errcheck // frees the lock if the test fails
-		if err := lock(ctx, dbgen.New(tx), kind, room.ID); err != nil {
+		if err := lock(ctx, dbgen.New(tx), room.ID); err != nil {
 			t.Fatal(err)
 		}
 		done := make(chan error, 1)

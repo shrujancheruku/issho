@@ -58,14 +58,6 @@ type AppAvailabilitySlot struct {
 	Block   string
 }
 
-type AppChatMessage struct {
-	ID        int64
-	GroupID   uuid.UUID
-	UserID    uuid.UUID
-	Body      string
-	CreatedAt pgtype.Timestamptz
-}
-
 type AppCity struct {
 	ID       string
 	Name     []byte
@@ -116,15 +108,6 @@ type AppCrewMember struct {
 	UserID      uuid.UUID
 	Response    string
 	RespondedAt pgtype.Timestamptz
-}
-
-type AppCrewMessage struct {
-	ID        int64
-	CrewID    uuid.UUID
-	UserID    pgtype.UUID
-	Body      string
-	PlanID    pgtype.UUID
-	CreatedAt pgtype.Timestamptz
 }
 
 type AppEvent struct {
@@ -183,6 +166,15 @@ type AppMatePick struct {
 	PickerID  uuid.UUID
 	PickedID  uuid.UUID
 	Pick      string
+	CreatedAt pgtype.Timestamptz
+}
+
+type AppMessage struct {
+	ID        int64
+	RoomID    uuid.UUID
+	UserID    pgtype.UUID
+	Body      string
+	PlanID    pgtype.UUID
 	CreatedAt pgtype.Timestamptz
 }
 
@@ -318,6 +310,14 @@ type AppReport struct {
 	CrewID     pgtype.UUID
 	ReviewedBy pgtype.UUID
 	Note       string
+}
+
+type AppRoom struct {
+	ID        uuid.UUID
+	Kind      string
+	GroupID   pgtype.UUID
+	CrewID    pgtype.UUID
+	CreatedAt pgtype.Timestamptz
 }
 
 type AppSuspendedUser struct {
