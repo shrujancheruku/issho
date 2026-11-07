@@ -19,17 +19,25 @@ KNIP_VERSION=6.44.1
 PARKED_GO=(
   'backend/internal/matching/sim/' # the matching simulator
   'backend/internal/tagging/'      # interest tagging
+  'backend/internal/translate/translators/' # the translator role
+  'backend/cmd/tool/settranslator\.go'     # ...and the command that grants it
   'backend/internal/repoedit/'     # the editing side of repoedit (the read side is kept; narrow this once the read side is split out)
 )
 
 cd "$(dirname "$0")/.."
 summary="${GITHUB_STEP_SUMMARY:-/dev/null}"
 status=0
+tool_failed=0
 
 echo "== Go: deadcode -test $DEADCODE_VERSION =="
 # deadcode prints paths relative to the working directory (backend/), so put
 # the prefix back to match the list above. Default -filter is the main module.
-go_out=$(cd backend && go run "golang.org/x/tools/cmd/deadcode@$DEADCODE_VERSION" -test ./...) || status=1
+# deadcode exits 0 with or without findings, so a non-zero exit is the tool
+# failing (download, build), not a finding: say so, or a broken check would look
+# like a clean one.
+if ! go_out=$(cd backend && go run "golang.org/x/tools/cmd/deadcode@$DEADCODE_VERSION" -test ./... 2>&1); then
+  echo "TOOL FAILED: deadcode"; tool_failed=1; status=1
+fi
 go_out=$(printf '%s\n' "$go_out" | sed -e '/^$/d' -e 's|^|backend/|')
 for p in "${PARKED_GO[@]}"; do
   go_out=$(printf '%s\n' "$go_out" | grep -Ev -- "$p")
@@ -40,7 +48,13 @@ echo "${go_out:-none}"
 
 echo
 echo "== TypeScript: knip $KNIP_VERSION =="
-ts_out=$(pnpm dlx "knip@$KNIP_VERSION" --no-progress 2>&1 | grep -v '^\.\.\.') || status=1
+# knip exits 1 with findings and 2 when it fails (bad config, crash); the exit
+# code is taken before the output is filtered, since `grep -v` exits 1 on an
+# empty (clean) report.
+ts_raw=$(pnpm dlx "knip@$KNIP_VERSION" --no-progress 2>&1); knip_rc=$?
+ts_out=$(printf '%s\n' "$ts_raw" | grep -v '^\.\.\.' || true)
+[ "$knip_rc" -ne 0 ] && status=1
+if [ "$knip_rc" -gt 1 ]; then echo "TOOL FAILED: knip (exit $knip_rc)"; tool_failed=1; fi
 echo "${ts_out:-none}"
 
 {
@@ -51,6 +65,11 @@ echo "${ts_out:-none}"
   echo '```'
 } >>"$summary"
 
+if [ "$tool_failed" -ne 0 ]; then
+  echo "a check tool failed: the report above is incomplete"
+  [ "${DEADCODE_STRICT:-}" = 1 ] && exit 1
+  echo "::warning::dead-code check tool failed (report-only: not failing)"
+fi
 if [ "$status" -ne 0 ]; then
   if [ "${DEADCODE_STRICT:-}" = 1 ]; then
     echo "dead code found (strict)"; exit 1
