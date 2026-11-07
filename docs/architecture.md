@@ -106,7 +106,7 @@ Defined in `backend/db/migrations/`. All app tables live in the `app` schema. Th
 | `availability_slots` | Weekday × morning/afternoon/evening |
 | `user_activity_prefs` | Weight per activity: 0 = open to try, 1 = like, 2 = love |
 
-Later migrations add the rest, each described in its file: plans (`plans`, `plan_stops`, `plan_signups` and their slots), events (`events`, `event_groups`, `group_members`, `chat_messages`, `event_feedback`, `mate_picks`), crews (`crews`, `crew_members`, `crew_messages`, `crew_leaves`), moderation (`reports`, `moderation_flags`, `suspensions`), notifications (`notifications`, `push_tokens`, `push_tickets`), `translations` (the cache) and `walk_failures`. Every foreign key is indexed (`00026`), so the cascades from deleting an account, and joins on those keys, use an index rather than a table scan.
+Later migrations add the rest, each described in its file: plans (`plans`, `plan_stops`, `plan_signups` and their slots), events (`events`, `event_groups`, `group_members`, `event_feedback`, `mate_picks`), crews (`crews`, `crew_members`, `crew_leaves`), chat (`rooms`, one per event group or crew, and `messages`: both kinds of chat share the two tables), moderation (`reports`, `moderation_flags`, `suspensions`), notifications (`notifications`, `push_tokens`, `push_tickets`), `translations` (the cache) and `walk_failures`. Every foreign key is indexed (`00026`), so the cascades from deleting an account, and joins on those keys, use an index rather than a table scan.
 
 ### Languages
 

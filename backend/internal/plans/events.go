@@ -12,7 +12,6 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
-	"github.com/shrujancheruku/issho/backend/internal/chat"
 	"github.com/shrujancheruku/issho/backend/internal/matching"
 	"github.com/shrujancheruku/issho/backend/internal/notifications"
 	"github.com/shrujancheruku/issho/backend/internal/platform/bound"
@@ -377,7 +376,6 @@ func cancelGroup(ctx context.Context, q *dbgen.Queries, groupID, planID, eventID
 // SettleReport counts what a settling pass did.
 type SettleReport struct {
 	Confirmed, Cancelled, Finished int
-	ChatMessagesDeleted            int
 	FeedbackAsked                  int // people asked how it was
 	Failed                         int // groups that could not be decided
 }
@@ -458,11 +456,6 @@ func (r *Runner) Settle(ctx context.Context, cityID string, now time.Time) (Sett
 		return rep, err
 	}
 	rep.Finished = int(finished)
-	chats, err := chat.DeleteOld(ctx, q, cityID, now)
-	if err != nil {
-		return rep, err
-	}
-	rep.ChatMessagesDeleted = int(chats)
 	asked, err := askFeedback(ctx, q, cityID, now)
 	if err != nil {
 		return rep, err

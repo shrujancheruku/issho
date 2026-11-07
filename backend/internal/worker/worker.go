@@ -352,8 +352,8 @@ func (w *retentionWorker) Work(ctx context.Context, _ *river.Job[RetentionArgs])
 	q := dbgen.New(w.pool)
 	now := w.now()
 	notes, nErr := notifications.DeleteOld(ctx, q, now)
-	crewChats, cErr := chat.DeleteOldCrewChats(ctx, q, now)
-	w.log.Info("retention", "notifications_deleted", notes, "crew_chat_messages_deleted", crewChats)
+	chats, cErr := chat.DeleteOld(ctx, q, now)
+	w.log.Info("retention", "notifications_deleted", notes, "chat_messages_deleted", chats)
 	return errors.Join(nErr, cErr)
 }
 

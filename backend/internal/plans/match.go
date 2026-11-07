@@ -30,7 +30,7 @@ type MatchReport struct {
 func (r MatchReport) LogValue() slog.Value {
 	return slog.GroupValue(
 		slog.Int("groups_confirmed", r.Settled.Confirmed), slog.Int("groups_cancelled", r.Settled.Cancelled),
-		slog.Int("events_done", r.Settled.Finished), slog.Int("chat_messages_deleted", r.Settled.ChatMessagesDeleted),
+		slog.Int("events_done", r.Settled.Finished),
 		slog.Int("feedback_asked", r.Settled.FeedbackAsked), slog.Int("settle_failed", r.Settled.Failed),
 		slog.Int("checked", r.Scheduled.Checked), slog.Int("scheduled", r.Scheduled.Scheduled), slog.Int("closed", r.Scheduled.Closed),
 		slog.Int("schedule_failed", r.Scheduled.Failed),

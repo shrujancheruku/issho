@@ -398,9 +398,14 @@ func (q *Queries) InsertEvent(ctx context.Context, arg InsertEventParams) (uuid.
 }
 
 const insertEventGroup = `-- name: InsertEventGroup :one
-insert into app.event_groups (event_id, quorum, min_attendance, score)
-values ($1, $2, $3, $4)
-returning id
+with g as (
+  insert into app.event_groups (event_id, quorum, min_attendance, score)
+  values ($1, $2, $3, $4)
+  returning id
+), r as (
+  insert into app.rooms (kind, group_id) select 'outing', id from g
+)
+select id from g
 `
 
 type InsertEventGroupParams struct {
@@ -410,6 +415,8 @@ type InsertEventGroupParams struct {
 	Score         float32
 }
 
+// Its chat room is written in the same statement, so a group never exists
+// without one (and a rolled-back save leaves no room).
 func (q *Queries) InsertEventGroup(ctx context.Context, arg InsertEventGroupParams) (uuid.UUID, error) {
 	row := q.db.QueryRow(ctx, insertEventGroup,
 		arg.EventID,

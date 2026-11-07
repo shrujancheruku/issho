@@ -12,52 +12,41 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const deleteOldChats = `-- name: DeleteOldChats :execrows
-delete from app.chat_messages c
-using app.event_groups g, app.events e, app.plans p
-where g.id = c.group_id and e.id = g.event_id and p.id = e.plan_id
-  and p.city_id = $1 and e.date < $2
-`
-
-type DeleteOldChatsParams struct {
-	CityID string
-	Before pgtype.Date
-}
-
-// Chats of events more than 30 days past (privacy).
-func (q *Queries) DeleteOldChats(ctx context.Context, arg DeleteOldChatsParams) (int64, error) {
-	result, err := q.db.Exec(ctx, deleteOldChats, arg.CityID, arg.Before)
-	if err != nil {
-		return 0, err
-	}
-	return result.RowsAffected(), nil
-}
-
-const deleteOldCrewChats = `-- name: DeleteOldCrewChats :execrows
-delete from app.crew_messages
+const deleteOldMessages = `-- name: DeleteOldMessages :execrows
+delete from app.messages
 where id in (
-  select m.id from app.crew_messages m
-  join app.crews c on c.id = m.crew_id
-  where c.closed_at < $1
-  order by m.id
-  limit $2
+  select old.id from (
+    select m.id from app.rooms r
+    join app.event_groups g on g.id = r.group_id
+    join app.events e on e.id = g.event_id
+    join app.messages m on m.room_id = r.id
+    where e.date < $1
+    union all
+    select m.id from app.rooms r
+    join app.crews c on c.id = r.crew_id
+    join app.messages m on m.room_id = r.id
+    where c.closed_at < $2
+  ) old
+  order by old.id
+  limit $3
 )
 `
 
-type DeleteOldCrewChatsParams struct {
-	Before pgtype.Timestamptz
-	Max    int32
+type DeleteOldMessagesParams struct {
+	BeforeDate pgtype.Date
+	BeforeAt   pgtype.Timestamptz
+	Max        int32
 }
 
-// Crew chats of crews closed more than 30 days ago (privacy). A crew that
-// lapsed or closed has closed_at set (UpdateCrewStatus), so one rule covers
-// both; someone leaving an active crew doesn't delete their messages. At
-// most @max rows per call so the daily run never holds a long lock: the
-// caller repeats until fewer come back. crew_messages_crew_idx finds a
-// crew's messages; the few closed crews are filtered from the small
-// crews table.
-func (q *Queries) DeleteOldCrewChats(ctx context.Context, arg DeleteOldCrewChatsParams) (int64, error) {
-	result, err := q.db.Exec(ctx, deleteOldCrewChats, arg.Before, arg.Max)
+// Privacy: the messages of outings more than 30 days past (@before_date) and
+// of crews closed more than 30 days ago (@before_at). A crew that lapsed or
+// closed has closed_at set (UpdateCrewStatus), so one rule covers both;
+// someone leaving an active crew doesn't delete their messages. At most @max
+// rows per call so the daily run never holds a long lock: the caller repeats
+// until fewer come back. messages_room_idx finds a room's messages; each side
+// starts from the few old events or closed crews.
+func (q *Queries) DeleteOldMessages(ctx context.Context, arg DeleteOldMessagesParams) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteOldMessages, arg.BeforeDate, arg.BeforeAt, arg.Max)
 	if err != nil {
 		return 0, err
 	}
@@ -102,6 +91,17 @@ func (q *Queries) GetChatAccess(ctx context.Context, arg GetChatAccessParams) (G
 	return i, err
 }
 
+const getCrewRoom = `-- name: GetCrewRoom :one
+select id from app.rooms where crew_id = $1
+`
+
+func (q *Queries) GetCrewRoom(ctx context.Context, crewID pgtype.UUID) (uuid.UUID, error) {
+	row := q.db.QueryRow(ctx, getCrewRoom, crewID)
+	var id uuid.UUID
+	err := row.Scan(&id)
+	return id, err
+}
+
 const getDisplayName = `-- name: GetDisplayName :one
 select display_name from app.profiles where user_id = $1
 `
@@ -114,152 +114,144 @@ func (q *Queries) GetDisplayName(ctx context.Context, userID uuid.UUID) (string,
 	return display_name, err
 }
 
-const insertChatMessage = `-- name: InsertChatMessage :one
-insert into app.chat_messages (group_id, user_id, body) values ($1, $2, $3)
+const getGroupRoom = `-- name: GetGroupRoom :one
+select id from app.rooms where group_id = $1
+`
+
+// The room of an event's group or of a crew (chat.State.Topic is its id).
+func (q *Queries) GetGroupRoom(ctx context.Context, groupID pgtype.UUID) (uuid.UUID, error) {
+	row := q.db.QueryRow(ctx, getGroupRoom, groupID)
+	var id uuid.UUID
+	err := row.Scan(&id)
+	return id, err
+}
+
+const insertMessage = `-- name: InsertMessage :one
+insert into app.messages (room_id, user_id, body) values ($1, $2, $3)
 returning id, created_at
 `
 
-type InsertChatMessageParams struct {
-	GroupID uuid.UUID
-	UserID  uuid.UUID
-	Body    string
-}
-
-type InsertChatMessageRow struct {
-	ID        int64
-	CreatedAt pgtype.Timestamptz
-}
-
-func (q *Queries) InsertChatMessage(ctx context.Context, arg InsertChatMessageParams) (InsertChatMessageRow, error) {
-	row := q.db.QueryRow(ctx, insertChatMessage, arg.GroupID, arg.UserID, arg.Body)
-	var i InsertChatMessageRow
-	err := row.Scan(&i.ID, &i.CreatedAt)
-	return i, err
-}
-
-const insertCrewMessage = `-- name: InsertCrewMessage :one
-insert into app.crew_messages (crew_id, user_id, body) values ($1, $2, $3)
-returning id, created_at
-`
-
-type InsertCrewMessageParams struct {
-	CrewID uuid.UUID
+type InsertMessageParams struct {
+	RoomID uuid.UUID
 	UserID pgtype.UUID
 	Body   string
 }
 
-type InsertCrewMessageRow struct {
+type InsertMessageRow struct {
 	ID        int64
 	CreatedAt pgtype.Timestamptz
 }
 
-// A crew's chat. A message is someone's text, or a plan Issho suggested
-// (plan_id, no author).
-func (q *Queries) InsertCrewMessage(ctx context.Context, arg InsertCrewMessageParams) (InsertCrewMessageRow, error) {
-	row := q.db.QueryRow(ctx, insertCrewMessage, arg.CrewID, arg.UserID, arg.Body)
-	var i InsertCrewMessageRow
+// A message is someone's text, or a plan Issho suggested (plan_id, no author).
+func (q *Queries) InsertMessage(ctx context.Context, arg InsertMessageParams) (InsertMessageRow, error) {
+	row := q.db.QueryRow(ctx, insertMessage, arg.RoomID, arg.UserID, arg.Body)
+	var i InsertMessageRow
 	err := row.Scan(&i.ID, &i.CreatedAt)
 	return i, err
 }
 
-const insertCrewPlanMessage = `-- name: InsertCrewPlanMessage :exec
-insert into app.crew_messages (crew_id, plan_id, created_at) values ($1, $2, $3)
+const insertPlanMessage = `-- name: InsertPlanMessage :exec
+insert into app.messages (room_id, plan_id, created_at) values ($1, $2, $3)
 `
 
-type InsertCrewPlanMessageParams struct {
-	CrewID uuid.UUID
+type InsertPlanMessageParams struct {
+	RoomID uuid.UUID
 	PlanID pgtype.UUID
 	At     pgtype.Timestamptz
 }
 
-func (q *Queries) InsertCrewPlanMessage(ctx context.Context, arg InsertCrewPlanMessageParams) error {
-	_, err := q.db.Exec(ctx, insertCrewPlanMessage, arg.CrewID, arg.PlanID, arg.At)
+func (q *Queries) InsertPlanMessage(ctx context.Context, arg InsertPlanMessageParams) error {
+	_, err := q.db.Exec(ctx, insertPlanMessage, arg.RoomID, arg.PlanID, arg.At)
 	return err
 }
 
-const listChatMessages = `-- name: ListChatMessages :many
-select c.id, c.user_id, pr.display_name, c.body, c.created_at
-from app.chat_messages c
-left join app.profiles pr on pr.user_id = c.user_id
-where c.group_id = $1 and c.id > $2
-order by c.id
+const listLatestMessages = `-- name: ListLatestMessages :many
+select id, user_id, display_name, body, plan_id, created_at from (
+  select m.id, m.user_id, pr.display_name, m.body, m.plan_id, m.created_at
+  from app.messages m
+  left join app.profiles pr on pr.user_id = m.user_id
+  where m.room_id = $1
+  order by m.id desc
+  limit $2
+) latest order by id
+`
+
+type ListLatestMessagesParams struct {
+	RoomID uuid.UUID
+	Max    int32
+}
+
+type ListLatestMessagesRow struct {
+	ID          int64
+	UserID      pgtype.UUID
+	DisplayName *string
+	Body        string
+	PlanID      pgtype.UUID
+	CreatedAt   pgtype.Timestamptz
+}
+
+// The latest messages, for opening a room.
+func (q *Queries) ListLatestMessages(ctx context.Context, arg ListLatestMessagesParams) ([]ListLatestMessagesRow, error) {
+	rows, err := q.db.Query(ctx, listLatestMessages, arg.RoomID, arg.Max)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListLatestMessagesRow
+	for rows.Next() {
+		var i ListLatestMessagesRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.DisplayName,
+			&i.Body,
+			&i.PlanID,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listMessages = `-- name: ListMessages :many
+select m.id, m.user_id, pr.display_name, m.body, m.plan_id, m.created_at
+from app.messages m
+left join app.profiles pr on pr.user_id = m.user_id
+where m.room_id = $1 and m.id > $2
+order by m.id
 limit $3
 `
 
-type ListChatMessagesParams struct {
-	GroupID uuid.UUID
+type ListMessagesParams struct {
+	RoomID  uuid.UUID
 	AfterID int64
 	Max     int32
 }
 
-type ListChatMessagesRow struct {
+type ListMessagesRow struct {
 	ID          int64
-	UserID      uuid.UUID
+	UserID      pgtype.UUID
 	DisplayName *string
 	Body        string
+	PlanID      pgtype.UUID
 	CreatedAt   pgtype.Timestamptz
 }
 
 // Messages after a given one, oldest first, with the sender's first name.
-func (q *Queries) ListChatMessages(ctx context.Context, arg ListChatMessagesParams) ([]ListChatMessagesRow, error) {
-	rows, err := q.db.Query(ctx, listChatMessages, arg.GroupID, arg.AfterID, arg.Max)
+func (q *Queries) ListMessages(ctx context.Context, arg ListMessagesParams) ([]ListMessagesRow, error) {
+	rows, err := q.db.Query(ctx, listMessages, arg.RoomID, arg.AfterID, arg.Max)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []ListChatMessagesRow
+	var items []ListMessagesRow
 	for rows.Next() {
-		var i ListChatMessagesRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.UserID,
-			&i.DisplayName,
-			&i.Body,
-			&i.CreatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listCrewMessages = `-- name: ListCrewMessages :many
-select c.id, c.user_id, pr.display_name, c.body, c.plan_id, c.created_at
-from app.crew_messages c
-left join app.profiles pr on pr.user_id = c.user_id
-where c.crew_id = $1 and c.id > $2
-order by c.id
-limit $3
-`
-
-type ListCrewMessagesParams struct {
-	CrewID  uuid.UUID
-	AfterID int64
-	Max     int32
-}
-
-type ListCrewMessagesRow struct {
-	ID          int64
-	UserID      pgtype.UUID
-	DisplayName *string
-	Body        string
-	PlanID      pgtype.UUID
-	CreatedAt   pgtype.Timestamptz
-}
-
-func (q *Queries) ListCrewMessages(ctx context.Context, arg ListCrewMessagesParams) ([]ListCrewMessagesRow, error) {
-	rows, err := q.db.Query(ctx, listCrewMessages, arg.CrewID, arg.AfterID, arg.Max)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []ListCrewMessagesRow
-	for rows.Next() {
-		var i ListCrewMessagesRow
+		var i ListMessagesRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.UserID,
@@ -278,122 +270,20 @@ func (q *Queries) ListCrewMessages(ctx context.Context, arg ListCrewMessagesPara
 	return items, nil
 }
 
-const listLatestChatMessages = `-- name: ListLatestChatMessages :many
-select id, user_id, display_name, body, created_at from (
-  select c.id, c.user_id, pr.display_name, c.body, c.created_at
-  from app.chat_messages c
-  left join app.profiles pr on pr.user_id = c.user_id
-  where c.group_id = $1
-  order by c.id desc
-  limit $2
-) latest order by id
+const lockCrewRoomByCrew = `-- name: LockCrewRoomByCrew :one
+select id from app.rooms where crew_id = $1 for no key update
 `
 
-type ListLatestChatMessagesParams struct {
-	GroupID uuid.UUID
-	Max     int32
+// The same lock, found by crew, for the plan Issho suggests in a crew's room.
+func (q *Queries) LockCrewRoomByCrew(ctx context.Context, crewID pgtype.UUID) (uuid.UUID, error) {
+	row := q.db.QueryRow(ctx, lockCrewRoomByCrew, crewID)
+	var id uuid.UUID
+	err := row.Scan(&id)
+	return id, err
 }
 
-type ListLatestChatMessagesRow struct {
-	ID          int64
-	UserID      uuid.UUID
-	DisplayName *string
-	Body        string
-	CreatedAt   pgtype.Timestamptz
-}
-
-// The latest messages, for opening a chat.
-func (q *Queries) ListLatestChatMessages(ctx context.Context, arg ListLatestChatMessagesParams) ([]ListLatestChatMessagesRow, error) {
-	rows, err := q.db.Query(ctx, listLatestChatMessages, arg.GroupID, arg.Max)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []ListLatestChatMessagesRow
-	for rows.Next() {
-		var i ListLatestChatMessagesRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.UserID,
-			&i.DisplayName,
-			&i.Body,
-			&i.CreatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listLatestCrewMessages = `-- name: ListLatestCrewMessages :many
-select id, user_id, display_name, body, plan_id, created_at from (
-  select c.id, c.user_id, pr.display_name, c.body, c.plan_id, c.created_at
-  from app.crew_messages c
-  left join app.profiles pr on pr.user_id = c.user_id
-  where c.crew_id = $1
-  order by c.id desc
-  limit $2
-) latest order by id
-`
-
-type ListLatestCrewMessagesParams struct {
-	CrewID uuid.UUID
-	Max    int32
-}
-
-type ListLatestCrewMessagesRow struct {
-	ID          int64
-	UserID      pgtype.UUID
-	DisplayName *string
-	Body        string
-	PlanID      pgtype.UUID
-	CreatedAt   pgtype.Timestamptz
-}
-
-func (q *Queries) ListLatestCrewMessages(ctx context.Context, arg ListLatestCrewMessagesParams) ([]ListLatestCrewMessagesRow, error) {
-	rows, err := q.db.Query(ctx, listLatestCrewMessages, arg.CrewID, arg.Max)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []ListLatestCrewMessagesRow
-	for rows.Next() {
-		var i ListLatestCrewMessagesRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.UserID,
-			&i.DisplayName,
-			&i.Body,
-			&i.PlanID,
-			&i.CreatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const lockCrewRoom = `-- name: LockCrewRoom :one
-select id from app.crews where id = $1 for no key update
-`
-
-func (q *Queries) LockCrewRoom(ctx context.Context, id uuid.UUID) (uuid.UUID, error) {
-	row := q.db.QueryRow(ctx, lockCrewRoom, id)
-	var id_2 uuid.UUID
-	err := row.Scan(&id_2)
-	return id_2, err
-}
-
-const lockEventRoom = `-- name: LockEventRoom :one
-select id from app.event_groups where id = $1 for no key update
+const lockRoom = `-- name: LockRoom :one
+select id from app.rooms where id = $1 for no key update
 `
 
 // Rooms are locked while a message is stored (internal/chat): ids come from
@@ -403,8 +293,8 @@ select id from app.event_groups where id = $1 for no key update
 // after a reader has moved past it. No key update: it still serialises
 // posters (and anything updating the row) but not the foreign-key checks of
 // unrelated inserts.
-func (q *Queries) LockEventRoom(ctx context.Context, id uuid.UUID) (uuid.UUID, error) {
-	row := q.db.QueryRow(ctx, lockEventRoom, id)
+func (q *Queries) LockRoom(ctx context.Context, id uuid.UUID) (uuid.UUID, error) {
+	row := q.db.QueryRow(ctx, lockRoom, id)
 	var id_2 uuid.UUID
 	err := row.Scan(&id_2)
 	return id_2, err
@@ -414,11 +304,11 @@ const notifyChat = `-- name: NotifyChat :exec
 select pg_notify('chat', $1::text)
 `
 
-// Tells every API instance listening on "chat" that a group has a new
-// message; they push it to the sockets open on that chat. Sent in the same
+// Tells every API instance listening on "chat" that a room has a new
+// message; they push it to the sockets open on that room. Sent in the same
 // transaction as the insert, so it's delivered only once it's committed.
-func (q *Queries) NotifyChat(ctx context.Context, groupID string) error {
-	_, err := q.db.Exec(ctx, notifyChat, groupID)
+func (q *Queries) NotifyChat(ctx context.Context, roomID string) error {
+	_, err := q.db.Exec(ctx, notifyChat, roomID)
 	return err
 }
 
@@ -426,9 +316,9 @@ const notifyTyping = `-- name: NotifyTyping :exec
 select pg_notify('chat_typing', $1::text)
 `
 
-// Someone in a chat is typing: the API instances' listeners pass it to the
-// other sockets open on that chat (internal/chatws). Payload: JSON with the
-// chat (group or crew id), who and their first name. Not stored anywhere.
+// Someone in a room is typing: the API instances' listeners pass it to the
+// other sockets open on that room (internal/chatws). Payload: JSON with the
+// room id, who and their first name. Not stored anywhere.
 func (q *Queries) NotifyTyping(ctx context.Context, payload string) error {
 	_, err := q.db.Exec(ctx, notifyTyping, payload)
 	return err

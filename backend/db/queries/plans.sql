@@ -169,9 +169,16 @@ values (@plan_id, @round, @date, @block, @starts_at, @confirm_by, @forced, @stat
 returning id;
 
 -- name: InsertEventGroup :one
-insert into app.event_groups (event_id, quorum, min_attendance, score)
-values (@event_id, @quorum, @min_attendance, @score)
-returning id;
+-- Its chat room is written in the same statement, so a group never exists
+-- without one (and a rolled-back save leaves no room).
+with g as (
+  insert into app.event_groups (event_id, quorum, min_attendance, score)
+  values (@event_id, @quorum, @min_attendance, @score)
+  returning id
+), r as (
+  insert into app.rooms (kind, group_id) select 'outing', id from g
+)
+select id from g;
 
 -- name: InsertGroupMembers :exec
 insert into app.group_members (group_id, event_id, user_id)
