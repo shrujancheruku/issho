@@ -5,7 +5,7 @@
 ## Backlog
 
 - **Tracker docs:** `docs/agents/issue-tracker.md` (operations, blocking, claiming) and `docs/agents/triage-labels.md` (label strings), from `/setup-matt-pocock-skills`. Takeable tickets are open, `ready-for-agent`, unassigned and unblocked (every GitHub "blocked by" dependency closed), with no open sub-issues and no `wayfinder:` label. Claim = `gh issue edit <n> --add-assignee @me`.
-- **Order:** a run targets one parent issue (the user names it). Take takeable tickets in the parent's sub-issue order; blocking edges come first. Without a parent, ascending issue number. Grouping (several tickets in one PR, or one ticket split into several) comes from the parent's or the ticket's body, never from guesswork.
+- **Order:** a run targets the active **work parent** (see "Planning rules" in `docs/agents/issue-tracker.md`; the user names it) and nothing else. Take takeable tickets in the parent's sub-issue order; blocking edges come first. Without a parent, ascending issue number. Grouping (several tickets in one PR, or one ticket split into several) comes from the parent's or the ticket's body, never from guesswork.
 - **Domain docs:** `docs/agents/domain.md` (`GLOSSARY.md`, ADRs in `docs/adr/`, and the frozen `docs/decisions-2026.md`).
 
 ## Slots
@@ -31,7 +31,7 @@ Every ticket, from the repo root. Leave `TEST_DATABASE_URL` unset: DB integratio
 A **shared file** is one many PRs edit. The `merge` script resolves collisions in the files listed here by replaying each PR's lines onto main, so nobody merges them by hand; a conflict in any other file is handed to the worker.
 
 - **Shared files:**
-  - `backend/README.md`: edit only the sections for what the PR changes (endpoints, setup, testing), as `CLAUDE.md` requires. Other directory READMEs follow the same rule but aren't replayed.
+  - `backend/README.md`, `docs/architecture.md`, `GLOSSARY.md`, `apps/mobile/README.md`, `apps/admin/README.md`: most behaviour PRs edit these under the reviewer standard (see **Review**). Edit only the sections for what the PR changes (endpoints, setup, testing), as `CLAUDE.md` requires. Other directory READMEs follow the same rule but aren't replayed.
 - **Generated:** CI's `codegen` job fails on drift.
   - `backend/gen/**`: `make gen`
   - `packages/api-client/src/gen/**`: `make gen`
@@ -90,4 +90,5 @@ Workers stop and report when they reach one:
 - **Risk paths** (any PR touching them is reviewed as L): `backend/db/migrations/**`, `backend/internal/identity/**`, `backend/internal/platform/auth/**`, `config/**`, `.kamal/**`, `.github/workflows/deploy-*.yml`, `backend/Dockerfile`, `supabase/config.toml`, `apps/*/wrangler.jsonc`, `site/wrangler.jsonc`, `scripts/deploy-web.sh`, `.github/workflows/ci.yml`, `scripts/ci-changes.sh` (a wrong path filter silently skips required checks). `proto/**` is left out: `buf breaking` and the `breaking-ok` merge gate cover it.
 - **Tiers:** S is at most 50 changed lines in at most 3 files, none on a risk path; L touches a risk path or changes more than 400 lines; M is everything else. A `size:S|M|L` label on the ticket overrides.
 - **Repo-specific checks:** `make gen` leaves no diff (run: `make gen && git diff --exit-code`); `docs/decisions-2026.md` untouched (run: `git diff --quiet origin/main...HEAD -- docs/decisions-2026.md`); migrations are new files with a Down; RPC auth is deny-by-default; no `public` schema tables, PostgREST grants or RLS-as-exposure; no secrets or personal data; `buf breaking` passes unless the PR is `breaking-ok`.
+- **Hygiene standards:** comments explain why, not what; a behaviour change ships with a test that fails without it; a behaviour change updates the directory README, `docs/architecture.md` and `GLOSSARY.md` in the same PR; a hard-to-reverse decision gets an ADR.
 - **Post reviews:** yes. The reviewer posts each round on its PR as one GitHub review with event `COMMENT` (the owner's account can't approve its own PR): the verdict first in the body, findings inline on diff lines, anything off the diff in the body. Public repo: no local paths or session details.
