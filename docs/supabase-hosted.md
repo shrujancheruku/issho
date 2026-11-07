@@ -8,7 +8,18 @@ Current projects:
 |---|---|---|---|
 | `issho-dev` | `yjnzrhusfxilktbjrzsw` | ap-northeast-2 (Seoul) | Free |
 
-For **production**, create the project in **ap-northeast-1 (Tokyo)**, closest to the first city's users. A project's region can't be changed later.
+For **production**, create the project in **ap-southeast-1 (Singapore)**, the nearest region to the Da Nang–Hoi An pack, with the API server next to it in Google Cloud's `asia-southeast1`. A project's region can't be changed later. Decided in [Production stack](https://github.com/shrujancheruku/issho/issues/341).
+
+### When production leaves the free tiers
+
+Production starts on Supabase **Free**. The nightly R2 dump ([deploy.md](deploy.md), *Off-site backups*) is then its **only** backup: Free has no Supabase backups and no point-in-time recovery, caps the database at 500 MB, allows two active projects (`issho-dev` and production), and may pause a project after a week of low activity. Check these at each Pilot checkpoint, and upgrade when a trigger fires:
+
+| Service | Free cap | Upgrade when |
+|---|---|---|
+| Supabase (to Pro) | 500 MB database, 2 active projects, no backups, pauses when inactive | before the soft launch opens beyond the Pilot's invitees; the database reaches 400 MB; the project is ever paused; a real restore from R2 is ever needed, or a day's lost data stops being acceptable; a third hosted project is needed (e.g. staging) |
+| Resend | 100 emails a day, 3,000 a month | 80 a day or 2,400 a month (every sign-in code is an email) |
+| Sentry (Developer) | 5,000 errors a month, 1 cron monitor, 1 user | 4,000 errors a month; a second cron monitor or a second person |
+| Cloudflare R2 | 10 GB-month, 1M writes, 10M reads a month | 8 GB stored |
 
 > **Secrets** (database password, SMTP key, Supabase secret key) live only in gitignored files on your machine and in the deployment's secret store. Never paste them into chats, commands or issues. Commands below read them from files and filter their output. See [secrets.md](secrets.md).
 
