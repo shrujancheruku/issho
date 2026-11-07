@@ -10,11 +10,11 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/testfixture"
 )
 
-// TestIntegrationDeleteOldCrewMessages: the one retention delete covers both
+// TestIntegrationDeleteOld: the one retention delete covers both
 // kinds of room. A crew's messages go 30 days after it closed or lapsed (an
 // active crew's stay, even after a member left it); an outing's go 30 days
 // after its event.
-func TestIntegrationDeleteOldCrewMessages(t *testing.T) {
+func TestIntegrationDeleteOld(t *testing.T) {
 	f := testfixture.New(t, "zz-chat-crewret", "UTC", 2)
 	ctx := context.Background()
 	now := time.Date(2030, 3, 1, 12, 0, 0, 0, time.UTC)
@@ -81,6 +81,7 @@ func TestIntegrationDeleteOldCrewMessages(t *testing.T) {
 		id   uuid.UUID
 		want int
 	}{"outing 31 days ago": {outing31, 0}, "outing 29 days ago": {outing29, 1}, "closed 31 days ago": {closed31, 0}, "lapsed 31 days ago": {lapsed31, 0}, "closed 29 days ago": {closed29, 2}, "active, a member left": {active, 2}} {
+		// An outing is identified by its room id, a crew by its crew id.
 		var got int
 		if err := f.Pool.QueryRow(ctx, `select count(*) from app.messages m join app.rooms r on r.id = m.room_id where r.id = $1 or r.crew_id = $1`, c.id).Scan(&got); err != nil {
 			t.Fatal(err)

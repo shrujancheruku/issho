@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
@@ -30,6 +31,10 @@ func (ChatAccess) Access(ctx context.Context, q *dbgen.Queries, userID, crewID u
 		return chat.State{}, chat.ErrForbidden
 	}
 	roomID, err := q.GetCrewRoom(ctx, pgtype.UUID{Bytes: crewID, Valid: true})
+	if errors.Is(err, pgx.ErrNoRows) {
+		// Unreachable while CreateCrew writes the room with the crew.
+		return chat.State{}, chat.ErrNoRoom
+	}
 	if err != nil {
 		return chat.State{}, err
 	}

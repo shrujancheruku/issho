@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 
 	"github.com/shrujancheruku/issho/backend/gen/dbgen"
@@ -32,6 +33,10 @@ func (ChatAccess) Access(ctx context.Context, q *dbgen.Queries, userID, eventID 
 		return chat.State{}, err
 	}
 	roomID, err := q.GetGroupRoom(ctx, pgtype.UUID{Bytes: groupID, Valid: true})
+	if errors.Is(err, pgx.ErrNoRows) {
+		// Unreachable while InsertEventGroup writes the room with the group.
+		return chat.State{}, chat.ErrNoRoom
+	}
 	if err != nil {
 		return chat.State{}, err
 	}

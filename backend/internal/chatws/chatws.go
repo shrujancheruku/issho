@@ -35,8 +35,8 @@
 //	         worth retrying.
 //
 // New messages reach every API instance through Postgres NOTIFY on the
-// "chat" channel (payload: the room's topic, an event group's or a crew's id;
-// both are uuids, so they never collide), sent in the transaction that stores
+// "chat" channel (payload: the room's id in app.rooms, the same for an
+// outing's and a crew's room), sent in the transaction that stores
 // the message, which also holds the room's lock so ids commit in order: after
 // a signal a socket reads everything after the last id it sent, a page at a
 // time until a page isn't full. Typing notices go the same way on
