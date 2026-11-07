@@ -238,9 +238,11 @@ jobs:
       - name: Test
         working-directory: backend
         # pipefail: without it `tee` would hide a failing test.
+        # -count=1: the Go test cache keys on source, not on the database, and
+        # ~/.cache/go-build is restored between runs, so a cached pass proves nothing.
         run: |
           set -o pipefail
-          go test ./... -skip Integration -coverprofile="$RUNNER_TEMP/cover.out" | tee "$RUNNER_TEMP/go-test.log"
+          go test ./... -skip Integration -count=1 -coverprofile="$RUNNER_TEMP/cover.out" | tee "$RUNNER_TEMP/go-test.log"
       - name: Go coverage summary
         if: ${{ !cancelled() }}
         working-directory: backend
