@@ -1,0 +1,7 @@
+[
+  {"number": 100, "title": "feat: closes one", "mergedAt": "2026-11-05T10:00:00Z", "headRefName": "feat/1-x", "closingIssuesReferences": [{"number": 1}]},
+  {"number": 101, "title": "docs: closes nothing", "mergedAt": "2026-11-05T10:00:00Z", "headRefName": "docs/x", "closingIssuesReferences": []},
+  {"number": 102, "title": "docs: closes nothing but too old to audit", "mergedAt": "2026-10-01T10:00:00Z", "headRefName": "docs/y", "closingIssuesReferences": []},
+  {"number": 103, "title": "chore(main): release 1.2.3", "mergedAt": "2026-11-05T10:00:00Z", "headRefName": "release-please--branches--main", "closingIssuesReferences": []},
+  {"number": 104, "title": "chore(deps): update x", "mergedAt": "2026-11-05T10:00:00Z", "headRefName": "renovate/x", "closingIssuesReferences": []}
+]

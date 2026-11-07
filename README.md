@@ -123,7 +123,7 @@ cd apps/mobile && cp .env.example .env && npx expo start
 
 ## Common commands
 
-`make gen` · `make lint` · `make test` · `make secrets-scan` · `make migrate-up` · `make seed` · `make api`
+`make gen` · `make lint` · `make test` · `make secrets-scan` · `make deadcode` (report-only dead-code check: Go `deadcode`, TypeScript knip; see backend/README.md) · `make migrate-up` · `make seed` · `make api`
 
 ## Stack
 

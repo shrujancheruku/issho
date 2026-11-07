@@ -1,0 +1,16 @@
+[
+  {"number": 1, "title": "clean agent ticket", "state": "open", "body": "Do the thing.\n\n- Moved from [`docs/ROADMAP.md`](https://example.test/ROADMAP.md), *M3*, when the ROADMAP was retired\n", "labels": [{"name": "ready-for-agent"}, {"name": "size:S"}], "parent_issue_url": "https://api.github.com/repos/o/r/issues/433"},
+  {"number": 2, "title": "two triage labels", "state": "open", "body": "", "labels": [{"name": "needs-info"}, {"name": "needs-triage"}], "parent_issue_url": null},
+  {"number": 3, "title": "no triage label", "state": "open", "body": null, "labels": [{"name": "enhancement"}], "parent_issue_url": null},
+  {"number": 4, "title": "closed but still ready", "state": "closed", "body": "", "labels": [{"name": "ready-for-agent"}, {"name": "size:M"}], "parent_issue_url": "https://api.github.com/repos/o/r/issues/433"},
+  {"number": 5, "title": "closed wontfix is fine", "state": "closed", "body": "", "labels": [{"name": "wontfix"}], "parent_issue_url": null},
+  {"number": 6, "title": "roadmap acceptance box", "state": "open", "body": "## Acceptance\n- [ ] ROADMAP M4 row is ticked\n", "labels": [{"name": "needs-triage"}], "parent_issue_url": null},
+  {"number": 7, "title": "links retired doc", "state": "open", "body": "See docs/ROADMAP.md", "labels": [{"name": "needs-triage"}], "parent_issue_url": null},
+  {"number": 8, "title": "ready human, no parent", "state": "open", "body": "", "labels": [{"name": "ready-for-human"}], "parent_issue_url": null},
+  {"number": 9, "title": "ready agent, no size", "state": "open", "body": "", "labels": [{"name": "ready-for-agent"}], "parent_issue_url": "https://api.github.com/repos/o/r/issues/433"},
+  {"number": 10, "title": "pilot bug stands alone", "state": "open", "body": "", "labels": [{"name": "ready-for-agent"}, {"name": "size:S"}, {"name": "bug"}], "parent_issue_url": null},
+  {"number": 11, "title": "PR-only label on an issue", "state": "open", "body": "", "labels": [{"name": "needs-triage"}, {"name": "go"}], "parent_issue_url": null},
+  {"number": 12, "title": "wayfinder map is exempt", "state": "open", "body": "", "labels": [{"name": "wayfinder:map"}], "parent_issue_url": null},
+  {"number": 269, "title": "Dependency Dashboard", "state": "open", "body": "", "labels": [], "parent_issue_url": null},
+  {"number": 360, "title": "Ideas", "state": "open", "body": "", "labels": [], "parent_issue_url": null}
+]

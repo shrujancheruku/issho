@@ -11,6 +11,7 @@ Project-specific rules for AI coding agents. They **take precedence over generic
 
 ## Every change
 - Work from an issue and close it from the PR (`Closes #<n>`). Record a decision in the issue's resolution comment, or as an ADR in `docs/adr/` when it's hard to reverse, surprising without context and a real trade-off. `docs/ROADMAP.md` is retired; never recreate it or add rows to `docs/decisions-2026.md`.
+- Planned work lives under the one active **work parent** issue (sub-issue order is run order); see "Planning rules" in `docs/agents/issue-tracker.md`.
 - Keep the directory READMEs accurate (endpoints, setup, testing).
 - Comment non-obvious logic with the *why*.
 - Run `make gen` after editing `proto/` or `backend/db/queries/`, then `make lint test`.
