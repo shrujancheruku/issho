@@ -128,3 +128,7 @@ cd apps/mobile && cp .env.example .env && npx expo start
 ## Stack
 
 Expo / React Native · Go (ConnectRPC, pgx, sqlc, goose, River) · Supabase (Postgres + PostGIS, Auth, Storage) · Google Maps Platform · Cloudflare Workers · Sentry · Claude · GitHub Actions · release-please. The reasons for each choice are in the [decision log](docs/decisions-2026.md).
+
+## Dependencies
+
+Renovate (`renovate.json5`) opens dependency PRs on Monday mornings. Patch and minor updates merge on their own once CI is green; majors get a `major-update` label and a ticket; the mobile native packages (Expo, React Native, React) come as one reviewed PR a week. The rules and the owner setup are in [docs/onboarding.md](docs/onboarding.md#dependency-updates).

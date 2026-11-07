@@ -59,12 +59,6 @@
       labels: ["major-update"],
     },
     {
-      // Wrangler deploys the admin and the site, so a new version gets a look even when
-      // it is only a patch or minor.
-      matchPackageNames: ["wrangler"],
-      automerge: false,
-    },
-    {
       // The build-only `tool` dependencies in backend/go.mod (codegen, migrations, secrets
       // scan). connect and protobuf are also runtime libraries, so they are not listed.
       // Only the commit type is set here: their automerge comes from the patch/minor rule.
@@ -89,12 +83,6 @@
       groupName: "go archives",
       matchManagers: ["gomod"],
       matchPackageNames: ["github.com/mholt/archives", "github.com/nwaples/rardecode/v2"],
-    },
-    {
-      // Supabase's Postgres image must match the tag the Supabase CLI runs (see the
-      // comment in ci.yml), so a person checks each bump against the CLI.
-      matchPackageNames: ["public.ecr.aws/supabase/postgres"],
-      automerge: false,
     },
     {
       // The mobile app lints through eslint-config-expo, whose eslint-plugin-react fails
