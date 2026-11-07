@@ -11,7 +11,7 @@ include $(ENV_FILE)
 export
 endif
 
-.PHONY: setup lint-go deadcode secrets-scan docs gen gen-proto gen-sql gen-strings email-templates ui-bundle app-build app-icons readme-panels lint test test-db migrate-up migrate-status api worker seed matrix venues boundaries sim
+.PHONY: setup lint-go deadcode tracker-check secrets-scan docs gen gen-proto gen-sql gen-strings email-templates ui-bundle app-build app-icons readme-panels lint test test-db migrate-up migrate-status api worker seed matrix venues boundaries sim
 
 # One-time setup after cloning: install JS deps and enable the secret-scanning pre-commit hook.
 setup:
@@ -57,6 +57,12 @@ lint-go:
 # (ADR 0002) are exempt by the lists in that script and knip.jsonc.
 deadcode:
 	scripts/deadcode.sh
+
+# Tracker hygiene (#435): lists issues and PRs that break the planning rules in
+# docs/agents/issue-tracker.md. Needs `gh` logged in; CI runs it weekly. Exits 1 on findings.
+tracker-check:
+	scripts/tracker-check.test.sh
+	scripts/tracker-check.sh
 
 lint: lint-go
 	$(GOTOOL) buf lint proto

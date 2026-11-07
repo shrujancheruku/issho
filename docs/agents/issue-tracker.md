@@ -28,6 +28,19 @@ How work is planned and tracked. The decision is in the resolution comment of #4
 - **Reviews file findings for triage.** A review never files `ready-for-agent` tickets directly. It opens one parent issue of its own, with its findings as sub-issues labelled `needs-triage`. The owner moves each into the work parent (shaped and labelled ready), into the Ideas list, or closes it.
 - **When to re-plan.** At each Pilot checkpoint, reorder open tickets and close stale ones. Before the Pilot, review the plan when each audit-driven milestone finishes.
 
+## The tracker check
+
+`make tracker-check` (`scripts/tracker-check.sh`, needs `gh` logged in) checks the rules above and the hygiene bar (#414). `.github/workflows/tracker-check.yml` runs it every Monday and on demand; a failing run lists the offenders in its log and job summary. It uses only the default `GITHUB_TOKEN`. It fails when:
+
+- an open issue does not have exactly one triage label (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). Exempt: `wayfinder:*` issues, the Dependency Dashboard (#269) and the Ideas issue (#360);
+- a closed issue still carries a triage label. `wontfix` may stay on a closed issue: it records why it was closed;
+- an open issue links `docs/ROADMAP.md` or has an acceptance box mentioning the ROADMAP. A `Moved from ...` provenance line is allowed;
+- a PR merged in the last 8 days closes no issue (`TRACKER_CHECK_DAYS` changes the window). Release-please, Renovate and Dependabot PRs are exempt;
+- an open `ready-for-agent` or `ready-for-human` issue has no parent (a `bug` is exempt, the Pilot-bug exception), or a `ready-for-agent` issue has no `size:` label;
+- an issue carries a PR-only label (`go`, `breaking-ok`).
+
+The rules are in `scripts/tracker-check.sh`, and `scripts/tracker-check.test.sh` tests them against recorded `gh` JSON in `scripts/testdata/tracker-check/` (CI runs it too).
+
 ## Pull requests as a triage surface
 
 **PRs as a request surface: no.** _(Set to `yes` if this repo treats external PRs as feature requests; `/triage` reads this flag.)_
