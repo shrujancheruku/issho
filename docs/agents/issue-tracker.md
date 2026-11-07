@@ -10,7 +10,7 @@ Issues and specs for this repo live as GitHub issues. Use the `gh` CLI for all o
 - **Make an issue a sub-issue of a parent**: `gh issue create --parent <parent> ...`, or `gh issue edit <parent> --add-sub-issue <child>` afterwards (`gh` 2.94+). Older `gh`: `gh api --method POST repos/<owner>/<repo>/issues/<parent>/sub_issues -F sub_issue_id=<child-db-id>` (database id, as in **Blocking** below). Without sub-issues, put `Part of #<parent>` at the top of the child body.
 - **Comment on an issue**: `gh issue comment <number> --body "..."`
 - **Apply / remove labels**: `gh issue edit <number> --add-label "..."` / `--remove-label "..."`
-- **Close**: `gh issue close <number> --comment "..."`
+- **Close**: `gh issue close <number> --comment "..."`. Closing a ticket also removes its triage label (`gh issue edit <number> --remove-label ready-for-agent`, say), except `wontfix`: the tracker check fails on a closed issue that still carries one.
 
 Infer the repo from `git remote -v`; `gh` does this automatically when run inside a clone.
 
@@ -27,6 +27,19 @@ How work is planned and tracked. The decision is in the resolution comment of #4
 - **Fog and deferred ideas.** In-scope fog stays in the active map's **Not yet specified** section. Ideas beyond any current destination go as bullets in the one pinned Ideas issue (#360), not as an issue each. An idea becomes an issue only when the owner makes it a destination or pulls it into a plan.
 - **Reviews file findings for triage.** A review never files `ready-for-agent` tickets directly. It opens one parent issue of its own, with its findings as sub-issues labelled `needs-triage`. The owner moves each into the work parent (shaped and labelled ready), into the Ideas list, or closes it.
 - **When to re-plan.** At each Pilot checkpoint, reorder open tickets and close stale ones. Before the Pilot, review the plan when each audit-driven milestone finishes.
+
+## The tracker check
+
+`make tracker-check` (`scripts/tracker-check.sh`, needs `gh` logged in) checks the rules above and the hygiene bar (#414). `.github/workflows/tracker-check.yml` runs it every Monday and on demand; a failing run lists the offenders in its log and job summary. It uses only the default `GITHUB_TOKEN`. It fails when:
+
+- an open issue does not have exactly one triage label (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). Exempt: `wayfinder:*` issues, the Dependency Dashboard (#269) and the Ideas issue (#360);
+- a closed issue still carries a triage label. `wontfix` may stay on a closed issue: it records why it was closed;
+- an open issue links `docs/ROADMAP.md` or has an acceptance box mentioning the ROADMAP. A `Moved from ...` provenance line is allowed;
+- a PR merged in the last 8 days closes no issue (`TRACKER_CHECK_DAYS` changes the window). Release-please, Renovate and Dependabot PRs are exempt;
+- an open `ready-for-agent` or `ready-for-human` issue has no parent (a `bug` is exempt, the Pilot-bug exception), or a `ready-for-agent` issue has no `size:` label;
+- an issue carries a PR-only label (`go`, `breaking-ok`).
+
+The rules are in `scripts/tracker-check.sh`, and `scripts/tracker-check.test.sh` tests them against recorded `gh` JSON in `scripts/testdata/tracker-check/` (CI runs it too).
 
 ## Pull requests as a triage surface
 

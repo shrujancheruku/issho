@@ -42,6 +42,8 @@ DATABASE_URL="$TEST_DATABASE_URL" go run ./cmd/tool seed ../data/citypacks/*.jso
 # a new package would be left out too. Every test that needs the database is
 # named TestIntegration* (checked: all 53 tests that skip without a database
 # match), so -run Integration finds exactly those.
+# -count=1: the test cache keys on Go sources and env, not on the database's
+# contents, so a cached pass could hide a migration or view change (#492).
 go test ./... -run Integration -count=1 -v
 go run ./cmd/tool build-matrix -dry-run tokyo
 go run ./cmd/tool discover-venues -dry-run austin

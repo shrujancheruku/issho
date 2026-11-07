@@ -55,6 +55,8 @@ jobs:
           fetch-depth: 0
       - name: The path rules behave
         run: scripts/ci-changes.test.sh
+      - name: The tracker check behaves
+        run: scripts/tracker-check.test.sh
       - name: Which jobs does this change need
         id: filter
         run: |
@@ -236,9 +238,11 @@ jobs:
       - name: Test
         working-directory: backend
         # pipefail: without it `tee` would hide a failing test.
+        # -count=1: the Go test cache keys on source, not on the database, and
+        # ~/.cache/go-build is restored between runs, so a cached pass proves nothing.
         run: |
           set -o pipefail
-          go test ./... -skip Integration -coverprofile="$RUNNER_TEMP/cover.out" | tee "$RUNNER_TEMP/go-test.log"
+          go test ./... -skip Integration -count=1 -coverprofile="$RUNNER_TEMP/cover.out" | tee "$RUNNER_TEMP/go-test.log"
       - name: Go coverage summary
         if: ${{ !cancelled() }}
         working-directory: backend
