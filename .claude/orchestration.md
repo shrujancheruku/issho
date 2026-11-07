@@ -17,7 +17,12 @@ Tickets run in parallel only when their touch maps don't overlap outside the sha
 
 ## Verify
 
-`make gen && make lint test`, from the repo root, for every ticket. Then `make secrets-scan` before pushing. Leave `TEST_DATABASE_URL` unset for those: DB integration tests skip there.
+Every ticket, from the repo root. Leave `TEST_DATABASE_URL` unset: DB integration tests skip there.
+
+- `make gen` regenerates code before lint and tests read it
+- `make secrets-scan`
+- `--then`
+- `make lint test`
 
 **Database tickets** (a touch map that includes `backend/db/**` or a `store.go`) also run `make test-db`. It starts a throwaway PostGIS container per run (unique name, free host port, removed on exit), so parallel worktrees can't clash. It needs Docker.
 
@@ -33,6 +38,7 @@ A **shared file** is one many PRs edit. The `merge` script resolves collisions i
   - `docs/generated/**`: `make gen`
   - `backend/internal/uistrings/*.json`: `make gen`
   - `backend/internal/uistrings/human/**`: `make gen`
+  - `pnpm-lock.yaml`: `pnpm install --lockfile-only`
 - **Orchestrator-owned edits:** the parent issue's body, and closing it once every sub-issue is closed.
 
 Not shared, but every PR follows these:
