@@ -17,6 +17,10 @@
     schedule: ["before 7am on the first day of the month"],
     automerge: false,
   },
+  // Automerge waits for the required checks: `ignoreTests` is false (Renovate's default),
+  // and the `main` ruleset (strict) enforces them. Platform automerge needs the repo's
+  // "Allow auto-merge" setting, an owner step.
+  ignoreTests: false,
   // Same release-age gate as pnpm-workspace.yaml (1440 minutes = 1 day), so Renovate
   // never opens a PR for a version pnpm would refuse to install.
   minimumReleaseAge: "1 day",
@@ -41,17 +45,29 @@
       semanticCommitType: "chore",
     },
     {
-      // Automerge only patch and minor updates of dev tooling, once the required
-      // checks pass (the `main` ruleset enforces them). Everything else waits for review.
-      matchDepTypes: ["devDependencies"],
+      // Patch and minor updates automerge once the required checks pass, for every manager
+      // here: npm, Go modules, GitHub Actions and Docker images. Majors are excluded below.
+      // Later rules override this one, so the exceptions come after it.
       matchUpdateTypes: ["patch", "minor"],
-      // Wrangler deploys the admin and the site: review it.
-      matchPackageNames: ["!wrangler"],
       automerge: true,
+    },
+    {
+      // A major update waits for a person and a ticket. The label is what the reviewer
+      // filters on: a major upgrade gets a ticket within a week (the hygiene bar, #414).
+      matchUpdateTypes: ["major"],
+      automerge: false,
+      labels: ["major-update"],
+    },
+    {
+      // Wrangler deploys the admin and the site, so a new version gets a look even when
+      // it is only a patch or minor.
+      matchPackageNames: ["wrangler"],
+      automerge: false,
     },
     {
       // The build-only `tool` dependencies in backend/go.mod (codegen, migrations, secrets
       // scan). connect and protobuf are also runtime libraries, so they are not listed.
+      // Only the commit type is set here: their automerge comes from the patch/minor rule.
       matchManagers: ["gomod"],
       matchPackageNames: [
         "github.com/bufbuild/buf",
@@ -60,9 +76,7 @@
         "github.com/sqlc-dev/sqlc",
         "github.com/zricethezav/gitleaks/v8",
       ],
-      matchUpdateTypes: ["patch", "minor"],
       semanticCommitType: "chore",
-      automerge: true,
     },
     {
       // gitleaks (a build-only `tool`) pulls in mholt/archives, which must be built against
@@ -92,20 +106,27 @@
       allowedVersions: "<10",
     },
     {
-      // Expo moves as one SDK: never automerged. `expo install --fix` picks the
-      // versions each SDK expects, which Renovate can't, so a person aligns them.
+      // Mobile native runtime never automerges, whatever the update type. CI builds only the
+      // web export, so a native break has no check behind it. Expo moves as one SDK:
+      // `expo install --fix` picks the versions each SDK expects, which Renovate can't, so a
+      // person aligns them. React and react-dom are pinned to the React Native release.
+      // They're grouped into one PR a week, the global schedule.
       // Keep this rule LAST: later packageRules win, and an earlier position would let
-      // the devDependencies automerge rule override `automerge: false` for
-      // jest-expo and eslint-config-expo.
-      groupName: "expo",
+      // the patch/minor automerge rule override `automerge: false`.
+      groupName: "mobile native",
       matchPackageNames: [
         "expo",
         "expo-*",
-        "react-native",
-        "@react-native/*",
         "@expo/*",
         "jest-expo",
         "eslint-config-expo",
+        "react-native",
+        "react-native-*",
+        "@react-native/*",
+        "@react-native-*",
+        "@sentry/react-native",
+        "react",
+        "react-dom",
       ],
       automerge: false,
       prBodyNotes: [
