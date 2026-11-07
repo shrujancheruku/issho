@@ -24,14 +24,25 @@ go run ./cmd/tool migrate down
 go run ./cmd/tool migrate up
 go run ./cmd/tool seed ../data/citypacks/*.json
 
+# One database per package: build a migrated, seeded template once, and
+# testfixture clones it for each package's tests (and drops the clone), so the
+# packages run in parallel (no -p 1). The role needs CREATEDB, which Supabase's
+# `postgres` has. The sweep drops the template and any clone a killed run left.
+rest="${DATABASE_URL#postgres://}"
+query=""; [[ "$DATABASE_URL" == *\?* ]] && query="?${DATABASE_URL#*\?}"
+TEST_DATABASE_URL="postgres://${rest%%/*}/issho_template$query"
+export TEST_DATABASE_URL
+trap 'go run ./internal/testfixture/cmd/testdb sweep "$TEST_DATABASE_URL"' EXIT
+go run ./internal/testfixture/cmd/testdb create "$TEST_DATABASE_URL" "$DATABASE_URL"
+DATABASE_URL="$TEST_DATABASE_URL" go run ./cmd/tool migrate up
+DATABASE_URL="$TEST_DATABASE_URL" go run ./cmd/tool seed ../data/citypacks/*.json
+
 # DB integration tests and tool dry-runs (no Google calls).
-# -p 1: the packages share one database and their fixtures use stable ids, so
-# packages running in parallel delete each other's rows.
 # ./... instead of a package list: the list had silently left out metrics, and
 # a new package would be left out too. Every test that needs the database is
 # named TestIntegration* (checked: all 53 tests that skip without a database
 # match), so -run Integration finds exactly those.
-TEST_DATABASE_URL="$DATABASE_URL" go test -p 1 ./... -run Integration -v
+go test ./... -run Integration -count=1 -v
 go run ./cmd/tool build-matrix -dry-run tokyo
 go run ./cmd/tool discover-venues -dry-run austin
 go run ./cmd/tool discover-venues -dry-run da-nang-hoi-an  # areas with boundaries, read back from PostGIS
