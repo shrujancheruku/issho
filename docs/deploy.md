@@ -62,7 +62,7 @@ kamal deploy -d production --skip-push
 
 Every Kamal command takes `-d production` (see *Environments*); without it Kamal refuses.
 
-Migrations run **before** the new code, so the old code must work with the new schema for the minute in between; keep migrations additive, as they already are. kamal-proxy only switches traffic once the new API container's `GET /up` answers 200, which needs the database, so a broken `DATABASE_URL` never replaces a working container.
+Migrations run **before** the new code, so the old code must work with the new schema for the minute in between; keep migrations additive, as they already are. **Before a migration that drops or rewrites data, take a manual dump** (the one-off backup run under *Off-site backups*): while production is on Supabase Free, the nightly dump is the only backup. kamal-proxy only switches traffic once the new API container's `GET /up` answers 200, which needs the database, so a broken `DATABASE_URL` never replaces a working container.
 
 Then check:
 
