@@ -260,6 +260,27 @@ jobs:
         run: |
           test "$(psql "$DATABASE_URL" -Atc "select to_regclass('goose.db_version') is not null and to_regclass('public.app_goose_db_version') is null")" = t
 
+  # Dead code, report-only (#436): findings go to the job summary and the log
+  # but never fail the run. It starts gating after the phase 1 cuts (#433).
+  # Not gated by `changes`: it is cheap and not a required check.
+  deadcode:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: backend/go.mod
+          cache: false
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 26
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Dead-code check (report-only)
+        run: make deadcode
+
   typescript:
     needs: changes
     if: >-

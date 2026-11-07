@@ -1,0 +1,23 @@
+{
+  "$schema": "https://unpkg.com/knip@6.44.1/schema.json",
+  // Report-only for now (#436). The named exemptions below are the PARKED
+  // parts (ADR 0002): CityEditor, the translation editor and interest tagging.
+  // Generated code is not ours to prune. The Go side keeps its own list in
+  // scripts/deadcode.sh.
+  "workspaces": {
+    "apps/admin": {
+      "ignore": [
+        "src/pages/CityEditor.tsx",
+        "src/pages/CityEditor.test.tsx",
+        "src/pages/Translations.tsx"
+      ]
+    },
+    "apps/mobile": {
+      "ignore": ["src/features/profile/interest.ts"]
+    },
+    "packages/api-client": {
+      "ignore": ["src/gen/**"],
+      "ignoreDependencies": ["@bufbuild/protoc-gen-es"]
+    }
+  }
+}
