@@ -1,5 +1,37 @@
 # Changelog
 
+## [0.11.0](https://github.com/shrujancheruku/issho/compare/v0.10.0...v0.11.0) (2026-11-14)
+
+
+### ⚠ BREAKING CHANGES
+
+* **db:** one rooms table and one messages table for outing and crew chat ([#513](https://github.com/shrujancheruku/issho/issues/513))
+
+### Bug Fixes
+
+* **deps:** update dependency [@vis](https://github.com/vis).gl/react-google-maps to v1.10.2 ([#365](https://github.com/shrujancheruku/issho/issues/365)) ([4ab9708](https://github.com/shrujancheruku/issho/commit/4ab970859df895f19d5ce77edaf53f300fcd466f))
+* **deps:** update dependency @connectrpc/connect to v2.3.0 ([#376](https://github.com/shrujancheruku/issho/issues/376)) ([36ac568](https://github.com/shrujancheruku/issho/commit/36ac56828dd2fbf985e819cdf1b6ff05ec829c06))
+* **deps:** update dependency @connectrpc/connect-web to v2.3.0 ([#377](https://github.com/shrujancheruku/issho/issues/377)) ([dde7c56](https://github.com/shrujancheruku/issho/commit/dde7c56aca5377ee9bf3ad2631d5e8eb5c470aff))
+* **deps:** update dependency @sentry/react-native to ~8.33.0 ([#378](https://github.com/shrujancheruku/issho/issues/378)) ([77c6d00](https://github.com/shrujancheruku/issho/commit/77c6d002dd697e31f8c970b3173a3b594b42d38f))
+* **deps:** update dependency @tanstack/react-query to v5.106.1 ([#379](https://github.com/shrujancheruku/issho/issues/379)) ([c824635](https://github.com/shrujancheruku/issho/commit/c824635fc07cffe0bf71322ddb8b799c2a7ff83c))
+* **deps:** update dependency @tanstack/react-query to v5.107.1 ([#518](https://github.com/shrujancheruku/issho/issues/518)) ([9c60fee](https://github.com/shrujancheruku/issho/commit/9c60feed166db156e5fe36091d96bc8107653d5b))
+* **deps:** update dependency react-native-gesture-handler to ~3.4.0 ([#380](https://github.com/shrujancheruku/issho/issues/380)) ([e47f454](https://github.com/shrujancheruku/issho/commit/e47f4548775fcf04a667a28992a471e0d78c83b2))
+* **deps:** update dependency react-native-safe-area-context to ~5.11.0 ([#381](https://github.com/shrujancheruku/issho/issues/381)) ([eed2328](https://github.com/shrujancheruku/issho/commit/eed23284f8476acabf433069e417a597ac87a219))
+* **deps:** update dependency react-native-screens to v4.30.1 ([#366](https://github.com/shrujancheruku/issho/issues/366)) ([6ba69f9](https://github.com/shrujancheruku/issho/commit/6ba69f9dfee5846b4bc494bbffa3e68619358b69))
+* **deps:** update dependency react-native-worklets to v0.13.1 ([#367](https://github.com/shrujancheruku/issho/issues/367)) ([4e1ddf3](https://github.com/shrujancheruku/issho/commit/4e1ddf340714d5fa0011a985f9a609c78e461e66))
+* **deps:** update expo ([#368](https://github.com/shrujancheruku/issho/issues/368)) ([efa799c](https://github.com/shrujancheruku/issho/commit/efa799c7fdc4414818334109a405f1553e781bb1))
+* **deps:** update module connectrpc.com/connect to v2 ([#471](https://github.com/shrujancheruku/issho/issues/471)) ([0363829](https://github.com/shrujancheruku/issho/commit/0363829cdd529cefb9721e3a9b9cc13752634e9f))
+* **deps:** update module github.com/jackc/pgx/v5 to v5.12.0 ([#382](https://github.com/shrujancheruku/issho/issues/382)) ([bbe10f2](https://github.com/shrujancheruku/issho/commit/bbe10f2b15b7966f5b81f9f6ec7061a6465c4bc2))
+* **deps:** update module github.com/micahparks/keyfunc/v3 to v3.9.1 ([#383](https://github.com/shrujancheruku/issho/issues/383)) ([23730e0](https://github.com/shrujancheruku/issho/commit/23730e042514d93e7fdc8250053a20bc2ab56e8b))
+* **deps:** update react monorepo to v19.3.1 ([#369](https://github.com/shrujancheruku/issho/issues/369)) ([dd8dbc7](https://github.com/shrujancheruku/issho/commit/dd8dbc7a5a1488c001588414ab7f76a166f93657))
+* **deps:** update river monorepo to v0.51.0 ([#384](https://github.com/shrujancheruku/issho/issues/384)) ([7d096ce](https://github.com/shrujancheruku/issho/commit/7d096ce8ff0c7e4ff2fdf189de128ce49329167d))
+* **deps:** update river monorepo to v0.51.1 ([#516](https://github.com/shrujancheruku/issho/issues/516)) ([8374eb5](https://github.com/shrujancheruku/issho/commit/8374eb58ec74e49ce16e6a3f9ad2031c3f0c8838))
+
+
+### Code Refactoring
+
+* **db:** one rooms table and one messages table for outing and crew chat ([#513](https://github.com/shrujancheruku/issho/issues/513)) ([acedc11](https://github.com/shrujancheruku/issho/commit/acedc1110f63975e608d55db8f602f9d1099f5c9))
+
 ## [0.10.0](https://github.com/shrujancheruku/issho/compare/v0.9.0...v0.10.0) (2026-11-04)
 
 
