@@ -30,5 +30,14 @@
     "sonnet": "sonnet",
     "opus": "opus"
   },
-  "slack_prefix": "issho"
+  "slack_prefix": "issho",
+  "generated_paths": [
+    "backend/gen/**",
+    "packages/api-client/src/gen/**",
+    "docs/generated/**",
+    "backend/internal/uistrings/*.json",
+    "backend/internal/uistrings/human/**",
+    "pnpm-lock.yaml",
+    "backend/go.sum"
+  ]
 }
