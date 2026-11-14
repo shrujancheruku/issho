@@ -1,0 +1,34 @@
+{
+  "tracker": "github",
+  "github_repo": "shrujancheruku/issho",
+  "labels": {
+    "size": {
+      "S": "size:S",
+      "M": "size:M",
+      "L": "size:L"
+    },
+    "risk": "risk",
+    "integrated": "integrated"
+  },
+  "risk_paths": [
+    "backend/db/migrations/**",
+    "backend/internal/identity/**",
+    "backend/internal/platform/auth/**",
+    "config/**",
+    ".kamal/**",
+    ".github/workflows/deploy-*.yml",
+    ".github/workflows/ci.yml",
+    "backend/Dockerfile",
+    "supabase/config.toml",
+    "apps/*/wrangler.jsonc",
+    "site/wrangler.jsonc",
+    "scripts/deploy-web.sh",
+    "scripts/ci-changes.sh"
+  ],
+  "models": {
+    "haiku": "haiku",
+    "sonnet": "sonnet",
+    "opus": "opus"
+  },
+  "slack_prefix": "issho"
+}

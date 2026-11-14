@@ -7,7 +7,7 @@ Project-specific rules for AI coding agents. They **take precedence over generic
 - [docs/adr/](docs/adr/) and the frozen [docs/decisions-2026.md](docs/decisions-2026.md): why things are the way they are
 - [docs/architecture.md](docs/architecture.md): how the pieces fit together
 - The README in the directory you're changing. `apps/mobile/AGENTS.md` has Expo-specific rules.
-- [.claude/orchestration.md](.claude/orchestration.md) when working through a backlog in parallel with the [orchestrate plugin](https://github.com/shrujancheruku/claude-orchestrate): lanes, verify commands, gates and the merge rule.
+- [docs/agents/orchestration.md](docs/agents/orchestration.md) when building a milestone in parallel on Orca workers with the [flow plugin](https://github.com/shrujancheruku/orca-flow) (`/flow:build`): model routing, holds, verify commands, review checks and the merge rule.
 
 ## Every change
 - Work from an issue and close it from the PR (`Closes #<n>`). Record a decision in the issue's resolution comment, or as an ADR in `docs/adr/` when it's hard to reverse, surprising without context and a real trade-off. `docs/ROADMAP.md` is retired; never recreate it or add rows to `docs/decisions-2026.md`.
@@ -44,3 +44,9 @@ The five default labels: needs-triage, needs-info, ready-for-agent, ready-for-hu
 ### Domain docs
 
 Single-context: a root `GLOSSARY.md`; decisions in `docs/adr/` (from 2026-11-04) and the frozen `docs/decisions-2026.md` (before). See `docs/agents/domain.md`.
+
+<!-- flow:begin orchestration -->
+### Orchestration
+
+Build a spec with `/flow:build`: Matt's `/implement-spec` run on Orca workers, with models routed by `route.py` from the table in `docs/agents/orchestration.md`. A build milestone is a GitHub Milestone; the founder merges the integration PR. See `docs/agents/orchestration.md`.
+<!-- flow:end orchestration -->

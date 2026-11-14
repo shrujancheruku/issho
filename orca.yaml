@@ -1,0 +1,7 @@
+# Orca workspace hooks, shared by everyone who opens Issho in Orca.
+# Orca also copies the files listed in .worktreeinclude into each new worktree.
+scripts:
+  # Same as a fresh clone: pnpm install + the git hooks (secret scan, commit-msg lint).
+  # Without the hooks, commits from a worktree skip the pre-commit secret scan.
+  setup: |
+    make setup

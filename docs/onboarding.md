@@ -28,6 +28,8 @@ make setup        # pnpm install + enables git hooks (secret scan, commit-messag
 - **pre-commit:** scans staged changes for secrets. CI scans every push too, but by then a secret is already public. See [secrets.md](secrets.md).
 - **commit-msg:** checks the message against Conventional Commits, the same rules CI applies.
 
+In Orca, `orca.yaml` runs `make setup` in every new worktree, and `.worktreeinclude` copies the untracked files a worktree needs (never `.env*` or other secrets).
+
 ## 3. Start the local backend stack
 
 ```sh
