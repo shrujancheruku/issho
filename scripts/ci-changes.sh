@@ -86,7 +86,7 @@ classify() {
     # packages/), tooling config, deploy and hosting config (checked by the
     # deploy workflows, not by CI), the static site and brand assets.
     docs/* | *.md | .claude/* | site/* | assets/* | config/* | .kamal/* | supabase/* \
-      | .githooks/* | .gitignore | .worktreeinclude | .gitleaks.toml | .env.example \
+      | .githooks/* | .gitignore | .worktreeinclude | orca.yaml | .gitleaks.toml | .env.example \
       | version.txt | .release-please-manifest.json | release-please-config.json \
       | skills-lock.json | commitlint.config.mjs | .github/pull_request_template.md \
       | .github/ISSUE_TEMPLATE/* | .github/CODEOWNERS | .github/dependabot.yml) ;;

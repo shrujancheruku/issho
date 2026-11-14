@@ -37,8 +37,9 @@ GoogleService-Info.plist
 .kamal/secrets*
 !.kamal/secrets.production.example
 
-# Claude Code: per-user settings stay local; .claude/skills and
-# .claude/orchestration.md are shared; agent worktrees are throwaway checkouts
+# Claude Code: per-user settings stay local; .claude/skills are shared; agent
+# worktrees are throwaway checkouts. The orchestrate-* entries are leftovers from
+# the retired orchestrate plugin's local state.
 .claude/settings.local.json
 .claude/worktrees/
 .claude/orchestrate-state.json

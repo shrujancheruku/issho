@@ -38,6 +38,7 @@ none="backend=false codegen=false image=false proto=false ts=false ts_filter="
 check docs-only "$none" docs/architecture.md README.md
 check no-files "$none"
 check claude-and-site "$none" .claude/orchestration.md site/index.html config/deploy.yml
+check worktree-tooling "$none" orca.yaml .worktreeinclude
 go="backend=true codegen=true image=true proto=false ts=false ts_filter="
 check go-only "$go" backend/internal/walks/walks.go
 check data "backend=true codegen=true image=true proto=false ts=true ts_filter=" data/activities.json
