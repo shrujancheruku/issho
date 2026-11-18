@@ -3,7 +3,8 @@
 # Supabase stays hosted; nothing else runs on the server.
 #
 # The domain is joinissho.com (api.joinissho.com for the API); the server is
-# a Google Compute Engine VM in Tokyo (issho-api, project issho-dev-512213).
+# a Google Compute Engine VM in Tokyo (issho-api, project issho-dev-512213),
+# deleted on 2026-11-18 until it is rebuilt.
 # See docs/deploy.md for the one-time setup and the deploy steps.
 #
 # This file holds what every environment shares. What names an environment
