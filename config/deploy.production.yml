@@ -11,10 +11,12 @@
 servers:
   web:
     hosts:
-      - 35.243.76.67 # GCE issho-api, asia-northeast1-b (static address)
+      # TODO: the rebuilt server's static address (docs/deploy.md, "Status").
+      # The first one, 35.243.76.67, was released on 2026-11-18.
+      - TODO
   worker:
     hosts:
-      - 35.243.76.67
+      - TODO
 
 proxy:
   host: api.joinissho.com # proxied by Cloudflare
@@ -34,7 +36,7 @@ env:
 
 accessories:
   backup:
-    host: 35.243.76.67
+    host: TODO
     env:
       clear:
         R2_ENDPOINT: https://b6f3e52f2491d38421018e275ef7896b.r2.cloudflarestorage.com
