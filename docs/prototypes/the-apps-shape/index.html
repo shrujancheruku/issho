@@ -1,0 +1,337 @@
+<title>Issho App Shape</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<!--
+  PROTOTYPE, throwaway. Ticket: "The app's shape" (#560) on the v2 wayfinder map (#532).
+  Four structurally different layouts of the member app, switchable with ?variant=A|B|C|D
+  (or #three-tabs, #one-list, #agenda, #rooms) and the floating bar. Rough screens, example data.
+-->
+<style>
+/* Layout: a storyboard per variant. Rows of phone frames that scroll sideways, the same moments in the same order, so variants compare frame for frame. */
+:root{
+  --page:#E7EBF3; --bg:#F3F5F9; --surface:#FFFFFF; --sunk:#E7EBF3; --line:#D5DBE7; --line-strong:#7A849C;
+  --ink:#131B40; --ink2:#545D73; --accent:#24307A; --on-accent:#FFFFFF; --gold:#DEA92C; --gold-tint:#F2E2B2;
+  --gold-text:#885716; --on-gold:#131B40; --ok:#2F6B3D; --error:#BC002D; --bar:#131B40; --on-bar:#FFFFFF;
+  --display:"Dela Gothic One","Zen Kaku Gothic New",system-ui,sans-serif;
+  --body:"Zen Kaku Gothic New",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --page:#080C22; --bg:#0D1330; --surface:#161E40; --sunk:#222B52; --line:#2C3765; --line-strong:#6C78AA;
+  --ink:#F1F3F8; --ink2:#A9B1CB; --accent:#3A4A9E; --on-accent:#FFFFFF; --gold:#DEA92C; --gold-tint:#4A3D1C;
+  --gold-text:#DEA92C; --on-gold:#131B40; --ok:#7FCB91; --error:#FF7A90; --bar:#F1F3F8; --on-bar:#131B40; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --page:#080C22; --bg:#0D1330; --surface:#161E40; --sunk:#222B52; --line:#2C3765; --line-strong:#6C78AA;
+  --ink:#F1F3F8; --ink2:#A9B1CB; --accent:#3A4A9E; --on-accent:#FFFFFF; --gold:#DEA92C; --gold-tint:#4A3D1C;
+  --gold-text:#DEA92C; --on-gold:#131B40; --ok:#7FCB91; --error:#FF7A90; --bar:#F1F3F8; --on-bar:#131B40; color-scheme:dark }
+
+*{box-sizing:border-box}
+body{background:var(--page);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5}
+.page{max-width:1640px;margin:0 auto;padding-block:28px 120px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:28px}
+h1,h2,h3,h4,p,figure,ul{margin:0}
+.top h1{font-family:var(--display);font-weight:400;font-size:26px;line-height:1.45}
+.top p{color:var(--ink2);max-width:70ch}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold-text);font-weight:700}
+.vhead{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:24px;align-items:start}
+@media (max-width:900px){.vhead{grid-template-columns:minmax(0,1fr)}}
+.vhead h2{font-family:var(--display);font-weight:400;font-size:22px;line-height:1.45}
+.vhead .bet{display:flex;flex-direction:column;gap:10px;min-width:0}
+.vhead .bet p{max-width:62ch}
+.vhead b{font-weight:700}
+.where{overflow-x:auto;min-width:0}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{text-align:left;vertical-align:top;padding:6px 10px 6px 0;border-bottom:1px solid var(--line)}
+th{color:var(--ink2);font-weight:500;white-space:nowrap;width:1%}
+h3.sec{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink2);font-weight:700}
+.board{display:flex;gap:22px;overflow-x:auto;align-items:flex-start;padding:4px 2px 14px}
+.fig{flex:none;width:292px;display:flex;flex-direction:column;gap:8px}
+.fig.wide{width:min(860px,88vw)}
+.cap{font-weight:700;font-size:13.5px}
+.note{font-size:13px;color:var(--ink2)}
+
+/* phone */
+.ph{background:var(--bg);border:1px solid var(--line-strong);border-radius:26px;min-height:600px;display:flex;flex-direction:column;overflow:hidden;font-size:12.5px;line-height:1.4;position:relative}
+.ph .sb{display:flex;justify-content:space-between;padding:8px 18px 2px;font-size:10.5px;color:var(--ink2);font-weight:700}
+.ph .hd{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 14px}
+.ph .hd .ttl{font-family:var(--display);font-size:17px;line-height:1.45}
+.ph .hd .sub{font-size:11.5px;color:var(--ink2)}
+.ph .body{padding:4px 14px 14px;display:flex;flex-direction:column;gap:9px;flex:1}
+.lbl{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink2);font-weight:700;margin-top:4px;display:flex;justify-content:space-between}
+.lbl.gold{color:var(--gold-text)}
+.card{background:var(--surface);border-radius:14px;padding:10px 12px;display:flex;flex-direction:column;gap:5px}
+.card.need{box-shadow:inset 0 0 0 2px var(--gold)}
+.card h4{font-family:var(--display);font-weight:400;font-size:13.5px;line-height:1.45}
+.card h4.plain{font-family:var(--body);font-weight:700}
+.k{font-size:10.5px;color:var(--ink2);font-weight:700;letter-spacing:.04em}
+.meta{font-size:11.5px;color:var(--ink2)}
+.foot{font-size:11.5px;color:var(--gold-text);font-weight:700}
+.rowx{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.sp{justify-content:space-between}
+.btn{background:var(--gold);color:var(--on-gold);font-weight:700;border-radius:999px;padding:6px 14px;font-size:12px;text-align:center;flex:none}
+.btn.big{padding:10px 14px;font-size:13px;flex:1}
+.btn.o{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--line-strong)}
+.btn.a{background:var(--accent);color:var(--on-accent)}
+.pill{font-size:10.5px;font-weight:700;border-radius:999px;padding:2px 8px;background:var(--sunk);color:var(--ink);white-space:nowrap}
+.pill.g{background:var(--gold-tint);color:var(--gold-text)}
+.pill.a{background:var(--accent);color:var(--on-accent)}
+.chip{font-size:11.5px;border-radius:999px;padding:4px 10px;background:var(--sunk);font-weight:500;white-space:nowrap}
+.chip.on{background:var(--accent);color:var(--on-accent)}
+.dot{display:inline-block;min-width:16px;height:16px;border-radius:999px;background:var(--gold);color:var(--on-gold);font-size:10px;font-weight:700;text-align:center;line-height:16px;padding:0 4px}
+.tabs{display:flex;border-top:1px solid var(--line);background:var(--surface);margin-top:auto}
+.tab{flex:1;text-align:center;padding:10px 4px 12px;font-size:11.5px;font-weight:700;color:var(--ink2)}
+.tab.on{color:var(--accent);box-shadow:inset 0 2px 0 var(--accent)}
+:root[data-theme="dark"] .tab.on{color:var(--ink)}
+.av{width:26px;height:26px;border-radius:999px;background:var(--accent);color:var(--on-accent);font-weight:700;font-size:11px;display:flex;align-items:center;justify-content:center;flex:none}
+.lnk{color:var(--accent);font-weight:700;font-size:12px}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .lnk{color:var(--ink)} :root:not([data-theme="light"]) .tab.on{color:var(--ink)}}
+:root[data-theme="dark"] .lnk{color:var(--ink)}
+.banner{background:var(--gold-tint);color:var(--ink);border-radius:12px;padding:8px 10px;font-size:12px}
+.list{background:var(--surface);border-radius:14px;display:flex;flex-direction:column}
+.li{display:flex;justify-content:space-between;gap:8px;padding:9px 12px;border-bottom:1px solid var(--line);align-items:center}
+.li:last-child{border-bottom:0}
+.li small{color:var(--ink2);font-size:11.5px;display:block}
+.li>div{min-width:0}
+.sw{width:30px;height:18px;border-radius:999px;background:var(--line-strong);position:relative;flex:none}
+.sw::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:999px;background:var(--surface)}
+.sw.on{background:var(--accent)}.sw.on::after{left:14px}
+/* stage thread */
+.thread{display:flex;align-items:flex-start;margin:2px 0}
+.thread span{flex:1;text-align:center;font-size:10px;color:var(--ink2);position:relative;padding-top:14px;font-weight:700}
+.thread span::before{content:"";position:absolute;top:4px;left:0;right:0;height:2px;background:var(--line)}
+.thread span::after{content:"";position:absolute;top:0;left:50%;margin-left:-5px;width:10px;height:10px;border-radius:999px;background:var(--line-strong)}
+.thread span.d::before,.thread span.n::before{background:var(--gold)}
+.thread span.d::after{background:var(--gold)}
+.thread span.n{color:var(--ink)}
+.thread span.n::after{background:var(--gold);box-shadow:0 0 0 3px var(--gold-tint)}
+/* stops */
+.stops{display:flex;flex-direction:column;gap:0;border-left:2px solid var(--gold);margin-left:5px;padding-left:12px}
+.stops div{padding:3px 0;position:relative}
+.stops div::before{content:"";position:absolute;left:-18px;top:8px;width:8px;height:8px;border-radius:999px;background:var(--gold)}
+.stops div.leg{color:var(--ink2);font-size:11px}
+.stops div.leg::before{display:none}
+/* chat */
+.msg{background:var(--sunk);border-radius:12px;padding:6px 9px;max-width:85%;align-self:flex-start}
+.msg b{display:block;font-size:10.5px;color:var(--ink2)}
+.msg.me{align-self:flex-end;background:var(--accent);color:var(--on-accent)}
+.sys{text-align:center;font-size:11px;color:var(--ink2)}
+.composer{display:flex;gap:6px;align-items:center;padding:8px 12px;background:var(--surface);border-top:1px solid var(--line);margin-top:auto}
+.composer .in{flex:1;background:var(--sunk);border-radius:999px;padding:6px 12px;color:var(--ink2)}
+.seg{display:flex;background:var(--sunk);border-radius:999px;padding:2px}
+.seg span{flex:1;text-align:center;padding:5px;border-radius:999px;font-weight:700;font-size:11.5px;color:var(--ink2)}
+.seg span.on{background:var(--surface);color:var(--ink)}
+.sheet{background:var(--surface);border-radius:18px 18px 0 0;margin-top:auto;padding:10px 14px 14px;display:flex;flex-direction:column;gap:8px;box-shadow:0 -6px 24px rgba(19,27,64,.18)}
+.sheet .grab{width:36px;height:4px;border-radius:999px;background:var(--line-strong);align-self:center}
+.dim{opacity:.45}
+.dock{margin:auto 10px 10px;background:var(--accent);color:var(--on-accent);border-radius:16px;padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+.dock .meta{color:var(--on-accent);opacity:.85}
+.dock .btn.o{color:var(--on-accent);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.6)}
+.priv{background:var(--accent);color:var(--on-accent);border-radius:14px;padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+.priv .meta,.priv .k{color:var(--on-accent);opacity:.85}
+.priv .pill{background:rgba(255,255,255,.18);color:var(--on-accent)}
+.grid{display:grid;grid-template-columns:auto repeat(3,1fr);gap:4px;font-size:11px;align-items:center}
+.grid i{font-style:normal;min-height:24px;background:var(--sunk);border-radius:6px;text-align:center;padding:5px 0}
+.grid i.on{background:var(--accent);color:var(--on-accent)}
+.grid em{font-style:normal;color:var(--ink2);text-align:center}
+/* agenda */
+.day{display:grid;grid-template-columns:44px minmax(0,1fr);gap:8px}
+.day .dt{font-size:11px;font-weight:700;color:var(--ink2);text-align:right;padding-top:10px;line-height:1.25}
+.day .dt b{display:block;font-size:15px;color:var(--ink)}
+.day .col{border-left:2px solid var(--gold);padding-left:10px;display:flex;flex-direction:column;gap:7px;padding-bottom:4px}
+.card.ghost{background:transparent;box-shadow:inset 0 0 0 1.5px var(--line-strong)}
+/* browser */
+.bw{background:var(--bg);border:1px solid var(--line-strong);border-radius:12px;overflow:hidden;font-size:13px}
+.bw .url{background:var(--sunk);padding:6px 12px;font-size:12px;color:var(--ink2)}
+.bw .nav{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 18px;flex-wrap:wrap}
+.bw .wm{font-family:var(--display);font-size:18px;line-height:1.45}
+.bw .cols{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;padding:6px 18px 18px}
+.bw .hero{padding:4px 18px 8px}
+.bw .hero h4{font-family:var(--display);font-weight:400;font-size:20px;line-height:1.45}
+
+/* switcher: not part of the design */
+.switcher{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:20;display:flex;align-items:center;gap:4px;background:var(--bar);color:var(--on-bar);border-radius:999px;padding:6px;box-shadow:0 8px 28px rgba(0,0,0,.35);font-size:13.5px;max-width:calc(100vw - 24px)}
+.switcher button{font:inherit;background:transparent;color:inherit;border:0;border-radius:999px;padding:8px 13px;cursor:pointer;font-weight:700}
+.switcher button:hover{background:rgba(128,128,128,.3)}
+.switcher button:focus-visible{outline:2px solid var(--gold);outline-offset:1px}
+.switcher .name{padding:0 8px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.proto{font-size:12px;color:var(--ink2)}
+</style>
+
+<div class="page">
+  <div class="top">
+    <p class="eyebrow">Prototype, to throw away · The app's shape</p>
+    <h1>How is the app laid out so the core loop is obvious?</h1>
+    <p>Four layouts that disagree about structure, each drawn through the same five moments of one person's week, then the browser. Flip with the bar or the arrow keys. Plans, names and prices are examples, not vouched. Today is Monday 23 November.</p>
+  </div>
+  <div id="app"></div>
+  <div id="shared"></div>
+  <p class="proto">Rough on purpose: no real navigation, no motion, approximate spacing. The identity (Ai indigo, Kogane gold, the thread) stands and is not what is being judged.</p>
+</div>
+<nav class="switcher" aria-label="Prototype variants">
+  <button id="prev" aria-label="Previous variant">←</button>
+  <span class="name" id="vname"></span>
+  <button id="next" aria-label="Next variant">→</button>
+  <button id="theme" aria-label="Switch light or dark">◐</button>
+</nav>
+
+<script>
+const SB = '<div class="sb"><span>9:41</span><span>Mon 23 Nov</span></div>';
+const tabs = (items, on) => '<div class="tabs">' + items.map(t => {
+  const [n, c] = t.split('|');
+  return `<span class="tab${n === on ? ' on' : ''}">${n}${c ? ` <span class="dot">${c}</span>` : ''}</span>`;
+}).join('') + '</div>';
+const ph = (cap, inner, note, cls = '') => `<figure class="fig ${cls}"><figcaption class="cap">${cap}</figcaption><div class="ph">${SB}${inner}</div><p class="note">${note}</p></figure>`;
+const body = h => `<div class="body">${h}</div>`;
+
+const P = {
+  pottery: {t: 'Pottery at Thanh Hà, then cao lầu', k: 'Make', a: 'Hội An', d: '3½ h', p: '280k ₫', hear: 'Mon 30 Nov', s: 'Throw a bowl on a kick wheel in a family workshop, then noodles by the river.'},
+  baichoi: {t: 'Bài chòi night', k: 'Play', a: 'Hội An', d: '3 h', p: '150k ₫', hear: 'Sun 29 Nov', s: 'Play the sung card game from a bamboo hut, then dinner nearby.'},
+  paddle: {t: 'Paddle at Mân Thái, then bún chả cá', k: 'Move', a: 'Sơn Trà', d: '3 h', p: '220k ₫', hear: 'Mon 30 Nov', s: 'An hour on boards past the fishing boats, then fish-cake noodles.'},
+  games: {t: 'Board games in Hải Châu, then mì Quảng', k: 'Play', a: 'Hải Châu', d: '3½ h', p: '120k ₫', hear: 'Sat 28 Nov', s: 'Two tables, games taught by the café, noodles round the corner.'},
+  walk: {t: 'Sơn Trà banyan walk', k: 'Walk', a: 'Sơn Trà', d: '3 h', p: 'Free', hear: 'Sun 29 Nov', s: 'Up to the thousand-year banyan in the cool of the morning.'},
+};
+const plan = (p, foot) => `<div class="card"><div class="k">${p.k.toUpperCase()} · ${p.a.toUpperCase()}</div><h4>${p.t}</h4><div class="meta">${p.s}</div><div class="rowx sp"><span class="meta">${p.d} · ${p.p}</span><span class="foot">${foot || 'Hear by ' + p.hear}</span></div></div>`;
+const filters = `<div class="rowx"><span class="chip">Area</span><span class="chip on">Up to 300k ₫</span><span class="chip">Kind</span></div>`;
+const visitorHd = `<div class="hd"><div><div class="ttl">Plans</div><div class="sub">Da Nang–Hoi An</div></div><span class="lnk">Sign in</span></div>`;
+const invite = (btns = true) => `<div class="card need"><div class="rowx sp"><span class="pill g">Can you go?</span><span class="meta">answer by Wed 14:10</span></div><h4>${P.pottery.t}</h4><div class="meta"><b>Sat 28 Nov, 15:00</b> · 3 said yes · in English</div>${btns ? '<div class="rowx"><span class="btn">Yes, I\'m going</span><span class="btn o">No</span></div>' : ''}</div>`;
+const crewAsk = `<div class="card need"><div class="rowx sp"><span class="pill g">Your crew</span><span class="meta">6 days left</span></div><h4 class="plain">Minh proposed ${P.games.t}</h4><div class="meta">Minh and An said yes</div><div class="rowx"><span class="btn">Yes, with times</span><span class="btn o">No</span></div></div>`;
+const stops = `<div class="stops"><div><b>18:30 Meet</b> · An Hội bridge, north end</div><div class="leg">6 min walk</div><div><b>19:00 Bài chòi</b> · the huts by the river</div><div class="leg">8 min walk</div><div><b>20:15 Dinner</b> · cao lầu, 45k ₫</div></div>`;
+const thread = n => '<div class="thread">' + ['Invited', 'Going', 'On the day', 'After'].map((s, i) => `<span class="${i < n ? 'd' : i === n ? 'n' : ''}">${s}</span>`).join('') + '</div>';
+const group = `<div class="list"><div class="li"><div>Minh <small>you met at Sơn Trà banyan walk, Nov</small></div><span class="pill g">here</span></div><div class="li"><div>Thảo</div><span class="meta">not yet</span></div><div class="li"><div>Shrujan <span class="pill">runs Issho</span></div><span class="meta">not yet</span></div></div>`;
+const chatLines = `<div class="sys">Check-in is open</div><div class="msg"><b>Minh</b>I'm by the bridge, blue shirt</div><div class="msg"><b>Thảo</b>Running late · 10 min</div><div class="sys">Minh is here</div>`;
+const composer = `<div class="composer"><span class="pill">Running late</span><span class="in">Message</span></div>`;
+
+/* ---------- A: three tabs ---------- */
+const A = {
+  key: 'A', hash: 'three-tabs', name: 'Three tabs',
+  title: 'A · Together, Plans, You',
+  bet: 'v1\'s shape, corrected to v2. <b>Together</b> holds everything of yours, grouped by kind: what needs you, your outings, what you\'re waiting on, your crews. <b>Plans</b> is the city. <b>You</b> is the account. A newcomer lands on Plans; anyone with something in play lands on Together.',
+  strain: 'Together grows long as crews and outings pile up, and it groups by kind, so the thing happening tonight can sit below a crew proposal due next week. Two places hold a plan you signed up to (its card in Together and its page in Plans).',
+  where: [['Opens on', 'Plans when nothing is in play, otherwise Together'], ['What needs you', 'Top section of Together, with a count on the tab'], ['Outings', 'Cards in Together, each opening one outing screen'], ['Chat', 'A second pane inside the outing screen and inside the crew screen'], ['Crews', 'A section of Together'], ['Settings, Contact Issho', 'You'], ['Making and vouching', 'A section of You, shown only to the owner and insiders']],
+  frames: () => {
+    const t = ['Together|2', 'Plans', 'You'];
+    return [
+      ph('1 · First open, no account', visitorHd + body(filters + plan(P.pottery) + plan(P.paddle) + plan(P.baichoi)) + tabs(['Together', 'Plans', 'You'], 'Plans'), 'Lands on Plans. Together and You each show one line and a sign-in button until there is an account.'),
+      ph('2 · Home with things in play', `<div class="hd"><div class="ttl">Together</div></div>` + body(`<div class="lbl gold">Needs you</div>${invite()}${crewAsk}<div class="lbl">Your outings</div><div class="card"><div class="rowx sp"><span class="pill a">Going</span><span class="dot">3</span></div><h4>${P.baichoi.t}</h4><div class="meta"><b>Wed 25 Nov, 18:30</b> · Minh, Thảo, Shrujan</div></div><div class="lbl">Waiting</div><div class="card"><h4>${P.paddle.t}</h4><div class="rowx sp"><span class="meta">4 interested</span><span class="foot">Hear by Mon 30 Nov</span></div></div><div class="lbl">Crews</div><div class="card"><h4>Tuesday Noodles</h4><div class="meta">An: see you all there</div></div><div class="lbl">How was it?</div><div class="card"><h4>${P.walk.t}</h4><div class="rowx sp"><span class="meta">5 days left to answer</span><span class="btn o">Answer</span></div></div>`) + tabs(t, 'Together'), 'No inbox: each thing that needs an answer is a gold-ringed card answered in place. The tab count is the number of those.'),
+      ph('3 · A plan you signed up to', `<div class="hd"><span class="lnk">‹ Plans</span><span class="lnk">Share</span></div>` + body(`<div class="k">MOVE · SƠN TRÀ</div><h4 style="font-family:var(--display);font-weight:400;font-size:16px;line-height:1.45">${P.paddle.t}</h4><div class="banner"><b>You signed up.</b> 4 interested. You'll hear by Mon 30 Nov.</div><div class="meta">${P.paddle.s}</div><div class="card"><div class="k">THE RECORD</div><div>Ran 6 times · 4.6 would send a friend</div><div class="meta">Last confirmed by people who went on 14 Nov</div></div><div class="stops"><div><b>Meet</b> · the lifeguard tower, Mân Thái</div><div class="leg">2 min walk</div><div><b>Paddle</b> · 60 min, boards included</div><div class="leg">9 min ride, own way</div><div><b>Bún chả cá</b> · 40k ₫</div></div><div class="rowx"><span class="btn o big">Change times</span><span class="btn o big">Propose to a crew</span></div>`) + tabs(t, 'Plans'), 'The plan page is public and the same for everyone; a signed-up person gets one status line and two more actions.'),
+      ph('4 · The outing, on the day', `<div class="hd"><span class="lnk">‹ Together</span><span class="meta">in English</span></div>` + body(`<h4 style="font-family:var(--display);font-weight:400;font-size:16px;line-height:1.45">${P.baichoi.t}</h4><div class="meta"><b>Today, Wed 25 Nov, 18:30</b></div>${thread(2)}<div class="seg"><span class="on">Outing</span><span>Chat <span class="dot">3</span></span></div><div class="rowx"><span class="btn big">I'm here</span></div>${group}${stops}<div class="meta">Bring 150k ₫ in cash · ends 21:30</div><span class="lnk">Can't make it</span>`) + tabs(t, 'Together'), 'One screen per outing for all four stages; the thread shows which. The room is the second pane, never a separate place in the app.'),
+      ph('5 · A crew', `<div class="hd"><span class="lnk">‹ Together</span><span class="lnk">Propose a plan</span></div>` + body(`<h4 style="font-family:var(--display);font-weight:400;font-size:16px;line-height:1.45">Tuesday Noodles</h4><div class="meta">You, Minh, Thảo, An · 3 outings together</div><div class="seg"><span class="on">Chat</span><span>Crew</span></div>${crewAsk}<div class="msg"><b>Minh</b>Saturday afternoon works for me</div><div class="msg"><b>An</b>Same, after 2</div><div class="msg me">Let me check and answer tonight</div>`) + composer + tabs(t, 'Together'), 'The crew opens on its room; a live proposal is a card pinned in it. Members, the name vote and leaving sit in the Crew pane.'),
+    ];
+  },
+};
+
+/* ---------- B: one list ---------- */
+const B = {
+  key: 'B', hash: 'one-list', name: 'One list',
+  title: 'B · The plans are the app',
+  bet: 'No tabs. The city\'s plans are the only screen, the same one a visitor sees in a browser, and a plan <b>changes in place</b> as you move round the loop: its card and page gain your state. Everything of yours rides above the list in a <b>dock</b> that always shows the single next thing and opens into the full list.',
+  strain: 'Crews have no natural home in a list of plans; they live only in the dock\'s sheet. The dock hides everything but the next thing, so a person with a crew and two outings is always one tap from seeing them. The outing as "a plan page with a private strip" may bury the day-of screen under public content.',
+  where: [['Opens on', 'The plans, always'], ['What needs you', 'The dock, answered there without leaving the list'], ['Outings', 'The plan\'s own page, with a private strip on top'], ['Chat', 'A sheet over the plan page or the crew'], ['Crews', 'A row in the dock\'s sheet'], ['Settings, Contact Issho', 'Behind the avatar'], ['Making and vouching', 'Behind the avatar; "New plan" also sits at the end of the list for the owner and insiders']],
+  frames: () => {
+    const hd = `<div class="hd"><div><div class="ttl">Issho</div><div class="sub">Da Nang–Hoi An</div></div><span class="av">M</span></div>`;
+    const mine = (p, pillTxt, line) => `<div class="card"><div class="rowx sp"><span class="pill a">${pillTxt}</span><span class="foot">${line}</span></div><h4>${p.t}</h4></div>`;
+    return [
+      ph('1 · First open, no account', `<div class="hd"><div><div class="ttl">Issho</div><div class="sub">Da Nang–Hoi An</div></div><span class="lnk">Sign in</span></div>` + body(filters + plan(P.pottery) + plan(P.paddle) + plan(P.baichoi) + plan(P.games)), 'Nothing but plans. No empty tabs to explain, and the app and the browser are the same screen.'),
+      ph('2 · Home with things in play', hd + body(filters + `<div class="lbl">Yours</div>` + mine(P.pottery, 'Invited', 'Sat 28 Nov, 15:00') + mine(P.baichoi, 'Going', 'Wed 25 Nov, 18:30') + mine(P.paddle, 'Waiting', 'Hear by Mon 30 Nov') + `<div class="lbl">Open in Da Nang–Hoi An</div>` + plan(P.games)) + `<div class="dock"><div class="rowx sp"><b>Can you go Sat 28 Nov, 15:00?</b></div><div class="meta">${P.pottery.t} · answer by Wed 14:10</div><div class="rowx sp"><span class="rowx"><span class="btn">Yes</span><span class="btn o">No</span></span><span class="meta">4 more of yours ▴</span></div></div>`, 'Your plans rise to the top with their state on the card. The dock shows the one most urgent thing and answers it in place.'),
+      ph('3 · The dock, opened', `<div class="dim">${hd}${body(filters + plan(P.games))}</div><div class="sheet"><span class="grab"></span><div class="lbl gold">Needs you</div>${invite()}<div class="list"><div class="li"><div><b>Tuesday Noodles</b><small>Minh proposed a plan · answer</small></div><span class="dot">1</span></div><div class="li"><div><b>${P.baichoi.t}</b><small>Going · Wed 25 Nov, 18:30</small></div><span class="dot">3</span></div><div class="li"><div><b>${P.paddle.t}</b><small>Waiting · hear by Mon 30 Nov</small></div></div><div class="li"><div><b>${P.walk.t}</b><small>How was it? 5 days left</small></div></div></div></div>`, 'Everything of yours in one sheet, ordered by what is next. Crews appear here as rows and nowhere else.'),
+      ph('4 · The outing, on the day', `<div class="hd"><span class="lnk">‹ Plans</span><span class="lnk">Share plan</span></div>` + body(`<div class="priv"><div class="k">YOUR OUTING · ONLY YOUR GROUP SEES THIS</div><b>Today, Wed 25 Nov, 18:30 · in English</b><div class="rowx"><span class="pill">Minh · here</span><span class="pill">Thảo</span><span class="pill">Shrujan · runs Issho</span></div><div class="rowx"><span class="btn big">I'm here</span><span class="btn o big" style="color:var(--on-accent);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.6)">Chat · 3 new</span></div></div><div class="k">PLAY · HỘI AN</div><h4 style="font-family:var(--display);font-weight:400;font-size:16px;line-height:1.45">${P.baichoi.t}</h4><div class="meta">${P.baichoi.s}</div>${stops}<div class="card"><div class="k">THE RECORD</div><div>Ran 9 times · 4.4 would send a friend</div></div>`), 'The outing is the public plan page plus a private strip: the date, the group, check-in and the room. Nothing is repeated on a second screen.'),
+      ph('5 · A crew', `<div class="hd"><span class="lnk">‹ Yours</span><span class="lnk">Crew</span></div>` + body(`<h4 style="font-family:var(--display);font-weight:400;font-size:16px;line-height:1.45">Tuesday Noodles</h4><div class="meta">You, Minh, Thảo, An</div>${crewAsk}<div class="msg"><b>Minh</b>Saturday afternoon works for me</div><div class="msg"><b>An</b>Same, after 2</div><div class="sys">To propose a plan, open it and choose "Propose to a crew"</div>`) + composer, 'A crew is its room. Proposing starts from a plan, because plans are the only place to browse.'),
+    ];
+  },
+};
+
+/* ---------- C: agenda ---------- */
+const C = {
+  key: 'C', hash: 'agenda', name: 'Agenda',
+  title: 'C · Your week on the thread',
+  bet: 'Home is <b>time</b>, not kinds. The gold thread runs down the week and everything of yours hangs on its date: the answer that is due, the outing on Wednesday, the day you will hear. <b>Crews</b> get a tab of their own, because seeing the same people again is the promise. Tabs: Week, Plans, Crews; the account sits behind the avatar.',
+  strain: 'A week with one item looks empty, and the Pilot will have many such weeks. Deadlines and outings share one line, so "hear by" dates can read as events. Crews as a tab is an empty tab for everyone until their first crew, which may be weeks.',
+  where: [['Opens on', 'Plans when nothing is in play, otherwise Week'], ['What needs you', 'A "Now" block above the thread, then on its due date'], ['Outings', 'On their date in Week, each opening one outing screen'], ['Chat', 'Docked at the foot of the outing screen; crew rooms in Crews'], ['Crews', 'Their own tab: offers, proposals, rooms'], ['Settings, Contact Issho', 'Behind the avatar'], ['Making and vouching', 'Behind the avatar, for the owner and insiders']],
+  frames: () => {
+    const t = ['Week|2', 'Plans', 'Crews|1'];
+    const hd = n => `<div class="hd"><div class="ttl">${n}</div><span class="av">M</span></div>`;
+    return [
+      ph('1 · First open, no account', visitorHd + body(filters + plan(P.pottery) + plan(P.paddle) + plan(P.baichoi)) + tabs(['Week', 'Plans', 'Crews'], 'Plans'), 'Lands on Plans. Week and Crews explain themselves in a line each until there is something on them.'),
+      ph('2 · Home with things in play', hd('This week') + body(`<div class="lbl gold">Now</div>${invite()}<div class="day"><div class="dt">Wed<b>25</b></div><div class="col"><div class="card"><div class="rowx sp"><span class="pill a">Going</span><span class="dot">3</span></div><h4>${P.baichoi.t}</h4><div class="meta">18:30 · Minh, Thảo, Shrujan</div></div></div></div><div class="day"><div class="dt">Fri<b>27</b></div><div class="col"><div class="card"><div class="meta">Last day to say how <b>${P.walk.t}</b> was</div></div></div></div><div class="day"><div class="dt">Sat<b>28</b></div><div class="col"><div class="card ghost"><div class="meta">If you say yes</div><h4>${P.pottery.t}</h4><div class="meta">15:00</div></div></div></div><div class="day"><div class="dt">Mon<b>30</b></div><div class="col"><div class="card"><div class="meta">You'll hear about <b>${P.paddle.t}</b> by today · 4 interested</div></div></div></div>`) + tabs(t, 'Week'), 'One line of time. What is due sits on top; outings, the invitation\'s date and hear-by days hang on the thread in order.'),
+      ph('3 · Crews', hd('Crews') + body(`<div class="card need"><div class="rowx sp"><span class="pill g">A crew for you</span><span class="meta">5 days left</span></div><div>You, Jonas, Hà and Linh have all met and got on. A crew goes on outings of its own.</div><div class="rowx"><span class="btn">Join</span><span class="btn o">Not now</span></div></div><div class="card"><div class="rowx sp"><h4>Tuesday Noodles</h4><span class="dot">1</span></div><div class="meta">You, Minh, Thảo, An</div><div class="banner">Minh proposed <b>${P.games.t}</b> · 2 said yes</div><div class="meta">An: Same, after 2</div></div><div class="lbl">Before your first crew</div><div class="meta">After an outing, pick who you'd meet again. When a few of you pick each other, Issho offers you a crew.</div>`) + tabs(t, 'Crews'), 'Offers, proposals and rooms for the people you already know, apart from outings with strangers.'),
+      ph('4 · The outing, on the day', `<div class="hd"><span class="lnk">‹ Week</span><span class="meta">in English</span></div>` + body(`<h4 style="font-family:var(--display);font-weight:400;font-size:16px;line-height:1.45">${P.baichoi.t}</h4><div class="meta"><b>Today, Wed 25 Nov, 18:30</b></div>${thread(2)}<div class="rowx"><span class="btn big">I'm here</span></div>${group}${stops}<div class="lbl">The room <span class="lnk">Open</span></div>${chatLines}`) + composer + tabs(t, 'Week'), 'One scroll: check-in, the group, the stops, and the last lines of the room with the composer always at the foot.'),
+      ph('5 · A crew', `<div class="hd"><span class="lnk">‹ Crews</span><span class="lnk">Propose a plan</span></div>` + body(`<h4 style="font-family:var(--display);font-weight:400;font-size:16px;line-height:1.45">Tuesday Noodles</h4><div class="meta">You, Minh, Thảo, An · 3 outings together</div>${crewAsk}<div class="lbl">Outings together</div><div class="list"><div class="li"><div>${P.walk.t}<small>14 Nov</small></div></div><div class="li"><div>${P.baichoi.t}<small>31 Oct</small></div></div></div><div class="lbl">The room <span class="lnk">Open</span></div><div class="msg"><b>An</b>Same, after 2</div>`) + composer + tabs(t, 'Crews'), 'The crew screen leads with what the crew does (a proposal, past outings); the room is docked below, as on an outing.'),
+    ];
+  },
+};
+
+/* ---------- D: rooms ---------- */
+const D = {
+  key: 'D', hash: 'rooms', name: 'Rooms',
+  title: 'D · Every group is a conversation',
+  bet: 'Built like a messenger. <b>Plans</b> is where you browse and wait; the moment a group exists it becomes a row in <b>Chats</b>, and the room <b>is</b> the outing: the plan is pinned at its head and Issho\'s system lines carry the stages. Outings with strangers and crews sit in one list, because both are "people I\'m going out with". Tabs: Plans, Chats, You.',
+  strain: 'Chat decided there is no room until an outing is set, so invitations and waiting have no conversation to live in and need a second home (a "Yours" filter in Plans, action rows above the chats). It makes talking the centre of an app whose point is going out, and a quiet room looks like a dead one.',
+  where: [['Opens on', 'Plans when no group exists, otherwise Chats'], ['What needs you', 'Action rows above the chats; counts on both tabs'], ['Outings', 'The room, with the plan and check-in pinned at its head'], ['Chat', 'The Chats tab: one list of outing rooms and crew rooms'], ['Crews', 'Rows in Chats, marked as crews'], ['Settings, Contact Issho', 'You'], ['Making and vouching', 'A section of You, for the owner and insiders']],
+  frames: () => {
+    const t = ['Plans|1', 'Chats|2', 'You'];
+    return [
+      ph('1 · First open, no account', visitorHd + body(filters + plan(P.pottery) + plan(P.paddle) + plan(P.baichoi)) + tabs(['Plans', 'Chats', 'You'], 'Plans'), 'Lands on Plans. Chats says "your groups will appear here" until the first outing is set.'),
+      ph('2 · Home with things in play', `<div class="hd"><div class="ttl">Chats</div></div>` + body(`<div class="lbl gold">Needs you</div>${invite()}<div class="list"><div class="li"><div><b>${P.baichoi.t}</b> <span class="pill a">Wed 18:30</span><small>Thảo: Running late · 10 min</small></div><span class="dot">3</span></div><div class="li"><div><b>Tuesday Noodles</b> <span class="pill">crew</span><small>Minh proposed a plan · answer</small></div><span class="dot">1</span></div><div class="li"><div><b>${P.walk.t}</b> <span class="pill g">How was it?</span><small>Read-only · 5 days left to answer</small></div></div></div><div class="meta">Waiting on 1 plan. See Plans.</div>`) + tabs(t, 'Chats'), 'A messenger\'s list. The invitation has no room yet, so it sits above as an action row; the plan you are waiting on is not here at all.'),
+      ph('3 · Plans, with yours', `<div class="hd"><div><div class="ttl">Plans</div><div class="sub">Da Nang–Hoi An</div></div></div>` + body(`<div class="seg"><span>All</span><span class="on">Yours · 2</span></div>${invite(false)}<div class="card"><div class="rowx sp"><span class="pill">Waiting</span><span class="foot">Hear by Mon 30 Nov</span></div><h4>${P.paddle.t}</h4><div class="meta">4 interested · your times: Sat and Sun mornings</div><span class="lnk">Change times</span></div><div class="meta">Once a date is set and three say yes, the group moves to Chats.</div>`) + tabs(t, 'Plans'), 'Everything before a group exists lives here: signed up, waiting, invited. The loop is split across two tabs at the moment the outing is set.'),
+      ph('4 · The outing, on the day', `<div class="hd"><span class="lnk">‹ Chats</span><span class="meta">in English</span></div>` + `<div style="padding:0 12px 8px"><div class="priv"><div class="rowx sp"><b>${P.baichoi.t}</b><span class="meta">Plan ▾</span></div><div class="meta">Today 18:30 · meet at An Hội bridge, north end</div><div class="rowx"><span class="pill">Minh · here</span><span class="pill">Thảo</span><span class="pill">Shrujan · runs Issho</span></div><div class="rowx"><span class="btn big">I'm here</span></div></div></div>` + body(`<div class="sys">Wed 25 Nov</div><div class="sys">Reminder: today at 18:30. Ends 21:30.</div><div class="msg"><b>Shrujan</b>Looking forward to it</div>${chatLines}<div class="msg me">On my way</div>`) + composer + tabs(t, 'Chats'), 'The room is the outing. The plan, the group and check-in are pinned at the head and fold away; system lines mark each stage.'),
+      ph('5 · A crew', `<div class="hd"><span class="lnk">‹ Chats</span><span class="lnk">Crew</span></div>` + `<div style="padding:0 12px 8px"><div class="priv"><b>Tuesday Noodles</b><div class="meta">You, Minh, Thảo, An</div></div></div>` + body(`<div class="sys">Minh proposed a plan</div>${crewAsk}<div class="msg"><b>Minh</b>Saturday afternoon works for me</div><div class="msg"><b>An</b>Same, after 2</div><div class="msg me">Let me check and answer tonight</div>`) + composer + tabs(t, 'Chats'), 'The same screen as an outing\'s room. A proposal is a card in the flow of the conversation, answered there.'),
+    ];
+  },
+};
+
+const V = [A, B, C, D];
+
+/* ---------- shared: the same in every variant ---------- */
+const sharedFrames = () => [
+  ph('Signing up', `<div class="dim">${visitorHd}</div><div class="sheet"><span class="grab"></span><b>When could you go?</b><div class="meta">${P.paddle.t} · filled in from last time</div><div class="grid"><em></em><em>Morning</em><em>Afternoon</em><em>Evening</em><em>Thu</em><i></i><i></i><i></i><em>Fri</em><i></i><i></i><i class="on">✓</i><em>Sat</em><i class="on">✓</i><i></i><i></i><em>Sun</em><i class="on">✓</i><i class="on">✓</i><i></i></div><div class="meta">Signing up commits you to nothing. You'll hear by Mon 30 Nov.</div><div class="rowx"><span class="btn big">Sign up</span></div></div>`, 'A sheet over the plan. First time only, the six profile questions come before it.'),
+  ph('Right after the first signup', body(`<div style="margin-top:90px;display:flex;flex-direction:column;gap:10px;text-align:center"><h4 style="font-family:var(--display);font-weight:400;font-size:17px;line-height:1.45">You're signed up</h4><div>We'll set a date when enough people can go, and ask if you can make it. You'll hear by <b>Mon 30 Nov</b>.</div><div class="card" style="text-align:left"><b>Don't miss your invitation</b><div class="meta">You have 48 hours to answer it. Turn on notifications and we'll tell you the moment it arrives.</div><div class="rowx"><span class="btn">Turn on</span><span class="btn o">Not now</span></div></div></div>`), 'The one place push permission is asked. A refusal is never asked again.'),
+  ph('Filters', `<div class="dim">${visitorHd}</div><div class="sheet"><span class="grab"></span><div class="lbl">Area</div><div class="rowx"><span class="chip">Hải Châu</span><span class="chip">Sơn Trà</span><span class="chip">Ngũ Hành Sơn</span><span class="chip">Hội An</span></div><div class="lbl">Up to</div><div class="rowx"><span class="chip">Free</span><span class="chip">150k ₫</span><span class="chip on">300k ₫</span><span class="chip">Any</span></div><div class="lbl">Kind</div><div class="rowx"><span class="chip">Make</span><span class="chip">Move</span><span class="chip">Play</span><span class="chip">Walk</span><span class="chip">Learn</span><span class="chip">Watch</span></div><div class="rowx"><span class="btn big">Show 9 plans</span></div></div>`, 'Three filters, usable with no account. The six kinds are a first guess at the short list People asked for.'),
+  ph('You and settings', `<div class="hd"><div class="ttl">You</div></div>` + body(`<div class="list"><div class="li"><div><b>Mai</b><small>Da Nang–Hoi An · English</small></div><span class="lnk">Edit</span></div><div class="li"><div>Invitations<small>2 of 3 left</small></div><span class="lnk">Invite</span></div><div class="li"><div>Only women and non-binary people</div><span class="sw"></span></div></div><div class="lbl">Notifications</div><div class="list"><div class="li"><div>Nudges<small>Feedback reminders, crew suggestions, new plans</small></div><span class="sw on"></span></div><div class="li"><div>${P.baichoi.t}<small>Room · can't be muted on the day</small></div><span class="sw on"></span></div><div class="li"><div>Tuesday Noodles<small>Room</small></div><span class="sw"></span></div></div><div class="list"><div class="li"><div>Suggest a place or an activity</div></div><div class="li"><div>Contact Issho</div></div><div class="li"><div>Code of conduct</div></div><div class="li"><div>Delete my account</div></div></div>`), 'The whole settings screen: one switch and the room mutes, as Notifications decided. "Contact Issho" lives here.'),
+  ph('Making, for the owner and insiders', `<div class="hd"><div class="ttl">Making</div><span class="pill">insider</span></div>` + body(`<div class="rowx"><span class="btn big">New plan</span><span class="btn o big">Vouch for a piece</span></div><div class="lbl">Needs you</div><div class="list"><div class="li"><div>Re-check: lifeguard tower, Mân Thái<small>Meeting point · due in 9 days</small></div></div><div class="li"><div>Doubted: cao lầu stop<small>Closes 2 plans · retired in 11 days</small></div></div></div><div class="lbl">Your plans</div><div class="list"><div class="li"><div>${P.paddle.t}<small>Open · ran 6 times · 4.6</small></div></div><div class="li"><div>${P.pottery.t}<small>In review</small></div></div></div><div class="lbl">Pieces</div><div class="list"><div class="li"><div>14 vouched<small>5 activities · 4 meeting points · 3 food · 2 stretches</small></div></div></div>`), 'One screen holding the plan editor, vouching and re-checks. Members never see it. Where it hangs differs by variant (see each table).'),
+  ph('Quiet and blocked states', `<div class="hd"><div class="ttl">One line each</div></div>` + body(`<div class="lbl">On the waitlist</div><div class="banner">You're on the waitlist for Da Nang–Hoi An. We'll email you when your place opens.</div><div class="lbl">A break</div><div class="banner">Issho is on a break in Da Nang–Hoi An until 14 Dec. Outings already set go ahead.</div><div class="lbl">No group formed</div><div class="card need"><div>Not enough people could make <b>${P.paddle.t}</b> this round. You come first next time.</div><div class="rowx"><span class="btn">Keep waiting</span><span class="btn o">Leave it</span></div></div><div class="lbl">Paused</div><div class="banner">You can't sign up for new plans until 7 Dec. Your crews and set outings carry on.</div><div class="lbl">In a phone browser</div><div class="banner">Get the app so you don't miss your invitation. <b>✕</b></div>`), 'Each is a line at the top of the home screen (and of the plans list), never a separate page.'),
+];
+
+const browser = v => {
+  const nav = v.key === 'B' ? '' : v.frames ? ' ' : '';
+  const items = {A: ['Together', 'Plans', 'You'], B: ['Plans', 'Yours ▾', 'Mai'], C: ['Week', 'Plans', 'Crews', 'Mai'], D: ['Plans', 'Chats', 'You']}[v.key];
+  return `<figure class="fig wide"><figcaption class="cap">In a browser, as a visitor</figcaption><div class="bw"><div class="url">joinissho.com/da-nang-hoi-an</div><div class="nav"><span class="wm">Issho</span><span class="rowx"><span class="lnk">Plans</span><span class="lnk">Sign in</span><span class="btn">Join the waitlist</span></span></div><div class="hero"><h4>Plans in Da Nang–Hoi An</h4><div class="rowx" style="margin-top:6px">${filters.replace('<div class="rowx">', '').replace(/<\/div>$/, '')}</div></div><div class="cols">${plan(P.pottery)}${plan(P.paddle)}${plan(P.baichoi)}${plan(P.games)}${plan(P.walk)}</div></div><p class="note">The same list and cards as the app, in columns. A visitor sees no sections at all; signed in, the top bar carries this variant's sections: ${items.join(' · ')}.</p></figure>` +
+  `<figure class="fig"><figcaption class="cap">A plan's page, as a visitor</figcaption><div class="ph"><div class="bw" style="border:0;border-radius:0"><div class="url">joinissho.com/…/paddle-at-man-thai</div></div>${body(`<div class="k">MOVE · SƠN TRÀ</div><h4 style="font-family:var(--display);font-weight:400;font-size:16px;line-height:1.45">${P.paddle.t}</h4><div class="meta">${P.paddle.s}</div><div class="card"><div class="k">THE RECORD</div><div>Ran 6 times · 4.6 would send a friend</div></div><div class="stops"><div><b>Meet</b> · the lifeguard tower, Mân Thái</div><div class="leg">2 min walk</div><div><b>Paddle</b> · 60 min, boards included</div><div class="leg">9 min ride, own way</div><div><b>Bún chả cá</b> · 40k ₫</div></div><div class="meta">3 h · 220k ₫ · 3 to 6 people · no date yet: sign up with your times and hear by Mon 30 Nov</div><div class="rowx"><span class="btn big">Sign up</span></div>`)}</div><p class="note">The whole plan and one button. Sign-in happens after the tap.</p></figure>` +
+  `<figure class="fig"><figcaption class="cap">Waiting, in a phone browser</figcaption><div class="ph"><div class="bw" style="border:0;border-radius:0"><div class="url">joinissho.com/da-nang-hoi-an</div></div>${body(`<div class="banner">You're on the waitlist for Da Nang–Hoi An. We'll email you when your place opens.</div>${filters}${plan(P.pottery, "Sign up when your place opens")}${plan(P.paddle, "Sign up when your place opens")}<div class="rowx sp"><span class="lnk">Change city or language</span><span class="lnk">Delete account</span></div>`)}</div><p class="note">The plans and one status line. No queue position, no date, and no "get the app" until admitted.</p></figure>`;
+};
+
+/* ---------- switcher ---------- */
+const qs = new URLSearchParams(location.search);
+let idx = 0;
+const fromUrl = () => {
+  const q = (qs.get('variant') || '').toUpperCase();
+  const h = location.hash.replace('#', '');
+  const i = V.findIndex(v => v.key === q || v.hash === h);
+  return i < 0 ? 0 : i;
+};
+function render() {
+  const v = V[idx];
+  document.getElementById('app').innerHTML =
+    `<section style="display:flex;flex-direction:column;gap:18px"><div class="vhead"><div class="bet"><h2>${v.title}</h2><p>${v.bet}</p><p><b>Where it strains.</b> ${v.strain}</p></div><div class="where"><table>${v.where.map(r => `<tr><th>${r[0]}</th><td>${r[1]}</td></tr>`).join('')}</table></div></div><h3 class="sec">One person's week in the app</h3><div class="board">${v.frames().join('')}</div><h3 class="sec">In a browser</h3><div class="board">${browser(v)}</div></section>`;
+  document.getElementById('vname').textContent = `${v.key} (${v.name})`;
+}
+function go(d) {
+  idx = (idx + d + V.length) % V.length;
+  try { history.replaceState(null, '', '#' + V[idx].hash); } catch (e) { location.hash = V[idx].hash; }
+  render();
+}
+document.getElementById('shared').innerHTML = `<section style="display:flex;flex-direction:column;gap:18px"><h3 class="sec">The same in every variant</h3><div class="board" style="flex-wrap:wrap">${sharedFrames().join('')}</div></section>`;
+document.getElementById('prev').onclick = () => go(-1);
+document.getElementById('next').onclick = () => go(1);
+document.addEventListener('keydown', e => {
+  if (e.target.closest('input,textarea,[contenteditable]')) return;
+  if (e.key === 'ArrowLeft') go(-1);
+  if (e.key === 'ArrowRight') go(1);
+});
+window.addEventListener('hashchange', () => { idx = fromUrl(); render(); });
+const root = document.documentElement;
+if (qs.get('theme')) root.setAttribute('data-theme', qs.get('theme'));
+document.getElementById('theme').onclick = () => {
+  const dark = root.getAttribute('data-theme') ? root.getAttribute('data-theme') === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+  root.setAttribute('data-theme', dark ? 'light' : 'dark');
+};
+idx = fromUrl();
+render();
+</script>
