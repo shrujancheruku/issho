@@ -53,7 +53,7 @@ Each is a GitHub Milestone with one integration PR. Each ends in something the o
 
 ## Production from milestone 3
 
-Production stands up at the end of milestone 3 so the owner can vouch pieces and make the 12 plans while the rest is built. From that merge production is never reset, and every later migration runs against real pieces and plans. The nightly dump starts with it.
+Production stands up at the end of milestone 3 so the owner can vouch pieces and make the 12 plans while the rest is built. From that merge production is never reset, and every later migration runs against real pieces and plans. The nightly dump starts with it, and each paid API gets its daily quota cap in the ticket that first calls it ([Technical operations](operations.md#cost)).
 
 ## Screen design
 
@@ -77,6 +77,7 @@ Each is a `ready-for-human` ticket under the work parent, placed where it can st
 | Draft the policy and terms | 6, before 8's pages | The recipient list is final then |
 | Engage the Vietnamese reader | 7 | Lead time before the read |
 | The Vietnamese read; the device checklist on real phones | 9 | Both need the finished app |
+| The impact assessments | 9, due within 60 days of the first member | The recipients and the transfers are final then ([Privacy](privacy.md)) |
 
 These cover the gates before the Pilot in [Running Issho](running-issho.md#gates) and the 12 plans in [Plan knowledge](plan-knowledge.md).
 
