@@ -39,7 +39,7 @@ The lead search's cadence is not a city setting ([Leads](leads.md)).
 | Meeting points | No city setting. One rule everywhere (signed, one of a kind); the person who stood there supplies the local answer. |
 | Sources of plan knowledge | Each city keeps a plain list of lead sources (name, link, what it is good for) that the lead search uses. No per-source code. Google is the identity layer in every city. |
 | Activity types | One worldwide list ([The app's shape](app-shape.md)), with no per-city overrides. A city's activities are whatever has been vouched there. |
-| Season and weather | The months a piece runs, and whether it needs dry weather or daylight, are recorded on the piece by whoever vouches; the plan inherits them as it does hours. |
+| Season and weather | The months a piece runs, and whether it needs dry weather or daylight, are recorded on the piece by whoever vouches; the plan inherits them as it does hours. A forecast is looked up for plans that need dry weather, from the Pilot on ([Outings](outings.md#when-an-outing-doesnt-happen-as-set)). |
 | Times of day | The names are worldwide; the clock hours and the weekend days are the city's. |
 | Units and money | Prices are always in the city's currency, never converted. Metric or imperial and the 12- or 24-hour clock follow the person's device. |
 

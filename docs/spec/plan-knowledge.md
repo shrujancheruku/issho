@@ -23,10 +23,9 @@ No scraping of TikTok, Facebook or Zalo.
 
 ## Vouching
 
-- **An activity, a meeting point and a stretch** need someone to have been there in person. Never from a desk, by the owner or anyone.
-- **A food stop** can be used when two independent local sources agree, cited. The first group's answers then confirm it or drop it.
-
-  > **Unresolved (3).** [Routes worth walking](https://github.com/shrujancheruku/issho/issues/546) says "the first vouch stays in person, by an insider or the owner" for all four piece types. This ticket and [Building blocks](https://github.com/shrujancheruku/issho/issues/544) let a food stop be vouched from two sources, and [Finding leads on a schedule](https://github.com/shrujancheruku/issho/issues/568) later said "every vouching rule stands". See the [list of conflicts](README.md#conflicts-for-the-owner).
+- **A visit in person is a full vouch. Each independent local source, cited, is half a vouch.** A piece needs a full vouch before a plan can use it, and an insider or the owner records it either way.
+- **An activity, a meeting point and a stretch** take only a visit. Never from a desk, by the owner or anyone.
+- **A food stop** takes a visit, or two independent local sources that agree. When it rests on sources, the first group's answers then confirm it or drop it.
 - Whoever vouches records **cost per head, whether it takes a group of six, whether it needs booking, and real hours** including "until sold out", and picks the piece's area from the city's list ([Cities](cities.md)).
 - For a bookable activity, the owner or an insider may ask the venue directly. The venue is never paid, charged or promised placement.
 - A suggestion with a declared stake can be vouched, but only by someone other than the person who sent it.

@@ -69,10 +69,7 @@ Push; email at the halfway point.
 | "Keep waiting for the next round?", which is also the notice that no group formed | Until the next round forms groups |
 | Crew offer | 7 days |
 | A crew member proposes a plan | 7 days |
-| A place in the crew, offered to a guest | 7 days |
 | "Still in?" to a quiet crew member, and "keep this crew?" | 7 days |
-
-The guest question ("would you want them in the crew?") is asked inside feedback and has no message of its own.
 
 ### About your outing
 
@@ -114,7 +111,7 @@ Push; one switch; at most one a day.
 - Issho's weekly proposal to a crew.
 - A crew has formed; a crew has closed.
 - A suggestion of the person's was used in a plan.
-- A friend has joined by the person's join link.
+- A friend has joined by the person's join link, or their guest has signed up.
 - **New plans this week**: one weekly message, only to an active person with no signup or outing in play, and only when there is a plan they haven't seen. It is the only message that isn't a reply to something the person did.
 
 ## No marketing

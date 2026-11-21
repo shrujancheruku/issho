@@ -18,13 +18,14 @@ There are no scored weights. Rules and the seat order decide, so a decision can 
 - **Only women and non-binary people.** A person who gave their gender as woman or non-binary can turn this on; every group they join is then made up only of women and non-binary people. The others in the group don't need the setting on. They are told it means a longer wait. Gender is self-declared. There is no men-only setting.
 - Nobody is double-booked: an outing a person is going to blocks that time in their other signups.
 - No outing is set on a closed date in the city's calendar; a caution date needs the owner's okay.
+- For a plan that needs dry weather, a date with rain forecast for the plan's hours is not offered ([Outings](outings.md#when-an-outing-doesnt-happen-as-set)).
 
 ## Preferences
 
 Followed whenever a hard rule and the seat order allow:
 
 - Nobody is the only woman or the only man. Non-binary people and people who gave no gender are exempt.
-- **Mutual picks together.** Two people who picked each other, signed up to the same plan with a shared time, are put in the same group.
+- **Mutual picks together.** Two people who picked each other, signed up to the same plan with a shared time, are put in the same group. A member and the guest on their signup count as a mutual pick from the start ([People](people.md#guests)).
 - **No lone stranger.** A group is never one stranger plus people who all know each other, unless the choice is that or no outing for the stranger.
 - Sizes nearest 4 or 5.
 
@@ -37,7 +38,7 @@ When more people fit a group than it has seats:
 3. Mutual picks kept together
 4. Everyone else, earliest signup first
 5. People who already have an outing set in the current week
-6. People with a late cancel or a final no-show against them ([Safety](safety.md#late-cancels-and-no-shows))
+6. People with a late cancel or a final no-show counted against them ([Safety](safety.md#late-cancels-and-no-shows))
 
 The order decides seats only and never bends a hard rule. There is no cap on outings per week; a person's third outing just never takes someone's first.
 
@@ -65,9 +66,7 @@ The number of open plans is capped at one per 6 active people, never fewer than 
 
 In the Pilot an outing is **proposed** until the owner approves it; nobody has been told. The owner can approve, remove a person, move a person to another proposed outing of the same plan, or reject. Every edit is checked against the rules above and needs a reason. The owner cannot change the date or the meeting point. With no act in 24 hours the group is invited as proposed.
 
-Approval turns off once the owner has let 20 groups in a row through unchanged, and it is a Pilot-only step that does not return in a later city.
-
-> **Unresolved (4).** This ticket said approval "turns off once the owner has let 20 groups in a row through unchanged"; [Running Issho](running-issho.md) and [Cities](cities.md) say only that it is "Pilot only". The line above assumes both hold. See the [list of conflicts](README.md#conflicts-for-the-owner).
+Approval turns off once the owner has let 20 groups in a row through unchanged. It belongs to the first city's Pilot and does not return in a later city.
 
 ## The got-an-outing share
 

@@ -19,9 +19,7 @@ From [Chat](https://github.com/shrujancheruku/issho/issues/551), amended by [Not
 ## A crew's room
 
 - It is open as long as the crew is.
-- A crew outing with no guest has no room of its own; it lives in the crew's room as a card.
-- A crew outing with a **guest** gets an outing's room for those going, under the rules above, so the guest never reads the crew's room.
-- A guest who later joins the crew sees the crew's room only from the day they join.
+- A crew outing has no room of its own; it lives in the crew's room as a card.
 - When the crew closes, the room goes read-only with a system line and stays readable for 30 days to those who were crew members that day.
 
 ## What can be sent

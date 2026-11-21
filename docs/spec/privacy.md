@@ -4,7 +4,7 @@ From [Privacy and legal obligations in the product](https://github.com/shrujanch
 
 ## The floor
 
-- Vietnam's Personal Data Protection Law and social-network decrees, plus both stores' rules. Members are residents of one Vietnamese city.
+- Vietnam's Personal Data Protection Law and social-network decrees, plus both stores' rules. The first city is in Vietnam.
 - Another country's law is researched when a city there is planned.
 - A lawyer checks before the public launch ([ADR 0004](../adr/0004-the-owner-operates-issho-until-the-public-launch.md)), not before.
 
@@ -91,7 +91,7 @@ The tombstone disappears when it holds nothing. The privacy policy states all of
 ## Giving a person's data to someone outside
 
 - **A lawful request from an authority:** only the owner answers, it is written in the staff log, and the person is told unless the law forbids it.
-- **Someone may be in danger:** the moderator may give the police the group's names, emails and the plan without waiting for a request. (See the unresolved note in [Running Issho](running-issho.md#the-safety-runbook).)
+- **Someone may be in danger:** the moderator may give the police the group's names, emails and the plan without waiting for an authority's request, but only after contacting the member first.
 - **Another member asks:** never.
 
 ## A breach
@@ -116,7 +116,7 @@ The tombstone disappears when it holds nothing. The privacy policy states all of
 
 The terms say:
 
-- For residents of an open city aged 18 or over; one account per person.
+- For people aged 18 or over, in an open city; one account per person.
 - The code of conduct is part of the terms, and breaking it can end the account.
 - Issho plans outings and forms groups. It doesn't run the venues or activities, and it doesn't vet members beyond what [Safety](safety.md) describes. Each person goes at their own risk and pays their own costs.
 - What people write is licensed to Issho.

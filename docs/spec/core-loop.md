@@ -19,9 +19,7 @@ Plan first, time second: with few people, pooling interest over time matters mor
 
 - **Too few people.** When a round ends with no group, the people left waiting are told, not moved to another plan. They, and people who have never had an outing, come first when groups are next formed.
 - **How many plans a city has.** The number to maximise is the share of people who signed up and got an outing, not the share of plans filled. Many rounds ending with no group is accepted.
-- **Late cancels and no-shows.** A late cancel or a no-show counts against the person. Repeats lower their place in the seat order, and a pattern pauses them. There is no money penalty. The numbers are in [Safety](safety.md).
-
-  > **Unresolved (2).** This ticket said the first late cancel or no-show "is forgiven". [Safety](safety.md), which was handed the thresholds, says any count puts the person at the back of the seat order for their next group, and does not mention forgiving the first. See the [list of conflicts](README.md#conflicts-for-the-owner).
+- **Late cancels and no-shows.** A late cancel or a no-show counts against the person. The first is forgiven, repeats lower their place in the seat order, and a pattern pauses them. There is no money penalty. The numbers are in [Safety](safety.md#late-cancels-and-no-shows).
 - **Claimed attendance.** A person attended if they checked in or said so in feedback, and their own "I didn't go" wins. When the group's word says someone didn't come, that wins over the person's own claim. The rule is in [Outings](outings.md).
 - **A bad plan.** A plan that fails its checks isn't opened: a weak plan costs more trust than a missing one. A plan rated poorly does not run again until Issho or its maker has changed it. See [The plan bar](plan-bar.md).
 

@@ -25,7 +25,7 @@ It does not try to prove that people will pay, that strangers can be recruited a
 **Who.** About 10 seeds the owner admits, then the people they bring in, grown in waves.
 
 - The cap is about **60 active people**.
-- Everyone lives in Da Nang–Hoi An (staying three months or more). No short-stay visitors.
+- The seeds live in Da Nang–Hoi An (staying three months or more). The people they bring in are welcome wherever they live.
 - Seeds are chosen so the Pilot has both Vietnamese and foreign residents, with no fixed ratio.
 - Each member gets **3 join links** ([People](people.md#join-links)).
 
@@ -33,9 +33,7 @@ It does not try to prove that people will pay, that strangers can be recruited a
 
 **Insiders.** None. Every Pilot plan is Issho's, made by the owner. Suggestions are open, so the candidate pool builds from the first day.
 
-**Conditions.** It runs on the production system and nothing is wiped; members stay on into the soft launch with their history. Android, iOS and the web are open from the first member's day. The owner makes and approves every plan, approves groups and crew offers, and moderates.
-
-> **Unresolved (7).** This ticket said the owner "gives support through a chat group outside the app". [Running Issho](running-issho.md#support) later decided support is by email from one address and that there is no community chat group. No amendment was posted here. See the [list of conflicts](README.md#conflicts-for-the-owner).
+**Conditions.** It runs on the production system and nothing is wiped; members stay on into the soft launch with their history. Android, iOS and the web are open from the first member's day. The owner makes and approves every plan, approves groups and crew offers, moderates, and gives support by email only ([Running Issho](running-issho.md#support)).
 
 **The success bar**, read once the Pilot has run at least 20 outings over at least 6 weeks.
 
@@ -45,8 +43,6 @@ It does not try to prove that people will pay, that strangers can be recruited a
 | The plan bar | 80% of outings at 4 or more on "send a friend"; under 5% with an accuracy problem |
 | The promise | At least 30% of people who attended have had a second outing with someone from an earlier one |
 | The floor | No outing fails because of a bug; no safety incident goes unhandled |
-
-> **Unresolved (8).** The loop's second number here is 80% of set outings going ahead with 3 or more. The scorecard in [Running Issho](running-issho.md#the-numbers) gives "went ahead: share of formed groups that go ahead" a target of 60%, and says the north star's target is "set after two rounds of Pilot data" where this table says 30%. See the [list of conflicts](README.md#conflicts-for-the-owner).
 
 Passing makes the soft launch possible; the owner decides whether to start it. The Pilot has no end date. A miss means changing the product and reading the bar again. The gates [Running Issho](running-issho.md#gates) adds before the Pilot and the soft launch also apply.
 

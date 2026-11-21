@@ -64,6 +64,10 @@ _Avoid_: log in, register
 A one-use link from a member that admits whoever signs in with it, valid 14 days.
 _Avoid_: invitation (that is an outing's), invite, referral
 
+**Guest**:
+A person a member adds to their own signup to a plan, by a link that shows the plan and lets them join and sign up. Admitting a guest who isn't a member uses one of the member's join links.
+_Avoid_: vouch for, join offer; a guest of a crew
+
 **Waitlist**:
 The waitlisted people of a city.
 
@@ -152,8 +156,8 @@ To claim a lead for a visit.
 To rule a lead out, with a reason.
 
 **Vouch**:
-An insider or the owner records, first-hand, that a place or activity is good for an Issho group, with its facts and the date.
-_Avoid_: vet, verify, approve; vouch for a person (that is bring a guest)
+An insider or the owner records that a place or activity is good for an Issho group, with its facts and the date. A visit in person is a full vouch; each independent local source is half a vouch, and a piece needs a full one.
+_Avoid_: vet, verify, approve; vouch for a person (that is add a guest)
 
 **Doubted**:
 The state of a piece whose vouched facts a group or Google has contradicted, awaiting a re-check.
@@ -353,15 +357,11 @@ A person in a crew.
 _Avoid_: bare "member"
 
 **Crew outing**:
-An outing whose group came from a crew's yeses rather than from matching: its crew members and at most one guest. Everything true of an outing holds unless Crews said otherwise.
+An outing whose group came from a crew's yeses rather than from matching: its crew members and nobody else. Everything true of an outing holds unless Crews said otherwise.
 
 **Propose**:
 To put a plan to a crew, by a crew member or by Issho; 3 yeses make a crew outing.
 _Avoid_: suggest (that is a suggestion)
-
-**Guest**:
-A person a crew member brings to one crew outing; not a crew member.
-_Avoid_: vouch for, plus-one, join offer
 
 **Resting**:
 The state of a crew with no outing in 8 weeks.
@@ -478,7 +478,8 @@ The block at the top of Together holding everything that awaits the person's ans
 - A plan has at most one **maker**, and a **record**.
 - A plan opens in **rounds**. A person makes a **signup** to a round. **Matching** turns a round's signups into **outings**.
 - An **outing** belongs to one plan and has 3 to 6 **seats**; the people in its seats are its **group**. Each seat is one person's, and carries their **stage**.
-- An outing has one **room**, except a crew outing with no guest, which lives in the crew's room.
+- An outing has one **room**, except a crew outing, which lives in the crew's room.
+- A member can add one **guest** to a signup. The two count as a mutual pick.
 - Two attendees of one outing have **met**. After an outing, each can **pick** or **rather not** each other person.
 - A **crew** has 3 to 8 **crew members**, one room, and **crew outings**. A crew outing is an outing.
 - A **report** or a rather not makes two people **kept apart**.

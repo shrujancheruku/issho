@@ -5,8 +5,8 @@ From [People](https://github.com/shrujancheruku/issho/issues/552), amended by [C
 ## Sign-in and the account
 
 - **Sign-in** is a 6-digit email code, the only way in for the Pilot. Apple and Google sign-in are added at the soft launch.
-- An **account** is an email, a city and a display language, nothing more. It is what a waitlisted person, a person who only sends a suggestion, or a guest signing in for the first time has. To **join** is to make an account.
-- A **profile** is the answers below. It is required at the first signup to a plan, an invitation to a crew outing as a guest, or chat, not before. A person who sends a suggestion accepts the code of conduct without the rest.
+- An **account** is an email, a city and a display language, nothing more. It is what a waitlisted person, or a person who only sends a suggestion has. To **join** is to make an account.
+- A **profile** is the answers below. It is required at the first signup to a plan (a guest's included) or chat, not before. A person who sends a suggestion accepts the code of conduct without the rest.
 - **Adults only.** The full date of birth is asked and the person must be 18 on the day. Issho checks the date and keeps only "said they were 18 or over, on this day".
 
 ## Join links
@@ -16,6 +16,18 @@ From [People](https://github.com/shrujancheruku/issho/issues/552), amended by [C
 - Issho records who brought in whom; only a moderator sees it ([Safety](safety.md#join-links)).
 - "Invitation" is only an outing's offer of a seat.
 
+## Guests
+
+A **guest** is anyone a member adds to their own signup to a plan: a +1.
+
+- **Who can add one.** A member whose standing is ready and who has attended at least one outing. One guest per signup.
+- **The link.** The member sends the guest a link any way they like. It shows the plan's card and details with no account needed.
+- **Signing up.** On that screen the guest can make an account. They then give their profile and their times and are signed up to the plan like any member.
+- **Admission.** A guest who isn't yet a member is admitted by the link, which uses one of the member's 3 join links. A member with none left can add only someone who is already a member.
+- **Grouped together.** The member and the guest are treated at once as a mutual pick, so matching puts them in the same group where their times allow ([Matching](matching.md#preferences)). A group is still 3 to 6: the two never make an outing by themselves.
+- A guest can't be someone suspended, or kept apart from the member; that link fails without saying why.
+- A guest is not a crew matter: nobody brings a guest to a crew outing ([Crews](crews.md)).
+
 ## The profile
 
 Asked once, at the first signup, in this order:
@@ -24,7 +36,7 @@ Asked once, at the first signup, in this order:
 2. **Date of birth.**
 3. **Gender**: woman, man, non-binary or prefer not to say; an answer is required, with one line saying why (so nobody is the only woman or the only man in a group). People who answer woman or non-binary are then offered the "only women and non-binary people" setting.
 4. **Spoken languages**: "Which languages can you comfortably hold a conversation in for a whole outing?" At least one, any language, no levels ([Languages](languages.md)).
-5. **"I live in Da Nang–Hoi An"**: a self-declared tick meaning they are staying three months or more.
+5. **"Do you live in Da Nang–Hoi An?"**: self-declared; "yes" means they are staying three months or more. Either answer is accepted.
 6. **The code of conduct.**
 
 From the soft launch a verified +84 phone number is a seventh answer, shown to nobody and never used to sign in or to contact anyone ([Privacy](privacy.md)).
@@ -49,7 +61,7 @@ Sorting is done on the plans list, not from the profile. Plans are visible befor
 
 ## Residents and cities
 
-- **Residents only, at every stage**, by the self-declared tick.
+- **Residents first, at every stage.** Issho is built for people who live in the city, and nobody is turned away for not living there ([Who Issho is for](who-issho-is-for.md#the-person)).
 - A person belongs to **one city at a time**, changed in settings. Their history, standing and kept-apart pairs carry over; their crews stay behind. Switching to a planned city joins its waitlist.
 - A visitor with no account sees the city of the link they arrived by, else the only listed city, else picks from a list ([Cities](cities.md#which-city-a-visitor-with-no-account-sees)).
 

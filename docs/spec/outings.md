@@ -62,9 +62,11 @@ Beside a first name the viewer may also see a private "you met at ⟨plan⟩, �
 ## When an outing doesn't happen as set
 
 - **Too few.** A set outing goes ahead with 2. It is cancelled the moment only 1 person is going, at any point before the start; that person is told at once and gets the priority of people left waiting. If the others simply don't turn up, the one who came is told "we're sorry", gets the same priority, and the others are no-shows.
-- **The forecast fails.** When the check at the 24-hour mark finds rain forecast for the hours of a plan that needs dry weather, the outing is cancelled unless the owner or an insider moves the day within 6 hours of the check. A moved day follows the change rules below. There is no wet-weather substitute: a different activity is a cancellation. A cancellation gives left-waiting priority and costs nobody reliability.
-
-  > **Unresolved (5).** [Routes worth walking](https://github.com/shrujancheruku/issho/issues/546) said "no forecast feed for the Pilot", with weather handled by a person changing the outing. This ticket, later the same day, and [Running Issho](running-issho.md#the-queue) (the weather decision) assume a forecast is looked up. See the [list of conflicts](README.md#conflicts-for-the-owner).
+- **The forecast fails.** A forecast is looked up for a plan that needs dry weather, from the Pilot on. The check is strict while cancelling is cheap, and the bar rises once the outing is set.
+  - **Before the outing is set:** a date with rain forecast for the plan's hours is not offered. If the forecast turns to rain while the invitations are out, the outing is not set, and those who said yes count as left waiting.
+  - **Once it is set:** rain in the forecast no longer cancels by rule. The check at the 24-hour mark makes a weather decision for the owner or an insider, due 6 hours before the start: move the day (under the change rules below), cancel, or let it run. With no act the outing goes ahead.
+  - **Severe weather:** a severe-weather warning (a storm, a flood) for the outing's hours cancels a set outing by rule, with no person involved.
+  - There is no wet-weather substitute: a different activity is a cancellation. A cancellation gives left-waiting priority and costs nobody reliability.
 - **Removed before the start.** A person suspended before the start is taken out as if they had cancelled, and so is the reported or not-wanted person when two people going become kept apart. The group is told only that it is one smaller. It costs the others nothing.
 
 ## Changing a set outing
@@ -98,7 +100,7 @@ Open from the plan's stated end for 7 days, to people who were going at the star
 5. **Who would you meet again?** Each answer is a pick.
 6. **Anyone you'd rather not be grouped with?** Folded away. Each answer is a "rather not", and makes the pair kept apart.
 
-Questions 1 to 4 are required; 5 and 6 are optional. After a crew outing with a guest, each crew member who was there is also asked the guest question ([Crews](crews.md#how-a-guest-becomes-a-crew-member)).
+Questions 1 to 4 are required; 5 and 6 are optional.
 
 - **No group rating.** The measure of "a few people they can talk to" is the share of attendees who picked at least one person to meet again, per outing and overall. A "rather not" is counted separately. The Pilot sets the target.
 - **Feedback nobody gives** costs the person nothing. Fewer than 3 "as described?" answers renews no vouch. A "send a friend" median needs at least 2 answers before it can make a plan rated poorly.

@@ -4,9 +4,9 @@ From [Who Issho is for and what it promises](https://github.com/shrujancheruku/i
 
 ## The person
 
-People who live in the city or are staying long enough to want people to do things with there, local and foreign alike. Nothing is designed for tourists passing through.
+People who live in the city or are staying long enough to want people to do things with there, local and foreign alike.
 
-> **Unresolved (1).** This ticket said tourists "aren't turned away". [People](people.md) later made Issho residents only at every stage (a self-declared stay of three months or more). No amendment was posted here. See the [list of conflicts](README.md#conflicts-for-the-owner).
+**Residents first** is a guiding principle: every decision is made for people who live in the city. Nobody is turned away. Someone passing through who wants to join is welcome, and nothing is designed for them.
 
 ## The problem
 

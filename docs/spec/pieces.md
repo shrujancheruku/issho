@@ -13,7 +13,7 @@ From [Building blocks](https://github.com/shrujancheruku/issho/issues/544), with
 | Piece type | What it is | How it is vouched |
 | --- | --- | --- |
 | **Activity** | Something concrete the group does together | In person |
-| **Food stop** | A café, stall, restaurant or bar | Two independent local sources, then the first group (see the unresolved note in [Plan knowledge](plan-knowledge.md#vouching)) |
+| **Food stop** | A café, stall, restaurant or bar | In person, or two independent local sources (half a vouch each) and then the first group ([Plan knowledge](plan-knowledge.md#vouching)) |
 | **Meeting point** | A signed, one-of-a-kind place | In person, by someone who has stood there |
 | **Stretch** | A way on foot someone has walked and found pleasant | In person, walked end to end ([Routes](routes.md#vouching-a-stretch)) |
 

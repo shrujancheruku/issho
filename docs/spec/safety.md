@@ -41,8 +41,9 @@ From [Safety](https://github.com/shrujancheruku/issho/issues/553), amended by [P
 
 ## Late cancels and no-shows
 
-- Over a rolling 90 days a late cancel counts 1 and a final no-show counts 2.
-- Any count: back of the seat order for the person's next group. (See the unresolved note in [The core loop](core-loop.md#where-it-breaks).)
+- **The first is forgiven.** A person's first late cancel or final no-show in a rolling 90 days counts nothing and costs nothing.
+- After that, over the same 90 days, a late cancel counts 1 and a final no-show counts 2.
+- Any count: back of the seat order for the person's next group.
 - 3 points: paused 14 days. 3 points again within 90 days of returning: paused 30 days.
 - No excuse forms; a moderator can waive one. Saying "running late" in the room changes nothing.
 - A pause never becomes a suspension. A paused person keeps their crews, rooms and any outing already set.

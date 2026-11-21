@@ -56,13 +56,11 @@ Every item has a written default at its due time, so the loop never waits on a p
 | Accuracy report | 72 hours | Nothing; the item stays |
 | Doubted piece | 14 days | Retired |
 | Re-check due | 30 days after the 6 or 12 months | The piece becomes doubted |
-| Weather decision | 6 hours before the start | The outing cancels |
+| Weather decision (a set outing with rain forecast) | 6 hours before the start | The outing goes ahead; a severe-weather warning cancels by rule |
 | Wave admission (soft launch) | Weekly, Monday | No wave |
 | A suspended insider's plans | With the suspension | Stay closed |
 
 Leads are not queue items ([Leads](leads.md)).
-
-> **Unresolved (9).** The weather decision is due "6 hours before the start" here; [The outing](https://github.com/shrujancheruku/issho/issues/550) gives the owner or an insider "6 hours from the check" at the 24-hour mark, which is 18 hours before the start. See the [list of conflicts](README.md#conflicts-for-the-owner).
 
 ### Accuracy reports
 
@@ -73,7 +71,7 @@ One attendee answering "not as described" makes an item; the owner confirms (the
 Per city:
 
 - Plan review narrows to judge-flagged plans once the judge and the owner agree on 27 of the last 30.
-- Group approval is Pilot only ([Matching](matching.md#the-owner-approves-groups-in-the-pilot)).
+- Group approval ends after 20 groups in a row are approved unchanged, and belongs to the first city's Pilot ([Matching](matching.md#the-owner-approves-groups-in-the-pilot)).
 - Crew approval ends after 10 crews in a row are approved unchanged, and does not return in a later city.
 - The owner can switch any of them back on for a city, with a reason.
 
@@ -99,9 +97,7 @@ A written runbook for an urgent alert.
 4. Decide within 24 hours.
 5. Record it.
 
-Staff point people to the city's emergency numbers. They never contact police or anyone else on a member's behalf unless the member asks.
-
-> **Unresolved (10).** [Privacy](privacy.md#giving-a-persons-data-to-someone-outside) later says that when someone may be in danger the moderator may give the police the group's names, emails and the plan "without waiting for a request". Whether that request is the member's or an authority's is not said. See the [list of conflicts](README.md#conflicts-for-the-owner).
+Staff point people to the city's emergency numbers. They never contact police or anyone else on a member's behalf unless the member asks. The one exception: when someone may be in danger, the moderator may give the police the group's names, emails and the plan, but only after contacting the member first ([Privacy](privacy.md#giving-a-persons-data-to-someone-outside)).
 
 ## Cover
 
@@ -120,18 +116,16 @@ One weekly **scorecard** per city, holding only numbers that have a target.
 
 | Number | Target |
 |---|---|
-| North star: people with a second outing with someone from an earlier one | Set after two rounds of Pilot data |
+| North star: share of people who attended who have had a second outing with someone from an earlier one | 30% |
 | Got an outing: share of people who signed up and got one | 60% |
 | Plan bar: outings at 4 or more on "send a friend" | 80% |
 | Plan bar: outings with an accuracy problem | Under 5% |
-| Went ahead: share of formed groups that go ahead | 60% |
+| Went ahead: share of set outings that go ahead with 3 or more | 80% |
 | Late cancels and no-shows | Read, no target yet |
 | Reports looked at within 24 hours | All |
 | The model judge's agreement with the owner | 27 of the last 30 |
 | The lead search: of search leads vouched or dismissed in the last 3 months, the share vouched | 1 in 5, counted once 20 have been vouched or dismissed |
 | By-hand load: queue items by item, how many went past due, the owner's hours (entered by hand) | No item overdue more than 1 time in 10 |
-
-(The "went ahead" and north-star targets are in the unresolved note in [The stages of launch](launch.md#the-pilot).)
 
 - No product analytics through the Pilot. The one thing recorded about arrival is the plan or join link a new account came by ([The site](site.md#measuring-and-reading)).
 - **The wave proposal.** Each Monday in the soft launch the admin proposes a wave size: the largest that keeps the got-an-outing share at 60% over the last 4 rounds, and zero while the share or the plan bar is missed. The owner confirms, changes or skips it.
