@@ -7,6 +7,7 @@ package dbgen
 import (
 	"database/sql/driver"
 	"fmt"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -59,15 +60,26 @@ func (ns NullRiverRiverJobState) Value() (driver.Value, error) {
 	return string(ns.RiverRiverJobState), nil
 }
 
+type AppQueueItem struct {
+	ID        int64
+	Kind      string
+	Subject   string
+	DueAt     time.Time
+	State     string
+	Reason    *string
+	CreatedAt time.Time
+	ClosedAt  *time.Time
+}
+
 type RiverRiverJob struct {
 	ID           int64
 	State        RiverRiverJobState
 	Attempt      int16
 	MaxAttempts  int16
-	AttemptedAt  pgtype.Timestamptz
-	CreatedAt    pgtype.Timestamptz
-	FinalizedAt  pgtype.Timestamptz
-	ScheduledAt  pgtype.Timestamptz
+	AttemptedAt  *time.Time
+	CreatedAt    time.Time
+	FinalizedAt  *time.Time
+	ScheduledAt  time.Time
 	Priority     int16
 	Args         []byte
 	AttemptedBy  []string
@@ -81,29 +93,29 @@ type RiverRiverJob struct {
 }
 
 type RiverRiverLeader struct {
-	ElectedAt pgtype.Timestamptz
-	ExpiresAt pgtype.Timestamptz
+	ElectedAt time.Time
+	ExpiresAt time.Time
 	LeaderID  string
 	Name      string
 }
 
 type RiverRiverMigration struct {
 	ID        int64
-	CreatedAt pgtype.Timestamptz
+	CreatedAt time.Time
 	Version   int64
 }
 
 type RiverRiverNotification struct {
 	ID        int64
-	CreatedAt pgtype.Timestamptz
+	CreatedAt time.Time
 	Payload   string
 	Topic     string
 }
 
 type RiverRiverQueue struct {
 	Name      string
-	CreatedAt pgtype.Timestamptz
+	CreatedAt time.Time
 	Metadata  []byte
-	PausedAt  pgtype.Timestamptz
-	UpdatedAt pgtype.Timestamptz
+	PausedAt  *time.Time
+	UpdatedAt time.Time
 }

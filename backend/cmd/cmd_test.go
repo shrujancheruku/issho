@@ -175,22 +175,25 @@ func TestMigrateCommandAppliesAndRollsBack(t *testing.T) {
 			t.Fatalf("migrate %s: %v\n%s", arg, err, out)
 		}
 	}
-	appExists := func() bool {
-		var ok bool
+	// goose records each applied migration as a row; `down` rolls back one, so
+	// this holds however many migrations there are.
+	applied := func() int {
+		var n int
 		if err := pool.QueryRow(context.Background(),
-			`select exists (select 1 from pg_namespace where nspname = 'app')`).Scan(&ok); err != nil {
+			`select count(*) from goose.goose_db_version where version_id > 0 and is_applied`).Scan(&n); err != nil {
 			t.Fatal(err)
 		}
-		return ok
+		return n
 	}
 
 	run("up")
-	if !appExists() {
-		t.Fatal("schema app missing after migrate up")
+	before := applied()
+	if before == 0 {
+		t.Fatal("no migration applied after migrate up")
 	}
 	run("down")
-	if appExists() {
-		t.Fatal("schema app still there after migrate down")
+	if after := applied(); after != before-1 {
+		t.Fatalf("migrations applied after migrate down = %d, want %d", after, before-1)
 	}
 }
 
