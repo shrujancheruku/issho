@@ -8,6 +8,9 @@ package testdb
 import (
 	"context"
 	"fmt"
+	"net"
+	"net/url"
+	"strconv"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -95,4 +98,58 @@ func New(t testing.TB) *pgxpool.Pool {
 		admin.Close()
 	})
 	return pool
+}
+
+// NewDatabase returns a pool on a database of its own, dropped when the test
+// ends. A schema per test (New) can't hold what the migrations create, since
+// they use fixed schema names (app, river, goose).
+func NewDatabase(t testing.TB) *pgxpool.Pool {
+	t.Helper()
+	once.Do(func() { dsn, dsnErr = start() })
+	if dsnErr != nil {
+		t.Fatal(dsnErr)
+	}
+	ctx := context.Background()
+	name := fmt.Sprintf("d%d", seq.Add(1))
+
+	admin, err := pgxpool.New(ctx, dsn)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := admin.Exec(ctx, "create database "+name); err != nil {
+		admin.Close()
+		t.Fatal(err)
+	}
+
+	cfg, err := pgxpool.ParseConfig(dsn)
+	if err != nil {
+		admin.Close()
+		t.Fatal(err)
+	}
+	cfg.ConnConfig.Database = name
+	pool, err := pgxpool.NewWithConfig(ctx, cfg)
+	if err != nil {
+		admin.Close()
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		pool.Close()
+		_, _ = admin.Exec(ctx, "drop database "+name+" with (force)")
+		admin.Close()
+	})
+	return pool
+}
+
+// URL returns a connection string for the database of a pool from NewDatabase,
+// for a test that starts a process which connects by itself.
+func URL(pool *pgxpool.Pool) string {
+	c := pool.Config().ConnConfig
+	u := url.URL{
+		Scheme:   "postgres",
+		User:     url.UserPassword(c.User, c.Password),
+		Host:     net.JoinHostPort(c.Host, strconv.Itoa(int(c.Port))),
+		Path:     "/" + c.Database,
+		RawQuery: "sslmode=disable",
+	}
+	return u.String()
 }

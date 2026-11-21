@@ -3,7 +3,13 @@
 # makes it usable from the root).
 GITLEAKS := go tool gitleaks
 
-.PHONY: setup gen lint test tracker-check secrets-scan
+# The local Supabase database (`supabase start`). The migrate targets always use
+# this, never DATABASE_URL from the environment: a shell or .env that exports it
+# usually points at a hosted project. To migrate anything else, name it on the
+# command line (make migrate-up DATABASE_URL=...).
+DATABASE_URL = postgresql://postgres:postgres@127.0.0.1:54322/postgres
+
+.PHONY: setup gen lint test migrate-up migrate-down tracker-check secrets-scan
 
 # One-time setup after cloning: install JS deps (commitlint) and enable the git
 # hooks (secret scan, commit-message lint).
@@ -11,10 +17,10 @@ setup:
 	pnpm install
 	git config core.hooksPath .githooks
 
-# Code generation. Nothing generates yet: sqlc (#594) and the ConnectRPC client
-# (#595) hook in here.
+# Code generation: sqlc compiles backend/db/queries into backend/gen/dbgen. The
+# ConnectRPC client (#595) hooks in here.
 gen:
-	@echo "nothing to generate yet"
+	cd backend && go tool sqlc generate
 
 # gofmt and go vet over the backend. The app and admin add their own checks in
 # their tickets (#600, #601).
@@ -26,6 +32,14 @@ lint:
 # schema (backend/internal/testdb). There is no way to skip the database.
 test:
 	cd backend && go test -race -count=1 ./...
+
+# Apply or roll back the goose migrations (backend/db/migrations) on the local
+# database, which `supabase start` runs. migrate-down rolls back one migration.
+migrate-up:
+	cd backend && DATABASE_URL='$(DATABASE_URL)' go run ./cmd/migrate up
+
+migrate-down:
+	cd backend && DATABASE_URL='$(DATABASE_URL)' go run ./cmd/migrate down
 
 # Scan every commit on every branch for secrets. Gitignored local secrets are
 # intentionally not scanned; the pre-commit hook stops them if they are ever staged.

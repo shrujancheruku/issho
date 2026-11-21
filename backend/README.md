@@ -1,19 +1,45 @@
 # backend
 
-One Go module (`github.com/shrujancheruku/issho/backend`), part of the root `go.work`. Later tickets add the database (#594) and the ConnectRPC API (#595); this README grows with them.
+One Go module (`github.com/shrujancheruku/issho/backend`), part of the root `go.work`. The database baseline (#594) is in; the ConnectRPC API (#595) comes next, and this README grows with each ticket.
 
 ## Layout
 
 | Path | What |
 |---|---|
 | `cmd/api` | The API process |
-| `cmd/worker` | The background-job process |
+| `cmd/worker` | The background-job process: runs River |
+| `cmd/migrate` | `migrate up` and `migrate down`, behind `make migrate-up` and `make migrate-down` |
+| `db` | The goose migrations (`db/migrations`), embedded, and the `Up` and `Down` that run them; sqlc's queries (`db/queries`) |
+| `gen/dbgen` | The Go that sqlc generates from `db/queries`. Generated: never edit it |
+| `internal/jobs` | The River client the worker runs and the domain packages enqueue through |
 | `internal/serve` | The lifecycle both commands share |
-| `internal/testdb` | A schema per test in a throwaway Postgres |
+| `internal/testdb` | A schema, or a whole database, per test in a throwaway Postgres |
 
 ## The commands
 
-`api` and `worker` each log `started` and run until they get SIGINT or SIGTERM, then log `stopped` and exit 0. They do no other work yet. `cmd/cmd_test.go` builds each binary, signals it and checks the exit.
+`api` and `worker` each log `started` and run until they get SIGINT or SIGTERM, then log `stopped` and exit 0. `api` does no other work yet. `worker` connects to `WORKER_DATABASE_URL` and runs River (see "Jobs"); without it, the worker logs the error and exits 1. `cmd/cmd_test.go` builds each binary, signals it and checks the exit.
+
+## Migrations
+
+goose owns the schema, as SQL files in `db/migrations/` (`00001_baseline.sql`, `00002_….sql`), each with a `-- +goose Up` and a working `-- +goose Down`. App tables are in the `app` schema, River's in `river`, and goose's own bookkeeping in `goose` (`goose.goose_db_version`); nothing is ever created in `public`. Don't use the Supabase CLI's migrations (`supabase db push`, `supabase migration new`): they are disabled in `supabase/config.toml`.
+
+```sh
+supabase start      # the local database, on 127.0.0.1:54322
+make migrate-up     # apply every pending migration
+make migrate-down   # roll back the latest one
+```
+
+Both targets run `cmd/migrate`, which connects to the local database and ignores `DATABASE_URL` in the environment; to migrate another database, name it: `make migrate-up DATABASE_URL=...`. A migration is a new file, never an edit of one that has landed on `main`; its Down undoes it exactly, so `up`, `down`, `up` works (`db/migrate_test.go` runs that, checks `public` stays empty and goose's table is in `goose`). Production migrates forward only: a mistake is fixed by a new migration.
+
+The baseline writes out River's own schema (River v0.51.2) as SQL, so that goose is the only thing that migrates. When an upgrade of River adds a migration, `db/river_test.go` fails until a new goose migration holds its SQL.
+
+## Queries
+
+SQL is written by hand in `db/queries/*.sql` and compiled by sqlc into `gen/dbgen` (config: `sqlc.yaml`, which reads `db/migrations` as the schema). After changing a query or a migration, run `make gen` from the repo root and commit the result; CI fails if `make gen` leaves a diff. Call the generated methods with a pgx pool or transaction: `dbgen.New(pool).CountJobs(ctx)`. `db/queries/sample.sql` is a placeholder for the first real query to replace.
+
+## Jobs
+
+Background work is River's, in Postgres. `internal/jobs.New` builds the client; `cmd/worker` starts it on a direct (or session-pooler) connection in `WORKER_DATABASE_URL`, since River listens for new jobs with LISTEN/NOTIFY, which a transaction pooler breaks. A job is enqueued with `client.InsertTx` in the transaction that causes it: it is worked only after that transaction commits and never if it rolls back (`internal/jobs/jobs_test.go`). Each domain package defines its own job args and worker and registers the worker on the bundle from `jobs.NewWorkers()`. That bundle holds a placeholder worker, because River won't start with none; the first real job replaces it.
 
 ## Testing
 
@@ -24,4 +50,4 @@ make test   # go test -race ./... in backend/
 make lint   # gofmt and go vet
 ```
 
-`make test` needs Docker running. The first `testdb.New(t)` in a test binary starts a Postgres 17 container (removed when the binary exits) and returns a pool whose `search_path` is a fresh schema, dropped when the test ends, so tests may write the same keys in parallel. With Docker stopped or unreachable (`DOCKER_HOST`) the test fails; no flag or environment variable skips the database. Tests use it directly rather than mocking stores.
+`make test` needs Docker running. The first `testdb.New(t)` in a test binary starts a Postgres 17 container (removed when the binary exits) and returns a pool whose `search_path` is a fresh schema, dropped when the test ends, so tests may write the same keys in parallel. A test that runs the migrations, which use fixed schema names, calls `testdb.NewDatabase(t)` instead for a database of its own, then `db.Up`. With Docker stopped or unreachable (`DOCKER_HOST`) the test fails; no flag or environment variable skips the database. Tests use it directly rather than mocking stores.

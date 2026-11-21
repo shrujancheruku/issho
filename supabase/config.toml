@@ -1,0 +1,65 @@
+#:schema https://supabase.com/schemas/config/v1.json
+# The local Supabase stack (`supabase start`). Only what Issho changes from the
+# CLI's defaults is written here; supabase/README.md says what is on and off,
+# and why. Ports are the defaults, 54320 to 54329, shared by every worktree.
+
+project_id = "issho"
+
+# The Data API (PostgREST) is off: clients never query the database directly,
+# everything goes through the Go API. See supabase/README.md.
+[api]
+enabled = false
+
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 17
+
+[db.pooler]
+enabled = false
+
+# goose owns the migrations (backend/db/migrations) and nothing seeds from here:
+# the CLI's own migrations and seed are disabled so that `supabase db reset` and
+# `supabase db push` can't apply anything.
+[db.migrations]
+enabled = false
+
+[db.seed]
+enabled = false
+
+# Not used: the Go API and the River worker cover chat and jobs, there is no file
+# storage, and none of these are worth the memory locally.
+[realtime]
+enabled = false
+
+[storage]
+enabled = false
+
+[edge_runtime]
+enabled = false
+
+[analytics]
+enabled = false
+
+[studio]
+enabled = true
+port = 54323
+
+# Catches the sign-in emails locally (http://127.0.0.1:54324).
+[local_smtp]
+enabled = true
+port = 54324
+
+# Supabase Auth is used for sign-in only, with an email code.
+[auth]
+enabled = true
+site_url = "http://127.0.0.1:3000"
+additional_redirect_urls = ["https://127.0.0.1:3000"]
+enable_signup = true
+enable_anonymous_sign_ins = false
+
+[auth.email]
+enable_signup = true
+enable_confirmations = false
+otp_length = 6
+otp_expiry = 600
