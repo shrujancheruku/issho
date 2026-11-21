@@ -15,6 +15,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/jobs"
 	"github.com/shrujancheruku/issho/backend/internal/logging"
 	"github.com/shrujancheruku/issho/backend/internal/serve"
+	"github.com/shrujancheruku/issho/backend/internal/staff"
 )
 
 // stopTimeout is how long a deploy's SIGTERM waits for running jobs to finish
@@ -55,9 +56,10 @@ func run(ctx context.Context, log *slog.Logger) error {
 
 	// The real clock is built here and only here (tools/clockcheck enforces it);
 	// everything below takes it as a clock.Clock. No domain package has a job
-	// yet; each adds its workers here.
+	// yet; each registers its queue kinds on kinds and its workers here.
 	clk := clock.Real{}
-	client, err := jobs.New(pool, jobs.NewWorkers(clk), log, clk)
+	kinds := staff.NewKinds()
+	client, err := jobs.New(pool, jobs.NewWorkers(clk, pool, kinds), log, clk)
 	if err != nil {
 		return err
 	}

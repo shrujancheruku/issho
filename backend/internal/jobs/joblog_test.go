@@ -81,7 +81,7 @@ func TestWorkerLogsOneLinePerJobWithKindAndOutcomeButNoArguments(t *testing.T) {
 	}
 
 	var out lockedBuffer
-	workers := jobs.NewWorkers(clock.NewFake(time.Date(2026, 11, 22, 9, 0, 0, 0, time.UTC)))
+	workers := river.NewWorkers()
 	river.AddWorker(workers, secretWorker{})
 	river.AddWorker(workers, failingWorker{})
 	client, err := jobs.New(pool, workers, logging.New(&out, "worker"), clock.NewFake(time.Date(2026, 11, 22, 9, 0, 0, 0, time.UTC)))

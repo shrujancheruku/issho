@@ -108,3 +108,34 @@ func TestDownThenUpAgain(t *testing.T) {
 		t.Fatalf("up after down: %v", err)
 	}
 }
+
+// The queue's migration (00002) is undone by one step of Down, which leaves the
+// baseline in place, and goes up again.
+func TestQueueMigrationDownThenUp(t *testing.T) {
+	ctx := context.Background()
+	pool := testdb.NewDatabase(t)
+
+	if err := db.Up(ctx, pool); err != nil {
+		t.Fatal(err)
+	}
+	if !slices.Contains(objectsIn(t, pool, "app"), "queue_items") {
+		t.Fatalf("app.queue_items missing after up: %v", objectsIn(t, pool, "app"))
+	}
+
+	if err := db.Down(ctx, pool); err != nil {
+		t.Fatal(err)
+	}
+	if got := objectsIn(t, pool, "app"); len(got) != 0 {
+		t.Errorf("app holds %v after one down, want nothing (queue_items and its index gone)", got)
+	}
+	if !slices.Contains(schemas(t, pool), "app") {
+		t.Error("one down removed the app schema, which is the baseline's")
+	}
+
+	if err := db.Up(ctx, pool); err != nil {
+		t.Fatalf("up after down: %v", err)
+	}
+	if !slices.Contains(objectsIn(t, pool, "app"), "queue_items") {
+		t.Error("app.queue_items missing after up, down, up")
+	}
+}
