@@ -128,8 +128,12 @@ if kamal config >/dev/null 2>&1; then bad "kamal ran without a destination"; fi
 
 # .kamal/secrets.dev holds names and reads, never a value: every line is a comment, a
 # blank, a fetch from Secret Manager, or an extract of what it fetched.
-bad_lines=$(grep -vE '^\s*(#|$)|^SECRETS=\$\(kamal secrets fetch --adapter gcp_secret_manager |^[A-Z_]+=\$\(kamal secrets extract dev-[a-z-]+ \$\{SECRETS\}\)$' .kamal/secrets.dev || true)
+bad_lines=$(grep -vE '^\s*(#|$)|^SECRETS=\$\(kamal secrets fetch --adapter gcp_secret_manager |^[A-Z_]+=\$\(kamal secrets extract dev-[a-z-]+ \$\{SECRETS\}\)$|^KAMAL_REGISTRY_PASSWORD=\$KAMAL_REGISTRY_PASSWORD$' .kamal/secrets.dev || true)
 [ -z "$bad_lines" ] || bad ".kamal/secrets.dev holds something but names and reads: $bad_lines"
+
+# Kamal refuses a build whose registry password is not listed in the secrets file
+# ("Secret 'KAMAL_REGISTRY_PASSWORD' not found"), as the first CI run showed.
+grep -qx 'KAMAL_REGISTRY_PASSWORD=$KAMAL_REGISTRY_PASSWORD' .kamal/secrets.dev || bad ".kamal/secrets.dev does not pass KAMAL_REGISTRY_PASSWORD through"
 
 [ "$fail" -eq 0 ] && echo "deploy-config: ok"
 exit "$fail"
