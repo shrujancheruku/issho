@@ -11,3 +11,7 @@ minimumReleaseAge: 1440
 # back to Metro's own file watching without its native build, so it stays off.
 allowBuilds:
   '@parcel/watcher': false
+# wrangler (the admin's deploy, #605) pulls these in. Both ship their binaries as
+# platform packages, so the install scripts only verify them; deploying needs neither.
+  esbuild: false
+  workerd: false
