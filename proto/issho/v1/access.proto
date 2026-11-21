@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package issho.v1;
+
+import "google/protobuf/descriptor.proto";
+
+// Who may call an RPC. Every RPC names one in its `access` option, and the API
+// refuses an RPC that names none, so a new RPC is never open by accident.
+enum Access {
+  // No rule declared. `make rpc-auth` fails on it and the API denies the call.
+  ACCESS_UNSPECIFIED = 0;
+  // Anyone, signed in or not.
+  ACCESS_PUBLIC = 1;
+  // Any signed-in person.
+  ACCESS_MEMBER = 2;
+  // The owner and the insiders of the city, who see the Making tab.
+  ACCESS_MAKING = 3;
+  // Staff in the admin, who must also have taken the second sign-in step.
+  ACCESS_ADMIN = 4;
+}
+
+extend google.protobuf.MethodOptions {
+  // The access rule of the RPC. 50001 is in the range protobuf leaves for
+  // private extensions.
+  Access access = 50001;
+}

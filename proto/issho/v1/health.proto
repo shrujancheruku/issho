@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package issho.v1;
+
+import "issho/v1/access.proto";
+
+// The API's liveness check.
+service HealthService {
+  // Reports that the API is up and which build it is. Public: a deploy's probe
+  // and the status page call it with no token.
+  rpc Check(CheckRequest) returns (CheckResponse) {
+    option (issho.v1.access) = ACCESS_PUBLIC;
+  }
+}
+
+message CheckRequest {}
+
+message CheckResponse {
+  // The build's version, as set when the API was built ("dev" for a plain
+  // `go build`).
+  string version = 1;
+}
