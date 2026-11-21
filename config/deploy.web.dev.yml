@@ -1,0 +1,16 @@
+# The dev destination of the Expo server (`kamal -c config/deploy.web.yml -d dev`).
+# See config/deploy.dev.yml for what dev is and where DEPLOY_HOST comes from.
+
+servers:
+  web:
+    hosts:
+      - <%= ENV.fetch("DEPLOY_HOST") %>
+
+proxy:
+  host: dev.joinissho.com
+
+builder:
+  args:
+    # Public: it is bundled into the page. The page's own origin, where the proxy
+    # sends the RPC paths to the API (config/deploy.dev.yml).
+    EXPO_PUBLIC_API_URL: https://dev.joinissho.com

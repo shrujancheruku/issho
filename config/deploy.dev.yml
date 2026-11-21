@@ -1,0 +1,29 @@
+# The dev destination (`kamal -d dev`): the values that name dev, merged over
+# config/deploy.yml. Dev is the e2-micro `issho-dev` on Compute Engine
+# (asia-southeast1-b) in the Google Cloud project `issho-dev-512213`, behind
+# Cloudflare, running against the `issho-dev` Supabase project
+# (docs/spec/operations.md#environments).
+#
+# DEPLOY_HOST is the VM's address, set by the deploy (scripts/deploy-dev.sh). It
+# isn't written here: the repository is public and the VM answers only
+# Cloudflare on 80 and 443.
+
+servers:
+  web:
+    hosts:
+      - <%= ENV.fetch("DEPLOY_HOST") %>
+  worker:
+    hosts:
+      - <%= ENV.fetch("DEPLOY_HOST") %>
+
+# The API answers on its own name (api-dev, for the admin's Worker to forward to)
+# and on the web's (dev), but only the RPC paths of the latter: the Expo server
+# behind the same proxy (config/deploy.web.yml) has every other path on dev. The
+# browser then calls the API on the page's own origin, so the API needs no CORS.
+proxy:
+  hosts:
+    - api-dev.joinissho.com
+    - dev.joinissho.com
+  path_prefix: /issho.v1.
+  # The API's paths include the prefix, so it must not be stripped.
+  strip_path_prefix: false

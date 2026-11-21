@@ -1,0 +1,80 @@
+# Kamal 2 deploy of the Go backend: the API behind kamal-proxy and the River
+# worker, both from backend/Dockerfile (one image, two commands). The Expo server
+# is its own Kamal service, config/deploy.web.yml, on the same host and behind
+# the same proxy. Technical operations: docs/spec/operations.md. How to deploy,
+# roll back and stop dev: docs/deploy.md.
+#
+# This file holds what every environment shares. What names an environment (the
+# host, the address, the database's secrets) lives in deploy.<destination>.yml,
+# merged over this one by `kamal -d <destination>`; today only deploy.dev.yml.
+# Production is a later milestone's. Every call passes `-d dev`:
+# require_destination makes Kamal refuse a call without one.
+
+service: issho
+require_destination: true
+
+# GitHub Container Registry. CI pushes with the workflow's own token, which
+# expires with the job; the VM pulls with the same login Kamal gives it.
+image: shrujancheruku/issho-backend
+registry:
+  server: ghcr.io
+  username: shrujancheruku
+  password:
+    - KAMAL_REGISTRY_PASSWORD
+
+servers:
+  web:
+    hosts: [] # per destination
+  # The worker serves no HTTP, so it has no proxy. River elects one leader, so a
+  # second worker would be safe but idle.
+  worker:
+    hosts: [] # per destination
+    cmd: /usr/local/bin/worker
+    proxy: false
+    env:
+      secret:
+        # A session-pooler connection: River listens with LISTEN/NOTIFY, which the
+        # transaction pooler can't carry (backend/cmd/worker).
+        - WORKER_DATABASE_URL
+        - RESEND_API_KEY
+        - EMAIL_FROM
+
+proxy:
+  # host: per destination
+  app_port: 8080
+  # Cloudflare terminates TLS for clients and connects to the VM over HTTPS with
+  # a Cloudflare origin certificate (SSL mode "Full (strict)"). Let's Encrypt isn't
+  # used: its HTTP challenge is awkward behind Cloudflare's proxy, and the VM only
+  # takes 80 and 443 from Cloudflare.
+  ssl:
+    certificate_pem: ORIGIN_CERT
+    private_key_pem: ORIGIN_KEY
+  healthcheck:
+    # GET /up answers 200 once the process is up (backend/internal/rpc).
+    path: /up
+    interval: 2
+    timeout: 5
+
+# Compute Engine logs in as an ordinary user: `kamal`, in the docker group. Its
+# private key is a secret (.kamal/secrets.dev); keys_only stops Kamal from also
+# offering whatever keys an agent holds.
+ssh:
+  user: kamal
+  keys_only: true
+  key_data:
+    - SSH_PRIVATE_KEY
+
+builder:
+  arch: amd64
+  dockerfile: backend/Dockerfile
+  # backend/ is the build context: the Dockerfile copies relative to it.
+  context: backend
+  args:
+    # What the API's health check reports (`main.version`), and what the deploy's
+    # last step compares the live API with.
+    # Quoted: a commit of all digits would be read as a number.
+    VERSION: "<%= `git rev-parse --short HEAD`.strip %>"
+
+env:
+  clear:
+    API_ADDR: ":8080"

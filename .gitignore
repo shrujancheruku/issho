@@ -36,6 +36,8 @@ google-services.json
 GoogleService-Info.plist
 .kamal/secrets*
 !.kamal/secrets.production.example
+# Holds the names of secrets in Secret Manager, never a value (docs/deploy.md).
+!.kamal/secrets.dev
 
 # Claude Code: per-user settings stay local; .claude/skills are shared; agent
 # worktrees are throwaway checkouts. The orchestrate-* entries are leftovers from
