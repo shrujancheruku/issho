@@ -8,5 +8,8 @@
       "@/assets/*": ["./assets/*"]
     }
   },
-  "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts"]
+  "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts"],
+  // The native-bundle fixture route is copied into src/app for one run (see
+  // scripts/native-bundle.test.sh); where it sits its imports don't resolve.
+  "exclude": ["node_modules", "scripts/fixtures"]
 }

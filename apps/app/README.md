@@ -30,6 +30,7 @@ Screenshots of every empty tab at phone width, light and dark, English and Vietn
 | Strings: language choice, `{placeholders}`, the device language | `src/i18n/__tests__/` |
 | The strings check (`make lint`) | `scripts/__tests__/check-strings.test.js` |
 | Lint fails on a string literal in a screen file | `src/__tests__/screen-lint.test.ts` |
+| The native bundle fails on a web-only import (`make native-bundle-test`, a shell test, not Jest) | `scripts/native-bundle.test.sh` |
 
 Tests use Jest with `jest-expo` and React Native Testing Library. A screen test renders inside `TestProviders` (`src/test-support/providers.tsx`) with `fakeApi()` (`src/test-support/fake-api.ts`), a stand-in for `@issho/api-client` whose RPCs are `jest.fn`s: no test reaches a network. Add a service's methods to the fake as screens start calling them.
 
@@ -44,7 +45,8 @@ Tests use Jest with `jest-expo` and React Native Testing Library. A screen test 
 | `src/constants/theme.ts`, `src/hooks/use-theme.ts` | Colour tokens and the theme in use |
 | `src/api/` | `ApiProvider` and `useApi()`: the one generated client, given to screens |
 | `assets/images/` | The icon, splash, favicon, logo and tab icons, ported from v1 (`apps/mobile` at `v1-final`) |
-| `scripts/` | The strings check and the helper the lint test uses |
+| `scripts/` | The strings check, the helper the lint test uses, and `fixtures/native-bundle/` for the native bundle test |
+| `docs/screenshots/` | Screenshots of the tabs and of the native builds, named `<tab>-<language>-<theme>` or `<name>-<platform>` |
 
 ## The app's words
 
@@ -53,6 +55,30 @@ Tests use Jest with `jest-expo` and React Native Testing Library. A screen test 
 - `expo lint` fails on a string literal in `src/app/` and `src/components/`: JSX text, a string in braces, and `title`, `label`, `placeholder`, `alt` and accessibility attributes. Pass a key through a prop named `…Key`.
 - A language is added by its JSON file, an entry in `languages` (`src/i18n/strings.ts`) and one in `OTHER_LANGUAGES` (`scripts/check-strings.js`).
 - On the web the server renders English and the browser's language follows right after hydration, so pages stay cacheable and hydration matches (`src/i18n/use-device-language.ts`).
+
+## Native builds
+
+Local development builds only: nothing goes to EAS or a store before the release milestone ([Native along the way](../../docs/spec/quality.md#native-along-the-way)). From the repo root:
+
+| Command | What it does |
+|---|---|
+| `make native-bundle` | `expo export` for iOS and Android. Fails on an import that resolves only on the web. Also runs in `make lint`. |
+| `make native-bundle-test` | Proves that failure with a fixture (`apps/app/scripts/fixtures/native-bundle/`). Also runs in `make test`. |
+| `make native-ios` | Builds a development build (`expo run:ios`) and opens it on the booted iOS simulator |
+| `make native-android` | Builds a development build (`expo run:android`) and opens it on the running Android emulator |
+| `make native-screenshot-ios NAME=plans` | Captures the booted simulator to `docs/screenshots/plans-ios.png` |
+| `make native-screenshot-android NAME=plans` | Captures the running emulator to `docs/screenshots/plans-android.png` |
+
+`make native-ios` and `make native-android` generate `ios/` and `android/` and build the native projects; both folders, and what they hold (Pods, `.gradle`), are gitignored and not committed.
+
+What a machine needs:
+
+- **iOS:** full Xcode, not only the Command Line Tools (`xcode-select -p` must print a path inside `Xcode.app`), with an iOS simulator runtime. CocoaPods, which `expo run:ios` uses to install the pods. Open a simulator with `open -a Simulator` before the screenshot.
+- **Android:** the Android SDK (`ANDROID_HOME` set) with platform-tools (`adb`), build-tools and the emulator package, a JDK, and an emulator image (AVD). Create one in Android Studio's Device Manager, then start it with `emulator -avd <name>` (`emulator -list-avds` lists them).
+
+Expo's dev server (Metro) listens on port 8081 during a native run. Two worktrees cannot both run a native build at once, because they would share the simulator, the emulator and that port. Stop Metro (Ctrl-C in the terminal running it) when the run is done.
+
+The failure of a missing tool is explicit: `make native-ios` stops with the Xcode error, and the screenshot script names what to install.
 
 ## Dates and times
 
@@ -64,4 +90,4 @@ Colours come from `useTheme()` (`src/constants/theme.ts`, light and dark) and fo
 
 ## Not here yet
 
-Sign-in, the real screens, Making, push, the Sentry setup, EAS configuration and native builds (the iOS simulator and Android emulator checks start with the local-builds ticket).
+Sign-in, the real screens, Making, push, the Sentry setup and EAS configuration. Nothing here is sent to EAS or a store.
