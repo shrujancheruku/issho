@@ -1,6 +1,6 @@
 # Privacy and legal obligations in the product
 
-From [Privacy and legal obligations in the product](https://github.com/shrujancheruku/issho/issues/559), amended by [The v2 glossary and domain model](https://github.com/shrujancheruku/issho/issues/569), with facts from [What the v2 spec asks of the stack](https://github.com/shrujancheruku/issho/issues/571). The legal parts are research, not legal advice.
+From [Privacy and legal obligations in the product](https://github.com/shrujancheruku/issho/issues/559), amended by [The v2 glossary and domain model](https://github.com/shrujancheruku/issho/issues/569) and [Architecture and stack](https://github.com/shrujancheruku/issho/issues/572), with facts from [What the v2 spec asks of the stack](https://github.com/shrujancheruku/issho/issues/571). The legal parts are research, not legal advice.
 
 ## The floor
 
@@ -19,15 +19,13 @@ From [Privacy and legal obligations in the product](https://github.com/shrujanch
 
 ## When the notice changes
 
-- **A new purpose or a new type of recipient** (the fee and a payment processor, the phone number at the soft launch): the person ticks again and can't sign up or answer until they do. Outings already set go ahead.
+- **A new purpose or a new type of recipient** (the fee and a payment processor): the person ticks again and can't sign up or answer until they do. Outings already set go ahead.
 - **Any other edit:** an email 14 days before it takes effect, no tick.
 - The standing **needs agreement** covers a new code of conduct and a new notice.
 
-## Phone verification and the sign-in log
+## No phone number, and the sign-in log
 
-- From the soft launch a verified +84 number is a seventh profile answer, shown to nobody and never used to sign in or to contact anyone.
-- The Pilot runs on email codes as an accepted risk.
-- It costs about US$0.34 per person through Twilio Verify. Delivery to Vietnamese carriers is tested with real SIMs before the soft launch.
+- No phone number is collected or verified at any stage. Sign-in is by email code, with Apple and Google from the soft launch. Running without phone verification is an accepted risk and a question for the lawyer ([Architecture and stack](https://github.com/shrujancheruku/issho/issues/572)).
 - Each account's sign-ins and sign-outs are logged with time and IP address from the Pilot's first account and deleted at 12 months. Nobody can read the log in the admin; it is produced only for a lawful request. It is the only place Issho keeps an IP address.
 
 ## Age
@@ -83,8 +81,18 @@ The tombstone disappears when it holds nothing. The privacy policy states all of
 
 ## Who receives personal data
 
-- A short published **recipient list**, and nothing goes to anyone off it: hosting and database, email and push delivery, error tracking (no request bodies or headers), the phone-code sender, and one machine-translation service for the moderator's view of reports, messages and feedback, under terms that forbid training on it.
-- No personal data goes to a model for any other reason. The model judge, plan translation and the lead search see no personal data.
+- A short published **recipient list**, and nothing goes to anyone off it:
+
+  | Recipient | What it gets | Where |
+  |---|---|---|
+  | Supabase | The database and sign-in | Singapore |
+  | Google Cloud | Hosting, and Cloud Translation for the moderator's view of reports, messages and feedback, under terms that forbid training on it | Singapore; translation on a global endpoint |
+  | Resend | Email address and message | United States |
+  | Expo, then Apple and Google | Push token and message | United States |
+  | Sentry | Errors, with no request bodies or headers | European Union |
+
+- No personal data goes to a model. The model judge, plan translation and the lead search see none, and the moderator's translation is a translation service, not a model ([Architecture](architecture.md#models)).
+- Places, the forecast and weather alerts are sent a place ID or a meeting point's coordinates and nothing about a person.
 - Fonts are served from `joinissho.com`, not from Google.
 - Every candidate service holding personal data is outside Vietnam, which is a cross-border transfer: a transfer impact assessment is owed within 60 days of the first transfer ([What the v2 spec asks of the stack](https://github.com/shrujancheruku/issho/issues/571)).
 

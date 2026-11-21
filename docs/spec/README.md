@@ -32,6 +32,7 @@ The documents state decisions only. The reasoning, and what v1 did, is in the li
 | [The app's shape](app-shape.md) | The tabs, Together and "Needs you", the outing as the plan's page, Making |
 | [The stages of launch](launch.md) | Pilot, soft launch, public launch, the fee, a second city |
 | [Where v2 lives and what carries over](repo-and-carry-over.md) | The repo, v1's code and services, accounts, versions, porting |
+| [Architecture and stack](architecture.md) | What v2 is built from, the modules and their seams, models, outside services |
 
 ## Amending the spec
 
@@ -57,10 +58,11 @@ Linked, never merged. Each is on its own branch.
 | [The app's shape](https://github.com/shrujancheruku/issho/issues/560) | [`prototype/the-apps-shape`](https://github.com/shrujancheruku/issho/blob/prototype/the-apps-shape/docs/prototypes/the-apps-shape.md) |
 | [What the v2 spec asks of the stack](https://github.com/shrujancheruku/issho/issues/571) | [`research/v2-stack-asks`](https://github.com/shrujancheruku/issho/blob/research/v2-stack-asks/docs/research/v2-stack-asks.md) |
 | [The v2 glossary and domain model](https://github.com/shrujancheruku/issho/issues/569) | Landed as the root `GLOSSARY.md` |
+| [Architecture and stack](https://github.com/shrujancheruku/issho/issues/572) | [`research/vertex-and-forecast`](https://github.com/shrujancheruku/issho/blob/research/vertex-and-forecast/docs/research/vertex-and-forecast.md), [`research/on-device-translation`](https://github.com/shrujancheruku/issho/blob/research/on-device-translation/docs/research/on-device-translation.md) |
 
 ## Not in the spec yet
 
-The architecture and stack, technical operations, the quality bar and test strategy, and the build order are still open tickets on the map. Its "Not yet specified" section lists what no ticket has settled: per-screen design, money in detail, filling the waitlist, insiders as a role, photos of an outing, identity verification at the public launch, place names in another script, and the questions for the lawyer.
+Technical operations, the quality bar and test strategy, and the build order are still open tickets on the map. Its "Not yet specified" section lists what no ticket has settled: per-screen design, money in detail, filling the waitlist, insiders as a role, photos of an outing, identity verification at the public launch, place names in another script, and the questions for the lawyer.
 
 One gap opened while gathering: a guest now belongs to a member's signup to a plan ([People](people.md#guests)), which removed the route by which a crew outing's guest was voted into the crew. How an open crew gains a crew member is not yet specified.
 
@@ -72,5 +74,4 @@ Separately, wording the documents had to settle to use the glossary's terms:
 
 - Matching's "an outing is never set less than 3 days after its invitations go out" is written as the outing's date being at least 3 days after its invitations, since "set" now means 3 yeses.
 - Crews used "minding", which is not a v2 term. "Nobody minded anyone" is written as nobody being kept apart; leaving with "made me uncomfortable" is written as the crew-exit flag in Safety.
-- The glossary says a profile is six answers. From the soft launch the verified phone number is a seventh.
 - The rules for changing a set outing, decided in What varies by city, are in [Outings](outings.md#changing-a-set-outing).
