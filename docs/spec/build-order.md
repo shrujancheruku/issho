@@ -42,7 +42,7 @@ Each is a GitHub Milestone with one integration PR. Each ends in something the o
 | 6 | **Safety and privacy** | Reports, kept apart, holds, reliability points, standing, consent, deletion, the tombstone, retention, the sign-in log. Journeys 2 and 3. |
 | 7 | **Running Issho** | The queue's items and their defaults, alerts, the scorecard, the second sign-in step, the break switch, the moderator's translation. |
 | 8 | **The site** | The front page, the public plan pages, the other pages, the waitlist, "Get the app", the policy and terms. |
-| 9 | **Release** | The Vietnamese read, the test tracks, the device checklist, Sentry, technical alerts, the restore test, `2.0.0`. The Pilot can open. |
+| 9 | **Release** | The Vietnamese read, the test tracks, the device checklist, Sentry, technical alerts, the restore test, the demo city and the store reviewers' way in, `2.0.0`. The Pilot can open. |
 | 10 | **The tail** | The four things after the day-one line. |
 
 - **The thin loop comes before plan-making.** It proves the stack end to end on fixture plans. Plan-making comes straight after because it opens the slowest gate, the 12 standing plans.
