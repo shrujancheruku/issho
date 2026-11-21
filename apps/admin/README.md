@@ -8,6 +8,8 @@ The admin: a Vite React single-page app for staff, on the same Go API as the mem
 - `src/HealthPage.tsx` is the page. It takes the client as a prop, so tests pass a fake.
 - `src/HealthPage.test.tsx` renders the page against a fake of the generated client (Vitest and Testing Library, in jsdom).
 - `vite.config.ts` sets the dev port, the API proxy and the test environment.
+- `worker/index.ts` is the deployed admin's Worker: it forwards the API's paths to the API (see Deploying). `worker/index.test.ts` tests it.
+- `wrangler.jsonc` is the Cloudflare config; its `dev` environment is `admin-dev.joinissho.com`.
 
 ## Setup
 
@@ -31,13 +33,19 @@ pnpm --filter @issho/admin build  # type check, then static files in dist/
 
 `make lint` runs this build; the output is ignored by git.
 
+## Deploying
+
+CI deploys the admin to dev as a Cloudflare Worker, `issho-admin-dev` at `admin-dev.joinissho.com`, after the API ([docs/deploy.md](../../docs/deploy.md)): the Vite build in `dist/` is served as static assets and `worker/index.ts` answers only the API's paths. Nothing here is deployed from a laptop.
+
+**How the deployed admin reaches the API.** It is on its own address and the API has no CORS, so the Worker forwards `/issho.v1.*` to `API_ORIGIN` (`https://api-dev.joinissho.com`, set in `wrangler.jsonc`) and the page calls relative paths, as it does through Vite's proxy in development (`VITE_API_URL` stays empty). The Worker forwards nothing else, so it is not an open proxy. The API stays closed to every browser origin but the one that proxies it, and no origin list has to be kept. The cost is a second hop for the admin's calls and a Worker request for each; both are small for staff.
+
 ## Testing
 
 ```sh
 pnpm --filter @issho/admin test
 ```
 
-`make test` runs the same. The screen test asserts what a person sees: the version the API reports, and a message when the API cannot be reached. It needs no API and no database.
+`make test` runs the same. The screen test asserts what a person sees: the version the API reports, and a message when the API cannot be reached. The Worker's test calls it with a stand-in `fetch`: an RPC is forwarded with its method, headers and body, the API's errors pass through, nothing outside the API's paths is forwarded, and an unreachable API answers 502. It needs no API and no database.
 
 ## Adding a screen
 

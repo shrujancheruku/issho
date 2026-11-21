@@ -1,6 +1,6 @@
 # apps/app
 
-The member app: one Expo project for iOS, Android and the web ([Architecture and stack](../../docs/spec/architecture.md#what-v2-is-built-from)). The web is the same project, server-rendered (`web.output: "server"` in `app.json`). Right now it is the shell: three empty tabs, the strings and the theme. Sign-in and the real screens come in later tickets.
+The member app: one Expo project for iOS, Android and the web ([Architecture and stack](../../docs/spec/architecture.md#what-v2-is-built-from)). The web is the same project, server-rendered (`web.output: "server"` in `app.json`). Right now it is the shell: three empty tabs, the strings and the theme, and on the You tab the version the API reports (`src/components/api-version.tsx`), which is what the dev deploy checks. Sign-in and the real screens come in later tickets.
 
 ## Setup
 
@@ -26,6 +26,7 @@ Screenshots of every empty tab at phone width, light and dark, English and Vietn
 | What | Where |
 |---|---|
 | The three tabs, Plans first, English and Vietnamese, light and dark, with a fake of the generated API client | `src/app/__tests__/tabs.test.tsx` |
+| The You tab shows the API's version, or that it could not be reached, in both languages | `src/app/__tests__/api-version.test.tsx` |
 | The date and time formatter | `src/lib/__tests__/format.test.ts` |
 | Strings: language choice, `{placeholders}`, the device language | `src/i18n/__tests__/` |
 | The strings check (`make lint`) | `scripts/__tests__/check-strings.test.js` |
@@ -55,6 +56,10 @@ Tests use Jest with `jest-expo` and React Native Testing Library. A screen test 
 - `expo lint` fails on a string literal in `src/app/` and `src/components/`: JSX text, a string in braces, and `title`, `label`, `placeholder`, `alt` and accessibility attributes. Pass a key through a prop named `…Key`.
 - A language is added by its JSON file, an entry in `languages` (`src/i18n/strings.ts`) and one in `OTHER_LANGUAGES` (`scripts/check-strings.js`).
 - On the web the server renders English and the browser's language follows right after hydration, so pages stay cacheable and hydration matches (`src/i18n/use-device-language.ts`).
+
+## The web in production
+
+`apps/web` serves the web build in a container, and CI deploys it to dev ([docs/deploy.md](../../docs/deploy.md)). Its image is built from this project with `EXPO_PUBLIC_API_URL` set to the address the page's own origin answers the API on. `make image` checks that the page is server-rendered: its words are in the HTML a client with no JavaScript gets.
 
 ## Native builds
 

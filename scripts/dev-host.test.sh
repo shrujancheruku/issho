@@ -55,5 +55,12 @@ if RECORDS='{"success":true,"result":[]}' run >/dev/null; then bad "succeeded wi
 if ZONES='{"success":true,"result":[]}' run >/dev/null; then bad "succeeded with no zone"; fi
 if RECORDS='{"success":true,"result":[{"content":"not an address"}]}' run >/dev/null; then bad "accepted something that is not an address"; fi
 
+# A DEV_HOST given in the environment (a repository variable, set by the founder)
+# wins, and then nothing is asked of Google or Cloudflare.
+: > "$work/log"
+[ "$(PATH="$work/bin:$PATH" LOG="$work/log" DEV_HOST=198.51.100.9 "$script")" = "198.51.100.9" ] || bad "did not use DEV_HOST"
+[ ! -s "$work/log" ] || bad "asked for a secret or an API although DEV_HOST was given"
+if PATH="$work/bin:$PATH" LOG="$work/log" DEV_HOST='dev; rm -rf /' "$script" >/dev/null 2>&1; then bad "accepted a DEV_HOST that is not an address"; fi
+
 [ "$fail" -eq 0 ] && echo "dev-host: ok"
 exit "$fail"
