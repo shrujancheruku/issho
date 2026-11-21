@@ -15,9 +15,9 @@ Every job in `ci.yml` is a check, and its job id is its name: the founder sets t
 | Check | Runs | What it catches |
 |---|---|---|
 | `secrets` | `make secrets-scan` | A committed secret, in any commit on any branch |
-| `commits` | commitlint | A message that isn't a Conventional Commit |
-| `codegen` | `make codegen` | `make gen` leaves a diff or an untracked file |
-| `backend` | `make backend` | gofmt, `go vet`, the clock lint, `buf lint` and every Go test on a throwaway Postgres |
+| `commits` | `make commits` | A commit since the PR's base that isn't a Conventional Commit (`commitlint.config.mjs`, the commit-msg hook's config) |
+| `codegen` | `make codegen ci-lint ci-test` | `make gen` leaves a diff or an untracked file; and CI's own guards: actionlint, the workflow's shape (`scripts/ci-workflow.test.sh`) and the path filter (`scripts/ci-changes.test.sh`) |
+| `backend` | `make backend` | gofmt, `go vet`, the clock lint, `buf lint`, every Go test on a throwaway Postgres, and `proto-breaking.sh`'s own tests |
 | `boundaries` | `make boundaries` | A package importing another's internals; an outside service's real implementation outside `cmd/` |
 | `policy` | `make policy-lint` | A number in `policy` with no link to its document; a rule's number as a literal elsewhere |
 | `rpc-auth` | `make rpc-auth` | An RPC with no declared access rule |
@@ -29,13 +29,13 @@ Every job in `ci.yml` is a check, and its job id is its name: the founder sets t
 | `native-bundle` | `make native-bundle native-bundle-test` | The app not bundling for iOS or Android |
 | `image` | `make image` | The container image not building, or not holding `api` and `worker` |
 
-`make lint test` before a push covers all of these except `image`, `e2e` and the `breaking-ok` skip, and also runs `buf breaking`, so on a `breaking-ok` change `make lint` fails locally on purpose.
+`make lint test` before a push covers all of these except `commits`, `image`, `e2e` and the `breaking-ok` skip, and also runs `buf breaking`, so on a `breaking-ok` change `make lint` fails locally on purpose. The other way round, every command `make lint test` runs is run by some job: `scripts/ci-workflow.test.sh` fails otherwise, so no check exists only on a laptop.
 
 ## A job that skips still passes
 
-A check that never reports blocks the PR, so a workflow-level `paths:` filter can't be used. Instead the `changes` job lists the files the PR touches (`scripts/ci-changes.sh`, tested by `scripts/ci-changes.test.sh`), and each filtered job skips itself when none of its paths changed. A skipped job reports as passing. If `changes` itself fails, the jobs run instead of skipping. `secrets`, `commits` and `codegen` always run. On a push to `main` or a dispatched run, every job runs.
+A check that never reports blocks the PR, so a workflow-level `paths:` filter can't be used. Instead the `changes` job lists the files the PR touches (`scripts/ci-changes.sh`, tested by `scripts/ci-changes.test.sh`), and each filtered job skips itself when none of its paths changed. A skipped job reports as passing. If `changes` itself fails, the jobs run instead of skipping. A change to anything every job runs on touches every job's paths: the workflow, `.github/actions/`, the Makefile, `scripts/ci-*`, the root `package.json`, `pnpm-lock.yaml`, `pnpm-workspace.yaml`, any `go.mod` or `go.sum`, `go.work` and `tools/`. Otherwise a break in one would skip the jobs it breaks, and each would report as passing. `secrets`, `commits` and `codegen` always run, which is why `codegen` also runs CI's own guards. On a push to `main` or a dispatched run, every job runs.
 
-A new job: add its target to the Makefile, its paths to `scripts/ci-changes.sh` and its test case to `scripts/ci-changes.test.sh`, and `needs: changes` with the same `if:` as its neighbours. `make lint` (`scripts/ci-workflow.test.sh` and actionlint) fails if the job is missing the skip, a timeout or a pinned action.
+A new job: add its target to the Makefile, its paths to `scripts/ci-changes.sh` and its test case to `scripts/ci-changes.test.sh`, and `needs: changes` with the same `if:` as its neighbours. `make lint` (`scripts/ci-workflow.test.sh` and actionlint) and the `codegen` job fail if the job is missing the skip, a timeout or a pinned action, uses an action other than checkout, the toolchains or upload-artifact, or doesn't call the make target of its own name. A new local action is in the shared paths already (`.github/actions/`).
 
 ## Rules the workflow keeps
 

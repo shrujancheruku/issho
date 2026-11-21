@@ -131,18 +131,30 @@ test: native-bundle-test
 # to one of these (or to a target above), so what CI runs is what runs here.
 # Their names are the checks' names; scripts/ci-workflow.test.sh keeps the two
 # together. `make lint test` stays the superset to run before a push.
-.PHONY: backend codegen retention proto-breaking typescript strings image e2e ci-lint ci-test
+.PHONY: commits backend codegen retention proto-breaking typescript strings image e2e ci-lint ci-test
 
-# The backend job: formatting, vet, the clock lint, buf lint and every Go test
-# (the package tests, the property tests, the season and the privacy tests, as
-# they arrive). It is `make lint test`'s Go half without buf breaking, which has
-# its own job: `breaking-ok` skips that job, and make lint can't skip the check.
+# Every commit since the branch left COMMITS_BASE is a Conventional Commit, by
+# the config the commit-msg hook uses (commitlint.config.mjs). The base is
+# origin/main unless given (fetch it first); CI gives a PR's base. Merge commits
+# are skipped, as commitlint's defaults skip them.
+COMMITS_BASE ?= origin/main
+commits:
+	@base=$$(git merge-base '$(COMMITS_BASE)' HEAD) || { echo "commits: no merge base with $(COMMITS_BASE); fetch it first"; exit 1; }; \
+	pnpm exec commitlint --config commitlint.config.mjs --from "$$base" --to HEAD
+
+# The backend job: formatting, vet, the clock lint, buf lint, every Go test (the
+# package tests, the property tests, the season and the privacy tests, as they
+# arrive) and proto-breaking.sh's own tests. It is `make lint test`'s Go half
+# without buf breaking, which has its own job: `breaking-ok` skips that job, and
+# make lint can't skip the check. The script's tests stay here so the label
+# can't skip them too.
 backend:
 	@test -z "$$(gofmt -l backend)" || { gofmt -l backend; echo "gofmt: files above need formatting"; exit 1; }
 	cd backend && go vet ./...
 	cd backend && go run ./tools/clockcheck
 	go tool buf lint
 	cd backend && go test -race -count=1 ./...
+	scripts/proto-breaking.test.sh
 
 # `make gen` leaves no diff: nothing changed and nothing new. Needs `make setup`
 # (buf's TypeScript plugin comes from pnpm install).

@@ -49,9 +49,9 @@ jobs:
           cache: false
       - run: make secrets-scan
 
-  # On a dispatch (the release PR) there is no PR event, so lint the commits
-  # since main by hand rather than rely on a skipped required check counting
-  # as passed.
+  # Every commit in the PR is a Conventional Commit (make commits). A dispatch
+  # (the release PR) has no PR, so its range starts at main. A push to main
+  # skips: its commits were checked on their PR.
   commits:
     if: github.event_name != 'push'
     runs-on: ubuntu-latest
@@ -60,21 +60,11 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-      - uses: wagoid/commitlint-github-action@b948419dd99f3fd78a6548d48f94e3df7f6bf3ed # v6.2.1
-        if: github.event_name == 'pull_request'
-        with:
-          configFile: commitlint.config.mjs
-      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
-        if: github.event_name == 'workflow_dispatch'
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        if: github.event_name == 'workflow_dispatch'
-        with:
-          node-version: 26
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-        if: github.event_name == 'workflow_dispatch'
-      - run: git fetch --no-tags origin main && pnpm exec commitlint --config commitlint.config.mjs --from "$(git merge-base origin/main HEAD)" --to HEAD
-        if: github.event_name == 'workflow_dispatch'
+      - uses: ./.github/actions/setup
+        with: { node: "true" }
+      - run: make commits
+        env:
+          COMMITS_BASE: ${{ github.event.pull_request.base.sha || 'origin/main' }}
 
   # Decides which filtered jobs have something to check. On anything but a PR
   # (a push to main, a dispatched release PR) every job runs. If this job fails,
@@ -111,7 +101,10 @@ jobs:
             scripts/ci-changes.sh --all < /dev/null
           fi | tee -a "$GITHUB_OUTPUT"
 
-  # `make gen` leaves no diff.
+  # `make gen` leaves no diff. This job always runs, so it also runs CI's own
+  # guards (make ci-lint ci-test): the workflow's shape, the no-retry rule, the
+  # breaking-ok rule and the path filter. They read the workflow, the Makefile
+  # and the test runners' configs, which no one job's paths cover.
   codegen:
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -119,10 +112,11 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/setup
         with: { go: "true", node: "true" }
-      - run: make codegen
+      - run: make codegen ci-lint ci-test
 
-  # Formatting, vet, the clock lint, buf lint and every Go test. The tests start
-  # a throwaway Postgres in Docker, which the runner has.
+  # Formatting, vet, the clock lint, buf lint, every Go test and
+  # proto-breaking.sh's tests. The Go tests start a throwaway Postgres in Docker,
+  # which the runner has.
   backend:
     needs: changes
     if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.backend == 'true') }}

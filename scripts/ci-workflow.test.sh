@@ -84,11 +84,33 @@ done
 
 # Each job calls the target of its own name, so the check and the make target
 # stay one idea (typescript's, native-bundle's and the rest are all thin calls).
-for job in boundaries retention rpc-auth strings image e2e backend codegen typescript native-bundle proto-breaking; do
+for job in commits boundaries retention rpc-auth strings image e2e backend codegen typescript native-bundle proto-breaking; do
   grep -qE "run: make ([a-z-]+ )*$job( |$)" <<<"$(block "$job")" || bad "$job does not run make $job"
 done
 grep -q 'run: make policy-lint' <<<"$(block policy)" || bad "policy does not run make policy-lint"
 grep -q 'run: make secrets-scan' <<<"$(block secrets)" || bad "secrets does not run make secrets-scan"
+
+# The actions a job may use: checkout, the toolchains, and the e2e job's traces.
+# Anything else would be a check that isn't a make target (a third-party
+# commitlint action, say), so it couldn't run on a laptop.
+allowed='actions/checkout|actions/setup-go|actions/upload-artifact|\./\.github/actions/setup'
+if grep -nE '^\s*(- )?uses:' <<<"$code" | grep -vE "uses: ($allowed)(@| |$)"; then
+  bad "a job uses an action other than checkout, the toolchains or upload-artifact; call a make target instead"
+fi
+
+# What CI itself runs on counts as touching every job's paths, or breaking it
+# would skip the jobs it breaks and each would report as passing.
+for path in "$workflow" Makefile $(grep -hoE 'uses: \./[^ ]+' <<<"$code" | sed 's|uses: \./||; s|$|/action.yml|' | sort -u); do
+  grep -q '=false$' <<<"$(printf '%s\n' "$path" | scripts/ci-changes.sh)" && bad "a change to $path skips some jobs; add it to shared in scripts/ci-changes.sh"
+done
+
+# Nothing make lint test runs is left to the laptop: every command in it is run
+# by a target some job calls, so a guard (this test, the path filter's test,
+# proto-breaking.sh's test) can't exist only locally.
+ci_targets=$(grep -hoE 'run: make [a-z0-9 -]+' <<<"$code" | sed 's/run: make //' | tr '\n' ' ')
+# shellcheck disable=SC2086 # the targets are words
+missing=$(comm -23 <(make -n lint test | sort -u) <(make -n $ci_targets | sort -u))
+[ -z "$missing" ] || bad "make lint test runs these and no CI job does:"$'\n'"$missing"
 
 [ "$fail" -eq 0 ] && echo "ci-workflow: ok"
 exit "$fail"
