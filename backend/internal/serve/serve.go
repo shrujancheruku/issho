@@ -9,6 +9,8 @@ import (
 	"net"
 	"net/http"
 	"time"
+
+	"github.com/shrujancheruku/issho/backend/internal/logging"
 )
 
 // Run is for a process with no listener of its own (the worker, whose River
@@ -33,6 +35,9 @@ func HTTP(ctx context.Context, log *slog.Logger, addr string, h http.Handler) er
 		// Without it a client can hold a connection open by never finishing its
 		// headers. The body and response get no timeout: RPCs may stream.
 		ReadHeaderTimeout: 10 * time.Second,
+		// net/http's own errors go through the helper, which keeps none of their
+		// text: it can name the client's address.
+		ErrorLog: logging.ServerErrorLog(log),
 	}
 	failed := make(chan error, 1)
 	go func() { failed <- srv.Serve(ln) }()

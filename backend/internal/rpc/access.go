@@ -95,6 +95,9 @@ func (a *AccessInterceptor) WrapStreamingHandler(next connect.StreamingHandlerFu
 }
 
 func (a *AccessInterceptor) check(ctx context.Context, procedure, authorization string) (context.Context, error) {
+	// A procedure is always one a registered service owns: Connect routes no
+	// other, so it is safe to log.
+	note(ctx, procedure, "")
 	rule := a.rule(procedure)
 	if rule == isshov1.Access_ACCESS_UNSPECIFIED {
 		// A server bug, not the caller's doing, so it says nothing of why.
@@ -123,6 +126,7 @@ func (a *AccessInterceptor) check(ctx context.Context, procedure, authorization 
 			return ctx, connect.NewError(connect.CodePermissionDenied, errors.New("not allowed"))
 		}
 	}
+	note(ctx, "", id.Subject)
 	return context.WithValue(ctx, identityKey{}, id), nil
 }
 
@@ -137,6 +141,7 @@ func (a *AccessInterceptor) withOptionalIdentity(ctx context.Context, authorizat
 	if err != nil {
 		return ctx
 	}
+	note(ctx, "", id.Subject)
 	return context.WithValue(ctx, identityKey{}, id)
 }
 
