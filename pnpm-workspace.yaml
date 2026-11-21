@@ -1,8 +1,9 @@
 # packages/api-client is here (#595); the apps come in their own tickets:
-# apps/app (#600), apps/admin (#601).
+# apps/app (#600), apps/admin (#601), e2e (#603).
 packages:
   - apps/*
   - packages/*
+  - e2e
 # Release-age gate, in minutes (1 day): pnpm won't install a version published
 # more recently, as a supply-chain guard. Renovate's minimumReleaseAge matches.
 minimumReleaseAge: 1440
