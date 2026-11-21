@@ -44,7 +44,14 @@ func run(ctx context.Context, log *slog.Logger) error {
 	}
 	defer pool.Close()
 
-	// No domain package has a job yet; each adds its workers here.
+	emails, err := newEmailSender(os.Getenv)
+	if err != nil {
+		return err
+	}
+
+	// No domain package has a job yet; each adds its workers here, and hands
+	// the ones that send email the sender above.
+	_ = emails
 	client, err := jobs.New(pool, jobs.NewWorkers(), log)
 	if err != nil {
 		return err
