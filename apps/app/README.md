@@ -45,8 +45,8 @@ Tests use Jest with `jest-expo` and React Native Testing Library. A screen test 
 | `src/constants/theme.ts`, `src/hooks/use-theme.ts` | Colour tokens and the theme in use |
 | `src/api/` | `ApiProvider` and `useApi()`: the one generated client, given to screens |
 | `assets/images/` | The icon, splash, favicon, logo and tab icons, ported from v1 (`apps/mobile` at `v1-final`) |
-| `scripts/` | The strings check, the helper the lint test uses, and `fixtures/native-bundle/` for the native bundle test |
-| `docs/screenshots/` | Screenshots of the tabs, named `<tab>-<language>-<theme>` |
+| `scripts/` | The strings check, the helper the lint test uses, `fixtures/native-bundle/` for the native bundle test, and the native build scripts (`native-prepare-ios.sh`, `native-screenshot.sh`) |
+| `docs/screenshots/` | Screenshots of the tabs (`<tab>-<language>-<theme>`) and of the native builds (`<name>-<platform>`) |
 
 ## The app's words
 
@@ -58,7 +58,23 @@ Tests use Jest with `jest-expo` and React Native Testing Library. A screen test 
 
 ## Native builds
 
-`make native-bundle` (from the repo root; also run by `make lint`) exports the app for iOS and Android with `expo export` and fails on an import that resolves only on the web. `make native-bundle-test` (also run by `make test`) proves that failure with a fixture in `scripts/fixtures/native-bundle/`. Local development builds on the iOS simulator and the Android emulator arrive with #630; nothing is sent to EAS or a store ([Native along the way](../../docs/spec/quality.md#native-along-the-way)).
+`make native-bundle` (from the repo root; also run by `make lint`) exports the app for iOS and Android with `expo export` and fails on an import that resolves only on the web. `make native-bundle-test` (also run by `make test`) proves that failure with a fixture in `scripts/fixtures/native-bundle/`.
+
+Local development builds, on the iOS simulator and the Android emulator, are for checking a screen on a phone before a ticket is done ([Native along the way](../../docs/spec/quality.md#native-along-the-way)). Nothing goes to EAS or a store. `ios/` and `android/` are generated and gitignored; nothing in them is committed.
+
+| Command | What it does |
+|---|---|
+| `make native-ios` | Prepares `ios/` for Swift Package Manager (`scripts/native-prepare-ios.sh`), then `expo run:ios` builds and opens the app on the `NATIVE_IOS_DEVICE` simulator (default `iPhone 17`) |
+| `make native-android` | `android emulator start $(NATIVE_AVD)` (default `issho`), then `expo run:android` builds and installs the app on it |
+| `make native-screenshot-ios NAME=plans` | Captures the booted simulator to `docs/screenshots/plans-ios.png` |
+| `make native-screenshot-android NAME=plans` | Captures the running emulator through the `android` CLI to `docs/screenshots/plans-android.png` |
+| `make native-screenshot-test` | Checks that the screenshot script refuses bad arguments (also run by `make test`) |
+
+Machine needs: full Xcode (`xcode-select -p` prints a path inside `Xcode.app`) with an iOS simulator runtime; the Android SDK (`ANDROID_HOME`) with platform `android-36`, build-tools `36.0.0` and the emulator package, JDK 17, and an AVD named `issho` (`android emulator list`). Gradle installs the platform Expo's template asks for on first build. No CocoaPods is installed or used: the iOS build uses Swift Package Manager, which `experiments.swiftPackageManager` in `app.json` turns on.
+
+Metro (Expo's dev server) listens on port 8081 during a native run. Two worktrees cannot run one at once, since they would share the simulator, the emulator and that port. Stop Metro (Ctrl-C) when a run is done.
+
+Status: the Android build and screenshot work. The iOS build is blocked: `react-native-screens` and `@react-native-masked-view/masked-view` ship no `Package.swift`, scaffolding one for `@react-native-masked-view/masked-view` produces a target whose umbrella header layout SPM rejects (its `RNCMaskedView.xcodeproj` sits beside the public headers), and no committed fix exists yet.
 
 ## Dates and times
 
@@ -70,4 +86,4 @@ Colours come from `useTheme()` (`src/constants/theme.ts`, light and dark) and fo
 
 ## Not here yet
 
-Sign-in, the real screens, Making, push, the Sentry setup, EAS configuration and the development builds on the simulator and emulator (#630).
+Sign-in, the real screens, Making, push, the Sentry setup and EAS configuration.

@@ -115,7 +115,7 @@ lint: boundaries
 
 # Native checks (#602). `native-bundle` bundles the app for iOS and Android and
 # fails on a web-only import; its test proves that with a fixture. The development
-# builds on the simulator and emulator arrive with #630.
+# builds on the simulator and emulator are the block below (#630).
 .PHONY: native-bundle native-bundle-test
 
 native-bundle:
@@ -126,6 +126,34 @@ native-bundle-test:
 
 lint: native-bundle
 test: native-bundle-test
+
+# Local development builds on the iOS simulator and the Android emulator (#630).
+# Nothing goes to EAS or a store. Metro's port (8081) and the simulator and
+# emulator are shared, so one native run at a time per machine. NATIVE_AVD is an
+# AVD name from `android emulator list`; NATIVE_IOS_DEVICE a simulator name from
+# `xcrun simctl list devices available`.
+NATIVE_IOS_DEVICE ?= iPhone 17
+NATIVE_AVD ?= issho
+
+.PHONY: native-ios native-android native-screenshot-ios native-screenshot-android native-screenshot-test
+
+native-ios:
+	scripts/native-prepare-ios.sh
+	pnpm --filter @issho/app exec expo run:ios --device "$(NATIVE_IOS_DEVICE)"
+
+native-android:
+	android emulator start $(NATIVE_AVD)
+	pnpm --filter @issho/app exec expo run:android
+
+native-screenshot-ios:
+	scripts/native-screenshot.sh ios $(or $(NAME),screen)
+
+native-screenshot-android:
+	scripts/native-screenshot.sh android $(or $(NAME),screen)
+
+test: native-screenshot-test
+native-screenshot-test:
+	scripts/native-screenshot.test.sh
 
 # CI's required checks (#603). Each job in .github/workflows/ci.yml is a thin call
 # to one of these (or to a target above), so what CI runs is what runs here.

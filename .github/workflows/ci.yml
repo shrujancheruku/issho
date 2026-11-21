@@ -227,7 +227,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/setup
         with: { node: "true" }
-      - run: make native-bundle native-bundle-test
+      - run: make native-bundle native-bundle-test native-screenshot-test
 
   # One container image holds the api and the worker.
   image:
