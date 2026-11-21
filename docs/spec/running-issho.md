@@ -11,7 +11,7 @@ From [Running Issho](https://github.com/shrujancheruku/issho/issues/557), amende
   - **Reader**: the fluent person for one language. Sees app text and plan text only.
 - "Admin" is only the tool's name.
 - Only the owner grants and removes roles; removal takes effect at once.
-- The admin needs a second sign-in step beyond the email code.
+- The admin needs a second sign-in step beyond the email code ([Technical operations](operations.md#the-second-sign-in-step)).
 - Staff can never see the app as another member.
 - **The staff log.** Every staff act is kept with who, when and what, including every opening of a person's view. A written reason is required for moderation decisions, group edits, waivers and switching a review back on. It is kept 24 months and read only by the owner ([Privacy](privacy.md)).
 - A staff member never takes an item about themselves or about an outing they were on.
@@ -145,4 +145,4 @@ One weekly **scorecard** per city, holding only numbers that have a target.
 
 ## Promises that bind the stack
 
-No outing fails because of a fault in Issho, and at most a day of data is lost.
+No outing fails because of a fault in Issho, and at most a day of data is lost. [Technical operations](operations.md) says how each is kept.

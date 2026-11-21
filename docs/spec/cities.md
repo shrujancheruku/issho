@@ -1,6 +1,6 @@
 # Cities
 
-From [Cities](https://github.com/shrujancheruku/issho/issues/555), with [What varies by city](https://github.com/shrujancheruku/issho/issues/545), [The stages of launch](https://github.com/shrujancheruku/issho/issues/548) and [Running Issho](https://github.com/shrujancheruku/issho/issues/557).
+From [Cities](https://github.com/shrujancheruku/issho/issues/555), with [What varies by city](https://github.com/shrujancheruku/issho/issues/545), [The stages of launch](https://github.com/shrujancheruku/issho/issues/548) and [Running Issho](https://github.com/shrujancheruku/issho/issues/557), amended by [Technical operations](https://github.com/shrujancheruku/issho/issues/573).
 
 ## Areas
 
@@ -26,6 +26,13 @@ From [Cities](https://github.com/shrujancheruku/issho/issues/555), with [What va
 - **Closed.**
 - At most one city is planned at a time. The rule once there are two cities is decided after the second opens.
 - A person who switches their city to a planned one joins its waitlist.
+
+## A demo city
+
+- A **demo city** is a city marked as demo. It is not a fourth state: it is open, so its plans run.
+- It is never listed and can't be requested.
+- It holds only scripted members and seeded plans, and exists for the store reviewers' account ([Technical operations](operations.md#the-store-reviewers-way-in)).
+- It is left out of every scorecard and count.
 
 ## People whose city isn't listed
 

@@ -1,6 +1,6 @@
 # Architecture and stack
 
-From [Architecture and stack](https://github.com/shrujancheruku/issho/issues/572), with facts from [What the v2 spec asks of the stack](https://github.com/shrujancheruku/issho/issues/571) and two research notes: [models on Vertex AI and forecast sources](https://github.com/shrujancheruku/issho/blob/research/vertex-and-forecast/docs/research/vertex-and-forecast.md) and [on-device translation options](https://github.com/shrujancheruku/issho/blob/research/on-device-translation/docs/research/on-device-translation.md). Hosting, backups, releases and the other running concerns are decided in [Technical operations](https://github.com/shrujancheruku/issho/issues/573).
+From [Architecture and stack](https://github.com/shrujancheruku/issho/issues/572), with facts from [What the v2 spec asks of the stack](https://github.com/shrujancheruku/issho/issues/571) and two research notes: [models on Vertex AI and forecast sources](https://github.com/shrujancheruku/issho/blob/research/vertex-and-forecast/docs/research/vertex-and-forecast.md) and [on-device translation options](https://github.com/shrujancheruku/issho/blob/research/on-device-translation/docs/research/on-device-translation.md). Hosting, backups, releases and the other running concerns are in [Technical operations](operations.md), which also amended the second sign-in step.
 
 ## What v2 is built from
 
@@ -30,6 +30,7 @@ Google Cloud is the default for the model API and for any need that is still ope
 | Expo push | One integration and one token type for both stores. |
 | Sentry | One tool for the app, the Expo server and the API. Google's equivalent for the app is Crashlytics, which brings Firebase's SDK into an app that promises no trackers. |
 | Open-Meteo | Google's Weather API has no forecasts for Vietnam. |
+| Cloudflare | It already holds the DNS and costs nothing. Google's static hosting means Firebase or a paid load balancer. |
 
 ## The web at one address
 
@@ -79,7 +80,7 @@ The city clock, the queue and `policy` are built before any domain package.
 |---|---|---|
 | City settings, areas, the calendar, lead sources | The database | The owner in the admin; the calendar and lead sources also by insiders in the Making tab. Each change records who and why. A fixture file seeds development and tests only. |
 | Staff roles | Rows in `staff`'s table, an insider's scoped to a city | The owner. The API reads the role on each staff RPC, so removing one takes effect on the next request. The token says only who the person is and whether the second step was done. |
-| The second sign-in step for staff | A TOTP factor in Supabase Auth | The API requires `aal2` on every staff RPC. |
+| The second sign-in step for staff | A TOTP factor in Supabase Auth | The API requires `aal2` on every admin RPC, and not on the Making tab's ([Technical operations](operations.md#the-second-sign-in-step)). |
 | The app's words | JSON files in the repo, one per display language | A PR. The paid reader reads a preview build before each stage ([Languages](languages.md)). The Go API renders push and email bodies from the same files. |
 | Plan text and its translations | The database | Written in the editor, translated at approval. |
 | The rules' numbers | The `policy` package | A PR. |
@@ -110,7 +111,7 @@ Models are called through Vertex AI. Vertex has no one API across model families
 | Severe-weather warnings | Google's Weather API alerts | Vietnam's official warnings; the only weather data Google has for Vietnam. |
 | Push | Expo's push service, behind `push.Sender` | |
 | Email | Resend, behind `email.Sender` | Supabase's sign-in emails go through Resend's SMTP; the product's own go through its API from `worker`. |
-| Errors | Sentry, EU region | No request bodies or headers. |
+| Errors | Sentry, EU region | No request bodies or headers ([Technical operations](operations.md#errors-and-logs)). |
 
 Who receives personal data is the recipient list in [Privacy](privacy.md#who-receives-personal-data). Models, Places, Routes, Open-Meteo and the weather alerts are not on it.
 
