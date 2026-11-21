@@ -22,8 +22,11 @@ case "${1:-}" in
   *) echo "usage: ci-changes.sh [--all]  (changed paths on stdin)" >&2; exit 2 ;;
 esac
 
-# What changes the checks themselves.
-shared='Makefile|\.github/workflows/ci\.yml|scripts/ci-.*'
+# What every job runs on, so a change to it touches every job's paths: the
+# workflow, its local actions, the Makefile, these scripts, the lockfiles and
+# workspace files every install reads, and the tool pins. Left out, a break in
+# one of them would skip the jobs it breaks, and each would report as passing.
+shared='Makefile|\.github/workflows/ci\.yml|\.github/actions/.*|scripts/ci-.*|package\.json|pnpm-(lock|workspace)\.yaml|(.*/)?go\.(mod|sum)|go\.work(\.sum)?|tools/.*'
 # The Go side. docs/spec is here because the policy lint reads the spec's documents.
 go="(backend|proto|tools|docs/spec)/.*|go\.work(\.sum)?|buf(\.gen)?\.yaml"
 # The TypeScript side. proto because the client is generated from it.
@@ -31,7 +34,7 @@ ts="(apps|packages|proto|e2e)/.*|package\.json|pnpm-.*"
 
 # job|extended regex over a whole path. Output order is the order here.
 patterns=$(cat <<PATTERNS
-backend|^($shared|$go)$
+backend|^($shared|scripts/proto-breaking.*|$go)$
 boundaries|^($shared|$go)$
 e2e|^($shared|scripts/e2e.*|backend/.*|$ts)$
 image|^($shared|scripts/image.*|backend/.*)$

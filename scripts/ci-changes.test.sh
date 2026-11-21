@@ -31,7 +31,21 @@ want "the e2e package" "e2e typescript" e2e/tests/version.spec.ts
 want "the Makefile runs every job" "$all" Makefile
 want "the workflow runs every job" "$all" .github/workflows/ci.yml
 want "another workflow runs nothing" "" .github/workflows/release-please.yml
-want "a lockfile change" "e2e native-bundle strings typescript" pnpm-lock.yaml
+# What CI itself depends on runs every job: a break in any of these would
+# otherwise skip the jobs it breaks, and a skipped job reports as passing.
+want "the setup action runs every job" "$all" .github/actions/setup/action.yml
+want "another local action runs every job" "$all" .github/actions/other/action.yml
+want "a CI script runs every job" "$all" scripts/ci-changes.sh
+want "the pnpm lockfile runs every job" "$all" pnpm-lock.yaml
+want "the pnpm workspace runs every job" "$all" pnpm-workspace.yaml
+want "the root package.json runs every job" "$all" package.json
+want "a tool pin runs every job" "$all" tools/go.mod
+want "the tools' checksums run every job" "$all" tools/go.sum
+want "the backend's go.sum runs every job" "$all" backend/go.sum
+want "the backend's go.mod runs every job" "$all" backend/go.mod
+want "the workspace's go.work.sum runs every job" "$all" go.work.sum
+want "proto-breaking.sh runs its check and the backend job, which runs its tests" "backend proto-breaking" scripts/proto-breaking.sh
+want "an app's own package.json is not CI's" "e2e native-bundle strings typescript" apps/app/package.json
 want "two changes run both's jobs" "e2e native-bundle strings typescript" apps/app/a.ts apps/app/b.ts
 
 # --all is a push to main, a dispatch, or a base that can't be diffed.
