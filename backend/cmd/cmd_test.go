@@ -113,8 +113,9 @@ func TestAPIServesTheHealthCheckWithItsBuildVersion(t *testing.T) {
 
 	// The started line says which port the OS gave it.
 	addrs := make(chan string, 1)
+	requests := make(chan string, 1)
 	go func() {
-		addr := regexp.MustCompile(`addr=(\S+)`)
+		addr := regexp.MustCompile(`"addr":"([^"]+)"`)
 		sc := bufio.NewScanner(stdout)
 		for sc.Scan() {
 			if m := addr.FindStringSubmatch(sc.Text()); m != nil && strings.Contains(sc.Text(), "started") {
@@ -123,6 +124,9 @@ func TestAPIServesTheHealthCheckWithItsBuildVersion(t *testing.T) {
 			}
 		}
 		for sc.Scan() {
+			if strings.Contains(sc.Text(), `"msg":"request"`) {
+				requests <- sc.Text()
+			}
 		}
 	}()
 	var addr string
@@ -139,6 +143,20 @@ func TestAPIServesTheHealthCheckWithItsBuildVersion(t *testing.T) {
 	}
 	if got := res.Msg.GetVersion(); got != "9.9.9-test" {
 		t.Fatalf("version = %q, want 9.9.9-test", got)
+	}
+
+	// The process logs the request through the shared logger: the route and
+	// nothing of the caller, whose address was 127.0.0.1.
+	select {
+	case line := <-requests:
+		if !strings.Contains(line, `"route":"/issho.v1.HealthService/Check"`) {
+			t.Errorf("request line has no route: %s", line)
+		}
+		if strings.Contains(line, "127.0.0.1") {
+			t.Errorf("request line holds the caller's address: %s", line)
+		}
+	case <-time.After(10 * time.Second):
+		t.Fatal("the API logged no request line")
 	}
 }
 

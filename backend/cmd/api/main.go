@@ -2,11 +2,12 @@ package main
 
 import (
 	"context"
-	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"github.com/shrujancheruku/issho/backend/internal/clock"
+	"github.com/shrujancheruku/issho/backend/internal/logging"
 	"github.com/shrujancheruku/issho/backend/internal/rpc"
 	"github.com/shrujancheruku/issho/backend/internal/serve"
 )
@@ -20,14 +21,14 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	log := slog.New(slog.NewTextHandler(os.Stdout, nil)).With("cmd", "api")
+	log := logging.New(os.Stdout, "api")
 	addr := os.Getenv("API_ADDR")
 	if addr == "" {
 		addr = ":8080"
 	}
 	// No Auth yet: the token verifier is #608's, and until it exists only the
 	// public RPCs can be called.
-	if err := serve.HTTP(ctx, log, addr, rpc.NewHandler(rpc.Config{Version: version})); err != nil {
+	if err := serve.HTTP(ctx, log, addr, rpc.NewHandler(rpc.Config{Version: version, Log: log, Clock: clock.Real{}})); err != nil {
 		log.Error("exited", "err", err)
 		os.Exit(1)
 	}

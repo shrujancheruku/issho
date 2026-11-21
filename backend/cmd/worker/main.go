@@ -13,6 +13,7 @@ import (
 
 	"github.com/shrujancheruku/issho/backend/internal/clock"
 	"github.com/shrujancheruku/issho/backend/internal/jobs"
+	"github.com/shrujancheruku/issho/backend/internal/logging"
 	"github.com/shrujancheruku/issho/backend/internal/serve"
 )
 
@@ -25,7 +26,7 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	log := slog.New(slog.NewTextHandler(os.Stdout, nil)).With("cmd", "worker")
+	log := logging.New(os.Stdout, "worker")
 	if err := run(ctx, log); err != nil {
 		log.Error("exited", "err", err)
 		os.Exit(1)
@@ -55,7 +56,8 @@ func run(ctx context.Context, log *slog.Logger) error {
 	// The real clock is built here and only here (tools/clockcheck enforces it);
 	// everything below takes it as a clock.Clock. No domain package has a job
 	// yet; each adds its workers here.
-	client, err := jobs.New(pool, jobs.NewWorkers(clock.Real{}), log)
+	clk := clock.Real{}
+	client, err := jobs.New(pool, jobs.NewWorkers(clk), log, clk)
 	if err != nil {
 		return err
 	}

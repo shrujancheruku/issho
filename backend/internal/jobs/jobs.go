@@ -17,8 +17,10 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/riverqueue/river"
 	"github.com/riverqueue/river/riverdriver/riverpgxv5"
+	"github.com/riverqueue/river/rivertype"
 
 	"github.com/shrujancheruku/issho/backend/internal/clock"
+	"github.com/shrujancheruku/issho/backend/internal/logging"
 )
 
 // Schema is where River's tables are (db/migrations/00001_baseline.sql).
@@ -50,12 +52,18 @@ func NewWorkers(clk clock.Clock) *river.Workers {
 
 // New returns a River client on pool. Its pool must connect to Postgres
 // directly or through a session pooler: River listens for new jobs with
-// LISTEN/NOTIFY, which a transaction pooler breaks. A nil log uses slog's default.
-func New(pool *pgxpool.Pool, workers *river.Workers, log *slog.Logger) (*river.Client[pgx.Tx], error) {
+// LISTEN/NOTIFY, which a transaction pooler breaks. The client logs one line per
+// job (see logJobs), timed by clk. A nil log discards everything: a package never
+// logs through slog's global default.
+func New(pool *pgxpool.Pool, workers *river.Workers, log *slog.Logger, clk clock.Clock) (*river.Client[pgx.Tx], error) {
+	if log == nil {
+		log = logging.Discard()
+	}
 	return river.NewClient(riverpgxv5.New(pool), &river.Config{
-		Logger:  log,
-		Schema:  Schema,
-		Queues:  map[string]river.QueueConfig{river.QueueDefault: {MaxWorkers: 10}},
-		Workers: workers,
+		Logger:           logging.WithoutErrors(log),
+		Schema:           Schema,
+		Queues:           map[string]river.QueueConfig{river.QueueDefault: {MaxWorkers: 10}},
+		Workers:          workers,
+		WorkerMiddleware: []rivertype.WorkerMiddleware{&logJobs{log: log, clk: clk}},
 	})
 }

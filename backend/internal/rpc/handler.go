@@ -3,12 +3,14 @@
 package rpc
 
 import (
+	"log/slog"
 	"net/http"
 
 	"connectrpc.com/connect"
 	"google.golang.org/protobuf/reflect/protoregistry"
 
 	"github.com/shrujancheruku/issho/backend/gen/issho/v1/isshov1connect"
+	"github.com/shrujancheruku/issho/backend/internal/clock"
 )
 
 // Config is what the handler needs from the process that builds it.
@@ -18,6 +20,10 @@ type Config struct {
 	// Auth verifies bearer tokens. Nil refuses every token, which leaves only
 	// the public RPCs callable (the verifier is #608's).
 	Auth Authenticator
+	// Log gets one line per request (see logRequests), timed by Clock. Nil logs
+	// nothing; set, Clock is required.
+	Log   *slog.Logger
+	Clock clock.Clock
 }
 
 // NewHandler serves every service of the API.
@@ -27,5 +33,8 @@ func NewHandler(cfg Config) http.Handler {
 	opts := connect.WithInterceptors(NewAccessInterceptor(cfg.Auth, protoregistry.GlobalFiles))
 	mux := http.NewServeMux()
 	mux.Handle(isshov1connect.NewHealthServiceHandler(healthService{version: cfg.Version}, opts))
-	return mux
+	if cfg.Log == nil {
+		return mux
+	}
+	return logRequests(cfg.Log, cfg.Clock, mux)
 }
