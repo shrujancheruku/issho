@@ -27,6 +27,7 @@ gen:
 lint:
 	@test -z "$$(gofmt -l backend)" || { gofmt -l backend; echo "gofmt: files above need formatting"; exit 1; }
 	cd backend && go vet ./...
+	cd backend && go run ./tools/clockcheck
 
 # Needs Docker: the tests start a throwaway Postgres and give each test its own
 # schema (backend/internal/testdb). There is no way to skip the database.

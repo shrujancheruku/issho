@@ -11,6 +11,9 @@ One Go module (`github.com/shrujancheruku/issho/backend`), part of the root `go.
 | `cmd/migrate` | `migrate up` and `migrate down`, behind `make migrate-up` and `make migrate-down` |
 | `db` | The goose migrations (`db/migrations`), embedded, and the `Up` and `Down` that run them; sqlc's queries (`db/queries`) |
 | `gen/dbgen` | The Go that sqlc generates from `db/queries`. Generated: never edit it |
+| `internal/clock` | The injected clock: `Clock`, `Real` (wired only in `cmd/`) and the test `Fake` |
+| `internal/cityclock` | The one city-clock helper: a city's date, "HH:MM on a date", part of the day, midnight-crossing windows |
+| `tools/clockcheck` | The lint check that fails on `time.Now`, `time.Since` and `time.Until` outside `internal/clock` |
 | `internal/jobs` | The River client the worker runs and the domain packages enqueue through |
 | `internal/serve` | The lifecycle both commands share |
 | `internal/testdb` | A schema, or a whole database, per test in a throwaway Postgres |
@@ -40,6 +43,12 @@ SQL is written by hand in `db/queries/*.sql` and compiled by sqlc into `gen/dbge
 ## Jobs
 
 Background work is River's, in Postgres. `internal/jobs.New` builds the client; `cmd/worker` starts it on a direct (or session-pooler) connection in `WORKER_DATABASE_URL`, since River listens for new jobs with LISTEN/NOTIFY, which a transaction pooler breaks. A job is enqueued with `client.InsertTx` in the transaction that causes it: it is worked only after that transaction commits and never if it rolls back (`internal/jobs/jobs_test.go`). Each domain package defines its own job args and worker and registers the worker on the bundle from `jobs.NewWorkers()`. That bundle holds a placeholder worker, because River won't start with none; the first real job replaces it.
+
+## Time
+
+Code never asks the system for the time. It takes a `clock.Clock`; `cmd/` passes `clock.Real{}`, and tests pass a `clock.NewFake(start)` that stands still until `Set` or `Advance` moves it. `make lint` runs `tools/clockcheck`, which fails on `time.Now`, `time.Since` and `time.Until` in any package but `internal/clock` (tests included). Its fixtures are in `tools/clockcheck/testdata`.
+
+Every time on a city's clock goes through `cityclock.New(zone, dayParts)`, built from the city's IANA time zone and its clock hours of morning, afternoon and evening (a city setting). Its methods take an instant, so they are pure and testable with a fake clock: `Date` (the city's date), `At` (an instant from a date and "HH:MM"), `PartOfDay` and `InWindow` (a from-to window that may cross midnight, from inclusive, to exclusive). `At` puts a time the clocks skip after the gap and takes the first of a time they repeat.
 
 ## Testing
 
