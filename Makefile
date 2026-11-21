@@ -104,30 +104,15 @@ boundaries:
 lint: boundaries
 
 # Native checks (#602). `native-bundle` bundles the app for iOS and Android and
-# fails on a web-only import (its test proves that with a fixture). The two run
-# targets build a development build and open it on the simulator or emulator;
-# they need Xcode or the Android SDK, see apps/app/README.md. The screenshot
-# targets capture the running simulator or emulator into apps/app/docs/screenshots,
-# named by NAME (make native-screenshot-ios NAME=plans).
-.PHONY: native-bundle native-bundle-test native-ios native-android native-screenshot-ios native-screenshot-android
+# fails on a web-only import; its test proves that with a fixture. The development
+# builds on the simulator and emulator arrive with #630.
+.PHONY: native-bundle native-bundle-test
 
 native-bundle:
 	scripts/native-bundle.sh
 
 native-bundle-test:
 	scripts/native-bundle.test.sh
-
-native-ios:
-	pnpm --filter @issho/app exec expo run:ios
-
-native-android:
-	pnpm --filter @issho/app exec expo run:android
-
-native-screenshot-ios:
-	scripts/native-screenshot.sh ios $(or $(NAME),screen)
-
-native-screenshot-android:
-	scripts/native-screenshot.sh android $(or $(NAME),screen)
 
 lint: native-bundle
 test: native-bundle-test

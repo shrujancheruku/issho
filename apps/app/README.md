@@ -46,7 +46,7 @@ Tests use Jest with `jest-expo` and React Native Testing Library. A screen test 
 | `src/api/` | `ApiProvider` and `useApi()`: the one generated client, given to screens |
 | `assets/images/` | The icon, splash, favicon, logo and tab icons, ported from v1 (`apps/mobile` at `v1-final`) |
 | `scripts/` | The strings check, the helper the lint test uses, and `fixtures/native-bundle/` for the native bundle test |
-| `docs/screenshots/` | Screenshots of the tabs and of the native builds, named `<tab>-<language>-<theme>` or `<name>-<platform>` |
+| `docs/screenshots/` | Screenshots of the tabs, named `<tab>-<language>-<theme>` |
 
 ## The app's words
 
@@ -58,27 +58,7 @@ Tests use Jest with `jest-expo` and React Native Testing Library. A screen test 
 
 ## Native builds
 
-Local development builds only: nothing goes to EAS or a store before the release milestone ([Native along the way](../../docs/spec/quality.md#native-along-the-way)). From the repo root:
-
-| Command | What it does |
-|---|---|
-| `make native-bundle` | `expo export` for iOS and Android. Fails on an import that resolves only on the web. Also runs in `make lint`. |
-| `make native-bundle-test` | Proves that failure with a fixture (`apps/app/scripts/fixtures/native-bundle/`). Also runs in `make test`. |
-| `make native-ios` | Builds a development build (`expo run:ios`) and opens it on the booted iOS simulator |
-| `make native-android` | Builds a development build (`expo run:android`) and opens it on the running Android emulator |
-| `make native-screenshot-ios NAME=plans` | Captures the booted simulator to `docs/screenshots/plans-ios.png` |
-| `make native-screenshot-android NAME=plans` | Captures the running emulator to `docs/screenshots/plans-android.png` |
-
-`make native-ios` and `make native-android` generate `ios/` and `android/` and build the native projects; both folders, and what they hold (Pods, `.gradle`), are gitignored and not committed.
-
-What a machine needs:
-
-- **iOS:** full Xcode, not only the Command Line Tools (`xcode-select -p` must print a path inside `Xcode.app`), with an iOS simulator runtime. CocoaPods, which `expo run:ios` uses to install the pods. Open a simulator with `open -a Simulator` before the screenshot.
-- **Android:** the Android SDK (`ANDROID_HOME` set) with platform-tools (`adb`), build-tools and the emulator package, a JDK, and an emulator image (AVD). Create one in Android Studio's Device Manager, then start it with `emulator -avd <name>` (`emulator -list-avds` lists them).
-
-Expo's dev server (Metro) listens on port 8081 during a native run. Two worktrees cannot both run a native build at once, because they would share the simulator, the emulator and that port. Stop Metro (Ctrl-C in the terminal running it) when the run is done.
-
-The failure of a missing tool is explicit: `make native-ios` stops with the Xcode error, and the screenshot script names what to install.
+`make native-bundle` (from the repo root; also run by `make lint`) exports the app for iOS and Android with `expo export` and fails on an import that resolves only on the web. `make native-bundle-test` (also run by `make test`) proves that failure with a fixture in `scripts/fixtures/native-bundle/`. Local development builds on the iOS simulator and the Android emulator arrive with #630; nothing is sent to EAS or a store ([Native along the way](../../docs/spec/quality.md#native-along-the-way)).
 
 ## Dates and times
 
@@ -90,4 +70,4 @@ Colours come from `useTheme()` (`src/constants/theme.ts`, light and dark) and fo
 
 ## Not here yet
 
-Sign-in, the real screens, Making, push, the Sentry setup and EAS configuration. Nothing here is sent to EAS or a store.
+Sign-in, the real screens, Making, push, the Sentry setup, EAS configuration and the development builds on the simulator and emulator (#630).
