@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package fixture.v1;
+
+import "issho/v1/access.proto";
+
+// Two RPCs here break the rule: one names no access rule at all, one names the
+// "unspecified" value. The third is fine.
+service UnruledService {
+  rpc Fine(Msg) returns (Msg) {
+    option (issho.v1.access) = ACCESS_MEMBER;
+  }
+  rpc Forgotten(Msg) returns (Msg);
+  rpc OtherOption(Msg) returns (Msg) {
+    option deprecated = true;
+  }
+  rpc Unspecified(Msg) returns (Msg) {
+    option (issho.v1.access) = ACCESS_UNSPECIFIED;
+  }
+}
+
+message Msg {}

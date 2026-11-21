@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package fixture.v1;
+
+import "issho/v1/access.proto";
+
+// Every RPC here declares a rule, so the check passes.
+service RuledService {
+  rpc Open(Msg) returns (Msg) {
+    option (issho.v1.access) = ACCESS_PUBLIC;
+  }
+  rpc Mine(Msg) returns (Msg) {
+    option (issho.v1.access) = ACCESS_MEMBER;
+  }
+  rpc Run(Msg) returns (Msg) {
+    option (issho.v1.access) = ACCESS_ADMIN;
+  }
+}
+
+message Msg {}

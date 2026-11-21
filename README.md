@@ -22,10 +22,12 @@
 | Path | What |
 |---|---|
 | [`assets/brand/`](assets/brand/README.md) | Logo and mark, plain and in round blue and white versions, as SVG and PNG; brand colours and the story behind the kanji |
+| [`proto/`](proto/README.md) | The API's contract (ConnectRPC over protobuf), where every RPC declares who may call it |
 | `backend/` | The Go module: commands `cmd/api` and `cmd/worker`, packages under `internal/` (`testdb` gives each test its own schema in a throwaway Postgres) |
-| `apps/`, `packages/` | The pnpm workspace's members: `apps/app`, `apps/admin` and `packages/api-client`, each added by its own ticket |
+| `packages/api-client/` | The generated TypeScript client of the API ([README](packages/api-client/README.md)) |
+| `apps/` | The pnpm workspace's apps, `apps/app` and `apps/admin`, each added by its own ticket |
 | `scripts/` | The tracker check and the brand generators |
-| `tools/` | Go tools pinned for the repo (gitleaks) |
+| `tools/` | Go tools pinned for the repo (gitleaks, goose, sqlc, buf and its Go plugins) |
 | [`CLAUDE.md`](CLAUDE.md), `.claude/skills/` | Instructions for AI coding agents, and the official Supabase agent skills |
 | `.githooks/` | Git hooks: secret scan (pre-commit) and commit-message lint (commit-msg). Enable with `make setup`. |
 
@@ -34,10 +36,10 @@
 Prerequisites: Go, pnpm and Docker (running; `make test` needs it).
 
 ```sh
-make setup          # commitlint + the git hooks
-make gen            # code generation (nothing generates yet)
-make lint           # gofmt and go vet
-make test           # backend tests against a throwaway Postgres in Docker
+make setup          # pnpm install (commitlint, the TypeScript generator) + the git hooks
+make gen            # code generation: sqlc, and buf for the Go and TypeScript API code
+make lint           # gofmt, go vet, buf lint, the RPC access-rule check, the client's type check
+make test           # backend tests against a throwaway Postgres in Docker, and the client's tests
 make secrets-scan   # scan every commit for secrets
 ```
 

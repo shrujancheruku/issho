@@ -1,23 +1,36 @@
 # backend
 
-One Go module (`github.com/shrujancheruku/issho/backend`), part of the root `go.work`. The database baseline (#594) is in; the ConnectRPC API (#595) comes next, and this README grows with each ticket.
+One Go module (`github.com/shrujancheruku/issho/backend`), part of the root `go.work`. The database baseline (#594) and the ConnectRPC API (#595) are in, and this README grows with each ticket.
 
 ## Layout
 
 | Path | What |
 |---|---|
-| `cmd/api` | The API process |
+| `cmd/api` | The API process: serves ConnectRPC |
 | `cmd/worker` | The background-job process: runs River |
+| `cmd/rpcauth` | `make rpc-auth`: fails when an RPC in `proto/` declares no access rule |
 | `cmd/migrate` | `migrate up` and `migrate down`, behind `make migrate-up` and `make migrate-down` |
 | `db` | The goose migrations (`db/migrations`), embedded, and the `Up` and `Down` that run them; sqlc's queries (`db/queries`) |
 | `gen/dbgen` | The Go that sqlc generates from `db/queries`. Generated: never edit it |
+| `gen/issho` | The Go that buf generates from `proto/`: the messages and the ConnectRPC service stubs. Generated: never edit it |
+| `internal/rpc` | The API's services and the access interceptor; `rpc/rpcauth` is the check behind `cmd/rpcauth` |
 | `internal/jobs` | The River client the worker runs and the domain packages enqueue through |
 | `internal/serve` | The lifecycle both commands share |
 | `internal/testdb` | A schema, or a whole database, per test in a throwaway Postgres |
 
 ## The commands
 
-`api` and `worker` each log `started` and run until they get SIGINT or SIGTERM, then log `stopped` and exit 0. `api` does no other work yet. `worker` connects to `WORKER_DATABASE_URL` and runs River (see "Jobs"); without it, the worker logs the error and exits 1. `cmd/cmd_test.go` builds each binary, signals it and checks the exit.
+`api` and `worker` each log `started` and run until they get SIGINT or SIGTERM, then log `stopped` and exit 0 (`api` lets requests in flight finish first). `api` listens on `API_ADDR` (default `:8080`) and logs the address it bound, so `API_ADDR=127.0.0.1:0` takes any free port. `worker` connects to `WORKER_DATABASE_URL` and runs River (see "Jobs"); without it, the worker logs the error and exits 1. `cmd/cmd_test.go` builds each binary, signals it and checks the exit.
+
+## The API
+
+The API is ConnectRPC over protobuf: the contract is `proto/` (see its README), `make gen` turns it into `gen/issho`, and `internal/rpc` implements it. `rpc.NewHandler` mounts every service behind one interceptor that enforces the `access` option each RPC declares in its proto (public, member, Making, or admin with the second sign-in step). It denies by default: an RPC with no rule is refused for everyone with `internal`, a missing, malformed or unverifiable token on a member, Making or admin RPC is `unauthenticated`, and a verified caller without the role (or, for admin, the second step) is `permission_denied`.
+
+Who a token belongs to comes from an `rpc.Authenticator`, which turns a bearer token into an `rpc.Identity` (subject, second step, Making, admin). The Supabase JWKS verifier and the staff-role lookup are #608's; until they exist `cmd/api` passes none and every token is refused, so only public RPCs work. A handler reads the caller with `rpc.IdentityFrom(ctx)`.
+
+The one RPC so far is `HealthService.Check`, public, which reports the build's version. `cmd/api`'s `version` is set when building (`go build -ldflags "-X main.version=1.2.3"`) and is `dev` otherwise.
+
+Tests go through HTTP with a generated Connect client. `internal/rpc/access_test.go` serves a throwaway service, built in the test with one RPC per rule plus one with none, behind the real interceptor; `internal/rpc/rpcauth` tests the access-rule check against fixture protos in its `testdata`.
 
 ## Migrations
 
@@ -46,8 +59,8 @@ Background work is River's, in Postgres. `internal/jobs.New` builds the client; 
 Run from the repo root:
 
 ```sh
-make test   # go test -race ./... in backend/
-make lint   # gofmt and go vet
+make test   # go test -race ./... in backend/, and the api-client's tests
+make lint   # gofmt, go vet, buf lint, rpc-auth and the api-client's type check
 ```
 
 `make test` needs Docker running. The first `testdb.New(t)` in a test binary starts a Postgres 17 container (removed when the binary exits) and returns a pool whose `search_path` is a fresh schema, dropped when the test ends, so tests may write the same keys in parallel. A test that runs the migrations, which use fixed schema names, calls `testdb.NewDatabase(t)` instead for a database of its own, then `db.Up`. With Docker stopped or unreachable (`DOCKER_HOST`) the test fails; no flag or environment variable skips the database. Tests use it directly rather than mocking stores.
