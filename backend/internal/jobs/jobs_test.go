@@ -5,11 +5,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/riverqueue/river"
 
 	"github.com/shrujancheruku/issho/backend/db"
 	"github.com/shrujancheruku/issho/backend/internal/clock"
 	"github.com/shrujancheruku/issho/backend/internal/jobs"
+	"github.com/shrujancheruku/issho/backend/internal/staff"
 	"github.com/shrujancheruku/issho/backend/internal/testdb"
 )
 
@@ -41,7 +43,7 @@ func TestJobEnqueuedInATransactionRunsOnlyAfterCommit(t *testing.T) {
 	}
 
 	w := &markWorker{worked: make(chan string, 10)}
-	workers := jobs.NewWorkers(clock.NewFake(time.Date(2026, 11, 21, 9, 0, 0, 0, time.UTC)))
+	workers := jobs.NewWorkers(clock.NewFake(time.Date(2026, 11, 21, 9, 0, 0, 0, time.UTC)), pool, staff.NewKinds())
 	river.AddWorker(workers, w)
 	client, err := jobs.New(pool, workers, nil)
 	if err != nil {
@@ -113,5 +115,65 @@ func waitFor(t *testing.T, ctx context.Context, ch <-chan string, want string) {
 		}
 	case <-ctx.Done():
 		t.Fatalf("%q was never worked", want)
+	}
+}
+
+// The worker process's whole path for the queue: an item opened in a committed
+// transaction, a fake clock past its due time, and the started River client
+// applies the registered default and marks the item defaulted. The item is due
+// in the real past, so River itself considers the job ready; the fake clock is
+// what the worker's decision turns on.
+func TestWorkerAppliesAnItemsDefaultOnceItIsDue(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	pool := testdb.NewDatabase(t)
+	if err := db.Up(ctx, pool); err != nil {
+		t.Fatal(err)
+	}
+
+	applied := make(chan string, 2)
+	kinds := staff.NewKinds()
+	kinds.Register("plan-review", func(_ context.Context, _ pgx.Tx, item staff.Item) error {
+		applied <- item.Subject
+		return nil
+	})
+	clk := clock.NewFake(time.Date(2026, 1, 5, 9, 0, 0, 0, time.UTC))
+	client, err := jobs.New(pool, jobs.NewWorkers(clk, pool, kinds), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	queue := staff.NewQueue(clk, kinds, client)
+
+	tx, err := pool.Begin(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := queue.Open(ctx, tx, staff.OpenParams{Kind: "plan-review", Subject: "plan-a", DueAt: clk.Now().Add(72 * time.Hour)}); err != nil {
+		t.Fatal(err)
+	}
+	if err := tx.Commit(ctx); err != nil {
+		t.Fatal(err)
+	}
+
+	clk.Advance(73 * time.Hour)
+	if err := client.Start(ctx); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = client.Stop(context.Background()) })
+
+	waitFor(t, ctx, applied, "plan-a")
+	for {
+		open, err := queue.ListOpen(ctx, pool)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(open) == 0 {
+			break
+		}
+		select {
+		case <-ctx.Done():
+			t.Fatal("the item was never marked defaulted")
+		case <-time.After(50 * time.Millisecond):
+		}
 	}
 }

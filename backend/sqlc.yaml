@@ -10,3 +10,13 @@ sql:
         out: gen/dbgen
         sql_package: pgx/v5
         emit_pointers_for_null_types: true
+        # time.Time rather than pgtype.Timestamptz: every column is timestamptz
+        # and the code works in instants (the injected clock's).
+        overrides:
+          - db_type: timestamptz
+            go_type: time.Time
+          - db_type: timestamptz
+            nullable: true
+            go_type:
+              type: time.Time
+              pointer: true

@@ -17,15 +17,18 @@ One Go module (`github.com/shrujancheruku/issho/backend`), part of the root `go.
 | `tools/clockcheck` | The lint check that fails on `time.Now`, `time.Since` and `time.Until` outside `internal/clock`, and on `clock.Real` outside `cmd/` |
 | `gen/issho` | The Go that buf generates from `proto/`: the messages and the ConnectRPC service stubs. Generated: never edit it |
 | `internal/rpc` | The API's services and the access interceptor; `rpc/rpcauth` is the check behind `cmd/rpcauth` |
+| `internal/email` | `email.Sender`, its in-memory fake, and `email/resend`, the real one |
 | `internal/jobs` | The River client the worker runs and the domain packages enqueue through |
 | `internal/policy` | Every number in the spec's rules, as a constant linked to its document (see "Policy") |
+| `internal/staff` | The queue: items with a due time and a written default, and the River job that applies the default (see "The queue") |
 | `internal/serve` | The lifecycle both commands share |
 | `internal/testdb` | A schema, or a whole database, per test in a throwaway Postgres |
 | `tools/policylint` | The check behind `make policy-lint` |
+| `tools/boundaries` | The check behind `make boundaries` |
 
 ## The commands
 
-`api` and `worker` each log `started` and run until they get SIGINT or SIGTERM, then log `stopped` and exit 0 (`api` lets requests in flight finish first). `api` listens on `API_ADDR` (default `:8080`) and logs the address it bound, so `API_ADDR=127.0.0.1:0` takes any free port. `worker` connects to `WORKER_DATABASE_URL` and runs River (see "Jobs"); without it, the worker logs the error and exits 1. `cmd/cmd_test.go` builds each binary, signals it and checks the exit.
+`api` and `worker` each log `started` and run until they get SIGINT or SIGTERM, then log `stopped` and exit 0 (`api` lets requests in flight finish first). `api` listens on `API_ADDR` (default `:8080`) and logs the address it bound, so `API_ADDR=127.0.0.1:0` takes any free port. `worker` connects to `WORKER_DATABASE_URL` and runs River (see "Jobs"); without it, the worker logs the error and exits 1. With `RESEND_API_KEY` and `EMAIL_FROM` set it can send email (see "Outside services"); with neither it runs and every send fails; a key without `EMAIL_FROM` exits 1. `cmd/cmd_test.go` builds each binary, signals it and checks the exit.
 
 ## The API
 
@@ -53,11 +56,11 @@ The baseline writes out River's own schema (River v0.51.2) as SQL, so that goose
 
 ## Queries
 
-SQL is written by hand in `db/queries/*.sql` and compiled by sqlc into `gen/dbgen` (config: `sqlc.yaml`, which reads `db/migrations` as the schema). After changing a query or a migration, run `make gen` from the repo root and commit the result; CI fails if `make gen` leaves a diff. Call the generated methods with a pgx pool or transaction: `dbgen.New(pool).CountJobs(ctx)`. `db/queries/sample.sql` is a placeholder for the first real query to replace.
+SQL is written by hand in `db/queries/*.sql` and compiled by sqlc into `gen/dbgen` (config: `sqlc.yaml`, which reads `db/migrations` as the schema). After changing a query or a migration, run `make gen` from the repo root and commit the result; CI fails if `make gen` leaves a diff. Call the generated methods with a pgx pool or transaction: `dbgen.New(pool).CountJobs(ctx)`. `db/queries/sample.sql` is a placeholder for the first real query to replace. `timestamptz` columns come out as `time.Time` (`*time.Time` when nullable), set by the overrides in `sqlc.yaml`.
 
 ## Jobs
 
-Background work is River's, in Postgres. `internal/jobs.New` builds the client; `cmd/worker` starts it on a direct (or session-pooler) connection in `WORKER_DATABASE_URL`, since River listens for new jobs with LISTEN/NOTIFY, which a transaction pooler breaks. A job is enqueued with `client.InsertTx` in the transaction that causes it: it is worked only after that transaction commits and never if it rolls back (`internal/jobs/jobs_test.go`). Each domain package defines its own job args and worker and registers the worker on the bundle from `jobs.NewWorkers(clk)`, taking the time from `clk` (see "Time"). That bundle holds a placeholder worker, because River won't start with none; the first real job replaces it.
+Background work is River's, in Postgres. `internal/jobs.New` builds the client; `cmd/worker` starts it on a direct (or session-pooler) connection in `WORKER_DATABASE_URL`, since River listens for new jobs with LISTEN/NOTIFY, which a transaction pooler breaks. A job is enqueued with `client.InsertTx` in the transaction that causes it: it is worked only after that transaction commits and never if it rolls back (`internal/jobs/jobs_test.go`). Each domain package defines its own job args and worker and registers the worker on the bundle from `jobs.NewWorkers(clk, pool, kinds)`, taking the time from `clk` (see "Time"). The bundle holds the queue's due worker (see "The queue"); a domain package's job is added beside it.
 
 ## Time
 
@@ -65,9 +68,24 @@ Code never asks the system for the time. It takes a `clock.Clock`: `cmd/worker` 
 
 Every time on a city's clock goes through `cityclock.New(zone, dayParts)`, built from the city's IANA time zone and its clock hours of morning, afternoon and evening (a city setting). Its methods take an instant, so they are pure and testable with a fake clock: `Date` (the city's date), `At` (an instant from a date and "HH:MM"), `PartOfDay` and `InWindow` (a from-to window that may cross midnight, from inclusive, to exclusive). `At` puts a time the clocks skip after the gap and takes the first of a time they repeat.
 
+## The queue
+
+Every by-hand step is an item in one queue, with a due time and a written default; `internal/staff` owns its table (`app.queue_items`, migration `00002`). A package registers each kind of item with the function that applies its default, then opens items in its own transaction with `Queue.Open`, which also enqueues a River job for the due time. When the job runs, an item still open at its due time gets the default and is marked `defaulted`, once; an item resolved first is left alone. `cmd/worker` builds the `staff.Kinds` registry and passes it to `jobs.NewWorkers`. See `internal/staff/README.md`.
+
 ## Policy
 
 Every number in the spec's rules (a group of 3 to 6, a 48-hour invitation) is a constant in `internal/policy`, with a comment linking the spec document that sets it; none is in the database. A number changes only by a PR that edits the document and the constant together. `make policy-lint`, which `make lint` runs, fails on a constant with no link or a dead one, and on a policy number written as a literal in another package. See `internal/policy/README.md` and `tools/policylint/README.md`.
+
+## Outside services
+
+Each outside service (email, then push, Places and the models) follows the pattern `internal/email` set:
+
+1. **One interface in its own package**, named for what the code needs (`email.Sender`), and that package's exported API is all a domain package imports.
+2. **One shared fake in the same package** (`email.NewFake()`), which records what was sent and enforces the same message rules as the real one. Every test uses it; none writes its own.
+3. **The real implementation in a subpackage** (`email/resend`) marked `//boundaries:outside-service`, tested with a transport that serves a recorded response from `testdata`: no network, no key.
+4. **It is constructed only in `cmd/`** (`cmd/worker/email.go`) from environment variables, and handed to the packages that take the interface. With no key set it is a `NotConfigured` stand-in that fails each send, so a local process still runs.
+
+`make boundaries` (part of `make lint`) fails a package that imports another seam's internals, and anything outside `cmd/` that imports a marked implementation. See `tools/boundaries/README.md`.
 
 ## Testing
 
@@ -77,6 +95,7 @@ Run from the repo root:
 make test   # go test -race ./... in backend/, and the api-client's tests
 make lint   # gofmt, go vet, buf lint, buf breaking, rpc-auth and the api-client's type check
 make policy-lint   # the policy lint, which make lint also runs
+make boundaries    # the seam check, which make lint also runs
 ```
 
 `make test` needs Docker running. The first `testdb.New(t)` in a test binary starts a Postgres 17 container (removed when the binary exits) and returns a pool whose `search_path` is a fresh schema, dropped when the test ends, so tests may write the same keys in parallel. A test that runs the migrations, which use fixed schema names, calls `testdb.NewDatabase(t)` instead for a database of its own, then `db.Up`. With Docker stopped or unreachable (`DOCKER_HOST`) the test fails; no flag or environment variable skips the database. Tests use it directly rather than mocking stores.
