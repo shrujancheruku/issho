@@ -80,6 +80,16 @@ policy-lint:
 
 lint: policy-lint
 
+# The admin (#601): its build (type check, then static files in apps/admin/dist)
+# is a lint, and its screen tests run under make test.
+.PHONY: admin-lint admin-test
+lint: admin-lint
+test: admin-test
+admin-lint:
+	pnpm --filter @issho/admin build
+admin-test:
+	pnpm --filter @issho/admin test
+
 # The member app, apps/app (#600): expo lint (which bans string literals in
 # screen files), the strings check (en.json and vi.json hold the same keys, none
 # unused) and the type check; and its Jest tests.
