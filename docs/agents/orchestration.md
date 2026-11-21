@@ -111,7 +111,7 @@ A worker stops and reports with `orca orchestration send --type escalation` for 
 - `held-path`: the ticket needs a path someone else holds.
 - `no-spec`: the ticket has no acceptance criteria.
 - `ambiguous`: the ticket reads two ways.
-- `adr-conflict`: the ticket contradicts an ADR in `docs/adr/` or the frozen `docs/decisions-2026.md`.
+- `adr-conflict`: the ticket contradicts an ADR in `docs/adr/`.
 - `human-only`: a step only the founder can take: resetting or migrating `issho-dev` (or any hosted database), `supabase config push`, EAS env writes (`eas env:set`), anything involving secrets (creating, rotating or uploading them), force-push, merging the release-please PR, or adding the `breaking-ok` label.
 - `verify-outside-ticket`: proof needs work outside the ticket.
 - `already-done`: the work is already on the integration branch.
@@ -140,7 +140,7 @@ The merger resolves conflicts in these by replaying each ticket's lines onto the
 
 - **Shared:** `backend/README.md`, `docs/architecture.md`, `GLOSSARY.md`, `apps/mobile/README.md`, `apps/admin/README.md`. Edit only the sections for what the ticket changes, as `CLAUDE.md` requires.
 - **Generated** (never hand-merged; regenerate after the merge, CI's `codegen` job fails on drift): `backend/gen/**`, `packages/api-client/src/gen/**`, `docs/generated/**`, `backend/internal/uistrings/*.json` and `backend/internal/uistrings/human/**` with `make gen`; `pnpm-lock.yaml` with `pnpm install --lockfile-only`.
-- **ADRs:** a ticket that settles a decision worth an ADR (see `docs/agents/domain.md`) adds the next number in `docs/adr/`; if two land with the same number, the second renumbers. Never add rows to `docs/decisions-2026.md`.
+- **ADRs:** a ticket that settles a decision worth an ADR (see `docs/agents/domain.md`) adds the next number in `docs/adr/`; if two land with the same number, the second renumbers.
 - **Release-please files, never edited by hand:** `CHANGELOG.md`, `.release-please-manifest.json`, `release-please-config.json`, `version.txt`, the `package.json` and `apps/mobile/package.json` versions, the `apps/mobile/app.json` version.
 
 ## Commits and PRs
@@ -154,7 +154,7 @@ The merger resolves conflicts in these by replaying each ticket's lines onto the
 The `check` worker and the integration review read these as well as the ticket.
 
 - **Instruction files:** `CLAUDE.md`, `apps/mobile/AGENTS.md`, `docs/contributing.md`, `.github/pull_request_template.md`, the README of each directory changed, `GLOSSARY.md` for domain terms.
-- **Repo-specific:** `make gen && git diff --exit-code` is clean; `git diff --quiet origin/main...HEAD -- docs/decisions-2026.md`; migrations are new files with a Down; RPC auth is deny-by-default; no `public` schema tables, PostgREST grants or RLS-as-exposure; no secrets or personal data (the repo is public); `buf breaking` passes unless the PR is `breaking-ok`.
+- **Repo-specific:** `make gen && git diff --exit-code` is clean; migrations are new files with a Down; RPC auth is deny-by-default; no `public` schema tables, PostgREST grants or RLS-as-exposure; no secrets or personal data (the repo is public); `buf breaking` passes unless the PR is `breaking-ok`.
 - **Hygiene:** comments explain why, not what; a behaviour change ships with a test that fails without it and updates the directory README, `docs/architecture.md` and `GLOSSARY.md`; a hard-to-reverse decision gets an ADR.
 - **Post reviews:** the integration review posts each round on the integration PR as one GitHub review with event `COMMENT` (the founder's account can't approve its own PR): verdict first, findings inline. No local paths or session details.
 

@@ -31,7 +31,7 @@ wantnot "#5 "     # closed wontfix is allowed
 wantnot "#10 "    # Pilot bug without a parent
 wantnot "#12 "    # wayfinder is exempt from the triage-label rule
 wantnot "#269 "   # Dependency Dashboard
-wantnot "#360 "   # Ideas
+wantnot "#582 "   # Ideas
 wantnot "PR #100 "
 wantnot "PR #102 " # outside the window
 wantnot "PR #103 " # release-please

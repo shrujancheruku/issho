@@ -6,7 +6,7 @@ How the engineering skills should consume this repo's domain documentation when 
 
 - **`GLOSSARY.md`** at the repo root.
 - **ADRs in [`docs/adr/`](../adr/)**: read the ones that touch the area you're about to work in.
-- **The frozen decision log in [`docs/decisions-2026.md`](../decisions-2026.md)** (newest at the bottom): every decision made before 2026-11-04. Read the entries for your area too; don't add rows.
+- **The spec in [`docs/spec/`](../spec/README.md)**: the document for the area you're about to work in. Each section links the ticket that holds its reasoning.
 - **Resolution comments on closed issues**, where wayfinder tickets and triaged issues record what was decided. Search the tracker when an area's history matters.
 
 If `GLOSSARY.md` doesn't exist, **proceed silently**. Don't flag its absence; don't suggest creating it upfront. The `/domain-modeling` skill (reached via `/grill-with-docs` and `/improve-codebase-architecture`) creates it lazily when terms actually get resolved.
@@ -18,14 +18,14 @@ Single-context:
 ```
 /
 ├── GLOSSARY.md
-├── docs/adr/              ← decisions from 2026-11-04 on
-├── docs/decisions-2026.md ← frozen decision log (before 2026-11-04)
+├── docs/adr/              ← the hard-to-reverse decisions
+├── docs/spec/             ← the v2 spec, one document per area
 ├── apps/  backend/  packages/
 ```
 
 ## Recording a decision
 
-Write ADRs in `docs/adr/` as the `/domain-modeling` skill describes, and only when its three tests hold (hard to reverse, surprising without context, a real trade-off). Most decisions don't need one: the resolution comment on the issue that settled it is enough. Never add rows to `docs/decisions-2026.md`.
+Write ADRs in `docs/adr/` as the `/domain-modeling` skill describes, and only when its three tests hold (hard to reverse, surprising without context, a real trade-off). Most decisions don't need one: the resolution comment on the issue that settled it is enough. A product decision that changes the spec edits its document in `docs/spec/`.
 
 ## Use the glossary's vocabulary
 
@@ -35,6 +35,6 @@ If the concept you need isn't in the glossary yet, that's a signal: either you'r
 
 ## Flag decision conflicts
 
-If your output contradicts an ADR or an entry in the decision log, surface it explicitly rather than silently overriding:
+If your output contradicts an ADR or the spec, surface it explicitly rather than silently overriding:
 
-> _Contradicts the decision log entry of 2026-10-24 (city packs are edited through GitHub pull requests), but worth reopening because…_
+> _Contradicts ADR 0002 (Issho's knowledge comes only from vouching), but worth reopening because…_

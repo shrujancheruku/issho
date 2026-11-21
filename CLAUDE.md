@@ -5,13 +5,13 @@ Project-specific rules for AI coding agents. They **take precedence over generic
 ## Read first
 - [GitHub Issues](https://github.com/shrujancheruku/issho/issues): plan and status (see `docs/agents/issue-tracker.md`)
 - [docs/spec/](docs/spec/README.md): the v2 spec, in the terms of the root `GLOSSARY.md`. The code in this repo is still v1 until the build's first PR deletes it; an amendment to the spec is a PR that edits its document.
-- [docs/adr/](docs/adr/) and the frozen [docs/decisions-2026.md](docs/decisions-2026.md): why things are the way they are
+- [docs/adr/](docs/adr/): why things are the way they are
 - [docs/architecture.md](docs/architecture.md): how the pieces fit together
 - The README in the directory you're changing. `apps/mobile/AGENTS.md` has Expo-specific rules.
 - [docs/agents/orchestration.md](docs/agents/orchestration.md) when building a milestone in parallel on Orca workers with the [flow plugin](https://github.com/shrujancheruku/orca-flow) (`/flow:build`): model routing, holds, verify commands, review checks and the merge rule.
 
 ## Every change
-- Work from an issue and close it from the PR (`Closes #<n>`). Record a decision in the issue's resolution comment, or as an ADR in `docs/adr/` when it's hard to reverse, surprising without context and a real trade-off. `docs/ROADMAP.md` is retired; never recreate it or add rows to `docs/decisions-2026.md`.
+- Work from an issue and close it from the PR (`Closes #<n>`). Record a decision in the issue's resolution comment, or as an ADR in `docs/adr/` when it's hard to reverse, surprising without context and a real trade-off. `docs/ROADMAP.md` and the decision log `docs/decisions-2026.md` are retired; never recreate either.
 - Planned work lives under the one active **work parent** issue (sub-issue order is run order); see "Planning rules" in `docs/agents/issue-tracker.md`.
 - Keep the directory READMEs accurate (endpoints, setup, testing).
 - Comment non-obvious logic with the *why*.
@@ -44,7 +44,7 @@ The five default labels: needs-triage, needs-info, ready-for-agent, ready-for-hu
 
 ### Domain docs
 
-Single-context: a root `GLOSSARY.md`; decisions in `docs/adr/` (from 2026-11-04) and the frozen `docs/decisions-2026.md` (before). See `docs/agents/domain.md`.
+Single-context: a root `GLOSSARY.md`; decisions in `docs/adr/` and in the spec under `docs/spec/`. See `docs/agents/domain.md`.
 
 <!-- flow:begin orchestration -->
 ### Orchestration

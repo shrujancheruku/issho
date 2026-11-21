@@ -12,5 +12,5 @@
   {"number": 11, "title": "PR-only label on an issue", "state": "open", "body": "", "labels": [{"name": "needs-triage"}, {"name": "go"}], "parent_issue_url": null},
   {"number": 12, "title": "wayfinder map is exempt", "state": "open", "body": "", "labels": [{"name": "wayfinder:map"}], "parent_issue_url": null},
   {"number": 269, "title": "Dependency Dashboard", "state": "open", "body": "", "labels": [], "parent_issue_url": null},
-  {"number": 360, "title": "Ideas", "state": "open", "body": "", "labels": [], "parent_issue_url": null}
+  {"number": 582, "title": "Ideas", "state": "open", "body": "", "labels": [], "parent_issue_url": null}
 ]

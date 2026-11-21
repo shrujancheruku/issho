@@ -83,7 +83,7 @@ See you out there.
 |---|---|
 | [docs/onboarding.md](docs/onboarding.md) | **Start here.** Set up a machine from scratch and run everything locally. |
 | [GitHub Issues](https://github.com/shrujancheruku/issho/issues) | What's planned and in progress. Large efforts are parent issues with sub-issues. |
-| [docs/adr/](docs/adr/) · [docs/decisions-2026.md](docs/decisions-2026.md) | Why things are the way they are: ADRs from 2026-11-04 on, and the frozen decision log before that. |
+| [docs/adr/](docs/adr/) | Why things are the way they are: the few decisions that are hard to reverse. The rest is in [docs/spec/](docs/spec/README.md). |
 | [docs/architecture.md](docs/architecture.md) | System design, request lifecycle, data model, code generation |
 | [docs/generated/api.md](docs/generated/api.md) | API reference, generated from the protos |
 | [docs/contributing.md](docs/contributing.md) | Workflow, Conventional Commits, releases, testing, common tasks |
