@@ -27,6 +27,8 @@ RUN cd apps/app && CI=1 pnpm exec expo export --platform web --output-dir /out
 
 # The server needs only express and expo-server: the export holds its own code.
 FROM base AS runtime
+# Links the package to this repository, so the deploy workflow's GITHUB_TOKEN may push it.
+LABEL org.opencontainers.image.source="https://github.com/shrujancheruku/issho"
 ENV NODE_ENV=production
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/web apps/web

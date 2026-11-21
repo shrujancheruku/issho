@@ -8,7 +8,7 @@ Dev is deployed from CI on every merge to `main`, by Kamal 2, onto its own VM. N
 
 | Part | Where | Address |
 |---|---|---|
-| The API (`api`) and the worker (`worker`) | Two containers from one image, `ghcr.io/shrujancheruku/issho-backend`, on the dev VM | `api-dev.joinissho.com`, and `dev.joinissho.com/issho.v1.*` |
+| The API (`api`) and the worker (`worker`) | Two containers from one image, `ghcr.io/shrujancheruku/issho-server`, on the dev VM | `api-dev.joinissho.com`, and `dev.joinissho.com/issho.v1.*` |
 | The web, the member app server-rendered (`apps/web`) | One container from `ghcr.io/shrujancheruku/issho-web` on the same VM | `dev.joinissho.com` |
 | The admin (`apps/admin`) | A Cloudflare Worker, `issho-admin-dev`, static files and a small forwarder | `admin-dev.joinissho.com` |
 | The database and sign-in | The `issho-dev` Supabase project | |

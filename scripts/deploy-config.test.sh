@@ -87,7 +87,7 @@ expect() { # <what> <jq expression> <expected>
 # Both services deploy to the one dev VM, which DEPLOY_HOST names (no address is in the repository).
 expect "backend host" '.backend.hosts | join(",")' 203.0.113.7
 expect "web host" '.web.hosts | join(",")' 203.0.113.7
-expect "backend image" '.backend.image' ghcr.io/shrujancheruku/issho-backend
+expect "backend image" '.backend.image' ghcr.io/shrujancheruku/issho-server
 expect "web image" '.web.image' ghcr.io/shrujancheruku/issho-web
 expect "kamal logs in as the deploy user" '.backend.ssh_user' kamal
 expect "only the given key is offered" '.backend.keys_only' true

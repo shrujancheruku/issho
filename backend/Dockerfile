@@ -24,5 +24,7 @@ RUN CGO_ENABLED=0 go build -trimpath -ldflags "-s -w -X main.version=${VERSION}"
 
 # distroless/static has no shell or package manager and runs as a non-root user.
 FROM gcr.io/distroless/static-debian13:nonroot@sha256:aafe993665bf6200db38a02c11a9351e782a84b6a45e7f33b6695638c88e3931
+# Links the package to this repository, so the deploy workflow's GITHUB_TOKEN may push it.
+LABEL org.opencontainers.image.source="https://github.com/shrujancheruku/issho"
 COPY --from=build /out/api /out/worker /usr/local/bin/
 CMD ["/usr/local/bin/api"]

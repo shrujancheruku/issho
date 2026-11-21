@@ -47,6 +47,9 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ inputs.ref || github.sha }}
+      # The credentials file the sign-in step writes is untracked; Kamal would tag the
+      # images "_uncommitted" because of it.
+      - run: echo "gha-creds-*.json" >> .git/info/exclude
       # Go runs the migration; Node and pnpm build the admin and deploy it with wrangler.
       - uses: ./.github/actions/setup
         with: { go: "true", node: "true" }

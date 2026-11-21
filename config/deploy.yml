@@ -15,7 +15,9 @@ require_destination: true
 
 # GitHub Container Registry. CI pushes with the workflow's own token, which
 # expires with the job; the VM pulls with the same login Kamal gives it.
-image: shrujancheruku/issho-backend
+# Not issho-backend: that package is v1's, private and linked to no repository, so
+# this repository's GITHUB_TOKEN may not write it (denied: read_package).
+image: shrujancheruku/issho-server
 registry:
   server: ghcr.io
   username: shrujancheruku
