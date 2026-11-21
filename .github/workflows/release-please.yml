@@ -31,7 +31,7 @@ jobs:
   # release PR would never get CI. GITHUB_TOKEN may start a workflow_dispatch,
   # so run ci.yml on the release branch: its checks attach to the PR's head
   # commit. No PAT or App. This can't deploy or release by itself: ci.yml only
-  # tests, and the deploy workflows act only on a `push` CI run on main.
+  # checks.
   ci-for-release-pr:
     needs: release-please
     if: needs.release-please.outputs.prs_created == 'true' && needs.release-please.outputs.branch != ''

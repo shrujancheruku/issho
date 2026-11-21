@@ -3,17 +3,8 @@
   "version": "0.10.0",
   "private": true,
   "packageManager": "pnpm@12.18.0",
-  "scripts": {
-    "build": "turbo run build",
-    "dev": "turbo run dev",
-    "lint": "turbo run lint",
-    "typecheck": "turbo run typecheck",
-    "gen": "make gen",
-    "test": "turbo run test"
-  },
   "devDependencies": {
     "@commitlint/cli": "^21.2.4",
-    "@commitlint/config-conventional": "^21.2.4",
-    "turbo": "^2.11.9"
+    "@commitlint/config-conventional": "^21.2.4"
   }
 }

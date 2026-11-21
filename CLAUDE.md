@@ -1,13 +1,12 @@
 # Agent instructions for Issho
 
-Project-specific rules for AI coding agents. They **take precedence over generic skills** in `.claude/skills/` (e.g. the Supabase skills) where they conflict. Humans: see [docs/onboarding.md](docs/onboarding.md).
+Project-specific rules for AI coding agents. They **take precedence over generic skills** in `.claude/skills/` (e.g. the Supabase skills) where they conflict. Humans: see [README.md](README.md).
 
 ## Read first
 - [GitHub Issues](https://github.com/shrujancheruku/issho/issues): plan and status (see `docs/agents/issue-tracker.md`)
-- [docs/spec/](docs/spec/README.md): the v2 spec, in the terms of the root `GLOSSARY.md`. The code in this repo is still v1 until the build's first PR deletes it; an amendment to the spec is a PR that edits its document.
+- [docs/spec/](docs/spec/README.md): the v2 spec, in the terms of the root `GLOSSARY.md`. v1's code was deleted by the build's first ticket (#587) and stays readable at the `v1-final` tag; an amendment to the spec is a PR that edits its document.
 - [docs/adr/](docs/adr/): why things are the way they are
-- [docs/architecture.md](docs/architecture.md): how the pieces fit together
-- The README in the directory you're changing. `apps/mobile/AGENTS.md` has Expo-specific rules.
+- The README in the directory you're changing.
 - [docs/agents/orchestration.md](docs/agents/orchestration.md) when building a milestone in parallel on Orca workers with the [flow plugin](https://github.com/shrujancheruku/orca-flow) (`/flow:build`): model routing, holds, verify commands, review checks and the merge rule.
 
 ## Every change
@@ -15,7 +14,7 @@ Project-specific rules for AI coding agents. They **take precedence over generic
 - Planned work lives under the one active **work parent** issue (sub-issue order is run order); see "Planning rules" in `docs/agents/issue-tracker.md`.
 - Keep the directory READMEs accurate (endpoints, setup, testing).
 - Comment non-obvious logic with the *why*.
-- Run `make gen` after editing `proto/` or `backend/db/queries/`, then `make lint test`.
+- Run each of `make gen`, `make lint` and `make test` that exists, plus `make secrets-scan`.
 - Commit messages follow Conventional Commits (`feat(scope): …`); hooks and CI enforce this.
 
 ## Supabase: how this repo differs from the generic Supabase skills
