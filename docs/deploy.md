@@ -8,13 +8,13 @@ Dev is deployed from CI on every merge to `main`, by Kamal 2, onto its own VM. N
 
 | Part | Where | Address |
 |---|---|---|
-| The API (`api`) and the worker (`worker`) | Two containers from one image, `ghcr.io/shrujancheruku/issho-server`, on the dev VM | `api-dev.joinissho.com`, and `dev.joinissho.com/issho.v1.*` |
+| The API (`api`) and the worker (`worker`) | Two containers from one image, `ghcr.io/shrujancheruku/issho-server`, on the dev VM | `api-dev.joinissho.com` |
 | The web, the member app server-rendered (`apps/web`) | One container from `ghcr.io/shrujancheruku/issho-web` on the same VM | `dev.joinissho.com` |
 | The admin (`apps/admin`) | A Cloudflare Worker, `issho-admin-dev`, static files and a small forwarder | `admin-dev.joinissho.com` |
 | The database and sign-in | The `issho-dev` Supabase project | |
 | The VM | `issho-dev`, an `e2-micro` (1 GB of memory) in `asia-southeast1-b`, Google Cloud project `issho-dev-512213`, on the static address `issho-dev-ip` | |
 
-Cloudflare is in front of all of it (proxied, SSL mode Full (strict)). The VM takes ports 80 and 443 only from Cloudflare, and answers with a Cloudflare origin certificate, which kamal-proxy holds. One kamal-proxy on the VM routes by name and path.
+Cloudflare is in front of all of it (proxied, SSL mode Full (strict)). The VM takes ports 80 and 443 only from Cloudflare, and answers with a Cloudflare origin certificate, which kamal-proxy holds. One kamal-proxy on the VM routes by name: each name has one service.
 
 ## A deploy
 
@@ -40,11 +40,11 @@ Cloudflare is in front of all of it (proxied, SSL mode Full (strict)). The VM ta
 
 The API has no CORS, by design: no browser origin is trusted to call it from another. Each web page therefore calls it on **its own origin**.
 
-- **The web**, at `dev.joinissho.com`: kamal-proxy sends the RPC paths (`/issho.v1.*`, prefix kept) to the API and every other path to the Expo server. The app is built with `EXPO_PUBLIC_API_URL=https://dev.joinissho.com`.
+- **The web**, at `dev.joinissho.com`: the Expo server forwards the RPC paths (`/issho.v1.*`, nothing else) to `https://api-dev.joinissho.com` (`apps/web/api-proxy.js`) and serves every other path as the page. The app is built with `EXPO_PUBLIC_API_URL=https://dev.joinissho.com`. Sharing the name by path in kamal-proxy was tried first and refused: it wants TLS settings on the root path's service.
 - **The admin**, at `admin-dev.joinissho.com`: the Worker forwards the same paths to `https://api-dev.joinissho.com` and serves everything else as static files (`apps/admin/README.md`).
 - **Phones** are not a browser: they call `api-dev.joinissho.com` directly.
 
-Choosing path routing and a forwarder over adding CORS kept the API unchanged and closed. If a page ever has to call the API from another origin, that needs a CORS rule written in the API's own ticket, with an allowed-origin list, not a loosening here.
+Choosing a forwarder on each page's own origin over adding CORS kept the API unchanged and closed. If a page ever has to call the API from another origin, that needs a CORS rule written in the API's own ticket, with an allowed-origin list, not a loosening here.
 
 ## Rolling back
 

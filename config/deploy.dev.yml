@@ -16,14 +16,9 @@ servers:
     hosts:
       - <%= ENV.fetch("DEPLOY_HOST") %>
 
-# The API answers on its own name (api-dev, for the admin's Worker to forward to)
-# and on the web's (dev), but only the RPC paths of the latter: the Expo server
-# behind the same proxy (config/deploy.web.yml) has every other path on dev. The
-# browser then calls the API on the page's own origin, so the API needs no CORS.
+# The API has its own name. The Expo server (config/deploy.web.yml) forwards the
+# API's paths on dev, and the admin's Worker on admin-dev, so a browser calls it
+# on the page's own origin and the API needs no CORS. (Sharing dev's name by path
+# in kamal-proxy was tried: it wants TLS on the root path's service.)
 proxy:
-  hosts:
-    - api-dev.joinissho.com
-    - dev.joinissho.com
-  path_prefix: /issho.v1.
-  # The API's paths include the prefix, so it must not be stripped.
-  strip_path_prefix: false
+  host: api-dev.joinissho.com

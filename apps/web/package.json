@@ -5,7 +5,8 @@
   "description": "Serves the member app's web build (apps/app, `expo export -p web`) in production",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "node --test"
   },
   "dependencies": {
     "expo-server": "~58.1.0",

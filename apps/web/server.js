@@ -3,11 +3,15 @@
 // (`web.output: "server"`). This is Expo's own Express recipe; the Expo server
 // holds no tokens, cookies or personal data, so what it sends can be cached.
 //
+// With API_ORIGIN set, the API's paths are forwarded to it (api-proxy.js), so the
+// page calls the API on its own origin.
+//
 // The build is `expo export -p web` in apps/app, copied next to this file as
 // `dist` by apps/web/Dockerfile. DIST overrides where to look.
 const path = require('node:path');
 const express = require('express');
 const { createRequestHandler } = require('expo-server/adapter/express');
+const { apiProxy } = require('./api-proxy');
 
 const dist = path.resolve(process.env.DIST ?? path.join(__dirname, 'dist'));
 const port = Number(process.env.PORT ?? 8081);
@@ -18,6 +22,8 @@ app.disable('x-powered-by');
 // The deploy's liveness probe (kamal-proxy polls a plain GET), served before
 // anything else so it says nothing about a page.
 app.get('/up', (_req, res) => res.sendStatus(200));
+
+if (process.env.API_ORIGIN) app.use(apiProxy(process.env.API_ORIGIN));
 
 // Expo hashes the names of what is under /_expo and /assets, so they never change.
 app.use(

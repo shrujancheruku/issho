@@ -5,7 +5,7 @@ Kamal 2's configuration for dev ([docs/deploy.md](../docs/deploy.md) says how a 
 | File | Holds |
 |---|---|
 | `deploy.yml` | The backend service `issho`: the API (behind kamal-proxy) and the worker (no proxy), both from `backend/Dockerfile`. What every environment shares |
-| `deploy.dev.yml` | The backend's dev destination: the host, the API's names and the path routing |
+| `deploy.dev.yml` | The backend's dev destination: the host and the API's name |
 | `deploy.web.yml` | The Expo server, a service of its own (`issho-web`, from `apps/web/Dockerfile`) on the same host and proxy. Used with `-c config/deploy.web.yml` |
 | `deploy.web.dev.yml` | The Expo server's dev destination: its name and the address its build calls |
 | `kamal-version` | The Kamal release CI installs and the config test runs |

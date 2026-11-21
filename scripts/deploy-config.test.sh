@@ -71,6 +71,7 @@ out = {}
     ssh_key_read: c.ssh.key_data,
     cert: c.proxy.certificate_pem_content,
     build_args: c.builder.args,
+    env_clear: c.raw_config.env&.dig("clear"),
     worker_secrets: c.raw_config.servers["worker"]&.dig("env", "secret"),
   }
 end
@@ -100,14 +101,14 @@ expect "the worker runs the worker binary" '.backend.roles[] | select(.name == "
 expect "the worker has no proxy" '.backend.roles[] | select(.name == "worker") | .proxied' false
 expect "the worker's secrets" '.backend.worker_secrets | join(",")' WORKER_DATABASE_URL,RESEND_API_KEY,EMAIL_FROM
 
-# Routing: the API on its own name and on the web's, but only its RPC paths on
-# the web's, with the prefix left on, so a browser calls it on the page's origin.
-expect "the API's names" '.backend.proxy.host | join(",")' api-dev.joinissho.com,dev.joinissho.com
-expect "the API's paths" '.backend.proxy["path-prefix"] | join(",")' /issho.v1.
-expect "the prefix is not stripped" '.backend.proxy["strip-path-prefix"]' false
+# Routing: each name has one service at its root path (kamal-proxy wants TLS on
+# the root path's service, so two services do not share a name by path). The API
+# has api-dev; the Expo server has dev and forwards the API's paths itself.
+expect "the API's name" '.backend.proxy.host | join(",")' api-dev.joinissho.com
+expect "the API has no path prefix" '.backend.proxy["path-prefix"] | length' 0
 expect "the API's probe" '.backend.proxy["health-check-path"]' /up
 expect "the web's name" '.web.proxy.host | join(",")' dev.joinissho.com
-expect "the web takes every other path" '.web.proxy["path-prefix"] | length' 0
+expect "the web has no path prefix" '.web.proxy["path-prefix"] | length' 0
 expect "the web's probe" '.web.proxy["health-check-path"]' /up
 expect "the web's port is Expo's server" '.web.roles[0].proxied' true
 
@@ -122,6 +123,9 @@ expect "the API is built with the commit's version, as a string" '.backend.build
 
 # The web is built for the page's own origin.
 expect "the web is built against the page's origin" '.web.build_args.EXPO_PUBLIC_API_URL' https://dev.joinissho.com
+
+# The Expo server forwards the API's paths to the API's own name.
+expect "the web forwards the API's paths to api-dev" '.web.env_clear.API_ORIGIN' https://api-dev.joinissho.com
 
 # A call without a destination is refused, so nothing can deploy to the wrong place.
 if kamal config >/dev/null 2>&1; then bad "kamal ran without a destination"; fi

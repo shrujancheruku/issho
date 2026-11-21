@@ -9,8 +9,13 @@ servers:
 proxy:
   host: dev.joinissho.com
 
+env:
+  clear:
+    # Where the Expo server forwards the API's paths (apps/web/api-proxy.js).
+    API_ORIGIN: https://api-dev.joinissho.com
+
 builder:
   args:
-    # Public: it is bundled into the page. The page's own origin, where the proxy
-    # sends the RPC paths to the API (config/deploy.dev.yml).
+    # Public: it is bundled into the page. The page's own origin, where the Expo
+    # server forwards the API's paths.
     EXPO_PUBLIC_API_URL: https://dev.joinissho.com
