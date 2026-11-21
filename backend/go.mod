@@ -10,6 +10,7 @@ require (
 	github.com/pressly/goose/v3 v3.30.1
 	github.com/riverqueue/river v0.51.2
 	github.com/riverqueue/river/riverdriver/riverpgxv5 v0.51.2
+	github.com/riverqueue/river/rivertype v0.51.2
 	github.com/testcontainers/testcontainers-go v0.45.0
 	github.com/testcontainers/testcontainers-go/modules/postgres v0.45.0
 	google.golang.org/protobuf v1.36.12
@@ -55,7 +56,6 @@ require (
 	github.com/power-devops/perfstat v0.0.0-20240221224432-82ca36839d55 // indirect
 	github.com/riverqueue/river/riverdriver v0.51.2 // indirect
 	github.com/riverqueue/river/rivershared v0.51.2 // indirect
-	github.com/riverqueue/river/rivertype v0.51.2 // indirect
 	github.com/sethvargo/go-retry v0.5.0 // indirect
 	github.com/shirou/gopsutil/v4 v4.26.6 // indirect
 	github.com/sirupsen/logrus v1.10.2 // indirect
@@ -73,6 +73,7 @@ require (
 	go.opentelemetry.io/otel/log v1.47.0 // indirect
 	go.opentelemetry.io/otel/metric v1.47.0 // indirect
 	go.opentelemetry.io/otel/trace v1.47.0 // indirect
+	go.uber.org/goleak v1.3.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.6 // indirect
 	golang.org/x/crypto v0.58.0 // indirect
