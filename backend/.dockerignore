@@ -1,0 +1,5 @@
+# Keeps the build context to what the image's build reads.
+bin/
+**/testdata
+**/*_test.go
+**/README.md
