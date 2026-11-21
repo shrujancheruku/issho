@@ -28,9 +28,9 @@ The API enforces the rule (`backend/internal/rpc`, an interceptor that reads the
 1. Add the `rpc` to a service in `issho/v1/<area>.proto`, or start a new `<area>.proto` with a `<Area>Service`. Name its messages `<Rpc>Request` and `<Rpc>Response` (buf lint requires it).
 2. Set its `option (issho.v1.access) = ...;` from the table above, and `import "issho/v1/access.proto";` if the file doesn't yet.
 3. Comment the service, the RPC and each field: the comments become the generated code's docs. For an RPC, say what it does and why that rule fits.
-4. `make gen`, then commit what it wrote. CI fails if `make gen` leaves a diff.
+4. `make gen`, then commit what it wrote. A second `make gen` must leave no diff.
 5. Implement the service in `backend/internal/rpc` and mount it in `NewHandler`, which puts it behind the interceptor. Add it to `createApi` in `packages/api-client/src/index.ts`.
-6. Test it through the Go client over HTTP (see `health_test.go`), including who is refused.
+6. Test it through the Go client over HTTP (see `backend/internal/rpc/health_test.go`), including who is refused.
 
 Field names are `snake_case` in proto and `camelCase` in JSON and TypeScript. Fields are never renumbered or reused: retire one with `reserved`.
 
@@ -41,4 +41,4 @@ make lint        # buf lint, buf breaking against main, and rpc-auth
 make rpc-auth    # just the access-rule check
 ```
 
-`buf breaking` (`scripts/proto-breaking.sh`) compares `proto/` with `origin/main`'s. It runs only once main holds v2's proto, which it tells by `proto/issho/v1/access.proto` (v1 had none): before that, every v2 file would read as a break of v1's, so `make lint` prints "buf breaking not run: ..." and exits 0. It decides from main's content alone, so it switches itself on at the merge of the Foundation milestone and nothing can turn it off; it is also skipped, with the same notice, when `origin/main` isn't fetched. `scripts/proto-breaking.test.sh` (part of `make test`) runs both branches against a throwaway git repo.
+`buf breaking` (`../scripts/proto-breaking.sh`) compares `proto/` with `origin/main`'s, using the buf pinned in `../tools/go.mod`. It runs only once main holds v2's proto, which it tells by `proto/issho/v1/access.proto` (v1 had none): before that, every v2 file would read as a break of v1's, so `make lint` prints "buf breaking not run: ..." and exits 0. It decides from main's content alone and takes no arguments or environment, so it switches itself on at the merge of the Foundation milestone and nothing given to `make lint` can turn it off. When `origin/main` isn't fetched it fails and says to fetch it (`git fetch origin main`), so a checkout without main can't pass by not checking. `../scripts/proto-breaking.test.sh` (part of `make test`) covers each case against a throwaway git repo.

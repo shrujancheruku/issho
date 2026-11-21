@@ -29,7 +29,9 @@ gen:
 # access-rule check and the type check of the generated client. The app and admin add their own
 # checks in their tickets (#600, #601). buf breaking compares with main, but only
 # once main holds v2's proto: until the Foundation merge, main's is v1's and every
-# v2 file would read as a break (scripts/proto-breaking.sh).
+# v2 file would read as a break. It takes no arguments or environment, so nothing
+# given to make lint switches it off, and it fails if origin/main isn't fetched
+# (scripts/proto-breaking.sh).
 lint: rpc-auth
 	@test -z "$$(gofmt -l backend)" || { gofmt -l backend; echo "gofmt: files above need formatting"; exit 1; }
 	cd backend && go vet ./...
