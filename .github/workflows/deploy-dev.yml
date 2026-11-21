@@ -17,6 +17,7 @@ on:
     branches:
       - main
       - integration/foundation
+      - shrujancheruku/605-dev-deploy # TRIAL: removed before #605 is reported done
   # A rollback: Run workflow with an earlier commit's SHA (docs/deploy.md).
   workflow_dispatch:
     inputs:
@@ -62,12 +63,12 @@ jobs:
       - run: gcloud auth login --cred-file="$GOOGLE_APPLICATION_CREDENTIALS" --quiet
       # The release of Kamal that config/ was written for. Nothing is installed on the VM.
       - run: sudo gem install kamal --no-document --version "$(cat config/kamal-version)"
-      # Not written in the repository: scripts/dev-host.sh says why.
+      # The address is asked of Google Cloud each run and masked the moment it is
+      # read: these logs are public, and Kamal prints the host it connects to.
       - name: Find the VM
-        env:
-          DEV_HOST: ${{ vars.DEV_HOST }}
         run: |
           host=$(scripts/dev-host.sh)
+          echo "::add-mask::$host"
           echo "DEPLOY_HOST=$host" >> "$GITHUB_ENV"
       - name: Deploy
         env:

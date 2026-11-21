@@ -17,8 +17,8 @@ Repo-level helper scripts, run by the root `Makefile`. Each script has a header 
 | `deploy-dev.test.sh` | `make deploy-test` (also `make test` and CI's `codegen` job) | Tests that order with stand-ins for `kamal`, `gcloud`, `go` and `pnpm`: a failed migration or build deploys nothing |
 | `deploy-dev-verify.sh` | `make deploy-dev-verify` (CI's `deploy-dev` workflow) | Checks from outside that the API, the web and the admin each report the commit just deployed and that the web page is server-rendered |
 | `deploy-dev-verify.test.sh` | `make deploy-test` | Tests it against a stand-in server and browser |
-| `dev-host.sh` | CI's `deploy-dev` workflow | Prints the dev VM's address, from the API's DNS record in Cloudflare |
-| `dev-host.test.sh` | `make deploy-test` | Tests it with stand-ins for `gcloud` and `curl` |
+| `dev-host.sh` | CI's `deploy-dev` workflow | Prints the dev VM's address, asked of Google Cloud (the reserved address `issho-dev-ip`); the workflow masks it |
+| `dev-host.test.sh` | `make deploy-test` | Tests it with a stand-in for `gcloud` |
 | `deploy-config.test.sh` | `make deploy-test` | Loads `config/deploy*.yml` and `.kamal/secrets.dev` through Kamal's own loader, in Docker, with a stand-in `gcloud` ([config](../config/README.md)) |
 | `tracker-check.sh` | `make tracker-check` (weekly CI) | The issue-tracker hygiene check ([issue-tracker.md](../docs/agents/issue-tracker.md)) |
 | `tracker-check.test.sh` | `make tracker-check` | Tests `tracker-check.sh` against the fixtures in `testdata/tracker-check/` |

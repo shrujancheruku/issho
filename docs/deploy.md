@@ -34,7 +34,7 @@ Cloudflare is in front of all of it (proxied, SSL mode Full (strict)). The VM ta
 - **No cloud key or token is stored in GitHub.** The workflow signs in to Google Cloud by Workload Identity Federation: GitHub gives the run a short-lived OIDC token (`id-token: write`), and Google exchanges it for the access of `issho-deploy@issho-dev-512213.iam.gserviceaccount.com` through the provider `projects/94737271594/locations/global/workloadIdentityPools/github/providers/issho`, which accepts only this repository. That account can only access secrets in Secret Manager. The only secret the job holds is its own `GITHUB_TOKEN` (`packages: write`), which pushes the images, is what the VM pulls with, and expires with the job.
 - **Kamal reads its secrets from Secret Manager itself.** This answers the spec's check ([Technical operations](spec/operations.md#where-it-runs)). Kamal 2.12's `kamal secrets fetch --adapter gcp_secret_manager` runs `gcloud secrets versions access`, which the service account's role allows, and `.kamal/secrets.dev` uses it: the file names secrets and holds no value. CI does not have to read them and hand them over. The two secrets Kamal does not read (the migration's connection and the Cloudflare token) are read by `scripts/deploy-dev.sh` with the same `gcloud` call, put in the environment of the one command that needs each, and masked in the log. Kamal's `config` command prints the SSH key it read, so never run it where its output is kept.
 - The secrets are `dev-worker-database-url`, `dev-resend-api-key`, `dev-email-from`, `dev-ssh-private-key`, `dev-origin-cert`, `dev-origin-key`, `dev-migrate-database-url` and `dev-cloudflare-api-token`. The Cloudflare token's stored value ends in a newline, which Cloudflare rejects; the script strips it. `dev-database-url` is not read yet, since the API has no database connection until a ticket gives it one.
-- The VM's address is not in the repository. It comes from the `DEV_HOST` repository variable (not a secret).
+- **The VM's address is stored nowhere.** The service account has a custom role, `isshoDeployAddressReader`, with only `compute.addresses.get`, and `scripts/dev-host.sh` asks Google Cloud for the reserved address `issho-dev-ip` each run. The workflow masks it (`::add-mask::`) the moment it is read, before Kamal prints the host it connects to: this repository's Actions logs are public.
 
 ## How the browser reaches the API
 
@@ -73,7 +73,7 @@ gcloud compute instances start issho-dev --zone asia-southeast1-b --project issh
 
 | What you see | Where to look |
 |---|---|
-| The run fails at "Find the VM" | `DEV_HOST` is unset or not an address, and the Cloudflare token can't read DNS (`scripts/dev-host.sh`) |
+| The run fails at "Find the VM" | The service account lost `isshoDeployAddressReader`, or `issho-dev-ip` is gone or has no address (`scripts/dev-host.sh`) |
 | It fails signing in to Google | The provider or the service account changed; `projects/94737271594/.../providers/issho` must still accept this repository |
 | It fails at the migration | The run's log, and nothing was replaced. Fix the migration, push |
 | It fails at a Kamal step | The run's log names the host and the command. Kamal holds a lock on the VM during a deploy; a run killed halfway can leave it (`kamal lock release -d dev`, from a CI run, not a laptop) |

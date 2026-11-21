@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Tests scripts/dev-host.sh with stand-ins for gcloud and curl: it prints the
-# address Cloudflare holds for the API's name, sends the token to Cloudflare
-# without putting it in an argument, and fails when Cloudflare says no.
+# Tests scripts/dev-host.sh with a stand-in for gcloud: it asks Google Cloud for
+# the reserved address issho-dev-ip, prints only that, and fails on anything
+# that is not an address.
 # Usage: scripts/dev-host.test.sh
 set -euo pipefail
 
@@ -14,53 +14,25 @@ work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
 mkdir "$work/bin"
 
-# gcloud: the stored token, with the newline it really ends in.
 cat > "$work/bin/gcloud" <<'STUB'
 #!/bin/sh
 echo "gcloud $*" >> "$LOG"
-printf 'token-value\n'
+[ -z "${FAIL:-}" ] || exit 1
+printf '%s\r\n' "${ADDRESS-203.0.113.7}"
 STUB
-# curl: Cloudflare's two answers, chosen by the URL (the last argument that looks like one).
-# The header it was given arrives in --config, which it reads, as curl does.
-cat > "$work/bin/curl" <<'STUB'
-#!/bin/bash
-echo "curl $*" >> "$LOG"
-cfg=""; url=""
-while [ $# -gt 0 ]; do
-  case "$1" in
-    --config) cfg=$(cat "$2"); shift ;;
-    http*) url=$1 ;;
-  esac
-  shift
-done
-echo "header: $cfg" >> "$LOG.headers"
-zones=${ZONES:-'{"success":true,"result":[{"id":"zone1"}]}'}
-records=${RECORDS:-'{"success":true,"result":[{"content":"203.0.113.7"}]}'}
-case "$url" in
-  */zones\?name=joinissho.com) echo "$zones" ;;
-  */zones/zone1/dns_records*) echo "$records" ;;
-  *) echo '{"success":false}'; exit 22 ;;
-esac
-STUB
-chmod +x "$work/bin/gcloud" "$work/bin/curl"
+chmod +x "$work/bin/gcloud"
 
-run() { : > "$work/log"; : > "$work/log.headers"; PATH="$work/bin:$PATH" LOG="$work/log" "$script" 2> "$work/err"; }
+run() { : > "$work/log"; PATH="$work/bin:$PATH" LOG="$work/log" "$script" 2> "$work/err"; }
 
 [ "$(run)" = "203.0.113.7" ] || bad "did not print the address"
-grep -q 'name=api-dev.joinissho.com' "$work/log" || bad "did not look up the API's name"
-grep -q 'Bearer token-value' "$work/log.headers" || bad "did not send the token, without its newline, as a bearer"
-grep -q 'token-value' "$work/log" && bad "the token is in a command's arguments"
+grep -q 'compute addresses describe issho-dev-ip' "$work/log" || bad "did not ask for issho-dev-ip"
+grep -q -- '--region asia-southeast1' "$work/log" || bad "did not name the region"
+grep -q -- '--project issho-dev-512213' "$work/log" || bad "did not name the project"
 
-if RECORDS='{"success":true,"result":[]}' run >/dev/null; then bad "succeeded with no DNS record"; fi
-if ZONES='{"success":true,"result":[]}' run >/dev/null; then bad "succeeded with no zone"; fi
-if RECORDS='{"success":true,"result":[{"content":"not an address"}]}' run >/dev/null; then bad "accepted something that is not an address"; fi
-
-# A DEV_HOST given in the environment (a repository variable, set by the founder)
-# wins, and then nothing is asked of Google or Cloudflare.
-: > "$work/log"
-[ "$(PATH="$work/bin:$PATH" LOG="$work/log" DEV_HOST=198.51.100.9 "$script")" = "198.51.100.9" ] || bad "did not use DEV_HOST"
-[ ! -s "$work/log" ] || bad "asked for a secret or an API although DEV_HOST was given"
-if PATH="$work/bin:$PATH" LOG="$work/log" DEV_HOST='dev; rm -rf /' "$script" >/dev/null 2>&1; then bad "accepted a DEV_HOST that is not an address"; fi
+if ADDRESS='' run >/dev/null 2>&1; then bad "succeeded with no address"; fi
+if ADDRESS='not an address' run >/dev/null 2>&1; then bad "accepted something that is not an address"; fi
+if ADDRESS='host.example.com' run >/dev/null 2>&1; then bad "accepted a host name"; fi
+if FAIL=1 run >/dev/null 2>&1; then bad "succeeded although gcloud failed"; fi
 
 [ "$fail" -eq 0 ] && echo "dev-host: ok"
 exit "$fail"
