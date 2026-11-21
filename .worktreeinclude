@@ -1,2 +1,2 @@
 # Gitignored files Orca copies into each new worktree. None yet: v1's
-# apps/mobile/expo-env.d.ts went with v1 (#587). Never list .env* here.
+# v1's Expo env typings went with v1 (#587). Never list .env* here.

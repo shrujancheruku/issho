@@ -26,7 +26,7 @@ Project-specific rules for AI coding agents. They **take precedence over generic
 - **The Supabase MCP server is not configured.** Don't create `.mcp.json` unless the user asks.
 
 ## Secrets (the repo is public)
-- Never commit secrets. Real values live in gitignored files (`.env.*`, `supabase/.env`, `supabase/signing_keys.json`) or in the deployment's secret store. See [docs/secrets.md](docs/secrets.md).
+- Never commit secrets. Real values live in gitignored files (`.env.*` and the others `.gitignore` lists) or in the deployment's secret store. See [docs/secrets.md](docs/secrets.md).
 - Never print secrets in command output: no `cat` of env files, and filter CLI output so only public values (e.g. the publishable key) are shown.
 - `EXPO_PUBLIC_*` values are bundled into the app and are public.
 - `make secrets-scan` before pushing; the pre-commit hook also scans.
