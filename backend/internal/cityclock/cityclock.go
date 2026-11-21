@@ -134,7 +134,7 @@ func (c *City) minuteOfDay(t time.Time) int {
 }
 
 func sameWall(a, b time.Time) bool {
-	return a.Hour() == b.Hour() && a.Minute() == b.Minute() && a.YearDay() == b.YearDay()
+	return a.Hour() == b.Hour() && a.Minute() == b.Minute() && a.Year() == b.Year() && a.YearDay() == b.YearDay()
 }
 
 // minutes parses a strict "HH:MM" into minutes after midnight.

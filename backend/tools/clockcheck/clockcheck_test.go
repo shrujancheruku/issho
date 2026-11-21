@@ -7,9 +7,9 @@ import (
 	"testing"
 )
 
-func lines(t *testing.T, root string, exempt ...string) []string {
+func lines(t *testing.T, root, clockDir string, wiring ...string) []string {
 	t.Helper()
-	found, err := check(root, exempt)
+	found, err := check(root, clockDir, wiring)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -18,7 +18,7 @@ func lines(t *testing.T, root string, exempt ...string) []string {
 }
 
 func TestFlagsEveryReadOfTheSystemClock(t *testing.T) {
-	got := lines(t, "testdata/bad")
+	got := lines(t, "testdata/bad", "")
 	want := []string{ // sorted as strings, so line 9 follows line 16
 		"testdata/bad/bad.go:11: time.Since reads the system clock",
 		"testdata/bad/bad.go:13: time.Until reads the system clock",
@@ -32,13 +32,13 @@ func TestFlagsEveryReadOfTheSystemClock(t *testing.T) {
 }
 
 func TestPassesCodeThatDoesNotReadTheClock(t *testing.T) {
-	if got := lines(t, "testdata/ok"); len(got) != 0 {
+	if got := lines(t, "testdata/ok", ""); len(got) != 0 {
 		t.Fatalf("want no findings, got %v", got)
 	}
 }
 
 func TestSkipsTheClocksOwnDirectory(t *testing.T) {
-	if got := lines(t, "testdata/exempt"); len(got) != 1 {
+	if got := lines(t, "testdata/exempt", ""); len(got) != 1 {
 		t.Fatalf("without the exemption want 1 finding, got %v", got)
 	}
 	if got := lines(t, "testdata/exempt", filepath.Join("testdata", "exempt")); len(got) != 0 {
@@ -49,7 +49,19 @@ func TestSkipsTheClocksOwnDirectory(t *testing.T) {
 // Walking a tree never descends into a testdata directory, so the fixtures
 // above don't fail the real run.
 func TestSkipsTestdataDirectories(t *testing.T) {
-	if got := lines(t, "."); len(got) != 0 {
+	if got := lines(t, ".", ""); len(got) != 0 {
 		t.Fatalf("want no findings under the tool's own directory, got %v", got)
+	}
+}
+
+// Only the commands build clock.Real; a package outside them takes a Clock.
+func TestFlagsTheRealClockBuiltOutsideCmd(t *testing.T) {
+	got := lines(t, "testdata/wiring", "", filepath.Join("testdata", "wiring", "cmd"))
+	want := []string{
+		"testdata/wiring/internal/thing/thing.go:11: clock.Real built outside cmd/; take a clock.Clock",
+		"testdata/wiring/internal/thing/thing.go:9: clock.Real built outside cmd/; take a clock.Clock",
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("got:\n%v\nwant:\n%v", got, want)
 	}
 }

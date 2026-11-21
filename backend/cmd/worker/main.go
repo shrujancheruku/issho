@@ -11,6 +11,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"github.com/shrujancheruku/issho/backend/internal/clock"
 	"github.com/shrujancheruku/issho/backend/internal/jobs"
 	"github.com/shrujancheruku/issho/backend/internal/serve"
 )
@@ -44,8 +45,10 @@ func run(ctx context.Context, log *slog.Logger) error {
 	}
 	defer pool.Close()
 
-	// No domain package has a job yet; each adds its workers here.
-	client, err := jobs.New(pool, jobs.NewWorkers(), log)
+	// The real clock is built here and only here (tools/clockcheck enforces it);
+	// everything below takes it as a clock.Clock. No domain package has a job
+	// yet; each adds its workers here.
+	client, err := jobs.New(pool, jobs.NewWorkers(clock.Real{}), log)
 	if err != nil {
 		return err
 	}
