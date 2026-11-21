@@ -56,7 +56,7 @@ Passing makes the soft launch possible; the owner decides whether to start it. T
 
 **Insiders.** The first are brought on during the soft launch, from people whose suggestions keep being used.
 
-**Sign-in and verification.** Apple and Google sign-in are added, and a verified +84 phone number is required ([People](people.md), [Privacy](privacy.md)).
+**Sign-in and verification.** Apple and Google sign-in are added ([People](people.md)). No phone number is asked for ([Privacy](privacy.md#no-phone-number-and-the-sign-in-log)).
 
 **What it proves.** What the Pilot didn't: strangers from a waitlist, payment, and the owner running it alone.
 

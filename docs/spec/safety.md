@@ -79,7 +79,7 @@ The removal rule stands even though it can be misused to push someone out: safet
 
 ## Verification and declarations
 
-- No identity verification before the public launch; the chain of join links and the waitlist are the check. A verified phone number is added at the soft launch ([Privacy](privacy.md)).
+- No identity verification before the public launch; the chain of join links and the waitlist are the check. No phone number is collected ([Privacy](privacy.md#no-phone-number-and-the-sign-in-log)).
 - One account per person. A second account, or a false age, gender or residence declaration, is a conduct breach a moderator can suspend for.
 - Evading a suspension with a new email: suspended on discovery.
 - No place is screened by name: every place a plan names is a piece someone vouched for.

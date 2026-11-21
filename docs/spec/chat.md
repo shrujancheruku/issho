@@ -43,7 +43,7 @@ From [Chat](https://github.com/shrujancheruku/issho/issues/551), amended by [Not
 - Each room has an on-device **translate toggle**.
   - Per person and per room, off by default, remembered.
   - Each message not in the person's display language gets its translation underneath the original, which stays visible; the translation is marked as one.
-  - It runs only on the device, using the system's own translation, so no message leaves the device.
+  - It runs only on the device, using the system's own translation, so no message leaves the device. On Android the translation is credited to Google, as its terms ask ([Architecture](architecture.md#on-device-translation)).
   - Where the system can't do it (a device, a language pair, most browsers) the toggle isn't shown.
   - Nobody else sees who has it on.
 

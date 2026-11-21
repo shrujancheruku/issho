@@ -39,8 +39,6 @@ Asked once, at the first signup, in this order:
 5. **"Do you live in Da Nang–Hoi An?"**: self-declared; "yes" means they are staying three months or more. Either answer is accepted.
 6. **The code of conduct.**
 
-From the soft launch a verified +84 phone number is a seventh answer, shown to nobody and never used to sign in or to contact anyone ([Privacy](privacy.md)).
-
 The consent ticks that go with the profile are in [Privacy](privacy.md#consent). Nothing is asked about home area, travel, usual availability, tastes, group size, energy or budget. Times are asked at each signup and prefilled from the person's last one.
 
 ## Finding plans
