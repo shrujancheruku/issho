@@ -12,18 +12,18 @@
   },
   "risk_paths": [
     "backend/db/migrations/**",
-    "backend/internal/identity/**",
-    "backend/internal/platform/auth/**",
+    "backend/internal/policy/**",
+    "backend/internal/matching/**",
+    "backend/internal/safety/**",
+    "backend/internal/retention/**",
+    "backend/internal/rpc/**",
     "config/**",
     ".kamal/**",
     ".github/workflows/deploy-*.yml",
     ".github/workflows/ci.yml",
     "backend/Dockerfile",
     "supabase/config.toml",
-    "apps/*/wrangler.jsonc",
-    "site/wrangler.jsonc",
-    "scripts/deploy-web.sh",
-    "scripts/ci-changes.sh"
+    "apps/*/wrangler.jsonc"
   ],
   "models": {
     "haiku": "haiku",
