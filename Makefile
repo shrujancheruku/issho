@@ -35,6 +35,7 @@ gen:
 lint: rpc-auth
 	@test -z "$$(gofmt -l backend)" || { gofmt -l backend; echo "gofmt: files above need formatting"; exit 1; }
 	cd backend && go vet ./...
+	cd backend && go run ./tools/clockcheck
 	go tool buf lint
 	scripts/proto-breaking.sh
 	pnpm --filter @issho/api-client typecheck
