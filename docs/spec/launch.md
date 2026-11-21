@@ -1,6 +1,6 @@
 # The stages of launch
 
-From [The stages of launch](https://github.com/shrujancheruku/issho/issues/548), amended by [The v2 glossary and domain model](https://github.com/shrujancheruku/issho/issues/569), with [Cities](https://github.com/shrujancheruku/issho/issues/555), [People](https://github.com/shrujancheruku/issho/issues/552) and [Running Issho](https://github.com/shrujancheruku/issho/issues/557). Research behind it: [Comparable products](https://github.com/shrujancheruku/issho/issues/535).
+From [The stages of launch](https://github.com/shrujancheruku/issho/issues/548), amended by [The v2 glossary and domain model](https://github.com/shrujancheruku/issho/issues/569), with [Cities](https://github.com/shrujancheruku/issho/issues/555), [Build order and the first work parent](https://github.com/shrujancheruku/issho/issues/576), [People](https://github.com/shrujancheruku/issho/issues/552) and [Running Issho](https://github.com/shrujancheruku/issho/issues/557). Research behind it: [Comparable products](https://github.com/shrujancheruku/issho/issues/535).
 
 ## The stages
 
@@ -33,7 +33,7 @@ It does not try to prove that people will pay, that strangers can be recruited a
 
 **Insiders.** None. Every Pilot plan is Issho's, made by the owner. Suggestions are open, so the candidate pool builds from the first day.
 
-**Conditions.** It runs on the production system and nothing is wiped; members stay on into the soft launch with their history. Android, iOS and the web are open from the first member's day. The owner makes and approves every plan, approves groups and crew offers, moderates, and gives support by email only ([Running Issho](running-issho.md#support)).
+**Conditions.** It runs on the production system and nothing is wiped; members stay on into the soft launch with their history. Android, iOS and the web are open from the first member's day. Crews, the lead search, the chat's translate toggle and city requests are built after the first member's day, while the Pilot runs ([The build order](build-order.md#the-day-one-line)). The owner makes and approves every plan, approves groups and crew offers, moderates, and gives support by email only ([Running Issho](running-issho.md#support)).
 
 **The success bar**, read once the Pilot has run at least 20 outings over at least 6 weeks.
 

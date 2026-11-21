@@ -55,6 +55,16 @@ Playwright runs against the web build on the local stack. There are four journey
 - No native end-to-end tool before the soft launch.
 - **The device checklist** covers the native-only parts (push, on-device translation, the store build). It is written down and run by hand on a preview build before each release, on one iPhone, one Android phone and desktop Chrome.
 
+### Native along the way
+
+The journeys run in a browser, so a feature can work on the web and be broken on a phone. Until a native end-to-end tool exists, three things catch that, from the first milestone ([Build order and the first work parent](https://github.com/shrujancheruku/issho/issues/576)):
+
+- CI bundles the app for iOS and Android on every change, so an import or API that exists only on the web fails the PR.
+- A ticket that changes a screen shows it on the iOS simulator and the Android emulator, on a local development build.
+- The owner's walk at the end of a milestone runs the same script on the web, one simulator and one emulator.
+
+Local builds are enough. Nothing goes to EAS or a store before the release milestone, and the device checklist on real phones stays before each release.
+
 ### Model output
 
 | Use | How it is evaluated |
@@ -94,6 +104,7 @@ Every check fails the PR. A job skipped because its paths are untouched counts a
 | `typescript` | Lint, the type check, the screen tests |
 | `strings` | A display language missing a key; an unused key |
 | `e2e` | The four journeys |
+| `native-bundle` | The app doesn't bundle for iOS or Android |
 | `image` | The container doesn't build |
 | `evals` | Only on prompt, model or adapter paths |
 
@@ -113,7 +124,7 @@ All of these are in the PR or the ticket's resolution comment.
 
 1. Each acceptance criterion is listed beside the name of the test that proves it.
 2. `make gen`, `make secrets-scan` and `make lint test` pass from the worktree root, with the last lines of output pasted.
-3. A ticket that changes a screen attaches screenshots of every state it touches: light and dark, Vietnamese and English, at phone width.
+3. A ticket that changes a screen attaches screenshots of every state it touches: light and dark, Vietnamese and English, at phone width. Those are from the web. It also attaches each state once from the iOS simulator and once from the Android emulator ([Native along the way](#native-along-the-way)).
 4. The directory's README is updated, and `GLOSSARY.md` if a term changed.
 5. Anything in the spec the ticket found wrong or unbuildable is a spec PR or a stop. It is never a silent deviation.
 6. A "Check in the build's first … ticket" item in the spec is answered in writing by the ticket that reaches it.
@@ -124,6 +135,6 @@ All of these are in the PR or the ticket's resolution comment.
 |---|---|---|
 | The check | Per ticket, before it merges into the integration branch | The done list, against the ticket and the spec document it cites |
 | The code review | Once per milestone, on the integration PR | Standards and spec, side by side, on a stronger model when the milestone has `risk` tickets |
-| The owner | Before merging the integration PR | Reads the review, looks at the screenshots, and walks the milestone on dev from a short script the coordinator writes ("sign in as …, do …, expect …") |
+| The owner | Before merging the integration PR | Reads the review, looks at the screenshots, and walks the milestone on dev from a short script the coordinator writes ("sign in as …, do …, expect …"), on the web, one iOS simulator and one Android emulator |
 
 The owner reads code only on the `risk` paths: `policy`, `matching`, `safety`, `retention`, migrations and the RPC access rules.
