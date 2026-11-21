@@ -92,6 +92,9 @@ _Avoid_: level, learner
 A set of adjoining areas a resident would cross for an outing, with one set of city settings, a calendar, lead sources, pieces and plans. It is *planned*, *open* or *closed*.
 _Avoid_: city pack, patch, market
 
+**Demo city**:
+A city marked as demo: open, never listed or requestable, holding only scripted members, and left out of every scorecard. It is not a state.
+
 **Area**:
 One of the local government's units in a city, with its official name. A label on a piece and a filter on the plans list; a plan's area is its meeting point's area.
 _Avoid_: neighbourhood, district, region

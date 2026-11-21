@@ -1,6 +1,6 @@
 # Privacy and legal obligations in the product
 
-From [Privacy and legal obligations in the product](https://github.com/shrujancheruku/issho/issues/559), amended by [The v2 glossary and domain model](https://github.com/shrujancheruku/issho/issues/569) and [Architecture and stack](https://github.com/shrujancheruku/issho/issues/572), with facts from [What the v2 spec asks of the stack](https://github.com/shrujancheruku/issho/issues/571). The legal parts are research, not legal advice.
+From [Privacy and legal obligations in the product](https://github.com/shrujancheruku/issho/issues/559), amended by [The v2 glossary and domain model](https://github.com/shrujancheruku/issho/issues/569), [Architecture and stack](https://github.com/shrujancheruku/issho/issues/572) and [Technical operations](https://github.com/shrujancheruku/issho/issues/573), with facts from [What the v2 spec asks of the stack](https://github.com/shrujancheruku/issho/issues/571). The legal parts are research, not legal advice.
 
 ## The floor
 
@@ -26,7 +26,8 @@ From [Privacy and legal obligations in the product](https://github.com/shrujanch
 ## No phone number, and the sign-in log
 
 - No phone number is collected or verified at any stage. Sign-in is by email code, with Apple and Google from the soft launch. Running without phone verification is an accepted risk and a question for the lawyer ([Architecture and stack](https://github.com/shrujancheruku/issho/issues/572)).
-- Each account's sign-ins and sign-outs are logged with time and IP address from the Pilot's first account and deleted at 12 months. Nobody can read the log in the admin; it is produced only for a lawful request. It is the only place Issho keeps an IP address.
+- Each account's sign-ins and sign-outs are logged with their time from the Pilot's first account and deleted at 12 months. Nobody can read the log in the admin; it is produced only for a lawful request ([Technical operations](operations.md#the-sign-in-log)).
+- Issho keeps no IP address anywhere, in the sign-in log or in any other log. Whether a sign-in log without one is enough is a question for the lawyer.
 
 ## Age
 
@@ -41,6 +42,7 @@ From [Privacy and legal obligations in the product](https://github.com/shrujanch
 - Their messages stay until the room's own 30 days run out, shown as from "someone who left".
 - Their feedback on plans stays without their identity. Their picks, signups and profile go.
 - Their reports about others stay, without their name. Plans and vouches they made stay Issho's.
+- Backups keep deleted data for up to 30 days, and the privacy policy says so. A restore never brings a deleted account back ([Technical operations](operations.md#backups-and-the-restore)).
 
 ## The tombstone
 
@@ -89,7 +91,8 @@ The tombstone disappears when it holds nothing. The privacy policy states all of
   | Google Cloud | Hosting, and Cloud Translation for the moderator's view of reports, messages and feedback, under terms that forbid training on it | Singapore; translation on a global endpoint |
   | Resend | Email address and message | United States |
   | Expo, then Apple and Google | Push token and message | United States |
-  | Sentry | Errors, with no request bodies or headers | European Union |
+  | Sentry | Errors, with the account's ID and no request bodies or headers | European Union |
+  | Cloudflare | Every request in transit, with its IP address, which Issho does not keep | Worldwide |
 
 - No personal data goes to a model. The model judge, plan translation and the lead search see none, and the moderator's translation is a translation service, not a model ([Architecture](architecture.md#models)).
 - Places, the forecast and weather alerts are sent a place ID or a meeting point's coordinates and nothing about a person.
