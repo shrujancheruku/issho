@@ -1,86 +1,36 @@
-import { createClient, type Interceptor } from "@connectrpc/connect";
-import { createConnectTransport } from "@connectrpc/connect-web";
-import { AdminService } from "./gen/issho/v1/admin_pb";
-import { CatalogService } from "./gen/issho/v1/catalog_pb";
-import { ChatService } from "./gen/issho/v1/chat_pb";
-import { CityPackService } from "./gen/issho/v1/citypacks_pb";
-import { CrewService } from "./gen/issho/v1/crews_pb";
-import { CurationService } from "./gen/issho/v1/curation_pb";
-import { EventService } from "./gen/issho/v1/events_pb";
-import { HealthService } from "./gen/issho/v1/health_pb";
-import { IdentityService } from "./gen/issho/v1/identity_pb";
-import { MetricsService } from "./gen/issho/v1/metrics_pb";
-import { ModerationService } from "./gen/issho/v1/moderation_pb";
-import { PlanService } from "./gen/issho/v1/plans_pb";
-import { ProfileService } from "./gen/issho/v1/profile_pb";
-import { PushService } from "./gen/issho/v1/push_pb";
-import { ReviewService } from "./gen/issho/v1/review_pb";
-import { TranslationService } from "./gen/issho/v1/translation_pb";
-import { UIService } from "./gen/issho/v1/ui_pb";
+import { createClient, type Interceptor } from '@connectrpc/connect';
+import { createConnectTransport } from '@connectrpc/connect-web';
 
-// Error types for callers (code checks like `err.code === Code.Unauthenticated`), so apps
-// don't need their own dependency on @connectrpc/connect.
-export { Code, ConnectError } from "@connectrpc/connect";
-export { errorReason } from "./errors";
-export { maxLen } from "./limits";
-export * from "./gen/issho/v1/admin_pb";
-export * from "./gen/issho/v1/catalog_pb";
-export * from "./gen/issho/v1/chat_pb";
-export * from "./gen/issho/v1/citypacks_pb";
-export * from "./gen/issho/v1/crews_pb";
-export * from "./gen/issho/v1/curation_pb";
-export * from "./gen/issho/v1/errors_pb";
-export * from "./gen/issho/v1/events_pb";
-export * from "./gen/issho/v1/health_pb";
-export * from "./gen/issho/v1/identity_pb";
-export * from "./gen/issho/v1/metrics_pb";
-export * from "./gen/issho/v1/moderation_pb";
-export * from "./gen/issho/v1/plans_pb";
-export * from "./gen/issho/v1/profile_pb";
-export * from "./gen/issho/v1/push_pb";
-export * from "./gen/issho/v1/review_pb";
-export * from "./gen/issho/v1/translation_pb";
-export * from "./gen/issho/v1/ui_pb";
+import { HealthService } from './gen/issho/v1/health_pb';
 
-export type ApiClientOptions = {
+export * from './gen/issho/v1/access_pb';
+export * from './gen/issho/v1/health_pb';
+
+export interface ApiOptions {
   baseUrl: string;
-  /** Returns the current Supabase access token, or null when signed out. */
+  /** Called before every request; a token is sent as `Authorization: Bearer`. */
   getAccessToken: () => Promise<string | null>;
-};
+  /** For tests; defaults to the global fetch. */
+  fetch?: typeof globalThis.fetch;
+}
 
-export function createApi({ baseUrl, getAccessToken }: ApiClientOptions) {
-  const auth: Interceptor = (next) => async (req) => {
+/** The one client the app, the Expo server and the admin use to call the API. */
+export function createApi({ baseUrl, getAccessToken, fetch }: ApiOptions) {
+  const bearer: Interceptor = (next) => async (req) => {
     const token = await getAccessToken();
-    if (token) req.header.set("Authorization", `Bearer ${token}`);
+    if (token) req.header.set('Authorization', `Bearer ${token}`);
     return next(req);
   };
-  // JSON over HTTP/1.1 works everywhere, including React Native's fetch.
-  const transport = createConnectTransport({ baseUrl, useBinaryFormat: false, interceptors: [auth] });
+  // JSON, not binary: it works with React Native's fetch and reads in a network
+  // inspector.
+  const transport = createConnectTransport({
+    baseUrl,
+    useBinaryFormat: false,
+    interceptors: [bearer],
+    fetch,
+  });
   return {
-    /** Admins only (the admin SPA): the long operations it starts. */
-    admin: createClient(AdminService, transport),
-    catalog: createClient(CatalogService, transport),
-    chat: createClient(ChatService, transport),
-    /** Admins only (the admin SPA). */
-    cityPacks: createClient(CityPackService, transport),
-    crews: createClient(CrewService, transport),
-    /** Admins only (the admin SPA). */
-    curation: createClient(CurationService, transport),
-    events: createClient(EventService, transport),
     health: createClient(HealthService, transport),
-    identity: createClient(IdentityService, transport),
-    /** Admins only (the admin SPA). */
-    metrics: createClient(MetricsService, transport),
-    /** Admins only (the admin SPA). */
-    moderation: createClient(ModerationService, transport),
-    plans: createClient(PlanService, transport),
-    profile: createClient(ProfileService, transport),
-    push: createClient(PushService, transport),
-    /** Admins only (the admin SPA). */
-    review: createClient(ReviewService, transport),
-    /** Admins and translators (the admin SPA's translation editor). */
-    translation: createClient(TranslationService, transport),
-    ui: createClient(UIService, transport),
   };
 }
 

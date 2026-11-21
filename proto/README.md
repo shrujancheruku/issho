@@ -1,22 +1,44 @@
 # proto
 
-The API contract. **These files are the source of truth** for the Go server, the TypeScript client and the [API reference](../docs/generated/api.md).
+The API's contract. **These files are the source of truth** for the Go server stubs (`backend/gen/issho`) and the TypeScript client (`packages/api-client/src/gen`). Both are generated: never edit them.
 
-- Package `issho.v1`, one file per service (`identity.proto` is `IdentityService`, and so on).
-- buf module config: `buf.yaml` (lint: `STANDARD`, breaking: `FILE`). Generation config: `../buf.gen.yaml`.
+- Package `issho.v1`, in `issho/v1/`. One file per service (`health.proto` holds `HealthService`).
+- `access.proto` defines the `Access` enum and the `access` method option every RPC must set.
+- Config: `../buf.yaml` (lint `STANDARD`, breaking `FILE`) and `../buf.gen.yaml` (the generators). `make gen` needs `make setup` first, for the TypeScript plugin.
 
-## Workflow
+## Every RPC declares who may call it
 
-```sh
-make gen                      # from root: Go (backend/gen), TS (packages/api-client/src/gen), docs (docs/generated/api.md)
-go tool buf lint proto        # also part of `make lint`
+```proto
+rpc Check(CheckRequest) returns (CheckResponse) {
+  option (issho.v1.access) = ACCESS_PUBLIC;
+}
 ```
 
-## Rules
+| Rule | Who may call |
+|---|---|
+| `ACCESS_PUBLIC` | Anyone, signed in or not |
+| `ACCESS_MEMBER` | Any signed-in person |
+| `ACCESS_MAKING` | The owner and the insiders of the city (the Making tab) |
+| `ACCESS_ADMIN` | Staff in the admin, who have also taken the second sign-in step |
 
-- **Comment every service, RPC and field.** The comments are published as the API docs. For each RPC, state its auth requirement and HTTP path.
-- Field names use `snake_case` in proto and appear as `camelCase` in JSON and TypeScript.
-- **No breaking changes** once a field ships in an app build. CI runs `buf breaking` against `main` on every PR. To retire a field, deprecate it and keep the number reserved (`reserved 5;`). Never reuse field numbers.
-- **Lists that can grow page with [AIP-158](https://google.aip.dev/158):** the request has `int32 page_size` and `string page_token`, the response `string next_page_token` (empty on the last page). The server treats `page_size` 0 as 50 and clamps it to 200 (`platform/paging`). The token is opaque and means "the page after this row": a keyset cursor (sort key plus id), never an offset, tied to the list and its filters, so a token from another list or filter is `INVALID_ARGUMENT`. Keep a `total` only where a screen shows a count. A list that is bounded on purpose ("the latest 50", "the best 20") says so in its comment instead of paging. The app's own unpaged lists are bounded this way (`ListFeed` 200, `ListMyEvents` 200, `ListMyCrews` 50): the query has a hard `limit` (`platform/bound`), which logs a warning and reports to Sentry once per process when hit. If one ever gets paging, `page_size = 0` (what installed builds send) must keep returning the whole bounded list, so adding the fields isn't breaking. `ListMessages.after_id` in chat is a sync cursor, not paging.
-- **Request-field limits are `buf.validate` rules** ([protovalidate](https://protovalidate.com), the `buf.build/bufbuild/protovalidate` dep in `buf.yaml`, locked in `buf.lock`): `string body = 2 [(buf.validate.field).string = {min_len: 1, max_len: 1000}];`. Add `import "buf/validate/validate.proto";`. The server enforces them (`backend/internal/platform/validate`, an `InvalidArgument` in the `errs.Invalid` shape) and the app reads them (`maxLen(schema, field)` in `@issho/api-client`), so a limit is written once, here, and the comment says it in words. `max_len` counts characters. Adding a rule doesn't change the wire format, so `buf breaking` passes. Tightening one is a behaviour change: older apps may send what the server now refuses.
-- New RPCs are authenticated by default (see `backend/cmd/api/main.go`).
+The API enforces the rule (`backend/internal/rpc`, an interceptor that reads the option) and denies by default: an RPC with no rule, or `ACCESS_UNSPECIFIED`, is refused for everyone. `make rpc-auth` (part of `make lint`) fails and names any RPC that has none, so it never reaches that point.
+
+## Adding an RPC
+
+1. Add the `rpc` to a service in `issho/v1/<area>.proto`, or start a new `<area>.proto` with a `<Area>Service`. Name its messages `<Rpc>Request` and `<Rpc>Response` (buf lint requires it).
+2. Set its `option (issho.v1.access) = ...;` from the table above, and `import "issho/v1/access.proto";` if the file doesn't yet.
+3. Comment the service, the RPC and each field: the comments become the generated code's docs. For an RPC, say what it does and why that rule fits.
+4. `make gen`, then commit what it wrote. A second `make gen` must leave no diff.
+5. Implement the service in `backend/internal/rpc` and mount it in `NewHandler`, which puts it behind the interceptor. Add it to `createApi` in `packages/api-client/src/index.ts`.
+6. Test it through the Go client over HTTP (see `backend/internal/rpc/health_test.go`), including who is refused.
+
+Field names are `snake_case` in proto and `camelCase` in JSON and TypeScript. Fields are never renumbered or reused: retire one with `reserved`.
+
+## Checks
+
+```sh
+make lint        # buf lint, buf breaking against main, and rpc-auth
+make rpc-auth    # just the access-rule check
+```
+
+`buf breaking` (`../scripts/proto-breaking.sh`) compares `proto/` with `origin/main`'s, using the buf pinned in `../tools/go.mod`. It runs only once main holds v2's proto, which it tells by `proto/issho/v1/access.proto` (v1 had none): before that, every v2 file would read as a break of v1's, so `make lint` prints "buf breaking not run: ..." and exits 0. It decides from main's content alone and takes no arguments or environment, so it switches itself on at the merge of the Foundation milestone and nothing given to `make lint` can turn it off. When `origin/main` isn't fetched it fails and says to fetch it (`git fetch origin main`), so a checkout without main can't pass by not checking. `../scripts/proto-breaking.test.sh` (part of `make test`) covers each case against a throwaway git repo.

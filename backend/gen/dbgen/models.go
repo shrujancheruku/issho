@@ -5,391 +5,105 @@
 package dbgen
 
 import (
-	"github.com/google/uuid"
+	"database/sql/driver"
+	"fmt"
+
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-type AppActivity struct {
-	ID              string
-	Name            []byte
-	Category        string
-	Indoor          bool
-	Energy          int16
-	CostLevel       int16
-	Conversational  bool
-	SkillDependent  bool
-	MinGroupSize    int16
-	MaxGroupSize    int16
-	VenueCategories []string
-	Blocks          []string
-	WalkTheme       *string
-	Hours           pgtype.Numeric
+type RiverRiverJobState string
+
+const (
+	RiverRiverJobStateAvailable RiverRiverJobState = "available"
+	RiverRiverJobStateCancelled RiverRiverJobState = "cancelled"
+	RiverRiverJobStateCompleted RiverRiverJobState = "completed"
+	RiverRiverJobStateDiscarded RiverRiverJobState = "discarded"
+	RiverRiverJobStatePending   RiverRiverJobState = "pending"
+	RiverRiverJobStateRetryable RiverRiverJobState = "retryable"
+	RiverRiverJobStateRunning   RiverRiverJobState = "running"
+	RiverRiverJobStateScheduled RiverRiverJobState = "scheduled"
+)
+
+func (e *RiverRiverJobState) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = RiverRiverJobState(s)
+	case string:
+		*e = RiverRiverJobState(s)
+	default:
+		return fmt.Errorf("unsupported scan type for RiverRiverJobState: %T", src)
+	}
+	return nil
 }
 
-type AppArea struct {
-	ID       string
-	CityID   string
-	Name     []byte
-	Centroid string
-	Boundary interface{}
+type NullRiverRiverJobState struct {
+	RiverRiverJobState RiverRiverJobState
+	Valid              bool // Valid is true if RiverRiverJobState is not NULL
 }
 
-type AppAreaTravelTime struct {
-	FromAreaID string
-	ToAreaID   string
-	Mode       string
-	Minutes    int32
-	ComputedAt pgtype.Timestamptz
+// Scan implements the Scanner interface.
+func (ns *NullRiverRiverJobState) Scan(value interface{}) error {
+	if value == nil {
+		ns.RiverRiverJobState, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.RiverRiverJobState.Scan(value)
 }
 
-type AppAttendance struct {
-	UserID    uuid.UUID
-	GroupID   uuid.UUID
-	EventID   uuid.UUID
-	Date      pgtype.Date
-	Response  string
-	WentAhead *bool
-	Attended  *bool
+// Value implements the driver Valuer interface.
+func (ns NullRiverRiverJobState) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.RiverRiverJobState), nil
 }
 
-type AppAvailabilitySlot struct {
-	UserID  uuid.UUID
-	Weekday int16
-	Block   string
+type RiverRiverJob struct {
+	ID           int64
+	State        RiverRiverJobState
+	Attempt      int16
+	MaxAttempts  int16
+	AttemptedAt  pgtype.Timestamptz
+	CreatedAt    pgtype.Timestamptz
+	FinalizedAt  pgtype.Timestamptz
+	ScheduledAt  pgtype.Timestamptz
+	Priority     int16
+	Args         []byte
+	AttemptedBy  []string
+	Errors       [][]byte
+	Kind         string
+	Metadata     []byte
+	Queue        string
+	Tags         []string
+	UniqueKey    []byte
+	UniqueStates pgtype.Bits
 }
 
-type AppCity struct {
-	ID       string
-	Name     []byte
-	Timezone string
-	Currency string
-	// Languages commonly used in the city, most common first (suggestions only)
-	Languages          []string
-	Matching           []byte
-	CreatedAt          pgtype.Timestamptz
-	TravelModes        []string
-	Review             bool
-	ApprovedVenuesOnly bool
-	MeetingPlaces      []byte
+type RiverRiverLeader struct {
+	ElectedAt pgtype.Timestamptz
+	ExpiresAt pgtype.Timestamptz
+	LeaderID  string
+	Name      string
 }
 
-type AppCityActivityOverride struct {
-	CityID     string
-	ActivityID string
-	Enabled    bool
-	Name       []byte
-	Months     []int16
-}
-
-type AppCrew struct {
-	ID          uuid.UUID
-	CityID      string
-	ActivityID  *string
-	AreaID      *string
-	Status      string
-	OfferUntil  pgtype.Timestamptz
-	SuggestedAt pgtype.Timestamptz
-	CreatedAt   pgtype.Timestamptz
-	FormedAt    pgtype.Timestamptz
-	ClosedAt    pgtype.Timestamptz
-}
-
-type AppCrewLeafe struct {
+type RiverRiverMigration struct {
 	ID        int64
-	CrewID    uuid.UUID
-	UserID    pgtype.UUID
-	Reason    string
-	Details   string
 	CreatedAt pgtype.Timestamptz
+	Version   int64
 }
 
-type AppCrewMember struct {
-	CrewID      uuid.UUID
-	UserID      uuid.UUID
-	Response    string
-	RespondedAt pgtype.Timestamptz
-}
-
-type AppEvent struct {
-	ID         uuid.UUID
-	PlanID     uuid.UUID
-	Round      int16
-	Date       pgtype.Date
-	Block      string
-	StartsAt   pgtype.Timestamptz
-	ConfirmBy  pgtype.Timestamptz
-	Forced     bool
-	Status     string
-	CreatedAt  pgtype.Timestamptz
-	ReviewedBy pgtype.UUID
-	ReviewedAt pgtype.Timestamptz
-}
-
-type AppEventFeedback struct {
-	GroupID     uuid.UUID
-	UserID      uuid.UUID
-	Attended    bool
-	PlanRating  *int16
-	GroupRating *int16
-	CreatedAt   pgtype.Timestamptz
-	UpdatedAt   pgtype.Timestamptz
-}
-
-type AppEventGroup struct {
-	ID            uuid.UUID
-	EventID       uuid.UUID
-	Quorum        int16
-	MinAttendance int16
-	Score         float32
-	Status        string
-	VenuePlaceID  *string
-	MeetingPoint  []byte
-	CreatedAt     pgtype.Timestamptz
-}
-
-type AppGroupMember struct {
-	GroupID     uuid.UUID
-	EventID     uuid.UUID
-	UserID      uuid.UUID
-	Response    string
-	RespondedAt pgtype.Timestamptz
-	CheckedInAt pgtype.Timestamptz
-}
-
-type AppKeptApart struct {
-	UserID  pgtype.UUID
-	OtherID uuid.UUID
-}
-
-type AppMatePick struct {
-	GroupID   uuid.UUID
-	PickerID  uuid.UUID
-	PickedID  uuid.UUID
-	Pick      string
-	CreatedAt pgtype.Timestamptz
-}
-
-type AppMessage struct {
+type RiverRiverNotification struct {
 	ID        int64
-	RoomID    uuid.UUID
-	UserID    pgtype.UUID
-	Body      string
-	PlanID    pgtype.UUID
 	CreatedAt pgtype.Timestamptz
+	Payload   string
+	Topic     string
 }
 
-type AppModerationFlag struct {
-	ID         int64
-	UserID     uuid.UUID
-	Kind       string
-	Details    []byte
-	CreatedAt  pgtype.Timestamptz
-	UpdatedAt  pgtype.Timestamptz
-	ResolvedAt pgtype.Timestamptz
-	ResolvedBy pgtype.UUID
-	Note       string
-}
-
-type AppNotification struct {
-	ID        int64
-	UserID    uuid.UUID
-	Kind      string
-	EventID   pgtype.UUID
+type RiverRiverQueue struct {
+	Name      string
 	CreatedAt pgtype.Timestamptz
-	SentAt    pgtype.Timestamptz
-	Attempts  int16
-	PlanID    pgtype.UUID
-	CrewID    pgtype.UUID
-}
-
-type AppPlan struct {
-	ID                   uuid.UUID
-	CityID               string
-	AreaID               string
-	ActivityID           string
-	FollowUpID           *string
-	PrimaryLanguage      string
-	SecondaryLanguage    *string
-	Description          []byte
-	Audience             int32
-	Score                float32
-	Round                int16
-	WindowStart          pgtype.Date
-	WindowDays           int16
-	SignupDeadline       pgtype.Timestamptz
-	Status               string
-	ClosedReason         *string
-	ClosedAt             pgtype.Timestamptz
-	CreatedAt            pgtype.Timestamptz
-	VenuePlaceID         *string
-	FollowUpVenuePlaceID *string
-	RoutePolyline        *string
-	RouteSeconds         *int32
-	RouteComputedAt      pgtype.Timestamptz
-	MeetingPlaceID       *string
-	Title                []byte
-	CreatedBy            pgtype.UUID
-	ReviewedBy           pgtype.UUID
-	ReviewedAt           pgtype.Timestamptz
-	ProposalRejectedAt   pgtype.Timestamptz
-}
-
-type AppPlanSignup struct {
-	PlanID    uuid.UUID
-	UserID    uuid.UUID
-	CreatedAt pgtype.Timestamptz
-}
-
-type AppPlanSignupSlot struct {
-	PlanID  uuid.UUID
-	UserID  uuid.UUID
-	Weekday int16
-	Block   string
-}
-
-type AppPlanSignupUnavailable struct {
-	PlanID uuid.UUID
-	UserID uuid.UUID
-	Date   pgtype.Date
-	Block  string
-}
-
-type AppPlanStop struct {
-	PlanID      uuid.UUID
-	Position    int16
-	Role        string
-	PlaceID     string
-	Minutes     int16
-	Note        []byte
-	WalkSeconds *int32
-}
-
-type AppProfile struct {
-	UserID            uuid.UUID
-	DisplayName       string
-	BirthYear         int16
-	Gender            string
-	SameGenderOnly    bool
-	HomeAreaID        string
-	MaxTravelMin      int16
-	Energy            int16
-	Budget            int16
-	SizePref          string
-	UpdatedAt         pgtype.Timestamptz
-	PrimaryLanguage   string
-	SecondaryLanguage *string
-	ConductVersion    int16
-	ConductAcceptedAt pgtype.Timestamptz
-}
-
-type AppPushTicket struct {
-	ID        string
-	Token     string
-	CreatedAt pgtype.Timestamptz
-}
-
-type AppPushToken struct {
-	Token      string
-	UserID     uuid.UUID
-	Platform   string
-	CreatedAt  pgtype.Timestamptz
-	LastSeenAt pgtype.Timestamptz
-}
-
-type AppReport struct {
-	ID         uuid.UUID
-	ReporterID pgtype.UUID
-	ReportedID uuid.UUID
-	EventID    pgtype.UUID
-	Reason     string
-	Details    string
-	Status     string
-	CreatedAt  pgtype.Timestamptz
-	UpdatedAt  pgtype.Timestamptz
-	ReviewedAt pgtype.Timestamptz
-	CrewID     pgtype.UUID
-	ReviewedBy pgtype.UUID
-	Note       string
-}
-
-type AppRoom struct {
-	ID        uuid.UUID
-	Kind      string
-	GroupID   pgtype.UUID
-	CrewID    pgtype.UUID
-	CreatedAt pgtype.Timestamptz
-}
-
-type AppSuspendedUser struct {
-	UserID       uuid.UUID
-	SuspensionID int64
-}
-
-type AppSuspension struct {
-	ID        int64
-	UserID    uuid.UUID
-	Reason    string
-	CreatedBy uuid.UUID
-	CreatedAt pgtype.Timestamptz
-	LiftedAt  pgtype.Timestamptz
-	LiftedBy  pgtype.UUID
-	LiftNote  string
-}
-
-type AppTranslation struct {
-	SourceHash string
-	Lang       string
-	Source     string
-	Context    string
-	Text       string
-	Model      string
-	Reviewed   bool
-	CreatedAt  pgtype.Timestamptz
-	ReviewedBy pgtype.UUID
-	ReviewedAt pgtype.Timestamptz
-}
-
-type AppUser struct {
-	ID        uuid.UUID
-	Email     *string
-	CreatedAt pgtype.Timestamptz
-}
-
-type AppUserActivityPref struct {
-	UserID     uuid.UUID
-	ActivityID string
-	Weight     int16
-}
-
-type AppUserLanguage struct {
-	UserID uuid.UUID
-	Lang   string
-	Fluent bool
-	Level  *int16
-}
-
-type AppVenue struct {
-	GooglePlaceID string
-	CityID        string
-	AreaID        string
-	CategoryID    string
-	Status        string
-	LastSeenAt    pgtype.Timestamptz
-	ReviewedBy    pgtype.UUID
-	ReviewedAt    pgtype.Timestamptz
-	AddedBy       pgtype.UUID
-}
-
-type AppVenueCategory struct {
-	ID            string
-	Name          []byte
-	GoogleTypes   []string
-	SearchRadiusM int32
-}
-
-type AppWalkFailure struct {
-	AreaID     string
-	ActivityID string
-	FailedAt   pgtype.Timestamptz
-	Reason     string
+	Metadata  []byte
+	PausedAt  pgtype.Timestamptz
+	UpdatedAt pgtype.Timestamptz
 }

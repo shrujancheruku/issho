@@ -2,22 +2,21 @@ syntax = "proto3";
 
 package issho.v1;
 
-option go_package = "github.com/shrujancheruku/issho/backend/gen/issho/v1;isshov1";
+import "issho/v1/access.proto";
 
-// HealthService reports whether the API and its dependencies are reachable.
-// Public: no Authorization header required. Used by load balancers and the app's status row.
-//
-// HTTP: POST /issho.v1.HealthService/Check
+// The API's liveness check.
 service HealthService {
-  // Check pings the database and returns the running build version.
-  rpc Check(CheckRequest) returns (CheckResponse) {}
+  // Reports that the API is up and which build it is. Public: a deploy's probe
+  // and the status page call it with no token.
+  rpc Check(CheckRequest) returns (CheckResponse) {
+    option (issho.v1.access) = ACCESS_PUBLIC;
+  }
 }
 
 message CheckRequest {}
 
 message CheckResponse {
-  // True when the API could ping Postgres during this request.
-  bool database_ok = 1;
-  // Build version of the API binary ("dev" for local builds).
-  string version = 2;
+  // The build's version, as set when the API was built ("dev" for a plain
+  // `go build`).
+  string version = 1;
 }

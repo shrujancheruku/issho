@@ -1,23 +1,8 @@
+# packages/api-client is here (#595); the apps come in their own tickets:
+# apps/app (#600), apps/admin (#601).
 packages:
   - apps/*
   - packages/*
-# pnpm blocks dependency install scripts unless approved here (true = allow,
-# false = deny). Deny by default; allow only packages that need their script.
-# unrs-resolver (via eslint-config-expo) only downloads fallback binaries;
-# @parcel/watcher (via jest) ships prebuilt platform packages, so its build step is unneeded.
-# esbuild and workerd (via wrangler) also ship their binaries as platform packages;
-# their scripts only check them.
-# @sentry/cli (via @sentry/react-native) downloads its binary, which EAS builds
-# use to upload the app's source maps to Sentry.
-allowBuilds:
-  '@parcel/watcher': false
-  '@sentry/cli': true
-  esbuild: false
-  workerd: false
-  unrs-resolver: false
 # Release-age gate, in minutes (1 day): pnpm won't install a version published
 # more recently, as a supply-chain guard. Renovate's minimumReleaseAge matches.
-# Add an exact `name@version` to minimumReleaseAgeExclude only when
-# `npx expo install --fix` is blocked by the gate, and remove it once that
-# version is older than the gate.
 minimumReleaseAge: 1440
