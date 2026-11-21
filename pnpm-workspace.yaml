@@ -1,5 +1,8 @@
-# v1's apps and packages went with v1 (#587); the root holds only commitlint
-# until v2's packages are added.
+# The members come in their own tickets: apps/app (#600), apps/admin (#601),
+# packages/api-client (#595).
+packages:
+  - apps/*
+  - packages/*
 # Release-age gate, in minutes (1 day): pnpm won't install a version published
 # more recently, as a supply-chain guard. Renovate's minimumReleaseAge matches.
 minimumReleaseAge: 1440

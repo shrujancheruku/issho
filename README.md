@@ -22,6 +22,8 @@
 | Path | What |
 |---|---|
 | [`assets/brand/`](assets/brand/README.md) | Logo and mark, plain and in round blue and white versions, as SVG and PNG; brand colours and the story behind the kanji |
+| `backend/` | The Go module: commands `cmd/api` and `cmd/worker`, packages under `internal/` (`testdb` gives each test its own schema in a throwaway Postgres) |
+| `apps/`, `packages/` | The pnpm workspace's members: `apps/app`, `apps/admin` and `packages/api-client`, each added by its own ticket |
 | `scripts/` | The tracker check and the brand generators |
 | `tools/` | Go tools pinned for the repo (gitleaks) |
 | [`CLAUDE.md`](CLAUDE.md), `.claude/skills/` | Instructions for AI coding agents, and the official Supabase agent skills |
@@ -29,11 +31,16 @@
 
 ## Quick start
 
-Prerequisites: Go and pnpm.
+Prerequisites: Go, pnpm and Docker (running; `make test` needs it).
 
 ```sh
 make setup          # commitlint + the git hooks
+make gen            # code generation (nothing generates yet)
+make lint           # gofmt and go vet
+make test           # backend tests against a throwaway Postgres in Docker
 make secrets-scan   # scan every commit for secrets
 ```
+
+`make test` starts its own Postgres and gives each test its own schema. It fails with Docker stopped; no flag or environment variable skips the database.
 
 Commit messages follow [Conventional Commits](https://www.conventionalcommits.org/) (`commitlint.config.mjs`). Releases follow SemVer through release-please; v2's first is `2.0.0`.
