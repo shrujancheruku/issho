@@ -60,7 +60,7 @@ Run from the repo root:
 
 ```sh
 make test   # go test -race ./... in backend/, and the api-client's tests
-make lint   # gofmt, go vet, buf lint, rpc-auth and the api-client's type check
+make lint   # gofmt, go vet, buf lint, buf breaking, rpc-auth and the api-client's type check
 ```
 
 `make test` needs Docker running. The first `testdb.New(t)` in a test binary starts a Postgres 17 container (removed when the binary exits) and returns a pool whose `search_path` is a fresh schema, dropped when the test ends, so tests may write the same keys in parallel. A test that runs the migrations, which use fixed schema names, calls `testdb.NewDatabase(t)` instead for a database of its own, then `db.Up`. With Docker stopped or unreachable (`DOCKER_HOST`) the test fails; no flag or environment variable skips the database. Tests use it directly rather than mocking stores.

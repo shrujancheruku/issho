@@ -26,7 +26,7 @@
 | `backend/` | The Go module: commands `cmd/api` and `cmd/worker`, packages under `internal/` (`testdb` gives each test its own schema in a throwaway Postgres) |
 | `packages/api-client/` | The generated TypeScript client of the API ([README](packages/api-client/README.md)) |
 | `apps/` | The pnpm workspace's apps, `apps/app` and `apps/admin`, each added by its own ticket |
-| `scripts/` | The tracker check and the brand generators |
+| `scripts/` | The tracker check, the `buf breaking` wrapper and the brand generators |
 | `tools/` | Go tools pinned for the repo (gitleaks, goose, sqlc, buf and its Go plugins) |
 | [`CLAUDE.md`](CLAUDE.md), `.claude/skills/` | Instructions for AI coding agents, and the official Supabase agent skills |
 | `.githooks/` | Git hooks: secret scan (pre-commit) and commit-message lint (commit-msg). Enable with `make setup`. |
@@ -38,7 +38,7 @@ Prerequisites: Go, pnpm and Docker (running; `make test` needs it).
 ```sh
 make setup          # pnpm install (commitlint, the TypeScript generator) + the git hooks
 make gen            # code generation: sqlc, and buf for the Go and TypeScript API code
-make lint           # gofmt, go vet, buf lint, the RPC access-rule check, the client's type check
+make lint           # gofmt, go vet, buf lint and breaking, the RPC access-rule check, the client's type check
 make test           # backend tests against a throwaway Postgres in Docker, and the client's tests
 make secrets-scan   # scan every commit for secrets
 ```

@@ -37,9 +37,8 @@ Field names are `snake_case` in proto and `camelCase` in JSON and TypeScript. Fi
 ## Checks
 
 ```sh
-make lint            # buf lint, and rpc-auth
-make rpc-auth        # just the access-rule check
-make proto-breaking  # buf breaking against main
+make lint        # buf lint, buf breaking against main, and rpc-auth
+make rpc-auth    # just the access-rule check
 ```
 
-`make proto-breaking` is not in `make lint` yet: `main` still holds v1's `proto/`, so every v1 file reads as deleted. See #595's resolution comment.
+`buf breaking` (`scripts/proto-breaking.sh`) compares `proto/` with `origin/main`'s. It runs only once main holds v2's proto, which it tells by `proto/issho/v1/access.proto` (v1 had none): before that, every v2 file would read as a break of v1's, so `make lint` prints "buf breaking not run: ..." and exits 0. It decides from main's content alone, so it switches itself on at the merge of the Foundation milestone and nothing can turn it off; it is also skipped, with the same notice, when `origin/main` isn't fetched. `scripts/proto-breaking.test.sh` (part of `make test`) runs both branches against a throwaway git repo.
