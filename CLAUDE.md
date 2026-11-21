@@ -4,6 +4,7 @@ Project-specific rules for AI coding agents. They **take precedence over generic
 
 ## Read first
 - [GitHub Issues](https://github.com/shrujancheruku/issho/issues): plan and status (see `docs/agents/issue-tracker.md`)
+- [docs/spec/](docs/spec/README.md): the v2 spec, in the terms of the root `GLOSSARY.md`. The code in this repo is still v1 until the build's first PR deletes it; an amendment to the spec is a PR that edits its document.
 - [docs/adr/](docs/adr/) and the frozen [docs/decisions-2026.md](docs/decisions-2026.md): why things are the way they are
 - [docs/architecture.md](docs/architecture.md): how the pieces fit together
 - The README in the directory you're changing. `apps/mobile/AGENTS.md` has Expo-specific rules.
