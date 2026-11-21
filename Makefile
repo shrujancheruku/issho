@@ -78,3 +78,13 @@ policy-lint:
 	cd backend && go run ./tools/policylint -root ..
 
 lint: policy-lint
+
+# The admin (#601): its build (type check, then static files in apps/admin/dist)
+# is a lint, and its screen tests run under make test.
+.PHONY: admin-lint admin-test
+lint: admin-lint
+test: admin-test
+admin-lint:
+	pnpm --filter @issho/admin build
+admin-test:
+	pnpm --filter @issho/admin test
