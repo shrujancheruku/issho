@@ -84,7 +84,7 @@ The urgent alerts in [Running Issho](running-issho.md#alerts) arrive through the
 ## The store reviewers' way in
 
 - One reviewer account, signed in by an email and a password. The app shows the password field only for that address.
-- The account lives in a **demo city** ([Cities](cities.md#a-demo-city)), which holds seeded plans and scripted members, so a reviewer sees an outing at each stage and a chat room and never meets a real person.
+- The account lives in a **demo city** ([Cities](cities.md#a-demo-city)), which holds seeded plans and scripted members (those of [the season](quality.md#matching-and-the-rules)), so a reviewer sees an outing at each stage and a chat room and never meets a real person.
 - **Check in the build's first sign-in ticket:** Supabase Auth can take a password for one account while every other account uses an email code.
 
 ## The second sign-in step

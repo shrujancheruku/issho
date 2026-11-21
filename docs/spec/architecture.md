@@ -74,6 +74,8 @@ One Go package per area of the spec, named in the glossary's words. Each owns it
 
 The city clock, the queue and `policy` are built before any domain package.
 
+How the seams are tested, and what CI checks of them, is in [The quality bar and test strategy](quality.md).
+
 ## Where things live
 
 | Thing | Where | Changed by |
@@ -87,7 +89,7 @@ The city clock, the queue and `policy` are built before any domain package.
 
 ## Models
 
-Models are called through Vertex AI. Vertex has no one API across model families, so the swap is ours: one Go interface per use, one adapter per family (Gemini, Claude), and config that names the model for each use. An eval command runs a fixed set of cases through any configured model.
+Models are called through Vertex AI. Vertex has no one API across model families, so the swap is ours: one Go interface per use, one adapter per family (Gemini, Claude), and config that names the model for each use. An eval command runs a fixed set of cases through any configured model. What it scores and when it runs is in [The quality bar and test strategy](quality.md#model-output).
 
 | Use | Interface | Starts on | May be sent |
 |---|---|---|---|

@@ -34,6 +34,7 @@ The documents state decisions only. The reasoning, and what v1 did, is in the li
 | [Where v2 lives and what carries over](repo-and-carry-over.md) | The repo, v1's code and services, accounts, versions, porting |
 | [Architecture and stack](architecture.md) | What v2 is built from, the modules and their seams, models, outside services |
 | [Technical operations](operations.md) | Hosting, environments, backups, alerts, cost, releases, the reviewers' way in, the sign-in log, retention |
+| [The quality bar and test strategy](quality.md) | The kinds of test, the season, model evals, privacy as tests, what CI requires, when a ticket is done, review |
 
 ## Amending the spec
 
@@ -63,7 +64,7 @@ Linked, never merged. Each is on its own branch.
 
 ## Not in the spec yet
 
-The quality bar and test strategy, and the build order are still open tickets on the map. Its "Not yet specified" section lists what no ticket has settled: per-screen design, money in detail, filling the waitlist, insiders as a role, photos of an outing, identity verification at the public launch, place names in another script, and the questions for the lawyer.
+The build order is still an open ticket on the map. Its "Not yet specified" section lists what no ticket has settled: per-screen design, money in detail, filling the waitlist, insiders as a role, photos of an outing, identity verification at the public launch, place names in another script, and the questions for the lawyer.
 
 One gap opened while gathering: a guest now belongs to a member's signup to a plan ([People](people.md#guests)), which removed the route by which a crew outing's guest was voted into the crew. How an open crew gains a crew member is not yet specified.
 
