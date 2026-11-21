@@ -78,3 +78,17 @@ policy-lint:
 	cd backend && go run ./tools/policylint -root ..
 
 lint: policy-lint
+
+# The member app, apps/app (#600): expo lint (which bans string literals in
+# screen files), the strings check (en.json and vi.json hold the same keys, none
+# unused) and the type check; and its Jest tests.
+.PHONY: app-lint app-test
+app-lint:
+	pnpm --filter @issho/app lint
+	pnpm --filter @issho/app typecheck
+
+app-test:
+	pnpm --filter @issho/app test
+
+lint: app-lint
+test: app-test

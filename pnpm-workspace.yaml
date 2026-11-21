@@ -6,3 +6,7 @@ packages:
 # Release-age gate, in minutes (1 day): pnpm won't install a version published
 # more recently, as a supply-chain guard. Renovate's minimumReleaseAge matches.
 minimumReleaseAge: 1440
+# Install scripts are opt-in. @parcel/watcher (pulled in by Expo's tooling) falls
+# back to Metro's own file watching without its native build, so it stays off.
+allowBuilds:
+  '@parcel/watcher': false
