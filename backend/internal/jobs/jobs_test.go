@@ -8,6 +8,7 @@ import (
 	"github.com/riverqueue/river"
 
 	"github.com/shrujancheruku/issho/backend/db"
+	"github.com/shrujancheruku/issho/backend/internal/clock"
 	"github.com/shrujancheruku/issho/backend/internal/jobs"
 	"github.com/shrujancheruku/issho/backend/internal/testdb"
 )
@@ -40,7 +41,7 @@ func TestJobEnqueuedInATransactionRunsOnlyAfterCommit(t *testing.T) {
 	}
 
 	w := &markWorker{worked: make(chan string, 10)}
-	workers := jobs.NewWorkers()
+	workers := jobs.NewWorkers(clock.NewFake(time.Date(2026, 11, 21, 9, 0, 0, 0, time.UTC)))
 	river.AddWorker(workers, w)
 	client, err := jobs.New(pool, workers, nil)
 	if err != nil {
