@@ -89,3 +89,12 @@ admin-lint:
 	pnpm --filter @issho/admin build
 admin-test:
 	pnpm --filter @issho/admin test
+
+# A package reaches another only through its exported Go API, and outside
+# services are wired only in cmd/ (#599). make lint runs this; the rule is stated
+# once, in backend/tools/boundaries.
+.PHONY: boundaries
+boundaries:
+	cd backend && go run ./tools/boundaries -root ..
+
+lint: boundaries
