@@ -60,7 +60,7 @@ chmod +x "$work/chrome"
 
 run() { # <served version> <version in the browsers' pages> [want]
   echo "$1" > "$work/version"
-  DOM_VERSION=$2 API_URL=$base WEB_URL=$base ADMIN_URL=$base CHROME="$work/chrome" WANT="${3:-abc1234}" "$script" > "$work/out" 2>&1
+  TRIES=2 SECONDS_BETWEEN=0 DOM_VERSION=$2 API_URL=$base WEB_URL=$base ADMIN_URL=$base CHROME="$work/chrome" WANT="${3:-abc1234}" "$script" > "$work/out" 2>&1
 }
 
 run abc1234 abc1234 || { cat "$work/out"; bad "failed although everything shows the commit's version"; }

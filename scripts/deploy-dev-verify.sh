@@ -21,8 +21,17 @@ fail=0
 bad() { echo "FAIL $*"; fail=1; }
 
 # version_at <base>: what the API's public health check reports through that address.
+# A new name (the admin's, the first time) takes a minute to resolve, and the new
+# API container a moment to take traffic, so it tries again until it reports what is
+# wanted or the tries run out (TRIES, SECONDS_BETWEEN for the test).
 version_at() {
-  curl -fsS --max-time 20 -X POST -H 'Content-Type: application/json' -d '{}' "$1/issho.v1.HealthService/Check" | jq -r .version
+  local v="" _
+  for _ in $(seq 1 "${TRIES:-12}"); do
+    v=$(curl -fsS --max-time 20 -X POST -H 'Content-Type: application/json' -d '{}' "$1/issho.v1.HealthService/Check" 2>/dev/null | jq -r .version) || v=""
+    [ "$v" = "$want" ] && break
+    sleep "${SECONDS_BETWEEN:-5}"
+  done
+  [ -n "$v" ] && echo "$v"
 }
 
 # The API on its own name, and on the web's and the admin's: the web's proxy
