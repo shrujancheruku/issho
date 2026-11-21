@@ -126,3 +126,69 @@ native-bundle-test:
 
 lint: native-bundle
 test: native-bundle-test
+
+# CI's required checks (#603). Each job in .github/workflows/ci.yml is a thin call
+# to one of these (or to a target above), so what CI runs is what runs here.
+# Their names are the checks' names; scripts/ci-workflow.test.sh keeps the two
+# together. `make lint test` stays the superset to run before a push.
+.PHONY: backend codegen retention proto-breaking typescript strings image e2e ci-lint ci-test
+
+# The backend job: formatting, vet, the clock lint, buf lint and every Go test
+# (the package tests, the property tests, the season and the privacy tests, as
+# they arrive). It is `make lint test`'s Go half without buf breaking, which has
+# its own job: `breaking-ok` skips that job, and make lint can't skip the check.
+backend:
+	@test -z "$$(gofmt -l backend)" || { gofmt -l backend; echo "gofmt: files above need formatting"; exit 1; }
+	cd backend && go vet ./...
+	cd backend && go run ./tools/clockcheck
+	go tool buf lint
+	cd backend && go test -race -count=1 ./...
+
+# `make gen` leaves no diff: nothing changed and nothing new. Needs `make setup`
+# (buf's TypeScript plugin comes from pnpm install).
+codegen: gen
+	git diff --exit-code
+	@test -z "$$(git status --porcelain)" || { git status --short; echo "codegen: make gen left files that are not committed"; exit 1; }
+
+# Every table has an entry in backend/internal/retention/registry.json. Part of
+# make test as well; this is the check on its own. Needs Docker.
+retention:
+	cd backend && go test -count=1 ./internal/retention/
+
+# buf breaking against origin/main (fetch it first). make lint runs it too.
+proto-breaking:
+	scripts/proto-breaking.sh
+
+# The TypeScript half: the client's type check and tests, the app's lint (with
+# the strings check), type check and tests, the admin's build and tests, and the
+# e2e package's type check.
+typescript: app-lint app-test admin-lint admin-test
+	pnpm --filter @issho/api-client typecheck
+	pnpm --filter @issho/api-client test
+	pnpm --filter @issho/e2e typecheck
+
+# The app's strings: en.json and vi.json hold the same keys and none is unused.
+strings:
+	pnpm --filter @issho/app strings
+
+# The backend's container image builds and holds api and worker. Needs Docker.
+image:
+	scripts/image.sh
+
+# Playwright against the API binary and the web build, on free ports. Starts
+# neither Supabase nor a database. See e2e/README.md.
+e2e:
+	scripts/e2e.sh
+
+# The workflow files are valid (actionlint, pinned in tools/go.mod) and
+# ci.yml keeps its required checks, skips and no-retry rule.
+ci-lint:
+	go tool actionlint
+	scripts/ci-workflow.test.sh
+
+# The path filter that lets a job skip and still report as passing.
+ci-test:
+	scripts/ci-changes.test.sh
+
+lint: ci-lint
+test: ci-test

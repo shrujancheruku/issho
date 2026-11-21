@@ -27,6 +27,8 @@
 | `packages/api-client/` | The generated TypeScript client of the API ([README](packages/api-client/README.md)) |
 | `apps/` | The pnpm workspace's apps, `apps/app` and `apps/admin`, each added by its own ticket |
 | `scripts/` | The tracker check, the `buf breaking` wrapper and the brand generators |
+| [`e2e/`](e2e/README.md) | The Playwright tests, run against the API and the web build by `make e2e` |
+| [`.github/workflows/`](.github/workflows/README.md) | CI's required checks, and how a job that skips still passes |
 | `tools/` | Go tools pinned for the repo (gitleaks, goose, sqlc, buf and its Go plugins) |
 | [`CLAUDE.md`](CLAUDE.md), `.claude/skills/` | Instructions for AI coding agents, and the official Supabase agent skills |
 | `.githooks/` | Git hooks: secret scan (pre-commit) and commit-message lint (commit-msg). Enable with `make setup`. |

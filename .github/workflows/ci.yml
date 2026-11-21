@@ -1,15 +1,29 @@
 name: ci
 
-# v1's build, test and image jobs went with v1 (#587); v2's are added by the
-# build tickets that need them.
+# The required checks (docs/spec/quality.md, "What CI requires"): each job's id
+# is its check's name, and each is a thin call to a make target, so what runs
+# here runs the same on a laptop. scripts/ci-workflow.test.sh (part of make lint)
+# keeps the names, the skips, the pins and the no-retry rule.
+#
+# A job whose paths a change leaves untouched skips, and a skipped job reports
+# as passing, so every job below can be a required check. The `changes` job
+# decides which run (scripts/ci-changes.sh). A workflow-level `paths:` filter
+# would leave the checks pending forever instead.
 on:
   push:
     branches: [main]
   pull_request:
+    # labeled and unlabeled so that adding `breaking-ok` re-runs the PR and
+    # proto-breaking skips; the other types are the defaults.
+    types: [opened, synchronize, reopened, labeled, unlabeled]
   # Dispatched by release-please.yml on the release PR's branch: PRs opened
   # with GITHUB_TOKEN don't trigger workflows, so without this the release PR
   # would never get its required checks.
   workflow_dispatch:
+
+# The jobs only read the repository; none writes to it or needs a secret.
+permissions:
+  contents: read
 
 # A newer push to a PR cancels its older run. Each push run on main gets its
 # own group (by SHA), since GitHub drops a *queued* run when a newer one joins
@@ -61,3 +75,195 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
       - run: git fetch --no-tags origin main && pnpm exec commitlint --config commitlint.config.mjs --from "$(git merge-base origin/main HEAD)" --to HEAD
         if: github.event_name == 'workflow_dispatch'
+
+  # Decides which filtered jobs have something to check. On anything but a PR
+  # (a push to main, a dispatched release PR) every job runs. If this job fails,
+  # the jobs below run instead of skipping, so a broken filter can't turn the
+  # checks into passes.
+  changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      boundaries: ${{ steps.filter.outputs.boundaries }}
+      e2e: ${{ steps.filter.outputs.e2e }}
+      image: ${{ steps.filter.outputs.image }}
+      native-bundle: ${{ steps.filter.outputs.native-bundle }}
+      policy: ${{ steps.filter.outputs.policy }}
+      proto-breaking: ${{ steps.filter.outputs.proto-breaking }}
+      retention: ${{ steps.filter.outputs.retention }}
+      rpc-auth: ${{ steps.filter.outputs.rpc-auth }}
+      strings: ${{ steps.filter.outputs.strings }}
+      typescript: ${{ steps.filter.outputs.typescript }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - id: filter
+        shell: bash
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          if [ "$EVENT" = pull_request ]; then
+            git diff --name-only "$BASE"...HEAD | scripts/ci-changes.sh
+          else
+            scripts/ci-changes.sh --all < /dev/null
+          fi | tee -a "$GITHUB_OUTPUT"
+
+  # `make gen` leaves no diff.
+  codegen:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+        with: { go: "true", node: "true" }
+      - run: make codegen
+
+  # Formatting, vet, the clock lint, buf lint and every Go test. The tests start
+  # a throwaway Postgres in Docker, which the runner has.
+  backend:
+    needs: changes
+    if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.backend == 'true') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+        with: { go: "true" }
+      - run: make backend
+
+  boundaries:
+    needs: changes
+    if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.boundaries == 'true') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+        with: { go: "true" }
+      - run: make boundaries
+
+  # A number in `policy` with no link to its document, or a rule's number
+  # written as a literal elsewhere.
+  policy:
+    needs: changes
+    if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.policy == 'true') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+        with: { go: "true" }
+      - run: make policy-lint
+
+  # An RPC in proto/ with no declared access rule.
+  rpc-auth:
+    needs: changes
+    if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.rpc-auth == 'true') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+        with: { go: "true" }
+      - run: make rpc-auth
+
+  # A table with no entry in the retention registry. Needs Docker, like the tests.
+  retention:
+    needs: changes
+    if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.retention == 'true') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+        with: { go: "true" }
+      - run: make retention
+
+  # buf breaking against main. The `breaking-ok` label skips it (only the founder
+  # adds that label), and skipping reports as passing. The full checkout holds
+  # origin/main, which the check needs: without it the check fails, never skips.
+  proto-breaking:
+    needs: changes
+    if: ${{ !cancelled() && !contains(github.event.pull_request.labels.*.name, 'breaking-ok') && (needs.changes.result != 'success' || needs.changes.outputs.proto-breaking == 'true') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/setup
+        with: { go: "true" }
+      - run: make proto-breaking
+
+  # Lint, type check and tests for the member app, the admin, the client and the
+  # e2e package.
+  typescript:
+    needs: changes
+    if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.typescript == 'true') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+        with: { node: "true" }
+      - run: make typescript
+
+  # A display language missing a key, or a key nothing uses.
+  strings:
+    needs: changes
+    if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.strings == 'true') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+        with: { node: "true" }
+      - run: make strings
+
+  # The app bundles for iOS and Android, and the check fails on a web-only import.
+  native-bundle:
+    needs: changes
+    if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.native-bundle == 'true') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+        with: { node: "true" }
+      - run: make native-bundle native-bundle-test
+
+  # One container image holds the api and the worker.
+  image:
+    needs: changes
+    if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.image == 'true') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - run: make image
+
+  # Playwright against the API binary and the web build, both started by the
+  # run. The one retry is Playwright's own (e2e/playwright.config.ts); a test
+  # that needs it is reported as flaky.
+  e2e:
+    needs: changes
+    if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.e2e == 'true') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+        with: { go: "true", node: "true" }
+      # The browser needs system libraries the runner doesn't have; the script's
+      # own install covers a laptop, which has them.
+      - run: pnpm --filter @issho/e2e exec playwright install --with-deps chromium
+      - run: make e2e
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: failure()
+        with:
+          name: e2e-traces
+          path: e2e/test-results
+          if-no-files-found: ignore

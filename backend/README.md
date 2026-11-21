@@ -22,8 +22,10 @@ One Go module (`github.com/shrujancheruku/issho/backend`), part of the root `go.
 | `internal/jobs` | The River client the worker runs and the domain packages enqueue through |
 | `internal/policy` | Every number in the spec's rules, as a constant linked to its document (see "Policy") |
 | `internal/staff` | The queue: items with a due time and a written default, and the River job that applies the default (see "The queue") |
+| `internal/retention` | The registry of every table's personal data and lifetime, and the check that none is missing (see "Retention") |
 | `internal/serve` | The lifecycle both commands share |
 | `internal/testdb` | A schema, or a whole database, per test in a throwaway Postgres |
+| `Dockerfile` | One image holding `api` and `worker` (see "The image") |
 | `tools/policylint` | The check behind `make policy-lint` |
 | `tools/boundaries` | The check behind `make boundaries` |
 
@@ -96,6 +98,14 @@ Each outside service (email, then push, Places and the models) follows the patte
 4. **It is constructed only in `cmd/`** (`cmd/worker/email.go`) from environment variables, and handed to the packages that take the interface. With no key set it is a `NotConfigured` stand-in that fails each send, so a local process still runs.
 
 `make boundaries` (part of `make lint`) fails a package that imports another seam's internals, and anything outside `cmd/` that imports a marked implementation. See `tools/boundaries/README.md`.
+
+## Retention
+
+`internal/retention/registry.json` lists every table with what personal data it holds and its lifetime, and `make retention` (CI's `retention` check, also part of `make test`) fails on a table with no entry, or an entry for a table that is gone. A migration that adds a table adds its entry in the same PR. See `internal/retention/README.md`.
+
+## The image
+
+`Dockerfile` builds `api` and `worker` into one image at `/usr/local/bin`, on a distroless base that runs as a non-root user; the command defaults to `api`, and the deploy runs the worker by naming its command. `make image` builds it, checks both binaries are in it and removes it again (`scripts/image.sh`). `--build-arg VERSION=1.2.3` is what the API's health check reports.
 
 ## Testing
 
