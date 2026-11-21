@@ -108,6 +108,7 @@ func Check(root string) ([]Finding, error) {
 // seamRoot is the top package of a path under internal/: internal/email for
 // internal/email/resend.
 func seamRoot(target string) string {
+	//policylint:ignore a split limit on path segments, not a group size
 	parts := strings.SplitN(target, "/", 3)
 	return path.Join(parts[0], parts[1])
 }
