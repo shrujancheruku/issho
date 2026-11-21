@@ -45,7 +45,7 @@ func TestJobEnqueuedInATransactionRunsOnlyAfterCommit(t *testing.T) {
 	w := &markWorker{worked: make(chan string, 10)}
 	workers := jobs.NewWorkers(clock.NewFake(time.Date(2026, 11, 21, 9, 0, 0, 0, time.UTC)), pool, staff.NewKinds())
 	river.AddWorker(workers, w)
-	client, err := jobs.New(pool, workers, nil, clock.NewFake(time.Date(2026, 11, 22, 9, 0, 0, 0, time.UTC)))
+	client, err := jobs.New(pool, workers, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -138,7 +138,7 @@ func TestWorkerAppliesAnItemsDefaultOnceItIsDue(t *testing.T) {
 		return nil
 	})
 	clk := clock.NewFake(time.Date(2026, 1, 5, 9, 0, 0, 0, time.UTC))
-	client, err := jobs.New(pool, jobs.NewWorkers(clk, pool, kinds), nil, clk)
+	client, err := jobs.New(pool, jobs.NewWorkers(clk, pool, kinds), nil)
 	if err != nil {
 		t.Fatal(err)
 	}

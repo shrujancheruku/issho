@@ -47,17 +47,35 @@ func logRequests(log *slog.Logger, clk clock.Clock, next http.Handler) http.Hand
 		start := clk.Now()
 		s := &seen{route: unmatched}
 		rec := &statusRecorder{ResponseWriter: w, status: http.StatusOK}
+		defer func() {
+			// A panic stops here rather than reaching net/http, whose own panic
+			// log prints the caller's address and the panic's value, which can
+			// quote what a person sent. The request still gets its one line, as a
+			// 500. The panic's value is dropped (reporting it is Sentry's job).
+			v := recover()
+			if v != nil {
+				if !rec.wrote {
+					rec.WriteHeader(http.StatusInternalServerError)
+				} else {
+					rec.status = http.StatusInternalServerError
+				}
+			}
+			attrs := []any{
+				"route", s.route,
+				"status", rec.status,
+				"duration_ms", float64(clk.Now().Sub(start)) / float64(time.Millisecond),
+			}
+			if s.account != "" {
+				attrs = append(attrs, "account", s.account)
+			}
+			log.Info("request", attrs...)
+			if v == http.ErrAbortHandler {
+				// The handler meant to cut the connection; net/http does that
+				// without logging anything.
+				panic(v)
+			}
+		}()
 		next.ServeHTTP(rec, r.WithContext(context.WithValue(r.Context(), seenKey{}, s)))
-
-		attrs := []any{
-			"route", s.route,
-			"status", rec.status,
-			"duration_ms", float64(clk.Now().Sub(start)) / float64(time.Millisecond),
-		}
-		if s.account != "" {
-			attrs = append(attrs, "account", s.account)
-		}
-		log.Info("request", attrs...)
 	})
 }
 
@@ -65,11 +83,22 @@ func logRequests(log *slog.Logger, clk clock.Clock, next http.Handler) http.Hand
 type statusRecorder struct {
 	http.ResponseWriter
 	status int
+	// wrote is whether the response has started, after which a panic can no
+	// longer change the status the client sees.
+	wrote bool
 }
 
 func (r *statusRecorder) WriteHeader(code int) {
-	r.status = code
+	if !r.wrote {
+		r.status = code
+		r.wrote = true
+	}
 	r.ResponseWriter.WriteHeader(code)
+}
+
+func (r *statusRecorder) Write(p []byte) (int, error) {
+	r.wrote = true
+	return r.ResponseWriter.Write(p)
 }
 
 // Unwrap lets http.ResponseController reach the real writer for flushing, which

@@ -3,6 +3,7 @@ package logging_test
 import (
 	"bytes"
 	"encoding/json"
+	"log/slog"
 	"strings"
 	"testing"
 
@@ -30,17 +31,37 @@ func TestNewWritesOneJSONObjectPerLineToItsWriter(t *testing.T) {
 	}
 }
 
-// A library's failure line keeps its kind and job, and loses the error's text.
-func TestWithoutErrorsDropsTheErrorAttributeOnly(t *testing.T) {
+// A library's line keeps only the attributes named, so an error's text or a
+// panic's value it attaches, under any key, is dropped; a line the filter names
+// is dropped whole.
+func TestRestrictedKeepsOnlyTheNamedAttributesAndDropsNamedLines(t *testing.T) {
 	var buf bytes.Buffer
-	log := logging.WithoutErrors(logging.New(&buf, "worker")).With("job_id", 7)
-	log.Error("failed", "error", "no mailbox ana@example.com", "kind", "send")
+	log := logging.Restricted(logging.New(&buf, "worker"), []string{"job_id", "kind"},
+		func(_ slog.Level, has func(string) bool) bool { return has("panic_val") }).With("job_id", 7, "metadata", "ana@example.com")
+	log.Error("failed", "error", "no mailbox ana@example.com", "err", "ana@example.com", "kind", "send")
+	log.Error("recovered", "panic_val", "ana@example.com")
 
 	out := buf.String()
-	if strings.Contains(out, "ana@example.com") || strings.Contains(out, `"error"`) {
-		t.Errorf("error text survived: %s", out)
+	if strings.Contains(out, "ana@example.com") || strings.Contains(out, "recovered") {
+		t.Errorf("a dropped attribute or line survived: %s", out)
 	}
 	if !strings.Contains(out, `"kind":"send"`) || !strings.Contains(out, `"job_id":7`) || !strings.Contains(out, `"cmd":"worker"`) {
-		t.Errorf("other attributes were lost: %s", out)
+		t.Errorf("a kept attribute was lost: %s", out)
+	}
+}
+
+// net/http's error log is free text that can name the client's address (a
+// failed TLS handshake from 203.0.113.9, say), so the line keeps that something
+// went wrong and nothing of the text.
+func TestServerErrorLogKeepsNoneOfNetHTTPsText(t *testing.T) {
+	var buf bytes.Buffer
+	logging.ServerErrorLog(logging.New(&buf, "api")).Printf("http: TLS handshake error from %s: EOF", "203.0.113.9:4431")
+
+	out := buf.String()
+	if strings.Contains(out, "203.0.113.9") || strings.Contains(out, "handshake") {
+		t.Errorf("net/http's text survived: %s", out)
+	}
+	if !strings.Contains(out, `"msg":"http server error"`) || !strings.Contains(out, `"cmd":"api"`) {
+		t.Errorf("no http server error line: %s", out)
 	}
 }

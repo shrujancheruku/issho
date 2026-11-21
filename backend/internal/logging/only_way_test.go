@@ -18,11 +18,17 @@ var forbidden = map[string]map[string]bool{
 	"log": {"*": true},
 	"fmt": {"Print": true, "Printf": true, "Println": true},
 	"log/slog": {
-		"New": true, "NewTextHandler": true, "NewJSONHandler": true, "Default": true, "SetDefault": true,
+		"New": true, "NewTextHandler": true, "NewJSONHandler": true, "NewLogLogger": true, "Default": true, "SetDefault": true,
 		"Debug": true, "Info": true, "Warn": true, "Error": true, "Log": true, "LogAttrs": true,
 		"DebugContext": true, "InfoContext": true, "WarnContext": true, "ErrorContext": true,
 	},
 	"os": {"Stdout": true, "Stderr": true},
+}
+
+// testMayUse is what a test may name anyway: capturing the standard logger is
+// how a test proves nothing reaches it.
+var testMayUse = map[string]map[string]bool{
+	"log": {"SetOutput": true, "Writer": true},
 }
 
 // A helper is the only way a package logs (docs/spec/operations.md, "Errors and
@@ -71,7 +77,23 @@ func TestOnlyTheHelperMakesALoggerOrWritesToTheProcessOutput(t *testing.T) {
 			}
 			names[local] = path
 		}
+		isTest := strings.HasSuffix(rel, "_test.go")
 		ast.Inspect(f, func(n ast.Node) bool {
+			// The builtins print and println write to stderr.
+			if call, ok := n.(*ast.CallExpr); ok {
+				if id, ok := call.Fun.(*ast.Ident); ok && id.Obj == nil && (id.Name == "print" || id.Name == "println") {
+					t.Errorf("%s: %s: log through the *slog.Logger you are handed", fset.Position(id.Pos()), id.Name)
+				}
+			}
+			// An http.Server with no ErrorLog writes net/http's errors to the
+			// standard logger, client addresses and all.
+			if lit, ok := n.(*ast.CompositeLit); ok {
+				if sel, ok := lit.Type.(*ast.SelectorExpr); ok && sel.Sel.Name == "Server" {
+					if id, ok := sel.X.(*ast.Ident); ok && names[id.Name] == "net/http" && !setsField(lit, "ErrorLog") {
+						t.Errorf("%s: http.Server without ErrorLog: set it to logging.ServerErrorLog", fset.Position(lit.Pos()))
+					}
+				}
+			}
 			sel, ok := n.(*ast.SelectorExpr)
 			if !ok {
 				return true
@@ -82,6 +104,9 @@ func TestOnlyTheHelperMakesALoggerOrWritesToTheProcessOutput(t *testing.T) {
 			}
 			bad := forbidden[names[id.Name]]
 			if bad == nil || !(bad["*"] || bad[sel.Sel.Name]) {
+				return true
+			}
+			if isTest && testMayUse[names[id.Name]][sel.Sel.Name] {
 				return true
 			}
 			if names[id.Name] == "os" && mainMayUseStdout(rel) {
@@ -98,4 +123,15 @@ func TestOnlyTheHelperMakesALoggerOrWritesToTheProcessOutput(t *testing.T) {
 	if checked == 0 {
 		t.Fatal("checked no files: the walk is looking in the wrong place")
 	}
+}
+
+func setsField(lit *ast.CompositeLit, name string) bool {
+	for _, e := range lit.Elts {
+		if kv, ok := e.(*ast.KeyValueExpr); ok {
+			if k, ok := kv.Key.(*ast.Ident); ok && k.Name == name {
+				return true
+			}
+		}
+	}
+	return false
 }

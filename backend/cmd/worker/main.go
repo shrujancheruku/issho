@@ -57,9 +57,8 @@ func run(ctx context.Context, log *slog.Logger) error {
 	// The real clock is built here and only here (tools/clockcheck enforces it);
 	// everything below takes it as a clock.Clock. No domain package has a job
 	// yet; each registers its queue kinds on kinds and its workers here.
-	clk := clock.Real{}
 	kinds := staff.NewKinds()
-	client, err := jobs.New(pool, jobs.NewWorkers(clk, pool, kinds), log, clk)
+	client, err := jobs.New(pool, jobs.NewWorkers(clock.Real{}, pool, kinds), log)
 	if err != nil {
 		return err
 	}

@@ -6,6 +6,7 @@ package logging
 import (
 	"context"
 	"io"
+	"log"
 	"log/slog"
 )
 
@@ -20,31 +21,84 @@ func New(w io.Writer, cmd string) *slog.Logger {
 // reaching for slog's global default.
 func Discard() *slog.Logger { return slog.New(slog.DiscardHandler) }
 
-// WithoutErrors returns log with the "error" attribute dropped from every line.
-// It is for a library that logs through a logger it is given (River, say) and
-// reports a failure with the error's text, which can quote what a person gave
-// us, an email in a failed send for one. The other attributes stay.
-func WithoutErrors(log *slog.Logger) *slog.Logger {
-	return slog.New(errorStripper{log.Handler()})
+// Restricted is the logger for a library that logs through a logger it is
+// given (River, say) and attaches what it likes: an error's text, a panic's
+// value, which can quote what a person gave us. Each line keeps only the
+// attributes named in keep, so one the library adds later is dropped rather
+// than leaked. drop, when not nil, discards a whole line: it gets the line's
+// level and reports whether the line, before filtering, has an attribute.
+func Restricted(l *slog.Logger, keep []string, drop func(level slog.Level, has func(key string) bool) bool) *slog.Logger {
+	kept := map[string]bool{}
+	for _, k := range keep {
+		kept[k] = true
+	}
+	return slog.New(restricted{Handler: l.Handler(), keep: kept, drop: drop})
 }
 
-type errorStripper struct{ slog.Handler }
+type restricted struct {
+	slog.Handler
+	keep map[string]bool
+	drop func(slog.Level, func(string) bool) bool
+	// with is the keys the library attached with With, which drop sees too.
+	with []string
+}
 
-func (s errorStripper) Handle(ctx context.Context, r slog.Record) error {
-	kept := slog.NewRecord(r.Time, r.Level, r.Message, r.PC)
+func (h restricted) Handle(ctx context.Context, r slog.Record) error {
+	if h.drop != nil {
+		has := func(key string) bool {
+			for _, k := range h.with {
+				if k == key {
+					return true
+				}
+			}
+			found := false
+			r.Attrs(func(a slog.Attr) bool {
+				found = a.Key == key
+				return !found
+			})
+			return found
+		}
+		if h.drop(r.Level, has) {
+			return nil
+		}
+	}
+	out := slog.NewRecord(r.Time, r.Level, r.Message, r.PC)
 	r.Attrs(func(a slog.Attr) bool {
-		if a.Key != "error" {
-			kept.AddAttrs(a)
+		if h.keep[a.Key] {
+			out.AddAttrs(a)
 		}
 		return true
 	})
-	return s.Handler.Handle(ctx, kept)
+	return h.Handler.Handle(ctx, out)
 }
 
-func (s errorStripper) WithAttrs(attrs []slog.Attr) slog.Handler {
-	return errorStripper{s.Handler.WithAttrs(attrs)}
+func (h restricted) WithAttrs(attrs []slog.Attr) slog.Handler {
+	var kept []slog.Attr
+	with := append([]string(nil), h.with...)
+	for _, a := range attrs {
+		with = append(with, a.Key)
+		if h.keep[a.Key] {
+			kept = append(kept, a)
+		}
+	}
+	return restricted{Handler: h.Handler.WithAttrs(kept), keep: h.keep, drop: h.drop, with: with}
 }
 
-func (s errorStripper) WithGroup(name string) slog.Handler {
-	return errorStripper{s.Handler.WithGroup(name)}
+func (h restricted) WithGroup(name string) slog.Handler {
+	return restricted{Handler: h.Handler.WithGroup(name), keep: h.keep, drop: h.drop, with: h.with}
+}
+
+// ServerErrorLog is the error log for an http.Server. Without one net/http
+// writes to the standard logger, outside this helper, and its messages are free
+// text that can name the client's address ("TLS handshake error from …"). Each
+// message becomes a fixed "http server error" line that keeps none of the text.
+func ServerErrorLog(l *slog.Logger) *log.Logger {
+	return log.New(serverErrors{l}, "", 0)
+}
+
+type serverErrors struct{ log *slog.Logger }
+
+func (s serverErrors) Write(p []byte) (int, error) {
+	s.log.Warn("http server error")
+	return len(p), nil
 }

@@ -45,8 +45,8 @@ Tests go through HTTP with a generated Connect client. `internal/rpc/access_test
 
 Logs carry the account's ID and the route and nothing else about a person ([Technical operations](../docs/spec/operations.md#errors-and-logs)). Each command builds its logger once with `logging.New(os.Stdout, "api")`, one JSON object per line, and hands it down; no package makes a logger of its own or writes to stdout, which `internal/logging/only_way_test.go` enforces, so a test that builds one on a buffer captures a whole run.
 
-- **API:** one `request` line per request with `route`, `status`, `duration_ms` and, when the caller is signed in, `account`. It is built from those fields, never from the request, so an email in a body, a forwarded-for header or the caller's address can't reach it (`internal/rpc/requestlog_test.go`). A path no service owns logs as `unmatched`.
-- **Worker:** one `job` line per job with `kind`, `outcome` (`done` or `failed`) and `duration_ms`; never the arguments or the error's text (`internal/jobs/joblog_test.go`).
+- **API:** one `request` line per request with `route`, `status`, `duration_ms` and, when the caller is signed in, `account`. It is built from those fields, never from the request, so an email in a body, a forwarded-for header or the caller's address can't reach it (`internal/rpc/requestlog_test.go`). A path no service owns logs as `unmatched`; a handler that panics logs as a 500, without the caller's address or the panic's value, and net/http's own errors go through `logging.ServerErrorLog`, which keeps none of their text (`internal/rpc/panic_test.go`).
+- **Worker:** exactly one `job` line per job with `kind` and `outcome` (`done`, `failed` or `panicked`); never the arguments, the error's text or a panic's value, and River's own lines about the job are dropped (`internal/jobs/joblog_test.go`).
 
 See `internal/logging/README.md`, `internal/rpc/README.md` and `internal/jobs/README.md`.
 
