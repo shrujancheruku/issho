@@ -4,6 +4,19 @@ How a spec gets built here. `/flow:build` follows this file. Tickets are GitHub 
 
 A build milestone takes its tickets from the active **work parent** (see "Planning rules" in `docs/agents/issue-tracker.md`), in its sub-issue order, and nothing else. Grouping (several tickets in one change, or one ticket split) comes from the parent's or the ticket's body, never from guesswork.
 
+## While v2's Foundation is being built
+
+The rest of this file was written for v1. The last Foundation ticket rewrites it for v2 and removes this section. Until then, where this section and the rest differ, this section wins. The bar it points at is [The quality bar and test strategy](../spec/quality.md); the order is [The build order](../spec/build-order.md).
+
+- **Verify.** From the worktree root, run each of `make gen`, `make secrets-scan`, `make lint` and `make test` that exists at the worktree's base or that the ticket adds. A target that doesn't exist yet is named in the done report; it is not a failure. `make setup` and `make secrets-scan` exist throughout: a ticket that breaks either is not done.
+- **The database is never skipped.** From the repo-layout ticket on, `make test` starts its own throwaway Postgres and needs Docker. The `TEST_DATABASE_URL` and `make test-db` lines under "Verify" are v1's and don't apply.
+- **Nothing hosted.** Workers never connect to `issho-dev` or any hosted service, and never read `.env*`. Setting up or wiping a hosted project is `human-only`.
+- **Native.** From the local-builds ticket on, a ticket that changes a screen shows each state on the iOS simulator and the Android emulator, as well as the web ([Native along the way](../spec/quality.md#native-along-the-way)). The simulator, the emulator and Metro's port are shared by every worktree, so this is a standing exclusive hold: one ticket at a time runs a native build.
+- **Done.** A ticket is done by the list in [When a build ticket is done](../spec/quality.md#when-a-build-ticket-is-done). The `check` worker reads that list, the ticket and the spec document the ticket cites.
+- **Review checks.** The v1 instruction files named under "Review checks" (`apps/mobile/AGENTS.md`, `docs/contributing.md`, `docs/architecture.md`) go with the v1 deletion. Read the spec document instead.
+- **Required checks.** The integration PR needs whatever checks exist on it to pass. The required-checks ticket lists the new names for the founder to set in the `main` ruleset.
+- **Risk paths.** `docs/agents/flow.json` already holds v2's: `policy`, `matching`, `safety`, `retention`, migrations, the RPC access rules, CI and deploy.
+
 ## Layers
 
 - **Procedure:** Matt Pocock's `/implement-spec`, unmodified. Read its `SKILL.md` and follow it.
@@ -61,7 +74,7 @@ The merger, checker, fixer and reviewer start the same way: a `--task-title` of 
 
 ## Holds
 
-Before dispatching a ticket, compare its touch map (the paths in its "What to build" section) with:
+Before dispatching a ticket, compare its touch map (the paths in its "Expected paths" section) with:
 
 - open PRs,
 - tickets in progress,
