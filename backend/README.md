@@ -15,8 +15,10 @@ One Go module (`github.com/shrujancheruku/issho/backend`), part of the root `go.
 | `internal/cityclock` | The one city-clock helper: a city's date, "HH:MM on a date", part of the day, midnight-crossing windows |
 | `tools/clockcheck` | The lint check that fails on `time.Now`, `time.Since` and `time.Until` outside `internal/clock`, and on `clock.Real` outside `cmd/` |
 | `internal/jobs` | The River client the worker runs and the domain packages enqueue through |
+| `internal/policy` | Every number in the spec's rules, as a constant linked to its document (see "Policy") |
 | `internal/serve` | The lifecycle both commands share |
 | `internal/testdb` | A schema, or a whole database, per test in a throwaway Postgres |
+| `tools/policylint` | The check behind `make policy-lint` |
 
 ## The commands
 
@@ -50,6 +52,10 @@ Code never asks the system for the time. It takes a `clock.Clock`: `cmd/worker` 
 
 Every time on a city's clock goes through `cityclock.New(zone, dayParts)`, built from the city's IANA time zone and its clock hours of morning, afternoon and evening (a city setting). Its methods take an instant, so they are pure and testable with a fake clock: `Date` (the city's date), `At` (an instant from a date and "HH:MM"), `PartOfDay` and `InWindow` (a from-to window that may cross midnight, from inclusive, to exclusive). `At` puts a time the clocks skip after the gap and takes the first of a time they repeat.
 
+## Policy
+
+Every number in the spec's rules (a group of 3 to 6, a 48-hour invitation) is a constant in `internal/policy`, with a comment linking the spec document that sets it; none is in the database. A number changes only by a PR that edits the document and the constant together. `make policy-lint`, which `make lint` runs, fails on a constant with no link or a dead one, and on a policy number written as a literal in another package. See `internal/policy/README.md` and `tools/policylint/README.md`.
+
 ## Testing
 
 Run from the repo root:
@@ -57,6 +63,7 @@ Run from the repo root:
 ```sh
 make test   # go test -race ./... in backend/
 make lint   # gofmt and go vet
+make policy-lint   # the policy lint, which make lint also runs
 ```
 
 `make test` needs Docker running. The first `testdb.New(t)` in a test binary starts a Postgres 17 container (removed when the binary exits) and returns a pool whose `search_path` is a fresh schema, dropped when the test ends, so tests may write the same keys in parallel. A test that runs the migrations, which use fixed schema names, calls `testdb.NewDatabase(t)` instead for a database of its own, then `db.Up`. With Docker stopped or unreachable (`DOCKER_HOST`) the test fails; no flag or environment variable skips the database. Tests use it directly rather than mocking stores.

@@ -52,3 +52,12 @@ secrets-scan:
 tracker-check:
 	scripts/tracker-check.test.sh
 	scripts/tracker-check.sh
+
+# Every number in the rules is a constant in backend/internal/policy, linked to
+# its spec document (#596). make lint runs this; the rule is stated once, in
+# backend/tools/policylint.
+.PHONY: policy-lint
+policy-lint:
+	cd backend && go run ./tools/policylint -root ..
+
+lint: policy-lint
