@@ -90,6 +90,20 @@ admin-lint:
 admin-test:
 	pnpm --filter @issho/admin test
 
+# The member app, apps/app (#600): expo lint (which bans string literals in
+# screen files), the strings check (en.json and vi.json hold the same keys, none
+# unused) and the type check; and its Jest tests.
+.PHONY: app-lint app-test
+app-lint:
+	pnpm --filter @issho/app lint
+	pnpm --filter @issho/app typecheck
+
+app-test:
+	pnpm --filter @issho/app test
+
+lint: app-lint
+test: app-test
+
 # A package reaches another only through its exported Go API, and outside
 # services are wired only in cmd/ (#599). make lint runs this; the rule is stated
 # once, in backend/tools/boundaries.
