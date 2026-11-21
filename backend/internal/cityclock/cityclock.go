@@ -35,7 +35,8 @@ type DayParts struct{ Morning, Afternoon, Evening Span }
 
 // City is one city's clock. Build it with New.
 type City struct {
-	loc   *time.Location
+	loc *time.Location
+	//policylint:ignore the three parts of the day (morning, afternoon, evening), not a group size
 	parts [3]struct {
 		part     Part
 		from, to int // minutes after midnight
@@ -140,6 +141,8 @@ func sameWall(a, b time.Time) bool {
 // minutes parses a strict "HH:MM" into minutes after midnight.
 func minutes(hhmm string) (int, error) {
 	t, err := time.Parse("15:04", hhmm)
+	// time.Parse accepts "9:05" for "15:04"; the length keeps it to HH:MM.
+	//policylint:ignore the length of "HH:MM", not a rule's number
 	if err != nil || len(hhmm) != 5 {
 		return 0, fmt.Errorf("cityclock: clock time %q is not HH:MM", hhmm)
 	}
