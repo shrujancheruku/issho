@@ -15,8 +15,10 @@ One Go module (`github.com/shrujancheruku/issho/backend`), part of the root `go.
 | `gen/issho` | The Go that buf generates from `proto/`: the messages and the ConnectRPC service stubs. Generated: never edit it |
 | `internal/rpc` | The API's services and the access interceptor; `rpc/rpcauth` is the check behind `cmd/rpcauth` |
 | `internal/jobs` | The River client the worker runs and the domain packages enqueue through |
+| `internal/policy` | Every number in the spec's rules, as a constant linked to its document (see "Policy") |
 | `internal/serve` | The lifecycle both commands share |
 | `internal/testdb` | A schema, or a whole database, per test in a throwaway Postgres |
+| `tools/policylint` | The check behind `make policy-lint` |
 
 ## The commands
 
@@ -54,6 +56,10 @@ SQL is written by hand in `db/queries/*.sql` and compiled by sqlc into `gen/dbge
 
 Background work is River's, in Postgres. `internal/jobs.New` builds the client; `cmd/worker` starts it on a direct (or session-pooler) connection in `WORKER_DATABASE_URL`, since River listens for new jobs with LISTEN/NOTIFY, which a transaction pooler breaks. A job is enqueued with `client.InsertTx` in the transaction that causes it: it is worked only after that transaction commits and never if it rolls back (`internal/jobs/jobs_test.go`). Each domain package defines its own job args and worker and registers the worker on the bundle from `jobs.NewWorkers()`. That bundle holds a placeholder worker, because River won't start with none; the first real job replaces it.
 
+## Policy
+
+Every number in the spec's rules (a group of 3 to 6, a 48-hour invitation) is a constant in `internal/policy`, with a comment linking the spec document that sets it; none is in the database. A number changes only by a PR that edits the document and the constant together. `make policy-lint`, which `make lint` runs, fails on a constant with no link or a dead one, and on a policy number written as a literal in another package. See `internal/policy/README.md` and `tools/policylint/README.md`.
+
 ## Testing
 
 Run from the repo root:
@@ -61,6 +67,7 @@ Run from the repo root:
 ```sh
 make test   # go test -race ./... in backend/, and the api-client's tests
 make lint   # gofmt, go vet, buf lint, buf breaking, rpc-auth and the api-client's type check
+make policy-lint   # the policy lint, which make lint also runs
 ```
 
 `make test` needs Docker running. The first `testdb.New(t)` in a test binary starts a Postgres 17 container (removed when the binary exits) and returns a pool whose `search_path` is a fresh schema, dropped when the test ends, so tests may write the same keys in parallel. A test that runs the migrations, which use fixed schema names, calls `testdb.NewDatabase(t)` instead for a database of its own, then `db.Up`. With Docker stopped or unreachable (`DOCKER_HOST`) the test fails; no flag or environment variable skips the database. Tests use it directly rather than mocking stores.
