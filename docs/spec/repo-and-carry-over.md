@@ -6,7 +6,8 @@ From [Where v2 lives and what carries over](https://github.com/shrujancheruku/is
 |---|---|
 | The repo | v2 starts clean in this repo. The spec's tickets, research branches, ADRs and tracker setup are here and link to each other by issue number. |
 | v1's code | The last v1 commit is tagged `v1-final`, then one PR deletes `apps/`, `backend/`, `proto/`, `packages/`, `site/`, `supabase/`, `data/`, `config/` and the v1-only docs (architecture, deploy, hosted Supabase, Google Maps, design system, onboarding). No legacy folder: it would still be linted, updated and copied from. That PR is the first ticket of the build. |
-| v1's history and docs | History, tags, the ADRs and `docs/decisions-2026.md` stay. The research and prototype branches stay unmerged. |
+| v1's history and docs | History and tags stay. The research and prototype branches stay unmerged. v1's ADRs and its decision log (`docs/decisions-2026.md`) are deleted: [`docs/adr/`](../adr/) is written anew for v2, keeping the tombstone and the owner as operator ([The ADRs owed and the fate of v1's plan](https://github.com/shrujancheruku/issho/issues/575)). |
+| v1's tracker | Every v1 issue and PR is closed unplanned, [Road to the Pilot](https://github.com/shrujancheruku/issho/issues/433) and the old Ideas issue included. None is carried over; the build's tickets are written from the spec. |
 | The spec's form | One document per product area under `docs/spec/`, each section linking its ticket. |
 | Amendments | The documents are the spec. An amendment is a PR that edits the document ([README](README.md#amending-the-spec)). |
 | The glossary | The v2 glossary is the root `GLOSSARY.md`. v1's stays readable at the tag. Until the deletion PR, main holds v2's glossary beside v1's code; v1 work is paused, so nothing reads the pair together. |

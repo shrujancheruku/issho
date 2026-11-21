@@ -24,7 +24,7 @@ How work is planned and tracked. The decision is in the resolution comment of #4
 - **Ticket shape.** Use `.github/ISSUE_TEMPLATE/ticket.md`: what and why; acceptance criteria as behaviour you can observe; expected paths; a required `size:S|M|L` label; blockers wired as native dependencies (see **Blocking**); no references to retired docs. A ticket fits one worker session; an L that isn't on a risk path gets split. The PR-only labels `go` and `breaking-ok` never go on issues.
 - **When a ticket is ready.** Label it `ready-for-agent` only when no decision is left open in it (open decisions go to a wayfinder ticket first), its criteria can be tested, and it has a size label, a parent and wired blockers.
 - **Pilot-bug exception.** A bug found during the Pilot may stand alone, without a parent, and goes to the front of the run order.
-- **Fog and deferred ideas.** In-scope fog stays in the active map's **Not yet specified** section. Ideas beyond any current destination go as bullets in the one pinned Ideas issue (#360), not as an issue each. An idea becomes an issue only when the owner makes it a destination or pulls it into a plan.
+- **Fog and deferred ideas.** In-scope fog stays in the active map's **Not yet specified** section. Ideas beyond any current destination go as bullets in the one pinned Ideas issue (#582), not as an issue each. An idea becomes an issue only when the owner makes it a destination or pulls it into a plan.
 - **Reviews file findings for triage.** A review never files `ready-for-agent` tickets directly. It opens one parent issue of its own, with its findings as sub-issues labelled `needs-triage`. The owner moves each into the work parent (shaped and labelled ready), into the Ideas list, or closes it.
 - **When to re-plan.** At each Pilot checkpoint, reorder open tickets and close stale ones. Before the Pilot, review the plan when each audit-driven milestone finishes.
 
@@ -32,7 +32,7 @@ How work is planned and tracked. The decision is in the resolution comment of #4
 
 `make tracker-check` (`scripts/tracker-check.sh`, needs `gh` logged in) checks the rules above and the hygiene bar (#414). `.github/workflows/tracker-check.yml` runs it every Monday and on demand; a failing run lists the offenders in its log and job summary. It uses only the default `GITHUB_TOKEN`. It fails when:
 
-- an open issue does not have exactly one triage label (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). Exempt: `wayfinder:*` issues, the Dependency Dashboard (#269) and the Ideas issue (#360);
+- an open issue does not have exactly one triage label (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). Exempt: `wayfinder:*` issues, the Dependency Dashboard (#269) and the Ideas issue (#582);
 - a closed issue still carries a triage label. `wontfix` may stay on a closed issue: it records why it was closed;
 - an open issue links `docs/ROADMAP.md` or has an acceptance box mentioning the ROADMAP. A `Moved from ...` provenance line is allowed;
 - a PR merged in the last 8 days closes no issue (`TRACKER_CHECK_DAYS` changes the window). Release-please, Renovate and Dependabot PRs are exempt;

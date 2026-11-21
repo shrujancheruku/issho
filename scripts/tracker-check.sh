@@ -48,8 +48,8 @@ jq -r '
   def line(rule): "#\(.number) [\(rule)] \(.title)";
 
   # Exempt from the exactly-one-triage-label rule: wayfinder maps and tickets,
-  # the Dependency Dashboard (#269) and the Ideas issue (#360).
-  def exempt: .number == 269 or .number == 360 or (names | any(startswith("wayfinder:")));
+  # the Dependency Dashboard (#269) and the Ideas issue (#582).
+  def exempt: .number == 269 or .number == 582 or (names | any(startswith("wayfinder:")));
 
   # A closed issue may keep wontfix: it records why it was closed.
   def stale_triage: names | map(select(IN(triage[]) and . != "wontfix"));
