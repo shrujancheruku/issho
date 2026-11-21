@@ -27,7 +27,7 @@ Every job in `ci.yml` is a check, and its job id is its name: the founder sets t
 | `strings` | `make strings` | A display language missing a key; an unused key |
 | `e2e` | `make e2e` | The end-to-end tests (`e2e/README.md`) |
 | `native-bundle` | `make native-bundle native-bundle-test` | The app not bundling for iOS or Android |
-| `image` | `make image` | The container image not building, or not holding `api` and `worker` |
+| `image` | `make image` | A container image not building; the backend's not holding `api` and `worker`; the web's not serving a server-rendered page |
 
 `make lint test` before a push covers all of these except `commits`, `image`, `e2e` and the `breaking-ok` skip, and also runs `buf breaking`, so on a `breaking-ok` change `make lint` fails locally on purpose. The other way round, every command `make lint test` runs is run by some job: `scripts/ci-workflow.test.sh` fails otherwise, so no check exists only on a laptop.
 

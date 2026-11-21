@@ -24,13 +24,19 @@ want "an ADR runs nothing" "" docs/adr/0001-example.md
 want "the README runs nothing" "" README.md
 want "a spec document, which the policy lint reads" "backend boundaries policy retention" docs/spec/quality.md
 want "a backend package" "backend boundaries e2e image policy retention rpc-auth" backend/internal/staff/staff.go
-want "the app" "e2e native-bundle strings typescript" apps/app/src/app/index.tsx
+want "the app, which the web image builds" "e2e image native-bundle strings typescript" apps/app/src/app/index.tsx
 want "the admin" "e2e typescript" apps/admin/src/HealthPage.tsx
+want "the web server, which only the web image runs" "e2e image typescript" apps/web/server.js
+want "the generated client, which the web image builds in" "e2e image native-bundle typescript" packages/api-client/src/index.ts
 want "a proto file" "backend boundaries e2e native-bundle policy proto-breaking retention rpc-auth typescript" proto/issho/v1/health.proto
 want "the e2e package" "e2e typescript" e2e/tests/version.spec.ts
 want "the Makefile runs every job" "$all" Makefile
 want "the workflow runs every job" "$all" .github/workflows/ci.yml
 want "another workflow runs nothing" "" .github/workflows/release-please.yml
+# The deploy workflow is linted by actionlint in codegen, which always runs, and
+# nothing it deploys is checked until the push that runs it.
+want "the deploy workflow runs nothing" "" .github/workflows/deploy-dev.yml
+want "the deploy config runs nothing" "" config/deploy.yml .kamal/secrets.dev docs/deploy.md
 # What CI itself depends on runs every job: a break in any of these would
 # otherwise skip the jobs it breaks, and a skipped job reports as passing.
 want "the setup action runs every job" "$all" .github/actions/setup/action.yml
@@ -45,8 +51,8 @@ want "the backend's go.sum runs every job" "$all" backend/go.sum
 want "the backend's go.mod runs every job" "$all" backend/go.mod
 want "the workspace's go.work.sum runs every job" "$all" go.work.sum
 want "proto-breaking.sh runs its check and the backend job, which runs its tests" "backend proto-breaking" scripts/proto-breaking.sh
-want "an app's own package.json is not CI's" "e2e native-bundle strings typescript" apps/app/package.json
-want "two changes run both's jobs" "e2e native-bundle strings typescript" apps/app/a.ts apps/app/b.ts
+want "an app's own package.json is not CI's" "e2e image native-bundle strings typescript" apps/app/package.json
+want "two changes run both's jobs" "e2e image native-bundle strings typescript" apps/app/a.ts apps/app/b.ts
 
 # --all is a push to main, a dispatch, or a base that can't be diffed.
 got=$(printf '' | "$script" --all | sed -n 's/=true$//p' | tr '\n' ' ' | sed 's/ $//')

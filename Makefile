@@ -183,7 +183,8 @@ typescript: app-lint app-test admin-lint admin-test
 strings:
 	pnpm --filter @issho/app strings
 
-# The backend's container image builds and holds api and worker. Needs Docker.
+# The backend's container image builds and holds api and worker, and the web's
+# builds and serves a server-rendered page (apps/web). Needs Docker.
 image:
 	scripts/image.sh
 
