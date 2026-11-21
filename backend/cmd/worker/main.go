@@ -46,6 +46,13 @@ func run(ctx context.Context, log *slog.Logger) error {
 	}
 	defer pool.Close()
 
+	emails, err := newEmailSender(os.Getenv)
+	if err != nil {
+		return err
+	}
+	// No job sends email yet; the ones that do are handed emails below.
+	_ = emails
+
 	// The real clock is built here and only here (tools/clockcheck enforces it);
 	// everything below takes it as a clock.Clock. No domain package has a job
 	// yet; each registers its queue kinds on kinds and its workers here.
