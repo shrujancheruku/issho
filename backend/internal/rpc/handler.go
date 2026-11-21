@@ -33,8 +33,17 @@ func NewHandler(cfg Config) http.Handler {
 	opts := connect.WithInterceptors(NewAccessInterceptor(cfg.Auth, protoregistry.GlobalFiles))
 	mux := http.NewServeMux()
 	mux.Handle(isshov1connect.NewHealthServiceHandler(healthService{version: cfg.Version}, opts))
-	if cfg.Log == nil {
-		return mux
+	var rpcs http.Handler = mux
+	if cfg.Log != nil {
+		rpcs = logRequests(cfg.Log, cfg.Clock, mux)
 	}
-	return logRequests(cfg.Log, cfg.Clock, mux)
+
+	// /up is the deploy's liveness probe: kamal-proxy polls a plain GET every few
+	// seconds and sends a new container traffic only once it answers 200. It
+	// sits outside the access interceptor (it is not an RPC) and outside the
+	// request log, which it would fill with a line per poll.
+	top := http.NewServeMux()
+	top.HandleFunc("GET /up", func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusOK) })
+	top.Handle("/", rpcs)
+	return top
 }
