@@ -89,11 +89,13 @@ type AppPlan struct {
 	PartsOfDay     []string
 	StartsAt       string
 	EndsAt         string
+	OpensOn        pgtype.Date
 }
 
 type AppPlanRound struct {
 	ID       pgtype.UUID
 	PlanID   pgtype.UUID
+	Number   int32
 	StartsOn pgtype.Date
 	EndsOn   pgtype.Date
 }

@@ -89,11 +89,13 @@ type AppPlan struct {
 	PartsOfDay     []string
 	StartsAt       string
 	EndsAt         string
+	OpensOn        time.Time
 }
 
 type AppPlanRound struct {
 	ID       string
 	PlanID   string
+	Number   int32
 	StartsOn time.Time
 	EndsOn   time.Time
 }

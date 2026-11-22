@@ -42,7 +42,7 @@ type Tick struct {
 	Part string
 }
 
-// Signup is a person's ticks on a plan in its running round. It commits the
+// Signup is a person's ticks on a plan in a round of it. It commits the
 // person to nothing.
 type Signup struct {
 	PlanID string
@@ -90,12 +90,25 @@ func (s *Signups) today(zone string) (string, error) {
 	return clk.Date(s.clock.Now()), nil
 }
 
+// roundOf is the round of a plan that opened on opensOn that holds today, both
+// city calendar dates: round k covers opensOn + 7k to opensOn + 7k + 6. open is
+// false before the plan's opening day, when it has no round.
+func roundOf(opensOn, today time.Time) (number int32, starts, ends time.Time, open bool) {
+	days := int(today.Sub(opensOn) / (24 * time.Hour))
+	if days < 0 {
+		return 0, time.Time{}, time.Time{}, false
+	}
+	number = int32(days / roundDays)
+	starts = addDays(opensOn, int(number)*roundDays)
+	return number, starts, addDays(starts, roundDays-1), true
+}
+
 // addDays is the calendar date n days after date (negative for before).
 func addDays(date time.Time, n int) time.Time { return date.AddDate(0, 0, n) }
 
 // Set makes the account's signup to the plan from ticks, or replaces the ticks
 // of the one it has: a person changes their times by signing up again. The
-// first signup into a plan with no running round opens it.
+// round is the plan's 7-day block that holds today (see roundOf).
 func (s *Signups) Set(ctx context.Context, accountID, planID string, ticks []Tick) (Signup, error) {
 	plan, city, err := s.planAndCity(ctx, planID)
 	if err != nil {
@@ -123,9 +136,16 @@ func (s *Signups) Set(ctx context.Context, accountID, planID string, ticks []Tic
 	defer tx.Rollback(ctx) //nolint:errcheck // a rollback after commit is a no-op
 	q := store.New(tx)
 
-	round, err := q.CurrentRound(ctx, store.CurrentRoundParams{PlanID: plan.ID, Today: today})
+	// The round is the 7-day block of the plan's days that holds today. Its
+	// dates are derived, so everyone signing up in the block shares it; the row
+	// is stored by whoever signs up first, and a race for it stores one.
+	number, starts, ends, open := roundOf(plan.OpensOn, today)
+	if !open {
+		return Signup{}, ErrNotFound
+	}
+	round, err := q.GetRound(ctx, store.GetRoundParams{PlanID: plan.ID, Number: number})
 	if errors.Is(err, pgx.ErrNoRows) {
-		round, err = q.OpenRound(ctx, store.OpenRoundParams{PlanID: plan.ID, StartsOn: today, EndsOn: addDays(today, roundDays-1)})
+		round, err = q.OpenRound(ctx, store.OpenRoundParams{PlanID: plan.ID, Number: number, StartsOn: starts, EndsOn: ends})
 	}
 	if err != nil {
 		return Signup{}, fmt.Errorf("plans: signup: round: %w", err)

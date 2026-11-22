@@ -5,20 +5,31 @@
 -- A signup commits a person to nothing, so it can be changed or withdrawn
 -- until matching reads the round (docs/spec/core-loop.md).
 
+-- The day a plan opened on its city's calendar. A plan's rounds are 7-day
+-- blocks counted from it (docs/spec/matching.md, "Rounds"), so which round a
+-- date falls in never depends on who signed up when. A plan that was already
+-- there opened on the day this migration ran, on its city's clock.
+alter table app.plans add column opens_on date;
+update app.plans p set opens_on = (now() at time zone c.time_zone)::date
+from app.cities c where c.slug = p.city;
+alter table app.plans alter column opens_on set not null;
+
 -- A plan's round: a fixed 7 days, the same for everyone signed up, and the
--- last day is the day they hear by (docs/spec/matching.md, "Rounds"). The thin
--- loop opens a round when someone signs up and the plan has none running;
--- rounds on the real clock, with a state of their own, are milestone 4's and
--- will add columns here, not a second table.
+-- last day is the day they hear by. Round `number` of a plan covers
+-- opens_on + 7 * number to opens_on + 7 * number + 6, so its dates are
+-- derived; the row is only stored, at the first signup into the round, to hang
+-- signups on. Rounds on the real clock, with a state of their own, are
+-- milestone 4's and will add columns here, not a second table.
 create table app.plan_rounds (
   id        uuid primary key default gen_random_uuid(),
   plan_id   uuid not null references app.plans (id) on delete cascade,
-  -- City calendar dates. The first day is the day the round opened and the
-  -- last is the hear-by day.
+  number    integer not null check (number >= 0),
+  -- City calendar dates, derived from the plan's opening day and the number.
+  -- The last is the hear-by day.
   starts_on date not null,
   ends_on   date not null check (ends_on > starts_on),
-  -- Two signups racing to open the same plan's round on the same day open one.
-  constraint plan_rounds_plan_id_starts_on_key unique (plan_id, starts_on)
+  -- Two first signups racing to store the same round store one.
+  constraint plan_rounds_plan_id_number_key unique (plan_id, number)
 );
 
 -- One signup per person per plan round. Matching leaves out a person whose two
@@ -52,3 +63,4 @@ create index signups_account_id_idx on app.signups (account_id);
 drop table app.signup_ticks;
 drop table app.signups;
 drop table app.plan_rounds;
+alter table app.plans drop column opens_on;

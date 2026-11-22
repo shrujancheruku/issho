@@ -57,34 +57,6 @@ func (q *Queries) CountSignups(ctx context.Context, arg CountSignupsParams) ([]C
 	return items, nil
 }
 
-const currentRound = `-- name: CurrentRound :one
-
-select id, plan_id, starts_on, ends_on from app.plan_rounds
-where plan_id = $1 and ends_on >= $2::date
-order by ends_on desc
-limit 1
-`
-
-type CurrentRoundParams struct {
-	PlanID string
-	Today  time.Time
-}
-
-// The signups tables, app.plan_rounds, app.signups and app.signup_ticks; only
-// internal/plans calls these. "Today" is always the city's date, which the
-// caller works out with cityclock.
-func (q *Queries) CurrentRound(ctx context.Context, arg CurrentRoundParams) (AppPlanRound, error) {
-	row := q.db.QueryRow(ctx, currentRound, arg.PlanID, arg.Today)
-	var i AppPlanRound
-	err := row.Scan(
-		&i.ID,
-		&i.PlanID,
-		&i.StartsOn,
-		&i.EndsOn,
-	)
-	return i, err
-}
-
 const deleteSignup = `-- name: DeleteSignup :exec
 delete from app.signups s
 using app.plan_rounds r
@@ -116,6 +88,32 @@ type DeleteTicksParams struct {
 func (q *Queries) DeleteTicks(ctx context.Context, arg DeleteTicksParams) error {
 	_, err := q.db.Exec(ctx, deleteTicks, arg.RoundID, arg.AccountID)
 	return err
+}
+
+const getRound = `-- name: GetRound :one
+
+select id, plan_id, number, starts_on, ends_on from app.plan_rounds where plan_id = $1 and number = $2
+`
+
+type GetRoundParams struct {
+	PlanID string
+	Number int32
+}
+
+// The signups tables, app.plan_rounds, app.signups and app.signup_ticks; only
+// internal/plans calls these. "Today" is always the city's date, which the
+// caller works out with cityclock.
+func (q *Queries) GetRound(ctx context.Context, arg GetRoundParams) (AppPlanRound, error) {
+	row := q.db.QueryRow(ctx, getRound, arg.PlanID, arg.Number)
+	var i AppPlanRound
+	err := row.Scan(
+		&i.ID,
+		&i.PlanID,
+		&i.Number,
+		&i.StartsOn,
+		&i.EndsOn,
+	)
+	return i, err
 }
 
 const insertTick = `-- name: InsertTick :exec
@@ -231,26 +229,34 @@ func (q *Queries) ListTicksOfAccount(ctx context.Context, arg ListTicksOfAccount
 }
 
 const openRound = `-- name: OpenRound :one
-insert into app.plan_rounds (plan_id, starts_on, ends_on)
-values ($1, $2, $3)
-on conflict (plan_id, starts_on) do update set starts_on = excluded.starts_on
-returning id, plan_id, starts_on, ends_on
+insert into app.plan_rounds (plan_id, number, starts_on, ends_on)
+values ($1, $2, $3, $4)
+on conflict (plan_id, number) do update set number = excluded.number
+returning id, plan_id, number, starts_on, ends_on
 `
 
 type OpenRoundParams struct {
 	PlanID   string
+	Number   int32
 	StartsOn time.Time
 	EndsOn   time.Time
 }
 
-// A round opens on the day of the first signup into a plan with none running.
-// The no-op update makes a lost race return the round the winner opened.
+// A round's dates are derived from the plan's opening day, so whoever stores
+// it first stores the same row. The no-op update makes a lost race return the
+// round the winner stored.
 func (q *Queries) OpenRound(ctx context.Context, arg OpenRoundParams) (AppPlanRound, error) {
-	row := q.db.QueryRow(ctx, openRound, arg.PlanID, arg.StartsOn, arg.EndsOn)
+	row := q.db.QueryRow(ctx, openRound,
+		arg.PlanID,
+		arg.Number,
+		arg.StartsOn,
+		arg.EndsOn,
+	)
 	var i AppPlanRound
 	err := row.Scan(
 		&i.ID,
 		&i.PlanID,
+		&i.Number,
 		&i.StartsOn,
 		&i.EndsOn,
 	)

@@ -3,7 +3,10 @@ package plans_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"reflect"
+	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -50,8 +53,8 @@ func newSignupRig(t *testing.T) *signupRig {
 }
 
 // A signup is a set of (date, part of the day) ticks on a plan. The person
-// hears by the last day of the plan's round: 7 days from the day the round
-// opened, which was today's signup.
+// hears by the last day of the plan's round: the fixture's plans opened on the
+// 5th, so today's round is the 5th to the 11th.
 func TestASignupCarriesItsTicksAndTheDayThePersonWillHearBy(t *testing.T) {
 	r := newSignupRig(t)
 	ticks := []plans.Tick{{Date: "2026-01-08", Part: "evening"}, {Date: "2026-01-10", Part: "evening"}}
@@ -134,7 +137,7 @@ func TestARefusedSignupLeavesNothingBehind(t *testing.T) {
 }
 
 // Ticks run to 7 days after the round's last day (docs/spec/matching.md,
-// "Rounds"): the round opened on the 5th ends on the 11th, so the 18th is the
+// "Rounds"): the round of the 5th to the 11th, so the 18th is the
 // last date a tick can be on.
 func TestATickMoreThanARoundBeyondTheRoundsEndIsRefused(t *testing.T) {
 	r := newSignupRig(t)
@@ -314,9 +317,10 @@ func TestACountSaysHowManyAreSignedUpToEachPlan(t *testing.T) {
 	}
 }
 
-// A round lasts 7 days, the 5th to the 11th. Signups in it share one hear-by
-// day, whenever in the round they were made; once it has ended the signup is
-// no longer the member's current one and the next signup opens a new round.
+// The plan opened on the 5th, so a round lasts 7 days, the 5th to the 11th.
+// Signups in it share one hear-by day, whenever in the round they were made;
+// once it has ended the signup is no longer the member's current one and the
+// next signup is in the next round, the 12th to the 18th.
 func TestARoundIsSevenDaysAndTheNextSignupOpensTheNext(t *testing.T) {
 	r := newSignupRig(t)
 	ctx := context.Background()
@@ -384,5 +388,169 @@ func TestTheDatabaseHoldsOneSignupPerPersonPerPlanRound(t *testing.T) {
 	var pgErr *pgconn.PgError
 	if !errors.As(err, &pgErr) || pgErr.Code != "23505" || pgErr.ConstraintName != "signups_pkey" {
 		t.Fatalf("err = %v, want a unique violation of signups_pkey", err)
+	}
+}
+
+// opensOn sets the day a plan opened on the city's calendar. Its rounds are the
+// 7-day blocks counted from it, whenever anyone signs up.
+func opensOn(t *testing.T, r *signupRig, plan, date string) {
+	t.Helper()
+	if _, err := r.pool.Exec(context.Background(), "update app.plans set opens_on = $2::date where id = $1", plan, date); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func roundRows(t *testing.T, r *signupRig, plan string) int {
+	t.Helper()
+	var n int
+	if err := r.pool.QueryRow(context.Background(), "select count(*) from app.plan_rounds where plan_id = $1", plan).Scan(&n); err != nil {
+		t.Fatal(err)
+	}
+	return n
+}
+
+// A plan's rounds are fixed by the day it opened, not by who signs up when
+// (docs/spec/matching.md, "Rounds"). The plan opened on Wednesday the 31st, so
+// its rounds are 31 Dec–6 Jan, 7–13 Jan, and so on. Two people signing up on
+// different days of one block land in one round with one hear-by; the day
+// after its last day is the next round.
+func TestRoundsAreSevenDayBlocksFromThePlansOpeningDay(t *testing.T) {
+	r := newSignupRig(t)
+	ctx := context.Background()
+	opensOn(t, r, lanterns, "2025-12-31")
+
+	early, err := r.svc.Set(ctx, ada, lanterns, []plans.Tick{{Date: "2026-01-09", Part: "evening"}}) // the 5th there
+	if err != nil {
+		t.Fatal(err)
+	}
+	r.clk.Set(time.Date(2026, 1, 6, 9, 0, 0, 0, time.UTC)) // the 6th, the block's last day
+	late, err := r.svc.Set(ctx, grace, lanterns, []plans.Tick{{Date: "2026-01-10", Part: "evening"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if early.HearBy != "2026-01-06" || late.HearBy != "2026-01-06" {
+		t.Fatalf("hear by %s and %s, want 2026-01-06 for both", early.HearBy, late.HearBy)
+	}
+	if n := roundRows(t, r, lanterns); n != 1 {
+		t.Fatalf("%d rounds stored, want 1", n)
+	}
+
+	r.clk.Set(time.Date(2026, 1, 6, 17, 0, 0, 0, time.UTC)) // 00:00 on the 7th there
+	next, err := r.svc.Set(ctx, ada, lanterns, []plans.Tick{{Date: "2026-01-12", Part: "evening"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if next.HearBy != "2026-01-13" {
+		t.Fatalf("the next round's hear-by = %s, want 2026-01-13", next.HearBy)
+	}
+	if n := roundRows(t, r, lanterns); n != 2 {
+		t.Fatalf("%d rounds stored, want 2", n)
+	}
+}
+
+// The block is counted from the opening day however long ago it was, so a
+// plan that opened on 22 November 2025 is in round 6 on 5 January: 3–9 Jan.
+func TestALongOpenPlansRoundIsDerivedNotCounted(t *testing.T) {
+	r := newSignupRig(t)
+	opensOn(t, r, lanterns, "2025-11-22")
+
+	got, err := r.svc.Set(context.Background(), ada, lanterns, []plans.Tick{{Date: "2026-01-09", Part: "evening"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.HearBy != "2026-01-09" {
+		t.Fatalf("hear by %s, want 2026-01-09", got.HearBy)
+	}
+	var number int
+	var starts, ends time.Time
+	err = r.pool.QueryRow(context.Background(),
+		"select number, starts_on, ends_on from app.plan_rounds where plan_id = $1", lanterns).Scan(&number, &starts, &ends)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if number != 6 || starts.Format(time.DateOnly) != "2026-01-03" || ends.Format(time.DateOnly) != "2026-01-09" {
+		t.Fatalf("round %d, %s to %s; want round 6, 2026-01-03 to 2026-01-09", number, starts.Format(time.DateOnly), ends.Format(time.DateOnly))
+	}
+}
+
+// The opening day is on the city's calendar too: at 18:00 UTC on the 5th it is
+// already the 6th there, the plan's first day, and a plan that opens the 6th
+// has begun.
+func TestAPlanThatHasNotOpenedYetTakesNoSignups(t *testing.T) {
+	r := newSignupRig(t)
+	opensOn(t, r, lanterns, "2026-01-06")
+
+	_, err := r.svc.Set(context.Background(), ada, lanterns, []plans.Tick{{Date: "2026-01-09", Part: "evening"}})
+	if !errors.Is(err, plans.ErrNotFound) {
+		t.Fatalf("on the 5th: err = %v, want ErrNotFound", err)
+	}
+	r.clk.Set(time.Date(2026, 1, 5, 18, 0, 0, 0, time.UTC))
+	got, err := r.svc.Set(context.Background(), ada, lanterns, []plans.Tick{{Date: "2026-01-09", Part: "evening"}})
+	if err != nil {
+		t.Fatalf("on the 6th, its first day: %v", err)
+	}
+	if got.HearBy != "2026-01-12" {
+		t.Fatalf("hear by %s, want 2026-01-12", got.HearBy)
+	}
+}
+
+// Many people making the first signup of a round at once open one round, and
+// all of them hear by the same day.
+func TestConcurrentFirstSignupsMakeOneRound(t *testing.T) {
+	r := newSignupRig(t)
+	ctx := context.Background()
+	opensOn(t, r, lanterns, "2025-12-31")
+	ppl := people.New(r.clk, r.pool, cities.New(r.pool), people.Config{DefaultCity: city})
+	accounts := []string{ada, grace}
+	for i := 3; i <= 8; i++ {
+		id := strings.Repeat(string(rune('0'+i)), 8) + "-3333-4333-8333-333333333333"
+		if _, err := ppl.Join(ctx, people.Claims{Subject: id, Email: fmt.Sprintf("p%d@example.com", i)}, people.Preferences{}); err != nil {
+			t.Fatal(err)
+		}
+		accounts = append(accounts, id)
+	}
+
+	start := make(chan struct{})
+	hearBy := make([]string, len(accounts))
+	errs := make([]error, len(accounts))
+	var wg sync.WaitGroup
+	for i, id := range accounts {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			<-start
+			got, err := r.svc.Set(ctx, id, lanterns, []plans.Tick{{Date: "2026-01-09", Part: "evening"}})
+			hearBy[i], errs[i] = got.HearBy, err
+		}()
+	}
+	close(start)
+	wg.Wait()
+
+	for i := range accounts {
+		if errs[i] != nil || hearBy[i] != "2026-01-06" {
+			t.Fatalf("signup %d: hear by %q, err %v; want 2026-01-06", i, hearBy[i], errs[i])
+		}
+	}
+	if n := roundRows(t, r, lanterns); n != 1 {
+		t.Fatalf("%d rounds stored, want 1", n)
+	}
+	if n := countOf(t, r, lanterns); n != len(accounts) {
+		t.Fatalf("signed up = %d, want %d", n, len(accounts))
+	}
+}
+
+// A plan has one row per round number: the database refuses a second.
+func TestTheDatabaseHoldsOneRowPerPlanRoundNumber(t *testing.T) {
+	r := newSignupRig(t)
+	ctx := context.Background()
+	if _, err := r.svc.Set(ctx, ada, lanterns, []plans.Tick{{Date: "2026-01-09", Part: "evening"}}); err != nil {
+		t.Fatal(err)
+	}
+	_, err := r.pool.Exec(ctx, `insert into app.plan_rounds (plan_id, number, starts_on, ends_on)
+		select plan_id, number, starts_on + 1, ends_on + 1 from app.plan_rounds`)
+
+	var pgErr *pgconn.PgError
+	if !errors.As(err, &pgErr) || pgErr.Code != "23505" || pgErr.ConstraintName != "plan_rounds_plan_id_number_key" {
+		t.Fatalf("err = %v, want a unique violation of plan_rounds_plan_id_number_key", err)
 	}
 }

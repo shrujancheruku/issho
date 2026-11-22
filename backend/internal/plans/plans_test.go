@@ -183,3 +183,17 @@ func TestAFixtureWithAnUnknownFieldIsRefused(t *testing.T) {
 		t.Fatal("LoadFixture accepted an unknown field")
 	}
 }
+
+// A plan's rounds are counted from its opening day, so a fixture plan without
+// one, or with one that isn't a date, is refused rather than given a day.
+func TestAFixturePlanWithoutAValidOpeningDayIsRefused(t *testing.T) {
+	pool := seeded(t)
+	for _, opens := range []string{``, `"opens_on": "",`, `"opens_on": "5 January",`} {
+		bad := []byte(`{"plans": [{"id": "6a1f0c52-3d1b-4f0e-9a52-0d7c9a1b0009", "city": "da-nang-hoi-an", "price": 1,
+			"meeting_address": "x", "parts_of_day": ["evening"], "starts_at": "17:00", "ends_at": "18:00", ` + opens + `
+			"texts": {}, "stops": []}]}`)
+		if err := plans.LoadFixture(context.Background(), pool, bad); err == nil {
+			t.Errorf("LoadFixture accepted a plan with %q", opens)
+		}
+	}
+}

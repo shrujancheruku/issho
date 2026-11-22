@@ -2,18 +2,16 @@
 -- internal/plans calls these. "Today" is always the city's date, which the
 -- caller works out with cityclock.
 
--- name: CurrentRound :one
-select * from app.plan_rounds
-where plan_id = $1 and ends_on >= sqlc.arg(today)::date
-order by ends_on desc
-limit 1;
+-- name: GetRound :one
+select * from app.plan_rounds where plan_id = $1 and number = $2;
 
--- A round opens on the day of the first signup into a plan with none running.
--- The no-op update makes a lost race return the round the winner opened.
+-- A round's dates are derived from the plan's opening day, so whoever stores
+-- it first stores the same row. The no-op update makes a lost race return the
+-- round the winner stored.
 -- name: OpenRound :one
-insert into app.plan_rounds (plan_id, starts_on, ends_on)
-values ($1, $2, $3)
-on conflict (plan_id, starts_on) do update set starts_on = excluded.starts_on
+insert into app.plan_rounds (plan_id, number, starts_on, ends_on)
+values ($1, $2, $3, $4)
+on conflict (plan_id, number) do update set number = excluded.number
 returning *;
 
 -- name: UpsertSignup :exec

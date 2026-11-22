@@ -223,6 +223,14 @@ func TestSignupsMigrationDownThenUp(t *testing.T) {
 	if !slices.Contains(got, "plans") || !slices.Contains(got, "profiles") {
 		t.Errorf("down of signups took the plans or profiles with it: %v", got)
 	}
+	var hasOpensOn bool
+	if err := pool.QueryRow(ctx, `select exists (select 1 from information_schema.columns
+		where table_schema = 'app' and table_name = 'plans' and column_name = 'opens_on')`).Scan(&hasOpensOn); err != nil {
+		t.Fatal(err)
+	}
+	if hasOpensOn {
+		t.Error("app.plans.opens_on is still there after down")
+	}
 
 	if err := db.Up(ctx, pool); err != nil {
 		t.Fatalf("up after down: %v", err)
