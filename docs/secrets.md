@@ -25,6 +25,8 @@ Dev's secrets are in Google Cloud project `issho-dev-512213` (Secret Manager). T
 |---|---|---|
 | `dev-database-url` | the API (`DATABASE_URL`, through `.kamal/secrets.dev`) | the Supabase transaction pooler's URL for the app's own role |
 | `dev-supabase-auth-url` | the API (`SUPABASE_AUTH_URL`, through `.kamal/secrets.dev`) | `https://<ref>.supabase.co/auth/v1`, the tokens' issuer and where the API reads their keys. Public; stored only to keep the project's ref out of this repository. The founder adds it before the next deploy |
+| `dev-supabase-url` | the web build (`EXPO_PUBLIC_SUPABASE_URL`, a Kamal builder secret through `.kamal/secrets.dev`) | `https://<ref>.supabase.co`, the project's address for sign-in. Public once bundled; stored only to keep the ref out of this repository. The founder adds it before the next deploy |
+| `dev-supabase-publishable-key` | the web build (`EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, a Kamal builder secret) | the project's publishable key (`sb_publishable_…`). Public once bundled; never the secret key. The founder adds it before the next deploy |
 | `dev-worker-database-url` | the worker (`WORKER_DATABASE_URL`, through `.kamal/secrets.dev`) | the session pooler's URL; River's LISTEN/NOTIFY needs a session connection, not the transaction pooler |
 | `dev-migrate-database-url` | the migration step of `scripts/deploy-dev.sh`, before any container is replaced | the URL goose migrates with |
 | `dev-resend-api-key` | the worker (`RESEND_API_KEY`) | the Resend API key for product email |
@@ -33,6 +35,15 @@ Dev's secrets are in Google Cloud project `issho-dev-512213` (Secret Manager). T
 | `dev-ssh-host-key` | `scripts/dev-ssh-pin.sh`, with `gcloud`, before Kamal connects (not through `.kamal/secrets.dev`) | the VM's public host key, pinned so an unknown or changed host is refused (#605) |
 | `dev-origin-cert`, `dev-origin-key` | Kamal (`ORIGIN_CERT`, `ORIGIN_KEY`) | the Cloudflare origin certificate and key for the dev names |
 | `dev-cloudflare-api-token` | `scripts/deploy-dev.sh`, which deploys the admin Worker | an API token that can deploy Workers |
+
+**Native builds** take the same two values from EAS environment variables, not Secret Manager. The founder sets them (a worker never runs `eas`), for each EAS environment the builds use:
+
+```sh
+eas env:set --name EXPO_PUBLIC_SUPABASE_URL --value "<project url>" --environment development --visibility plaintext
+eas env:set --name EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY --value "<publishable key>" --environment development --visibility plaintext
+```
+
+`--environment` names an EAS environment (`development`, `preview` or `production`), not a build profile in `eas.json`, so these commands are right as written without one. The founder confirms which environment the dev build uses when running them; repeat for each environment the builds use.
 
 Kamal's own registry login is not in Secret Manager; see CI below.
 
