@@ -465,9 +465,13 @@ type search struct {
 	seatable int
 
 	work, budget int
-	withDates    bool
-	done         bool
-	best         *ranking
+	// scale multiplies both work limits. It is 1 in Match; only the
+	// measurement in measure_internal_test.go raises it, to see what a longer
+	// search would have found.
+	scale     int
+	withDates bool
+	done      bool
+	best      *ranking
 
 	// ideal[m] is the best m people could do on sizes, whatever the rules
 	// leave: the least distance and the fewest groups, or not ok when no
@@ -479,7 +483,7 @@ type search struct {
 }
 
 func newSearch(p *pool) *search {
-	s := &search{cands: p.people, slots: p.slots}
+	s := &search{cands: p.people, slots: p.slots, scale: 1}
 	n := len(s.cands)
 	s.ideal = idealSizes(n)
 	s.blocked = make([]bool, n)
@@ -557,10 +561,10 @@ func (s *search) run(withDates bool) {
 	s.withDates = withDates
 	s.done = false
 	s.work = 0
-	s.budget = seatWork
+	s.budget = seatWork * s.scale
 	s.idealSlot = -1
 	if withDates {
-		s.budget = dateWork
+		s.budget = dateWork * s.scale
 		// The earliest time that could seat everyone who can be seated.
 		for i := range s.slots {
 			n := 0

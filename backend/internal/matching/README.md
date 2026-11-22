@@ -51,16 +51,27 @@ The same input always gives the same output, whatever the order of the signups, 
 
 The search is a branch and bound over the whole assignment, and it is exact except when it runs out of work. Its limits (`seatWork`, `dateWork`, `groupsPerNode`) count search nodes and candidate groups, never a clock, so a result is the same on every machine. When it runs out it returns the best valid groups it has found: every rule still holds, but a different grouping might seat more people or sit nearer 4 or 5.
 
-What was measured, on random rounds of the shape the tests generate (three languages, a quarter with the women-and-non-binary setting, a kept-apart pair for every three people, six times to tick), comparing each answer with the same search given ten times the work:
+What was measured, by `measure_internal_test.go` (below), on random rounds from a fixed seed, of the shape the property tests generate (three languages, a quarter with the women-and-non-binary setting, a kept-apart pair for every three people, six times to tick). The figures are what one run printed, not a proof for every round:
 
-- **Exact with room to spare:** every round of up to 14 people ticking about half the times, and a crowd of any size who can all meet (60 at any of six times is settled in about a hundred steps). `TestTheSearchFinishesSmallAndOpenRounds` holds both.
-- **Where it can fall short:** from 18 people up, when most people tick most of the times, and from 40 up even with few ticks. The first search (the most seated, then sizes and groups) reached its limit in 58 of the 360 rounds measured (14 to 60 people, three tick densities, 20 rounds each), about one in six. The date tie-break reached its limit in most rounds of 24 or more people; it only chooses among groupings already equal on those three, so it changes which date, not who is seated.
-- **How much it cost:** of those 360 rounds, 20 gave a different split than ten times the work did, almost all in the sizes or the number of groups. Two of them seated one person fewer than the longer search found (24 people ticking nine times in ten, and 60 ticking three in ten). The longer search is itself a bound on the best, not a proof.
-- **Time:** the slowest round took about 1.5 seconds. Matching runs when a round closes, not while someone waits.
+- **Small rounds:** in 300 random rounds of up to 14 people ticking about half the times, none ran out of work. `TestTheSearchFinishesSmallAndOpenRounds` holds the same claim for another 300 such rounds (without kept-apart pairs) in every `make test`.
+- **A crowd who can all meet:** 60 people who can all meet at any of six times were settled in 295 steps for the most seated, without running out of work (the same test).
+- **Larger rounds:** 360 rounds of 14 to 60 people (14, 18, 24, 40, 50 and 60 people, each at three tick densities of 0.3, 0.6 and 0.9, 20 rounds each), each searched as `Match` searches and again with ten times the work.
+  - The first search (the most seated, then sizes and groups) ran out of work in 69 of the 360 rounds: in none of the 60 at 14 people, in 5 of the 20 at 18 people ticking 0.9 (and none of the other 40 at 18), in 5 of the 60 at 24 people, and in 2 to 14 of every 20 at 40, 50 or 60 people (14 of 20 at 60 people ticking 0.3 is the most).
+  - 33 of the 360 gave a different answer than ten times the work did, almost all in the sizes or the number of groups. One of them seated one person fewer than the longer search found (40 people ticking 0.9). The longer search is itself a bound on the best, not a proof.
+  - Cost is counted in steps, not seconds (the repo's clock rule keeps `time.Now` out of tests too): the most any one round's first search took was 400,289 steps, which is its limit (`seatWork`, 400,000) plus the last candidates weighed. Matching runs when a round closes, not while someone waits.
+
+The rounds in the Pilot are far smaller than the dense, larger ones where it fell short ([Matching](../../../docs/spec/matching.md#rounds), "Sizes").
 
 Nothing here is exact beyond those, and this README does not claim it. When the search runs out, a person left out of the groups could still have been seated, so a caller who needs to explain "why wasn't I picked?" should not read an empty result at 18 or more people as proof. The seat order (milestone 4) is where leftovers are decided.
 
 ## Tests
 
-`matching_test.go` has the examples through `Match`: the named sizes (3 through 12), 18, 60 and 61 people at one time, each rule, the date that seats the most, the earliest on a tie, seating the most across dates, duplicate signups and an unknown part. `property_test.go` generates rounds from a fixed seed and holds each rule on every group, that nobody left over could have formed a group, determinism and shuffle-invariance, the best grouping against a brute-force search both at one time and across three dates, Pilot-sized rounds, and that the package's non-test files import only `cmp`, `slices` and `policy`.
-`exact_internal_test.go` holds the measured claim above: the search finishes small and open rounds within its limits.
+`matching_test.go` has the examples through `Match`: the named sizes (3 through 12), 18, 60 and 61 people at one time, each rule, the date that seats the most, the earliest on a tie, seating the most across dates, duplicate signups and an unknown part. `property_test.go` generates rounds from a fixed seed and holds each rule on every group, that nobody left over could have formed a group, determinism and shuffle-invariance, Pilot-sized rounds, that the package's non-test files import only `cmp`, `slices` and `policy`, and the best grouping against a brute-force search that tries every assignment: at one time, across three dates, and across the parts of a day. Those brute-force rounds draw closed dates too, so a closed day has to seat nobody.
+
+`exact_internal_test.go` holds the small rounds and the open crowd of 60 above: the search finishes them within its limits.
+
+`measure_internal_test.go` prints the larger-round figures above. It is slow (about three minutes), so it is behind the `measure` build tag and not part of `make test`; run it on request:
+
+```sh
+cd backend && go test -tags measure -run TestMeasure -v ./internal/matching
+```

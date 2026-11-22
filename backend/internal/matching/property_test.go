@@ -232,7 +232,7 @@ func TestPropertyBestGroupingAtOneTime(t *testing.T) {
 		for i := range in.Signups {
 			in.Signups[i].Ticks = []matching.Slot{slot}
 		}
-		in.ClosedDates = nil
+		// ClosedDates stay as generated: a closed day has to seat nobody.
 
 		var got score
 		for _, g := range matching.Match(in) {
@@ -349,7 +349,16 @@ type dateSeats struct {
 	seats int
 }
 
-func slotIndex(s matching.Slot) int { return slices.Index(allSlots, s) }
+// slotIndex puts any two times in order: by date, then morning, afternoon,
+// evening ("2026-12-07" without its dashes is a number that grows with the date).
+func slotIndex(s matching.Slot) int {
+	day, err := strconv.Atoi(strings.ReplaceAll(s.Date, "-", ""))
+	if err != nil {
+		panic("bad test date " + s.Date)
+	}
+	part := slices.Index([]matching.Part{matching.Morning, matching.Afternoon, matching.Evening}, s.Part)
+	return day*10 + part
+}
 
 func rankOf(groups map[matching.Slot]int, sizes []int) ranking {
 	var r ranking
@@ -449,17 +458,20 @@ func bruteForceAnywhere(in matching.Input, times []matching.Slot) ranking {
 	return best
 }
 
-// Whatever the dates the people ticked, the groups seat the most people over
-// the whole assignment, not date by date, and then rank as the spec says.
-func TestPropertyBestAssignmentAcrossDates(t *testing.T) {
-	r := rand.New(rand.NewPCG(5, 617))
-	times := allSlots[:3]
-	for round := range 600 {
+// Whatever the times the people ticked, the groups seat the most people over
+// the whole assignment, not time by time, and then rank as the spec says.
+// checkBestAssignment compares Match with the brute force over times, on rounds
+// whose closed days are drawn from closable (a closed day seats nobody).
+func checkBestAssignment(t *testing.T, r *rand.Rand, times []matching.Slot, closable []string, rounds int) {
+	t.Helper()
+	closedSeen := 0
+	for round := range rounds {
 		in := generate(r, 8)
 		for i := range in.Signups {
 			in.Signups[i].Ticks = someOf(r, times, 0.6)
 		}
-		in.ClosedDates = nil
+		in.ClosedDates = someOf(r, closable, 0.3)
+		closedSeen += len(in.ClosedDates)
 
 		got := rankOfGroups(matching.Match(in))
 		want := bruteForceAnywhere(in, times)
@@ -467,6 +479,31 @@ func TestPropertyBestAssignmentAcrossDates(t *testing.T) {
 			t.Fatalf("round %d: matching ranks %+v, brute force finds %+v\ninput: %+v", round, got, want, in)
 		}
 	}
+	if closedSeen == 0 {
+		t.Fatal("no round had a closed date, so the check never saw one")
+	}
+}
+
+// Three real dates, a morning on each, some of them closed.
+func TestPropertyBestAssignmentAcrossDates(t *testing.T) {
+	times := []matching.Slot{
+		{Date: "2026-12-07", Part: matching.Morning},
+		{Date: "2026-12-08", Part: matching.Morning},
+		{Date: "2026-12-09", Part: matching.Morning},
+	}
+	checkBestAssignment(t, rand.New(rand.NewPCG(5, 617)), times, []string{"2026-12-07", "2026-12-08", "2026-12-09"}, 600)
+}
+
+// Three parts of one day against another day's evening: the parts of a day
+// weigh the same as dates do, and closing the day closes all its parts.
+func TestPropertyBestAssignmentAcrossPartsOfTheDay(t *testing.T) {
+	times := []matching.Slot{
+		{Date: "2026-12-07", Part: matching.Morning},
+		{Date: "2026-12-07", Part: matching.Afternoon},
+		{Date: "2026-12-07", Part: matching.Evening},
+		{Date: "2026-12-08", Part: matching.Evening},
+	}
+	checkBestAssignment(t, rand.New(rand.NewPCG(10, 617)), times, []string{"2026-12-07", "2026-12-08"}, 600)
 }
 
 // Pilot-sized rounds (60 people, docs/spec/matching.md) hold every rule, give
