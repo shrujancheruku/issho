@@ -10,6 +10,8 @@ Every number in the spec's rules, as a constant. None is in the database, and no
 | `RoundLength` | 7 days | [Matching](../../../docs/spec/matching.md) |
 | `CheckInOpensBeforeStart` | 30 minutes | [Outings](../../../docs/spec/outings.md) |
 | `FeedbackWindow` | 7 days | [Outings](../../../docs/spec/outings.md) |
+| `MinAge` | 18 | [People](../../../docs/spec/people.md) |
+| `NameMinLength`, `NameMaxLength` | 1 and 40 characters | [People](../../../docs/spec/people.md) |
 
 These are the numbers the thin loop needs. A later ticket adds a number to this package when it builds the rule that uses it.
 

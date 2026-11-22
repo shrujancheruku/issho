@@ -3,10 +3,12 @@ import { createConnectTransport } from '@connectrpc/connect-web';
 
 import { AccountService } from './gen/issho/v1/account_pb';
 import { HealthService } from './gen/issho/v1/health_pb';
+import { ProfileService } from './gen/issho/v1/profile_pb';
 
 export * from './gen/issho/v1/access_pb';
 export * from './gen/issho/v1/account_pb';
 export * from './gen/issho/v1/health_pb';
+export * from './gen/issho/v1/profile_pb';
 
 export interface ApiOptions {
   baseUrl: string;
@@ -34,6 +36,7 @@ export function createApi({ baseUrl, getAccessToken, fetch }: ApiOptions) {
   return {
     health: createClient(HealthService, transport),
     account: createClient(AccountService, transport),
+    profile: createClient(ProfileService, transport),
   };
 }
 

@@ -1,8 +1,9 @@
 // Package people owns accounts: who a person is to Issho, from the first
 // signed-in call (docs/spec/people.md, "Sign-in and the account"). An account
-// is an email, a city and a display language, nothing more. The profile,
-// standing and join links are added to this package by later tickets, each in
-// a table of its own keyed by the account's id.
+// is an email, a city and a display language, nothing more. The profile
+// (profile.go) is the answers asked at the first signup. Standing and join
+// links are added to this package by later tickets, each in a table of its own
+// keyed by the account's id.
 //
 // Sign-in itself is Supabase Auth's, with an email code. This package never
 // sees a code or a password: it checks the token Auth hands the app (Verifier)

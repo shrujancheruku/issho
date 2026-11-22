@@ -116,6 +116,20 @@ type AppPlanText struct {
 	WhatToBring  []string
 }
 
+type AppProfile struct {
+	AccountID               string
+	Name                    string
+	Gender                  string
+	Languages               []string
+	LivesInCity             bool
+	OnlyWomenAndNonBinary   bool
+	SaidAdultOn             time.Time
+	CodeOfConductVersion    int32
+	CodeOfConductAcceptedAt time.Time
+	CreatedAt               time.Time
+	UpdatedAt               time.Time
+}
+
 type AppQueueItem struct {
 	ID        int64
 	Kind      string

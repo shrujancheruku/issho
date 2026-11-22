@@ -60,4 +60,28 @@ describe('createApi', () => {
     expect(seen[0].url).toBe('https://api.example.test/issho.v1.AccountService/GetAccount');
     expect(seen[0].headers.get('authorization')).toBe('Bearer tok-1');
   });
+
+  it("saves the caller's own profile through the profile service", async () => {
+    const seen: Request[] = [];
+    const fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+      seen.push(new Request(input, init));
+      return new Response(JSON.stringify({ profile: { name: 'Ada', gender: 'woman', languages: ['en'], livesInCity: true } }), {
+        headers: { 'content-type': 'application/json' },
+      });
+    };
+    const api = createApi({ baseUrl: 'https://api.example.test', getAccessToken: async () => 'tok-1', fetch });
+
+    const res = await api.profile.saveProfile({
+      name: 'Ada',
+      dateOfBirth: '1990-06-15',
+      gender: 'woman',
+      languages: ['en'],
+      livesInCity: true,
+      acceptedCodeOfConduct: true,
+    });
+
+    expect(res.profile?.name).toBe('Ada');
+    expect(seen[0].url).toBe('https://api.example.test/issho.v1.ProfileService/SaveProfile');
+    expect(seen[0].headers.get('authorization')).toBe('Bearer tok-1');
+  });
 });

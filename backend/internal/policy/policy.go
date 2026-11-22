@@ -40,3 +40,13 @@ const CheckInOpensBeforeStart = 30 * time.Minute
 // FeedbackWindow is how long feedback stays open after the plan's stated end,
 // and when a provisional no-show becomes final (docs/spec/outings.md).
 const FeedbackWindow = 7 * 24 * time.Hour
+
+// MinAge is the age a person must be on the day they give their date of birth:
+// Issho is for adults only (docs/spec/people.md, "Sign-in and the account").
+const MinAge = 18 // docs/spec/people.md
+
+// A profile's name is 1 to 40 characters (docs/spec/people.md, "The profile").
+const (
+	NameMinLength = 1  // docs/spec/people.md
+	NameMaxLength = 40 // docs/spec/people.md
+)
