@@ -23,6 +23,9 @@
     ".github/workflows/deploy-*.yml",
     ".github/workflows/ci.yml",
     "backend/Dockerfile",
+    "apps/web/Dockerfile",
+    "apps/web/api-proxy.js",
+    "apps/admin/worker/**",
     "supabase/config.toml",
     "apps/*/wrangler.jsonc"
   ],
