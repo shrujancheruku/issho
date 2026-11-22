@@ -28,7 +28,13 @@ export function createAppSessionClient(): SessionClient {
       return null;
     }
   };
+  // Read as written so Expo can inline them into the bundle; the names are what the screen shows.
+  const missingConfig = [
+    ['EXPO_PUBLIC_SUPABASE_URL', process.env.EXPO_PUBLIC_SUPABASE_URL],
+    ['EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY', process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY],
+  ].flatMap(([name, value]) => (value ? [] : [name as string]));
   return {
+    missingConfig,
     getSession: async () => (await made()?.getSession()) ?? null,
     onChange: (listener) => made()?.onChange(listener) ?? (() => {}),
     sendCode: async (email) => real().sendCode(email),

@@ -5,7 +5,7 @@ import type { Session, SessionClient } from './session-client';
 /** `loading` until the stored session has been read: a screen must not send a signed-in person to sign-in before then. */
 export type AuthState = { status: 'loading' } | { status: 'signedOut' } | { status: 'signedIn'; session: Session };
 
-type Auth = AuthState & Pick<SessionClient, 'sendCode' | 'verifyCode' | 'signOut'>;
+type Auth = AuthState & Pick<SessionClient, 'sendCode' | 'verifyCode' | 'signOut'> & { missingConfig: readonly string[] };
 
 const AuthContext = createContext<Auth | null>(null);
 
@@ -29,6 +29,7 @@ export function AuthProvider({ client, children }: { client: SessionClient; chil
   const value = useMemo<Auth>(
     () => ({
       ...state,
+      missingConfig: client.missingConfig ?? [],
       sendCode: (email) => client.sendCode(email),
       verifyCode: (email, code) => client.verifyCode(email, code),
       signOut: () => client.signOut(),

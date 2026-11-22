@@ -20,6 +20,7 @@
   "signIn.rateLimited": "Too many tries. Wait a minute and try again.",
   "signIn.resend": "Send a new code",
   "signIn.resendWait": "You can ask for a new code in {seconds} seconds.",
+  "signIn.notConfigured": "This build is not set up for sign-in. Missing: {missing}.",
   "you.email": "Signed in as {email}",
   "you.signOut": "Sign out",
   "you.accountError": "Your account could not be loaded."

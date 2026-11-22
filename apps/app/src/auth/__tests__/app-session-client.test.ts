@@ -15,6 +15,14 @@ describe('the app session client without a Supabase address', () => {
     process.env = { ...saved };
   });
 
+  it('says which values are missing, by name', () => {
+    expect(createAppSessionClient().missingConfig).toEqual(['EXPO_PUBLIC_SUPABASE_URL', 'EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY']);
+    process.env.EXPO_PUBLIC_SUPABASE_URL = 'https://x.example.test';
+    expect(createAppSessionClient().missingConfig).toEqual(['EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY']);
+    process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY = 'pk';
+    expect(createAppSessionClient().missingConfig).toEqual([]);
+  });
+
   it('reads as signed out instead of throwing', async () => {
     const client = createAppSessionClient();
     expect(() => client.onChange(() => {})()).not.toThrow();

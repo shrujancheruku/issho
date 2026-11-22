@@ -1,7 +1,9 @@
 import { act, fireEvent, screen, waitFor } from '@testing-library/react-native';
 import { renderRouter } from 'expo-router/testing-library';
 import type { ReactNode } from 'react';
+import { StyleSheet } from 'react-native';
 
+import { Spacing } from '@/constants/theme';
 import { fakeApi } from '@/test-support/fake-api';
 import { RateLimitedError } from '@/auth/session-client';
 import { fakeSessionClient, RIGHT_CODE, type FakeSessionClient } from '@/test-support/fake-session-client';
@@ -13,6 +15,11 @@ import TogetherScreen from '../(tabs)/together';
 import YouScreen from '../(tabs)/you';
 import Index from '../index';
 import SignIn from '../sign-in';
+
+jest.mock('react-native-safe-area-context', () => ({
+  ...jest.requireActual('react-native-safe-area-context'),
+  useSafeAreaInsets: jest.fn(() => ({ top: 0, bottom: 0, left: 0, right: 0 })),
+}));
 
 jest.mock('react-native/Libraries/Utilities/useColorScheme', () => ({
   __esModule: true,
@@ -136,6 +143,36 @@ describe('signing in by email code', () => {
     await fireEvent.changeText(screen.getByLabelText('Mã 6 chữ số'), '000000');
     await fireEvent.press(screen.getByRole('button', { name: 'Đăng nhập' }));
     expect(await screen.findByText('Mã chưa đúng. Hãy kiểm tra và thử lại.')).toBeTruthy();
+  });
+});
+
+describe('the sign-in screen on a device with a status bar', () => {
+  it('starts below the top inset, so the title is not under the status bar', async () => {
+    const { useSafeAreaInsets } = jest.requireMock('react-native-safe-area-context');
+    useSafeAreaInsets.mockReturnValue({ top: 40, bottom: 0, left: 0, right: 0 });
+    await open('/sign-in', 'en');
+    expect(StyleSheet.flatten((await screen.findByTestId('screen')).props.style).paddingTop).toBe(40 + Spacing.four);
+  });
+});
+
+describe('a build missing its Supabase settings', () => {
+  const misconfigured = () => Object.assign(fakeSessionClient(), { missingConfig: ['EXPO_PUBLIC_SUPABASE_URL'] });
+
+  it('says at start which value is missing, instead of waiting for a send to fail', async () => {
+    await open('/sign-in', 'en', misconfigured());
+    expect(await screen.findByText('This build is not set up for sign-in. Missing: EXPO_PUBLIC_SUPABASE_URL.')).toBeTruthy();
+    expect(screen.queryByLabelText('Email')).toBeNull();
+  });
+
+  it('says it in Vietnamese too', async () => {
+    await open('/sign-in', 'vi', misconfigured());
+    expect(await screen.findByText('Bản dựng này chưa được cấu hình để đăng nhập: thiếu EXPO_PUBLIC_SUPABASE_URL.')).toBeTruthy();
+  });
+
+  it('shows the normal form when nothing is missing', async () => {
+    await open('/sign-in', 'en');
+    expect(await screen.findByLabelText('Email')).toBeTruthy();
+    expect(screen.queryByText(/not set up for sign-in/)).toBeNull();
   });
 });
 

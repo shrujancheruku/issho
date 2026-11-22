@@ -10,6 +10,8 @@ export interface Session {
  * Sign-in is a 6-digit email code and nothing else.
  */
 export interface SessionClient {
+  /** Names of the public build settings this client needs and was not given. Empty (or absent) when it can work. */
+  readonly missingConfig?: readonly string[];
   /** The session the client holds, from storage after a restart; null when signed out. */
   getSession(): Promise<Session | null>;
   /** Called on every sign-in, sign-out and token refresh. Returns the way to stop listening. */

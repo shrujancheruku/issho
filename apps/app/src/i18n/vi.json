@@ -20,6 +20,7 @@
   "signIn.rateLimited": "Bạn đã thử quá nhiều lần. Hãy đợi một phút rồi thử lại.",
   "signIn.resend": "Gửi mã mới",
   "signIn.resendWait": "Bạn có thể xin mã mới sau {seconds} giây.",
+  "signIn.notConfigured": "Bản dựng này chưa được cấu hình để đăng nhập: thiếu {missing}.",
   "you.email": "Đã đăng nhập là {email}",
   "you.signOut": "Đăng xuất",
   "you.accountError": "Không tải được tài khoản của bạn."

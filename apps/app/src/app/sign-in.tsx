@@ -1,6 +1,7 @@
 import { Redirect, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAuth } from '@/auth/auth-provider';
 import { returnPath } from '@/auth/return-path';
@@ -27,6 +28,8 @@ export default function SignIn() {
   const { t } = useI18n();
   const theme = useTheme();
   const auth = useAuth();
+  // This screen is outside the tabs, so nothing else keeps it clear of the status bar (Android draws edge to edge).
+  const insets = useSafeAreaInsets();
   const next = returnPath(useLocalSearchParams<{ next?: string }>().next);
 
   const [email, setEmail] = useState('');
@@ -84,12 +87,15 @@ export default function SignIn() {
   };
 
   return (
-    <View testID="screen" style={[styles.screen, { backgroundColor: theme.background }]}>
+    <View testID="screen" style={[styles.screen, { backgroundColor: theme.background, paddingTop: insets.top + Spacing.four }]}>
       <View style={styles.column}>
         <Text accessibilityRole="header" style={[styles.title, { color: theme.text }]}>
           {t('signIn.title')}
         </Text>
-        {sentTo === null ? (
+        {auth.missingConfig.length > 0 ? (
+          // A build without its Supabase settings cannot sign anyone in; say so now and name what is missing.
+          <ErrorText>{t('signIn.notConfigured', { missing: auth.missingConfig.join(', ') })}</ErrorText>
+        ) : sentTo === null ? (
           <>
             <Field
               label={t('signIn.emailLabel')}
