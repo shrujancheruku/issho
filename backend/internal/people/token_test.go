@@ -346,16 +346,13 @@ func TestARetiredKeyStopsWorkingOnceTheSetIsRefreshed(t *testing.T) {
 	// The refresh runs beside the requests it doesn't hold up, so the first
 	// token after the hour may still pass; the retired key is refused as soon
 	// as the new set is in.
-	deadline := time.Now().Add(5 * time.Second)
-	for {
+	for range 500 { // up to five seconds, for a fetch from a local test server
 		if _, err := v.Verify(ctx, tok); err != nil {
-			break
-		}
-		if time.Now().After(deadline) {
-			t.Fatal("token from a retired key was still accepted after the set was refreshed")
+			return
 		}
 		time.Sleep(10 * time.Millisecond)
 	}
+	t.Fatal("token from a retired key was still accepted after the set was refreshed")
 }
 
 func TestJWKSDownMeansRefusedUntilItIsUpAndKnownKeysKeepWorking(t *testing.T) {
