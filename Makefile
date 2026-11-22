@@ -105,11 +105,13 @@ lint: app-lint
 test: app-test
 
 # A package reaches another only through its exported Go API, and outside
-# services are wired only in cmd/ (#599). make lint runs this; the rule is stated
-# once, in backend/tools/boundaries.
+# services are wired only in cmd/ (#599), and only the city clock asks the system
+# for the time (tools/clockcheck, which `backend` runs too). make lint runs this;
+# the rules are stated once, in backend/tools/boundaries and backend/tools/clockcheck.
 .PHONY: boundaries
 boundaries:
 	cd backend && go run ./tools/boundaries -root ..
+	cd backend && go run ./tools/clockcheck
 
 lint: boundaries
 

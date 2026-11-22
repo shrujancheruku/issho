@@ -1,6 +1,6 @@
 # boundaries
 
-The check behind `make boundaries`, which `make lint` runs. It holds the backend to two rules in [Architecture and stack](../../../docs/spec/architecture.md#the-seams): a package reaches another only through its exported Go API, and outside services are wired only in `cmd/`.
+The check behind `make boundaries`, which `make lint` runs. It holds the backend to two rules (and `make boundaries` adds a third, the clock's) in [Architecture and stack](../../../docs/spec/architecture.md#the-seams): a package reaches another only through its exported Go API, and outside services are wired only in `cmd/`.
 
 ```sh
 make boundaries                                    # from the repo root
@@ -18,7 +18,7 @@ It prints one line per finding, as `file:line: kind: message`, and exits 1; exit
 
 `cmd/` may import anything: it is where the process is wired. Test files are checked like the rest. Generated code (`gen/`) and `testdata` are left out. The marker is a comment line of its own in a non-test file of the package, as in `internal/email/resend/resend.go`.
 
-The third boundary rule in the spec, that only the city clock asks the system for the time, is the clock ticket's.
+The third boundary rule in the spec, that only the injected clock asks the system for the time, is [`tools/clockcheck`](../clockcheck/README.md). `make boundaries` runs it after this check, so the `boundaries` job covers all three rules (`make backend` runs it too).
 
 ## Tests and fixtures
 
