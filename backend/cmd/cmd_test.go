@@ -251,3 +251,82 @@ func TestRPCAuthFailsOnAnRPCWithNoRuleAndPassesOtherwise(t *testing.T) {
 		t.Fatalf("the repo's proto: %v\n%s", err, out)
 	}
 }
+
+// The API needs its database and its sign-in together: with only one, it says
+// which is missing and exits 1 rather than serving accounts it can't keep or
+// can't check.
+func TestAPIWithHalfOfItsAccountsConfigExitsWithAnError(t *testing.T) {
+	bin := filepath.Join(t.TempDir(), "api")
+	if out, err := exec.Command("go", "build", "-o", bin, "./api").CombinedOutput(); err != nil {
+		t.Fatalf("build: %v\n%s", err, out)
+	}
+	for name, tc := range map[string]struct{ env, missing string }{
+		"no sign-in":  {"DATABASE_URL=postgres://localhost/x", "SUPABASE_AUTH_URL"},
+		"no database": {"SUPABASE_AUTH_URL=http://127.0.0.1:1/auth/v1", "DATABASE_URL"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			cmd := exec.Command(bin)
+			cmd.Env = append(os.Environ(), "API_ADDR=127.0.0.1:0", "DATABASE_URL=", "SUPABASE_AUTH_URL=", tc.env)
+			out, err := cmd.CombinedOutput()
+			if ee, ok := err.(*exec.ExitError); !ok || ee.ExitCode() != 1 {
+				t.Fatalf("err = %v, want exit status 1; output:\n%s", err, out)
+			}
+			if !strings.Contains(string(out), tc.missing) {
+				t.Fatalf("output does not name %s:\n%s", tc.missing, out)
+			}
+		})
+	}
+}
+
+// With its database and sign-in configured the API serves accounts, behind the
+// token check: a call with no good token is refused as unauthenticated (an API
+// that didn't serve accounts would answer unimplemented).
+func TestAPIWithAccountsConfiguredServesThemBehindTheTokenCheck(t *testing.T) {
+	bin := filepath.Join(t.TempDir(), "api")
+	if out, err := exec.Command("go", "build", "-o", bin, "./api").CombinedOutput(); err != nil {
+		t.Fatalf("build: %v\n%s", err, out)
+	}
+	pool := testdb.NewDatabase(t)
+	if err := db.Up(context.Background(), pool); err != nil {
+		t.Fatal(err)
+	}
+	cmd := exec.Command(bin)
+	// The key set's address is never reached: the token is refused first.
+	cmd.Env = append(os.Environ(), "API_ADDR=127.0.0.1:0", "DATABASE_URL="+testdb.URL(pool), "SUPABASE_AUTH_URL=http://127.0.0.1:1/auth/v1")
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := cmd.Start(); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = cmd.Process.Kill() })
+
+	addrs := make(chan string, 1)
+	go func() {
+		addr := regexp.MustCompile(`"addr":"([^"]+)"`)
+		sc := bufio.NewScanner(stdout)
+		for sc.Scan() {
+			if m := addr.FindStringSubmatch(sc.Text()); m != nil && strings.Contains(sc.Text(), "started") {
+				addrs <- m[1]
+				break
+			}
+		}
+		for sc.Scan() {
+		}
+	}()
+	var addr string
+	select {
+	case addr = <-addrs:
+	case <-time.After(10 * time.Second):
+		t.Fatal("did not report its address")
+	}
+
+	client := isshov1connect.NewAccountServiceClient(http.DefaultClient, "http://"+addr)
+	req := connect.NewRequest(&isshov1.GetAccountRequest{})
+	req.Header().Set("Authorization", "Bearer forged")
+	_, err = client.GetAccount(context.Background(), req)
+	if got := connect.CodeOf(err); got != connect.CodeUnauthenticated {
+		t.Fatalf("GetAccount with a forged token: code %v (%v), want unauthenticated", got, err)
+	}
+}

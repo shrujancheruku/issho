@@ -60,6 +60,14 @@ func (ns NullRiverRiverJobState) Value() (driver.Value, error) {
 	return string(ns.RiverRiverJobState), nil
 }
 
+type AppAccount struct {
+	ID              pgtype.UUID
+	Email           string
+	City            string
+	DisplayLanguage string
+	CreatedAt       time.Time
+}
+
 type AppQueueItem struct {
 	ID        int64
 	Kind      string

@@ -11,6 +11,7 @@ import (
 
 	"github.com/shrujancheruku/issho/backend/gen/issho/v1/isshov1connect"
 	"github.com/shrujancheruku/issho/backend/internal/clock"
+	"github.com/shrujancheruku/issho/backend/internal/people"
 )
 
 // Config is what the handler needs from the process that builds it.
@@ -18,8 +19,11 @@ type Config struct {
 	// Version is the build's version, reported by the health check.
 	Version string
 	// Auth verifies bearer tokens. Nil refuses every token, which leaves only
-	// the public RPCs callable (the verifier is #608's).
+	// the public RPCs callable.
 	Auth Authenticator
+	// People keeps the accounts. Nil leaves AccountService unserved, as it is
+	// for a process with no database.
+	People *people.Service
 	// Log gets one line per request (see logRequests), timed by Clock. Nil logs
 	// nothing; set, Clock is required.
 	Log   *slog.Logger
@@ -33,6 +37,9 @@ func NewHandler(cfg Config) http.Handler {
 	opts := connect.WithInterceptors(NewAccessInterceptor(cfg.Auth, protoregistry.GlobalFiles))
 	mux := http.NewServeMux()
 	mux.Handle(isshov1connect.NewHealthServiceHandler(healthService{version: cfg.Version}, opts))
+	if cfg.People != nil {
+		mux.Handle(isshov1connect.NewAccountServiceHandler(accountService{people: cfg.People}, opts))
+	}
 	var rpcs http.Handler = mux
 	if cfg.Log != nil {
 		rpcs = logRequests(cfg.Log, cfg.Clock, mux)

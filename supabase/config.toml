@@ -61,5 +61,19 @@ enable_anonymous_sign_ins = false
 [auth.email]
 enable_signup = true
 enable_confirmations = false
+# Sign-in is a code, not a link: the code is 6 digits and good for ten minutes.
 otp_length = 6
 otp_expiry = 600
+
+# What the code's email says. A person new to Issho is sent the "confirmation"
+# email and a returning one the "magic_link" email, so both show the code
+# ({{ .Token }}) and neither a link. Locally the mail lands in the catcher at
+# http://127.0.0.1:54324 (see [local_smtp]); a hosted project sends it through
+# Resend's SMTP, set in that project's [remotes.<project>] override.
+[auth.email.template.confirmation]
+subject = "Your Issho code"
+content_path = "./supabase/templates/code.html"
+
+[auth.email.template.magic_link]
+subject = "Your Issho code"
+content_path = "./supabase/templates/code.html"

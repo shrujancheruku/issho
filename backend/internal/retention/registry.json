@@ -1,4 +1,5 @@
 [
+  {"table": "app.accounts", "personal_data": "the person's email address, city and display language, under their Supabase Auth user ID", "lifetime": "While the account exists; a waitlisted account never given a place, or any account with no sign-in for 24 months, is deleted after one warning email 30 days before"},
   {"table": "app.queue_items", "personal_data": "none"},
   {"table": "goose.goose_db_version", "personal_data": "none"},
   {"table": "river.river_job", "personal_data": "none"},

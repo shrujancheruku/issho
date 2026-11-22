@@ -42,4 +42,22 @@ describe('createApi', () => {
 
     expect(seen[0].headers.has('authorization')).toBe(false);
   });
+
+  it("reads the caller's own account from the account service", async () => {
+    const seen: Request[] = [];
+    const fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+      seen.push(new Request(input, init));
+      return new Response(
+        JSON.stringify({ account: { id: 'a-1', email: 'ada@example.com', city: 'da-nang-hoi-an', displayLanguage: 'vi' } }),
+        { headers: { 'content-type': 'application/json' } },
+      );
+    };
+    const api = createApi({ baseUrl: 'https://api.example.test', getAccessToken: async () => 'tok-1', fetch });
+
+    const res = await api.account.getAccount({ displayLanguage: 'vi' });
+
+    expect(res.account?.email).toBe('ada@example.com');
+    expect(seen[0].url).toBe('https://api.example.test/issho.v1.AccountService/GetAccount');
+    expect(seen[0].headers.get('authorization')).toBe('Bearer tok-1');
+  });
 });
