@@ -3,9 +3,10 @@ name: deploy-dev
 # Deploys dev on every merge to main (docs/spec/operations.md#environments): builds
 # the two images, migrates the issho-dev database, then deploys the API, the
 # worker, the Expo server and the admin, and checks from outside that each serves
-# this commit. While the Foundation is built, a push to integration/foundation
-# deploys too, so the deploy is proven before the milestone merges. docs/deploy.md
-# has the picture, how to roll back and how to stop the VM.
+# this commit. Only a merge to main (or a manual run) deploys: an integration
+# branch does not, since CI's push trigger is main only and a red commit there
+# could otherwise migrate issho-dev. docs/deploy.md has the picture, how to roll
+# back and how to stop the VM.
 #
 # CI signs in to Google Cloud by Workload Identity Federation: GitHub issues this
 # run a short-lived OIDC token, and Google trades it for the deploy service
@@ -16,7 +17,6 @@ on:
   push:
     branches:
       - main
-      - integration/foundation
   # A rollback: Run workflow with an earlier commit's SHA (docs/deploy.md).
   workflow_dispatch:
     inputs:

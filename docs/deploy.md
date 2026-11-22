@@ -18,7 +18,7 @@ Cloudflare is in front of all of it (proxied, SSL mode Full (strict)). The VM ta
 
 ## A deploy
 
-`.github/workflows/deploy-dev.yml` runs on a push to `main`. (While the Foundation milestone is built it also runs on a push to `integration/foundation`, so the deploy is proven before that merges.) One deploy at a time. The job signs in, finds the VM and pins its SSH host key, runs `make deploy-dev` ([`scripts/deploy-dev.sh`](../scripts/deploy-dev.sh)), then `make deploy-dev-verify`:
+`.github/workflows/deploy-dev.yml` runs on a push to `main`. One deploy at a time. The job signs in, finds the VM and pins its SSH host key, runs `make deploy-dev` ([`scripts/deploy-dev.sh`](../scripts/deploy-dev.sh)), then `make deploy-dev-verify`:
 
 1. **Docker on the VM.** `kamal server bootstrap` installs it on the first run and does nothing after.
 2. **Build and push both images** to ghcr.io, tagged with the commit. A build that fails changes nothing.

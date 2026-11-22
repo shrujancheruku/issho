@@ -37,7 +37,7 @@ Kamal's own registry login is not in Secret Manager; see CI below.
 
 ### CI: GitHub Actions
 
-- **No cloud key is stored in GitHub.** The deploy job signs in to Google Cloud by Workload Identity Federation (#605). Its provider and deploy service account are named in `.github/workflows/deploy-dev.yml`, and the provider accepts only `main` and `integration/foundation` (#588, #605).
+- **No cloud key is stored in GitHub.** The deploy job signs in to Google Cloud by Workload Identity Federation (#605). Its provider and deploy service account are named in `.github/workflows/deploy-dev.yml`, and the provider accepts only `main` (#588, #605).
 - **`KAMAL_REGISTRY_PASSWORD`** is the job's own `GITHUB_TOKEN`, passed in its environment. It expires with the job.
 - **v1's `CLOUDFLARE_API_TOKEN` secret and `CLOUDFLARE_ACCOUNT_ID` variable were deleted** from GitHub Actions by the founder (#605). The admin's token is read from Secret Manager instead.
 

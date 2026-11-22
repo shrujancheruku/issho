@@ -19,7 +19,7 @@
 | [docs/secrets.md](docs/secrets.md) | Where secrets live and how leaks are prevented (**public repo**) |
 | [SECURITY.md](SECURITY.md) | Reporting vulnerabilities |
 | [docs/spec/architecture.md](docs/spec/architecture.md) | The stack and how its parts fit (the architecture; the spec's own document, not a copy) |
-| [docs/deploy.md](docs/deploy.md) | How dev deploys: from CI only, on pushes to `main` and `integration/foundation`, and how to roll back |
+| [docs/deploy.md](docs/deploy.md) | How dev deploys: from CI only, on merges to `main`, and how to roll back |
 
 | Path | What |
 |---|---|

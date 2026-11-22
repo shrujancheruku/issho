@@ -5,7 +5,7 @@
 | `ci.yml` | The required checks, below |
 | `release-please.yml` | Keeps the release PR open from the Conventional Commits since the last tag |
 | `tracker-check.yml` | The weekly issue-tracker hygiene check (`make tracker-check`) |
-| `deploy-dev.yml` | Deploys dev on a push to `main` (and, while the Foundation is built, to `integration/foundation`), or by hand for a rollback. [docs/deploy.md](../../docs/deploy.md) says how |
+| `deploy-dev.yml` | Deploys dev on a push to `main`, or by hand for a rollback. [docs/deploy.md](../../docs/deploy.md) says how |
 
 `deploy-dev.yml` is not a check and has none of `ci.yml`'s rules (`scripts/ci-workflow.test.sh` reads `ci.yml` only): it needs `id-token: write` and `packages: write`, and uses Google's auth action, pinned to a commit like the rest. `go tool actionlint` (the `codegen` job) lints it, and `make deploy-test` (also run by `codegen`) tests what it runs.
 
