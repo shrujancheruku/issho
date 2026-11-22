@@ -25,3 +25,7 @@ builder:
     # Public: it is bundled into the page. The page's own origin, where the Expo
     # server forwards the API's paths.
     EXPO_PUBLIC_API_URL: https://dev.joinissho.com
+    # A digest of the two Supabase values (not a value), so a changed value rebuilds
+    # the export instead of reusing BuildKit's cached one (apps/web/Dockerfile).
+    # scripts/deploy-dev.sh computes it; ENV.fetch, so Kamal will not build without it.
+    SUPABASE_VALUES_HASH: <%= ENV.fetch("SUPABASE_VALUES_HASH") %>

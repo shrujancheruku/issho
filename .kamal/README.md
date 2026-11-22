@@ -12,6 +12,7 @@ Kamal's secrets file for dev, `secrets.dev`. Kamal evaluates it on every call an
 | `RESEND_API_KEY`, `EMAIL_FROM` | `dev-resend-api-key`, `dev-email-from` | The worker's email |
 | `SSH_PRIVATE_KEY` | `dev-ssh-private-key` | Kamal's login to the VM as `kamal` |
 | `ORIGIN_CERT`, `ORIGIN_KEY` | `dev-origin-cert`, `dev-origin-key` | TLS between Cloudflare and kamal-proxy |
+| `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | `dev-supabase-url`, `dev-supabase-publishable-key` | The web build's sign-in values, given to `apps/web/Dockerfile` as builder secrets (`config/deploy.web.yml`) |
 | `KAMAL_REGISTRY_PASSWORD` | none | The workflow's own `GITHUB_TOKEN`, in its environment |
 
 `dev-ssh-host-key` (the VM's public host key, read by `scripts/dev-ssh-pin.sh` before Kamal connects, see [docs/deploy.md](../docs/deploy.md#where-the-secrets-are-and-how-ci-gets-at-them)), `dev-migrate-database-url` and `dev-cloudflare-api-token` are read by `scripts/deploy-dev.sh` (the migration and the admin's deploy), not by Kamal.
