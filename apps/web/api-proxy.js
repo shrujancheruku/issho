@@ -22,14 +22,18 @@ const DECODED = new Set(['content-encoding', 'content-length']);
 
 function apiProxy(apiOrigin) {
   return async (req, res, next) => {
-    if (!req.url.startsWith('/issho.v1.')) return next();
+    // Test the path the request will actually reach: `new URL` resolves `..`, so
+    // `/issho.v1./../up` would pass a check on the raw string and land on `/up`.
+    // The origin is checked too, since `//host/..` resolves to another host.
+    const target = new URL(req.url, apiOrigin);
+    if (target.origin !== new URL(apiOrigin).origin || !target.pathname.startsWith('/issho.v1.')) return next();
     const headers = new Headers();
     for (const [name, value] of Object.entries(req.headers)) {
       if (!HOP.has(name) && !CLIENT_ADDRESS.has(name)) headers.set(name, Array.isArray(value) ? value.join(', ') : value);
     }
     const hasBody = req.method !== 'GET' && req.method !== 'HEAD';
     try {
-      const upstream = await fetch(new URL(req.url, apiOrigin), {
+      const upstream = await fetch(target, {
         method: req.method,
         headers,
         body: hasBody ? Readable.toWeb(req) : undefined,

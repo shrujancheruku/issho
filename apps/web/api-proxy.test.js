@@ -72,6 +72,24 @@ test('a path outside the API is the page, and never reaches the API', async (t) 
   assert.equal(seen.length, 0);
 });
 
+test('a path that climbs out of the API\'s prefix is the page, and never reaches the API', async (t) => {
+  const { seen, origin, close } = await setup((_req, res) => res.end('api'));
+  t.after(close);
+  // fetch would resolve the dots itself; send them as they are, as a raw client can.
+  const raw = (path) => new Promise((resolve, reject) => {
+    const { port } = new URL(origin);
+    http.get({ host: '127.0.0.1', port, path }, (res) => {
+      let body = '';
+      res.on('data', (c) => { body += c; });
+      res.on('end', () => resolve(body));
+    }).on('error', reject);
+  });
+  for (const path of ['/issho.v1./../up', '/issho.v1./%2e%2e/up', '/issho.v1./..%2fup']) {
+    assert.equal(await raw(path), 'the page', path);
+  }
+  assert.deepEqual(seen, []);
+});
+
 test('an API that cannot be reached answers 502', async (t) => {
   const app = express();
   app.use(apiProxy('http://127.0.0.1:1'));
