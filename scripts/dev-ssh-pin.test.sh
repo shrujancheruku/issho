@@ -60,11 +60,15 @@ address=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{
 
 # connect <key> [<pinned address>]: what net-ssh says when Kamal's options meet
 # the server, with <key> pinned for the server's address (or another one).
+# Each call writes to a new directory: Docker Desktop on macOS can keep serving a
+# deleted bind-mounted directory's old contents, and net-ssh silently ignores a
+# missing config file, so a reused path made the refusal cases pass or fail at random.
 connect() {
-  rm -rf "$work/c"
-  KEY="$1" pin "${2:-$address}" "$work/c" >/dev/null
-  docker run --rm --network "$net" -v "$work/c:$work/c:ro" --entrypoint ruby "$kamal_image" -e '
+  n=$((${n:-0} + 1)); c="$work/c$n"
+  KEY="$1" pin "${2:-$address}" "$c" >/dev/null
+  docker run --rm --network "$net" -v "$c:$c:ro" --entrypoint ruby "$kamal_image" -e '
 require "net/ssh"
+abort "no ssh config at #{ARGV[1]}" unless File.readable?(ARGV[1])
 begin
   Net::SSH.start(ARGV[0], "kamal", config: [ARGV[1]], keys_only: true, key_data: [], non_interactive: true, timeout: 10) { }
   puts "connected"
@@ -72,7 +76,7 @@ rescue Net::SSH::HostKeyError => e
   puts "host key refused: #{e.class}"
 rescue Net::SSH::AuthenticationFailed
   puts "host key accepted"
-end' "$address" "$work/c/ssh_config"
+end' "$address" "$c/ssh_config"
 }
 got=$(connect "$server_key")
 [ "$got" = "host key accepted" ] || bad "the pinned key: $got"
