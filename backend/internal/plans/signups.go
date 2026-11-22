@@ -1,0 +1,350 @@
+package plans
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"slices"
+	"strings"
+	"time"
+
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/shrujancheruku/issho/backend/internal/cities"
+	"github.com/shrujancheruku/issho/backend/internal/cityclock"
+	"github.com/shrujancheruku/issho/backend/internal/clock"
+	"github.com/shrujancheruku/issho/backend/internal/plans/store"
+	"github.com/shrujancheruku/issho/backend/internal/policy"
+)
+
+// The ways a signup is refused. ErrNotFound (a plan that isn't there, or whose
+// city is closed) is plans' own, in plans.go.
+var (
+	// ErrInvalid wraps a refusal of malformed ticks: none, a date that isn't a
+	// date or a part of the day that isn't one.
+	ErrInvalid = errors.New("plans: invalid signup")
+	// ErrTickTooSoon: a tick less than policy.MinTickLeadDays ahead, counted on
+	// the city's clock.
+	ErrTickTooSoon = errors.New("plans: a tick is less than 3 days ahead")
+	// ErrTickTooFar: a tick later than a round (policy.RoundLength) after the
+	// round's last day.
+	ErrTickTooFar = errors.New("plans: a tick is too far ahead")
+	// ErrTickPartNotAllowed: a tick on a part of the day the plan doesn't allow.
+	ErrTickPartNotAllowed = errors.New("plans: the plan doesn't run in that part of the day")
+)
+
+// Tick is one part of one day a person can go: "2026-01-08" and "evening".
+// The date is the city's calendar date and the part is in the city's clock
+// hours.
+type Tick struct {
+	Date string
+	Part string
+}
+
+// Signup is a person's ticks on a plan in its running round. It commits the
+// person to nothing.
+type Signup struct {
+	PlanID string
+	// Ticks are in time order: by date, then morning, afternoon, evening.
+	Ticks []Tick
+	// HearBy is the round's last day, the city's calendar date by which the
+	// person has an invitation or "no group this round" (docs/spec/matching.md).
+	HearBy string
+}
+
+// Signups keeps who is signed up to which plan, with their ticks. It is part of
+// plans' exported API with Service, and reads the same tables.
+type Signups struct {
+	clock  clock.Clock
+	pool   *pgxpool.Pool
+	cities *cities.Service
+}
+
+// NewSignups returns a Signups that reads "today" from clk on each city's clock.
+func NewSignups(clk clock.Clock, pool *pgxpool.Pool, cs *cities.Service) *Signups {
+	return &Signups{clock: clk, pool: pool, cities: cs}
+}
+
+// noParts: signups need only the city's calendar date, not its hours of the
+// day, and cityclock accepts an empty span (as people's profile does).
+var noParts = cityclock.DayParts{
+	Morning:   cityclock.Span{From: "00:00", To: "00:00"},
+	Afternoon: cityclock.Span{From: "00:00", To: "00:00"},
+	Evening:   cityclock.Span{From: "00:00", To: "00:00"},
+}
+
+// partRank orders a day's parts.
+var partRank = map[string]int{"morning": 0, "afternoon": 1, "evening": 2}
+
+// roundDays is how many calendar days a round spans, its first and last
+// included.
+const roundDays = int(policy.RoundLength / (24 * time.Hour))
+
+// today is the date on the city's clock now.
+func (s *Signups) today(zone string) (string, error) {
+	clk, err := cityclock.New(zone, noParts)
+	if err != nil {
+		return "", err
+	}
+	return clk.Date(s.clock.Now()), nil
+}
+
+// addDays is the calendar date n days after date (negative for before).
+func addDays(date time.Time, n int) time.Time { return date.AddDate(0, 0, n) }
+
+// Set makes the account's signup to the plan from ticks, or replaces the ticks
+// of the one it has: a person changes their times by signing up again. The
+// first signup into a plan with no running round opens it.
+func (s *Signups) Set(ctx context.Context, accountID, planID string, ticks []Tick) (Signup, error) {
+	plan, city, err := s.planAndCity(ctx, planID)
+	if err != nil {
+		return Signup{}, err
+	}
+	// A closed city's plans are kept but not shown, so they take no signups; the
+	// error is the one for a plan that isn't there, as GetPlan's is.
+	if city.State == cities.Closed {
+		return Signup{}, ErrNotFound
+	}
+	todayText, err := s.today(city.TimeZone)
+	if err != nil {
+		return Signup{}, fmt.Errorf("plans: signup: %w", err)
+	}
+	today, _ := time.Parse(time.DateOnly, todayText)
+	norm, err := parseTicks(ticks)
+	if err != nil {
+		return Signup{}, err
+	}
+
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return Signup{}, fmt.Errorf("plans: signup: %w", err)
+	}
+	defer tx.Rollback(ctx) //nolint:errcheck // a rollback after commit is a no-op
+	q := store.New(tx)
+
+	round, err := q.CurrentRound(ctx, store.CurrentRoundParams{PlanID: plan.ID, Today: today})
+	if errors.Is(err, pgx.ErrNoRows) {
+		round, err = q.OpenRound(ctx, store.OpenRoundParams{PlanID: plan.ID, StartsOn: today, EndsOn: addDays(today, roundDays-1)})
+	}
+	if err != nil {
+		return Signup{}, fmt.Errorf("plans: signup: round: %w", err)
+	}
+
+	if err := checkTicks(norm, plan.PartsOfDay, today, round.EndsOn); err != nil {
+		return Signup{}, err
+	}
+
+	now := s.clock.Now()
+	if err := q.UpsertSignup(ctx, store.UpsertSignupParams{RoundID: round.ID, AccountID: accountID, CreatedAt: now}); err != nil {
+		return Signup{}, fmt.Errorf("plans: signup: %w", err)
+	}
+	if err := q.DeleteTicks(ctx, store.DeleteTicksParams{RoundID: round.ID, AccountID: accountID}); err != nil {
+		return Signup{}, fmt.Errorf("plans: signup: %w", err)
+	}
+	for _, t := range norm {
+		d, _ := time.Parse(time.DateOnly, t.Date)
+		if err := q.InsertTick(ctx, store.InsertTickParams{RoundID: round.ID, AccountID: accountID, TickDate: d, Part: t.Part}); err != nil {
+			return Signup{}, fmt.Errorf("plans: signup: tick: %w", err)
+		}
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return Signup{}, fmt.Errorf("plans: signup: %w", err)
+	}
+	return Signup{PlanID: plan.ID, Ticks: norm, HearBy: round.EndsOn.Format(time.DateOnly)}, nil
+}
+
+// cityDates answers "what day is it" for the cities the signups are in, each
+// on its own clock, reading each city once.
+type cityDates struct {
+	s     *Signups
+	ctx   context.Context
+	dates map[string]time.Time
+}
+
+func (s *Signups) cityDates(ctx context.Context) *cityDates {
+	return &cityDates{s: s, ctx: ctx, dates: map[string]time.Time{}}
+}
+
+// today is the city's calendar date now, at midnight UTC.
+func (c *cityDates) today(slug string) (time.Time, error) {
+	if d, ok := c.dates[slug]; ok {
+		return d, nil
+	}
+	city, err := c.s.cities.Get(c.ctx, slug)
+	if err != nil {
+		return time.Time{}, err
+	}
+	text, err := c.s.today(city.TimeZone)
+	if err != nil {
+		return time.Time{}, err
+	}
+	d, err := time.Parse(time.DateOnly, text)
+	if err != nil {
+		return time.Time{}, err
+	}
+	c.dates[slug] = d
+	return d, nil
+}
+
+// since is the loose lower bound for reads: a day before the UTC date, which no
+// city's today is earlier than.
+func (s *Signups) since() time.Time {
+	now := s.clock.Now().UTC()
+	return addDays(time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC), -1)
+}
+
+// Mine returns the account's signups to rounds that haven't ended, the
+// earliest hear-by first. Its own, and nobody else's: it takes the account.
+func (s *Signups) Mine(ctx context.Context, accountID string) ([]Signup, error) {
+	q := store.New(s.pool)
+	rows, err := q.ListSignupsOfAccount(ctx, store.ListSignupsOfAccountParams{AccountID: accountID, Since: s.since()})
+	if err != nil {
+		return nil, fmt.Errorf("plans: mine: %w", err)
+	}
+	ticks, err := q.ListTicksOfAccount(ctx, store.ListTicksOfAccountParams{AccountID: accountID, Since: s.since()})
+	if err != nil {
+		return nil, fmt.Errorf("plans: mine: %w", err)
+	}
+	type key struct {
+		plan string
+		ends time.Time
+	}
+	byRound := map[key][]Tick{}
+	for _, t := range ticks {
+		k := key{t.PlanID, t.EndsOn}
+		byRound[k] = append(byRound[k], Tick{Date: t.TickDate.Format(time.DateOnly), Part: t.Part})
+	}
+	dates := s.cityDates(ctx)
+	out := []Signup{}
+	for _, r := range rows {
+		today, err := dates.today(r.City)
+		if err != nil {
+			return nil, fmt.Errorf("plans: mine: %w", err)
+		}
+		if r.EndsOn.Before(today) {
+			continue
+		}
+		out = append(out, Signup{
+			PlanID: r.PlanID,
+			Ticks:  normalise(byRound[key{r.PlanID, r.EndsOn}]),
+			HearBy: r.EndsOn.Format(time.DateOnly),
+		})
+	}
+	return out, nil
+}
+
+// Withdraw ends the account's signup to the plan. A person with none withdraws
+// nothing and gets no error. A closed city's signups can be withdrawn too.
+func (s *Signups) Withdraw(ctx context.Context, accountID, planID string) error {
+	plan, city, err := s.planAndCity(ctx, planID)
+	if err != nil {
+		return err
+	}
+	todayText, err := s.today(city.TimeZone)
+	if err != nil {
+		return fmt.Errorf("plans: withdraw: %w", err)
+	}
+	today, _ := time.Parse(time.DateOnly, todayText)
+	if err := store.New(s.pool).DeleteSignup(ctx, store.DeleteSignupParams{PlanID: plan.ID, AccountID: accountID, Today: today}); err != nil {
+		return fmt.Errorf("plans: withdraw: %w", err)
+	}
+	return nil
+}
+
+// Count returns how many people are signed up to each of the plans' running
+// rounds, 0 for a plan with none. It never says who.
+func (s *Signups) Count(ctx context.Context, planIDs []string) (map[string]int, error) {
+	out := make(map[string]int, len(planIDs))
+	if len(planIDs) == 0 {
+		return out, nil
+	}
+	rows, err := store.New(s.pool).CountSignups(ctx, store.CountSignupsParams{PlanIds: planIDs, Since: s.since()})
+	if err != nil {
+		return nil, fmt.Errorf("plans: count: %w", err)
+	}
+	dates := s.cityDates(ctx)
+	for _, r := range rows {
+		today, err := dates.today(r.City)
+		if err != nil {
+			return nil, fmt.Errorf("plans: count: %w", err)
+		}
+		if !r.EndsOn.Before(today) {
+			out[r.PlanID] += int(r.SignedUp)
+		}
+	}
+	return out, nil
+}
+
+// planAndCity reads the plan and its city, or ErrNotFound for a plan that isn't
+// there or whose id couldn't be one.
+func (s *Signups) planAndCity(ctx context.Context, planID string) (store.AppPlan, cities.City, error) {
+	planID = strings.ToLower(planID)
+	if !idRe.MatchString(planID) {
+		return store.AppPlan{}, cities.City{}, ErrNotFound
+	}
+	plan, err := store.New(s.pool).GetPlan(ctx, planID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return store.AppPlan{}, cities.City{}, ErrNotFound
+	}
+	if err != nil {
+		return store.AppPlan{}, cities.City{}, fmt.Errorf("plans: signup: %w", err)
+	}
+	city, err := s.cities.Get(ctx, plan.City)
+	if err != nil {
+		return store.AppPlan{}, cities.City{}, fmt.Errorf("plans: signup: city: %w", err)
+	}
+	return plan, city, nil
+}
+
+// normalise drops repeated ticks and puts the rest in time order.
+func normalise(ticks []Tick) []Tick {
+	out := slices.Clone(ticks)
+	slices.SortFunc(out, func(a, b Tick) int {
+		if c := strings.Compare(a.Date, b.Date); c != 0 {
+			return c
+		}
+		return partRank[a.Part] - partRank[b.Part]
+	})
+	return slices.Compact(out)
+}
+
+// parseTicks refuses malformed ticks and returns the rest normalised.
+func parseTicks(ticks []Tick) ([]Tick, error) {
+	if len(ticks) == 0 {
+		return nil, fmt.Errorf("%w: a signup needs at least one tick", ErrInvalid)
+	}
+	for _, t := range ticks {
+		// time.DateOnly's own parse takes "2026-1-9"; compare the round trip so a
+		// date has one spelling.
+		d, err := time.Parse(time.DateOnly, t.Date)
+		if err != nil || d.Format(time.DateOnly) != t.Date {
+			return nil, fmt.Errorf("%w: %q is not a date (YYYY-MM-DD)", ErrInvalid, t.Date)
+		}
+		if _, ok := partRank[t.Part]; !ok {
+			return nil, fmt.Errorf("%w: %q is not morning, afternoon or evening", ErrInvalid, t.Part)
+		}
+	}
+	return normalise(ticks), nil
+}
+
+// checkTicks holds each tick to the plan and the clock: a part the plan allows,
+// at least policy.MinTickLeadDays after today and no later than a round after
+// the round's last day.
+func checkTicks(ticks []Tick, allowed []string, today, roundEnds time.Time) error {
+	earliest := addDays(today, policy.MinTickLeadDays)
+	latest := addDays(roundEnds, roundDays)
+	for _, t := range ticks {
+		if !slices.Contains(allowed, t.Part) {
+			return fmt.Errorf("%w: %s", ErrTickPartNotAllowed, t.Part)
+		}
+		d, _ := time.Parse(time.DateOnly, t.Date) // parseTicks has checked it
+		switch {
+		case d.Before(earliest):
+			return fmt.Errorf("%w: %s", ErrTickTooSoon, t.Date)
+		case d.After(latest):
+			return fmt.Errorf("%w: %s", ErrTickTooFar, t.Date)
+		}
+	}
+	return nil
+}

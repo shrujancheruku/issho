@@ -256,7 +256,10 @@ type Plan struct {
 	// ends_at are in.
 	TimeZone string `protobuf:"bytes,14,opt,name=time_zone,json=timeZone,proto3" json:"time_zone,omitempty"`
 	// The stops, in order.
-	Stops         []*Stop `protobuf:"bytes,15,rep,name=stops,proto3" json:"stops,omitempty"`
+	Stops []*Stop `protobuf:"bytes,15,rep,name=stops,proto3" json:"stops,omitempty"`
+	// How many people are signed up to the plan's running round: a number, never
+	// who. 0 when no round is running.
+	SignedUp      int32 `protobuf:"varint,16,opt,name=signed_up,json=signedUp,proto3" json:"signed_up,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -394,6 +397,13 @@ func (x *Plan) GetStops() []*Stop {
 		return x.Stops
 	}
 	return nil
+}
+
+func (x *Plan) GetSignedUp() int32 {
+	if x != nil {
+		return x.SignedUp
+	}
+	return 0
 }
 
 // One stop of a plan.
@@ -545,7 +555,7 @@ const file_issho_v1_plan_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12)\n" +
 	"\x10display_language\x18\x02 \x01(\tR\x0fdisplayLanguage\"5\n" +
 	"\x0fGetPlanResponse\x12\"\n" +
-	"\x04plan\x18\x01 \x01(\v2\x0e.issho.v1.PlanR\x04plan\"\xbd\x03\n" +
+	"\x04plan\x18\x01 \x01(\v2\x0e.issho.v1.PlanR\x04plan\"\xda\x03\n" +
 	"\x04Plan\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04city\x18\x02 \x01(\tR\x04city\x12\x1a\n" +
@@ -563,7 +573,8 @@ const file_issho_v1_plan_proto_rawDesc = "" +
 	"\tstarts_at\x18\f \x01(\tR\bstartsAt\x12\x17\n" +
 	"\aends_at\x18\r \x01(\tR\x06endsAt\x12\x1b\n" +
 	"\ttime_zone\x18\x0e \x01(\tR\btimeZone\x12$\n" +
-	"\x05stops\x18\x0f \x03(\v2\x0e.issho.v1.StopR\x05stops\"\x8e\x01\n" +
+	"\x05stops\x18\x0f \x03(\v2\x0e.issho.v1.StopR\x05stops\x12\x1b\n" +
+	"\tsigned_up\x18\x10 \x01(\x05R\bsignedUp\"\x8e\x01\n" +
 	"\x04Stop\x12\x1a\n" +
 	"\bposition\x18\x01 \x01(\x05R\bposition\x12!\n" +
 	"\fstay_minutes\x18\x02 \x01(\x05R\vstayMinutes\x12\x12\n" +

@@ -3,7 +3,6 @@ package rpc_test
 import (
 	"context"
 	"errors"
-	"net/http/httptest"
 	"strings"
 	"testing"
 
@@ -182,14 +181,8 @@ func TestAnAccountWithNoProfileIsRefusedWithProfileRequired(t *testing.T) {
 	if got := problemOf(err); got != isshov1.ProfileProblemReason_PROFILE_PROBLEM_REASON_PROFILE_REQUIRED {
 		t.Fatalf("reason = %v, want PROFILE_REQUIRED", got)
 	}
-	// The error crosses the wire with the detail intact.
-	srv := httptest.NewServer(rpcHandlerRequiringAProfile(r, ada))
-	t.Cleanup(srv.Close)
-	_, werr := isshov1connect.NewHealthServiceClient(srv.Client(), srv.URL).Check(context.Background(), connect.NewRequest(&isshov1.CheckRequest{}))
-	wantCode(t, werr, connect.CodeFailedPrecondition)
-	if got := problemOf(werr); got != isshov1.ProfileProblemReason_PROFILE_PROBLEM_REASON_PROFILE_REQUIRED {
-		t.Fatalf("over the wire, reason = %v, want PROFILE_REQUIRED", got)
-	}
+	// The error crosses the wire with the detail intact: TestSigningUpWithNoProfile
+	// IsRefusedWithProfileRequired (signup_test.go) calls it through the signup RPC.
 
 	if _, err := r.save(r.issuer.Token(r.clk.Now(), ada, "ada@example.com"), goodSave()); err != nil {
 		t.Fatal(err)

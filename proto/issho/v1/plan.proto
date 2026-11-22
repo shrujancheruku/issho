@@ -10,7 +10,8 @@ service PlanService {
   // Lists a city's plans, earliest start first, with their text in the
   // caller's display language. Public: anyone may see a city's plans with no
   // token (docs/spec/core-loop.md). It returns a plan's page fields, which are
-  // the same for everyone, and nothing about any person.
+  // the same for everyone, and nothing about any person but how many are signed
+  // up.
   rpc ListPlans(ListPlansRequest) returns (ListPlansResponse) {
     option (issho.v1.access) = ACCESS_PUBLIC;
   }
@@ -84,6 +85,9 @@ message Plan {
   string time_zone = 14;
   // The stops, in order.
   repeated Stop stops = 15;
+  // How many people are signed up to the plan's running round: a number, never
+  // who. 0 when no round is running.
+  int32 signed_up = 16;
 }
 
 // One stop of a plan.

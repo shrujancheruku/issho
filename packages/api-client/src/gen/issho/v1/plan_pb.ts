@@ -11,7 +11,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file issho/v1/plan.proto.
  */
 export const file_issho_v1_plan: GenFile = /*@__PURE__*/
-  fileDesc("ChNpc3Noby92MS9wbGFuLnByb3RvEghpc3Noby52MSI6ChBMaXN0UGxhbnNSZXF1ZXN0EgwKBGNpdHkYASABKAkSGAoQZGlzcGxheV9sYW5ndWFnZRgCIAEoCSIyChFMaXN0UGxhbnNSZXNwb25zZRIdCgVwbGFucxgBIAMoCzIOLmlzc2hvLnYxLlBsYW4iNgoOR2V0UGxhblJlcXVlc3QSCgoCaWQYASABKAkSGAoQZGlzcGxheV9sYW5ndWFnZRgCIAEoCSIvCg9HZXRQbGFuUmVzcG9uc2USHAoEcGxhbhgBIAEoCzIOLmlzc2hvLnYxLlBsYW4iqgIKBFBsYW4SCgoCaWQYASABKAkSDAoEY2l0eRgCIAEoCRIQCghsYW5ndWFnZRgDIAEoCRINCgV0aXRsZRgEIAEoCRITCgtkZXNjcmlwdGlvbhgFIAEoCRINCgVwcmljZRgGIAEoBRIQCghjdXJyZW5jeRgHIAEoCRIXCg9tZWV0aW5nX2FkZHJlc3MYCCABKAkSFQoNbWVldGluZ19wb2ludBgJIAEoCRIVCg13aGF0X3RvX2JyaW5nGAogAygJEhQKDHBhcnRzX29mX2RheRgLIAMoCRIRCglzdGFydHNfYXQYDCABKAkSDwoHZW5kc19hdBgNIAEoCRIRCgl0aW1lX3pvbmUYDiABKAkSHQoFc3RvcHMYDyADKAsyDi5pc3Noby52MS5TdG9wImYKBFN0b3ASEAoIcG9zaXRpb24YASABKAUSFAoMc3RheV9taW51dGVzGAIgASgFEgwKBG5hbWUYAyABKAkSDAoEbm90ZRgEIAEoCRIaCgNsZWcYBSABKAsyDS5pc3Noby52MS5MZWciJAoDTGVnEgwKBG1vZGUYASABKAkSDwoHbWludXRlcxgCIAEoBTKfAQoLUGxhblNlcnZpY2USSgoJTGlzdFBsYW5zEhouaXNzaG8udjEuTGlzdFBsYW5zUmVxdWVzdBobLmlzc2hvLnYxLkxpc3RQbGFuc1Jlc3BvbnNlIgSItRgBEkQKB0dldFBsYW4SGC5pc3Noby52MS5HZXRQbGFuUmVxdWVzdBoZLmlzc2hvLnYxLkdldFBsYW5SZXNwb25zZSIEiLUYAUKYAQoMY29tLmlzc2hvLnYxQglQbGFuUHJvdG9QAVo8Z2l0aHViLmNvbS9zaHJ1amFuY2hlcnVrdS9pc3Noby9iYWNrZW5kL2dlbi9pc3Noby92MTtpc3Nob3YxogIDSVhYqgIISXNzaG8uVjHKAghJc3Nob1xWMeICFElzc2hvXFYxXEdQQk1ldGFkYXRh6gIJSXNzaG86OlYxYgZwcm90bzM", [file_issho_v1_access]);
+  fileDesc("ChNpc3Noby92MS9wbGFuLnByb3RvEghpc3Noby52MSI6ChBMaXN0UGxhbnNSZXF1ZXN0EgwKBGNpdHkYASABKAkSGAoQZGlzcGxheV9sYW5ndWFnZRgCIAEoCSIyChFMaXN0UGxhbnNSZXNwb25zZRIdCgVwbGFucxgBIAMoCzIOLmlzc2hvLnYxLlBsYW4iNgoOR2V0UGxhblJlcXVlc3QSCgoCaWQYASABKAkSGAoQZGlzcGxheV9sYW5ndWFnZRgCIAEoCSIvCg9HZXRQbGFuUmVzcG9uc2USHAoEcGxhbhgBIAEoCzIOLmlzc2hvLnYxLlBsYW4ivQIKBFBsYW4SCgoCaWQYASABKAkSDAoEY2l0eRgCIAEoCRIQCghsYW5ndWFnZRgDIAEoCRINCgV0aXRsZRgEIAEoCRITCgtkZXNjcmlwdGlvbhgFIAEoCRINCgVwcmljZRgGIAEoBRIQCghjdXJyZW5jeRgHIAEoCRIXCg9tZWV0aW5nX2FkZHJlc3MYCCABKAkSFQoNbWVldGluZ19wb2ludBgJIAEoCRIVCg13aGF0X3RvX2JyaW5nGAogAygJEhQKDHBhcnRzX29mX2RheRgLIAMoCRIRCglzdGFydHNfYXQYDCABKAkSDwoHZW5kc19hdBgNIAEoCRIRCgl0aW1lX3pvbmUYDiABKAkSHQoFc3RvcHMYDyADKAsyDi5pc3Noby52MS5TdG9wEhEKCXNpZ25lZF91cBgQIAEoBSJmCgRTdG9wEhAKCHBvc2l0aW9uGAEgASgFEhQKDHN0YXlfbWludXRlcxgCIAEoBRIMCgRuYW1lGAMgASgJEgwKBG5vdGUYBCABKAkSGgoDbGVnGAUgASgLMg0uaXNzaG8udjEuTGVnIiQKA0xlZxIMCgRtb2RlGAEgASgJEg8KB21pbnV0ZXMYAiABKAUynwEKC1BsYW5TZXJ2aWNlEkoKCUxpc3RQbGFucxIaLmlzc2hvLnYxLkxpc3RQbGFuc1JlcXVlc3QaGy5pc3Noby52MS5MaXN0UGxhbnNSZXNwb25zZSIEiLUYARJECgdHZXRQbGFuEhguaXNzaG8udjEuR2V0UGxhblJlcXVlc3QaGS5pc3Noby52MS5HZXRQbGFuUmVzcG9uc2UiBIi1GAFCmAEKDGNvbS5pc3Noby52MUIJUGxhblByb3RvUAFaPGdpdGh1Yi5jb20vc2hydWphbmNoZXJ1a3UvaXNzaG8vYmFja2VuZC9nZW4vaXNzaG8vdjE7aXNzaG92MaICA0lYWKoCCElzc2hvLlYxygIISXNzaG9cVjHiAhRJc3Nob1xWMVxHUEJNZXRhZGF0YeoCCUlzc2hvOjpWMWIGcHJvdG8z", [file_issho_v1_access]);
 
 /**
  * @generated from message issho.v1.ListPlansRequest
@@ -211,6 +211,14 @@ export type Plan = Message<"issho.v1.Plan"> & {
    * @generated from field: repeated issho.v1.Stop stops = 15;
    */
   stops: Stop[];
+
+  /**
+   * How many people are signed up to the plan's running round: a number, never
+   * who. 0 when no round is running.
+   *
+   * @generated from field: int32 signed_up = 16;
+   */
+  signedUp: number;
 };
 
 /**
@@ -304,7 +312,8 @@ export const PlanService: GenService<{
    * Lists a city's plans, earliest start first, with their text in the
    * caller's display language. Public: anyone may see a city's plans with no
    * token (docs/spec/core-loop.md). It returns a plan's page fields, which are
-   * the same for everyone, and nothing about any person.
+   * the same for everyone, and nothing about any person but how many are signed
+   * up.
    *
    * @generated from rpc issho.v1.PlanService.ListPlans
    */

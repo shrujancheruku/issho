@@ -1,8 +1,8 @@
 # plans
 
-Owns plans: the fields a plan page shows, and the prose in each language ([Plans](../../../docs/spec/plans.md), [Languages](../../../docs/spec/languages.md#plans)). The tables are `app.plans`, `app.plan_texts`, `app.plan_stops` and `app.plan_stop_texts` (`db/migrations/00004_cities_and_plans.sql`); no other package reads them.
+Owns plans: the fields a plan page shows, and the prose in each language ([Plans](../../../docs/spec/plans.md), [Languages](../../../docs/spec/languages.md#plans)). The tables are `app.plans`, `app.plan_texts`, `app.plan_stops` and `app.plan_stop_texts` (`db/migrations/00004_cities_and_plans.sql`), and for signups `app.plan_rounds`, `app.signups` and `app.signup_ticks` (`00006_signups.sql`); no other package reads them.
 
-So far plans are **read only**. A fixture seeds them in development and tests; making, reviewing and opening plans are later tickets'. A plan's states, its rounds and its record arrive with them, in tables keyed by the plan's id.
+So far plans are **read only**, and only signups to them are written. A fixture seeds them in development and tests; making, reviewing and opening plans are later tickets'. A plan's states, its rounds and its record arrive with them, in tables keyed by the plan's id.
 
 **Fields and prose.** What must be true on the day is a column of `app.plans` or `app.plan_stops`, the same in every language: the price (per person, whole units of the city's currency), the meeting address, the parts of the day, the start and end (`HH:MM` on the city's clock) and each stop's minutes and the mode and minutes of the leg to the next. The prose (title, description, what to look for at the meeting point, what to bring, each stop's name and note) is a row per language in `app.plan_texts` and `app.plan_stop_texts`, so a translation can't change a field and a city that opens with a new language is no migration.
 
@@ -17,6 +17,28 @@ So far plans are **read only**. A fixture seeds them in development and tests; m
 
 A plan with no prose in the language asked for reads in English, `FallbackLanguage` ([Languages](../../../docs/spec/languages.md): English is the fallback for every language), and its `Language` says so.
 
+## Signups
+
+A signup is a person's **ticks** on a plan: parts of the day (morning, afternoon, evening, in the city's clock hours) on real dates, from 3 days ahead. It commits them to nothing ([Matching](../../../docs/spec/matching.md#rounds), [The core loop](../../../docs/spec/core-loop.md)). `plans.Signups` is its API; the RPCs are `SignupService` in `internal/rpc`.
+
+| Function | What |
+|---|---|
+| `NewSignups(clock, pool, cities)` | The service, reading "today" from the injected clock on each plan's city clock |
+| `Signups.Set(ctx, account, plan, ticks)` | Signs the account up, or replaces the ticks of the signup it has: changing times is signing up again. Ticks come back in time order, repeats once. The whole call or nothing: one refused tick saves none and opens no round |
+| `Signups.Withdraw(ctx, account, plan)` | Ends the account's signup in the plan's running round. A person with none withdraws nothing, with no error |
+| `Signups.Mine(ctx, account)` | The account's own signups to rounds that haven't ended, earliest hear-by first, each with its `HearBy`. It takes the account, so it can't return another's |
+| `Signups.Count(ctx, plans)` | How many are signed up to each plan's running round: a number, never who |
+
+A tick is refused when it is less than `policy.MinTickLeadDays` (3) calendar days ahead **on the city's clock** (`ErrTickTooSoon`), on a part of the day the plan doesn't allow (`ErrTickPartNotAllowed`), or later than a round (`policy.RoundLength`) after the round's last day (`ErrTickTooFar`, "from 3 days ahead to 7 days after the round's last day"). A signup with no ticks, a date that isn't `YYYY-MM-DD` or a part that isn't one of the three is `ErrInvalid`. A plan that isn't there, or whose city is closed (a closed city's plans aren't shown, so they take no signups), is `ErrNotFound`, the same error either way. A closed city's signups can still be withdrawn.
+
+**Rounds, so far.** The rounds themselves are milestone 4's ("Rounds on the real clock"). Until then a round is opened by the first signup into a plan with none running, on that day on the city's clock, and lasts `policy.RoundLength` (7 days): `app.plan_rounds` holds its first and last day, and the last day is the **hear-by date** every signup in it shares. Once it has ended, its signups are no longer the member's current ones, the plan's count starts again from 0, and the next signup opens the next round. Milestone 4 adds a round's state and its other columns to this table rather than a second one.
+
+**One signup per person per plan round** is the database's rule: `app.signups` is keyed `(round_id, account_id)`, so a second entry is refused with a unique violation (`signups_pkey`) whatever code writes it. Matching leaves out a person whose entries differ rather than erroring ([matching](../matching/README.md)), so the outings job (#618) can rely on never meeting one. `app.signup_ticks` hangs off it, so withdrawing, or deleting the account, takes the ticks with it.
+
+**Admission.** `SignUp` doesn't check that the account was admitted: admission is `people`' to keep (join links, #609, which makes a signup from an account that isn't admitted refused). **Profile.** The RPC, not this package, requires the profile (`rpc.RequireProfile`).
+
+The retention registry holds all three tables (`../retention/registry.json`): the signups and their ticks are kept while the account exists ([Privacy](../../../docs/spec/privacy.md)).
+
 ## Tests
 
 Package tests go through the exported API on the throwaway Postgres (`internal/testdb`); `internal/rpc/plan_test.go` covers the same plans over HTTP.
@@ -24,3 +46,5 @@ Package tests go through the exported API on the throwaway Postgres (`internal/t
 | File | Proves |
 |---|---|
 | `plans_test.go` | The fixture seeds two plans and the city lists them by start time; a plan carries every field a plan page shows, stops and legs included; the prose comes back in the caller's language and the fields are the same in both; a plan with no prose in the language reads in English; a plan that doesn't exist, or an id that couldn't be one, is `ErrNotFound`; loading twice leaves two plans with their stops not doubled; a fixture with an unknown field is refused |
+
+`signups_test.go` is the signups, through `plans.Signups` on the fixture city with a fake clock: a signup carries its ticks and the day the person hears by, a tick under 3 days ahead is refused (counted on the city's clock, not UTC's), so is one on a part of the day the plan doesn't allow, one too far past the round, and a malformed one; a refused signup leaves nothing; signing up again changes the ticks, withdrawing removes the signup (twice, or with none, is no error); one person signs up to both fixture plans; `Mine` is the caller's own; `Count` is a number per plan; a round lasts 7 days on the city's clock and the next signup opens the next; a closed city's plan takes no signups; and the database itself refuses a second signup of one person to one round.

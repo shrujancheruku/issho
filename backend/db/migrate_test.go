@@ -194,3 +194,40 @@ func TestAccountsMigrationDownThenUp(t *testing.T) {
 		t.Error("app.accounts missing after up, down, up")
 	}
 }
+
+// The signups migration (00006) is undone by its Down, which leaves the plans
+// and everything before it in place, and goes up again.
+func TestSignupsMigrationDownThenUp(t *testing.T) {
+	ctx := context.Background()
+	pool := testdb.NewDatabase(t)
+
+	if err := db.Up(ctx, pool); err != nil {
+		t.Fatal(err)
+	}
+	for _, table := range []string{"plan_rounds", "signups", "signup_ticks"} {
+		if !slices.Contains(objectsIn(t, pool, "app"), table) {
+			t.Fatalf("app.%s missing after up", table)
+		}
+	}
+
+	downPast(t, pool, 6)
+	if err := db.Down(ctx, pool); err != nil {
+		t.Fatal(err)
+	}
+	got := objectsIn(t, pool, "app")
+	for _, gone := range []string{"plan_rounds", "signups", "signup_ticks", "signups_account_id_idx"} {
+		if slices.Contains(got, gone) {
+			t.Errorf("app holds %v after down, want %s gone", got, gone)
+		}
+	}
+	if !slices.Contains(got, "plans") || !slices.Contains(got, "profiles") {
+		t.Errorf("down of signups took the plans or profiles with it: %v", got)
+	}
+
+	if err := db.Up(ctx, pool); err != nil {
+		t.Fatalf("up after down: %v", err)
+	}
+	if !slices.Contains(objectsIn(t, pool, "app"), "signups") {
+		t.Error("app.signups missing after up, down, up")
+	}
+}

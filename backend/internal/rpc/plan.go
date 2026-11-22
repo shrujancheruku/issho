@@ -16,6 +16,21 @@ import (
 type planService struct {
 	cities *cities.Service
 	plans  *plans.Service
+	// signups gives each plan its count of people signed up; nil leaves it 0.
+	signups *plans.Signups
+}
+
+// signedUp is how many people are signed up to each of the plans, by id, and
+// never who. A failed read is an error: a count of 0 would say nobody is.
+func (s planService) signedUp(ctx context.Context, listed []plans.Plan) (map[string]int, error) {
+	if s.signups == nil || len(listed) == 0 {
+		return nil, nil
+	}
+	ids := make([]string, len(listed))
+	for i, p := range listed {
+		ids[i] = p.ID
+	}
+	return s.signups.Count(ctx, ids)
 }
 
 // language is the display language of a public call, which has no account to
@@ -54,9 +69,13 @@ func (s planService) ListPlans(ctx context.Context, req *connect.Request[isshov1
 		// The error may quote the database; the caller gets none of it.
 		return nil, connect.NewError(connect.CodeInternal, errors.New("could not read the plans"))
 	}
+	counts, err := s.signedUp(ctx, listed)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, errors.New("could not read the signups"))
+	}
 	out := make([]*isshov1.Plan, len(listed))
 	for i, p := range listed {
-		out[i] = planMessage(p, city)
+		out[i] = planMessage(p, city, counts[p.ID])
 	}
 	return connect.NewResponse(&isshov1.ListPlansResponse{Plans: out}), nil
 }
@@ -82,10 +101,14 @@ func (s planService) GetPlan(ctx context.Context, req *connect.Request[isshov1.G
 	if city.State == cities.Closed {
 		return nil, connect.NewError(connect.CodeNotFound, errors.New("no such plan"))
 	}
-	return connect.NewResponse(&isshov1.GetPlanResponse{Plan: planMessage(p, city)}), nil
+	counts, err := s.signedUp(ctx, []plans.Plan{p})
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, errors.New("could not read the signups"))
+	}
+	return connect.NewResponse(&isshov1.GetPlanResponse{Plan: planMessage(p, city, counts[p.ID])}), nil
 }
 
-func planMessage(p plans.Plan, city cities.City) *isshov1.Plan {
+func planMessage(p plans.Plan, city cities.City, signedUp int) *isshov1.Plan {
 	m := &isshov1.Plan{
 		Id: p.ID, City: p.City, Language: p.Language,
 		Title: p.Title, Description: p.Description,
@@ -93,6 +116,7 @@ func planMessage(p plans.Plan, city cities.City) *isshov1.Plan {
 		MeetingAddress: p.MeetingAddress, MeetingPoint: p.MeetingPoint,
 		WhatToBring: p.WhatToBring, PartsOfDay: p.PartsOfDay,
 		StartsAt: p.StartsAt, EndsAt: p.EndsAt, TimeZone: city.TimeZone,
+		SignedUp: int32(signedUp),
 	}
 	for _, st := range p.Stops {
 		stop := &isshov1.Stop{Position: int32(st.Position), StayMinutes: int32(st.StayMinutes), Name: st.Name, Note: st.Note}

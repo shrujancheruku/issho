@@ -31,6 +31,10 @@ type Config struct {
 	// process with no database.
 	Cities *cities.Service
 	Plans  *plans.Service
+	// Signups keeps who is signed up to which plan. With People it serves
+	// SignupService, and with Cities and Plans it puts each plan's count of
+	// signups on the plan RPCs; nil leaves both out.
+	Signups *plans.Signups
 	// Log gets one line per request (see logRequests), timed by Clock. Nil logs
 	// nothing; set, Clock is required.
 	Log   *slog.Logger
@@ -49,7 +53,10 @@ func NewHandler(cfg Config) http.Handler {
 		mux.Handle(isshov1connect.NewProfileServiceHandler(profileService{people: cfg.People}, opts))
 	}
 	if cfg.Cities != nil && cfg.Plans != nil {
-		mux.Handle(isshov1connect.NewPlanServiceHandler(planService{cities: cfg.Cities, plans: cfg.Plans}, opts))
+		mux.Handle(isshov1connect.NewPlanServiceHandler(planService{cities: cfg.Cities, plans: cfg.Plans, signups: cfg.Signups}, opts))
+	}
+	if cfg.People != nil && cfg.Signups != nil {
+		mux.Handle(isshov1connect.NewSignupServiceHandler(signupService{people: cfg.People, signups: cfg.Signups}, opts))
 	}
 	var rpcs http.Handler = mux
 	if cfg.Log != nil {

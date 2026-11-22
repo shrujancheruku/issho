@@ -85,3 +85,7 @@ sql:
           # A plan's id is a uuid the API handles as text.
           - db_type: uuid
             go_type: string
+          # A round's days are the city's calendar dates, handled as a time at
+          # midnight UTC.
+          - db_type: date
+            go_type: time.Time

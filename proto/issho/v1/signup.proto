@@ -1,0 +1,97 @@
+syntax = "proto3";
+
+package issho.v1;
+
+import "issho/v1/access.proto";
+
+// A member's signups to plans: the parts of the day they can go, on real dates.
+// A signup commits a person to nothing and can be changed or withdrawn until
+// matching reads the round (docs/spec/core-loop.md). How many are signed up to
+// a plan is `Plan.signed_up`, which is public; who never is.
+service SignupService {
+  // Signs the caller up to a plan with a set of ticks, or replaces the ticks of
+  // the signup they already have: changing your times is signing up again.
+  // Member: any signed-in person, but a caller with no profile is refused with
+  // FAILED_PRECONDITION and the ProfileProblem reason PROFILE_REQUIRED (the app
+  // opens the profile's questions, then returns here). A tick that is less than
+  // 3 days ahead on the city's clock, falls on a part of the day the plan
+  // doesn't allow or is too far ahead is INVALID_ARGUMENT with a SignupProblem
+  // detail saying which; the signup is then unchanged. A plan that doesn't
+  // exist, or whose city is closed, is NOT_FOUND. Signing up to several plans
+  // is several calls.
+  rpc SignUp(SignUpRequest) returns (SignUpResponse) {
+    option (issho.v1.access) = ACCESS_MEMBER;
+  }
+
+  // Withdraws the caller's signup to a plan. Member. Withdrawing when there is
+  // no signup is not an error.
+  rpc WithdrawSignup(WithdrawSignupRequest) returns (WithdrawSignupResponse) {
+    option (issho.v1.access) = ACCESS_MEMBER;
+  }
+
+  // Lists the caller's own signups to rounds that haven't ended, earliest
+  // hear-by first, each with the day they will hear by. Member: it takes no
+  // account id, so it can only ever return the caller's own.
+  rpc ListMySignups(ListMySignupsRequest) returns (ListMySignupsResponse) {
+    option (issho.v1.access) = ACCESS_MEMBER;
+  }
+}
+
+message SignUpRequest {
+  // The plan's id.
+  string plan_id = 1;
+  // The times the person can go: at least one. Repeats are one.
+  repeated Tick ticks = 2;
+}
+
+message SignUpResponse {
+  Signup signup = 1;
+}
+
+message WithdrawSignupRequest {
+  string plan_id = 1;
+}
+
+message WithdrawSignupResponse {}
+
+message ListMySignupsRequest {}
+
+message ListMySignupsResponse {
+  repeated Signup signups = 1;
+}
+
+// One tick: a part of a real date.
+message Tick {
+  // The city's calendar date, "YYYY-MM-DD".
+  string date = 1;
+  // "morning", "afternoon" or "evening", in the city's clock hours.
+  string part = 2;
+}
+
+// A person's signup to a plan in its running round. It carries no other
+// person.
+message Signup {
+  string plan_id = 1;
+  // In time order: by date, then morning, afternoon, evening.
+  repeated Tick ticks = 2;
+  // The round's last day, the city's calendar date, "YYYY-MM-DD": by then the
+  // person has an invitation or a "no group this round".
+  string hear_by = 3;
+}
+
+// Why SignUp refused the ticks, when the app has something particular to do
+// about it. It is attached to the Connect error as a detail
+// (`error.findDetails(SignupProblemSchema)` in TypeScript).
+message SignupProblem {
+  SignupProblemReason reason = 1;
+}
+
+enum SignupProblemReason {
+  SIGNUP_PROBLEM_REASON_UNSPECIFIED = 0;
+  // A tick is less than 3 days ahead on the city's clock.
+  SIGNUP_PROBLEM_REASON_TICK_TOO_SOON = 1;
+  // A tick is on a part of the day the plan doesn't allow.
+  SIGNUP_PROBLEM_REASON_TICK_PART_NOT_ALLOWED = 2;
+  // A tick is more than a round past the end of the round.
+  SIGNUP_PROBLEM_REASON_TICK_TOO_FAR = 3;
+}
