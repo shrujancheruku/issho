@@ -1,4 +1,5 @@
 import { isAdult, isRealPastDate, validName } from '../answers';
+import { languageName, searchLanguages } from '../languages';
 
 describe('18 on the day', () => {
   it.each([
@@ -35,9 +36,6 @@ describe('a name', () => {
 });
 
 describe('searching every language by its name, in the display language', () => {
-  // searchLanguages / languageName are imported late so the file above still reads as it did.
-  const { languageName, searchLanguages } = require('../languages') as typeof import('../languages');
-
   it('finds a language the short list does not hold, by its English name', () => {
     expect(searchLanguages('fili', 'en').map((l) => l.code)).toContain('fil');
     expect(languageName('fil', 'en')).toBe('Filipino');
