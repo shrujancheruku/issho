@@ -1,6 +1,5 @@
 # apps/app
 
-<<<<<<< HEAD
 The member app: one Expo project for iOS, Android and the web ([Architecture and stack](../../docs/spec/architecture.md#what-v2-is-built-from)). The web is the same project, server-rendered (`web.output: "server"` in `app.json`). Right now it is the shell (three tabs, the strings and the theme), the Plans tab and a plan's page (below), sign-in by email code, and on the You tab the person's email, a sign-out button and the version the API reports (also on the sign-in screen, where a signed-out visit to `/you` lands) (`src/components/api-version.tsx`), which is what the dev deploy checks. Members never see the version: it shows only when the build's `EXPO_PUBLIC_API_URL` is an API that holds no real people (`isDevApi` in `src/api/api-url.ts`: a local address, or a name whose first label is `dev` or ends in `-dev`, as `dev.joinissho.com` and `api-dev.joinissho.com` do). Any other address, production's included, shows nothing and makes no call. The rest of the screens come in later tickets.
 
 ## Setup
