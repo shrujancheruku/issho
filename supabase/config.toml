@@ -60,7 +60,10 @@ enable_anonymous_sign_ins = false
 
 [auth.email]
 enable_signup = true
-enable_confirmations = false
+# On: an address becomes a user only when its owner confirms it with the code,
+# so nobody can register a password for an address that hasn't joined. A code
+# sign-in is that confirmation.
+enable_confirmations = true
 # Sign-in is a code, not a link: the code is 6 digits and good for ten minutes.
 otp_length = 6
 otp_expiry = 600

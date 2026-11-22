@@ -101,10 +101,24 @@ func TestFirstCallWithNothingElseGetsTheDefaultCityAndEnglish(t *testing.T) {
 	}
 }
 
+// Only the listed city and "vi" or "en" make an account: anything else is
+// InvalidArgument, and the refused call leaves no account behind.
 func TestAnAccountThatIsNotValidIsInvalidArgument(t *testing.T) {
 	r := newAccountRig(t)
-	_, err := r.get(r.issuer.Token(r.clk.Now(), ada, "ada@example.com"), &isshov1.GetAccountRequest{DisplayLanguage: "fr"})
-	wantCode(t, err, connect.CodeInvalidArgument)
+	token := r.issuer.Token(r.clk.Now(), ada, "ada@example.com")
+	for name, req := range map[string]*isshov1.GetAccountRequest{
+		"language not listed": {DisplayLanguage: "fr"},
+		"city not listed":     {City: "hanoi"},
+		"city not a slug":     {City: "Da Nang"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			_, err := r.get(token, req)
+			wantCode(t, err, connect.CodeInvalidArgument)
+			if _, err := r.people.Account(context.Background(), ada); err == nil {
+				t.Fatal("a refused call made the account")
+			}
+		})
+	}
 }
 
 // A member RPC returns the caller's own account: each caller sees their own,

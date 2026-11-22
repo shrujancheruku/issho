@@ -33,6 +33,8 @@ const (
 	// id the API hasn't seen (a rotation, or a forgery) can't make it fetch on
 	// every request.
 	refetchEvery = time.Minute
+	// fetchTimeout bounds one fetch of the key set.
+	fetchTimeout = 10 * time.Second
 	// maxJWKSBytes bounds what a fetch reads; a project's set is a few hundred bytes.
 	maxJWKSBytes = 1 << 20
 
@@ -67,6 +69,7 @@ type Verifier struct {
 	keys      map[string]crypto.PublicKey
 	fetchedAt time.Time // when keys was last replaced
 	triedAt   time.Time // when a fetch was last started, good or not
+	flight    *flight   // the fetch in progress, if any
 }
 
 // NewVerifier returns a Verifier that reads the time from clk, so a test can
@@ -77,7 +80,7 @@ func NewVerifier(clk clock.Clock, cfg VerifierConfig) *Verifier {
 	}
 	client := cfg.HTTPClient
 	if client == nil {
-		client = &http.Client{Timeout: 10 * time.Second}
+		client = &http.Client{Timeout: fetchTimeout}
 	}
 	return &Verifier{clock: clk, cfg: cfg, client: client}
 }
@@ -116,30 +119,74 @@ func (v *Verifier) Verify(ctx context.Context, raw string) (Claims, error) {
 	return Claims{Subject: sub, Email: email, SecondStep: aal == "aal2"}, nil
 }
 
-// key returns the public key with the given id, fetching the set when it is
-// unknown or old, subject to refetchEvery. A set that can't be fetched is not
-// an excuse to refuse a key the API already knows.
+// flight is one fetch of the key set in progress; every caller that needs the
+// result waits on done.
+type flight struct {
+	done chan struct{}
+	err  error // set before done is closed
+}
+
+// key returns the public key with the given id.
+//
+// A key the API already has is returned at once, even when the set is due for
+// its hourly refresh: the refresh runs beside the request, so a slow or dead
+// key-set host never holds up a signed-in person whose key is known (a key
+// Auth has revoked is refused from the moment the new set arrives). A key id
+// the API hasn't seen waits for a fetch, subject to refetchEvery; callers that
+// need a fetch while one is in flight share it. The lock is never held while
+// the fetch runs.
 func (v *Verifier) key(ctx context.Context, kid string) (crypto.PublicKey, error) {
 	v.mu.Lock()
-	defer v.mu.Unlock()
 	now := v.clock.Now()
 	k, known := v.keys[kid]
 	stale := now.Sub(v.fetchedAt) >= keyMaxAge
-	if (!known || stale) && now.Sub(v.triedAt) >= refetchEvery {
-		v.triedAt = now
-		keys, err := v.fetch(ctx)
-		switch {
-		case err == nil:
-			v.keys, v.fetchedAt = keys, now
-			k, known = keys[kid]
-		case !known:
-			return nil, fmt.Errorf("fetch keys: %w", err)
-		}
+	fl := v.flight
+	if fl == nil && (!known || stale) && now.Sub(v.triedAt) >= refetchEvery {
+		fl = &flight{done: make(chan struct{})}
+		v.flight, v.triedAt = fl, now
+		// The fetch isn't the caller's: its result serves everyone waiting, so
+		// it outlives the caller's cancellation and has its own deadline.
+		go v.refresh(context.WithoutCancel(ctx), fl, now)
 	}
+	v.mu.Unlock()
+
+	if known {
+		return k, nil
+	}
+	if fl == nil {
+		return nil, errors.New("unknown key id")
+	}
+	select {
+	case <-fl.done:
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	}
+	if fl.err != nil {
+		return nil, fmt.Errorf("fetch keys: %w", fl.err)
+	}
+	v.mu.Lock()
+	k, known = v.keys[kid]
+	v.mu.Unlock()
 	if !known {
 		return nil, errors.New("unknown key id")
 	}
 	return k, nil
+}
+
+// refresh fetches the key set and, if it arrives, replaces the one in use. A
+// failed fetch leaves the last good set working.
+func (v *Verifier) refresh(ctx context.Context, fl *flight, now time.Time) {
+	ctx, cancel := context.WithTimeout(ctx, fetchTimeout)
+	defer cancel()
+	keys, err := v.fetch(ctx)
+	v.mu.Lock()
+	if err == nil {
+		v.keys, v.fetchedAt = keys, now
+	}
+	v.flight = nil
+	v.mu.Unlock()
+	fl.err = err
+	close(fl.done)
 }
 
 func (v *Verifier) fetch(ctx context.Context) (map[string]crypto.PublicKey, error) {

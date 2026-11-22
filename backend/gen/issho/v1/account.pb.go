@@ -25,11 +25,12 @@ type GetAccountRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// The city's slug, for the call that makes the account: the city of the join
 	// link the person arrived by, else the only listed city. Empty means the
-	// default city. Ignored when the account already exists.
+	// default city; any city that isn't listed is INVALID_ARGUMENT, on every
+	// call. Not applied when the account already exists.
 	City string `protobuf:"bytes,1,opt,name=city,proto3" json:"city,omitempty"`
 	// The language the person is reading in, "en" or "vi", for the call that
-	// makes the account. Empty means English. Ignored when the account already
-	// exists.
+	// makes the account. Empty means English; any other is INVALID_ARGUMENT,
+	// on every call. Not applied when the account already exists.
 	DisplayLanguage string `protobuf:"bytes,2,opt,name=display_language,json=displayLanguage,proto3" json:"display_language,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache

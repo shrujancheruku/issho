@@ -80,7 +80,7 @@ func TestJoiningAgainChangesNothing(t *testing.T) {
 		t.Fatal(err)
 	}
 	r.clk.Advance(time.Hour)
-	again, err := r.svc.Join(ctx, c, people.Preferences{City: "hanoi", DisplayLanguage: "en"})
+	again, err := r.svc.Join(ctx, c, people.Preferences{City: "da-nang-hoi-an", DisplayLanguage: "en"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -135,12 +135,36 @@ func TestJoinRefusesWhatIsNotAnAccount(t *testing.T) {
 		"email not an address": {people.Claims{Subject: ada, Email: "Ada <a@example.com>"}, people.Preferences{}},
 		"unknown language":     {people.Claims{Subject: ada, Email: "a@example.com"}, people.Preferences{DisplayLanguage: "fr"}},
 		"city not a slug":      {people.Claims{Subject: ada, Email: "a@example.com"}, people.Preferences{City: "Da Nang"}},
+		"city not listed":      {people.Claims{Subject: ada, Email: "a@example.com"}, people.Preferences{City: "hanoi"}},
+		"language not listed":  {people.Claims{Subject: ada, Email: "a@example.com"}, people.Preferences{DisplayLanguage: "ja"}},
+		"language not a code":  {people.Claims{Subject: ada, Email: "a@example.com"}, people.Preferences{DisplayLanguage: "EN"}},
 	} {
 		t.Run(name, func(t *testing.T) {
 			if _, err := r.svc.Join(ctx, tc.claims, tc.prefs); !errors.Is(err, people.ErrInvalid) {
 				t.Fatalf("err = %v, want ErrInvalid", err)
 			}
 		})
+	}
+}
+
+// Only a listed city and a listed display language make an account (Cities:
+// "only listed cities"); a refused call leaves no account behind, so the same
+// person can join properly straight after.
+func TestAnUnlistedCityOrLanguageMakesNoAccount(t *testing.T) {
+	r := newRig(t)
+	ctx := context.Background()
+	c := people.Claims{Subject: ada, Email: "ada@example.com"}
+	for _, prefs := range []people.Preferences{{City: "hanoi"}, {DisplayLanguage: "fr"}} {
+		if _, err := r.svc.Join(ctx, c, prefs); !errors.Is(err, people.ErrInvalid) {
+			t.Fatalf("Join(%+v) err = %v, want ErrInvalid", prefs, err)
+		}
+		if _, err := r.svc.Account(ctx, ada); !errors.Is(err, people.ErrNotFound) {
+			t.Fatalf("after Join(%+v) refused, Account err = %v, want ErrNotFound", prefs, err)
+		}
+	}
+	got, err := r.svc.Join(ctx, c, people.Preferences{City: "da-nang-hoi-an", DisplayLanguage: "vi"})
+	if err != nil || got.City != "da-nang-hoi-an" || got.DisplayLanguage != "vi" {
+		t.Fatalf("Join = %+v, %v", got, err)
 	}
 }
 

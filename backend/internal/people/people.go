@@ -80,8 +80,8 @@ var (
 
 // Config is what the service needs from the process that builds it.
 type Config struct {
-	// DefaultCity is the city of a first call that names none: the only listed
-	// city (docs/spec/cities.md, "Which city a visitor with no account sees").
+	// DefaultCity is the only listed city (docs/spec/cities.md): the city of a
+	// first call that names none, and the only city a call may name.
 	DefaultCity string
 }
 
@@ -102,13 +102,12 @@ func New(clk clock.Clock, pool *pgxpool.Pool, cfg Config) *Service {
 
 var (
 	uuidRe = regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)
-	slugRe = regexp.MustCompile(`^[a-z0-9]+(-[a-z0-9]+)*$`)
 )
 
 // Join returns the caller's account, making it first if this is the first
 // call with their token: the token's email, the city and display language in
 // prefs (or their defaults). On any later call it returns the account as it
-// is and ignores prefs: changing a city or language is a settings call, not a
+// is and does not apply prefs (it still checks them): changing a city or language is a settings call, not a
 // second join.
 func (s *Service) Join(ctx context.Context, c Claims, prefs Preferences) (Account, error) {
 	subject := lowerASCII(c.Subject)
@@ -123,8 +122,11 @@ func (s *Service) Join(ctx context.Context, c Claims, prefs Preferences) (Accoun
 	if city == "" {
 		city = s.cfg.DefaultCity
 	}
-	if !slugRe.MatchString(city) {
-		return Account{}, fmt.Errorf("%w: city is not a slug", ErrInvalid)
+	// Only a listed city makes an account (docs/spec/cities.md). Today the only
+	// listed city is the default; #610 adds the cities table and this check
+	// moves to it.
+	if city != s.cfg.DefaultCity {
+		return Account{}, fmt.Errorf("%w: city is not listed", ErrInvalid)
 	}
 	language := prefs.DisplayLanguage
 	if language == "" {

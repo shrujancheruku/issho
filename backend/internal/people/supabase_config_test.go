@@ -22,9 +22,10 @@ type supabaseConfig struct {
 	Auth struct {
 		EnableAnonymousSignIns bool `toml:"enable_anonymous_sign_ins"`
 		Email                  struct {
-			OTPLength int `toml:"otp_length"`
-			OTPExpiry int `toml:"otp_expiry"`
-			Template  map[string]struct {
+			EnableConfirmations bool `toml:"enable_confirmations"`
+			OTPLength           int  `toml:"otp_length"`
+			OTPExpiry           int  `toml:"otp_expiry"`
+			Template            map[string]struct {
 				Subject     string `toml:"subject"`
 				ContentPath string `toml:"content_path"`
 			} `toml:"template"`
@@ -65,6 +66,19 @@ func TestSupabaseAuthSendsASixDigitCodeToTheLocalMailCatcher(t *testing.T) {
 	}
 	if c.API.Enabled {
 		t.Error("the Data API is on: clients reach the database only through the Go API")
+	}
+}
+
+// Auth's own password sign-up stays callable by anyone who reaches its URL
+// (the app never calls it). Without confirmation, someone could register a
+// password for an address that hasn't joined; with it, the address is not a
+// user until its owner confirms it with the emailed code. A code sign-in is
+// that confirmation (a new person gets the "confirmation" email, whose code
+// TestBothSignInEmailsShowTheCode checks), so the code flow works with this on.
+func TestAnAddressIsConfirmedByItsCodeBeforeItIsAUser(t *testing.T) {
+	c := loadSupabaseConfig(t)
+	if !c.Auth.Email.EnableConfirmations {
+		t.Error("[auth.email] enable_confirmations is off: a password can be registered for an address that hasn't joined")
 	}
 }
 

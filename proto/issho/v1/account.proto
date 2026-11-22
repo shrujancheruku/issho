@@ -18,11 +18,12 @@ service AccountService {
 message GetAccountRequest {
   // The city's slug, for the call that makes the account: the city of the join
   // link the person arrived by, else the only listed city. Empty means the
-  // default city. Ignored when the account already exists.
+  // default city; any city that isn't listed is INVALID_ARGUMENT, on every
+  // call. Not applied when the account already exists.
   string city = 1;
   // The language the person is reading in, "en" or "vi", for the call that
-  // makes the account. Empty means English. Ignored when the account already
-  // exists.
+  // makes the account. Empty means English; any other is INVALID_ARGUMENT,
+  // on every call. Not applied when the account already exists.
   string display_language = 2;
 }
 
