@@ -63,7 +63,7 @@ One city, Da Nang–Hoi An, and two plans (`fixtures/da-nang-hoi-an.json`) carry
 
 `SignupService` (member) holds a signup to a plan with its ticks: `SignUp` (which also changes the ticks), `WithdrawSignup` and `ListMySignups`, each only for the caller. `SignUp` calls `rpc.RequireProfile` first. A plan's `signed_up` is how many are signed up, never who. See `internal/plans/README.md`.
 
-`PlanService` (`ListPlans`, `GetPlan`) is public: anyone reads a city's plans with no token, in `en` or `vi` from the fixture's prose (`internal/rpc/plan.go`). A closed city's plans are kept but not shown: `ListPlans` returns none and `GetPlan` on one is `not_found`.
+`PlanService` (`ListPlans`, `GetPlan`) is public: anyone reads a city's plans with no token, in `en` or `vi` from the fixture's prose (`internal/rpc/plan.go`). A closed city's plans are kept but not shown: `ListPlans` returns none and `GetPlan` on one is `not_found`; so is a plan before its opening day (`opens_on`, on the city's calendar).
 
 `accounts_city_fkey` (migration `00004`) fails with `23503` on a local database that already holds an account but no city row, which only one built from an earlier integration tip can. Run `make migrate-down` (or reset the database) and `make migrate-up`, then `make seed`.
 

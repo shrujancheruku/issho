@@ -53,7 +53,8 @@ type SignupServiceClient interface {
 	// 3 days ahead on the city's clock, falls on a part of the day the plan
 	// doesn't allow or is too far ahead is INVALID_ARGUMENT with a SignupProblem
 	// detail saying which; the signup is then unchanged. A plan that doesn't
-	// exist, or whose city is closed, is NOT_FOUND. Signing up to several plans
+	// exist, whose city is closed or that hasn't opened yet (its opening day on
+	// the city's calendar is after today) is NOT_FOUND, as GetPlan says. Signing up to several plans
 	// is several calls.
 	SignUp(context.Context, *connect.Request[v1.SignUpRequest]) (*connect.Response[v1.SignUpResponse], error)
 	// Withdraws the caller's signup to a plan. Member. Withdrawing when there is
@@ -129,7 +130,8 @@ type SignupServiceHandler interface {
 	// 3 days ahead on the city's clock, falls on a part of the day the plan
 	// doesn't allow or is too far ahead is INVALID_ARGUMENT with a SignupProblem
 	// detail saying which; the signup is then unchanged. A plan that doesn't
-	// exist, or whose city is closed, is NOT_FOUND. Signing up to several plans
+	// exist, whose city is closed or that hasn't opened yet (its opening day on
+	// the city's calendar is after today) is NOT_FOUND, as GetPlan says. Signing up to several plans
 	// is several calls.
 	SignUp(context.Context, *connect.Request[v1.SignUpRequest]) (*connect.Response[v1.SignUpResponse], error)
 	// Withdraws the caller's signup to a plan. Member. Withdrawing when there is

@@ -13,10 +13,13 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"github.com/shrujancheruku/issho/backend/internal/cities"
+	"github.com/shrujancheruku/issho/backend/internal/clock"
 	"github.com/shrujancheruku/issho/backend/internal/plans/store"
 )
 
@@ -77,26 +80,59 @@ type Leg struct {
 
 // Service is the exported API of plans.
 type Service struct {
-	pool *pgxpool.Pool
+	clock  clock.Clock
+	pool   *pgxpool.Pool
+	cities *cities.Service
 }
 
-// New returns a Service that reads plans from pool.
-func New(pool *pgxpool.Pool) *Service { return &Service{pool: pool} }
+// New returns a Service that reads plans from pool. It reads "today" from clk
+// on each city's clock, to leave out the plans that haven't opened yet.
+func New(clk clock.Clock, pool *pgxpool.Pool, cs *cities.Service) *Service {
+	return &Service{clock: clk, pool: pool, cities: cs}
+}
 
 var idRe = regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)
 
+// shown is the one definition of whether a plan is shown, for List, Get and
+// signups alike: its city isn't closed (a closed city's plans are kept but not
+// shown, docs/spec/cities.md) and it has opened, that is today on the city's
+// calendar is its opening day or later. The spec has no "opening soon" state,
+// so a plan before its day is as if it weren't there.
+func shown(city cities.City, opensOn, today time.Time) bool {
+	return city.State != cities.Closed && opened(opensOn, today)
+}
+
 // List returns the city's plans with their text in language, by start time. A
-// city with none, or no such city, lists none: whether the city is listed is
-// the cities package's to say.
-func (s *Service) List(ctx context.Context, city, language string) ([]Plan, error) {
-	rows, err := store.New(s.pool).ListPlansInCity(ctx, city)
+// city with none, or no such city, lists none, and so does a closed city, and
+// a plan that hasn't opened yet is left out (see shown).
+func (s *Service) List(ctx context.Context, slug, language string) ([]Plan, error) {
+	city, err := s.cities.Get(ctx, slug)
+	if errors.Is(err, cities.ErrNotFound) {
+		return []Plan{}, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("plans: list: city: %w", err)
+	}
+	today, err := cityToday(s.clock, city.TimeZone)
 	if err != nil {
 		return nil, fmt.Errorf("plans: list: %w", err)
+	}
+	all, err := store.New(s.pool).ListPlansInCity(ctx, slug)
+	if err != nil {
+		return nil, fmt.Errorf("plans: list: %w", err)
+	}
+	rows := make([]store.AppPlan, 0, len(all))
+	for _, r := range all {
+		if shown(city, r.OpensOn, today) {
+			rows = append(rows, r)
+		}
 	}
 	return s.assemble(ctx, rows, language)
 }
 
-// Get returns one plan with its text in language, or ErrNotFound.
+// Get returns one plan with its text in language, or ErrNotFound: no such plan,
+// or one that isn't shown (see shown), the same error so a caller can't tell
+// which.
 func (s *Service) Get(ctx context.Context, id, language string) (Plan, error) {
 	id = strings.ToLower(id)
 	if !idRe.MatchString(id) {
@@ -108,6 +144,17 @@ func (s *Service) Get(ctx context.Context, id, language string) (Plan, error) {
 	}
 	if err != nil {
 		return Plan{}, fmt.Errorf("plans: get: %w", err)
+	}
+	city, err := s.cities.Get(ctx, row.City)
+	if err != nil {
+		return Plan{}, fmt.Errorf("plans: get: city: %w", err)
+	}
+	today, err := cityToday(s.clock, city.TimeZone)
+	if err != nil {
+		return Plan{}, fmt.Errorf("plans: get: %w", err)
+	}
+	if !shown(city, row.OpensOn, today) {
+		return Plan{}, ErrNotFound
 	}
 	got, err := s.assemble(ctx, []store.AppPlan{row}, language)
 	if err != nil {

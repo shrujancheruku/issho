@@ -59,7 +59,7 @@ func newAccounts(ctx context.Context, log *slog.Logger, getenv func(string) stri
 	return &accounts{
 		people:  people.New(clk, pool, cs, people.Config{DefaultCity: defaultCity}),
 		cities:  cs,
-		plans:   plans.New(pool),
+		plans:   plans.New(clk, pool, cs),
 		signups: plans.NewSignups(clk, pool, cs),
 		auth:    rpc.NewAuthenticator(verifier),
 		close:   pool.Close,

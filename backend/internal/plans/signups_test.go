@@ -494,6 +494,53 @@ func TestAPlanThatHasNotOpenedYetTakesNoSignups(t *testing.T) {
 	}
 }
 
+// A plan is hidden until its opening day, on the city's calendar: ListPlans and
+// GetPlan leave it out as they do a missing plan, and signups turn it away the
+// same way, so the three agree on whether a plan is shown. The fixture's
+// plans open on the 5th.
+func TestAPlanIsHiddenUntilItsOpeningDay(t *testing.T) {
+	r := newSignupRig(t)
+	ctx := context.Background()
+	reader := plans.New(r.clk, r.pool, cities.New(r.pool))
+	tick := []plans.Tick{{Date: "2026-01-08", Part: "evening"}}
+
+	r.clk.Set(time.Date(2026, 1, 4, 16, 59, 0, 0, time.UTC)) // 23:59 on the 4th there
+	listed, err := reader.List(ctx, city, "en")
+	if err != nil || len(listed) != 0 {
+		t.Fatalf("on the 4th: List = %d plans, %v; want none", len(listed), err)
+	}
+	if _, err := reader.Get(ctx, lanterns, "en"); !errors.Is(err, plans.ErrNotFound) {
+		t.Fatalf("on the 4th: Get err = %v, want ErrNotFound", err)
+	}
+	if _, err := r.svc.Set(ctx, ada, lanterns, tick); !errors.Is(err, plans.ErrNotFound) {
+		t.Fatalf("on the 4th: Set err = %v, want ErrNotFound", err)
+	}
+
+	r.clk.Set(time.Date(2026, 1, 4, 17, 0, 0, 0, time.UTC)) // midnight on the 5th there
+	listed, err = reader.List(ctx, city, "en")
+	if err != nil || len(listed) != 2 {
+		t.Fatalf("on the 5th: List = %d plans, %v; want both", len(listed), err)
+	}
+	if _, err := reader.Get(ctx, lanterns, "en"); err != nil {
+		t.Fatalf("on the 5th: Get: %v", err)
+	}
+	if _, err := r.svc.Set(ctx, ada, lanterns, tick); err != nil {
+		t.Fatalf("on the 5th: Set: %v", err)
+	}
+}
+
+// Only the plans that haven't opened are left out: a city lists the others.
+func TestTheCityListsThePlansThatHaveOpened(t *testing.T) {
+	r := newSignupRig(t)
+	opensOn(t, r, lanterns, "2026-01-06")
+	reader := plans.New(r.clk, r.pool, cities.New(r.pool))
+
+	listed, err := reader.List(context.Background(), city, "en")
+	if err != nil || len(listed) != 1 || listed[0].ID != sunrise {
+		t.Fatalf("List = %v, %v; want only the sunrise plan", listed, err)
+	}
+}
+
 // Many people making the first signup of a round at once open one round, and
 // all of them hear by the same day.
 func TestConcurrentFirstSignupsMakeOneRound(t *testing.T) {

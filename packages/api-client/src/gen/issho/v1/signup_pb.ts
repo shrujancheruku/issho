@@ -255,7 +255,8 @@ export const SignupService: GenService<{
    * 3 days ahead on the city's clock, falls on a part of the day the plan
    * doesn't allow or is too far ahead is INVALID_ARGUMENT with a SignupProblem
    * detail saying which; the signup is then unchanged. A plan that doesn't
-   * exist, or whose city is closed, is NOT_FOUND. Signing up to several plans
+   * exist, whose city is closed or that hasn't opened yet (its opening day on
+   * the city's calendar is after today) is NOT_FOUND, as GetPlan says. Signing up to several plans
    * is several calls.
    *
    * @generated from rpc issho.v1.SignupService.SignUp

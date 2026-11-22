@@ -81,23 +81,27 @@ var partRank = map[string]int{"morning": 0, "afternoon": 1, "evening": 2}
 // included.
 const roundDays = int(policy.RoundLength / (24 * time.Hour))
 
-// today is the date on the city's clock now.
-func (s *Signups) today(zone string) (string, error) {
-	clk, err := cityclock.New(zone, noParts)
+// cityToday is the date on the city's clock now, as midnight UTC.
+func cityToday(clk clock.Clock, zone string) (time.Time, error) {
+	cc, err := cityclock.New(zone, noParts)
 	if err != nil {
-		return "", err
+		return time.Time{}, err
 	}
-	return clk.Date(s.clock.Now()), nil
+	return time.Parse(time.DateOnly, cc.Date(clk.Now()))
 }
+
+// opened is whether a plan that opened on opensOn has opened by today, both
+// city calendar dates: its opening day is its first day.
+func opened(opensOn, today time.Time) bool { return !today.Before(opensOn) }
 
 // roundOf is the round of a plan that opened on opensOn that holds today, both
 // city calendar dates: round k covers opensOn + 7k to opensOn + 7k + 6. open is
 // false before the plan's opening day, when it has no round.
 func roundOf(opensOn, today time.Time) (number int32, starts, ends time.Time, open bool) {
-	days := int(today.Sub(opensOn) / (24 * time.Hour))
-	if days < 0 {
+	if !opened(opensOn, today) {
 		return 0, time.Time{}, time.Time{}, false
 	}
+	days := int(today.Sub(opensOn) / (24 * time.Hour))
 	number = int32(days / roundDays)
 	starts = addDays(opensOn, int(number)*roundDays)
 	return number, starts, addDays(starts, roundDays-1), true
@@ -114,16 +118,16 @@ func (s *Signups) Set(ctx context.Context, accountID, planID string, ticks []Tic
 	if err != nil {
 		return Signup{}, err
 	}
-	// A closed city's plans are kept but not shown, so they take no signups; the
-	// error is the one for a plan that isn't there, as GetPlan's is.
-	if city.State == cities.Closed {
-		return Signup{}, ErrNotFound
-	}
-	todayText, err := s.today(city.TimeZone)
+	today, err := cityToday(s.clock, city.TimeZone)
 	if err != nil {
 		return Signup{}, fmt.Errorf("plans: signup: %w", err)
 	}
-	today, _ := time.Parse(time.DateOnly, todayText)
+	// A plan that isn't shown (a closed city's, or one that hasn't opened yet)
+	// takes no signups; the error is the one for a plan that isn't there, as
+	// GetPlan's is.
+	if !shown(city, plan.OpensOn, today) {
+		return Signup{}, ErrNotFound
+	}
 	norm, err := parseTicks(ticks)
 	if err != nil {
 		return Signup{}, err
@@ -139,10 +143,7 @@ func (s *Signups) Set(ctx context.Context, accountID, planID string, ticks []Tic
 	// The round is the 7-day block of the plan's days that holds today. Its
 	// dates are derived, so everyone signing up in the block shares it; the row
 	// is stored by whoever signs up first, and a race for it stores one.
-	number, starts, ends, open := roundOf(plan.OpensOn, today)
-	if !open {
-		return Signup{}, ErrNotFound
-	}
+	number, starts, ends, _ := roundOf(plan.OpensOn, today)
 	round, err := q.GetRound(ctx, store.GetRoundParams{PlanID: plan.ID, Number: number})
 	if errors.Is(err, pgx.ErrNoRows) {
 		round, err = q.OpenRound(ctx, store.OpenRoundParams{PlanID: plan.ID, Number: number, StartsOn: starts, EndsOn: ends})
@@ -195,11 +196,7 @@ func (c *cityDates) today(slug string) (time.Time, error) {
 	if err != nil {
 		return time.Time{}, err
 	}
-	text, err := c.s.today(city.TimeZone)
-	if err != nil {
-		return time.Time{}, err
-	}
-	d, err := time.Parse(time.DateOnly, text)
+	d, err := cityToday(c.s.clock, city.TimeZone)
 	if err != nil {
 		return time.Time{}, err
 	}
@@ -261,11 +258,10 @@ func (s *Signups) Withdraw(ctx context.Context, accountID, planID string) error 
 	if err != nil {
 		return err
 	}
-	todayText, err := s.today(city.TimeZone)
+	today, err := cityToday(s.clock, city.TimeZone)
 	if err != nil {
 		return fmt.Errorf("plans: withdraw: %w", err)
 	}
-	today, _ := time.Parse(time.DateOnly, todayText)
 	if err := store.New(s.pool).DeleteSignup(ctx, store.DeleteSignupParams{PlanID: plan.ID, AccountID: accountID, Today: today}); err != nil {
 		return fmt.Errorf("plans: withdraw: %w", err)
 	}

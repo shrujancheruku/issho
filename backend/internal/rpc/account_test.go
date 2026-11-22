@@ -61,7 +61,7 @@ func newAccountRig(t *testing.T) *accountRig {
 		Auth:    rpc.NewAuthenticator(issuer.Verifier(clk)),
 		People:  svc,
 		Cities:  cs,
-		Plans:   plans.New(pool),
+		Plans:   plans.New(clk, pool, cs),
 		Signups: plans.NewSignups(clk, pool, cs),
 	}))
 	t.Cleanup(srv.Close)
