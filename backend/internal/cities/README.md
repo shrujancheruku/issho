@@ -10,7 +10,7 @@ So far a city has a slug, a state (`planned`, `open` or `closed`), a time zone, 
 |---|---|
 | `New(pool)` | The service |
 | `Service.Get(ctx, slug)` | The city with that slug (`Slug`, `State`, `TimeZone` for `cityclock.New`, `Currency`, `Names` by language), or `ErrNotFound` |
-| `LoadFixture(ctx, pool, data)` | Writes the `city` of a fixture file (`../../fixtures`), replacing a city of the same slug. **Development and tests only**: `cmd/seed` and the tests call it; no process in the production image does. An unknown field is an error |
+| `LoadFixture(ctx, db, data)` | Writes the `city` of a fixture file (`../../fixtures`), replacing a city of the same slug. **Development and tests only**: `cmd/seed` and the tests call it; no process in the production image does. An unknown field is an error. `db` is a pool or a transaction (`Beginner`); given a transaction it writes in a savepoint, so `cmd/seed` can check and write in one transaction |
 
 ## Tests
 

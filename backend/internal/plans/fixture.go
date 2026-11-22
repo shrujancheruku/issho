@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/jackc/pgx/v5"
 
 	"github.com/shrujancheruku/issho/backend/internal/plans/store"
 )
@@ -47,6 +47,13 @@ type fixtureStop struct {
 	} `json:"texts"`
 }
 
+// Beginner starts the transaction LoadFixture writes in: a pool, or a
+// transaction (which then gives it a savepoint, so the caller can do other
+// work in the same transaction, as cmd/seed does).
+type Beginner interface {
+	Begin(ctx context.Context) (pgx.Tx, error)
+}
+
 // LoadFixture writes the fixture's plans, replacing any plan of the same id
 // whole. Their city must already be there (cities.LoadFixture first). It is
 // for development and tests only: cmd/seed and the tests call it, and no
@@ -55,7 +62,7 @@ type fixtureStop struct {
 // A field a plan doesn't know is an error, so a typo in the file can't
 // silently drop one. Other packages' top-level keys ("city") are ignored.
 // Stops are numbered from 1 in the order the file lists them.
-func LoadFixture(ctx context.Context, pool *pgxpool.Pool, data []byte) error {
+func LoadFixture(ctx context.Context, pool Beginner, data []byte) error {
 	var top map[string]json.RawMessage
 	if err := json.Unmarshal(data, &top); err != nil {
 		return fmt.Errorf("plans: fixture: %w", err)

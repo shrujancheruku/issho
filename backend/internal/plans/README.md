@@ -13,7 +13,7 @@ So far plans are **read only**, and only signups to them are written. A fixture 
 | `New(pool)` | The service |
 | `Service.List(ctx, city, language)` | The city's plans, earliest start first, with their prose in `language`. A city with none, or no such city, lists none: whether a city is listed is `cities`' to say |
 | `Service.Get(ctx, id, language)` | One plan with its stops and legs, or `ErrNotFound`: for an id nobody has and for one that couldn't be a plan's alike, never an empty plan |
-| `LoadFixture(ctx, pool, data)` | Writes the `plans` of a fixture file (`../../fixtures`), each replaced whole, so a stop dropped from the file doesn't linger. The city must be there first. **Development and tests only**: `cmd/seed` and the tests call it; no process in the production image does. An unknown field is an error |
+| `LoadFixture(ctx, db, data)` | Writes the `plans` of a fixture file (`../../fixtures`), each replaced whole, so a stop dropped from the file doesn't linger. The city must be there first. **Development and tests only**: `cmd/seed` and the tests call it; no process in the production image does. An unknown field is an error. `db` is a pool or a transaction (`Beginner`); given a transaction it writes in a savepoint, so `cmd/seed` can check and write in one transaction |
 
 A plan with no prose in the language asked for reads in English, `FallbackLanguage` ([Languages](../../../docs/spec/languages.md): English is the fallback for every language), and its `Language` says so.
 

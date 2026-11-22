@@ -104,3 +104,29 @@ gcloud compute instances start issho-dev --zone asia-southeast1-b --project issh
 ## Not here yet
 
 Production's destination, release-driven deploys, backups, Sentry, alerts and the Google Cloud logging of the containers (all later milestones'), and a deploy hold for the two hours before an outing ([Technical operations](spec/operations.md#what-the-promise-means)), which has no outings to protect until they exist.
+
+## Seeding the dev city
+
+A freshly migrated `issho-dev` has no city, so the API refuses every city and nobody can sign in. The founder, not CI and not a worker, seeds it. The city row is upserted to the fixture's values (state, time zone, currency, names), and the plan rows are rewritten (deleted, then inserted) with the fixture's content, so running it again is safe but puts the fixture back over any change made to those rows by hand.
+
+First, once, mark the dev database as dev. The marker is a database setting stored in the database itself (`pg_db_role_setting`), so the operator can't supply it the way they supply a ref, and a connection can't fake it: the seed reads the stored setting, not the session's, so `?options=-c issho.environment=dev` or `SET` do nothing. Run this against issho-dev only, and never on production:
+
+```sql
+alter database postgres set issho.environment = 'dev';
+```
+
+Then seed:
+
+```sh
+export DATABASE_URL=...            # dev's migration connection (secret dev-migrate-database-url)
+export SEED_DEV_PROJECT_REF=...    # the issho-dev project's ref
+make seed-dev
+```
+
+`cmd/seed` refuses any database that isn't on this machine unless `--hosted-dev` is given. Then it checks three things before writing anything: the URL (and the `PG*` environment) sets no session parameters such as `options`, the target is the project named by `SEED_DEV_PROJECT_REF` (its `db.<ref>.supabase.co` host, or `postgres.<ref>` on the pooler, judged on the connection pgx would make, so a `?user=` in the query counts), and the database's stored `issho.environment` setting is exactly `dev`. The marker check and the writes share one transaction, so the database that was checked is the one written. The ref is what the operator typed, so on its own it would let production's URL through with production's ref; the marker is why that fails, since production never has it. Take the ref from the dev project anyway. The marker is set by hand, in no committed file, and the local `make seed` never reads it.
+
+Check afterwards with the public `ListPlans` call, which needs no token and lists the fixture's plans once the city exists:
+
+```sh
+curl -s -X POST https://api-dev.joinissho.com/issho.v1.PlanService/ListPlans -H 'content-type: application/json' -d '{"city":"da-nang-hoi-an"}'
+```

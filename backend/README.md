@@ -10,7 +10,7 @@ One Go module (`github.com/shrujancheruku/issho/backend`), part of the root `go.
 | `cmd/worker` | The background-job process: runs River |
 | `cmd/rpcauth` | `make rpc-auth`: fails when an RPC in `proto/` declares no access rule |
 | `cmd/migrate` | `migrate up` and `migrate down`, behind `make migrate-up` and `make migrate-down` |
-| `cmd/seed` | `make seed`: loads the development fixture into a local database; refuses any other and is not in the image (see "Fixtures") |
+| `cmd/seed` | `make seed`: loads the development fixture into a local database; refuses any other unless `--hosted-dev` names the issho-dev project (`make seed-dev`, founder only); not in the image (see "Fixtures") |
 | `db` | The goose migrations (`db/migrations`), embedded, and the `Up` and `Down` that run them; the schema sqlc reads |
 | `internal/<pkg>/store` | The Go that sqlc generates from `internal/<pkg>/queries`, one pair per package (`internal/staff`, `internal/people`). Generated: never edit it |
 | `internal/clock` | The injected clock: `Clock`, `Real` (wired only in `cmd/`) and the test `Fake` |
@@ -67,7 +67,7 @@ One city, Da Nang–Hoi An, and two plans (`fixtures/da-nang-hoi-an.json`) carry
 
 `accounts_city_fkey` (migration `00004`) fails with `23503` on a local database that already holds an account but no city row, which only one built from an earlier integration tip can. Run `make migrate-down` (or reset the database) and `make migrate-up`, then `make seed`.
 
-`make seed` is local only: it refuses any host that isn't this machine, and that stays. Hosted dev has no city, so its API refuses every city, until #638 seeds the hosted dev city through an explicit, dev-only opt-in.
+`make seed` is local only: it refuses any host that isn't this machine, and that stays. Hosted dev has no city until the founder runs `make seed-dev` once, after dev is migrated: `cmd/seed --hosted-dev`, with `DATABASE_URL` (dev's migration connection) and `SEED_DEV_PROJECT_REF` (the issho-dev project's ref) in the environment. The target must be that project's own host (`db.<ref>.supabase.co`) or pooler user (`postgres.<ref>`), judged on the connection pgx would actually make (a `user=` in the query counts), with no `host=` override, and the database's own stored `issho.environment` setting must be exactly `dev` (the founder sets it once on issho-dev, never on production; the seed reads the stored setting, not the session's, and refuses a URL that sets session parameters such as `options`), so a production URL is refused even with the flag and production's ref. A worker never runs it against a hosted database, and CI doesn't. Running it again upserts the city row to the fixture's values and rewrites the plan rows (delete, then insert) with the fixture's content. See `docs/deploy.md`.
 
 ## Logs
 
