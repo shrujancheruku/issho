@@ -36,4 +36,8 @@ app.use(
 );
 app.all('/{*splat}', createRequestHandler({ build: path.join(dist, 'server') }));
 
+// No request log yet: operations.md says this server logs the route (and the
+// account once there is one), and there is no account until the sign-in work
+// gives the web one. When it does, add one line per request there (route,
+// status, duration; never the address or a query), not before.
 app.listen(port, '0.0.0.0', () => console.log(`web: listening on :${port}`));

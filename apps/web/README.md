@@ -24,3 +24,7 @@ docker run --publish 8081:8081 <image>      # PORT overrides 8081
 `make image` (also `scripts/image.sh`) builds this image, runs it, and checks that `/up` answers 200, that `/plans` holds its words (`No plans yet.`) in the HTML a client with no JavaScript gets, and that the script the page names is served. It needs Docker, and it removes what it started. `api-proxy.test.js` (`pnpm --filter @issho/web test`, run by `make deploy-test`, so by `make test`) tests the forwarder against a stand-in API on a real port: an RPC is forwarded with its method, headers and body; the API's errors pass through; a path outside the API is the page and never reaches the API; the member's address headers are not passed on; an unreachable API answers 502. The rest of the file is Expo's own recipe, and what can go wrong there is the image, which `make image` checks.
 
 `expo-server`'s version must stay the one `expo` depends on (`apps/app`'s lockfile entry): the server bundle's format is theirs. `package.json` pins its minor.
+
+## Logs
+
+The server logs only its startup line. [Technical operations](../../docs/spec/operations.md#errors-and-logs) says it logs the route (and the account, once there is one); that waits for the sign-in work, which gives the web an account to log. Then it adds one line per request: route, status and duration, never the visitor's address or the query.
