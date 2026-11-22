@@ -31,7 +31,7 @@ Every draw comes from one seeded generator and is taken in an order that depends
 
 ## The log search
 
-The run's logger (`logging.New`) goes to every package that logs, River's client included, and its output is searched (`Search`) for each member's email, name and first name, in any case. The test also captures the standard logger, which slog's default writes through. A hit names the member and which detail, never the detail. `Options.Plant` lets a test log a member's name partway through to prove the run reports it.
+The run's logger (`logging.New`) goes to every package that logs, River's client included, and its output is searched (`Search`) for each member's email, name, first name and last name, in any case. The test also captures the standard logger, which slog's default writes through. A hit names the member and which detail, never the detail. `Options.Plant` lets a test log a member's name partway through to prove the run reports it.
 
 ## The scorecard
 
@@ -39,4 +39,4 @@ The run's logger (`logging.New`) goes to every package that logs, River's client
 
 ## Testing
 
-`season_test.go`: each criterion of the first form, the determinism of two runs, the invariants and their failure on purpose, and the log search with its planted names. The whole package runs in about 10 seconds against the throwaway Postgres `make test` starts.
+`season_test.go`: each criterion of the first form, the determinism of two runs, the invariants and their failure on purpose (a cancelled seat is not a double booking), and the log search with its planted names. The whole package runs in about 10 seconds against the throwaway Postgres `make test` starts.

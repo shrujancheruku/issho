@@ -159,6 +159,9 @@ func TestTheScorecardSaysWhatShareGotAnOutingAndWhoGotNone(t *testing.T) {
 	if s.Signups == 0 || s.GotAnOuting == 0 || s.GotAnOuting > s.Grouped || s.Grouped > s.Signups {
 		t.Errorf("scorecard does not add up: %+v", s)
 	}
+	if s.PeopleNone < 1 {
+		t.Errorf("the season leaves nobody without an outing, so the list of people who got none is untested: %+v", s)
+	}
 	out := s.String()
 	for _, want := range []string{"signups", "got an outing", "%", "people who got none"} {
 		if !strings.Contains(out, want) {
@@ -192,6 +195,7 @@ func TestAPlantedNameInTheRunsLogIsFound(t *testing.T) {
 		"email":      {`{"msg":"x","who":"` + m.Email + `"}`, season.LeakEmail},
 		"full name":  {`{"msg":"x","who":"` + m.Name + `"}`, season.LeakName},
 		"first name": {`{"msg":"x","who":"` + strings.ToUpper(m.FirstName) + `"}`, season.LeakFirstName},
+		"last name":  {`{"msg":"x","who":"` + strings.ToUpper(m.LastName) + `"}`, season.LeakLastName},
 	}
 	for name, p := range plants {
 		t.Run(name, func(t *testing.T) {
@@ -211,6 +215,20 @@ func TestAPlantedNameInTheRunsLogIsFound(t *testing.T) {
 	}
 }
 
+// A member who cancelled a seat and was regrouped into another outing at the
+// same time was never in two at once: the check ignores a cancelled seat, and
+// still catches two that are both live.
+func TestACancelledSeatIsNotADoubleBooking(t *testing.T) {
+	w := season.Broken("double-book")
+	if len(season.CheckInvariants(w)) == 0 {
+		t.Fatal("two live seats at one time passed")
+	}
+	w.Going[0].Cancelled = true
+	if bad := season.CheckInvariants(w); len(bad) != 0 {
+		t.Errorf("a cancelled seat was counted as a booking: %v", bad)
+	}
+}
+
 func hasKind(leaks []season.Leak, k season.LeakKind) bool {
 	for _, l := range leaks {
 		if l.Kind == k {
@@ -227,9 +245,9 @@ func TestANameLoggedDuringTheRunMakesTheRunReportTheLeak(t *testing.T) {
 	res, _ := run(t, season.Options{Plant: func(l *slog.Logger, cast []season.Member) {
 		l.Info("planted", "who", cast[5].Name)
 	}})
-	// A full name holds the first name, so both are found; nothing else is, and
-	// nobody else.
-	if len(res.Leaks) != 2 || !hasKind(res.Leaks, season.LeakName) || !hasKind(res.Leaks, season.LeakFirstName) {
+	// A full name holds the first and last names, so all three are found;
+	// nothing else is, and nobody else.
+	if len(res.Leaks) != 3 || !hasKind(res.Leaks, season.LeakName) || !hasKind(res.Leaks, season.LeakFirstName) || !hasKind(res.Leaks, season.LeakLastName) {
 		t.Fatalf("leaks = %v, want the planted name of member 5", res.Leaks)
 	}
 	for _, l := range res.Leaks {

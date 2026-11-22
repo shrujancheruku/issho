@@ -53,6 +53,9 @@ type GoingSeat struct {
 	Member     int
 	Outing     string
 	Date, Part string
+	// Cancelled: the seat was cancelled, so it no longer books the time and a
+	// regroup into another outing then is not a double booking.
+	Cancelled bool
 }
 
 // Holder is a member holding a signup.
@@ -95,6 +98,9 @@ func CheckInvariants(w World) []string {
 	}
 	at := map[slot]string{}
 	for _, g := range w.Going {
+		if g.Cancelled {
+			continue
+		}
 		k := slot{g.Member, g.Date, g.Part}
 		if prev, ok := at[k]; ok && prev != g.Outing {
 			bad = append(bad, fmt.Sprintf("member %d is going to outings %s and %s on %s %s", g.Member, prev, g.Outing, g.Date, g.Part))

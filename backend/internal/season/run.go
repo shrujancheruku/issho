@@ -846,6 +846,13 @@ func (r *runner) finish() (Result, error) {
 				byOuting[s.OutingID] = o
 			}
 			o.Seats = append(o.Seats, SeatRecord{Member: m.Index, State: s.State, CheckedIn: s.CheckedIn})
+			if s.State == outings.SeatCancelled {
+				for i := range r.world.Going {
+					if g := &r.world.Going[i]; g.Member == m.Index && g.Outing == s.OutingID {
+						g.Cancelled = true
+					}
+				}
+			}
 			if s.State == outings.SeatGoing || s.State == outings.SeatCancelled {
 				round := r.roundOf(r.cityDate(s.InvitedAt))
 				if sg := r.signed[signedKey{m.Index, s.PlanID, round}]; sg != nil {

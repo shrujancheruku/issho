@@ -16,6 +16,7 @@ type Member struct {
 	Email     string
 	Name      string
 	FirstName string
+	LastName  string
 	Gender    people.Gender
 	Languages []string
 	WomenOnly bool
@@ -68,6 +69,7 @@ func castOf() []Member {
 			Email:     strings.ToLower(firstNames[i]+"."+lastNames[i]) + "@example.com",
 			Name:      firstNames[i] + " " + lastNames[i],
 			FirstName: firstNames[i],
+			LastName:  lastNames[i],
 			Gender:    g,
 			Languages: languages[i],
 			WomenOnly: womenOnly[i] && (g == people.GenderWoman || g == people.GenderNonBinary),
