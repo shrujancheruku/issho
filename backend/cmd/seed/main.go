@@ -4,9 +4,15 @@
 //
 //   - It refuses any database that isn't on this machine, before it connects,
 //     so a DATABASE_URL left in the environment can't seed a hosted project.
+//
 //   - The production image doesn't build it (backend/Dockerfile builds api and
 //     worker), and neither of those imports the fixtures
 //     (TestProductionProcessesDoNotImportTheFixtures).
+//
+//   - One explicit opt-in reaches the hosted dev database (and only it): the
+//     --hosted-dev flag together with SEED_DEV_PROJECT_REF, the dev project's
+//     ref. The target must be that project's own host or pooler user
+//     (checkTarget), so a production URL is refused even with the opt-in.
 //
 // Running it again replaces the fixture's rows with the fixture's.
 package main
@@ -14,10 +20,13 @@ package main
 import (
 	"context"
 	"errors"
+	"flag"
 	"fmt"
 	"net"
 	"net/url"
 	"os"
+	"regexp"
+	"strings"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
@@ -27,19 +36,20 @@ import (
 )
 
 func main() {
-	if err := run(context.Background(), os.Getenv("DATABASE_URL")); err != nil {
+	hostedDev := flag.Bool("hosted-dev", false, "seed the hosted dev database; needs SEED_DEV_PROJECT_REF, the dev project's ref")
+	flag.Parse()
+	if err := run(context.Background(), os.Getenv("DATABASE_URL"), *hostedDev, os.Getenv("SEED_DEV_PROJECT_REF")); err != nil {
 		fmt.Fprintln(os.Stderr, "seed:", err)
 		os.Exit(1)
 	}
 }
 
-func run(ctx context.Context, databaseURL string) error {
+func run(ctx context.Context, databaseURL string, hostedDev bool, devRef string) error {
 	if databaseURL == "" {
 		return errors.New("DATABASE_URL is not set")
 	}
-	if !isLocal(databaseURL) {
-		// The URL holds a password, so it is not echoed.
-		return errors.New("DATABASE_URL is not a database on this machine: the fixture is for development only")
+	if err := checkTarget(databaseURL, hostedDev, devRef); err != nil {
+		return err
 	}
 	pool, err := pgxpool.New(ctx, databaseURL)
 	if err != nil {
@@ -73,4 +83,43 @@ func isLocal(databaseURL string) bool {
 	}
 	ip := net.ParseIP(host)
 	return ip != nil && ip.IsLoopback()
+}
+
+// refPattern is the shape of a Supabase project ref. It also keeps the ref
+// from carrying anything that could change what the comparison below means.
+var refPattern = regexp.MustCompile(`^[a-z0-9]{8,32}$`)
+
+// checkTarget is whether the database may be seeded. A database on this machine
+// always may. Any other only with the hosted-dev opt-in, and then only if it is
+// the dev project's: devRef (given by the operator, never taken from the URL)
+// must be the ref in the URL's host (`db.<ref>.supabase.co`) or in the pooler's
+// user (`postgres.<ref>`). A production URL carries production's ref, so it
+// fails here even with the opt-in. The errors never echo the URL (it holds a
+// password).
+func checkTarget(databaseURL string, hostedDev bool, devRef string) error {
+	if isLocal(databaseURL) {
+		return nil
+	}
+	if !hostedDev {
+		return errors.New("DATABASE_URL is not a database on this machine: the fixture is for development only")
+	}
+	if !refPattern.MatchString(devRef) {
+		return errors.New("--hosted-dev needs SEED_DEV_PROJECT_REF set to the dev project's ref")
+	}
+	u, err := url.Parse(databaseURL)
+	if err != nil || u.Host == "" {
+		return errors.New("DATABASE_URL could not be used")
+	}
+	for _, k := range []string{"host", "hostaddr", "service"} {
+		if u.Query().Has(k) {
+			return errors.New("DATABASE_URL has a query that could change its host")
+		}
+	}
+	if u.Hostname() == "db."+devRef+".supabase.co" {
+		return nil
+	}
+	if strings.HasSuffix(u.Hostname(), ".pooler.supabase.com") && u.User != nil && u.User.Username() == "postgres."+devRef {
+		return nil
+	}
+	return errors.New("DATABASE_URL is not the dev project's database (SEED_DEV_PROJECT_REF): --hosted-dev reaches dev only")
 }

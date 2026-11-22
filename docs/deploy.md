@@ -104,3 +104,15 @@ gcloud compute instances start issho-dev --zone asia-southeast1-b --project issh
 ## Not here yet
 
 Production's destination, release-driven deploys, backups, Sentry, alerts and the Google Cloud logging of the containers (all later milestones'), and a deploy hold for the two hours before an outing ([Technical operations](spec/operations.md#what-the-promise-means)), which has no outings to protect until they exist.
+
+## Seeding the dev city
+
+A freshly migrated `issho-dev` has no city, so the API refuses every city and nobody can sign in. The founder, not CI and not a worker, seeds it once (running it again changes nothing):
+
+```sh
+export DATABASE_URL=...            # dev's migration connection (secret dev-migrate-database-url)
+export SEED_DEV_PROJECT_REF=...    # the issho-dev project's ref
+make seed-dev
+```
+
+`cmd/seed` refuses any database that isn't on this machine unless `--hosted-dev` is given, and then only if the target is the project named by `SEED_DEV_PROJECT_REF` (its `db.<ref>.supabase.co` host, or `postgres.<ref>` on the pooler), so production's URL is refused. Take the ref from the dev project, never from production's. Check afterwards with the `GetAccount` call above: it should no longer refuse the city.

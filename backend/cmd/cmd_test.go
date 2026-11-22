@@ -426,3 +426,27 @@ func TestSeedRefusesADatabaseThatIsNotLocal(t *testing.T) {
 		}
 	}
 }
+
+// The hosted-dev opt-in does not open the door to production: with the flag
+// and a dev ref set, a target that is not that project's is refused before it
+// connects, and the password is not printed. Without SEED_DEV_PROJECT_REF the
+// flag alone reaches nothing.
+func TestSeedHostedDevOptInRefusesAProductionLikeTarget(t *testing.T) {
+	bin := buildSeed(t)
+	const devRef = "abcdefghijklmnopqrst"
+	for _, tc := range []struct{ url, ref string }{
+		{"postgresql://postgres:hunter2@db.zzzzzzzzzzzzzzzzzzzz.supabase.co:5432/postgres", devRef},
+		{"postgresql://postgres.zzzzzzzzzzzzzzzzzzzz:hunter2@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres", devRef},
+		{"postgresql://postgres:hunter2@db." + devRef + ".supabase.co:5432/postgres", ""},
+	} {
+		cmd := exec.Command(bin, "--hosted-dev")
+		cmd.Env = append(os.Environ(), "DATABASE_URL="+tc.url, "SEED_DEV_PROJECT_REF="+tc.ref)
+		out, err := cmd.CombinedOutput()
+		if err == nil {
+			t.Errorf("seed --hosted-dev accepted %q with ref %q", tc.url, tc.ref)
+		}
+		if strings.Contains(string(out), "hunter2") {
+			t.Errorf("seed printed the password:\n%s", out)
+		}
+	}
+}
