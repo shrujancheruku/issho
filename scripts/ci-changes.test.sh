@@ -52,6 +52,8 @@ want "the backend's go.mod runs every job" "$all" backend/go.mod
 want "the workspace's go.work.sum runs every job" "$all" go.work.sum
 want "proto-breaking.sh runs its check and the backend job, which runs its tests" "backend proto-breaking" scripts/proto-breaking.sh
 want "an app's own package.json is not CI's" "e2e image native-bundle strings typescript" apps/app/package.json
+want "native-metro.sh, which the native-bundle job tests" "native-bundle" scripts/native-metro.sh
+want "native-screenshot.test.sh, which the native-bundle job runs" "native-bundle" scripts/native-screenshot.test.sh
 want "two changes run both's jobs" "e2e image native-bundle strings typescript" apps/app/a.ts apps/app/b.ts
 
 # --all is a push to main, a dispatch, or a base that can't be diffed.
