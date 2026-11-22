@@ -11,6 +11,8 @@ function env(name: string): string {
 
 const apiPort = env('E2E_API_PORT');
 const webPort = env('E2E_WEB_PORT');
+const appPort = env('E2E_APP_PORT');
+const appDist = env('E2E_APP_DIST');
 const apiBinary = env('E2E_API_BINARY');
 
 export default defineConfig({
@@ -41,6 +43,15 @@ export default defineConfig({
       command: `pnpm --filter @issho/admin exec vite preview --host 127.0.0.1 --port ${webPort} --strictPort`,
       env: { API_PROXY_TARGET: `http://127.0.0.1:${apiPort}` },
       url: `http://127.0.0.1:${webPort}/`,
+      reuseExistingServer: false,
+    },
+    {
+      // The member app as deployed: the Expo server (apps/web/server.js) serving
+      // the app's web export, forwarding the API's paths to the API.
+      command: 'node server.js',
+      cwd: '../apps/web',
+      env: { PORT: appPort, DIST: appDist, API_ORIGIN: `http://127.0.0.1:${apiPort}` },
+      url: `http://127.0.0.1:${appPort}/up`,
       reuseExistingServer: false,
     },
   ],

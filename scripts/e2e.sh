@@ -3,7 +3,7 @@
 # started here on free ports. Usage: scripts/e2e.sh   (from anywhere)
 #
 # Never starts local Supabase and touches no database: the API has no store yet.
-# It chooses two free ports rather than the dev defaults (8080, 8081, 5173), so
+# It chooses three free ports rather than the dev defaults (8080, 8081, 5173), so
 # it can run beside a developer's servers; Playwright starts both servers and
 # stops them when the run ends (e2e/playwright.config.ts).
 set -euo pipefail
@@ -21,9 +21,17 @@ export E2E_API_VERSION="e2e-$$"
 export E2E_API_BINARY="$work/api"
 export E2E_API_PORT=$(free_port)
 export E2E_WEB_PORT=$(free_port)
+export E2E_APP_PORT=$(free_port)
+# The Expo server's build (the member app's web export) and where Playwright finds it.
+export E2E_APP_DIST="$work/app-dist"
 
 (cd "$repo/backend" && go build -ldflags "-X main.version=$E2E_API_VERSION" -o "$E2E_API_BINARY" ./cmd/api)
 pnpm --filter @issho/admin build
+# The member app, built as the web image builds it: for its own origin (the Expo
+# server forwards the API's paths, as in deployment), and 127.0.0.1 counts as a
+# dev API, so the You tab shows the API's version.
+(cd "$repo/apps/app" && CI=1 EXPO_PUBLIC_API_URL="http://127.0.0.1:$E2E_APP_PORT" \
+  pnpm exec expo export --platform web --output-dir "$E2E_APP_DIST")
 pnpm --filter @issho/e2e exec playwright install chromium
 
 pnpm --filter @issho/e2e test
