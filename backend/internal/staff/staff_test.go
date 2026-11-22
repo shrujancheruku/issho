@@ -3,6 +3,7 @@ package staff_test
 import (
 	"context"
 	"errors"
+	"sync"
 	"testing"
 	"time"
 
@@ -216,17 +217,24 @@ func TestResolveClosesTheItemWithAReason(t *testing.T) {
 // work runs the due job for item once, as River would, against the rig's clock.
 func (r *rig) work(t *testing.T, item staff.Item) {
 	t.Helper()
-	ctx := context.Background()
-	w := rivertest.NewWorker(t, riverpgxv5.New(r.pool), &river.Config{Schema: jobs.Schema},
-		staff.NewDueWorker(r.clk, r.pool, r.kinds))
-	tx, err := r.pool.Begin(ctx)
-	if err != nil {
+	if err := r.workOn(t, r.pool, item); err != nil {
 		t.Fatal(err)
+	}
+}
+
+// workOn is work on pool, returning the job's error so a goroutine can report it.
+func (r *rig) workOn(t *testing.T, pool *pgxpool.Pool, item staff.Item) error {
+	t.Helper()
+	ctx := context.Background()
+	w := rivertest.NewWorker(t, riverpgxv5.New(pool), &river.Config{Schema: jobs.Schema},
+		staff.NewDueWorker(r.clk, pool, r.kinds))
+	tx, err := pool.Begin(ctx)
+	if err != nil {
+		return err
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
-	if _, err := w.Work(ctx, t, tx, staff.DueArgs{ItemID: item.ID}, nil); err != nil {
-		t.Fatal(err)
-	}
+	_, err = w.Work(ctx, t, tx, staff.DueArgs{ItemID: item.ID}, nil)
+	return err
 }
 
 // isOpen reports whether the queue lists the item as open.
@@ -273,6 +281,80 @@ func TestDueJobAppliesTheDefaultExactlyOnce(t *testing.T) {
 	}
 	if state != string(staff.StateDefaulted) || !closedAt.Equal(r.clk.Now()) {
 		t.Fatalf("state = %q closed at %v, want defaulted at %v", state, closedAt, r.clk.Now())
+	}
+}
+
+// River delivers a job at least once, so two deliveries can run at the same
+// time. Both read the item before either commits; the row lock makes the second
+// wait and then find it closed, so the default is applied once. Without the lock
+// (`for update` in LockQueueItem) the second reads the item still open and
+// applies the default as well.
+func TestTwoDueJobsRunningAtOnceApplyTheDefaultOnce(t *testing.T) {
+	ctx := context.Background()
+	r := newRig(t)
+	// Each concurrent job holds a transaction and a connection of its own, as does
+	// the poll below, so the rig's pool (as small as four) is not enough.
+	cfg, err := pgxpool.ParseConfig(testdb.URL(r.pool))
+	if err != nil {
+		t.Fatal(err)
+	}
+	cfg.MaxConns = 8
+	pool, err := pgxpool.NewWithConfig(ctx, cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(pool.Close)
+
+	var mu sync.Mutex
+	applied := 0
+	release := make(chan struct{})
+	r.kinds.Register("plan-review", func(context.Context, pgx.Tx, staff.Item) error {
+		mu.Lock()
+		applied++
+		mu.Unlock()
+		<-release // hold the transaction (and its lock) open until the test lets go
+		return nil
+	})
+	item := r.open(t, "plan-review", "plan-a", start.Add(72*time.Hour))
+	r.clk.Advance(72*time.Hour + time.Minute)
+
+	errs := make(chan error, 2)
+	for range 2 {
+		go func() { errs <- r.workOn(t, pool, item) }()
+	}
+
+	// Wait until the second job is blocked on the first's row lock, or (with no
+	// lock) has got as far as applying the default too: either way, both have read
+	// the item before either has committed.
+	deadline := time.Now().Add(10 * time.Second)
+	for {
+		mu.Lock()
+		n := applied
+		mu.Unlock()
+		var waiting bool
+		if err := r.pool.QueryRow(ctx,
+			`select exists (select 1 from pg_stat_activity
+			 where datname = current_database() and wait_event_type = 'Lock')`).Scan(&waiting); err != nil {
+			t.Fatal(err)
+		}
+		if n >= 2 || (n == 1 && waiting) {
+			break
+		}
+		if time.Now().After(deadline) {
+			close(release)
+			t.Fatalf("after 10s: %d defaults applied and no job waiting on the row lock", n)
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	close(release)
+	for range 2 {
+		if err := <-errs; err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	if applied != 1 {
+		t.Fatalf("default applied %d times by two jobs at once, want once", applied)
 	}
 }
 
