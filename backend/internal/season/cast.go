@@ -51,9 +51,9 @@ var (
 	}
 	// inviters: member 0 is the founder; each member brings in at most three
 	// (the limit per member), and 17 to 19 are never admitted.
-	inviters = []int{-1, 0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, -2, -2, -2}
+	inviters = []int{-1, 0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, -2, -2, -2} //policylint:ignore a scripted number of the season, not that rule
 	// womenOnly: two women ask for groups of women and non-binary people only.
-	womenOnly = map[int]bool{4: true, 9: true}
+	womenOnly = map[int]bool{4: true, 9: true} //policylint:ignore a scripted number of the season, not that rule
 )
 
 // castOf is the scripted cast: 17 admitted members in a tree of join links
@@ -73,7 +73,7 @@ func castOf() []Member {
 			WomenOnly: womenOnly[i] && (g == people.GenderWoman || g == people.GenderNonBinary),
 			Inviter:   inviters[i],
 			Admitted:  inviters[i] >= -1,
-			plans:     []int{3, 1, 1, 2}[i%4],
+			plans:     []int{3, 1, 1, 2}[i%4], //policylint:ignore a scripted number of the season, not that rule
 		}
 	}
 	return cast

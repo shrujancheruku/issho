@@ -160,7 +160,7 @@ func Run(ctx context.Context, pool *pgxpool.Pool, opts Options) (Result, error) 
 	buf := &lockedBuffer{}
 	lg := logging.New(buf, "season")
 	// 09:00 UTC is 16:00 in the city, on the day the plans open.
-	clk := clock.NewFake(time.Date(2026, 1, 5, 9, 0, 0, 0, time.UTC))
+	clk := clock.NewFake(time.Date(2026, 1, 5, 9, 0, 0, 0, time.UTC)) //policylint:ignore a scripted number of the season, not that rule
 	cs := cities.New(pool)
 	ppl := people.New(clk, pool, cs, people.Config{DefaultCity: city})
 	signups := plans.NewSignups(clk, pool, cs)
@@ -330,7 +330,7 @@ func (r *runner) roundOf(date string) int {
 	return int(d.Sub(r.open) / (24 * time.Hour) / 7)
 }
 
-func (r *runner) roundEnd(round int) time.Time { return r.open.AddDate(0, 0, round*7+6) }
+func (r *runner) roundEnd(round int) time.Time { return r.open.AddDate(0, 0, round*7+6) } //policylint:ignore a scripted number of the season, not that rule
 
 func (r *runner) stage(name string) {
 	r.stages[name]++
@@ -344,16 +344,17 @@ func (r *runner) script(opts Options) error {
 	// earlier member.
 	for _, m := range r.cast {
 		m := m
-		r.at(r.local(5, 16, 5).Add(time.Duration(m.Index)*20*time.Minute), "join", func() error { return r.join(m) })
+		r.at(r.local(5, 16, 5).Add(time.Duration(m.Index)*20*time.Minute), "join", func() error { return r.join(m) }) //policylint:ignore a scripted number of the season, not that rule
 	}
 	// Signups: each round, each member signs up to their plans on their own day
 	// of the first five days, at night.
 	for round := 0; round < rounds; round++ {
 		for _, m := range r.cast {
 			m := m
-			day := 5 + round*7 + m.Index%5
+			day := 5 + round*7 + m.Index%5 //policylint:ignore a scripted number of the season, not that rule
 			if round > 0 {
-				day = 5 + round*7 + m.Index%2 // the second round's signups come early, so its early forming overlaps the first's outings
+				// The second round's signups come early, so its early forming overlaps the first's outings.
+				day = 5 + round*7 + m.Index%2 //policylint:ignore a scripted number of the season, not that rule
 			}
 			for _, plan := range []string{lanterns, sunrise} {
 				plan := plan
@@ -361,7 +362,7 @@ func (r *runner) script(opts Options) error {
 					continue
 				}
 				// Not everyone signs up again for the second round.
-				if round > 0 && m.Index%6 == 5 {
+				if round > 0 && m.Index%6 == 5 { //policylint:ignore a scripted number of the season, not that rule
 					continue
 				}
 				r.at(r.local(day, 23, m.Index), "sign up", func() error { return r.signUp(m, plan) })
@@ -370,11 +371,11 @@ func (r *runner) script(opts Options) error {
 	}
 	// The forming, each morning from the second day to the last day of the
 	// second round: the spec's rules decide whether each plan forms that day.
-	for day := 6; day <= 5+rounds*7-1; day++ {
+	for day := 6; day <= 5+rounds*7-1; day++ { //policylint:ignore a scripted number of the season, not that rule
 		day := day
 		r.at(r.local(day, 8, 0), "form", func() error { return r.formDay(day) })
 	}
-	r.at(r.local(6, 7, 0), "fourth join link", r.fourthLink)
+	r.at(r.local(6, 7, 0), "fourth join link", r.fourthLink) //policylint:ignore a scripted number of the season, not that rule
 	if opts.Plant != nil {
 		r.at(r.local(10, 12, 0), "plant", func() error { opts.Plant(r.log, r.cast); return nil })
 	}
@@ -418,14 +419,14 @@ func (r *runner) join(m Member) error {
 		// Not admitted: one tries a code that is nobody's, another the code a
 		// friend has already used. Neither gets in.
 		code := "no-such-code"
-		if m.Index == 18 {
+		if m.Index == 18 { //policylint:ignore a scripted number of the season, not that rule
 			code = r.codes[16]
 		}
 		if m.Index != 19 {
 			if err := r.ppl.RedeemJoinLink(ctx, m.ID, code); !errors.Is(err, people.ErrJoinLinkUnusable) {
 				return fmt.Errorf("a code that admits nobody: got %v, want %v", err, people.ErrJoinLinkUnusable)
 			}
-			if m.Index == 18 {
+			if m.Index == 18 { //policylint:ignore a scripted number of the season, not that rule
 				r.refusals["used join link"]++
 			} else {
 				r.refusals["made-up join link"]++
@@ -434,7 +435,7 @@ func (r *runner) join(m Member) error {
 	}
 	if _, err := r.ppl.SaveProfile(ctx, m.ID, people.ProfileInput{
 		Name: m.Name, DateOfBirth: "1990-06-15", Gender: m.Gender, Languages: m.Languages,
-		LivesInCity: m.Index%3 != 0, AcceptedCodeOfConduct: true, OnlyWomenAndNonBinary: m.WomenOnly,
+		LivesInCity: m.Index%3 != 0, AcceptedCodeOfConduct: true, OnlyWomenAndNonBinary: m.WomenOnly, //policylint:ignore a scripted number of the season, not that rule
 	}); err != nil {
 		return fmt.Errorf("profile: %w", err)
 	}
@@ -517,7 +518,7 @@ func (r *runner) pickTicks(m Member, plan, today string, round int) ([]plans.Tic
 	}
 	r.rng.Shuffle(len(dates), func(i, j int) { dates[i], dates[j] = dates[j], dates[i] })
 	// The dates a person is free are close together, as a week's are.
-	n := 3 + r.rng.IntN(3)
+	n := 3 + r.rng.IntN(3) //policylint:ignore a scripted number of the season, not that rule
 	if len(dates) > 7 {
 		dates = dates[:7]
 	}
@@ -590,7 +591,7 @@ func (r *runner) fiveShareATime(plan, today string, round int) bool {
 		}
 	}
 	for _, n := range count {
-		if n >= 5 {
+		if n >= 5 { //policylint:ignore a scripted number of the season, not that rule
 			return true
 		}
 	}
@@ -625,17 +626,24 @@ func (r *runner) observe() error {
 	for _, g := range byOuting {
 		sort.Slice(g, func(i, j int) bool { return g[i].member < g[j].member })
 	}
-	sort.Slice(order, func(i, j int) bool {
-		a, b := byOuting[order[i]][0], byOuting[order[j]][0]
-		switch {
-		case a.seat.Date != b.seat.Date:
-			return a.seat.Date < b.seat.Date
-		case a.seat.Part != b.seat.Part:
-			return a.seat.Part < b.seat.Part
-		case a.seat.PlanID != b.seat.PlanID:
-			return a.seat.PlanID < b.seat.PlanID
+	sig := func(g []mine) string {
+		s := ""
+		for _, m := range g {
+			s += fmt.Sprintf("%02d%s,", m.member, m.seat.State)
 		}
-		return a.member < b.member
+		return s
+	}
+	sort.Slice(order, func(i, j int) bool {
+		a, b := byOuting[order[i]], byOuting[order[j]]
+		switch {
+		case a[0].seat.Date != b[0].seat.Date:
+			return a[0].seat.Date < b[0].seat.Date
+		case a[0].seat.Part != b[0].seat.Part:
+			return a[0].seat.Part < b[0].seat.Part
+		case a[0].seat.PlanID != b[0].seat.PlanID:
+			return a[0].seat.PlanID < b[0].seat.PlanID
+		}
+		return sig(a) < sig(b)
 	})
 	r.checked["double-booking sweeps"]++
 	for _, id := range order {
@@ -774,7 +782,7 @@ func (r *runner) plansFor(member int, s outings.Seat, si *seatInfo) error {
 	si.wasGoing = true
 	noShow := draw < 0.225
 	if !noShow {
-		at := s.CheckInOpensAt.Add(time.Duration(5+r.rng.IntN(45)) * time.Minute)
+		at := s.CheckInOpensAt.Add(time.Duration(5+r.rng.IntN(45)) * time.Minute) //policylint:ignore a scripted number of the season, not that rule
 		r.at(at, "check in", func() error {
 			if _, err := r.svc.CheckIn(r.ctx, acct, id); err != nil {
 				return fmt.Errorf("check in: %w", err)
@@ -790,9 +798,9 @@ func (r *runner) plansFor(member int, s outings.Seat, si *seatInfo) error {
 		})
 	}
 	// A no-show says they went one time in three: their word is theirs.
-	saysWent := !noShow || r.rng.IntN(3) == 0
+	saysWent := !noShow || r.rng.IntN(3) == 0 //policylint:ignore a scripted number of the season, not that rule
 	meetAgain := r.rng.IntN(2) == 0
-	at := s.FeedbackOpensAt.Add(time.Hour + time.Duration(r.rng.IntN(40*60))*time.Minute)
+	at := s.FeedbackOpensAt.Add(time.Hour + time.Duration(r.rng.IntN(40*60))*time.Minute) //policylint:ignore a scripted number of the season, not that rule
 	r.at(at, "feedback", func() error {
 		form, err := r.svc.Feedback(r.ctx, acct, id)
 		if err != nil {
@@ -822,7 +830,6 @@ func (r *runner) plansFor(member int, s outings.Seat, si *seatInfo) error {
 func (r *runner) finish() (Result, error) {
 	res := Result{Cast: r.cast, Stages: r.stages, Refusals: r.refusals, Checked: r.checked, FirstSignup: r.firstSignup, LastSignup: r.lastSignup}
 	byOuting := map[string]*OutingRecord{}
-	var firstMember = map[string]int{}
 	for _, m := range r.cast {
 		seats, err := r.svc.Mine(r.ctx, m.ID)
 		if err != nil {
@@ -837,7 +844,6 @@ func (r *runner) finish() (Result, error) {
 				}
 				o = &OutingRecord{Plan: name, Date: s.Date, Part: s.Part, Languages: s.Languages, State: s.OutingState}
 				byOuting[s.OutingID] = o
-				firstMember[s.OutingID] = m.Index
 			}
 			o.Seats = append(o.Seats, SeatRecord{Member: m.Index, State: s.State, CheckedIn: s.CheckedIn})
 			if s.State == outings.SeatGoing || s.State == outings.SeatCancelled {
@@ -865,6 +871,16 @@ func (r *runner) finish() (Result, error) {
 	for _, o := range byOuting {
 		res.Outings = append(res.Outings, *o)
 	}
+	for _, o := range res.Outings {
+		sort.Slice(o.Seats, func(i, j int) bool { return o.Seats[i].Member < o.Seats[j].Member })
+	}
+	sig := func(o OutingRecord) string {
+		s := ""
+		for _, st := range o.Seats {
+			s += fmt.Sprintf("%02d%s,", st.Member, st.State)
+		}
+		return s
+	}
 	sort.Slice(res.Outings, func(i, j int) bool {
 		a, b := res.Outings[i], res.Outings[j]
 		switch {
@@ -875,11 +891,8 @@ func (r *runner) finish() (Result, error) {
 		case a.Plan != b.Plan:
 			return a.Plan < b.Plan
 		}
-		return a.Seats[0].Member < b.Seats[0].Member
+		return sig(a) < sig(b)
 	})
-	for _, o := range res.Outings {
-		sort.Slice(o.Seats, func(i, j int) bool { return o.Seats[i].Member < o.Seats[j].Member })
-	}
 	people := map[int]bool{}
 	wentPeople := map[int]bool{}
 	for k, s := range r.signed {

@@ -137,7 +137,7 @@ func shareOne(o SetOuting) bool {
 func Broken(bug string) World {
 	member := func(i int, spoken ...string) SetMember { return SetMember{Member: i, Spoken: spoken, Ticked: true} }
 	good := SetOuting{ID: "o1", Date: "2026-01-14", Part: "evening", Languages: []string{"en"},
-		Members: []SetMember{member(1, "en"), member(2, "en", "vi"), member(3, "en")}}
+		Members: []SetMember{member(1, "en"), member(2, "en", "vi"), member(3, "en")}} //policylint:ignore a scripted number of the season, not that rule
 	w := World{SetOutings: []SetOuting{good}, Holders: []Holder{{Member: 1, Admitted: true}}}
 	switch bug {
 	case "double-book":
@@ -150,7 +150,7 @@ func Broken(bug string) World {
 	case "set-too-small":
 		w.SetOutings[0].Members = w.SetOutings[0].Members[:2]
 	case "set-too-big":
-		w.SetOutings[0].Members = append(w.SetOutings[0].Members, member(4, "en"), member(5, "en"), member(6, "en"), member(7, "en"))
+		w.SetOutings[0].Members = append(w.SetOutings[0].Members, member(4, "en"), member(5, "en"), member(6, "en"), member(7, "en")) //policylint:ignore a scripted number of the season, not that rule
 	case "no-shared-language":
 		w.SetOutings[0].Languages = []string{"fr"}
 	case "no-shared-time":
