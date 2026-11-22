@@ -71,7 +71,7 @@ Together's "Needs you" block and the outing's page ([#619](https://github.com/sh
 - **Refusals.** The server answers a refused yes or cancel with FAILED_PRECONDITION and a message, with no structured reason, so the app reloads the outing and reads the cause from it (`refusalOf`, `src/outings/model.ts`): a full seat is "This group is full.", an invitation whose 48 hours ended, an outing not set or a seat unanswered is "This invitation has run out.", and a yes on a seat still open is "You are already going to another outing at that time…". A cancel after check-in says so. The refusal stays on the outing's card, row or strip until the next try.
 - **Nothing per person is in the cached page.** The strip and the badge read `ListMyOutings` in the browser only for a signed-in person, as the signup panel does.
 - No design for these screens exists on [#607](https://github.com/shrujancheruku/issho/issues/607): they use the existing components and tokens.
-- Screenshots (`docs/screenshots/`): `outing-<state>-<language>-<theme>.png` from the web at 390 wide, one `outing-<state>-android.png` per screen from the emulator, from a throwaway local stand-in for Supabase Auth and the API (not in the repo). The iOS simulator's are not attached ([#631](https://github.com/shrujancheruku/issho/issues/631)).
+- Screenshots (`docs/screenshots/`): `outing-<state>-<language>-<theme>.png` from the web at 390 wide, `outing-together-needs-you-android.png` and `outing-invited-android.png` from the emulator, one per screen, from a throwaway local stand-in for Supabase Auth and the API (not in the repo). The iOS simulator's are not attached ([#631](https://github.com/shrujancheruku/issho/issues/631)).
 
 ## Testing
 
