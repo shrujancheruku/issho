@@ -45,6 +45,16 @@ secret() {
 
 step() { echo "== $*"; }
 
+step "Check that every secret the deploy names exists"
+# The names are the ones .kamal/secrets.dev fetches. Kamal would fail on a missing
+# one at its first call anyway; checking here, by name and without reading a value,
+# fails first and says which, before the VM, a build or a container is touched.
+missing=()
+for name in $(sed -n 's/^SECRETS=.*issho-dev-512213 //p' .kamal/secrets.dev | tr -d ')'); do
+  gcloud secrets describe "$name" --project="$project" >/dev/null 2>&1 || missing+=("$name")
+done
+[ "${#missing[@]}" -eq 0 ] || { echo "Secret Manager has no secret named: ${missing[*]}" >&2; exit 1; }
+
 step "Docker on the VM (installs it on the first run)"
 kamal server bootstrap "${backend[@]}"
 

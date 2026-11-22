@@ -96,6 +96,27 @@ if grep -q 'value-of-secret' "$work/log"; then bad "a secret's value was passed 
 grep -q '^go DATABASE_URL=value-of-secret ' "$work/log.env" || bad "the migration did not get the migration role's database URL in its environment"
 grep -q 'CLOUDFLARE_API_TOKEN=value-of-secret$' "$work/log.env" || bad "wrangler did not get the token in its environment, without its newline"
 
+# --- the API's database and Auth addresses ---------------------------------------
+# The API (the web role) names both in its env.secret, and the dev destination
+# reads each from Secret Manager by name. Values are never in the repository.
+api_env=$(awk '/^  web:/{w=1;next} /^  worker:/{w=0} w' "$repo/config/deploy.yml")
+for name in DATABASE_URL SUPABASE_AUTH_URL; do
+  grep -q "^ *- $name\$" <<<"$api_env" || bad "the API's env.secret does not name $name"
+  grep -q "^$name=\$(kamal secrets extract " "$repo/.kamal/secrets.dev" || bad ".kamal/secrets.dev does not read $name"
+done
+grep -q '^DATABASE_URL=$(kamal secrets extract dev-database-url ' "$repo/.kamal/secrets.dev" || bad "DATABASE_URL is not read from dev-database-url"
+grep -q '^SUPABASE_AUTH_URL=$(kamal secrets extract dev-supabase-auth-url ' "$repo/.kamal/secrets.dev" || bad "SUPABASE_AUTH_URL is not read from dev-supabase-auth-url"
+# The worker's connection is its own (a session pooler), not the API's.
+grep -A8 '^  worker:' "$repo/config/deploy.yml" | grep -q '^ *- DATABASE_URL$' && bad "the worker is given the API's DATABASE_URL"
+
+# A secret the deploy names but the store lacks stops it before Kamal is called at
+# all, so no image is built and no container replaced.
+for name in dev-database-url dev-supabase-auth-url; do
+  if run "gcloud secrets describe $name"; then bad "the script succeeded although $name is missing"; fi
+  [ ! -s "$work/log" ] || [ "$(grep -c '^kamal\|^go \|^pnpm' "$work/log")" -eq 0 ] || bad "a tool ran although $name is missing: $(cat "$work/log")"
+  grep -q "$name" "$work/out" || bad "the failure does not name the missing secret $name"
+done
+
 # --- no address, no deploy --------------------------------------------------------
 : > "$work/log"
 if PATH="$work/bin:$PATH" LOG="$work/log" env -u DEPLOY_HOST "$script" >/dev/null 2>&1; then bad "the script ran without DEPLOY_HOST"; fi
