@@ -63,6 +63,8 @@ One city, Da Nang–Hoi An, and two plans (`fixtures/da-nang-hoi-an.json`) carry
 
 `accounts_city_fkey` (migration `00004`) fails with `23503` on a local database that already holds an account but no city row, which only one built from an earlier integration tip can. Run `make migrate-down` (or reset the database) and `make migrate-up`, then `make seed`.
 
+`make seed` is local only: it refuses any host that isn't this machine, and that stays. Hosted dev has no city, so its API refuses every city, until #638 seeds the hosted dev city through an explicit, dev-only opt-in.
+
 ## Logs
 
 Logs carry the account's ID and the route and nothing else about a person ([Technical operations](../docs/spec/operations.md#errors-and-logs)). Each command builds its logger once with `logging.New(os.Stdout, "api")`, one JSON object per line, and hands it down; no package makes a logger of its own or writes to stdout, which `internal/logging/only_way_test.go` enforces, so a test that builds one on a buffer captures a whole run.
