@@ -26,6 +26,7 @@ One Go module (`github.com/shrujancheruku/issho/backend`), part of the root `go.
 | `internal/logging` | `logging.New`, the one way a process makes a logger, and the test that keeps it the only way (see "Logs") |
 | `internal/jobs` | The River client the worker runs and the domain packages enqueue through |
 | `internal/policy` | Every number in the spec's rules, as a constant linked to its document (see "Policy") |
+| `internal/matching` | Matching as a pure function: a round's signups, the kept-apart pairs and the closed dates in, groups with a date and part of the day out (the thin loop's hard rules; see its README) |
 | `internal/staff` | The queue: items with a due time and a written default, and the River job that applies the default (see "The queue") |
 | `internal/retention` | The registry of every table's personal data and lifetime, and the check that none is missing (see "Retention") |
 | `internal/serve` | The lifecycle both commands share |
