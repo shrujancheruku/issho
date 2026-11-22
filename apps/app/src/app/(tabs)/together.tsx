@@ -1,5 +1,10 @@
 import { EmptyScreen } from '@/components/empty-screen';
+import { RequireSignIn } from '@/components/require-sign-in';
 
 export default function Together() {
-  return <EmptyScreen titleKey="tabs.together" emptyKey="together.empty" />;
+  return (
+    <RequireSignIn path="/together">
+      <EmptyScreen titleKey="tabs.together" emptyKey="together.empty" />
+    </RequireSignIn>
+  );
 }

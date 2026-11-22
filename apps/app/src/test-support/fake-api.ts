@@ -6,8 +6,20 @@ import type { Api } from '@issho/api-client';
  * reaches a network. Add each service's methods here as the screens start
  * calling them.
  */
-export function fakeApi(): { [K in keyof Api]: { [M in keyof Api[K]]: jest.Mock } } {
+export function fakeApi(): {
+  [K in keyof Api]: { [M in keyof Api[K]]: jest.Mock };
+} {
   return {
     health: { check: jest.fn().mockResolvedValue({ version: 'test' }) },
+    account: {
+      getAccount: jest.fn().mockResolvedValue({
+        account: {
+          id: 'u1',
+          email: 'ada@example.com',
+          city: 'da-nang-hoi-an',
+          displayLanguage: 'en',
+        },
+      }),
+    },
   } as never;
 }

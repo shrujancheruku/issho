@@ -1,4 +1,4 @@
-import { createClient, type Interceptor } from '@connectrpc/connect';
+import { Code, ConnectError, createClient, type Interceptor } from '@connectrpc/connect';
 import { createConnectTransport } from '@connectrpc/connect-web';
 
 import { AccountService } from './gen/issho/v1/account_pb';
@@ -18,23 +18,37 @@ export interface ApiOptions {
   baseUrl: string;
   /** Called before every request; a token is sent as `Authorization: Bearer`. */
   getAccessToken: () => Promise<string | null>;
+  /**
+   * Called when the API answers that the caller is not signed in (a missing,
+   * expired or revoked token), so the app can send the person to sign-in from
+   * one place instead of in every screen. The error is still thrown.
+   */
+  onUnauthenticated?: () => void;
   /** For tests; defaults to the global fetch. */
   fetch?: typeof globalThis.fetch;
 }
 
 /** The one client the app, the Expo server and the admin use to call the API. */
-export function createApi({ baseUrl, getAccessToken, fetch }: ApiOptions) {
+export function createApi({ baseUrl, getAccessToken, onUnauthenticated, fetch }: ApiOptions) {
   const bearer: Interceptor = (next) => async (req) => {
     const token = await getAccessToken();
     if (token) req.header.set('Authorization', `Bearer ${token}`);
     return next(req);
+  };
+  const unauthenticated: Interceptor = (next) => async (req) => {
+    try {
+      return await next(req);
+    } catch (err) {
+      if (ConnectError.from(err).code === Code.Unauthenticated) onUnauthenticated?.();
+      throw err;
+    }
   };
   // JSON, not binary: it works with React Native's fetch and reads in a network
   // inspector.
   const transport = createConnectTransport({
     baseUrl,
     useBinaryFormat: false,
-    interceptors: [bearer],
+    interceptors: [bearer, unauthenticated],
     fetch,
   });
   return {
