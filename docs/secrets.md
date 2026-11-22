@@ -43,7 +43,7 @@ eas env:set --name EXPO_PUBLIC_SUPABASE_URL --value "<project url>" --environmen
 eas env:set --name EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY --value "<publishable key>" --environment development --visibility plaintext
 ```
 
-(Repeat for each environment the builds use.)
+`--environment` names an EAS environment (`development`, `preview` or `production`), not a build profile in `eas.json`, so these commands are right as written without one. The founder confirms which environment the dev build uses when running them; repeat for each environment the builds use.
 
 Kamal's own registry login is not in Secret Manager; see CI below.
 

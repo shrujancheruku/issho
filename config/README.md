@@ -7,7 +7,7 @@ Kamal 2's configuration for dev ([docs/deploy.md](../docs/deploy.md) says how a 
 | `deploy.yml` | The backend service `issho`: the API (behind kamal-proxy) and the worker (no proxy), both from `backend/Dockerfile`. What every environment shares |
 | `deploy.dev.yml` | The backend's dev destination: the host, the pinned SSH host key and the API's name |
 | `deploy.web.yml` | The Expo server, a service of its own (`issho-web`, from `apps/web/Dockerfile`) on the same host and proxy. Used with `-c config/deploy.web.yml`. Its build takes the sign-in's Supabase values as builder secrets |
-| `deploy.web.dev.yml` | The Expo server's dev destination: its host, the pinned SSH host key, its name and the address its build calls |
+| `deploy.web.dev.yml` | The Expo server's dev destination: its host, the pinned SSH host key, its name, the address its build calls and the digest of the Supabase values that keeps its cache honest (`SUPABASE_VALUES_HASH`) |
 | `kamal-version` | The Kamal release CI installs and the config test runs |
 
 Every Kamal call passes `-d dev`; `require_destination` makes it refuse one without. The secrets are named in `.kamal/secrets.dev` ([`.kamal/README.md`](../.kamal/README.md)). `DEPLOY_HOST`, the VM's address, comes from the environment, so it is not in the repository; so does `DEV_SSH_CONFIG`, the ssh config `scripts/dev-ssh-pin.sh` writes, which refuses any host key but the VM's.
