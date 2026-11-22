@@ -1,6 +1,6 @@
 # apps/app
 
-The member app: one Expo project for iOS, Android and the web ([Architecture and stack](../../docs/spec/architecture.md#what-v2-is-built-from)). The web is the same project, server-rendered (`web.output: "server"` in `app.json`). Right now it is the shell: three empty tabs, the strings and the theme. Sign-in and the real screens come in later tickets.
+The member app: one Expo project for iOS, Android and the web ([Architecture and stack](../../docs/spec/architecture.md#what-v2-is-built-from)). The web is the same project, server-rendered (`web.output: "server"` in `app.json`). Right now it is the shell: three empty tabs, the strings and the theme, and on the You tab the version the API reports (`src/components/api-version.tsx`), which is what the dev deploy checks. Members never see the version: it shows only when the build's `EXPO_PUBLIC_API_URL` is an API that holds no real people (`isDevApi` in `src/api/api-url.ts`: a local address, or a name whose first label is `dev` or ends in `-dev`, as `dev.joinissho.com` and `api-dev.joinissho.com` do). Any other address, production's included, shows nothing and makes no call. Sign-in and the real screens come in later tickets.
 
 ## Setup
 
@@ -17,7 +17,7 @@ pnpm --filter @issho/app start    # Expo's dev server for a phone or simulator
 
 Pass `--port <n>` after `expo start` to use another port. To see the server render, fetch a page without running any JavaScript: `curl localhost:8081/plans` holds the tab bar and "No plans yet." A visitor who opens `/` is sent to `/plans` by the browser (`src/app/index.tsx`).
 
-Screenshots of every empty tab at phone width, light and dark, English and Vietnamese, are in `docs/screenshots/` (`<tab>-<language>-<theme>.png`).
+Screenshots of every empty tab at phone width, light and dark, English and Vietnamese, are in `docs/screenshots/` (`<tab>-<language>-<theme>.png`). The You tab's are of a dev build, so they show the API's version: the web image (`apps/web/Dockerfile`) built with `EXPO_PUBLIC_API_URL` set to its own origin and run with `API_ORIGIN` pointing at a local API, as on dev, and captured with Playwright's Chromium at 390×780, device scale 2, with the language and colour scheme set. A production build shows the tab without that line.
 
 ## Testing
 
@@ -26,6 +26,8 @@ Screenshots of every empty tab at phone width, light and dark, English and Vietn
 | What | Where |
 |---|---|
 | The three tabs, Plans first, English and Vietnamese, light and dark, with a fake of the generated API client | `src/app/__tests__/tabs.test.tsx` |
+| The You tab shows the API's version, or that it could not be reached, in both languages, in dev's build and not in production's | `src/app/__tests__/api-version.test.tsx` |
+| Which API addresses count as dev (`isDevApi`) | `src/api/__tests__/api-url.test.ts` |
 | The date and time formatter | `src/lib/__tests__/format.test.ts` |
 | Strings: language choice, `{placeholders}`, the device language | `src/i18n/__tests__/` |
 | The strings check (`make lint`) | `scripts/__tests__/check-strings.test.js` |
@@ -43,7 +45,7 @@ Tests use Jest with `jest-expo` and React Native Testing Library. A screen test 
 | `src/i18n/` | `en.json`, `vi.json`, `strings.ts` (`translate`, `pickLanguage`), the provider and `useDeviceLanguage` |
 | `src/lib/format.ts` | The one date and time formatter |
 | `src/constants/theme.ts`, `src/hooks/use-theme.ts` | Colour tokens and the theme in use |
-| `src/api/` | `ApiProvider` and `useApi()`: the one generated client, given to screens |
+| `src/api/` | `ApiProvider` and `useApi()`: the one generated client, given to screens; `api-url.ts`, the API's address and whether it is dev's |
 | `assets/images/` | The icon, splash, favicon, logo and tab icons, ported from v1 (`apps/mobile` at `v1-final`) |
 | `scripts/` | The strings check, the helper the lint test uses, `fixtures/native-bundle/` for the native bundle test, and the native build scripts (`native-prepare-ios.sh`, `native-screenshot.sh`) |
 | `docs/screenshots/` | Screenshots of the tabs (`<tab>-<language>-<theme>`) and of the native builds (`<name>-<platform>`) |
@@ -55,6 +57,10 @@ Tests use Jest with `jest-expo` and React Native Testing Library. A screen test 
 - `expo lint` fails on a string literal in `src/app/` and `src/components/`: JSX text, a string in braces, and `title`, `label`, `placeholder`, `alt` and accessibility attributes. Pass a key through a prop named `…Key`.
 - A language is added by its JSON file, an entry in `languages` (`src/i18n/strings.ts`) and one in `OTHER_LANGUAGES` (`scripts/check-strings.js`).
 - On the web the server renders English and the browser's language follows right after hydration, so pages stay cacheable and hydration matches (`src/i18n/use-device-language.ts`).
+
+## The web in production
+
+`apps/web` serves the web build in a container, and CI deploys it to dev ([docs/deploy.md](../../docs/deploy.md)). Its image is built from this project with `EXPO_PUBLIC_API_URL` set to the address the page's own origin answers the API on. `make image` checks that the page is server-rendered: its words are in the HTML a client with no JavaScript gets.
 
 ## Native builds
 

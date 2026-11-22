@@ -210,7 +210,8 @@ typescript: app-lint app-test admin-lint admin-test
 strings:
 	pnpm --filter @issho/app strings
 
-# The backend's container image builds and holds api and worker. Needs Docker.
+# The backend's container image builds and holds api and worker, and the web's
+# builds and serves a server-rendered page (apps/web). Needs Docker.
 image:
 	scripts/image.sh
 
@@ -231,3 +232,26 @@ ci-test:
 
 lint: ci-lint
 test: ci-test
+
+# Dev's deploy (#605), run by .github/workflows/deploy-dev.yml and nowhere else:
+# nothing that deploys is installed on a laptop. deploy-test is what can be tested
+# without a server: the order (a failed migration stops the deploy), the Kamal
+# config (with Kamal itself, in Docker) and the checks the deploy ends with. It
+# is part of make test and, through ci-test, of CI's codegen job.
+.PHONY: deploy-dev deploy-dev-verify deploy-test
+deploy-dev:
+	scripts/deploy-dev.sh
+
+deploy-dev-verify:
+	scripts/deploy-dev-verify.sh
+
+deploy-test:
+	scripts/deploy-config.test.sh
+	scripts/deploy-dev.test.sh
+	scripts/deploy-dev-verify.test.sh
+	scripts/dev-host.test.sh
+	scripts/dev-ssh-pin.test.sh
+	cd apps/web && node --test
+
+test: deploy-test
+ci-test: deploy-test

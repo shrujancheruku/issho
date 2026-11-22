@@ -1,0 +1,47 @@
+# Kamal 2 deploy of the Expo server (apps/web): the member app's web build, server
+# rendered. A service of its own, beside the backend's (config/deploy.yml), on the
+# same host and behind the same kamal-proxy, which routes by host name. It has its
+# own image because the two ship on different clocks and the web's carries the API's
+# address, which differs by environment.
+#
+# Deploy it with `kamal <command> -c config/deploy.web.yml -d dev`.
+
+service: issho-web
+require_destination: true
+
+image: shrujancheruku/issho-web
+registry:
+  server: ghcr.io
+  username: shrujancheruku
+  password:
+    - KAMAL_REGISTRY_PASSWORD
+
+servers:
+  web:
+    hosts: [] # per destination
+
+proxy:
+  # host: per destination
+  app_port: 8081
+  # The same origin certificate as the API's; it covers both dev names.
+  ssl:
+    certificate_pem: ORIGIN_CERT
+    private_key_pem: ORIGIN_KEY
+  healthcheck:
+    # apps/web/server.js answers 200 before it touches a page.
+    path: /up
+    interval: 2
+    timeout: 5
+
+ssh:
+  user: kamal
+  keys_only: true
+  key_data:
+    - SSH_PRIVATE_KEY
+
+builder:
+  arch: amd64
+  dockerfile: apps/web/Dockerfile
+  # The repository root: the image installs the workspace (apps/web/Dockerfile).
+  context: .
+  # args: EXPO_PUBLIC_API_URL: per destination

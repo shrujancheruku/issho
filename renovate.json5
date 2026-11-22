@@ -1,10 +1,10 @@
-// Renovate config. See docs/onboarding.md ("Dependency updates") for how it runs.
+// Renovate config. Renovate runs on main; its Dependency Dashboard is the issue it keeps up to date.
 {
   $schema: "https://docs.renovatebot.com/renovate-schema.json",
   extends: [
     "config:recommended",
     // Pins every `uses:` to a commit SHA with a version comment. Third-party actions
-    // run next to CLOUDFLARE_API_TOKEN and `packages: write`.
+    // run next to the deploy's Workload Identity Federation sign-in and `packages: write`.
     "helpers:pinGitHubActionDigests",
     // `chore(deps): …` / `fix(deps): …`, which commitlint accepts (scope `deps`).
     ":semanticCommits",
@@ -25,8 +25,12 @@
   // never opens a PR for a version pnpm would refuse to install.
   minimumReleaseAge: "1 day",
   prConcurrentLimit: 5,
-  // gomod covers backend/go.mod, including its `tool` directives (gitleaks, buf, sqlc,
-  // goose, ...). go.work is kept and go.work.sum is committed.
+  // The boundaries check's fixtures are small Go modules under testdata/. They are not
+  // dependencies of the repo, so they are not scanned.
+  ignorePaths: ["**/node_modules/**", "**/testdata/**"],
+  // gomod covers backend/go.mod (the runtime dependencies) and tools/go.mod (the build-only
+  // `tool` directives: buf, sqlc, goose, gitleaks, actionlint, protoc-gen-go and -connect-go).
+  // go.work is kept and go.work.sum is committed.
   postUpdateOptions: ["gomodTidy"],
   packageRules: [
     {
@@ -59,14 +63,15 @@
       labels: ["major-update"],
     },
     {
-      // The build-only `tool` dependencies in backend/go.mod (codegen, migrations, secrets
-      // scan). connect and protobuf are also runtime libraries, so they are not listed.
-      // Only the commit type is set here: their automerge comes from the patch/minor rule.
+      // The build-only `tool` dependencies in tools/go.mod (codegen, migrations, secrets
+      // scan, workflow lint). connect and protobuf are also runtime libraries, so they are
+      // not listed. Only the commit type is set here: their automerge comes from the
+      // patch/minor rule.
       matchManagers: ["gomod"],
       matchPackageNames: [
         "github.com/bufbuild/buf",
         "github.com/pressly/goose/v3",
-        "github.com/pseudomuto/protoc-gen-doc",
+        "github.com/rhysd/actionlint",
         "github.com/sqlc-dev/sqlc",
         "github.com/zricethezav/gitleaks/v8",
       ],
@@ -85,23 +90,24 @@
       matchPackageNames: ["github.com/mholt/archives", "github.com/nwaples/rardecode/v2"],
     },
     {
-      // The mobile app lints through eslint-config-expo, whose eslint-plugin-react fails
+      // The member app lints through eslint-config-expo, whose eslint-plugin-react fails
       // to load on ESLint 10 ("contextOrFilename.getFilename is not a function"), so
-      // mobile stays on 9 while the admin moves on. Drop this rule once an Expo SDK's
+      // apps/app stays on 9 while the admin moves on. Drop this rule once an Expo SDK's
       // eslint-config-expo supports ESLint 10.
-      matchFileNames: ["apps/mobile/package.json"],
+      matchFileNames: ["apps/app/package.json"],
       matchPackageNames: ["eslint", "@eslint/js"],
       allowedVersions: "<10",
     },
     {
-      // Mobile native runtime never automerges, whatever the update type. CI builds only the
-      // web export, so a native break has no check behind it. Expo moves as one SDK:
-      // `expo install --fix` picks the versions each SDK expects, which Renovate can't, so a
-      // person aligns them. React and react-dom are pinned to the React Native release.
-      // They're grouped into one PR a week, the global schedule.
+      // The app's native runtime never automerges, whatever the update type. CI bundles the
+      // app for iOS and Android (`native-bundle`), but no device build runs in CI, so a
+      // native-runtime break can pass CI. Expo moves as one SDK: `expo install --fix` picks
+      // the versions each SDK expects, which Renovate can't, so a person aligns them. React
+      // and react-dom are pinned to the React Native release. They're grouped into one PR a
+      // week, the global schedule.
       // Keep this rule LAST: later packageRules win, and an earlier position would let
       // the patch/minor automerge rule override `automerge: false`.
-      groupName: "mobile native",
+      groupName: "app native",
       matchPackageNames: [
         "expo",
         "expo-*",
@@ -118,25 +124,26 @@
       ],
       automerge: false,
       prBodyNotes: [
-        "Align the SDK-pinned packages before merging: from `apps/mobile` run `npx expo install --fix` and `npx expo-doctor`, and commit the result. Follow `apps/mobile/AGENTS.md` (read the versioned Expo docs; don't rely on memory).",
+        "Align the SDK-pinned packages before merging: from `apps/app` run `npx expo install --fix` and `npx expo-doctor`, and commit the result. Read the versioned Expo docs; don't rely on memory.",
       ],
     },
   ],
   customManagers: [
     {
-      // config/kamal-image holds the Kamal image reference alone (one source: deploy-api.yml
-      // and config/server/deploy.sh both read it).
+      // config/kamal-version holds the Kamal release alone (a bare version). CI installs it
+      // with `gem install kamal` and the config test runs the matching image.
       customType: "regex",
-      managerFilePatterns: ["/^config/kamal-image$/"],
-      matchStrings: ["^(?<depName>[^:\\s]+):(?<currentValue>v?[\\w.-]+)\\s*$"],
-      datasourceTemplate: "docker",
+      managerFilePatterns: ["/^config/kamal-version$/"],
+      matchStrings: ["^(?<currentValue>\\d+\\.\\d+\\.\\d+)\\s*$"],
+      depNameTemplate: "kamal",
+      datasourceTemplate: "rubygems",
     },
     {
-      // The Postgres image in ci.yml's `docker run`, which the dockerfile manager can't see.
-      // scripts/test-db.sh reads it from there.
+      // The Postgres image the backend's tests start (testcontainers, in Go code, which the
+      // dockerfile manager can't see). Its major bumps need a person (the major rule).
       customType: "regex",
-      managerFilePatterns: ["/^\\.github/workflows/ci\\.yml$/"],
-      matchStrings: ["(?<depName>public\\.ecr\\.aws/supabase/postgres):(?<currentValue>[\\w.-]+)"],
+      managerFilePatterns: ["/^backend\\/internal\\/testdb\\/testdb\\.go$/"],
+      matchStrings: ["\"(?<depName>postgres):(?<currentValue>\\d+(?:\\.\\d+)?)-alpine\""],
       datasourceTemplate: "docker",
       versioningTemplate: "loose",
     },

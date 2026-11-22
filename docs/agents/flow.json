@@ -17,6 +17,7 @@
     "backend/internal/safety/**",
     "backend/internal/retention/**",
     "backend/internal/rpc/**",
+    "proto/**",
     "config/**",
     ".kamal/**",
     ".github/workflows/deploy-*.yml",
@@ -34,9 +35,6 @@
   "generated_paths": [
     "backend/gen/**",
     "packages/api-client/src/gen/**",
-    "docs/generated/**",
-    "backend/internal/uistrings/*.json",
-    "backend/internal/uistrings/human/**",
     "pnpm-lock.yaml",
     "backend/go.sum"
   ]

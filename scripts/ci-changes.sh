@@ -37,7 +37,7 @@ patterns=$(cat <<PATTERNS
 backend|^($shared|scripts/proto-breaking.*|$go)$
 boundaries|^($shared|$go)$
 e2e|^($shared|scripts/e2e.*|backend/.*|$ts)$
-image|^($shared|scripts/image.*|backend/.*)$
+image|^($shared|scripts/image.*|backend/.*|apps/(app|web)/.*|packages/.*)$
 native-bundle|^($shared|scripts/native-bundle.*|apps/app/.*|packages/.*|proto/.*|package\.json|pnpm-.*)$
 policy|^($shared|$go)$
 proto-breaking|^($shared|scripts/proto-breaking.*|proto/.*|buf(\.gen)?\.yaml|tools/.*)$

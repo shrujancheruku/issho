@@ -1,0 +1,14 @@
+# What the web image's build (the repository root) must not send: everything
+# but the files its Dockerfile copies, and no installed packages or build output.
+*
+!package.json
+!pnpm-lock.yaml
+!pnpm-workspace.yaml
+!apps/app
+!apps/web
+!packages/api-client
+**/node_modules
+**/dist
+**/.expo
+**/docs
+**/*.md

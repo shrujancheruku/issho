@@ -1,0 +1,89 @@
+name: deploy-dev
+
+# Deploys dev on every merge to main (docs/spec/operations.md#environments): builds
+# the two images, migrates the issho-dev database, then deploys the API, the
+# worker, the Expo server and the admin, and checks from outside that each serves
+# this commit. While the Foundation is built, a push to integration/foundation
+# deploys too, so the deploy is proven before the milestone merges. docs/deploy.md
+# has the picture, how to roll back and how to stop the VM.
+#
+# CI signs in to Google Cloud by Workload Identity Federation: GitHub issues this
+# run a short-lived OIDC token, and Google trades it for the deploy service
+# account's access. No cloud key or token is stored in GitHub; every secret the
+# deploy uses is read from Secret Manager while it runs. The only secret the job
+# holds is its own GITHUB_TOKEN, which expires with it.
+on:
+  push:
+    branches:
+      - main
+      - integration/foundation
+  # A rollback: Run workflow with an earlier commit's SHA (docs/deploy.md).
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: The commit to deploy (default, the one the run is on)
+        required: false
+
+permissions:
+  contents: read
+  # Workload Identity Federation: the OIDC token Google trades for access.
+  id-token: write
+  # Push the images to ghcr.io with the job's own token, which the VM pulls with.
+  packages: write
+
+# One deploy at a time, in the order of the pushes. A deploy already running is
+# never cancelled halfway: the one waiting takes its turn, and a newer push
+# replaces a waiting one, which is fine since every run ships its own commit and
+# the newer one holds the older's changes.
+concurrency:
+  group: deploy-dev
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.ref || github.sha }}
+      # The credentials file the sign-in step writes is untracked; Kamal would tag the
+      # images "_uncommitted" because of it.
+      - run: echo "gha-creds-*.json" >> .git/info/exclude
+      # Go runs the migration; Node and pnpm build the admin and deploy it with wrangler.
+      - uses: ./.github/actions/setup
+        with: { go: "true", node: "true" }
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          workload_identity_provider: projects/94737271594/locations/global/workloadIdentityPools/github/providers/issho
+          service_account: issho-deploy@issho-dev-512213.iam.gserviceaccount.com
+      # gcloud, which Kamal's Secret Manager adapter runs, has to be logged in
+      # itself: the step above only writes the credentials file.
+      - run: gcloud auth login --cred-file="$GOOGLE_APPLICATION_CREDENTIALS" --quiet
+      # The release of Kamal that config/ was written for. Nothing is installed on the VM.
+      - run: sudo gem install kamal --no-document --version "$(cat config/kamal-version)"
+      # The address is asked of Google Cloud each run and masked the moment it is
+      # read: these logs are public, and Kamal prints the host it connects to.
+      - name: Find the VM
+        run: |
+          host=$(scripts/dev-host.sh)
+          echo "::add-mask::$host"
+          echo "DEPLOY_HOST=$host" >> "$GITHUB_ENV"
+      # Kamal's ssh accepts only this key for the VM and refuses an unknown or
+      # changed one (scripts/dev-ssh-pin.sh); the runner knows no host before.
+      - name: Pin the VM's host key
+        run: |
+          config=$(scripts/dev-ssh-pin.sh "$DEPLOY_HOST" "$RUNNER_TEMP/ssh")
+          echo "DEV_SSH_CONFIG=$config" >> "$GITHUB_ENV"
+      - name: Deploy
+        env:
+          KAMAL_REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+        run: make deploy-dev
+      # What a visitor sees, from outside: each address serves this commit.
+      - name: Check dev serves this commit
+        run: make deploy-dev-verify
+      # The VM is an e2-micro with 1 GB of memory: three containers, the proxy and
+      # Docker have to fit. Printed so a deploy that squeezes it shows.
+      - name: What the VM's memory holds
+        if: ${{ !cancelled() }}
+        run: kamal server exec -d dev 'free -m; docker stats --no-stream --format "{{.Name}} {{.MemUsage}}"'

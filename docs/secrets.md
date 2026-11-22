@@ -2,67 +2,73 @@
 
 **This repository is public.** Anything committed, even to a branch, even briefly, should be treated as leaked. If that happens, rotate the secret first and clean up the history afterwards.
 
+This file names where each of v2's secrets lives. It never holds a value.
+
 ## Rules
 
 1. **Never commit a secret.** Secrets live in the places listed below, never in the repo.
-2. **`EXPO_PUBLIC_*` variables are public.** Expo bundles them into the app binary, so anyone can extract them. Only put values there that are safe to publish (API base URL, Supabase publishable key, mobile Maps keys restricted by bundle ID).
+2. **`EXPO_PUBLIC_*` variables are public.** Expo bundles them into the app binary, so anyone can extract them. Only put values there that are safe to publish, such as the API's base URL.
 3. **Supabase keys:**
    - The **publishable key** (`sb_publishable_…`) is public by design.
    - The **secret key** (`sb_secret_…`), the legacy **service_role** JWT and the **JWT signing keys** are server-only.
    - The Go API needs **none** of these to verify tokens: it uses the public JWKS.
-4. **Google Maps keys:** use one *server* key, restricted to the Places and Routes APIs and used only by the backend, plus separate *iOS* and *Android* keys restricted by bundle ID and package name. Set quotas and a budget alert. Setup steps: [google-maps.md](google-maps.md).
-5. **Least privilege:** each environment (local, staging, production) gets its own keys.
+4. **Least privilege:** each environment (dev, and later production) gets its own keys and its own secrets.
+5. **Only CI reads dev's secrets at deploy time.** Workers never read a secret's value on their machine; see [orchestration](agents/orchestration.md#environment).
 
 ## Where secrets live
 
-| Secret | Local dev | CI (GitHub Actions) | Production |
-|---|---|---|---|
-| Supabase JWT signing key | `supabase/signing_keys.json` (gitignored, generated per machine) | not needed | Supabase dashboard (never exported) |
-| `DATABASE_URL` (with password) | `.env.example` defaults are the well-known **local-only** Supabase credentials | throwaway PostGIS container in the `backend` job | Kamal secrets (`.kamal/secrets.production`, gitignored, filled from a password manager) |
-| Hosted DB URL for a Supabase project (with password) | `.env.<project>` (e.g. `.env.issho-dev`, gitignored), used via `make … ENV_FILE=` | not used | Kamal secrets (`DATABASE_URL`) |
-| SMTP password (Resend API key) | `supabase/.env` as `SUPABASE_SMTP_PASS` (gitignored); `config push` uploads it to Supabase as a masked secret | not used | Supabase project config |
-| Supabase CLI access token | macOS keychain, via `supabase login --token` with a **scoped** token run in your own terminal (the browser login grants full-account access) | not used | n/a |
-| Supabase secret key (`SUPABASE_SECRET_KEY`) | `SECRET_KEY` from `supabase status`, exported in your shell or a gitignored `.env` (never in `.env.example`) | not used (tests use a fake admin) | Kamal secrets |
-| Google Maps server key (`GOOGLE_MAPS_API_KEY`) | your shell env or `.env.issho-dev` (gitignored), used via `make … ENV_FILE=` | not used (tests use `httptest` fakes; CI only dry-runs) | Kamal secrets |
-| GitHub token for the city-pack and translation editors (`GITHUB_TOKEN`) | `.env.issho-dev` (gitignored). A **fine-grained** personal access token limited to this repository, with **Contents: read and write** and **Pull requests: read and write** only, and an expiry | not used (`httptest` fakes) | Kamal secrets |
-| Sentry DSN (`SENTRY_DSN` for the API, the worker and the backup accessory's cron check-ins; `EXPO_PUBLIC_SENTRY_DSN` for the app) | `.env.issho-*` (gitignored) | not used | Kamal secrets; EAS environment variable |
-| Sentry auth token (`SENTRY_AUTH_TOKEN`: an organisation token for the `shrujan` org, release and source-map upload only) | only to upload an EAS Update's maps by hand (`npx sentry-expo-upload-sourcemaps dist`); shell env | not used | secret EAS variable (`preview`, `production`), used by the build's source-map upload |
-| Google Cloud Translation key (`GOOGLE_TRANSLATE_API_KEY`, API server) | shell env / untracked `.env` | not used (tests use `httptest` fakes) | Kamal secrets |
-| Google Cloud Agent Platform key for Gemini (`GOOGLE_GEMINI_API_KEY`, API server: interest suggestions; starts `AQ.`) | shell env / untracked `.env` | not used (tests use `httptest` fakes) | Kamal secrets |
-| Anthropic API key (`ANTHROPIC_API_KEY`, M6 plan text) | shell env / untracked `.env` | not used (tests use fakes) | Kamal secrets |
-| Apple / Google OAuth secrets (post-MVP; not used) | `supabase/.env` (gitignored), referenced as `env(...)` in `supabase/config.toml` | not used | Supabase dashboard |
-| Expo access token (`EXPO_ACCESS_TOKEN`, worker: push notifications) | only needed if the Expo project turns on enhanced push security; shell env / untracked `.env` | not used (tests use a fake sender) | Kamal secrets |
-| Cloudflare credentials (deploying `issho-admin`, `issho-web` and `issho-site`) | `wrangler login` (OAuth, stored by Wrangler in your user settings, never in the repo) | `CLOUDFLARE_API_TOKEN` repository secret for `deploy-web.yml`: an account API token limited to **Workers Scripts: Edit** (the apps job is skipped without `API_URL`; the site job always runs) | same |
-| Registry token for deploys (`KAMAL_REGISTRY_PASSWORD`) | a manual deploy: a GitHub token with `write:packages`, exported in your shell; log the server out afterwards (`ssh kamal@<server> docker logout ghcr.io`), as Kamal leaves the login there | `deploy-api`: the job's own `GITHUB_TOKEN` (`packages: write`), also passed to the server for the pull; it expires with the job, and the server logs out after each deploy | not stored |
-| Deploy key (`DEPLOY_SSH_KEY`, the server's `deploy` user) | not stored locally | GitHub secret; its `authorized_keys` line forces `config/server/deploy.sh` (`restrict`), so it can only deploy a commit on main | public half on the server only |
-| Production env on the server (`/opt/issho/env`, `kamal-secrets`, `certs/`) | the source is `.env.issho-prod` and `~/.config/issho/`; copy changes to the server by hand (docs/deploy.md) | never in GitHub | readable by `kamal` only; the same values are in the running containers' env files anyway |
-| Cloudflare origin certificate and key (the API's TLS behind Cloudflare) | saved outside the repo (e.g. `~/.config/issho/`), read by `.kamal/secrets.production` | not used | kamal-proxy, via Kamal secrets ([deploy.md](deploy.md)) |
-| Push credentials: APNs key, FCM V1 service account key | not stored locally; uploaded to EAS with `eas credentials` | n/a | EAS (Expo) credential store |
-| Apple `.p8` keys, Android keystores | not stored locally; EAS manages signing credentials | n/a | EAS (Expo) credential store |
-| SMTP relay credentials (M2) | not needed (Mailpit) | n/a | Supabase dashboard (custom SMTP) |
+### Dev: Google Secret Manager
 
-**`APP_ENV` and missing keys.** `APP_ENV` (`development` by default, `preview` or `production`; not a secret) is set in each deployment's environment: `config/deploy.production.yml` sets `preview` for the hosted API and worker while they point at `issho-dev`; `production` is for a future real environment. With `APP_ENV=production` the API and worker refuse to start unless every key in the table in [backend/README.md](../backend/README.md#app_env-and-what-production-requires) is set, and the error names all that are missing. So before switching a deployment to production, make sure each of those secrets is non-empty in its env file (and the server's copy). A preview deployment such as the current one keeps the optional behaviour. A missing key never deletes data in any environment.
+Dev's secrets are in Google Cloud project `issho-dev-512213` (Secret Manager). The deploy reads them at run time; the repo holds only their names, in `.kamal/secrets.dev` and `scripts/deploy-dev.sh`.
 
-`.env.example` files contain **only** local-only defaults or empty placeholders, and are committed on purpose. Any real `.env`/`.env.*` file is gitignored.
+| Secret name | Read by | What it is |
+|---|---|---|
+| `dev-database-url` | not read by the deploy's files (listed on #588) | the Supabase session pooler's URL for the app |
+| `dev-worker-database-url` | the worker (`WORKER_DATABASE_URL`, through `.kamal/secrets.dev`) | the session pooler's URL; River's LISTEN/NOTIFY needs a session connection, not the transaction pooler |
+| `dev-migrate-database-url` | the migration step of `scripts/deploy-dev.sh`, before any container is replaced | the URL goose migrates with |
+| `dev-resend-api-key` | the worker (`RESEND_API_KEY`) | the Resend API key for product email |
+| `dev-email-from` | the worker (`EMAIL_FROM`) | the sender address |
+| `dev-ssh-private-key` | Kamal (`SSH_PRIVATE_KEY`) | the key the deploy uses to reach the dev VM |
+| `dev-ssh-host-key` | `scripts/dev-ssh-pin.sh`, before Kamal connects (`SSH_HOST_KEY`) | the VM's public host key, pinned so an unknown or changed host is refused (#605) |
+| `dev-origin-cert`, `dev-origin-key` | Kamal (`ORIGIN_CERT`, `ORIGIN_KEY`) | the Cloudflare origin certificate and key for the dev names |
+| `dev-cloudflare-api-token` | `scripts/deploy-dev.sh`, which deploys the admin Worker | an API token that can deploy Workers |
+
+Kamal's own registry login is not in Secret Manager; see CI below.
+
+### CI: GitHub Actions
+
+- **No cloud key is stored in GitHub.** The deploy job signs in to Google Cloud by Workload Identity Federation (#605). Its provider and deploy service account are named in `.github/workflows/deploy-dev.yml`, and the provider accepts only `main` and `integration/foundation` (#588, #605).
+- **`KAMAL_REGISTRY_PASSWORD`** is the job's own `GITHUB_TOKEN`, passed in its environment. It expires with the job.
+- **v1's `CLOUDFLARE_API_TOKEN` secret and `CLOUDFLARE_ACCOUNT_ID` variable were deleted** from GitHub Actions by the founder (#605). The admin's token is read from Secret Manager instead.
+
+### Local
+
+- The repo stores no secret. Real `.env` and `.env.*` files are gitignored, as are `supabase/.env`, `supabase/signing_keys.json` and `.kamal/secrets*`. The one `.kamal/` file that is committed holds names only (`.kamal/secrets.dev`).
+- Workers never read any of these files.
+
+### Production
+
+Not set up. Production stands up at the end of milestone 3 ([build order](spec/build-order.md)). Its secrets are listed here when it does.
 
 ## Automated protection
 
 | Layer | What | Where |
 |---|---|---|
-| `.gitignore` | Blocks `.env*`, `*.pem`, `*.p8`, `*.p12`, `*.key`, keystores, `credentials.json`, `google-services.json`, `GoogleService-Info.plist`, `supabase/signing_keys.json`, `supabase/.env`, `.kamal/secrets*` (the template `.kamal/secrets.production.example` is committed) | repo root |
+| `.gitignore` | Blocks `.env*`, `*.pem`, `*.p8`, `*.p12`, `*.key`, keystores, `credentials.json`, `google-services.json`, `GoogleService-Info.plist`, `supabase/signing_keys.json`, `supabase/.env` and `.kamal/secrets*`, except `.kamal/secrets.dev` (names only) | repo root |
 | Pre-commit hook | gitleaks scans staged changes and blocks the commit if it finds a secret | `.githooks/pre-commit` (enabled by `make setup`) |
-| CI `secrets` job | gitleaks scans **all history on all branches** on every push and PR | `.github/workflows/ci.yml` |
-| Custom rules | JWK private keys (`"d"`), Supabase `sb_secret_…` keys, service_role JWTs, plus gitleaks' ~150 default rules (AWS, GCP, Stripe, Anthropic, private keys, …) | `.gitleaks.toml` |
-| GitHub | Secret scanning + **push protection** (free for public repos). **Enable both:** Settings → Code security. | repo settings |
+| CI `secrets` job | `make secrets-scan`: gitleaks scans **all history on all branches** on every push and PR | `.github/workflows/ci.yml` |
+| Custom rules | Private JWKs (the `"d"` field), Supabase `sb_secret_…` keys and service_role JWTs, plus gitleaks' default rules | `.gitleaks.toml` |
+| GitHub | Secret scanning and **push protection** (free for public repos). **Enable both:** Settings → Code security. | repo settings |
 
 Run a full scan any time with `make secrets-scan`.
 
 ### False positives
+
 Never bypass the hook with `git commit --no-verify`. Add a narrowly scoped `[allowlist]` entry (path or regex) to `.gitleaks.toml` in a PR, so the exception gets reviewed.
 
 ## If a secret leaks
 
-1. **Rotate it immediately** in the provider's console (Supabase, Google Cloud, Anthropic, …). Assume it's already been scraped; bots scan public GitHub within minutes.
+1. **Rotate it immediately** in the provider's console (Supabase, Google Cloud, Resend, Cloudflare, …). Assume it's already been scraped; bots scan public GitHub within minutes.
 2. Check the provider's logs and usage for abuse.
 3. Remove it from the code. If you're rewriting history (`git filter-repo`), coordinate first, since everyone will need to re-clone. Rotation is what actually fixes the leak; the rewrite is cleanup.
 4. Add a detection rule to `.gitleaks.toml` if the scanners missed it.

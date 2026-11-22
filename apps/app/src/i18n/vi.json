@@ -4,5 +4,7 @@
   "tabs.you": "Bạn",
   "together.empty": "Chưa có gì ở đây.",
   "plans.empty": "Chưa có kế hoạch nào.",
-  "you.empty": "Chưa có gì ở đây."
+  "you.empty": "Chưa có gì ở đây.",
+  "apiVersion.value": "Phiên bản API {version}",
+  "apiVersion.unreachable": "Không kết nối được với API."
 }
