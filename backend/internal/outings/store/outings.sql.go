@@ -44,6 +44,36 @@ func (q *Queries) CountYeses(ctx context.Context, outingIds []string) ([]CountYe
 	return items, nil
 }
 
+const declineOtherOpenSeats = `-- name: DeclineOtherOpenSeats :exec
+update app.seats s set state = 'declined'
+from app.outings o
+where o.id = s.outing_id and s.account_id = $1 and o.date = $2 and o.part = $3 and o.id <> $4
+  and s.state in ('invited', 'accepted') and s.invitation_ends_at > $5
+`
+
+type DeclineOtherOpenSeatsParams struct {
+	AccountID        string
+	Date             time.Time
+	Part             string
+	ID               string
+	InvitationEndsAt time.Time
+}
+
+// A person going to an outing is a no to every other invitation of theirs for
+// that date and part of the day that is still open (invited or waiting on its
+// outing): a seat going is never touched, and an invitation whose 48 hours have
+// ended is left for the expiring job to record.
+func (q *Queries) DeclineOtherOpenSeats(ctx context.Context, arg DeclineOtherOpenSeatsParams) error {
+	_, err := q.db.Exec(ctx, declineOtherOpenSeats,
+		arg.AccountID,
+		arg.Date,
+		arg.Part,
+		arg.ID,
+		arg.InvitationEndsAt,
+	)
+	return err
+}
+
 const expireUnansweredSeats = `-- name: ExpireUnansweredSeats :exec
 update app.seats set state = 'unanswered'
 where outing_id = $1 and state = 'invited' and invitation_ends_at <= $2
@@ -186,6 +216,34 @@ func (q *Queries) InsertSeat(ctx context.Context, arg InsertSeatParams) error {
 	return err
 }
 
+const isGoingElsewhere = `-- name: IsGoingElsewhere :one
+select exists (
+  select 1 from app.seats s join app.outings o on o.id = s.outing_id
+  where s.account_id = $1 and s.state = 'going' and o.date = $2 and o.part = $3 and o.id <> $4
+) as going
+`
+
+type IsGoingElsewhereParams struct {
+	AccountID string
+	Date      time.Time
+	Part      string
+	ID        string
+}
+
+// Whether the account is going to another outing on that date and part of the
+// day.
+func (q *Queries) IsGoingElsewhere(ctx context.Context, arg IsGoingElsewhereParams) (bool, error) {
+	row := q.db.QueryRow(ctx, isGoingElsewhere,
+		arg.AccountID,
+		arg.Date,
+		arg.Part,
+		arg.ID,
+	)
+	var going bool
+	err := row.Scan(&going)
+	return going, err
+}
+
 const lastInvitationEnd = `-- name: LastInvitationEnd :one
 select max(invitation_ends_at)::timestamptz as ends from app.seats where outing_id = $1
 `
@@ -196,6 +254,32 @@ func (q *Queries) LastInvitationEnd(ctx context.Context, outingID string) (time.
 	var ends time.Time
 	err := row.Scan(&ends)
 	return ends, err
+}
+
+const listAcceptedAccounts = `-- name: ListAcceptedAccounts :many
+select account_id from app.seats where outing_id = $1 and state = 'accepted' order by account_id
+`
+
+// Who has said yes to an outing that isn't set yet: those the third yes makes
+// going, whose times are locked before it does.
+func (q *Queries) ListAcceptedAccounts(ctx context.Context, outingID string) ([]string, error) {
+	rows, err := q.db.Query(ctx, listAcceptedAccounts, outingID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var account_id string
+		if err := rows.Scan(&account_id); err != nil {
+			return nil, err
+		}
+		items = append(items, account_id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listGoing = `-- name: ListGoing :many
@@ -309,6 +393,27 @@ func (q *Queries) ListSeatsOfAccount(ctx context.Context, accountID string) ([]L
 		return nil, err
 	}
 	return items, nil
+}
+
+const lockAccountTime = `-- name: LockAccountTime :exec
+select pg_advisory_xact_lock(hashtextextended(
+  $1::text || '|' || $2::date::text || '|' || $3::text, 0))
+`
+
+type LockAccountTimeParams struct {
+	AccountID string
+	Date      time.Time
+	Part      string
+}
+
+// A person's time is one at a time: whoever is about to become going, or to be
+// turned down because another outing took their time, holds this lock on the
+// person's date and part of the day to the end of the transaction. Two outings
+// that share a person can't then both make them going, and since the locks are
+// taken in account order after the outing's own row, they can't deadlock either.
+func (q *Queries) LockAccountTime(ctx context.Context, arg LockAccountTimeParams) error {
+	_, err := q.db.Exec(ctx, lockAccountTime, arg.AccountID, arg.Date, arg.Part)
+	return err
 }
 
 const lockOuting = `-- name: LockOuting :one

@@ -91,6 +91,8 @@ func outingError(err error, msg string) error {
 		return connect.NewError(connect.CodeInvalidArgument, errors.New("the answer is yes or no"))
 	case errors.Is(err, outings.ErrInvitationClosed):
 		return connect.NewError(connect.CodeFailedPrecondition, errors.New("the invitation is closed"))
+	case errors.Is(err, outings.ErrTimeTaken):
+		return connect.NewError(connect.CodeFailedPrecondition, errors.New("you are going to another outing at that time"))
 	case errors.Is(err, outings.ErrNotGoing):
 		return connect.NewError(connect.CodeFailedPrecondition, errors.New("the seat is not going"))
 	}

@@ -81,3 +81,35 @@ where outing_id = $1 and state = 'invited' and invitation_ends_at <= $2;
 -- When the last of an outing's invitations ends.
 -- name: LastInvitationEnd :one
 select max(invitation_ends_at)::timestamptz as ends from app.seats where outing_id = $1;
+
+-- A person's time is one at a time: whoever is about to become going, or to be
+-- turned down because another outing took their time, holds this lock on the
+-- person's date and part of the day to the end of the transaction. Two outings
+-- that share a person can't then both make them going, and since the locks are
+-- taken in account order after the outing's own row, they can't deadlock either.
+-- name: LockAccountTime :exec
+select pg_advisory_xact_lock(hashtextextended(
+  sqlc.arg(account_id)::text || '|' || sqlc.arg(date)::date::text || '|' || sqlc.arg(part)::text, 0));
+
+-- Who has said yes to an outing that isn't set yet: those the third yes makes
+-- going, whose times are locked before it does.
+-- name: ListAcceptedAccounts :many
+select account_id from app.seats where outing_id = $1 and state = 'accepted' order by account_id;
+
+-- Whether the account is going to another outing on that date and part of the
+-- day.
+-- name: IsGoingElsewhere :one
+select exists (
+  select 1 from app.seats s join app.outings o on o.id = s.outing_id
+  where s.account_id = $1 and s.state = 'going' and o.date = $2 and o.part = $3 and o.id <> $4
+) as going;
+
+-- A person going to an outing is a no to every other invitation of theirs for
+-- that date and part of the day that is still open (invited or waiting on its
+-- outing): a seat going is never touched, and an invitation whose 48 hours have
+-- ended is left for the expiring job to record.
+-- name: DeclineOtherOpenSeats :exec
+update app.seats s set state = 'declined'
+from app.outings o
+where o.id = s.outing_id and s.account_id = $1 and o.date = $2 and o.part = $3 and o.id <> $4
+  and s.state in ('invited', 'accepted') and s.invitation_ends_at > $5;

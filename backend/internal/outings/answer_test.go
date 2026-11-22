@@ -526,3 +526,146 @@ func TestAYesThatIsStillWaitingKeepsTheOtherSignups(t *testing.T) {
 		}
 	}
 }
+
+// twoOutings forms two outings on the same evening, one on each plan, that share
+// the first person: n people on the lanterns plan and n on the late lanterns
+// plan, the first of the lanterns' also ticking the late one. Forming runs per
+// plan, so nothing yet stops the shared person holding an invitation to each.
+func (r *rig) twoOutings(t *testing.T, n int) (shared string, a []string, outingA string, b []string, outingB string) {
+	t.Helper()
+	ctx := context.Background()
+	if err := plans.LoadFixture(ctx, r.pool, []byte(lateLanternsFixture)); err != nil {
+		t.Fatal(err)
+	}
+	a = r.crowd(t, 1, n, person{})
+	shared = a[0]
+	b = []string{shared}
+	r.signUp(t, shared, lateLanterns, evening9th)
+	for i := n + 1; i < 2*n; i++ {
+		id := r.member(t, i, person{})
+		r.signUp(t, id, lateLanterns, evening9th)
+		b = append(b, id)
+	}
+	for _, plan := range []string{lanterns, lateLanterns} {
+		if formed, err := r.svc.Form(ctx, plan); err != nil || formed != 1 {
+			t.Fatalf("Form(%s) = %d, %v; want 1 outing", plan, formed, err)
+		}
+	}
+	for _, seat := range r.seatsOf(t, shared) {
+		if seat.PlanID == lanterns {
+			outingA = seat.OutingID
+		} else {
+			outingB = seat.OutingID
+		}
+	}
+	if outingA == "" || outingB == "" {
+		t.Fatalf("%s has no seat in each outing: %v", shared, r.seatsOf(t, shared))
+	}
+	return shared, a, outingA, b, outingB
+}
+
+// seatIn is the person's seat in the one outing.
+func (r *rig) seatIn(t *testing.T, id, outing string) outings.Seat {
+	t.Helper()
+	for _, seat := range r.seatsOf(t, id) {
+		if seat.OutingID == outing {
+			return seat
+		}
+	}
+	t.Fatalf("%s has no seat in %s", id, outing)
+	return outings.Seat{}
+}
+
+// Nobody is double-booked (docs/spec/matching.md): a person who said yes to two
+// outings at one time is going to the one that is set first, and their other
+// seat at that time becomes a no, which the other outing's count follows.
+func TestAPersonGoingToOneOutingIsNeverGoingToAnotherAtTheSameTime(t *testing.T) {
+	r := newRig(t)
+	shared, a, outingA, b, outingB := r.twoOutings(t, 4)
+	r.answer(t, shared, outingA, outings.Yes)
+	r.answer(t, shared, outingB, outings.Yes)
+	r.answer(t, b[1], outingB, outings.Yes)
+	if got := r.seatIn(t, b[1], outingB).YesCount; got != 2 {
+		t.Fatalf("before either is set the second outing has %d yeses, want 2", got)
+	}
+
+	r.answer(t, a[1], outingA, outings.Yes)
+	r.answer(t, a[2], outingA, outings.Yes) // the third yes: the first outing is set
+
+	if got := r.seatIn(t, shared, outingA).State; got != outings.SeatGoing {
+		t.Errorf("the shared person's seat in the set outing is %q, want going", got)
+	}
+	if got := r.seatIn(t, shared, outingB).State; got != outings.SeatDeclined {
+		t.Errorf("their seat at the same time in the other outing is %q, want declined", got)
+	}
+	if got := r.seatIn(t, b[1], outingB); got.YesCount != 1 || got.OutingState != outings.OutingOffered {
+		t.Errorf("the other outing has %d yeses and is %q, want 1 and offered", got.YesCount, got.OutingState)
+	}
+
+	// The other outing can still be set, without them.
+	r.answer(t, b[2], outingB, outings.Yes)
+	r.answer(t, b[3], outingB, outings.Yes)
+	for _, id := range b[1:] {
+		if got := r.seatIn(t, id, outingB); got.State != outings.SeatGoing || got.OutingState != outings.OutingSet {
+			t.Errorf("seat %q in an outing %q, want going in a set one", got.State, got.OutingState)
+		}
+	}
+	if got := r.seatIn(t, shared, outingB).State; got != outings.SeatDeclined {
+		t.Errorf("setting the other outing leaves the shared person %q there, want declined", got)
+	}
+}
+
+// A yes to an outing at a date and part of the day where the person is already
+// going to another is refused, and leaves the seat as it was.
+func TestAYesToAnOutingAtATimeAlreadyTakenIsRefused(t *testing.T) {
+	r := newRig(t)
+	shared, a, outingA, _, outingB := r.twoOutings(t, 4)
+	for _, id := range a[:3] {
+		r.answer(t, id, outingA, outings.Yes)
+	}
+
+	_, err := r.svc.Answer(context.Background(), shared, outingB, outings.Yes)
+
+	if !errors.Is(err, outings.ErrTimeTaken) {
+		t.Fatalf("a yes to a second outing at the same time = %v, want ErrTimeTaken", err)
+	}
+	if got := r.seatIn(t, shared, outingA).State; got != outings.SeatGoing {
+		t.Errorf("the seat they are going to is %q, want it untouched", got)
+	}
+	if got := r.seatIn(t, shared, outingB).State; got == outings.SeatGoing || got == outings.SeatAccepted {
+		t.Errorf("the refused yes left the seat %q", got)
+	}
+}
+
+// Two third yeses at once, on two outings that share a person, set one of them:
+// neither waits on the other forever, and the shared person is going once.
+func TestTwoThirdYesesAtOnceOnOutingsSharingAPersonSetOneAndDoNotDeadlock(t *testing.T) {
+	r := newRig(t)
+	shared, a, outingA, b, outingB := r.twoOutings(t, 3)
+	r.answer(t, shared, outingA, outings.Yes)
+	r.answer(t, shared, outingB, outings.Yes)
+	r.answer(t, a[1], outingA, outings.Yes)
+	r.answer(t, b[1], outingB, outings.Yes)
+
+	var wg sync.WaitGroup
+	for _, c := range []struct{ id, outing string }{{a[2], outingA}, {b[2], outingB}} {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			if _, err := r.svc.Answer(context.Background(), c.id, c.outing, outings.Yes); err != nil {
+				t.Errorf("%s answers: %v", c.id, err)
+			}
+		}()
+	}
+	wg.Wait()
+
+	going := 0
+	for _, seat := range r.seatsOf(t, shared) {
+		if seat.State == outings.SeatGoing {
+			going++
+		}
+	}
+	if going != 1 {
+		t.Errorf("the shared person is going to %d outings, want 1", going)
+	}
+}

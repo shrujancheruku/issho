@@ -8,6 +8,7 @@ import (
 
 	"connectrpc.com/connect"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
 	"github.com/shrujancheruku/issho/backend/gen/issho/v1/isshov1connect"
@@ -268,4 +269,53 @@ func TestAnsweringAndCancellingNeedASignedInCaller(t *testing.T) {
 	_, cancel := r.cancel("", "x")
 	wantCode(t, answer, connect.CodeUnauthenticated)
 	wantCode(t, cancel, connect.CodeUnauthenticated)
+}
+
+// The descriptor walk in TestNoRPCReturnsAnotherPersonsEmail finds a field that
+// could hold an email; this reads what the outing RPCs actually send. Three
+// people with a known email and a full name go through every outing call (list,
+// yes, set, list again going, cancel), and in none of the responses is there an
+// email, an account id or more of a name than the first.
+func TestTheOutingRPCsNeverSendAnotherPersonsEmailIdOrSurname(t *testing.T) {
+	r := newOutingRig(t)
+	adaTok, graceTok, thirdTok := r.formedGroup(t)
+	outing := r.outingOf(t, adaTok).GetId()
+	var sent []string
+	record := func(m proto.Message) {
+		b, err := protojson.Marshal(m)
+		if err != nil {
+			t.Fatal(err)
+		}
+		sent = append(sent, string(b))
+	}
+	for _, tok := range []string{adaTok, graceTok, thirdTok} {
+		got, err := r.answer(tok, outing, isshov1.InvitationAnswer_INVITATION_ANSWER_YES)
+		if err != nil {
+			t.Fatal(err)
+		}
+		record(got)
+	}
+	for _, tok := range []string{adaTok, graceTok, thirdTok} {
+		list, err := r.list(tok)
+		if err != nil {
+			t.Fatal(err)
+		}
+		record(list)
+	}
+	cancelled, err := r.cancel(graceTok, outing)
+	if err != nil {
+		t.Fatal(err)
+	}
+	record(cancelled)
+
+	all := strings.Join(sent, "\n")
+	for _, leak := range []string{"@", "example.com", ada, grace, third, "Lovelace", "Hopper", "Johnson"} {
+		if strings.Contains(all, leak) {
+			t.Errorf("an outing response carries %q: %s", leak, all)
+		}
+	}
+	// The first names are what is meant to be shown, so the scan can see them.
+	if !strings.Contains(all, "Grace") || !strings.Contains(all, "Katherine") {
+		t.Errorf("no first names in the responses, so the scan proved nothing: %s", all)
+	}
 }

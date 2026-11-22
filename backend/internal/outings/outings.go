@@ -91,6 +91,9 @@ var (
 	// the outing is in a state that takes no answer (a going person cancels, they
 	// don't answer no; an outing not set takes none).
 	ErrInvitationClosed = errors.New("outings: the invitation is closed")
+	// ErrTimeTaken: the person is already going to another outing at that date
+	// and part of the day, so a yes to this one is refused.
+	ErrTimeTaken = errors.New("outings: going to another outing at that time")
 	// ErrNotGoing: only a person going can cancel.
 	ErrNotGoing = errors.New("outings: the seat is not going")
 )
@@ -338,7 +341,10 @@ func (s *Service) seat(ctx context.Context, accountID, outingID string) (Seat, e
 // at once. A person with no seat in the outing, and an outing that isn't there,
 // are ErrNotFound alike. ErrInvitationClosed for an answer after the 48 hours,
 // for an outing that was not set, and for a no from someone going (they
-// cancel); a yes from someone already going is a no-op.
+// cancel); a yes from someone already going is a no-op. Nobody is double-booked
+// (docs/spec/matching.md): a yes while the person is going to another outing
+// at the same date and part of the day is ErrTimeTaken, and becoming going
+// turns their other open invitations for that time into a no.
 func (s *Service) Answer(ctx context.Context, accountID, outingID string, a Answer) (Seat, error) {
 	if a != Yes && a != No {
 		return Seat{}, ErrInvalid
@@ -355,6 +361,17 @@ func (s *Service) Answer(ctx context.Context, accountID, outingID string, a Answ
 	o, seat, err := s.lockSeat(ctx, q, accountID, outingID)
 	if err != nil {
 		return Seat{}, err
+	}
+	if a == Yes && SeatState(seat.State) != SeatGoing {
+		// A yes may make people going, and nobody is going to two outings at one
+		// time: hold their time, then read the seat as it stands, since another
+		// outing may have turned it down while this waited.
+		if err := s.lockTimes(ctx, q, o, accountID); err != nil {
+			return Seat{}, err
+		}
+		if seat, err = q.GetSeat(ctx, store.GetSeatParams{OutingID: outingID, AccountID: accountID}); err != nil {
+			return Seat{}, fmt.Errorf("outings: answer: %w", err)
+		}
 	}
 
 	now := s.clock.Now()
@@ -373,6 +390,10 @@ func (s *Service) Answer(ctx context.Context, accountID, outingID string, a Answ
 		if err := q.SetSeatState(ctx, store.SetSeatStateParams{OutingID: outingID, AccountID: accountID, State: string(SeatDeclined)}); err != nil {
 			return Seat{}, fmt.Errorf("outings: answer: %w", err)
 		}
+	} else if taken, err := q.IsGoingElsewhere(ctx, store.IsGoingElsewhereParams{AccountID: accountID, Date: o.Date, Part: o.Part, ID: o.ID}); err != nil {
+		return Seat{}, fmt.Errorf("outings: answer: %w", err)
+	} else if taken {
+		return Seat{}, ErrTimeTaken
 	} else if err := s.sayYes(ctx, tx, q, o, accountID); err != nil {
 		return Seat{}, err
 	}
@@ -440,9 +461,40 @@ func (s *Service) sayYes(ctx context.Context, tx pgx.Tx, q *store.Queries, o sto
 	return nil
 }
 
-// busy takes the outing's date and part of the day off the account's other
-// signups: a person going to an outing isn't grouped for the same time again.
+// lockTimes holds the date and part of the day of the outing for each person a
+// yes may make going: the caller, and when the outing isn't set yet everyone
+// whose yes waits on it, in account order. It is the only way an answer waits on
+// another outing, so two third yeses on outings that share a person queue and
+// don't deadlock. People can only leave the waiting ones while this waits, so
+// what it locks is at least who will be going.
+func (s *Service) lockTimes(ctx context.Context, q *store.Queries, o store.LockOutingRow, accountID string) error {
+	who := []string{accountID}
+	if OutingState(o.State) == OutingOffered {
+		waiting, err := q.ListAcceptedAccounts(ctx, o.ID)
+		if err != nil {
+			return fmt.Errorf("outings: answer: %w", err)
+		}
+		who = append(who, waiting...)
+	}
+	slices.Sort(who)
+	for _, id := range slices.Compact(who) {
+		if err := q.LockAccountTime(ctx, store.LockAccountTimeParams{AccountID: id, Date: o.Date, Part: o.Part}); err != nil {
+			return fmt.Errorf("outings: answer: lock time: %w", err)
+		}
+	}
+	return nil
+}
+
+// busy is what going to the outing does to the account's other plans: its date
+// and part of the day come off their other signups, so they aren't grouped for
+// that time again, and their other invitations for it still open are a no
+// (docs/spec/matching.md: nobody is double-booked).
 func (s *Service) busy(ctx context.Context, tx pgx.Tx, o store.LockOutingRow, accountID string) error {
+	if err := store.New(tx).DeclineOtherOpenSeats(ctx, store.DeclineOtherOpenSeatsParams{
+		AccountID: accountID, Date: o.Date, Part: o.Part, ID: o.ID, InvitationEndsAt: s.clock.Now(),
+	}); err != nil {
+		return fmt.Errorf("outings: answer: %w", err)
+	}
 	if err := s.signups.ReleaseTime(ctx, tx, accountID, o.Date.Format(time.DateOnly), o.Part, o.RoundID); err != nil {
 		return fmt.Errorf("outings: answer: %w", err)
 	}
