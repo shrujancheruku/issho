@@ -25,5 +25,14 @@ export function fakeApi(): {
         },
       }),
     },
+    joinLink: {
+      createJoinLink: jest.fn(),
+      cancelJoinLink: jest.fn().mockResolvedValue({}),
+      listMyJoinLinks: jest.fn().mockResolvedValue({ links: [], remaining: 3 }),
+      redeemJoinLink: jest.fn().mockResolvedValue({}),
+    },
+    signup: {
+      signUp: jest.fn(),
+    },
   } as never;
 }

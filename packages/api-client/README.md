@@ -33,6 +33,12 @@ const { signup } = await api.signup.signUp({ planId, ticks: [{ date: '2026-01-08
 // signup.hearBy is the day they will hear by; api.signup.listMySignups({}) and
 // api.signup.withdrawSignup({ planId }) are the rest.
 
+// Join links: a member's own (up to 3; CreateJoinLink, CancelJoinLink, ListMyJoinLinks) and a friend
+// redeeming one (RedeemJoinLink, after getAccount has made the account). A refusal carries a
+// JoinLinkProblem: err.findDetails(JoinLinkProblemSchema)[0]?.reason.
+const { links, remaining } = await api.joinLink.listMyJoinLinks({});
+await api.joinLink.redeemJoinLink({ code });
+
 // The caller's own outings, earliest date first: the date, the time (startsAt), the languages the
 // group shares and the state of their seat. Never another person's name or id.
 const { outings } = await api.outing.listMyOutings({});

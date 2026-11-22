@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { Code } from '@connectrpc/connect';
+import { Code, ConnectError } from '@connectrpc/connect';
 
-import { createApi, InvitationAnswer, OutingState, SeatState } from './index';
+import { createApi, InvitationAnswer, JoinLinkProblemReason, JoinLinkProblemSchema, OutingState, SeatState } from './index';
 
 // A fake fetch that answers the health check and keeps the request it saw.
 function fakeFetch() {
@@ -206,5 +206,28 @@ describe('createApi', () => {
 
     expect(res.outing?.seatState).toBe(SeatState.CANCELLED);
     expect(seen[0].url).toBe('https://api.example.test/issho.v1.OutingService/CancelSeat');
+  });
+
+  it('redeems a join link through the join link service, with the code in the body and a problem the app can read', async () => {
+    const seen: Request[] = [];
+    const fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+      seen.push(new Request(input, init));
+      return new Response(
+        JSON.stringify({
+          code: 'failed_precondition',
+          message: 'this join link cannot be used',
+          details: [{ type: 'issho.v1.JoinLinkProblem', value: 'CAM=' }],
+        }),
+        { status: 400, headers: { 'content-type': 'application/json' } },
+      );
+    };
+    const api = createApi({ baseUrl: 'https://api.example.test', getAccessToken: async () => 'tok-1', fetch });
+
+    const err = await api.joinLink.redeemJoinLink({ code: 'abc' }).catch((e) => e);
+
+    expect(seen[0].url).toBe('https://api.example.test/issho.v1.JoinLinkService/RedeemJoinLink');
+    expect(await seen[0].json()).toEqual({ code: 'abc' });
+    expect(ConnectError.from(err).code).toBe(Code.FailedPrecondition);
+    expect(ConnectError.from(err).findDetails(JoinLinkProblemSchema)[0]?.reason).toBe(JoinLinkProblemReason.LINK_UNUSABLE);
   });
 });

@@ -5,6 +5,7 @@ import { useAuth } from '@/auth/auth-provider';
 import { Account } from '@/components/account';
 import { ApiVersion } from '@/components/api-version';
 import { Button } from '@/components/form';
+import { JoinLinks } from '@/components/join-links';
 import { RequireSignIn } from '@/components/require-sign-in';
 import { FontSize, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -37,6 +38,7 @@ function Signed() {
           {t('tabs.you')}
         </Text>
         <Account />
+        <JoinLinks />
         <Button quiet label={t('you.signOut')} onPress={signOut} />
         <ApiVersion />
       </View>
