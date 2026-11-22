@@ -68,6 +68,54 @@ type AppAccount struct {
 	CreatedAt       time.Time
 }
 
+type AppCity struct {
+	Slug     string
+	State    string
+	TimeZone string
+	Currency string
+}
+
+type AppCityName struct {
+	City     string
+	Language string
+	Name     string
+}
+
+type AppPlan struct {
+	ID             string
+	City           string
+	Price          int32
+	MeetingAddress string
+	PartsOfDay     []string
+	StartsAt       string
+	EndsAt         string
+}
+
+type AppPlanStop struct {
+	PlanID      string
+	Position    int32
+	StayMinutes int32
+	LegMode     *string
+	LegMinutes  *int32
+}
+
+type AppPlanStopText struct {
+	PlanID   string
+	Position int32
+	Language string
+	Name     string
+	Note     string
+}
+
+type AppPlanText struct {
+	PlanID       string
+	Language     string
+	Title        string
+	Description  string
+	MeetingPoint string
+	WhatToBring  []string
+}
+
 type AppQueueItem struct {
 	ID        int64
 	Kind      string

@@ -269,3 +269,10 @@ deploy-test:
 
 test: deploy-test
 ci-test: deploy-test
+
+# Load the development fixture (the city Da Nang–Hoi An and its two plans, backend/fixtures)
+# into the local database that `make migrate-up` migrated. It refuses a database that
+# isn't on this machine and is not in the production image (backend/cmd/seed).
+.PHONY: seed
+seed:
+	cd backend && DATABASE_URL='$(DATABASE_URL)' go run ./cmd/seed

@@ -23,7 +23,8 @@ Dev's secrets are in Google Cloud project `issho-dev-512213` (Secret Manager). T
 
 | Secret name | Read by | What it is |
 |---|---|---|
-| `dev-database-url` | not read by the deploy's files (listed on #588) | the Supabase session pooler's URL for the app |
+| `dev-database-url` | the API (`DATABASE_URL`, through `.kamal/secrets.dev`) | the Supabase transaction pooler's URL for the app's own role |
+| `dev-supabase-auth-url` | the API (`SUPABASE_AUTH_URL`, through `.kamal/secrets.dev`) | `https://<ref>.supabase.co/auth/v1`, the tokens' issuer and where the API reads their keys. Public; stored only to keep the project's ref out of this repository. The founder adds it before the next deploy |
 | `dev-worker-database-url` | the worker (`WORKER_DATABASE_URL`, through `.kamal/secrets.dev`) | the session pooler's URL; River's LISTEN/NOTIFY needs a session connection, not the transaction pooler |
 | `dev-migrate-database-url` | the migration step of `scripts/deploy-dev.sh`, before any container is replaced | the URL goose migrates with |
 | `dev-resend-api-key` | the worker (`RESEND_API_KEY`) | the Resend API key for product email |

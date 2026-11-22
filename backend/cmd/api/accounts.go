@@ -8,8 +8,10 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"github.com/shrujancheruku/issho/backend/internal/cities"
 	"github.com/shrujancheruku/issho/backend/internal/clock"
 	"github.com/shrujancheruku/issho/backend/internal/people"
+	"github.com/shrujancheruku/issho/backend/internal/plans"
 	"github.com/shrujancheruku/issho/backend/internal/rpc"
 )
 
@@ -18,12 +20,15 @@ import (
 // account sees"). It becomes a lookup in cities when a second city is listed.
 const defaultCity = "da-nang-hoi-an"
 
-// accounts is what the API needs to know who is calling: the database that
-// keeps accounts and Supabase Auth's tokens to check. Both values are public
+// accounts is what the API needs to know who is calling and what to show them:
+// the database that keeps accounts, cities and plans, and Supabase Auth's
+// tokens to check. Both values are public
 // (a connection URL for the app's own role, and the project's Auth URL); the
 // API never holds the project's JWT secret.
 type accounts struct {
 	people *people.Service
+	cities *cities.Service
+	plans  *plans.Service
 	auth   rpc.Authenticator
 	close  func()
 }
@@ -49,8 +54,11 @@ func newAccounts(ctx context.Context, log *slog.Logger, getenv func(string) stri
 		return nil, err
 	}
 	verifier := people.NewVerifier(clk, people.VerifierConfig{JWKSURL: authURL + "/.well-known/jwks.json", Issuer: authURL, Log: log})
+	cs := cities.New(pool)
 	return &accounts{
-		people: people.New(clk, pool, people.Config{DefaultCity: defaultCity}),
+		people: people.New(clk, pool, cs, people.Config{DefaultCity: defaultCity}),
+		cities: cs,
+		plans:  plans.New(pool),
 		auth:   rpc.NewAuthenticator(verifier),
 		close:  pool.Close,
 	}, nil

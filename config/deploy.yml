@@ -27,6 +27,13 @@ registry:
 servers:
   web:
     hosts: [] # per destination
+    # The API's own database connection (the transaction pooler: it holds no
+    # session state) and the Auth URL its token check reads the keys from
+    # (backend/cmd/api). Both or neither: the API refuses to start with one.
+    env:
+      secret:
+        - DATABASE_URL
+        - SUPABASE_AUTH_URL
   # The worker serves no HTTP, so it has no proxy. River elects one leader, so a
   # second worker would be safe but idle.
   worker:
