@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 
 import { Code } from '@connectrpc/connect';
 
-import { createApi, SeatState } from './index';
+import { create } from '@bufbuild/protobuf';
+
+import { createApi, ProfileProblemReason, ProfileProblemSchema, profileProblem, SeatState } from './index';
 
 // A fake fetch that answers the health check and keeps the request it saw.
 function fakeFetch() {
@@ -162,5 +164,18 @@ describe('createApi', () => {
     expect(res.outings[0].seatState).toBe(SeatState.INVITED);
     expect(seen[0].url).toBe('https://api.example.test/issho.v1.OutingService/ListMyOutings');
     expect(seen[0].headers.get('authorization')).toBe('Bearer tok-1');
+  });
+});
+
+// The profile screens' block (#614).
+describe('profileProblem', () => {
+  it('reads the ProfileProblem reason an RPC refused with, and nothing from any other error', async () => {
+    const { ConnectError } = await import('@connectrpc/connect');
+    const refused = new ConnectError('under 18', Code.InvalidArgument, undefined, [
+      { desc: ProfileProblemSchema, value: create(ProfileProblemSchema, { reason: ProfileProblemReason.UNDER_AGE }) },
+    ]);
+    expect(profileProblem(refused)).toBe(ProfileProblemReason.UNDER_AGE);
+    expect(profileProblem(new ConnectError('nope', Code.InvalidArgument))).toBeUndefined();
+    expect(profileProblem(new Error('network'))).toBeUndefined();
   });
 });

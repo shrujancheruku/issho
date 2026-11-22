@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { ApiProvider } from '@/api/api-provider';
 import { AuthProvider } from '@/auth/auth-provider';
@@ -27,10 +28,13 @@ export function TestProviders({
   children: ReactNode;
 }) {
   return (
-    <ApiProvider api={api as never}>
-      <AuthProvider client={session}>
-        <I18nProvider lang={lang}>{children}</I18nProvider>
-      </AuthProvider>
-    </ApiProvider>
+    // Screens that keep clear of the status bar read the insets; a test has none, unless it mocks them.
+    <SafeAreaProvider initialMetrics={{ frame: { x: 0, y: 0, width: 390, height: 780 }, insets: { top: 0, left: 0, right: 0, bottom: 0 } }}>
+      <ApiProvider api={api as never}>
+        <AuthProvider client={session}>
+          <I18nProvider lang={lang}>{children}</I18nProvider>
+        </AuthProvider>
+      </ApiProvider>
+    </SafeAreaProvider>
   );
 }

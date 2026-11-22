@@ -21,7 +21,7 @@ const { version } = await api.health.check({});
 const { account } = await api.account.getAccount({ displayLanguage: 'vi' });
 
 // The profile asked at the first signup; unset until it is saved. A refusal carries a
-// ProfileProblem detail: err.findDetails(ProfileProblemSchema)[0]?.reason is
+// ProfileProblem detail: profileProblem(err) (src/profile-problem.ts) returns its reason, which is
 // PROFILE_REQUIRED (open the questions) or UNDER_AGE (stop with a plain message).
 const { profile } = await api.profile.getProfile({});
 
