@@ -45,7 +45,14 @@ The API has no CORS, by design: no browser origin is trusted to call it from ano
 - **The admin**, at `admin-dev.joinissho.com`: the Worker forwards the same paths to `https://api-dev.joinissho.com` and serves everything else as static files (`apps/admin/README.md`).
 - **Phones** are not a browser: they call `api-dev.joinissho.com` directly.
 
-Both forwarders drop the headers that carry the member's address (`cf-connecting-ip`, `x-forwarded-for`, `x-real-ip`, `forwarded`, `true-client-ip` and the like), since Issho keeps no IP address anywhere ([ADR 0005](adr/0005-no-phone-number-and-no-ip-address.md)); the API sees the forwarder's address instead.
+Both forwarders drop the headers that carry the member's address (`cf-connecting-ip`, `x-forwarded-for`, `x-real-ip`, `forwarded`, `true-client-ip` and the like), since Issho keeps no IP address anywhere ([ADR 0005](adr/0005-no-phone-number-and-no-ip-address.md)); the API sees the forwarder's address instead. The forwarders drop them only after kamal-proxy, which sits before them, has logged each request, so the zone setting below is what keeps the address out of the proxy's log.
+
+### A required Cloudflare zone setting
+
+**Turn on the managed transform "Remove visitor IP headers"** on the `joinissho.com` zone (Cloudflare dashboard, Rules, Settings, Managed Transforms). It is a zone setting made by hand; nothing in this repository sets it, and the deploy does not check it.
+
+- **Why:** Cloudflare puts the visitor's address in `X-Forwarded-For` (and `CF-Connecting-IP`) on every request to the VM. kamal-proxy's request log writes `remote_addr` from that header on each request, and it logs before either forwarder can drop anything. Phones call `api-dev.joinissho.com` directly, so their requests reach it with Cloudflare's headers as they are. Without the transform the proxy's log holds every member's address, which [ADR 0005](adr/0005-no-phone-number-and-no-ip-address.md) and [Technical operations](spec/operations.md#logs) rule out. With it, the origin sees only Cloudflare's edge address.
+- **To confirm it,** read one request from the proxy's log in a CI run or on the VM (`kamal proxy logs -d dev`, never on a laptop) and check its `remote_addr`: it must be one of Cloudflare's published ranges ([cloudflare.com/ips](https://www.cloudflare.com/ips/)), not the address of the machine that made the request. Make the request from a machine whose address you know. Check again after any change to the zone's rules, and before the first production deploy.
 
 Why a forwarder and not CORS, what it costs and what would reverse it: [ADR 0006](adr/0006-browsers-reach-the-api-on-their-own-origin.md).
 

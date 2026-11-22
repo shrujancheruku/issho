@@ -41,6 +41,8 @@ Kamal's own registry login is not in Secret Manager; see CI below.
 - **`KAMAL_REGISTRY_PASSWORD`** is the job's own `GITHUB_TOKEN`, passed in its environment. It expires with the job.
 - **v1's `CLOUDFLARE_API_TOKEN` secret and `CLOUDFLARE_ACCOUNT_ID` variable were deleted** from GitHub Actions by the founder (#605). The admin's token is read from Secret Manager instead.
 
+- **Not a secret, but required:** the Cloudflare zone's "Remove visitor IP headers" managed transform, set by hand by the founder, keeps members' addresses out of the proxy's log ([Deploying dev](deploy.md#a-required-cloudflare-zone-setting), ADR 0005).
+
 ### Local
 
 - The repo stores no secret. Real `.env` and `.env.*` files are gitignored, as are `supabase/.env`, `supabase/signing_keys.json` and `.kamal/secrets*`. The one `.kamal/` file that is committed holds names only (`.kamal/secrets.dev`).
