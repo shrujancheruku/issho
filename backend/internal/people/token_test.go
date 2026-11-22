@@ -10,7 +10,6 @@ import (
 	"crypto/rsa"
 	"encoding/base64"
 	"encoding/json"
-	"log/slog"
 	"math/big"
 	"net/http"
 	"net/http/httptest"
@@ -23,6 +22,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 
 	"github.com/shrujancheruku/issho/backend/internal/clock"
+	"github.com/shrujancheruku/issho/backend/internal/logging"
 	"github.com/shrujancheruku/issho/backend/internal/people"
 )
 
@@ -395,7 +395,7 @@ func TestAKeySetThatCannotBeRefreshedStopsVerifyingAtItsMaxAge(t *testing.T) {
 	j := newJWKS(t, ec)
 	var logged bytes.Buffer
 	v := people.NewVerifier(clk, people.VerifierConfig{
-		JWKSURL: j.srv.URL, Issuer: issuer, Log: slog.New(slog.NewTextHandler(&logged, nil)),
+		JWKSURL: j.srv.URL, Issuer: issuer, Log: logging.New(&logged, "api"),
 	})
 	ctx := context.Background()
 	if _, err := v.Verify(ctx, ec.token(t, claims(start, ada, "ada@example.com"))); err != nil {

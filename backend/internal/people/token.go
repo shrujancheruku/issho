@@ -20,6 +20,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 
 	"github.com/shrujancheruku/issho/backend/internal/clock"
+	"github.com/shrujancheruku/issho/backend/internal/logging"
 )
 
 const (
@@ -65,7 +66,7 @@ type VerifierConfig struct {
 	// HTTPClient fetches the key set; nil uses a client with a 10-second timeout.
 	HTTPClient *http.Client
 	// Log says when a token is refused because the key set is past
-	// KeySetMaxAge; nil uses slog.Default(). It never gets a token.
+	// KeySetMaxAge; nil logs nothing. It never gets a token.
 	Log *slog.Logger
 }
 
@@ -95,7 +96,7 @@ func NewVerifier(clk clock.Clock, cfg VerifierConfig) *Verifier {
 		client = &http.Client{Timeout: fetchTimeout}
 	}
 	if cfg.Log == nil {
-		cfg.Log = slog.Default()
+		cfg.Log = logging.Discard()
 	}
 	return &Verifier{clock: clk, cfg: cfg, client: client}
 }
