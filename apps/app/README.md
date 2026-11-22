@@ -98,14 +98,22 @@ Every command returns. Metro is the one long-running process, and `make native-m
 
 Machine needs: full Xcode (`xcode-select -p` prints a path inside `Xcode.app`) with an iOS simulator runtime; the Android SDK (`ANDROID_HOME`) with platform `android-36`, build-tools `36.0.0`, the emulator package and the system image `system-images;android-36;google_apis;arm64-v8a` (`x86_64` on an Intel machine), JDK 17, and an AVD named `issho` made from that image (`android emulator list`). Gradle installs the platform Expo's template asks for on first build. CocoaPods (`pod` on the `PATH`), which Expo's iOS build runs. Expo's Swift Package Manager route (`experiments.swiftPackageManager`) is off: it can't build `expo-router` with `react-native-screens` yet ([#630](https://github.com/shrujancheruku/issho/issues/630)).
 
-**iOS status: `make native-ios` does not build yet on Xcode 26.3 (Swift 6.2); [#631](https://github.com/shrujancheruku/issho/issues/631) owns it.** It generates `ios/`, runs `pod install` and compiles most pods, then fails in `expo-modules-jsi` 58.0.23, which Expo SDK 58 ships at its latest version:
+**iOS status: `make native-ios` does not build yet on Xcode 26.3 (Swift 6.2); [#631](https://github.com/shrujancheruku/issho/issues/631) owns it.** It generates `ios/`, runs `pod install` and compiles most pods, then fails in `expo-modules-jsi` 58.0.21 to 58.0.23 (58.0.20 does not have the failing code, but `expo-modules-core` 58.1.0 requires `~58.0.23`, so pinning back is not an option). Xcode 26.2 fails the same way ([expo/expo#52754](https://github.com/expo/expo/issues/52754), open, no Expo fix yet):
 
 ```
 expo-modules-jsi/apple/Sources/ExpoModulesJSI/Runtime/Values/JavaScriptObject.swift:946:36: error: sending 'slot' risks causing data races
 xcodebuild exited with error code 65
 ```
 
-The pod is built by a nested SwiftPM `xcodebuild` in Swift 6 language mode, so a Podfile or config-plugin setting can't change it from this repo. So `docs/screenshots/plans-ios.png` doesn't exist yet and `make native-screenshot-ios` is untested.
+**Xcode version.** Expo's changelog gives no supported Xcode range for SDK 58. Expo's upgrade guide sets the `sdk-58` iOS build image to Xcode 27.1 ([how to upgrade to SDK 58](https://expo.dev/blog/how-to-upgrade-to-sdk-58)), so 27.1 is the version to build with. Install it beside 26.3 (Xcode 27.1 comes from Apple's developer downloads; `xcodes install 27.1` does the same). Then build with it selected for that command only:
+
+```sh
+DEVELOPER_DIR=/Applications/Xcode-27.1.app/Contents/Developer make native-ios
+```
+
+`make` passes `DEVELOPER_DIR` through to `xcodebuild`, `xcrun` and `pod`, and the Makefile sets none, so the machine's `xcode-select` stays on 26.3 for everything else. Until a build on 27.1 succeeds here, treat this as unverified.
+
+The pod is built by a nested SwiftPM `xcodebuild` in Swift 6 language mode, so a Podfile or config-plugin setting can't change it from this repo, and the fix is not in `node_modules`. So `docs/screenshots/plans-ios.png` doesn't exist yet and `make native-screenshot-ios` is untested.
 
 Metro's port, the simulator and the emulator are shared: two worktrees cannot run native builds at once.
 
