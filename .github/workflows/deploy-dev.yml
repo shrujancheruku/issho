@@ -17,6 +17,8 @@ on:
     branches:
       - main
       - integration/foundation
+      # Trial: proves the host-key pin (#605); removed in the next commit.
+      - shrujancheruku/605-dev-deploy
   # A rollback: Run workflow with an earlier commit's SHA (docs/deploy.md).
   workflow_dispatch:
     inputs:
