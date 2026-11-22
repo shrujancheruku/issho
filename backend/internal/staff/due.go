@@ -9,8 +9,8 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/riverqueue/river"
 
-	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	"github.com/shrujancheruku/issho/backend/internal/clock"
+	"github.com/shrujancheruku/issho/backend/internal/staff/store"
 )
 
 // dueWorker is the job Open enqueues for each item, scheduled at its due time.
@@ -43,7 +43,7 @@ func (w *dueWorker) Work(ctx context.Context, job *river.Job[DueArgs]) error {
 	// second delivery of the same job (River runs jobs at least once): whoever
 	// comes second sees the item closed and does nothing, so the default is
 	// applied once.
-	q := dbgen.New(tx)
+	q := store.New(tx)
 	row, err := q.LockQueueItem(ctx, job.Args.ItemID)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil
@@ -69,7 +69,7 @@ func (w *dueWorker) Work(ctx context.Context, job *river.Job[DueArgs]) error {
 	if err := apply(ctx, tx, itemOf(row)); err != nil {
 		return fmt.Errorf("apply default of %q (item %d): %w", row.Kind, row.ID, err)
 	}
-	if err := q.DefaultQueueItem(ctx, dbgen.DefaultQueueItemParams{ID: row.ID, ClosedAt: &now}); err != nil {
+	if err := q.DefaultQueueItem(ctx, store.DefaultQueueItemParams{ID: row.ID, ClosedAt: &now}); err != nil {
 		return fmt.Errorf("mark queue item defaulted: %w", err)
 	}
 	return tx.Commit(ctx)

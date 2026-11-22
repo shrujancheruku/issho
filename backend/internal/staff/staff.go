@@ -11,8 +11,8 @@ import (
 	"github.com/riverqueue/river"
 	"github.com/riverqueue/river/rivertype"
 
-	"github.com/shrujancheruku/issho/backend/gen/dbgen"
 	"github.com/shrujancheruku/issho/backend/internal/clock"
+	"github.com/shrujancheruku/issho/backend/internal/staff/store"
 )
 
 // State is where an item stands.
@@ -44,7 +44,7 @@ type Item struct {
 	ClosedAt *time.Time
 }
 
-func itemOf(r dbgen.AppQueueItem) Item {
+func itemOf(r store.AppQueueItem) Item {
 	it := Item{
 		ID: r.ID, Kind: r.Kind, Subject: r.Subject, DueAt: r.DueAt,
 		State: State(r.State), CreatedAt: r.CreatedAt, ClosedAt: r.ClosedAt,
@@ -131,7 +131,7 @@ func (q *Queue) Open(ctx context.Context, tx pgx.Tx, p OpenParams) (Item, error)
 	if _, ok := q.kinds.lookup(p.Kind); !ok {
 		return Item{}, fmt.Errorf("%w: %q", ErrUnknownKind, p.Kind)
 	}
-	row, err := dbgen.New(tx).InsertQueueItem(ctx, dbgen.InsertQueueItemParams{
+	row, err := store.New(tx).InsertQueueItem(ctx, store.InsertQueueItemParams{
 		Kind: p.Kind, Subject: p.Subject, DueAt: p.DueAt, CreatedAt: q.clock.Now(),
 	})
 	if err != nil {
@@ -144,8 +144,8 @@ func (q *Queue) Open(ctx context.Context, tx pgx.Tx, p OpenParams) (Item, error)
 }
 
 // ListOpen returns the open items, soonest due first. db is a pool or a transaction.
-func (q *Queue) ListOpen(ctx context.Context, db dbgen.DBTX) ([]Item, error) {
-	rows, err := dbgen.New(db).ListOpenQueueItems(ctx)
+func (q *Queue) ListOpen(ctx context.Context, db store.DBTX) ([]Item, error) {
+	rows, err := store.New(db).ListOpenQueueItems(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("list open queue items: %w", err)
 	}
@@ -171,7 +171,7 @@ func (q *Queue) Resolve(ctx context.Context, tx pgx.Tx, id int64, reason string)
 		return Item{}, ErrReasonRequired
 	}
 	now := q.clock.Now()
-	row, err := dbgen.New(tx).ResolveQueueItem(ctx, dbgen.ResolveQueueItemParams{ID: id, Reason: &reason, ClosedAt: &now})
+	row, err := store.New(tx).ResolveQueueItem(ctx, store.ResolveQueueItemParams{ID: id, Reason: &reason, ClosedAt: &now})
 	if errors.Is(err, pgx.ErrNoRows) {
 		return Item{}, ErrNotOpen
 	}

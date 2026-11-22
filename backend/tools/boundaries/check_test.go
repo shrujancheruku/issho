@@ -44,6 +44,14 @@ func TestImportingAnotherPackagesInternalPartsFails(t *testing.T) {
 		"backend/internal/plans/plans.go:3", "internal/places/cache")
 }
 
+// Each package's sqlc queries generate under it (internal/staff/store), so
+// reading another package's tables is an import of its internals, which the same
+// rule refuses. The owner's own import, in the fixture's staff, passes.
+func TestReadingAnotherPackagesQueriesFails(t *testing.T) {
+	wantOne(t, check(t, "store-import"), KindInternal,
+		"backend/internal/plans/plans.go:3", "internal/staff/store")
+}
+
 func TestDomainPackageImportingARealImplementationFails(t *testing.T) {
 	wantOne(t, check(t, "real-impl"), KindOutsideService,
 		"backend/internal/plans/plans.go:3", "internal/email/resend")

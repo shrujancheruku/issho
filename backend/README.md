@@ -10,8 +10,8 @@ One Go module (`github.com/shrujancheruku/issho/backend`), part of the root `go.
 | `cmd/worker` | The background-job process: runs River |
 | `cmd/rpcauth` | `make rpc-auth`: fails when an RPC in `proto/` declares no access rule |
 | `cmd/migrate` | `migrate up` and `migrate down`, behind `make migrate-up` and `make migrate-down` |
-| `db` | The goose migrations (`db/migrations`), embedded, and the `Up` and `Down` that run them; sqlc's queries (`db/queries`) |
-| `gen/dbgen` | The Go that sqlc generates from `db/queries`. Generated: never edit it |
+| `db` | The goose migrations (`db/migrations`), embedded, and the `Up` and `Down` that run them; the schema sqlc reads |
+| `internal/<pkg>/store` | The Go that sqlc generates from `internal/<pkg>/queries`, one pair per package (today `internal/staff`). Generated: never edit it |
 | `internal/clock` | The injected clock: `Clock`, `Real` (wired only in `cmd/`) and the test `Fake` |
 | `internal/cityclock` | The one city-clock helper: a city's date, "HH:MM on a date", part of the day, midnight-crossing windows |
 | `tools/clockcheck` | The lint check that fails on `time.Now`, `time.Since` and `time.Until` outside `internal/clock`, and on `clock.Real` outside `cmd/` |
@@ -68,7 +68,7 @@ The baseline writes out River's own schema (River v0.51.2) as SQL, so that goose
 
 ## Queries
 
-SQL is written by hand in `db/queries/*.sql` and compiled by sqlc into `gen/dbgen` (config: `sqlc.yaml`, which reads `db/migrations` as the schema). After changing a query or a migration, run `make gen` from the repo root and commit the result; CI fails if `make gen` leaves a diff. Call the generated methods with a pgx pool or transaction: `dbgen.New(pool).CountJobs(ctx)`. `db/queries/sample.sql` is a placeholder for the first real query to replace. `timestamptz` columns come out as `time.Time` (`*time.Time` when nullable), set by the overrides in `sqlc.yaml`.
+SQL is written by hand in each package's `queries/*.sql` and compiled by sqlc into that package's `store` (config: `sqlc.yaml`, one entry per package, which reads `db/migrations` as the schema). A package's queries are its internals: `tools/boundaries` refuses any other package that imports its `store`, so no package reads another's tables. A new package adds its own `sqlc.yaml` entry, never a shared output. After changing a query or a migration, run `make gen` from the repo root and commit the result; CI fails if `make gen` leaves a diff. Call the generated methods with a pgx pool or transaction: `store.New(tx).ListOpenQueueItems(ctx)`. `timestamptz` columns come out as `time.Time` (`*time.Time` when nullable), set by the overrides in `sqlc.yaml`.
 
 ## Jobs
 

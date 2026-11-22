@@ -1,13 +1,17 @@
 version: "2"
+# One entry per package, generating under that package (internal/<pkg>/store), so
+# a package's queries are its internals and tools/boundaries refuses any other
+# package that imports them. Copy the entry, its overrides included, for the next
+# package; never point two packages at one output.
 sql:
   - engine: postgresql
     # sqlc reads the goose migrations as the schema; it stops at each `-- +goose Down`.
     schema: db/migrations
-    queries: db/queries
+    queries: internal/staff/queries
     gen:
       go:
-        package: dbgen
-        out: gen/dbgen
+        package: store
+        out: internal/staff/store
         sql_package: pgx/v5
         emit_pointers_for_null_types: true
         # time.Time rather than pgtype.Timestamptz: every column is timestamptz

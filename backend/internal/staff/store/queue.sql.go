@@ -3,7 +3,7 @@
 //   sqlc v1.31.1
 // source: queue.sql
 
-package dbgen
+package store
 
 import (
 	"context"

@@ -17,7 +17,7 @@ setup:
 	pnpm install
 	git config core.hooksPath .githooks
 
-# Code generation: sqlc compiles backend/db/queries into backend/gen/dbgen, and
+# Code generation: sqlc compiles each backend package's queries into its store, and
 # buf turns proto/ into the Go server stubs (backend/gen/issho) and the
 # TypeScript client (packages/api-client/src/gen). buf's TypeScript plugin comes
 # from pnpm install, so run `make setup` first.
