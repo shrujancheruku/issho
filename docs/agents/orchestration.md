@@ -72,7 +72,7 @@ Before dispatching a ticket, compare its touch map (the paths in its "Expected p
 Standing exclusive holds:
 
 - At most one ticket in progress adds or edits a file under `backend/db/migrations/`. Goose numbers migrations sequentially, so two would collide.
-- **The native slot:** at most one worker at a time runs anything on the iOS simulator, the Android emulator or Metro. Every worktree shares the simulator, the emulator and Metro's port 8081, so two at once interfere with each other (#602, #630).
+- **The native slot:** at most one worker at a time runs anything on the iOS simulator, the Android emulator or Metro. Every worktree shares the simulator, the emulator and Metro's port 8081, so two at once interfere with each other (#602, #630). Metro is long-running: a worker starts it with `make native-metro` (in the background), never waits on it, and stops it with `make native-stop`. `apps/app/README.md` has the sequence.
 
 Overlap means wait. Shared registries (one file per entry plus an index) do not count as overlap.
 
@@ -141,7 +141,14 @@ Notes:
 
 ### The required checks
 
-These are the 14 names set as required in the `main` ruleset (by the founder). Each job's id is its name, and each runs the make target of the same name in `.github/workflows/ci.yml`:
+These are the 14 names set as required in the `main` ruleset (by the founder). Each job's id is its name and each runs the make targets in `.github/workflows/ci.yml`; most are the target of the same name, and these are not:
+
+| Check | Runs |
+|---|---|
+| `secrets` | `make secrets-scan` |
+| `policy` | `make policy-lint` |
+| `codegen` | `make codegen ci-lint ci-test` |
+| `native-bundle` | `make native-bundle native-bundle-test native-screenshot-test` |
 
 `secrets`, `commits`, `codegen`, `backend`, `boundaries`, `policy`, `rpc-auth`, `retention`, `proto-breaking`, `typescript`, `strings`, `e2e`, `native-bundle`, `image`.
 
