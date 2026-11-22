@@ -13,7 +13,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file issho/v1/outing.proto.
  */
 export const file_issho_v1_outing: GenFile = /*@__PURE__*/
-  fileDesc("ChVpc3Noby92MS9vdXRpbmcucHJvdG8SCGlzc2hvLnYxIhYKFExpc3RNeU91dGluZ3NSZXF1ZXN0IjoKFUxpc3RNeU91dGluZ3NSZXNwb25zZRIhCgdvdXRpbmdzGAEgAygLMhAuaXNzaG8udjEuT3V0aW5nIlgKF0Fuc3dlckludml0YXRpb25SZXF1ZXN0EhEKCW91dGluZ19pZBgBIAEoCRIqCgZhbnN3ZXIYAiABKA4yGi5pc3Noby52MS5JbnZpdGF0aW9uQW5zd2VyIjwKGEFuc3dlckludml0YXRpb25SZXNwb25zZRIgCgZvdXRpbmcYASABKAsyEC5pc3Noby52MS5PdXRpbmciJgoRQ2FuY2VsU2VhdFJlcXVlc3QSEQoJb3V0aW5nX2lkGAEgASgJIjYKEkNhbmNlbFNlYXRSZXNwb25zZRIgCgZvdXRpbmcYASABKAsyEC5pc3Noby52MS5PdXRpbmcizgIKBk91dGluZxIKCgJpZBgBIAEoCRIPCgdwbGFuX2lkGAIgASgJEgwKBGRhdGUYAyABKAkSDAoEcGFydBgEIAEoCRIRCglzdGFydHNfYXQYBSABKAkSEQoJbGFuZ3VhZ2VzGAYgAygJEicKCnNlYXRfc3RhdGUYByABKA4yEy5pc3Noby52MS5TZWF0U3RhdGUSLgoKaW52aXRlZF9hdBgIIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASNgoSaW52aXRhdGlvbl9lbmRzX2F0GAkgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIrCgxvdXRpbmdfc3RhdGUYCiABKA4yFS5pc3Noby52MS5PdXRpbmdTdGF0ZRIRCgl5ZXNfY291bnQYCyABKAUSFAoMb3RoZXJzX2dvaW5nGAwgAygJKmoKEEludml0YXRpb25BbnN3ZXISIQodSU5WSVRBVElPTl9BTlNXRVJfVU5TUEVDSUZJRUQQABIZChVJTlZJVEFUSU9OX0FOU1dFUl9ZRVMQARIYChRJTlZJVEFUSU9OX0FOU1dFUl9OTxACKsMBCgtPdXRpbmdTdGF0ZRIcChhPVVRJTkdfU1RBVEVfVU5TUEVDSUZJRUQQABIZChVPVVRJTkdfU1RBVEVfUFJPUE9TRUQQARIYChRPVVRJTkdfU1RBVEVfT0ZGRVJFRBACEhQKEE9VVElOR19TVEFURV9TRVQQAxIVChFPVVRJTkdfU1RBVEVfT1ZFUhAEEhgKFE9VVElOR19TVEFURV9OT1RfU0VUEAUSGgoWT1VUSU5HX1NUQVRFX0NBTkNFTExFRBAGKoUCCglTZWF0U3RhdGUSGgoWU0VBVF9TVEFURV9VTlNQRUNJRklFRBAAEhYKElNFQVRfU1RBVEVfSU5WSVRFRBABEhQKEFNFQVRfU1RBVEVfR09JTkcQAhIXChNTRUFUX1NUQVRFX0RFQ0xJTkVEEAMSGQoVU0VBVF9TVEFURV9VTkFOU1dFUkVEEAQSEwoPU0VBVF9TVEFURV9GVUxMEAUSGAoUU0VBVF9TVEFURV9DQU5DRUxMRUQQBhIaChZTRUFUX1NUQVRFX0xBVEVfQ0FOQ0VMEAcSFgoSU0VBVF9TVEFURV9SRU1PVkVEEAgSFwoTU0VBVF9TVEFURV9BQ0NFUFRFRBAJMpcCCg1PdXRpbmdTZXJ2aWNlElYKDUxpc3RNeU91dGluZ3MSHi5pc3Noby52MS5MaXN0TXlPdXRpbmdzUmVxdWVzdBofLmlzc2hvLnYxLkxpc3RNeU91dGluZ3NSZXNwb25zZSIEiLUYAhJfChBBbnN3ZXJJbnZpdGF0aW9uEiEuaXNzaG8udjEuQW5zd2VySW52aXRhdGlvblJlcXVlc3QaIi5pc3Noby52MS5BbnN3ZXJJbnZpdGF0aW9uUmVzcG9uc2UiBIi1GAISTQoKQ2FuY2VsU2VhdBIbLmlzc2hvLnYxLkNhbmNlbFNlYXRSZXF1ZXN0GhwuaXNzaG8udjEuQ2FuY2VsU2VhdFJlc3BvbnNlIgSItRgCQpoBCgxjb20uaXNzaG8udjFCC091dGluZ1Byb3RvUAFaPGdpdGh1Yi5jb20vc2hydWphbmNoZXJ1a3UvaXNzaG8vYmFja2VuZC9nZW4vaXNzaG8vdjE7aXNzaG92MaICA0lYWKoCCElzc2hvLlYxygIISXNzaG9cVjHiAhRJc3Nob1xWMVxHUEJNZXRhZGF0YeoCCUlzc2hvOjpWMWIGcHJvdG8z", [file_google_protobuf_timestamp, file_issho_v1_access]);
+  fileDesc("ChVpc3Noby92MS9vdXRpbmcucHJvdG8SCGlzc2hvLnYxIhYKFExpc3RNeU91dGluZ3NSZXF1ZXN0IjoKFUxpc3RNeU91dGluZ3NSZXNwb25zZRIhCgdvdXRpbmdzGAEgAygLMhAuaXNzaG8udjEuT3V0aW5nIlgKF0Fuc3dlckludml0YXRpb25SZXF1ZXN0EhEKCW91dGluZ19pZBgBIAEoCRIqCgZhbnN3ZXIYAiABKA4yGi5pc3Noby52MS5JbnZpdGF0aW9uQW5zd2VyIjwKGEFuc3dlckludml0YXRpb25SZXNwb25zZRIgCgZvdXRpbmcYASABKAsyEC5pc3Noby52MS5PdXRpbmciJgoRQ2FuY2VsU2VhdFJlcXVlc3QSEQoJb3V0aW5nX2lkGAEgASgJIjYKEkNhbmNlbFNlYXRSZXNwb25zZRIgCgZvdXRpbmcYASABKAsyEC5pc3Noby52MS5PdXRpbmciIwoOQ2hlY2tJblJlcXVlc3QSEQoJb3V0aW5nX2lkGAEgASgJIjMKD0NoZWNrSW5SZXNwb25zZRIgCgZvdXRpbmcYASABKAsyEC5pc3Noby52MS5PdXRpbmciJwoSR2V0RmVlZGJhY2tSZXF1ZXN0EhEKCW91dGluZ19pZBgBIAEoCSI7ChNHZXRGZWVkYmFja1Jlc3BvbnNlEiQKCGZlZWRiYWNrGAEgASgLMhIuaXNzaG8udjEuRmVlZGJhY2siXQoTU2F2ZUZlZWRiYWNrUmVxdWVzdBIRCglvdXRpbmdfaWQYASABKAkSDAoEd2VudBgCIAEoCBIRCglub3RfdGhlcmUYAyADKAkSEgoKbWVldF9hZ2FpbhgEIAMoCSI8ChRTYXZlRmVlZGJhY2tSZXNwb25zZRIkCghmZWVkYmFjaxgBIAEoCzISLmlzc2hvLnYxLkZlZWRiYWNrIrgBCghGZWVkYmFjaxIRCglvdXRpbmdfaWQYASABKAkSEAoIYW5zd2VyZWQYAiABKAgSDAoEd2VudBgDIAEoCBIjCgZvdGhlcnMYBCADKAsyEy5pc3Noby52MS5Db21wYW5pb24SEQoJbm90X3RoZXJlGAUgAygJEhIKCm1lZXRfYWdhaW4YBiADKAkSLQoJY2xvc2VzX2F0GAcgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCIvCglDb21wYW5pb24SDgoGaGFuZGxlGAEgASgJEhIKCmZpcnN0X25hbWUYAiABKAkijQUKBk91dGluZxIKCgJpZBgBIAEoCRIPCgdwbGFuX2lkGAIgASgJEgwKBGRhdGUYAyABKAkSDAoEcGFydBgEIAEoCRIRCglzdGFydHNfYXQYBSABKAkSEQoJbGFuZ3VhZ2VzGAYgAygJEicKCnNlYXRfc3RhdGUYByABKA4yEy5pc3Noby52MS5TZWF0U3RhdGUSLgoKaW52aXRlZF9hdBgIIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASNgoSaW52aXRhdGlvbl9lbmRzX2F0GAkgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIrCgxvdXRpbmdfc3RhdGUYCiABKA4yFS5pc3Noby52MS5PdXRpbmdTdGF0ZRIRCgl5ZXNfY291bnQYCyABKAUSFAoMb3RoZXJzX2dvaW5nGAwgAygJEhIKCmNoZWNrZWRfaW4YDSABKAgSMQoNY2hlY2tlZF9pbl9hdBgOIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASGAoQY2hlY2tlZF9pbl9uYW1lcxgPIAMoCRI1ChFjaGVja19pbl9vcGVuc19hdBgQIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASNgoSY2hlY2tfaW5fY2xvc2VzX2F0GBEgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBI1ChFmZWVkYmFja19vcGVuc19hdBgSIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASNgoSZmVlZGJhY2tfY2xvc2VzX2F0GBMgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCpqChBJbnZpdGF0aW9uQW5zd2VyEiEKHUlOVklUQVRJT05fQU5TV0VSX1VOU1BFQ0lGSUVEEAASGQoVSU5WSVRBVElPTl9BTlNXRVJfWUVTEAESGAoUSU5WSVRBVElPTl9BTlNXRVJfTk8QAirDAQoLT3V0aW5nU3RhdGUSHAoYT1VUSU5HX1NUQVRFX1VOU1BFQ0lGSUVEEAASGQoVT1VUSU5HX1NUQVRFX1BST1BPU0VEEAESGAoUT1VUSU5HX1NUQVRFX09GRkVSRUQQAhIUChBPVVRJTkdfU1RBVEVfU0VUEAMSFQoRT1VUSU5HX1NUQVRFX09WRVIQBBIYChRPVVRJTkdfU1RBVEVfTk9UX1NFVBAFEhoKFk9VVElOR19TVEFURV9DQU5DRUxMRUQQBiqFAgoJU2VhdFN0YXRlEhoKFlNFQVRfU1RBVEVfVU5TUEVDSUZJRUQQABIWChJTRUFUX1NUQVRFX0lOVklURUQQARIUChBTRUFUX1NUQVRFX0dPSU5HEAISFwoTU0VBVF9TVEFURV9ERUNMSU5FRBADEhkKFVNFQVRfU1RBVEVfVU5BTlNXRVJFRBAEEhMKD1NFQVRfU1RBVEVfRlVMTBAFEhgKFFNFQVRfU1RBVEVfQ0FOQ0VMTEVEEAYSGgoWU0VBVF9TVEFURV9MQVRFX0NBTkNFTBAHEhYKElNFQVRfU1RBVEVfUkVNT1ZFRBAIEhcKE1NFQVRfU1RBVEVfQUNDRVBURUQQCTKEBAoNT3V0aW5nU2VydmljZRJWCg1MaXN0TXlPdXRpbmdzEh4uaXNzaG8udjEuTGlzdE15T3V0aW5nc1JlcXVlc3QaHy5pc3Noby52MS5MaXN0TXlPdXRpbmdzUmVzcG9uc2UiBIi1GAISXwoQQW5zd2VySW52aXRhdGlvbhIhLmlzc2hvLnYxLkFuc3dlckludml0YXRpb25SZXF1ZXN0GiIuaXNzaG8udjEuQW5zd2VySW52aXRhdGlvblJlc3BvbnNlIgSItRgCEk0KCkNhbmNlbFNlYXQSGy5pc3Noby52MS5DYW5jZWxTZWF0UmVxdWVzdBocLmlzc2hvLnYxLkNhbmNlbFNlYXRSZXNwb25zZSIEiLUYAhJECgdDaGVja0luEhguaXNzaG8udjEuQ2hlY2tJblJlcXVlc3QaGS5pc3Noby52MS5DaGVja0luUmVzcG9uc2UiBIi1GAISUAoLR2V0RmVlZGJhY2sSHC5pc3Noby52MS5HZXRGZWVkYmFja1JlcXVlc3QaHS5pc3Noby52MS5HZXRGZWVkYmFja1Jlc3BvbnNlIgSItRgCElMKDFNhdmVGZWVkYmFjaxIdLmlzc2hvLnYxLlNhdmVGZWVkYmFja1JlcXVlc3QaHi5pc3Noby52MS5TYXZlRmVlZGJhY2tSZXNwb25zZSIEiLUYAkKaAQoMY29tLmlzc2hvLnYxQgtPdXRpbmdQcm90b1ABWjxnaXRodWIuY29tL3NocnVqYW5jaGVydWt1L2lzc2hvL2JhY2tlbmQvZ2VuL2lzc2hvL3YxO2lzc2hvdjGiAgNJWFiqAghJc3Noby5WMcoCCElzc2hvXFYx4gIUSXNzaG9cVjFcR1BCTWV0YWRhdGHqAglJc3Nobzo6VjFiBnByb3RvMw", [file_google_protobuf_timestamp, file_issho_v1_access]);
 
 /**
  * @generated from message issho.v1.ListMyOutingsRequest
@@ -123,6 +123,220 @@ export const CancelSeatResponseSchema: GenMessage<CancelSeatResponse> = /*@__PUR
   messageDesc(file_issho_v1_outing, 5);
 
 /**
+ * @generated from message issho.v1.CheckInRequest
+ */
+export type CheckInRequest = Message<"issho.v1.CheckInRequest"> & {
+  /**
+   * @generated from field: string outing_id = 1;
+   */
+  outingId: string;
+};
+
+/**
+ * Describes the message issho.v1.CheckInRequest.
+ * Use `create(CheckInRequestSchema)` to create a new message.
+ */
+export const CheckInRequestSchema: GenMessage<CheckInRequest> = /*@__PURE__*/
+  messageDesc(file_issho_v1_outing, 6);
+
+/**
+ * The outing as the caller's seat sees it after checking in.
+ *
+ * @generated from message issho.v1.CheckInResponse
+ */
+export type CheckInResponse = Message<"issho.v1.CheckInResponse"> & {
+  /**
+   * @generated from field: issho.v1.Outing outing = 1;
+   */
+  outing?: Outing | undefined;
+};
+
+/**
+ * Describes the message issho.v1.CheckInResponse.
+ * Use `create(CheckInResponseSchema)` to create a new message.
+ */
+export const CheckInResponseSchema: GenMessage<CheckInResponse> = /*@__PURE__*/
+  messageDesc(file_issho_v1_outing, 7);
+
+/**
+ * @generated from message issho.v1.GetFeedbackRequest
+ */
+export type GetFeedbackRequest = Message<"issho.v1.GetFeedbackRequest"> & {
+  /**
+   * @generated from field: string outing_id = 1;
+   */
+  outingId: string;
+};
+
+/**
+ * Describes the message issho.v1.GetFeedbackRequest.
+ * Use `create(GetFeedbackRequestSchema)` to create a new message.
+ */
+export const GetFeedbackRequestSchema: GenMessage<GetFeedbackRequest> = /*@__PURE__*/
+  messageDesc(file_issho_v1_outing, 8);
+
+/**
+ * @generated from message issho.v1.GetFeedbackResponse
+ */
+export type GetFeedbackResponse = Message<"issho.v1.GetFeedbackResponse"> & {
+  /**
+   * @generated from field: issho.v1.Feedback feedback = 1;
+   */
+  feedback?: Feedback | undefined;
+};
+
+/**
+ * Describes the message issho.v1.GetFeedbackResponse.
+ * Use `create(GetFeedbackResponseSchema)` to create a new message.
+ */
+export const GetFeedbackResponseSchema: GenMessage<GetFeedbackResponse> = /*@__PURE__*/
+  messageDesc(file_issho_v1_outing, 9);
+
+/**
+ * @generated from message issho.v1.SaveFeedbackRequest
+ */
+export type SaveFeedbackRequest = Message<"issho.v1.SaveFeedbackRequest"> & {
+  /**
+   * @generated from field: string outing_id = 1;
+   */
+  outingId: string;
+
+  /**
+   * Question 1, "did you go?". A false ends the feedback there: the other
+   * fields are ignored and nothing after it is kept.
+   *
+   * @generated from field: bool went = 2;
+   */
+  went: boolean;
+
+  /**
+   * Question 2, "who else was there?": everyone going at the start is ticked by
+   * default, so these are the handles of the people the caller says were not
+   * there.
+   *
+   * @generated from field: repeated string not_there = 3;
+   */
+  notThere: string[];
+
+  /**
+   * Question 5, "who would you meet again?": the handles of the people the caller
+   * would. Each is a pick, private to the caller.
+   *
+   * @generated from field: repeated string meet_again = 4;
+   */
+  meetAgain: string[];
+};
+
+/**
+ * Describes the message issho.v1.SaveFeedbackRequest.
+ * Use `create(SaveFeedbackRequestSchema)` to create a new message.
+ */
+export const SaveFeedbackRequestSchema: GenMessage<SaveFeedbackRequest> = /*@__PURE__*/
+  messageDesc(file_issho_v1_outing, 10);
+
+/**
+ * @generated from message issho.v1.SaveFeedbackResponse
+ */
+export type SaveFeedbackResponse = Message<"issho.v1.SaveFeedbackResponse"> & {
+  /**
+   * @generated from field: issho.v1.Feedback feedback = 1;
+   */
+  feedback?: Feedback | undefined;
+};
+
+/**
+ * Describes the message issho.v1.SaveFeedbackResponse.
+ * Use `create(SaveFeedbackResponseSchema)` to create a new message.
+ */
+export const SaveFeedbackResponseSchema: GenMessage<SaveFeedbackResponse> = /*@__PURE__*/
+  messageDesc(file_issho_v1_outing, 11);
+
+/**
+ * The caller's feedback form for one outing.
+ *
+ * @generated from message issho.v1.Feedback
+ */
+export type Feedback = Message<"issho.v1.Feedback"> & {
+  /**
+   * @generated from field: string outing_id = 1;
+   */
+  outingId: string;
+
+  /**
+   * Whether the caller has answered "did you go?" yet; went is that answer and
+   * means nothing before it.
+   *
+   * @generated from field: bool answered = 2;
+   */
+  answered: boolean;
+
+  /**
+   * @generated from field: bool went = 3;
+   */
+  went: boolean;
+
+  /**
+   * Everyone who was going at the start but the caller, by first name and then
+   * handle.
+   *
+   * @generated from field: repeated issho.v1.Companion others = 4;
+   */
+  others: Companion[];
+
+  /**
+   * The caller's own answers, as handles, sorted.
+   *
+   * @generated from field: repeated string not_there = 5;
+   */
+  notThere: string[];
+
+  /**
+   * @generated from field: repeated string meet_again = 6;
+   */
+  meetAgain: string[];
+
+  /**
+   * When feedback closes: 7 days after the plan's stated end.
+   *
+   * @generated from field: google.protobuf.Timestamp closes_at = 7;
+   */
+  closesAt?: Timestamp | undefined;
+};
+
+/**
+ * Describes the message issho.v1.Feedback.
+ * Use `create(FeedbackSchema)` to create a new message.
+ */
+export const FeedbackSchema: GenMessage<Feedback> = /*@__PURE__*/
+  messageDesc(file_issho_v1_outing, 12);
+
+/**
+ * Another person of an outing as feedback names them. A handle is random, means
+ * nothing outside this outing and is not an account or anything that links to
+ * one; a first name is all that is ever shown of another person.
+ *
+ * @generated from message issho.v1.Companion
+ */
+export type Companion = Message<"issho.v1.Companion"> & {
+  /**
+   * @generated from field: string handle = 1;
+   */
+  handle: string;
+
+  /**
+   * @generated from field: string first_name = 2;
+   */
+  firstName: string;
+};
+
+/**
+ * Describes the message issho.v1.Companion.
+ * Use `create(CompanionSchema)` to create a new message.
+ */
+export const CompanionSchema: GenMessage<Companion> = /*@__PURE__*/
+  messageDesc(file_issho_v1_outing, 13);
+
+/**
  * An outing as its own seat's holder sees it. It carries no other person.
  *
  * @generated from message issho.v1.Outing
@@ -211,6 +425,49 @@ export type Outing = Message<"issho.v1.Outing"> & {
    * @generated from field: repeated string others_going = 12;
    */
   othersGoing: string[];
+
+  /**
+   * Whether the caller has checked in, and when.
+   *
+   * @generated from field: bool checked_in = 13;
+   */
+  checkedIn: boolean;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp checked_in_at = 14;
+   */
+  checkedInAt?: Timestamp | undefined;
+
+  /**
+   * The first names of the others who have checked in, sorted: only to a person
+   * who is going themselves, never their own.
+   *
+   * @generated from field: repeated string checked_in_names = 15;
+   */
+  checkedInNames: string[];
+
+  /**
+   * Check-in opens 30 minutes before the start and closes at the plan's stated
+   * end, on the city's clock; feedback opens at that end and closes 7 days later.
+   *
+   * @generated from field: google.protobuf.Timestamp check_in_opens_at = 16;
+   */
+  checkInOpensAt?: Timestamp | undefined;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp check_in_closes_at = 17;
+   */
+  checkInClosesAt?: Timestamp | undefined;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp feedback_opens_at = 18;
+   */
+  feedbackOpensAt?: Timestamp | undefined;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp feedback_closes_at = 19;
+   */
+  feedbackClosesAt?: Timestamp | undefined;
 };
 
 /**
@@ -218,7 +475,7 @@ export type Outing = Message<"issho.v1.Outing"> & {
  * Use `create(OutingSchema)` to create a new message.
  */
 export const OutingSchema: GenMessage<Outing> = /*@__PURE__*/
-  messageDesc(file_issho_v1_outing, 6);
+  messageDesc(file_issho_v1_outing, 14);
 
 /**
  * The two replies to an invitation.
@@ -424,6 +681,54 @@ export const OutingService: GenService<{
     methodKind: "unary";
     input: typeof CancelSeatRequestSchema;
     output: typeof CancelSeatResponseSchema;
+  },
+  /**
+   * "I'm here": one tap, no proof of place, for the caller's own seat, which must
+   * be going. Open from 30 minutes before the start to the plan's stated end on
+   * the city's clock: FAILED_PRECONDITION outside it and for a seat that is not
+   * going; NOT_FOUND for an outing the caller has no seat in. Checking in again
+   * changes nothing. Once checked in there is no cancel. Returns the outing as
+   * the caller sees it, with the first names of the others who have checked in.
+   * Member.
+   *
+   * @generated from rpc issho.v1.OutingService.CheckIn
+   */
+  checkIn: {
+    methodKind: "unary";
+    input: typeof CheckInRequestSchema;
+    output: typeof CheckInResponseSchema;
+  },
+  /**
+   * The caller's feedback form for an outing: who else was going at the start
+   * (each ticked by default) and the caller's answers so far. Open from the
+   * plan's stated end for 7 days, to a person who was going at the start:
+   * FAILED_PRECONDITION before it opens, after it closes, and for a seat that was
+   * not going at the start; NOT_FOUND for an outing the caller has no seat in.
+   * The others are named by first name and a handle that means something only
+   * inside this outing, never by an account, an email or a surname. Member.
+   *
+   * @generated from rpc issho.v1.OutingService.GetFeedback
+   */
+  getFeedback: {
+    methodKind: "unary";
+    input: typeof GetFeedbackRequestSchema;
+    output: typeof GetFeedbackResponseSchema;
+  },
+  /**
+   * Answers feedback's first three questions for the caller's own seat, replacing
+   * any answers given before; open as GetFeedback is, so answers can be changed
+   * until it closes. A "no" to "did you go?" ends the feedback there: nothing
+   * after it is kept. INVALID_ARGUMENT for a handle that is none of the others
+   * who were going at the start, or a pick of someone the same answer says was
+   * not there. A pick is private: no RPC tells the person picked, or anyone
+   * else. Member.
+   *
+   * @generated from rpc issho.v1.OutingService.SaveFeedback
+   */
+  saveFeedback: {
+    methodKind: "unary";
+    input: typeof SaveFeedbackRequestSchema;
+    output: typeof SaveFeedbackResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_issho_v1_outing, 0);

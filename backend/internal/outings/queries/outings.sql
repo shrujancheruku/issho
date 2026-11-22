@@ -12,8 +12,8 @@ select pg_advisory_xact_lock(hashtextextended(sqlc.arg(round_id)::text, 0));
 select account_id from app.seats where round_id = $1;
 
 -- name: InsertOuting :one
-insert into app.outings (plan_id, round_id, date, part, starts_at, languages, state, created_at)
-values ($1, $2, $3, $4, $5, $6, $7, $8)
+insert into app.outings (plan_id, round_id, date, part, starts_at, ends_at, time_zone, languages, state, created_at)
+values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 returning id;
 
 -- name: InsertSeat :exec
@@ -23,8 +23,8 @@ values ($1, $2, $3, $4, $5, $6);
 -- An account's own seats with what their outings say, earliest date first. It
 -- is by account and reads no other person's seat.
 -- name: ListSeatsOfAccount :many
-select o.id as outing_id, o.plan_id, o.date, o.part, o.starts_at, o.languages, o.state as outing_state,
-       s.state, s.invited_at, s.invitation_ends_at
+select o.id as outing_id, o.plan_id, o.date, o.part, o.starts_at, o.ends_at, o.time_zone, o.languages,
+       o.state as outing_state, s.state, s.invited_at, s.invitation_ends_at, s.checked_in_at
 from app.seats s
 join app.outings o on o.id = s.outing_id
 where s.account_id = $1
@@ -32,8 +32,8 @@ order by o.date, o.starts_at, o.id;
 
 -- One of the account's own seats, the same columns.
 -- name: GetSeatOfAccount :one
-select o.id as outing_id, o.plan_id, o.date, o.part, o.starts_at, o.languages, o.state as outing_state,
-       s.state, s.invited_at, s.invitation_ends_at
+select o.id as outing_id, o.plan_id, o.date, o.part, o.starts_at, o.ends_at, o.time_zone, o.languages,
+       o.state as outing_state, s.state, s.invited_at, s.invitation_ends_at, s.checked_in_at
 from app.seats s
 join app.outings o on o.id = s.outing_id
 where s.account_id = $1 and o.id = $2;
@@ -57,13 +57,27 @@ order by outing_id, account_id;
 -- transaction, so three people saying yes at once are counted one after the
 -- other and the third sets the outing, once.
 -- name: LockOuting :one
-select id, plan_id, round_id, date, part, state from app.outings where id = $1 for update;
+select id, plan_id, round_id, date, part, starts_at, ends_at, time_zone, state from app.outings where id = $1 for update;
 
 -- name: GetSeat :one
-select state, invited_at, invitation_ends_at from app.seats where outing_id = $1 and account_id = $2;
+select state, invited_at, invitation_ends_at, going_at, left_going_at, checked_in_at, handle
+from app.seats where outing_id = $1 and account_id = $2;
 
 -- name: SetSeatState :exec
 update app.seats set state = $3 where outing_id = $1 and account_id = $2;
+
+-- A seat becomes going: its history starts here.
+-- name: MakeSeatGoing :exec
+update app.seats set state = 'going', going_at = $3 where outing_id = $1 and account_id = $2;
+
+-- A seat going is given up: its history ends here.
+-- name: LeaveSeat :exec
+update app.seats set state = $3, left_going_at = $4 where outing_id = $1 and account_id = $2;
+
+-- One tap. A second changes nothing, the instant included.
+-- name: CheckInSeat :exec
+update app.seats set checked_in_at = $3
+where outing_id = $1 and account_id = $2 and checked_in_at is null;
 
 -- name: SetOutingState :exec
 update app.outings set state = $2 where id = $1;
@@ -71,7 +85,7 @@ update app.outings set state = $2 where id = $1;
 -- Setting the outing makes every seat that said yes going; the accounts come
 -- back so their time can be taken off their other signups.
 -- name: PromoteAcceptedSeats :many
-update app.seats set state = 'going' where outing_id = $1 and state = 'accepted' returning account_id;
+update app.seats set state = 'going', going_at = $2 where outing_id = $1 and state = 'accepted' returning account_id;
 
 -- A seat still invited when its 48 hours end is recorded as unanswered.
 -- name: ExpireUnansweredSeats :exec
@@ -113,3 +127,57 @@ update app.seats s set state = 'declined'
 from app.outings o
 where o.id = s.outing_id and s.account_id = $1 and o.date = $2 and o.part = $3 and o.id <> $4
   and s.state in ('invited', 'accepted') and s.invitation_ends_at > $5;
+
+-- Who of an outing has checked in: for the first names the people going see.
+-- name: ListCheckedIn :many
+select outing_id, account_id
+from app.seats
+where outing_id = any(sqlc.arg(outing_ids)::uuid[]) and state = 'going' and checked_in_at is not null
+order by outing_id, account_id;
+
+-- Everyone who was going at the start of an outing, by account: a seat that
+-- became going by then and had not left going by then. It is read from the
+-- seat's history, so a person who cancelled after the start is among them.
+-- name: ListGoingAtStart :many
+select account_id, handle
+from app.seats
+where outing_id = $1 and going_at <= sqlc.arg(starts_at)::timestamptz
+  and (left_going_at is null or left_going_at > sqlc.arg(starts_at)::timestamptz)
+order by account_id;
+
+-- name: GetFeedback :one
+select went, answered_at, updated_at from app.feedback where outing_id = $1 and account_id = $2;
+
+-- name: UpsertFeedback :exec
+insert into app.feedback (outing_id, account_id, went, answered_at, updated_at)
+values ($1, $2, $3, $4, $4)
+on conflict (outing_id, account_id) do update set went = excluded.went, updated_at = excluded.updated_at;
+
+-- Answers are replaced whole: whatever the person ticked and picked before is
+-- cleared and what they now say is written.
+-- name: ClearUnticks :exec
+delete from app.feedback_unticks where outing_id = $1 and rater_id = $2;
+
+-- name: InsertUntick :exec
+insert into app.feedback_unticks (outing_id, rater_id, subject_id) values ($1, $2, $3);
+
+-- name: ListUnticks :many
+select subject_id from app.feedback_unticks where outing_id = $1 and rater_id = $2 order by subject_id;
+
+-- name: ClearPicks :exec
+delete from app.picks where outing_id = $1 and picker_id = $2;
+
+-- name: InsertPick :exec
+insert into app.picks (outing_id, picker_id, picked_id, created_at) values ($1, $2, $3, $4);
+
+-- The caller's own picks. Nothing reads picks by who was picked.
+-- name: ListPicksBy :many
+select picked_id from app.picks where outing_id = $1 and picker_id = $2 order by picked_id;
+
+-- Whether the account attended: checked in or said so in feedback, and their own
+-- "I didn't go" wins over a check-in.
+-- name: IsAttended :one
+select coalesce(f.went, s.checked_in_at is not null)::boolean as attended
+from app.seats s
+left join app.feedback f on f.outing_id = s.outing_id and f.account_id = s.account_id
+where s.outing_id = $1 and s.account_id = $2;

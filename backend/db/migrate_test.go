@@ -294,9 +294,9 @@ func TestSeatAnswersMigrationDownThenUp(t *testing.T) {
 		values ('00000000-0000-4000-8000-0000000000a1', 'x', 1, 'm', '{evening}', '17:00', '18:00', '2026-01-05');
 		insert into app.plan_rounds (id, plan_id, number, starts_on, ends_on)
 		values ('00000000-0000-4000-8000-0000000000b1', '00000000-0000-4000-8000-0000000000a1', 0, '2026-01-05', '2026-01-11');
-		insert into app.outings (id, plan_id, round_id, date, part, starts_at, languages, state, created_at)
+		insert into app.outings (id, plan_id, round_id, date, part, starts_at, ends_at, time_zone, languages, state, created_at)
 		values ('00000000-0000-4000-8000-0000000000c1', '00000000-0000-4000-8000-0000000000a1', '00000000-0000-4000-8000-0000000000b1',
-		        '2026-01-09', 'evening', '17:00', '{en}', 'offered', now());
+		        '2026-01-09', 'evening', '17:00', '18:00', 'UTC', '{en}', 'offered', now());
 		insert into app.seats (outing_id, round_id, account_id, state, invited_at, invitation_ends_at)
 		values ('00000000-0000-4000-8000-0000000000c1', '00000000-0000-4000-8000-0000000000b1',
 		        '00000000-0000-4000-8000-000000000001', 'invited', now(), now() + interval '2 days');`); err != nil {
@@ -378,6 +378,100 @@ func TestJoinLinksMigrationDownThenUp(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, table := range []string{"join_links", "admissions"} {
+		if slices.Contains(objectsIn(t, pool, "app"), table) {
+			t.Errorf("app.%s remains after down", table)
+		}
+	}
+	if err := db.Up(ctx, pool); err != nil {
+		t.Fatalf("up after down: %v", err)
+	}
+}
+
+// The check-in and feedback migration (00010) keeps each outing's end and time
+// zone, a seat's history, check-in and handle, and makes the feedback, unticks
+// and picks tables. Outings and seats that were there before it get the plan's
+// end and the city's zone, and the history their state implies. Its Down drops
+// all of it and goes up again.
+func TestCheckInAndFeedbackMigrationDownThenUp(t *testing.T) {
+	ctx := context.Background()
+	pool := testdb.NewDatabase(t)
+	if err := db.Up(ctx, pool); err != nil {
+		t.Fatal(err)
+	}
+	downPast(t, pool, 9)
+	if _, err := pool.Exec(ctx, `
+		insert into app.cities (slug, state, time_zone, currency) values ('x', 'open', 'Asia/Ho_Chi_Minh', 'USD');
+		insert into app.accounts (id, email, city, display_language, created_at) values
+		  ('00000000-0000-4000-8000-000000000001', 'a@example.com', 'x', 'en', now()),
+		  ('00000000-0000-4000-8000-000000000002', 'b@example.com', 'x', 'en', now()),
+		  ('00000000-0000-4000-8000-000000000003', 'c@example.com', 'x', 'en', now());
+		insert into app.plans (id, city, price, meeting_address, parts_of_day, starts_at, ends_at, opens_on)
+		values ('00000000-0000-4000-8000-0000000000a1', 'x', 1, 'm', '{evening}', '17:00', '20:30', '2026-01-05');
+		insert into app.plan_rounds (id, plan_id, number, starts_on, ends_on)
+		values ('00000000-0000-4000-8000-0000000000b1', '00000000-0000-4000-8000-0000000000a1', 0, '2026-01-05', '2026-01-11');
+		insert into app.outings (id, plan_id, round_id, date, part, starts_at, languages, state, created_at)
+		values ('00000000-0000-4000-8000-0000000000c1', '00000000-0000-4000-8000-0000000000a1', '00000000-0000-4000-8000-0000000000b1',
+		        '2026-01-09', 'evening', '17:00', '{en}', 'set', now());
+		insert into app.seats (outing_id, round_id, account_id, state, invited_at, invitation_ends_at) values
+		  ('00000000-0000-4000-8000-0000000000c1', '00000000-0000-4000-8000-0000000000b1', '00000000-0000-4000-8000-000000000001', 'going', '2026-01-05 09:00+00', '2026-01-07 09:00+00'),
+		  ('00000000-0000-4000-8000-0000000000c1', '00000000-0000-4000-8000-0000000000b1', '00000000-0000-4000-8000-000000000002', 'cancelled', '2026-01-05 09:00+00', '2026-01-07 09:00+00'),
+		  ('00000000-0000-4000-8000-0000000000c1', '00000000-0000-4000-8000-0000000000b1', '00000000-0000-4000-8000-000000000003', 'invited', '2026-01-05 09:00+00', '2026-01-07 09:00+00');`); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := db.Up(ctx, pool); err != nil {
+		t.Fatalf("up over existing outings: %v", err)
+	}
+
+	var endsAt, zone string
+	if err := pool.QueryRow(ctx, `select ends_at, time_zone from app.outings`).Scan(&endsAt, &zone); err != nil || endsAt != "20:30" || zone != "Asia/Ho_Chi_Minh" {
+		t.Errorf("the outing got end %q and zone %q, %v; want the plan's and the city's", endsAt, zone, err)
+	}
+	history := func(account string) (going, left bool) {
+		if err := pool.QueryRow(ctx, `select going_at is not null, left_going_at is not null from app.seats where account_id = $1`, account).Scan(&going, &left); err != nil {
+			t.Fatal(err)
+		}
+		return going, left
+	}
+	for account, want := range map[string][2]bool{
+		"00000000-0000-4000-8000-000000000001": {true, false}, // going: became going, still is
+		"00000000-0000-4000-8000-000000000002": {true, true},  // cancelled: was going and left
+		"00000000-0000-4000-8000-000000000003": {false, false},
+	} {
+		if going, left := history(account); going != want[0] || left != want[1] {
+			t.Errorf("%s history = going %v, left %v; want %v", account, going, left, want)
+		}
+	}
+	for name, stmt := range map[string]string{
+		"checking in without ever going":      `update app.seats set checked_in_at = now() where account_id = '00000000-0000-4000-8000-000000000003'`,
+		"leaving going without ever going":    `update app.seats set left_going_at = now() where account_id = '00000000-0000-4000-8000-000000000003'`,
+		"a feedback row for no seat":          `insert into app.feedback (outing_id, account_id, went, answered_at, updated_at) values ('00000000-0000-4000-8000-0000000000c1', '00000000-0000-4000-8000-0000000000ff', true, now(), now())`,
+		"a pick with no feedback by the pick": `insert into app.picks (outing_id, picker_id, picked_id, created_at) values ('00000000-0000-4000-8000-0000000000c1', '00000000-0000-4000-8000-000000000001', '00000000-0000-4000-8000-000000000002', now())`,
+	} {
+		if _, err := pool.Exec(ctx, stmt); err == nil {
+			t.Errorf("%s: the database accepted it", name)
+		}
+	}
+	if _, err := pool.Exec(ctx, `insert into app.feedback (outing_id, account_id, went, answered_at, updated_at) values ('00000000-0000-4000-8000-0000000000c1', '00000000-0000-4000-8000-000000000001', true, now(), now())`); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := pool.Exec(ctx, `insert into app.picks (outing_id, picker_id, picked_id, created_at) values ('00000000-0000-4000-8000-0000000000c1', '00000000-0000-4000-8000-000000000001', '00000000-0000-4000-8000-000000000001', now())`); err == nil {
+		t.Error("a person picked themselves")
+	}
+	// A person who leaves takes what they picked and what was said of them.
+	if _, err := pool.Exec(ctx, `insert into app.picks (outing_id, picker_id, picked_id, created_at) values ('00000000-0000-4000-8000-0000000000c1', '00000000-0000-4000-8000-000000000001', '00000000-0000-4000-8000-000000000002', now())`); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := pool.Exec(ctx, `delete from app.accounts where id = '00000000-0000-4000-8000-000000000002'`); err != nil {
+		t.Fatal(err)
+	}
+	var picks int
+	if err := pool.QueryRow(ctx, `select count(*) from app.picks`).Scan(&picks); err != nil || picks != 0 {
+		t.Errorf("%d picks remain after the person picked was deleted, %v; want none", picks, err)
+	}
+
+	downPast(t, pool, 9)
+	for _, table := range []string{"feedback", "feedback_unticks", "picks"} {
 		if slices.Contains(objectsIn(t, pool, "app"), table) {
 			t.Errorf("app.%s remains after down", table)
 		}

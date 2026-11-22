@@ -89,6 +89,20 @@ type AppCityName struct {
 	Name     string
 }
 
+type AppFeedback struct {
+	OutingID   pgtype.UUID
+	AccountID  pgtype.UUID
+	Went       bool
+	AnsweredAt time.Time
+	UpdatedAt  time.Time
+}
+
+type AppFeedbackUntick struct {
+	OutingID  pgtype.UUID
+	RaterID   pgtype.UUID
+	SubjectID pgtype.UUID
+}
+
 type AppJoinLink struct {
 	ID          pgtype.UUID
 	MemberID    pgtype.UUID
@@ -107,6 +121,15 @@ type AppOuting struct {
 	StartsAt  string
 	Languages []string
 	State     string
+	CreatedAt time.Time
+	EndsAt    string
+	TimeZone  string
+}
+
+type AppPick struct {
+	OutingID  pgtype.UUID
+	PickerID  pgtype.UUID
+	PickedID  pgtype.UUID
 	CreatedAt time.Time
 }
 
@@ -186,6 +209,10 @@ type AppSeat struct {
 	State            string
 	InvitedAt        time.Time
 	InvitationEndsAt time.Time
+	GoingAt          *time.Time
+	LeftGoingAt      *time.Time
+	CheckedInAt      *time.Time
+	Handle           pgtype.UUID
 }
 
 type AppSignup struct {

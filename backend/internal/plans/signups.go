@@ -190,8 +190,10 @@ type FormingRound struct {
 	// RoundID is the stored round's id; empty while nobody has signed up to the
 	// round, which has no row yet.
 	RoundID string
-	// StartsAt is the plan's start, "HH:MM" on the city's clock.
-	StartsAt string
+	// StartsAt and EndsAt are the plan's start and stated end, "HH:MM" on the
+	// city's clock, and TimeZone is that clock's IANA name: an outing keeps all
+	// three as they were when it was formed (docs/spec/outings.md, "On the day").
+	StartsAt, EndsAt, TimeZone string
 	// Entries are the signups with at least one tick that is still
 	// policy.MinTickLeadDays ahead, one per person, by account.
 	Entries []Entry
@@ -214,7 +216,7 @@ func (s *Signups) Forming(ctx context.Context, planID string) (FormingRound, err
 	if !shown(city, plan.OpensOn, today) {
 		return FormingRound{}, ErrNotFound
 	}
-	out := FormingRound{PlanID: plan.ID, StartsAt: plan.StartsAt}
+	out := FormingRound{PlanID: plan.ID, StartsAt: plan.StartsAt, EndsAt: plan.EndsAt, TimeZone: city.TimeZone}
 	number, _, _, _ := roundOf(plan.OpensOn, today)
 	q := store.New(s.pool)
 	round, err := q.GetRound(ctx, store.GetRoundParams{PlanID: plan.ID, Number: number})

@@ -10,6 +10,53 @@ import (
 	"time"
 )
 
+const checkInSeat = `-- name: CheckInSeat :exec
+update app.seats set checked_in_at = $3
+where outing_id = $1 and account_id = $2 and checked_in_at is null
+`
+
+type CheckInSeatParams struct {
+	OutingID    string
+	AccountID   string
+	CheckedInAt *time.Time
+}
+
+// One tap. A second changes nothing, the instant included.
+func (q *Queries) CheckInSeat(ctx context.Context, arg CheckInSeatParams) error {
+	_, err := q.db.Exec(ctx, checkInSeat, arg.OutingID, arg.AccountID, arg.CheckedInAt)
+	return err
+}
+
+const clearPicks = `-- name: ClearPicks :exec
+delete from app.picks where outing_id = $1 and picker_id = $2
+`
+
+type ClearPicksParams struct {
+	OutingID string
+	PickerID string
+}
+
+func (q *Queries) ClearPicks(ctx context.Context, arg ClearPicksParams) error {
+	_, err := q.db.Exec(ctx, clearPicks, arg.OutingID, arg.PickerID)
+	return err
+}
+
+const clearUnticks = `-- name: ClearUnticks :exec
+delete from app.feedback_unticks where outing_id = $1 and rater_id = $2
+`
+
+type ClearUnticksParams struct {
+	OutingID string
+	RaterID  string
+}
+
+// Answers are replaced whole: whatever the person ticked and picked before is
+// cleared and what they now say is written.
+func (q *Queries) ClearUnticks(ctx context.Context, arg ClearUnticksParams) error {
+	_, err := q.db.Exec(ctx, clearUnticks, arg.OutingID, arg.RaterID)
+	return err
+}
+
 const countYeses = `-- name: CountYeses :many
 select outing_id, count(*)::int as yeses
 from app.seats
@@ -90,8 +137,31 @@ func (q *Queries) ExpireUnansweredSeats(ctx context.Context, arg ExpireUnanswere
 	return err
 }
 
+const getFeedback = `-- name: GetFeedback :one
+select went, answered_at, updated_at from app.feedback where outing_id = $1 and account_id = $2
+`
+
+type GetFeedbackParams struct {
+	OutingID  string
+	AccountID string
+}
+
+type GetFeedbackRow struct {
+	Went       bool
+	AnsweredAt time.Time
+	UpdatedAt  time.Time
+}
+
+func (q *Queries) GetFeedback(ctx context.Context, arg GetFeedbackParams) (GetFeedbackRow, error) {
+	row := q.db.QueryRow(ctx, getFeedback, arg.OutingID, arg.AccountID)
+	var i GetFeedbackRow
+	err := row.Scan(&i.Went, &i.AnsweredAt, &i.UpdatedAt)
+	return i, err
+}
+
 const getSeat = `-- name: GetSeat :one
-select state, invited_at, invitation_ends_at from app.seats where outing_id = $1 and account_id = $2
+select state, invited_at, invitation_ends_at, going_at, left_going_at, checked_in_at, handle
+from app.seats where outing_id = $1 and account_id = $2
 `
 
 type GetSeatParams struct {
@@ -103,18 +173,30 @@ type GetSeatRow struct {
 	State            string
 	InvitedAt        time.Time
 	InvitationEndsAt time.Time
+	GoingAt          *time.Time
+	LeftGoingAt      *time.Time
+	CheckedInAt      *time.Time
+	Handle           string
 }
 
 func (q *Queries) GetSeat(ctx context.Context, arg GetSeatParams) (GetSeatRow, error) {
 	row := q.db.QueryRow(ctx, getSeat, arg.OutingID, arg.AccountID)
 	var i GetSeatRow
-	err := row.Scan(&i.State, &i.InvitedAt, &i.InvitationEndsAt)
+	err := row.Scan(
+		&i.State,
+		&i.InvitedAt,
+		&i.InvitationEndsAt,
+		&i.GoingAt,
+		&i.LeftGoingAt,
+		&i.CheckedInAt,
+		&i.Handle,
+	)
 	return i, err
 }
 
 const getSeatOfAccount = `-- name: GetSeatOfAccount :one
-select o.id as outing_id, o.plan_id, o.date, o.part, o.starts_at, o.languages, o.state as outing_state,
-       s.state, s.invited_at, s.invitation_ends_at
+select o.id as outing_id, o.plan_id, o.date, o.part, o.starts_at, o.ends_at, o.time_zone, o.languages,
+       o.state as outing_state, s.state, s.invited_at, s.invitation_ends_at, s.checked_in_at
 from app.seats s
 join app.outings o on o.id = s.outing_id
 where s.account_id = $1 and o.id = $2
@@ -131,11 +213,14 @@ type GetSeatOfAccountRow struct {
 	Date             time.Time
 	Part             string
 	StartsAt         string
+	EndsAt           string
+	TimeZone         string
 	Languages        []string
 	OutingState      string
 	State            string
 	InvitedAt        time.Time
 	InvitationEndsAt time.Time
+	CheckedInAt      *time.Time
 }
 
 // One of the account's own seats, the same columns.
@@ -148,18 +233,21 @@ func (q *Queries) GetSeatOfAccount(ctx context.Context, arg GetSeatOfAccountPara
 		&i.Date,
 		&i.Part,
 		&i.StartsAt,
+		&i.EndsAt,
+		&i.TimeZone,
 		&i.Languages,
 		&i.OutingState,
 		&i.State,
 		&i.InvitedAt,
 		&i.InvitationEndsAt,
+		&i.CheckedInAt,
 	)
 	return i, err
 }
 
 const insertOuting = `-- name: InsertOuting :one
-insert into app.outings (plan_id, round_id, date, part, starts_at, languages, state, created_at)
-values ($1, $2, $3, $4, $5, $6, $7, $8)
+insert into app.outings (plan_id, round_id, date, part, starts_at, ends_at, time_zone, languages, state, created_at)
+values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 returning id
 `
 
@@ -169,6 +257,8 @@ type InsertOutingParams struct {
 	Date      time.Time
 	Part      string
 	StartsAt  string
+	EndsAt    string
+	TimeZone  string
 	Languages []string
 	State     string
 	CreatedAt time.Time
@@ -181,6 +271,8 @@ func (q *Queries) InsertOuting(ctx context.Context, arg InsertOutingParams) (str
 		arg.Date,
 		arg.Part,
 		arg.StartsAt,
+		arg.EndsAt,
+		arg.TimeZone,
 		arg.Languages,
 		arg.State,
 		arg.CreatedAt,
@@ -188,6 +280,27 @@ func (q *Queries) InsertOuting(ctx context.Context, arg InsertOutingParams) (str
 	var id string
 	err := row.Scan(&id)
 	return id, err
+}
+
+const insertPick = `-- name: InsertPick :exec
+insert into app.picks (outing_id, picker_id, picked_id, created_at) values ($1, $2, $3, $4)
+`
+
+type InsertPickParams struct {
+	OutingID  string
+	PickerID  string
+	PickedID  string
+	CreatedAt time.Time
+}
+
+func (q *Queries) InsertPick(ctx context.Context, arg InsertPickParams) error {
+	_, err := q.db.Exec(ctx, insertPick,
+		arg.OutingID,
+		arg.PickerID,
+		arg.PickedID,
+		arg.CreatedAt,
+	)
+	return err
 }
 
 const insertSeat = `-- name: InsertSeat :exec
@@ -214,6 +327,42 @@ func (q *Queries) InsertSeat(ctx context.Context, arg InsertSeatParams) error {
 		arg.InvitationEndsAt,
 	)
 	return err
+}
+
+const insertUntick = `-- name: InsertUntick :exec
+insert into app.feedback_unticks (outing_id, rater_id, subject_id) values ($1, $2, $3)
+`
+
+type InsertUntickParams struct {
+	OutingID  string
+	RaterID   string
+	SubjectID string
+}
+
+func (q *Queries) InsertUntick(ctx context.Context, arg InsertUntickParams) error {
+	_, err := q.db.Exec(ctx, insertUntick, arg.OutingID, arg.RaterID, arg.SubjectID)
+	return err
+}
+
+const isAttended = `-- name: IsAttended :one
+select coalesce(f.went, s.checked_in_at is not null)::boolean as attended
+from app.seats s
+left join app.feedback f on f.outing_id = s.outing_id and f.account_id = s.account_id
+where s.outing_id = $1 and s.account_id = $2
+`
+
+type IsAttendedParams struct {
+	OutingID  string
+	AccountID string
+}
+
+// Whether the account attended: checked in or said so in feedback, and their own
+// "I didn't go" wins over a check-in.
+func (q *Queries) IsAttended(ctx context.Context, arg IsAttendedParams) (bool, error) {
+	row := q.db.QueryRow(ctx, isAttended, arg.OutingID, arg.AccountID)
+	var attended bool
+	err := row.Scan(&attended)
+	return attended, err
 }
 
 const isGoingElsewhere = `-- name: IsGoingElsewhere :one
@@ -256,6 +405,28 @@ func (q *Queries) LastInvitationEnd(ctx context.Context, outingID string) (time.
 	return ends, err
 }
 
+const leaveSeat = `-- name: LeaveSeat :exec
+update app.seats set state = $3, left_going_at = $4 where outing_id = $1 and account_id = $2
+`
+
+type LeaveSeatParams struct {
+	OutingID    string
+	AccountID   string
+	State       string
+	LeftGoingAt *time.Time
+}
+
+// A seat going is given up: its history ends here.
+func (q *Queries) LeaveSeat(ctx context.Context, arg LeaveSeatParams) error {
+	_, err := q.db.Exec(ctx, leaveSeat,
+		arg.OutingID,
+		arg.AccountID,
+		arg.State,
+		arg.LeftGoingAt,
+	)
+	return err
+}
+
 const listAcceptedAccounts = `-- name: ListAcceptedAccounts :many
 select account_id from app.seats where outing_id = $1 and state = 'accepted' order by account_id
 `
@@ -275,6 +446,39 @@ func (q *Queries) ListAcceptedAccounts(ctx context.Context, outingID string) ([]
 			return nil, err
 		}
 		items = append(items, account_id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listCheckedIn = `-- name: ListCheckedIn :many
+select outing_id, account_id
+from app.seats
+where outing_id = any($1::uuid[]) and state = 'going' and checked_in_at is not null
+order by outing_id, account_id
+`
+
+type ListCheckedInRow struct {
+	OutingID  string
+	AccountID string
+}
+
+// Who of an outing has checked in: for the first names the people going see.
+func (q *Queries) ListCheckedIn(ctx context.Context, outingIds []string) ([]ListCheckedInRow, error) {
+	rows, err := q.db.Query(ctx, listCheckedIn, outingIds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListCheckedInRow
+	for rows.Next() {
+		var i ListCheckedInRow
+		if err := rows.Scan(&i.OutingID, &i.AccountID); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -315,6 +519,77 @@ func (q *Queries) ListGoing(ctx context.Context, outingIds []string) ([]ListGoin
 	return items, nil
 }
 
+const listGoingAtStart = `-- name: ListGoingAtStart :many
+select account_id, handle
+from app.seats
+where outing_id = $1 and going_at <= $2::timestamptz
+  and (left_going_at is null or left_going_at > $2::timestamptz)
+order by account_id
+`
+
+type ListGoingAtStartParams struct {
+	OutingID string
+	StartsAt time.Time
+}
+
+type ListGoingAtStartRow struct {
+	AccountID string
+	Handle    string
+}
+
+// Everyone who was going at the start of an outing, by account: a seat that
+// became going by then and had not left going by then. It is read from the
+// seat's history, so a person who cancelled after the start is among them.
+func (q *Queries) ListGoingAtStart(ctx context.Context, arg ListGoingAtStartParams) ([]ListGoingAtStartRow, error) {
+	rows, err := q.db.Query(ctx, listGoingAtStart, arg.OutingID, arg.StartsAt)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListGoingAtStartRow
+	for rows.Next() {
+		var i ListGoingAtStartRow
+		if err := rows.Scan(&i.AccountID, &i.Handle); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listPicksBy = `-- name: ListPicksBy :many
+select picked_id from app.picks where outing_id = $1 and picker_id = $2 order by picked_id
+`
+
+type ListPicksByParams struct {
+	OutingID string
+	PickerID string
+}
+
+// The caller's own picks. Nothing reads picks by who was picked.
+func (q *Queries) ListPicksBy(ctx context.Context, arg ListPicksByParams) ([]string, error) {
+	rows, err := q.db.Query(ctx, listPicksBy, arg.OutingID, arg.PickerID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var picked_id string
+		if err := rows.Scan(&picked_id); err != nil {
+			return nil, err
+		}
+		items = append(items, picked_id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listSeatedInRound = `-- name: ListSeatedInRound :many
 select account_id from app.seats where round_id = $1
 `
@@ -341,8 +616,8 @@ func (q *Queries) ListSeatedInRound(ctx context.Context, roundID string) ([]stri
 }
 
 const listSeatsOfAccount = `-- name: ListSeatsOfAccount :many
-select o.id as outing_id, o.plan_id, o.date, o.part, o.starts_at, o.languages, o.state as outing_state,
-       s.state, s.invited_at, s.invitation_ends_at
+select o.id as outing_id, o.plan_id, o.date, o.part, o.starts_at, o.ends_at, o.time_zone, o.languages,
+       o.state as outing_state, s.state, s.invited_at, s.invitation_ends_at, s.checked_in_at
 from app.seats s
 join app.outings o on o.id = s.outing_id
 where s.account_id = $1
@@ -355,11 +630,14 @@ type ListSeatsOfAccountRow struct {
 	Date             time.Time
 	Part             string
 	StartsAt         string
+	EndsAt           string
+	TimeZone         string
 	Languages        []string
 	OutingState      string
 	State            string
 	InvitedAt        time.Time
 	InvitationEndsAt time.Time
+	CheckedInAt      *time.Time
 }
 
 // An account's own seats with what their outings say, earliest date first. It
@@ -379,15 +657,47 @@ func (q *Queries) ListSeatsOfAccount(ctx context.Context, accountID string) ([]L
 			&i.Date,
 			&i.Part,
 			&i.StartsAt,
+			&i.EndsAt,
+			&i.TimeZone,
 			&i.Languages,
 			&i.OutingState,
 			&i.State,
 			&i.InvitedAt,
 			&i.InvitationEndsAt,
+			&i.CheckedInAt,
 		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listUnticks = `-- name: ListUnticks :many
+select subject_id from app.feedback_unticks where outing_id = $1 and rater_id = $2 order by subject_id
+`
+
+type ListUnticksParams struct {
+	OutingID string
+	RaterID  string
+}
+
+func (q *Queries) ListUnticks(ctx context.Context, arg ListUnticksParams) ([]string, error) {
+	rows, err := q.db.Query(ctx, listUnticks, arg.OutingID, arg.RaterID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var subject_id string
+		if err := rows.Scan(&subject_id); err != nil {
+			return nil, err
+		}
+		items = append(items, subject_id)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -417,16 +727,19 @@ func (q *Queries) LockAccountTime(ctx context.Context, arg LockAccountTimeParams
 }
 
 const lockOuting = `-- name: LockOuting :one
-select id, plan_id, round_id, date, part, state from app.outings where id = $1 for update
+select id, plan_id, round_id, date, part, starts_at, ends_at, time_zone, state from app.outings where id = $1 for update
 `
 
 type LockOutingRow struct {
-	ID      string
-	PlanID  string
-	RoundID string
-	Date    time.Time
-	Part    string
-	State   string
+	ID       string
+	PlanID   string
+	RoundID  string
+	Date     time.Time
+	Part     string
+	StartsAt string
+	EndsAt   string
+	TimeZone string
+	State    string
 }
 
 // Answering is one at a time per outing: the row lock is held to the end of the
@@ -441,6 +754,9 @@ func (q *Queries) LockOuting(ctx context.Context, id string) (LockOutingRow, err
 		&i.RoundID,
 		&i.Date,
 		&i.Part,
+		&i.StartsAt,
+		&i.EndsAt,
+		&i.TimeZone,
 		&i.State,
 	)
 	return i, err
@@ -461,14 +777,35 @@ func (q *Queries) LockRound(ctx context.Context, roundID string) error {
 	return err
 }
 
-const promoteAcceptedSeats = `-- name: PromoteAcceptedSeats :many
-update app.seats set state = 'going' where outing_id = $1 and state = 'accepted' returning account_id
+const makeSeatGoing = `-- name: MakeSeatGoing :exec
+update app.seats set state = 'going', going_at = $3 where outing_id = $1 and account_id = $2
 `
+
+type MakeSeatGoingParams struct {
+	OutingID  string
+	AccountID string
+	GoingAt   *time.Time
+}
+
+// A seat becomes going: its history starts here.
+func (q *Queries) MakeSeatGoing(ctx context.Context, arg MakeSeatGoingParams) error {
+	_, err := q.db.Exec(ctx, makeSeatGoing, arg.OutingID, arg.AccountID, arg.GoingAt)
+	return err
+}
+
+const promoteAcceptedSeats = `-- name: PromoteAcceptedSeats :many
+update app.seats set state = 'going', going_at = $2 where outing_id = $1 and state = 'accepted' returning account_id
+`
+
+type PromoteAcceptedSeatsParams struct {
+	OutingID string
+	GoingAt  *time.Time
+}
 
 // Setting the outing makes every seat that said yes going; the accounts come
 // back so their time can be taken off their other signups.
-func (q *Queries) PromoteAcceptedSeats(ctx context.Context, outingID string) ([]string, error) {
-	rows, err := q.db.Query(ctx, promoteAcceptedSeats, outingID)
+func (q *Queries) PromoteAcceptedSeats(ctx context.Context, arg PromoteAcceptedSeatsParams) ([]string, error) {
+	rows, err := q.db.Query(ctx, promoteAcceptedSeats, arg.OutingID, arg.GoingAt)
 	if err != nil {
 		return nil, err
 	}
@@ -513,5 +850,28 @@ type SetSeatStateParams struct {
 
 func (q *Queries) SetSeatState(ctx context.Context, arg SetSeatStateParams) error {
 	_, err := q.db.Exec(ctx, setSeatState, arg.OutingID, arg.AccountID, arg.State)
+	return err
+}
+
+const upsertFeedback = `-- name: UpsertFeedback :exec
+insert into app.feedback (outing_id, account_id, went, answered_at, updated_at)
+values ($1, $2, $3, $4, $4)
+on conflict (outing_id, account_id) do update set went = excluded.went, updated_at = excluded.updated_at
+`
+
+type UpsertFeedbackParams struct {
+	OutingID   string
+	AccountID  string
+	Went       bool
+	AnsweredAt time.Time
+}
+
+func (q *Queries) UpsertFeedback(ctx context.Context, arg UpsertFeedbackParams) error {
+	_, err := q.db.Exec(ctx, upsertFeedback,
+		arg.OutingID,
+		arg.AccountID,
+		arg.Went,
+		arg.AnsweredAt,
+	)
 	return err
 }

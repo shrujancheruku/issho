@@ -349,6 +349,10 @@ _Avoid_: went, showed up
 **Attendee**:
 A person who attended an outing.
 
+**Check-in**:
+One tap ("I'm here") by a person going, with no proof of place, from 30 minutes before the start to the plan's stated end. Once checked in there is no cancel; the group sees who has checked in.
+_Avoid_: arrive, confirm
+
 **The group's word**:
 What most of at least 2 others said about whether a person was there.
 

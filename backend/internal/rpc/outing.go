@@ -70,15 +70,80 @@ func (s outingService) CancelSeat(ctx context.Context, req *connect.Request[issh
 	return connect.NewResponse(&isshov1.CancelSeatResponse{Outing: outingOf(seat)}), nil
 }
 
+// CheckIn records the caller's "I'm here" for their own seat. The seat is the
+// caller's, from the interceptor's verified identity.
+func (s outingService) CheckIn(ctx context.Context, req *connect.Request[isshov1.CheckInRequest]) (*connect.Response[isshov1.CheckInResponse], error) {
+	id, ok := IdentityFrom(ctx)
+	if !ok {
+		return nil, connect.NewError(connect.CodeInternal, errors.New("no identity"))
+	}
+	seat, err := s.outings.CheckIn(ctx, id.Subject, req.Msg.GetOutingId())
+	if err != nil {
+		return nil, outingError(err, "could not check in")
+	}
+	return connect.NewResponse(&isshov1.CheckInResponse{Outing: outingOf(seat)}), nil
+}
+
+// GetFeedback is the caller's own feedback form for an outing they were going to
+// at the start: the others by first name and handle, and the caller's answers.
+func (s outingService) GetFeedback(ctx context.Context, req *connect.Request[isshov1.GetFeedbackRequest]) (*connect.Response[isshov1.GetFeedbackResponse], error) {
+	id, ok := IdentityFrom(ctx)
+	if !ok {
+		return nil, connect.NewError(connect.CodeInternal, errors.New("no identity"))
+	}
+	f, err := s.outings.Feedback(ctx, id.Subject, req.Msg.GetOutingId())
+	if err != nil {
+		return nil, outingError(err, "could not read the feedback")
+	}
+	return connect.NewResponse(&isshov1.GetFeedbackResponse{Feedback: feedbackOf(f)}), nil
+}
+
+// SaveFeedback records the caller's answers to feedback's first three questions.
+// Nothing it returns says who picked whom: the response holds the caller's own
+// answers only.
+func (s outingService) SaveFeedback(ctx context.Context, req *connect.Request[isshov1.SaveFeedbackRequest]) (*connect.Response[isshov1.SaveFeedbackResponse], error) {
+	id, ok := IdentityFrom(ctx)
+	if !ok {
+		return nil, connect.NewError(connect.CodeInternal, errors.New("no identity"))
+	}
+	f, err := s.outings.SaveFeedback(ctx, id.Subject, req.Msg.GetOutingId(), outings.FeedbackInput{
+		Went: req.Msg.GetWent(), NotThere: req.Msg.GetNotThere(), MeetAgain: req.Msg.GetMeetAgain(),
+	})
+	if err != nil {
+		return nil, outingError(err, "could not save the feedback")
+	}
+	return connect.NewResponse(&isshov1.SaveFeedbackResponse{Feedback: feedbackOf(f)}), nil
+}
+
+// feedbackOf is a form as the API shows it: first names and handles of the
+// others, and the caller's own answers.
+func feedbackOf(f outings.Feedback) *isshov1.Feedback {
+	others := make([]*isshov1.Companion, len(f.Others))
+	for i, c := range f.Others {
+		others[i] = &isshov1.Companion{Handle: c.Handle, FirstName: c.FirstName}
+	}
+	return &isshov1.Feedback{
+		OutingId: f.OutingID, Answered: f.Answered, Went: f.Went, Others: others,
+		NotThere: f.NotThere, MeetAgain: f.MeetAgain, ClosesAt: timestamppb.New(f.ClosesAt),
+	}
+}
+
 // outingOf is a seat as the API shows it: no other person but the first names of
 // those going, which the seat carries only for a person who is going.
 func outingOf(seat outings.Seat) *isshov1.Outing {
-	return &isshov1.Outing{
+	o := &isshov1.Outing{
 		Id: seat.OutingID, PlanId: seat.PlanID, Date: seat.Date, Part: seat.Part, StartsAt: seat.StartsAt,
 		Languages: seat.Languages, SeatState: seatState(seat.State),
 		InvitedAt: timestamppb.New(seat.InvitedAt), InvitationEndsAt: timestamppb.New(seat.InvitationEndsAt),
 		OutingState: outingState(seat.OutingState), YesCount: int32(seat.YesCount), OthersGoing: seat.GoingFirstNames,
+		CheckedIn: seat.CheckedIn, CheckedInNames: seat.CheckedInFirstNames,
+		CheckInOpensAt: timestamppb.New(seat.CheckInOpensAt), CheckInClosesAt: timestamppb.New(seat.CheckInClosesAt),
+		FeedbackOpensAt: timestamppb.New(seat.FeedbackOpensAt), FeedbackClosesAt: timestamppb.New(seat.FeedbackClosesAt),
 	}
+	if seat.CheckedIn {
+		o.CheckedInAt = timestamppb.New(seat.CheckedInAt)
+	}
+	return o
 }
 
 // outingError is the status for a refused call. An error that isn't one of the
@@ -88,13 +153,23 @@ func outingError(err error, msg string) error {
 	case errors.Is(err, outings.ErrNotFound):
 		return connect.NewError(connect.CodeNotFound, errors.New("no such outing"))
 	case errors.Is(err, outings.ErrInvalid):
-		return connect.NewError(connect.CodeInvalidArgument, errors.New("the answer is yes or no"))
+		return connect.NewError(connect.CodeInvalidArgument, errors.New("the answer is not one the outing takes"))
 	case errors.Is(err, outings.ErrInvitationClosed):
 		return connect.NewError(connect.CodeFailedPrecondition, errors.New("the invitation is closed"))
 	case errors.Is(err, outings.ErrTimeTaken):
 		return connect.NewError(connect.CodeFailedPrecondition, errors.New("you are going to another outing at that time"))
 	case errors.Is(err, outings.ErrNotGoing):
 		return connect.NewError(connect.CodeFailedPrecondition, errors.New("the seat is not going"))
+	case errors.Is(err, outings.ErrCheckedIn):
+		return connect.NewError(connect.CodeFailedPrecondition, errors.New("you have checked in, so there is no cancel"))
+	case errors.Is(err, outings.ErrCheckInClosed):
+		return connect.NewError(connect.CodeFailedPrecondition, errors.New("check-in is not open"))
+	case errors.Is(err, outings.ErrFeedbackNotOpen):
+		return connect.NewError(connect.CodeFailedPrecondition, errors.New("feedback is not open yet"))
+	case errors.Is(err, outings.ErrFeedbackClosed):
+		return connect.NewError(connect.CodeFailedPrecondition, errors.New("feedback is closed"))
+	case errors.Is(err, outings.ErrNotThere):
+		return connect.NewError(connect.CodeFailedPrecondition, errors.New("you were not going at the start"))
 	}
 	return connect.NewError(connect.CodeInternal, errors.New(msg))
 }
