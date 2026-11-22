@@ -21,6 +21,8 @@ Pass `--port <n>` after `expo start` to use another port. To see the server rend
 
 Screenshots of every empty tab at phone width, light and dark, English and Vietnamese, are in `docs/screenshots/` (`<tab>-<language>-<theme>.png`). The You tab's are of a dev build, so they show the API's version: the web image (`apps/web/Dockerfile`) built with `EXPO_PUBLIC_API_URL` set to its own origin and run with `API_ORIGIN` pointing at a local API, as on dev, and captured with Playwright's Chromium at 390×780, device scale 2, with the language and colour scheme set. A production build shows the tab without that line.
 
+The sign-in screens (`sign-in-email`, `sign-in-code`, `sign-in-wrong-code`) and the signed-in You tab (`you-signed-in`) are in `docs/screenshots/` as `<state>-en-<theme>.png` from the web at 390 wide, and `<state>-android.png` from the emulator. They were taken against a local stand-in for Supabase Auth and the API (a throwaway script, not in the repo: code `123456` right, any other wrong), with `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_API_URL` pointed at it. The iOS simulator's are not attached: `make native-ios` still fails in `expo-modules-jsi` ([#631](https://github.com/shrujancheruku/issho/issues/631)). Vietnamese screenshots of these states are not attached; the Vietnamese strings are covered by `sign-in.test.tsx` and `you-account.test.tsx`.
+
 ## Testing
 
 `make lint test` at the repo root runs everything below; `pnpm --filter @issho/app test` runs the tests alone.
