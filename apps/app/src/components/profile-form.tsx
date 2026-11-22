@@ -9,11 +9,31 @@ import { useI18n } from '@/i18n/i18n-provider';
 import type { StringKey } from '@/i18n/strings';
 import { useApi } from '@/api/api-provider';
 import { type Answers, GENDERS, isAdult, isRealPastDate, LANGUAGES, localDay, offersWomenOnly, validName } from '@/profile/answers';
+import { languageName, searchLanguages } from '@/profile/languages';
 
 type Step = 'name' | 'dateOfBirth' | 'gender' | 'languages' | 'city' | 'conduct';
 /** The order the spec gives (docs/spec/people.md, "The profile"). */
 const STEPS: readonly Step[] = ['name', 'dateOfBirth', 'gender', 'languages', 'city', 'conduct'];
 const RULES = ['profile.conduct.rule1', 'profile.conduct.rule2', 'profile.conduct.rule3', 'profile.conduct.rule4', 'profile.conduct.rule5', 'profile.conduct.rule6'] as const;
+
+/**
+ * The languages to tick: what the search finds, right under the box (docs/spec/languages.md:
+ * any language can be listed), then the likely ones, then any other already ticked.
+ */
+function languageChoices(ticked: string[], query: string, lang: Parameters<typeof languageName>[1], t: (key: StringKey) => string) {
+  const likely = LANGUAGES.map((l) => ({ code: l.code as string, name: t(l.labelKey) }));
+  const out: { code: string; name: string }[] = [];
+  const have = new Set<string>();
+  const add = (l: { code: string; name: string }) => {
+    if (have.has(l.code)) return;
+    have.add(l.code);
+    out.push(l);
+  };
+  searchLanguages(query, lang).forEach(add);
+  likely.forEach(add);
+  ticked.map((code) => ({ code, name: languageName(code, lang) })).forEach(add);
+  return out;
+}
 
 export const EMPTY_ANSWERS: Answers = {
   name: '',
@@ -33,7 +53,7 @@ export const EMPTY_ANSWERS: Answers = {
  * saved it.
  */
 export function ProfileForm({ existing, onSaved }: { existing?: Answers; onSaved: () => void }) {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const theme = useTheme();
   const api = useApi();
   const editing = existing !== undefined;
@@ -42,6 +62,7 @@ export function ProfileForm({ existing, onSaved }: { existing?: Answers; onSaved
   const [index, setIndex] = useState(0);
   const [problem, setProblem] = useState<StringKey | null>(null);
   const [busy, setBusy] = useState(false);
+  const [search, setSearch] = useState('');
   const set = (patch: Partial<Answers>) => {
     setAnswers((a) => ({ ...a, ...patch }));
     setProblem(null);
@@ -78,7 +99,8 @@ export function ProfileForm({ existing, onSaved }: { existing?: Answers; onSaved
         gender: answers.gender,
         languages: answers.languages,
         livesInCity: answers.livesInCity === true,
-        acceptedCodeOfConduct: true,
+        // Accepted by the person at the first save only; a change never accepts a version.
+        acceptedCodeOfConduct: !editing,
         onlyWomenAndNonBinary: offersWomenOnly(answers.gender) && answers.onlyWomenAndNonBinary,
       });
       onSaved();
@@ -162,11 +184,15 @@ export function ProfileForm({ existing, onSaved }: { existing?: Answers; onSaved
               <Text accessibilityRole="header" style={[styles.question, { color: theme.text }]}>
                 {t('profile.languages.label')}
               </Text>
-              {LANGUAGES.map((l) => (
+              <Field label={t('profile.languages.search')} value={search} onChangeText={setSearch} autoCapitalize="none" autoCorrect={false} />
+              {search.trim() !== '' && searchLanguages(search, lang).length === 0 && (
+                <Text style={[styles.help, { color: theme.textSecondary }]}>{t('profile.languages.none')}</Text>
+              )}
+              {languageChoices(answers.languages, search, lang, t).map((l) => (
                 <Choice
                   key={l.code}
                   kind="checkbox"
-                  label={t(l.labelKey)}
+                  label={l.name}
                   selected={answers.languages.includes(l.code)}
                   onPress={() => set({ languages: answers.languages.includes(l.code) ? answers.languages.filter((c) => c !== l.code) : [...answers.languages, l.code] })}
                 />
@@ -193,7 +219,12 @@ export function ProfileForm({ existing, onSaved }: { existing?: Answers; onSaved
                   {i + 1}. {t(rule)}
                 </Text>
               ))}
-              <Choice kind="checkbox" label={t('profile.conduct.agree')} selected={answers.acceptedCodeOfConduct} onPress={() => set({ acceptedCodeOfConduct: !answers.acceptedCodeOfConduct })} />
+              {editing ? (
+                // Said once, at the first save: a change shows it as a fact and sends no acceptance.
+                <Text style={[styles.rule, { color: theme.textSecondary }]}>{t('profile.conduct.accepted')}</Text>
+              ) : (
+                <Choice kind="checkbox" label={t('profile.conduct.agree')} selected={answers.acceptedCodeOfConduct} onPress={() => set({ acceptedCodeOfConduct: !answers.acceptedCodeOfConduct })} />
+              )}
             </>
           )}
         </View>

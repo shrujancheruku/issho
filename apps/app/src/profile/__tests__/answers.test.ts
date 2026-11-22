@@ -33,3 +33,33 @@ describe('a name', () => {
     expect(validName('a'.repeat(41))).toBe(false);
   });
 });
+
+describe('searching every language by its name, in the display language', () => {
+  // searchLanguages / languageName are imported late so the file above still reads as it did.
+  const { languageName, searchLanguages } = require('../languages') as typeof import('../languages');
+
+  it('finds a language the short list does not hold, by its English name', () => {
+    expect(searchLanguages('fili', 'en').map((l) => l.code)).toContain('fil');
+    expect(languageName('fil', 'en')).toBe('Filipino');
+  });
+
+  it('shows and matches the names in the display language', () => {
+    expect(languageName('ja', 'vi')).toBe('Tiếng Nhật');
+    expect(searchLanguages('tiếng nhật', 'vi').map((l) => l.code)).toContain('ja');
+    expect(searchLanguages('nhat', 'vi').map((l) => l.code)).toContain('ja');
+  });
+
+  it('ignores case and accents, and an empty search lists nothing', () => {
+    expect(searchLanguages('HAWAIIAN', 'en').map((l) => l.code)).toContain('haw');
+    expect(searchLanguages('  ', 'en')).toEqual([]);
+  });
+
+  it('offers codes the API accepts, once each, with no placeholder entries', () => {
+    const all = searchLanguages('a', 'en', 10000);
+    const codes = all.map((l) => l.code);
+    expect(new Set(codes).size).toBe(codes.length);
+    for (const code of codes) expect(code).toMatch(/^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$/);
+    for (const pseudo of ['und', 'mul', 'zxx', 'mis']) expect(codes).not.toContain(pseudo);
+    expect(codes).not.toContain('eng'); // "en" is the one code for English
+  });
+});

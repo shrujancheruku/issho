@@ -74,17 +74,29 @@ export function Choice({ label, selected, onPress, kind }: { label: string; sele
   );
 }
 
-/** An on-off setting with its label and a line of help. */
+/**
+ * An on-off setting with its label and a line of help. The whole row is the
+ * target (the label too), at least 44 points tall; the switch inside only shows
+ * the state.
+ */
 export function Toggle({ label, help, value, onValueChange }: { label: string; help?: string; value: boolean; onValueChange: (value: boolean) => void }) {
   const theme = useTheme();
   return (
-    <View style={styles.toggle}>
+    <Pressable
+      accessibilityRole="switch"
+      accessibilityLabel={label}
+      accessibilityState={{ checked: value }}
+      onPress={() => onValueChange(!value)}
+      style={styles.toggle}
+    >
       <View style={styles.toggleText}>
         <Text style={[styles.buttonText, { color: theme.text }]}>{label}</Text>
         {help ? <Text style={[styles.label, { color: theme.textSecondary }]}>{help}</Text> : null}
       </View>
-      <Switch accessibilityLabel={label} value={value} onValueChange={onValueChange} trackColor={{ true: theme.accent }} />
-    </View>
+      <View pointerEvents="none" accessible={false} importantForAccessibility="no-hide-descendants">
+        <Switch value={value} trackColor={{ true: theme.accent }} />
+      </View>
+    </Pressable>
   );
 }
 
@@ -96,7 +108,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: Spacing.three,
   },
-  toggle: { minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
+  toggle: { minHeight: 48, paddingVertical: Spacing.one, flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
   toggleText: { flex: 1, gap: Spacing.half },
   field: { gap: Spacing.one },
   label: { fontSize: FontSize.small },

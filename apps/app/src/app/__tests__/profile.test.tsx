@@ -100,7 +100,7 @@ describe('the profile, asked at the first signup', () => {
     // 3. gender, with its reason
     expect(await screen.findByText('We ask so that nobody ends up the only woman or the only man in a group.')).toBeTruthy();
     await fireEvent.press(screen.getByRole('radio', { name: 'Woman' }));
-    await fireEvent(screen.getByRole('switch', { name: 'Only women and non-binary people' }), 'valueChange', true);
+    await fireEvent.press(screen.getByRole('switch', { name: 'Only women and non-binary people' }));
     await next();
     // 4. spoken languages
     expect(await screen.findByText('Which languages can you comfortably hold a conversation in for a whole outing?')).toBeTruthy();
@@ -208,7 +208,7 @@ describe('the profile, asked at the first signup', () => {
     const api = fakeApi();
     await toGender(api);
     await fireEvent.press(screen.getByRole('radio', { name: 'Woman' }));
-    await fireEvent(screen.getByRole('switch', { name: 'Only women and non-binary people' }), 'valueChange', true);
+    await fireEvent.press(screen.getByRole('switch', { name: 'Only women and non-binary people' }));
     await fireEvent.press(screen.getByRole('radio', { name: 'Man' }));
     await next();
     await fireEvent.press(screen.getByRole('checkbox', { name: 'English' }));
@@ -289,14 +289,102 @@ describe('the profile, asked at the first signup', () => {
     insets.mockReturnValue({ top: 0, bottom: 0, left: 0, right: 0 });
   });
 
-  it('gives every control a label and a 44-point target', async () => {
-    await toGender(fakeApi());
-    const controls = [...screen.getAllByRole('radio'), ...screen.getAllByRole('button')];
-    expect(controls.length).toBeGreaterThan(4);
+  // Every kind of control on these screens: text boxes, radios, switches, checkboxes and buttons.
+  const targets = () => [
+    ...screen.queryAllByRole('radio'),
+    ...screen.queryAllByRole('checkbox'),
+    ...screen.queryAllByRole('switch'),
+    ...screen.queryAllByRole('button'),
+  ];
+  const expectLabelledAndBig = (controls: ReturnType<typeof targets>) => {
     for (const control of controls) {
       expect(control.props.accessibilityLabel ?? control.props.children).toBeTruthy();
       expect(StyleSheet.flatten(control.props.style).minHeight).toBeGreaterThanOrEqual(44);
     }
+  };
+
+  it('gives every control a label and a 44-point target', async () => {
+    const api = fakeApi();
+    await toGender(api);
+    await fireEvent.press(screen.getByRole('radio', { name: 'Woman' }));
+    expect(screen.getByRole('switch')).toBeTruthy();
+    const kinds = new Set(targets().map((c) => c.props.accessibilityRole));
+    expect([...kinds]).toEqual(expect.arrayContaining(['radio', 'switch', 'button']));
+    expectLabelledAndBig(targets());
+
+    await next();
+    expect(await screen.findByLabelText('Search every language')).toBeTruthy();
+    expect(screen.getAllByRole('checkbox').length).toBeGreaterThan(4);
+    expectLabelledAndBig(targets());
+    await fireEvent.press(screen.getByRole('checkbox', { name: 'English' }));
+    await next();
+    await fireEvent.press(screen.getByRole('radio', { name: 'Yes' }));
+    await next();
+    expect(screen.getByRole('checkbox', { name: 'I agree to the code of conduct' })).toBeTruthy();
+    expectLabelledAndBig(targets());
+  });
+
+  it('gives the name and date of birth boxes a 44-point target too', async () => {
+    await open('/profile');
+    const name = await screen.findByLabelText('The name you go by');
+    expect(StyleSheet.flatten(name.props.style).minHeight).toBeGreaterThanOrEqual(44);
+    await fireEvent.changeText(name, 'Ada');
+    await next();
+    const dob = await screen.findByLabelText('Date of birth (YYYY-MM-DD)');
+    expect(StyleSheet.flatten(dob.props.style).minHeight).toBeGreaterThanOrEqual(44);
+  });
+
+  it('flips the switch from its whole row, the label included', async () => {
+    await toGender(fakeApi());
+    await fireEvent.press(screen.getByRole('radio', { name: 'Woman' }));
+    const row = screen.getByRole('switch', { name: 'Only women and non-binary people' });
+    expect(row.props.accessibilityState).toMatchObject({ checked: false });
+    await fireEvent.press(screen.getByText('Only women and non-binary people'));
+    expect(screen.getByRole('switch', { name: 'Only women and non-binary people' }).props.accessibilityState).toMatchObject({ checked: true });
+  });
+
+  it('lets any language be ticked by searching its name, and lists what was ticked', async () => {
+    const api = fakeApi();
+    await toGender(api);
+    await fireEvent.press(screen.getByRole('radio', { name: 'Man' }));
+    await next();
+    await fireEvent.press(screen.getByRole('checkbox', { name: 'English' }));
+    expect(screen.queryByRole('checkbox', { name: 'Filipino' })).toBeNull();
+    await fireEvent.changeText(screen.getByLabelText('Search every language'), 'filip');
+    await fireEvent.press(await screen.findByRole('checkbox', { name: 'Filipino' }));
+    await fireEvent.changeText(screen.getByLabelText('Search every language'), '');
+    // Ticked, so still shown with the short list once the search is cleared.
+    expect(screen.getByRole('checkbox', { name: 'Filipino' }).props.accessibilityState).toMatchObject({ checked: true });
+    await next();
+    await fireEvent.press(screen.getByRole('radio', { name: 'No' }));
+    await next();
+    await fireEvent.press(screen.getByRole('checkbox', { name: 'I agree to the code of conduct' }));
+    await press('Save');
+    await waitFor(() => expect(api.profile.saveProfile).toHaveBeenCalled());
+    expect(api.profile.saveProfile.mock.calls[0][0].languages).toEqual(['en', 'fil']);
+  });
+
+  it('lists what the search finds first, so it is on screen beside the box', async () => {
+    await toGender(fakeApi());
+    await fireEvent.press(screen.getByRole('radio', { name: 'Man' }));
+    await next();
+    await fireEvent.changeText(screen.getByLabelText('Search every language'), 'hawaii');
+    expect(screen.getAllByRole('checkbox')[0].props.accessibilityLabel).toBe('Hawaiian');
+    await fireEvent.changeText(screen.getByLabelText('Search every language'), 'zzzz');
+    expect(screen.getByText('No language has that name.')).toBeTruthy();
+  });
+
+  it('searches the language names in the display language', async () => {
+    await open('/profile', fakeApi(), 'vi');
+    await fireEvent.changeText(await screen.findByLabelText('Tên bạn muốn được gọi'), 'Ada');
+    await fireEvent.press(screen.getByRole('button', { name: 'Tiếp' }));
+    await fireEvent.changeText(await screen.findByLabelText('Ngày sinh (NNNN-TT-NN)'), '1990-04-23');
+    await fireEvent.press(screen.getByRole('button', { name: 'Tiếp' }));
+    await screen.findAllByRole('radio');
+    await fireEvent.press(screen.getAllByRole('radio')[1]);
+    await fireEvent.press(screen.getByRole('button', { name: 'Tiếp' }));
+    await fireEvent.changeText(await screen.findByLabelText('Tìm mọi ngôn ngữ'), 'hawaii');
+    expect(await screen.findByRole('checkbox', { name: 'Tiếng Hawaii' })).toBeTruthy();
   });
 
   it('is asked in Vietnamese too', async () => {
@@ -332,9 +420,22 @@ describe('the profile on the You tab', () => {
       gender: 'non-binary',
       languages: ['en', 'vi'],
       livesInCity: true,
-      acceptedCodeOfConduct: true,
+      // Changing the profile never accepts a version: only the first save does.
+      acceptedCodeOfConduct: false,
       onlyWomenAndNonBinary: true,
     });
+  });
+
+  it('shows that the code of conduct was accepted, without a box to tick, and sends no acceptance', async () => {
+    const api = fakeApi();
+    api.profile.getProfile.mockResolvedValue({ profile: saved });
+    await open('/profile?next=/you', api);
+    await screen.findByLabelText('The name you go by');
+    expect(screen.getByText('You accepted the code of conduct.')).toBeTruthy();
+    expect(screen.queryByRole('checkbox', { name: 'I agree to the code of conduct' })).toBeNull();
+    await press('Save');
+    await waitFor(() => expect(api.profile.saveProfile).toHaveBeenCalled());
+    expect(api.profile.saveProfile.mock.calls[0][0]).toMatchObject({ acceptedCodeOfConduct: false });
   });
 
   it('offers to give the profile when there is none', async () => {
