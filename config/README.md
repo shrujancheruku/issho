@@ -6,7 +6,7 @@ Kamal 2's configuration for dev ([docs/deploy.md](../docs/deploy.md) says how a 
 |---|---|
 | `deploy.yml` | The backend service `issho`: the API (behind kamal-proxy) and the worker (no proxy), both from `backend/Dockerfile`. What every environment shares |
 | `deploy.dev.yml` | The backend's dev destination: the host, the pinned SSH host key and the API's name |
-| `deploy.web.yml` | The Expo server, a service of its own (`issho-web`, from `apps/web/Dockerfile`) on the same host and proxy. Used with `-c config/deploy.web.yml` |
+| `deploy.web.yml` | The Expo server, a service of its own (`issho-web`, from `apps/web/Dockerfile`) on the same host and proxy. Used with `-c config/deploy.web.yml`. Its build takes the sign-in's Supabase values as builder secrets |
 | `deploy.web.dev.yml` | The Expo server's dev destination: its host, the pinned SSH host key, its name and the address its build calls |
 | `kamal-version` | The Kamal release CI installs and the config test runs |
 

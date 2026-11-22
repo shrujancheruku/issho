@@ -72,6 +72,8 @@ out = {}
     ssh_config: c.ssh.options[:config],
     cert: c.proxy.certificate_pem_content,
     build_args: c.builder.args,
+    build_secrets: c.raw_config.builder["secrets"],
+    secret_values: %w[EXPO_PUBLIC_SUPABASE_URL EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY].map { |k| c.secrets[k] },
     env_clear: c.raw_config.env&.dig("clear"),
     worker_secrets: c.raw_config.servers["worker"]&.dig("env", "secret"),
   }
@@ -126,6 +128,14 @@ expect "the API is built with the commit's version, as a string" '.backend.build
 
 # The web is built for the page's own origin.
 expect "the web is built against the page's origin" '.web.build_args.EXPO_PUBLIC_API_URL' https://dev.joinissho.com
+
+# The sign-in's Supabase values reach the build as builder secrets, read by name
+# from Secret Manager (never a build argument, which would sit in the image's history).
+expect "the web build takes the Supabase URL as a secret" '.web.build_secrets | index("EXPO_PUBLIC_SUPABASE_URL") != null' true
+expect "the web build takes the publishable key as a secret" '.web.build_secrets | index("EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY") != null' true
+expect "the Supabase URL is read from dev-supabase-url" '.web.secret_values[0]' value-of-dev-supabase-url
+expect "the publishable key is read from dev-supabase-publishable-key" '.web.secret_values[1]' value-of-dev-supabase-publishable-key
+expect "no Supabase value is a build argument" '.web.build_args | keys | map(select(test("SUPABASE"))) | length' 0
 
 # The Expo server forwards the API's paths to the API's own name.
 expect "the web forwards the API's paths to api-dev" '.web.env_clear.API_ORIGIN' https://api-dev.joinissho.com

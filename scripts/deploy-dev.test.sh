@@ -115,7 +115,7 @@ run "" || bad "the script failed with every tool succeeding"
 
 # A secret the deploy names but the store lacks stops it before Kamal is called at
 # all, so no image is built and no container replaced.
-for name in dev-database-url dev-supabase-auth-url; do
+for name in dev-database-url dev-supabase-auth-url dev-supabase-url dev-supabase-publishable-key; do
   # The preflight uses the access the deploy account already has (accessor), never
   # secrets.get, which docs/deploy.md does not grant.
   if run "gcloud secrets versions access latest --secret=$name "; then bad "the script succeeded although $name is missing"; fi

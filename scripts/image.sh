@@ -41,7 +41,14 @@ done
 echo "image: ok (backend holds api and worker)"
 
 # The web image: built from the repository root, as the deploy builds it.
-docker build --file "$repo/apps/web/Dockerfile" --build-arg EXPO_PUBLIC_API_URL=https://api.image-check.invalid --tag "$web_image" "$repo"
+# The sign-in values are build secrets the Dockerfile requires; these stand-ins are
+# not a real project's.
+EXPO_PUBLIC_SUPABASE_URL=https://image-check.invalid \
+EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=image-check-key \
+docker build --file "$repo/apps/web/Dockerfile" --build-arg EXPO_PUBLIC_API_URL=https://api.image-check.invalid \
+  --secret id=EXPO_PUBLIC_SUPABASE_URL,env=EXPO_PUBLIC_SUPABASE_URL \
+  --secret id=EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY,env=EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY \
+  --tag "$web_image" "$repo"
 # Docker picks the host port, so nothing on a laptop (Metro's 8081 included) clashes.
 web_container=$(docker run --detach --publish 127.0.0.1::8081 "$web_image")
 port=$(docker port "$web_container" 8081/tcp | head -n1 | sed 's/.*://')
