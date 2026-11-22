@@ -44,6 +44,10 @@ sql:
           # The account id is Supabase Auth's user id, which the API handles as text.
           - db_type: uuid
             go_type: string
+          # The day a person said they were 18 or over is the city's calendar
+          # date, handled as a time at midnight UTC.
+          - db_type: date
+            go_type: time.Time
   - engine: postgresql
     schema: db/migrations
     queries: internal/cities/queries

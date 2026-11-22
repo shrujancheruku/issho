@@ -46,6 +46,7 @@ func NewHandler(cfg Config) http.Handler {
 	mux.Handle(isshov1connect.NewHealthServiceHandler(healthService{version: cfg.Version}, opts))
 	if cfg.People != nil {
 		mux.Handle(isshov1connect.NewAccountServiceHandler(accountService{people: cfg.People}, opts))
+		mux.Handle(isshov1connect.NewProfileServiceHandler(profileService{people: cfg.People}, opts))
 	}
 	if cfg.Cities != nil && cfg.Plans != nil {
 		mux.Handle(isshov1connect.NewPlanServiceHandler(planService{cities: cfg.Cities, plans: cfg.Plans}, opts))

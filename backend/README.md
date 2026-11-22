@@ -10,7 +10,7 @@ One Go module (`github.com/shrujancheruku/issho/backend`), part of the root `go.
 | `cmd/worker` | The background-job process: runs River |
 | `cmd/rpcauth` | `make rpc-auth`: fails when an RPC in `proto/` declares no access rule |
 | `cmd/migrate` | `migrate up` and `migrate down`, behind `make migrate-up` and `make migrate-down` |
-| `cmd/seed` | `make seed`: loads the development fixture into a local database; refuses any other and is not in the image (see "Fixtures") |
+| `cmd/seed` | `make seed`: loads the development fixture into a local database; refuses any other unless `--hosted-dev` names the issho-dev project (`make seed-dev`, founder only); not in the image (see "Fixtures") |
 | `db` | The goose migrations (`db/migrations`), embedded, and the `Up` and `Down` that run them; the schema sqlc reads |
 | `internal/<pkg>/store` | The Go that sqlc generates from `internal/<pkg>/queries`, one pair per package (`internal/staff`, `internal/people`). Generated: never edit it |
 | `internal/clock` | The injected clock: `Clock`, `Real` (wired only in `cmd/`) and the test `Fake` |
@@ -21,7 +21,7 @@ One Go module (`github.com/shrujancheruku/issho/backend`), part of the root `go.
 | `fixtures` | The development and test fixture: the city Da Nang–Hoi An and two plans, as embedded JSON (see "Fixtures") |
 | `internal/cities` | The listed cities: slug, state, time zone, currency and names (`app.cities`) |
 | `internal/plans` | Plans, read only so far: the fields a plan page shows and the prose per language (`app.plans` and its texts and stops) |
-| `internal/people` | Accounts (`app.accounts`), and the verifier for Supabase Auth's tokens (see "Accounts and sign-in") |
+| `internal/people` | Accounts (`app.accounts`), profiles (`app.profiles`), and the verifier for Supabase Auth's tokens (see "Accounts and sign-in") |
 | `internal/email` | `email.Sender`, its in-memory fake, and `email/resend`, the real one |
 | `internal/logging` | `logging.New`, the one way a process makes a logger, and the test that keeps it the only way (see "Logs") |
 | `internal/jobs` | The River client the worker runs and the domain packages enqueue through |
@@ -45,7 +45,7 @@ The API is ConnectRPC over protobuf: the contract is `proto/` (see its README), 
 
 Who a token belongs to comes from an `rpc.Authenticator`, which turns a bearer token into an `rpc.Identity` (subject, second step, Making, admin). The verifier against the Supabase JWKS is `rpc.NewAuthenticator(people.Verifier)` (see "Accounts and sign-in"); the staff-role lookup is later, so nobody is Making or admin yet. A process with no `DATABASE_URL` and `SUPABASE_AUTH_URL` passes none and every token is refused, so only public RPCs work. A handler reads the caller with `rpc.IdentityFrom(ctx)`.
 
-The RPCs so far are `HealthService.Check`, public, which reports the build's version, and `AccountService.GetAccount` (see "Accounts and sign-in"). `cmd/api`'s `version` is set when building (`go build -ldflags "-X main.version=1.2.3"`) and is `dev` otherwise.
+The RPCs so far are `HealthService.Check`, public, which reports the build's version, and `AccountService.GetAccount` and `ProfileService` (see "Accounts and sign-in"). `cmd/api`'s `version` is set when building (`go build -ldflags "-X main.version=1.2.3"`) and is `dev` otherwise.
 
 Tests go through HTTP with a generated Connect client. `internal/rpc/access_test.go` serves a throwaway service, built in the test with one RPC per rule plus one with none, behind the real interceptor; `internal/rpc/rpcauth` tests the access-rule check against fixture protos in its `testdata`.
 
@@ -55,6 +55,8 @@ Sign-in is Supabase Auth's 6-digit email code; `internal/people` owns the accoun
 
 `AccountService.GetAccount` (member) returns the caller's own account, making it on the first call from the token's email and the city and display language the app sends (defaults: the Pilot's only city, English). It takes no account id, and `rpc/account_test.go` fails if any other RPC's response carries an email field. See `internal/people/README.md` and `supabase/README.md`.
 
+`ProfileService` (member) holds the profile asked at the first signup: `GetProfile` returns the caller's own (empty while there is none) and `SaveProfile` makes or changes it. Neither takes an account id, and `rpc/profile_test.go` fails if another RPC returns a profile or these can name a person. A signup RPC calls `rpc.RequireProfile` first: an account with no profile gets `FAILED_PRECONDITION` with `ProfileProblem` reason `PROFILE_REQUIRED`. See `internal/people/README.md`.
+
 ## Fixtures
 
 One city, Da Nang–Hoi An, and two plans (`fixtures/da-nang-hoi-an.json`) carry the thin loop before plan-making exists. `internal/cities` and `internal/plans` each own their tables and each reads its own part of the file (`LoadFixture`). The tests load it themselves; in development `make seed` (`cmd/seed`) loads it into the local database after `make migrate-up`. **Nothing loads it in production:** the image holds `api` and `worker`, neither imports `fixtures`, `seed` refuses a database that isn't on this machine, and a migration inserts no city. `cmd/cmd_test.go` fails if any of that stops being true. See `fixtures/README.md`.
@@ -63,7 +65,7 @@ One city, Da Nang–Hoi An, and two plans (`fixtures/da-nang-hoi-an.json`) carry
 
 `accounts_city_fkey` (migration `00004`) fails with `23503` on a local database that already holds an account but no city row, which only one built from an earlier integration tip can. Run `make migrate-down` (or reset the database) and `make migrate-up`, then `make seed`.
 
-`make seed` is local only: it refuses any host that isn't this machine, and that stays. Hosted dev has no city, so its API refuses every city, until #638 seeds the hosted dev city through an explicit, dev-only opt-in.
+`make seed` is local only: it refuses any host that isn't this machine, and that stays. Hosted dev has no city until the founder runs `make seed-dev` once, after dev is migrated: `cmd/seed --hosted-dev`, with `DATABASE_URL` (dev's migration connection) and `SEED_DEV_PROJECT_REF` (the issho-dev project's ref) in the environment. The target must be that project's own host (`db.<ref>.supabase.co`) or pooler user (`postgres.<ref>`), judged on the connection pgx would actually make (a `user=` in the query counts), with no `host=` override, and the database's own stored `issho.environment` setting must be exactly `dev` (the founder sets it once on issho-dev, never on production; the seed reads the stored setting, not the session's, and refuses a URL that sets session parameters such as `options`), so a production URL is refused even with the flag and production's ref. A worker never runs it against a hosted database, and CI doesn't. Running it again upserts the city row to the fixture's values and rewrites the plan rows (delete, then insert) with the fixture's content. See `docs/deploy.md`.
 
 ## Logs
 

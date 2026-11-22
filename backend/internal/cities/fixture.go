@@ -7,7 +7,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/jackc/pgx/v5"
 
 	"github.com/shrujancheruku/issho/backend/internal/cities/store"
 )
@@ -22,6 +22,13 @@ type fixtureCity struct {
 	Names    map[string]string `json:"names"`
 }
 
+// Beginner starts the transaction LoadFixture writes in: a pool, or a
+// transaction (which then gives it a savepoint, so the caller can do other
+// work in the same transaction, as cmd/seed does).
+type Beginner interface {
+	Begin(ctx context.Context) (pgx.Tx, error)
+}
+
 // LoadFixture writes the fixture's city, replacing a city of the same slug.
 // It is for development and tests only: cmd/seed and the tests call it, and no
 // process in the production image does (see package fixtures).
@@ -29,7 +36,7 @@ type fixtureCity struct {
 // A field the city doesn't know is an error, so a typo in the file can't
 // silently drop one. Other packages' top-level keys ("plans") are ignored,
 // since each package reads only its own.
-func LoadFixture(ctx context.Context, pool *pgxpool.Pool, data []byte) error {
+func LoadFixture(ctx context.Context, pool Beginner, data []byte) error {
 	var top map[string]json.RawMessage
 	if err := json.Unmarshal(data, &top); err != nil {
 		return fmt.Errorf("cities: fixture: %w", err)

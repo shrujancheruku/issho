@@ -19,6 +19,11 @@ const { version } = await api.health.check({});
 
 // The signed-in person's own account; the first call makes it (members only).
 const { account } = await api.account.getAccount({ displayLanguage: 'vi' });
+
+// The profile asked at the first signup; unset until it is saved. A refusal carries a
+// ProfileProblem detail: err.findDetails(ProfileProblemSchema)[0]?.reason is
+// PROFILE_REQUIRED (open the questions) or UNDER_AGE (stop with a plain message).
+const { profile } = await api.profile.getProfile({});
 ```
 
 - `getAccessToken` is called before every request. A token goes out as `Authorization: Bearer <token>`; with none, no header is sent, which only public RPCs accept.

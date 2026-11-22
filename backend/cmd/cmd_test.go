@@ -426,3 +426,128 @@ func TestSeedRefusesADatabaseThatIsNotLocal(t *testing.T) {
 		}
 	}
 }
+
+// The hosted-dev opt-in does not open the door to production: with the flag
+// and a dev ref set, a target that is not that project's is refused before it
+// connects, and the password is not printed. Without SEED_DEV_PROJECT_REF the
+// flag alone reaches nothing.
+func TestSeedHostedDevOptInRefusesAProductionLikeTarget(t *testing.T) {
+	bin := buildSeed(t)
+	const devRef = "abcdefghijklmnopqrst"
+	for _, tc := range []struct{ url, ref string }{
+		{"postgresql://postgres:hunter2@db.zzzzzzzzzzzzzzzzzzzz.supabase.co:5432/postgres", devRef},
+		{"postgresql://postgres.zzzzzzzzzzzzzzzzzzzz:hunter2@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres", devRef},
+		{"postgresql://postgres:hunter2@db." + devRef + ".supabase.co:5432/postgres", ""},
+	} {
+		cmd := exec.Command(bin, "--hosted-dev")
+		cmd.Env = append(os.Environ(), "DATABASE_URL="+tc.url, "SEED_DEV_PROJECT_REF="+tc.ref)
+		out, err := cmd.CombinedOutput()
+		if err == nil {
+			t.Errorf("seed --hosted-dev accepted %q with ref %q", tc.url, tc.ref)
+		}
+		if strings.Contains(string(out), "hunter2") {
+			t.Errorf("seed printed the password:\n%s", out)
+		}
+	}
+}
+
+// With --hosted-dev the seed also reads the database's own environment marker
+// (`issho.environment`) before writing anything, and goes on only if it is
+// exactly `dev`: the operator supplies the ref, but not what is stored in the
+// database. The test database is local, so the target check passes and only the
+// marker decides. No marker and `prod` are refused with nothing written; `dev`
+// seeds. Without the flag the marker is never read: a local seed needs none.
+func TestSeedHostedDevNeedsTheDevEnvironmentMarker(t *testing.T) {
+	bin := buildSeed(t)
+	for _, tc := range []struct {
+		name   string
+		marker string // "" sets none
+		seeds  bool
+	}{
+		{"no marker", "", false},
+		{"prod", "prod", false},
+		{"dev with other case", "Dev", false},
+		{"dev", "dev", true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			pool := testdb.NewDatabase(t)
+			ctx := context.Background()
+			if err := db.Up(ctx, pool); err != nil {
+				t.Fatal(err)
+			}
+			if tc.marker != "" {
+				if _, err := pool.Exec(ctx, `do $$ begin execute format('alter database %I set issho.environment = %L', current_database(), '`+tc.marker+`'); end $$`); err != nil {
+					t.Fatal(err)
+				}
+			}
+			cmd := exec.Command(bin, "--hosted-dev")
+			cmd.Env = append(os.Environ(), "DATABASE_URL="+testdb.URL(pool))
+			out, err := cmd.CombinedOutput()
+			var cities int
+			if qerr := pool.QueryRow(ctx, `select count(*) from app.cities`).Scan(&cities); qerr != nil {
+				t.Fatal(qerr)
+			}
+			if tc.seeds {
+				if err != nil || cities != 1 {
+					t.Fatalf("seed: err %v, cities %d\n%s", err, cities, out)
+				}
+				return
+			}
+			if err == nil || cities != 0 {
+				t.Fatalf("seed went ahead without the dev marker: err %v, cities %d\n%s", err, cities, out)
+			}
+			if !strings.Contains(string(out), "issho.environment") {
+				t.Errorf("refusal does not name the marker:\n%s", out)
+			}
+		})
+	}
+}
+
+// A session can set `issho.environment` itself: a URL's `options` parameter, or
+// PGOPTIONS in the environment, sends `-c issho.environment=dev` at connect. The
+// marker that counts is the one stored on the database, so none of these may
+// seed an unmarked database. And a --hosted-dev URL that sets any runtime
+// parameter is refused before it connects, even on a database that is marked,
+// so nothing the session says is ever in play. The refusal never prints the URL.
+func TestSeedHostedDevRefusesASessionThatSetsTheMarker(t *testing.T) {
+	bin := buildSeed(t)
+	const options = "&options=-c%20issho.environment%3Ddev"
+	for _, tc := range []struct {
+		name   string
+		query  string   // appended to the database's URL
+		env    []string // extra environment
+		marked bool
+	}{
+		{"options in the URL, database unmarked", options, nil, false},
+		{"options in the URL, database marked", options, nil, true},
+		{"another runtime parameter, database marked", "&application_name=seed", nil, true},
+		{"PGOPTIONS, database unmarked", "", []string{"PGOPTIONS=-c issho.environment=dev"}, false},
+		{"PGOPTIONS, database marked", "", []string{"PGOPTIONS=-c issho.environment=dev"}, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			pool := testdb.NewDatabase(t)
+			ctx := context.Background()
+			if err := db.Up(ctx, pool); err != nil {
+				t.Fatal(err)
+			}
+			if tc.marked {
+				if _, err := pool.Exec(ctx, `do $$ begin execute format('alter database %I set issho.environment = %L', current_database(), 'dev'); end $$`); err != nil {
+					t.Fatal(err)
+				}
+			}
+			cmd := exec.Command(bin, "--hosted-dev")
+			cmd.Env = append(append(os.Environ(), "DATABASE_URL="+testdb.URL(pool)+tc.query), tc.env...)
+			out, err := cmd.CombinedOutput()
+			var cities int
+			if qerr := pool.QueryRow(ctx, `select count(*) from app.cities`).Scan(&cities); qerr != nil {
+				t.Fatal(qerr)
+			}
+			if err == nil || cities != 0 {
+				t.Fatalf("seed went ahead with a session that sets parameters: err %v, cities %d\n%s", err, cities, out)
+			}
+			if strings.Contains(string(out), "issho.environment=dev") && strings.Contains(string(out), "options") {
+				t.Errorf("refusal echoes the URL:\n%s", out)
+			}
+		})
+	}
+}

@@ -33,3 +33,14 @@ func TestPreferredSizesLieWithinTheGroupRange(t *testing.T) {
 		t.Errorf("want %d <= %d <= %d <= %d", MinGroupSize, PreferredGroupSizeLow, PreferredGroupSizeHigh, MaxGroupSize)
 	}
 }
+
+// The profile's numbers, from docs/spec/people.md ("Adults only", "The
+// profile"), written out independently of the constants.
+func TestProfileNumbers(t *testing.T) {
+	if MinAge != 18 {
+		t.Errorf("minimum age = %d, spec says 18", MinAge)
+	}
+	if NameMinLength != 1 || NameMaxLength != 40 {
+		t.Errorf("name length = %d to %d, spec says 1 to 40", NameMinLength, NameMaxLength)
+	}
+}
