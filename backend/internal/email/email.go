@@ -40,7 +40,7 @@ func (m Message) Validate() error {
 	// bare address, because the fallback rules in the spec decide per person.
 	addr, err := mail.ParseAddress(m.To)
 	if err != nil || addr.Address != m.To {
-		return fmt.Errorf("%w: To must be one address, got %q", ErrInvalidMessage, m.To)
+		return fmt.Errorf("%w: To must be one bare address", ErrInvalidMessage)
 	}
 	if m.Subject == "" {
 		return fmt.Errorf("%w: no subject", ErrInvalidMessage)

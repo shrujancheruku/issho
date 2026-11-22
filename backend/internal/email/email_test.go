@@ -3,6 +3,7 @@ package email_test
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/shrujancheruku/issho/backend/internal/email"
@@ -59,6 +60,21 @@ func TestFakeRefusesAnInvalidMessage(t *testing.T) {
 				t.Errorf("recorded %d messages for an invalid one", n)
 			}
 		})
+	}
+}
+
+// River keeps a failed job's error text in river_job.errors, and a caller may log
+// it, so the error never quotes the address it refused.
+func TestInvalidMessageErrorDoesNotQuoteTheRecipient(t *testing.T) {
+	m := email.Message{To: "ada@example.com, bob@example.com", Subject: "s", Text: "t"}
+
+	err := m.Validate()
+
+	if err == nil {
+		t.Fatal("two recipients were accepted")
+	}
+	if strings.Contains(err.Error(), "example.com") || strings.Contains(err.Error(), "ada") {
+		t.Fatalf("the error quotes the recipient: %v", err)
 	}
 }
 
