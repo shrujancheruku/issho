@@ -31,6 +31,9 @@ func TestCheckTarget(t *testing.T) {
 		{"ref in someone else's domain", "postgresql://postgres:x@db." + devRef + ".supabase.co.evil.example/postgres", true, devRef, true},
 		{"host override in the query", direct + "?host=db." + prodRef + ".supabase.co", true, devRef, true},
 		{"service file in the query", direct + "?service=prod", true, devRef, true},
+		{"user override in the query names production", pooler + "?user=postgres." + prodRef, true, devRef, true},
+		{"user override in the query on a url with no user", "postgresql://aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres?user=postgres." + prodRef + "&password=hunter2", true, devRef, true},
+		{"dev user only by query override", "postgresql://postgres." + prodRef + ":hunter2@aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres?user=postgres." + devRef, true, devRef, false},
 		{"malformed ref", direct, true, "dev", true},
 		{"not a url", "not a url", true, devRef, true},
 	}
@@ -45,4 +48,24 @@ func TestCheckTarget(t *testing.T) {
 			}
 		})
 	}
+}
+
+// The check is on what pgx will connect with, not on the URL's text: the
+// environment fills in whatever the URL leaves out, so a pooler URL with no
+// user, run under PGUSER naming production, is production's.
+func TestCheckTargetReadsTheConnectionPgxWouldMake(t *testing.T) {
+	prodRef := "zzzzzzzzzzzzzzzzzzzz"
+	noUser := "postgresql://aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres"
+	t.Run("PGUSER names production", func(t *testing.T) {
+		t.Setenv("PGUSER", "postgres."+prodRef)
+		if err := checkTarget(noUser, true, devRef); err == nil {
+			t.Fatal("checkTarget accepted a pooler URL whose user comes from PGUSER (production)")
+		}
+	})
+	t.Run("PGUSER names dev", func(t *testing.T) {
+		t.Setenv("PGUSER", "postgres."+devRef)
+		if err := checkTarget(noUser, true, devRef); err != nil {
+			t.Fatalf("checkTarget refused a pooler URL whose user comes from PGUSER (dev): %v", err)
+		}
+	})
 }

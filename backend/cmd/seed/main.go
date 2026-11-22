@@ -12,7 +12,9 @@
 //   - One explicit opt-in reaches the hosted dev database (and only it): the
 //     --hosted-dev flag together with SEED_DEV_PROJECT_REF, the dev project's
 //     ref. The target must be that project's own host or pooler user
-//     (checkTarget), so a production URL is refused even with the opt-in.
+//     (checkTarget, on the connection pgx would actually make, so a `user=` in
+//     the query or PGUSER counts), so a production URL is refused even with the
+//     opt-in.
 //
 //   - The ref comes from the operator, so it alone can't tell dev from
 //     production. With the opt-in the seed also reads the database's own marker,
@@ -166,13 +168,32 @@ func checkTarget(databaseURL string, hostedDev bool, devRef string) error {
 			return errors.New("DATABASE_URL has a query that could change its host")
 		}
 	}
-	if u.Hostname() == "db."+devRef+".supabase.co" {
-		return nil
+	// What pgx will connect with, not the URL's text: a query-string `user`
+	// overrides the userinfo, and PGUSER/PGHOST fill in what the URL leaves out.
+	// Every address it may try (the primary and its fallbacks) must be dev's.
+	cfg, err := pgxpool.ParseConfig(databaseURL)
+	if err != nil {
+		return errors.New("DATABASE_URL could not be used")
 	}
-	if strings.HasSuffix(u.Hostname(), ".pooler.supabase.com") && u.User != nil && u.User.Username() == "postgres."+devRef {
-		return nil
+	hosts := []string{cfg.ConnConfig.Host}
+	for _, f := range cfg.ConnConfig.Fallbacks {
+		hosts = append(hosts, f.Host)
 	}
-	return errors.New("DATABASE_URL is not the dev project's database (SEED_DEV_PROJECT_REF): --hosted-dev reaches dev only")
+	for _, h := range hosts {
+		if !isDevEndpoint(h, cfg.ConnConfig.User, devRef) {
+			return errors.New("DATABASE_URL is not the dev project's database (SEED_DEV_PROJECT_REF): --hosted-dev reaches dev only")
+		}
+	}
+	return nil
+}
+
+// isDevEndpoint is whether a connection to host as user is the dev project's:
+// its own direct host, or the shared pooler as the project's own user.
+func isDevEndpoint(host, user, devRef string) bool {
+	if host == "db."+devRef+".supabase.co" {
+		return true
+	}
+	return strings.HasSuffix(host, ".pooler.supabase.com") && user == "postgres."+devRef
 }
 
 // querier is what checkEnvironment reads through: a pool or a transaction.
