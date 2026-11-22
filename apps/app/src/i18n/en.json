@@ -23,5 +23,22 @@
   "signIn.notConfigured": "This build is not set up for sign-in. Missing: {missing}.",
   "you.email": "Signed in as {email}",
   "you.signOut": "Sign out",
-  "you.accountError": "Your account could not be loaded."
+  "you.accountError": "Your account could not be loaded.",
+  "plans.free": "Free",
+  "plans.loadFailed": "The plans could not be loaded.",
+  "plans.retry": "Try again",
+  "plan.loadFailed": "The plan could not be loaded.",
+  "plan.notFound": "We could not find that plan.",
+  "plan.seeAll": "See all plans",
+  "plan.notTranslated": "This plan is not in your language yet, so it is shown in English.",
+  "plan.stops": "Stops",
+  "plan.stay": "{minutes} min",
+  "plan.leg.walk": "Walk, {minutes} min to the next stop",
+  "plan.leg.ride": "Ride, {minutes} min to the next stop",
+  "plan.leg.transit": "Transit, {minutes} min to the next stop",
+  "plan.leg.other": "{minutes} min to the next stop",
+  "plan.price": "Price per person",
+  "plan.when": "When",
+  "plan.meeting": "Where to meet",
+  "plan.whatToBring": "What to bring"
 }

@@ -11,6 +11,10 @@ export function fakeApi(): {
 } {
   return {
     health: { check: jest.fn().mockResolvedValue({ version: 'test' }) },
+    plans: {
+      listPlans: jest.fn().mockResolvedValue({ plans: [] }),
+      getPlan: jest.fn(),
+    },
     account: {
       getAccount: jest.fn().mockResolvedValue({
         account: {
