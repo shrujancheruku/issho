@@ -49,6 +49,39 @@ describe('the admin Worker', () => {
     expect(upstream).not.toHaveBeenCalled();
   });
 
+  // Issho keeps no IP address anywhere (docs/spec/privacy.md), so the member's
+  // address, which Cloudflare puts in these, never reaches the API.
+  it("does not pass the member's address on to the API", async () => {
+    const upstream = vi.fn().mockResolvedValue(new Response('{}'));
+    vi.stubGlobal('fetch', upstream);
+    const address = {
+      'cf-connecting-ip': '198.51.100.7',
+      'cf-connecting-ipv6': '2001:db8::7',
+      'cf-pseudo-ipv4': '198.51.100.8',
+      'cf-ipcountry': 'VN',
+      'x-forwarded-for': '198.51.100.7, 203.0.113.1',
+      'x-real-ip': '198.51.100.7',
+      forwarded: 'for=198.51.100.7;proto=https',
+      'true-client-ip': '198.51.100.7',
+      'x-client-ip': '198.51.100.7',
+      'x-cluster-client-ip': '198.51.100.7',
+      'client-ip': '198.51.100.7',
+    };
+
+    await worker.fetch(
+      new Request('https://admin.example.test/issho.v1.HealthService/Check', {
+        method: 'POST',
+        headers: { ...address, authorization: 'Bearer token' },
+        body: '{}',
+      }),
+      env,
+    );
+
+    const sent = new Headers((upstream.mock.calls[0] as [string, RequestInit])[1].headers);
+    for (const name of Object.keys(address)) expect(sent.get(name), name).toBeNull();
+    expect(sent.get('authorization')).toBe('Bearer token');
+  });
+
   it('answers 502 when the API cannot be reached', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('network')));
     const res = await worker.fetch(new Request('https://admin.example.test/issho.v1.HealthService/Check', { method: 'POST', body: '{}' }), env);

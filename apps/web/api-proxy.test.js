@@ -81,3 +81,34 @@ test('an API that cannot be reached answers 502', async (t) => {
   const res = await fetch(`${origin}/issho.v1.HealthService/Check`, { method: 'POST', body: '{}' });
   assert.equal(res.status, 502);
 });
+
+// Issho keeps no IP address anywhere (docs/spec/privacy.md), so the member's
+// address, which Cloudflare and kamal-proxy put in these, never reaches the API.
+const CLIENT_ADDRESS = {
+  'cf-connecting-ip': '198.51.100.7',
+  'cf-connecting-ipv6': '2001:db8::7',
+  'cf-pseudo-ipv4': '198.51.100.8',
+  'cf-ipcountry': 'VN',
+  'x-forwarded-for': '198.51.100.7, 203.0.113.1',
+  'x-real-ip': '198.51.100.7',
+  forwarded: 'for=198.51.100.7;proto=https',
+  'true-client-ip': '198.51.100.7',
+  'x-client-ip': '198.51.100.7',
+  'x-cluster-client-ip': '198.51.100.7',
+  'client-ip': '198.51.100.7',
+};
+
+test("the member's address is not passed on to the API", async (t) => {
+  const { seen, origin, close } = await setup((_req, res) => res.end('{}'));
+  t.after(close);
+  await fetch(`${origin}/issho.v1.HealthService/Check`, {
+    method: 'POST',
+    headers: { ...CLIENT_ADDRESS, 'content-type': 'application/json', authorization: 'Bearer t' },
+    body: '{}',
+  });
+  assert.equal(seen.length, 1);
+  for (const name of Object.keys(CLIENT_ADDRESS)) assert.equal(seen[0].headers[name], undefined, name);
+  // Fetch's own connection to the API is the forwarder's, never the member's.
+  assert.doesNotMatch(JSON.stringify(seen[0].headers), /198\.51\.100|2001:db8/);
+  assert.equal(seen[0].headers.authorization, 'Bearer t');
+});

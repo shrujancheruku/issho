@@ -3,11 +3,20 @@
 // proxied: kamal-proxy cannot do it on dev's shared name (it wants TLS on the
 // root path's service), and the admin's Worker does the same for its own page
 // (apps/admin/worker/index.ts). Only paths of the API's services (`/issho.v1.`)
-// are forwarded, so this is not an open proxy.
+// are forwarded, so this is not an open proxy. Why not CORS: ADR 0006
+// (docs/adr/0006-browsers-reach-the-api-on-their-own-origin.md).
 const { Readable } = require('node:stream');
 
 // Not copied between the two sides: they describe one connection, not the message.
 const HOP = new Set(['connection', 'keep-alive', 'proxy-connection', 'transfer-encoding', 'upgrade', 'te', 'trailer', 'host']);
+// The member's address, and where Cloudflare places it, which Cloudflare and
+// kamal-proxy add on the way here: not passed on, since Issho keeps no IP address
+// anywhere (docs/spec/privacy.md). The API sees this server's address instead.
+// The admin's Worker drops the same (apps/admin/worker/index.ts).
+const CLIENT_ADDRESS = new Set([
+  'cf-connecting-ip', 'cf-connecting-ipv6', 'cf-pseudo-ipv4', 'cf-ipcountry', 'x-forwarded-for', 'x-real-ip',
+  'forwarded', 'true-client-ip', 'x-client-ip', 'x-cluster-client-ip', 'client-ip',
+]);
 // fetch has already decoded the body, so the encoding and length no longer fit it.
 const DECODED = new Set(['content-encoding', 'content-length']);
 
@@ -16,7 +25,7 @@ function apiProxy(apiOrigin) {
     if (!req.url.startsWith('/issho.v1.')) return next();
     const headers = new Headers();
     for (const [name, value] of Object.entries(req.headers)) {
-      if (!HOP.has(name)) headers.set(name, Array.isArray(value) ? value.join(', ') : value);
+      if (!HOP.has(name) && !CLIENT_ADDRESS.has(name)) headers.set(name, Array.isArray(value) ? value.join(', ') : value);
     }
     const hasBody = req.method !== 'GET' && req.method !== 'HEAD';
     try {
