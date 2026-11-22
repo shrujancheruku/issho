@@ -19,7 +19,6 @@ package matching
 import (
 	"cmp"
 	"slices"
-	"sort"
 
 	"github.com/shrujancheruku/issho/backend/internal/policy"
 )
@@ -81,8 +80,10 @@ type Pair struct{ A, B PersonID }
 // Input is everything matching reads. It reads nothing else: not home area,
 // tastes, age or display language (docs/spec/matching.md).
 type Input struct {
-	// Signups are the round's. A person who appears twice counts once, by
-	// their first entry.
+	// Signups are the round's, one for each person. A person who appears more
+	// than once with the same entry counts once; one who appears with entries
+	// that differ is never grouped, whatever the order of the entries, because
+	// matching can't know which one a language or a setting should come from.
 	Signups []Signup
 	// KeptApart are the pairs who are never grouped, in either order.
 	KeptApart []Pair
@@ -100,48 +101,55 @@ type Group struct {
 	Languages []string
 }
 
-// searchSteps bounds the search for the best groups at one time, so a large
-// round still returns. It counts search nodes, never time, so the result is the
-// same on every machine. Rounds are small (a Pilot city has about 60 people
-// over a dozen plans), so the search is exact in practice: the cap only changes
-// the answer for a crowd of a few dozen at one time, and then it still returns
-// a valid, if not the best, set of groups.
-const searchSteps = 200_000
-
-// groupsPerNode bounds how many candidate groups the search weighs for one
-// seat. Like searchSteps, it matters only for a crowd at one time.
-const groupsPerNode = 2_000
+// The search is a branch and bound over the whole assignment. It is exact
+// unless it runs out of work, and then it returns the best valid groups it has
+// found, which are always valid but may not be the best. The limits count
+// search nodes and candidate groups weighed, never time, so a result is the
+// same on every machine. The README says how often they bite.
+//
+// The search first looks for what the rules allow at best: with a crowd of
+// people who can all be grouped it stops as soon as it has seated everyone in
+// the nearest sizes. Where the rules leave a puzzle it keeps looking until it
+// has proved nothing seats more people in nearer sizes and fewer groups.
+const (
+	// seatWork is the budget for seating the most people, then the sizes and
+	// the fewest groups.
+	seatWork = 400_000
+	// dateWork is the budget for the tie-break among assignments that are
+	// equal on those three: the date that seats the most.
+	dateWork = 100_000
+	// groupsPerNode bounds how many candidate groups the search weighs for one
+	// person.
+	groupsPerNode = 4_000
+)
 
 // Match forms the groups and dates for a round.
 //
-// Among the times people ticked, the one that seats the most people wins and
-// a tie goes to the earliest; its groups are formed, their people leave the
-// pool, and the next time is chosen the same way from those who remain. At
-// one time the groups seat the most people first, then prefer sizes nearest
-// 4 or 5, then fewer groups ("Sizes" in docs/spec/matching.md). The same input
-// always gives the same output, whatever the order of the signups.
+// It ranks every way to group the signups as the spec words it ("Sizes" in
+// docs/spec/matching.md), over the whole assignment and not date by date: the
+// most people seated first, then sizes nearest 4 or 5 (the sum of each group's
+// distance from that range), then fewer groups. Among assignments equal on
+// those, the date that seats the most people wins and a tie goes to the
+// earliest; then the next date is weighed the same way. Anything still equal
+// is settled by the order the search tries things in, which depends only on
+// the people and the rules. The same input always gives the same output,
+// whatever the order of the signups.
 func Match(in Input) []Group {
-	pool := newPool(in)
-	var groups []Group
-	for {
-		var (
-			bestSlot Slot
-			best     outcome
-		)
-		for _, slot := range pool.slots() {
-			if o := pool.solve(slot); o.seated > best.seated {
-				bestSlot, best = slot, o
-			}
+	p := newPool(in)
+	if len(p.people) < policy.MinGroupSize {
+		return nil
+	}
+	s := newSearch(p)
+	s.run(false)
+	s.run(true)
+	groups := make([]Group, len(s.best.chosen))
+	for i, g := range s.best.chosen {
+		ids := make([]PersonID, len(g.members))
+		for j, m := range g.members {
+			ids[j] = s.cands[m].id
 		}
-		if best.seated == 0 {
-			break
-		}
-		for _, members := range best.groups {
-			groups = append(groups, pool.group(bestSlot, members))
-			for _, p := range members {
-				pool.remove(p)
-			}
-		}
+		slices.Sort(ids)
+		groups[i] = p.group(s.slots[g.slot], ids)
 	}
 	slices.SortFunc(groups, func(a, b Group) int {
 		return cmp.Or(
@@ -158,16 +166,77 @@ type person struct {
 	langs     []string // sorted, no repeats
 	gender    Gender
 	womenOnly bool
-	slots     map[Slot]bool
+	ticks     []bool // by index into pool.slots
 	apart     map[PersonID]bool
+	// class numbers people who are interchangeable: the same ticks, languages
+	// and setting, and no kept-apart pair. Two of one class never need
+	// telling apart, which keeps the search from trying both orders.
+	class int
 }
 
 // eligible is whether the person can be in a group made up only of women and
 // non-binary people.
 func (p *person) eligible() bool { return p.gender == Woman || p.gender == NonBinary }
 
+// fits is whether two people could be in one group, setting aside the rest of
+// the group and the time: a language, no kept-apart pair, the setting, and a
+// time they both ticked.
+func fits(a, b *person) bool {
+	if a.apart[b.id] || b.apart[a.id] {
+		return false
+	}
+	if a.womenOnly && !b.eligible() || b.womenOnly && !a.eligible() {
+		return false
+	}
+	if len(intersect(a.langs, b.langs)) == 0 {
+		return false
+	}
+	for i := range a.ticks {
+		if a.ticks[i] && b.ticks[i] {
+			return true
+		}
+	}
+	return false
+}
+
 type pool struct {
-	people []*person // ordered by ID, those not yet in a group
+	people []*person // ordered by ID: those who could be in some group
+	slots  []Slot    // the times someone ticked, earliest first
+}
+
+// entry is what a signup says, with the order of its lists taken out.
+type entry struct {
+	ticks     []Slot
+	langs     []string
+	gender    Gender
+	womenOnly bool
+}
+
+func normalise(s Signup) entry {
+	e := entry{gender: s.Gender, womenOnly: s.WomenAndNonBinaryOnly}
+	for _, t := range s.Ticks {
+		if slices.Contains(partOrder, t.Part) {
+			e.ticks = append(e.ticks, t)
+		}
+	}
+	slices.SortFunc(e.ticks, compareSlots)
+	e.ticks = slices.Compact(e.ticks)
+	e.langs = slices.Clone(s.Languages)
+	slices.Sort(e.langs)
+	e.langs = slices.Compact(e.langs)
+	return e
+}
+
+func (e entry) equal(o entry) bool {
+	return e.gender == o.gender && e.womenOnly == o.womenOnly &&
+		slices.Equal(e.langs, o.langs) && slices.Equal(e.ticks, o.ticks)
+}
+
+func compareSlots(a, b Slot) int {
+	return cmp.Or(
+		cmp.Compare(a.Date, b.Date),
+		cmp.Compare(slices.Index(partOrder, a.Part), slices.Index(partOrder, b.Part)),
+	)
 }
 
 func newPool(in Input) *pool {
@@ -175,8 +244,29 @@ func newPool(in Input) *pool {
 	for _, d := range in.ClosedDates {
 		closed[d] = true
 	}
+	// One entry for each person, or none when a person's entries differ.
+	entries := map[PersonID]entry{}
+	conflicted := map[PersonID]bool{}
+	for _, s := range in.Signups {
+		e := normalise(s)
+		if prev, seen := entries[s.Person]; seen && !prev.equal(e) {
+			conflicted[s.Person] = true
+		}
+		entries[s.Person] = e
+	}
+	ids := make([]PersonID, 0, len(entries))
+	for id := range entries {
+		if !conflicted[id] {
+			ids = append(ids, id)
+		}
+	}
+	slices.Sort(ids)
+
 	apart := map[PersonID]map[PersonID]bool{}
 	for _, pair := range in.KeptApart {
+		if pair.A == pair.B {
+			continue
+		}
 		for _, ends := range [][2]PersonID{{pair.A, pair.B}, {pair.B, pair.A}} {
 			if apart[ends[0]] == nil {
 				apart[ends[0]] = map[PersonID]bool{}
@@ -184,57 +274,86 @@ func newPool(in Input) *pool {
 			apart[ends[0]][ends[1]] = true
 		}
 	}
-	seen := map[PersonID]bool{}
+
 	p := &pool{}
-	for _, s := range in.Signups {
-		if seen[s.Person] {
+	slotSet := map[Slot]bool{}
+	for _, id := range ids {
+		e := entries[id]
+		// A person with the setting on who isn't a woman or non-binary person
+		// can be in no group, and nobody without a language can.
+		pp := &person{id: id, langs: e.langs, gender: e.gender, womenOnly: e.womenOnly, apart: apart[id]}
+		if len(pp.langs) == 0 || pp.womenOnly && !pp.eligible() {
 			continue
 		}
-		seen[s.Person] = true
-		langs := slices.Clone(s.Languages)
-		slices.Sort(langs)
-		pp := &person{
-			id:        s.Person,
-			langs:     slices.Compact(langs),
-			gender:    s.Gender,
-			womenOnly: s.WomenAndNonBinaryOnly,
-			slots:     map[Slot]bool{},
-			apart:     apart[s.Person],
-		}
-		for _, t := range s.Ticks {
-			if !closed[t.Date] && slices.Contains(partOrder, t.Part) {
-				pp.slots[t] = true
+		for _, t := range e.ticks {
+			if !closed[t.Date] {
+				slotSet[t] = true
 			}
 		}
 		p.people = append(p.people, pp)
 	}
-	slices.SortFunc(p.people, func(a, b *person) int { return cmp.Compare(a.id, b.id) })
+	for s := range slotSet {
+		p.slots = append(p.slots, s)
+	}
+	slices.SortFunc(p.slots, compareSlots)
+	for _, pp := range p.people {
+		pp.ticks = make([]bool, len(p.slots))
+		for _, t := range entries[pp.id].ticks {
+			if i, ok := slices.BinarySearchFunc(p.slots, t, compareSlots); ok {
+				pp.ticks[i] = true
+			}
+		}
+	}
+
+	// Drop whoever couldn't be grouped with two others, until nobody goes.
+	// That is a cheap bound, not the rules: it never drops anyone who could
+	// be grouped, so the groups are the same, and it makes the search small.
+	for changed := true; changed; {
+		changed = false
+		for i := 0; i < len(p.people); i++ {
+			partners := 0
+			for _, o := range p.people {
+				if o != p.people[i] && fits(p.people[i], o) {
+					partners++
+				}
+			}
+			if partners < policy.MinGroupSize-1 {
+				p.people = slices.Delete(p.people, i, i+1)
+				i--
+				changed = true
+			}
+		}
+	}
+	// Only the kept-apart pairs among those left make anyone distinct.
+	left := map[PersonID]bool{}
+	for _, pp := range p.people {
+		left[pp.id] = true
+	}
+	for _, pp := range p.people {
+		kept := map[PersonID]bool{}
+		for other := range pp.apart {
+			if left[other] {
+				kept[other] = true
+			}
+		}
+		pp.apart = kept
+	}
+	for i, a := range p.people {
+		a.class = i
+		for _, b := range p.people[:i] {
+			if interchangeable(a, b) {
+				a.class = b.class
+				break
+			}
+		}
+	}
 	return p
 }
 
-// slots are the times someone in the pool ticked, earliest first.
-func (p *pool) slots() []Slot {
-	set := map[Slot]bool{}
-	for _, pp := range p.people {
-		for s := range pp.slots {
-			set[s] = true
-		}
-	}
-	out := make([]Slot, 0, len(set))
-	for s := range set {
-		out = append(out, s)
-	}
-	slices.SortFunc(out, func(a, b Slot) int {
-		return cmp.Or(
-			cmp.Compare(a.Date, b.Date),
-			cmp.Compare(slices.Index(partOrder, a.Part), slices.Index(partOrder, b.Part)),
-		)
-	})
-	return out
-}
-
-func (p *pool) remove(id PersonID) {
-	p.people = slices.DeleteFunc(p.people, func(pp *person) bool { return pp.id == id })
+func interchangeable(a, b *person) bool {
+	return len(a.apart) == 0 && len(b.apart) == 0 &&
+		a.womenOnly == b.womenOnly && a.eligible() == b.eligible() &&
+		slices.Equal(a.langs, b.langs) && slices.Equal(a.ticks, b.ticks)
 }
 
 func (p *pool) group(slot Slot, members []PersonID) Group {
@@ -262,14 +381,6 @@ func intersect(a, b []string) []string {
 	return out
 }
 
-// outcome is a way to group some of the people at one time, and how it ranks.
-type outcome struct {
-	groups [][]PersonID
-	seated int
-	// distance is each group's size away from the preferred 4 or 5, summed.
-	distance int
-}
-
 func distanceFromPreferred(size int) int {
 	switch {
 	case size < policy.PreferredGroupSizeLow:
@@ -280,146 +391,345 @@ func distanceFromPreferred(size int) int {
 	return 0
 }
 
-// beats is whether o ranks above other: the most people seated, then sizes
-// nearest 4 or 5, then fewer groups. A tie keeps the one found first.
-func (o outcome) beats(other outcome) bool {
-	return cmp.Or(
-		-cmp.Compare(o.seated, other.seated),
-		cmp.Compare(o.distance, other.distance),
-		cmp.Compare(len(o.groups), len(other.groups)),
-	) < 0
+// group is one group the search has chosen: a time (an index into the slots)
+// and its people (indexes into the candidates, the first one lowest).
+type chosenGroup struct {
+	slot    int
+	members []int
 }
 
-// solve finds the best groups of the people who ticked slot.
-func (p *pool) solve(slot Slot) outcome {
-	s := &search{}
-	for _, pp := range p.people {
-		if pp.slots[slot] {
-			s.cands = append(s.cands, pp)
+// dateSeats is how many people one time seats.
+type dateSeats struct{ slot, seats int }
+
+// ranking is how good a whole assignment is, in the spec's order.
+type ranking struct {
+	seated, distance, groups int
+	// dates are the times with a group, the one seating the most first, a tie
+	// going to the earliest.
+	dates  []dateSeats
+	chosen []chosenGroup
+}
+
+// beats is whether r ranks above other. The date order only breaks a tie among
+// assignments equal on the other three, and only when withDates is on.
+func (r *ranking) beats(other *ranking, withDates bool) bool {
+	if c := cmp.Or(
+		-cmp.Compare(r.seated, other.seated),
+		cmp.Compare(r.distance, other.distance),
+		cmp.Compare(r.groups, other.groups),
+	); c != 0 || !withDates {
+		return c < 0
+	}
+	for i := range min(len(r.dates), len(other.dates)) {
+		if c := cmp.Or(-cmp.Compare(r.dates[i].seats, other.dates[i].seats), cmp.Compare(r.dates[i].slot, other.dates[i].slot)); c != 0 {
+			return c < 0
 		}
 	}
-	s.decided = make([]bool, len(s.cands))
-	s.descend(0, nil)
-	return s.best
+	return false
 }
 
-// search is a depth-first search over one time's people, in ID order: the first
-// undecided person is either put in a group with later people, or left out.
+func rank(chosen []chosenGroup, slots int) *ranking {
+	r := &ranking{chosen: slices.Clone(chosen)}
+	seats := make([]int, slots)
+	for _, g := range chosen {
+		r.seated += len(g.members)
+		r.distance += distanceFromPreferred(len(g.members))
+		r.groups++
+		seats[g.slot] += len(g.members)
+	}
+	for slot, n := range seats {
+		if n > 0 {
+			r.dates = append(r.dates, dateSeats{slot, n})
+		}
+	}
+	slices.SortFunc(r.dates, func(a, b dateSeats) int {
+		return cmp.Or(-cmp.Compare(a.seats, b.seats), cmp.Compare(a.slot, b.slot))
+	})
+	return r
+}
+
+// search is a depth-first branch and bound over the whole assignment. It takes
+// the lowest undecided person and either puts them in a group, at any time
+// they ticked and with any later undecided people who fit, or leaves them out.
 type search struct {
 	cands   []*person
+	slots   []Slot
 	decided []bool
-	steps   int
-	best    outcome
-	found   bool
+	blocked []bool // by class: see groupsWith
+	// nbrs are the candidates each one fits with (see fits). deg counts, for
+	// each undecided candidate, the undecided ones among them; and seatable
+	// counts the undecided candidates with at least two, the only ones who
+	// could still be in a group.
+	nbrs     [][]int
+	deg      []int
+	seatable int
+
+	work, budget int
+	withDates    bool
+	done         bool
+	best         *ranking
+
+	// ideal[m] is the best m people could do on sizes, whatever the rules
+	// leave: the least distance and the fewest groups, or not ok when no
+	// groups of 3 to 6 seat exactly m.
+	ideal []idealCost
+	// idealSlot is the earliest time that, for the most seated, could seat
+	// them all.
+	idealSlot int
 }
 
-func (s *search) descend(undecidedFrom int, chosen [][]int) {
-	s.steps++
-	for undecidedFrom < len(s.cands) && s.decided[undecidedFrom] {
-		undecidedFrom++
-	}
-	cur := outcome{}
-	left := 0
-	for _, g := range chosen {
-		cur.seated += len(g)
-		cur.distance += distanceFromPreferred(len(g))
-	}
-	for i := range s.cands {
-		if !s.decided[i] {
-			left++
-		}
-	}
-	// Even if everyone left were seated, could this beat the best?
-	if s.found && cur.seated+left < s.best.seated {
-		return
-	}
-	if left == 0 {
-		cur.groups = make([][]PersonID, len(chosen))
-		for i, g := range chosen {
-			for _, c := range g {
-				cur.groups[i] = append(cur.groups[i], s.cands[c].id)
+func newSearch(p *pool) *search {
+	s := &search{cands: p.people, slots: p.slots}
+	n := len(s.cands)
+	s.ideal = idealSizes(n)
+	s.blocked = make([]bool, n)
+	s.nbrs = make([][]int, n)
+	for i, a := range s.cands {
+		for j, b := range s.cands {
+			if i != j && fits(a, b) {
+				s.nbrs[i] = append(s.nbrs[i], j)
 			}
 		}
-		if !s.found || cur.beats(s.best) {
-			s.best, s.found = cur, true
-		}
-		return
 	}
-	// Past the step budget the search stops, but only once it has a result.
-	if s.found && s.steps > searchSteps {
-		return
-	}
-	first := undecidedFrom
-	s.decided[first] = true
-	for _, g := range s.groupsWith(first) {
-		for _, c := range g {
-			s.decided[c] = true
-		}
-		s.descend(first+1, append(chosen, g))
-		for _, c := range g[1:] { // g[0] is first, which stays decided here
-			s.decided[c] = false
-		}
-	}
-	// Leave the first person out.
-	s.descend(first+1, chosen)
-	s.decided[first] = false
+	return s
 }
 
-// groupsWith lists the groups that include candidate first and any later
-// undecided candidates, best first: nearest 4 or 5, then larger.
-func (s *search) groupsWith(first int) [][]int {
-	var out [][]int
-	var grow func(members []int, langs []string, anyWomenOnly bool, from int)
-	grow = func(members []int, langs []string, anyWomenOnly bool, from int) {
-		if len(members) >= policy.MinGroupSize {
-			out = append(out, slices.Clone(members))
+// decide takes candidate x out of the undecided, and undecide puts them back;
+// calls nest like a stack.
+func (s *search) decide(x int) {
+	s.decided[x] = true
+	if s.deg[x] >= policy.MinGroupSize-1 {
+		s.seatable--
+	}
+	for _, j := range s.nbrs[x] {
+		if !s.decided[j] {
+			s.deg[j]--
+			if s.deg[j] == policy.MinGroupSize-2 {
+				s.seatable--
+			}
 		}
-		if len(members) == policy.MaxGroupSize {
+	}
+}
+
+func (s *search) undecide(x int) {
+	s.decided[x] = false
+	for _, j := range s.nbrs[x] {
+		if !s.decided[j] {
+			if s.deg[j] == policy.MinGroupSize-2 {
+				s.seatable++
+			}
+			s.deg[j]++
+		}
+	}
+	if s.deg[x] >= policy.MinGroupSize-1 {
+		s.seatable++
+	}
+}
+
+type idealCost struct {
+	distance, groups int
+	ok               bool
+}
+
+// idealSizes is, for each m up to n, the least total distance from 4 or 5, then
+// the fewest groups, that m people can be split into groups of 3 to 6 with.
+func idealSizes(n int) []idealCost {
+	best := make([]idealCost, n+1)
+	best[0].ok = true
+	for i := 1; i <= n; i++ {
+		for size := policy.MinGroupSize; size <= min(i, policy.MaxGroupSize); size++ {
+			prev := best[i-size]
+			if !prev.ok {
+				continue
+			}
+			c := idealCost{prev.distance + distanceFromPreferred(size), prev.groups + 1, true}
+			if !best[i].ok || c.distance < best[i].distance || c.distance == best[i].distance && c.groups < best[i].groups {
+				best[i] = c
+			}
+		}
+	}
+	return best
+}
+
+// run searches once: for the most seated, sizes and groups, or (withDates)
+// for the date tie-break, starting from what the first run found.
+func (s *search) run(withDates bool) {
+	s.withDates = withDates
+	s.done = false
+	s.work = 0
+	s.budget = seatWork
+	s.idealSlot = -1
+	if withDates {
+		s.budget = dateWork
+		// The earliest time that could seat everyone who can be seated.
+		for i := range s.slots {
+			n := 0
+			for _, c := range s.cands {
+				if c.ticks[i] {
+					n++
+				}
+			}
+			if n >= s.best.seated {
+				s.idealSlot = i
+				break
+			}
+		}
+	}
+	if s.best != nil && s.settled() {
+		return
+	}
+	s.decided = make([]bool, len(s.cands))
+	s.deg = make([]int, len(s.cands))
+	s.seatable = 0
+	for i, n := range s.nbrs {
+		s.deg[i] = len(n)
+		if len(n) >= policy.MinGroupSize-1 {
+			s.seatable++
+		}
+	}
+	s.descend(nil, 0, 0, 0)
+}
+
+func (s *search) descend(chosen []chosenGroup, seated, distance, groups int) {
+	if s.done {
+		return
+	}
+	s.work++
+	if s.seatable == 0 {
+		// Whoever is left can't be in a group.
+		s.leaf(chosen)
+		return
+	}
+	if s.best != nil {
+		// Even if everyone who could still be seated were, could this beat the
+		// best? A tie on the most seated can only be won on sizes: the sizes
+		// and groups only grow, and seating m more people in groups of 3 to 6
+		// costs at least what the ideal split of m costs.
+		if upper := seated + s.seatable; upper < s.best.seated {
+			return
+		} else if upper == s.best.seated {
+			more := s.ideal[s.seatable]
+			switch {
+			case !more.ok, distance+more.distance > s.best.distance:
+				return
+			case distance+more.distance == s.best.distance && groups+more.groups > s.best.groups:
+				return
+			}
+		}
+		if s.work > s.budget {
+			s.done = true
 			return
 		}
-		for c := from; c < len(s.cands) && len(out) < groupsPerNode; c++ {
-			if s.decided[c] {
-				continue
-			}
-			cand := s.cands[c]
-			shared := intersect(langs, cand.langs)
-			if len(shared) == 0 {
-				continue
-			}
-			womenOnly := anyWomenOnly || cand.womenOnly
-			if womenOnly && !cand.eligible() {
-				continue
-			}
-			if cand.womenOnly && !s.allEligible(members) {
-				continue
-			}
-			if s.apartFromAny(cand, members) {
-				continue
-			}
-			grow(append(members, c), shared, womenOnly, c+1)
+	}
+	first := s.mostConstrained()
+	s.decide(first)
+	candidates := s.groupsWith(first)
+	s.work += len(candidates)
+	for _, g := range candidates {
+		for _, c := range g.members[1:] {
+			s.decide(c)
+		}
+		s.descend(append(chosen, g), seated+len(g.members), distance+distanceFromPreferred(len(g.members)), groups+1)
+		for i := len(g.members) - 1; i >= 1; i-- {
+			s.undecide(g.members[i])
+		}
+		if s.done {
+			break
 		}
 	}
-	f := s.cands[first]
-	if len(f.langs) > 0 && (!f.womenOnly || f.eligible()) {
-		grow([]int{first}, f.langs, f.womenOnly, first+1)
+	if !s.done {
+		// Leave the first person out.
+		s.descend(chosen, seated, distance, groups)
 	}
-	sort.SliceStable(out, func(i, j int) bool {
-		di, dj := distanceFromPreferred(len(out[i])), distanceFromPreferred(len(out[j]))
-		if di != dj {
-			return di < dj
-		}
-		return len(out[i]) > len(out[j])
-	})
-	return out
+	s.undecide(first)
 }
 
-func (s *search) allEligible(members []int) bool {
-	for _, m := range members {
-		if !s.cands[m].eligible() {
-			return false
+// mostConstrained is the undecided candidate who fits with the fewest other
+// undecided ones, the lowest ID on a tie. Deciding the person with the fewest
+// ways out first keeps the search small.
+func (s *search) mostConstrained() int {
+	pick := -1
+	for i := range s.cands {
+		if !s.decided[i] && (pick < 0 || s.deg[i] < s.deg[pick]) {
+			pick = i
 		}
 	}
-	return true
+	return pick
+}
+
+func (s *search) leaf(chosen []chosenGroup) {
+	if r := rank(chosen, len(s.slots)); s.best == nil || r.beats(s.best, s.withDates) {
+		s.best = r
+	}
+	s.done = s.settled()
+}
+
+// settled is whether the best found can't be beaten, so the search can stop.
+func (s *search) settled() bool {
+	r := s.best
+	if !s.withDates {
+		// Nothing seats more people, in nearer sizes, in fewer groups.
+		ideal := s.ideal[len(s.cands)]
+		return ideal.ok && r.seated == len(s.cands) && r.distance == ideal.distance && r.groups == ideal.groups
+	}
+	// Everyone seated at the earliest time that could seat them.
+	return len(r.dates) == 1 && r.dates[0].slot == s.idealSlot
+}
+
+// groupsWith lists the groups that include candidate first and any other
+// undecided candidates, at any time first ticked, best first: nearest 4 or 5,
+// then larger, then the earlier time.
+func (s *search) groupsWith(first int) []chosenGroup {
+	var out []chosenGroup
+	f := s.cands[first]
+	for slot := range s.slots {
+		if !f.ticks[slot] {
+			continue
+		}
+		var grow func(members []int, langs []string, active, allEligible bool, from int)
+		grow = func(members []int, langs []string, active, allEligible bool, from int) {
+			if len(members) >= policy.MinGroupSize {
+				out = append(out, chosenGroup{slot, slices.Clone(members)})
+			}
+			if len(members) == policy.MaxGroupSize {
+				return
+			}
+			var skipped []int // classes blocked for the rest of this loop
+			for c := from; c < len(s.cands) && len(out) < groupsPerNode; c++ {
+				cand := s.cands[c]
+				// Of interchangeable people, take the lowest IDs: a later one
+				// is tried only once every earlier one of its class is in.
+				if s.decided[c] || !cand.ticks[slot] || s.blocked[cand.class] {
+					continue
+				}
+				shared := intersect(langs, cand.langs)
+				if len(shared) == 0 {
+					continue
+				}
+				nowActive, nowEligible := active || cand.womenOnly, allEligible && cand.eligible()
+				if nowActive && !nowEligible {
+					continue
+				}
+				if s.apartFromAny(cand, members) {
+					continue
+				}
+				grow(append(members, c), shared, nowActive, nowEligible, c+1)
+				s.blocked[cand.class] = true
+				skipped = append(skipped, cand.class)
+			}
+			for _, class := range skipped {
+				s.blocked[class] = false
+			}
+		}
+		grow([]int{first}, f.langs, f.womenOnly, f.eligible(), 0)
+	}
+	slices.SortStableFunc(out, func(a, b chosenGroup) int {
+		return cmp.Or(
+			cmp.Compare(distanceFromPreferred(len(a.members)), distanceFromPreferred(len(b.members))),
+			-cmp.Compare(len(a.members), len(b.members)),
+		)
+	})
+	return out
 }
 
 func (s *search) apartFromAny(cand *person, members []int) bool {

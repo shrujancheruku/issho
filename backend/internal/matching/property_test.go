@@ -305,7 +305,7 @@ func bruteForce(in matching.Input, slot matching.Slot) score {
 // or outside-service package (docs/spec/architecture.md, "The seams").
 func TestImportsNoDatabaseClockOrOutsideService(t *testing.T) {
 	allowed := map[string]bool{
-		"cmp": true, "slices": true, "sort": true,
+		"cmp": true, "slices": true,
 		"github.com/shrujancheruku/issho/backend/internal/policy": true,
 	}
 	files, err := filepath.Glob("*.go")
@@ -331,5 +331,205 @@ func TestImportsNoDatabaseClockOrOutsideService(t *testing.T) {
 	}
 	if checked == 0 {
 		t.Fatal("found no source files to check")
+	}
+}
+
+// The whole assignment is ranked as the spec words it ("Sizes" in
+// docs/spec/matching.md): the most people seated, then sizes nearest 4 or 5,
+// then fewer groups; among assignments equal on those, the date that seats the
+// most wins and a tie goes to the earliest, then the next date the same way.
+type ranking struct {
+	seated, distance, groups int
+	// dates are the dates with a group, the one seating the most first.
+	dates []dateSeats
+}
+
+type dateSeats struct {
+	slot  matching.Slot
+	seats int
+}
+
+func slotIndex(s matching.Slot) int { return slices.Index(allSlots, s) }
+
+func rankOf(groups map[matching.Slot]int, sizes []int) ranking {
+	var r ranking
+	for _, n := range sizes {
+		r.seated += n
+		r.distance += distance(n)
+		r.groups++
+	}
+	for slot, seats := range groups {
+		r.dates = append(r.dates, dateSeats{slot, seats})
+	}
+	slices.SortFunc(r.dates, func(a, b dateSeats) int {
+		if a.seats != b.seats {
+			return b.seats - a.seats
+		}
+		return slotIndex(a.slot) - slotIndex(b.slot)
+	})
+	return r
+}
+
+// better is whether a ranks above b.
+func (a ranking) better(b ranking) bool {
+	switch {
+	case a.seated != b.seated:
+		return a.seated > b.seated
+	case a.distance != b.distance:
+		return a.distance < b.distance
+	case a.groups != b.groups:
+		return a.groups < b.groups
+	}
+	for i := range min(len(a.dates), len(b.dates)) {
+		if a.dates[i] != b.dates[i] {
+			if a.dates[i].seats != b.dates[i].seats {
+				return a.dates[i].seats > b.dates[i].seats
+			}
+			return slotIndex(a.dates[i].slot) < slotIndex(b.dates[i].slot)
+		}
+	}
+	return false
+}
+
+func rankOfGroups(groups []matching.Group) ranking {
+	seats := map[matching.Slot]int{}
+	var sizes []int
+	for _, g := range groups {
+		seats[matching.Slot{Date: g.Date, Part: g.Part}] += len(g.People)
+		sizes = append(sizes, len(g.People))
+	}
+	return rankOf(seats, sizes)
+}
+
+// bruteForceAnywhere tries every way to put each person in nobody's group or
+// in one of two groups, and each group at every one of the times, so it
+// finds the best assignment across dates. It is the oracle for the search.
+func bruteForceAnywhere(in matching.Input, times []matching.Slot) ranking {
+	n := len(in.Signups)
+	var best ranking
+	label := make([]int, n)
+	var try func(i int)
+	try = func(i int) {
+		if i < n {
+			for l := range 3 {
+				label[i] = l
+				try(i + 1)
+			}
+			return
+		}
+		var members [3][]matching.PersonID
+		for j, l := range label {
+			members[l] = append(members[l], in.Signups[j].Person)
+		}
+		// Each non-empty group picks a time it can meet at; try every pick.
+		var pick func(g int, seats map[matching.Slot]int, sizes []int)
+		pick = func(g int, seats map[matching.Slot]int, sizes []int) {
+			if g == 3 {
+				if r := rankOf(seats, sizes); r.better(best) {
+					best = r
+				}
+				return
+			}
+			if len(members[g]) == 0 {
+				pick(g+1, seats, sizes)
+				return
+			}
+			for _, slot := range times {
+				if problems(in, members[g], slot) != "" {
+					continue
+				}
+				next := maps.Clone(seats)
+				next[slot] += len(members[g])
+				pick(g+1, next, append(slices.Clone(sizes), len(members[g])))
+			}
+		}
+		pick(1, map[matching.Slot]int{}, nil)
+	}
+	try(0)
+	return best
+}
+
+// Whatever the dates the people ticked, the groups seat the most people over
+// the whole assignment, not date by date, and then rank as the spec says.
+func TestPropertyBestAssignmentAcrossDates(t *testing.T) {
+	r := rand.New(rand.NewPCG(5, 617))
+	times := allSlots[:3]
+	for round := range 600 {
+		in := generate(r, 8)
+		for i := range in.Signups {
+			in.Signups[i].Ticks = someOf(r, times, 0.6)
+		}
+		in.ClosedDates = nil
+
+		got := rankOfGroups(matching.Match(in))
+		want := bruteForceAnywhere(in, times)
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("round %d: matching ranks %+v, brute force finds %+v\ninput: %+v", round, got, want, in)
+		}
+	}
+}
+
+// Pilot-sized rounds (60 people, docs/spec/matching.md) hold every rule, give
+// the same answer twice and seat everyone who could be seated when the crowd
+// is open enough that a perfect assignment exists.
+func TestPropertyPilotSizedRounds(t *testing.T) {
+	r := rand.New(rand.NewPCG(6, 617))
+	for round := range 12 {
+		in := generate(r, 60)
+		for len(in.Signups) < 60 {
+			i := len(in.Signups)
+			in.Signups = append(in.Signups, matching.Signup{
+				Person:    matching.PersonID(fmt.Sprintf("q%02d", i)),
+				Ticks:     someOf(r, allSlots, 0.5),
+				Languages: someOf(r, allLangs, 0.7),
+				Gender:    allGenders[r.IntN(len(allGenders))],
+			})
+		}
+		groups := matching.Match(in)
+		inGroup := map[matching.PersonID]bool{}
+		for _, g := range groups {
+			if p := problems(in, g.People, matching.Slot{Date: g.Date, Part: g.Part}); p != "" {
+				t.Fatalf("round %d: group %+v: %s", round, g, p)
+			}
+			for _, id := range g.People {
+				if inGroup[id] {
+					t.Fatalf("round %d: %s is in two groups", round, id)
+				}
+				inGroup[id] = true
+			}
+		}
+		if again := matching.Match(in); !reflect.DeepEqual(again, groups) {
+			t.Fatalf("round %d: two runs differ", round)
+		}
+	}
+}
+
+// A whole city at one time who can all meet seats every one of them, in the
+// sizes the spec names, however the 60 are spread over languages.
+func TestEveryoneWhoCanBeSeatedIsSeatedAtPilotSize(t *testing.T) {
+	r := rand.New(rand.NewPCG(7, 617))
+	for round := range 20 {
+		var in matching.Input
+		for i := range 60 {
+			in.Signups = append(in.Signups, matching.Signup{
+				Person:    matching.PersonID(fmt.Sprintf("p%02d", i)),
+				Ticks:     someOf(r, allSlots, 0.9),
+				Languages: []string{"en"},
+				Gender:    allGenders[r.IntN(len(allGenders))],
+			})
+			if len(in.Signups[i].Ticks) == 0 {
+				in.Signups[i].Ticks = allSlots[:1]
+			}
+		}
+		seated := 0
+		for _, g := range matching.Match(in) {
+			seated += len(g.People)
+		}
+		// Everyone ticks nearly everything, so someone can be seated at some
+		// time: 60 people in groups of 5 (12 groups) is possible only if all
+		// are seated, and no rule keeps anyone out.
+		if seated != 60 {
+			t.Fatalf("round %d: seated %d of 60", round, seated)
+		}
 	}
 }

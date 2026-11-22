@@ -249,3 +249,95 @@ func TestTicksOfAnUnknownPartAreIgnored(t *testing.T) {
 		t.Errorf("got %+v, want none", got)
 	}
 }
+
+// "Matching first seats the most people" (docs/spec/matching.md, "Sizes"): the
+// most people over the whole assignment, not date by date. Monday seats 4 and
+// Tuesday 5, but taking Tuesday's five first strands p3 and p4; Monday's four
+// with Tuesday's other three seat all seven.
+func TestSeatsTheMostOverTheWholeAssignment(t *testing.T) {
+	mk := func(id string, ticks ...matching.Slot) matching.Signup {
+		return matching.Signup{Person: matching.PersonID(id), Ticks: ticks, Languages: []string{"en"}}
+	}
+	got := matching.Match(matching.Input{Signups: []matching.Signup{
+		mk("p1", monMorning, tueMorning), mk("p2", monMorning, tueMorning),
+		mk("p3", monMorning), mk("p4", monMorning),
+		mk("p5", tueMorning), mk("p6", tueMorning), mk("p7", tueMorning),
+	}})
+	seated := 0
+	for _, g := range got {
+		seated += len(g.People)
+	}
+	if seated != 7 {
+		t.Fatalf("seated %d, want all 7: %+v", seated, got)
+	}
+	// The two ways to seat 7 are equal on sizes and groups (4 and 3); the date
+	// that seats the most wins, and 4 on Monday is earlier than 4 on Tuesday.
+	if len(got) != 2 || got[0].Date != monMorning.Date || len(got[0].People) != 4 || got[1].Date != tueMorning.Date {
+		t.Errorf("got %+v, want 4 on Monday and 3 on Tuesday", got)
+	}
+}
+
+// Sizes are weighed over every date together. Monday's six seat only 6 and
+// leave Tuesday's two stranded; splitting them seats all 8, and 4 and 4 is
+// nearer 4 or 5 than 3 and 5.
+func TestSizesAreWeighedAcrossDates(t *testing.T) {
+	mk := func(id string, ticks ...matching.Slot) matching.Signup {
+		return matching.Signup{Person: matching.PersonID(id), Ticks: ticks, Languages: []string{"en"}}
+	}
+	// a, b, c can do only Monday; d, e, f can do Monday or Tuesday; g, h only
+	// Tuesday.
+	got := matching.Match(matching.Input{Signups: []matching.Signup{
+		mk("a", monMorning), mk("b", monMorning), mk("c", monMorning),
+		mk("d", monMorning, tueMorning), mk("e", monMorning, tueMorning), mk("f", monMorning, tueMorning),
+		mk("g", tueMorning), mk("h", tueMorning),
+	}})
+	if want := []int{4, 4}; !slices.Equal(sizes(got), want) {
+		t.Errorf("sizes %v, want %v: %+v", sizes(got), want, got)
+	}
+}
+
+// Sixty is the Pilot's active people (docs/spec/matching.md, "How many plans
+// are open"), and a round can be all of them at one time.
+func TestAPilotSizedRoundIsExact(t *testing.T) {
+	for _, tc := range []struct {
+		people int
+		want   []int
+	}{
+		{18, []int{5, 5, 4, 4}},
+		{60, slices.Repeat([]int{5}, 12)},
+		{61, slices.Concat(slices.Repeat([]int{5}, 9), slices.Repeat([]int{4}, 4))},
+	} {
+		t.Run(fmt.Sprint(tc.people), func(t *testing.T) {
+			got := sizes(matching.Match(matching.Input{Signups: crowd(tc.people, monMorning)}))
+			if !slices.Equal(got, tc.want) {
+				t.Errorf("%d people made groups of %v, want %v", tc.people, got, tc.want)
+			}
+		})
+	}
+}
+
+// A person who appears twice with the same entry counts once. One who appears
+// with entries that differ can't be told apart from a mistake, so they are
+// left out whatever the order of the entries: matching never guesses which
+// entry is right when a hard rule (a language, a setting) hangs on it.
+func TestADuplicateSignupWithDifferentContentIsLeftOut(t *testing.T) {
+	base := crowd(3, monMorning)
+	other := base[0]
+	other.Ticks = []matching.Slot{monMorning, tueMorning}
+	for _, signups := range [][]matching.Signup{
+		append(slices.Clone(base), other),
+		append([]matching.Signup{other}, base...),
+	} {
+		got := matching.Match(matching.Input{Signups: signups})
+		if len(got) != 0 {
+			t.Errorf("got %+v, want none: p00 appears twice with different ticks, leaving two people", got)
+		}
+	}
+	// The same entry twice, with ticks and languages in another order.
+	same := base[0]
+	same.Ticks = []matching.Slot{monMorning, monMorning}
+	same.Languages = []string{"en", "en"}
+	if got := matching.Match(matching.Input{Signups: append(slices.Clone(base), same)}); len(got) != 1 || len(got[0].People) != 3 {
+		t.Errorf("got %+v, want one group of 3", got)
+	}
+}
