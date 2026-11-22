@@ -6,6 +6,7 @@
   {"table": "app.plan_stop_texts", "personal_data": "none"},
   {"table": "app.plan_stops", "personal_data": "none"},
   {"table": "app.plan_texts", "personal_data": "none"},
+  {"table": "app.profiles", "personal_data": "the person's first name or the name they go by, gender, spoken languages, whether they live in the city, the setting for only women and non-binary people, the day they said they were 18 or over (never the date of birth), and the code of conduct version accepted and when", "lifetime": "While the account exists"},
   {"table": "app.queue_items", "personal_data": "none"},
   {"table": "goose.goose_db_version", "personal_data": "none"},
   {"table": "river.river_job", "personal_data": "none"},

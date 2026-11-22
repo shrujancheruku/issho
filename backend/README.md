@@ -21,7 +21,7 @@ One Go module (`github.com/shrujancheruku/issho/backend`), part of the root `go.
 | `fixtures` | The development and test fixture: the city Da Nang–Hoi An and two plans, as embedded JSON (see "Fixtures") |
 | `internal/cities` | The listed cities: slug, state, time zone, currency and names (`app.cities`) |
 | `internal/plans` | Plans, read only so far: the fields a plan page shows and the prose per language (`app.plans` and its texts and stops) |
-| `internal/people` | Accounts (`app.accounts`), and the verifier for Supabase Auth's tokens (see "Accounts and sign-in") |
+| `internal/people` | Accounts (`app.accounts`), profiles (`app.profiles`), and the verifier for Supabase Auth's tokens (see "Accounts and sign-in") |
 | `internal/email` | `email.Sender`, its in-memory fake, and `email/resend`, the real one |
 | `internal/logging` | `logging.New`, the one way a process makes a logger, and the test that keeps it the only way (see "Logs") |
 | `internal/jobs` | The River client the worker runs and the domain packages enqueue through |
@@ -45,7 +45,7 @@ The API is ConnectRPC over protobuf: the contract is `proto/` (see its README), 
 
 Who a token belongs to comes from an `rpc.Authenticator`, which turns a bearer token into an `rpc.Identity` (subject, second step, Making, admin). The verifier against the Supabase JWKS is `rpc.NewAuthenticator(people.Verifier)` (see "Accounts and sign-in"); the staff-role lookup is later, so nobody is Making or admin yet. A process with no `DATABASE_URL` and `SUPABASE_AUTH_URL` passes none and every token is refused, so only public RPCs work. A handler reads the caller with `rpc.IdentityFrom(ctx)`.
 
-The RPCs so far are `HealthService.Check`, public, which reports the build's version, and `AccountService.GetAccount` (see "Accounts and sign-in"). `cmd/api`'s `version` is set when building (`go build -ldflags "-X main.version=1.2.3"`) and is `dev` otherwise.
+The RPCs so far are `HealthService.Check`, public, which reports the build's version, and `AccountService.GetAccount` and `ProfileService` (see "Accounts and sign-in"). `cmd/api`'s `version` is set when building (`go build -ldflags "-X main.version=1.2.3"`) and is `dev` otherwise.
 
 Tests go through HTTP with a generated Connect client. `internal/rpc/access_test.go` serves a throwaway service, built in the test with one RPC per rule plus one with none, behind the real interceptor; `internal/rpc/rpcauth` tests the access-rule check against fixture protos in its `testdata`.
 
@@ -54,6 +54,8 @@ Tests go through HTTP with a generated Connect client. `internal/rpc/access_test
 Sign-in is Supabase Auth's 6-digit email code; `internal/people` owns the accounts. `cmd/api` reads two public values: `DATABASE_URL` (the app's connection URL) and `SUPABASE_AUTH_URL` (`https://<ref>.supabase.co/auth/v1`, the tokens' issuer, whose keys are at `<it>/.well-known/jwks.json`; locally `http://127.0.0.1:54321/auth/v1`). With both it serves `AccountService` behind the verifier; with neither it serves only the public RPCs and logs a warning; with one it exits 1 naming the other. The API never holds the project's JWT secret.
 
 `AccountService.GetAccount` (member) returns the caller's own account, making it on the first call from the token's email and the city and display language the app sends (defaults: the Pilot's only city, English). It takes no account id, and `rpc/account_test.go` fails if any other RPC's response carries an email field. See `internal/people/README.md` and `supabase/README.md`.
+
+`ProfileService` (member) holds the profile asked at the first signup: `GetProfile` returns the caller's own (empty while there is none) and `SaveProfile` makes or changes it. Neither takes an account id, and `rpc/profile_test.go` fails if another RPC returns a profile or these can name a person. A signup RPC calls `rpc.RequireProfile` first: an account with no profile gets `FAILED_PRECONDITION` with `ProfileProblem` reason `PROFILE_REQUIRED`. See `internal/people/README.md`.
 
 ## Fixtures
 
