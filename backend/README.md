@@ -11,6 +11,7 @@ One Go module (`github.com/shrujancheruku/issho/backend`), part of the root `go.
 | `cmd/rpcauth` | `make rpc-auth`: fails when an RPC in `proto/` declares no access rule |
 | `cmd/migrate` | `migrate up` and `migrate down`, behind `make migrate-up` and `make migrate-down` |
 | `cmd/seed` | `make seed`: loads the development fixture into a local database (and with `ADMIT=<email>`, admits that account as the owner); refuses any other unless `--hosted-dev` names the issho-dev project (`make seed-dev`, founder only); not in the image (see "Fixtures") |
+| `cmd/season` | `make season`: plays the season (`internal/season`) on a throwaway Postgres in Docker and prints its scorecard; not in the image |
 | `db` | The goose migrations (`db/migrations`), embedded, and the `Up` and `Down` that run them; the schema sqlc reads |
 | `internal/<pkg>/store` | The Go that sqlc generates from `internal/<pkg>/queries`, one pair per package (`internal/staff`, `internal/people`). Generated: never edit it |
 | `internal/clock` | The injected clock: `Clock`, `Real` (wired only in `cmd/`) and the test `Fake` |
@@ -29,6 +30,7 @@ One Go module (`github.com/shrujancheruku/issho/backend`), part of the root `go.
 | `internal/policy` | Every number in the spec's rules, as a constant linked to its document (see "Policy") |
 | `internal/matching` | Matching as a pure function: a round's signups, the kept-apart pairs and the closed dates in, groups with a date and part of the day out (the thin loop's hard rules; see its README) |
 | `internal/staff` | The queue: items with a due time and a written default, and the River job that applies the default (see "The queue") |
+| `internal/season` | The season: the scripted cast and fixture plans run through the real packages on the fake clock, its invariants, the log search and the scorecard (see its README; `make season` prints the numbers) |
 | `internal/retention` | The registry of every table's personal data and lifetime, and the check that none is missing (see "Retention") |
 | `internal/serve` | The lifecycle both commands share |
 | `internal/testdb` | A schema, or a whole database, per test in a throwaway Postgres |

@@ -286,3 +286,10 @@ seed:
 .PHONY: seed-dev
 seed-dev:
 	cd backend && go run ./cmd/seed --hosted-dev $(if $(ADMIT),--admit '$(ADMIT)')
+
+# The season (#623): the scripted run of people and plans through the real
+# packages on the fake clock, and its scorecard. It starts its own throwaway
+# Postgres in Docker (backend/cmd/season); `make test` runs it as a test too.
+.PHONY: season
+season:
+	cd backend && go run ./cmd/season
