@@ -8,6 +8,7 @@ import { createAppSessionClient } from '@/auth/app-session-client';
 import { AuthProvider } from '@/auth/auth-provider';
 import { I18nProvider } from '@/i18n/i18n-provider';
 import { useDeviceLanguage } from '@/i18n/use-device-language';
+import { MyOutingsProvider } from '@/outings/use-my-outings';
 import '@/global.css';
 
 export default function RootLayout() {
@@ -18,8 +19,10 @@ export default function RootLayout() {
     <ApiProvider api={api}>
       <AuthProvider client={session}>
         <I18nProvider lang={lang}>
-          <StatusBar style="auto" />
-          <Slot />
+          <MyOutingsProvider>
+            <StatusBar style="auto" />
+            <Slot />
+          </MyOutingsProvider>
         </I18nProvider>
       </AuthProvider>
     </ApiProvider>

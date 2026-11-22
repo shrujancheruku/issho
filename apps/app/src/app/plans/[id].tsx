@@ -2,6 +2,7 @@ import { Link, useLocalSearchParams } from 'expo-router';
 import { StyleSheet, Text } from 'react-native';
 
 import { useApi } from '@/api/api-provider';
+import { OutingStrip } from '@/components/outing-strip';
 import { PlanDetails } from '@/components/plan-details';
 import { SignupPanel } from '@/components/signup-panel';
 import { ScreenFrame } from '@/components/screen-frame';
@@ -39,6 +40,8 @@ export default function PlanPage() {
       </Link>
       {state.status === 'ready' && plan ? (
         <>
+          {/* Client-only, like the signup panel: the private strip loads after hydration, so the cached page holds nothing per person. */}
+          <OutingStrip plan={plan} />
           <PlanDetails plan={plan} />
           {/* Client-only: it asks who the visitor is after hydration, so the cached page holds nothing per visitor. */}
           <SignupPanel plan={plan} />

@@ -36,6 +36,14 @@ export function fakeApi(): {
       withdrawSignup: jest.fn().mockResolvedValue({}),
       listMySignups: jest.fn().mockResolvedValue({ signups: [] }),
     },
+    outing: {
+      listMyOutings: jest.fn().mockResolvedValue({ outings: [] }),
+      answerInvitation: jest.fn().mockResolvedValue({}),
+      cancelSeat: jest.fn().mockResolvedValue({}),
+      checkIn: jest.fn(),
+      getFeedback: jest.fn(),
+      saveFeedback: jest.fn(),
+    },
     // No profile yet: an empty response, which is how the app knows to ask the questions.
     profile: {
       getProfile: jest.fn().mockResolvedValue({}),

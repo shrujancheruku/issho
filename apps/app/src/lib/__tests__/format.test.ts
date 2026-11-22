@@ -1,4 +1,4 @@
-import { cityDateKey, formatCalendarDate, formatDate, formatDateTime, formatPrice, formatTime, formatTimeRange } from '../format';
+import { cityDateKey, formatCalendarDate, formatDate, formatDateTime, formatOutingWhen, formatPrice, formatTime, formatTimeRange } from '../format';
 
 // 17:30 UTC on 21 November is already 00:30 on the 22nd in Da Nang (UTC+7, no
 // daylight saving), so each expectation also shows the city's clock, not the
@@ -58,5 +58,31 @@ describe('cityDateKey', () => {
   it("is the city's calendar date as a sortable YYYY-MM-DD key, whatever the device's zone and the display language", () => {
     expect(cityDateKey(instant, danang)).toBe('2026-11-22');
     expect(cityDateKey(instant, 'UTC')).toBe('2026-11-21');
+  });
+});
+
+describe('formatOutingWhen', () => {
+  // 09:00 on 25 November in Da Nang is 02:00 UTC, 18:00 the day before in Los Angeles.
+  const when = { date: '2026-11-25', startsAt: '09:00', timeZone: danang };
+
+  it('writes the city clock alone when the device is on it', () => {
+    expect(formatOutingWhen({ ...when, lang: 'en', deviceZone: danang })).toEqual({ city: 'Wed, Nov 25, 9:00 AM', device: null });
+  });
+
+  it('writes the device time beside it when the device is elsewhere, with its own day', () => {
+    expect(formatOutingWhen({ ...when, lang: 'en', deviceZone: 'America/Los_Angeles' })).toEqual({ city: 'Wed, Nov 25, 9:00 AM', device: 'Tue, Nov 24, 6:00 PM' });
+  });
+
+  it('writes both in Vietnamese', () => {
+    expect(formatOutingWhen({ ...when, lang: 'vi', deviceZone: 'America/Los_Angeles' })).toEqual({ city: '9:00 Th 4, 25 thg 11', device: '18:00 Th 3, 24 thg 11' });
+  });
+
+  it('writes the city clock alone for another zone with the same time (no daylight saving in Da Nang)', () => {
+    expect(formatOutingWhen({ ...when, lang: 'en', deviceZone: 'Asia/Bangkok' })).toEqual({ city: 'Wed, Nov 25, 9:00 AM', device: null });
+  });
+
+  it('finds the instant across a daylight-saving change in the other zone', () => {
+    // 09:00 on 15 March 2027 in Da Nang is 02:00 UTC: Los Angeles went to daylight time on the 14th (UTC-7), so 19:00 on the 14th.
+    expect(formatOutingWhen({ date: '2027-03-15', startsAt: '09:00', timeZone: danang, lang: 'en', deviceZone: 'America/Los_Angeles' }).device).toBe('Sun, Mar 14, 7:00 PM');
   });
 });

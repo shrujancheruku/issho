@@ -1,8 +1,9 @@
-import type { Signup } from '@issho/api-client';
+import type { Outing, Signup } from '@issho/api-client';
 import { useCallback, useEffect, useState } from 'react';
 
 import { useApi } from '@/api/api-provider';
 import { useAuth } from '@/auth/auth-provider';
+import { inPlayOutings } from '@/outings/model';
 
 /**
  * The signed-in person's own signups (ListMySignups). It loads on the client
@@ -45,5 +46,5 @@ export function useMySignups() {
   return { state, reload };
 }
 
-/** Something is in play when the person has a signup running. Outings (#619) add to this. */
-export const inPlay = (signups: Signup[]) => signups.length > 0;
+/** Something is in play when the person has a signup running or an outing ahead of them. */
+export const inPlay = (signups: Signup[], outings: Outing[] = []) => signups.length > 0 || inPlayOutings(outings);

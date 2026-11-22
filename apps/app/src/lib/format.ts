@@ -50,3 +50,39 @@ export const formatCalendarDate = (date: string, lang: Language) => formatDate(n
  */
 export const cityDateKey = (date: Date, timeZone: string) =>
   new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(date);
+
+/** The device's own time zone, which only the outing's "beside it" line reads. */
+export const deviceTimeZone = () => Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+/**
+ * The instant a wall-clock time ("YYYY-MM-DD", "HH:MM") is in a zone. A zone's
+ * offset is read at the guess and again at the corrected instant, which settles
+ * it on either side of a daylight-saving change.
+ */
+function instantIn(date: string, time: string, timeZone: string): Date {
+  const wall = Date.parse(`${date}T${time}:00Z`);
+  const offsetAt = (at: number) => {
+    const parts = Object.fromEntries(
+      new Intl.DateTimeFormat('en-US', { timeZone, hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })
+        .formatToParts(new Date(at))
+        .map((p) => [p.type, p.value]),
+    );
+    return Date.UTC(+parts.year, +parts.month - 1, +parts.day, +parts.hour, +parts.minute, +parts.second) - at;
+  };
+  const first = wall - offsetAt(wall);
+  return new Date(wall - offsetAt(first));
+}
+
+/**
+ * When an outing is, on the city's clock, and on the device's clock when that
+ * reads differently (docs/spec/outings.md: "with the device's time beside it
+ * when different"). An outing's date and start are the city's own wall time, so
+ * the device's reading is found from the instant they name. `device` is null
+ * when the device reads the same.
+ */
+export function formatOutingWhen({ date, startsAt, timeZone, lang, deviceZone = deviceTimeZone() }: { date: string; startsAt: string; timeZone: string; lang: Language; deviceZone?: string }) {
+  const at = instantIn(date, startsAt, timeZone);
+  const city = formatDateTime(at, { timeZone, lang });
+  const device = formatDateTime(at, { timeZone: deviceZone, lang });
+  return { city, device: device === city ? null : device };
+}

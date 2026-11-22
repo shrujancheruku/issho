@@ -6,6 +6,7 @@ import { ApiProvider } from '@/api/api-provider';
 import { createAppApi } from '@/api/app-api';
 import { AuthProvider } from '@/auth/auth-provider';
 import { I18nProvider } from '@/i18n/i18n-provider';
+import { MyOutingsProvider } from '@/outings/use-my-outings';
 import { fakeApi } from '@/test-support/fake-api';
 import { fakeSessionClient } from '@/test-support/fake-session-client';
 import { TestProviders } from '@/test-support/providers';
@@ -125,7 +126,9 @@ describe('a token the API no longer accepts', () => {
         wrapper: ({ children }: { children: ReactNode }) => (
           <ApiProvider api={api}>
             <AuthProvider client={session}>
-              <I18nProvider lang="en">{children}</I18nProvider>
+              <I18nProvider lang="en">
+                <MyOutingsProvider>{children}</MyOutingsProvider>
+              </I18nProvider>
             </AuthProvider>
           </ApiProvider>
         ),

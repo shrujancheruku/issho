@@ -3,6 +3,8 @@ import { Image, Platform, type ColorValue } from 'react-native';
 
 import { useI18n } from '@/i18n/i18n-provider';
 import { useTheme } from '@/hooks/use-theme';
+import { needsAnswer } from '@/outings/model';
+import { useMyOutings } from '@/outings/use-my-outings';
 
 // The tab bar icons are v1's, drawn to be tinted.
 const icons = {
@@ -15,6 +17,9 @@ const icons = {
 export default function TabsLayout() {
   const { t } = useI18n();
   const theme = useTheme();
+  const { state } = useMyOutings();
+  // The tab carries a count of what needs an answer: this is how the app works with no inbox (docs/spec/app-shape.md).
+  const needs = state.status === 'ready' ? state.outings.filter((o) => needsAnswer(o, new Date())).length : 0;
   const tab = (icon: keyof typeof icons) => ({
     tabBarIcon: ({ color }: { color: ColorValue }) => <Image source={icons[icon]} style={{ width: 24, height: 24, tintColor: color }} />,
   });
@@ -31,7 +36,14 @@ export default function TabsLayout() {
           ...Platform.select({ web: { height: 64, paddingBottom: 8 } }),
         },
       }}>
-      <Tabs.Screen name="together" options={{ title: t('tabs.together'), ...tab('together') }} />
+      <Tabs.Screen
+        name="together"
+        options={{
+          title: t('tabs.together'),
+          ...tab('together'),
+          ...(needs > 0 ? { tabBarBadge: needs, tabBarAccessibilityLabel: t('tabs.togetherNeedsYou', { count: needs }) } : {}),
+        }}
+      />
       <Tabs.Screen name="plans" options={{ title: t('tabs.plans'), ...tab('plans') }} />
       <Tabs.Screen name="you" options={{ title: t('tabs.you'), ...tab('you') }} />
     </Tabs>
