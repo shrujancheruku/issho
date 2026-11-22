@@ -2,12 +2,12 @@ import type { Outing } from '@issho/api-client';
 import { Link } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { AnswerButtons, OutingGroupLines, OutingWhen, RefusalText } from '@/components/outing-parts';
+import { AnswerButtons, FeedbackCloses, OutingGroupLines, OutingWhen, RefusalText } from '@/components/outing-parts';
 import { FontSize, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useI18n } from '@/i18n/i18n-provider';
-import { formatCalendarDate, formatDate } from '@/lib/format';
-import { feedbackOpen, muted, stampDate } from '@/outings/model';
+import { formatCalendarDate } from '@/lib/format';
+import { feedbackOpen, muted } from '@/outings/model';
 import { statusKey } from '@/outings/text';
 
 /** An invitation that needs an answer, answered in place (docs/spec/app-shape.md, "Together"). */
@@ -31,14 +31,13 @@ export function NeedsYouCard({ outing, title, timeZone }: { outing: Outing; titl
 
 /** Feedback to give, in "Needs you": the outing is over, and the form is on the outing's page. */
 export function FeedbackCard({ outing, title, timeZone }: { outing: Outing; title: string; timeZone: string }) {
-  const { t, lang } = useI18n();
+  const { t } = useI18n();
   const theme = useTheme();
-  const closes = formatDate(stampDate(outing.feedbackClosesAt), { timeZone, lang });
   const testID = `needs-you-${outing.id}`;
   return (
     <View testID={testID} style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.accent }]}>
       <Text style={[styles.value, { color: theme.text }]}>{title}</Text>
-      <Text style={[styles.body, { color: theme.text }]}>{t('feedback.card', { when: closes })}</Text>
+      <FeedbackCloses outing={outing} timeZone={timeZone} sentence="feedback.card" size="body" />
       {/* A link to the outing's page, where the form is: the answers are private, so they are asked for there and not on a list. */}
       <Link href={{ pathname: '/plans/[id]', params: { id: outing.planId } }} asChild>
         <Pressable accessibilityRole="link" accessibilityLabel={t('feedback.give')} style={StyleSheet.flatten([styles.linkButton, { backgroundColor: theme.accent }])}>
@@ -65,7 +64,7 @@ export function SignupRow({ planId, day, title }: { planId: string; day: string;
 
 /** A row for an outing on its date: the outing's page is the plan's, so it opens the plan. Muted when the outing is not on or the person is out of it. */
 export function OutingRow({ outing, title, timeZone }: { outing: Outing; title: string; timeZone: string }) {
-  const { t, lang } = useI18n();
+  const { t } = useI18n();
   const theme = useTheme();
   const testID = `together-row-${outing.id}`;
   return (
@@ -78,7 +77,7 @@ export function OutingRow({ outing, title, timeZone }: { outing: Outing; title: 
         <Text style={[styles.value, { color: theme.text }]}>{title}</Text>
         <OutingWhen outing={outing} timeZone={timeZone} />
         <Text style={[styles.body, { color: theme.textSecondary }]}>{t(statusKey(outing))}</Text>
-        {feedbackOpen(outing, new Date()) ? <Text style={[styles.body, { color: theme.textSecondary }]}>{t('feedback.closes', { when: formatDate(stampDate(outing.feedbackClosesAt), { timeZone, lang }) })}</Text> : null}
+        {feedbackOpen(outing, new Date()) ? <FeedbackCloses outing={outing} timeZone={timeZone} sentence="feedback.closes" size="body" /> : null}
         <RefusalText outingId={outing.id} />
       </Pressable>
     </Link>

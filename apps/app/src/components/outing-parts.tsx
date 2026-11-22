@@ -7,8 +7,8 @@ import { FontSize, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useI18n } from '@/i18n/i18n-provider';
 import type { StringKey } from '@/i18n/strings';
-import { deviceTimeZone, formatOutingWhen } from '@/lib/format';
-import { canSayYes, type OutingRefusal } from '@/outings/model';
+import { deviceTimeZone, formatInstantDay, formatInstantWhen, formatOutingWhen } from '@/lib/format';
+import { canSayYes, stampDate, type OutingRefusal } from '@/outings/model';
 import { languagesText } from '@/outings/text';
 import { useMyOutings } from '@/outings/use-my-outings';
 
@@ -42,6 +42,40 @@ export function OutingWhen({ outing, timeZone }: { outing: Outing; timeZone: str
     <View style={styles.tight}>
       <Text style={[styles.value, { color: theme.text }]}>{when.city}</Text>
       {when.device ? <Text style={[styles.small, { color: theme.textSecondary }]}>{t('outing.deviceTime', { when: when.device })}</Text> : null}
+    </View>
+  );
+}
+
+/** The device's own reading of a time, beside the city's, when it reads differently. */
+function DeviceLine({ device }: { device: string | null }) {
+  const { t } = useI18n();
+  const theme = useTheme();
+  return device ? <Text style={[styles.small, { color: theme.textSecondary }]}>{t('outing.deviceTime', { when: device })}</Text> : null;
+}
+
+/** When check-in opens, on the city's clock with the device's beside it (docs/spec/city-settings.md). */
+export function CheckInOpens({ outing, timeZone }: { outing: Outing; timeZone: string }) {
+  const { t, lang } = useI18n();
+  const theme = useTheme();
+  const when = formatInstantWhen(stampDate(outing.checkInOpensAt), { timeZone, lang, deviceZone: deviceTimeZone() });
+  return (
+    <View style={styles.tight}>
+      <Text style={[styles.body, { color: theme.textSecondary }]}>{t('outing.checkIn.opens', { when: when.city })}</Text>
+      <DeviceLine device={when.device} />
+    </View>
+  );
+}
+
+/** The day feedback closes, on the city's clock with the device's beside it when that is another day. `sentence` is the string it is written in. */
+export function FeedbackCloses({ outing, timeZone, sentence, size }: { outing: Outing; timeZone: string; sentence: 'feedback.closes' | 'feedback.card'; size: 'body' | 'small' }) {
+  const { t, lang } = useI18n();
+  const theme = useTheme();
+  const when = formatInstantDay(stampDate(outing.feedbackClosesAt), { timeZone, lang, deviceZone: deviceTimeZone() });
+  const color = sentence === 'feedback.card' ? theme.text : theme.textSecondary;
+  return (
+    <View style={styles.tight}>
+      <Text style={[styles[size], { color }]}>{t(sentence, { when: when.city })}</Text>
+      <DeviceLine device={when.device} />
     </View>
   );
 }

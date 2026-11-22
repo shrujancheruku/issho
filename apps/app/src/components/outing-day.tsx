@@ -3,12 +3,12 @@ import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { Button, Choice, ErrorText } from '@/components/form';
+import { CheckInOpens, FeedbackCloses } from '@/components/outing-parts';
 import { FontSize, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useI18n } from '@/i18n/i18n-provider';
 import type { StringKey } from '@/i18n/strings';
-import { formatDate, formatDateTime } from '@/lib/format';
-import { canCheckIn, checkInComingUp, feedbackClosed, feedbackOpen, stampDate, type FeedbackRefusal } from '@/outings/model';
+import { canCheckIn, checkInComingUp, feedbackClosed, feedbackOpen, type FeedbackRefusal } from '@/outings/model';
 import { useMyOutings } from '@/outings/use-my-outings';
 
 /**
@@ -18,7 +18,7 @@ import { useMyOutings } from '@/outings/use-my-outings';
  * not going, and nothing once the plan has ended and they never checked in.
  */
 export function CheckInSection({ outing, timeZone }: { outing: Outing; timeZone: string }) {
-  const { t, lang } = useI18n();
+  const { t } = useI18n();
   const theme = useTheme();
   const { checkIn } = useMyOutings();
   const [busy, setBusy] = useState(false);
@@ -52,7 +52,7 @@ export function CheckInSection({ outing, timeZone }: { outing: Outing; timeZone:
     );
   }
   if (checkInComingUp(outing, now)) {
-    return <Text style={[styles.body, { color: theme.textSecondary }]}>{t('outing.checkIn.opens', { when: formatDateTime(stampDate(outing.checkInOpensAt), { timeZone, lang }) })}</Text>;
+    return <CheckInOpens outing={outing} timeZone={timeZone} />;
   }
   return null;
 }
@@ -72,7 +72,7 @@ const refusalKeys: Record<FeedbackRefusal, StringKey> = {
  * saved, and are never put in an address, a log or a cache key.
  */
 export function FeedbackSection({ outing, timeZone }: { outing: Outing; timeZone: string }) {
-  const { t, lang } = useI18n();
+  const { t } = useI18n();
   const theme = useTheme();
   const { feedbacks, loadFeedback } = useMyOutings();
   const now = new Date();
@@ -88,15 +88,15 @@ export function FeedbackSection({ outing, timeZone }: { outing: Outing; timeZone
       </View>
     );
   }
-  const closes = formatDate(stampDate(outing.feedbackClosesAt), { timeZone, lang });
-  return <FeedbackForm outingId={outing.id} feedback={read.feedback} closes={closes} />;
+  return <FeedbackForm outing={outing} timeZone={timeZone} feedback={read.feedback} />;
 }
 
 /** The answers as the form holds them: handles only, which are the one thing that names another person inside the outing. */
 type Draft = { went: boolean | null; notThere: Set<string>; meetAgain: Set<string> };
 const draftOf = (f: Feedback): Draft => ({ went: f.answered ? f.went : null, notThere: new Set(f.notThere), meetAgain: new Set(f.meetAgain) });
 
-function FeedbackForm({ outingId, feedback, closes }: { outingId: string; feedback: Feedback; closes: string }) {
+function FeedbackForm({ outing, timeZone, feedback }: { outing: Outing; timeZone: string; feedback: Feedback }) {
+  const outingId = outing.id;
   const { t } = useI18n();
   const theme = useTheme();
   const { saveFeedback } = useMyOutings();
@@ -137,7 +137,7 @@ function FeedbackForm({ outingId, feedback, closes }: { outingId: string; feedba
     return (
       <View style={styles.tight}>
         <Text style={[styles.body, { color: theme.text }]}>{t(feedback.went ? 'feedback.saved.went' : 'feedback.saved.didNotGo')}</Text>
-        <Text style={[styles.small, { color: theme.textSecondary }]}>{t('feedback.closes', { when: closes })}</Text>
+        <FeedbackCloses outing={outing} timeZone={timeZone} sentence="feedback.closes" size="small" />
         <Button
           quiet
           label={t('feedback.change')}
@@ -156,7 +156,7 @@ function FeedbackForm({ outingId, feedback, closes }: { outingId: string; feedba
   return (
     <View style={styles.form}>
       <Text accessibilityRole="header" style={[styles.heading, { color: theme.text }]}>{t('feedback.title')}</Text>
-      <Text style={[styles.small, { color: theme.textSecondary }]}>{t('feedback.closes', { when: closes })}</Text>
+      <FeedbackCloses outing={outing} timeZone={timeZone} sentence="feedback.closes" size="small" />
 
       <Text style={[styles.question, { color: theme.text }]}>{t('feedback.q1')}</Text>
       <View style={styles.row}>

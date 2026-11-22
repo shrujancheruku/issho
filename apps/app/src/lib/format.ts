@@ -86,3 +86,26 @@ export function formatOutingWhen({ date, startsAt, timeZone, lang, deviceZone = 
   const device = formatDateTime(at, { timeZone: deviceZone, lang });
   return { city, device: device === city ? null : device };
 }
+
+/**
+ * An instant on the city's clock, and on the device's clock when that reads
+ * differently (docs/spec/city-settings.md: "when the person's device is in
+ * another time zone, their own time is shown beside it"). For a window's
+ * opening or closing, which the server gives as an instant.
+ */
+export function formatInstantWhen(at: Date, { timeZone, lang, deviceZone = deviceTimeZone() }: FormatOptions & { deviceZone?: string }) {
+  const city = formatDateTime(at, { timeZone, lang });
+  const device = formatDateTime(at, { timeZone: deviceZone, lang });
+  return { city, device: device === city ? null : device };
+}
+
+/**
+ * The same, for a day that something closes on: the city's day alone. The
+ * device's reading is added only when it falls on another day, and then with
+ * its time, because a bare date would not say which hour it is.
+ */
+export function formatInstantDay(at: Date, { timeZone, lang, deviceZone = deviceTimeZone() }: FormatOptions & { deviceZone?: string }) {
+  const city = formatDate(at, { timeZone, lang });
+  const device = formatDate(at, { timeZone: deviceZone, lang });
+  return { city, device: device === city ? null : formatDateTime(at, { timeZone: deviceZone, lang }) };
+}

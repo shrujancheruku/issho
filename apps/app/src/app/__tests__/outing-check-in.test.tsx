@@ -72,6 +72,17 @@ describe('check-in on the day', () => {
     expect(within(strip).queryByRole('button', { name: "I'm here" })).toBeNull();
   });
 
+  it("shows the device's time beside the opening time when the zones differ", async () => {
+    jest.spyOn(format, 'deviceTimeZone').mockReturnValue('America/Los_Angeles');
+    clock('2026-11-25T01:29:00Z');
+    const api = fakeApi();
+    api.outing.listMyOutings.mockResolvedValue({ outings: [going()] });
+    await open('/plans/p1', { api });
+    const strip = await screen.findByTestId('outing-strip');
+    expect(within(strip).getByText('Check-in opens Wed, Nov 25, 8:30 AM.')).toBeTruthy();
+    expect(within(strip).getByText('Your time: Tue, Nov 24, 5:30 PM')).toBeTruthy();
+  });
+
   it('stays open to the plan\'s end, which is not part of it', async () => {
     clock(JUST_BEFORE_THE_END);
     const api = fakeApi();

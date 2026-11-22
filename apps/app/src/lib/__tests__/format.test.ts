@@ -1,4 +1,4 @@
-import { cityDateKey, formatCalendarDate, formatDate, formatDateTime, formatOutingWhen, formatPrice, formatTime, formatTimeRange } from '../format';
+import { cityDateKey, formatCalendarDate, formatDate, formatDateTime, formatInstantDay, formatInstantWhen, formatOutingWhen, formatPrice, formatTime, formatTimeRange } from '../format';
 
 // 17:30 UTC on 21 November is already 00:30 on the 22nd in Da Nang (UTC+7, no
 // daylight saving), so each expectation also shows the city's clock, not the
@@ -84,5 +84,31 @@ describe('formatOutingWhen', () => {
   it('finds the instant across a daylight-saving change in the other zone', () => {
     // 09:00 on 15 March 2027 in Da Nang is 02:00 UTC: Los Angeles went to daylight time on the 14th (UTC-7), so 19:00 on the 14th.
     expect(formatOutingWhen({ date: '2027-03-15', startsAt: '09:00', timeZone: danang, lang: 'en', deviceZone: 'America/Los_Angeles' }).device).toBe('Sun, Mar 14, 7:00 PM');
+  });
+});
+
+describe('formatInstantWhen', () => {
+  // 01:30 UTC on 25 November: 08:30 in Da Nang, 17:30 the day before in Los Angeles.
+  const at = new Date('2026-11-25T01:30:00Z');
+
+  it('writes the city clock alone when the device is on it', () => {
+    expect(formatInstantWhen(at, { timeZone: danang, lang: 'en', deviceZone: danang })).toEqual({ city: 'Wed, Nov 25, 8:30 AM', device: null });
+  });
+
+  it('writes the device time beside it when the device is elsewhere', () => {
+    expect(formatInstantWhen(at, { timeZone: danang, lang: 'en', deviceZone: 'America/Los_Angeles' })).toEqual({ city: 'Wed, Nov 25, 8:30 AM', device: 'Tue, Nov 24, 5:30 PM' });
+  });
+});
+
+describe('formatInstantDay', () => {
+  // 05:30 UTC on 2 December: the 2nd in Da Nang (12:30), the 1st at 21:30 in Los Angeles.
+  const at = new Date('2026-12-02T05:30:00Z');
+
+  it('writes the city day alone when the device is on the same day', () => {
+    expect(formatInstantDay(at, { timeZone: danang, lang: 'en', deviceZone: 'Asia/Bangkok' })).toEqual({ city: 'Wed, Dec 2', device: null });
+  });
+
+  it("writes the device's day and time beside it when the device is on another day", () => {
+    expect(formatInstantDay(at, { timeZone: danang, lang: 'en', deviceZone: 'America/Los_Angeles' })).toEqual({ city: 'Wed, Dec 2', device: 'Tue, Dec 1, 9:30 PM' });
   });
 });

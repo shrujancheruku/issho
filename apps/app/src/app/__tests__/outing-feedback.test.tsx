@@ -67,6 +67,30 @@ describe('after the plan\'s end, in Together', () => {
     expect(api.outing.getFeedback).toHaveBeenCalledWith({ outingId: 'o1' });
   });
 
+  it("shows the device's time beside the closing day on the card and the row when the device is on another day", async () => {
+    jest.spyOn(format, 'deviceTimeZone').mockReturnValue('America/Los_Angeles');
+    const api = afterTheOuting();
+    await open('/together', { api });
+    const card = await screen.findByTestId('needs-you-o1');
+    expect(within(card).getByText('How did it go? Feedback closes Wed, Dec 2.')).toBeTruthy();
+    expect(within(card).getByText('Your time: Tue, Dec 1, 9:30 PM')).toBeTruthy();
+  });
+
+  it("shows the device's time beside the closing day on the form", async () => {
+    jest.spyOn(format, 'deviceTimeZone').mockReturnValue('America/Los_Angeles');
+    await open('/plans/p1', { api: afterTheOuting() });
+    const strip = await screen.findByTestId('outing-strip');
+    await within(strip).findByText('Did you go?');
+    expect(within(strip).getByText('Feedback closes Wed, Dec 2.')).toBeTruthy();
+    expect(within(strip).getByText('Your time: Tue, Dec 1, 9:30 PM')).toBeTruthy();
+  });
+
+  it('writes no second time when the device is on the same day', async () => {
+    await open('/together', { api: afterTheOuting() });
+    await screen.findByTestId('needs-you-o1');
+    expect(screen.queryByText(/Your time/)).toBeNull();
+  });
+
   it('opens the outing\'s page from "Give feedback"', async () => {
     await open('/together', { api: afterTheOuting() });
     const card = await screen.findByTestId('needs-you-o1');
