@@ -47,7 +47,7 @@ Tests use Jest with `jest-expo` and React Native Testing Library. A screen test 
 | `src/constants/theme.ts`, `src/hooks/use-theme.ts` | Colour tokens and the theme in use |
 | `src/api/` | `ApiProvider` and `useApi()`: the one generated client, given to screens; `api-url.ts`, the API's address and whether it is dev's |
 | `assets/images/` | The icon, splash, favicon, logo and tab icons, ported from v1 (`apps/mobile` at `v1-final`) |
-| `scripts/` | The strings check, the helper the lint test uses, `fixtures/native-bundle/` for the native bundle test, and the native build scripts (`native-prepare-ios.sh`, `native-screenshot.sh`) |
+| `scripts/` | The strings check, the helper the lint test uses and `fixtures/native-bundle/` for the native bundle test (the native build scripts are in the repo's [`scripts/`](../../scripts/README.md)) |
 | `docs/screenshots/` | Screenshots of the tabs (`<tab>-<language>-<theme>`) and of the native builds (`<name>-<platform>`) |
 
 ## The app's words
@@ -76,7 +76,7 @@ Local development builds, on the iOS simulator and the Android emulator, are for
 | `make native-wait` | Returns once a device has loaded the app's bundle; fails after `NATIVE_WAIT` seconds (default 180) with the log's last lines | yes |
 | `make native-screenshot-android NAME=plans` | Captures the running emulator through the `android` CLI to `docs/screenshots/plans-android.png` | yes |
 | `make native-screenshot-ios NAME=plans` | Captures the booted simulator to `docs/screenshots/plans-ios.png` | yes |
-| `make native-stop` | Stops Metro, the emulator and the simulator | yes |
+| `make native-stop` | Stops Metro, the `NATIVE_AVD` emulator and the `NATIVE_IOS_DEVICE` simulator, and leaves any other device running | yes |
 | `make native-screenshot-test` | Checks that the screenshot and Metro scripts refuse bad arguments and that `native-wait` is bounded (also run by `make test`) | yes |
 
 **A worker's sequence** (from the repo root; `make native-metro` first, so the app finds Metro when it opens):
@@ -91,9 +91,9 @@ make native-stop                       # always, even when a step failed
 
 Every command returns. Metro is the one long-running process, and `make native-metro` already starts it in the background: never run `expo start` or `expo run:*` without `--no-bundler` in the foreground and wait for it, because Metro keeps them alive for as long as it runs and the wait never ends. If a step fails, read `.expo/native-metro/metro.log`, run `make native-stop` and report.
 
-Machine needs: full Xcode (`xcode-select -p` prints a path inside `Xcode.app`) with an iOS simulator runtime; the Android SDK (`ANDROID_HOME`) with platform `android-36`, build-tools `36.0.0` and the emulator package, JDK 17, and an AVD named `issho` (`android emulator list`). Gradle installs the platform Expo's template asks for on first build. CocoaPods (`pod` on the `PATH`), which Expo's iOS build runs. Expo's Swift Package Manager route (`experiments.swiftPackageManager`) is off: it can't build `expo-router` with `react-native-screens` yet ([#630](https://github.com/shrujancheruku/issho/issues/630)).
+Machine needs: full Xcode (`xcode-select -p` prints a path inside `Xcode.app`) with an iOS simulator runtime; the Android SDK (`ANDROID_HOME`) with platform `android-36`, build-tools `36.0.0`, the emulator package and the system image `system-images;android-36;google_apis;arm64-v8a` (`x86_64` on an Intel machine), JDK 17, and an AVD named `issho` made from that image (`android emulator list`). Gradle installs the platform Expo's template asks for on first build. CocoaPods (`pod` on the `PATH`), which Expo's iOS build runs. Expo's Swift Package Manager route (`experiments.swiftPackageManager`) is off: it can't build `expo-router` with `react-native-screens` yet ([#630](https://github.com/shrujancheruku/issho/issues/630)).
 
-**iOS status: `make native-ios` does not build yet on Xcode 26.3 (Swift 6.2).** It generates `ios/`, runs `pod install` and compiles most pods, then fails in `expo-modules-jsi` 58.0.23, which Expo SDK 58 ships at its latest version:
+**iOS status: `make native-ios` does not build yet on Xcode 26.3 (Swift 6.2); [#631](https://github.com/shrujancheruku/issho/issues/631) owns it.** It generates `ios/`, runs `pod install` and compiles most pods, then fails in `expo-modules-jsi` 58.0.23, which Expo SDK 58 ships at its latest version:
 
 ```
 expo-modules-jsi/apple/Sources/ExpoModulesJSI/Runtime/Values/JavaScriptObject.swift:946:36: error: sending 'slot' risks causing data races

@@ -3,7 +3,8 @@
 #   start  launches Metro in the background and returns once it answers
 #   wait   returns once a device has loaded the app's bundle, or fails with the
 #          log's last lines after NATIVE_WAIT seconds (default 180)
-#   stop   stops Metro, the Android emulator and the iOS simulator
+#   stop   stops Metro, the NATIVE_AVD emulator and the NATIVE_IOS_DEVICE
+#          simulator, and no other device on the machine
 # Why not `expo run:*` serving Metro itself: it stays in the foreground for as
 # long as Metro runs, so a worker waiting on it waits forever. The build
 # targets pass --no-bundler and exit when the app is installed.
@@ -62,7 +63,7 @@ case "${1:-}" in
     # Anything else still holding the port (a Metro started by hand).
     lsof -ti "tcp:$PORT" -sTCP:LISTEN 2>/dev/null | xargs kill 2>/dev/null || true
     android emulator stop "${NATIVE_AVD:-issho}" >/dev/null 2>&1 || true
-    xcrun simctl shutdown all >/dev/null 2>&1 || true
+    xcrun simctl shutdown "${NATIVE_IOS_DEVICE:-iPhone 17}" >/dev/null 2>&1 || true
     echo "native-metro: stopped Metro, the emulator and the simulator"
     ;;
   *)

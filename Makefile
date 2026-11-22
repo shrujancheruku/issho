@@ -146,7 +146,7 @@ native-wait:
 	scripts/native-metro.sh wait
 
 native-stop:
-	NATIVE_AVD="$(NATIVE_AVD)" scripts/native-metro.sh stop
+	NATIVE_AVD="$(NATIVE_AVD)" NATIVE_IOS_DEVICE="$(NATIVE_IOS_DEVICE)" scripts/native-metro.sh stop
 
 native-ios:
 	pnpm --filter @issho/app exec expo run:ios --device "$(NATIVE_IOS_DEVICE)" --no-bundler

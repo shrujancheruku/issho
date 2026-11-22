@@ -6,6 +6,10 @@ Repo-level helper scripts, run by the root `Makefile`. Each script has a header 
 |---|---|---|
 | `native-bundle.sh` | `make native-bundle` (also `make lint`) | `expo export` of `apps/app` for iOS and Android; fails on an import that resolves only on the web |
 | `native-bundle.test.sh` | `make native-bundle-test` (also `make test`) | Proves the bundle check fails on a web-only import, using the fixture in `apps/app/scripts/fixtures/native-bundle/` |
+| `native-metro.sh` | `make native-metro`, `make native-wait`, `make native-stop` | Metro for a native run as three commands that return: starts it in the background, waits (bounded) until a device loads the bundle, and stops Metro with the build's emulator and simulator ([Native builds](../apps/app/README.md#native-builds)) |
+| `native-metro.test.sh` | `make native-screenshot-test` (also `make test`) | Proves `wait` is bounded and the script refuses an unknown command |
+| `native-screenshot.sh` | `make native-screenshot-android`, `make native-screenshot-ios` | Captures the running emulator or simulator to `apps/app/docs/screenshots/<name>-<platform>.png` |
+| `native-screenshot.test.sh` | `make native-screenshot-test` (also `make test`) | Proves `native-screenshot.sh` refuses bad arguments before it touches a device |
 | `proto-breaking.sh` | `make lint`, `make proto-breaking` | `buf breaking` against `origin/main`, once main holds v2's proto |
 | `proto-breaking.test.sh` | `make test`, `make backend` (CI's `backend` job) | Tests `proto-breaking.sh` in a throwaway git repo |
 | `ci-changes.sh` | CI's `changes` job | Which of CI's path-filtered jobs have something to check, from the changed files on stdin; a skipped job reports as passing ([Workflows](../.github/workflows/README.md)) |
