@@ -21,7 +21,7 @@ Pass `--port <n>` after `expo start` to use another port. To see the server rend
 
 Screenshots of every empty tab at phone width, light and dark, English and Vietnamese, are in `docs/screenshots/` (`<tab>-<language>-<theme>.png`). The You tab's are of a dev build, so they show the API's version: the web image (`apps/web/Dockerfile`) built with `EXPO_PUBLIC_API_URL` set to its own origin and run with `API_ORIGIN` pointing at a local API, as on dev, and captured with Playwright's Chromium at 390×780, device scale 2, with the language and colour scheme set. A production build shows the tab without that line.
 
-The sign-in screens (`sign-in-email`, `sign-in-code`, `sign-in-wrong-code`) and the signed-in You tab (`you-signed-in`) are in `docs/screenshots/` as `<state>-en-<theme>.png` from the web at 390 wide, and `<state>-android.png` from the emulator. They were taken against a local stand-in for Supabase Auth and the API (a throwaway script, not in the repo: code `123456` right, any other wrong), with `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_API_URL` pointed at it. The iOS simulator's are not attached: `make native-ios` still fails in `expo-modules-jsi` ([#631](https://github.com/shrujancheruku/issho/issues/631)). Vietnamese screenshots of these states are not attached; the Vietnamese strings are covered by `sign-in.test.tsx` and `you-account.test.tsx`.
+The sign-in screens (`sign-in-email`, `sign-in-code`, `sign-in-wrong-code`) and the signed-in You tab (`you-signed-in`) are in `docs/screenshots/` as `<state>-en-<theme>.png` from the web at 390 wide, and `<state>-android.png` from the emulator. They were taken against a local stand-in for Supabase Auth and the API (a throwaway script, not in the repo: code `123456` right, any other wrong), with `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_API_URL` pointed at it. The iOS simulator's are not attached: `make native-ios` still fails in `expo-modules-jsi` ([#631](https://github.com/shrujancheruku/issho/issues/631)). The same states in Vietnamese are `<state>-vi-<theme>.png`.
 
 ## Testing
 
@@ -32,9 +32,11 @@ The sign-in screens (`sign-in-email`, `sign-in-code`, `sign-in-wrong-code`) and 
 | The three tabs, Plans first, English and Vietnamese, light and dark, with a fake of the generated API client | `src/app/__tests__/tabs.test.tsx` |
 | The You tab shows the API's version, or that it could not be reached, in both languages, in dev's build and not in production's | `src/app/__tests__/api-version.test.tsx` |
 | Which API addresses count as dev (`isDevApi`) | `src/api/__tests__/api-url.test.ts` |
-| Sign-in: email, then the 6-digit code; a wrong code says so and can be retried; a return to the screen the person came from; Vietnamese | `src/app/__tests__/sign-in.test.tsx` |
+| Sign-in: email, then the 6-digit code; a wrong code says so and can be retried; Auth's rate limit (429) says to wait a minute; a new code can be asked for only after a minute; a return to the screen the person came from; Vietnamese | `src/app/__tests__/sign-in.test.tsx` |
 | A signed-out visitor who opens You or Together is sent to sign-in and returned; Plans stays open; nothing is decided until the stored session is read | `src/app/__tests__/sign-in-guard.test.tsx` |
 | The You tab shows the account's email and signs out | `src/app/__tests__/you-account.test.tsx` |
+| The session is encrypted at rest on a phone, and unreadable if the key is gone | `src/auth/__tests__/encrypted-storage.test.ts` |
+| A 401 from the API sends the person to sign-in, from any screen | `src/app/__tests__/you-account.test.tsx` |
 | The Supabase adapter (code sent, code checked, session kept across a restart, sign-out) against a fake Auth server | `src/auth/__tests__/supabase-session-client.test.ts` |
 | The date and time formatter | `src/lib/__tests__/format.test.ts` |
 | Strings: language choice, `{placeholders}`, the device language | `src/i18n/__tests__/` |
@@ -58,7 +60,7 @@ Tests use Jest with `jest-expo` and React Native Testing Library. A screen test 
 | `src/types/` | Ambient declarations (`css.d.ts`, so the `.css` import type-checks) |
 | `src/global.css` | Web-only global styles (`color-scheme`, so browser controls follow the theme) |
 | `src/__tests__/` | Tests that read the source tree rather than render a screen (the string-literal lint) |
-| `src/auth/` | Sign-in. `SessionClient` (`session-client.ts`) is the app's one view of Supabase Auth: `supabase-session-client.ts` implements it, `app-session-client.ts` builds the build's own from the `EXPO_PUBLIC_SUPABASE_*` values, and `session-storage.ts` keeps the session on a phone (`.web.ts`: the browser's own storage). `AuthProvider` and `useAuth()` hold the person's state: `loading` until the stored session is read, then `signedIn` or `signedOut`. `return-path.ts` accepts only an in-app `?next=` |
+| `src/auth/` | Sign-in. `SessionClient` (`session-client.ts`) is the app's one view of Supabase Auth: `supabase-session-client.ts` implements it, `app-session-client.ts` builds the build's own from the `EXPO_PUBLIC_SUPABASE_*` values, and `session-storage.ts` keeps the session on a phone, encrypted in AsyncStorage with the key in `expo-secure-store` (`encrypted-storage.ts`; SecureStore alone holds about 2 KB, and `android.allowBackup` is `false` so a backup never carries the session; `.web.ts`: the browser's own storage). `src/api/app-api.ts` builds the API client: a 401 from the API ends the session, and the signed-in screens' guard sends the person to sign-in. `AuthProvider` and `useAuth()` hold the person's state: `loading` until the stored session is read, then `signedIn` or `signedOut`. `return-path.ts` accepts only an in-app `?next=` |
 | `src/api/` | `ApiProvider` and `useApi()`: the one generated client, given to screens; `api-url.ts`, the API's address and whether it is dev's |
 | `assets/images/` | The icon, splash, favicon, logo and tab icons, ported from v1 (`apps/mobile` at `v1-final`) |
 | `scripts/` | The strings check, the helper the lint test uses and `fixtures/native-bundle/` for the native bundle test (the native build scripts are in the repo's [`scripts/`](../../scripts/README.md)) |
@@ -128,4 +130,4 @@ Colours come from `useTheme()` (`src/constants/theme.ts`, light and dark) and fo
 
 ## Not here yet
 
-Sign-in, the real screens, Making, push, the Sentry setup and EAS configuration.
+The real screens, Making, push, the Sentry setup and EAS configuration.

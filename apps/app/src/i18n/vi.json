@@ -17,6 +17,9 @@
   "signIn.wrongCode": "Mã chưa đúng. Hãy kiểm tra và thử lại.",
   "signIn.verifyFailed": "Đã có lỗi. Hãy thử lại.",
   "signIn.changeEmail": "Dùng email khác",
+  "signIn.rateLimited": "Bạn đã thử quá nhiều lần. Hãy đợi một phút rồi thử lại.",
+  "signIn.resend": "Gửi mã mới",
+  "signIn.resendWait": "Bạn có thể xin mã mới sau {seconds} giây.",
   "you.email": "Đã đăng nhập là {email}",
   "you.signOut": "Đăng xuất",
   "you.accountError": "Không tải được tài khoản của bạn."

@@ -14,9 +14,17 @@ export interface SessionClient {
   getSession(): Promise<Session | null>;
   /** Called on every sign-in, sign-out and token refresh. Returns the way to stop listening. */
   onChange(listener: (session: Session | null) => void): () => void;
-  /** Emails a code. Throws when it could not be sent. */
+  /** Emails a code. Throws when it could not be sent, and a RateLimitedError when Auth is limiting sends. */
   sendCode(email: string): Promise<void>;
-  /** Signs in with the code. False when the code is wrong or has expired; throws when it could not be checked. */
+  /** Signs in with the code. False when the code is wrong or has expired; throws when it could not be checked (a RateLimitedError when Auth is limiting attempts). */
   verifyCode(email: string, code: string): Promise<boolean>;
   signOut(): Promise<void>;
+}
+
+/** Auth answered 429: too many codes sent or checked. Waiting is the only fix, so the screen says that instead of "something went wrong". */
+export class RateLimitedError extends Error {
+  constructor() {
+    super('Too many sign-in attempts');
+    this.name = 'RateLimitedError';
+  }
 }

@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
+import { Code } from '@connectrpc/connect';
+
 import { createApi } from './index';
 
 // A fake fetch that answers the health check and keeps the request it saw.
@@ -59,5 +61,31 @@ describe('createApi', () => {
     expect(res.account?.email).toBe('ada@example.com');
     expect(seen[0].url).toBe('https://api.example.test/issho.v1.AccountService/GetAccount');
     expect(seen[0].headers.get('authorization')).toBe('Bearer tok-1');
+  });
+
+  it('tells the caller when the API answers 401, and still throws the error', async () => {
+    const fetch = async () =>
+      new Response(JSON.stringify({ code: 'unauthenticated', message: 'bad token' }), {
+        status: 401,
+        headers: { 'content-type': 'application/json' },
+      });
+    let told = 0;
+    const api = createApi({ baseUrl: 'https://api.example.test', getAccessToken: async () => 'stale', fetch, onUnauthenticated: () => void told++ });
+
+    await expect(api.account.getAccount({})).rejects.toMatchObject({ code: Code.Unauthenticated });
+    expect(told).toBe(1);
+  });
+
+  it('does not call onUnauthenticated for other failures', async () => {
+    const fetch = async () =>
+      new Response(JSON.stringify({ code: 'internal', message: 'boom' }), {
+        status: 500,
+        headers: { 'content-type': 'application/json' },
+      });
+    let told = 0;
+    const api = createApi({ baseUrl: 'https://api.example.test', getAccessToken: async () => 'tok', fetch, onUnauthenticated: () => void told++ });
+
+    await expect(api.account.getAccount({})).rejects.toBeDefined();
+    expect(told).toBe(0);
   });
 });

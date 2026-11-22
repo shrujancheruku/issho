@@ -1,6 +1,6 @@
 import { createClient, type SupabaseClientOptions } from '@supabase/supabase-js';
 
-import type { Session, SessionClient } from './session-client';
+import { RateLimitedError, type Session, type SessionClient } from './session-client';
 
 type Storage = NonNullable<NonNullable<SupabaseClientOptions<'public'>['auth']>['storage']>;
 
@@ -26,6 +26,9 @@ export function createSupabaseSessionClient(options: { url: string; key: string;
   const toSession = (s: { access_token: string; user: { email?: string } } | null): Session | null =>
     s ? { accessToken: s.access_token, email: s.user.email ?? '' } : null;
 
+  // 429 is Auth's rate limit (per email, per address); it has its own message.
+  const failure = (error: { status?: number }) => (error.status === 429 ? new RateLimitedError() : error);
+
   return {
     async getSession() {
       const { data, error } = await supabase.auth.getSession();
@@ -42,7 +45,7 @@ export function createSupabaseSessionClient(options: { url: string; key: string;
         email,
         options: { shouldCreateUser: true },
       });
-      if (error) throw error;
+      if (error) throw failure(error);
     },
     async verifyCode(email, code) {
       const { error } = await supabase.auth.verifyOtp({
@@ -53,7 +56,7 @@ export function createSupabaseSessionClient(options: { url: string; key: string;
       if (!error) return true;
       // A wrong or expired code is the person's to retry; anything else (network, server) is not.
       if (error.status === 400 || error.status === 401 || error.status === 403 || error.status === 422) return false;
-      throw error;
+      throw failure(error);
     },
     async signOut() {
       // Local scope: end this device's session even when Supabase cannot be reached.

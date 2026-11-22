@@ -22,6 +22,7 @@ const { account } = await api.account.getAccount({ displayLanguage: 'vi' });
 ```
 
 - `getAccessToken` is called before every request. A token goes out as `Authorization: Bearer <token>`; with none, no header is sent, which only public RPCs accept.
+- `onUnauthenticated` (optional) is called when the API answers that the caller is not signed in (the Connect code `unauthenticated`, HTTP 401); the error is still thrown. The app ends the session there, once, so no screen handles it.
 - The transport is Connect over `fetch` with JSON encoding, which works with React Native's `fetch` and reads in a network inspector.
 - Errors are thrown as `ConnectError`; branch on its `.code` (`Code.Unauthenticated`, `Code.PermissionDenied`).
 

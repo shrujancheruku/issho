@@ -1,3 +1,4 @@
+import { RateLimitedError } from '../session-client';
 import { createSupabaseSessionClient } from '../supabase-session-client';
 
 // The adapter against a stand-in for Supabase Auth's HTTP API: the fetch is
@@ -127,5 +128,19 @@ describe('the Supabase session client', () => {
     stop();
     expect(seen).toEqual(expect.arrayContaining(['ada@example.com', null]));
     expect(seen.lastIndexOf(null)).toBeGreaterThan(seen.indexOf('ada@example.com'));
+  });
+
+  it('says so when Auth rate-limits sending or checking a code (429), apart from other failures', async () => {
+    const server = fakeAuthServer();
+    server.fetch.mockImplementation(
+      async () =>
+        new Response(JSON.stringify({ code: 429, error_code: 'over_email_send_rate_limit', msg: 'email rate limit exceeded' }), {
+          status: 429,
+          headers: { 'content-type': 'application/json' },
+        }),
+    );
+    const client = make(server);
+    await expect(client.sendCode('ada@example.com')).rejects.toBeInstanceOf(RateLimitedError);
+    await expect(client.verifyCode('ada@example.com', '123456')).rejects.toBeInstanceOf(RateLimitedError);
   });
 });

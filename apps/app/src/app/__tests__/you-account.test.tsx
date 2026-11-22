@@ -2,6 +2,10 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react-nativ
 import { renderRouter } from 'expo-router/testing-library';
 import type { ReactNode } from 'react';
 
+import { ApiProvider } from '@/api/api-provider';
+import { createAppApi } from '@/api/app-api';
+import { AuthProvider } from '@/auth/auth-provider';
+import { I18nProvider } from '@/i18n/i18n-provider';
 import { fakeApi } from '@/test-support/fake-api';
 import { fakeSessionClient } from '@/test-support/fake-session-client';
 import { TestProviders } from '@/test-support/providers';
@@ -92,5 +96,44 @@ describe('the You tab, signed in', () => {
     await waitFor(() => expect(screen).toHavePathname('/plans'));
     // Opening You again now asks for sign-in.
     expect(await screen.findByText('No plans yet.')).toBeTruthy();
+  });
+});
+
+describe('a token the API no longer accepts', () => {
+  it('sends the person from You to sign-in, and back to You once they sign in again', async () => {
+    const session = fakeSessionClient({ accessToken: 'stale', email: 'ada@example.com' });
+    // The real client over a fetch that answers as the API does for a bad token.
+    const fetch = jest.fn(
+      async () =>
+        new Response(JSON.stringify({ code: 'unauthenticated', message: 'invalid token' }), {
+          status: 401,
+          headers: { 'content-type': 'application/json' },
+        }),
+    );
+    const api = createAppApi(session, { fetch: fetch as never });
+    await renderRouter(
+      {
+        index: Index,
+        'sign-in': SignIn,
+        '(tabs)/_layout': TabsLayout,
+        '(tabs)/together': TogetherScreen,
+        '(tabs)/plans': PlansScreen,
+        '(tabs)/you': YouScreen,
+      },
+      {
+        initialUrl: '/you',
+        wrapper: ({ children }: { children: ReactNode }) => (
+          <ApiProvider api={api}>
+            <AuthProvider client={session}>
+              <I18nProvider lang="en">{children}</I18nProvider>
+            </AuthProvider>
+          </ApiProvider>
+        ),
+      } as never,
+    );
+    await waitFor(() => expect(screen).toHavePathname('/sign-in'));
+    expect(screen).toHaveSearchParams({ next: '/you' });
+    expect(session.signOut).toHaveBeenCalled();
+    expect(screen.queryByText('Your account could not be loaded.')).toBeNull();
   });
 });

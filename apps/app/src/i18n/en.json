@@ -17,6 +17,9 @@
   "signIn.wrongCode": "That code is not right. Check it and try again.",
   "signIn.verifyFailed": "Something went wrong. Try again.",
   "signIn.changeEmail": "Use a different email",
+  "signIn.rateLimited": "Too many tries. Wait a minute and try again.",
+  "signIn.resend": "Send a new code",
+  "signIn.resendWait": "You can ask for a new code in {seconds} seconds.",
   "you.email": "Signed in as {email}",
   "you.signOut": "Sign out",
   "you.accountError": "Your account could not be loaded."

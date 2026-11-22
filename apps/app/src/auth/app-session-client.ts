@@ -18,11 +18,21 @@ export function createAppSessionClient(): SessionClient {
       key: process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? '',
       storage: sessionStorage,
     }));
+  // Without a Supabase address the client cannot be made. That must not crash the
+  // app on start: the person is signed out, and sending or checking a code fails
+  // as any failed call does, which the sign-in screen already says.
+  const made = (): SessionClient | null => {
+    try {
+      return real();
+    } catch {
+      return null;
+    }
+  };
   return {
-    getSession: () => real().getSession(),
-    onChange: (listener) => real().onChange(listener),
-    sendCode: (email) => real().sendCode(email),
-    verifyCode: (email, code) => real().verifyCode(email, code),
-    signOut: () => real().signOut(),
+    getSession: async () => (await made()?.getSession()) ?? null,
+    onChange: (listener) => made()?.onChange(listener) ?? (() => {}),
+    sendCode: async (email) => real().sendCode(email),
+    verifyCode: async (email, code) => real().verifyCode(email, code),
+    signOut: async () => made()?.signOut(),
   };
 }
