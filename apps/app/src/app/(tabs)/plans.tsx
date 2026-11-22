@@ -1,3 +1,4 @@
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Pressable, StyleSheet, Text } from 'react-native';
 
 import { useApi } from '@/api/api-provider';
@@ -10,10 +11,18 @@ import { loadPlans, type PlanList } from '@/plans/load';
 import { plansForServer } from '@/plans/server-loaders';
 import { useServerData } from '@/plans/server-data';
 import { useLoaded } from '@/plans/use-loaded';
+import { useOpenOnTogether } from '@/signup/use-open-on-together';
 
 /** Runs on the Expo server, so the list is in the HTML a client with no JavaScript gets. */
 export async function loader() {
   return plansForServer();
+}
+
+/** Where the server's redirect of `/` lands: it cannot know who is looking, so a person with something in play is moved on to Together here. */
+function OpenOnTogether() {
+  const router = useRouter();
+  useOpenOnTogether(() => router.setParams({ open: undefined }));
+  return null;
 }
 
 /** The city's plans, the same for a visitor and a member (docs/spec/app-shape.md). */
@@ -22,8 +31,10 @@ export default function Plans() {
   const theme = useTheme();
   const api = useApi();
   const { state, retry } = useLoaded((lang) => loadPlans(api, lang), useServerData<PlanList | null>() ?? undefined, 'plans');
+  const { open } = useLocalSearchParams<{ open?: string }>();
   return (
     <ScreenFrame>
+      {open ? <OpenOnTogether /> : null}
       <Text accessibilityRole="header" style={[styles.title, { color: theme.text }]}>
         {t('tabs.plans')}
       </Text>

@@ -32,7 +32,9 @@ export function fakeApi(): {
       redeemJoinLink: jest.fn().mockResolvedValue({}),
     },
     signup: {
-      signUp: jest.fn(),
+      signUp: jest.fn().mockResolvedValue({}),
+      withdrawSignup: jest.fn().mockResolvedValue({}),
+      listMySignups: jest.fn().mockResolvedValue({ signups: [] }),
     },
     // No profile yet: an empty response, which is how the app knows to ask the questions.
     profile: {

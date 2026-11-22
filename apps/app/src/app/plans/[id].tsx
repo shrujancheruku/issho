@@ -3,6 +3,7 @@ import { StyleSheet, Text } from 'react-native';
 
 import { useApi } from '@/api/api-provider';
 import { PlanDetails } from '@/components/plan-details';
+import { SignupPanel } from '@/components/signup-panel';
 import { ScreenFrame } from '@/components/screen-frame';
 import { FontSize } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -36,7 +37,13 @@ export default function PlanPage() {
       <Link href="/plans" style={[styles.body, { color: theme.link }]}>
         {t('plan.seeAll')}
       </Link>
-      {state.status === 'ready' && plan ? <PlanDetails plan={plan} /> : null}
+      {state.status === 'ready' && plan ? (
+        <>
+          <PlanDetails plan={plan} />
+          {/* Client-only: it asks who the visitor is after hydration, so the cached page holds nothing per visitor. */}
+          <SignupPanel plan={plan} />
+        </>
+      ) : null}
       {state.status === 'ready' && !plan ? <Text style={[styles.body, { color: theme.text }]}>{t('plan.notFound')}</Text> : null}
       {state.status === 'failed' ? (
         <>

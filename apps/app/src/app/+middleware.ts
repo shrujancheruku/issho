@@ -6,8 +6,11 @@ export const unstable_settings: MiddlewareSettings = { matcher: { methods: ['GET
  * Plans opens first for a visitor (docs/spec/app-shape.md), and the screen that
  * says so (`index.tsx`) redirects in the client, which leaves a visitor with no
  * JavaScript an empty shell. The server sends them on instead. Runs on the
- * Expo server only; a phone never sees it.
+ * Expo server only; a phone never sees it. The server cannot know who is
+ * looking (no token, a cached page), so it sends everyone to Plans and marks the
+ * visit with `open=1`: the Plans screen then moves a person with something in
+ * play on to Together, once the browser knows them.
  */
 // A relative Location: behind the proxy the request's own origin is not the visitor's.
-const middleware: MiddlewareFunction = () => new Response(null, { status: 302, headers: { Location: '/plans' } });
+const middleware: MiddlewareFunction = () => new Response(null, { status: 302, headers: { Location: '/plans?open=1' } });
 export default middleware;

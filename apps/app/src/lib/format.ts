@@ -33,3 +33,10 @@ export const formatPrice = (amount: number, currency: string, lang: Language) =>
 
 /** A plan's start and end, "HH:MM" on the city's clock, as one range. They are already the city's time, so nothing is converted. */
 export const formatTimeRange = (startsAt: string, endsAt: string) => `${startsAt}–${endsAt}`;
+
+/**
+ * A calendar date ("YYYY-MM-DD", the city's own, as ticks and hear-by dates
+ * are) written like any other date. A date has no instant, so it is read at
+ * noon UTC and written in UTC: the city's zone cannot move it to another day.
+ */
+export const formatCalendarDate = (date: string, lang: Language) => formatDate(new Date(`${date}T12:00:00Z`), { timeZone: 'UTC', lang });

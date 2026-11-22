@@ -134,5 +134,22 @@
   "joinLinks.cancelFailed": "We could not cancel that link. Try again.",
   "joinLinks.copied": "Link copied.",
   "joinLinks.shareFailed": "We could not share the link. Try again.",
-  "joinLinks.shareMessage": "Join me on Issho: {url}"
+  "joinLinks.shareMessage": "Join me on Issho: {url}",
+  "signup.action": "Sign up",
+  "signup.signInFirst": "Sign in to sign up",
+  "signup.timesTitle": "When can you go?",
+  "signup.timesHelp": "Tick every time that suits you. Nothing is booked: you will hear by the day we tell you.",
+  "signup.pickOne": "Tick at least one time.",
+  "signup.part.morning": "morning",
+  "signup.part.afternoon": "afternoon",
+  "signup.part.evening": "evening",
+  "signup.save": "Save times",
+  "signup.cancel": "Cancel",
+  "signup.signedUp": "You signed up. You will hear by {date}.",
+  "signup.interested": "Interested: {count}",
+  "signup.change": "Change times",
+  "signup.withdraw": "Withdraw",
+  "signup.withdrawFailed": "We could not withdraw your signup. Try again.",
+  "together.hearAbout": "You will hear about {plan}",
+  "together.loadFailed": "Your plans could not be loaded."
 }
