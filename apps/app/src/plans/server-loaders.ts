@@ -44,7 +44,16 @@ async function cacheIfFilled<T>(pending: Promise<T>): Promise<T | null> {
   }
 }
 
-/** The same page's head, for the route's `generateMetadata`. */
+/**
+ * The same page's head, for the route's `generateMetadata`. It is a second call
+ * to the API, so it can fail after the body loaded; a head with no title is a
+ * page the API failed to fill, and the same rule holds: `no-store`.
+ */
 export async function planMetadataForServer(id: string): Promise<Metadata> {
-  return planMetadata(await loadPlan(createServerApi(), id, 'en').catch(() => null));
+  try {
+    return planMetadata(await loadPlan(createServerApi(), id, 'en'));
+  } catch {
+    setResponseHeaders({ 'Cache-Control': 'no-store' });
+    return planMetadata(null);
+  }
 }

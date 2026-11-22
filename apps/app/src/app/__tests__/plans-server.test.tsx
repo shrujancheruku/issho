@@ -7,7 +7,7 @@ import { aPlan } from '@/test-support/plan-fixtures';
 import { TestProviders } from '@/test-support/providers';
 
 import PlansScreen, { loader as plansLoader } from '../(tabs)/plans';
-import PlanPage, { loader as planLoader } from '../plans/[id]';
+import PlanPage, { generateMetadata as planMetadataFor, loader as planLoader } from '../plans/[id]';
 
 jest.mock('react-native/Libraries/Utilities/useColorScheme', () => ({ __esModule: true, default: jest.fn(() => 'light') }));
 jest.mock('react-native-safe-area-context', () => ({
@@ -129,5 +129,18 @@ describe("the server's loaders", () => {
     expect(await plansLoader()).toBeNull();
     expect(mockSetResponseHeaders).toHaveBeenCalledTimes(1);
     expect(mockSetResponseHeaders).toHaveBeenCalledWith({ 'Cache-Control': 'no-store' });
+  });
+
+  it('marks the page no-store when the head call fails after the body loaded', async () => {
+    fetchSpy = jest.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('down'));
+    await planMetadataFor(undefined, { id: 'p1' });
+    expect(mockSetResponseHeaders).toHaveBeenCalledWith({ 'Cache-Control': 'no-store' });
+    expect(mockSetResponseHeaders).not.toHaveBeenCalledWith({ 'Cache-Control': expect.stringContaining('public') });
+  });
+
+  it('leaves the cache header alone when the head call succeeds', async () => {
+    fetchSpy = jest.spyOn(globalThis, 'fetch').mockImplementation(answer({ plan: aPlan({ title: 'T' }) }));
+    await planMetadataFor(undefined, { id: 'p1' });
+    expect(mockSetResponseHeaders).not.toHaveBeenCalled();
   });
 });
