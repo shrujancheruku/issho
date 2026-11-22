@@ -17,7 +17,7 @@ pnpm --filter @issho/app start    # Expo's dev server for a phone or simulator
 
 Pass `--port <n>` after `expo start` to use another port. To see the server render, fetch a page without running any JavaScript: `curl localhost:8081/plans` holds the tab bar and "No plans yet." A visitor who opens `/` is sent to `/plans` by the browser (`src/app/index.tsx`).
 
-Screenshots of every empty tab at phone width, light and dark, English and Vietnamese, are in `docs/screenshots/` (`<tab>-<language>-<theme>.png`).
+Screenshots of every empty tab at phone width, light and dark, English and Vietnamese, are in `docs/screenshots/` (`<tab>-<language>-<theme>.png`). The You tab's are of a dev build, so they show the API's version: the web image (`apps/web/Dockerfile`) built with `EXPO_PUBLIC_API_URL` set to its own origin and run with `API_ORIGIN` pointing at a local API, as on dev, and captured with Playwright's Chromium at 390×780, device scale 2, with the language and colour scheme set. A production build shows the tab without that line.
 
 ## Testing
 
