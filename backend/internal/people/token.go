@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"math/big"
 	"net/http"
 	"sync"
@@ -26,9 +27,17 @@ const (
 	// person. The project's anon and service keys are JWTs too, with other roles.
 	audience = "authenticated"
 
-	// keyMaxAge is how long a fetched key set is trusted before the next token
-	// makes the API fetch it again, so a key Auth has revoked stops working.
-	keyMaxAge = time.Hour
+	// keyRefreshAfter is how old a fetched key set is before the next token
+	// makes the API fetch it again, beside the request.
+	keyRefreshAfter = time.Hour
+	// KeySetMaxAge is the hard limit on how long a fetched key set is trusted,
+	// counted from its last successful fetch. Past it no token verifies until
+	// a fetch succeeds (fail closed), so a key Auth has revoked stops working
+	// within a bound we can state even while the key-set host is unreachable.
+	// Three hours is two failed hourly refreshes' worth of outage, retried
+	// every refetchEvery, before sign-in stops; if Supabase Auth is down for
+	// longer nobody can sign in anyway.
+	KeySetMaxAge = 3 * time.Hour
 	// refetchEvery is the least time between two fetches: a token naming a key
 	// id the API hasn't seen (a rotation, or a forgery) can't make it fetch on
 	// every request.
@@ -55,6 +64,9 @@ type VerifierConfig struct {
 	Issuer string
 	// HTTPClient fetches the key set; nil uses a client with a 10-second timeout.
 	HTTPClient *http.Client
+	// Log says when a token is refused because the key set is past
+	// KeySetMaxAge; nil uses slog.Default(). It never gets a token.
+	Log *slog.Logger
 }
 
 // Verifier checks the access tokens Supabase Auth issues. It accepts ES256 and
@@ -81,6 +93,9 @@ func NewVerifier(clk clock.Clock, cfg VerifierConfig) *Verifier {
 	client := cfg.HTTPClient
 	if client == nil {
 		client = &http.Client{Timeout: fetchTimeout}
+	}
+	if cfg.Log == nil {
+		cfg.Log = slog.Default()
 	}
 	return &Verifier{clock: clk, cfg: cfg, client: client}
 }
@@ -131,15 +146,21 @@ type flight struct {
 // A key the API already has is returned at once, even when the set is due for
 // its hourly refresh: the refresh runs beside the request, so a slow or dead
 // key-set host never holds up a signed-in person whose key is known (a key
-// Auth has revoked is refused from the moment the new set arrives). A key id
-// the API hasn't seen waits for a fetch, subject to refetchEvery; callers that
-// need a fetch while one is in flight share it. The lock is never held while
-// the fetch runs.
+// Auth has revoked is refused from the moment the new set arrives). That
+// holds only while the set is younger than KeySetMaxAge: past it every key
+// counts as unknown, so a caller waits for a fetch and is refused if it
+// fails. A key id the API hasn't seen waits for a fetch, subject to
+// refetchEvery; callers that need a fetch while one is in flight share it.
+// The lock is never held while the fetch runs.
 func (v *Verifier) key(ctx context.Context, kid string) (crypto.PublicKey, error) {
 	v.mu.Lock()
 	now := v.clock.Now()
 	k, known := v.keys[kid]
-	stale := now.Sub(v.fetchedAt) >= keyMaxAge
+	age := now.Sub(v.fetchedAt)
+	// A set that was never fetched isn't "past its age": it is just absent.
+	expired := !v.fetchedAt.IsZero() && age >= KeySetMaxAge
+	known = known && !expired
+	stale := age >= keyRefreshAfter
 	fl := v.flight
 	if fl == nil && (!known || stale) && now.Sub(v.triedAt) >= refetchEvery {
 		fl = &flight{done: make(chan struct{})}
@@ -150,24 +171,35 @@ func (v *Verifier) key(ctx context.Context, kid string) (crypto.PublicKey, error
 	}
 	v.mu.Unlock()
 
+	// refuse is every way out but a key: the refusal of an expired set is
+	// logged here, once the wait for a fetch has failed. The log gets neither
+	// the token nor its key id, both of which are the caller's to choose.
+	refuse := func(err error) (crypto.PublicKey, error) {
+		if expired {
+			v.cfg.Log.Warn("token refused: the key set is past its maximum age and could not be refreshed",
+				"age", age.Round(time.Second), "max_age", KeySetMaxAge)
+		}
+		return nil, err
+	}
 	if known {
 		return k, nil
 	}
 	if fl == nil {
-		return nil, errors.New("unknown key id")
+		return refuse(errors.New("unknown key id"))
 	}
 	select {
 	case <-fl.done:
 	case <-ctx.Done():
-		return nil, ctx.Err()
+		return refuse(ctx.Err())
 	}
 	if fl.err != nil {
-		return nil, fmt.Errorf("fetch keys: %w", fl.err)
+		return refuse(fmt.Errorf("fetch keys: %w", fl.err))
 	}
 	v.mu.Lock()
 	k, known = v.keys[kid]
 	v.mu.Unlock()
 	if !known {
+		// The fetch succeeded, so the set is fresh: this is just an unknown key.
 		return nil, errors.New("unknown key id")
 	}
 	return k, nil

@@ -37,7 +37,7 @@ func run(ctx context.Context, log *slog.Logger, addr string) error {
 	// The real clock is built here and only here (tools/clockcheck enforces it).
 	clk := clock.Real{}
 	cfg := rpc.Config{Version: version, Log: log, Clock: clk}
-	acc, err := newAccounts(ctx, os.Getenv, clk)
+	acc, err := newAccounts(ctx, log, os.Getenv, clk)
 	if err != nil {
 		return err
 	}

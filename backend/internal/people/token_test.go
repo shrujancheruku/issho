@@ -1,6 +1,7 @@
 package people_test
 
 import (
+	"bytes"
 	"context"
 	"crypto"
 	"crypto/ecdsa"
@@ -9,9 +10,11 @@ import (
 	"crypto/rsa"
 	"encoding/base64"
 	"encoding/json"
+	"log/slog"
 	"math/big"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -371,12 +374,64 @@ func TestJWKSDownMeansRefusedUntilItIsUpAndKnownKeysKeepWorking(t *testing.T) {
 	if _, err := v.Verify(ctx, tok); err != nil {
 		t.Fatalf("refused after the set came up: %v", err)
 	}
-	// It goes down again after the cache has aged out: the last good set is used.
+	// It goes down again after the hourly refresh is due: the last good set is
+	// still used, until it reaches its maximum age (the next test).
 	j.down.Store(true)
 	clk.Advance(2 * time.Hour)
 	tok = ec.token(t, claims(clk.Now(), ada, "ada@example.com"))
 	if _, err := v.Verify(ctx, tok); err != nil {
-		t.Fatalf("known key refused while Auth is unreachable: %v", err)
+		t.Fatalf("known key refused while Auth is unreachable and the set is within its maximum age: %v", err)
+	}
+}
+
+// A key Auth has revoked must stop working within a bound we can state, even
+// while the key-set host is unreachable and no new set can arrive. So a cached
+// set has a hard maximum age from its last successful fetch; past it no token
+// verifies (fail closed) until a fetch succeeds, and each refusal is logged
+// without the token.
+func TestAKeySetThatCannotBeRefreshedStopsVerifyingAtItsMaxAge(t *testing.T) {
+	clk := clock.NewFake(start)
+	ec := newES256(t, "ec-1")
+	j := newJWKS(t, ec)
+	var logged bytes.Buffer
+	v := people.NewVerifier(clk, people.VerifierConfig{
+		JWKSURL: j.srv.URL, Issuer: issuer, Log: slog.New(slog.NewTextHandler(&logged, nil)),
+	})
+	ctx := context.Background()
+	if _, err := v.Verify(ctx, ec.token(t, claims(start, ada, "ada@example.com"))); err != nil {
+		t.Fatal(err)
+	}
+	j.down.Store(true)
+
+	clk.Advance(people.KeySetMaxAge - time.Minute)
+	if _, err := v.Verify(ctx, ec.token(t, claims(clk.Now(), ada, "ada@example.com"))); err != nil {
+		t.Fatalf("known key refused just inside the maximum age: %v", err)
+	}
+	if logged.Len() != 0 {
+		t.Fatalf("logged inside the maximum age: %s", logged.String())
+	}
+
+	clk.Advance(time.Minute) // the set is now exactly as old as it may be
+	tok := ec.token(t, claims(clk.Now(), ada, "ada@example.com"))
+	if _, err := v.Verify(ctx, tok); err == nil {
+		t.Fatal("token accepted from a key set past its maximum age")
+	}
+	if !strings.Contains(logged.String(), "key set") {
+		t.Fatalf("the refusal was not logged: %q", logged.String())
+	}
+	if strings.Contains(logged.String(), tok) || strings.Contains(logged.String(), "ec-1") {
+		t.Fatalf("the log carries the token or its key id: %s", logged.String())
+	}
+
+	// Still down a minute later: still refused. Back up: verifying again.
+	clk.Advance(time.Minute)
+	if _, err := v.Verify(ctx, ec.token(t, claims(clk.Now(), ada, "ada@example.com"))); err == nil {
+		t.Fatal("token accepted while the key set is past its maximum age and still unreachable")
+	}
+	j.down.Store(false)
+	clk.Advance(time.Minute)
+	if _, err := v.Verify(ctx, ec.token(t, claims(clk.Now(), ada, "ada@example.com"))); err != nil {
+		t.Fatalf("refused after a fetch succeeded: %v", err)
 	}
 }
 

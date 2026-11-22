@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"strings"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -33,7 +34,7 @@ type accounts struct {
 // set it returns nil: the API then serves only its public RPCs, as a local
 // process with no stack does. With one of them set, it is an error: half a
 // configuration would serve accounts it can't keep, or keep ones it can't check.
-func newAccounts(ctx context.Context, getenv func(string) string, clk clock.Clock) (*accounts, error) {
+func newAccounts(ctx context.Context, log *slog.Logger, getenv func(string) string, clk clock.Clock) (*accounts, error) {
 	dbURL, authURL := getenv("DATABASE_URL"), strings.TrimRight(getenv("SUPABASE_AUTH_URL"), "/")
 	switch {
 	case dbURL == "" && authURL == "":
@@ -47,7 +48,7 @@ func newAccounts(ctx context.Context, getenv func(string) string, clk clock.Cloc
 	if err != nil {
 		return nil, err
 	}
-	verifier := people.NewVerifier(clk, people.VerifierConfig{JWKSURL: authURL + "/.well-known/jwks.json", Issuer: authURL})
+	verifier := people.NewVerifier(clk, people.VerifierConfig{JWKSURL: authURL + "/.well-known/jwks.json", Issuer: authURL, Log: log})
 	return &accounts{
 		people: people.New(clk, pool, people.Config{DefaultCity: defaultCity}),
 		auth:   rpc.NewAuthenticator(verifier),

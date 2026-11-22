@@ -107,8 +107,8 @@ var (
 // Join returns the caller's account, making it first if this is the first
 // call with their token: the token's email, the city and display language in
 // prefs (or their defaults). On any later call it returns the account as it
-// is and does not apply prefs (it still checks them): changing a city or language is a settings call, not a
-// second join.
+// is and does not apply prefs (it still checks them): changing a city or
+// language is a settings call, not a second join.
 func (s *Service) Join(ctx context.Context, c Claims, prefs Preferences) (Account, error) {
 	subject := lowerASCII(c.Subject)
 	if !uuidRe.MatchString(subject) {
