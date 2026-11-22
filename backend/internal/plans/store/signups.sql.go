@@ -57,6 +57,48 @@ func (q *Queries) CountSignups(ctx context.Context, arg CountSignupsParams) ([]C
 	return items, nil
 }
 
+const deleteEmptySignups = `-- name: DeleteEmptySignups :exec
+delete from app.signups s
+where s.account_id = $1 and s.round_id <> $2
+  and not exists (select 1 from app.signup_ticks t where t.round_id = s.round_id and t.account_id = s.account_id)
+`
+
+type DeleteEmptySignupsParams struct {
+	AccountID string
+	RoundID   string
+}
+
+// A signup always has a tick, so one left with none is withdrawn. Only the
+// account's signups to rounds but the outing's own are looked at.
+func (q *Queries) DeleteEmptySignups(ctx context.Context, arg DeleteEmptySignupsParams) error {
+	_, err := q.db.Exec(ctx, deleteEmptySignups, arg.AccountID, arg.RoundID)
+	return err
+}
+
+const deleteOtherTicksAt = `-- name: DeleteOtherTicksAt :exec
+delete from app.signup_ticks
+where account_id = $1 and tick_date = $2 and part = $3 and round_id <> $4
+`
+
+type DeleteOtherTicksAtParams struct {
+	AccountID string
+	TickDate  time.Time
+	Part      string
+	RoundID   string
+}
+
+// A person who is going to an outing is busy then: the same date and part of
+// the day is taken off their signups to every round but the outing's own.
+func (q *Queries) DeleteOtherTicksAt(ctx context.Context, arg DeleteOtherTicksAtParams) error {
+	_, err := q.db.Exec(ctx, deleteOtherTicksAt,
+		arg.AccountID,
+		arg.TickDate,
+		arg.Part,
+		arg.RoundID,
+	)
+	return err
+}
+
 const deleteSignup = `-- name: DeleteSignup :exec
 delete from app.signups s
 using app.plan_rounds r

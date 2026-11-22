@@ -202,11 +202,13 @@ func TestAnExpiredTokenIsRefused(t *testing.T) {
 func TestNoRPCReturnsAnotherPersonsEmail(t *testing.T) {
 	ownEmail := map[string]bool{"issho.v1.AccountService.GetAccount": true}
 	var offenders []string
+	walked := map[string]bool{}
 	protoregistry.GlobalFiles.RangeFilesByPackage("issho.v1", func(fd protoreflect.FileDescriptor) bool {
 		for i := 0; i < fd.Services().Len(); i++ {
 			svc := fd.Services().Get(i)
 			for j := 0; j < svc.Methods().Len(); j++ {
 				m := svc.Methods().Get(j)
+				walked[string(m.FullName())] = true
 				if holdsEmail(m.Output(), map[protoreflect.FullName]bool{}) && !ownEmail[string(m.FullName())] {
 					offenders = append(offenders, string(m.FullName()))
 				}
@@ -216,6 +218,14 @@ func TestNoRPCReturnsAnotherPersonsEmail(t *testing.T) {
 	})
 	if len(offenders) > 0 {
 		t.Fatalf("RPCs whose response carries an email, and are not the caller's own: %v", offenders)
+	}
+	// The walk is over everything registered, so a new RPC is checked without
+	// anyone listing it; these are the outing RPCs that show other people's
+	// first names, which it must be seen to reach.
+	for _, rpc := range []string{"issho.v1.OutingService.ListMyOutings", "issho.v1.OutingService.AnswerInvitation", "issho.v1.OutingService.CancelSeat"} {
+		if !walked[rpc] {
+			t.Errorf("the walk did not reach %s", rpc)
+		}
 	}
 }
 

@@ -7,16 +7,36 @@ import "issho/v1/access.proto";
 
 // A member's own outings: the groups matching formed that they have a seat in
 // (docs/spec/outings.md). An outing is private to the people in it, so there is
-// no RPC that names an outing or a person: a caller is only ever shown their
-// own seats. Answering an invitation is a later RPC.
+// no RPC names a person, and one that names an outing only acts on the caller's
+// own seat in it: a caller is only ever shown their own seats, and what they see
+// of the others is a count of yeses and, once going, first names.
 service OutingService {
   // Lists the caller's own outings, earliest date first: each one they have a
   // seat in, with the date, the time and the languages the group shares, and
   // where their seat stands. Member: it takes no account and no outing id, so
   // it can only ever return the caller's own, and an outing the caller has no
   // seat in is never in it. It never returns a name or the id of another
-  // person.
+  // person except the first names of the others going, and those only to a
+  // person who is going themselves.
   rpc ListMyOutings(ListMyOutingsRequest) returns (ListMyOutingsResponse) {
+    option (issho.v1.access) = ACCESS_MEMBER;
+  }
+
+  // Says yes or no to the caller's own invitation. It is open for a fixed 48
+  // hours from the invitation (FAILED_PRECONDITION after that, or when the
+  // outing was not set, or for a no from someone already going: they cancel).
+  // A no can be changed to a yes inside the 48 hours. A yes is held until 3 have
+  // said yes, which sets the outing and makes everyone who said yes going; a yes
+  // after that is going at once. Member: the seat is the caller's own, and an
+  // outing the caller has no seat in is NOT_FOUND, as is one that doesn't exist.
+  rpc AnswerInvitation(AnswerInvitationRequest) returns (AnswerInvitationResponse) {
+    option (issho.v1.access) = ACCESS_MEMBER;
+  }
+
+  // Cancels the caller's own seat, which must be going: the seat records it as
+  // cancelled. FAILED_PRECONDITION for a seat that is not going, NOT_FOUND for an
+  // outing the caller has no seat in. Member.
+  rpc CancelSeat(CancelSeatRequest) returns (CancelSeatResponse) {
     option (issho.v1.access) = ACCESS_MEMBER;
   }
 }
@@ -25,6 +45,32 @@ message ListMyOutingsRequest {}
 
 message ListMyOutingsResponse {
   repeated Outing outings = 1;
+}
+
+message AnswerInvitationRequest {
+  string outing_id = 1;
+  InvitationAnswer answer = 2;
+}
+
+// The outing as the caller's seat sees it after answering.
+message AnswerInvitationResponse {
+  Outing outing = 1;
+}
+
+// The two replies to an invitation.
+enum InvitationAnswer {
+  INVITATION_ANSWER_UNSPECIFIED = 0;
+  INVITATION_ANSWER_YES = 1;
+  INVITATION_ANSWER_NO = 2;
+}
+
+message CancelSeatRequest {
+  string outing_id = 1;
+}
+
+// The outing as the caller's seat sees it after cancelling.
+message CancelSeatResponse {
+  Outing outing = 1;
 }
 
 // An outing as its own seat's holder sees it. It carries no other person.
@@ -46,6 +92,30 @@ message Outing {
   // When the caller's invitation went out, and when its fixed 48 hours end.
   google.protobuf.Timestamp invited_at = 8;
   google.protobuf.Timestamp invitation_ends_at = 9;
+  // Where the whole outing stands.
+  OutingState outing_state = 10;
+  // How many have said yes: those going and those whose yes waits for the
+  // outing to be set. A count, never who, shown to everyone with a seat.
+  int32 yes_count = 11;
+  // The first names of the others going, sorted: the caller's own is not in it,
+  // and it is empty unless the caller is going themselves. A first name is all
+  // that is ever shown of another person.
+  repeated string others_going = 12;
+}
+
+// An outing's state (docs/spec/outings.md, "What an outing is"). Only offered,
+// set and not set are made so far.
+enum OutingState {
+  OUTING_STATE_UNSPECIFIED = 0;
+  OUTING_STATE_PROPOSED = 1;
+  // Its invitations are out and fewer than 3 have said yes.
+  OUTING_STATE_OFFERED = 2;
+  // At least 3 have said yes.
+  OUTING_STATE_SET = 3;
+  OUTING_STATE_OVER = 4;
+  // Fewer than 3 had said yes when the invitations' 48 hours ended.
+  OUTING_STATE_NOT_SET = 5;
+  OUTING_STATE_CANCELLED = 6;
 }
 
 // A seat's state: the person's stage in the outing, or how they left it
@@ -61,4 +131,6 @@ enum SeatState {
   SEAT_STATE_CANCELLED = 6;
   SEAT_STATE_LATE_CANCEL = 7;
   SEAT_STATE_REMOVED = 8;
+  // Said yes, and the outing is not set yet: the yes waits for the third.
+  SEAT_STATE_ACCEPTED = 9;
 }

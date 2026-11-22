@@ -145,7 +145,7 @@ func TestFormingMakesAnOutingWithAnInvitedSeatForEachPerson(t *testing.T) {
 		}
 		want := outings.Seat{
 			OutingID: outing, PlanID: lanterns, Date: "2026-01-09", Part: "evening", StartsAt: "17:00",
-			Languages: []string{"en", "vi"}, State: outings.SeatInvited,
+			Languages: []string{"en", "vi"}, State: outings.SeatInvited, OutingState: outings.OutingOffered,
 			InvitedAt: rigStart, InvitationEndsAt: rigStart.Add(policy.InvitationWindow),
 		}
 		if !reflect.DeepEqual(s, want) {
@@ -378,12 +378,15 @@ func TestAFailedRunLeavesNoOutingBehind(t *testing.T) {
 		t.Fatal("Form succeeded, want the refused seat's error")
 	}
 
-	var outings, seats int
-	if err := r.pool.QueryRow(ctx, `select (select count(*) from app.outings), (select count(*) from app.seats)`).Scan(&outings, &seats); err != nil {
+	var outings, seats, jobs int
+	if err := r.pool.QueryRow(ctx, `select (select count(*) from app.outings), (select count(*) from app.seats),
+		(select count(*) from river.river_job where kind = 'outings_expire_invitations')`).Scan(&outings, &seats, &jobs); err != nil {
 		t.Fatal(err)
 	}
-	if outings != 0 || seats != 0 {
-		t.Fatalf("%d outings and %d seats were left behind, want none", outings, seats)
+	// The unanswered-seat jobs are made in the invitations' transaction, so a
+	// failed run leaves none for outings that don't exist.
+	if outings != 0 || seats != 0 || jobs != 0 {
+		t.Fatalf("%d outings, %d seats and %d jobs were left behind, want none", outings, seats, jobs)
 	}
 }
 
@@ -447,3 +450,7 @@ func TestAPersonWithNoSeatInAnOutingIsNeverShownIt(t *testing.T) {
 		t.Fatalf("a person with no seat sees %+v, want nothing", seats)
 	}
 }
+
+// policyWindow is the invitations' fixed 48 hours, written out from the spec
+// independently of policy.InvitationWindow.
+const policyWindow = 48 * time.Hour

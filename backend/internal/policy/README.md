@@ -7,6 +7,7 @@ Every number in the spec's rules, as a constant. None is in the database, and no
 | `MinGroupSize`, `MaxGroupSize` | 3 and 6 | [Matching](../../../docs/spec/matching.md) |
 | `PreferredGroupSizeLow`, `PreferredGroupSizeHigh` | 4 and 5 | [Matching](../../../docs/spec/matching.md) |
 | `InvitationWindow` | 48 hours | [Outings](../../../docs/spec/outings.md) |
+| `YesesToSet` | 3 | [Outings](../../../docs/spec/outings.md) |
 | `RoundLength` | 7 days | [Matching](../../../docs/spec/matching.md) |
 | `CheckInOpensBeforeStart` | 30 minutes | [Outings](../../../docs/spec/outings.md) |
 | `FeedbackWindow` | 7 days | [Outings](../../../docs/spec/outings.md) |

@@ -239,6 +239,32 @@ func (s *Signups) Forming(ctx context.Context, planID string) (FormingRound, err
 	return out, nil
 }
 
+// ReleaseTime takes one time, a date and a part of the day, off the account's
+// signups to every round but exceptRound, in the caller's transaction: a person
+// who is going to an outing can't be grouped for the same time on another plan
+// (docs/spec/outings.md, "Going"; docs/spec/core-loop.md). exceptRound is the
+// outing's own round, whose signup is what formed the group. A signup left with
+// no tick is withdrawn, since a signup always has one. The time is a calendar
+// date ("2006-01-02") and a part of the day as in Tick; a person with no such
+// tick changes nothing and gets no error.
+//
+// It takes a transaction so that `outings` can make a person going and take the
+// time off in one commit; it writes only plans' own tables.
+func (s *Signups) ReleaseTime(ctx context.Context, tx pgx.Tx, accountID, date, part, exceptRound string) error {
+	day, err := time.Parse(time.DateOnly, date)
+	if err != nil {
+		return fmt.Errorf("%w: date %q", ErrInvalid, date)
+	}
+	q := store.New(tx)
+	if err := q.DeleteOtherTicksAt(ctx, store.DeleteOtherTicksAtParams{AccountID: accountID, TickDate: day, Part: part, RoundID: exceptRound}); err != nil {
+		return fmt.Errorf("plans: release time: %w", err)
+	}
+	if err := q.DeleteEmptySignups(ctx, store.DeleteEmptySignupsParams{AccountID: accountID, RoundID: exceptRound}); err != nil {
+		return fmt.Errorf("plans: release time: signups: %w", err)
+	}
+	return nil
+}
+
 // cityDates answers "what day is it" for the cities the signups are in, each
 // on its own clock, reading each city once.
 type cityDates struct {

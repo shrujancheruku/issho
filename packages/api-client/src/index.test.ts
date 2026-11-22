@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { Code } from '@connectrpc/connect';
 
-import { createApi, SeatState } from './index';
+import { createApi, InvitationAnswer, OutingState, SeatState } from './index';
 
 // A fake fetch that answers the health check and keeps the request it saw.
 function fakeFetch() {
@@ -162,5 +162,49 @@ describe('createApi', () => {
     expect(res.outings[0].seatState).toBe(SeatState.INVITED);
     expect(seen[0].url).toBe('https://api.example.test/issho.v1.OutingService/ListMyOutings');
     expect(seen[0].headers.get('authorization')).toBe('Bearer tok-1');
+  });
+
+  it('answers an invitation and reads the count of yeses and the first names of those going', async () => {
+    const seen: Request[] = [];
+    const fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+      seen.push(new Request(input, init));
+      return new Response(
+        JSON.stringify({
+          outing: {
+            id: 'o1',
+            seatState: 'SEAT_STATE_GOING',
+            outingState: 'OUTING_STATE_SET',
+            yesCount: 3,
+            othersGoing: ['Grace', 'Katherine'],
+          },
+        }),
+        { headers: { 'content-type': 'application/json' } },
+      );
+    };
+    const api = createApi({ baseUrl: 'https://api.example.test', getAccessToken: async () => 'tok-1', fetch });
+
+    const res = await api.outing.answerInvitation({ outingId: 'o1', answer: InvitationAnswer.YES });
+
+    expect(res.outing).toMatchObject({ yesCount: 3, othersGoing: ['Grace', 'Katherine'] });
+    expect(res.outing?.seatState).toBe(SeatState.GOING);
+    expect(res.outing?.outingState).toBe(OutingState.SET);
+    expect(seen[0].url).toBe('https://api.example.test/issho.v1.OutingService/AnswerInvitation');
+    expect(await seen[0].json()).toEqual({ outingId: 'o1', answer: 'INVITATION_ANSWER_YES' });
+  });
+
+  it('cancels a seat', async () => {
+    const seen: Request[] = [];
+    const fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+      seen.push(new Request(input, init));
+      return new Response(JSON.stringify({ outing: { id: 'o1', seatState: 'SEAT_STATE_CANCELLED' } }), {
+        headers: { 'content-type': 'application/json' },
+      });
+    };
+    const api = createApi({ baseUrl: 'https://api.example.test', getAccessToken: async () => 'tok-1', fetch });
+
+    const res = await api.outing.cancelSeat({ outingId: 'o1' });
+
+    expect(res.outing?.seatState).toBe(SeatState.CANCELLED);
+    expect(seen[0].url).toBe('https://api.example.test/issho.v1.OutingService/CancelSeat');
   });
 });

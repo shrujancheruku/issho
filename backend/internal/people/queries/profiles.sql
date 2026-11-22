@@ -23,3 +23,8 @@ returning *;
 
 -- name: GetProfile :one
 select * from app.profiles where account_id = $1;
+
+-- Only the name, never the rest of the row: it is what FirstNames shows of
+-- other people.
+-- name: ListProfileNames :many
+select account_id, name from app.profiles where account_id = any($1::uuid[]);
