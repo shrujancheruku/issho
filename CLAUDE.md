@@ -4,17 +4,17 @@ Project-specific rules for AI coding agents. They **take precedence over generic
 
 ## Read first
 - [GitHub Issues](https://github.com/shrujancheruku/issho/issues): plan and status (see `docs/agents/issue-tracker.md`)
-- [docs/spec/](docs/spec/README.md): the v2 spec, in the terms of the root `GLOSSARY.md`. v1's code was deleted by the build's first ticket (#587) and stays readable at the `v1-final` tag; an amendment to the spec is a PR that edits its document.
+- [docs/spec/](docs/spec/README.md): the v2 spec, in the terms of the root `GLOSSARY.md`. v1's code is not in this repo; it stays readable at the `v1-final` tag. An amendment to the spec is a PR that edits its document.
 - [docs/adr/](docs/adr/): why things are the way they are
 - The README in the directory you're changing.
 - [docs/agents/orchestration.md](docs/agents/orchestration.md) when building a milestone in parallel on Orca workers with the [flow plugin](https://github.com/shrujancheruku/orca-flow) (`/flow:build`): model routing, holds, verify commands, review checks and the merge rule.
 
 ## Every change
-- Work from an issue and close it from the PR (`Closes #<n>`). Record a decision in the issue's resolution comment, or as an ADR in `docs/adr/` when it's hard to reverse, surprising without context and a real trade-off. `docs/ROADMAP.md` and the decision log `docs/decisions-2026.md` are retired; never recreate either.
+- Work from an issue and close it from the PR (`Closes #<n>`). Record a decision in the issue's resolution comment, or as an ADR in `docs/adr/` when it's hard to reverse, surprising without context and a real trade-off. The v1 roadmap and its decision log are retired; never recreate either.
 - Planned work lives under the one active **work parent** issue (sub-issue order is run order); see "Planning rules" in `docs/agents/issue-tracker.md`.
 - Keep the directory READMEs accurate (endpoints, setup, testing).
 - Comment non-obvious logic with the *why*.
-- Run each of `make gen`, `make lint` and `make test` that exists, plus `make secrets-scan`.
+- Run `make gen` (then `git diff --exit-code` must be clean), `make secrets-scan`, `make lint` and `make test` from the repo root. `make test` starts its own Postgres in Docker, so Docker must be running.
 - Commit messages follow Conventional Commits (`feat(scope): …`); hooks and CI enforce this.
 
 ## Supabase: how this repo differs from the generic Supabase skills
@@ -22,7 +22,7 @@ Project-specific rules for AI coding agents. They **take precedence over generic
 - **App tables live in the `app` schema; goose's bookkeeping lives in `goose`.** Don't create tables in `public`.
 - **The Data API (PostgREST) is disabled**, locally and on hosted projects. Clients never query the database directly; everything goes through the Go API (ConnectRPC). Don't grant `anon`/`authenticated` access or write RLS policies as a way to expose data. Add an RPC instead.
 - **Supabase Auth is used for sign-in only** (email OTP). The Go API verifies ES256/RS256 tokens against the project JWKS and never uses the JWT secret.
-- **Hosted config** is pushed from `supabase/config.toml` with `supabase config diff` / `config push`, using the overrides in `[remotes.<project>]`. Always run `config diff` and review it before pushing.
+- **Hosted config**, once a hosted project's overrides exist in `[remotes.<project>]` in `supabase/config.toml`, is pushed with `supabase config push`. Always run `supabase config diff` and review it before pushing. (No `[remotes]` section exists yet.)
 - **The Supabase MCP server is not configured.** Don't create `.mcp.json` unless the user asks.
 
 ## Secrets (the repo is public)
