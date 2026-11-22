@@ -19,6 +19,8 @@ Repo-level helper scripts, run by the root `Makefile`. Each script has a header 
 | `deploy-dev-verify.test.sh` | `make deploy-test` | Tests it against a stand-in server and browser |
 | `dev-host.sh` | CI's `deploy-dev` workflow | Prints the dev VM's address, asked of Google Cloud (the reserved address `issho-dev-ip`); the workflow masks it |
 | `dev-host.test.sh` | `make deploy-test` | Tests it with a stand-in for `gcloud` |
+| `dev-ssh-pin.sh` | CI's `deploy-dev` workflow | Writes the VM's address and its host key (`dev-ssh-host-key`) as the only known host, and an ssh config that refuses any other key, for Kamal |
+| `dev-ssh-pin.test.sh` | `make deploy-test` | Tests what it writes with a stand-in for `gcloud`, then, against a real sshd in Docker and through Kamal's net-ssh, that the pinned key is accepted and a changed key or an unknown host refused |
 | `deploy-config.test.sh` | `make deploy-test` | Loads `config/deploy*.yml` and `.kamal/secrets.dev` through Kamal's own loader, in Docker, with a stand-in `gcloud` ([config](../config/README.md)) |
 | `tracker-check.sh` | `make tracker-check` (weekly CI) | The issue-tracker hygiene check ([issue-tracker.md](../docs/agents/issue-tracker.md)) |
 | `tracker-check.test.sh` | `make tracker-check` | Tests `tracker-check.sh` against the fixtures in `testdata/tracker-check/` |

@@ -46,14 +46,14 @@ chmod +x "$work/gcloud"
 kamal() {
   docker run --rm -v "$work/project:/workdir" -v "$work/gcloud:/usr/local/bin/gcloud:ro" \
     -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0='*' \
-    -e DEPLOY_HOST=203.0.113.7 -e KAMAL_REGISTRY_PASSWORD=stub \
+    -e DEPLOY_HOST=203.0.113.7 -e KAMAL_REGISTRY_PASSWORD=stub -e DEV_SSH_CONFIG=/pin/ssh_config \
     "$kamal_image" "$@"
 }
 
 # What each service's configuration comes to, from Kamal's own loader.
 facts=$(docker run --rm -v "$work/project:/workdir" -v "$work/gcloud:/usr/local/bin/gcloud:ro" \
   -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0='*' \
-  -e DEPLOY_HOST=203.0.113.7 -e KAMAL_REGISTRY_PASSWORD=stub \
+  -e DEPLOY_HOST=203.0.113.7 -e KAMAL_REGISTRY_PASSWORD=stub -e DEV_SSH_CONFIG=/pin/ssh_config \
   --entrypoint ruby "$kamal_image" -e '
 require "kamal"
 require "json"
@@ -69,6 +69,8 @@ out = {}
     ssh_user: c.ssh.user,
     keys_only: c.ssh.keys_only,
     ssh_key_read: c.ssh.key_data,
+    ssh_config: c.ssh.options[:config],
+    host_key: c.secrets["SSH_HOST_KEY"],
     cert: c.proxy.certificate_pem_content,
     build_args: c.builder.args,
     env_clear: c.raw_config.env&.dig("clear"),
@@ -93,6 +95,9 @@ expect "web image" '.web.image' ghcr.io/shrujancheruku/issho-web
 expect "kamal logs in as the deploy user" '.backend.ssh_user' kamal
 expect "only the given key is offered" '.backend.keys_only' true
 expect "the key comes from Secret Manager" '.backend.ssh_key_read[0]' value-of-dev-ssh-private-key
+expect "the backend's ssh reads the pinned host key" '.backend.ssh_config' /pin/ssh_config
+expect "the web's ssh reads the pinned host key" '.web.ssh_config' /pin/ssh_config
+expect "the host key is named among the dev secrets" '.backend.host_key' value-of-dev-ssh-host-key
 
 # The backend: the API behind the proxy, the worker beside it with no proxy.
 expect "roles" '.backend.roles | map(.name) | join(",")' web,worker

@@ -16,6 +16,12 @@ servers:
     hosts:
       - <%= ENV.fetch("DEPLOY_HOST") %>
 
+# The VM's host key, pinned: an ssh config written by scripts/dev-ssh-pin.sh that
+# refuses an unknown or changed key. ENV.fetch, so Kamal will not load this
+# destination, and so not connect, without it.
+ssh:
+  config: <%= ENV.fetch("DEV_SSH_CONFIG") %>
+
 # The API has its own name. The Expo server (config/deploy.web.yml) forwards the
 # API's paths on dev, and the admin's Worker on admin-dev, so a browser calls it
 # on the page's own origin and the API needs no CORS. (Sharing dev's name by path

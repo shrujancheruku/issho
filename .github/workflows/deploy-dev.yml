@@ -69,6 +69,12 @@ jobs:
           host=$(scripts/dev-host.sh)
           echo "::add-mask::$host"
           echo "DEPLOY_HOST=$host" >> "$GITHUB_ENV"
+      # Kamal's ssh accepts only this key for the VM and refuses an unknown or
+      # changed one (scripts/dev-ssh-pin.sh); the runner knows no host before.
+      - name: Pin the VM's host key
+        run: |
+          config=$(scripts/dev-ssh-pin.sh "$DEPLOY_HOST" "$RUNNER_TEMP/ssh")
+          echo "DEV_SSH_CONFIG=$config" >> "$GITHUB_ENV"
       - name: Deploy
         env:
           KAMAL_REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}

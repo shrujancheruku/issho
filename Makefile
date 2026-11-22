@@ -223,6 +223,7 @@ deploy-test:
 	scripts/deploy-dev.test.sh
 	scripts/deploy-dev-verify.test.sh
 	scripts/dev-host.test.sh
+	scripts/dev-ssh-pin.test.sh
 	cd apps/web && node --test
 
 test: deploy-test

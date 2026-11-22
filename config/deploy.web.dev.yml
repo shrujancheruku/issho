@@ -6,6 +6,12 @@ servers:
     hosts:
       - <%= ENV.fetch("DEPLOY_HOST") %>
 
+# The VM's host key, pinned: an ssh config written by scripts/dev-ssh-pin.sh that
+# refuses an unknown or changed key. ENV.fetch, so Kamal will not load this
+# destination, and so not connect, without it.
+ssh:
+  config: <%= ENV.fetch("DEV_SSH_CONFIG") %>
+
 proxy:
   host: dev.joinissho.com
 
