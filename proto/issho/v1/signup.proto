@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package issho.v1;
 
+import "google/protobuf/timestamp.proto";
 import "issho/v1/access.proto";
 
 // A member's signups to plans: the parts of the day they can go, on real dates.
@@ -81,6 +82,10 @@ message Signup {
   // The round's last day, the city's calendar date, "YYYY-MM-DD": by then the
   // person has an invitation or a "no group this round".
   string hear_by = 3;
+  // When the signup was made or last changed: the person's last signup is the
+  // newest by this, which the app prefills the ticks from. ListMySignups stays
+  // in hear-by order.
+  google.protobuf.Timestamp signed_at = 4;
 }
 
 // Why SignUp refused the ticks, when the app has something particular to do

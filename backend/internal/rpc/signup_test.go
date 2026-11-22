@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"connectrpc.com/connect"
 
@@ -254,5 +255,58 @@ func TestAPlanReturnsHowManyAreSignedUpAndNeverWho(t *testing.T) {
 	}
 	if graceOwn := r.mine(t, graceTok); len(graceOwn) != 1 || graceOwn[0].GetPlanId() != lanterns {
 		t.Fatalf("grace's own signups = %v, want only the lantern plan", graceOwn)
+	}
+}
+
+// A signup says when it was made or last changed, over the wire, in what
+// SignUp and ListMySignups return: the app prefills the ticks from the newest.
+func TestASignupSaysWhenItWasMadeOrLastChangedOverTheWire(t *testing.T) {
+	r := newSignupRig(t)
+	tok := r.member(t, ada, "ada@example.com")
+	first := r.clk.Now()
+
+	made, err := r.signUp(tok, lanterns, tick("2026-01-09", "evening"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !made.GetSignedAt().AsTime().Equal(first) {
+		t.Fatalf("SignUp signed_at = %v, want %v", made.GetSignedAt().AsTime(), first)
+	}
+	r.clk.Advance(time.Minute)
+	if _, err := r.signUp(tok, sunrise, tick("2026-01-10", "morning")); err != nil {
+		t.Fatal(err)
+	}
+	r.clk.Advance(time.Minute)
+	changed := r.clk.Now()
+	if _, err := r.signUp(tok, lanterns, tick("2026-01-10", "evening")); err != nil {
+		t.Fatal(err)
+	}
+
+	got := map[string]time.Time{}
+	for _, s := range r.mine(t, tok) {
+		got[s.GetPlanId()] = s.GetSignedAt().AsTime()
+	}
+	if !got[lanterns].Equal(changed) || !got[sunrise].Equal(first.Add(time.Minute)) {
+		t.Fatalf("mine signed_at = %v; want lanterns at %v (last changed) and sunrise a minute after the first", got, changed)
+	}
+}
+
+// Both public reads say the plan's round's last day, to a visitor with no
+// token: it is the same for everyone.
+func TestAPlanSaysItsRoundsLastDayToAVisitor(t *testing.T) {
+	r := newSignupRig(t)
+
+	listed, err := r.plans.ListPlans(context.Background(), connect.NewRequest(&isshov1.ListPlansRequest{City: "da-nang-hoi-an"}))
+	if err != nil || len(listed.Msg.GetPlans()) != 2 {
+		t.Fatalf("ListPlans = %v, %v", listed, err)
+	}
+	for _, p := range listed.Msg.GetPlans() {
+		if p.GetRoundEnds() != "2026-01-11" {
+			t.Fatalf("listed plan %s round_ends = %q, want 2026-01-11", p.GetId(), p.GetRoundEnds())
+		}
+	}
+	one, err := r.plans.GetPlan(context.Background(), connect.NewRequest(&isshov1.GetPlanRequest{Id: lanterns}))
+	if err != nil || one.Msg.GetPlan().GetRoundEnds() != "2026-01-11" {
+		t.Fatalf("GetPlan = %v, %v; want round_ends 2026-01-11", one, err)
 	}
 }

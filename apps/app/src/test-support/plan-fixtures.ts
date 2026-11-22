@@ -23,6 +23,7 @@ export function aPlan(over: Partial<Plan> = {}): Plan {
       { $typeName: 'issho.v1.Stop', position: 2, stayMinutes: 60, name: 'Riverside café', note: 'Iced coffee to finish.' },
     ],
     signedUp: 0,
+    roundEnds: '2026-11-28',
     ...over,
   } as Plan;
 }

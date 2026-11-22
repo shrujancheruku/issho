@@ -13,7 +13,7 @@ import type { StringKey } from '@/i18n/strings';
 import { SignUpRefusal, useSignUp } from '@/join/sign-up';
 import { formatCalendarDate } from '@/lib/format';
 import { useProfileGate } from '@/profile/use-profile-gate';
-import { PARTS_OF_DAY, prefill, signupDates, tickKey } from '@/signup/times';
+import { lastSignup, PARTS_OF_DAY, prefill, signupDates, tickKey } from '@/signup/times';
 import { useMySignups } from '@/signup/use-my-signups';
 
 const partKeys: Record<(typeof PARTS_OF_DAY)[number], StringKey> = {
@@ -56,13 +56,22 @@ export function SignupPanel({ plan }: { plan: Plan }) {
     if (auth.status === 'loading') return null;
     return <Button label={t('signup.signInFirst')} onPress={() => router.push({ pathname: '/sign-in', params: { next: `/plans/${plan.id}` } })} />;
   }
+  // The same error state as the rest of the page, and the same way out.
+  if (state.status === 'failed') {
+    return (
+      <View style={styles.action}>
+        <ErrorText>{t('plan.loadFailed')}</ErrorText>
+        <Button quiet label={t('plans.retry')} onPress={reload} />
+      </View>
+    );
+  }
   if (state.status !== 'ready') return null;
 
   const mine: Signup | undefined = state.signups.find((s) => s.planId === plan.id);
-  const dates = signupDates(new Date(), plan.timeZone);
+  const dates = signupDates(new Date(), plan.timeZone, plan.roundEnds);
   const allowed = PARTS_OF_DAY.filter((p) => plan.partsOfDay.includes(p));
-  // From this plan's own ticks when changing them; else from the person's most recent signup (the list is earliest hear-by first).
-  const startFrom = () => prefill(mine ? mine.ticks : (state.signups[state.signups.length - 1]?.ticks ?? []), dates, allowed);
+  // From this plan's own ticks when changing them; else from the person's last signup, the newest by when it was made.
+  const startFrom = () => prefill(mine ? mine.ticks : (lastSignup(state.signups)?.ticks ?? []), dates, allowed);
 
   const begin = async () => {
     setBusy(true);

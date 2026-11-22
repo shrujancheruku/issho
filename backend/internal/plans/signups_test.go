@@ -746,3 +746,133 @@ func TestReleasingATimeTakesItFromTheOtherSignupsOfThePerson(t *testing.T) {
 		t.Errorf("grace's signups = %v, %v; want none once its only tick was released", mine, err)
 	}
 }
+
+// A signup says when it was made or last changed, so the app can prefill the
+// ticks from the person's last signup (docs/spec/matching.md, "Times"): the
+// newest by that time, whichever plan it is on and whenever its round ends.
+func TestASignupSaysWhenItWasMadeOrLastChanged(t *testing.T) {
+	r := newSignupRig(t)
+	ctx := context.Background()
+	first := r.clk.Now()
+
+	got, err := r.svc.Set(ctx, ada, lanterns, []plans.Tick{{Date: "2026-01-08", Part: "evening"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !got.SignedAt.Equal(first) {
+		t.Fatalf("SignedAt = %v, want %v", got.SignedAt, first)
+	}
+
+	r.clk.Advance(time.Hour)
+	second := r.clk.Now()
+	if _, err := r.svc.Set(ctx, ada, sunrise, []plans.Tick{{Date: "2026-01-09", Part: "morning"}}); err != nil {
+		t.Fatal(err)
+	}
+	r.clk.Advance(time.Hour)
+	third := r.clk.Now()
+	if _, err := r.svc.Set(ctx, ada, lanterns, []plans.Tick{{Date: "2026-01-10", Part: "evening"}}); err != nil {
+		t.Fatal(err)
+	}
+
+	mine, err := r.svc.Mine(ctx, ada)
+	if err != nil {
+		t.Fatal(err)
+	}
+	signedAt := map[string]time.Time{}
+	for _, s := range mine {
+		signedAt[s.PlanID] = s.SignedAt
+	}
+	if !signedAt[sunrise].Equal(second) {
+		t.Fatalf("sunrise signed at %v, want %v (when it was made)", signedAt[sunrise], second)
+	}
+	if !signedAt[lanterns].Equal(third) {
+		t.Fatalf("lanterns signed at %v, want %v (when it was last changed, not first made)", signedAt[lanterns], third)
+	}
+}
+
+// The plan says the last day of its round: the running round's, or the one a
+// round begun now would end on, which is the same derived day. It is the
+// same for everyone, signed up or not.
+func TestAPlanSaysTheLastDayOfItsRound(t *testing.T) {
+	r := newSignupRig(t)
+	ctx := context.Background()
+	reader := plans.New(r.clk, r.pool, cities.New(r.pool))
+	roundEnds := func() string {
+		t.Helper()
+		p, err := reader.Get(ctx, lanterns, "en")
+		if err != nil {
+			t.Fatal(err)
+		}
+		return p.RoundEnds
+	}
+
+	if got := roundEnds(); got != "2026-01-11" {
+		t.Fatalf("with no signups, on the 5th: round ends %s, want 2026-01-11", got)
+	}
+	if _, err := r.svc.Set(ctx, ada, lanterns, []plans.Tick{{Date: "2026-01-08", Part: "evening"}}); err != nil {
+		t.Fatal(err)
+	}
+	if got := roundEnds(); got != "2026-01-11" {
+		t.Fatalf("with a round running: round ends %s, want 2026-01-11", got)
+	}
+	// 18:00 UTC on the 11th is 01:00 on the 12th there: the next round.
+	r.clk.Set(time.Date(2026, 1, 11, 18, 0, 0, 0, time.UTC))
+	if got := roundEnds(); got != "2026-01-18" {
+		t.Fatalf("on the 12th there: round ends %s, want 2026-01-18", got)
+	}
+	listed, err := reader.List(ctx, city, "en")
+	if err != nil || len(listed) != 2 || listed[0].RoundEnds != "2026-01-18" || listed[1].RoundEnds != "2026-01-18" {
+		t.Fatalf("List = %+v, %v; want both plans' rounds to end 2026-01-18", listed, err)
+	}
+}
+
+// The app offers the dates from 3 days ahead to a round after the round's last
+// day, from the plan's own round end. Whatever day it is, SignUp accepts every
+// date and every part the plan allows in that window, and refuses the day after
+// the last (TICK_TOO_FAR) and the day before the first (TICK_TOO_SOON). The
+// days run across two rounds, and the times of day on either side of the city's
+// midnight (09:00 and 18:00 UTC, the latter already tomorrow there).
+func TestEveryDateTheAppOffersIsAcceptedAndTheDayAfterTheLastIsNot(t *testing.T) {
+	r := newSignupRig(t)
+	ctx := context.Background()
+	reader := plans.New(r.clk, r.pool, cities.New(r.pool))
+
+	for day := 0; day < 16; day++ {
+		for _, hour := range []int{9, 18} {
+			r.clk.Set(time.Date(2026, 1, 5+day, hour, 0, 0, 0, time.UTC))
+			today, err := time.Parse(time.DateOnly, r.clk.Now().In(time.FixedZone("", 7*3600)).Format(time.DateOnly))
+			if err != nil {
+				t.Fatal(err)
+			}
+			p, err := reader.Get(ctx, lanterns, "en")
+			if err != nil {
+				t.Fatal(err)
+			}
+			last, err := time.Parse(time.DateOnly, p.RoundEnds)
+			if err != nil {
+				t.Fatalf("RoundEnds %q: %v", p.RoundEnds, err)
+			}
+			offer := func(from, to time.Time) []plans.Tick {
+				var ticks []plans.Tick
+				for d := from; !d.After(to); d = d.AddDate(0, 0, 1) {
+					ticks = append(ticks, plans.Tick{Date: d.Format(time.DateOnly), Part: "evening"})
+				}
+				return ticks
+			}
+			offered := offer(today.AddDate(0, 0, 3), last.AddDate(0, 0, 7))
+			label := fmt.Sprintf("%s: %d offered", r.clk.Now().Format(time.RFC3339), len(offered))
+
+			if _, err := r.svc.Set(ctx, ada, lanterns, offered); err != nil {
+				t.Fatalf("%s: every offered date must be accepted: %v", label, err)
+			}
+			after := last.AddDate(0, 0, 8).Format(time.DateOnly)
+			if _, err := r.svc.Set(ctx, ada, lanterns, []plans.Tick{{Date: after, Part: "evening"}}); !errors.Is(err, plans.ErrTickTooFar) {
+				t.Fatalf("%s: the day after the last (%s): err = %v, want ErrTickTooFar", label, after, err)
+			}
+			before := today.AddDate(0, 0, 2).Format(time.DateOnly)
+			if _, err := r.svc.Set(ctx, ada, lanterns, []plans.Tick{{Date: before, Part: "evening"}}); !errors.Is(err, plans.ErrTickTooSoon) {
+				t.Fatalf("%s: the day before the first (%s): err = %v, want ErrTickTooSoon", label, before, err)
+			}
+		}
+	}
+}

@@ -40,3 +40,13 @@ export const formatTimeRange = (startsAt: string, endsAt: string) => `${startsAt
  * noon UTC and written in UTC: the city's zone cannot move it to another day.
  */
 export const formatCalendarDate = (date: string, lang: Language) => formatDate(new Date(`${date}T12:00:00Z`), { timeZone: 'UTC', lang });
+
+/**
+ * The city's calendar date as a "YYYY-MM-DD" key, the form ticks, hear-by dates
+ * and a plan's round end travel in (never shown: `formatCalendarDate` writes
+ * it for people). It is the date on the city's clock, whatever the device's
+ * zone. en-CA is used for its year-month-day order only, as a key and not as
+ * text in the display language, so it takes no `lang`.
+ */
+export const cityDateKey = (date: Date, timeZone: string) =>
+  new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(date);

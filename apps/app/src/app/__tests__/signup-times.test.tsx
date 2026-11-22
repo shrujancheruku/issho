@@ -31,7 +31,8 @@ const NOW = new Date('2026-11-22T10:00:00Z');
 beforeEach(() => jest.useFakeTimers({ doNotFake: ['nextTick', 'setImmediate', 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'queueMicrotask'], now: NOW }));
 afterEach(() => jest.useRealTimers());
 
-const mySignup = (over = {}) => ({ $typeName: 'issho.v1.Signup', planId: 'p1', ticks: [{ date: '2026-11-26', part: 'morning' }], hearBy: '2026-11-28', ...over });
+const at = (seconds: number) => ({ $typeName: 'google.protobuf.Timestamp', seconds: BigInt(seconds), nanos: 0 });
+const mySignup = (over = {}) => ({ $typeName: 'issho.v1.Signup', planId: 'p1', ticks: [{ date: '2026-11-26', part: 'morning' }], hearBy: '2026-11-28', signedAt: at(1000), ...over });
 
 async function open(url: string, { lang = 'en', api = fakeApi(), session, plans = [aPlan({ partsOfDay: ['morning', 'evening'] })] }: { plans?: Plan[]; lang?: 'en' | 'vi'; api?: ReturnType<typeof fakeApi>; session?: ReturnType<typeof fakeSessionClient> } = {}) {
   api.plans.getPlan.mockResolvedValue({ plan: aPlan({ partsOfDay: ['morning', 'evening'], signedUp: 4 }) });
@@ -61,10 +62,11 @@ describe('signing up from a plan page', () => {
     await open('/plans/p1', { api });
     await fireEvent.press(await screen.findByRole('button', { name: 'Sign up' }));
     expect(await screen.findByRole('checkbox', { name: 'Wed, Nov 25 morning' })).toBeTruthy();
-    expect(screen.getByRole('checkbox', { name: 'Sun, Nov 29 evening' })).toBeTruthy();
     expect(screen.queryByRole('checkbox', { name: /afternoon/ })).toBeNull();
     expect(screen.queryByRole('checkbox', { name: /Nov 24 / })).toBeNull();
-    expect(screen.queryByRole('checkbox', { name: /Nov 30 / })).toBeNull();
+    // The plan's round ends on the 28th: the last date is 7 days after it, and the next day is not offered.
+    expect(screen.getByRole('checkbox', { name: 'Sat, Dec 5 evening' })).toBeTruthy();
+    expect(screen.queryByRole('checkbox', { name: /Dec 6 / })).toBeNull();
   });
 
   it('opens the profile first when the person has none, returning to this plan', async () => {
@@ -109,20 +111,31 @@ describe('signing up from a plan page', () => {
     expect(api.signup.signUp).not.toHaveBeenCalled();
   });
 
-  it('prefills the ticks from the last signup where they fall in the new window', async () => {
+  it("prefills the ticks from the person's newest signup (by when it was made), where they fall in the new window", async () => {
     const api = fakeApi();
     api.profile.getProfile.mockResolvedValue({ profile: { name: 'Ada' } });
+    // The API lists earliest hear-by first: p3 is last in that list but p2 was signed up most recently.
     api.signup.listMySignups.mockResolvedValue({
       signups: [
-        mySignup({ planId: 'p2', hearBy: '2026-11-23', ticks: [{ date: '2026-11-20', part: 'morning' }] }),
-        mySignup({ planId: 'p3', hearBy: '2026-11-24', ticks: [{ date: '2026-11-20', part: 'evening' }, { date: '2026-11-27', part: 'evening' }, { date: '2026-11-27', part: 'afternoon' }] }),
+        mySignup({ planId: 'p2', hearBy: '2026-11-23', signedAt: at(3000), ticks: [{ date: '2026-11-20', part: 'evening' }, { date: '2026-11-27', part: 'evening' }, { date: '2026-11-27', part: 'afternoon' }] }),
+        mySignup({ planId: 'p3', hearBy: '2026-11-24', signedAt: at(2000), ticks: [{ date: '2026-11-26', part: 'morning' }] }),
       ],
     });
     await open('/plans/p1', { api });
     await fireEvent.press(await screen.findByRole('button', { name: 'Sign up' }));
     expect(await screen.findByRole('checkbox', { name: 'Fri, Nov 27 evening', checked: true })).toBeTruthy();
-    expect(tick('Fri, Nov 27 evening')).toBeTruthy();
     expect(screen.getAllByRole('checkbox', { checked: true })).toHaveLength(1);
+  });
+
+  it('shows the same error state as the rest of the page when the signups could not be loaded, and tries again', async () => {
+    const api = fakeApi();
+    api.profile.getProfile.mockResolvedValue({ profile: { name: 'Ada' } });
+    api.signup.listMySignups.mockRejectedValueOnce(new Error('down'));
+    await open('/plans/p1', { api });
+    expect(await screen.findByText('The plan could not be loaded.')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Sign up' })).toBeNull();
+    await fireEvent.press(screen.getByText('Try again'));
+    expect(await screen.findByRole('button', { name: 'Sign up' })).toBeTruthy();
   });
 
   it('tells a person who is not admitted that they need a join link', async () => {

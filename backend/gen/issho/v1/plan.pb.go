@@ -259,7 +259,13 @@ type Plan struct {
 	Stops []*Stop `protobuf:"bytes,15,rep,name=stops,proto3" json:"stops,omitempty"`
 	// How many people are signed up to the plan's running round: a number, never
 	// who. 0 when no round is running.
-	SignedUp      int32 `protobuf:"varint,16,opt,name=signed_up,json=signedUp,proto3" json:"signed_up,omitempty"`
+	SignedUp int32 `protobuf:"varint,16,opt,name=signed_up,json=signedUp,proto3" json:"signed_up,omitempty"`
+	// The last day of the plan's running round, or of the round a signup made
+	// today would be in when none is running: the city's calendar date
+	// "YYYY-MM-DD". People can tick from 3 days ahead to a round (7 days) after
+	// it, so the app offers exactly the dates SignUp accepts. It is the same for
+	// every visitor and changes only when a round ends.
+	RoundEnds     string `protobuf:"bytes,17,opt,name=round_ends,json=roundEnds,proto3" json:"round_ends,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -404,6 +410,13 @@ func (x *Plan) GetSignedUp() int32 {
 		return x.SignedUp
 	}
 	return 0
+}
+
+func (x *Plan) GetRoundEnds() string {
+	if x != nil {
+		return x.RoundEnds
+	}
+	return ""
 }
 
 // One stop of a plan.
@@ -555,7 +568,7 @@ const file_issho_v1_plan_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12)\n" +
 	"\x10display_language\x18\x02 \x01(\tR\x0fdisplayLanguage\"5\n" +
 	"\x0fGetPlanResponse\x12\"\n" +
-	"\x04plan\x18\x01 \x01(\v2\x0e.issho.v1.PlanR\x04plan\"\xda\x03\n" +
+	"\x04plan\x18\x01 \x01(\v2\x0e.issho.v1.PlanR\x04plan\"\xf9\x03\n" +
 	"\x04Plan\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04city\x18\x02 \x01(\tR\x04city\x12\x1a\n" +
@@ -574,7 +587,9 @@ const file_issho_v1_plan_proto_rawDesc = "" +
 	"\aends_at\x18\r \x01(\tR\x06endsAt\x12\x1b\n" +
 	"\ttime_zone\x18\x0e \x01(\tR\btimeZone\x12$\n" +
 	"\x05stops\x18\x0f \x03(\v2\x0e.issho.v1.StopR\x05stops\x12\x1b\n" +
-	"\tsigned_up\x18\x10 \x01(\x05R\bsignedUp\"\x8e\x01\n" +
+	"\tsigned_up\x18\x10 \x01(\x05R\bsignedUp\x12\x1d\n" +
+	"\n" +
+	"round_ends\x18\x11 \x01(\tR\troundEnds\"\x8e\x01\n" +
 	"\x04Stop\x12\x1a\n" +
 	"\bposition\x18\x01 \x01(\x05R\bposition\x12!\n" +
 	"\fstay_minutes\x18\x02 \x01(\x05R\vstayMinutes\x12\x12\n" +

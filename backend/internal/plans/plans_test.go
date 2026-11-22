@@ -78,7 +78,7 @@ func TestAPlanCarriesTheFieldsAPlanPageShows(t *testing.T) {
 		MeetingPoint:   "At the east end of the Japanese Covered Bridge, by the stone dog.",
 		WhatToBring:    []string{"Comfortable walking shoes", "Cash for the stall", "A light rain jacket in the wet months"},
 		PartsOfDay:     []string{"evening"},
-		StartsAt:       "17:00", EndsAt: "20:30",
+		StartsAt:       "17:00", EndsAt: "20:30", RoundEnds: "2026-01-11",
 		Stops: []plans.Stop{
 			{Position: 1, StayMinutes: 30, Name: "Chùa Cầu (Japanese Covered Bridge)", Note: "Meet here and say hello; the bridge is free to look at.", Leg: &plans.Leg{Mode: "walk", Minutes: 8}},
 			{Position: 2, StayMinutes: 75, Name: "Quán cao lầu Bà Bé", Note: "Cao lầu is a Hoi An noodle dish; the stall has a vegetarian bowl.", Leg: &plans.Leg{Mode: "walk", Minutes: 6}},

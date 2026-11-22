@@ -1,4 +1,4 @@
-import { formatCalendarDate, formatDate, formatDateTime, formatPrice, formatTime, formatTimeRange } from '../format';
+import { cityDateKey, formatCalendarDate, formatDate, formatDateTime, formatPrice, formatTime, formatTimeRange } from '../format';
 
 // 17:30 UTC on 21 November is already 00:30 on the 22nd in Da Nang (UTC+7, no
 // daylight saving), so each expectation also shows the city's clock, not the
@@ -51,5 +51,12 @@ describe('formatCalendarDate', () => {
   it("writes the city's calendar date as it is, whatever the device's zone", () => {
     expect(formatCalendarDate('2026-11-28', 'en')).toBe('Sat, Nov 28');
     expect(formatCalendarDate('2026-11-28', 'vi')).toBe('Th 7, 28 thg 11');
+  });
+});
+
+describe('cityDateKey', () => {
+  it("is the city's calendar date as a sortable YYYY-MM-DD key, whatever the device's zone and the display language", () => {
+    expect(cityDateKey(instant, danang)).toBe('2026-11-22');
+    expect(cityDateKey(instant, 'UTC')).toBe('2026-11-21');
   });
 });

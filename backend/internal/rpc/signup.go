@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"connectrpc.com/connect"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
 	"github.com/shrujancheruku/issho/backend/internal/people"
@@ -92,7 +93,7 @@ func (s signupService) ListMySignups(ctx context.Context, _ *connect.Request[iss
 }
 
 func signupMessage(s plans.Signup) *isshov1.Signup {
-	m := &isshov1.Signup{PlanId: s.PlanID, HearBy: s.HearBy}
+	m := &isshov1.Signup{PlanId: s.PlanID, HearBy: s.HearBy, SignedAt: timestamppb.New(s.SignedAt)}
 	for _, t := range s.Ticks {
 		m.Ticks = append(m.Ticks, &isshov1.Tick{Date: t.Date, Part: t.Part})
 	}

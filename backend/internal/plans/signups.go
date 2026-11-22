@@ -51,6 +51,10 @@ type Signup struct {
 	// HearBy is the round's last day, the city's calendar date by which the
 	// person has an invitation or "no group this round" (docs/spec/matching.md).
 	HearBy string
+	// SignedAt is when the signup was made or last changed: the person's last
+	// signup is the newest by it, which the ticks are prefilled from
+	// (docs/spec/matching.md, "Times").
+	SignedAt time.Time
 }
 
 // Signups keeps who is signed up to which plan, with their ticks. It is part of
@@ -172,7 +176,7 @@ func (s *Signups) Set(ctx context.Context, accountID, planID string, ticks []Tic
 	if err := tx.Commit(ctx); err != nil {
 		return Signup{}, fmt.Errorf("plans: signup: %w", err)
 	}
-	return Signup{PlanID: plan.ID, Ticks: norm, HearBy: round.EndsOn.Format(time.DateOnly)}, nil
+	return Signup{PlanID: plan.ID, Ticks: norm, HearBy: round.EndsOn.Format(time.DateOnly), SignedAt: now}, nil
 }
 
 // Entry is one person's signup to a round as forming reads it: who, and the
@@ -335,9 +339,10 @@ func (s *Signups) Mine(ctx context.Context, accountID string) ([]Signup, error) 
 			continue
 		}
 		out = append(out, Signup{
-			PlanID: r.PlanID,
-			Ticks:  normalise(byRound[key{r.PlanID, r.EndsOn}]),
-			HearBy: r.EndsOn.Format(time.DateOnly),
+			PlanID:   r.PlanID,
+			Ticks:    normalise(byRound[key{r.PlanID, r.EndsOn}]),
+			HearBy:   r.EndsOn.Format(time.DateOnly),
+			SignedAt: r.UpdatedAt.UTC(),
 		})
 	}
 	return out, nil

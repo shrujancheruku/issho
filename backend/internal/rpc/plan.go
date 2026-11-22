@@ -116,7 +116,7 @@ func planMessage(p plans.Plan, city cities.City, signedUp int) *isshov1.Plan {
 		MeetingAddress: p.MeetingAddress, MeetingPoint: p.MeetingPoint,
 		WhatToBring: p.WhatToBring, PartsOfDay: p.PartsOfDay,
 		StartsAt: p.StartsAt, EndsAt: p.EndsAt, TimeZone: city.TimeZone,
-		SignedUp: int32(signedUp),
+		SignedUp: int32(signedUp), RoundEnds: p.RoundEnds,
 	}
 	for _, st := range p.Stops {
 		stop := &isshov1.Stop{Position: int32(st.Position), StayMinutes: int32(st.StayMinutes), Name: st.Name, Note: st.Note}

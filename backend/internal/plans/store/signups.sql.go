@@ -223,7 +223,7 @@ func (q *Queries) ListRoundTicks(ctx context.Context, arg ListRoundTicksParams) 
 
 const listSignupsOfAccount = `-- name: ListSignupsOfAccount :many
 
-select r.plan_id, r.ends_on, p.city
+select r.plan_id, r.ends_on, p.city, s.updated_at
 from app.signups s
 join app.plan_rounds r on r.id = s.round_id
 join app.plans p on p.id = r.plan_id
@@ -237,9 +237,10 @@ type ListSignupsOfAccountParams struct {
 }
 
 type ListSignupsOfAccountRow struct {
-	PlanID string
-	EndsOn time.Time
-	City   string
+	PlanID    string
+	EndsOn    time.Time
+	City      string
+	UpdatedAt time.Time
 }
 
 // The reads below take a loose lower bound, one day before the UTC date: a
@@ -255,7 +256,12 @@ func (q *Queries) ListSignupsOfAccount(ctx context.Context, arg ListSignupsOfAcc
 	var items []ListSignupsOfAccountRow
 	for rows.Next() {
 		var i ListSignupsOfAccountRow
-		if err := rows.Scan(&i.PlanID, &i.EndsOn, &i.City); err != nil {
+		if err := rows.Scan(
+			&i.PlanID,
+			&i.EndsOn,
+			&i.City,
+			&i.UpdatedAt,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

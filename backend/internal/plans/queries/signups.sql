@@ -39,7 +39,7 @@ where r.id = s.round_id and r.plan_id = $1 and s.account_id = $2 and r.ends_on >
 
 -- A member's signups, the earliest hear-by first.
 -- name: ListSignupsOfAccount :many
-select r.plan_id, r.ends_on, p.city
+select r.plan_id, r.ends_on, p.city, s.updated_at
 from app.signups s
 join app.plan_rounds r on r.id = s.round_id
 join app.plans p on p.id = r.plan_id

@@ -57,6 +57,12 @@ type Plan struct {
 	StartsAt, EndsAt string
 	// Stops are in order.
 	Stops []Stop
+	// RoundEnds is the last day of the plan's running round, or of the round a
+	// signup made today would be in when none is running: the same derived day
+	// (see roundOf), the city's calendar date "YYYY-MM-DD". The same for every
+	// visitor, so it may sit in the cached page. A person can tick up to a round
+	// after it (docs/spec/matching.md, "Times").
+	RoundEnds string
 }
 
 // Stop is one stop of a plan.
@@ -127,7 +133,7 @@ func (s *Service) List(ctx context.Context, slug, language string) ([]Plan, erro
 			rows = append(rows, r)
 		}
 	}
-	return s.assemble(ctx, rows, language)
+	return s.assemble(ctx, rows, language, today)
 }
 
 // Get returns one plan with its text in language, or ErrNotFound: no such plan,
@@ -156,7 +162,7 @@ func (s *Service) Get(ctx context.Context, id, language string) (Plan, error) {
 	if !shown(city, row.OpensOn, today) {
 		return Plan{}, ErrNotFound
 	}
-	got, err := s.assemble(ctx, []store.AppPlan{row}, language)
+	got, err := s.assemble(ctx, []store.AppPlan{row}, language, today)
 	if err != nil {
 		return Plan{}, err
 	}
@@ -164,8 +170,10 @@ func (s *Service) Get(ctx context.Context, id, language string) (Plan, error) {
 }
 
 // assemble reads the texts and stops of rows' plans, in three queries however
-// many plans there are, and builds them in language.
-func (s *Service) assemble(ctx context.Context, rows []store.AppPlan, language string) ([]Plan, error) {
+// many plans there are, and builds them in language. today is the city's
+// calendar date, which the plans' round ends are worked out from; every row is
+// a plan that has opened by it.
+func (s *Service) assemble(ctx context.Context, rows []store.AppPlan, language string, today time.Time) ([]Plan, error) {
 	if len(rows) == 0 {
 		return []Plan{}, nil
 	}
@@ -230,6 +238,8 @@ func (s *Service) assemble(ctx context.Context, rows []store.AppPlan, language s
 			PartsOfDay:  r.PartsOfDay,
 			StartsAt:    r.StartsAt, EndsAt: r.EndsAt,
 		}
+		_, _, ends, _ := roundOf(r.OpensOn, today)
+		p.RoundEnds = ends.Format(time.DateOnly)
 		for _, st := range stopsOf[r.ID] {
 			k := stopKey{r.ID, st.Position}
 			t, ok := stopText[k][lang]

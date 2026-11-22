@@ -9,6 +9,7 @@ package isshov1
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -403,7 +404,11 @@ type Signup struct {
 	Ticks []*Tick `protobuf:"bytes,2,rep,name=ticks,proto3" json:"ticks,omitempty"`
 	// The round's last day, the city's calendar date, "YYYY-MM-DD": by then the
 	// person has an invitation or a "no group this round".
-	HearBy        string `protobuf:"bytes,3,opt,name=hear_by,json=hearBy,proto3" json:"hear_by,omitempty"`
+	HearBy string `protobuf:"bytes,3,opt,name=hear_by,json=hearBy,proto3" json:"hear_by,omitempty"`
+	// When the signup was made or last changed: the person's last signup is the
+	// newest by this, which the app prefills the ticks from. ListMySignups stays
+	// in hear-by order.
+	SignedAt      *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=signed_at,json=signedAt,proto3" json:"signed_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -459,6 +464,13 @@ func (x *Signup) GetHearBy() string {
 	return ""
 }
 
+func (x *Signup) GetSignedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.SignedAt
+	}
+	return nil
+}
+
 // Why SignUp refused the ticks, when the app has something particular to do
 // about it. It is attached to the Connect error as a detail
 // (`error.findDetails(SignupProblemSchema)` in TypeScript).
@@ -510,7 +522,7 @@ var File_issho_v1_signup_proto protoreflect.FileDescriptor
 
 const file_issho_v1_signup_proto_rawDesc = "" +
 	"\n" +
-	"\x15issho/v1/signup.proto\x12\bissho.v1\x1a\x15issho/v1/access.proto\"N\n" +
+	"\x15issho/v1/signup.proto\x12\bissho.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x15issho/v1/access.proto\"N\n" +
 	"\rSignUpRequest\x12\x17\n" +
 	"\aplan_id\x18\x01 \x01(\tR\x06planId\x12$\n" +
 	"\x05ticks\x18\x02 \x03(\v2\x0e.issho.v1.TickR\x05ticks\":\n" +
@@ -524,11 +536,12 @@ const file_issho_v1_signup_proto_rawDesc = "" +
 	"\asignups\x18\x01 \x03(\v2\x10.issho.v1.SignupR\asignups\".\n" +
 	"\x04Tick\x12\x12\n" +
 	"\x04date\x18\x01 \x01(\tR\x04date\x12\x12\n" +
-	"\x04part\x18\x02 \x01(\tR\x04part\"`\n" +
+	"\x04part\x18\x02 \x01(\tR\x04part\"\x99\x01\n" +
 	"\x06Signup\x12\x17\n" +
 	"\aplan_id\x18\x01 \x01(\tR\x06planId\x12$\n" +
 	"\x05ticks\x18\x02 \x03(\v2\x0e.issho.v1.TickR\x05ticks\x12\x17\n" +
-	"\ahear_by\x18\x03 \x01(\tR\x06hearBy\"F\n" +
+	"\ahear_by\x18\x03 \x01(\tR\x06hearBy\x127\n" +
+	"\tsigned_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\bsignedAt\"F\n" +
 	"\rSignupProblem\x125\n" +
 	"\x06reason\x18\x01 \x01(\x0e2\x1d.issho.v1.SignupProblemReasonR\x06reason*\xe6\x01\n" +
 	"\x13SignupProblemReason\x12%\n" +
@@ -568,24 +581,26 @@ var file_issho_v1_signup_proto_goTypes = []any{
 	(*Tick)(nil),                   // 7: issho.v1.Tick
 	(*Signup)(nil),                 // 8: issho.v1.Signup
 	(*SignupProblem)(nil),          // 9: issho.v1.SignupProblem
+	(*timestamppb.Timestamp)(nil),  // 10: google.protobuf.Timestamp
 }
 var file_issho_v1_signup_proto_depIdxs = []int32{
-	7, // 0: issho.v1.SignUpRequest.ticks:type_name -> issho.v1.Tick
-	8, // 1: issho.v1.SignUpResponse.signup:type_name -> issho.v1.Signup
-	8, // 2: issho.v1.ListMySignupsResponse.signups:type_name -> issho.v1.Signup
-	7, // 3: issho.v1.Signup.ticks:type_name -> issho.v1.Tick
-	0, // 4: issho.v1.SignupProblem.reason:type_name -> issho.v1.SignupProblemReason
-	1, // 5: issho.v1.SignupService.SignUp:input_type -> issho.v1.SignUpRequest
-	3, // 6: issho.v1.SignupService.WithdrawSignup:input_type -> issho.v1.WithdrawSignupRequest
-	5, // 7: issho.v1.SignupService.ListMySignups:input_type -> issho.v1.ListMySignupsRequest
-	2, // 8: issho.v1.SignupService.SignUp:output_type -> issho.v1.SignUpResponse
-	4, // 9: issho.v1.SignupService.WithdrawSignup:output_type -> issho.v1.WithdrawSignupResponse
-	6, // 10: issho.v1.SignupService.ListMySignups:output_type -> issho.v1.ListMySignupsResponse
-	8, // [8:11] is the sub-list for method output_type
-	5, // [5:8] is the sub-list for method input_type
-	5, // [5:5] is the sub-list for extension type_name
-	5, // [5:5] is the sub-list for extension extendee
-	0, // [0:5] is the sub-list for field type_name
+	7,  // 0: issho.v1.SignUpRequest.ticks:type_name -> issho.v1.Tick
+	8,  // 1: issho.v1.SignUpResponse.signup:type_name -> issho.v1.Signup
+	8,  // 2: issho.v1.ListMySignupsResponse.signups:type_name -> issho.v1.Signup
+	7,  // 3: issho.v1.Signup.ticks:type_name -> issho.v1.Tick
+	10, // 4: issho.v1.Signup.signed_at:type_name -> google.protobuf.Timestamp
+	0,  // 5: issho.v1.SignupProblem.reason:type_name -> issho.v1.SignupProblemReason
+	1,  // 6: issho.v1.SignupService.SignUp:input_type -> issho.v1.SignUpRequest
+	3,  // 7: issho.v1.SignupService.WithdrawSignup:input_type -> issho.v1.WithdrawSignupRequest
+	5,  // 8: issho.v1.SignupService.ListMySignups:input_type -> issho.v1.ListMySignupsRequest
+	2,  // 9: issho.v1.SignupService.SignUp:output_type -> issho.v1.SignUpResponse
+	4,  // 10: issho.v1.SignupService.WithdrawSignup:output_type -> issho.v1.WithdrawSignupResponse
+	6,  // 11: issho.v1.SignupService.ListMySignups:output_type -> issho.v1.ListMySignupsResponse
+	9,  // [9:12] is the sub-list for method output_type
+	6,  // [6:9] is the sub-list for method input_type
+	6,  // [6:6] is the sub-list for extension type_name
+	6,  // [6:6] is the sub-list for extension extendee
+	0,  // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_issho_v1_signup_proto_init() }
