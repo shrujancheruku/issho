@@ -34,9 +34,9 @@ Before every worker, run `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/route.py --role 
 | merge | Merger | haiku | low | |
 | merge.conflict | Merger on a real conflict | sonnet | medium | |
 | check | Spec check before a ticket merges into the integration branch | haiku | low | One per ticket. |
-| review | Integration `code-review`, once per milestone | opus | | The same model as `review.risk`; both rows stay so `--risk` resolves. |
-| review.risk | Integration `code-review`, milestone has `risk` tickets | opus | | The same model as `review`. |
-| fix | Fixer | opus | | Fixes the integration review's findings, so it runs on the reviewer's model. |
+| review | Integration `code-review`, once per milestone | sonnet | high | |
+| review.risk | Integration `code-review`, milestone has `risk` tickets | opus | | |
+| fix | Fixer | sonnet | medium | |
 
 Size comes from the issue's `size:S`, `size:M` or `size:L` label. The `risk` label, or a ticket that names a path in `risk_paths` in `docs/agents/flow.json`, raises the model to the `.risk` row. A ticket with no size label routes as M and `route.py` warns; run `estimate.py propose` for the founder to approve sizes.
 
