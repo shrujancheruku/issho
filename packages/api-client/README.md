@@ -16,6 +16,9 @@ const api = createApi({
 });
 
 const { version } = await api.health.check({});
+
+// The signed-in person's own account; the first call makes it (members only).
+const { account } = await api.account.getAccount({ displayLanguage: 'vi' });
 ```
 
 - `getAccessToken` is called before every request. A token goes out as `Authorization: Bearer <token>`; with none, no header is sent, which only public RPCs accept.

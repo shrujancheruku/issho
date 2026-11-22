@@ -2,7 +2,10 @@ package db_test
 
 import (
 	"context"
+	"os"
 	"slices"
+	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -109,6 +112,24 @@ func TestDownThenUpAgain(t *testing.T) {
 	}
 }
 
+// downPast rolls back every migration numbered above n, so a test of
+// migration n holds however many later ones there are.
+func downPast(t *testing.T, pool *pgxpool.Pool, n int) {
+	t.Helper()
+	files, err := os.ReadDir("migrations")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, f := range files {
+		num, _, _ := strings.Cut(f.Name(), "_")
+		if v, err := strconv.Atoi(num); err == nil && v > n {
+			if err := db.Down(context.Background(), pool); err != nil {
+				t.Fatal(err)
+			}
+		}
+	}
+}
+
 // The queue's migration (00002) is undone by one step of Down, which leaves the
 // baseline in place, and goes up again.
 func TestQueueMigrationDownThenUp(t *testing.T) {
@@ -122,6 +143,7 @@ func TestQueueMigrationDownThenUp(t *testing.T) {
 		t.Fatalf("app.queue_items missing after up: %v", objectsIn(t, pool, "app"))
 	}
 
+	downPast(t, pool, 2)
 	if err := db.Down(ctx, pool); err != nil {
 		t.Fatal(err)
 	}
@@ -137,5 +159,38 @@ func TestQueueMigrationDownThenUp(t *testing.T) {
 	}
 	if !slices.Contains(objectsIn(t, pool, "app"), "queue_items") {
 		t.Error("app.queue_items missing after up, down, up")
+	}
+}
+
+// The accounts migration (00003) is undone by its Down, which leaves the queue
+// and the baseline in place, and goes up again.
+func TestAccountsMigrationDownThenUp(t *testing.T) {
+	ctx := context.Background()
+	pool := testdb.NewDatabase(t)
+
+	if err := db.Up(ctx, pool); err != nil {
+		t.Fatal(err)
+	}
+	if !slices.Contains(objectsIn(t, pool, "app"), "accounts") {
+		t.Fatalf("app.accounts missing after up: %v", objectsIn(t, pool, "app"))
+	}
+
+	downPast(t, pool, 3)
+	if err := db.Down(ctx, pool); err != nil {
+		t.Fatal(err)
+	}
+	got := objectsIn(t, pool, "app")
+	if slices.Contains(got, "accounts") || slices.Contains(got, "accounts_email_key") {
+		t.Errorf("app holds %v after down, want accounts and its index gone", got)
+	}
+	if !slices.Contains(got, "queue_items") {
+		t.Errorf("down of accounts took the queue with it: %v", got)
+	}
+
+	if err := db.Up(ctx, pool); err != nil {
+		t.Fatalf("up after down: %v", err)
+	}
+	if !slices.Contains(objectsIn(t, pool, "app"), "accounts") {
+		t.Error("app.accounts missing after up, down, up")
 	}
 }

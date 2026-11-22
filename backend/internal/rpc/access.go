@@ -16,6 +16,9 @@ import (
 // Identity is who a token says the caller is, plus what the API knows of them.
 type Identity struct {
 	Subject string
+	// Email is the address the token was issued for. It is the caller's own and
+	// never goes in a log (the request log is built from route and Subject only).
+	Email string
 	// SecondStep is whether the person took the second sign-in step (the
 	// token's `aal2`).
 	SecondStep bool
@@ -27,8 +30,8 @@ type Identity struct {
 }
 
 // Authenticator turns a bearer token into an Identity, or says why it can't.
-// The verifier against the Supabase JWKS is #608's; until it exists the API
-// runs with one that accepts nothing.
+// NewAuthenticator is the one that checks Supabase Auth's tokens; a process with
+// none configured runs with one that accepts nothing.
 type Authenticator interface {
 	Authenticate(ctx context.Context, token string) (Identity, error)
 }

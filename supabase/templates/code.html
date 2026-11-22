@@ -1,0 +1,7 @@
+<!-- The sign-in email: the 6-digit code and nothing else (docs/spec/people.md,
+     "Sign-in and the account"). Supabase Auth fills in the code. It is
+     sent before Issho knows the person's display language, so it says both. -->
+<p>Your Issho code is</p>
+<p style="font-size: 28px; letter-spacing: 6px"><strong>{{ .Token }}</strong></p>
+<p>Enter it in the app. It works once and expires in 10 minutes. If you didn't ask for it, ignore this email.</p>
+<p>Mã Issho của bạn là <strong>{{ .Token }}</strong>. Nhập mã vào ứng dụng; mã chỉ dùng một lần và hết hạn sau 10 phút. Nếu bạn không yêu cầu, hãy bỏ qua email này.</p>

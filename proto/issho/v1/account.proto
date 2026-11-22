@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package issho.v1;
+
+import "issho/v1/access.proto";
+
+// A person's own account: an email, a city and a display language.
+service AccountService {
+  // Returns the caller's own account, making it first if this is the first
+  // call with their token (to join is to make an account). Member: it needs a
+  // signed-in caller, and the caller is the only account it can ever return,
+  // since it takes no account id: no RPC returns another person's email.
+  rpc GetAccount(GetAccountRequest) returns (GetAccountResponse) {
+    option (issho.v1.access) = ACCESS_MEMBER;
+  }
+}
+
+message GetAccountRequest {
+  // The city's slug, for the call that makes the account: the city of the join
+  // link the person arrived by, else the only listed city. Empty means the
+  // default city; any city that isn't listed is INVALID_ARGUMENT, on every
+  // call. Not applied when the account already exists.
+  string city = 1;
+  // The language the person is reading in, "en" or "vi", for the call that
+  // makes the account. Empty means English; any other is INVALID_ARGUMENT,
+  // on every call. Not applied when the account already exists.
+  string display_language = 2;
+}
+
+message GetAccountResponse {
+  Account account = 1;
+}
+
+// A person's account. It is only ever the caller's own.
+message Account {
+  // The account's id, Supabase Auth's user id.
+  string id = 1;
+  // The email the person signed in with, in lowercase.
+  string email = 2;
+  // The city's slug, e.g. "da-nang-hoi-an".
+  string city = 3;
+  // The language Issho speaks to the person in: "en" or "vi".
+  string display_language = 4;
+}
