@@ -10,7 +10,7 @@ One Go module (`github.com/shrujancheruku/issho/backend`), part of the root `go.
 | `cmd/worker` | The background-job process: runs River |
 | `cmd/rpcauth` | `make rpc-auth`: fails when an RPC in `proto/` declares no access rule |
 | `cmd/migrate` | `migrate up` and `migrate down`, behind `make migrate-up` and `make migrate-down` |
-| `cmd/seed` | `make seed`: loads the development fixture into a local database; refuses any other unless `--hosted-dev` names the issho-dev project (`make seed-dev`, founder only); not in the image (see "Fixtures") |
+| `cmd/seed` | `make seed`: loads the development fixture into a local database (and with `ADMIT=<email>`, admits that account as the owner); refuses any other unless `--hosted-dev` names the issho-dev project (`make seed-dev`, founder only); not in the image (see "Fixtures") |
 | `db` | The goose migrations (`db/migrations`), embedded, and the `Up` and `Down` that run them; the schema sqlc reads |
 | `internal/<pkg>/store` | The Go that sqlc generates from `internal/<pkg>/queries`, one pair per package (`internal/staff`, `internal/people`). Generated: never edit it |
 | `internal/clock` | The injected clock: `Clock`, `Real` (wired only in `cmd/`) and the test `Fake` |
@@ -22,7 +22,7 @@ One Go module (`github.com/shrujancheruku/issho/backend`), part of the root `go.
 | `internal/cities` | The listed cities: slug, state, time zone, currency and names (`app.cities`) |
 | `internal/plans` | Plans, read only so far: the fields a plan page shows and the prose per language (`app.plans` and its texts and stops); and the signups to them, with their times (`app.plan_rounds`, `app.signups`, `app.signup_ticks`) |
 | `internal/outings` | Outings and their seats: forming a plan's groups into outings with their invitations, and what a seat holder is shown (`app.outings`, `app.seats`; see its README) |
-| `internal/people` | Accounts (`app.accounts`), profiles (`app.profiles`), and the verifier for Supabase Auth's tokens (see "Accounts and sign-in") |
+| `internal/people` | Accounts (`app.accounts`), profiles (`app.profiles`), join links and admission (`app.join_links`, `app.admissions`), and the verifier for Supabase Auth's tokens (see "Accounts and sign-in") |
 | `internal/email` | `email.Sender`, its in-memory fake, and `email/resend`, the real one |
 | `internal/logging` | `logging.New`, the one way a process makes a logger, and the test that keeps it the only way (see "Logs") |
 | `internal/jobs` | The River client the worker runs and the domain packages enqueue through |
@@ -56,7 +56,9 @@ Sign-in is Supabase Auth's 6-digit email code; `internal/people` owns the accoun
 
 `AccountService.GetAccount` (member) returns the caller's own account, making it on the first call from the token's email and the city and display language the app sends (defaults: the Pilot's only city, English). It takes no account id, and `rpc/account_test.go` fails if any other RPC's response carries an email field. See `internal/people/README.md` and `supabase/README.md`.
 
-`ProfileService` (member) holds the profile asked at the first signup: `GetProfile` returns the caller's own (empty while there is none) and `SaveProfile` makes or changes it. Neither takes an account id, and `rpc/profile_test.go` fails if another RPC returns a profile or these can name a person. A signup RPC calls `rpc.RequireProfile` first: an account with no profile gets `FAILED_PRECONDITION` with `ProfileProblem` reason `PROFILE_REQUIRED`. See `internal/people/README.md`.
+`ProfileService` (member) holds the profile asked at the first signup: `GetProfile` returns the caller's own (empty while there is none) and `SaveProfile` makes or changes it. Neither takes an account id, and `rpc/profile_test.go` fails if another RPC returns a profile or these can name a person. A signup RPC calls `rpc.RequireAdmitted` first: an account that hasn't been admitted gets `FAILED_PRECONDITION` with `SignupProblem` reason `NOT_ADMITTED` (plans stay readable). It then calls `rpc.RequireProfile`: an account with no profile gets `FAILED_PRECONDITION` with `ProfileProblem` reason `PROFILE_REQUIRED`. See `internal/people/README.md`.
+
+`JoinLinkService` (member) is how a person gets admitted in the Pilot: a member makes up to 3 one-use links (`CreateJoinLink`, `ListMyJoinLinks`, `CancelJoinLink`) and a friend, signed in, redeems one (`RedeemJoinLink`). A link expires after 14 days and the numbers are `policy` constants. Issho records who brought in whom (`app.admissions`), and `rpc/joinlink_test.go` fails if any RPC's response could say it. The owner's account is admitted by `make seed ADMIT=<email>` (or `make seed-dev ADMIT=<email>`) after they have signed in once, so the first links have a source; accounts that exist when migration `00009` runs are not admitted until then. See `internal/people/README.md`.
 
 ## Fixtures
 

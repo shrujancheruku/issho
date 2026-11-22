@@ -11,7 +11,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file issho/v1/signup.proto.
  */
 export const file_issho_v1_signup: GenFile = /*@__PURE__*/
-  fileDesc("ChVpc3Noby92MS9zaWdudXAucHJvdG8SCGlzc2hvLnYxIj8KDVNpZ25VcFJlcXVlc3QSDwoHcGxhbl9pZBgBIAEoCRIdCgV0aWNrcxgCIAMoCzIOLmlzc2hvLnYxLlRpY2siMgoOU2lnblVwUmVzcG9uc2USIAoGc2lnbnVwGAEgASgLMhAuaXNzaG8udjEuU2lnbnVwIigKFVdpdGhkcmF3U2lnbnVwUmVxdWVzdBIPCgdwbGFuX2lkGAEgASgJIhgKFldpdGhkcmF3U2lnbnVwUmVzcG9uc2UiFgoUTGlzdE15U2lnbnVwc1JlcXVlc3QiOgoVTGlzdE15U2lnbnVwc1Jlc3BvbnNlEiEKB3NpZ251cHMYASADKAsyEC5pc3Noby52MS5TaWdudXAiIgoEVGljaxIMCgRkYXRlGAEgASgJEgwKBHBhcnQYAiABKAkiSQoGU2lnbnVwEg8KB3BsYW5faWQYASABKAkSHQoFdGlja3MYAiADKAsyDi5pc3Noby52MS5UaWNrEg8KB2hlYXJfYnkYAyABKAkiPgoNU2lnbnVwUHJvYmxlbRItCgZyZWFzb24YASABKA4yHS5pc3Noby52MS5TaWdudXBQcm9ibGVtUmVhc29uKr4BChNTaWdudXBQcm9ibGVtUmVhc29uEiUKIVNJR05VUF9QUk9CTEVNX1JFQVNPTl9VTlNQRUNJRklFRBAAEicKI1NJR05VUF9QUk9CTEVNX1JFQVNPTl9USUNLX1RPT19TT09OEAESLworU0lHTlVQX1BST0JMRU1fUkVBU09OX1RJQ0tfUEFSVF9OT1RfQUxMT1dFRBACEiYKIlNJR05VUF9QUk9CTEVNX1JFQVNPTl9USUNLX1RPT19GQVIQAzKFAgoNU2lnbnVwU2VydmljZRJBCgZTaWduVXASFy5pc3Noby52MS5TaWduVXBSZXF1ZXN0GhguaXNzaG8udjEuU2lnblVwUmVzcG9uc2UiBIi1GAISWQoOV2l0aGRyYXdTaWdudXASHy5pc3Noby52MS5XaXRoZHJhd1NpZ251cFJlcXVlc3QaIC5pc3Noby52MS5XaXRoZHJhd1NpZ251cFJlc3BvbnNlIgSItRgCElYKDUxpc3RNeVNpZ251cHMSHi5pc3Noby52MS5MaXN0TXlTaWdudXBzUmVxdWVzdBofLmlzc2hvLnYxLkxpc3RNeVNpZ251cHNSZXNwb25zZSIEiLUYAkKaAQoMY29tLmlzc2hvLnYxQgtTaWdudXBQcm90b1ABWjxnaXRodWIuY29tL3NocnVqYW5jaGVydWt1L2lzc2hvL2JhY2tlbmQvZ2VuL2lzc2hvL3YxO2lzc2hvdjGiAgNJWFiqAghJc3Noby5WMcoCCElzc2hvXFYx4gIUSXNzaG9cVjFcR1BCTWV0YWRhdGHqAglJc3Nobzo6VjFiBnByb3RvMw", [file_issho_v1_access]);
+  fileDesc("ChVpc3Noby92MS9zaWdudXAucHJvdG8SCGlzc2hvLnYxIj8KDVNpZ25VcFJlcXVlc3QSDwoHcGxhbl9pZBgBIAEoCRIdCgV0aWNrcxgCIAMoCzIOLmlzc2hvLnYxLlRpY2siMgoOU2lnblVwUmVzcG9uc2USIAoGc2lnbnVwGAEgASgLMhAuaXNzaG8udjEuU2lnbnVwIigKFVdpdGhkcmF3U2lnbnVwUmVxdWVzdBIPCgdwbGFuX2lkGAEgASgJIhgKFldpdGhkcmF3U2lnbnVwUmVzcG9uc2UiFgoUTGlzdE15U2lnbnVwc1JlcXVlc3QiOgoVTGlzdE15U2lnbnVwc1Jlc3BvbnNlEiEKB3NpZ251cHMYASADKAsyEC5pc3Noby52MS5TaWdudXAiIgoEVGljaxIMCgRkYXRlGAEgASgJEgwKBHBhcnQYAiABKAkiSQoGU2lnbnVwEg8KB3BsYW5faWQYASABKAkSHQoFdGlja3MYAiADKAsyDi5pc3Noby52MS5UaWNrEg8KB2hlYXJfYnkYAyABKAkiPgoNU2lnbnVwUHJvYmxlbRItCgZyZWFzb24YASABKA4yHS5pc3Noby52MS5TaWdudXBQcm9ibGVtUmVhc29uKuYBChNTaWdudXBQcm9ibGVtUmVhc29uEiUKIVNJR05VUF9QUk9CTEVNX1JFQVNPTl9VTlNQRUNJRklFRBAAEicKI1NJR05VUF9QUk9CTEVNX1JFQVNPTl9USUNLX1RPT19TT09OEAESLworU0lHTlVQX1BST0JMRU1fUkVBU09OX1RJQ0tfUEFSVF9OT1RfQUxMT1dFRBACEiYKIlNJR05VUF9QUk9CTEVNX1JFQVNPTl9USUNLX1RPT19GQVIQAxImCiJTSUdOVVBfUFJPQkxFTV9SRUFTT05fTk9UX0FETUlUVEVEEAQyhQIKDVNpZ251cFNlcnZpY2USQQoGU2lnblVwEhcuaXNzaG8udjEuU2lnblVwUmVxdWVzdBoYLmlzc2hvLnYxLlNpZ25VcFJlc3BvbnNlIgSItRgCElkKDldpdGhkcmF3U2lnbnVwEh8uaXNzaG8udjEuV2l0aGRyYXdTaWdudXBSZXF1ZXN0GiAuaXNzaG8udjEuV2l0aGRyYXdTaWdudXBSZXNwb25zZSIEiLUYAhJWCg1MaXN0TXlTaWdudXBzEh4uaXNzaG8udjEuTGlzdE15U2lnbnVwc1JlcXVlc3QaHy5pc3Noby52MS5MaXN0TXlTaWdudXBzUmVzcG9uc2UiBIi1GAJCmgEKDGNvbS5pc3Noby52MUILU2lnbnVwUHJvdG9QAVo8Z2l0aHViLmNvbS9zaHJ1amFuY2hlcnVrdS9pc3Noby9iYWNrZW5kL2dlbi9pc3Noby92MTtpc3Nob3YxogIDSVhYqgIISXNzaG8uVjHKAghJc3Nob1xWMeICFElzc2hvXFYxXEdQQk1ldGFkYXRh6gIJSXNzaG86OlYxYgZwcm90bzM", [file_issho_v1_access]);
 
 /**
  * @generated from message issho.v1.SignUpRequest
@@ -229,6 +229,14 @@ export enum SignupProblemReason {
    * @generated from enum value: SIGNUP_PROBLEM_REASON_TICK_TOO_FAR = 3;
    */
   TICK_TOO_FAR = 3,
+
+  /**
+   * The caller hasn't been admitted: in the Pilot a signup needs a join link
+   * (FAILED_PRECONDITION). Plans stay readable without it.
+   *
+   * @generated from enum value: SIGNUP_PROBLEM_REASON_NOT_ADMITTED = 4;
+   */
+  NOT_ADMITTED = 4,
 }
 
 /**
@@ -249,7 +257,10 @@ export const SignupService: GenService<{
   /**
    * Signs the caller up to a plan with a set of ticks, or replaces the ticks of
    * the signup they already have: changing your times is signing up again.
-   * Member: any signed-in person, but a caller with no profile is refused with
+   * Member: any signed-in person, but one who hasn't been admitted is refused
+   * with FAILED_PRECONDITION and the SignupProblem reason NOT_ADMITTED (in the
+   * Pilot a join link is the only way in; plans stay readable without it), and
+   * a caller with no profile is refused with
    * FAILED_PRECONDITION and the ProfileProblem reason PROFILE_REQUIRED (the app
    * opens the profile's questions, then returns here). A tick that is less than
    * 3 days ahead on the city's clock, falls on a part of the day the plan

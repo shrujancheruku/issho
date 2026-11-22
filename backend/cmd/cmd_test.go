@@ -402,6 +402,76 @@ func TestSeedLoadsTheFixtureIntoALocalDatabase(t *testing.T) {
 	}
 }
 
+// Criterion: the owner's account can be admitted by a seed, so the first links
+// have a source. `seed --admit EMAIL` admits the account that signed in with
+// that email, with no link and nobody who brought it in, and can be run again.
+func TestSeedAdmitsTheAccountNamedByTheFlag(t *testing.T) {
+	bin := buildSeed(t)
+	pool := testdb.NewDatabase(t)
+	ctx := context.Background()
+	if err := db.Up(ctx, pool); err != nil {
+		t.Fatal(err)
+	}
+	const owner = "6f1c2a64-6f0e-4d0e-9a6a-0c4a6f3a0001"
+	seed := func(args ...string) ([]byte, error) {
+		cmd := exec.Command(bin, args...)
+		cmd.Env = append(os.Environ(), "DATABASE_URL="+testdb.URL(pool))
+		return cmd.CombinedOutput()
+	}
+	if out, err := seed(); err != nil { // the fixture city first: an account has a city
+		t.Fatalf("seed: %v\n%s", err, out)
+	}
+	if _, err := pool.Exec(ctx, `insert into app.accounts (id, email, city, display_language, created_at)
+		values ($1, 'owner@example.com', 'da-nang-hoi-an', 'en', now())`, owner); err != nil {
+		t.Fatal(err)
+	}
+	admitted := func() (n int, via string) {
+		t.Helper()
+		if err := pool.QueryRow(ctx, `select count(*), coalesce(min(via), '') from app.admissions where account_id = $1 and brought_by is null and link_id is null`, owner).Scan(&n, &via); err != nil {
+			t.Fatal(err)
+		}
+		return n, via
+	}
+	if n, _ := admitted(); n != 0 {
+		t.Fatal("the account was admitted before the seed")
+	}
+	for range 2 {
+		if out, err := seed("--admit", "Owner@Example.com"); err != nil {
+			t.Fatalf("seed --admit: %v\n%s", err, out)
+		}
+	}
+	if n, via := admitted(); n != 1 || via != "seed" {
+		t.Fatalf("admissions of the owner = %d via %q; want 1 via seed", n, via)
+	}
+}
+
+// An email nobody signed in with admits nobody, writes nothing, and the error
+// doesn't repeat the email (a log is no place for it).
+func TestSeedAdmitOfAnUnknownEmailWritesNothingAndDoesNotEchoIt(t *testing.T) {
+	bin := buildSeed(t)
+	pool := testdb.NewDatabase(t)
+	ctx := context.Background()
+	if err := db.Up(ctx, pool); err != nil {
+		t.Fatal(err)
+	}
+	cmd := exec.Command(bin, "--admit", "nobody@example.com")
+	cmd.Env = append(os.Environ(), "DATABASE_URL="+testdb.URL(pool))
+	out, err := cmd.CombinedOutput()
+	if err == nil {
+		t.Fatal("seed --admit of an unknown account succeeded")
+	}
+	if strings.Contains(string(out), "nobody@example.com") {
+		t.Errorf("seed echoed the email:\n%s", out)
+	}
+	var cities, admissions int
+	if err := pool.QueryRow(ctx, `select (select count(*) from app.cities), (select count(*) from app.admissions)`).Scan(&cities, &admissions); err != nil {
+		t.Fatal(err)
+	}
+	if cities != 0 || admissions != 0 {
+		t.Fatalf("cities, admissions = %d, %d after a refused seed; want nothing written", cities, admissions)
+	}
+}
+
 // `seed` is for development: it refuses a database that isn't on this machine,
 // before it connects, and says so without printing the URL (it holds the
 // password).

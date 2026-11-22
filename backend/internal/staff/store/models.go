@@ -68,6 +68,14 @@ type AppAccount struct {
 	CreatedAt       time.Time
 }
 
+type AppAdmission struct {
+	AccountID  pgtype.UUID
+	AdmittedAt time.Time
+	Via        string
+	BroughtBy  pgtype.UUID
+	LinkID     pgtype.UUID
+}
+
 type AppCity struct {
 	Slug     string
 	State    string
@@ -79,6 +87,15 @@ type AppCityName struct {
 	City     string
 	Language string
 	Name     string
+}
+
+type AppJoinLink struct {
+	ID          pgtype.UUID
+	MemberID    pgtype.UUID
+	Code        string
+	CreatedAt   time.Time
+	CancelledAt *time.Time
+	RedeemedAt  *time.Time
 }
 
 type AppOuting struct {

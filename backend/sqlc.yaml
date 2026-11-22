@@ -44,6 +44,12 @@ sql:
           # The account id is Supabase Auth's user id, which the API handles as text.
           - db_type: uuid
             go_type: string
+          # Who brought an account in is nullable (the seed brings nobody).
+          - db_type: uuid
+            nullable: true
+            go_type:
+              type: string
+              pointer: true
           # The day a person said they were 18 or over is the city's calendar
           # date, handled as a time at midnight UTC.
           - db_type: date

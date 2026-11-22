@@ -64,6 +64,10 @@ _Avoid_: log in, register
 A one-use link from a member that admits whoever signs in with it, valid 14 days.
 _Avoid_: invitation (that is an outing's), invite, referral
 
+**Admission**:
+The fact that an account has been let in: by a join link, or for the owner by the seed. In the Pilot a signup needs it; plans can be read without it. Issho records who brought in whom, which only a moderator sees.
+_Avoid_: approval, invite
+
 **Guest**:
 A person a member adds to their own signup to a plan, by a link that shows the plan and lets them join and sign up. Admitting a guest who isn't a member uses one of the member's join links.
 _Avoid_: vouch for, join offer; a guest of a crew

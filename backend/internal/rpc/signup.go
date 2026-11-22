@@ -24,6 +24,11 @@ func (s signupService) SignUp(ctx context.Context, req *connect.Request[isshov1.
 	if !ok {
 		return nil, connect.NewError(connect.CodeInternal, errors.New("no identity"))
 	}
+	// In the Pilot a signup needs admission (docs/spec/launch.md, "The Pilot"):
+	// asked of people, never read from its tables. Plans stay readable without it.
+	if err := RequireAdmitted(ctx, s.people, id.Subject); err != nil {
+		return nil, err
+	}
 	// A signup needs a profile (docs/spec/people.md, "The profile"); a caller
 	// with none is told to ask its questions first.
 	if err := RequireProfile(ctx, s.people, id.Subject); err != nil {
@@ -38,11 +43,11 @@ func (s signupService) SignUp(ctx context.Context, req *connect.Request[isshov1.
 	case errors.Is(err, plans.ErrNotFound):
 		return nil, connect.NewError(connect.CodeNotFound, errors.New("no such plan"))
 	case errors.Is(err, plans.ErrTickTooSoon):
-		return nil, signupProblem("a tick is less than 3 days ahead", isshov1.SignupProblemReason_SIGNUP_PROBLEM_REASON_TICK_TOO_SOON)
+		return nil, signupProblem(connect.CodeInvalidArgument, "a tick is less than 3 days ahead", isshov1.SignupProblemReason_SIGNUP_PROBLEM_REASON_TICK_TOO_SOON)
 	case errors.Is(err, plans.ErrTickPartNotAllowed):
-		return nil, signupProblem("the plan doesn't run in that part of the day", isshov1.SignupProblemReason_SIGNUP_PROBLEM_REASON_TICK_PART_NOT_ALLOWED)
+		return nil, signupProblem(connect.CodeInvalidArgument, "the plan doesn't run in that part of the day", isshov1.SignupProblemReason_SIGNUP_PROBLEM_REASON_TICK_PART_NOT_ALLOWED)
 	case errors.Is(err, plans.ErrTickTooFar):
-		return nil, signupProblem("a tick is too far ahead", isshov1.SignupProblemReason_SIGNUP_PROBLEM_REASON_TICK_TOO_FAR)
+		return nil, signupProblem(connect.CodeInvalidArgument, "a tick is too far ahead", isshov1.SignupProblemReason_SIGNUP_PROBLEM_REASON_TICK_TOO_FAR)
 	case errors.Is(err, plans.ErrInvalid):
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	case err != nil:
@@ -94,10 +99,9 @@ func signupMessage(s plans.Signup) *isshov1.Signup {
 	return m
 }
 
-// signupProblem is an INVALID_ARGUMENT with a SignupProblem detail for the app
-// to act on.
-func signupProblem(msg string, reason isshov1.SignupProblemReason) error {
-	err := connect.NewError(connect.CodeInvalidArgument, errors.New(msg))
+// signupProblem is an error with a SignupProblem detail for the app to act on.
+func signupProblem(code connect.Code, msg string, reason isshov1.SignupProblemReason) error {
+	err := connect.NewError(code, errors.New(msg))
 	if d, derr := connect.NewErrorDetail(&isshov1.SignupProblem{Reason: reason}); derr == nil {
 		err.AddDetail(d)
 	}

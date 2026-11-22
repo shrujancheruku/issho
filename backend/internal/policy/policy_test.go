@@ -55,3 +55,14 @@ func TestSignupLeadDays(t *testing.T) {
 		t.Errorf("a tick's lead = %d days, spec says 3", MinTickLeadDays)
 	}
 }
+
+// A member has 3 join links and a link lasts 14 days (docs/spec/people.md,
+// "Join links"), written out independently of the constants.
+func TestJoinLinkNumbers(t *testing.T) {
+	if JoinLinksPerMember != 3 {
+		t.Errorf("join links per member = %d, spec says 3", JoinLinksPerMember)
+	}
+	if JoinLinkLife != 14*24*time.Hour {
+		t.Errorf("a join link lasts %v, spec says 14 days", JoinLinkLife)
+	}
+}

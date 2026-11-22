@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/reflect/protoregistry"
 
@@ -34,6 +35,7 @@ const (
 // accountRig is the API with real accounts on a real database, and a fake
 // Supabase Auth whose tokens it verifies.
 type accountRig struct {
+	pool   *pgxpool.Pool
 	clk    *clock.Fake
 	issuer *people.FakeIssuer
 	people *people.Service
@@ -71,7 +73,17 @@ func newAccountRig(t *testing.T) *accountRig {
 		Outings: outs,
 	}))
 	t.Cleanup(srv.Close)
-	return &accountRig{clk: clk, issuer: issuer, people: svc, forming: outs, srv: srv, client: isshov1connect.NewAccountServiceClient(srv.Client(), srv.URL)}
+	return &accountRig{pool: pool, clk: clk, issuer: issuer, people: svc, forming: outs, srv: srv, client: isshov1connect.NewAccountServiceClient(srv.Client(), srv.URL)}
+}
+
+// admit admits the account that signed in with the email, as the seed command
+// does for the owner. Tests that sign someone up use it, because a signup needs
+// admission; the rule itself is never relaxed.
+func (r *accountRig) admit(t *testing.T, email string) {
+	t.Helper()
+	if err := people.AdmitByEmail(context.Background(), r.pool, email, r.clk.Now()); err != nil {
+		t.Fatal(err)
+	}
 }
 
 func (r *accountRig) get(token string, req *isshov1.GetAccountRequest) (*isshov1.Account, error) {

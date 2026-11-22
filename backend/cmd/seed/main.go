@@ -26,6 +26,14 @@
 //     and the check runs in the transaction that writes, before its first write.
 //
 // Running it again replaces the fixture's rows with the fixture's.
+//
+// --admit EMAIL also admits the account that signed in with that email, with no
+// join link and nobody who brought it in: the Pilot's first member, the
+// owner, so there is someone to make the first links (docs/spec/launch.md,
+// "The Pilot"). The email is the operator's to give on the command line; the
+// repo holds none. The account must have signed in once already, or the seed
+// stops and writes nothing (the fixture and the admission are one
+// transaction). Running it again changes nothing.
 package main
 
 import (
@@ -44,19 +52,22 @@ import (
 
 	"github.com/shrujancheruku/issho/backend/fixtures"
 	"github.com/shrujancheruku/issho/backend/internal/cities"
+	"github.com/shrujancheruku/issho/backend/internal/clock"
+	"github.com/shrujancheruku/issho/backend/internal/people"
 	"github.com/shrujancheruku/issho/backend/internal/plans"
 )
 
 func main() {
 	hostedDev := flag.Bool("hosted-dev", false, "seed the hosted dev database; needs SEED_DEV_PROJECT_REF, the dev project's ref")
+	admit := flag.String("admit", "", "also admit the account that signed in with this email, as the owner is admitted so they have join links to give")
 	flag.Parse()
-	if err := run(context.Background(), os.Getenv("DATABASE_URL"), *hostedDev, os.Getenv("SEED_DEV_PROJECT_REF")); err != nil {
+	if err := run(context.Background(), os.Getenv("DATABASE_URL"), *hostedDev, os.Getenv("SEED_DEV_PROJECT_REF"), *admit); err != nil {
 		fmt.Fprintln(os.Stderr, "seed:", err)
 		os.Exit(1)
 	}
 }
 
-func run(ctx context.Context, databaseURL string, hostedDev bool, devRef string) error {
+func run(ctx context.Context, databaseURL string, hostedDev bool, devRef, admit string) error {
 	if databaseURL == "" {
 		return errors.New("DATABASE_URL is not set")
 	}
@@ -98,6 +109,18 @@ func run(ctx context.Context, databaseURL string, hostedDev bool, devRef string)
 	}
 	if err := plans.LoadFixture(ctx, tx, fixtures.DaNangHoiAn); err != nil {
 		return err
+	}
+	if admit != "" {
+		// Inside the transaction that passed the environment check above, so
+		// the admission reaches only a database the seed may write.
+		err := people.AdmitByEmail(ctx, tx, admit, clock.Real{}.Now())
+		if errors.Is(err, people.ErrNotFound) {
+			// The error names no email: it is personal data and this is a log.
+			return errors.New("no account has signed in with the email given to --admit: sign in once, then seed again (nothing was written)")
+		}
+		if err != nil {
+			return err
+		}
 	}
 	return tx.Commit(ctx)
 }

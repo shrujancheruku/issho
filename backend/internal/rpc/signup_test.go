@@ -32,10 +32,11 @@ func newSignupRig(t *testing.T) *signupRig {
 	}
 }
 
-// member is a signed-in account with a profile.
+// member is an admitted, signed-in account with a profile.
 func (r *signupRig) member(t *testing.T, id, email string) string {
 	t.Helper()
 	tok := r.signedIn(t, id, email)
+	r.admit(t, email)
 	if _, err := r.save(tok, goodSave()); err != nil {
 		t.Fatal(err)
 	}
@@ -82,6 +83,7 @@ func signupReason(err error) isshov1.SignupProblemReason {
 func TestSigningUpWithNoProfileIsRefusedWithProfileRequired(t *testing.T) {
 	r := newSignupRig(t)
 	tok := r.signedIn(t, ada, "ada@example.com")
+	r.admit(t, "ada@example.com")
 
 	_, err := r.signUp(tok, lanterns, tick("2026-01-09", "evening"))
 
