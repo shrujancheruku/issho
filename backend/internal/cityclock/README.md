@@ -9,9 +9,9 @@ city, err := cityclock.New("Asia/Ho_Chi_Minh", cityclock.DayParts{
 	Evening:   cityclock.Span{From: "17:00", To: "22:00"},
 })
 city.Date(now)                           // "2026-11-21", the city's date
-city.At("2026-11-21", "09:00")           // that wall time as an instant
+t, err := city.At("2026-11-21", "09:00")           // that wall time as an instant
 city.PartOfDay(now)                      // Morning, Afternoon, Evening or None
-city.InWindow(now, "22:00", "07:00")     // quiet hours, across midnight
+in, err := city.InWindow(now, "22:00", "07:00")     // quiet hours, across midnight
 ```
 
 - `New` takes an IANA zone and the city's clock hours of morning, afternoon and evening (a city setting, `docs/spec/city-settings.md`); it fails on an unknown zone or a span that isn't `HH:MM`.
