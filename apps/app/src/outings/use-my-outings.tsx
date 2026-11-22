@@ -1,10 +1,10 @@
 import { InvitationAnswer, type Outing } from '@issho/api-client';
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
 import { useApi } from '@/api/api-provider';
 import { useAuth } from '@/auth/auth-provider';
 
-import { refusalOf, type OutingRefusal } from './model';
+import { feedbackOpen, feedbackRefusalOf, refusalOf, type FeedbackRead, type FeedbackRefusal, type OutingRefusal } from './model';
 
 /**
  * The signed-in person's own outings (ListMyOutings). Like the signups they load
@@ -24,9 +24,22 @@ type Value = {
   answer: (outingId: string, yes: boolean) => Promise<void>;
   /** Cancels the caller's seat in an outing they are going to. */
   cancel: (outingId: string) => Promise<void>;
+  /** "I'm here"; a refusal is in `refusals`. */
+  checkIn: (outingId: string) => Promise<void>;
+  /**
+   * The person's feedback form for each outing whose feedback is open, read
+   * once the outings are. It holds their own private picks, so it lives in
+   * memory here and nowhere else: not in a key, a log or an address.
+   */
+  feedbacks: Record<string, FeedbackRead>;
+  /** Reads an outing's feedback form again (after it could not be read). */
+  loadFeedback: (outingId: string) => Promise<void>;
+  /** Saves the person's answers, replacing the last; resolves to why it was refused, or null when it was saved. */
+  saveFeedback: (outingId: string, answers: { went: boolean; notThere: string[]; meetAgain: string[] }) => Promise<FeedbackRefusal | null>;
 };
 
 const Context = createContext<Value | null>(null);
+const NO_FORMS: Record<string, FeedbackRead> = {};
 
 export function MyOutingsProvider({ children }: { children: ReactNode }) {
   const api = useApi();
@@ -34,6 +47,13 @@ export function MyOutingsProvider({ children }: { children: ReactNode }) {
   const signedIn = auth.status === 'signedIn';
   const [read, setRead] = useState<MyOutings | null>(null);
   const [refusals, setRefusals] = useState<Record<string, OutingRefusal>>({});
+  // The forms belong to whoever was signed in when they were read: another person signing in on this device never sees them.
+  const owner = auth.status === 'signedIn' ? auth.session.email : null;
+  const [store, setStore] = useState<{ owner: string | null; forms: Record<string, FeedbackRead> }>({ owner: null, forms: {} });
+  const feedbacks = owner !== null && store.owner === owner ? store.forms : NO_FORMS;
+  const setForm = useCallback((who: string | null, outingId: string, form: FeedbackRead) => setStore((s) => ({ owner: who, forms: s.owner === who ? { ...s.forms, [outingId]: form } : { [outingId]: form } })), []);
+  // Outings whose form has been asked for (by whom), so a reload of the list does not ask again.
+  const asked = useRef(new Set<string>());
 
   const fetchOutings = useCallback(async (): Promise<Outing[] | null> => {
     try {
@@ -57,9 +77,44 @@ export function MyOutingsProvider({ children }: { children: ReactNode }) {
     };
   }, [signedIn, fetchOutings]);
 
+  const loadFeedback = useCallback(
+    async (outingId: string) => {
+      asked.current.add(`${owner}:${outingId}`);
+      setForm(owner, outingId, { status: 'loading' });
+      try {
+        const { feedback } = await api.outing.getFeedback({ outingId });
+        setForm(owner, outingId, feedback ? { status: 'ready', feedback } : { status: 'failed' });
+      } catch {
+        setForm(owner, outingId, { status: 'failed' });
+      }
+    },
+    [api, owner, setForm],
+  );
+
+  // Whether feedback was given is on the form, not the outing, so every outing whose feedback is open is asked for its form once the list is read.
+  useEffect(() => {
+    if (owner === null || read?.status !== 'ready') return;
+    const now = new Date();
+    for (const o of read.outings) if (feedbackOpen(o, now) && !asked.current.has(`${owner}:${o.id}`)) void loadFeedback(o.id);
+  }, [owner, read, loadFeedback]);
+
+  const saveFeedback = useCallback(
+    async (outingId: string, answers: { went: boolean; notThere: string[]; meetAgain: string[] }) => {
+      try {
+        const { feedback } = await api.outing.saveFeedback({ outingId, ...answers });
+        if (feedback) setForm(owner, outingId, { status: 'ready', feedback });
+        return null;
+      } catch (err) {
+        // The windows are fixed once an outing is formed, so the list already held says which side of them the clock is on.
+        return feedbackRefusalOf(err, read?.status === 'ready' ? read.outings.find((o) => o.id === outingId) : undefined, new Date());
+      }
+    },
+    [api, owner, read, setForm],
+  );
+
   // Every other outing's yes count and seat may have moved with an answer (becoming going declines the person's other open seats), so the whole list is read again.
   const act = useCallback(
-    async (kind: 'answer' | 'cancel', outingId: string, call: () => Promise<unknown>) => {
+    async (kind: 'answer' | 'cancel' | 'checkIn', outingId: string, call: () => Promise<unknown>) => {
       const refuse = (refusal: OutingRefusal | null) =>
         setRefusals(({ [outingId]: _gone, ...rest }) => (refusal ? { ...rest, [outingId]: refusal } : rest));
       refuse(null);
@@ -81,12 +136,13 @@ export function MyOutingsProvider({ children }: { children: ReactNode }) {
     [act, api],
   );
   const cancel = useCallback((outingId: string) => act('cancel', outingId, () => api.outing.cancelSeat({ outingId })), [act, api]);
+  const checkIn = useCallback((outingId: string) => act('checkIn', outingId, () => api.outing.checkIn({ outingId })), [act, api]);
 
   const value = useMemo(() => {
     // Nothing is kept for a person who is not signed in (or has signed out since).
     const state: MyOutings = !signedIn ? { status: 'idle' } : (read ?? { status: 'loading' });
-    return { state, refusals, reload, answer, cancel };
-  }, [signedIn, read, refusals, reload, answer, cancel]);
+    return { state, refusals, reload, answer, cancel, checkIn, feedbacks, loadFeedback, saveFeedback };
+  }, [signedIn, read, refusals, feedbacks, reload, answer, cancel, checkIn, loadFeedback, saveFeedback]);
   return <Context.Provider value={value}>{children}</Context.Provider>;
 }
 

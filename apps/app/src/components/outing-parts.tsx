@@ -20,6 +20,9 @@ const refusalKeys: Record<OutingRefusal, StringKey> = {
   checkedIn: 'outing.cancelRefused.checkedIn',
   cannotCancel: 'outing.cancelRefused.cannot',
   cancelFailed: 'outing.cancelRefused.failed',
+  checkInEarly: 'outing.checkInRefused.early',
+  checkInOver: 'outing.checkInRefused.over',
+  checkInFailed: 'outing.checkInRefused.failed',
 };
 
 /** Why the person's last try on this outing was refused, in words; nothing when it was not. */

@@ -3,7 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { useApi } from '@/api/api-provider';
 import { Button } from '@/components/form';
-import { NeedsYouCard, OutingRow, SignupRow } from '@/components/together-rows';
+import { FeedbackCard, NeedsYouCard, OutingRow, SignupRow } from '@/components/together-rows';
 import { RequireSignIn } from '@/components/require-sign-in';
 import { ScreenFrame } from '@/components/screen-frame';
 import { FontSize, Spacing } from '@/constants/theme';
@@ -29,7 +29,7 @@ function TogetherList() {
   const theme = useTheme();
   const api = useApi();
   const { state: signups, reload: reloadSignups } = useMySignups();
-  const { state: outings, reload: reloadOutings } = useMyOutings();
+  const { state: outings, reload: reloadOutings, feedbacks } = useMyOutings();
   const [plans, setPlans] = useState<Plan[] | null>(null);
   const [loadFailed, setLoadFailed] = useState(false);
   const failed = loadFailed || signups.status === 'failed' || outings.status === 'failed';
@@ -55,8 +55,8 @@ function TogetherList() {
   }, [reloadSignups, reloadOutings]);
 
   const now = new Date();
-  const cards = ready && plans ? needsYou(outings.outings, plans, now) : [];
-  const rows: TogetherItem[] = ready && plans ? byDay([...signupItems(signups.signups, plans), ...outingItems(outings.outings, plans, now)]) : [];
+  const cards = ready && plans ? needsYou(outings.outings, plans, now, feedbacks) : [];
+  const rows: TogetherItem[] = ready && plans ? byDay([...signupItems(signups.signups, plans), ...outingItems(outings.outings, plans, now, feedbacks)]) : [];
 
   return (
     <ScreenFrame>
@@ -75,9 +75,9 @@ function TogetherList() {
           <Text accessibilityRole="header" style={[styles.heading, { color: theme.text }]}>
             {t('together.needsYou')}
           </Text>
-          {cards.map(({ outing, title, timeZone }) => (
-            <NeedsYouCard key={outing.id} outing={outing} title={title} timeZone={timeZone} />
-          ))}
+          {cards.map(({ kind, outing, title, timeZone }) =>
+            kind === 'invitation' ? <NeedsYouCard key={outing.id} outing={outing} title={title} timeZone={timeZone} /> : <FeedbackCard key={outing.id} outing={outing} title={title} timeZone={timeZone} />,
+          )}
         </View>
       ) : null}
       {rows.map((item) =>

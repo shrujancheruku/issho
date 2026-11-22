@@ -3,7 +3,7 @@ import { Image, Platform, type ColorValue } from 'react-native';
 
 import { useI18n } from '@/i18n/i18n-provider';
 import { useTheme } from '@/hooks/use-theme';
-import { needsAnswer } from '@/outings/model';
+import { needsYouList } from '@/outings/model';
 import { useMyOutings } from '@/outings/use-my-outings';
 
 // The tab bar icons are v1's, drawn to be tinted.
@@ -17,9 +17,9 @@ const icons = {
 export default function TabsLayout() {
   const { t } = useI18n();
   const theme = useTheme();
-  const { state } = useMyOutings();
-  // The tab carries a count of what needs an answer: this is how the app works with no inbox (docs/spec/app-shape.md).
-  const needs = state.status === 'ready' ? state.outings.filter((o) => needsAnswer(o, new Date())).length : 0;
+  const { state, feedbacks } = useMyOutings();
+  // The tab carries a count of what needs an answer (an invitation, or feedback to give): this is how the app works with no inbox (docs/spec/app-shape.md).
+  const needs = state.status === 'ready' ? needsYouList(state.outings, new Date(), feedbacks).length : 0;
   const tab = (icon: keyof typeof icons) => ({
     tabBarIcon: ({ color }: { color: ColorValue }) => <Image source={icons[icon]} style={{ width: 24, height: 24, tintColor: color }} />,
   });

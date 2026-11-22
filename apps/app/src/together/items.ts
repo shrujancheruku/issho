@@ -1,6 +1,7 @@
 import type { Outing, Plan, Signup } from '@issho/api-client';
 
-import { needsAnswer } from '@/outings/model';
+import { cityDateKey } from '@/lib/format';
+import { feedbackOpen, needsYouList, stampDate, type FeedbackRead } from '@/outings/model';
 import { DEFAULT_CITY_TIME_ZONE } from '@/plans/city';
 
 /**
@@ -19,19 +20,30 @@ export function signupItems(signups: Signup[], plans: Plan[]): TogetherItem[] {
 
 const planOf = (plans: Plan[], id: string) => plans.find((p) => p.id === id);
 
-/** The outings that are not waiting on an answer, on their dates; the ones that are are in "Needs you". */
-export function outingItems(outings: Outing[], plans: Plan[], now: Date): TogetherItem[] {
+/**
+ * The outings that are not waiting on the person, each on its date, or, while
+ * its feedback is open, on the day feedback closes (docs/spec/app-shape.md); the
+ * ones that are waiting are in "Needs you".
+ */
+export function outingItems(outings: Outing[], plans: Plan[], now: Date, feedbacks: Record<string, FeedbackRead>): TogetherItem[] {
+  const waiting = new Set(needsYouList(outings, now, feedbacks).map((n) => n.outing.id));
   return outings
-    .filter((o) => !needsAnswer(o, now))
-    .map((outing) => ({ kind: 'outing' as const, day: outing.date, planId: outing.planId, title: planOf(plans, outing.planId)?.title ?? '', outing, timeZone: planOf(plans, outing.planId)?.timeZone ?? DEFAULT_CITY_TIME_ZONE }));
+    .filter((o) => !waiting.has(o.id))
+    .map((outing) => {
+      const timeZone = planOf(plans, outing.planId)?.timeZone ?? DEFAULT_CITY_TIME_ZONE;
+      const day = feedbackOpen(outing, now) ? cityDateKey(stampDate(outing.feedbackClosesAt), timeZone) : outing.date;
+      return { kind: 'outing' as const, day, planId: outing.planId, title: planOf(plans, outing.planId)?.title ?? '', outing, timeZone };
+    });
 }
 
-/** The invitations to answer, soonest outing first, each with the plan it is for. */
-export function needsYou(outings: Outing[], plans: Plan[], now: Date) {
-  return outings
-    .filter((o) => needsAnswer(o, now))
-    .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0))
-    .map((outing) => ({ outing, title: planOf(plans, outing.planId)?.title ?? '', timeZone: planOf(plans, outing.planId)?.timeZone ?? DEFAULT_CITY_TIME_ZONE }));
+/** What needs the person, soonest outing first, each with the plan it is for. */
+export function needsYou(outings: Outing[], plans: Plan[], now: Date, feedbacks: Record<string, FeedbackRead>) {
+  return needsYouList(outings, now, feedbacks).map(({ kind, outing }) => ({
+    kind,
+    outing,
+    title: planOf(plans, outing.planId)?.title ?? '',
+    timeZone: planOf(plans, outing.planId)?.timeZone ?? DEFAULT_CITY_TIME_ZONE,
+  }));
 }
 
 /** Rows in time order; ties keep their given order. */
