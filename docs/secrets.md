@@ -29,7 +29,7 @@ Dev's secrets are in Google Cloud project `issho-dev-512213` (Secret Manager). T
 | `dev-resend-api-key` | the worker (`RESEND_API_KEY`) | the Resend API key for product email |
 | `dev-email-from` | the worker (`EMAIL_FROM`) | the sender address |
 | `dev-ssh-private-key` | Kamal (`SSH_PRIVATE_KEY`) | the key the deploy uses to reach the dev VM |
-| `dev-ssh-host-key` | `scripts/dev-ssh-pin.sh`, before Kamal connects (`SSH_HOST_KEY`) | the VM's public host key, pinned so an unknown or changed host is refused (#605) |
+| `dev-ssh-host-key` | `scripts/dev-ssh-pin.sh`, with `gcloud`, before Kamal connects (not through `.kamal/secrets.dev`) | the VM's public host key, pinned so an unknown or changed host is refused (#605) |
 | `dev-origin-cert`, `dev-origin-key` | Kamal (`ORIGIN_CERT`, `ORIGIN_KEY`) | the Cloudflare origin certificate and key for the dev names |
 | `dev-cloudflare-api-token` | `scripts/deploy-dev.sh`, which deploys the admin Worker | an API token that can deploy Workers |
 

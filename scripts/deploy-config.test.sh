@@ -70,7 +70,6 @@ out = {}
     keys_only: c.ssh.keys_only,
     ssh_key_read: c.ssh.key_data,
     ssh_config: c.ssh.options[:config],
-    host_key: c.secrets["SSH_HOST_KEY"],
     cert: c.proxy.certificate_pem_content,
     build_args: c.builder.args,
     env_clear: c.raw_config.env&.dig("clear"),
@@ -97,7 +96,6 @@ expect "only the given key is offered" '.backend.keys_only' true
 expect "the key comes from Secret Manager" '.backend.ssh_key_read[0]' value-of-dev-ssh-private-key
 expect "the backend's ssh reads the pinned host key" '.backend.ssh_config' /pin/ssh_config
 expect "the web's ssh reads the pinned host key" '.web.ssh_config' /pin/ssh_config
-expect "the host key is named among the dev secrets" '.backend.host_key' value-of-dev-ssh-host-key
 
 # The backend: the API behind the proxy, the worker beside it with no proxy.
 expect "roles" '.backend.roles | map(.name) | join(",")' web,worker

@@ -10,9 +10,8 @@ Kamal's secrets file for dev, `secrets.dev`. Kamal evaluates it on every call an
 | `RESEND_API_KEY`, `EMAIL_FROM` | `dev-resend-api-key`, `dev-email-from` | The worker's email |
 | `SSH_PRIVATE_KEY` | `dev-ssh-private-key` | Kamal's login to the VM as `kamal` |
 | `ORIGIN_CERT`, `ORIGIN_KEY` | `dev-origin-cert`, `dev-origin-key` | TLS between Cloudflare and kamal-proxy |
-| `SSH_HOST_KEY` | `dev-ssh-host-key` | The VM's public host key, the one SSH accepts. No container gets it: `scripts/dev-ssh-pin.sh` writes it as the pinned `known_hosts` line ([docs/deploy.md](../docs/deploy.md#where-the-secrets-are-and-how-ci-gets-at-them)) |
 | `KAMAL_REGISTRY_PASSWORD` | none | The workflow's own `GITHUB_TOKEN`, in its environment |
 
-`dev-database-url` is not read: the API has no database connection yet, and the ticket that gives it one adds the line and the `DATABASE_URL` it passes. `dev-migrate-database-url` and `dev-cloudflare-api-token` are read by `scripts/deploy-dev.sh` (the migration and the admin's deploy), not by Kamal.
+`dev-database-url` is not read: the API has no database connection yet, and the ticket that gives it one adds the line and the `DATABASE_URL` it passes. `dev-ssh-host-key` (the VM's public host key, read by `scripts/dev-ssh-pin.sh` before Kamal connects, see [docs/deploy.md](../docs/deploy.md#where-the-secrets-are-and-how-ci-gets-at-them)), `dev-migrate-database-url` and `dev-cloudflare-api-token` are read by `scripts/deploy-dev.sh` (the migration and the admin's deploy), not by Kamal.
 
 `.gitignore` ignores `.kamal/secrets*` except this file. Another destination's file (production's, later) is its milestone's to add the same way.
