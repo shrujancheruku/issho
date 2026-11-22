@@ -135,10 +135,21 @@ describe('arriving by a join link', () => {
     expect(api.joinLink.redeemJoinLink).toHaveBeenLastCalledWith({ code: SECRET });
   });
 
-  it('sends a visit with no link to the plans', async () => {
+  it('says plainly that the link is gone when a reload or an app kill lost the code, with a way on to the plans', async () => {
     const { api } = await open('/join');
-    await waitFor(() => expect(screen).toHavePathname('/plans'));
+    expect(await screen.findByText('We no longer have your join link. Open your join link again.')).toBeTruthy();
     expect(api.joinLink.redeemJoinLink).not.toHaveBeenCalled();
+    await fireEvent.press(screen.getByRole('button', { name: 'See plans' }));
+    await waitFor(() => expect(screen).toHavePathname('/plans'));
+  });
+
+  it("answers a member's own link as already in", async () => {
+    const api = fakeApi();
+    api.joinLink.redeemJoinLink.mockRejectedValue(joinLinkRefusal(JoinLinkProblemReason.ALREADY_ADMITTED));
+    await open(`/join/${SECRET}`, { api });
+    expect(await screen.findByText("You're already in, so this link was not used.")).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'See plans' })).toBeTruthy();
+    expect(peekPendingJoin()).toBeNull();
   });
 
   it('reads in Vietnamese', async () => {

@@ -27,10 +27,28 @@ export default function Join() {
   // Read once: the answer clears it, and the screen must not then mistake that for "no link".
   const [code] = useState(peekPendingJoin);
 
-  if (!code) return <Redirect href="/plans" />;
+  if (!code) return <LinkGone />;
   if (auth.status === 'loading') return null;
   if (auth.status === 'signedOut') return <Redirect href={{ pathname: '/sign-in', params: { next: '/join' } }} />;
   return <Redeem code={code} />;
+}
+
+/**
+ * The code lives in memory only, so a reload or an app kill during sign-in
+ * loses it. Say so, rather than dropping the person on the plans unexplained.
+ */
+function LinkGone() {
+  const { t } = useI18n();
+  const theme = useTheme();
+  const router = useRouter();
+  return (
+    <ScreenFrame>
+      <Text accessibilityRole="alert" style={[styles.body, { color: theme.text }]}>
+        {t('join.gone')}
+      </Text>
+      <Button label={t('join.seePlans')} onPress={() => router.replace('/plans')} />
+    </ScreenFrame>
+  );
 }
 
 const MESSAGE = {

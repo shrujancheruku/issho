@@ -113,6 +113,7 @@
   "join.unusable": "Liên kết tham gia này đã được dùng, đã hết hạn hoặc đã bị huỷ. Hãy nhờ người gửi cho bạn một liên kết mới.",
   "join.alreadyIn": "Bạn đã vào rồi, nên liên kết này chưa được dùng.",
   "join.failed": "Chúng tôi không dùng được liên kết tham gia. Hãy kiểm tra kết nối và thử lại.",
+  "join.gone": "Chúng tôi không còn liên kết tham gia của bạn. Hãy mở lại liên kết tham gia của bạn.",
   "join.retry": "Thử lại",
   "join.seePlans": "Xem các kế hoạch",
   "signUp.needJoinLink": "Bạn cần một liên kết tham gia để đăng ký. Hãy nhờ một thành viên gửi cho bạn.",

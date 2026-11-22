@@ -113,6 +113,7 @@
   "join.unusable": "This join link has been used, has expired or was cancelled. Ask the person who sent it for a new one.",
   "join.alreadyIn": "You're already in, so this link was not used.",
   "join.failed": "We could not use the join link. Check your connection and try again.",
+  "join.gone": "We no longer have your join link. Open your join link again.",
   "join.retry": "Try again",
   "join.seePlans": "See plans",
   "signUp.needJoinLink": "You need a join link to sign up. Ask a member to send you one.",
