@@ -33,11 +33,13 @@ STUB
   chmod +x "$work/bin/$tool"
 done
 
-# run <FAIL_ON>: the script with the stand-ins first on PATH; prints nothing,
-# leaves the calls in $LOG and returns the script's status.
+# run <FAIL_ON> [<GITHUB_ACTIONS>]: the script with the stand-ins first on PATH;
+# prints nothing, leaves the calls in $LOG and returns the script's status.
+# GITHUB_ACTIONS is set only when asked for, since the script prints masks on
+# Actions and this test runs both on a laptop and on the runner.
 run() {
   : > "$work/log"; : > "$work/log.env"
-  PATH="$work/bin:$PATH" LOG="$work/log" FAIL_ON="${1:-}" DEPLOY_HOST=203.0.113.7 KAMAL_REGISTRY_PASSWORD=stub "$script" >"$work/out" 2>&1
+  PATH="$work/bin:$PATH" LOG="$work/log" FAIL_ON="${1:-}" GITHUB_ACTIONS="${2:-}" DEPLOY_HOST=203.0.113.7 KAMAL_REGISTRY_PASSWORD=stub "$script" >"$work/out" 2>&1
 }
 # line_of <prefix>: the line number of the first call starting with the prefix, or 0.
 line_of() { grep -n "^$1" "$work/log" | head -n1 | cut -d: -f1 | grep . || echo 0; }
@@ -82,6 +84,14 @@ grep -q 'wrangler' "$work/log" && bad "the admin was deployed after the API's de
 run "" || true
 if grep -q 'value-of-secret' "$work/out"; then bad "a secret's value is in the script's output"; fi
 if grep -q 'value-of-secret' "$work/log"; then bad "a secret's value was passed as an argument, where ps and logs show it"; fi
+
+# On GitHub Actions, each value read is masked: the runner takes an exact
+# "::add-mask::<value>" line as a command and keeps it out of the log. Any other
+# line holding the value would be logged as it is.
+run "" true || bad "the script failed on Actions with every tool succeeding"
+if grep 'value-of-secret' "$work/out" | grep -vqx '::add-mask::value-of-secret'; then bad "a secret's value is in the script's output on Actions, outside a mask"; fi
+[ "$(grep -cx '::add-mask::value-of-secret' "$work/out")" -eq 2 ] || bad "on Actions, the two secrets read are not each masked: $(grep -c 'add-mask' "$work/out") masks"
+if grep -q 'value-of-secret' "$work/log"; then bad "a secret's value was passed as an argument on Actions"; fi
 
 grep -q '^go DATABASE_URL=value-of-secret ' "$work/log.env" || bad "the migration did not get the migration role's database URL in its environment"
 grep -q 'CLOUDFLARE_API_TOKEN=value-of-secret$' "$work/log.env" || bad "wrangler did not get the token in its environment, without its newline"
