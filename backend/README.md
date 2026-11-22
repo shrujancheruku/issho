@@ -10,6 +10,7 @@ One Go module (`github.com/shrujancheruku/issho/backend`), part of the root `go.
 | `cmd/worker` | The background-job process: runs River |
 | `cmd/rpcauth` | `make rpc-auth`: fails when an RPC in `proto/` declares no access rule |
 | `cmd/migrate` | `migrate up` and `migrate down`, behind `make migrate-up` and `make migrate-down` |
+| `cmd/seed` | `make seed`: loads the development fixture into a local database; refuses any other and is not in the image (see "Fixtures") |
 | `db` | The goose migrations (`db/migrations`), embedded, and the `Up` and `Down` that run them; the schema sqlc reads |
 | `internal/<pkg>/store` | The Go that sqlc generates from `internal/<pkg>/queries`, one pair per package (`internal/staff`, `internal/people`). Generated: never edit it |
 | `internal/clock` | The injected clock: `Clock`, `Real` (wired only in `cmd/`) and the test `Fake` |
@@ -17,6 +18,9 @@ One Go module (`github.com/shrujancheruku/issho/backend`), part of the root `go.
 | `tools/clockcheck` | The lint check that fails on `time.Now`, `time.Since` and `time.Until` outside `internal/clock`, and on `clock.Real` outside `cmd/` |
 | `gen/issho` | The Go that buf generates from `proto/`: the messages and the ConnectRPC service stubs. Generated: never edit it |
 | `internal/rpc` | The API's services and the access interceptor; `rpc/rpcauth` is the check behind `cmd/rpcauth` |
+| `fixtures` | The development and test fixture: the city Da Nang–Hoi An and two plans, as embedded JSON (see "Fixtures") |
+| `internal/cities` | The listed cities: slug, state, time zone, currency and names (`app.cities`) |
+| `internal/plans` | Plans, read only so far: the fields a plan page shows and the prose per language (`app.plans` and its texts and stops) |
 | `internal/people` | Accounts (`app.accounts`), and the verifier for Supabase Auth's tokens (see "Accounts and sign-in") |
 | `internal/email` | `email.Sender`, its in-memory fake, and `email/resend`, the real one |
 | `internal/logging` | `logging.New`, the one way a process makes a logger, and the test that keeps it the only way (see "Logs") |
@@ -49,6 +53,12 @@ Tests go through HTTP with a generated Connect client. `internal/rpc/access_test
 Sign-in is Supabase Auth's 6-digit email code; `internal/people` owns the accounts. `cmd/api` reads two public values: `DATABASE_URL` (the app's connection URL) and `SUPABASE_AUTH_URL` (`https://<ref>.supabase.co/auth/v1`, the tokens' issuer, whose keys are at `<it>/.well-known/jwks.json`; locally `http://127.0.0.1:54321/auth/v1`). With both it serves `AccountService` behind the verifier; with neither it serves only the public RPCs and logs a warning; with one it exits 1 naming the other. The API never holds the project's JWT secret.
 
 `AccountService.GetAccount` (member) returns the caller's own account, making it on the first call from the token's email and the city and display language the app sends (defaults: the Pilot's only city, English). It takes no account id, and `rpc/account_test.go` fails if any other RPC's response carries an email field. See `internal/people/README.md` and `supabase/README.md`.
+
+## Fixtures
+
+One city, Da Nang–Hoi An, and two plans (`fixtures/da-nang-hoi-an.json`) carry the thin loop before plan-making exists. `internal/cities` and `internal/plans` each own their tables and each reads its own part of the file (`LoadFixture`). The tests load it themselves; in development `make seed` (`cmd/seed`) loads it into the local database after `make migrate-up`. **Nothing loads it in production:** the image holds `api` and `worker`, neither imports `fixtures`, `seed` refuses a database that isn't on this machine, and a migration inserts no city. `cmd/cmd_test.go` fails if any of that stops being true. See `fixtures/README.md`.
+
+`PlanService` (`ListPlans`, `GetPlan`) is public: anyone reads a city's plans with no token, in `en` or `vi` from the fixture's prose (`internal/rpc/plan.go`).
 
 ## Logs
 

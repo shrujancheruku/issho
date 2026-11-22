@@ -13,8 +13,8 @@ Sign-in is Supabase Auth's: a 6-digit code emailed to the person (`supabase/READ
 | Function | What |
 |---|---|
 | `NewVerifier(clk, VerifierConfig)` | Checks Supabase Auth's access tokens against the project's JWKS. Accepts ES256 and RS256 and nothing else (not HS256, which would need the JWT secret the API never holds, and not `none`). Checks expiry and not-before on the injected clock, the issuer, the `authenticated` audience and role, and a subject. `Verify` returns `Claims` (subject, email, second step: the token's `aal2`) or an error |
-| `New(clk, pool, Config)` | The account service. `Config.DefaultCity` is the only listed city: the city of a first call that names none, and the only city a call may name |
-| `Service.Join(ctx, Claims, Preferences)` | The caller's account, made if this is the first call: the token's email (lowercased), the city and display language in `Preferences` or their defaults (`DefaultCity`, English). Once made it is returned as it is and `Preferences` are not applied (they are checked on every call): changing a city or language is a settings call. `ErrInvalid` for malformed input, a city that isn't listed or a display language other than `en` or `vi` (nothing is made), `ErrEmailTaken` for an email another account holds |
+| `New(clk, pool, cities, Config)` | The account service. `Config.DefaultCity` is the city of a first call that names none; which cities a call may name is `cities`' to say |
+| `Service.Join(ctx, Claims, Preferences)` | The caller's account, made if this is the first call: the token's email (lowercased), the city and display language in `Preferences` or their defaults (`DefaultCity`, English). Once made it is returned as it is and `Preferences` are not applied (they are checked on every call): changing a city or language is a settings call. `ErrInvalid` for malformed input, a city `cities` doesn't list or a display language other than `en` or `vi` (nothing is made), `ErrEmailTaken` for an email another account holds |
 | `Service.Account(ctx, id)` | An account by id, or `ErrNotFound` |
 | `NewFakeIssuer()` | Stands in for Supabase Auth in tests: `Verifier(clk)` trusts its key (the key set is served in-process), `Token(now, id, email)` and `SecondStepToken` mint tokens. The one fake every test that needs a signed-in caller uses |
 
@@ -22,7 +22,7 @@ Sign-in is Supabase Auth's: a 6-digit code emailed to the person (`supabase/READ
 
 **The id.** An account's id is Supabase Auth's user id (the token's `sub`). It is not a foreign key to `auth.users`, which doesn't exist on the plain Postgres the tests run on.
 
-**The city.** It is the city's slug, a plain column until the fixture city's ticket (#610) adds the `cities` table, the constraint and the check that the city is listed (until then `Join` accepts only `Config.DefaultCity`, `da-nang-hoi-an`). Display languages are `people.Languages` (`en`, `vi`): the languages of the open cities.
+**The city.** It is the city's slug, a foreign key to `app.cities` (`db/migrations/00004_cities_and_plans.sql`), and `Join` asks `internal/cities` whether the city is listed, so a city that opens is no change here. In development and tests the fixture city is the one listed (`internal/cities`, `fixtures/`); a database with no city lists none, and nobody can join. Display languages are `people.Languages` (`en`, `vi`): the languages of the open cities.
 
 ## Tests
 
@@ -30,6 +30,6 @@ Package tests go through the exported API on the throwaway Postgres (`internal/t
 
 | File | Proves |
 |---|---|
-| `people_test.go` | The first call makes the account with the token's email, a city and a language; nothing sent means the defaults; a second call changes nothing; malformed input, an unlisted city and an unlisted language are refused and leave no account; one account per email |
+| `people_test.go` | The first call makes the account with the token's email, a city and a language; nothing sent means the defaults; a second call changes nothing; malformed input, an unlisted city and an unlisted language are refused and leave no account; a city `cities` lists makes an account even when it isn't the default, and with none listed nobody can join; the database refuses an account in an unlisted city; one account per email |
 | `token_test.go` | ES256 and RS256 verify; a token signed with another key, an unknown key id, another algorithm, HS256 or `none` is refused; an expired token is refused on the fake clock; key rotation and the fetch limit; a key set that can't be refreshed stops verifying at its maximum age (logged without the token) and comes back on the next good fetch; a slow key-set fetch (on a rotation or the hourly refresh) doesn't hold up a token whose key is known, and concurrent tokens share one fetch |
 | `supabase_config_test.go` | `supabase/config.toml` sets a 6-digit code, the local mail catcher, templates that show the code, and `enable_confirmations` on |

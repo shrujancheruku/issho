@@ -330,3 +330,99 @@ func TestAPIWithAccountsConfiguredServesThemBehindTheTokenCheck(t *testing.T) {
 		t.Fatalf("GetAccount with a forged token: code %v (%v), want unauthenticated", got, err)
 	}
 }
+
+const fixturesPkg = "github.com/shrujancheruku/issho/backend/fixtures"
+
+// depsOf lists every package the commands are built from, tests excluded.
+func depsOf(t *testing.T, commands ...string) string {
+	t.Helper()
+	args := []string{"list", "-deps"}
+	for _, c := range commands {
+		args = append(args, "./"+c)
+	}
+	out, err := exec.Command("go", args...).CombinedOutput()
+	if err != nil {
+		t.Fatalf("go list: %v\n%s", err, out)
+	}
+	return string(out)
+}
+
+// Nothing loads the fixture in production: the image holds api and worker, and
+// neither is built from the fixtures. migrate is the third command the
+// deploy might run, and it doesn't either. Only seed, which the image doesn't
+// hold, imports them.
+func TestProductionProcessesDoNotImportTheFixtures(t *testing.T) {
+	for _, name := range []string{"api", "worker", "migrate"} {
+		if strings.Contains(depsOf(t, name), fixturesPkg+"\n") {
+			t.Errorf("cmd/%s is built from the fixtures package", name)
+		}
+	}
+	if !strings.Contains(depsOf(t, "seed"), fixturesPkg+"\n") {
+		t.Error("cmd/seed is not built from the fixtures package: this test checks nothing")
+	}
+	dockerfile, err := os.ReadFile("../Dockerfile")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(dockerfile), "cmd/seed") {
+		t.Error("the image builds cmd/seed")
+	}
+}
+
+func buildSeed(t *testing.T) string {
+	t.Helper()
+	bin := filepath.Join(t.TempDir(), "seed")
+	if out, err := exec.Command("go", "build", "-o", bin, "./seed").CombinedOutput(); err != nil {
+		t.Fatalf("build: %v\n%s", err, out)
+	}
+	return bin
+}
+
+// `seed` loads the fixture city and plans into a migrated local database, and
+// can be run again.
+func TestSeedLoadsTheFixtureIntoALocalDatabase(t *testing.T) {
+	bin := buildSeed(t)
+	pool := testdb.NewDatabase(t)
+	if err := db.Up(context.Background(), pool); err != nil {
+		t.Fatal(err)
+	}
+	for range 2 {
+		cmd := exec.Command(bin)
+		cmd.Env = append(os.Environ(), "DATABASE_URL="+testdb.URL(pool))
+		if out, err := cmd.CombinedOutput(); err != nil {
+			t.Fatalf("seed: %v\n%s", err, out)
+		}
+	}
+	var cities, plans int
+	if err := pool.QueryRow(context.Background(), `select (select count(*) from app.cities), (select count(*) from app.plans)`).Scan(&cities, &plans); err != nil {
+		t.Fatal(err)
+	}
+	if cities != 1 || plans != 2 {
+		t.Fatalf("cities, plans = %d, %d; want 1, 2", cities, plans)
+	}
+}
+
+// `seed` is for development: it refuses a database that isn't on this machine,
+// before it connects, and says so without printing the URL (it holds the
+// password).
+func TestSeedRefusesADatabaseThatIsNotLocal(t *testing.T) {
+	bin := buildSeed(t)
+	for _, url := range []string{
+		"postgresql://postgres:hunter2@db.abcdefghij.supabase.co:5432/postgres",
+		"postgresql://postgres.abcdefghij:hunter2@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres",
+		"postgresql://postgres:hunter2@10.0.0.5/postgres",
+		"postgresql://postgres:hunter2@127.0.0.1/postgres?host=db.abcdefghij.supabase.co",
+		"not a url",
+		"",
+	} {
+		cmd := exec.Command(bin)
+		cmd.Env = append(os.Environ(), "DATABASE_URL="+url)
+		out, err := cmd.CombinedOutput()
+		if err == nil {
+			t.Errorf("seed accepted %q", url)
+		}
+		if strings.Contains(string(out), "hunter2") {
+			t.Errorf("seed printed the password:\n%s", out)
+		}
+	}
+}

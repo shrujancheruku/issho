@@ -9,6 +9,8 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/shrujancheruku/issho/backend/db"
+	"github.com/shrujancheruku/issho/backend/fixtures"
+	"github.com/shrujancheruku/issho/backend/internal/cities"
 	"github.com/shrujancheruku/issho/backend/internal/clock"
 	"github.com/shrujancheruku/issho/backend/internal/people"
 	"github.com/shrujancheruku/issho/backend/internal/testdb"
@@ -33,8 +35,12 @@ func newRig(t *testing.T) *rig {
 	if err := db.Up(context.Background(), pool); err != nil {
 		t.Fatal(err)
 	}
+	// The fixture city is the one listed city, as it is in development.
+	if err := cities.LoadFixture(context.Background(), pool, fixtures.DaNangHoiAn); err != nil {
+		t.Fatal(err)
+	}
 	clk := clock.NewFake(start)
-	return &rig{pool: pool, clk: clk, svc: people.New(clk, pool, people.Config{DefaultCity: "da-nang-hoi-an"})}
+	return &rig{pool: pool, clk: clk, svc: people.New(clk, pool, cities.New(pool), people.Config{DefaultCity: "da-nang-hoi-an"})}
 }
 
 // The first call with a valid token makes the account: the token's email, a
@@ -179,5 +185,44 @@ func TestAnEmailBelongsToOneAccount(t *testing.T) {
 	_, err := r.svc.Join(ctx, people.Claims{Subject: grace, Email: "ADA@example.com"}, people.Preferences{})
 	if !errors.Is(err, people.ErrEmailTaken) {
 		t.Fatalf("err = %v, want ErrEmailTaken", err)
+	}
+}
+
+// The cities package says which cities are listed, not people's config: a city
+// it lists makes an account whether or not it is the default.
+func TestACityTheCitiesPackageListsMakesAnAccount(t *testing.T) {
+	r := newRig(t)
+	ctx := context.Background()
+	second := []byte(`{"city": {"slug": "hue", "state": "planned", "time_zone": "Asia/Ho_Chi_Minh", "currency": "VND", "names": {"en": "Hue"}}}`)
+	if err := cities.LoadFixture(ctx, r.pool, second); err != nil {
+		t.Fatal(err)
+	}
+	got, err := r.svc.Join(ctx, people.Claims{Subject: ada, Email: "ada@example.com"}, people.Preferences{City: "hue"})
+	if err != nil || got.City != "hue" {
+		t.Fatalf("Join = %+v, %v; want an account in hue", got, err)
+	}
+}
+
+// With no city listed nobody can join, whatever the default says.
+func TestWithNoCityListedNobodyCanJoin(t *testing.T) {
+	r := newRig(t)
+	ctx := context.Background()
+	if _, err := r.pool.Exec(ctx, `delete from app.city_names; delete from app.cities`); err != nil {
+		t.Fatal(err)
+	}
+	_, err := r.svc.Join(ctx, people.Claims{Subject: ada, Email: "ada@example.com"}, people.Preferences{})
+	if !errors.Is(err, people.ErrInvalid) {
+		t.Fatalf("err = %v, want ErrInvalid", err)
+	}
+}
+
+// The database holds the same line: an account's city is a listed city, so
+// nothing but the people package's check stands between a typo and an orphan.
+func TestTheDatabaseRefusesAnAccountInAnUnlistedCity(t *testing.T) {
+	r := newRig(t)
+	_, err := r.pool.Exec(context.Background(),
+		`insert into app.accounts (id, email, city, display_language, created_at) values ($1, 'x@example.com', 'atlantis', 'en', now())`, ada)
+	if err == nil {
+		t.Fatal("the database made an account in a city that isn't listed")
 	}
 }

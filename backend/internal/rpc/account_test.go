@@ -12,8 +12,10 @@ import (
 	"google.golang.org/protobuf/reflect/protoregistry"
 
 	"github.com/shrujancheruku/issho/backend/db"
+	"github.com/shrujancheruku/issho/backend/fixtures"
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
 	"github.com/shrujancheruku/issho/backend/gen/issho/v1/isshov1connect"
+	"github.com/shrujancheruku/issho/backend/internal/cities"
 	"github.com/shrujancheruku/issho/backend/internal/clock"
 	"github.com/shrujancheruku/issho/backend/internal/people"
 	"github.com/shrujancheruku/issho/backend/internal/rpc"
@@ -45,7 +47,10 @@ func newAccountRig(t *testing.T) *accountRig {
 	}
 	clk := clock.NewFake(accountStart)
 	issuer := people.NewFakeIssuer()
-	svc := people.New(clk, pool, people.Config{DefaultCity: "da-nang-hoi-an"})
+	if err := cities.LoadFixture(context.Background(), pool, fixtures.DaNangHoiAn); err != nil {
+		t.Fatal(err)
+	}
+	svc := people.New(clk, pool, cities.New(pool), people.Config{DefaultCity: "da-nang-hoi-an"})
 	srv := httptest.NewServer(rpc.NewHandler(rpc.Config{
 		Version: "test",
 		Auth:    rpc.NewAuthenticator(issuer.Verifier(clk)),

@@ -10,8 +10,10 @@ import (
 	"google.golang.org/protobuf/reflect/protoregistry"
 
 	"github.com/shrujancheruku/issho/backend/gen/issho/v1/isshov1connect"
+	"github.com/shrujancheruku/issho/backend/internal/cities"
 	"github.com/shrujancheruku/issho/backend/internal/clock"
 	"github.com/shrujancheruku/issho/backend/internal/people"
+	"github.com/shrujancheruku/issho/backend/internal/plans"
 )
 
 // Config is what the handler needs from the process that builds it.
@@ -24,6 +26,11 @@ type Config struct {
 	// People keeps the accounts. Nil leaves AccountService unserved, as it is
 	// for a process with no database.
 	People *people.Service
+	// Cities and Plans keep the listed cities and their plans. Both must be set
+	// to serve PlanService; either nil leaves it unserved, as it is for a
+	// process with no database.
+	Cities *cities.Service
+	Plans  *plans.Service
 	// Log gets one line per request (see logRequests), timed by Clock. Nil logs
 	// nothing; set, Clock is required.
 	Log   *slog.Logger
@@ -39,6 +46,9 @@ func NewHandler(cfg Config) http.Handler {
 	mux.Handle(isshov1connect.NewHealthServiceHandler(healthService{version: cfg.Version}, opts))
 	if cfg.People != nil {
 		mux.Handle(isshov1connect.NewAccountServiceHandler(accountService{people: cfg.People}, opts))
+	}
+	if cfg.Cities != nil && cfg.Plans != nil {
+		mux.Handle(isshov1connect.NewPlanServiceHandler(planService{cities: cfg.Cities, plans: cfg.Plans}, opts))
 	}
 	var rpcs http.Handler = mux
 	if cfg.Log != nil {

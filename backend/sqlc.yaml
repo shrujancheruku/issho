@@ -44,3 +44,40 @@ sql:
           # The account id is Supabase Auth's user id, which the API handles as text.
           - db_type: uuid
             go_type: string
+  - engine: postgresql
+    schema: db/migrations
+    queries: internal/cities/queries
+    gen:
+      go:
+        package: store
+        out: internal/cities/store
+        sql_package: pgx/v5
+        emit_pointers_for_null_types: true
+        overrides:
+          - db_type: timestamptz
+            go_type: time.Time
+          - db_type: timestamptz
+            nullable: true
+            go_type:
+              type: time.Time
+              pointer: true
+  - engine: postgresql
+    schema: db/migrations
+    queries: internal/plans/queries
+    gen:
+      go:
+        package: store
+        out: internal/plans/store
+        sql_package: pgx/v5
+        emit_pointers_for_null_types: true
+        overrides:
+          - db_type: timestamptz
+            go_type: time.Time
+          - db_type: timestamptz
+            nullable: true
+            go_type:
+              type: time.Time
+              pointer: true
+          # A plan's id is a uuid the API handles as text.
+          - db_type: uuid
+            go_type: string

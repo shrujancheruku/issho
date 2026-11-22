@@ -21,6 +21,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"github.com/shrujancheruku/issho/backend/internal/cities"
 	"github.com/shrujancheruku/issho/backend/internal/clock"
 	"github.com/shrujancheruku/issho/backend/internal/people/store"
 )
@@ -80,24 +81,27 @@ var (
 
 // Config is what the service needs from the process that builds it.
 type Config struct {
-	// DefaultCity is the only listed city (docs/spec/cities.md): the city of a
-	// first call that names none, and the only city a call may name.
+	// DefaultCity is the city of a first call that names none: the only listed
+	// city while there is one (docs/spec/cities.md, "Which city a visitor with
+	// no account sees"). Which cities a call may name is the cities package's.
 	DefaultCity string
 }
 
 // Service is the exported API of accounts.
 type Service struct {
-	clock clock.Clock
-	pool  *pgxpool.Pool
-	cfg   Config
+	clock  clock.Clock
+	pool   *pgxpool.Pool
+	cities *cities.Service
+	cfg    Config
 }
 
-// New returns a Service that stamps times from clk and keeps accounts in pool.
-func New(clk clock.Clock, pool *pgxpool.Pool, cfg Config) *Service {
+// New returns a Service that stamps times from clk, keeps accounts in pool and
+// asks cities which cities are listed.
+func New(clk clock.Clock, pool *pgxpool.Pool, cities *cities.Service, cfg Config) *Service {
 	if cfg.DefaultCity == "" {
 		panic("people: Config.DefaultCity is required")
 	}
-	return &Service{clock: clk, pool: pool, cfg: cfg}
+	return &Service{clock: clk, pool: pool, cities: cities, cfg: cfg}
 }
 
 var (
@@ -122,11 +126,12 @@ func (s *Service) Join(ctx context.Context, c Claims, prefs Preferences) (Accoun
 	if city == "" {
 		city = s.cfg.DefaultCity
 	}
-	// Only a listed city makes an account (docs/spec/cities.md). Today the only
-	// listed city is the default; #610 adds the cities table and this check
-	// moves to it.
-	if city != s.cfg.DefaultCity {
+	// Only a listed city makes an account (docs/spec/cities.md); the database
+	// holds the same line with a foreign key.
+	if _, err := s.cities.Get(ctx, city); errors.Is(err, cities.ErrNotFound) {
 		return Account{}, fmt.Errorf("%w: city is not listed", ErrInvalid)
+	} else if err != nil {
+		return Account{}, fmt.Errorf("people: join: %w", err)
 	}
 	language := prefs.DisplayLanguage
 	if language == "" {
