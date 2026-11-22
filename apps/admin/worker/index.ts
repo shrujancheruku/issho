@@ -18,9 +18,9 @@ export interface Env {
  * The member's address, and where Cloudflare places it, which Cloudflare adds on
  * the way here: not passed on, since Issho keeps no IP address anywhere
  * (docs/spec/privacy.md). The Expo server's forwarder drops the same
- * (apps/web/api-proxy.js).
+ * (apps/web/api-proxy.js); a test in this folder fails if the two lists differ.
  */
-const CLIENT_ADDRESS = [
+export const CLIENT_ADDRESS = [
   'cf-connecting-ip', 'cf-connecting-ipv6', 'cf-pseudo-ipv4', 'cf-ipcountry', 'x-forwarded-for', 'x-real-ip',
   'forwarded', 'true-client-ip', 'x-client-ip', 'x-cluster-client-ip', 'client-ip',
 ];

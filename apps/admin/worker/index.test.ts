@@ -1,6 +1,8 @@
+import { createRequire } from 'node:module';
+
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import worker from './index';
+import worker, { CLIENT_ADDRESS } from './index';
 
 const env = { API_ORIGIN: 'https://api.example.test' };
 
@@ -86,5 +88,16 @@ describe('the admin Worker', () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('network')));
     const res = await worker.fetch(new Request('https://admin.example.test/issho.v1.HealthService/Check', { method: 'POST', body: '{}' }), env);
     expect(res.status).toBe(502);
+  });
+});
+
+// The headers that carry the member's address are ADR 0005's rule, kept in two
+// places because the Expo server's forwarder is CommonJS Node and this Worker is
+// TypeScript for Cloudflare. A header added to one and not the other would reach
+// the API from one of the two pages.
+describe('the list of headers that carry a member\'s address', () => {
+  it("is the same as the Expo server's forwarder's", () => {
+    const { CLIENT_ADDRESS: web } = createRequire(import.meta.url)('../../web/api-proxy.js') as { CLIENT_ADDRESS: Set<string> };
+    expect([...CLIENT_ADDRESS].sort()).toEqual([...web].sort());
   });
 });

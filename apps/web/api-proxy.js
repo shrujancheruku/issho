@@ -12,7 +12,8 @@ const HOP = new Set(['connection', 'keep-alive', 'proxy-connection', 'transfer-e
 // The member's address, and where Cloudflare places it, which Cloudflare and
 // kamal-proxy add on the way here: not passed on, since Issho keeps no IP address
 // anywhere (docs/spec/privacy.md). The API sees this server's address instead.
-// The admin's Worker drops the same (apps/admin/worker/index.ts).
+// The admin's Worker drops the same (apps/admin/worker/index.ts); a test there
+// fails if the two lists differ.
 const CLIENT_ADDRESS = new Set([
   'cf-connecting-ip', 'cf-connecting-ipv6', 'cf-pseudo-ipv4', 'cf-ipcountry', 'x-forwarded-for', 'x-real-ip',
   'forwarded', 'true-client-ip', 'x-client-ip', 'x-cluster-client-ip', 'client-ip',
@@ -62,4 +63,4 @@ function apiProxy(apiOrigin) {
   };
 }
 
-module.exports = { apiProxy };
+module.exports = { apiProxy, CLIENT_ADDRESS };
