@@ -450,3 +450,55 @@ func TestSeedHostedDevOptInRefusesAProductionLikeTarget(t *testing.T) {
 		}
 	}
 }
+
+// With --hosted-dev the seed also reads the database's own environment marker
+// (`issho.environment`) before writing anything, and goes on only if it is
+// exactly `dev`: the operator supplies the ref, but not what is stored in the
+// database. The test database is local, so the target check passes and only the
+// marker decides. No marker and `prod` are refused with nothing written; `dev`
+// seeds. Without the flag the marker is never read: a local seed needs none.
+func TestSeedHostedDevNeedsTheDevEnvironmentMarker(t *testing.T) {
+	bin := buildSeed(t)
+	for _, tc := range []struct {
+		name   string
+		marker string // "" sets none
+		seeds  bool
+	}{
+		{"no marker", "", false},
+		{"prod", "prod", false},
+		{"dev with other case", "Dev", false},
+		{"dev", "dev", true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			pool := testdb.NewDatabase(t)
+			ctx := context.Background()
+			if err := db.Up(ctx, pool); err != nil {
+				t.Fatal(err)
+			}
+			if tc.marker != "" {
+				if _, err := pool.Exec(ctx, `do $$ begin execute format('alter database %I set issho.environment = %L', current_database(), '`+tc.marker+`'); end $$`); err != nil {
+					t.Fatal(err)
+				}
+			}
+			cmd := exec.Command(bin, "--hosted-dev")
+			cmd.Env = append(os.Environ(), "DATABASE_URL="+testdb.URL(pool))
+			out, err := cmd.CombinedOutput()
+			var cities int
+			if qerr := pool.QueryRow(ctx, `select count(*) from app.cities`).Scan(&cities); qerr != nil {
+				t.Fatal(qerr)
+			}
+			if tc.seeds {
+				if err != nil || cities != 1 {
+					t.Fatalf("seed: err %v, cities %d\n%s", err, cities, out)
+				}
+				return
+			}
+			if err == nil || cities != 0 {
+				t.Fatalf("seed went ahead without the dev marker: err %v, cities %d\n%s", err, cities, out)
+			}
+			if !strings.Contains(string(out), "issho.environment") {
+				t.Errorf("refusal does not name the marker:\n%s", out)
+			}
+		})
+	}
+}

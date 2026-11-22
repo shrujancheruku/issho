@@ -280,7 +280,8 @@ seed:
 # Seed the hosted dev database (issho-dev) only. The founder runs it, once, after dev is
 # migrated; no worker or CI job does. DATABASE_URL (dev's migration connection) and
 # SEED_DEV_PROJECT_REF (the dev project's ref) come from the shell's environment, not this
-# file; the seed refuses any target that isn't that project's. See docs/deploy.md.
+# file; the seed refuses any target that isn't that project's, or whose issho.environment
+# setting isn't 'dev' (set once by the founder on dev). See docs/deploy.md.
 .PHONY: seed-dev
 seed-dev:
 	cd backend && go run ./cmd/seed --hosted-dev
