@@ -89,6 +89,15 @@ type AppPlan struct {
 	PartsOfDay     []string
 	StartsAt       string
 	EndsAt         string
+	OpensOn        time.Time
+}
+
+type AppPlanRound struct {
+	ID       string
+	PlanID   string
+	Number   int32
+	StartsOn time.Time
+	EndsOn   time.Time
 }
 
 type AppPlanStop struct {
@@ -123,7 +132,7 @@ type AppProfile struct {
 	Languages               []string
 	LivesInCity             bool
 	OnlyWomenAndNonBinary   bool
-	SaidAdultOn             pgtype.Date
+	SaidAdultOn             time.Time
 	CodeOfConductVersion    int32
 	CodeOfConductAcceptedAt time.Time
 	CreatedAt               time.Time
@@ -139,6 +148,20 @@ type AppQueueItem struct {
 	Reason    *string
 	CreatedAt time.Time
 	ClosedAt  *time.Time
+}
+
+type AppSignup struct {
+	RoundID   string
+	AccountID string
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
+type AppSignupTick struct {
+	RoundID   string
+	AccountID string
+	TickDate  time.Time
+	Part      string
 }
 
 type RiverRiverJob struct {

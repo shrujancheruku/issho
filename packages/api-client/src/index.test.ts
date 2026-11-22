@@ -112,4 +112,22 @@ describe('createApi', () => {
     expect(seen[0].url).toBe('https://api.example.test/issho.v1.ProfileService/SaveProfile');
     expect(seen[0].headers.get('authorization')).toBe('Bearer tok-1');
   });
+
+  it('signs the caller up to a plan with times through the signup service', async () => {
+    const seen: Request[] = [];
+    const fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+      seen.push(new Request(input, init));
+      return new Response(
+        JSON.stringify({ signup: { planId: 'p1', ticks: [{ date: '2026-01-08', part: 'evening' }], hearBy: '2026-01-11' } }),
+        { headers: { 'content-type': 'application/json' } },
+      );
+    };
+    const api = createApi({ baseUrl: 'https://api.example.test', getAccessToken: async () => 'tok-1', fetch });
+
+    const res = await api.signup.signUp({ planId: 'p1', ticks: [{ date: '2026-01-08', part: 'evening' }] });
+
+    expect(res.signup?.hearBy).toBe('2026-01-11');
+    expect(seen[0].url).toBe('https://api.example.test/issho.v1.SignupService/SignUp');
+    expect(seen[0].headers.get('authorization')).toBe('Bearer tok-1');
+  });
 });

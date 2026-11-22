@@ -5,7 +5,7 @@ The data that seeds **development and tests**: one city, Da Nang–Hoi An, and t
 `da-nang-hoi-an.json` is one object with two keys:
 
 - `city`: `slug`, `state`, `time_zone`, `currency` and `names` by language.
-- `plans`: each with `id` (fixed, so tests can name it), `city`, `price`, `meeting_address`, `parts_of_day`, `starts_at`, `ends_at`, `texts` by language (`title`, `description`, `meeting_point`, `what_to_bring`) and `stops` in order, each with `stay_minutes`, `leg` (the way to the next stop, `null` for the last) and `texts` by language (`name`, `note`).
+- `plans`: each with `id` (fixed, so tests can name it), `city`, `price`, `meeting_address`, `parts_of_day`, `starts_at`, `ends_at`, `opens_on` (the city day the plan opened; its rounds are 7-day blocks from it), `texts` by language (`title`, `description`, `meeting_point`, `what_to_bring`) and `stops` in order, each with `stay_minutes`, `leg` (the way to the next stop, `null` for the last) and `texts` by language (`name`, `note`).
 
 Fields that must be true on the day are single values; only prose is per language. A key the loaders don't know fails the load, so a typo can't drop a field.
 

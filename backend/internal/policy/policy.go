@@ -50,3 +50,9 @@ const (
 	NameMinLength = 1  // docs/spec/people.md
 	NameMaxLength = 40 // docs/spec/people.md
 )
+
+// MinTickLeadDays is how far ahead a tick must be: a person ticks parts of the
+// day on real dates from 3 days ahead, counted in calendar days on the city's
+// clock (docs/spec/matching.md, "Rounds"). It is also the least notice an
+// outing's date gets after its invitations go out.
+const MinTickLeadDays = 3 // docs/spec/matching.md

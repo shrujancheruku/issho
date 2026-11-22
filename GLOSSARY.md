@@ -266,6 +266,14 @@ _Avoid_: cycle, window
 One person's entry to one round of a plan, with the times they can go.
 _Avoid_: registration, booking, RSVP
 
+**Tick**:
+One part of one real date a person can go, in a signup: "Saturday 10 January, evening". A signup holds a set of ticks, from 3 days ahead.
+_Avoid_: slot (that is matching's own word for a tick it has read), availability
+
+**Hear-by date**:
+A round's last day, the same for everyone signed up: by then each has an invitation or a "no group this round".
+_Avoid_: deadline, results day
+
 **Matching**:
 Forming groups and setting dates among the signups to plans.
 _Avoid_: pool, audience, recommendation

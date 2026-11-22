@@ -89,6 +89,15 @@ type AppPlan struct {
 	PartsOfDay     []string
 	StartsAt       string
 	EndsAt         string
+	OpensOn        pgtype.Date
+}
+
+type AppPlanRound struct {
+	ID       pgtype.UUID
+	PlanID   pgtype.UUID
+	Number   int32
+	StartsOn pgtype.Date
+	EndsOn   pgtype.Date
 }
 
 type AppPlanStop struct {
@@ -139,6 +148,20 @@ type AppQueueItem struct {
 	Reason    *string
 	CreatedAt time.Time
 	ClosedAt  *time.Time
+}
+
+type AppSignup struct {
+	RoundID   pgtype.UUID
+	AccountID pgtype.UUID
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
+type AppSignupTick struct {
+	RoundID   pgtype.UUID
+	AccountID pgtype.UUID
+	TickDate  pgtype.Date
+	Part      string
 }
 
 type RiverRiverJob struct {

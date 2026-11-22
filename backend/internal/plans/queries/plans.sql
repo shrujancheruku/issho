@@ -22,8 +22,8 @@ select * from app.plan_stop_texts where plan_id = any($1::uuid[]);
 delete from app.plans where id = $1;
 
 -- name: InsertPlan :exec
-insert into app.plans (id, city, price, meeting_address, parts_of_day, starts_at, ends_at)
-values ($1, $2, $3, $4, $5, $6, $7);
+insert into app.plans (id, city, price, meeting_address, parts_of_day, starts_at, ends_at, opens_on)
+values ($1, $2, $3, $4, $5, $6, $7, $8);
 
 -- name: InsertPlanText :exec
 insert into app.plan_texts (plan_id, language, title, description, meeting_point, what_to_bring)

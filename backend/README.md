@@ -20,7 +20,7 @@ One Go module (`github.com/shrujancheruku/issho/backend`), part of the root `go.
 | `internal/rpc` | The API's services and the access interceptor; `rpc/rpcauth` is the check behind `cmd/rpcauth` |
 | `fixtures` | The development and test fixture: the city Da Nang–Hoi An and two plans, as embedded JSON (see "Fixtures") |
 | `internal/cities` | The listed cities: slug, state, time zone, currency and names (`app.cities`) |
-| `internal/plans` | Plans, read only so far: the fields a plan page shows and the prose per language (`app.plans` and its texts and stops) |
+| `internal/plans` | Plans, read only so far: the fields a plan page shows and the prose per language (`app.plans` and its texts and stops); and the signups to them, with their times (`app.plan_rounds`, `app.signups`, `app.signup_ticks`) |
 | `internal/people` | Accounts (`app.accounts`), profiles (`app.profiles`), and the verifier for Supabase Auth's tokens (see "Accounts and sign-in") |
 | `internal/email` | `email.Sender`, its in-memory fake, and `email/resend`, the real one |
 | `internal/logging` | `logging.New`, the one way a process makes a logger, and the test that keeps it the only way (see "Logs") |
@@ -61,7 +61,9 @@ Sign-in is Supabase Auth's 6-digit email code; `internal/people` owns the accoun
 
 One city, Da Nang–Hoi An, and two plans (`fixtures/da-nang-hoi-an.json`) carry the thin loop before plan-making exists. `internal/cities` and `internal/plans` each own their tables and each reads its own part of the file (`LoadFixture`). The tests load it themselves; in development `make seed` (`cmd/seed`) loads it into the local database after `make migrate-up`. **Nothing loads it in production:** the image holds `api` and `worker`, neither imports `fixtures`, `seed` refuses a database that isn't on this machine, and a migration inserts no city. `cmd/cmd_test.go` fails if any of that stops being true. See `fixtures/README.md`.
 
-`PlanService` (`ListPlans`, `GetPlan`) is public: anyone reads a city's plans with no token, in `en` or `vi` from the fixture's prose (`internal/rpc/plan.go`). A closed city's plans are kept but not shown: `ListPlans` returns none and `GetPlan` on one is `not_found`.
+`SignupService` (member) holds a signup to a plan with its ticks: `SignUp` (which also changes the ticks), `WithdrawSignup` and `ListMySignups`, each only for the caller. `SignUp` calls `rpc.RequireProfile` first. A plan's `signed_up` is how many are signed up, never who. See `internal/plans/README.md`.
+
+`PlanService` (`ListPlans`, `GetPlan`) is public: anyone reads a city's plans with no token, in `en` or `vi` from the fixture's prose (`internal/rpc/plan.go`). A closed city's plans are kept but not shown: `ListPlans` returns none and `GetPlan` on one is `not_found`; so is a plan before its opening day (`opens_on`, on the city's calendar).
 
 `accounts_city_fkey` (migration `00004`) fails with `23503` on a local database that already holds an account but no city row, which only one built from an earlier integration tip can. Run `make migrate-down` (or reset the database) and `make migrate-up`, then `make seed`.
 

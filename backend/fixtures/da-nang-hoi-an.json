@@ -18,6 +18,7 @@
       "parts_of_day": ["evening"],
       "starts_at": "17:00",
       "ends_at": "20:30",
+      "opens_on": "2026-01-05",
       "texts": {
         "en": {
           "title": "Hoi An old town at lantern time",
@@ -67,6 +68,7 @@
       "parts_of_day": ["morning"],
       "starts_at": "06:30",
       "ends_at": "10:00",
+      "opens_on": "2026-01-05",
       "texts": {
         "en": {
           "title": "My Khe at sunrise, then bánh mì and coffee",

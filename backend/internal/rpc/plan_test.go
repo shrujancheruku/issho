@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"connectrpc.com/connect"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -13,6 +14,7 @@ import (
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
 	"github.com/shrujancheruku/issho/backend/gen/issho/v1/isshov1connect"
 	"github.com/shrujancheruku/issho/backend/internal/cities"
+	"github.com/shrujancheruku/issho/backend/internal/clock"
 	"github.com/shrujancheruku/issho/backend/internal/plans"
 	"github.com/shrujancheruku/issho/backend/internal/rpc"
 	"github.com/shrujancheruku/issho/backend/internal/testdb"
@@ -27,7 +29,7 @@ const (
 // authenticator at all: nothing here sends a token.
 func planClient(t *testing.T) isshov1connect.PlanServiceClient {
 	t.Helper()
-	c, _ := planClientAndPool(t)
+	c, _, _ := planClientPoolAndClock(t)
 	return c
 }
 
@@ -35,6 +37,16 @@ func planClient(t *testing.T) isshov1connect.PlanServiceClient {
 // changes the city's state after its plans exist.
 func planClientAndPool(t *testing.T) (isshov1connect.PlanServiceClient, *pgxpool.Pool) {
 	t.Helper()
+	c, pool, _ := planClientPoolAndClock(t)
+	return c, pool
+}
+
+// planClientPoolAndClock is planClientAndPool and the server's clock, which
+// starts at 16:00 on 5 January 2026 on the city's clock, the day the fixture's
+// plans open.
+func planClientPoolAndClock(t *testing.T) (isshov1connect.PlanServiceClient, *pgxpool.Pool, *clock.Fake) {
+	t.Helper()
+	clk := clock.NewFake(time.Date(2026, 1, 5, 9, 0, 0, 0, time.UTC))
 	ctx := context.Background()
 	pool := testdb.NewDatabase(t)
 	if err := db.Up(ctx, pool); err != nil {
@@ -49,10 +61,10 @@ func planClientAndPool(t *testing.T) (isshov1connect.PlanServiceClient, *pgxpool
 	srv := httptest.NewServer(rpc.NewHandler(rpc.Config{
 		Version: "test",
 		Cities:  cities.New(pool),
-		Plans:   plans.New(pool),
+		Plans:   plans.New(clk, pool, cities.New(pool)),
 	}))
 	t.Cleanup(srv.Close)
-	return isshov1connect.NewPlanServiceClient(srv.Client(), srv.URL), pool
+	return isshov1connect.NewPlanServiceClient(srv.Client(), srv.URL), pool, clk
 }
 
 // Anyone can list a city's plans: no token, no account.
@@ -185,4 +197,38 @@ func TestWithoutPlansTheServiceIsNotServed(t *testing.T) {
 	c := isshov1connect.NewPlanServiceClient(srv.Client(), srv.URL)
 	_, err := c.GetPlan(context.Background(), connect.NewRequest(&isshov1.GetPlanRequest{Id: lanternPlan}))
 	wantCode(t, err, connect.CodeUnimplemented)
+}
+
+// A plan is hidden until its opening day on the city's calendar: before it the
+// list leaves the plan out and GetPlan is NotFound, exactly as for a plan that
+// doesn't exist. On the opening day it is shown.
+func TestAPlanThatHasNotOpenedIsNotShown(t *testing.T) {
+	c, pool, clk := planClientPoolAndClock(t)
+	ctx := context.Background()
+	if _, err := pool.Exec(ctx, `update app.plans set opens_on = '2026-01-06' where id = $1`, lanternPlan); err != nil {
+		t.Fatal(err)
+	}
+
+	list, err := c.ListPlans(ctx, connect.NewRequest(&isshov1.ListPlansRequest{City: "da-nang-hoi-an"}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := list.Msg.GetPlans(); len(got) != 1 || got[0].GetId() != sunrisePlan {
+		t.Fatalf("on the 5th the list is %v, want only the sunrise plan", got)
+	}
+	_, missing := c.GetPlan(ctx, connect.NewRequest(&isshov1.GetPlanRequest{Id: "6a1f0c52-3d1b-4f0e-9a52-0d7c9a1b00ff"}))
+	_, early := c.GetPlan(ctx, connect.NewRequest(&isshov1.GetPlanRequest{Id: lanternPlan}))
+	wantCode(t, early, connect.CodeNotFound)
+	if early.Error() != missing.Error() {
+		t.Fatalf("a plan not yet open answers %q, a missing plan %q", early, missing)
+	}
+
+	clk.Set(time.Date(2026, 1, 5, 17, 0, 0, 0, time.UTC)) // midnight on the 6th there
+	list, err = c.ListPlans(ctx, connect.NewRequest(&isshov1.ListPlansRequest{City: "da-nang-hoi-an"}))
+	if err != nil || len(list.Msg.GetPlans()) != 2 {
+		t.Fatalf("on the 6th the list is %v, %v; want both", list, err)
+	}
+	if _, err := c.GetPlan(ctx, connect.NewRequest(&isshov1.GetPlanRequest{Id: lanternPlan})); err != nil {
+		t.Fatalf("on the 6th: %v", err)
+	}
 }

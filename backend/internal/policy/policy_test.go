@@ -44,3 +44,11 @@ func TestProfileNumbers(t *testing.T) {
 		t.Errorf("name length = %d to %d, spec says 1 to 40", NameMinLength, NameMaxLength)
 	}
 }
+
+// A tick is on a real date from 3 days ahead (docs/spec/matching.md, "Rounds"),
+// written out independently of the constant.
+func TestSignupLeadDays(t *testing.T) {
+	if MinTickLeadDays != 3 {
+		t.Errorf("a tick's lead = %d days, spec says 3", MinTickLeadDays)
+	}
+}

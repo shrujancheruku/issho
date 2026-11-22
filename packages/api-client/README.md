@@ -24,6 +24,14 @@ const { account } = await api.account.getAccount({ displayLanguage: 'vi' });
 // ProfileProblem detail: err.findDetails(ProfileProblemSchema)[0]?.reason is
 // PROFILE_REQUIRED (open the questions) or UNDER_AGE (stop with a plain message).
 const { profile } = await api.profile.getProfile({});
+
+// A signup commits nobody: parts of the day on real dates, from 3 days ahead. Calling it
+// again changes the times. A tick the plan refuses carries a SignupProblem detail
+// (err.findDetails(SignupProblemSchema)[0]?.reason), and a caller with no profile gets
+// ProfileProblem PROFILE_REQUIRED, as above.
+const { signup } = await api.signup.signUp({ planId, ticks: [{ date: '2026-01-08', part: 'evening' }] });
+// signup.hearBy is the day they will hear by; api.signup.listMySignups({}) and
+// api.signup.withdrawSignup({ planId }) are the rest.
 ```
 
 - `getAccessToken` is called before every request. A token goes out as `Authorization: Bearer <token>`; with none, no header is sent, which only public RPCs accept.

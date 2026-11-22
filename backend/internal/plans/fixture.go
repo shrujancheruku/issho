@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 
@@ -22,6 +23,7 @@ type fixturePlan struct {
 	PartsOfDay     []string               `json:"parts_of_day"`
 	StartsAt       string                 `json:"starts_at"`
 	EndsAt         string                 `json:"ends_at"`
+	OpensOn        string                 `json:"opens_on"`
 	Texts          map[string]fixtureText `json:"texts"`
 	Stops          []fixtureStop          `json:"stops"`
 }
@@ -95,9 +97,13 @@ func writePlan(ctx context.Context, q *store.Queries, p fixturePlan) error {
 	if err := q.DeletePlan(ctx, p.ID); err != nil {
 		return err
 	}
+	opensOn, err := time.Parse(time.DateOnly, p.OpensOn)
+	if err != nil {
+		return fmt.Errorf("opens_on %q is not a date (YYYY-MM-DD)", p.OpensOn)
+	}
 	if err := q.InsertPlan(ctx, store.InsertPlanParams{
 		ID: p.ID, City: p.City, Price: p.Price, MeetingAddress: p.MeetingAddress,
-		PartsOfDay: p.PartsOfDay, StartsAt: p.StartsAt, EndsAt: p.EndsAt,
+		PartsOfDay: p.PartsOfDay, StartsAt: p.StartsAt, EndsAt: p.EndsAt, OpensOn: opensOn,
 	}); err != nil {
 		return err
 	}

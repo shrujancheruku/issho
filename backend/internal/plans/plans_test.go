@@ -11,6 +11,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/db"
 	"github.com/shrujancheruku/issho/backend/fixtures"
 	"github.com/shrujancheruku/issho/backend/internal/cities"
+	"github.com/shrujancheruku/issho/backend/internal/clock"
 	"github.com/shrujancheruku/issho/backend/internal/plans"
 	"github.com/shrujancheruku/issho/backend/internal/testdb"
 )
@@ -39,10 +40,15 @@ func seeded(t *testing.T) *pgxpool.Pool {
 	return pool
 }
 
+// service reads plans on a clock set to the fixture plans' opening day.
+func service(pool *pgxpool.Pool) *plans.Service {
+	return plans.New(clock.NewFake(rigStart), pool, cities.New(pool))
+}
+
 // The fixture seeds two plans, and the city lists both.
 func TestTheCityListsItsTwoFixturePlans(t *testing.T) {
 	pool := seeded(t)
-	got, err := plans.New(pool).List(context.Background(), city, "en")
+	got, err := service(pool).List(context.Background(), city, "en")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -59,7 +65,7 @@ func TestTheCityListsItsTwoFixturePlans(t *testing.T) {
 // A plan carries every field a plan page shows.
 func TestAPlanCarriesTheFieldsAPlanPageShows(t *testing.T) {
 	pool := seeded(t)
-	got, err := plans.New(pool).Get(context.Background(), lanterns, "en")
+	got, err := service(pool).Get(context.Background(), lanterns, "en")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -87,7 +93,7 @@ func TestAPlanCarriesTheFieldsAPlanPageShows(t *testing.T) {
 // The text comes back in the caller's language; the fields don't change.
 func TestAPlansTextIsInTheCallersLanguage(t *testing.T) {
 	pool := seeded(t)
-	svc := plans.New(pool)
+	svc := service(pool)
 	en, err := svc.Get(context.Background(), sunrise, "en")
 	if err != nil {
 		t.Fatal(err)
@@ -126,7 +132,7 @@ func TestAPlanWithNoTextInTheLanguageReadsInEnglish(t *testing.T) {
 	if _, err := pool.Exec(ctx, `delete from app.plan_texts where plan_id = $1 and language = 'vi'`, lanterns); err != nil {
 		t.Fatal(err)
 	}
-	got, err := plans.New(pool).Get(ctx, lanterns, "vi")
+	got, err := service(pool).Get(ctx, lanterns, "vi")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -140,7 +146,7 @@ func TestAPlanWithNoTextInTheLanguageReadsInEnglish(t *testing.T) {
 func TestAPlanThatDoesNotExistIsNotFound(t *testing.T) {
 	pool := seeded(t)
 	for _, id := range []string{"6a1f0c52-3d1b-4f0e-9a52-0d7c9a1b00ff", "", "not-an-id", lanterns + "'; drop table app.plans; --"} {
-		got, err := plans.New(pool).Get(context.Background(), id, "en")
+		got, err := service(pool).Get(context.Background(), id, "en")
 		if !errors.Is(err, plans.ErrNotFound) {
 			t.Errorf("Get(%q) = %+v, %v; want ErrNotFound", id, got, err)
 		}
@@ -154,7 +160,7 @@ func TestAnEmptyCityListsNoPlans(t *testing.T) {
 	if _, err := pool.Exec(ctx, `insert into app.cities (slug, state, time_zone, currency) values ('hue', 'planned', 'Asia/Ho_Chi_Minh', 'VND')`); err != nil {
 		t.Fatal(err)
 	}
-	got, err := plans.New(pool).List(ctx, "hue", "en")
+	got, err := service(pool).List(ctx, "hue", "en")
 	if err != nil || len(got) != 0 {
 		t.Fatalf("List = %v, %v; want none", got, err)
 	}
@@ -166,7 +172,7 @@ func TestLoadingThePlansTwiceChangesNothing(t *testing.T) {
 	if err := plans.LoadFixture(ctx, pool, fixtures.DaNangHoiAn); err != nil {
 		t.Fatal(err)
 	}
-	got, err := plans.New(pool).List(ctx, city, "en")
+	got, err := service(pool).List(ctx, city, "en")
 	if err != nil || len(got) != 2 {
 		t.Fatalf("List = %d plans, %v; want 2", len(got), err)
 	}
@@ -181,5 +187,19 @@ func TestAFixtureWithAnUnknownFieldIsRefused(t *testing.T) {
 	bad := []byte(`{"plans": [{"id": "6a1f0c52-3d1b-4f0e-9a52-0d7c9a1b0009", "colour": "red"}]}`)
 	if err := plans.LoadFixture(context.Background(), pool, bad); err == nil {
 		t.Fatal("LoadFixture accepted an unknown field")
+	}
+}
+
+// A plan's rounds are counted from its opening day, so a fixture plan without
+// one, or with one that isn't a date, is refused rather than given a day.
+func TestAFixturePlanWithoutAValidOpeningDayIsRefused(t *testing.T) {
+	pool := seeded(t)
+	for _, opens := range []string{``, `"opens_on": "",`, `"opens_on": "5 January",`} {
+		bad := []byte(`{"plans": [{"id": "6a1f0c52-3d1b-4f0e-9a52-0d7c9a1b0009", "city": "da-nang-hoi-an", "price": 1,
+			"meeting_address": "x", "parts_of_day": ["evening"], "starts_at": "17:00", "ends_at": "18:00", ` + opens + `
+			"texts": {}, "stops": []}]}`)
+		if err := plans.LoadFixture(context.Background(), pool, bad); err == nil {
+			t.Errorf("LoadFixture accepted a plan with %q", opens)
+		}
 	}
 }

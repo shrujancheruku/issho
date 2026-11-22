@@ -7,6 +7,7 @@ package store
 
 import (
 	"context"
+	"time"
 )
 
 const deletePlan = `-- name: DeletePlan :exec
@@ -21,7 +22,7 @@ func (q *Queries) DeletePlan(ctx context.Context, id string) error {
 }
 
 const getPlan = `-- name: GetPlan :one
-select id, city, price, meeting_address, parts_of_day, starts_at, ends_at from app.plans where id = $1
+select id, city, price, meeting_address, parts_of_day, starts_at, ends_at, opens_on from app.plans where id = $1
 `
 
 func (q *Queries) GetPlan(ctx context.Context, id string) (AppPlan, error) {
@@ -35,13 +36,14 @@ func (q *Queries) GetPlan(ctx context.Context, id string) (AppPlan, error) {
 		&i.PartsOfDay,
 		&i.StartsAt,
 		&i.EndsAt,
+		&i.OpensOn,
 	)
 	return i, err
 }
 
 const insertPlan = `-- name: InsertPlan :exec
-insert into app.plans (id, city, price, meeting_address, parts_of_day, starts_at, ends_at)
-values ($1, $2, $3, $4, $5, $6, $7)
+insert into app.plans (id, city, price, meeting_address, parts_of_day, starts_at, ends_at, opens_on)
+values ($1, $2, $3, $4, $5, $6, $7, $8)
 `
 
 type InsertPlanParams struct {
@@ -52,6 +54,7 @@ type InsertPlanParams struct {
 	PartsOfDay     []string
 	StartsAt       string
 	EndsAt         string
+	OpensOn        time.Time
 }
 
 func (q *Queries) InsertPlan(ctx context.Context, arg InsertPlanParams) error {
@@ -63,6 +66,7 @@ func (q *Queries) InsertPlan(ctx context.Context, arg InsertPlanParams) error {
 		arg.PartsOfDay,
 		arg.StartsAt,
 		arg.EndsAt,
+		arg.OpensOn,
 	)
 	return err
 }
@@ -234,7 +238,7 @@ func (q *Queries) ListPlanTexts(ctx context.Context, dollar_1 []string) ([]AppPl
 
 const listPlansInCity = `-- name: ListPlansInCity :many
 
-select id, city, price, meeting_address, parts_of_day, starts_at, ends_at from app.plans where city = $1 order by starts_at, id
+select id, city, price, meeting_address, parts_of_day, starts_at, ends_at, opens_on from app.plans where city = $1 order by starts_at, id
 `
 
 // The plans tables, app.plans, app.plan_texts, app.plan_stops and
@@ -256,6 +260,7 @@ func (q *Queries) ListPlansInCity(ctx context.Context, city string) ([]AppPlan, 
 			&i.PartsOfDay,
 			&i.StartsAt,
 			&i.EndsAt,
+			&i.OpensOn,
 		); err != nil {
 			return nil, err
 		}

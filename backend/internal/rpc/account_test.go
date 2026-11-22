@@ -18,6 +18,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/cities"
 	"github.com/shrujancheruku/issho/backend/internal/clock"
 	"github.com/shrujancheruku/issho/backend/internal/people"
+	"github.com/shrujancheruku/issho/backend/internal/plans"
 	"github.com/shrujancheruku/issho/backend/internal/rpc"
 	"github.com/shrujancheruku/issho/backend/internal/testdb"
 )
@@ -50,11 +51,18 @@ func newAccountRig(t *testing.T) *accountRig {
 	if err := cities.LoadFixture(context.Background(), pool, fixtures.DaNangHoiAn); err != nil {
 		t.Fatal(err)
 	}
-	svc := people.New(clk, pool, cities.New(pool), people.Config{DefaultCity: "da-nang-hoi-an"})
+	if err := plans.LoadFixture(context.Background(), pool, fixtures.DaNangHoiAn); err != nil {
+		t.Fatal(err)
+	}
+	cs := cities.New(pool)
+	svc := people.New(clk, pool, cs, people.Config{DefaultCity: "da-nang-hoi-an"})
 	srv := httptest.NewServer(rpc.NewHandler(rpc.Config{
 		Version: "test",
 		Auth:    rpc.NewAuthenticator(issuer.Verifier(clk)),
 		People:  svc,
+		Cities:  cs,
+		Plans:   plans.New(clk, pool, cs),
+		Signups: plans.NewSignups(clk, pool, cs),
 	}))
 	t.Cleanup(srv.Close)
 	return &accountRig{clk: clk, issuer: issuer, people: svc, srv: srv, client: isshov1connect.NewAccountServiceClient(srv.Client(), srv.URL)}

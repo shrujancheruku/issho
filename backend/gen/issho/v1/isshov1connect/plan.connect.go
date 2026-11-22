@@ -44,11 +44,14 @@ type PlanServiceClient interface {
 	// Lists a city's plans, earliest start first, with their text in the
 	// caller's display language. Public: anyone may see a city's plans with no
 	// token (docs/spec/core-loop.md). It returns a plan's page fields, which are
-	// the same for everyone, and nothing about any person.
+	// the same for everyone, and nothing about any person but how many are signed
+	// up. A plan is left out until its opening day on the city's calendar, and a
+	// closed city's plans are all left out: the spec has no "opening soon".
 	ListPlans(context.Context, *connect.Request[v1.ListPlansRequest]) (*connect.Response[v1.ListPlansResponse], error)
 	// Returns one plan with its text in the caller's display language. Public,
 	// for the same reason as ListPlans. A plan that doesn't exist is NOT_FOUND,
-	// never an empty plan.
+	// never an empty plan, and so is one ListPlans leaves out (not yet open, or
+	// in a closed city): the same error, so a caller can't tell which.
 	GetPlan(context.Context, *connect.Request[v1.GetPlanRequest]) (*connect.Response[v1.GetPlanResponse], error)
 }
 
@@ -99,11 +102,14 @@ type PlanServiceHandler interface {
 	// Lists a city's plans, earliest start first, with their text in the
 	// caller's display language. Public: anyone may see a city's plans with no
 	// token (docs/spec/core-loop.md). It returns a plan's page fields, which are
-	// the same for everyone, and nothing about any person.
+	// the same for everyone, and nothing about any person but how many are signed
+	// up. A plan is left out until its opening day on the city's calendar, and a
+	// closed city's plans are all left out: the spec has no "opening soon".
 	ListPlans(context.Context, *connect.Request[v1.ListPlansRequest]) (*connect.Response[v1.ListPlansResponse], error)
 	// Returns one plan with its text in the caller's display language. Public,
 	// for the same reason as ListPlans. A plan that doesn't exist is NOT_FOUND,
-	// never an empty plan.
+	// never an empty plan, and so is one ListPlans leaves out (not yet open, or
+	// in a closed city): the same error, so a caller can't tell which.
 	GetPlan(context.Context, *connect.Request[v1.GetPlanRequest]) (*connect.Response[v1.GetPlanResponse], error)
 }
 

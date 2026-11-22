@@ -26,11 +26,12 @@ const defaultCity = "da-nang-hoi-an"
 // (a connection URL for the app's own role, and the project's Auth URL); the
 // API never holds the project's JWT secret.
 type accounts struct {
-	people *people.Service
-	cities *cities.Service
-	plans  *plans.Service
-	auth   rpc.Authenticator
-	close  func()
+	people  *people.Service
+	cities  *cities.Service
+	plans   *plans.Service
+	signups *plans.Signups
+	auth    rpc.Authenticator
+	close   func()
 }
 
 // newAccounts reads DATABASE_URL (the Supabase pooler's URL for the app) and
@@ -56,10 +57,11 @@ func newAccounts(ctx context.Context, log *slog.Logger, getenv func(string) stri
 	verifier := people.NewVerifier(clk, people.VerifierConfig{JWKSURL: authURL + "/.well-known/jwks.json", Issuer: authURL, Log: log})
 	cs := cities.New(pool)
 	return &accounts{
-		people: people.New(clk, pool, cs, people.Config{DefaultCity: defaultCity}),
-		cities: cs,
-		plans:  plans.New(pool),
-		auth:   rpc.NewAuthenticator(verifier),
-		close:  pool.Close,
+		people:  people.New(clk, pool, cs, people.Config{DefaultCity: defaultCity}),
+		cities:  cs,
+		plans:   plans.New(clk, pool, cs),
+		signups: plans.NewSignups(clk, pool, cs),
+		auth:    rpc.NewAuthenticator(verifier),
+		close:   pool.Close,
 	}, nil
 }
