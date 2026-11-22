@@ -109,12 +109,20 @@ grep -q '^SUPABASE_AUTH_URL=$(kamal secrets extract dev-supabase-auth-url ' "$re
 # The worker's connection is its own (a session pooler), not the API's.
 grep -A8 '^  worker:' "$repo/config/deploy.yml" | grep -q '^ *- DATABASE_URL$' && bad "the worker is given the API's DATABASE_URL"
 
+# describe needs secretmanager.secrets.get, which the deploy account lacks: no call may use it.
+run "" || bad "the script failed with every tool succeeding"
+! grep -q '^gcloud secrets describe' "$work/log" || bad "the preflight calls gcloud secrets describe"
+
 # A secret the deploy names but the store lacks stops it before Kamal is called at
 # all, so no image is built and no container replaced.
 for name in dev-database-url dev-supabase-auth-url; do
-  if run "gcloud secrets describe $name"; then bad "the script succeeded although $name is missing"; fi
+  # The preflight uses the access the deploy account already has (accessor), never
+  # secrets.get, which docs/deploy.md does not grant.
+  if run "gcloud secrets versions access latest --secret=$name "; then bad "the script succeeded although $name is missing"; fi
   [ ! -s "$work/log" ] || [ "$(grep -c '^kamal\|^go \|^pnpm' "$work/log")" -eq 0 ] || bad "a tool ran although $name is missing: $(cat "$work/log")"
   grep -q "$name" "$work/out" || bad "the failure does not name the missing secret $name"
+  # The preflight reads the value to prove it exists, and must never print it.
+  ! grep -q 'value-of-secret' "$work/out" || bad "the preflight printed a secret's value"
 done
 
 # --- no address, no deploy --------------------------------------------------------
