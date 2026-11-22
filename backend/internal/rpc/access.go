@@ -117,6 +117,8 @@ func (a *AccessInterceptor) check(ctx context.Context, procedure, authorization 
 	}
 
 	switch rule {
+	case isshov1.Access_ACCESS_MEMBER:
+		// Any signed-in caller: nothing more to check.
 	case isshov1.Access_ACCESS_MAKING:
 		if !id.Making {
 			return ctx, connect.NewError(connect.CodePermissionDenied, errors.New("not allowed"))
@@ -125,6 +127,10 @@ func (a *AccessInterceptor) check(ctx context.Context, procedure, authorization 
 		if !id.Admin || !id.SecondStep {
 			return ctx, connect.NewError(connect.CodePermissionDenied, errors.New("not allowed"))
 		}
+	default:
+		// A rule this code has no case for must not let anyone in: deny by
+		// default, and say nothing of why (a server bug, not the caller's).
+		return ctx, connect.NewError(connect.CodeInternal, errors.New("rpc has an unknown access rule"))
 	}
 	note(ctx, "", id.Subject)
 	return context.WithValue(ctx, identityKey{}, id), nil

@@ -38,6 +38,8 @@ var throwawayRules = map[string]isshov1.Access{
 	"Admin":       isshov1.Access_ACCESS_ADMIN,
 	"Undeclared":  isshov1.Access_ACCESS_UNSPECIFIED,
 	"Unspecified": isshov1.Access_ACCESS_UNSPECIFIED,
+	// A value a later enum gains before this interceptor learns a case for it.
+	"Future": isshov1.Access(99),
 }
 
 // throwawayFiles is the registry of a service that exists only in these tests,
@@ -150,6 +152,8 @@ func TestAccessRules(t *testing.T) {
 		{"no rule declared, a fully privileged caller", "Undeclared", "making-admin2", connect.CodeInternal},
 		{"no rule declared, no token", "Undeclared", "", connect.CodeInternal},
 		{"rule set to unspecified", "Unspecified", "making-admin2", connect.CodeInternal},
+		{"rule outside the enum, a fully privileged caller", "Future", "making-admin2", connect.CodeInternal},
+		{"rule outside the enum, a plain member", "Future", "member", connect.CodeInternal},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			err := call(srv, tc.rpc, tc.token)
