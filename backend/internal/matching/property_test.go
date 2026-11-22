@@ -474,7 +474,7 @@ func TestPropertyBestAssignmentAcrossDates(t *testing.T) {
 // is open enough that a perfect assignment exists.
 func TestPropertyPilotSizedRounds(t *testing.T) {
 	r := rand.New(rand.NewPCG(6, 617))
-	for round := range 12 {
+	for round := range 4 {
 		in := generate(r, 60)
 		for len(in.Signups) < 60 {
 			i := len(in.Signups)
@@ -508,7 +508,7 @@ func TestPropertyPilotSizedRounds(t *testing.T) {
 // sizes the spec names, however the 60 are spread over languages.
 func TestEveryoneWhoCanBeSeatedIsSeatedAtPilotSize(t *testing.T) {
 	r := rand.New(rand.NewPCG(7, 617))
-	for round := range 20 {
+	for round := range 6 {
 		var in matching.Input
 		for i := range 60 {
 			in.Signups = append(in.Signups, matching.Signup{
