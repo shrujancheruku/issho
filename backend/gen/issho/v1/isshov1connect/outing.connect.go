@@ -36,6 +36,12 @@ const (
 	// OutingServiceListMyOutingsProcedure is the fully-qualified name of the OutingService's
 	// ListMyOutings RPC.
 	OutingServiceListMyOutingsProcedure = "/issho.v1.OutingService/ListMyOutings"
+	// OutingServiceAnswerInvitationProcedure is the fully-qualified name of the OutingService's
+	// AnswerInvitation RPC.
+	OutingServiceAnswerInvitationProcedure = "/issho.v1.OutingService/AnswerInvitation"
+	// OutingServiceCancelSeatProcedure is the fully-qualified name of the OutingService's CancelSeat
+	// RPC.
+	OutingServiceCancelSeatProcedure = "/issho.v1.OutingService/CancelSeat"
 )
 
 // OutingServiceClient is a client for the issho.v1.OutingService service.
@@ -45,8 +51,21 @@ type OutingServiceClient interface {
 	// where their seat stands. Member: it takes no account and no outing id, so
 	// it can only ever return the caller's own, and an outing the caller has no
 	// seat in is never in it. It never returns a name or the id of another
-	// person.
+	// person except the first names of the others going, and those only to a
+	// person who is going themselves.
 	ListMyOutings(context.Context, *connect.Request[v1.ListMyOutingsRequest]) (*connect.Response[v1.ListMyOutingsResponse], error)
+	// Says yes or no to the caller's own invitation. It is open for a fixed 48
+	// hours from the invitation (FAILED_PRECONDITION after that, or when the
+	// outing was not set, or for a no from someone already going: they cancel).
+	// A no can be changed to a yes inside the 48 hours. A yes is held until 3 have
+	// said yes, which sets the outing and makes everyone who said yes going; a yes
+	// after that is going at once. Member: the seat is the caller's own, and an
+	// outing the caller has no seat in is NOT_FOUND, as is one that doesn't exist.
+	AnswerInvitation(context.Context, *connect.Request[v1.AnswerInvitationRequest]) (*connect.Response[v1.AnswerInvitationResponse], error)
+	// Cancels the caller's own seat, which must be going: the seat records it as
+	// cancelled. FAILED_PRECONDITION for a seat that is not going, NOT_FOUND for an
+	// outing the caller has no seat in. Member.
+	CancelSeat(context.Context, *connect.Request[v1.CancelSeatRequest]) (*connect.Response[v1.CancelSeatResponse], error)
 }
 
 // NewOutingServiceClient constructs a client for the issho.v1.OutingService service. By default, it
@@ -66,17 +85,41 @@ func NewOutingServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 			connect.WithSchema(outingServiceMethods.ByName("ListMyOutings")),
 			connect.WithClientOptions(opts...),
 		),
+		answerInvitation: connect.NewClient[v1.AnswerInvitationRequest, v1.AnswerInvitationResponse](
+			httpClient,
+			baseURL+OutingServiceAnswerInvitationProcedure,
+			connect.WithSchema(outingServiceMethods.ByName("AnswerInvitation")),
+			connect.WithClientOptions(opts...),
+		),
+		cancelSeat: connect.NewClient[v1.CancelSeatRequest, v1.CancelSeatResponse](
+			httpClient,
+			baseURL+OutingServiceCancelSeatProcedure,
+			connect.WithSchema(outingServiceMethods.ByName("CancelSeat")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // outingServiceClient implements OutingServiceClient.
 type outingServiceClient struct {
-	listMyOutings *connect.Client[v1.ListMyOutingsRequest, v1.ListMyOutingsResponse]
+	listMyOutings    *connect.Client[v1.ListMyOutingsRequest, v1.ListMyOutingsResponse]
+	answerInvitation *connect.Client[v1.AnswerInvitationRequest, v1.AnswerInvitationResponse]
+	cancelSeat       *connect.Client[v1.CancelSeatRequest, v1.CancelSeatResponse]
 }
 
 // ListMyOutings calls issho.v1.OutingService.ListMyOutings.
 func (c *outingServiceClient) ListMyOutings(ctx context.Context, req *connect.Request[v1.ListMyOutingsRequest]) (*connect.Response[v1.ListMyOutingsResponse], error) {
 	return c.listMyOutings.CallUnary(ctx, req)
+}
+
+// AnswerInvitation calls issho.v1.OutingService.AnswerInvitation.
+func (c *outingServiceClient) AnswerInvitation(ctx context.Context, req *connect.Request[v1.AnswerInvitationRequest]) (*connect.Response[v1.AnswerInvitationResponse], error) {
+	return c.answerInvitation.CallUnary(ctx, req)
+}
+
+// CancelSeat calls issho.v1.OutingService.CancelSeat.
+func (c *outingServiceClient) CancelSeat(ctx context.Context, req *connect.Request[v1.CancelSeatRequest]) (*connect.Response[v1.CancelSeatResponse], error) {
+	return c.cancelSeat.CallUnary(ctx, req)
 }
 
 // OutingServiceHandler is an implementation of the issho.v1.OutingService service.
@@ -86,8 +129,21 @@ type OutingServiceHandler interface {
 	// where their seat stands. Member: it takes no account and no outing id, so
 	// it can only ever return the caller's own, and an outing the caller has no
 	// seat in is never in it. It never returns a name or the id of another
-	// person.
+	// person except the first names of the others going, and those only to a
+	// person who is going themselves.
 	ListMyOutings(context.Context, *connect.Request[v1.ListMyOutingsRequest]) (*connect.Response[v1.ListMyOutingsResponse], error)
+	// Says yes or no to the caller's own invitation. It is open for a fixed 48
+	// hours from the invitation (FAILED_PRECONDITION after that, or when the
+	// outing was not set, or for a no from someone already going: they cancel).
+	// A no can be changed to a yes inside the 48 hours. A yes is held until 3 have
+	// said yes, which sets the outing and makes everyone who said yes going; a yes
+	// after that is going at once. Member: the seat is the caller's own, and an
+	// outing the caller has no seat in is NOT_FOUND, as is one that doesn't exist.
+	AnswerInvitation(context.Context, *connect.Request[v1.AnswerInvitationRequest]) (*connect.Response[v1.AnswerInvitationResponse], error)
+	// Cancels the caller's own seat, which must be going: the seat records it as
+	// cancelled. FAILED_PRECONDITION for a seat that is not going, NOT_FOUND for an
+	// outing the caller has no seat in. Member.
+	CancelSeat(context.Context, *connect.Request[v1.CancelSeatRequest]) (*connect.Response[v1.CancelSeatResponse], error)
 }
 
 // NewOutingServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -103,10 +159,26 @@ func NewOutingServiceHandler(svc OutingServiceHandler, opts ...connect.HandlerOp
 		connect.WithSchema(outingServiceMethods.ByName("ListMyOutings")),
 		connect.WithHandlerOptions(opts...),
 	)
+	outingServiceAnswerInvitationHandler := connect.NewUnaryHandler(
+		OutingServiceAnswerInvitationProcedure,
+		svc.AnswerInvitation,
+		connect.WithSchema(outingServiceMethods.ByName("AnswerInvitation")),
+		connect.WithHandlerOptions(opts...),
+	)
+	outingServiceCancelSeatHandler := connect.NewUnaryHandler(
+		OutingServiceCancelSeatProcedure,
+		svc.CancelSeat,
+		connect.WithSchema(outingServiceMethods.ByName("CancelSeat")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/issho.v1.OutingService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case OutingServiceListMyOutingsProcedure:
 			outingServiceListMyOutingsHandler.ServeHTTP(w, r)
+		case OutingServiceAnswerInvitationProcedure:
+			outingServiceAnswerInvitationHandler.ServeHTTP(w, r)
+		case OutingServiceCancelSeatProcedure:
+			outingServiceCancelSeatHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -118,4 +190,12 @@ type UnimplementedOutingServiceHandler struct{}
 
 func (UnimplementedOutingServiceHandler) ListMyOutings(context.Context, *connect.Request[v1.ListMyOutingsRequest]) (*connect.Response[v1.ListMyOutingsResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.OutingService.ListMyOutings is not implemented"))
+}
+
+func (UnimplementedOutingServiceHandler) AnswerInvitation(context.Context, *connect.Request[v1.AnswerInvitationRequest]) (*connect.Response[v1.AnswerInvitationResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.OutingService.AnswerInvitation is not implemented"))
+}
+
+func (UnimplementedOutingServiceHandler) CancelSeat(context.Context, *connect.Request[v1.CancelSeatRequest]) (*connect.Response[v1.CancelSeatResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.OutingService.CancelSeat is not implemented"))
 }

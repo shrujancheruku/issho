@@ -30,13 +30,93 @@ func (s outingService) ListMyOutings(ctx context.Context, _ *connect.Request[iss
 	}
 	out := make([]*isshov1.Outing, len(seats))
 	for i, seat := range seats {
-		out[i] = &isshov1.Outing{
-			Id: seat.OutingID, PlanId: seat.PlanID, Date: seat.Date, Part: seat.Part, StartsAt: seat.StartsAt,
-			Languages: seat.Languages, SeatState: seatState(seat.State),
-			InvitedAt: timestamppb.New(seat.InvitedAt), InvitationEndsAt: timestamppb.New(seat.InvitationEndsAt),
-		}
+		out[i] = outingOf(seat)
 	}
 	return connect.NewResponse(&isshov1.ListMyOutingsResponse{Outings: out}), nil
+}
+
+// AnswerInvitation records the caller's yes or no to their own invitation. The
+// seat is the caller's, from the interceptor's verified identity; the request
+// names an outing and nobody else.
+func (s outingService) AnswerInvitation(ctx context.Context, req *connect.Request[isshov1.AnswerInvitationRequest]) (*connect.Response[isshov1.AnswerInvitationResponse], error) {
+	id, ok := IdentityFrom(ctx)
+	if !ok {
+		return nil, connect.NewError(connect.CodeInternal, errors.New("no identity"))
+	}
+	var answer outings.Answer
+	switch req.Msg.GetAnswer() {
+	case isshov1.InvitationAnswer_INVITATION_ANSWER_YES:
+		answer = outings.Yes
+	case isshov1.InvitationAnswer_INVITATION_ANSWER_NO:
+		answer = outings.No
+	}
+	seat, err := s.outings.Answer(ctx, id.Subject, req.Msg.GetOutingId(), answer)
+	if err != nil {
+		return nil, outingError(err, "could not record the answer")
+	}
+	return connect.NewResponse(&isshov1.AnswerInvitationResponse{Outing: outingOf(seat)}), nil
+}
+
+// CancelSeat cancels the caller's own seat in an outing they are going to.
+func (s outingService) CancelSeat(ctx context.Context, req *connect.Request[isshov1.CancelSeatRequest]) (*connect.Response[isshov1.CancelSeatResponse], error) {
+	id, ok := IdentityFrom(ctx)
+	if !ok {
+		return nil, connect.NewError(connect.CodeInternal, errors.New("no identity"))
+	}
+	seat, err := s.outings.Cancel(ctx, id.Subject, req.Msg.GetOutingId())
+	if err != nil {
+		return nil, outingError(err, "could not cancel the seat")
+	}
+	return connect.NewResponse(&isshov1.CancelSeatResponse{Outing: outingOf(seat)}), nil
+}
+
+// outingOf is a seat as the API shows it: no other person but the first names of
+// those going, which the seat carries only for a person who is going.
+func outingOf(seat outings.Seat) *isshov1.Outing {
+	return &isshov1.Outing{
+		Id: seat.OutingID, PlanId: seat.PlanID, Date: seat.Date, Part: seat.Part, StartsAt: seat.StartsAt,
+		Languages: seat.Languages, SeatState: seatState(seat.State),
+		InvitedAt: timestamppb.New(seat.InvitedAt), InvitationEndsAt: timestamppb.New(seat.InvitationEndsAt),
+		OutingState: outingState(seat.OutingState), YesCount: int32(seat.YesCount), OthersGoing: seat.GoingFirstNames,
+	}
+}
+
+// outingError is the status for a refused call. An error that isn't one of the
+// outings' own may quote the database, so the caller gets only msg.
+func outingError(err error, msg string) error {
+	switch {
+	case errors.Is(err, outings.ErrNotFound):
+		return connect.NewError(connect.CodeNotFound, errors.New("no such outing"))
+	case errors.Is(err, outings.ErrInvalid):
+		return connect.NewError(connect.CodeInvalidArgument, errors.New("the answer is yes or no"))
+	case errors.Is(err, outings.ErrInvitationClosed):
+		return connect.NewError(connect.CodeFailedPrecondition, errors.New("the invitation is closed"))
+	case errors.Is(err, outings.ErrTimeTaken):
+		return connect.NewError(connect.CodeFailedPrecondition, errors.New("you are going to another outing at that time"))
+	case errors.Is(err, outings.ErrNotGoing):
+		return connect.NewError(connect.CodeFailedPrecondition, errors.New("the seat is not going"))
+	}
+	return connect.NewError(connect.CodeInternal, errors.New(msg))
+}
+
+// outingState is an outing's stored state as the API names it.
+func outingState(s outings.OutingState) isshov1.OutingState {
+	switch s {
+	case outings.OutingProposed:
+		return isshov1.OutingState_OUTING_STATE_PROPOSED
+	case outings.OutingOffered:
+		return isshov1.OutingState_OUTING_STATE_OFFERED
+	case outings.OutingSet:
+		return isshov1.OutingState_OUTING_STATE_SET
+	case outings.OutingOver:
+		return isshov1.OutingState_OUTING_STATE_OVER
+	case outings.OutingNotSet:
+		return isshov1.OutingState_OUTING_STATE_NOT_SET
+	case outings.OutingCancelled:
+		return isshov1.OutingState_OUTING_STATE_CANCELLED
+	default:
+		return isshov1.OutingState_OUTING_STATE_UNSPECIFIED
+	}
 }
 
 // seatState is a seat's stored state as the API names it.
@@ -44,6 +124,8 @@ func seatState(s outings.SeatState) isshov1.SeatState {
 	switch s {
 	case outings.SeatInvited:
 		return isshov1.SeatState_SEAT_STATE_INVITED
+	case outings.SeatAccepted:
+		return isshov1.SeatState_SEAT_STATE_ACCEPTED
 	case outings.SeatGoing:
 		return isshov1.SeatState_SEAT_STATE_GOING
 	case outings.SeatDeclined:

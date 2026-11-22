@@ -13,7 +13,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file issho/v1/outing.proto.
  */
 export const file_issho_v1_outing: GenFile = /*@__PURE__*/
-  fileDesc("ChVpc3Noby92MS9vdXRpbmcucHJvdG8SCGlzc2hvLnYxIhYKFExpc3RNeU91dGluZ3NSZXF1ZXN0IjoKFUxpc3RNeU91dGluZ3NSZXNwb25zZRIhCgdvdXRpbmdzGAEgAygLMhAuaXNzaG8udjEuT3V0aW5nIvgBCgZPdXRpbmcSCgoCaWQYASABKAkSDwoHcGxhbl9pZBgCIAEoCRIMCgRkYXRlGAMgASgJEgwKBHBhcnQYBCABKAkSEQoJc3RhcnRzX2F0GAUgASgJEhEKCWxhbmd1YWdlcxgGIAMoCRInCgpzZWF0X3N0YXRlGAcgASgOMhMuaXNzaG8udjEuU2VhdFN0YXRlEi4KCmludml0ZWRfYXQYCCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEjYKEmludml0YXRpb25fZW5kc19hdBgJIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAq7AEKCVNlYXRTdGF0ZRIaChZTRUFUX1NUQVRFX1VOU1BFQ0lGSUVEEAASFgoSU0VBVF9TVEFURV9JTlZJVEVEEAESFAoQU0VBVF9TVEFURV9HT0lORxACEhcKE1NFQVRfU1RBVEVfREVDTElORUQQAxIZChVTRUFUX1NUQVRFX1VOQU5TV0VSRUQQBBITCg9TRUFUX1NUQVRFX0ZVTEwQBRIYChRTRUFUX1NUQVRFX0NBTkNFTExFRBAGEhoKFlNFQVRfU1RBVEVfTEFURV9DQU5DRUwQBxIWChJTRUFUX1NUQVRFX1JFTU9WRUQQCDJnCg1PdXRpbmdTZXJ2aWNlElYKDUxpc3RNeU91dGluZ3MSHi5pc3Noby52MS5MaXN0TXlPdXRpbmdzUmVxdWVzdBofLmlzc2hvLnYxLkxpc3RNeU91dGluZ3NSZXNwb25zZSIEiLUYAkKaAQoMY29tLmlzc2hvLnYxQgtPdXRpbmdQcm90b1ABWjxnaXRodWIuY29tL3NocnVqYW5jaGVydWt1L2lzc2hvL2JhY2tlbmQvZ2VuL2lzc2hvL3YxO2lzc2hvdjGiAgNJWFiqAghJc3Noby5WMcoCCElzc2hvXFYx4gIUSXNzaG9cVjFcR1BCTWV0YWRhdGHqAglJc3Nobzo6VjFiBnByb3RvMw", [file_google_protobuf_timestamp, file_issho_v1_access]);
+  fileDesc("ChVpc3Noby92MS9vdXRpbmcucHJvdG8SCGlzc2hvLnYxIhYKFExpc3RNeU91dGluZ3NSZXF1ZXN0IjoKFUxpc3RNeU91dGluZ3NSZXNwb25zZRIhCgdvdXRpbmdzGAEgAygLMhAuaXNzaG8udjEuT3V0aW5nIlgKF0Fuc3dlckludml0YXRpb25SZXF1ZXN0EhEKCW91dGluZ19pZBgBIAEoCRIqCgZhbnN3ZXIYAiABKA4yGi5pc3Noby52MS5JbnZpdGF0aW9uQW5zd2VyIjwKGEFuc3dlckludml0YXRpb25SZXNwb25zZRIgCgZvdXRpbmcYASABKAsyEC5pc3Noby52MS5PdXRpbmciJgoRQ2FuY2VsU2VhdFJlcXVlc3QSEQoJb3V0aW5nX2lkGAEgASgJIjYKEkNhbmNlbFNlYXRSZXNwb25zZRIgCgZvdXRpbmcYASABKAsyEC5pc3Noby52MS5PdXRpbmcizgIKBk91dGluZxIKCgJpZBgBIAEoCRIPCgdwbGFuX2lkGAIgASgJEgwKBGRhdGUYAyABKAkSDAoEcGFydBgEIAEoCRIRCglzdGFydHNfYXQYBSABKAkSEQoJbGFuZ3VhZ2VzGAYgAygJEicKCnNlYXRfc3RhdGUYByABKA4yEy5pc3Noby52MS5TZWF0U3RhdGUSLgoKaW52aXRlZF9hdBgIIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASNgoSaW52aXRhdGlvbl9lbmRzX2F0GAkgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIrCgxvdXRpbmdfc3RhdGUYCiABKA4yFS5pc3Noby52MS5PdXRpbmdTdGF0ZRIRCgl5ZXNfY291bnQYCyABKAUSFAoMb3RoZXJzX2dvaW5nGAwgAygJKmoKEEludml0YXRpb25BbnN3ZXISIQodSU5WSVRBVElPTl9BTlNXRVJfVU5TUEVDSUZJRUQQABIZChVJTlZJVEFUSU9OX0FOU1dFUl9ZRVMQARIYChRJTlZJVEFUSU9OX0FOU1dFUl9OTxACKsMBCgtPdXRpbmdTdGF0ZRIcChhPVVRJTkdfU1RBVEVfVU5TUEVDSUZJRUQQABIZChVPVVRJTkdfU1RBVEVfUFJPUE9TRUQQARIYChRPVVRJTkdfU1RBVEVfT0ZGRVJFRBACEhQKEE9VVElOR19TVEFURV9TRVQQAxIVChFPVVRJTkdfU1RBVEVfT1ZFUhAEEhgKFE9VVElOR19TVEFURV9OT1RfU0VUEAUSGgoWT1VUSU5HX1NUQVRFX0NBTkNFTExFRBAGKoUCCglTZWF0U3RhdGUSGgoWU0VBVF9TVEFURV9VTlNQRUNJRklFRBAAEhYKElNFQVRfU1RBVEVfSU5WSVRFRBABEhQKEFNFQVRfU1RBVEVfR09JTkcQAhIXChNTRUFUX1NUQVRFX0RFQ0xJTkVEEAMSGQoVU0VBVF9TVEFURV9VTkFOU1dFUkVEEAQSEwoPU0VBVF9TVEFURV9GVUxMEAUSGAoUU0VBVF9TVEFURV9DQU5DRUxMRUQQBhIaChZTRUFUX1NUQVRFX0xBVEVfQ0FOQ0VMEAcSFgoSU0VBVF9TVEFURV9SRU1PVkVEEAgSFwoTU0VBVF9TVEFURV9BQ0NFUFRFRBAJMpcCCg1PdXRpbmdTZXJ2aWNlElYKDUxpc3RNeU91dGluZ3MSHi5pc3Noby52MS5MaXN0TXlPdXRpbmdzUmVxdWVzdBofLmlzc2hvLnYxLkxpc3RNeU91dGluZ3NSZXNwb25zZSIEiLUYAhJfChBBbnN3ZXJJbnZpdGF0aW9uEiEuaXNzaG8udjEuQW5zd2VySW52aXRhdGlvblJlcXVlc3QaIi5pc3Noby52MS5BbnN3ZXJJbnZpdGF0aW9uUmVzcG9uc2UiBIi1GAISTQoKQ2FuY2VsU2VhdBIbLmlzc2hvLnYxLkNhbmNlbFNlYXRSZXF1ZXN0GhwuaXNzaG8udjEuQ2FuY2VsU2VhdFJlc3BvbnNlIgSItRgCQpoBCgxjb20uaXNzaG8udjFCC091dGluZ1Byb3RvUAFaPGdpdGh1Yi5jb20vc2hydWphbmNoZXJ1a3UvaXNzaG8vYmFja2VuZC9nZW4vaXNzaG8vdjE7aXNzaG92MaICA0lYWKoCCElzc2hvLlYxygIISXNzaG9cVjHiAhRJc3Nob1xWMVxHUEJNZXRhZGF0YeoCCUlzc2hvOjpWMWIGcHJvdG8z", [file_google_protobuf_timestamp, file_issho_v1_access]);
 
 /**
  * @generated from message issho.v1.ListMyOutingsRequest
@@ -44,6 +44,83 @@ export type ListMyOutingsResponse = Message<"issho.v1.ListMyOutingsResponse"> & 
  */
 export const ListMyOutingsResponseSchema: GenMessage<ListMyOutingsResponse> = /*@__PURE__*/
   messageDesc(file_issho_v1_outing, 1);
+
+/**
+ * @generated from message issho.v1.AnswerInvitationRequest
+ */
+export type AnswerInvitationRequest = Message<"issho.v1.AnswerInvitationRequest"> & {
+  /**
+   * @generated from field: string outing_id = 1;
+   */
+  outingId: string;
+
+  /**
+   * @generated from field: issho.v1.InvitationAnswer answer = 2;
+   */
+  answer: InvitationAnswer;
+};
+
+/**
+ * Describes the message issho.v1.AnswerInvitationRequest.
+ * Use `create(AnswerInvitationRequestSchema)` to create a new message.
+ */
+export const AnswerInvitationRequestSchema: GenMessage<AnswerInvitationRequest> = /*@__PURE__*/
+  messageDesc(file_issho_v1_outing, 2);
+
+/**
+ * The outing as the caller's seat sees it after answering.
+ *
+ * @generated from message issho.v1.AnswerInvitationResponse
+ */
+export type AnswerInvitationResponse = Message<"issho.v1.AnswerInvitationResponse"> & {
+  /**
+   * @generated from field: issho.v1.Outing outing = 1;
+   */
+  outing?: Outing | undefined;
+};
+
+/**
+ * Describes the message issho.v1.AnswerInvitationResponse.
+ * Use `create(AnswerInvitationResponseSchema)` to create a new message.
+ */
+export const AnswerInvitationResponseSchema: GenMessage<AnswerInvitationResponse> = /*@__PURE__*/
+  messageDesc(file_issho_v1_outing, 3);
+
+/**
+ * @generated from message issho.v1.CancelSeatRequest
+ */
+export type CancelSeatRequest = Message<"issho.v1.CancelSeatRequest"> & {
+  /**
+   * @generated from field: string outing_id = 1;
+   */
+  outingId: string;
+};
+
+/**
+ * Describes the message issho.v1.CancelSeatRequest.
+ * Use `create(CancelSeatRequestSchema)` to create a new message.
+ */
+export const CancelSeatRequestSchema: GenMessage<CancelSeatRequest> = /*@__PURE__*/
+  messageDesc(file_issho_v1_outing, 4);
+
+/**
+ * The outing as the caller's seat sees it after cancelling.
+ *
+ * @generated from message issho.v1.CancelSeatResponse
+ */
+export type CancelSeatResponse = Message<"issho.v1.CancelSeatResponse"> & {
+  /**
+   * @generated from field: issho.v1.Outing outing = 1;
+   */
+  outing?: Outing | undefined;
+};
+
+/**
+ * Describes the message issho.v1.CancelSeatResponse.
+ * Use `create(CancelSeatResponseSchema)` to create a new message.
+ */
+export const CancelSeatResponseSchema: GenMessage<CancelSeatResponse> = /*@__PURE__*/
+  messageDesc(file_issho_v1_outing, 5);
 
 /**
  * An outing as its own seat's holder sees it. It carries no other person.
@@ -110,6 +187,30 @@ export type Outing = Message<"issho.v1.Outing"> & {
    * @generated from field: google.protobuf.Timestamp invitation_ends_at = 9;
    */
   invitationEndsAt?: Timestamp | undefined;
+
+  /**
+   * Where the whole outing stands.
+   *
+   * @generated from field: issho.v1.OutingState outing_state = 10;
+   */
+  outingState: OutingState;
+
+  /**
+   * How many have said yes: those going and those whose yes waits for the
+   * outing to be set. A count, never who, shown to everyone with a seat.
+   *
+   * @generated from field: int32 yes_count = 11;
+   */
+  yesCount: number;
+
+  /**
+   * The first names of the others going, sorted: the caller's own is not in it,
+   * and it is empty unless the caller is going themselves. A first name is all
+   * that is ever shown of another person.
+   *
+   * @generated from field: repeated string others_going = 12;
+   */
+  othersGoing: string[];
 };
 
 /**
@@ -117,7 +218,90 @@ export type Outing = Message<"issho.v1.Outing"> & {
  * Use `create(OutingSchema)` to create a new message.
  */
 export const OutingSchema: GenMessage<Outing> = /*@__PURE__*/
-  messageDesc(file_issho_v1_outing, 2);
+  messageDesc(file_issho_v1_outing, 6);
+
+/**
+ * The two replies to an invitation.
+ *
+ * @generated from enum issho.v1.InvitationAnswer
+ */
+export enum InvitationAnswer {
+  /**
+   * @generated from enum value: INVITATION_ANSWER_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: INVITATION_ANSWER_YES = 1;
+   */
+  YES = 1,
+
+  /**
+   * @generated from enum value: INVITATION_ANSWER_NO = 2;
+   */
+  NO = 2,
+}
+
+/**
+ * Describes the enum issho.v1.InvitationAnswer.
+ */
+export const InvitationAnswerSchema: GenEnum<InvitationAnswer> = /*@__PURE__*/
+  enumDesc(file_issho_v1_outing, 0);
+
+/**
+ * An outing's state (docs/spec/outings.md, "What an outing is"). Only offered,
+ * set and not set are made so far.
+ *
+ * @generated from enum issho.v1.OutingState
+ */
+export enum OutingState {
+  /**
+   * @generated from enum value: OUTING_STATE_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: OUTING_STATE_PROPOSED = 1;
+   */
+  PROPOSED = 1,
+
+  /**
+   * Its invitations are out and fewer than 3 have said yes.
+   *
+   * @generated from enum value: OUTING_STATE_OFFERED = 2;
+   */
+  OFFERED = 2,
+
+  /**
+   * At least 3 have said yes.
+   *
+   * @generated from enum value: OUTING_STATE_SET = 3;
+   */
+  SET = 3,
+
+  /**
+   * @generated from enum value: OUTING_STATE_OVER = 4;
+   */
+  OVER = 4,
+
+  /**
+   * Fewer than 3 had said yes when the invitations' 48 hours ended.
+   *
+   * @generated from enum value: OUTING_STATE_NOT_SET = 5;
+   */
+  NOT_SET = 5,
+
+  /**
+   * @generated from enum value: OUTING_STATE_CANCELLED = 6;
+   */
+  CANCELLED = 6,
+}
+
+/**
+ * Describes the enum issho.v1.OutingState.
+ */
+export const OutingStateSchema: GenEnum<OutingState> = /*@__PURE__*/
+  enumDesc(file_issho_v1_outing, 1);
 
 /**
  * A seat's state: the person's stage in the outing, or how they left it
@@ -172,19 +356,27 @@ export enum SeatState {
    * @generated from enum value: SEAT_STATE_REMOVED = 8;
    */
   REMOVED = 8,
+
+  /**
+   * Said yes, and the outing is not set yet: the yes waits for the third.
+   *
+   * @generated from enum value: SEAT_STATE_ACCEPTED = 9;
+   */
+  ACCEPTED = 9,
 }
 
 /**
  * Describes the enum issho.v1.SeatState.
  */
 export const SeatStateSchema: GenEnum<SeatState> = /*@__PURE__*/
-  enumDesc(file_issho_v1_outing, 0);
+  enumDesc(file_issho_v1_outing, 2);
 
 /**
  * A member's own outings: the groups matching formed that they have a seat in
  * (docs/spec/outings.md). An outing is private to the people in it, so there is
- * no RPC that names an outing or a person: a caller is only ever shown their
- * own seats. Answering an invitation is a later RPC.
+ * no RPC names a person, and one that names an outing only acts on the caller's
+ * own seat in it: a caller is only ever shown their own seats, and what they see
+ * of the others is a count of yeses and, once going, first names.
  *
  * @generated from service issho.v1.OutingService
  */
@@ -195,7 +387,8 @@ export const OutingService: GenService<{
    * where their seat stands. Member: it takes no account and no outing id, so
    * it can only ever return the caller's own, and an outing the caller has no
    * seat in is never in it. It never returns a name or the id of another
-   * person.
+   * person except the first names of the others going, and those only to a
+   * person who is going themselves.
    *
    * @generated from rpc issho.v1.OutingService.ListMyOutings
    */
@@ -203,6 +396,34 @@ export const OutingService: GenService<{
     methodKind: "unary";
     input: typeof ListMyOutingsRequestSchema;
     output: typeof ListMyOutingsResponseSchema;
+  },
+  /**
+   * Says yes or no to the caller's own invitation. It is open for a fixed 48
+   * hours from the invitation (FAILED_PRECONDITION after that, or when the
+   * outing was not set, or for a no from someone already going: they cancel).
+   * A no can be changed to a yes inside the 48 hours. A yes is held until 3 have
+   * said yes, which sets the outing and makes everyone who said yes going; a yes
+   * after that is going at once. Member: the seat is the caller's own, and an
+   * outing the caller has no seat in is NOT_FOUND, as is one that doesn't exist.
+   *
+   * @generated from rpc issho.v1.OutingService.AnswerInvitation
+   */
+  answerInvitation: {
+    methodKind: "unary";
+    input: typeof AnswerInvitationRequestSchema;
+    output: typeof AnswerInvitationResponseSchema;
+  },
+  /**
+   * Cancels the caller's own seat, which must be going: the seat records it as
+   * cancelled. FAILED_PRECONDITION for a seat that is not going, NOT_FOUND for an
+   * outing the caller has no seat in. Member.
+   *
+   * @generated from rpc issho.v1.OutingService.CancelSeat
+   */
+  cancelSeat: {
+    methodKind: "unary";
+    input: typeof CancelSeatRequestSchema;
+    output: typeof CancelSeatResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_issho_v1_outing, 0);

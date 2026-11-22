@@ -17,6 +17,9 @@ func TestThinLoopNumbers(t *testing.T) {
 	if InvitationWindow != 48*time.Hour {
 		t.Errorf("invitation window = %v, spec says 48 hours", InvitationWindow)
 	}
+	if YesesToSet != 3 {
+		t.Errorf("yeses to set an outing = %d, spec says 3", YesesToSet)
+	}
 	if RoundLength != 7*24*time.Hour {
 		t.Errorf("round length = %v, spec says 7 days", RoundLength)
 	}

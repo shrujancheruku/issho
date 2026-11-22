@@ -8,6 +8,7 @@ import (
 
 	"connectrpc.com/connect"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 
 	isshov1 "github.com/shrujancheruku/issho/backend/gen/issho/v1"
 	"github.com/shrujancheruku/issho/backend/gen/issho/v1/isshov1connect"
@@ -120,4 +121,201 @@ func TestTheOutingRPCNeedsASignedInCaller(t *testing.T) {
 	r := newOutingRig(t)
 	_, err := r.list("")
 	wantCode(t, err, connect.CodeUnauthenticated)
+}
+
+func (r *outingRig) answer(token, outing string, a isshov1.InvitationAnswer) (*isshov1.Outing, error) {
+	res, err := r.outings.AnswerInvitation(context.Background(), authed(token, &isshov1.AnswerInvitationRequest{OutingId: outing, Answer: a}))
+	if err != nil {
+		return nil, err
+	}
+	return res.Msg.GetOuting(), nil
+}
+
+func (r *outingRig) cancel(token, outing string) (*isshov1.Outing, error) {
+	res, err := r.outings.CancelSeat(context.Background(), authed(token, &isshov1.CancelSeatRequest{OutingId: outing}))
+	if err != nil {
+		return nil, err
+	}
+	return res.Msg.GetOuting(), nil
+}
+
+// outingOf is the caller's one outing.
+func (r *outingRig) outingOf(t *testing.T, token string) *isshov1.Outing {
+	t.Helper()
+	got, err := r.list(token)
+	if err != nil || len(got.GetOutings()) != 1 {
+		t.Fatalf("list = %v, %v; want one outing", got, err)
+	}
+	return got.GetOutings()[0]
+}
+
+// An invited person answers yes or no over the API and the outing comes back as
+// they see it; a yes waits for the outing to be set, so it is not going yet.
+func TestAnInvitedPersonAnswersYesOrNoOverTheAPI(t *testing.T) {
+	r := newOutingRig(t)
+	adaTok, graceTok, _ := r.formedGroup(t)
+	outing := r.outingOf(t, adaTok).GetId()
+
+	yes, err := r.answer(adaTok, outing, isshov1.InvitationAnswer_INVITATION_ANSWER_YES)
+	if err != nil {
+		t.Fatal(err)
+	}
+	no, err := r.answer(graceTok, outing, isshov1.InvitationAnswer_INVITATION_ANSWER_NO)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if yes.GetSeatState() != isshov1.SeatState_SEAT_STATE_ACCEPTED || yes.GetOutingState() != isshov1.OutingState_OUTING_STATE_OFFERED || yes.GetYesCount() != 1 {
+		t.Errorf("after a yes: %v", yes)
+	}
+	if no.GetSeatState() != isshov1.SeatState_SEAT_STATE_DECLINED || no.GetYesCount() != 1 {
+		t.Errorf("after a no: %v", no)
+	}
+}
+
+// After the 48 hours the invitation is closed, over the API too; an answer that
+// is neither yes nor no is refused; an outing the caller has no seat in is not
+// found, whether or not it exists.
+func TestAnAnswerAfterTheFortyEightHoursOrWithoutASeatIsRefusedOverTheAPI(t *testing.T) {
+	r := newOutingRig(t)
+	adaTok, _, _ := r.formedGroup(t)
+	outing := r.outingOf(t, adaTok).GetId()
+	outsider := r.named(t, fourth, "fourth@example.com", "Mary Jackson")
+
+	_, unspecified := r.answer(adaTok, outing, isshov1.InvitationAnswer_INVITATION_ANSWER_UNSPECIFIED)
+	_, stranger := r.answer(outsider, outing, isshov1.InvitationAnswer_INVITATION_ANSWER_YES)
+	_, missing := r.answer(adaTok, "not-an-outing", isshov1.InvitationAnswer_INVITATION_ANSWER_YES)
+	r.clk.Advance(48 * time.Hour)
+	adaTok = r.signedIn(t, ada, "ada@example.com") // the first token expired with the hour
+	_, late := r.answer(adaTok, outing, isshov1.InvitationAnswer_INVITATION_ANSWER_YES)
+
+	wantCode(t, unspecified, connect.CodeInvalidArgument)
+	wantCode(t, stranger, connect.CodeNotFound)
+	wantCode(t, missing, connect.CodeNotFound)
+	wantCode(t, late, connect.CodeFailedPrecondition)
+}
+
+// What the group shows of itself, on the wire: an invited person sees the count
+// of yeses and no name at all; once the outing is set, a person going sees the
+// first names of the others going, not their own and not the rest of a name, and
+// still no account id.
+func TestTheWireShowsACountToTheInvitedAndFirstNamesToThoseGoing(t *testing.T) {
+	r := newOutingRig(t)
+	adaTok, graceTok, thirdTok := r.formedGroup(t)
+	outing := r.outingOf(t, adaTok).GetId()
+	r.answer(adaTok, outing, isshov1.InvitationAnswer_INVITATION_ANSWER_YES)
+	r.answer(graceTok, outing, isshov1.InvitationAnswer_INVITATION_ANSWER_YES)
+
+	waiting, err := r.list(adaTok)
+	if err != nil {
+		t.Fatal(err)
+	}
+	wire, _ := protojson.Marshal(waiting)
+	for _, name := range []string{"Grace", "Katherine", "Hopper", "Johnson", grace, third} {
+		if strings.Contains(string(wire), name) {
+			t.Fatalf("before the outing is set, the wire names %q: %s", name, wire)
+		}
+	}
+	if waiting.GetOutings()[0].GetYesCount() != 2 {
+		t.Fatalf("yes count = %d, want 2", waiting.GetOutings()[0].GetYesCount())
+	}
+
+	setBy, err := r.answer(thirdTok, outing, isshov1.InvitationAnswer_INVITATION_ANSWER_YES)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ada := r.outingOf(t, adaTok)
+
+	if setBy.GetOutingState() != isshov1.OutingState_OUTING_STATE_SET || setBy.GetSeatState() != isshov1.SeatState_SEAT_STATE_GOING {
+		t.Errorf("the third yes: %v", setBy)
+	}
+	if got := strings.Join(ada.GetOthersGoing(), ","); got != "Grace,Katherine" {
+		t.Errorf("Ada sees %q going, want Grace,Katherine", got)
+	}
+	wire, _ = protojson.Marshal(&isshov1.ListMyOutingsResponse{Outings: []*isshov1.Outing{ada}})
+	for _, leak := range []string{"Hopper", "Johnson", "Lovelace", grace, third} {
+		if strings.Contains(string(wire), leak) {
+			t.Fatalf("the wire carries %q: %s", leak, wire)
+		}
+	}
+}
+
+// A person going cancels over the API, and the seat comes back cancelled; one
+// who isn't going can't, and the outing isn't shown to those with no seat.
+func TestAPersonGoingCancelsOverTheAPI(t *testing.T) {
+	r := newOutingRig(t)
+	adaTok, graceTok, thirdTok := r.formedGroup(t)
+	outing := r.outingOf(t, adaTok).GetId()
+	_, early := r.cancel(adaTok, outing)
+	for _, tok := range []string{adaTok, graceTok, thirdTok} {
+		r.answer(tok, outing, isshov1.InvitationAnswer_INVITATION_ANSWER_YES)
+	}
+
+	cancelled, err := r.cancel(adaTok, outing)
+
+	wantCode(t, early, connect.CodeFailedPrecondition)
+	if err != nil || cancelled.GetSeatState() != isshov1.SeatState_SEAT_STATE_CANCELLED {
+		t.Fatalf("cancel = %v, %v; want a cancelled seat", cancelled, err)
+	}
+	outsider := r.named(t, fourth, "fourth@example.com", "Mary Jackson")
+	_, err = r.cancel(outsider, outing)
+	wantCode(t, err, connect.CodeNotFound)
+}
+
+// The new RPCs need a signed-in member.
+func TestAnsweringAndCancellingNeedASignedInCaller(t *testing.T) {
+	r := newOutingRig(t)
+	_, answer := r.answer("", "x", isshov1.InvitationAnswer_INVITATION_ANSWER_YES)
+	_, cancel := r.cancel("", "x")
+	wantCode(t, answer, connect.CodeUnauthenticated)
+	wantCode(t, cancel, connect.CodeUnauthenticated)
+}
+
+// The descriptor walk in TestNoRPCReturnsAnotherPersonsEmail finds a field that
+// could hold an email; this reads what the outing RPCs actually send. Three
+// people with a known email and a full name go through every outing call (list,
+// yes, set, list again going, cancel), and in none of the responses is there an
+// email, an account id or more of a name than the first.
+func TestTheOutingRPCsNeverSendAnotherPersonsEmailIdOrSurname(t *testing.T) {
+	r := newOutingRig(t)
+	adaTok, graceTok, thirdTok := r.formedGroup(t)
+	outing := r.outingOf(t, adaTok).GetId()
+	var sent []string
+	record := func(m proto.Message) {
+		b, err := protojson.Marshal(m)
+		if err != nil {
+			t.Fatal(err)
+		}
+		sent = append(sent, string(b))
+	}
+	for _, tok := range []string{adaTok, graceTok, thirdTok} {
+		got, err := r.answer(tok, outing, isshov1.InvitationAnswer_INVITATION_ANSWER_YES)
+		if err != nil {
+			t.Fatal(err)
+		}
+		record(got)
+	}
+	for _, tok := range []string{adaTok, graceTok, thirdTok} {
+		list, err := r.list(tok)
+		if err != nil {
+			t.Fatal(err)
+		}
+		record(list)
+	}
+	cancelled, err := r.cancel(graceTok, outing)
+	if err != nil {
+		t.Fatal(err)
+	}
+	record(cancelled)
+
+	all := strings.Join(sent, "\n")
+	for _, leak := range []string{"@", "example.com", ada, grace, third, "Lovelace", "Hopper", "Johnson"} {
+		if strings.Contains(all, leak) {
+			t.Errorf("an outing response carries %q: %s", leak, all)
+		}
+	}
+	// The first names are what is meant to be shown, so the scan can see them.
+	if !strings.Contains(all, "Grace") || !strings.Contains(all, "Katherine") {
+		t.Errorf("no first names in the responses, so the scan proved nothing: %s", all)
+	}
 }

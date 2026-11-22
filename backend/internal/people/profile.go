@@ -192,6 +192,29 @@ func (s *Service) Profile(ctx context.Context, accountID string) (Profile, error
 	return profileOf(row), nil
 }
 
+// FirstNames returns the first name of each account in ids that has a profile,
+// by account id: the first word of the name they go by, and nothing else of
+// them. It is the one thing this package shows of another person, for the
+// people going to one outing (docs/spec/outings.md, "What the group sees of
+// each other"); an id with no profile, or no account, is left out. It is for
+// the caller to have checked that the viewer may see these people.
+func (s *Service) FirstNames(ctx context.Context, ids []string) (map[string]string, error) {
+	out := make(map[string]string, len(ids))
+	if len(ids) == 0 {
+		return out, nil
+	}
+	rows, err := store.New(s.pool).ListProfileNames(ctx, ids)
+	if err != nil {
+		return nil, fmt.Errorf("people: first names: %w", err)
+	}
+	for _, r := range rows {
+		if words := strings.Fields(r.Name); len(words) > 0 {
+			out[r.AccountID] = words[0]
+		}
+	}
+	return out, nil
+}
+
 // RequireProfile is the check a signup (or anything else that needs the
 // profile) makes first: nil when the account has a profile, ErrProfileRequired
 // when it hasn't.

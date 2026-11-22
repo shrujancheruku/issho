@@ -24,11 +24,14 @@ for tool in kamal gcloud go pnpm; do
 name=$(basename "$0")
 echo "$name $*" >> "$LOG"
 # What the environment carried to the command that needs a secret.
-echo "$name DATABASE_URL=${DATABASE_URL:-} CLOUDFLARE_API_TOKEN=${CLOUDFLARE_API_TOKEN:-}" >> "$LOG.env"
+echo "$name DATABASE_URL=${DATABASE_URL:-} CLOUDFLARE_API_TOKEN=${CLOUDFLARE_API_TOKEN:-} SUPABASE_VALUES_HASH=${SUPABASE_VALUES_HASH:-}" >> "$LOG.env"
 if [ -n "${FAIL_ON:-}" ] && [[ "$name $*" == "$FAIL_ON"* ]]; then echo "$name: told to fail" >&2; exit 1; fi
 # gcloud's secret read is the only call whose output is used: the value, with the
 # trailing newline the stored Cloudflare token has.
-if [ "$name" = gcloud ]; then printf 'value-of-secret\n'; fi
+# EMPTY_SECRET names a secret whose stored value is empty.
+if [ "$name" = gcloud ]; then
+  if [ -n "${EMPTY_SECRET:-}" ] && [[ "$*" == *"--secret=$EMPTY_SECRET "* || "$*" == *"--secret=$EMPTY_SECRET" ]]; then :; else printf 'value-of-secret\n'; fi
+fi
 STUB
   chmod +x "$work/bin/$tool"
 done
@@ -90,11 +93,11 @@ if grep -q 'value-of-secret' "$work/log"; then bad "a secret's value was passed 
 # line holding the value would be logged as it is.
 run "" true || bad "the script failed on Actions with every tool succeeding"
 if grep 'value-of-secret' "$work/out" | grep -vqx '::add-mask::value-of-secret'; then bad "a secret's value is in the script's output on Actions, outside a mask"; fi
-[ "$(grep -cx '::add-mask::value-of-secret' "$work/out")" -eq 2 ] || bad "on Actions, the two secrets read are not each masked: $(grep -c 'add-mask' "$work/out") masks"
+[ "$(grep -cx '::add-mask::value-of-secret' "$work/out")" -eq 4 ] || bad "on Actions, the four secrets read are not each masked: $(grep -c 'add-mask' "$work/out") masks"
 if grep -q 'value-of-secret' "$work/log"; then bad "a secret's value was passed as an argument on Actions"; fi
 
 grep -q '^go DATABASE_URL=value-of-secret ' "$work/log.env" || bad "the migration did not get the migration role's database URL in its environment"
-grep -q 'CLOUDFLARE_API_TOKEN=value-of-secret$' "$work/log.env" || bad "wrangler did not get the token in its environment, without its newline"
+grep -q 'CLOUDFLARE_API_TOKEN=value-of-secret ' "$work/log.env" || bad "wrangler did not get the token in its environment, without its newline"
 
 # --- the API's database and Auth addresses ---------------------------------------
 # The API (the web role) names both in its env.secret, and the dev destination
@@ -115,7 +118,7 @@ run "" || bad "the script failed with every tool succeeding"
 
 # A secret the deploy names but the store lacks stops it before Kamal is called at
 # all, so no image is built and no container replaced.
-for name in dev-database-url dev-supabase-auth-url; do
+for name in dev-database-url dev-supabase-auth-url dev-supabase-url dev-supabase-publishable-key; do
   # The preflight uses the access the deploy account already has (accessor), never
   # secrets.get, which docs/deploy.md does not grant.
   if run "gcloud secrets versions access latest --secret=$name "; then bad "the script succeeded although $name is missing"; fi
@@ -124,6 +127,19 @@ for name in dev-database-url dev-supabase-auth-url; do
   # The preflight reads the value to prove it exists, and must never print it.
   ! grep -q 'value-of-secret' "$work/out" || bad "the preflight printed a secret's value"
 done
+
+# An empty Supabase value fails like a missing one, before Kamal is called.
+for name in dev-supabase-url dev-supabase-publishable-key; do
+  if EMPTY_SECRET=$name run ""; then bad "the script succeeded although $name is empty"; fi
+  [ "$(grep -c '^kamal\|^go \|^pnpm' "$work/log")" -eq 0 ] || bad "a tool ran although $name is empty"
+  grep -q "$name is empty" "$work/out" || bad "the failure does not name the empty secret $name"
+done
+
+# The build is told a digest of the two values, so a changed value is not served
+# from BuildKit's cache (apps/web/Dockerfile); it is a digest, never a value.
+run "" || bad "the script failed with every tool succeeding"
+digest=$(printf 'value-of-secret\nvalue-of-secret' | shasum -a 256 | cut -d' ' -f1)
+grep -q "^kamal .*SUPABASE_VALUES_HASH=$digest\$" "$work/log.env" || bad "kamal is not given the values' digest"
 
 # --- no address, no deploy --------------------------------------------------------
 : > "$work/log"

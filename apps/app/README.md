@@ -1,6 +1,6 @@
 # apps/app
 
-The member app: one Expo project for iOS, Android and the web ([Architecture and stack](../../docs/spec/architecture.md#what-v2-is-built-from)). The web is the same project, server-rendered (`web.output: "server"` in `app.json`). Right now it is the shell (three tabs, the strings and the theme), sign-in by email code, and on the You tab the person's email, their profile (with a way to change it), a sign-out button and the version the API reports (`src/components/api-version.tsx`), which is what the dev deploy checks. Members never see the version: it shows only when the build's `EXPO_PUBLIC_API_URL` is an API that holds no real people (`isDevApi` in `src/api/api-url.ts`: a local address, or a name whose first label is `dev` or ends in `-dev`, as `dev.joinissho.com` and `api-dev.joinissho.com` do). Any other address, production's included, shows nothing and makes no call. The real screens come in later tickets.
+The member app: one Expo project for iOS, Android and the web ([Architecture and stack](../../docs/spec/architecture.md#what-v2-is-built-from)). The web is the same project, server-rendered (`web.output: "server"` in `app.json`). Right now it is the shell (three tabs, the strings and the theme), sign-in by email code, and on the You tab the person's email, their profile (with a way to change it), a sign-out button and the version the API reports (also on the sign-in screen, where a signed-out visit to `/you` lands) (`src/components/api-version.tsx`), which is what the dev deploy checks. Members never see the version: it shows only when the build's `EXPO_PUBLIC_API_URL` is an API that holds no real people (`isDevApi` in `src/api/api-url.ts`: a local address, or a name whose first label is `dev` or ends in `-dev`, as `dev.joinissho.com` and `api-dev.joinissho.com` do). Any other address, production's included, shows nothing and makes no call. The real screens come in later tickets.
 
 ## Setup
 
@@ -30,6 +30,7 @@ The sign-in screens (`sign-in-email`, `sign-in-code`, `sign-in-wrong-code`) and 
 | What | Where |
 |---|---|
 | The three tabs, Plans first, English and Vietnamese, light and dark, with a fake of the generated API client | `src/app/__tests__/tabs.test.tsx` |
+| The sign-in screen shows the dev API's version to a visitor sent there from `/you` | `src/app/__tests__/sign-in.test.tsx` |
 | The You tab shows the API's version, or that it could not be reached, in both languages, in dev's build and not in production's | `src/app/__tests__/api-version.test.tsx` |
 | Which API addresses count as dev (`isDevApi`) | `src/api/__tests__/api-url.test.ts` |
 | Sign-in: a build missing `EXPO_PUBLIC_SUPABASE_URL` or `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` says at start which one (`SessionClient.missingConfig`); the title clears the status bar (top inset); email, then the 6-digit code; a wrong code says so and can be retried; Auth's rate limit (429) says to wait a minute; a new code can be asked for only after a minute; a return to the screen the person came from; Vietnamese | `src/app/__tests__/sign-in.test.tsx` |

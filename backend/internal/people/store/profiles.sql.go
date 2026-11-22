@@ -33,6 +33,37 @@ func (q *Queries) GetProfile(ctx context.Context, accountID string) (AppProfile,
 	return i, err
 }
 
+const listProfileNames = `-- name: ListProfileNames :many
+select account_id, name from app.profiles where account_id = any($1::uuid[])
+`
+
+type ListProfileNamesRow struct {
+	AccountID string
+	Name      string
+}
+
+// Only the name, never the rest of the row: it is what FirstNames shows of
+// other people.
+func (q *Queries) ListProfileNames(ctx context.Context, dollar_1 []string) ([]ListProfileNamesRow, error) {
+	rows, err := q.db.Query(ctx, listProfileNames, dollar_1)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListProfileNamesRow
+	for rows.Next() {
+		var i ListProfileNamesRow
+		if err := rows.Scan(&i.AccountID, &i.Name); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const upsertProfile = `-- name: UpsertProfile :one
 
 insert into app.profiles (

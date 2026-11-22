@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/auth/auth-provider';
 import { returnPath } from '@/auth/return-path';
 import { RateLimitedError } from '@/auth/session-client';
+import { ApiVersion } from '@/components/api-version';
 import { Button, ErrorText, Field } from '@/components/form';
 import { FontSize, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -138,6 +139,8 @@ export default function SignIn() {
             />
           </>
         )}
+        {/* Dev only. A signed-out visit to /you lands here, and the dev deploy's walk and `make e2e` read the version on that page. */}
+        <ApiVersion />
       </View>
     </View>
   );

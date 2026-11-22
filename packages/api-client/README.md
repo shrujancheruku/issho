@@ -36,6 +36,11 @@ const { signup } = await api.signup.signUp({ planId, ticks: [{ date: '2026-01-08
 // The caller's own outings, earliest date first: the date, the time (startsAt), the languages the
 // group shares and the state of their seat. Never another person's name or id.
 const { outings } = await api.outing.listMyOutings({});
+// An invited person answers for 48 hours (a no can become a yes); the third yes sets the outing.
+// Each outing carries yesCount (a count, never who) and, once the person is going, othersGoing
+// (the first names of the others going).
+await api.outing.answerInvitation({ outingId: outings[0].id, answer: InvitationAnswer.YES });
+await api.outing.cancelSeat({ outingId: outings[0].id }); // only a person going can cancel
 ```
 
 - `getAccessToken` is called before every request. A token goes out as `Authorization: Bearer <token>`; with none, no header is sent, which only public RPCs accept.

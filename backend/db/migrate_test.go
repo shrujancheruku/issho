@@ -276,3 +276,55 @@ func TestOutingsMigrationDownThenUp(t *testing.T) {
 		t.Error("app.seats missing after up, down, up")
 	}
 }
+
+// The seat answers migration (00008) lets a seat be accepted (a yes that waits
+// for the outing to be set). Its Down turns such a seat back into an invitation
+// and the check refuses the state again; going up again allows it.
+func TestSeatAnswersMigrationDownThenUp(t *testing.T) {
+	ctx := context.Background()
+	pool := testdb.NewDatabase(t)
+	if err := db.Up(ctx, pool); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := pool.Exec(ctx, `
+		insert into app.cities (slug, state, time_zone, currency) values ('x', 'open', 'UTC', 'USD');
+		insert into app.accounts (id, email, city, display_language, created_at)
+		values ('00000000-0000-4000-8000-000000000001', 'a@example.com', 'x', 'en', now());
+		insert into app.plans (id, city, price, meeting_address, parts_of_day, starts_at, ends_at, opens_on)
+		values ('00000000-0000-4000-8000-0000000000a1', 'x', 1, 'm', '{evening}', '17:00', '18:00', '2026-01-05');
+		insert into app.plan_rounds (id, plan_id, number, starts_on, ends_on)
+		values ('00000000-0000-4000-8000-0000000000b1', '00000000-0000-4000-8000-0000000000a1', 0, '2026-01-05', '2026-01-11');
+		insert into app.outings (id, plan_id, round_id, date, part, starts_at, languages, state, created_at)
+		values ('00000000-0000-4000-8000-0000000000c1', '00000000-0000-4000-8000-0000000000a1', '00000000-0000-4000-8000-0000000000b1',
+		        '2026-01-09', 'evening', '17:00', '{en}', 'offered', now());
+		insert into app.seats (outing_id, round_id, account_id, state, invited_at, invitation_ends_at)
+		values ('00000000-0000-4000-8000-0000000000c1', '00000000-0000-4000-8000-0000000000b1',
+		        '00000000-0000-4000-8000-000000000001', 'invited', now(), now() + interval '2 days');`); err != nil {
+		t.Fatal(err)
+	}
+	update := func(state string) error {
+		_, err := pool.Exec(ctx, `update app.seats set state = $1`, state)
+		return err
+	}
+	if err := update("accepted"); err != nil {
+		t.Fatalf("a seat can't be accepted after up: %v", err)
+	}
+
+	if err := db.Down(ctx, pool); err != nil {
+		t.Fatal(err)
+	}
+	var state string
+	if err := pool.QueryRow(ctx, `select state from app.seats`).Scan(&state); err != nil || state != "invited" {
+		t.Fatalf("after down the accepted seat is %q, %v; want invited", state, err)
+	}
+	if err := update("accepted"); err == nil {
+		t.Fatal("a seat can be accepted after down, want the check back")
+	}
+
+	if err := db.Up(ctx, pool); err != nil {
+		t.Fatalf("up after down: %v", err)
+	}
+	if err := update("accepted"); err != nil {
+		t.Fatalf("a seat can't be accepted after up, down, up: %v", err)
+	}
+}

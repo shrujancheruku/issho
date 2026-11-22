@@ -370,3 +370,42 @@ func TestAProfileForNoAccountIsRefused(t *testing.T) {
 		t.Fatalf("err = %v, want ErrNotFound", err)
 	}
 }
+
+// A first name is the one thing of another person that is shown (docs/spec/
+// outings.md, "What the group sees of each other"): the first word of the name
+// they go by, and no more, whatever else it holds. A person with no profile has
+// none, and an id nobody has is left out rather than an error.
+func TestFirstNamesAreTheFirstWordOfTheNameAndNothingMore(t *testing.T) {
+	r := newRig(t)
+	ctx := context.Background()
+	joined(t, r, ada, "ada@example.com")
+	joined(t, r, grace, "grace@example.com")
+	joined(t, r, "33333333-3333-4333-8333-333333333333", "third@example.com")
+	in := goodProfile()
+	in.Name = "  Ada Augusta  King "
+	if _, err := r.svc.SaveProfile(ctx, ada, in); err != nil {
+		t.Fatal(err)
+	}
+	in.Name = "Grace"
+	if _, err := r.svc.SaveProfile(ctx, grace, in); err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := r.svc.FirstNames(ctx, []string{ada, grace, "33333333-3333-4333-8333-333333333333", "44444444-4444-4444-8444-444444444444"})
+
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := map[string]string{ada: "Ada", grace: "Grace"}; len(got) != 2 || got[ada] != want[ada] || got[grace] != want[grace] {
+		t.Fatalf("FirstNames = %v, want %v", got, want)
+	}
+}
+
+// No ids is no query and no names.
+func TestFirstNamesOfNobodyIsNobody(t *testing.T) {
+	r := newRig(t)
+	got, err := r.svc.FirstNames(context.Background(), nil)
+	if err != nil || len(got) != 0 {
+		t.Fatalf("FirstNames(nil) = %v, %v; want none", got, err)
+	}
+}

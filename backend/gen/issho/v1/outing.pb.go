@@ -22,6 +22,122 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// The two replies to an invitation.
+type InvitationAnswer int32
+
+const (
+	InvitationAnswer_INVITATION_ANSWER_UNSPECIFIED InvitationAnswer = 0
+	InvitationAnswer_INVITATION_ANSWER_YES         InvitationAnswer = 1
+	InvitationAnswer_INVITATION_ANSWER_NO          InvitationAnswer = 2
+)
+
+// Enum value maps for InvitationAnswer.
+var (
+	InvitationAnswer_name = map[int32]string{
+		0: "INVITATION_ANSWER_UNSPECIFIED",
+		1: "INVITATION_ANSWER_YES",
+		2: "INVITATION_ANSWER_NO",
+	}
+	InvitationAnswer_value = map[string]int32{
+		"INVITATION_ANSWER_UNSPECIFIED": 0,
+		"INVITATION_ANSWER_YES":         1,
+		"INVITATION_ANSWER_NO":          2,
+	}
+)
+
+func (x InvitationAnswer) Enum() *InvitationAnswer {
+	p := new(InvitationAnswer)
+	*p = x
+	return p
+}
+
+func (x InvitationAnswer) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (InvitationAnswer) Descriptor() protoreflect.EnumDescriptor {
+	return file_issho_v1_outing_proto_enumTypes[0].Descriptor()
+}
+
+func (InvitationAnswer) Type() protoreflect.EnumType {
+	return &file_issho_v1_outing_proto_enumTypes[0]
+}
+
+func (x InvitationAnswer) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use InvitationAnswer.Descriptor instead.
+func (InvitationAnswer) EnumDescriptor() ([]byte, []int) {
+	return file_issho_v1_outing_proto_rawDescGZIP(), []int{0}
+}
+
+// An outing's state (docs/spec/outings.md, "What an outing is"). Only offered,
+// set and not set are made so far.
+type OutingState int32
+
+const (
+	OutingState_OUTING_STATE_UNSPECIFIED OutingState = 0
+	OutingState_OUTING_STATE_PROPOSED    OutingState = 1
+	// Its invitations are out and fewer than 3 have said yes.
+	OutingState_OUTING_STATE_OFFERED OutingState = 2
+	// At least 3 have said yes.
+	OutingState_OUTING_STATE_SET  OutingState = 3
+	OutingState_OUTING_STATE_OVER OutingState = 4
+	// Fewer than 3 had said yes when the invitations' 48 hours ended.
+	OutingState_OUTING_STATE_NOT_SET   OutingState = 5
+	OutingState_OUTING_STATE_CANCELLED OutingState = 6
+)
+
+// Enum value maps for OutingState.
+var (
+	OutingState_name = map[int32]string{
+		0: "OUTING_STATE_UNSPECIFIED",
+		1: "OUTING_STATE_PROPOSED",
+		2: "OUTING_STATE_OFFERED",
+		3: "OUTING_STATE_SET",
+		4: "OUTING_STATE_OVER",
+		5: "OUTING_STATE_NOT_SET",
+		6: "OUTING_STATE_CANCELLED",
+	}
+	OutingState_value = map[string]int32{
+		"OUTING_STATE_UNSPECIFIED": 0,
+		"OUTING_STATE_PROPOSED":    1,
+		"OUTING_STATE_OFFERED":     2,
+		"OUTING_STATE_SET":         3,
+		"OUTING_STATE_OVER":        4,
+		"OUTING_STATE_NOT_SET":     5,
+		"OUTING_STATE_CANCELLED":   6,
+	}
+)
+
+func (x OutingState) Enum() *OutingState {
+	p := new(OutingState)
+	*p = x
+	return p
+}
+
+func (x OutingState) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (OutingState) Descriptor() protoreflect.EnumDescriptor {
+	return file_issho_v1_outing_proto_enumTypes[1].Descriptor()
+}
+
+func (OutingState) Type() protoreflect.EnumType {
+	return &file_issho_v1_outing_proto_enumTypes[1]
+}
+
+func (x OutingState) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use OutingState.Descriptor instead.
+func (OutingState) EnumDescriptor() ([]byte, []int) {
+	return file_issho_v1_outing_proto_rawDescGZIP(), []int{1}
+}
+
 // A seat's state: the person's stage in the outing, or how they left it
 // (docs/spec/outings.md, "What an outing is").
 type SeatState int32
@@ -37,6 +153,8 @@ const (
 	SeatState_SEAT_STATE_CANCELLED   SeatState = 6
 	SeatState_SEAT_STATE_LATE_CANCEL SeatState = 7
 	SeatState_SEAT_STATE_REMOVED     SeatState = 8
+	// Said yes, and the outing is not set yet: the yes waits for the third.
+	SeatState_SEAT_STATE_ACCEPTED SeatState = 9
 )
 
 // Enum value maps for SeatState.
@@ -51,6 +169,7 @@ var (
 		6: "SEAT_STATE_CANCELLED",
 		7: "SEAT_STATE_LATE_CANCEL",
 		8: "SEAT_STATE_REMOVED",
+		9: "SEAT_STATE_ACCEPTED",
 	}
 	SeatState_value = map[string]int32{
 		"SEAT_STATE_UNSPECIFIED": 0,
@@ -62,6 +181,7 @@ var (
 		"SEAT_STATE_CANCELLED":   6,
 		"SEAT_STATE_LATE_CANCEL": 7,
 		"SEAT_STATE_REMOVED":     8,
+		"SEAT_STATE_ACCEPTED":    9,
 	}
 )
 
@@ -76,11 +196,11 @@ func (x SeatState) String() string {
 }
 
 func (SeatState) Descriptor() protoreflect.EnumDescriptor {
-	return file_issho_v1_outing_proto_enumTypes[0].Descriptor()
+	return file_issho_v1_outing_proto_enumTypes[2].Descriptor()
 }
 
 func (SeatState) Type() protoreflect.EnumType {
-	return &file_issho_v1_outing_proto_enumTypes[0]
+	return &file_issho_v1_outing_proto_enumTypes[2]
 }
 
 func (x SeatState) Number() protoreflect.EnumNumber {
@@ -89,7 +209,7 @@ func (x SeatState) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use SeatState.Descriptor instead.
 func (SeatState) EnumDescriptor() ([]byte, []int) {
-	return file_issho_v1_outing_proto_rawDescGZIP(), []int{0}
+	return file_issho_v1_outing_proto_rawDescGZIP(), []int{2}
 }
 
 type ListMyOutingsRequest struct {
@@ -172,6 +292,192 @@ func (x *ListMyOutingsResponse) GetOutings() []*Outing {
 	return nil
 }
 
+type AnswerInvitationRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	OutingId      string                 `protobuf:"bytes,1,opt,name=outing_id,json=outingId,proto3" json:"outing_id,omitempty"`
+	Answer        InvitationAnswer       `protobuf:"varint,2,opt,name=answer,proto3,enum=issho.v1.InvitationAnswer" json:"answer,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AnswerInvitationRequest) Reset() {
+	*x = AnswerInvitationRequest{}
+	mi := &file_issho_v1_outing_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AnswerInvitationRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AnswerInvitationRequest) ProtoMessage() {}
+
+func (x *AnswerInvitationRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_issho_v1_outing_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AnswerInvitationRequest.ProtoReflect.Descriptor instead.
+func (*AnswerInvitationRequest) Descriptor() ([]byte, []int) {
+	return file_issho_v1_outing_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *AnswerInvitationRequest) GetOutingId() string {
+	if x != nil {
+		return x.OutingId
+	}
+	return ""
+}
+
+func (x *AnswerInvitationRequest) GetAnswer() InvitationAnswer {
+	if x != nil {
+		return x.Answer
+	}
+	return InvitationAnswer_INVITATION_ANSWER_UNSPECIFIED
+}
+
+// The outing as the caller's seat sees it after answering.
+type AnswerInvitationResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Outing        *Outing                `protobuf:"bytes,1,opt,name=outing,proto3" json:"outing,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AnswerInvitationResponse) Reset() {
+	*x = AnswerInvitationResponse{}
+	mi := &file_issho_v1_outing_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AnswerInvitationResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AnswerInvitationResponse) ProtoMessage() {}
+
+func (x *AnswerInvitationResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_issho_v1_outing_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AnswerInvitationResponse.ProtoReflect.Descriptor instead.
+func (*AnswerInvitationResponse) Descriptor() ([]byte, []int) {
+	return file_issho_v1_outing_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *AnswerInvitationResponse) GetOuting() *Outing {
+	if x != nil {
+		return x.Outing
+	}
+	return nil
+}
+
+type CancelSeatRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	OutingId      string                 `protobuf:"bytes,1,opt,name=outing_id,json=outingId,proto3" json:"outing_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CancelSeatRequest) Reset() {
+	*x = CancelSeatRequest{}
+	mi := &file_issho_v1_outing_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CancelSeatRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CancelSeatRequest) ProtoMessage() {}
+
+func (x *CancelSeatRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_issho_v1_outing_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CancelSeatRequest.ProtoReflect.Descriptor instead.
+func (*CancelSeatRequest) Descriptor() ([]byte, []int) {
+	return file_issho_v1_outing_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *CancelSeatRequest) GetOutingId() string {
+	if x != nil {
+		return x.OutingId
+	}
+	return ""
+}
+
+// The outing as the caller's seat sees it after cancelling.
+type CancelSeatResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Outing        *Outing                `protobuf:"bytes,1,opt,name=outing,proto3" json:"outing,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CancelSeatResponse) Reset() {
+	*x = CancelSeatResponse{}
+	mi := &file_issho_v1_outing_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CancelSeatResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CancelSeatResponse) ProtoMessage() {}
+
+func (x *CancelSeatResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_issho_v1_outing_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CancelSeatResponse.ProtoReflect.Descriptor instead.
+func (*CancelSeatResponse) Descriptor() ([]byte, []int) {
+	return file_issho_v1_outing_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *CancelSeatResponse) GetOuting() *Outing {
+	if x != nil {
+		return x.Outing
+	}
+	return nil
+}
+
 // An outing as its own seat's holder sees it. It carries no other person.
 type Outing struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -192,13 +498,22 @@ type Outing struct {
 	// When the caller's invitation went out, and when its fixed 48 hours end.
 	InvitedAt        *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=invited_at,json=invitedAt,proto3" json:"invited_at,omitempty"`
 	InvitationEndsAt *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=invitation_ends_at,json=invitationEndsAt,proto3" json:"invitation_ends_at,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
+	// Where the whole outing stands.
+	OutingState OutingState `protobuf:"varint,10,opt,name=outing_state,json=outingState,proto3,enum=issho.v1.OutingState" json:"outing_state,omitempty"`
+	// How many have said yes: those going and those whose yes waits for the
+	// outing to be set. A count, never who, shown to everyone with a seat.
+	YesCount int32 `protobuf:"varint,11,opt,name=yes_count,json=yesCount,proto3" json:"yes_count,omitempty"`
+	// The first names of the others going, sorted: the caller's own is not in it,
+	// and it is empty unless the caller is going themselves. A first name is all
+	// that is ever shown of another person.
+	OthersGoing   []string `protobuf:"bytes,12,rep,name=others_going,json=othersGoing,proto3" json:"others_going,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Outing) Reset() {
 	*x = Outing{}
-	mi := &file_issho_v1_outing_proto_msgTypes[2]
+	mi := &file_issho_v1_outing_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -210,7 +525,7 @@ func (x *Outing) String() string {
 func (*Outing) ProtoMessage() {}
 
 func (x *Outing) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_outing_proto_msgTypes[2]
+	mi := &file_issho_v1_outing_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -223,7 +538,7 @@ func (x *Outing) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Outing.ProtoReflect.Descriptor instead.
 func (*Outing) Descriptor() ([]byte, []int) {
-	return file_issho_v1_outing_proto_rawDescGZIP(), []int{2}
+	return file_issho_v1_outing_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *Outing) GetId() string {
@@ -289,6 +604,27 @@ func (x *Outing) GetInvitationEndsAt() *timestamppb.Timestamp {
 	return nil
 }
 
+func (x *Outing) GetOutingState() OutingState {
+	if x != nil {
+		return x.OutingState
+	}
+	return OutingState_OUTING_STATE_UNSPECIFIED
+}
+
+func (x *Outing) GetYesCount() int32 {
+	if x != nil {
+		return x.YesCount
+	}
+	return 0
+}
+
+func (x *Outing) GetOthersGoing() []string {
+	if x != nil {
+		return x.OthersGoing
+	}
+	return nil
+}
+
 var File_issho_v1_outing_proto protoreflect.FileDescriptor
 
 const file_issho_v1_outing_proto_rawDesc = "" +
@@ -296,7 +632,16 @@ const file_issho_v1_outing_proto_rawDesc = "" +
 	"\x15issho/v1/outing.proto\x12\bissho.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x15issho/v1/access.proto\"\x16\n" +
 	"\x14ListMyOutingsRequest\"C\n" +
 	"\x15ListMyOutingsResponse\x12*\n" +
-	"\aoutings\x18\x01 \x03(\v2\x10.issho.v1.OutingR\aoutings\"\xcd\x02\n" +
+	"\aoutings\x18\x01 \x03(\v2\x10.issho.v1.OutingR\aoutings\"j\n" +
+	"\x17AnswerInvitationRequest\x12\x1b\n" +
+	"\touting_id\x18\x01 \x01(\tR\boutingId\x122\n" +
+	"\x06answer\x18\x02 \x01(\x0e2\x1a.issho.v1.InvitationAnswerR\x06answer\"D\n" +
+	"\x18AnswerInvitationResponse\x12(\n" +
+	"\x06outing\x18\x01 \x01(\v2\x10.issho.v1.OutingR\x06outing\"0\n" +
+	"\x11CancelSeatRequest\x12\x1b\n" +
+	"\touting_id\x18\x01 \x01(\tR\boutingId\">\n" +
+	"\x12CancelSeatResponse\x12(\n" +
+	"\x06outing\x18\x01 \x01(\v2\x10.issho.v1.OutingR\x06outing\"\xc7\x03\n" +
 	"\x06Outing\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
 	"\aplan_id\x18\x02 \x01(\tR\x06planId\x12\x12\n" +
@@ -308,7 +653,23 @@ const file_issho_v1_outing_proto_rawDesc = "" +
 	"seat_state\x18\a \x01(\x0e2\x13.issho.v1.SeatStateR\tseatState\x129\n" +
 	"\n" +
 	"invited_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\tinvitedAt\x12H\n" +
-	"\x12invitation_ends_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\x10invitationEndsAt*\xec\x01\n" +
+	"\x12invitation_ends_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\x10invitationEndsAt\x128\n" +
+	"\fouting_state\x18\n" +
+	" \x01(\x0e2\x15.issho.v1.OutingStateR\voutingState\x12\x1b\n" +
+	"\tyes_count\x18\v \x01(\x05R\byesCount\x12!\n" +
+	"\fothers_going\x18\f \x03(\tR\vothersGoing*j\n" +
+	"\x10InvitationAnswer\x12!\n" +
+	"\x1dINVITATION_ANSWER_UNSPECIFIED\x10\x00\x12\x19\n" +
+	"\x15INVITATION_ANSWER_YES\x10\x01\x12\x18\n" +
+	"\x14INVITATION_ANSWER_NO\x10\x02*\xc3\x01\n" +
+	"\vOutingState\x12\x1c\n" +
+	"\x18OUTING_STATE_UNSPECIFIED\x10\x00\x12\x19\n" +
+	"\x15OUTING_STATE_PROPOSED\x10\x01\x12\x18\n" +
+	"\x14OUTING_STATE_OFFERED\x10\x02\x12\x14\n" +
+	"\x10OUTING_STATE_SET\x10\x03\x12\x15\n" +
+	"\x11OUTING_STATE_OVER\x10\x04\x12\x18\n" +
+	"\x14OUTING_STATE_NOT_SET\x10\x05\x12\x1a\n" +
+	"\x16OUTING_STATE_CANCELLED\x10\x06*\x85\x02\n" +
 	"\tSeatState\x12\x1a\n" +
 	"\x16SEAT_STATE_UNSPECIFIED\x10\x00\x12\x16\n" +
 	"\x12SEAT_STATE_INVITED\x10\x01\x12\x14\n" +
@@ -318,9 +679,13 @@ const file_issho_v1_outing_proto_rawDesc = "" +
 	"\x0fSEAT_STATE_FULL\x10\x05\x12\x18\n" +
 	"\x14SEAT_STATE_CANCELLED\x10\x06\x12\x1a\n" +
 	"\x16SEAT_STATE_LATE_CANCEL\x10\a\x12\x16\n" +
-	"\x12SEAT_STATE_REMOVED\x10\b2g\n" +
+	"\x12SEAT_STATE_REMOVED\x10\b\x12\x17\n" +
+	"\x13SEAT_STATE_ACCEPTED\x10\t2\x97\x02\n" +
 	"\rOutingService\x12V\n" +
-	"\rListMyOutings\x12\x1e.issho.v1.ListMyOutingsRequest\x1a\x1f.issho.v1.ListMyOutingsResponse\"\x04\x88\xb5\x18\x02B\x9a\x01\n" +
+	"\rListMyOutings\x12\x1e.issho.v1.ListMyOutingsRequest\x1a\x1f.issho.v1.ListMyOutingsResponse\"\x04\x88\xb5\x18\x02\x12_\n" +
+	"\x10AnswerInvitation\x12!.issho.v1.AnswerInvitationRequest\x1a\".issho.v1.AnswerInvitationResponse\"\x04\x88\xb5\x18\x02\x12M\n" +
+	"\n" +
+	"CancelSeat\x12\x1b.issho.v1.CancelSeatRequest\x1a\x1c.issho.v1.CancelSeatResponse\"\x04\x88\xb5\x18\x02B\x9a\x01\n" +
 	"\fcom.issho.v1B\vOutingProtoP\x01Z<github.com/shrujancheruku/issho/backend/gen/issho/v1;isshov1\xa2\x02\x03IXX\xaa\x02\bIssho.V1\xca\x02\bIssho\\V1\xe2\x02\x14Issho\\V1\\GPBMetadata\xea\x02\tIssho::V1b\x06proto3"
 
 var (
@@ -335,27 +700,41 @@ func file_issho_v1_outing_proto_rawDescGZIP() []byte {
 	return file_issho_v1_outing_proto_rawDescData
 }
 
-var file_issho_v1_outing_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_issho_v1_outing_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_issho_v1_outing_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
+var file_issho_v1_outing_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_issho_v1_outing_proto_goTypes = []any{
-	(SeatState)(0),                // 0: issho.v1.SeatState
-	(*ListMyOutingsRequest)(nil),  // 1: issho.v1.ListMyOutingsRequest
-	(*ListMyOutingsResponse)(nil), // 2: issho.v1.ListMyOutingsResponse
-	(*Outing)(nil),                // 3: issho.v1.Outing
-	(*timestamppb.Timestamp)(nil), // 4: google.protobuf.Timestamp
+	(InvitationAnswer)(0),            // 0: issho.v1.InvitationAnswer
+	(OutingState)(0),                 // 1: issho.v1.OutingState
+	(SeatState)(0),                   // 2: issho.v1.SeatState
+	(*ListMyOutingsRequest)(nil),     // 3: issho.v1.ListMyOutingsRequest
+	(*ListMyOutingsResponse)(nil),    // 4: issho.v1.ListMyOutingsResponse
+	(*AnswerInvitationRequest)(nil),  // 5: issho.v1.AnswerInvitationRequest
+	(*AnswerInvitationResponse)(nil), // 6: issho.v1.AnswerInvitationResponse
+	(*CancelSeatRequest)(nil),        // 7: issho.v1.CancelSeatRequest
+	(*CancelSeatResponse)(nil),       // 8: issho.v1.CancelSeatResponse
+	(*Outing)(nil),                   // 9: issho.v1.Outing
+	(*timestamppb.Timestamp)(nil),    // 10: google.protobuf.Timestamp
 }
 var file_issho_v1_outing_proto_depIdxs = []int32{
-	3, // 0: issho.v1.ListMyOutingsResponse.outings:type_name -> issho.v1.Outing
-	0, // 1: issho.v1.Outing.seat_state:type_name -> issho.v1.SeatState
-	4, // 2: issho.v1.Outing.invited_at:type_name -> google.protobuf.Timestamp
-	4, // 3: issho.v1.Outing.invitation_ends_at:type_name -> google.protobuf.Timestamp
-	1, // 4: issho.v1.OutingService.ListMyOutings:input_type -> issho.v1.ListMyOutingsRequest
-	2, // 5: issho.v1.OutingService.ListMyOutings:output_type -> issho.v1.ListMyOutingsResponse
-	5, // [5:6] is the sub-list for method output_type
-	4, // [4:5] is the sub-list for method input_type
-	4, // [4:4] is the sub-list for extension type_name
-	4, // [4:4] is the sub-list for extension extendee
-	0, // [0:4] is the sub-list for field type_name
+	9,  // 0: issho.v1.ListMyOutingsResponse.outings:type_name -> issho.v1.Outing
+	0,  // 1: issho.v1.AnswerInvitationRequest.answer:type_name -> issho.v1.InvitationAnswer
+	9,  // 2: issho.v1.AnswerInvitationResponse.outing:type_name -> issho.v1.Outing
+	9,  // 3: issho.v1.CancelSeatResponse.outing:type_name -> issho.v1.Outing
+	2,  // 4: issho.v1.Outing.seat_state:type_name -> issho.v1.SeatState
+	10, // 5: issho.v1.Outing.invited_at:type_name -> google.protobuf.Timestamp
+	10, // 6: issho.v1.Outing.invitation_ends_at:type_name -> google.protobuf.Timestamp
+	1,  // 7: issho.v1.Outing.outing_state:type_name -> issho.v1.OutingState
+	3,  // 8: issho.v1.OutingService.ListMyOutings:input_type -> issho.v1.ListMyOutingsRequest
+	5,  // 9: issho.v1.OutingService.AnswerInvitation:input_type -> issho.v1.AnswerInvitationRequest
+	7,  // 10: issho.v1.OutingService.CancelSeat:input_type -> issho.v1.CancelSeatRequest
+	4,  // 11: issho.v1.OutingService.ListMyOutings:output_type -> issho.v1.ListMyOutingsResponse
+	6,  // 12: issho.v1.OutingService.AnswerInvitation:output_type -> issho.v1.AnswerInvitationResponse
+	8,  // 13: issho.v1.OutingService.CancelSeat:output_type -> issho.v1.CancelSeatResponse
+	11, // [11:14] is the sub-list for method output_type
+	8,  // [8:11] is the sub-list for method input_type
+	8,  // [8:8] is the sub-list for extension type_name
+	8,  // [8:8] is the sub-list for extension extendee
+	0,  // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_issho_v1_outing_proto_init() }
@@ -369,8 +748,8 @@ func file_issho_v1_outing_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_issho_v1_outing_proto_rawDesc), len(file_issho_v1_outing_proto_rawDesc)),
-			NumEnums:      1,
-			NumMessages:   3,
+			NumEnums:      3,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
