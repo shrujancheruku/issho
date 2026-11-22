@@ -601,3 +601,83 @@ func TestTheDatabaseHoldsOneRowPerPlanRoundNumber(t *testing.T) {
 		t.Fatalf("err = %v, want a unique violation of plan_rounds_plan_id_number_key", err)
 	}
 }
+
+// Forming reads the plan's running round: who is signed up and the times each
+// ticked. A person who changed their times is one entry with the latest ones,
+// and entries come in account order so a run is repeatable.
+func TestFormingReadsTheRunningRoundOneEntryPerPerson(t *testing.T) {
+	r := newSignupRig(t)
+	ctx := context.Background()
+	if _, err := r.svc.Set(ctx, grace, lanterns, []plans.Tick{{Date: "2026-01-09", Part: "evening"}}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := r.svc.Set(ctx, ada, lanterns, []plans.Tick{{Date: "2026-01-08", Part: "evening"}}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := r.svc.Set(ctx, ada, lanterns, []plans.Tick{{Date: "2026-01-10", Part: "evening"}, {Date: "2026-01-09", Part: "evening"}}); err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := r.svc.Forming(ctx, lanterns)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	want := []plans.Entry{
+		{Account: ada, Ticks: []plans.Tick{{Date: "2026-01-09", Part: "evening"}, {Date: "2026-01-10", Part: "evening"}}},
+		{Account: grace, Ticks: []plans.Tick{{Date: "2026-01-09", Part: "evening"}}},
+	}
+	if got.RoundID == "" || got.StartsAt != "17:00" || !reflect.DeepEqual(got.Entries, want) {
+		t.Fatalf("Forming = %+v, want a round with the lantern plan's 17:00 start and entries %+v", got, want)
+	}
+}
+
+// A plan nobody has signed up to has a running round with no entries and no
+// stored row yet; a plan that isn't shown is ErrNotFound, as for a signup.
+func TestFormingAPlanWithNoSignupsHasNoEntries(t *testing.T) {
+	r := newSignupRig(t)
+
+	got, err := r.svc.Forming(context.Background(), lanterns)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.RoundID != "" || len(got.Entries) != 0 {
+		t.Fatalf("Forming = %+v, want no round row and no entries", got)
+	}
+	if _, err := r.svc.Forming(context.Background(), "6a1f0c52-3d1b-4f0e-9a52-0d7c9a1b00ff"); !errors.Is(err, plans.ErrNotFound) {
+		t.Fatalf("a plan nobody has: err = %v, want ErrNotFound", err)
+	}
+	if _, err := r.pool.Exec(context.Background(), "update app.cities set state = 'closed'"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := r.svc.Forming(context.Background(), lanterns); !errors.Is(err, plans.ErrNotFound) {
+		t.Fatalf("a closed city's plan: err = %v, want ErrNotFound", err)
+	}
+}
+
+// An outing's date is never less than 3 days after its invitations go out
+// (docs/spec/matching.md, "Invitations"), so forming reads only the ticks that
+// are still 3 days ahead on the city's clock *now*, not when they were ticked.
+// A person with none left drops out of the round for this run.
+func TestFormingLeavesOutTicksNowLessThanThreeDaysAhead(t *testing.T) {
+	r := newSignupRig(t)
+	ctx := context.Background()
+	if _, err := r.svc.Set(ctx, ada, lanterns, []plans.Tick{{Date: "2026-01-08", Part: "evening"}, {Date: "2026-01-10", Part: "evening"}}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := r.svc.Set(ctx, grace, lanterns, []plans.Tick{{Date: "2026-01-08", Part: "evening"}}); err != nil {
+		t.Fatal(err)
+	}
+	// Two days later, on the 7th, the 8th is 1 day ahead and the 10th is 3.
+	r.clk.Set(rigStart.Add(48 * time.Hour))
+
+	got, err := r.svc.Forming(ctx, lanterns)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	want := []plans.Entry{{Account: ada, Ticks: []plans.Tick{{Date: "2026-01-10", Part: "evening"}}}}
+	if !reflect.DeepEqual(got.Entries, want) {
+		t.Fatalf("entries = %+v, want only ada's tick on the 10th", got.Entries)
+	}
+}
