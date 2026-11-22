@@ -128,7 +128,7 @@ describe("the server's loaders", () => {
   }
 
   /** The API answers each call with the next of these, then repeats the last. */
-  function apiAnswers(...outcomes: Array<'ok' | 'down'>) {
+  function apiAnswers(...outcomes: ('ok' | 'down')[]) {
     let calls = 0;
     fetchSpy = jest.spyOn(globalThis, 'fetch').mockImplementation(async () => {
       const outcome = outcomes[Math.min(calls++, outcomes.length - 1)];
