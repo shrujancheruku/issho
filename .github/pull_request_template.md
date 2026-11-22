@@ -7,7 +7,7 @@
 - [ ] PR title / commits follow Conventional Commits (`feat(scope): …`)
 - [ ] Linked to its issue; an ADR in `docs/adr/` if it settles a hard-to-reverse decision
 - [ ] Directory READMEs / docs updated if behaviour, setup or endpoints changed
-- [ ] `make gen` run if `proto/` or `backend/db/queries/` changed
+- [ ] `make gen` run if `proto/` or `backend/internal/*/queries/` changed
 - [ ] `make lint test` pass locally
 - [ ] Non-obvious logic has comments explaining *why*
 - [ ] No secrets added (pre-commit hook enabled via `make setup`)

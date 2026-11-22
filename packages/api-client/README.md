@@ -1,9 +1,9 @@
 # @issho/api-client
 
-A typed TypeScript client for the Issho API, shared by the mobile app and the (planned) admin SPA.
+The generated TypeScript client for the Issho API, used by the app, the Expo server and the admin.
 
-- `src/gen/` is **generated** from `proto/` by `protoc-gen-es` (`make gen` at the root). Don't edit it.
-- `src/index.ts` exports `createApi()` and re-exports all generated message types.
+- `src/gen/` is **generated** from `proto/` by `protoc-gen-es` (`make gen` at the root, after `make setup`). Don't edit it.
+- `src/index.ts` exports `createApi()` and re-exports the generated message types.
 
 ## Usage
 
@@ -12,22 +12,20 @@ import { createApi } from '@issho/api-client';
 
 const api = createApi({
   baseUrl: 'http://localhost:8080',
-  getAccessToken: async () => session?.access_token ?? null, // Supabase session
+  getAccessToken: async () => session?.access_token ?? null, // the Supabase session
 });
 
-const { user } = await api.identity.getMe({});
+const { version } = await api.health.check({});
 ```
 
-- `getAccessToken` is called before **every** request. When it returns a token, the client sends `Authorization: Bearer <token>`.
-- The transport is Connect over HTTP/1.1 with **JSON** encoding (`useBinaryFormat: false`). JSON works with React Native's `fetch` and is readable in network inspectors.
-- `maxLen(schema, field)` returns a string field's `max_len` rule from the .proto (`maxLen(SendMessageRequestSchema, 'body')`), for inputs' `maxLength`. The server enforces the same rule; it throws if the field has none. `include_imports` in `buf.gen.yaml` generates `src/gen/buf/validate/` so the rules can be read.
-- Errors are thrown as `ConnectError`, with `.code` (e.g. `Code.Unauthenticated`). `errorReason(err)` returns the API's machine-readable `ErrorReason` (`SUSPENDED`, `NO_PROFILE`, `TOO_LATE`, ...) or `undefined`; branch on the code first, then the reason.
+- `getAccessToken` is called before every request. A token goes out as `Authorization: Bearer <token>`; with none, no header is sent, which only public RPCs accept.
+- The transport is Connect over `fetch` with JSON encoding, which works with React Native's `fetch` and reads in a network inspector.
+- Errors are thrown as `ConnectError`; branch on its `.code` (`Code.Unauthenticated`, `Code.PermissionDenied`).
 
 ## Adding a service
 
-1. Add the `.proto` under `proto/issho/v1/` and run `make gen`.
-2. Import the generated service in `src/index.ts`, re-export its types and add it to the object returned by `createApi`.
+Add the `.proto` and run `make gen` (see `proto/README.md`), then import the generated service in `src/index.ts`, re-export its types and add it to the object `createApi` returns.
 
 ## Checks
 
-`pnpm typecheck` and `pnpm test` (root) or `pnpm --filter @issho/api-client typecheck` / `test`.
+`make lint` type-checks it (`pnpm --filter @issho/api-client typecheck`) and `make test` runs its tests (`src/index.test.ts`, against a fake `fetch`).

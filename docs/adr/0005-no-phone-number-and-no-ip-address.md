@@ -19,4 +19,5 @@ The check on who joins is the chain of join links in the Pilot and the waitlist 
 - Don't add phone verification or IP logging as a fix. Either one changes the privacy notice and needs a fresh tick from every member.
 - Two questions go to the lawyer before the public launch: whether email codes without phone verification are enough, and whether a sign-in log with no IP address is enough. If the answer is no, this ADR is reopened with the LLC in place.
 - Cloudflare sees every request's IP address in transit. That is stated in the recipient list; Issho still keeps none.
+- Keeping none depends on the zone's "Remove visitor IP headers" managed transform. Cloudflare otherwise sends the address to the origin in `X-Forwarded-For`, which kamal-proxy writes to its request log before the forwarders drop it. The setting is made by hand, and [Deploying dev](../deploy.md#a-required-cloudflare-zone-setting) says how to confirm it.
 - Nothing is guessed from an IP address: a visitor's city comes from the link or a list.

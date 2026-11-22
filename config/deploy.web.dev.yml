@@ -1,0 +1,27 @@
+# The dev destination of the Expo server (`kamal -c config/deploy.web.yml -d dev`).
+# See config/deploy.dev.yml for what dev is and where DEPLOY_HOST comes from.
+
+servers:
+  web:
+    hosts:
+      - <%= ENV.fetch("DEPLOY_HOST") %>
+
+# The VM's host key, pinned: an ssh config written by scripts/dev-ssh-pin.sh that
+# refuses an unknown or changed key. ENV.fetch, so Kamal will not load this
+# destination, and so not connect, without it.
+ssh:
+  config: <%= ENV.fetch("DEV_SSH_CONFIG") %>
+
+proxy:
+  host: dev.joinissho.com
+
+env:
+  clear:
+    # Where the Expo server forwards the API's paths (apps/web/api-proxy.js).
+    API_ORIGIN: https://api-dev.joinissho.com
+
+builder:
+  args:
+    # Public: it is bundled into the page. The page's own origin, where the Expo
+    # server forwards the API's paths.
+    EXPO_PUBLIC_API_URL: https://dev.joinissho.com

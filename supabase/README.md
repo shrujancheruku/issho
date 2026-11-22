@@ -1,50 +1,30 @@
 # supabase
 
-Configuration for the **local** Supabase stack (`supabase start`). It provides Postgres 17 + PostGIS, Auth, Storage, Studio and Mailpit in Docker.
+Configuration for the **local** Supabase stack: `supabase start` runs Postgres 17, Auth, Studio and a mail catcher in Docker, with the ports in `config.toml` (54320 to 54329, the same for every worktree, so one stack at a time).
 
-## What we use and what we don't
+## What is on and what is off
 
-| Supabase feature | Used? | Notes |
+| Feature | State | Why |
 |---|---|---|
-| Postgres + PostGIS | ✅ | Our tables live in schema `app`. **goose** owns migrations (`backend/db/migrations`), not the Supabase CLI. |
-| Auth | ✅ | Issues JWTs that the Go API verifies via JWKS |
-| Storage | planned | Photos (S3-compatible API) |
-| Studio | ✅ (local) | DB browser at http://127.0.0.1:54323 |
-| Mailpit | ✅ (local) | Catches auth emails at http://127.0.0.1:54324 |
-| PostgREST / Data API | ❌ **disabled** (`[api] enabled = false`) | Clients go through the Go API. With the Data API on, `anon` could read and write public-schema tables, e.g. PostGIS's `spatial_ref_sys`, whose grants belong to `supabase_admin` and can't be revoked by our migrations. `anon` and `authenticated` also have no grants on `app`. |
-| Realtime, Edge Functions, Analytics, Vector | ❌ | Disabled in `config.toml` to keep the stack light. The Go API and River worker cover these needs. |
-| `supabase/migrations`, `seed.sql` | ❌ | Disabled; see goose and `cmd/tool seed` |
+| Postgres | on | The store, the job queue and the chat fan-out. App tables are in the `app` schema, River's in `river`, goose's bookkeeping in `goose`; nothing is created in `public`. |
+| Auth | on | Sign-in only, with an email code. The Go API verifies the tokens against the JWKS. |
+| Studio, mail catcher | on | A database browser at http://127.0.0.1:54323; sign-in emails land at http://127.0.0.1:54324. |
+| Data API (PostgREST) | **off** (`[api] enabled = false`) | Clients never query the database directly; everything goes through the Go API. Don't grant `anon` or `authenticated` anything or write RLS policies to expose data: add an RPC. |
+| Migrations and seed | **off** (`[db.migrations]`, `[db.seed]`) | goose owns the migrations (`backend/db/migrations`). Never use `supabase db push`, `supabase db pull`, `supabase migration new` or a `supabase/migrations/` directory. |
+| Realtime, Storage, Edge Functions, Analytics | off | Chat and jobs run in the Go API and the worker, and v2 has no file storage. |
 
 ## Commands
 
 ```sh
-supabase start        # start (first run pulls images; needs Docker/OrbStack)
-supabase status       # URLs and local keys (publishable key, DB URL, …)
-supabase stop         # stop, keeping data
-supabase db reset     # WIPE local DB (then: make migrate-up seed)
+supabase start      # first run pulls the images; needs Docker
+supabase status     # URLs and local keys
+make migrate-up     # apply the goose migrations to it (backend/README.md, "Migrations")
+make migrate-down   # roll back the latest one
+supabase stop       # stop the stack, keeping its data
 ```
 
-## JWT signing keys
+`make migrate-up` and `make migrate-down` always use the local database (`postgresql://postgres:postgres@127.0.0.1:54322/postgres`) and ignore a `DATABASE_URL` in the environment, which usually points at a hosted project.
 
-The API only accepts **asymmetric** tokens (ES256/RS256). Locally, Supabase signs with the key in `signing_keys.json`:
+A local database left by v1 (it used the same project ID, `issho`) still holds v1's `app` schema, so `make migrate-up` stops with `schema "app" already exists`. Wipe it once with `supabase stop --no-backup` and start again; this deletes the local data.
 
-```sh
-echo '[]' > supabase/signing_keys.json
-supabase gen signing-key --algorithm ES256
-```
-
-`signing_keys.json` holds a **private key**. It's gitignored and blocked by the secret scanner, and each developer generates their own. In hosted projects, enable asymmetric JWT signing keys in the dashboard; the private key never leaves Supabase.
-
-## Sign-in emails
-
-The app signs in with **6-digit email codes** (not links, which can't reliably open a native app). `config.toml` points the `magic_link` and `confirmation` templates at `templates/*.html`, which show `{{ .Token }}`.
-
-**Emails in the user's language.** Each email is written in the language in the account's metadata (`user_metadata.lang`): the app sends the device language when it creates the account, and later keeps it equal to the profile's main language. The templates branch on it (`{{ if eq $lang "ja" }}…`) and fall back to English; the subjects do the same. They're **generated**: edit `templates/source.json` (the English sentences and the list of languages), then run `make email-templates` (needs `DATABASE_URL` for the translation cache and `GOOGLE_TRANSLATE_API_KEY`). It machine-translates through `app.translations` and rewrites `templates/magic_link.html`, `templates/confirmation.html` and the two `subject` lines here; nothing is written unless every language succeeds. Write unambiguous English: "This code expires" became "this *coupon* code" in Chinese until it said "This sign-in code". Never edit the generated files by hand. Codes expire after **10 minutes** (`otp_expiry = 600`). Locally, every email lands in Mailpit (http://127.0.0.1:54324). After editing templates or config, run `supabase stop && supabase start`.
-
-For the hosted project, the templates, subjects, SMTP relay and resend limit are pushed from this config with `supabase config push` (review `supabase config diff` first); the code expiry is set by hand in the dashboard. See [../docs/supabase-hosted.md](../docs/supabase-hosted.md).
-
-## Auth providers
-
-The MVP uses **email OTP only** (`[auth.email]`). All `[auth.external.*]` providers stay disabled; Apple and Google sign-in are deferred until after the MVP. If a provider is added later, reference its secret as `env(...)` and put the value in the gitignored `supabase/.env`. Never write it inline.
-
-The hosted project is set up separately; see [../docs/supabase-hosted.md](../docs/supabase-hosted.md).
+Hosted configuration is pushed from this file with `supabase config diff` and `supabase config push`, using a `[remotes.<project>]` override for each project. Always review `config diff` first. No project is set up here yet.

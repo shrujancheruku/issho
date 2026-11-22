@@ -1,109 +1,75 @@
-// Command worker runs background jobs (River): matching passes that open
-// plans and schedule them.
 package main
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	"github.com/shrujancheruku/issho/backend/gen/dbgen"
-	"github.com/shrujancheruku/issho/backend/internal/crews"
-	mapsgoogle "github.com/shrujancheruku/issho/backend/internal/maps/google"
-	"github.com/shrujancheruku/issho/backend/internal/notifications"
-	"github.com/shrujancheruku/issho/backend/internal/plans"
-	"github.com/shrujancheruku/issho/backend/internal/platform/config"
-	"github.com/shrujancheruku/issho/backend/internal/platform/db"
-	"github.com/shrujancheruku/issho/backend/internal/platform/github"
-	"github.com/shrujancheruku/issho/backend/internal/platform/sentry"
-	"github.com/shrujancheruku/issho/backend/internal/push"
-	"github.com/shrujancheruku/issho/backend/internal/repoedit"
-	"github.com/shrujancheruku/issho/backend/internal/translate"
-	"github.com/shrujancheruku/issho/backend/internal/translate/translators"
-	"github.com/shrujancheruku/issho/backend/internal/uistrings"
-	"github.com/shrujancheruku/issho/backend/internal/walks"
-	walksgemini "github.com/shrujancheruku/issho/backend/internal/walks/gemini"
-	"github.com/shrujancheruku/issho/backend/internal/worker"
+	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/shrujancheruku/issho/backend/internal/clock"
+	"github.com/shrujancheruku/issho/backend/internal/jobs"
+	"github.com/shrujancheruku/issho/backend/internal/logging"
+	"github.com/shrujancheruku/issho/backend/internal/serve"
+	"github.com/shrujancheruku/issho/backend/internal/staff"
 )
 
-// version is the commit, stamped by the image build (-X main.version).
-var version = "dev"
+// stopTimeout is how long a deploy's SIGTERM waits for running jobs to finish
+// before River cancels them; a canceled job is retried by the next worker.
+const stopTimeout = 30 * time.Second
 
 func main() {
-	if err := run(); err != nil {
-		slog.Error("worker exited", "err", err)
+	// SIGTERM is what the host sends on a deploy; SIGINT is Ctrl-C locally.
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+
+	log := logging.New(os.Stdout, "worker")
+	if err := run(ctx, log); err != nil {
+		log.Error("exited", "err", err)
 		os.Exit(1)
 	}
 }
 
-func run() error {
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stop()
-
-	cfg, err := config.LoadWorker()
-	if err != nil {
-		return err
+func run(ctx context.Context, log *slog.Logger) error {
+	// A direct or session-pooler connection, not the transaction pooler the API
+	// uses: River listens for new jobs with LISTEN/NOTIFY.
+	url := os.Getenv("WORKER_DATABASE_URL")
+	if url == "" {
+		return errors.New("WORKER_DATABASE_URL is not set")
 	}
-	flush, err := sentry.Init(cfg.SentryDSN, version, cfg.SentryEnvironment, "worker", 0)
-	if err != nil {
-		return err
-	}
-	defer flush()
-	pool, err := db.Open(ctx, cfg.DatabaseURL)
+	pool, err := pgxpool.New(ctx, url)
 	if err != nil {
 		return err
 	}
 	defer pool.Close()
-	translations := &translate.Service{Store: dbgen.New(pool)}
-	if translations.Translator, err = translators.New(cfg.Translator, cfg.GoogleTranslateAPIKey, cfg.GeminiAPIKey); err != nil {
-		return err
-	} else if translations.Translator == nil {
-		slog.Warn("no key for the translator (GOOGLE_TRANSLATE_API_KEY, or GOOGLE_GEMINI_API_KEY with TRANSLATOR=gemini): notifications in English only")
-	}
-	catalog, err := uistrings.Load()
+
+	emails, err := newEmailSender(os.Getenv)
 	if err != nil {
 		return err
 	}
-	// Merged human translations reach push text without a worker deploy.
-	if cfg.GitHubToken != "" {
-		gh := github.New(cfg.GitHubToken, cfg.GitHubRepo)
-		gh.API = cfg.GitHubAPI
-		// A refused token stops production here, not at the first push.
-		if err := catalog.Start(ctx, repoedit.New(gh, gh.Base), 5*time.Minute, slog.Default(), cfg.Production()); err != nil {
-			return err
-		}
-	}
-	// Each module that queues notifications writes their text.
-	plansSvc := &plans.Service{DB: pool, Translations: translations}
-	notifier := &notifications.Notifier{DB: pool, Sender: push.NewExpo(cfg.ExpoAccessToken), Log: slog.Default()}
-	notifier.Register(&plans.NotificationRenderer{Plans: plansSvc, Catalog: catalog}, plans.NotificationKinds()...)
-	notifier.Register(&crews.NotificationRenderer{Plans: plansSvc, Catalog: catalog}, crews.NotificationKinds()...)
-	var m worker.Maps
-	if cfg.GoogleMapsAPIKey != "" {
-		g := mapsgoogle.New(cfg.GoogleMapsAPIKey)
-		m = worker.Maps{Router: g, Hours: g, Routes: g, Places: g, WalkRoutes: g}
-		if cfg.GeminiAPIKey != "" {
-			m.Walks = &walks.Composer{Proposer: walksgemini.New(cfg.GeminiAPIKey), Places: g, Routes: g, Rules: walks.DefaultRules()}
-		} else {
-			slog.Warn("GOOGLE_GEMINI_API_KEY not set: no walking plans are opened")
-		}
-	} else {
-		slog.Warn("GOOGLE_MAPS_API_KEY not set: travel times are not rebuilt (and none are deleted); venue hours not checked; no walking plans are opened")
-	}
-	client, err := worker.NewClient(pool, slog.Default(), notifier, m)
+	// No job sends email yet; the ones that do are handed emails below.
+	_ = emails
+
+	// The real clock is built here and only here (tools/clockcheck enforces it);
+	// everything below takes it as a clock.Clock. No domain package has a job
+	// yet; each registers its queue kinds on kinds and its workers here.
+	kinds := staff.NewKinds()
+	client, err := jobs.New(pool, jobs.NewWorkers(clock.Real{}, pool, kinds), log)
 	if err != nil {
 		return err
 	}
 	if err := client.Start(ctx); err != nil {
 		return err
 	}
-	slog.Info("worker started")
-	<-ctx.Done()
-	// Let running jobs finish, but not forever.
-	stopCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+
+	err = serve.Run(ctx, log)
+
+	// ctx is done by now, so stopping needs a context of its own.
+	stopCtx, cancel := context.WithTimeout(context.Background(), stopTimeout)
 	defer cancel()
-	return client.Stop(stopCtx)
+	return errors.Join(err, client.Stop(stopCtx))
 }

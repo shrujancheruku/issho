@@ -1,129 +1,58 @@
 #!/usr/bin/env bash
-# Decides which CI jobs a change needs. Reads the changed file paths on stdin
-# (one per line) and prints `name=value` lines for $GITHUB_OUTPUT:
-#   backend, codegen, image, proto, ts   true/false: run that job
-#   admin, mobile                        true/false: rebuild that app (admin SPA
-#                                        build, mobile web export) in typescript
-#   ts_filter                          "--affected" when turbo may test only
-#                                        the packages a change reaches, else ""
-# `--all` ignores stdin and turns everything on (pushes to main, dispatches).
+# Which of CI's path-filtered jobs have something to check. Usage:
 #
-# Fail safe: a path no rule below knows turns everything on. Skipping a check
-# by mistake is worse than running one too many. Each group says why its paths
-# belong to it; tests are in scripts/ci-changes.test.sh.
+#   git diff --name-only BASE...HEAD | scripts/ci-changes.sh   # the files a change touches, on stdin
+#   scripts/ci-changes.sh --all < /dev/null                    # every job, whatever changed
 #
-# Cross-tree reads are the way a rule goes wrong, so they are listed with the
-# job that reads them (found by grepping for go:embed and `../` in Go code,
-# the Makefile and the scripts): backend/internal/translate/guide.md (embedded),
-# data/ and supabase/templates (read by Go tests), supabase/config.toml and
-# apps/mobile/src/i18n (read or rewritten by cmd/tool and its tests),
-# backend/internal/plans/events.go and crews/notifications.go (read by the
-# mobile Jest test push-kinds.test.ts, so a change there runs typescript).
-# Re-check when adding a go:embed or a test that reads outside its package.
+# Prints one `<job>=true|false` line per job (the format $GITHUB_OUTPUT reads).
+# The workflow's `changes` job runs it, and each filtered job skips itself when
+# its line is false. A job skipped that way reports as passing, which is why
+# every job can be a required check: a workflow-level `paths:` filter would
+# leave the check "expected" forever on a PR that touches none of them.
+#
+# The patterns are deliberately generous: a job that runs for no reason costs
+# minutes, a job that doesn't run when it should lets a break through. The jobs
+# not listed (secrets, commits, codegen) always run.
 set -euo pipefail
 
-backend=false codegen=false image=false proto=false ts=false admin=false mobile=false
-# ts_pkgs: every TypeScript-relevant path was inside apps/ or packages/, where
-# turbo's own dependency graph can pick the packages.
-ts_pkgs=true
 all=false
-[[ "${1:-}" == "--all" ]] && all=true
+case "${1:-}" in
+  --all) all=true ;;
+  "") ;;
+  *) echo "usage: ci-changes.sh [--all]  (changed paths on stdin)" >&2; exit 2 ;;
+esac
 
-# Order matters: `*` in a case pattern also matches `/`, so the code arms come
-# first and the "no job reads this" arm (which has `*.md`) comes after them.
-classify() {
-  case "$1" in
-    # --- Generated code. The drift check in `codegen` fails when it is edited
-    # by hand or goes stale. api-client's package.json pins protoc-gen-es.
-    docs/generated/*) codegen=true ;;
-    packages/api-client/src/gen/* | packages/api-client/package.json)
-      codegen=true ts=true admin=true mobile=true ;;
+# What every job runs on, so a change to it touches every job's paths: the
+# workflow, its local actions, the Makefile, these scripts, the lockfiles and
+# workspace files every install reads, and the tool pins. Left out, a break in
+# one of them would skip the jobs it breaks, and each would report as passing.
+shared='Makefile|\.github/workflows/ci\.yml|\.github/actions/.*|scripts/ci-.*|package\.json|pnpm-(lock|workspace)\.yaml|(.*/)?go\.(mod|sum)|go\.work(\.sum)?|tools/.*'
+# The Go side. docs/spec is here because the policy lint reads the spec's documents.
+go="(backend|proto|tools|docs/spec)/.*|go\.work(\.sum)?|buf(\.gen)?\.yaml"
+# The TypeScript side. proto because the client is generated from it.
+ts="(apps|packages|proto|e2e)/.*|package\.json|pnpm-.*"
 
-    # --- Go dependencies. Besides backend, `go tool buf` and the generators
-    # are pinned by tool directives here, so a bump can change the proto checks.
-    backend/go.mod | backend/go.sum)
-      backend=true image=true codegen=true proto=true ts_pkgs=false ;;
+# job|extended regex over a whole path. Output order is the order here.
+patterns=$(cat <<PATTERNS
+backend|^($shared|scripts/proto-breaking.*|$go)$
+boundaries|^($shared|$go)$
+e2e|^($shared|scripts/e2e.*|backend/.*|$ts)$
+image|^($shared|scripts/image.*|backend/.*|apps/(app|web)/.*|packages/.*)$
+native-bundle|^($shared|scripts/native-.*|apps/app/.*|packages/.*|proto/.*|package\.json|pnpm-.*)$
+policy|^($shared|$go)$
+proto-breaking|^($shared|scripts/proto-breaking.*|proto/.*|buf(\.gen)?\.yaml|tools/.*)$
+retention|^($shared|$go)$
+rpc-auth|^($shared|proto/.*|backend/.*|tools/.*|go\.work(\.sum)?|buf(\.gen)?\.yaml)$
+strings|^($shared|apps/app/.*|package\.json|pnpm-.*)$
+typescript|^($shared|$ts)$
+PATTERNS
+)
 
-    # --- Two Go files the mobile app's Jest suite reads: push-kinds.test.ts
-    # parses their Notify* constants to keep apps/mobile's pushKinds table in
-    # step. Everything backend/* does, plus the typescript job; turbo's
-    # --affected wouldn't pick apps/mobile for a backend-only change.
-    backend/internal/plans/events.go | backend/internal/crews/notifications.go)
-      backend=true image=true codegen=true ts=true ts_pkgs=false ;;
-
-    # --- Go. The backend job (vet, unit tests, migrations, DB integration
-    # tests) and the deploy image both build all of backend/. Markdown under
-    # backend/ counts too: translate/guide.md is go:embed'ded. go.work wires
-    # the module. codegen too: its generators (cmd/tool ui-strings, sqlc, buf
-    # plugins) are compiled from the whole backend module, so any Go file can
-    # break `make gen`.
-    backend/* | go.work | go.work.sum | .dockerignore)
-      backend=true image=true codegen=true ;;
-
-    # data/ is read by Go tests and copied into the image. The app's bundled
-    # translations (apps/mobile/src/i18n/bundled) are built from the city
-    # packs, so TypeScript runs unfiltered too.
-    data/*) backend=true image=true codegen=true ts=true ts_pkgs=false ;;
-
-    # --- Files outside backend/ that Go code reads: emailtemplates_test.go
-    # reads supabase/templates/source.json, and `tool emailtemplates` rewrites
-    # supabase/config.toml.
-    supabase/templates/* | supabase/config.toml) backend=true ;;
-
-    # --- The mobile app's strings. The ui-strings generator reads them (so
-    # codegen), and i18n_test.go in the Go module parses i18n/device.ts (so
-    # backend).
-    apps/mobile/src/i18n/*) ts=true codegen=true backend=true mobile=true ;;
-
-    # --- Protobuf. Generates Go and TS code (codegen drift, api-client) and is
-    # what `buf breaking` compares; the Go stubs compile in backend, and the
-    # TS client is typechecked in typescript. Turbo gets no filter: the
-    # generated client's dependents are cheap to test and easy to miss.
-    proto/* | buf.gen.yaml | buf.yaml | buf.work.yaml)
-      proto=true codegen=true backend=true image=true ts=true ts_pkgs=false ;;
-
-    # --- Paths no job reads: documentation (also Markdown inside apps/ and
-    # packages/), tooling config, deploy and hosting config (checked by the
-    # deploy workflows, not by CI), the static site and brand assets.
-    docs/* | *.md | .claude/* | site/* | assets/* | config/* | .kamal/* | supabase/* \
-      | .githooks/* | .gitignore | .worktreeinclude | orca.yaml | .gitleaks.toml | .env.example \
-      | version.txt | .release-please-manifest.json | release-please-config.json \
-      | skills-lock.json | commitlint.config.mjs | .github/pull_request_template.md \
-      | .github/ISSUE_TEMPLATE/* | .github/CODEOWNERS | .github/dependabot.yml) ;;
-
-    # --- TypeScript packages: turbo's graph picks the affected ones.
-    # The admin SPA build and the mobile web export (extra steps in that job)
-    # follow the app they build; both apps depend on packages/.
-    apps/admin/*) ts=true admin=true ;;
-    apps/mobile/*) ts=true mobile=true ;;
-    apps/* | packages/*) ts=true admin=true mobile=true ;;
-
-    # --- Anything else (workflows, lockfile, workspace/turbo/tsconfig/eslint
-    # roots, Makefile, scripts, unknown paths): everything on, and turbo gets
-    # no filter.
-    *) backend=true codegen=true image=true proto=true ts=true ts_pkgs=false ;;
-  esac
-}
-
-if $all; then
-  backend=true codegen=true image=true proto=true ts=true ts_pkgs=false
-else
-  while IFS= read -r f; do
-    [[ -n "$f" ]] && classify "$f"
-  done
-fi
-
-filter=""
-if $ts && $ts_pkgs; then filter="--affected"; fi
-# Any rule that turned turbo's filter off (toolchain, proto, data, unknown
-# paths) rebuilds both apps too.
-if $ts && ! $ts_pkgs; then admin=true mobile=true; fi
-
-echo "backend=$backend"
-echo "codegen=$codegen"
-echo "image=$image"
-echo "proto=$proto"
-echo "ts=$ts"
-echo "ts_filter=$filter"
-echo "admin=$admin"
-echo "mobile=$mobile"
+changed=$(cat)
+while IFS='|' read -r job regex; do
+  if $all || { [ -n "$changed" ] && grep -Eq "$regex" <<<"$changed"; }; then
+    echo "$job=true"
+  else
+    echo "$job=false"
+  fi
+done <<<"$patterns"

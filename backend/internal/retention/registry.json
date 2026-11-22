@@ -1,0 +1,9 @@
+[
+  {"table": "app.queue_items", "personal_data": "none"},
+  {"table": "goose.goose_db_version", "personal_data": "none"},
+  {"table": "river.river_job", "personal_data": "none"},
+  {"table": "river.river_leader", "personal_data": "none"},
+  {"table": "river.river_migration", "personal_data": "none"},
+  {"table": "river.river_notification", "personal_data": "none"},
+  {"table": "river.river_queue", "personal_data": "none"}
+]

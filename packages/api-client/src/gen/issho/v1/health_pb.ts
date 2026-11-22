@@ -4,13 +4,14 @@
 
 import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import { file_issho_v1_access } from "./access_pb";
 import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file issho/v1/health.proto.
  */
 export const file_issho_v1_health: GenFile = /*@__PURE__*/
-  fileDesc("ChVpc3Noby92MS9oZWFsdGgucHJvdG8SCGlzc2hvLnYxIg4KDENoZWNrUmVxdWVzdCI1Cg1DaGVja1Jlc3BvbnNlEhMKC2RhdGFiYXNlX29rGAEgASgIEg8KB3ZlcnNpb24YAiABKAkySwoNSGVhbHRoU2VydmljZRI6CgVDaGVjaxIWLmlzc2hvLnYxLkNoZWNrUmVxdWVzdBoXLmlzc2hvLnYxLkNoZWNrUmVzcG9uc2UiAEI+WjxnaXRodWIuY29tL3NocnVqYW5jaGVydWt1L2lzc2hvL2JhY2tlbmQvZ2VuL2lzc2hvL3YxO2lzc2hvdjFiBnByb3RvMw");
+  fileDesc("ChVpc3Noby92MS9oZWFsdGgucHJvdG8SCGlzc2hvLnYxIg4KDENoZWNrUmVxdWVzdCIgCg1DaGVja1Jlc3BvbnNlEg8KB3ZlcnNpb24YASABKAkyTwoNSGVhbHRoU2VydmljZRI+CgVDaGVjaxIWLmlzc2hvLnYxLkNoZWNrUmVxdWVzdBoXLmlzc2hvLnYxLkNoZWNrUmVzcG9uc2UiBIi1GAFCmgEKDGNvbS5pc3Noby52MUILSGVhbHRoUHJvdG9QAVo8Z2l0aHViLmNvbS9zaHJ1amFuY2hlcnVrdS9pc3Noby9iYWNrZW5kL2dlbi9pc3Noby92MTtpc3Nob3YxogIDSVhYqgIISXNzaG8uVjHKAghJc3Nob1xWMeICFElzc2hvXFYxXEdQQk1ldGFkYXRh6gIJSXNzaG86OlYxYgZwcm90bzM", [file_issho_v1_access]);
 
 /**
  * @generated from message issho.v1.CheckRequest
@@ -30,16 +31,10 @@ export const CheckRequestSchema: GenMessage<CheckRequest> = /*@__PURE__*/
  */
 export type CheckResponse = Message<"issho.v1.CheckResponse"> & {
   /**
-   * True when the API could ping Postgres during this request.
+   * The build's version, as set when the API was built ("dev" for a plain
+   * `go build`).
    *
-   * @generated from field: bool database_ok = 1;
-   */
-  databaseOk: boolean;
-
-  /**
-   * Build version of the API binary ("dev" for local builds).
-   *
-   * @generated from field: string version = 2;
+   * @generated from field: string version = 1;
    */
   version: string;
 };
@@ -52,16 +47,14 @@ export const CheckResponseSchema: GenMessage<CheckResponse> = /*@__PURE__*/
   messageDesc(file_issho_v1_health, 1);
 
 /**
- * HealthService reports whether the API and its dependencies are reachable.
- * Public: no Authorization header required. Used by load balancers and the app's status row.
- *
- * HTTP: POST /issho.v1.HealthService/Check
+ * The API's liveness check.
  *
  * @generated from service issho.v1.HealthService
  */
 export const HealthService: GenService<{
   /**
-   * Check pings the database and returns the running build version.
+   * Reports that the API is up and which build it is. Public: a deploy's probe
+   * and the status page call it with no token.
    *
    * @generated from rpc issho.v1.HealthService.Check
    */

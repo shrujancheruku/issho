@@ -1,6 +1,0 @@
-# Not part of the site (see wrangler.jsonc).
-README.md
-wrangler.jsonc
-.assetsignore
-.nojekyll
-.wrangler

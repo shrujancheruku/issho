@@ -1,0 +1,5 @@
+:root {
+  /* Web: scrollbars and form controls follow the system theme like the app
+     does; without it the browser draws light scrollbars on the dark theme. */
+  color-scheme: light dark;
+}

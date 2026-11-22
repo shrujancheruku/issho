@@ -1,99 +1,71 @@
 #!/usr/bin/env bash
-# Tests for ci-changes.sh. Run: scripts/ci-changes.test.sh
+# Tests for ci-changes.sh. Run from anywhere: scripts/ci-changes.test.sh
 set -euo pipefail
-cd "$(dirname "$0")"
 
+script=$(cd "$(dirname "$0")" && pwd)/ci-changes.sh
 fail=0
-# check <name> <expected output on one line> <paths...>
-check() {
-  local name=$1 want=$2; shift 2
+
+# jobs <files…> prints the names of the jobs that run, space-separated, for a
+# change to those files.
+jobs() { printf '%s\n' "$@" | "$script" | sed -n 's/=true$//p' | tr '\n' ' ' | sed 's/ $//'; }
+# want <what> <expected> <files…>
+want() {
+  local what=$1 expected=$2
+  shift 2
   local got
-  got=$( { [[ $# -gt 0 ]] && printf '%s\n' "$@"; true; } | ./ci-changes.sh | grep -Ev '^(admin|mobile)=' | tr '\n' ' ' | sed 's/ $//')
-  if [[ "$got" != "$want" ]]; then
-    echo "FAIL $name"; echo "  want: $want"; echo "  got:  $got"; fail=1
-  fi
+  got=$(jobs "$@")
+  [ "$got" = "$expected" ] || { echo "FAIL $what: ran '$got', want '$expected'"; fail=1; }
 }
 
-# checkapps <name> <"admin=x mobile=y"> <paths...>: which app builds run.
-checkapps() {
-  local name=$1 want=$2; shift 2
-  local got
-  got=$(printf '%s\n' "$@" | ./ci-changes.sh | grep -E '^(admin|mobile)=' | tr '\n' ' ' | sed 's/ $//')
-  if [[ "$got" != "$want" ]]; then
-    echo "FAIL apps $name"; echo "  want: $want"; echo "  got:  $got"; fail=1
-  fi
-}
-checkapps admin "admin=true mobile=false" apps/admin/src/a.ts
-checkapps mobile "admin=false mobile=true" apps/mobile/src/a.ts
-checkapps mobile-i18n "admin=false mobile=true" apps/mobile/src/i18n/en.json
-checkapps package "admin=true mobile=true" packages/api-client/src/index.ts
-checkapps api-gen "admin=true mobile=true" packages/api-client/src/gen/x_pb.ts
-checkapps go-only "admin=false mobile=false" backend/a.go
-checkapps docs "admin=false mobile=false" docs/a.md
-checkapps lockfile "admin=true mobile=true" pnpm-lock.yaml
-checkapps proto "admin=true mobile=true" proto/a.proto
-checkapps admin-and-go "admin=true mobile=false" apps/admin/src/a.ts backend/a.go
+all='backend boundaries e2e image native-bundle policy proto-breaking retention rpc-auth strings typescript'
 
-none="backend=false codegen=false image=false proto=false ts=false ts_filter="
-check docs-only "$none" docs/architecture.md README.md
-check no-files "$none"
-check claude-and-site "$none" .claude/orchestration.md site/index.html config/deploy.yml
-check worktree-tooling "$none" orca.yaml .worktreeinclude
-go="backend=true codegen=true image=true proto=false ts=false ts_filter="
-check go-only "$go" backend/internal/walks/walks.go
-check data "backend=true codegen=true image=true proto=false ts=true ts_filter=" data/activities.json
-# Cross-tree reads (review round 1): each must keep its reader's job on.
-check push-kinds-plans "backend=true codegen=true image=true proto=false ts=true ts_filter=" backend/internal/plans/events.go
-check push-kinds-crews "backend=true codegen=true image=true proto=false ts=true ts_filter=" backend/internal/crews/notifications.go
-check embedded-markdown "$go" backend/internal/translate/guide.md
-check supabase-templates "backend=true codegen=false image=false proto=false ts=false ts_filter=" supabase/templates/source.json
-check supabase-config "backend=true codegen=false image=false proto=false ts=false ts_filter=" supabase/config.toml
-check supabase-other "$none" supabase/seed.sql
-check api-client-gen "backend=false codegen=true image=false proto=false ts=true ts_filter=--affected" packages/api-client/src/gen/issho/v1/x_pb.ts
-check api-client-package "backend=false codegen=true image=false proto=false ts=true ts_filter=--affected" packages/api-client/package.json
-check go-mod "backend=true codegen=true image=true proto=true ts=false ts_filter=" backend/go.mod
-check app-readme "$none" apps/mobile/README.md
-# A rename shows up as two paths when the diff is run with --no-renames.
-check rename "backend=true codegen=true image=true proto=false ts=true ts_filter=--affected" backend/internal/a.go apps/admin/src/b.ts
-ts="backend=false codegen=false image=false proto=false ts=true ts_filter=--affected"
-check admin-only "$ts" apps/admin/src/main.tsx
-check mobile-only "$ts" apps/mobile/src/screens/Home.tsx
-check api-client "$ts" packages/api-client/src/index.ts
-check mixed-docs-and-admin "$ts" docs/architecture.md apps/admin/src/a.ts
-check mobile-i18n "backend=true codegen=true image=false proto=false ts=true ts_filter=--affected" apps/mobile/src/i18n/en.json
-check generated-docs "backend=false codegen=true image=false proto=false ts=false ts_filter=" docs/generated/api.md
-all="backend=true codegen=true image=true proto=true ts=true ts_filter="
-check proto "$all" proto/issho/v1/x.proto
-check workflow "$all" .github/workflows/ci.yml
-check lockfile "$all" pnpm-lock.yaml
-check makefile "$all" Makefile
-check scripts "$all" scripts/db-checks.sh
-check unknown "$all" something-new.toml
-check admin-and-lockfile "$all" apps/admin/src/a.ts pnpm-lock.yaml
+want "a change to no file runs nothing" "" 
+want "an ADR runs nothing" "" docs/adr/0001-example.md
+want "the README runs nothing" "" README.md
+want "a spec document, which the policy lint reads" "backend boundaries policy retention" docs/spec/quality.md
+want "a backend package" "backend boundaries e2e image policy retention rpc-auth" backend/internal/staff/staff.go
+want "the app, which the web image builds" "e2e image native-bundle strings typescript" apps/app/src/app/index.tsx
+want "the admin" "e2e typescript" apps/admin/src/HealthPage.tsx
+want "the web server, which only the web image runs" "e2e image typescript" apps/web/server.js
+want "the generated client, which the web image builds in" "e2e image native-bundle typescript" packages/api-client/src/index.ts
+want "a proto file" "backend boundaries e2e native-bundle policy proto-breaking retention rpc-auth typescript" proto/issho/v1/health.proto
+want "the e2e package" "e2e typescript" e2e/tests/version.spec.ts
+want "the Makefile runs every job" "$all" Makefile
+want "the workflow runs every job" "$all" .github/workflows/ci.yml
+want "another workflow runs nothing" "" .github/workflows/release-please.yml
+# The deploy workflow is linted by actionlint in codegen, which always runs, and
+# nothing it deploys is checked until the push that runs it.
+want "the deploy workflow runs nothing" "" .github/workflows/deploy-dev.yml
+want "the deploy config runs nothing" "" config/deploy.yml .kamal/secrets.dev docs/deploy.md
+# What CI itself depends on runs every job: a break in any of these would
+# otherwise skip the jobs it breaks, and a skipped job reports as passing.
+want "the setup action runs every job" "$all" .github/actions/setup/action.yml
+want "another local action runs every job" "$all" .github/actions/other/action.yml
+want "a CI script runs every job" "$all" scripts/ci-changes.sh
+want "the pnpm lockfile runs every job" "$all" pnpm-lock.yaml
+want "the pnpm workspace runs every job" "$all" pnpm-workspace.yaml
+want "the root package.json runs every job" "$all" package.json
+want "a tool pin runs every job" "$all" tools/go.mod
+want "the tools' checksums run every job" "$all" tools/go.sum
+want "the backend's go.sum runs every job" "$all" backend/go.sum
+want "the backend's go.mod runs every job" "$all" backend/go.mod
+want "the workspace's go.work.sum runs every job" "$all" go.work.sum
+want "proto-breaking.sh runs its check and the backend job, which runs its tests" "backend proto-breaking" scripts/proto-breaking.sh
+want "an app's own package.json is not CI's" "e2e image native-bundle strings typescript" apps/app/package.json
+want "native-metro.sh, which the native-bundle job tests" "native-bundle" scripts/native-metro.sh
+want "native-screenshot.test.sh, which the native-bundle job runs" "native-bundle" scripts/native-screenshot.test.sh
+want "two changes run both's jobs" "e2e image native-bundle strings typescript" apps/app/a.ts apps/app/b.ts
 
-# The workflow diffs with --no-renames: moving a Go file into docs/ must still
-# count as touching backend/ (a plain rename diff lists only the new path).
-tmp=$(mktemp -d)
-trap 'rm -rf "$tmp"' EXIT
-(
-  cd "$tmp"
-  git init -q .
-  mkdir -p backend docs
-  seq 1 50 > backend/a.go
-  git add . && git -c user.name=t -c user.email=t@t commit -qm one
-  git mv backend/a.go docs/a.txt
-  git -c user.name=t -c user.email=t@t commit -qm two
-  git diff --no-renames --name-only HEAD~1 HEAD
-) >"$tmp/rename-paths" || { echo "FAIL rename setup"; exit 1; }
-# Capture and match in the shell: `grep -q` exits at the first hit, and under
-# pipefail the writer's SIGPIPE would then fail the pipeline (flaky).
-rename_out=$(./ci-changes.sh <"$tmp/rename-paths")
-[[ $'\n'"$rename_out"$'\n' == *$'\nbackend=true\n'* ]] || { echo "FAIL rename via git diff"; fail=1; }
+# --all is a push to main, a dispatch, or a base that can't be diffed.
+got=$(printf '' | "$script" --all | sed -n 's/=true$//p' | tr '\n' ' ' | sed 's/ $//')
+[ "$got" = "$all" ] || { echo "FAIL --all: ran '$got'"; fail=1; }
 
-all_out=$(./ci-changes.sh --all </dev/null | grep -Ev '^(admin|mobile)=' | tr '\n' ' ' | sed 's/ $//')
-[[ "$all_out" == "$all" ]] || { echo "FAIL --all: $all_out"; fail=1; }
+# Every job is reported, true or false, so a workflow can read any of them.
+count=$(printf 'README.md\n' | "$script" | wc -l | tr -d ' ')
+[ "$count" -eq 11 ] || { echo "FAIL: $count lines for a docs change, want one per job (11)"; fail=1; }
 
-[[ "$(./ci-changes.sh --all </dev/null | grep -E '^(admin|mobile)=' | tr '\n' ' ')" == "admin=true mobile=true " ]] || { echo "FAIL --all apps"; fail=1; }
+# Nothing but --all is accepted.
+if "$script" --bogus </dev/null >/dev/null 2>&1; then echo "FAIL: accepted an unknown argument"; fail=1; fi
 
-[[ $fail == 0 ]] && echo "ci-changes: all passed"
-exit $fail
+[ "$fail" -eq 0 ] && echo "ci-changes: ok"
+exit "$fail"

@@ -17,11 +17,15 @@
     "backend/internal/safety/**",
     "backend/internal/retention/**",
     "backend/internal/rpc/**",
+    "proto/**",
     "config/**",
     ".kamal/**",
     ".github/workflows/deploy-*.yml",
     ".github/workflows/ci.yml",
     "backend/Dockerfile",
+    "apps/web/Dockerfile",
+    "apps/web/api-proxy.js",
+    "apps/admin/worker/**",
     "supabase/config.toml",
     "apps/*/wrangler.jsonc"
   ],
@@ -34,9 +38,6 @@
   "generated_paths": [
     "backend/gen/**",
     "packages/api-client/src/gen/**",
-    "docs/generated/**",
-    "backend/internal/uistrings/*.json",
-    "backend/internal/uistrings/human/**",
     "pnpm-lock.yaml",
     "backend/go.sum"
   ]

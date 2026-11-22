@@ -34,8 +34,8 @@ Each is a GitHub Milestone with one integration PR. Each ends in something the o
 
 | # | Milestone | Ends with |
 |---|---|---|
-| 1 | **Foundation** | v1 tagged and deleted; the empty app, admin, API and worker; CI's checks; `policy`, the city clock, the queue and the outside-service pattern; dev deploys on every merge; the bare app runs on the iOS simulator and the Android emulator. Its walk is "CI is green and dev deploys". |
-| 2 | **The thin loop** | A person goes from a join link to feedback on a fixture plan. Journey 1 and the season begin. |
+| 1 | **Foundation** | v1 tagged and deleted; the empty app, admin, API and worker; CI's checks; `policy`, the city clock, the queue and the outside-service pattern; dev deploys on every merge; the bare app runs on the Android emulator and bundles for iOS. Its walk is "CI is green and dev deploys". |
+| 2 | **The thin loop** | A person goes from a join link to feedback on a fixture plan. Journey 1 and the season begin. The bare app runs on the iOS simulator ([#631](https://github.com/shrujancheruku/issho/issues/631)). |
 | 3 | **Plan-making** | Pieces, vouching, routes, the editor, the accuracy checks, the judge and its eval, plan translation, approval, and the leads list worked by hand. Production stands up. |
 | 4 | **The outing in full** | Rounds, the seat order, group approval, the extra invitations, changes to a set outing, the forecast, cancels, attended and no-show, the whole of feedback, mutual picks, the cap on open plans. |
 | 5 | **Notifications and chat** | Push, email, quiet hours and every message; rooms and system lines. |

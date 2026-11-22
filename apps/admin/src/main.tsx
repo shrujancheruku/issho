@@ -1,25 +1,20 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 
-import { App } from './App';
-// Fonts are bundled rather than loaded from Google: the CSP allows only 'self'.
-// Each CSS file is split by script (unicode-range), so a page loads only the
-// Japanese or Latin files its text needs.
-import '@fontsource/dela-gothic-one/400.css';
-import '@fontsource/zen-kaku-gothic-new/400.css';
-import '@fontsource/zen-kaku-gothic-new/700.css';
-import './styles.css';
+import { createApi } from '@issho/api-client';
 
-const queryClient = new QueryClient({
-  // Moderators act on what they see: refetch when they come back to the tab.
-  defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: true } },
+import { HealthPage } from './HealthPage';
+
+// An empty base URL means the API is on this origin; in development Vite
+// proxies the API's paths to the local API (see vite.config.ts), so the browser
+// makes no cross-origin call.
+const api = createApi({
+  baseUrl: import.meta.env.VITE_API_URL ?? '',
+  getAccessToken: async () => null,
 });
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <App />
-    </QueryClientProvider>
+    <HealthPage api={api} />
   </StrictMode>,
 );

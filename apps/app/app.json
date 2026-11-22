@@ -1,0 +1,46 @@
+{
+  "expo": {
+    "name": "Issho",
+    "slug": "issho",
+    "version": "0.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "issho",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "bundleIdentifier": "com.joinissho.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0D1330",
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "package": "com.joinissho.app"
+    },
+    "web": {
+      "output": "server",
+      "bundler": "metro",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#F3F5F9",
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 160,
+          "dark": {
+            "backgroundColor": "#0D1330"
+          }
+        }
+      ],
+      "expo-localization"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

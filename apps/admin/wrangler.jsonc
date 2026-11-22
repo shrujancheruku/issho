@@ -1,16 +1,30 @@
-// The admin SPA as a static-assets-only Worker (no Worker code): Vite builds
-// into dist/, and `pnpm run deploy` uploads it. See README.md.
+// The admin as a Cloudflare Worker: Vite's static build (dist/) plus worker/index.ts,
+// which forwards the API's paths to the API (why: worker/index.ts, docs/deploy.md).
+// Deployed by CI (.github/workflows/deploy-dev.yml) with `--env dev`; production
+// adds an `env.production` in its milestone. Nothing is inherited from the top
+// level on purpose: wrangler does not inherit `assets` or `routes`, so each
+// environment lists everything it needs.
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "issho-admin",
-  "compatibility_date": "2026-10-23",
-  // admin.joinissho.com (Cloudflare creates its DNS record). The workers.dev
-  // address is switched off: the custom domain is the only way in.
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-11-01",
   "workers_dev": false,
-  "routes": [{ "pattern": "admin.joinissho.com", "custom_domain": true }],
-  "assets": {
-    "directory": "./dist",
-    // Unknown paths get index.html, so a reload on any route works.
-    "not_found_handling": "single-page-application"
+  "env": {
+    "dev": {
+      "name": "issho-admin-dev",
+      "main": "worker/index.ts",
+      "workers_dev": false,
+      // Cloudflare creates the DNS record for a custom domain on deploy.
+      "routes": [{ "pattern": "admin-dev.joinissho.com", "custom_domain": true }],
+      "vars": { "API_ORIGIN": "https://api-dev.joinissho.com" },
+      "assets": {
+        "directory": "./dist",
+        // Unknown paths get index.html, so a reload on any route works.
+        "not_found_handling": "single-page-application",
+        // Only the API's paths wake the Worker; every file is served from the assets.
+        "run_worker_first": ["/issho.v1.*"]
+      }
+    }
   }
 }

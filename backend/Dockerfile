@@ -1,41 +1,30 @@
-# One image for the API, the worker and the tool (migrations, seeding):
-# Kamal runs the API by default and the worker with `cmd: worker` (see
-# config/deploy.yml). Build from the repository root, since the tool's seed
-# reads data/:
-#   docker build -f backend/Dockerfile --build-arg VERSION=$(git rev-parse --short HEAD) .
+# One image for both backend processes, `api` and `worker`: they share the
+# module, the migrations and the release, so they ship and roll back together.
+# The deploy picks the process by its command (`/usr/local/bin/api`, the
+# default, or `/usr/local/bin/worker`). Build from the backend/ directory:
+#
+#   docker build --file backend/Dockerfile --build-arg VERSION=1.2.3 backend
+#
+# Both base images are pinned by digest; Renovate keeps them current.
 
-# The build stage runs on the builder's own platform and cross-compiles, so
-# an amd64 image builds quickly on an arm64 Mac (no emulation).
-# Alpine: a much smaller pull than the Debian image, and with cgo off the
-# libc doesn't matter.
-FROM --platform=$BUILDPLATFORM golang:1.27.3-alpine AS build
-WORKDIR /src/backend
+# The Go toolchain matches the go directive in go.mod.
+FROM golang:1.27.3-alpine@sha256:fa3d596898d9f126af7c01d14ee7597bab3f39cccf392ef36b69fe77cd681f18 AS build
+WORKDIR /src
+
+# The module cache is its own layer, so a source change doesn't download again.
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+# VERSION is what the API's health check reports (`main.version`); the worker
+# has no such variable and ignores the flag.
 ARG VERSION=dev
-ARG TARGETOS TARGETARCH
-# No `go mod download` layer: go.mod's `tool` block (buf, sqlc, …) makes it
-# fetch ~370 modules when the binaries need ~60, which was most of a cold
-# build. `go build` fetches only what it imports. The module and build
-# caches are BuildKit cache mounts, so they outlive the layer: a code change
-# downloads nothing and recompiles only the packages that changed. The
-# source is bind-mounted rather than copied, since only /out is kept. CI
-# fills the same cache mounts (the image job in .github/workflows/ci.yml);
-# keep the paths in step.
-# Static binaries (no cgo), so the runtime image needs no libc.
-RUN --mount=type=bind,source=backend,target=. \
-    --mount=type=cache,target=/go/pkg/mod \
-    --mount=type=cache,target=/root/.cache/go-build \
-    CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -trimpath -ldflags "-s -w -X main.version=${VERSION}" -o /out/ ./cmd/api ./cmd/worker ./cmd/tool
+# A static binary (no cgo) runs on the runtime image, which has no libc.
+RUN CGO_ENABLED=0 go build -trimpath -ldflags "-s -w -X main.version=${VERSION}" -o /out/ ./cmd/api ./cmd/worker
 
-# distroless: CA certificates and tzdata (time zones for city packs), no
-# shell, runs as a non-root user.
-FROM gcr.io/distroless/static-debian12:nonroot
-# Links the GHCR package to the repository, so the deploy workflow's own
-# token can push it (.github/workflows/deploy-api.yml).
-LABEL org.opencontainers.image.source=https://github.com/shrujancheruku/issho
-# The tool's seed defaults are ../data/…, relative to /app.
-WORKDIR /app
-COPY --from=build /out/ /usr/local/bin/
-COPY data/ /data/
-ENV API_ADDR=:8080
-EXPOSE 8080
-CMD ["api"]
+# distroless/static has no shell or package manager and runs as a non-root user.
+FROM gcr.io/distroless/static-debian13:nonroot@sha256:aafe993665bf6200db38a02c11a9351e782a84b6a45e7f33b6695638c88e3931
+# Links the package to this repository, so the deploy workflow's GITHUB_TOKEN may push it.
+LABEL org.opencontainers.image.source="https://github.com/shrujancheruku/issho"
+COPY --from=build /out/api /out/worker /usr/local/bin/
+CMD ["/usr/local/bin/api"]

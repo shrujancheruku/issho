@@ -59,10 +59,9 @@ func (*CheckRequest) Descriptor() ([]byte, []int) {
 
 type CheckResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// True when the API could ping Postgres during this request.
-	DatabaseOk bool `protobuf:"varint,1,opt,name=database_ok,json=databaseOk,proto3" json:"database_ok,omitempty"`
-	// Build version of the API binary ("dev" for local builds).
-	Version       string `protobuf:"bytes,2,opt,name=version,proto3" json:"version,omitempty"`
+	// The build's version, as set when the API was built ("dev" for a plain
+	// `go build`).
+	Version       string `protobuf:"bytes,1,opt,name=version,proto3" json:"version,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -97,13 +96,6 @@ func (*CheckResponse) Descriptor() ([]byte, []int) {
 	return file_issho_v1_health_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *CheckResponse) GetDatabaseOk() bool {
-	if x != nil {
-		return x.DatabaseOk
-	}
-	return false
-}
-
 func (x *CheckResponse) GetVersion() string {
 	if x != nil {
 		return x.Version
@@ -115,14 +107,13 @@ var File_issho_v1_health_proto protoreflect.FileDescriptor
 
 const file_issho_v1_health_proto_rawDesc = "" +
 	"\n" +
-	"\x15issho/v1/health.proto\x12\bissho.v1\"\x0e\n" +
-	"\fCheckRequest\"J\n" +
-	"\rCheckResponse\x12\x1f\n" +
-	"\vdatabase_ok\x18\x01 \x01(\bR\n" +
-	"databaseOk\x12\x18\n" +
-	"\aversion\x18\x02 \x01(\tR\aversion2K\n" +
-	"\rHealthService\x12:\n" +
-	"\x05Check\x12\x16.issho.v1.CheckRequest\x1a\x17.issho.v1.CheckResponse\"\x00B>Z<github.com/shrujancheruku/issho/backend/gen/issho/v1;isshov1b\x06proto3"
+	"\x15issho/v1/health.proto\x12\bissho.v1\x1a\x15issho/v1/access.proto\"\x0e\n" +
+	"\fCheckRequest\")\n" +
+	"\rCheckResponse\x12\x18\n" +
+	"\aversion\x18\x01 \x01(\tR\aversion2O\n" +
+	"\rHealthService\x12>\n" +
+	"\x05Check\x12\x16.issho.v1.CheckRequest\x1a\x17.issho.v1.CheckResponse\"\x04\x88\xb5\x18\x01B\x9a\x01\n" +
+	"\fcom.issho.v1B\vHealthProtoP\x01Z<github.com/shrujancheruku/issho/backend/gen/issho/v1;isshov1\xa2\x02\x03IXX\xaa\x02\bIssho.V1\xca\x02\bIssho\\V1\xe2\x02\x14Issho\\V1\\GPBMetadata\xea\x02\tIssho::V1b\x06proto3"
 
 var (
 	file_issho_v1_health_proto_rawDescOnce sync.Once
@@ -156,6 +147,7 @@ func file_issho_v1_health_proto_init() {
 	if File_issho_v1_health_proto != nil {
 		return
 	}
+	file_issho_v1_access_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

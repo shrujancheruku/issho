@@ -1,231 +1,96 @@
-# Deploying the backend
+# Deploying dev
 
-The Go API and the River worker run on one VPS, deployed with **Kamal 2** from a single image (`backend/Dockerfile`). Cloudflare sits in front of the API; Supabase (database and auth) stays hosted. The admin SPA and the web build are separate static sites on Cloudflare Workers ([../apps/admin/README.md](../apps/admin/README.md)).
+How dev is deployed, how to roll it back and how to stop its VM in a quiet week. Production, releases, backups, Sentry and alerts are later milestones' ([Technical operations](spec/operations.md)); this is dev only.
 
-```
-app / admin SPA ──HTTPS──▶ Cloudflare ──HTTPS (origin certificate)──▶ kamal-proxy ──▶ api container ─┐
-                                                                                      worker container ─┴──▶ Supabase Postgres
-```
+Dev is deployed from CI on every merge to `main`, by Kamal 2, onto its own VM. Nothing that deploys is installed on the VM, and nothing deploys from a laptop.
 
-**Status:** offline since 2026-11-18. The API ran at `https://api.joinissho.com` from 2026-10-26 (first `kamal setup` from a dev machine), against the `issho-dev` Supabase project. The VM, its disk and its static address were then deleted to stop paying for an idle server, and the `deploy-api` workflow was disabled (`gh workflow disable`). **To rebuild:** create the server as in step 1 of *One-time setup* (it gets a new address), put that address in `config/deploy.production.yml` (the `TODO`s) and in the `api.joinissho.com` `A` record, run `kamal setup -d production`, set up *Automatic deploys* again with new `DEPLOY_HOST` and `DEPLOY_HOST_KEY` values, then `gh workflow enable deploy-api.yml`. The origin certificate (15 years, `api.joinissho.com` only) is in `~/.config/issho/` on the deploying machine and survives the rebuild. Mind that a PEM pasted from the dashboard has no blank lines inside it, or Kamal's proxy can't read the key.
+## What dev is
 
-## Domain: joinissho.com
-
-Registered at Porkbun (2026-10-26); its DNS is moved to Cloudflare, which also serves the sites.
-
-| Host | What | Where |
+| Part | Where | Address |
 |---|---|---|
-| `joinissho.com`, `www.joinissho.com` | marketing page (`site/`) | Worker `issho-site` |
-| `app.joinissho.com` | the app's web build | Worker `issho-web` |
-| `admin.joinissho.com` | admin SPA | Worker `issho-admin` |
-| `api.joinissho.com` | Go API | the VPS, through Cloudflare (proxied) |
+| The API (`api`) and the worker (`worker`) | Two containers from one image, `ghcr.io/shrujancheruku/issho-server`, on the dev VM | `api-dev.joinissho.com` |
+| The web, the member app server-rendered (`apps/web`) | One container from `ghcr.io/shrujancheruku/issho-web` on the same VM | `dev.joinissho.com` |
+| The admin (`apps/admin`) | A Cloudflare Worker, `issho-admin-dev`, static files and a small forwarder | `admin-dev.joinissho.com` |
+| The database and sign-in | The `issho-dev` Supabase project | |
+| The VM | `issho-dev`, an `e2-micro` (1 GB of memory) in `asia-southeast1-b`, Google Cloud project `issho-dev-512213`, on the static address `issho-dev-ip` | |
 
-The Workers' `wrangler.jsonc` files claim their host names as custom domains, so a deploy creates their DNS records. Their `workers.dev` addresses are switched off (`"workers_dev": false`), so the custom domains are the only way in, and the API's `ALLOWED_ORIGINS` lists only those.
+Cloudflare is in front of all of it (proxied, SSL mode Full (strict)). The VM takes ports 80 and 443 only from Cloudflare, and answers with a Cloudflare origin certificate, which kamal-proxy holds. One kamal-proxy on the VM routes by name: each name has one service.
 
-**Moving DNS to Cloudflare (owner, once):** in Cloudflare, *Add a domain* → `joinissho.com`, Free plan; delete the imported Porkbun parking records; at Porkbun, *Domain → Authoritative nameservers* → Cloudflare's two (and switch off Porkbun's DNSSEC first, if on). The zone is active once Cloudflare sees the change (usually under an hour). Then SSL/TLS mode **Full (strict)**.
+## A deploy
 
-## Environments
+`.github/workflows/deploy-dev.yml` runs on a push to `main`. One deploy at a time. The job signs in, finds the VM and pins its SSH host key, runs `make deploy-dev` ([`scripts/deploy-dev.sh`](../scripts/deploy-dev.sh)), then `make deploy-dev-verify`:
 
-Kamal has one **destination**, `production` (there is one deployed API and no staging API is planned). [`config/deploy.yml`](../config/deploy.yml) holds what every environment shares; [`config/deploy.production.yml`](../config/deploy.production.yml) holds what names an environment: the server's address, the API's host, `SUPABASE_URL`, `ALLOWED_ORIGINS`, `APP_ENV`, and the backup accessory's host, bucket and `SENTRY_ENVIRONMENT`. Its secrets come from `.kamal/secrets.production` (gitignored; template `.kamal/secrets.production.example`), the only secrets file `-d production` reads. Every Kamal call passes `-d production`: the deploy workflow, `config/server/deploy.sh` and the commands here. `config/deploy.yml` sets `require_destination` (and has no host), so a call without it fails instead of guessing.
+1. **Docker on the VM.** `kamal server bootstrap` installs it on the first run and does nothing after.
+2. **Build and push both images** to ghcr.io, tagged with the commit. A build that fails changes nothing.
+3. **Migrate `issho-dev`** with goose (`backend/cmd/migrate up`), run on the CI runner against the migration role's connection. **This is before any container is replaced**: the script stops at the first failing step (`set -e`), so a failed or half-applied migration leaves the old containers serving and nothing after it runs. `scripts/deploy-dev.test.sh` proves the order with stand-ins for `kamal`, `go`, `pnpm` and `gcloud`; a failed migration, a failed build and a failed API deploy each leave the later steps uncalled.
+4. **Deploy the API and the worker** (`kamal deploy --skip-push`: the VM pulls the images pushed in step 2, so what runs is what was built). kamal-proxy sends the new API container traffic only when `GET /up` answers 200, then drains the old one.
+5. **Deploy the Expo server** the same way, `GET /up` of `apps/web/server.js` being its probe.
+6. **Deploy the admin**: `pnpm --filter @issho/admin build`, then `wrangler deploy --env dev`.
+7. **Check from outside** (`scripts/deploy-dev-verify.sh`): the API, the web's address and the admin's Worker each report the commit just deployed through the API's public health check; the web's `/plans` holds its words in the HTML a client with no JavaScript gets; and a real headless Chrome shows `API version <commit>` on the web's You tab and on the admin's page. A deploy that left an old API running fails here.
+8. The VM's memory is printed (`free -m` and `docker stats`).
 
-**M11 (the production Supabase project)** changes `SUPABASE_URL` and `APP_ENV` in `config/deploy.production.yml`, and the Supabase values and secrets in `.env.issho-prod` (and the server's copy); nothing else in the deploy config names the project.
+### Where the secrets are and how CI gets at them
 
-**Moving to the destination (owner, once, after the PR merges).** The server's `deploy.sh` is its own installed copy, so the merge's own deploy fails until it is reinstalled. That failure is safe: the old `deploy.sh` calls Kamal without `-d`, and Kamal refuses at config load, before any host is touched: the base config has no host, and `require_destination` in `config/deploy.yml` also rejects a call without `-d`, so the running API and worker stay up. Nothing on the server moves: `/opt/issho/kamal-secrets` keeps its content (the new template is the old one, renamed) and `deploy.sh` mounts it at the new name. In order:
+- **No cloud key or token is stored in GitHub.** The workflow signs in to Google Cloud by Workload Identity Federation: GitHub gives the run a short-lived OIDC token (`id-token: write`), and Google exchanges it for the access of `issho-deploy@issho-dev-512213.iam.gserviceaccount.com` through the provider `projects/94737271594/locations/global/workloadIdentityPools/github/providers/issho`, which accepts only this repository. That account can only access secrets in Secret Manager. The only secret the job holds is its own `GITHUB_TOKEN` (`packages: write`), which pushes the images, is what the VM pulls with, and expires with the job.
+- **Kamal reads its secrets from Secret Manager itself.** This answers the spec's check ([Technical operations](spec/operations.md#where-it-runs)). Kamal 2.12's `kamal secrets fetch --adapter gcp_secret_manager` runs `gcloud secrets versions access`, which the service account's role allows, and `.kamal/secrets.dev` uses it: the file names secrets and holds no value. CI does not have to read them and hand them over. The two secrets Kamal does not read (the migration's connection and the Cloudflare token) are read by `scripts/deploy-dev.sh` with the same `gcloud` call, put in the environment of the one command that needs each, and masked in the log. Kamal's `config` command prints the SSH key it read, so never run it where its output is kept.
+- The secrets are `dev-worker-database-url`, `dev-resend-api-key`, `dev-email-from`, `dev-ssh-private-key`, `dev-origin-cert`, `dev-origin-key`, `dev-ssh-host-key`, `dev-migrate-database-url` and `dev-cloudflare-api-token`. The Cloudflare token's stored value ends in a newline, which Cloudflare rejects; the script strips it. `dev-database-url` is not read yet, since the API has no database connection until a ticket gives it one.
+- **The VM's address is stored nowhere.** The service account has a custom role, `isshoDeployAddressReader`, with only `compute.addresses.get`, and `scripts/dev-host.sh` asks Google Cloud for the reserved address `issho-dev-ip` each run. The workflow masks it (`::add-mask::`) the moment it is read, before Kamal prints the host it connects to: this repository's Actions logs are public.
+- **The VM's SSH host key is pinned.** Its public key is the secret `dev-ssh-host-key` (one line, `ssh-ed25519 AAAA…`, no address). Before Kamal connects, `scripts/dev-ssh-pin.sh` writes a `known_hosts` line from the address just looked up and that key, and an ssh config with `StrictHostKeyChecking yes` that reads only that file; both destinations give it to Kamal (`ssh: config:`, from `DEV_SSH_CONFIG`). An unknown or changed key is refused, never added, so a machine posing as the VM gets no secret. If the VM is rebuilt, its new key goes into `dev-ssh-host-key` (`gcloud compute instances get-guest-attributes issho-dev --zone asia-southeast1-b --query-path=hostkeys/`, the `ssh-ed25519` one) before the next deploy, or the deploy fails at its first Kamal step.
 
-1. Let the merge's deploy run and fail (or skip it; the checkout on the server still moves to the merge commit either way).
-2. Reinstall `deploy.sh` as in *Automatic deploys* below.
-3. Rerun the `deploy-api` workflow (Actions, *Run workflow*).
-4. On your own machine, rename `.kamal/secrets` to `.kamal/secrets.production` before the next manual deploy.
+## How the browser reaches the API
 
-## One-time setup
+The API has no CORS, by design: no browser origin is trusted to call it from another. Each web page therefore calls it on **its own origin**.
 
-1. **The server** (first built 2026-10-26, deleted 2026-11-18): Compute Engine VM `issho-api` in project `issho-dev-512213`, `asia-northeast1-b` (Tokyo, near the database in Seoul), `e2-small` (2 GB), Ubuntu 24.04, 20 GB disk, and a static address reserved as `issho-api` (the first one, `35.243.76.67`, was released with the VM). Its startup script installs Docker, adds a 2 GB swap file and unattended upgrades, and puts the `kamal` user (created from the SSH key in the instance metadata) in the `docker` group: Compute Engine has no root login, so Kamal connects as `kamal` (`ssh.user`). Firewall `issho-api-web-from-cloudflare` (kept when the VM was deleted) lets 80 and 443 in only from [Cloudflare's addresses](https://www.cloudflare.com/ips/) (tag `issho-api`); SSH is the project's default rule.
-2. **The API's domain on Cloudflare:** an `A` record for `api.joinissho.com` pointing at the VPS, **proxied** (orange cloud). SSL/TLS mode **Full (strict)**.
-3. **A Cloudflare origin certificate** for that host (SSL/TLS → Origin Server → Create certificate). Save the certificate and key outside the repository, e.g. `~/.config/issho/origin-cert.pem` and `origin-key.pem`.
-4. **A registry token:** a GitHub personal access token (classic) with `write:packages`, exported as `KAMAL_REGISTRY_PASSWORD` when deploying. The image is pushed to `ghcr.io/shrujancheruku/issho`; keep the package private.
-5. **A production Supabase project**, configured as in [supabase-hosted.md](supabase-hosted.md), and its values in a gitignored `.env.issho-prod` (same names as `.env.issho-dev`). `DATABASE_URL` must be a **session-mode** connection (direct, or the session pooler): the API listens for chat messages and the worker for River jobs.
-6. **Fill in `config/deploy.production.yml`:** the values for this environment (server address, API host, `SUPABASE_URL`, `ALLOWED_ORIGINS`, the backup bucket); the registry account is in `config/deploy.yml`.
-7. **Secrets:** `cp .kamal/secrets.production.example .kamal/secrets.production` (gitignored; the file `-d production` reads). It reads each value from `.env.issho-prod` and the certificate files, so the file itself holds no secrets. See [secrets.md](secrets.md).
-   `config/deploy.production.yml` sets `APP_ENV=preview` while the deploy points at `issho-dev`, so missing optional keys only warn. When a real production environment exists, set `APP_ENV=production`: the API and worker then refuse to start unless every key in the table in [backend/README.md](../backend/README.md#app_env-and-what-production-requires) is non-empty in `.env.issho-prod`; the startup error names the missing ones, and the health check keeps the old container running.
-8. **Install Kamal** (Kamal 2 needs Ruby 3.2+; macOS ships 2.6, so the image is simpler; add `-v ~/.config/issho:/root/.config/issho:ro` so the secrets file finds the certificate, and on OrbStack or Docker Desktop pass the SSH agent as `-v /run/host-services/ssh-auth.sock:/run/host-services/ssh-auth.sock -e SSH_AUTH_SOCK=/run/host-services/ssh-auth.sock`): `gem install kamal`, or run it from its image: `alias kamal='docker run -it --rm -v "$PWD:/workdir" -v "$SSH_AUTH_SOCK:/ssh-agent" -e SSH_AUTH_SOCK=/ssh-agent -v /var/run/docker.sock:/var/run/docker.sock $(cat config/kamal-image)'` (from the repo root; [`config/kamal-image`](../config/kamal-image) is the one place the Kamal version is pinned, read by the deploy workflow and by the server's `deploy.sh`).
-9. **First deploy:** `kamal setup -d production` (installs Docker, starts kamal-proxy, then deploys as below).
+- **The web**, at `dev.joinissho.com`: the Expo server forwards the RPC paths (`/issho.v1.*`, nothing else) to `https://api-dev.joinissho.com` (`apps/web/api-proxy.js`) and serves every other path as the page. The app is built with `EXPO_PUBLIC_API_URL=https://dev.joinissho.com`. Sharing the name by path in kamal-proxy was tried first and refused: it wants TLS settings on the root path's service.
+- **The admin**, at `admin-dev.joinissho.com`: the Worker forwards the same paths to `https://api-dev.joinissho.com` and serves everything else as static files (`apps/admin/README.md`).
+- **Phones** are not a browser: they call `api-dev.joinissho.com` directly.
 
-## Deploying
+Both forwarders drop the headers that carry the member's address (`cf-connecting-ip`, `x-forwarded-for`, `x-real-ip`, `forwarded`, `true-client-ip` and the like), since Issho keeps no IP address anywhere ([ADR 0005](adr/0005-no-phone-number-and-no-ip-address.md)); the API sees the forwarder's address instead. The forwarders drop them only after kamal-proxy, which sits before them, has logged each request, so the zone setting below is what keeps the address out of the proxy's log.
 
-From a clean checkout of the commit to ship (Kamal builds from a fresh clone of `HEAD`, so uncommitted changes are never shipped):
+### A required Cloudflare zone setting
 
-```sh
-kamal build push -d production        # build the amd64 image (cross-compiled, fast on a Mac) and push it
-kamal migrate -d production           # apply new migrations with that image (alias for `app exec --primary --roles=web "tool migrate up"`, so it runs once)
-kamal deploy -d production --skip-push
-```
+**Turn on the managed transform "Remove visitor IP headers"** on the `joinissho.com` zone (Cloudflare dashboard, Rules, Settings, Managed Transforms). It is a zone setting made by hand; nothing in this repository sets it, and the deploy does not check it.
 
-Every Kamal command takes `-d production` (see *Environments*); without it Kamal refuses.
+- **Why:** Cloudflare puts the visitor's address in `X-Forwarded-For` (and `CF-Connecting-IP`) on every request to the VM. kamal-proxy's request log writes `remote_addr` from that header on each request, and it logs before either forwarder can drop anything. Phones call `api-dev.joinissho.com` directly, so their requests reach it with Cloudflare's headers as they are. Without the transform the proxy's log holds every member's address, which [ADR 0005](adr/0005-no-phone-number-and-no-ip-address.md) and [Technical operations](spec/operations.md#logs) rule out. With it, the origin sees only Cloudflare's edge address.
+- **To confirm it,** read one request from the proxy's log in a CI run or on the VM (`kamal proxy logs -d dev`, never on a laptop) and check its `remote_addr`: it must be one of Cloudflare's published ranges ([cloudflare.com/ips](https://www.cloudflare.com/ips/)), not the address of the machine that made the request. Make the request from a machine whose address you know. Check again after any change to the zone's rules, and before the first production deploy.
 
-Migrations run **before** the new code, so the old code must work with the new schema for the minute in between; keep migrations additive, as they already are. **Before a migration that drops or rewrites data, take a manual dump** (the one-off backup run under *Off-site backups*): while production is on Supabase Free, the nightly dump is the only backup. kamal-proxy only switches traffic once the new API container's `GET /up` answers 200, which needs the database, so a broken `DATABASE_URL` never replaces a working container.
+Why a forwarder and not CORS, what it costs and what would reverse it: [ADR 0006](adr/0006-browsers-reach-the-api-on-their-own-origin.md).
 
-Then check:
+## Rolling back
 
-```sh
-curl https://<api host>/up                                     # ok
-curl -X POST -H 'Content-Type: application/json' -d '{}' https://<api host>/issho.v1.HealthService/Check   # the commit's version
-kamal logs-api -d production          # or logs-worker
-```
+A rollback is a deploy of an earlier commit.
 
-**Checking Sentry:** `kamal app exec -d production --primary "tool sentry-test"` sends one test error to the `issho-api` project (Sentry organisation `shrujan`, EU region), as the API and worker would. Events are tagged with `APP_ENV`, which is `preview` while this deploy points at `issho-dev` (#232; it was `production` before). **To check next time you work in Sentry:** any alert rule that filters on environment `production` no longer fires for the API and worker; add `preview`, then delete this note. The backup monitor still reports as `production`.
+1. **Preferred:** revert the bad change in a PR and merge it. The merge deploys the revert.
+2. **Quicker, no PR:** in GitHub, Actions, `deploy-dev`, Run workflow, and give the last good commit's SHA as `ref`. The run builds that commit and deploys it, then checks that the API reports it.
 
-**Seeding and Google tools** run the same way, inside the image: `kamal app exec -d production --primary "tool seed /data/citypacks/tokyo.json"` (the catalogue is seeded too).
+A rollback never undoes a migration: goose's `down` is a manual act on the database, and nothing here runs it. A migration is written compatible with the release before it ([Technical operations](spec/operations.md#releases)), so the older code runs on the newer schema. If a migration itself is the fault, fix it forward.
 
-**During a deploy:** don't start an apply or a venue search on the admin Cities page (they are jobs on the worker, and the web and worker roles roll one after the other, so a job queued mid-roll may wait for the new worker or be cut off by the old one stopping).
+## Stopping the dev VM in a quiet week
 
-**Rolling back:** `kamal rollback -d production <version>` (versions are commit hashes; `kamal app containers -d production` lists them). Migrations aren't rolled back.
-
-## Automatic deploys
-
-`.github/workflows/deploy-api.yml` deploys every change to `backend/`, `data/`, `config/deploy*.yml` or `config/server/` on main (or on demand), without production secrets in GitHub:
-
-1. The job builds and pushes the image with Kamal, using its own short-lived `GITHUB_TOKEN` (the workflow created the `issho` package, so it's linked to the repository; the image's `org.opencontainers.image.source` label says so too).
-2. It connects as `deploy@<server>` with the `DEPLOY_SSH_KEY` secret (host key pinned by the `DEPLOY_HOST_KEY` variable) and writes `<commit> <token>` to it. That key's `authorized_keys` line is `restrict,command="sudo -n -u kamal /opt/issho/deploy.sh"`, and `/etc/sudoers.d/issho-deploy` allows exactly that, so the key can do nothing else.
-3. [`config/server/deploy.sh`](../config/server/deploy.sh) (installed root-owned at `/opt/issho/deploy.sh`) refuses a commit that isn't on `origin/main`, checks it out in `/opt/issho/repo`, and runs Kamal from its image against this server (`kamal` connects to itself with `~kamal/.ssh/id_self`, registered in the instance's SSH-key metadata): `registry login`, writes any missing role env files (below), `migrate`, `deploy --skip-push`, then logs out of the registry.
-4. The job checks that `HealthService.Check` reports the new commit.
-
-**Bootstrap (no manual first deploy).** `kamal migrate` is `app exec`, which starts a one-off container with `--env-file ~kamal/.kamal/apps/issho-production/env/roles/<role>.env`; in Kamal v2.12.0 only `app boot` (part of `deploy`) writes those files. A host that has never booted this service (a new service name, a rebuilt server, a new host) has none, so migrate failed with `--env-file: open ...web.env: no such file or directory` and `deploy` never ran. Before `migrate`, `deploy.sh` runs [`config/server/kamal-role-env.rb`](../config/server/kamal-role-env.rb) in the Kamal image: it builds each role's file with Kamal's own code from the same config and secrets and writes the ones that are missing (mode 0600, owned by `kamal`, nothing printed). It boots no container, so migrations still run before the new version takes traffic, and a failure stops the deploy before migrate. Files that exist are left alone, and `deploy` rewrites them anyway, so the normal path is unchanged. On a host that already has the files, migrate uses the secret values from the last deploy (`deploy` refreshes them afterwards). The script's own docker calls pass no secret in argv (the registry token goes through the environment; Kamal's own `registry login` still uses `docker login -p`). It supports one host per role and aborts otherwise. Bumping `config/kamal-image` must re-run the bootstrap test (the script uses Kamal's internal Ruby API). A manual `kamal migrate` from a dev machine on such a host still needs one `kamal deploy` first (or `kamal setup`).
-
-**Gated on CI.** Both deploy workflows (`deploy-api`, `deploy-web`) trigger on `workflow_run` of the `ci` workflow for main and run only when it concluded `success` for a push; when CI fails they show as skipped and nothing ships. They deploy `workflow_run.head_sha` (printed in the job log as `deploying <sha>`), the commit CI tested, not whatever main is by then. Since `workflow_run` has no path filter, each workflow's `changes` job diffs that commit against the last commit the target actually deployed (the newest successful run on main whose deploy job succeeded, found with `gh run list` and `gh run view`; the commit is in the run's title, `deploy <sha>`). A red commit's changes are therefore deployed with the next green one; with no earlier deploy it deploys everything (the first run after this change, whose title has no commit, does too). Runs that skipped (red CI, main moved on, or `DEPLOY_HOST` / `API_URL` unset) deployed nothing and don't move the base. `workflow_dispatch` deploys everything, at the commit it is run on. `deploy-web` does the same for the Workers (`site/`, `apps/`, `packages/`), with one base for the site and one for the apps. A failed apps deploy fails the whole run, so the site's base falls back too and the site redeploys next time (safe). If main has moved on by the time a run starts, it skips: the newer commit's run deploys the same changes.
-
-**Changing a production secret:** edit `.env.issho-prod` (or the certificate), then copy it to the server, which deploys with its own copy: `grep -v '^CLOUDFLARE_DNS_TOKEN=' .env.issho-prod | ssh kamal@<server> 'cat > /opt/issho/env'` (and `.kamal/secrets.production` to `/opt/issho/kamal-secrets`, the certificate files to `/opt/issho/certs/`), then rerun the workflow.
-
-**Changing `deploy.sh`:** the server runs its installed copy, not the checkout's. After a change to it merges, the owner reinstalls it: `ssh kamal@<server> 'sudo install -o root -g root -m 755 /opt/issho/repo/config/server/deploy.sh /opt/issho/deploy.sh'` (the repo there is at the last deployed commit, so wait for the deploy of the merge to finish first). The reinstalled script cannot deploy or roll back to a commit that predates `config/kamal-image` or `config/server/kamal-role-env.rb`; it exits with a message saying so. The script reads `config/kamal-image` from the checkout it deploys, so a Kamal upgrade is a one-line change to that file and needs no reinstall.
-
-**Manual deploys** from a dev machine still work as above; Kamal then leaves your registry login on the server, so log it out afterwards (`ssh kamal@<server> docker logout ghcr.io`).
-
-## Off-site backups
-
-A Kamal accessory, `backup` (`config/deploy.yml`), runs `config/backup/backup.sh` in the `ghcr.io/shrujancheruku/issho-backup:17` image (`config/backup/Dockerfile`: `postgres:17-alpine`, the database's major version, with curl baked in so the container starts without Alpine's mirrors). Every night at `BACKUP_AT` (UTC hour, default 3) it `pg_dump`s the `app`, `goose`, `river` and `auth` schemas in the custom format and uploads the file to a Cloudflare R2 bucket, signed with `curl --aws-sigv4`. Live sessions and one-time tokens are left out, so a leaked dump can't open anyone's account. A failed night is logged and retried the next night.
-
-**Alert:** each run checks in to a Sentry cron monitor, `issho-backup` (in the `issho-api` project), with `in_progress` first, then `ok` or `error`, using the server's `SENTRY_DSN` and curl. The first check-in of a run carries the monitor's config (daily at `BACKUP_AT` UTC, 60 minutes' margin, 60 minutes' maximum runtime), so Sentry creates and updates the monitor itself. A failed run (`error`), a run past its maximum, or a night with no check-in (missed) opens a monitor issue, and the alert rule below emails it. A failed check-in is logged and ignored: Sentry being unreachable never fails a backup. With no `SENTRY_DSN`, there are no check-ins.
-
-**Owner steps to turn the alert on** (the image is built and pushed by hand, and the Sentry side is the owner's):
-
-1. Build and push the image from the repo root (a classic PAT with `write:packages`, as for the first manual deploy; log out afterwards): `docker buildx build --platform linux/amd64 -t ghcr.io/shrujancheruku/issho-backup:17 --push config/backup`. Pushing again rebuilds on the latest `postgres:17-alpine`, so do it now and then.
-2. Make sure `SENTRY_DSN` (the `issho-api` project's) is in `.env.issho-prod`, and in the server's copy of the env.
-3. On the machine whose `.kamal/secrets.production` holds `SENTRY_DSN` (the one that deploys by hand): pulling the new private GHCR package needs `KAMAL_REGISTRY_PASSWORD` set to a PAT with `read:packages`. Run `kamal registry login -d production` if the reboot doesn't log in itself, then `kamal accessory reboot -d production backup` (it pulls the new image and mounts the new script). The check-in below creates the monitor.
-4. Check once: `kamal accessory exec -d production backup "env BACKUP_ONCE=1 sh /backup/backup.sh"`. Sentry, *Insights > Crons*, now lists `issho-backup` with an `ok` check-in.
-5. Create the alert: in the monitor's page, *Alerts > Create alert* (or *Alerts > Create Alert > Issues*, project `issho-api`, filter *issue category is Cron*, monitor slug `issho-backup`), action *Send a notification to Member*, you, by email. Check that the monitor shows the issue-alert rule as attached.
-6. Test the failure: `kamal accessory exec -d production backup "env BACKUP_ONCE=1 R2_SECRET_ACCESS_KEY=wrong sh /backup/backup.sh"` ends in an `error` check-in and an email. A missed night is the same alert (to try it, stop the accessory past `BACKUP_AT` plus the margin: `kamal accessory stop -d production backup`, then `start` it again).
-
-**Ran 2026-10-26 to 2026-11-18** (stopped with the server; the old dumps age out of the bucket): bucket `issho-backups` (30-day lifecycle rule) in the Cloudflare account, `BACKUP_AT` 18 (03:00 in Tokyo). The server's copy of the env holds the R2 keys. `config/deploy.yml` and `config/deploy.production.yml` changes to the accessory, or to `backup.sh` or its Dockerfile, need `kamal accessory reboot -d production backup`; the deploy workflow doesn't touch accessories.
-
-**One-time setup** (needs the Cloudflare account):
-
-1. Create an R2 bucket (e.g. `issho-backups`) and an **R2 API token** with *Object Read & Write* on that bucket only. Put its key pair in `.env.issho-prod` as `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` (`.kamal/secrets` reads them), and the account id and bucket in `config/deploy.production.yml` (`TODO`s).
-2. In the bucket's settings, add a **lifecycle rule** deleting objects after 30 days: that's the retention.
-3. `kamal accessory boot -d production backup`, then check the setup once: `kamal accessory exec -d production backup "env BACKUP_ONCE=1 sh /backup/backup.sh"`, which should print `backup: uploaded issho-….dump`. `kamal accessory logs -d production backup` shows each night.
-
-**Restore drill** (2026-10-26): the first dump (380 KB) was downloaded from R2 and restored in full into a throwaway plain PostGIS container (amd64 only: `--platform linux/amd64` on a Mac). Use the Supabase image CI runs instead (`public.ecr.aws/supabase/postgres`, tag in `ci.yml`): it's multi-arch and already has the `extensions` schema. That dump predates the baseline reset and holds PostGIS in `public`; later dumps hold it in `extensions`. It needs the extensions first: `create schema extensions; create extension postgis schema extensions; create extension pgcrypto schema extensions;`, then `pg_restore --no-owner --no-privileges -d postgres issho-….dump`. All 68 tables in `app`, `goose`, `river` and `auth` came back with the live row counts (7,139 rows), except the session tables, which are left out on purpose, and one River job queued after the dump. The drill found `auth.mfa_amr_claims` failing its foreign key without the sessions, so it's now left out too. Delete the dump afterwards: it holds people's data.
-
-**Restoring into a new Supabase project** (not yet rehearsed): download a dump from R2, then into an empty project with the same migrations applied:
+Dev has its own VM so it can be stopped by hand ([Technical operations](spec/operations.md#environments)). Stopping it stops the API, the worker and the web, and the admin's page loads but cannot reach the API.
 
 ```sh
-pg_restore --list issho-….dump                       # what it holds
-pg_restore --no-owner --no-privileges --data-only --schema=auth --table=users --table=identities -d "$NEW_DATABASE_URL" issho-….dump
-pg_restore --no-owner --no-privileges --data-only --schema=app -d "$NEW_DATABASE_URL" issho-….dump
+gcloud compute instances stop issho-dev --zone asia-southeast1-b --project issho-dev-512213
+gcloud compute instances start issho-dev --zone asia-southeast1-b --project issho-dev-512213
 ```
 
-Supabase creates `auth` itself, so only its data comes back (people's accounts; they sign in again). `goose` and `river` hold bookkeeping that the new project's own migrations recreate.
+- The containers come back on their own when Docker starts: Kamal runs them with `--restart unless-stopped`, and kamal-proxy as well. Confirm with `make deploy-dev-verify` (it only reads public addresses) once the VM has been up a minute.
+- The static address keeps its name while the VM is stopped, and Google bills a reserved address that nothing uses at a higher rate than one in use: a few days is fine, months is not.
+- **Start it before merging to `main`.** A deploy to a stopped VM fails at its first step (it can't reach the VM), changing nothing.
+- Cloudflare shows its own error page for the dev names while the VM is stopped.
 
-## Resetting a database onto the baseline migration
+## When something is wrong
 
-[#160](https://github.com/shrujancheruku/issho/issues/160) replaced migrations `00001`-`00028` with one baseline (`00001_baseline.sql`, then River's `00002_river.go`). A database that ran the old history is **reset**, not migrated: goose would see version 28 and the baseline's `00001` as already applied. Merging the PR triggers the automatic deploy, whose `migrate` step applies the baseline, so the reset happens **before the merge** and the deploy follows right after it. The API is down in between.
+| What you see | Where to look |
+|---|---|
+| The run fails at "Find the VM" | The service account lost `isshoDeployAddressReader`, or `issho-dev-ip` is gone or has no address (`scripts/dev-host.sh`) |
+| It fails signing in to Google | The provider or the service account changed; `projects/94737271594/.../providers/issho` must still accept this repository |
+| It fails at the migration | The run's log, and nothing was replaced. Fix the migration, push |
+| It fails at the first Kamal step with a host key error | The VM's host key is not the one in `dev-ssh-host-key`. If the VM was rebuilt, store its new key (above); if not, something else answered at its address: find out what before deploying |
+| It fails at a Kamal step | The run's log names the host and the command. Kamal holds a lock on the VM during a deploy; a run killed halfway can leave it (`kamal lock release -d dev`, from a CI run, not a laptop) |
+| The check at the end fails | The part that failed says which address showed which version. The API may be up with the old version: look at the container logs with `kamal app logs -d dev` in a run, or on the VM |
+| The VM is out of memory | The deploy prints `free -m` and `docker stats`. Three containers and the proxy on 1 GB are tight; move the web or the API to the larger machine type (`e2-small`, as in production) before they fail |
 
-**issho-dev was reset with the short variant below on 2026-11-03, the owner's call: nothing was carried over.**
+## Not here yet
 
-Run SQL with `supabase db query --linked "…"` or `psql "$DATABASE_URL"` (a session-mode URL, as everywhere else). Keep a scratch file of the output: the PostGIS version goes in the PR.
-
-### When nothing in the database needs keeping
-
-1. Stop the API and worker (`kamal app stop -d production`), then drop the old schemas in one transaction. `auth.users` is not touched, so admin and translator roles (`auth.users.raw_app_meta_data`) survive:
-   ```sql
-   begin;
-   drop schema app cascade;
-   drop schema river cascade;
-   drop schema goose cascade;
-   drop extension postgis cascade;   -- from public
-   commit;
-   ```
-2. Merge the PR. The deploy workflow runs `kamal migrate -d production` (which applies `00001_baseline` and `00002_river` from nothing, creating PostGIS in `extensions`) and `kamal deploy -d production`. `kamal app exec -d production --primary "tool migrate status"` should show both applied.
-3. Seed the packs: `kamal app exec -d production --primary "tool seed /data/citypacks/tokyo.json /data/citypacks/austin.json /data/citypacks/da-nang-hoi-an.json"`. With `GOOGLE_MAPS_API_KEY` set this also builds the travel times; if the log says they were skipped, run `kamal app exec -d production --primary "tool build-matrix <city>"` for each city.
-4. Run the checks in *Verify* below, and record `select extversion from pg_extension where extname = 'postgis';` in the PR.
-
-### When the data matters (production with active users)
-
-Keeps the old rows, renaming `app` to a scratch schema and copying the reference data across.
-
-1. **Final dump, kept.** Take one on demand and copy it somewhere the 30-day lifecycle rule won't delete it:
-   ```sh
-   kamal accessory exec -d production --reuse backup "env BACKUP_ONCE=1 sh /backup/backup.sh"   # prints: backup: uploaded issho-….dump
-   `--reuse` runs it in the accessory's running container; without it Kamal starts a fresh container from the configured image, which may not be pushed yet.
-   In R2, copy that object to `pre-baseline/issho-….dump` and check the lifecycle rule doesn't cover the prefix (or turn it into an object with its own retention). Delete it when the reset is verified: it holds people's data. If the backup accessory isn't running yet, `pg_dump --format=custom --no-owner --no-privileges --schema=app --schema=goose --schema=river --schema=auth` with the same exclusions as `config/backup/backup.sh`, to a file outside the repo.
-2. **Stop the API and worker**, so nothing writes while the schemas are swapped: `kamal app stop -d production`. The API stays down from here until the PR merges and deploys (step 4), so do steps 2 to 4 in one sitting and have the PR approved and green first.
-3. **Empty the database, keeping `app`'s old rows for step 6.** In one transaction:
-   ```sql
-   begin;
-   -- The old app schema stays, renamed, as the scratch schema for step 6. Its two
-   -- PostGIS columns go first so PostGIS can be dropped (areas are re-seeded).
-   alter schema app rename to app_old;
-   alter table app_old.areas drop column centroid, drop column boundary;
-   drop schema river cascade;
-   drop schema goose cascade;
-   drop extension postgis;            -- from public; no cascade, so it fails safely if anything else still uses it
-   commit;
-   ```
-   `auth.users` is not touched. Admin and translator roles live in `auth.users.raw_app_meta_data` (`admin`, `translator_langs`), so they survive as they are.
-4. **Deploy the baseline, right after step 3.** Merge the PR: the deploy workflow runs `kamal migrate -d production` (which applies `00001_baseline` and `00002_river` from nothing, creating PostGIS in `extensions`) and `kamal deploy -d production`. Or run `kamal build push -d production && kamal migrate -d production && kamal deploy -d production --skip-push` from the PR's commit. `kamal app exec -d production --primary "tool migrate status"` should show both migrations applied.
-5. **Seed every city pack and rebuild the travel times.** `tool seed` builds the matrix of new areas when `GOOGLE_MAPS_API_KEY` is set (about 554 elements across the three packs):
-   ```sh
-   kamal app exec -d production --primary "tool seed /data/citypacks/tokyo.json /data/citypacks/austin.json /data/citypacks/da-nang-hoi-an.json"
-   kamal app exec -d production --primary "tool build-matrix tokyo"          # only if the seed log says the travel times were skipped; same for austin, da-nang-hoi-an
-   ```
-6. **Carry the reference data over from `app_old`**, then drop it. Venues keep their curation status and who set it and when; `added_by` is kept only where that user still exists in `auth.users`. Translations keep their review. Accounts, profiles, plans, crews, chats, notifications and reports are **not** carried over.
-   ```sql
-   begin;
-   insert into app.venues (google_place_id, city_id, area_id, category_id, status, last_seen_at, reviewed_by, reviewed_at, added_by)
-   select v.google_place_id, v.city_id, v.area_id, v.category_id, v.status, v.last_seen_at, v.reviewed_by, v.reviewed_at,
-          case when exists (select 1 from auth.users u where u.id = v.added_by) then v.added_by end
-   from app_old.venues v
-   where exists (select 1 from app.areas a where a.id = v.area_id and a.city_id = v.city_id)
-     and exists (select 1 from app.venue_categories c where c.id = v.category_id)
-   on conflict do nothing;
-
-   insert into app.translations (source_hash, lang, source, context, text, model, reviewed, created_at, reviewed_by, reviewed_at)
-   select source_hash, lang, source, context, text, model, reviewed, created_at, reviewed_by, reviewed_at
-   from app_old.translations
-   on conflict do nothing;
-
-   -- Run everything above up to and including this select, and compare the counts. Only then run `commit;`.
-   select (select count(*) from app_old.venues) as venues_before, (select count(*) from app.venues) as venues_after,
-          (select count(*) from app_old.translations) as translations_before, (select count(*) from app.translations) as translations_after;
-   -- Venues in cities or areas that no longer exist in the packs are the only ones allowed to be missing.
-   ```
-   If the counts are right, run `commit;`, then `drop schema app_old cascade;`. If not, run `rollback;` and look again; `app_old` is untouched.
-   Roles need nothing: check that the admins and translators you expect are still there, and re-run `tool set-admin <email>` / `tool set-translator <email> <langs>` for any that aren't (the dump from step 1 lists them: `auth.users.raw_app_meta_data`):
-   ```sql
-   select email, raw_app_meta_data->>'admin' as admin, raw_app_meta_data->>'translator_langs' as translator_langs
-   from auth.users where raw_app_meta_data ? 'admin' or raw_app_meta_data ? 'translator_langs';
-   ```
-7. **Record the PostGIS version** and put the result in the PR: `select extversion from pg_extension where extname = 'postgis';`
-8. **Verify** (also the last step of the short variant):
-   - goose is at the baseline: `select version_id from goose.db_version order by id desc limit 1;` is `2`, and `app_old` and `public.app_goose_db_version` don't exist.
-   - `anon` and `authenticated` have no access: `select has_schema_privilege('anon', 'app', 'usage'), has_schema_privilege('authenticated', 'river', 'usage')` is `f, f`, and `select count(*) from information_schema.role_table_grants where grantee in ('anon','authenticated') and table_schema in ('app','river')` is `0`. (`extensions` tables such as `spatial_ref_sys` are owned by `supabase_admin`; with the Data API off they aren't reachable.)
-   - The Data API still answers 503: the `curl` in [supabase-hosted.md](supabase-hosted.md).
-   - `supabase db advisors --linked` is clean: `0014_extension_in_public` is gone.
-   - `curl https://api.joinissho.com/up`, and `HealthService/Check` reports `"databaseOk": true`.
-   - A sign-in from the app creates the `app.users` row again.
-
-**Backups from before the reset don't restore onto the baseline.** They hold the old `app` schema (`public.geography` columns, the dropped columns) and goose's 28-step history, so neither `pg_restore` of the whole dump nor a `--data-only --schema=app` restore into a database migrated to the baseline works: the column lists differ. To read old data, restore into a scratch Postgres with PostGIS in `public` and copy rows out. Dumps taken after the reset restore as described under *Off-site backups*, with the extensions in the `extensions` schema.
-
-## To check on the first real deploy
-
-- Group chat's WebSocket (`/ws/chat`) through Cloudflare and kamal-proxy: open a group chat in the app and send a message from another account.
-- The API sees Cloudflare's address, not the client's (nothing uses client addresses yet; if something does, read `CF-Connecting-IP`).
-- Point the app's and the sites' API URL at the new host: `EXPO_PUBLIC_API_URL`, and `scripts/deploy-web.sh https://<api host>`.
+Production's destination, release-driven deploys, backups, Sentry, alerts and the Google Cloud logging of the containers (all later milestones'), and a deploy hold for the two hours before an outing ([Technical operations](spec/operations.md#what-the-promise-means)), which has no outings to protect until they exist.
