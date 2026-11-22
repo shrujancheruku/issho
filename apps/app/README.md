@@ -68,13 +68,28 @@ Tests use Jest with `jest-expo` and React Native Testing Library. A screen test 
 
 Local development builds, on the iOS simulator and the Android emulator, are for checking a screen on a phone before a ticket is done ([Native along the way](../../docs/spec/quality.md#native-along-the-way)). Nothing goes to EAS or a store. `ios/` and `android/` are generated and gitignored; nothing in them is committed.
 
-| Command | What it does |
-|---|---|
-| `make native-ios` | `expo run:ios` generates `ios/`, runs `pod install`, builds and opens the app on the `NATIVE_IOS_DEVICE` simulator (default `iPhone 17`) |
-| `make native-android` | `android emulator start $(NATIVE_AVD)` (default `issho`), then `expo run:android` builds and installs the app on it |
-| `make native-screenshot-ios NAME=plans` | Captures the booted simulator to `docs/screenshots/plans-ios.png` |
-| `make native-screenshot-android NAME=plans` | Captures the running emulator through the `android` CLI to `docs/screenshots/plans-android.png` |
-| `make native-screenshot-test` | Checks that the screenshot script refuses bad arguments (also run by `make test`) |
+| Command | What it does | Returns? |
+|---|---|---|
+| `make native-metro` | Starts Metro (Expo's dev server, port 8081) in the background, logging to `.expo/native-metro/metro.log`, and returns once it answers | yes |
+| `make native-android` | `android emulator start $(NATIVE_AVD)` (default `issho`), then `expo run:android --no-bundler` builds, installs and opens the app | yes |
+| `make native-ios` | `expo run:ios --no-bundler` generates `ios/`, runs `pod install`, builds and opens the app on the `NATIVE_IOS_DEVICE` simulator (default `iPhone 17`) | yes |
+| `make native-wait` | Returns once a device has loaded the app's bundle; fails after `NATIVE_WAIT` seconds (default 180) with the log's last lines | yes |
+| `make native-screenshot-android NAME=plans` | Captures the running emulator through the `android` CLI to `docs/screenshots/plans-android.png` | yes |
+| `make native-screenshot-ios NAME=plans` | Captures the booted simulator to `docs/screenshots/plans-ios.png` | yes |
+| `make native-stop` | Stops Metro, the emulator and the simulator | yes |
+| `make native-screenshot-test` | Checks that the screenshot and Metro scripts refuse bad arguments and that `native-wait` is bounded (also run by `make test`) | yes |
+
+**A worker's sequence** (from the repo root; `make native-metro` first, so the app finds Metro when it opens):
+
+```sh
+make native-metro                      # Metro in the background; returns
+make native-android                    # then, for iOS: make native-ios
+make native-wait                       # the app has loaded its bundle
+make native-screenshot-android NAME=plans
+make native-stop                       # always, even when a step failed
+```
+
+Every command returns. Metro is the one long-running process, and `make native-metro` already starts it in the background: never run `expo start` or `expo run:*` without `--no-bundler` in the foreground and wait for it, because Metro keeps them alive for as long as it runs and the wait never ends. If a step fails, read `.expo/native-metro/metro.log`, run `make native-stop` and report.
 
 Machine needs: full Xcode (`xcode-select -p` prints a path inside `Xcode.app`) with an iOS simulator runtime; the Android SDK (`ANDROID_HOME`) with platform `android-36`, build-tools `36.0.0` and the emulator package, JDK 17, and an AVD named `issho` (`android emulator list`). Gradle installs the platform Expo's template asks for on first build. CocoaPods (`pod` on the `PATH`), which Expo's iOS build runs. Expo's Swift Package Manager route (`experiments.swiftPackageManager`) is off: it can't build `expo-router` with `react-native-screens` yet ([#630](https://github.com/shrujancheruku/issho/issues/630)).
 
@@ -87,7 +102,7 @@ xcodebuild exited with error code 65
 
 The pod is built by a nested SwiftPM `xcodebuild` in Swift 6 language mode, so a Podfile or config-plugin setting can't change it from this repo. So `docs/screenshots/plans-ios.png` doesn't exist yet and `make native-screenshot-ios` is untested.
 
-Metro (Expo's dev server) listens on port 8081 during a native run. Two worktrees cannot run one at once, since they would share the simulator, the emulator and that port. Stop Metro (Ctrl-C) when a run is done.
+Metro's port, the simulator and the emulator are shared: two worktrees cannot run native builds at once.
 
 ## Dates and times
 

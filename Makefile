@@ -135,14 +135,25 @@ test: native-bundle-test
 NATIVE_IOS_DEVICE ?= iPhone 17
 NATIVE_AVD ?= issho
 
-.PHONY: native-ios native-android native-screenshot-ios native-screenshot-android native-screenshot-test
+.PHONY: native-metro native-wait native-stop native-ios native-android native-screenshot-ios native-screenshot-android native-screenshot-test
+
+# These three return. `expo run:*` would stay in the foreground as Metro, so the
+# build targets pass --no-bundler and Metro is its own target (scripts/native-metro.sh).
+native-metro:
+	scripts/native-metro.sh start
+
+native-wait:
+	scripts/native-metro.sh wait
+
+native-stop:
+	NATIVE_AVD="$(NATIVE_AVD)" scripts/native-metro.sh stop
 
 native-ios:
-	pnpm --filter @issho/app exec expo run:ios --device "$(NATIVE_IOS_DEVICE)"
+	pnpm --filter @issho/app exec expo run:ios --device "$(NATIVE_IOS_DEVICE)" --no-bundler
 
 native-android:
 	android emulator start $(NATIVE_AVD)
-	pnpm --filter @issho/app exec expo run:android
+	pnpm --filter @issho/app exec expo run:android --no-bundler
 
 native-screenshot-ios:
 	scripts/native-screenshot.sh ios $(or $(NAME),screen)
@@ -153,6 +164,7 @@ native-screenshot-android:
 test: native-screenshot-test
 native-screenshot-test:
 	scripts/native-screenshot.test.sh
+	scripts/native-metro.test.sh
 
 # CI's required checks (#603). Each job in .github/workflows/ci.yml is a thin call
 # to one of these (or to a target above), so what CI runs is what runs here.
