@@ -26,7 +26,15 @@ function apiProxy(apiOrigin) {
     // `/issho.v1./../up` would pass a check on the raw string and land on `/up`.
     // The origin is checked too, since `//host/..` resolves to another host.
     const target = new URL(req.url, apiOrigin);
-    if (target.origin !== new URL(apiOrigin).origin || !target.pathname.startsWith('/issho.v1.')) return next();
+    // An encoded slash, backslash or dot is no part of an RPC's name; an API that
+    // decodes it would let `..%2f` climb out after all.
+    if (
+      target.origin !== new URL(apiOrigin).origin ||
+      !target.pathname.startsWith('/issho.v1.') ||
+      /%(2e|2f|5c)/i.test(target.pathname)
+    ) {
+      return next();
+    }
     const headers = new Headers();
     for (const [name, value] of Object.entries(req.headers)) {
       if (!HOP.has(name) && !CLIENT_ADDRESS.has(name)) headers.set(name, Array.isArray(value) ? value.join(', ') : value);
