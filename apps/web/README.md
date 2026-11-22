@@ -11,11 +11,11 @@ With `API_ORIGIN` set, `api-proxy.js` forwards the API's paths (`/issho.v1.*`, a
 `Dockerfile` builds from the repository root, in two stages: the app's export, then a runtime that installs only `express` and `expo-server` and copies the export in as `dist`.
 
 ```sh
-docker build --file apps/web/Dockerfile --build-arg EXPO_PUBLIC_API_URL=https://api-dev.joinissho.com .
+docker build --file apps/web/Dockerfile --build-arg EXPO_PUBLIC_API_URL=https://dev.joinissho.com .
 docker run --publish 8081:8081 <image>      # PORT overrides 8081
 ```
 
-`EXPO_PUBLIC_API_URL` is the Go API's address. Like every `EXPO_PUBLIC_*` value it is bundled into the app, so it is public and is a build argument, not a secret. It differs per environment, so each environment builds its own image.
+`EXPO_PUBLIC_API_URL` is the address the page calls the API at: the web's own origin, since the API has no CORS and the server forwards its paths (`API_ORIGIN`, above; [ADR 0006](../../docs/adr/0006-browsers-reach-the-api-on-their-own-origin.md)). Pointed at the API's own name, the page's calls would be cross-origin and refused. Like every `EXPO_PUBLIC_*` value it is bundled into the app, so it is public and is a build argument, not a secret. It differs per environment, so each environment builds its own image.
 
 `Dockerfile.dockerignore` keeps the build context to the files the Dockerfile copies.
 
