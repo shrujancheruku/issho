@@ -64,17 +64,24 @@ Local development builds, on the iOS simulator and the Android emulator, are for
 
 | Command | What it does |
 |---|---|
-| `make native-ios` | Prepares `ios/` for Swift Package Manager (`scripts/native-prepare-ios.sh`), then `expo run:ios` builds and opens the app on the `NATIVE_IOS_DEVICE` simulator (default `iPhone 17`) |
+| `make native-ios` | `expo run:ios` generates `ios/`, runs `pod install`, builds and opens the app on the `NATIVE_IOS_DEVICE` simulator (default `iPhone 17`) |
 | `make native-android` | `android emulator start $(NATIVE_AVD)` (default `issho`), then `expo run:android` builds and installs the app on it |
 | `make native-screenshot-ios NAME=plans` | Captures the booted simulator to `docs/screenshots/plans-ios.png` |
 | `make native-screenshot-android NAME=plans` | Captures the running emulator through the `android` CLI to `docs/screenshots/plans-android.png` |
 | `make native-screenshot-test` | Checks that the screenshot script refuses bad arguments (also run by `make test`) |
 
-Machine needs: full Xcode (`xcode-select -p` prints a path inside `Xcode.app`) with an iOS simulator runtime; the Android SDK (`ANDROID_HOME`) with platform `android-36`, build-tools `36.0.0` and the emulator package, JDK 17, and an AVD named `issho` (`android emulator list`). Gradle installs the platform Expo's template asks for on first build. No CocoaPods is installed or used: the iOS build uses Swift Package Manager, which `experiments.swiftPackageManager` in `app.json` turns on.
+Machine needs: full Xcode (`xcode-select -p` prints a path inside `Xcode.app`) with an iOS simulator runtime; the Android SDK (`ANDROID_HOME`) with platform `android-36`, build-tools `36.0.0` and the emulator package, JDK 17, and an AVD named `issho` (`android emulator list`). Gradle installs the platform Expo's template asks for on first build. CocoaPods (`pod` on the `PATH`), which Expo's iOS build runs. Expo's Swift Package Manager route (`experiments.swiftPackageManager`) is off: it can't build `expo-router` with `react-native-screens` yet ([#630](https://github.com/shrujancheruku/issho/issues/630)).
+
+**iOS status: `make native-ios` does not build yet on Xcode 26.3 (Swift 6.2).** It generates `ios/`, runs `pod install` and compiles most pods, then fails in `expo-modules-jsi` 58.0.23, which Expo SDK 58 ships at its latest version:
+
+```
+expo-modules-jsi/apple/Sources/ExpoModulesJSI/Runtime/Values/JavaScriptObject.swift:946:36: error: sending 'slot' risks causing data races
+xcodebuild exited with error code 65
+```
+
+The pod is built by a nested SwiftPM `xcodebuild` in Swift 6 language mode, so a Podfile or config-plugin setting can't change it from this repo. So `docs/screenshots/plans-ios.png` doesn't exist yet and `make native-screenshot-ios` is untested.
 
 Metro (Expo's dev server) listens on port 8081 during a native run. Two worktrees cannot run one at once, since they would share the simulator, the emulator and that port. Stop Metro (Ctrl-C) when a run is done.
-
-Status: the Android build and screenshot work. The iOS build is blocked: `react-native-screens` and `@react-native-masked-view/masked-view` ship no `Package.swift`, scaffolding one for `@react-native-masked-view/masked-view` produces a target whose umbrella header layout SPM rejects (its `RNCMaskedView.xcodeproj` sits beside the public headers), and no committed fix exists yet.
 
 ## Dates and times
 

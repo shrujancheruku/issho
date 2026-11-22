@@ -138,7 +138,6 @@ NATIVE_AVD ?= issho
 .PHONY: native-ios native-android native-screenshot-ios native-screenshot-android native-screenshot-test
 
 native-ios:
-	scripts/native-prepare-ios.sh
 	pnpm --filter @issho/app exec expo run:ios --device "$(NATIVE_IOS_DEVICE)"
 
 native-android:

@@ -40,8 +40,7 @@
       "expo-localization"
     ],
     "experiments": {
-      "typedRoutes": true,
-      "swiftPackageManager": true
+      "typedRoutes": true
     }
   }
 }

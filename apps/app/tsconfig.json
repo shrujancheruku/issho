@@ -11,8 +11,5 @@
   "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts"],
   // The native-bundle fixture route is copied into src/app for one run (see
   // scripts/native-bundle.test.sh); where it sits its imports don't resolve.
-  // ios/ and android/ are generated native projects (gitignored, #630). Expo's
-  // autolinking writes TypeScript into ios/build, which doesn't type-check
-  // against this project's config; the app's own source is what this checks.
-  "exclude": ["node_modules", "scripts/fixtures", "ios", "android"]
+  "exclude": ["node_modules", "scripts/fixtures"]
 }
