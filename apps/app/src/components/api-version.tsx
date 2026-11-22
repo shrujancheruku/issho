@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { StyleSheet, Text } from 'react-native';
 
 import { useApi } from '@/api/api-provider';
+import { apiUrl, isDevApi } from '@/api/api-url';
 import { FontSize } from '@/constants/theme';
 import { useI18n } from '@/i18n/i18n-provider';
 import { useTheme } from '@/hooks/use-theme';
@@ -10,8 +11,15 @@ import { useTheme } from '@/hooks/use-theme';
  * The version the API's public health check reports. It is what the dev deploy's
  * walk looks for on the page. It runs in the browser or on the phone, after the
  * page is up, so the server-rendered HTML holds nothing that depends on the API.
+ *
+ * Members never see it: a build whose API holds real people (production's) shows
+ * nothing and makes no call (`isDevApi`). Dev, preview builds and local runs show it.
  */
 export function ApiVersion() {
+  return isDevApi(apiUrl()) ? <Version /> : null;
+}
+
+function Version() {
   const { t } = useI18n();
   const theme = useTheme();
   const api = useApi();

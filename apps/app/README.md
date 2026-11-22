@@ -1,6 +1,6 @@
 # apps/app
 
-The member app: one Expo project for iOS, Android and the web ([Architecture and stack](../../docs/spec/architecture.md#what-v2-is-built-from)). The web is the same project, server-rendered (`web.output: "server"` in `app.json`). Right now it is the shell: three empty tabs, the strings and the theme, and on the You tab the version the API reports (`src/components/api-version.tsx`), which is what the dev deploy checks. Sign-in and the real screens come in later tickets.
+The member app: one Expo project for iOS, Android and the web ([Architecture and stack](../../docs/spec/architecture.md#what-v2-is-built-from)). The web is the same project, server-rendered (`web.output: "server"` in `app.json`). Right now it is the shell: three empty tabs, the strings and the theme, and on the You tab the version the API reports (`src/components/api-version.tsx`), which is what the dev deploy checks. Members never see the version: it shows only when the build's `EXPO_PUBLIC_API_URL` is an API that holds no real people (`isDevApi` in `src/api/api-url.ts`: a local address, or a name whose first label is `dev` or ends in `-dev`, as `dev.joinissho.com` and `api-dev.joinissho.com` do). Any other address, production's included, shows nothing and makes no call. Sign-in and the real screens come in later tickets.
 
 ## Setup
 
@@ -26,7 +26,8 @@ Screenshots of every empty tab at phone width, light and dark, English and Vietn
 | What | Where |
 |---|---|
 | The three tabs, Plans first, English and Vietnamese, light and dark, with a fake of the generated API client | `src/app/__tests__/tabs.test.tsx` |
-| The You tab shows the API's version, or that it could not be reached, in both languages | `src/app/__tests__/api-version.test.tsx` |
+| The You tab shows the API's version, or that it could not be reached, in both languages, in dev's build and not in production's | `src/app/__tests__/api-version.test.tsx` |
+| Which API addresses count as dev (`isDevApi`) | `src/api/__tests__/api-url.test.ts` |
 | The date and time formatter | `src/lib/__tests__/format.test.ts` |
 | Strings: language choice, `{placeholders}`, the device language | `src/i18n/__tests__/` |
 | The strings check (`make lint`) | `scripts/__tests__/check-strings.test.js` |
@@ -44,7 +45,7 @@ Tests use Jest with `jest-expo` and React Native Testing Library. A screen test 
 | `src/i18n/` | `en.json`, `vi.json`, `strings.ts` (`translate`, `pickLanguage`), the provider and `useDeviceLanguage` |
 | `src/lib/format.ts` | The one date and time formatter |
 | `src/constants/theme.ts`, `src/hooks/use-theme.ts` | Colour tokens and the theme in use |
-| `src/api/` | `ApiProvider` and `useApi()`: the one generated client, given to screens |
+| `src/api/` | `ApiProvider` and `useApi()`: the one generated client, given to screens; `api-url.ts`, the API's address and whether it is dev's |
 | `assets/images/` | The icon, splash, favicon, logo and tab icons, ported from v1 (`apps/mobile` at `v1-final`) |
 | `scripts/` | The strings check, the helper the lint test uses, and `fixtures/native-bundle/` for the native bundle test |
 | `docs/screenshots/` | Screenshots of the tabs, named `<tab>-<language>-<theme>` |
