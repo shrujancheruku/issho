@@ -308,6 +308,38 @@ func TestTheOutingRPCsNeverSendAnotherPersonsEmailIdOrSurname(t *testing.T) {
 		t.Fatal(err)
 	}
 	record(cancelled)
+	// On the day and after: check-in, then feedback's form, an answer with a
+	// pick, and a "no", each as every person sends them.
+	adaTok, _, thirdTok = r.at(t, outingStart)
+	for _, tok := range []string{adaTok, thirdTok} {
+		in, err := r.checkIn(tok, outing)
+		if err != nil {
+			t.Fatal(err)
+		}
+		record(in)
+	}
+	adaTok, _, thirdTok = r.at(t, outingEnd)
+	for _, tok := range []string{adaTok, thirdTok} {
+		form, err := r.feedback(tok, outing)
+		if err != nil {
+			t.Fatal(err)
+		}
+		record(form)
+		req := &isshov1.SaveFeedbackRequest{OutingId: outing, Went: true}
+		for _, c := range form.GetOthers() {
+			req.MeetAgain = append(req.MeetAgain, c.GetHandle())
+		}
+		saved, err := r.saveFeedback(tok, req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		record(saved)
+		no, err := r.saveFeedback(tok, &isshov1.SaveFeedbackRequest{OutingId: outing, Went: false})
+		if err != nil {
+			t.Fatal(err)
+		}
+		record(no)
+	}
 
 	all := strings.Join(sent, "\n")
 	for _, leak := range []string{"@", "example.com", ada, grace, third, "Lovelace", "Hopper", "Johnson"} {
@@ -318,5 +350,229 @@ func TestTheOutingRPCsNeverSendAnotherPersonsEmailIdOrSurname(t *testing.T) {
 	// The first names are what is meant to be shown, so the scan can see them.
 	if !strings.Contains(all, "Grace") || !strings.Contains(all, "Katherine") {
 		t.Errorf("no first names in the responses, so the scan proved nothing: %s", all)
+	}
+}
+
+// The plan runs 17:00 to 20:30 on the city's clock (UTC+7).
+var (
+	outingStart = time.Date(2026, 1, 9, 10, 0, 0, 0, time.UTC)
+	outingEnd   = time.Date(2026, 1, 9, 13, 30, 0, 0, time.UTC)
+)
+
+func (r *outingRig) checkIn(token, outing string) (*isshov1.Outing, error) {
+	res, err := r.outings.CheckIn(context.Background(), authed(token, &isshov1.CheckInRequest{OutingId: outing}))
+	if err != nil {
+		return nil, err
+	}
+	return res.Msg.GetOuting(), nil
+}
+
+func (r *outingRig) feedback(token, outing string) (*isshov1.Feedback, error) {
+	res, err := r.outings.GetFeedback(context.Background(), authed(token, &isshov1.GetFeedbackRequest{OutingId: outing}))
+	if err != nil {
+		return nil, err
+	}
+	return res.Msg.GetFeedback(), nil
+}
+
+func (r *outingRig) saveFeedback(token string, req *isshov1.SaveFeedbackRequest) (*isshov1.Feedback, error) {
+	res, err := r.outings.SaveFeedback(context.Background(), authed(token, req))
+	if err != nil {
+		return nil, err
+	}
+	return res.Msg.GetFeedback(), nil
+}
+
+// A set outing whose three people are all going, with the clock at the moment
+// they said so.
+func (r *outingRig) goingGroup(t *testing.T) (adaTok, graceTok, thirdTok, outing string) {
+	t.Helper()
+	adaTok, graceTok, thirdTok = r.formedGroup(t)
+	outing = r.outingOf(t, adaTok).GetId()
+	for _, tok := range []string{adaTok, graceTok, thirdTok} {
+		if _, err := r.answer(tok, outing, isshov1.InvitationAnswer_INVITATION_ANSWER_YES); err != nil {
+			t.Fatal(err)
+		}
+	}
+	return adaTok, graceTok, thirdTok, outing
+}
+
+// at moves the clock and signs the three in again, since a token lasts an hour.
+func (r *outingRig) at(t *testing.T, now time.Time) (adaTok, graceTok, thirdTok string) {
+	t.Helper()
+	r.clk.Set(now)
+	return r.signedIn(t, ada, "ada@example.com"), r.signedIn(t, grace, "grace@example.com"), r.signedIn(t, third, "third@example.com")
+}
+
+// Check-in over the API opens 30 minutes before the start, shows who has
+// checked in by first name to those going, and is refused outside its window.
+func TestCheckInOverTheAPIShowsWhoHasCheckedIn(t *testing.T) {
+	r := newOutingRig(t)
+	_, _, _, outing := r.goingGroup(t)
+
+	earlyTok, _, _ := r.at(t, outingStart.Add(-31*time.Minute))
+	_, early := r.checkIn(earlyTok, outing)
+	adaTok, graceTok, thirdTok := r.at(t, outingStart.Add(-30*time.Minute))
+	_, err := r.checkIn(graceTok, outing)
+	if err != nil {
+		t.Fatal(err)
+	}
+	mine, err := r.checkIn(adaTok, outing)
+	if err != nil {
+		t.Fatal(err)
+	}
+	katherine, err := r.list(thirdTok)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, _, thirdTok = r.at(t, outingEnd)
+	_, late := r.checkIn(thirdTok, outing)
+
+	wantCode(t, early, connect.CodeFailedPrecondition)
+	wantCode(t, late, connect.CodeFailedPrecondition)
+	if !mine.GetCheckedIn() || !mine.GetCheckedInAt().AsTime().Equal(outingStart.Add(-30*time.Minute)) {
+		t.Errorf("after checking in: %v", mine)
+	}
+	if got := strings.Join(mine.GetCheckedInNames(), ","); got != "Grace" {
+		t.Errorf("Ada sees %q checked in, want Grace", got)
+	}
+	if got := strings.Join(katherine.GetOutings()[0].GetCheckedInNames(), ","); got != "Ada,Grace" || katherine.GetOutings()[0].GetCheckedIn() {
+		t.Errorf("Katherine sees %q checked in, herself checked in %v; want Ada,Grace and no", got, katherine.GetOutings()[0].GetCheckedIn())
+	}
+	if !mine.GetCheckInOpensAt().AsTime().Equal(outingStart.Add(-30*time.Minute)) || !mine.GetCheckInClosesAt().AsTime().Equal(outingEnd) ||
+		!mine.GetFeedbackClosesAt().AsTime().Equal(outingEnd.Add(7*24*time.Hour)) {
+		t.Errorf("windows: %v", mine)
+	}
+}
+
+// Once checked in there is no cancel; a person who isn't going can't check in;
+// someone with no seat finds no outing.
+func TestCheckedInSeatsCannotCancelOverTheAPI(t *testing.T) {
+	r := newOutingRig(t)
+	_, _, _, outing := r.goingGroup(t)
+	r.named(t, fourth, "fourth@example.com", "Mary Jackson")
+	adaTok, _, _ := r.at(t, outingStart)
+	if _, err := r.checkIn(adaTok, outing); err != nil {
+		t.Fatal(err)
+	}
+
+	_, cancel := r.cancel(adaTok, outing)
+	_, stranger := r.checkIn(r.signedIn(t, fourth, "fourth@example.com"), outing)
+	_, missing := r.checkIn(adaTok, "not-an-outing")
+
+	wantCode(t, cancel, connect.CodeFailedPrecondition)
+	wantCode(t, stranger, connect.CodeNotFound)
+	wantCode(t, missing, connect.CodeNotFound)
+}
+
+// Feedback over the API: closed before the plan's end, then the form lists the
+// others by first name, answers are kept and changed, a "no" keeps nothing
+// after it, a made-up handle is refused, and a person who wasn't going at the
+// start is refused.
+func TestFeedbackOverTheAPI(t *testing.T) {
+	r := newOutingRig(t)
+	_, _, _, outing := r.goingGroup(t)
+	adaTok, _, _ := r.at(t, outingEnd.Add(-time.Second))
+	_, early := r.feedback(adaTok, outing)
+	adaTok, _, _ = r.at(t, outingEnd)
+
+	form, err := r.feedback(adaTok, outing)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var graceHandle, thirdHandle string
+	for _, c := range form.GetOthers() {
+		switch c.GetFirstName() {
+		case "Grace":
+			graceHandle = c.GetHandle()
+		case "Katherine":
+			thirdHandle = c.GetHandle()
+		}
+	}
+	saved, err := r.saveFeedback(adaTok, &isshov1.SaveFeedbackRequest{OutingId: outing, Went: true, NotThere: []string{thirdHandle}, MeetAgain: []string{graceHandle}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, bogus := r.saveFeedback(adaTok, &isshov1.SaveFeedbackRequest{OutingId: outing, Went: true, MeetAgain: []string{"nobody"}})
+	no, err := r.saveFeedback(adaTok, &isshov1.SaveFeedbackRequest{OutingId: outing, Went: false, MeetAgain: []string{graceHandle}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	late := r.clk.Now().Add(7 * 24 * time.Hour)
+	r.clk.Set(late)
+	adaTok = r.signedIn(t, ada, "ada@example.com")
+	_, closed := r.feedback(adaTok, outing)
+
+	wantCode(t, early, connect.CodeFailedPrecondition)
+	wantCode(t, bogus, connect.CodeInvalidArgument)
+	wantCode(t, closed, connect.CodeFailedPrecondition)
+	if len(form.GetOthers()) != 2 || form.GetAnswered() || graceHandle == "" || thirdHandle == "" {
+		t.Errorf("form = %v, want the two others, unanswered", form)
+	}
+	if !saved.GetAnswered() || !saved.GetWent() || len(saved.GetNotThere()) != 1 || saved.GetNotThere()[0] != thirdHandle || saved.GetMeetAgain()[0] != graceHandle {
+		t.Errorf("saved = %v", saved)
+	}
+	if !no.GetAnswered() || no.GetWent() || len(no.GetNotThere()) != 0 || len(no.GetMeetAgain()) != 0 {
+		t.Errorf("a no = %v, want nothing after it", no)
+	}
+}
+
+// A person who only had a yes waiting, or never answered, is refused the form.
+func TestFeedbackIsRefusedToSomeoneNotGoingAtTheStartOverTheAPI(t *testing.T) {
+	r := newOutingRig(t)
+	adaTok, graceTok, _ := r.formedGroup(t)
+	outing := r.outingOf(t, adaTok).GetId()
+	for _, tok := range []string{adaTok, graceTok} {
+		r.answer(tok, outing, isshov1.InvitationAnswer_INVITATION_ANSWER_YES)
+	}
+	// Katherine never answers, so the outing isn't set.
+	adaTok, _, thirdTok := r.at(t, outingEnd)
+
+	_, waiting := r.feedback(adaTok, outing)
+	_, never := r.feedback(thirdTok, outing)
+
+	wantCode(t, waiting, connect.CodeFailedPrecondition)
+	wantCode(t, never, connect.CodeFailedPrecondition)
+}
+
+// "Who would you meet again?" is private: after one person picks another, what
+// every call returns to the person picked is exactly what it returned before,
+// and a mutual pick is told to neither.
+func TestNoRPCTellsAPersonWhoPickedThem(t *testing.T) {
+	r := newOutingRig(t)
+	_, _, _, outing := r.goingGroup(t)
+	adaTok, graceTok, _ := r.at(t, outingEnd)
+	form, err := r.feedback(adaTok, outing)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var graceHandle string
+	for _, c := range form.GetOthers() {
+		if c.GetFirstName() == "Grace" {
+			graceHandle = c.GetHandle()
+		}
+	}
+	// What Grace is sent, as bytes, by every call that returns her something.
+	read := func(tok string) string {
+		list, err := r.list(tok)
+		if err != nil {
+			t.Fatal(err)
+		}
+		f, err := r.feedback(tok, outing)
+		if err != nil {
+			t.Fatal(err)
+		}
+		a, _ := protojson.Marshal(list)
+		b, _ := protojson.Marshal(f)
+		return string(a) + string(b)
+	}
+	before := read(graceTok)
+
+	if _, err := r.saveFeedback(adaTok, &isshov1.SaveFeedbackRequest{OutingId: outing, Went: true, MeetAgain: []string{graceHandle}}); err != nil {
+		t.Fatal(err)
+	}
+
+	if after := read(graceTok); after != before {
+		t.Errorf("Grace is sent something different once Ada picks her:\nbefore %s\nafter  %s", before, after)
 	}
 }

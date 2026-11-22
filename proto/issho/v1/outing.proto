@@ -39,6 +39,39 @@ service OutingService {
   rpc CancelSeat(CancelSeatRequest) returns (CancelSeatResponse) {
     option (issho.v1.access) = ACCESS_MEMBER;
   }
+
+  // "I'm here": one tap, no proof of place, for the caller's own seat, which must
+  // be going. Open from 30 minutes before the start to the plan's stated end on
+  // the city's clock: FAILED_PRECONDITION outside it and for a seat that is not
+  // going; NOT_FOUND for an outing the caller has no seat in. Checking in again
+  // changes nothing. Once checked in there is no cancel. Returns the outing as
+  // the caller sees it, with the first names of the others who have checked in.
+  // Member.
+  rpc CheckIn(CheckInRequest) returns (CheckInResponse) {
+    option (issho.v1.access) = ACCESS_MEMBER;
+  }
+
+  // The caller's feedback form for an outing: who else was going at the start
+  // (each ticked by default) and the caller's answers so far. Open from the
+  // plan's stated end for 7 days, to a person who was going at the start:
+  // FAILED_PRECONDITION before it opens, after it closes, and for a seat that was
+  // not going at the start; NOT_FOUND for an outing the caller has no seat in.
+  // The others are named by first name and a handle that means something only
+  // inside this outing, never by an account, an email or a surname. Member.
+  rpc GetFeedback(GetFeedbackRequest) returns (GetFeedbackResponse) {
+    option (issho.v1.access) = ACCESS_MEMBER;
+  }
+
+  // Answers feedback's first three questions for the caller's own seat, replacing
+  // any answers given before; open as GetFeedback is, so answers can be changed
+  // until it closes. A "no" to "did you go?" ends the feedback there: nothing
+  // after it is kept. INVALID_ARGUMENT for a handle that is none of the others
+  // who were going at the start, or a pick of someone the same answer says was
+  // not there. A pick is private: no RPC tells the person picked, or anyone
+  // else. Member.
+  rpc SaveFeedback(SaveFeedbackRequest) returns (SaveFeedbackResponse) {
+    option (issho.v1.access) = ACCESS_MEMBER;
+  }
 }
 
 message ListMyOutingsRequest {}
@@ -73,6 +106,66 @@ message CancelSeatResponse {
   Outing outing = 1;
 }
 
+message CheckInRequest {
+  string outing_id = 1;
+}
+
+// The outing as the caller's seat sees it after checking in.
+message CheckInResponse {
+  Outing outing = 1;
+}
+
+message GetFeedbackRequest {
+  string outing_id = 1;
+}
+
+message GetFeedbackResponse {
+  Feedback feedback = 1;
+}
+
+message SaveFeedbackRequest {
+  string outing_id = 1;
+  // Question 1, "did you go?". A false ends the feedback there: the other
+  // fields are ignored and nothing after it is kept.
+  bool went = 2;
+  // Question 2, "who else was there?": everyone going at the start is ticked by
+  // default, so these are the handles of the people the caller says were not
+  // there.
+  repeated string not_there = 3;
+  // Question 5, "who would you meet again?": the handles of the people the caller
+  // would. Each is a pick, private to the caller.
+  repeated string meet_again = 4;
+}
+
+message SaveFeedbackResponse {
+  Feedback feedback = 1;
+}
+
+// The caller's feedback form for one outing.
+message Feedback {
+  string outing_id = 1;
+  // Whether the caller has answered "did you go?" yet; went is that answer and
+  // means nothing before it.
+  bool answered = 2;
+  bool went = 3;
+  // Everyone who was going at the start but the caller, by first name and then
+  // handle.
+  repeated Companion others = 4;
+  // The caller's own answers, as handles, sorted.
+  repeated string not_there = 5;
+  repeated string meet_again = 6;
+  // When feedback closes: 7 days after the plan's stated end.
+  google.protobuf.Timestamp closes_at = 7;
+}
+
+// Another person of an outing as feedback names them. A handle is random, means
+// nothing outside this outing and is not an account or anything that links to
+// one; a first name is all that is ever shown of another person.
+message Companion {
+  string handle = 1;
+  string first_name = 2;
+}
+
 // An outing as its own seat's holder sees it. It carries no other person.
 message Outing {
   string id = 1;
@@ -101,6 +194,18 @@ message Outing {
   // and it is empty unless the caller is going themselves. A first name is all
   // that is ever shown of another person.
   repeated string others_going = 12;
+  // Whether the caller has checked in, and when.
+  bool checked_in = 13;
+  google.protobuf.Timestamp checked_in_at = 14;
+  // The first names of the others who have checked in, sorted: only to a person
+  // who is going themselves, never their own.
+  repeated string checked_in_names = 15;
+  // Check-in opens 30 minutes before the start and closes at the plan's stated
+  // end, on the city's clock; feedback opens at that end and closes 7 days later.
+  google.protobuf.Timestamp check_in_opens_at = 16;
+  google.protobuf.Timestamp check_in_closes_at = 17;
+  google.protobuf.Timestamp feedback_opens_at = 18;
+  google.protobuf.Timestamp feedback_closes_at = 19;
 }
 
 // An outing's state (docs/spec/outings.md, "What an outing is"). Only offered,

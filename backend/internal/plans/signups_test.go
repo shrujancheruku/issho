@@ -627,7 +627,7 @@ func TestFormingReadsTheRunningRoundOneEntryPerPerson(t *testing.T) {
 		{Account: ada, Ticks: []plans.Tick{{Date: "2026-01-09", Part: "evening"}, {Date: "2026-01-10", Part: "evening"}}},
 		{Account: grace, Ticks: []plans.Tick{{Date: "2026-01-09", Part: "evening"}}},
 	}
-	if got.RoundID == "" || got.StartsAt != "17:00" || !reflect.DeepEqual(got.Entries, want) {
+	if got.RoundID == "" || got.StartsAt != "17:00" || got.EndsAt != "20:30" || got.TimeZone != "Asia/Ho_Chi_Minh" || !reflect.DeepEqual(got.Entries, want) {
 		t.Fatalf("Forming = %+v, want a round with the lantern plan's 17:00 start and entries %+v", got, want)
 	}
 }

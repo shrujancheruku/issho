@@ -42,6 +42,14 @@ const (
 	// OutingServiceCancelSeatProcedure is the fully-qualified name of the OutingService's CancelSeat
 	// RPC.
 	OutingServiceCancelSeatProcedure = "/issho.v1.OutingService/CancelSeat"
+	// OutingServiceCheckInProcedure is the fully-qualified name of the OutingService's CheckIn RPC.
+	OutingServiceCheckInProcedure = "/issho.v1.OutingService/CheckIn"
+	// OutingServiceGetFeedbackProcedure is the fully-qualified name of the OutingService's GetFeedback
+	// RPC.
+	OutingServiceGetFeedbackProcedure = "/issho.v1.OutingService/GetFeedback"
+	// OutingServiceSaveFeedbackProcedure is the fully-qualified name of the OutingService's
+	// SaveFeedback RPC.
+	OutingServiceSaveFeedbackProcedure = "/issho.v1.OutingService/SaveFeedback"
 )
 
 // OutingServiceClient is a client for the issho.v1.OutingService service.
@@ -66,6 +74,30 @@ type OutingServiceClient interface {
 	// cancelled. FAILED_PRECONDITION for a seat that is not going, NOT_FOUND for an
 	// outing the caller has no seat in. Member.
 	CancelSeat(context.Context, *connect.Request[v1.CancelSeatRequest]) (*connect.Response[v1.CancelSeatResponse], error)
+	// "I'm here": one tap, no proof of place, for the caller's own seat, which must
+	// be going. Open from 30 minutes before the start to the plan's stated end on
+	// the city's clock: FAILED_PRECONDITION outside it and for a seat that is not
+	// going; NOT_FOUND for an outing the caller has no seat in. Checking in again
+	// changes nothing. Once checked in there is no cancel. Returns the outing as
+	// the caller sees it, with the first names of the others who have checked in.
+	// Member.
+	CheckIn(context.Context, *connect.Request[v1.CheckInRequest]) (*connect.Response[v1.CheckInResponse], error)
+	// The caller's feedback form for an outing: who else was going at the start
+	// (each ticked by default) and the caller's answers so far. Open from the
+	// plan's stated end for 7 days, to a person who was going at the start:
+	// FAILED_PRECONDITION before it opens, after it closes, and for a seat that was
+	// not going at the start; NOT_FOUND for an outing the caller has no seat in.
+	// The others are named by first name and a handle that means something only
+	// inside this outing, never by an account, an email or a surname. Member.
+	GetFeedback(context.Context, *connect.Request[v1.GetFeedbackRequest]) (*connect.Response[v1.GetFeedbackResponse], error)
+	// Answers feedback's first three questions for the caller's own seat, replacing
+	// any answers given before; open as GetFeedback is, so answers can be changed
+	// until it closes. A "no" to "did you go?" ends the feedback there: nothing
+	// after it is kept. INVALID_ARGUMENT for a handle that is none of the others
+	// who were going at the start, or a pick of someone the same answer says was
+	// not there. A pick is private: no RPC tells the person picked, or anyone
+	// else. Member.
+	SaveFeedback(context.Context, *connect.Request[v1.SaveFeedbackRequest]) (*connect.Response[v1.SaveFeedbackResponse], error)
 }
 
 // NewOutingServiceClient constructs a client for the issho.v1.OutingService service. By default, it
@@ -97,6 +129,24 @@ func NewOutingServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 			connect.WithSchema(outingServiceMethods.ByName("CancelSeat")),
 			connect.WithClientOptions(opts...),
 		),
+		checkIn: connect.NewClient[v1.CheckInRequest, v1.CheckInResponse](
+			httpClient,
+			baseURL+OutingServiceCheckInProcedure,
+			connect.WithSchema(outingServiceMethods.ByName("CheckIn")),
+			connect.WithClientOptions(opts...),
+		),
+		getFeedback: connect.NewClient[v1.GetFeedbackRequest, v1.GetFeedbackResponse](
+			httpClient,
+			baseURL+OutingServiceGetFeedbackProcedure,
+			connect.WithSchema(outingServiceMethods.ByName("GetFeedback")),
+			connect.WithClientOptions(opts...),
+		),
+		saveFeedback: connect.NewClient[v1.SaveFeedbackRequest, v1.SaveFeedbackResponse](
+			httpClient,
+			baseURL+OutingServiceSaveFeedbackProcedure,
+			connect.WithSchema(outingServiceMethods.ByName("SaveFeedback")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -105,6 +155,9 @@ type outingServiceClient struct {
 	listMyOutings    *connect.Client[v1.ListMyOutingsRequest, v1.ListMyOutingsResponse]
 	answerInvitation *connect.Client[v1.AnswerInvitationRequest, v1.AnswerInvitationResponse]
 	cancelSeat       *connect.Client[v1.CancelSeatRequest, v1.CancelSeatResponse]
+	checkIn          *connect.Client[v1.CheckInRequest, v1.CheckInResponse]
+	getFeedback      *connect.Client[v1.GetFeedbackRequest, v1.GetFeedbackResponse]
+	saveFeedback     *connect.Client[v1.SaveFeedbackRequest, v1.SaveFeedbackResponse]
 }
 
 // ListMyOutings calls issho.v1.OutingService.ListMyOutings.
@@ -120,6 +173,21 @@ func (c *outingServiceClient) AnswerInvitation(ctx context.Context, req *connect
 // CancelSeat calls issho.v1.OutingService.CancelSeat.
 func (c *outingServiceClient) CancelSeat(ctx context.Context, req *connect.Request[v1.CancelSeatRequest]) (*connect.Response[v1.CancelSeatResponse], error) {
 	return c.cancelSeat.CallUnary(ctx, req)
+}
+
+// CheckIn calls issho.v1.OutingService.CheckIn.
+func (c *outingServiceClient) CheckIn(ctx context.Context, req *connect.Request[v1.CheckInRequest]) (*connect.Response[v1.CheckInResponse], error) {
+	return c.checkIn.CallUnary(ctx, req)
+}
+
+// GetFeedback calls issho.v1.OutingService.GetFeedback.
+func (c *outingServiceClient) GetFeedback(ctx context.Context, req *connect.Request[v1.GetFeedbackRequest]) (*connect.Response[v1.GetFeedbackResponse], error) {
+	return c.getFeedback.CallUnary(ctx, req)
+}
+
+// SaveFeedback calls issho.v1.OutingService.SaveFeedback.
+func (c *outingServiceClient) SaveFeedback(ctx context.Context, req *connect.Request[v1.SaveFeedbackRequest]) (*connect.Response[v1.SaveFeedbackResponse], error) {
+	return c.saveFeedback.CallUnary(ctx, req)
 }
 
 // OutingServiceHandler is an implementation of the issho.v1.OutingService service.
@@ -144,6 +212,30 @@ type OutingServiceHandler interface {
 	// cancelled. FAILED_PRECONDITION for a seat that is not going, NOT_FOUND for an
 	// outing the caller has no seat in. Member.
 	CancelSeat(context.Context, *connect.Request[v1.CancelSeatRequest]) (*connect.Response[v1.CancelSeatResponse], error)
+	// "I'm here": one tap, no proof of place, for the caller's own seat, which must
+	// be going. Open from 30 minutes before the start to the plan's stated end on
+	// the city's clock: FAILED_PRECONDITION outside it and for a seat that is not
+	// going; NOT_FOUND for an outing the caller has no seat in. Checking in again
+	// changes nothing. Once checked in there is no cancel. Returns the outing as
+	// the caller sees it, with the first names of the others who have checked in.
+	// Member.
+	CheckIn(context.Context, *connect.Request[v1.CheckInRequest]) (*connect.Response[v1.CheckInResponse], error)
+	// The caller's feedback form for an outing: who else was going at the start
+	// (each ticked by default) and the caller's answers so far. Open from the
+	// plan's stated end for 7 days, to a person who was going at the start:
+	// FAILED_PRECONDITION before it opens, after it closes, and for a seat that was
+	// not going at the start; NOT_FOUND for an outing the caller has no seat in.
+	// The others are named by first name and a handle that means something only
+	// inside this outing, never by an account, an email or a surname. Member.
+	GetFeedback(context.Context, *connect.Request[v1.GetFeedbackRequest]) (*connect.Response[v1.GetFeedbackResponse], error)
+	// Answers feedback's first three questions for the caller's own seat, replacing
+	// any answers given before; open as GetFeedback is, so answers can be changed
+	// until it closes. A "no" to "did you go?" ends the feedback there: nothing
+	// after it is kept. INVALID_ARGUMENT for a handle that is none of the others
+	// who were going at the start, or a pick of someone the same answer says was
+	// not there. A pick is private: no RPC tells the person picked, or anyone
+	// else. Member.
+	SaveFeedback(context.Context, *connect.Request[v1.SaveFeedbackRequest]) (*connect.Response[v1.SaveFeedbackResponse], error)
 }
 
 // NewOutingServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -171,6 +263,24 @@ func NewOutingServiceHandler(svc OutingServiceHandler, opts ...connect.HandlerOp
 		connect.WithSchema(outingServiceMethods.ByName("CancelSeat")),
 		connect.WithHandlerOptions(opts...),
 	)
+	outingServiceCheckInHandler := connect.NewUnaryHandler(
+		OutingServiceCheckInProcedure,
+		svc.CheckIn,
+		connect.WithSchema(outingServiceMethods.ByName("CheckIn")),
+		connect.WithHandlerOptions(opts...),
+	)
+	outingServiceGetFeedbackHandler := connect.NewUnaryHandler(
+		OutingServiceGetFeedbackProcedure,
+		svc.GetFeedback,
+		connect.WithSchema(outingServiceMethods.ByName("GetFeedback")),
+		connect.WithHandlerOptions(opts...),
+	)
+	outingServiceSaveFeedbackHandler := connect.NewUnaryHandler(
+		OutingServiceSaveFeedbackProcedure,
+		svc.SaveFeedback,
+		connect.WithSchema(outingServiceMethods.ByName("SaveFeedback")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/issho.v1.OutingService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case OutingServiceListMyOutingsProcedure:
@@ -179,6 +289,12 @@ func NewOutingServiceHandler(svc OutingServiceHandler, opts ...connect.HandlerOp
 			outingServiceAnswerInvitationHandler.ServeHTTP(w, r)
 		case OutingServiceCancelSeatProcedure:
 			outingServiceCancelSeatHandler.ServeHTTP(w, r)
+		case OutingServiceCheckInProcedure:
+			outingServiceCheckInHandler.ServeHTTP(w, r)
+		case OutingServiceGetFeedbackProcedure:
+			outingServiceGetFeedbackHandler.ServeHTTP(w, r)
+		case OutingServiceSaveFeedbackProcedure:
+			outingServiceSaveFeedbackHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -198,4 +314,16 @@ func (UnimplementedOutingServiceHandler) AnswerInvitation(context.Context, *conn
 
 func (UnimplementedOutingServiceHandler) CancelSeat(context.Context, *connect.Request[v1.CancelSeatRequest]) (*connect.Response[v1.CancelSeatResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.OutingService.CancelSeat is not implemented"))
+}
+
+func (UnimplementedOutingServiceHandler) CheckIn(context.Context, *connect.Request[v1.CheckInRequest]) (*connect.Response[v1.CheckInResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.OutingService.CheckIn is not implemented"))
+}
+
+func (UnimplementedOutingServiceHandler) GetFeedback(context.Context, *connect.Request[v1.GetFeedbackRequest]) (*connect.Response[v1.GetFeedbackResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.OutingService.GetFeedback is not implemented"))
+}
+
+func (UnimplementedOutingServiceHandler) SaveFeedback(context.Context, *connect.Request[v1.SaveFeedbackRequest]) (*connect.Response[v1.SaveFeedbackResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("issho.v1.OutingService.SaveFeedback is not implemented"))
 }

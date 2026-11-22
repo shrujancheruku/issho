@@ -147,6 +147,9 @@ func TestFormingMakesAnOutingWithAnInvitedSeatForEachPerson(t *testing.T) {
 			OutingID: outing, PlanID: lanterns, Date: "2026-01-09", Part: "evening", StartsAt: "17:00",
 			Languages: []string{"en", "vi"}, State: outings.SeatInvited, OutingState: outings.OutingOffered,
 			InvitedAt: rigStart, InvitationEndsAt: rigStart.Add(policy.InvitationWindow),
+			// 17:00 to 20:30 on the city's clock is 10:00 to 13:30 UTC.
+			CheckInOpensAt: lanternsStart.Add(-policy.CheckInOpensBeforeStart), CheckInClosesAt: lanternsEnd,
+			FeedbackOpensAt: lanternsEnd, FeedbackClosesAt: lanternsEnd.Add(policy.FeedbackWindow),
 		}
 		if !reflect.DeepEqual(s, want) {
 			t.Fatalf("seat = %+v, want %+v", s, want)

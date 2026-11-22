@@ -478,6 +478,456 @@ func (x *CancelSeatResponse) GetOuting() *Outing {
 	return nil
 }
 
+type CheckInRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	OutingId      string                 `protobuf:"bytes,1,opt,name=outing_id,json=outingId,proto3" json:"outing_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CheckInRequest) Reset() {
+	*x = CheckInRequest{}
+	mi := &file_issho_v1_outing_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CheckInRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CheckInRequest) ProtoMessage() {}
+
+func (x *CheckInRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_issho_v1_outing_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CheckInRequest.ProtoReflect.Descriptor instead.
+func (*CheckInRequest) Descriptor() ([]byte, []int) {
+	return file_issho_v1_outing_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *CheckInRequest) GetOutingId() string {
+	if x != nil {
+		return x.OutingId
+	}
+	return ""
+}
+
+// The outing as the caller's seat sees it after checking in.
+type CheckInResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Outing        *Outing                `protobuf:"bytes,1,opt,name=outing,proto3" json:"outing,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CheckInResponse) Reset() {
+	*x = CheckInResponse{}
+	mi := &file_issho_v1_outing_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CheckInResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CheckInResponse) ProtoMessage() {}
+
+func (x *CheckInResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_issho_v1_outing_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CheckInResponse.ProtoReflect.Descriptor instead.
+func (*CheckInResponse) Descriptor() ([]byte, []int) {
+	return file_issho_v1_outing_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *CheckInResponse) GetOuting() *Outing {
+	if x != nil {
+		return x.Outing
+	}
+	return nil
+}
+
+type GetFeedbackRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	OutingId      string                 `protobuf:"bytes,1,opt,name=outing_id,json=outingId,proto3" json:"outing_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetFeedbackRequest) Reset() {
+	*x = GetFeedbackRequest{}
+	mi := &file_issho_v1_outing_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetFeedbackRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetFeedbackRequest) ProtoMessage() {}
+
+func (x *GetFeedbackRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_issho_v1_outing_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetFeedbackRequest.ProtoReflect.Descriptor instead.
+func (*GetFeedbackRequest) Descriptor() ([]byte, []int) {
+	return file_issho_v1_outing_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *GetFeedbackRequest) GetOutingId() string {
+	if x != nil {
+		return x.OutingId
+	}
+	return ""
+}
+
+type GetFeedbackResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Feedback      *Feedback              `protobuf:"bytes,1,opt,name=feedback,proto3" json:"feedback,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetFeedbackResponse) Reset() {
+	*x = GetFeedbackResponse{}
+	mi := &file_issho_v1_outing_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetFeedbackResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetFeedbackResponse) ProtoMessage() {}
+
+func (x *GetFeedbackResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_issho_v1_outing_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetFeedbackResponse.ProtoReflect.Descriptor instead.
+func (*GetFeedbackResponse) Descriptor() ([]byte, []int) {
+	return file_issho_v1_outing_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *GetFeedbackResponse) GetFeedback() *Feedback {
+	if x != nil {
+		return x.Feedback
+	}
+	return nil
+}
+
+type SaveFeedbackRequest struct {
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	OutingId string                 `protobuf:"bytes,1,opt,name=outing_id,json=outingId,proto3" json:"outing_id,omitempty"`
+	// Question 1, "did you go?". A false ends the feedback there: the other
+	// fields are ignored and nothing after it is kept.
+	Went bool `protobuf:"varint,2,opt,name=went,proto3" json:"went,omitempty"`
+	// Question 2, "who else was there?": everyone going at the start is ticked by
+	// default, so these are the handles of the people the caller says were not
+	// there.
+	NotThere []string `protobuf:"bytes,3,rep,name=not_there,json=notThere,proto3" json:"not_there,omitempty"`
+	// Question 5, "who would you meet again?": the handles of the people the caller
+	// would. Each is a pick, private to the caller.
+	MeetAgain     []string `protobuf:"bytes,4,rep,name=meet_again,json=meetAgain,proto3" json:"meet_again,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SaveFeedbackRequest) Reset() {
+	*x = SaveFeedbackRequest{}
+	mi := &file_issho_v1_outing_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SaveFeedbackRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SaveFeedbackRequest) ProtoMessage() {}
+
+func (x *SaveFeedbackRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_issho_v1_outing_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SaveFeedbackRequest.ProtoReflect.Descriptor instead.
+func (*SaveFeedbackRequest) Descriptor() ([]byte, []int) {
+	return file_issho_v1_outing_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *SaveFeedbackRequest) GetOutingId() string {
+	if x != nil {
+		return x.OutingId
+	}
+	return ""
+}
+
+func (x *SaveFeedbackRequest) GetWent() bool {
+	if x != nil {
+		return x.Went
+	}
+	return false
+}
+
+func (x *SaveFeedbackRequest) GetNotThere() []string {
+	if x != nil {
+		return x.NotThere
+	}
+	return nil
+}
+
+func (x *SaveFeedbackRequest) GetMeetAgain() []string {
+	if x != nil {
+		return x.MeetAgain
+	}
+	return nil
+}
+
+type SaveFeedbackResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Feedback      *Feedback              `protobuf:"bytes,1,opt,name=feedback,proto3" json:"feedback,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SaveFeedbackResponse) Reset() {
+	*x = SaveFeedbackResponse{}
+	mi := &file_issho_v1_outing_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SaveFeedbackResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SaveFeedbackResponse) ProtoMessage() {}
+
+func (x *SaveFeedbackResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_issho_v1_outing_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SaveFeedbackResponse.ProtoReflect.Descriptor instead.
+func (*SaveFeedbackResponse) Descriptor() ([]byte, []int) {
+	return file_issho_v1_outing_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *SaveFeedbackResponse) GetFeedback() *Feedback {
+	if x != nil {
+		return x.Feedback
+	}
+	return nil
+}
+
+// The caller's feedback form for one outing.
+type Feedback struct {
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	OutingId string                 `protobuf:"bytes,1,opt,name=outing_id,json=outingId,proto3" json:"outing_id,omitempty"`
+	// Whether the caller has answered "did you go?" yet; went is that answer and
+	// means nothing before it.
+	Answered bool `protobuf:"varint,2,opt,name=answered,proto3" json:"answered,omitempty"`
+	Went     bool `protobuf:"varint,3,opt,name=went,proto3" json:"went,omitempty"`
+	// Everyone who was going at the start but the caller, by first name and then
+	// handle.
+	Others []*Companion `protobuf:"bytes,4,rep,name=others,proto3" json:"others,omitempty"`
+	// The caller's own answers, as handles, sorted.
+	NotThere  []string `protobuf:"bytes,5,rep,name=not_there,json=notThere,proto3" json:"not_there,omitempty"`
+	MeetAgain []string `protobuf:"bytes,6,rep,name=meet_again,json=meetAgain,proto3" json:"meet_again,omitempty"`
+	// When feedback closes: 7 days after the plan's stated end.
+	ClosesAt      *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=closes_at,json=closesAt,proto3" json:"closes_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Feedback) Reset() {
+	*x = Feedback{}
+	mi := &file_issho_v1_outing_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Feedback) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Feedback) ProtoMessage() {}
+
+func (x *Feedback) ProtoReflect() protoreflect.Message {
+	mi := &file_issho_v1_outing_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Feedback.ProtoReflect.Descriptor instead.
+func (*Feedback) Descriptor() ([]byte, []int) {
+	return file_issho_v1_outing_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *Feedback) GetOutingId() string {
+	if x != nil {
+		return x.OutingId
+	}
+	return ""
+}
+
+func (x *Feedback) GetAnswered() bool {
+	if x != nil {
+		return x.Answered
+	}
+	return false
+}
+
+func (x *Feedback) GetWent() bool {
+	if x != nil {
+		return x.Went
+	}
+	return false
+}
+
+func (x *Feedback) GetOthers() []*Companion {
+	if x != nil {
+		return x.Others
+	}
+	return nil
+}
+
+func (x *Feedback) GetNotThere() []string {
+	if x != nil {
+		return x.NotThere
+	}
+	return nil
+}
+
+func (x *Feedback) GetMeetAgain() []string {
+	if x != nil {
+		return x.MeetAgain
+	}
+	return nil
+}
+
+func (x *Feedback) GetClosesAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ClosesAt
+	}
+	return nil
+}
+
+// Another person of an outing as feedback names them. A handle is random, means
+// nothing outside this outing and is not an account or anything that links to
+// one; a first name is all that is ever shown of another person.
+type Companion struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Handle        string                 `protobuf:"bytes,1,opt,name=handle,proto3" json:"handle,omitempty"`
+	FirstName     string                 `protobuf:"bytes,2,opt,name=first_name,json=firstName,proto3" json:"first_name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Companion) Reset() {
+	*x = Companion{}
+	mi := &file_issho_v1_outing_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Companion) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Companion) ProtoMessage() {}
+
+func (x *Companion) ProtoReflect() protoreflect.Message {
+	mi := &file_issho_v1_outing_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Companion.ProtoReflect.Descriptor instead.
+func (*Companion) Descriptor() ([]byte, []int) {
+	return file_issho_v1_outing_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *Companion) GetHandle() string {
+	if x != nil {
+		return x.Handle
+	}
+	return ""
+}
+
+func (x *Companion) GetFirstName() string {
+	if x != nil {
+		return x.FirstName
+	}
+	return ""
+}
+
 // An outing as its own seat's holder sees it. It carries no other person.
 type Outing struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -506,14 +956,26 @@ type Outing struct {
 	// The first names of the others going, sorted: the caller's own is not in it,
 	// and it is empty unless the caller is going themselves. A first name is all
 	// that is ever shown of another person.
-	OthersGoing   []string `protobuf:"bytes,12,rep,name=others_going,json=othersGoing,proto3" json:"others_going,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	OthersGoing []string `protobuf:"bytes,12,rep,name=others_going,json=othersGoing,proto3" json:"others_going,omitempty"`
+	// Whether the caller has checked in, and when.
+	CheckedIn   bool                   `protobuf:"varint,13,opt,name=checked_in,json=checkedIn,proto3" json:"checked_in,omitempty"`
+	CheckedInAt *timestamppb.Timestamp `protobuf:"bytes,14,opt,name=checked_in_at,json=checkedInAt,proto3" json:"checked_in_at,omitempty"`
+	// The first names of the others who have checked in, sorted: only to a person
+	// who is going themselves, never their own.
+	CheckedInNames []string `protobuf:"bytes,15,rep,name=checked_in_names,json=checkedInNames,proto3" json:"checked_in_names,omitempty"`
+	// Check-in opens 30 minutes before the start and closes at the plan's stated
+	// end, on the city's clock; feedback opens at that end and closes 7 days later.
+	CheckInOpensAt   *timestamppb.Timestamp `protobuf:"bytes,16,opt,name=check_in_opens_at,json=checkInOpensAt,proto3" json:"check_in_opens_at,omitempty"`
+	CheckInClosesAt  *timestamppb.Timestamp `protobuf:"bytes,17,opt,name=check_in_closes_at,json=checkInClosesAt,proto3" json:"check_in_closes_at,omitempty"`
+	FeedbackOpensAt  *timestamppb.Timestamp `protobuf:"bytes,18,opt,name=feedback_opens_at,json=feedbackOpensAt,proto3" json:"feedback_opens_at,omitempty"`
+	FeedbackClosesAt *timestamppb.Timestamp `protobuf:"bytes,19,opt,name=feedback_closes_at,json=feedbackClosesAt,proto3" json:"feedback_closes_at,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *Outing) Reset() {
 	*x = Outing{}
-	mi := &file_issho_v1_outing_proto_msgTypes[6]
+	mi := &file_issho_v1_outing_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -525,7 +987,7 @@ func (x *Outing) String() string {
 func (*Outing) ProtoMessage() {}
 
 func (x *Outing) ProtoReflect() protoreflect.Message {
-	mi := &file_issho_v1_outing_proto_msgTypes[6]
+	mi := &file_issho_v1_outing_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -538,7 +1000,7 @@ func (x *Outing) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Outing.ProtoReflect.Descriptor instead.
 func (*Outing) Descriptor() ([]byte, []int) {
-	return file_issho_v1_outing_proto_rawDescGZIP(), []int{6}
+	return file_issho_v1_outing_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *Outing) GetId() string {
@@ -625,6 +1087,55 @@ func (x *Outing) GetOthersGoing() []string {
 	return nil
 }
 
+func (x *Outing) GetCheckedIn() bool {
+	if x != nil {
+		return x.CheckedIn
+	}
+	return false
+}
+
+func (x *Outing) GetCheckedInAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CheckedInAt
+	}
+	return nil
+}
+
+func (x *Outing) GetCheckedInNames() []string {
+	if x != nil {
+		return x.CheckedInNames
+	}
+	return nil
+}
+
+func (x *Outing) GetCheckInOpensAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CheckInOpensAt
+	}
+	return nil
+}
+
+func (x *Outing) GetCheckInClosesAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CheckInClosesAt
+	}
+	return nil
+}
+
+func (x *Outing) GetFeedbackOpensAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.FeedbackOpensAt
+	}
+	return nil
+}
+
+func (x *Outing) GetFeedbackClosesAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.FeedbackClosesAt
+	}
+	return nil
+}
+
 var File_issho_v1_outing_proto protoreflect.FileDescriptor
 
 const file_issho_v1_outing_proto_rawDesc = "" +
@@ -641,7 +1152,36 @@ const file_issho_v1_outing_proto_rawDesc = "" +
 	"\x11CancelSeatRequest\x12\x1b\n" +
 	"\touting_id\x18\x01 \x01(\tR\boutingId\">\n" +
 	"\x12CancelSeatResponse\x12(\n" +
-	"\x06outing\x18\x01 \x01(\v2\x10.issho.v1.OutingR\x06outing\"\xc7\x03\n" +
+	"\x06outing\x18\x01 \x01(\v2\x10.issho.v1.OutingR\x06outing\"-\n" +
+	"\x0eCheckInRequest\x12\x1b\n" +
+	"\touting_id\x18\x01 \x01(\tR\boutingId\";\n" +
+	"\x0fCheckInResponse\x12(\n" +
+	"\x06outing\x18\x01 \x01(\v2\x10.issho.v1.OutingR\x06outing\"1\n" +
+	"\x12GetFeedbackRequest\x12\x1b\n" +
+	"\touting_id\x18\x01 \x01(\tR\boutingId\"E\n" +
+	"\x13GetFeedbackResponse\x12.\n" +
+	"\bfeedback\x18\x01 \x01(\v2\x12.issho.v1.FeedbackR\bfeedback\"\x82\x01\n" +
+	"\x13SaveFeedbackRequest\x12\x1b\n" +
+	"\touting_id\x18\x01 \x01(\tR\boutingId\x12\x12\n" +
+	"\x04went\x18\x02 \x01(\bR\x04went\x12\x1b\n" +
+	"\tnot_there\x18\x03 \x03(\tR\bnotThere\x12\x1d\n" +
+	"\n" +
+	"meet_again\x18\x04 \x03(\tR\tmeetAgain\"F\n" +
+	"\x14SaveFeedbackResponse\x12.\n" +
+	"\bfeedback\x18\x01 \x01(\v2\x12.issho.v1.FeedbackR\bfeedback\"\xf9\x01\n" +
+	"\bFeedback\x12\x1b\n" +
+	"\touting_id\x18\x01 \x01(\tR\boutingId\x12\x1a\n" +
+	"\banswered\x18\x02 \x01(\bR\banswered\x12\x12\n" +
+	"\x04went\x18\x03 \x01(\bR\x04went\x12+\n" +
+	"\x06others\x18\x04 \x03(\v2\x13.issho.v1.CompanionR\x06others\x12\x1b\n" +
+	"\tnot_there\x18\x05 \x03(\tR\bnotThere\x12\x1d\n" +
+	"\n" +
+	"meet_again\x18\x06 \x03(\tR\tmeetAgain\x127\n" +
+	"\tcloses_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\bclosesAt\"B\n" +
+	"\tCompanion\x12\x16\n" +
+	"\x06handle\x18\x01 \x01(\tR\x06handle\x12\x1d\n" +
+	"\n" +
+	"first_name\x18\x02 \x01(\tR\tfirstName\"\xf2\x06\n" +
 	"\x06Outing\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
 	"\aplan_id\x18\x02 \x01(\tR\x06planId\x12\x12\n" +
@@ -657,7 +1197,15 @@ const file_issho_v1_outing_proto_rawDesc = "" +
 	"\fouting_state\x18\n" +
 	" \x01(\x0e2\x15.issho.v1.OutingStateR\voutingState\x12\x1b\n" +
 	"\tyes_count\x18\v \x01(\x05R\byesCount\x12!\n" +
-	"\fothers_going\x18\f \x03(\tR\vothersGoing*j\n" +
+	"\fothers_going\x18\f \x03(\tR\vothersGoing\x12\x1d\n" +
+	"\n" +
+	"checked_in\x18\r \x01(\bR\tcheckedIn\x12>\n" +
+	"\rchecked_in_at\x18\x0e \x01(\v2\x1a.google.protobuf.TimestampR\vcheckedInAt\x12(\n" +
+	"\x10checked_in_names\x18\x0f \x03(\tR\x0echeckedInNames\x12E\n" +
+	"\x11check_in_opens_at\x18\x10 \x01(\v2\x1a.google.protobuf.TimestampR\x0echeckInOpensAt\x12G\n" +
+	"\x12check_in_closes_at\x18\x11 \x01(\v2\x1a.google.protobuf.TimestampR\x0fcheckInClosesAt\x12F\n" +
+	"\x11feedback_opens_at\x18\x12 \x01(\v2\x1a.google.protobuf.TimestampR\x0ffeedbackOpensAt\x12H\n" +
+	"\x12feedback_closes_at\x18\x13 \x01(\v2\x1a.google.protobuf.TimestampR\x10feedbackClosesAt*j\n" +
 	"\x10InvitationAnswer\x12!\n" +
 	"\x1dINVITATION_ANSWER_UNSPECIFIED\x10\x00\x12\x19\n" +
 	"\x15INVITATION_ANSWER_YES\x10\x01\x12\x18\n" +
@@ -680,12 +1228,15 @@ const file_issho_v1_outing_proto_rawDesc = "" +
 	"\x14SEAT_STATE_CANCELLED\x10\x06\x12\x1a\n" +
 	"\x16SEAT_STATE_LATE_CANCEL\x10\a\x12\x16\n" +
 	"\x12SEAT_STATE_REMOVED\x10\b\x12\x17\n" +
-	"\x13SEAT_STATE_ACCEPTED\x10\t2\x97\x02\n" +
+	"\x13SEAT_STATE_ACCEPTED\x10\t2\x84\x04\n" +
 	"\rOutingService\x12V\n" +
 	"\rListMyOutings\x12\x1e.issho.v1.ListMyOutingsRequest\x1a\x1f.issho.v1.ListMyOutingsResponse\"\x04\x88\xb5\x18\x02\x12_\n" +
 	"\x10AnswerInvitation\x12!.issho.v1.AnswerInvitationRequest\x1a\".issho.v1.AnswerInvitationResponse\"\x04\x88\xb5\x18\x02\x12M\n" +
 	"\n" +
-	"CancelSeat\x12\x1b.issho.v1.CancelSeatRequest\x1a\x1c.issho.v1.CancelSeatResponse\"\x04\x88\xb5\x18\x02B\x9a\x01\n" +
+	"CancelSeat\x12\x1b.issho.v1.CancelSeatRequest\x1a\x1c.issho.v1.CancelSeatResponse\"\x04\x88\xb5\x18\x02\x12D\n" +
+	"\aCheckIn\x12\x18.issho.v1.CheckInRequest\x1a\x19.issho.v1.CheckInResponse\"\x04\x88\xb5\x18\x02\x12P\n" +
+	"\vGetFeedback\x12\x1c.issho.v1.GetFeedbackRequest\x1a\x1d.issho.v1.GetFeedbackResponse\"\x04\x88\xb5\x18\x02\x12S\n" +
+	"\fSaveFeedback\x12\x1d.issho.v1.SaveFeedbackRequest\x1a\x1e.issho.v1.SaveFeedbackResponse\"\x04\x88\xb5\x18\x02B\x9a\x01\n" +
 	"\fcom.issho.v1B\vOutingProtoP\x01Z<github.com/shrujancheruku/issho/backend/gen/issho/v1;isshov1\xa2\x02\x03IXX\xaa\x02\bIssho.V1\xca\x02\bIssho\\V1\xe2\x02\x14Issho\\V1\\GPBMetadata\xea\x02\tIssho::V1b\x06proto3"
 
 var (
@@ -701,7 +1252,7 @@ func file_issho_v1_outing_proto_rawDescGZIP() []byte {
 }
 
 var file_issho_v1_outing_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_issho_v1_outing_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_issho_v1_outing_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
 var file_issho_v1_outing_proto_goTypes = []any{
 	(InvitationAnswer)(0),            // 0: issho.v1.InvitationAnswer
 	(OutingState)(0),                 // 1: issho.v1.OutingState
@@ -712,29 +1263,53 @@ var file_issho_v1_outing_proto_goTypes = []any{
 	(*AnswerInvitationResponse)(nil), // 6: issho.v1.AnswerInvitationResponse
 	(*CancelSeatRequest)(nil),        // 7: issho.v1.CancelSeatRequest
 	(*CancelSeatResponse)(nil),       // 8: issho.v1.CancelSeatResponse
-	(*Outing)(nil),                   // 9: issho.v1.Outing
-	(*timestamppb.Timestamp)(nil),    // 10: google.protobuf.Timestamp
+	(*CheckInRequest)(nil),           // 9: issho.v1.CheckInRequest
+	(*CheckInResponse)(nil),          // 10: issho.v1.CheckInResponse
+	(*GetFeedbackRequest)(nil),       // 11: issho.v1.GetFeedbackRequest
+	(*GetFeedbackResponse)(nil),      // 12: issho.v1.GetFeedbackResponse
+	(*SaveFeedbackRequest)(nil),      // 13: issho.v1.SaveFeedbackRequest
+	(*SaveFeedbackResponse)(nil),     // 14: issho.v1.SaveFeedbackResponse
+	(*Feedback)(nil),                 // 15: issho.v1.Feedback
+	(*Companion)(nil),                // 16: issho.v1.Companion
+	(*Outing)(nil),                   // 17: issho.v1.Outing
+	(*timestamppb.Timestamp)(nil),    // 18: google.protobuf.Timestamp
 }
 var file_issho_v1_outing_proto_depIdxs = []int32{
-	9,  // 0: issho.v1.ListMyOutingsResponse.outings:type_name -> issho.v1.Outing
+	17, // 0: issho.v1.ListMyOutingsResponse.outings:type_name -> issho.v1.Outing
 	0,  // 1: issho.v1.AnswerInvitationRequest.answer:type_name -> issho.v1.InvitationAnswer
-	9,  // 2: issho.v1.AnswerInvitationResponse.outing:type_name -> issho.v1.Outing
-	9,  // 3: issho.v1.CancelSeatResponse.outing:type_name -> issho.v1.Outing
-	2,  // 4: issho.v1.Outing.seat_state:type_name -> issho.v1.SeatState
-	10, // 5: issho.v1.Outing.invited_at:type_name -> google.protobuf.Timestamp
-	10, // 6: issho.v1.Outing.invitation_ends_at:type_name -> google.protobuf.Timestamp
-	1,  // 7: issho.v1.Outing.outing_state:type_name -> issho.v1.OutingState
-	3,  // 8: issho.v1.OutingService.ListMyOutings:input_type -> issho.v1.ListMyOutingsRequest
-	5,  // 9: issho.v1.OutingService.AnswerInvitation:input_type -> issho.v1.AnswerInvitationRequest
-	7,  // 10: issho.v1.OutingService.CancelSeat:input_type -> issho.v1.CancelSeatRequest
-	4,  // 11: issho.v1.OutingService.ListMyOutings:output_type -> issho.v1.ListMyOutingsResponse
-	6,  // 12: issho.v1.OutingService.AnswerInvitation:output_type -> issho.v1.AnswerInvitationResponse
-	8,  // 13: issho.v1.OutingService.CancelSeat:output_type -> issho.v1.CancelSeatResponse
-	11, // [11:14] is the sub-list for method output_type
-	8,  // [8:11] is the sub-list for method input_type
-	8,  // [8:8] is the sub-list for extension type_name
-	8,  // [8:8] is the sub-list for extension extendee
-	0,  // [0:8] is the sub-list for field type_name
+	17, // 2: issho.v1.AnswerInvitationResponse.outing:type_name -> issho.v1.Outing
+	17, // 3: issho.v1.CancelSeatResponse.outing:type_name -> issho.v1.Outing
+	17, // 4: issho.v1.CheckInResponse.outing:type_name -> issho.v1.Outing
+	15, // 5: issho.v1.GetFeedbackResponse.feedback:type_name -> issho.v1.Feedback
+	15, // 6: issho.v1.SaveFeedbackResponse.feedback:type_name -> issho.v1.Feedback
+	16, // 7: issho.v1.Feedback.others:type_name -> issho.v1.Companion
+	18, // 8: issho.v1.Feedback.closes_at:type_name -> google.protobuf.Timestamp
+	2,  // 9: issho.v1.Outing.seat_state:type_name -> issho.v1.SeatState
+	18, // 10: issho.v1.Outing.invited_at:type_name -> google.protobuf.Timestamp
+	18, // 11: issho.v1.Outing.invitation_ends_at:type_name -> google.protobuf.Timestamp
+	1,  // 12: issho.v1.Outing.outing_state:type_name -> issho.v1.OutingState
+	18, // 13: issho.v1.Outing.checked_in_at:type_name -> google.protobuf.Timestamp
+	18, // 14: issho.v1.Outing.check_in_opens_at:type_name -> google.protobuf.Timestamp
+	18, // 15: issho.v1.Outing.check_in_closes_at:type_name -> google.protobuf.Timestamp
+	18, // 16: issho.v1.Outing.feedback_opens_at:type_name -> google.protobuf.Timestamp
+	18, // 17: issho.v1.Outing.feedback_closes_at:type_name -> google.protobuf.Timestamp
+	3,  // 18: issho.v1.OutingService.ListMyOutings:input_type -> issho.v1.ListMyOutingsRequest
+	5,  // 19: issho.v1.OutingService.AnswerInvitation:input_type -> issho.v1.AnswerInvitationRequest
+	7,  // 20: issho.v1.OutingService.CancelSeat:input_type -> issho.v1.CancelSeatRequest
+	9,  // 21: issho.v1.OutingService.CheckIn:input_type -> issho.v1.CheckInRequest
+	11, // 22: issho.v1.OutingService.GetFeedback:input_type -> issho.v1.GetFeedbackRequest
+	13, // 23: issho.v1.OutingService.SaveFeedback:input_type -> issho.v1.SaveFeedbackRequest
+	4,  // 24: issho.v1.OutingService.ListMyOutings:output_type -> issho.v1.ListMyOutingsResponse
+	6,  // 25: issho.v1.OutingService.AnswerInvitation:output_type -> issho.v1.AnswerInvitationResponse
+	8,  // 26: issho.v1.OutingService.CancelSeat:output_type -> issho.v1.CancelSeatResponse
+	10, // 27: issho.v1.OutingService.CheckIn:output_type -> issho.v1.CheckInResponse
+	12, // 28: issho.v1.OutingService.GetFeedback:output_type -> issho.v1.GetFeedbackResponse
+	14, // 29: issho.v1.OutingService.SaveFeedback:output_type -> issho.v1.SaveFeedbackResponse
+	24, // [24:30] is the sub-list for method output_type
+	18, // [18:24] is the sub-list for method input_type
+	18, // [18:18] is the sub-list for extension type_name
+	18, // [18:18] is the sub-list for extension extendee
+	0,  // [0:18] is the sub-list for field type_name
 }
 
 func init() { file_issho_v1_outing_proto_init() }
@@ -749,7 +1324,7 @@ func file_issho_v1_outing_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_issho_v1_outing_proto_rawDesc), len(file_issho_v1_outing_proto_rawDesc)),
 			NumEnums:      3,
-			NumMessages:   7,
+			NumMessages:   15,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

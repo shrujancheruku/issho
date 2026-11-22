@@ -5,7 +5,9 @@
 //
 // It forms outings from a plan's signups and makes their invitations, takes
 // each invited person's yes or no for 48 hours, sets an outing at its third yes
-// and lets a person going cancel. Check-in and feedback are later tickets'.
+// and lets a person going cancel. On the day a person going checks in, and from
+// the plan's end those who were going at the start answer feedback's first
+// three questions (check-in and feedback are in checkin.go and feedback.go).
 package outings
 
 import (
@@ -21,6 +23,7 @@ import (
 	"github.com/riverqueue/river"
 	"github.com/riverqueue/river/riverdriver/riverpgxv5"
 
+	"github.com/shrujancheruku/issho/backend/internal/cityclock"
 	"github.com/shrujancheruku/issho/backend/internal/clock"
 	"github.com/shrujancheruku/issho/backend/internal/jobs"
 	"github.com/shrujancheruku/issho/backend/internal/matching"
@@ -94,8 +97,21 @@ var (
 	// ErrTimeTaken: the person is already going to another outing at that date
 	// and part of the day, so a yes to this one is refused.
 	ErrTimeTaken = errors.New("outings: going to another outing at that time")
-	// ErrNotGoing: only a person going can cancel.
+	// ErrNotGoing: only a person going can cancel or check in.
 	ErrNotGoing = errors.New("outings: the seat is not going")
+	// ErrCheckedIn: once checked in there is no cancel (docs/spec/outings.md,
+	// "Going").
+	ErrCheckedIn = errors.New("outings: checked in, so there is no cancel")
+	// ErrCheckInClosed: check-in is open from 30 minutes before the start to the
+	// plan's end, and the moment isn't in that window.
+	ErrCheckInClosed = errors.New("outings: check-in is not open")
+	// ErrFeedbackNotOpen and ErrFeedbackClosed: feedback is open from the plan's
+	// end for 7 days.
+	ErrFeedbackNotOpen = errors.New("outings: feedback is not open yet")
+	ErrFeedbackClosed  = errors.New("outings: feedback is closed")
+	// ErrNotThere: feedback is for people who were going at the start, and this
+	// person's seat says they weren't.
+	ErrNotThere = errors.New("outings: not going at the start")
 )
 
 // Seat is one person's place in one outing, with what the person is shown of
@@ -125,6 +141,16 @@ type Seat struct {
 	// fixed 48 hours (policy.InvitationWindow) end.
 	InvitedAt        time.Time
 	InvitationEndsAt time.Time
+	// CheckedIn is whether this person has checked in, and CheckedInAt when.
+	CheckedIn   bool
+	CheckedInAt time.Time
+	// CheckedInFirstNames are the first names of the others who have checked
+	// in, sorted: only for a person going, never their own.
+	CheckedInFirstNames []string
+	// CheckInOpensAt is 30 minutes before the start and CheckInClosesAt the
+	// plan's stated end, both on the outing's city clock; feedback opens at the
+	// end (FeedbackOpensAt) and closes 7 days later (FeedbackClosesAt).
+	CheckInOpensAt, CheckInClosesAt, FeedbackOpensAt, FeedbackClosesAt time.Time
 }
 
 // Service is the exported API of outings.
@@ -201,7 +227,8 @@ func (s *Service) Form(ctx context.Context, planID string) (int, error) {
 		}
 		id, err := q.InsertOuting(ctx, store.InsertOutingParams{
 			PlanID: round.PlanID, RoundID: round.RoundID, Date: date, Part: string(g.Part),
-			StartsAt: round.StartsAt, Languages: g.Languages, State: string(OutingOffered), CreatedAt: now,
+			StartsAt: round.StartsAt, EndsAt: round.EndsAt, TimeZone: round.TimeZone,
+			Languages: g.Languages, State: string(OutingOffered), CreatedAt: now,
 		})
 		if err != nil {
 			return 0, fmt.Errorf("outings: form: outing: %w", err)
@@ -236,7 +263,9 @@ func (s *Service) Mine(ctx context.Context, accountID string) ([]Seat, error) {
 	}
 	seats := make([]Seat, len(rows))
 	for i, r := range rows {
-		seats[i] = seatOf(r.OutingID, r.PlanID, r.Date, r.Part, r.StartsAt, r.Languages, r.OutingState, r.State, r.InvitedAt, r.InvitationEndsAt)
+		if seats[i], err = seatOf(seatRow(r)); err != nil {
+			return nil, fmt.Errorf("outings: mine: %w", err)
+		}
 	}
 	if err := s.reveal(ctx, accountID, seats); err != nil {
 		return nil, fmt.Errorf("outings: mine: %w", err)
@@ -244,13 +273,64 @@ func (s *Service) Mine(ctx context.Context, accountID string) ([]Seat, error) {
 	return seats, nil
 }
 
+// seatRow is the columns of one of an account's own seats with its outing.
+type seatRow = store.ListSeatsOfAccountRow
+
 // seatOf is a seat as stored, before what the group shows of itself is added.
-func seatOf(outing, plan string, date time.Time, part, startsAt string, languages []string, outingState, state string, invitedAt, endsAt time.Time) Seat {
-	return Seat{
-		OutingID: outing, PlanID: plan, Date: date.Format(time.DateOnly), Part: part, StartsAt: startsAt,
-		Languages: languages, State: SeatState(state), OutingState: OutingState(outingState),
-		InvitedAt: invitedAt.UTC(), InvitationEndsAt: endsAt.UTC(),
+func seatOf(r seatRow) (Seat, error) {
+	w, err := windowOf(r.Date, r.StartsAt, r.EndsAt, r.TimeZone)
+	if err != nil {
+		return Seat{}, err
 	}
+	seat := Seat{
+		OutingID: r.OutingID, PlanID: r.PlanID, Date: r.Date.Format(time.DateOnly), Part: r.Part, StartsAt: r.StartsAt,
+		Languages: r.Languages, State: SeatState(r.State), OutingState: OutingState(r.OutingState),
+		InvitedAt: r.InvitedAt.UTC(), InvitationEndsAt: r.InvitationEndsAt.UTC(),
+		CheckInOpensAt: w.checkInOpens, CheckInClosesAt: w.end, FeedbackOpensAt: w.end, FeedbackClosesAt: w.feedbackCloses,
+	}
+	if r.CheckedInAt != nil {
+		seat.CheckedIn, seat.CheckedInAt = true, r.CheckedInAt.UTC()
+	}
+	return seat, nil
+}
+
+// noParts: the windows need the city's clock only for its wall time, not its
+// parts of the day, and cityclock accepts an empty span.
+var noParts = cityclock.DayParts{
+	Morning:   cityclock.Span{From: "00:00", To: "00:00"},
+	Afternoon: cityclock.Span{From: "00:00", To: "00:00"},
+	Evening:   cityclock.Span{From: "00:00", To: "00:00"},
+}
+
+// window is the instants an outing's day is made of, all on its city's clock.
+type window struct {
+	start, end time.Time
+	// checkInOpens is policy.CheckInOpensBeforeStart before the start;
+	// feedbackCloses is policy.FeedbackWindow after the plan's end.
+	checkInOpens, feedbackCloses time.Time
+}
+
+// windowOf is the window of an outing on date (the city's calendar date) whose
+// plan starts and stops at the "HH:MM"s in the city's time zone. Daylight saving
+// and the date line are cityclock's.
+func windowOf(date time.Time, startsAt, endsAt, zone string) (window, error) {
+	cc, err := cityclock.New(zone, noParts)
+	if err != nil {
+		return window{}, err
+	}
+	day := date.Format(time.DateOnly)
+	start, err := cc.At(day, startsAt)
+	if err != nil {
+		return window{}, err
+	}
+	end, err := cc.At(day, endsAt)
+	if err != nil {
+		return window{}, err
+	}
+	return window{
+		start: start.UTC(), end: end.UTC(),
+		checkInOpens: start.Add(-policy.CheckInOpensBeforeStart).UTC(), feedbackCloses: end.Add(policy.FeedbackWindow).UTC(),
+	}, nil
 }
 
 // reveal adds what a person sees of the others to their seats: how many have
@@ -279,7 +359,8 @@ func (s *Service) reveal(ctx context.Context, accountID string, seats []Seat) er
 			going = append(going, seat.OutingID)
 		}
 	}
-	others := map[string][]string{} // outing -> account ids going, but the caller
+	others := map[string][]string{}  // outing -> account ids going, but the caller
+	arrived := map[string][]string{} // outing -> account ids checked in, but the caller
 	var accounts []string
 	if len(going) > 0 {
 		rows, err := q.ListGoing(ctx, going)
@@ -290,6 +371,15 @@ func (s *Service) reveal(ctx context.Context, accountID string, seats []Seat) er
 			if r.AccountID != accountID {
 				others[r.OutingID] = append(others[r.OutingID], r.AccountID)
 				accounts = append(accounts, r.AccountID)
+			}
+		}
+		here, err := q.ListCheckedIn(ctx, going)
+		if err != nil {
+			return err
+		}
+		for _, r := range here {
+			if r.AccountID != accountID {
+				arrived[r.OutingID] = append(arrived[r.OutingID], r.AccountID)
 			}
 		}
 	}
@@ -308,6 +398,12 @@ func (s *Service) reveal(ctx context.Context, accountID string, seats []Seat) er
 			}
 		}
 		slices.Sort(seats[i].GoingFirstNames)
+		for _, id := range arrived[seats[i].OutingID] {
+			if name, ok := names[id]; ok {
+				seats[i].CheckedInFirstNames = append(seats[i].CheckedInFirstNames, name)
+			}
+		}
+		slices.Sort(seats[i].CheckedInFirstNames)
 	}
 	return nil
 }
@@ -325,7 +421,11 @@ func (s *Service) seat(ctx context.Context, accountID, outingID string) (Seat, e
 	if err != nil {
 		return Seat{}, fmt.Errorf("outings: seat: %w", err)
 	}
-	seats := []Seat{seatOf(r.OutingID, r.PlanID, r.Date, r.Part, r.StartsAt, r.Languages, r.OutingState, r.State, r.InvitedAt, r.InvitationEndsAt)}
+	one, err := seatOf(seatRow(r))
+	if err != nil {
+		return Seat{}, fmt.Errorf("outings: seat: %w", err)
+	}
+	seats := []Seat{one}
 	if err := s.reveal(ctx, accountID, seats); err != nil {
 		return Seat{}, fmt.Errorf("outings: seat: %w", err)
 	}
@@ -427,16 +527,13 @@ func (s *Service) lockSeat(ctx context.Context, q *store.Queries, accountID, out
 // going at once. Otherwise the yes waits, and if it is the YesesToSet-th the
 // outing is set and everyone who said yes is going.
 func (s *Service) sayYes(ctx context.Context, tx pgx.Tx, q *store.Queries, o store.LockOutingRow, accountID string) error {
-	set := func(account string, state SeatState) error {
-		return q.SetSeatState(ctx, store.SetSeatStateParams{OutingID: o.ID, AccountID: account, State: string(state)})
-	}
 	if OutingState(o.State) == OutingSet {
-		if err := set(accountID, SeatGoing); err != nil {
+		if err := q.MakeSeatGoing(ctx, store.MakeSeatGoingParams{OutingID: o.ID, AccountID: accountID, GoingAt: ptr(s.clock.Now())}); err != nil {
 			return fmt.Errorf("outings: answer: %w", err)
 		}
 		return s.busy(ctx, tx, o, accountID)
 	}
-	if err := set(accountID, SeatAccepted); err != nil {
+	if err := q.SetSeatState(ctx, store.SetSeatStateParams{OutingID: o.ID, AccountID: accountID, State: string(SeatAccepted)}); err != nil {
 		return fmt.Errorf("outings: answer: %w", err)
 	}
 	counts, err := q.CountYeses(ctx, []string{o.ID})
@@ -449,7 +546,7 @@ func (s *Service) sayYes(ctx context.Context, tx pgx.Tx, q *store.Queries, o sto
 	if err := q.SetOutingState(ctx, store.SetOutingStateParams{ID: o.ID, State: string(OutingSet)}); err != nil {
 		return fmt.Errorf("outings: answer: %w", err)
 	}
-	going, err := q.PromoteAcceptedSeats(ctx, o.ID)
+	going, err := q.PromoteAcceptedSeats(ctx, store.PromoteAcceptedSeatsParams{OutingID: o.ID, GoingAt: ptr(s.clock.Now())})
 	if err != nil {
 		return fmt.Errorf("outings: answer: %w", err)
 	}
@@ -502,8 +599,9 @@ func (s *Service) busy(ctx context.Context, tx pgx.Tx, o store.LockOutingRow, ac
 }
 
 // Cancel is a person going giving their seat up: the seat records it as
-// cancelled and the person stops being counted among those going. Only someone
-// going can cancel (ErrNotGoing); no seat in the outing is ErrNotFound. What
+// cancelled, when, and the person stops being counted among those going. Only
+// someone going can cancel (ErrNotGoing), and not once checked in (ErrCheckedIn:
+// docs/spec/outings.md, "Going"); no seat in the outing is ErrNotFound. What
 // a cancel costs the person, and the outing it leaves with too few going, are
 // the later tickets' (see the README).
 func (s *Service) Cancel(ctx context.Context, accountID, outingID string) (Seat, error) {
@@ -523,7 +621,10 @@ func (s *Service) Cancel(ctx context.Context, accountID, outingID string) (Seat,
 	if SeatState(seat.State) != SeatGoing {
 		return Seat{}, ErrNotGoing
 	}
-	if err := q.SetSeatState(ctx, store.SetSeatStateParams{OutingID: outingID, AccountID: accountID, State: string(SeatCancelled)}); err != nil {
+	if seat.CheckedInAt != nil {
+		return Seat{}, ErrCheckedIn
+	}
+	if err := q.LeaveSeat(ctx, store.LeaveSeatParams{OutingID: outingID, AccountID: accountID, State: string(SeatCancelled), LeftGoingAt: ptr(s.clock.Now())}); err != nil {
 		return Seat{}, fmt.Errorf("outings: cancel: %w", err)
 	}
 	if err := tx.Commit(ctx); err != nil {
@@ -629,3 +730,6 @@ func genderOf(g people.Gender) matching.Gender {
 		return matching.Undeclared
 	}
 }
+
+// ptr is the address of a copy of t, for the columns that may be empty.
+func ptr(t time.Time) *time.Time { return &t }
