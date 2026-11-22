@@ -24,7 +24,7 @@ Needs Go, `make setup` (pnpm install) and a network the first time, to download 
 | Test | Proves |
 |---|---|
 | `tests/version.spec.ts` | The web page loads and shows the API's version: the admin's page calls the API's public health check through the generated client, and the page shows the version this run built into the binary. A page that printed a fixed string would fail |
-| `tests/app-version.spec.ts` | The member app's `/you` page, served by the Expo server from the app's web export, shows the same version: the page calls the API on its own origin, the forwarder sends the call on, and the generated client reads the answer |
+| `tests/app-version.spec.ts` | The member app opened at `/you` signed out (the guard sends it to sign-in, which shows the version), served by the Expo server from the app's web export with stand-in Supabase values that nothing calls, shows the same version: the page calls the API on its own origin, the forwarder sends the call on, and the generated client reads the answer |
 
 The admin's page and the member app's You tab are the two web pages that call the API so far, so both are covered: the second goes through the Expo server and its forwarder, as deployed. The four journeys in the spec come with the milestones that build them.
 

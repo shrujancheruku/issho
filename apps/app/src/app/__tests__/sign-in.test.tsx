@@ -58,6 +58,13 @@ const enterCode = async (code: string) => {
 };
 
 describe('signing in by email code', () => {
+  // The dev deploy's walk and `make e2e` open /you with no one signed in: the guard sends them here, so the version must show here too.
+  it("shows the dev API's version to a visitor sent here from /you", async () => {
+    await open('/you', 'en', fakeSessionClient(null));
+    expect(await screen.findByText('API version test')).toBeTruthy();
+    expect(screen).toHavePathname('/sign-in');
+  });
+
   it('asks for the email, then the 6-digit code, and signs the visitor in', async () => {
     const session = await open('/sign-in', 'en');
     await enterEmail('ada@example.com');
