@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 
 import { Code, ConnectError } from '@connectrpc/connect';
 
-import { createApi, InvitationAnswer, JoinLinkProblemReason, JoinLinkProblemSchema, OutingState, SeatState } from './index';
+import { create } from '@bufbuild/protobuf';
+
+import { createApi, InvitationAnswer, JoinLinkProblemReason, JoinLinkProblemSchema, OutingState, ProfileProblemReason, ProfileProblemSchema, profileProblem, SeatState } from './index';
 
 // A fake fetch that answers the health check and keeps the request it saw.
 function fakeFetch() {
@@ -229,5 +231,18 @@ describe('createApi', () => {
     expect(await seen[0].json()).toEqual({ code: 'abc' });
     expect(ConnectError.from(err).code).toBe(Code.FailedPrecondition);
     expect(ConnectError.from(err).findDetails(JoinLinkProblemSchema)[0]?.reason).toBe(JoinLinkProblemReason.LINK_UNUSABLE);
+  });
+});
+
+// The profile screens' block (#614).
+describe('profileProblem', () => {
+  it('reads the ProfileProblem reason an RPC refused with, and nothing from any other error', async () => {
+    const { ConnectError } = await import('@connectrpc/connect');
+    const refused = new ConnectError('under 18', Code.InvalidArgument, undefined, [
+      { desc: ProfileProblemSchema, value: create(ProfileProblemSchema, { reason: ProfileProblemReason.UNDER_AGE }) },
+    ]);
+    expect(profileProblem(refused)).toBe(ProfileProblemReason.UNDER_AGE);
+    expect(profileProblem(new ConnectError('nope', Code.InvalidArgument))).toBeUndefined();
+    expect(profileProblem(new Error('network'))).toBeUndefined();
   });
 });
