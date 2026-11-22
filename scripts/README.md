@@ -14,7 +14,7 @@ Repo-level helper scripts, run by the root `Makefile`. Each script has a header 
 | `e2e.sh` | `make e2e` | Playwright against the API binary and the web build, on free ports ([e2e](../e2e/README.md)) |
 | `image.sh` | `make image` | Builds `backend/Dockerfile` and checks the image holds `api` and `worker`; builds `apps/web/Dockerfile`, runs it and checks `/plans` is server-rendered; then removes both |
 | `deploy-dev.sh` | `make deploy-dev` (CI's `deploy-dev` workflow only) | Builds and pushes the two images, migrates `issho-dev`, then deploys the API, the worker, the Expo server and the admin, in that order; a failed step stops the rest |
-| `deploy-dev.test.sh` | `make deploy-test` (also `make test` and CI's `codegen` job) | Tests that order with stand-ins for `kamal`, `gcloud`, `go` and `pnpm`: a failed migration or build deploys nothing |
+| `deploy-dev.test.sh` | `make deploy-test` (also `make test` and CI's `codegen` job) | Tests that order with stand-ins for `kamal`, `gcloud`, `go` and `pnpm`: a failed migration or build deploys nothing. It also checks that no secret's value is printed, runs the script both off and on GitHub Actions, and on Actions allows the value only in the `::add-mask::` line the runner keeps out of the log |
 | `deploy-dev-verify.sh` | `make deploy-dev-verify` (CI's `deploy-dev` workflow) | Checks from outside that the API, the web and the admin each report the commit just deployed and that the web page is server-rendered |
 | `deploy-dev-verify.test.sh` | `make deploy-test` | Tests it against a stand-in server and browser |
 | `dev-host.sh` | CI's `deploy-dev` workflow | Prints the dev VM's address, asked of Google Cloud (the reserved address `issho-dev-ip`); the workflow masks it |
