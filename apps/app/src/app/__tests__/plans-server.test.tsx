@@ -116,4 +116,18 @@ describe("the server's loaders", () => {
     fetchSpy = jest.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('down'));
     expect(await plansLoader()).toBeNull();
   });
+
+  it('never lets a shared cache keep a page the API failed to fill', async () => {
+    fetchSpy = jest.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('down'));
+    expect(await plansLoader()).toBeNull();
+    expect(await planLoader(undefined, { id: 'p1' })).toBeNull();
+    expect(mockSetResponseHeaders).not.toHaveBeenCalledWith({ 'Cache-Control': expect.stringContaining('public') });
+    expect(mockSetResponseHeaders).toHaveBeenCalledWith({ 'Cache-Control': 'no-store' });
+
+    mockSetResponseHeaders.mockReset();
+    fetchSpy.mockResolvedValue(new Response(JSON.stringify({ code: 'unavailable', message: 'x' }), { status: 503, headers: { 'content-type': 'application/json' } }));
+    expect(await plansLoader()).toBeNull();
+    expect(mockSetResponseHeaders).toHaveBeenCalledTimes(1);
+    expect(mockSetResponseHeaders).toHaveBeenCalledWith({ 'Cache-Control': 'no-store' });
+  });
 });

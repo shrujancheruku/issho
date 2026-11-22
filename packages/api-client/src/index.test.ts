@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { Code } from '@connectrpc/connect';
 
-import { createApi } from './index';
+import { createApi, SeatState } from './index';
 
 // A fake fetch that answers the health check and keeps the request it saw.
 function fakeFetch() {
@@ -128,6 +128,39 @@ describe('createApi', () => {
 
     expect(res.signup?.hearBy).toBe('2026-01-11');
     expect(seen[0].url).toBe('https://api.example.test/issho.v1.SignupService/SignUp');
+    expect(seen[0].headers.get('authorization')).toBe('Bearer tok-1');
+  });
+
+  it("lists the caller's own outings through the outing service, with no one else in them", async () => {
+    const seen: Request[] = [];
+    const fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+      seen.push(new Request(input, init));
+      return new Response(
+        JSON.stringify({
+          outings: [
+            {
+              id: 'o1',
+              planId: 'p1',
+              date: '2026-01-09',
+              part: 'evening',
+              startsAt: '17:00',
+              languages: ['en', 'vi'],
+              seatState: 'SEAT_STATE_INVITED',
+              invitedAt: '2026-01-05T09:00:00Z',
+              invitationEndsAt: '2026-01-07T09:00:00Z',
+            },
+          ],
+        }),
+        { headers: { 'content-type': 'application/json' } },
+      );
+    };
+    const api = createApi({ baseUrl: 'https://api.example.test', getAccessToken: async () => 'tok-1', fetch });
+
+    const res = await api.outing.listMyOutings({});
+
+    expect(res.outings[0]).toMatchObject({ date: '2026-01-09', startsAt: '17:00', languages: ['en', 'vi'] });
+    expect(res.outings[0].seatState).toBe(SeatState.INVITED);
+    expect(seen[0].url).toBe('https://api.example.test/issho.v1.OutingService/ListMyOutings');
     expect(seen[0].headers.get('authorization')).toBe('Bearer tok-1');
   });
 });

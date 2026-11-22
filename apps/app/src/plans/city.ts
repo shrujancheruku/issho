@@ -5,3 +5,6 @@
  * settings. The slug is the API's (proto/issho/v1/plan.proto).
  */
 export const DEFAULT_CITY = 'da-nang-hoi-an';
+
+/** The city's name as people read it (docs/spec/site.md), for a link card. */
+export const DEFAULT_CITY_NAME = 'Da Nang–Hoi An';

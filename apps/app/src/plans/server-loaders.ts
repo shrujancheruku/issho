@@ -21,13 +21,27 @@ export const PUBLIC_PAGE_CACHE = 'public, max-age=60, s-maxage=300, stale-while-
  * server answering with an error page.
  */
 export async function plansForServer(): Promise<PlanList | null> {
-  setResponseHeaders({ 'Cache-Control': PUBLIC_PAGE_CACHE });
-  return loadPlans(createServerApi(), 'en').catch(() => null);
+  return cacheIfFilled(loadPlans(createServerApi(), 'en'));
 }
 
 export async function planForServer(id: string): Promise<PlanPageData | null> {
-  setResponseHeaders({ 'Cache-Control': PUBLIC_PAGE_CACHE });
-  return loadPlan(createServerApi(), id, 'en').catch(() => null);
+  return cacheIfFilled(loadPlan(createServerApi(), id, 'en'));
+}
+
+/**
+ * The public header goes on only once the API has answered. A failure leaves
+ * an empty page the client refills, and a shared cache must not keep that for
+ * minutes, so it says `no-store`.
+ */
+async function cacheIfFilled<T>(pending: Promise<T>): Promise<T | null> {
+  try {
+    const data = await pending;
+    setResponseHeaders({ 'Cache-Control': PUBLIC_PAGE_CACHE });
+    return data;
+  } catch {
+    setResponseHeaders({ 'Cache-Control': 'no-store' });
+    return null;
+  }
 }
 
 /** The same page's head, for the route's `generateMetadata`. */

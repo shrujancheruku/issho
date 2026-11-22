@@ -4,6 +4,7 @@ import { createConnectTransport } from '@connectrpc/connect-web';
 import { AccountService } from './gen/issho/v1/account_pb';
 import { HealthService } from './gen/issho/v1/health_pb';
 import { PlanService } from './gen/issho/v1/plan_pb';
+import { OutingService } from './gen/issho/v1/outing_pb';
 import { ProfileService } from './gen/issho/v1/profile_pb';
 import { SignupService } from './gen/issho/v1/signup_pb';
 
@@ -11,6 +12,7 @@ export * from './gen/issho/v1/access_pb';
 export * from './gen/issho/v1/account_pb';
 export * from './gen/issho/v1/health_pb';
 export * from './gen/issho/v1/plan_pb';
+export * from './gen/issho/v1/outing_pb';
 export * from './gen/issho/v1/profile_pb';
 export * from './gen/issho/v1/signup_pb';
 
@@ -57,6 +59,7 @@ export function createApi({ baseUrl, getAccessToken, onUnauthenticated, fetch }:
     plans: createClient(PlanService, transport),
     profile: createClient(ProfileService, transport),
     signup: createClient(SignupService, transport),
+    outing: createClient(OutingService, transport),
   };
 }
 

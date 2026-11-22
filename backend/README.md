@@ -21,6 +21,7 @@ One Go module (`github.com/shrujancheruku/issho/backend`), part of the root `go.
 | `fixtures` | The development and test fixture: the city Da Nang–Hoi An and two plans, as embedded JSON (see "Fixtures") |
 | `internal/cities` | The listed cities: slug, state, time zone, currency and names (`app.cities`) |
 | `internal/plans` | Plans, read only so far: the fields a plan page shows and the prose per language (`app.plans` and its texts and stops); and the signups to them, with their times (`app.plan_rounds`, `app.signups`, `app.signup_ticks`) |
+| `internal/outings` | Outings and their seats: forming a plan's groups into outings with their invitations, and what a seat holder is shown (`app.outings`, `app.seats`; see its README) |
 | `internal/people` | Accounts (`app.accounts`), profiles (`app.profiles`), and the verifier for Supabase Auth's tokens (see "Accounts and sign-in") |
 | `internal/email` | `email.Sender`, its in-memory fake, and `email/resend`, the real one |
 | `internal/logging` | `logging.New`, the one way a process makes a logger, and the test that keeps it the only way (see "Logs") |
@@ -63,6 +64,8 @@ One city, Da Nang–Hoi An, and two plans (`fixtures/da-nang-hoi-an.json`) carry
 
 `SignupService` (member) holds a signup to a plan with its ticks: `SignUp` (which also changes the ticks), `WithdrawSignup` and `ListMySignups`, each only for the caller. `SignUp` calls `rpc.RequireProfile` first. A plan's `signed_up` is how many are signed up, never who. See `internal/plans/README.md`.
 
+`OutingService.ListMyOutings` (member) lists the caller's own outings: the date, the time, the languages the group shares and the state of their seat, never a name. It takes no account and no outing id, so an outing is never returned to someone with no seat in it. See `internal/outings/README.md`.
+
 `PlanService` (`ListPlans`, `GetPlan`) is public: anyone reads a city's plans with no token, in `en` or `vi` from the fixture's prose (`internal/rpc/plan.go`). A closed city's plans are kept but not shown: `ListPlans` returns none and `GetPlan` on one is `not_found`; so is a plan before its opening day (`opens_on`, on the city's calendar).
 
 `accounts_city_fkey` (migration `00004`) fails with `23503` on a local database that already holds an account but no city row, which only one built from an earlier integration tip can. Run `make migrate-down` (or reset the database) and `make migrate-up`, then `make seed`.
@@ -98,7 +101,7 @@ SQL is written by hand in each package's `queries/*.sql` and compiled by sqlc in
 
 ## Jobs
 
-Background work is River's, in Postgres. `internal/jobs.New` builds the client; `cmd/worker` starts it on a direct (or session-pooler) connection in `WORKER_DATABASE_URL`, since River listens for new jobs with LISTEN/NOTIFY, which a transaction pooler breaks. A job is enqueued with `client.InsertTx` in the transaction that causes it: it is worked only after that transaction commits and never if it rolls back (`internal/jobs/jobs_test.go`). Each domain package defines its own job args and worker and registers the worker on the bundle from `jobs.NewWorkers(clk, pool, kinds)`, taking the time from `clk` (see "Time"). The bundle holds the queue's due worker (see "The queue"); a domain package's job is added beside it.
+Background work is River's, in Postgres. `internal/jobs.New` builds the client; `cmd/worker` starts it on a direct (or session-pooler) connection in `WORKER_DATABASE_URL`, since River listens for new jobs with LISTEN/NOTIFY, which a transaction pooler breaks. A job is enqueued with `client.InsertTx` in the transaction that causes it: it is worked only after that transaction commits and never if it rolls back (`internal/jobs/jobs_test.go`). Each domain package defines its own job args and worker and registers the worker on the bundle from `jobs.NewWorkers(clk, pool, kinds)`, taking the time from `clk` (see "Time"). The bundle holds the queue's due worker (see "The queue"); a domain package's job is added beside it. `cmd/worker` registers the forming job (`outings.AddWorker`, see `internal/outings/README.md`).
 
 ## Time
 

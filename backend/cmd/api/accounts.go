@@ -10,6 +10,7 @@ import (
 
 	"github.com/shrujancheruku/issho/backend/internal/cities"
 	"github.com/shrujancheruku/issho/backend/internal/clock"
+	"github.com/shrujancheruku/issho/backend/internal/outings"
 	"github.com/shrujancheruku/issho/backend/internal/people"
 	"github.com/shrujancheruku/issho/backend/internal/plans"
 	"github.com/shrujancheruku/issho/backend/internal/rpc"
@@ -30,6 +31,7 @@ type accounts struct {
 	cities  *cities.Service
 	plans   *plans.Service
 	signups *plans.Signups
+	outings *outings.Service
 	auth    rpc.Authenticator
 	close   func()
 }
@@ -56,11 +58,14 @@ func newAccounts(ctx context.Context, log *slog.Logger, getenv func(string) stri
 	}
 	verifier := people.NewVerifier(clk, people.VerifierConfig{JWKSURL: authURL + "/.well-known/jwks.json", Issuer: authURL, Log: log})
 	cs := cities.New(pool)
+	ppl := people.New(clk, pool, cs, people.Config{DefaultCity: defaultCity})
+	signups := plans.NewSignups(clk, pool, cs)
 	return &accounts{
-		people:  people.New(clk, pool, cs, people.Config{DefaultCity: defaultCity}),
+		people:  ppl,
 		cities:  cs,
 		plans:   plans.New(clk, pool, cs),
-		signups: plans.NewSignups(clk, pool, cs),
+		signups: signups,
+		outings: outings.New(clk, pool, signups, ppl),
 		auth:    rpc.NewAuthenticator(verifier),
 		close:   pool.Close,
 	}, nil

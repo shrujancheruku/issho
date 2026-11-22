@@ -7,9 +7,9 @@ describe("a plan page's head", () => {
     const meta = planMetadata({ lang: 'en', plan: aPlan() });
     expect(meta).toMatchObject({
       title: 'Lantern making in Hoi An',
-      description: 'Fold and paint a silk lantern with a local maker.',
-      openGraph: { title: 'Lantern making in Hoi An', description: 'Fold and paint a silk lantern with a local maker.', siteName: 'Issho' },
-      twitter: { card: 'summary', title: 'Lantern making in Hoi An', description: 'Fold and paint a silk lantern with a local maker.' },
+      description: 'Da Nang–Hoi An · Fold and paint a silk lantern with a local maker.',
+      openGraph: { title: 'Lantern making in Hoi An', description: 'Da Nang–Hoi An · Fold and paint a silk lantern with a local maker.', siteName: 'Issho' },
+      twitter: { card: 'summary', title: 'Lantern making in Hoi An', description: 'Da Nang–Hoi An · Fold and paint a silk lantern with a local maker.' },
     });
   });
 

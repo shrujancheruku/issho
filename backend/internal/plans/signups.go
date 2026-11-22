@@ -175,6 +175,70 @@ func (s *Signups) Set(ctx context.Context, accountID, planID string, ticks []Tic
 	return Signup{PlanID: plan.ID, Ticks: norm, HearBy: round.EndsOn.Format(time.DateOnly)}, nil
 }
 
+// Entry is one person's signup to a round as forming reads it: who, and the
+// times they ticked. It carries nothing else of the person.
+type Entry struct {
+	Account string
+	// Ticks are in time order.
+	Ticks []Tick
+}
+
+// FormingRound is a plan's running round as forming groups reads it
+// (docs/spec/architecture.md: "plans and outings load matching's inputs").
+type FormingRound struct {
+	PlanID string
+	// RoundID is the stored round's id; empty while nobody has signed up to the
+	// round, which has no row yet.
+	RoundID string
+	// StartsAt is the plan's start, "HH:MM" on the city's clock.
+	StartsAt string
+	// Entries are the signups with at least one tick that is still
+	// policy.MinTickLeadDays ahead, one per person, by account.
+	Entries []Entry
+}
+
+// Forming reads the plan's running round for forming groups: the round that
+// holds today on the city's calendar. An outing's date is never less than
+// policy.MinTickLeadDays after its invitations go out, so only the ticks that
+// far ahead *now* are read, and a person with none left isn't an entry. A plan
+// that isn't shown is ErrNotFound, as for Set.
+func (s *Signups) Forming(ctx context.Context, planID string) (FormingRound, error) {
+	plan, city, err := s.planAndCity(ctx, planID)
+	if err != nil {
+		return FormingRound{}, err
+	}
+	today, err := cityToday(s.clock, city.TimeZone)
+	if err != nil {
+		return FormingRound{}, fmt.Errorf("plans: forming: %w", err)
+	}
+	if !shown(city, plan.OpensOn, today) {
+		return FormingRound{}, ErrNotFound
+	}
+	out := FormingRound{PlanID: plan.ID, StartsAt: plan.StartsAt}
+	number, _, _, _ := roundOf(plan.OpensOn, today)
+	q := store.New(s.pool)
+	round, err := q.GetRound(ctx, store.GetRoundParams{PlanID: plan.ID, Number: number})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return out, nil
+	}
+	if err != nil {
+		return FormingRound{}, fmt.Errorf("plans: forming: round: %w", err)
+	}
+	out.RoundID = round.ID
+	rows, err := q.ListRoundTicks(ctx, store.ListRoundTicksParams{RoundID: round.ID, FromDate: addDays(today, policy.MinTickLeadDays)})
+	if err != nil {
+		return FormingRound{}, fmt.Errorf("plans: forming: ticks: %w", err)
+	}
+	for _, r := range rows {
+		if n := len(out.Entries); n == 0 || out.Entries[n-1].Account != r.AccountID {
+			out.Entries = append(out.Entries, Entry{Account: r.AccountID})
+		}
+		e := &out.Entries[len(out.Entries)-1]
+		e.Ticks = append(e.Ticks, Tick{Date: r.TickDate.Format(time.DateOnly), Part: r.Part})
+	}
+	return out, nil
+}
+
 // cityDates answers "what day is it" for the cities the signups are in, each
 // on its own clock, reading each city once.
 type cityDates struct {

@@ -61,3 +61,12 @@ join app.plan_rounds r on r.id = s.round_id
 join app.plans p on p.id = r.plan_id
 where r.plan_id = any(sqlc.arg(plan_ids)::uuid[]) and r.ends_on >= sqlc.arg(since)::date
 group by r.plan_id, r.ends_on, p.city;
+
+-- The ticks of one round from a date on, by person: what forming reads. A
+-- signup always has a tick, so a person with none from the date on has none
+-- left to form with.
+-- name: ListRoundTicks :many
+select account_id, tick_date, part
+from app.signup_ticks
+where round_id = $1 and tick_date >= sqlc.arg(from_date)::date
+order by account_id, tick_date, part;
