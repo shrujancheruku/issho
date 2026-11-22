@@ -13,8 +13,9 @@ import (
 type World struct {
 	// SetOutings are the outings seen set, as they were when first seen set.
 	SetOutings []SetOuting
-	// Going is every going seat the season saw at a sweep, once each.
-	Going []GoingSeat
+	// Sweeps are the going seats at each sweep, in order: a seat cancelled by
+	// a sweep is no longer in it.
+	Sweeps []Sweep
 	// Holders are the members who hold a signup at the end, and whether each is
 	// admitted.
 	Holders []Holder
@@ -48,14 +49,15 @@ type SetMember struct {
 	Ticked bool
 }
 
+// Sweep is the seats live (going) when the season looked, after a forming or
+// an answer. A seat counts as cancelled from the sweep that sees the cancel.
+type Sweep struct{ Live []GoingSeat }
+
 // GoingSeat is a person going to an outing at a date and part of the day.
 type GoingSeat struct {
 	Member     int
 	Outing     string
 	Date, Part string
-	// Cancelled: the seat was cancelled, so it no longer books the time and a
-	// regroup into another outing then is not a double booking.
-	Cancelled bool
 }
 
 // Holder is a member holding a signup.
@@ -96,16 +98,17 @@ func CheckInvariants(w World) []string {
 		member     int
 		date, part string
 	}
-	at := map[slot]string{}
-	for _, g := range w.Going {
-		if g.Cancelled {
-			continue
+	// Each sweep on its own: a later cancel must not hide a double booking
+	// that stood at an earlier one.
+	for i, sw := range w.Sweeps {
+		at := map[slot]string{}
+		for _, g := range sw.Live {
+			k := slot{g.Member, g.Date, g.Part}
+			if prev, ok := at[k]; ok && prev != g.Outing {
+				bad = append(bad, fmt.Sprintf("sweep %d: member %d is going to outings %s and %s on %s %s", i, g.Member, prev, g.Outing, g.Date, g.Part))
+			}
+			at[k] = g.Outing
 		}
-		k := slot{g.Member, g.Date, g.Part}
-		if prev, ok := at[k]; ok && prev != g.Outing {
-			bad = append(bad, fmt.Sprintf("member %d is going to outings %s and %s on %s %s", g.Member, prev, g.Outing, g.Date, g.Part))
-		}
-		at[k] = g.Outing
 	}
 	for _, h := range w.Holders {
 		if !h.Admitted {
@@ -138,7 +141,7 @@ func shareOne(o SetOuting) bool {
 }
 
 // Broken is a world with one rule broken, for the test that proves the check
-// can fail: "double-book", "unadmitted-signup", "set-too-small", "set-too-big",
+// can fail: "double-book", "double-book-mid-run", "unadmitted-signup", "set-too-small", "set-too-big",
 // "no-shared-language" or "no-shared-time".
 func Broken(bug string) World {
 	member := func(i int, spoken ...string) SetMember { return SetMember{Member: i, Spoken: spoken, Ticked: true} }
@@ -147,9 +150,19 @@ func Broken(bug string) World {
 	w := World{SetOutings: []SetOuting{good}, Holders: []Holder{{Member: 1, Admitted: true}}}
 	switch bug {
 	case "double-book":
-		w.Going = []GoingSeat{
+		w.Sweeps = []Sweep{{Live: []GoingSeat{
 			{Member: 1, Outing: "o1", Date: "2026-01-14", Part: "evening"},
 			{Member: 1, Outing: "o2", Date: "2026-01-14", Part: "evening"},
+		}}}
+	case "double-book-mid-run":
+		// Double booked at the first sweep; the second outing's seat is
+		// cancelled by the second, so the end state alone looks fine.
+		w.Sweeps = []Sweep{
+			{Live: []GoingSeat{
+				{Member: 1, Outing: "o1", Date: "2026-01-14", Part: "evening"},
+				{Member: 1, Outing: "o2", Date: "2026-01-14", Part: "evening"},
+			}},
+			{Live: []GoingSeat{{Member: 1, Outing: "o1", Date: "2026-01-14", Part: "evening"}}},
 		}
 	case "unadmitted-signup":
 		w.Holders = append(w.Holders, Holder{Member: 9, Admitted: false})

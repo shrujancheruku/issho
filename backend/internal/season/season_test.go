@@ -43,33 +43,48 @@ func (l *lockedBuffer) Bytes() []byte {
 // and that, together.
 func run(t *testing.T, opts season.Options) (season.Result, []byte) {
 	t.Helper()
+	res, lg, err := runE(t, opts)
+	if err != nil {
+		t.Fatalf("the season: %v", err)
+	}
+	return res, lg
+}
+
+// runE is run that returns the season's error instead of failing the test, for
+// the shared run, which must keep it. The budget starts once the database is
+// up, so a slow Postgres start is not charged to the season.
+func runE(t *testing.T, opts season.Options) (season.Result, []byte, error) {
+	t.Helper()
+	pool := testdb.NewDatabase(t)
 	ctx, cancel := context.WithTimeout(context.Background(), minute)
 	defer cancel()
-	pool := testdb.NewDatabase(t)
 	std := &lockedBuffer{}
 	prev := log.Writer()
 	log.SetOutput(std)
 	defer log.SetOutput(prev)
 	res, err := season.Run(ctx, pool, opts)
 	if err != nil {
-		t.Fatalf("the season: %v", err)
+		return res, nil, err
 	}
-	return res, append(append([]byte(nil), res.Log...), std.Bytes()...)
+	return res, append(append([]byte(nil), res.Log...), std.Bytes()...), nil
 }
 
 var (
 	once    sync.Once
 	first   season.Result
 	firstLg []byte
+	// firstErr is why the shared season did not run, kept so every test that
+	// reads it reports the real error, not a bare "did not run".
+	firstErr error
 )
 
 // theSeason is the one run most tests read; the tests that need another make
 // their own.
 func theSeason(t *testing.T) (season.Result, []byte) {
 	t.Helper()
-	once.Do(func() { first, firstLg = run(t, season.Options{}) })
-	if first.Outings == nil {
-		t.Fatal("the shared season did not run")
+	once.Do(func() { first, firstLg, firstErr = runE(t, season.Options{}) })
+	if firstErr != nil {
+		t.Fatalf("the shared season did not run: %v", firstErr)
 	}
 	return first, firstLg
 }
@@ -141,7 +156,7 @@ func TestAWorldWithNothingBrokenPasses(t *testing.T) {
 // A season whose invariant check cannot fail proves nothing: break the rule on
 // purpose and see it named.
 func TestAnInvariantBrokenOnPurposeIsReported(t *testing.T) {
-	for _, bug := range []string{"double-book", "unadmitted-signup", "set-too-small", "set-too-big", "no-shared-language", "no-shared-time"} {
+	for _, bug := range []string{"double-book", "double-book-mid-run", "unadmitted-signup", "set-too-small", "set-too-big", "no-shared-language", "no-shared-time"} {
 		t.Run(bug, func(t *testing.T) {
 			res := season.CheckInvariants(season.Broken(bug))
 			if len(res) == 0 {
@@ -215,15 +230,28 @@ func TestAPlantedNameInTheRunsLogIsFound(t *testing.T) {
 	}
 }
 
-// A member who cancelled a seat and was regrouped into another outing at the
-// same time was never in two at once: the check ignores a cancelled seat, and
-// still catches two that are both live.
+// A person going to two outings at one time at some sweep is a double booking,
+// even if they cancelled one later: the check runs on every sweep, not on the
+// end state. A seat cancelled before the next sweep is not one.
+func TestADoubleBookingMidRunIsCaughtEvenIfOneSeatIsCancelledLater(t *testing.T) {
+	w := season.Broken("double-book-mid-run")
+	// By the last sweep the person is going to one outing only.
+	if last := w.Sweeps[len(w.Sweeps)-1]; len(last.Live) != 1 {
+		t.Fatalf("the last sweep holds %d seats, the scenario wants 1", len(last.Live))
+	}
+	if len(season.CheckInvariants(w)) == 0 {
+		t.Fatal("two live seats at one time at an earlier sweep passed")
+	}
+}
+
 func TestACancelledSeatIsNotADoubleBooking(t *testing.T) {
 	w := season.Broken("double-book")
 	if len(season.CheckInvariants(w)) == 0 {
 		t.Fatal("two live seats at one time passed")
 	}
-	w.Going[0].Cancelled = true
+	// The cancel is seen at the next sweep: from then the seat books nothing.
+	w.Sweeps = append(w.Sweeps, season.Sweep{Live: w.Sweeps[0].Live[:1]})
+	w.Sweeps[0].Live = w.Sweeps[0].Live[:1]
 	if bad := season.CheckInvariants(w); len(bad) != 0 {
 		t.Errorf("a cancelled seat was counted as a booking: %v", bad)
 	}

@@ -646,6 +646,15 @@ func (r *runner) observe() error {
 		return sig(a) < sig(b)
 	})
 	r.checked["double-booking sweeps"]++
+	var live []GoingSeat
+	for _, id := range order {
+		for _, g := range byOuting[id] {
+			if g.seat.State == outings.SeatGoing {
+				live = append(live, GoingSeat{Member: g.member, Outing: id, Date: g.seat.Date, Part: g.seat.Part})
+			}
+		}
+	}
+	r.world.Sweeps = append(r.world.Sweeps, Sweep{Live: live})
 	for _, id := range order {
 		group := byOuting[id]
 		first := group[0].seat
@@ -669,7 +678,6 @@ func (r *runner) observe() error {
 			}
 			if g.seat.State == outings.SeatGoing && !si.going {
 				si.going = true
-				r.world.Going = append(r.world.Going, GoingSeat{Member: g.member, Outing: id, Date: first.Date, Part: first.Part})
 				if err := r.plansFor(g.member, g.seat, si); err != nil {
 					return err
 				}
@@ -846,13 +854,6 @@ func (r *runner) finish() (Result, error) {
 				byOuting[s.OutingID] = o
 			}
 			o.Seats = append(o.Seats, SeatRecord{Member: m.Index, State: s.State, CheckedIn: s.CheckedIn})
-			if s.State == outings.SeatCancelled {
-				for i := range r.world.Going {
-					if g := &r.world.Going[i]; g.Member == m.Index && g.Outing == s.OutingID {
-						g.Cancelled = true
-					}
-				}
-			}
 			if s.State == outings.SeatGoing || s.State == outings.SeatCancelled {
 				round := r.roundOf(r.cityDate(s.InvitedAt))
 				if sg := r.signed[signedKey{m.Index, s.PlanID, round}]; sg != nil {

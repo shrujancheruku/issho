@@ -1,6 +1,6 @@
 # season
 
-The season ([The quality bar and test strategy](../../../docs/spec/quality.md#matching-and-the-rules)): a deterministic run of scripted people and plans over two weeks, through the real packages on the fake clock. CI fails if it ends with a broken invariant, and its log output is searched for the scripted members' emails and names. It grows in each later milestone: this is its first form, from join links to feedback; late cancels' costs, reports and account deletions arrive with the packages that own them.
+The season ([The quality bar and test strategy](../../../docs/spec/quality.md#matching-and-the-rules)): a deterministic run of scripted people and plans over two weeks, through the real packages on the fake clock. CI fails if it ends with a broken invariant, and its log output is searched for the scripted members' emails and names. This is the season's first form: quality.md describes 60 people over 8 weeks, and this is 20 over two weeks. It grows in each later milestone, from join links to feedback; late cancels' costs, reports and account deletions arrive with the packages that own them.
 
 `Run(ctx, pool, Options)` migrates the empty database behind `pool`, loads the fixture city and its two plans, and plays the script. It uses only the packages' exported APIs (`tools/boundaries` enforces that), so what it knows of the world it was told by them; it reads no table.
 
@@ -23,7 +23,7 @@ Every draw comes from one seeded generator and is taken in an order that depends
 `CheckInvariants` on what the season saw (`World`), at the end:
 
 - every outing that was set had 3 to 6 people going, who share a language and had ticked its date and part of the day;
-- nobody was going to two outings at one time, at any sweep (after every forming and every answer);
+- nobody was going to two outings at one time, checked at each sweep (after every forming and every answer) on the seats going at that moment, so a double booking is caught even if one seat is cancelled later;
 - nobody who isn't admitted holds a signup;
 - what feedback says of attendance is what `Attended` says (checked in or said so; their own no wins).
 
@@ -39,4 +39,4 @@ The run's logger (`logging.New`) goes to every package that logs, River's client
 
 ## Testing
 
-`season_test.go`: each criterion of the first form, the determinism of two runs, the invariants and their failure on purpose (a cancelled seat is not a double booking), and the log search with its planted names. The whole package runs in about 10 seconds against the throwaway Postgres `make test` starts.
+`season_test.go`: each criterion of the first form, the determinism of two runs, the invariants and their failure on purpose (a double booking at a sweep is caught though a seat is cancelled later; a seat cancelled by a sweep is not counted), and the log search with its planted names. The whole package runs in about 10 seconds against the throwaway Postgres `make test` starts.
