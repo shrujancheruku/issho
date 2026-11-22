@@ -59,7 +59,9 @@ Sign-in is Supabase Auth's 6-digit email code; `internal/people` owns the accoun
 
 One city, Da Nang–Hoi An, and two plans (`fixtures/da-nang-hoi-an.json`) carry the thin loop before plan-making exists. `internal/cities` and `internal/plans` each own their tables and each reads its own part of the file (`LoadFixture`). The tests load it themselves; in development `make seed` (`cmd/seed`) loads it into the local database after `make migrate-up`. **Nothing loads it in production:** the image holds `api` and `worker`, neither imports `fixtures`, `seed` refuses a database that isn't on this machine, and a migration inserts no city. `cmd/cmd_test.go` fails if any of that stops being true. See `fixtures/README.md`.
 
-`PlanService` (`ListPlans`, `GetPlan`) is public: anyone reads a city's plans with no token, in `en` or `vi` from the fixture's prose (`internal/rpc/plan.go`).
+`PlanService` (`ListPlans`, `GetPlan`) is public: anyone reads a city's plans with no token, in `en` or `vi` from the fixture's prose (`internal/rpc/plan.go`). A closed city's plans are kept but not shown: `ListPlans` returns none and `GetPlan` on one is `not_found`.
+
+`accounts_city_fkey` (migration `00004`) fails with `23503` on a local database that already holds an account but no city row, which only one built from an earlier integration tip can. Run `make migrate-down` (or reset the database) and `make migrate-up`, then `make seed`.
 
 ## Logs
 

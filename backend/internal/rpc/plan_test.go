@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"connectrpc.com/connect"
+	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/shrujancheruku/issho/backend/db"
 	"github.com/shrujancheruku/issho/backend/fixtures"
@@ -26,6 +27,14 @@ const (
 // authenticator at all: nothing here sends a token.
 func planClient(t *testing.T) isshov1connect.PlanServiceClient {
 	t.Helper()
+	c, _ := planClientAndPool(t)
+	return c
+}
+
+// planClientAndPool is planClient and the database behind it, for a test that
+// changes the city's state after its plans exist.
+func planClientAndPool(t *testing.T) (isshov1connect.PlanServiceClient, *pgxpool.Pool) {
+	t.Helper()
 	ctx := context.Background()
 	pool := testdb.NewDatabase(t)
 	if err := db.Up(ctx, pool); err != nil {
@@ -43,7 +52,7 @@ func planClient(t *testing.T) isshov1connect.PlanServiceClient {
 		Plans:   plans.New(pool),
 	}))
 	t.Cleanup(srv.Close)
-	return isshov1connect.NewPlanServiceClient(srv.Client(), srv.URL)
+	return isshov1connect.NewPlanServiceClient(srv.Client(), srv.URL), pool
 }
 
 // Anyone can list a city's plans: no token, no account.
@@ -122,6 +131,38 @@ func TestAPlanThatDoesNotExistIsNotFoundOverTheWire(t *testing.T) {
 		if res != nil {
 			t.Errorf("GetPlan(%q) returned %v with the error", id, res.Msg)
 		}
+	}
+}
+
+// A closed city's plans are kept but not shown (docs/spec/cities.md): the list
+// is empty, and one of its plans is NotFound, exactly as for a plan that
+// doesn't exist. The city closes after its plans exist.
+func TestAClosedCitysPlansAreNotShown(t *testing.T) {
+	c, pool := planClientAndPool(t)
+	ctx := context.Background()
+	if _, err := pool.Exec(ctx, `update app.cities set state = 'closed' where slug = 'da-nang-hoi-an'`); err != nil {
+		t.Fatal(err)
+	}
+	list, err := c.ListPlans(ctx, connect.NewRequest(&isshov1.ListPlansRequest{City: "da-nang-hoi-an"}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if n := len(list.Msg.GetPlans()); n != 0 {
+		t.Fatalf("a closed city listed %d plans", n)
+	}
+	_, missing := c.GetPlan(ctx, connect.NewRequest(&isshov1.GetPlanRequest{Id: "6a1f0c52-3d1b-4f0e-9a52-0d7c9a1b00ff"}))
+	_, closed := c.GetPlan(ctx, connect.NewRequest(&isshov1.GetPlanRequest{Id: lanternPlan}))
+	wantCode(t, closed, connect.CodeNotFound)
+	if connect.CodeOf(closed) != connect.CodeOf(missing) || closed.Error() != missing.Error() {
+		t.Fatalf("a closed city's plan answers %q, a missing plan %q", closed, missing)
+	}
+	// The plans are kept: the city opening again shows them.
+	if _, err := pool.Exec(ctx, `update app.cities set state = 'open' where slug = 'da-nang-hoi-an'`); err != nil {
+		t.Fatal(err)
+	}
+	list, err = c.ListPlans(ctx, connect.NewRequest(&isshov1.ListPlansRequest{City: "da-nang-hoi-an"}))
+	if err != nil || len(list.Msg.GetPlans()) != 2 {
+		t.Fatalf("reopened city lists %v, %v", list, err)
 	}
 }
 

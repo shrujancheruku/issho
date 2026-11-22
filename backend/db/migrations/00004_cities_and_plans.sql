@@ -30,6 +30,13 @@ create table app.city_names (
 );
 
 -- An account's city is a listed city. #608 left it a plain slug.
+-- This fails (SQLSTATE 23503, accounts_city_fkey) on a database that already
+-- holds an account but no city row. That is accepted, with no data fix and no
+-- `not valid`: 00003 and 00004 reach main together, in the thin loop's
+-- integration PR, so no hosted database holds an account before `cities`
+-- exists, and the seed makes the city before anyone can join. Only a local
+-- database built from an earlier integration tip can hit it; `make
+-- migrate-down` (or a reset) and `make migrate-up` fix it.
 alter table app.accounts
   add constraint accounts_city_fkey foreign key (city) references app.cities (slug);
 

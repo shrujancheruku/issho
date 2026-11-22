@@ -45,6 +45,10 @@ func (s planService) ListPlans(ctx context.Context, req *connect.Request[isshov1
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, errors.New("could not read the city"))
 	}
+	// A closed city's plans are kept but not shown (docs/spec/cities.md).
+	if city.State == cities.Closed {
+		return connect.NewResponse(&isshov1.ListPlansResponse{}), nil
+	}
 	listed, err := s.plans.List(ctx, city.Slug, lang)
 	if err != nil {
 		// The error may quote the database; the caller gets none of it.
@@ -57,7 +61,8 @@ func (s planService) ListPlans(ctx context.Context, req *connect.Request[isshov1
 	return connect.NewResponse(&isshov1.ListPlansResponse{Plans: out}), nil
 }
 
-// GetPlan returns one plan. A plan that doesn't exist is NOT_FOUND.
+// GetPlan returns one plan. A plan that doesn't exist is NOT_FOUND, and so is
+// one in a closed city: the same error, so a caller can't tell the two apart.
 func (s planService) GetPlan(ctx context.Context, req *connect.Request[isshov1.GetPlanRequest]) (*connect.Response[isshov1.GetPlanResponse], error) {
 	lang, err := language(req.Msg.GetDisplayLanguage())
 	if err != nil {
@@ -73,6 +78,9 @@ func (s planService) GetPlan(ctx context.Context, req *connect.Request[isshov1.G
 	city, err := s.cities.Get(ctx, p.City)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, errors.New("could not read the plan's city"))
+	}
+	if city.State == cities.Closed {
+		return nil, connect.NewError(connect.CodeNotFound, errors.New("no such plan"))
 	}
 	return connect.NewResponse(&isshov1.GetPlanResponse{Plan: planMessage(p, city)}), nil
 }
