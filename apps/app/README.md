@@ -32,7 +32,7 @@ Screenshots of every empty tab at phone width, light and dark, English and Vietn
 | Strings: language choice, `{placeholders}`, the device language | `src/i18n/__tests__/` |
 | The strings check (`make lint`) | `scripts/__tests__/check-strings.test.js` |
 | Lint fails on a string literal in a screen file | `src/__tests__/screen-lint.test.ts` |
-| The native bundle fails on a web-only import (`make native-bundle-test`, a shell test, not Jest) | `scripts/native-bundle.test.sh` |
+| The native bundle fails on a web-only import (`make native-bundle-test`, a shell test, not Jest) | `scripts/native-bundle.test.sh` at the repo root (not `apps/app/scripts/`) |
 
 Tests use Jest with `jest-expo` and React Native Testing Library. A screen test renders inside `TestProviders` (`src/test-support/providers.tsx`) with `fakeApi()` (`src/test-support/fake-api.ts`), a stand-in for `@issho/api-client` whose RPCs are `jest.fn`s: no test reaches a network. Add a service's methods to the fake as screens start calling them.
 
@@ -45,6 +45,11 @@ Tests use Jest with `jest-expo` and React Native Testing Library. A screen test 
 | `src/i18n/` | `en.json`, `vi.json`, `strings.ts` (`translate`, `pickLanguage`), the provider and `useDeviceLanguage` |
 | `src/lib/format.ts` | The one date and time formatter |
 | `src/constants/theme.ts`, `src/hooks/use-theme.ts` | Colour tokens and the theme in use |
+| `src/hooks/use-color-scheme.ts` (and `.web.ts`) | The device's light or dark setting; the web version settles after hydration so the server render matches |
+| `src/test-support/` | `providers.tsx` (`TestProviders`) and `fake-api.ts` (`fakeApi()`), shared by the screen tests |
+| `src/types/` | Ambient declarations (`css.d.ts`, so the `.css` import type-checks) |
+| `src/global.css` | Web-only global styles (`color-scheme`, so browser controls follow the theme) |
+| `src/__tests__/` | Tests that read the source tree rather than render a screen (the string-literal lint) |
 | `src/api/` | `ApiProvider` and `useApi()`: the one generated client, given to screens; `api-url.ts`, the API's address and whether it is dev's |
 | `assets/images/` | The icon, splash, favicon, logo and tab icons, ported from v1 (`apps/mobile` at `v1-final`) |
 | `scripts/` | The strings check, the helper the lint test uses and `fixtures/native-bundle/` for the native bundle test (the native build scripts are in the repo's [`scripts/`](../../scripts/README.md)) |
