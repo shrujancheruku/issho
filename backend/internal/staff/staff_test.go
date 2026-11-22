@@ -326,8 +326,9 @@ func TestTwoDueJobsRunningAtOnceApplyTheDefaultOnce(t *testing.T) {
 	// Wait until the second job is blocked on the first's row lock, or (with no
 	// lock) has got as far as applying the default too: either way, both have read
 	// the item before either has committed.
-	deadline := time.Now().Add(10 * time.Second)
-	for {
+	// Real time, not the injected clock: a wait on another connection. Counted
+	// in polls, since only internal/clock may read the system clock.
+	for polls := 0; ; polls++ {
 		mu.Lock()
 		n := applied
 		mu.Unlock()
@@ -340,7 +341,7 @@ func TestTwoDueJobsRunningAtOnceApplyTheDefaultOnce(t *testing.T) {
 		if n >= 2 || (n == 1 && waiting) {
 			break
 		}
-		if time.Now().After(deadline) {
+		if polls >= 1000 {
 			close(release)
 			t.Fatalf("after 10s: %d defaults applied and no job waiting on the row lock", n)
 		}
