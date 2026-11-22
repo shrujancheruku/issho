@@ -81,6 +81,18 @@ type AppCityName struct {
 	Name     string
 }
 
+type AppOuting struct {
+	ID        pgtype.UUID
+	PlanID    pgtype.UUID
+	RoundID   pgtype.UUID
+	Date      pgtype.Date
+	Part      string
+	StartsAt  string
+	Languages []string
+	State     string
+	CreatedAt time.Time
+}
+
 type AppPlan struct {
 	ID             pgtype.UUID
 	City           string
@@ -148,6 +160,15 @@ type AppQueueItem struct {
 	Reason    *string
 	CreatedAt time.Time
 	ClosedAt  *time.Time
+}
+
+type AppSeat struct {
+	OutingID         pgtype.UUID
+	RoundID          pgtype.UUID
+	AccountID        pgtype.UUID
+	State            string
+	InvitedAt        time.Time
+	InvitationEndsAt time.Time
 }
 
 type AppSignup struct {

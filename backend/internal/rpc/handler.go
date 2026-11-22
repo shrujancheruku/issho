@@ -12,6 +12,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/gen/issho/v1/isshov1connect"
 	"github.com/shrujancheruku/issho/backend/internal/cities"
 	"github.com/shrujancheruku/issho/backend/internal/clock"
+	"github.com/shrujancheruku/issho/backend/internal/outings"
 	"github.com/shrujancheruku/issho/backend/internal/people"
 	"github.com/shrujancheruku/issho/backend/internal/plans"
 )
@@ -35,6 +36,9 @@ type Config struct {
 	// SignupService, and with Cities and Plans it puts each plan's count of
 	// signups on the plan RPCs; nil leaves both out.
 	Signups *plans.Signups
+	// Outings keeps the groups matching formed and serves OutingService; nil
+	// leaves it unserved, as it is for a process with no database.
+	Outings *outings.Service
 	// Log gets one line per request (see logRequests), timed by Clock. Nil logs
 	// nothing; set, Clock is required.
 	Log   *slog.Logger
@@ -57,6 +61,9 @@ func NewHandler(cfg Config) http.Handler {
 	}
 	if cfg.People != nil && cfg.Signups != nil {
 		mux.Handle(isshov1connect.NewSignupServiceHandler(signupService{people: cfg.People, signups: cfg.Signups}, opts))
+	}
+	if cfg.Outings != nil {
+		mux.Handle(isshov1connect.NewOutingServiceHandler(outingService{outings: cfg.Outings}, opts))
 	}
 	var rpcs http.Handler = mux
 	if cfg.Log != nil {

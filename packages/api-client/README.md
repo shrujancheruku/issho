@@ -32,6 +32,10 @@ const { profile } = await api.profile.getProfile({});
 const { signup } = await api.signup.signUp({ planId, ticks: [{ date: '2026-01-08', part: 'evening' }] });
 // signup.hearBy is the day they will hear by; api.signup.listMySignups({}) and
 // api.signup.withdrawSignup({ planId }) are the rest.
+
+// The caller's own outings, earliest date first: the date, the time (startsAt), the languages the
+// group shares and the state of their seat. Never another person's name or id.
+const { outings } = await api.outing.listMyOutings({});
 ```
 
 - `getAccessToken` is called before every request. A token goes out as `Authorization: Bearer <token>`; with none, no header is sent, which only public RPCs accept.

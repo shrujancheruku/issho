@@ -44,7 +44,7 @@ func run(ctx context.Context, log *slog.Logger, addr string) error {
 	if acc != nil {
 		defer acc.close()
 		cfg.People, cfg.Auth = acc.people, acc.auth
-		cfg.Cities, cfg.Plans, cfg.Signups = acc.cities, acc.plans, acc.signups
+		cfg.Cities, cfg.Plans, cfg.Signups, cfg.Outings = acc.cities, acc.plans, acc.signups, acc.outings
 	} else {
 		// Without them every token is refused and only the public RPCs work.
 		log.Warn("accounts are not configured: DATABASE_URL and SUPABASE_AUTH_URL are unset")

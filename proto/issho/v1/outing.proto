@@ -1,0 +1,64 @@
+syntax = "proto3";
+
+package issho.v1;
+
+import "google/protobuf/timestamp.proto";
+import "issho/v1/access.proto";
+
+// A member's own outings: the groups matching formed that they have a seat in
+// (docs/spec/outings.md). An outing is private to the people in it, so there is
+// no RPC that names an outing or a person: a caller is only ever shown their
+// own seats. Answering an invitation is a later RPC.
+service OutingService {
+  // Lists the caller's own outings, earliest date first: each one they have a
+  // seat in, with the date, the time and the languages the group shares, and
+  // where their seat stands. Member: it takes no account and no outing id, so
+  // it can only ever return the caller's own, and an outing the caller has no
+  // seat in is never in it. It never returns a name or the id of another
+  // person.
+  rpc ListMyOutings(ListMyOutingsRequest) returns (ListMyOutingsResponse) {
+    option (issho.v1.access) = ACCESS_MEMBER;
+  }
+}
+
+message ListMyOutingsRequest {}
+
+message ListMyOutingsResponse {
+  repeated Outing outings = 1;
+}
+
+// An outing as its own seat's holder sees it. It carries no other person.
+message Outing {
+  string id = 1;
+  // The plan the outing is for.
+  string plan_id = 2;
+  // The city's calendar date, "YYYY-MM-DD".
+  string date = 3;
+  // "morning", "afternoon" or "evening", the part of the day the group ticked.
+  string part = 4;
+  // The plan's start on that date, "HH:MM" on the city's clock.
+  string starts_at = 5;
+  // Every language the whole group speaks, as codes ("vi", "en"), sorted: the
+  // invitation names them all.
+  repeated string languages = 6;
+  // Where the caller's seat stands.
+  SeatState seat_state = 7;
+  // When the caller's invitation went out, and when its fixed 48 hours end.
+  google.protobuf.Timestamp invited_at = 8;
+  google.protobuf.Timestamp invitation_ends_at = 9;
+}
+
+// A seat's state: the person's stage in the outing, or how they left it
+// (docs/spec/outings.md, "What an outing is").
+enum SeatState {
+  SEAT_STATE_UNSPECIFIED = 0;
+  // A date is set and the person has 48 hours to say yes or no.
+  SEAT_STATE_INVITED = 1;
+  SEAT_STATE_GOING = 2;
+  SEAT_STATE_DECLINED = 3;
+  SEAT_STATE_UNANSWERED = 4;
+  SEAT_STATE_FULL = 5;
+  SEAT_STATE_CANCELLED = 6;
+  SEAT_STATE_LATE_CANCEL = 7;
+  SEAT_STATE_REMOVED = 8;
+}

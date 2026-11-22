@@ -138,6 +138,47 @@ func (q *Queries) InsertTick(ctx context.Context, arg InsertTickParams) error {
 	return err
 }
 
+const listRoundTicks = `-- name: ListRoundTicks :many
+select account_id, tick_date, part
+from app.signup_ticks
+where round_id = $1 and tick_date >= $2::date
+order by account_id, tick_date, part
+`
+
+type ListRoundTicksParams struct {
+	RoundID  string
+	FromDate time.Time
+}
+
+type ListRoundTicksRow struct {
+	AccountID string
+	TickDate  time.Time
+	Part      string
+}
+
+// The ticks of one round from a date on, by person: what forming reads. A
+// signup always has a tick, so a person with none from the date on has none
+// left to form with.
+func (q *Queries) ListRoundTicks(ctx context.Context, arg ListRoundTicksParams) ([]ListRoundTicksRow, error) {
+	rows, err := q.db.Query(ctx, listRoundTicks, arg.RoundID, arg.FromDate)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListRoundTicksRow
+	for rows.Next() {
+		var i ListRoundTicksRow
+		if err := rows.Scan(&i.AccountID, &i.TickDate, &i.Part); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listSignupsOfAccount = `-- name: ListSignupsOfAccount :many
 
 select r.plan_id, r.ends_on, p.city

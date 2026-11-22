@@ -11,12 +11,21 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"github.com/shrujancheruku/issho/backend/internal/cities"
 	"github.com/shrujancheruku/issho/backend/internal/clock"
 	"github.com/shrujancheruku/issho/backend/internal/jobs"
 	"github.com/shrujancheruku/issho/backend/internal/logging"
+	"github.com/shrujancheruku/issho/backend/internal/outings"
+	"github.com/shrujancheruku/issho/backend/internal/people"
+	"github.com/shrujancheruku/issho/backend/internal/plans"
 	"github.com/shrujancheruku/issho/backend/internal/serve"
 	"github.com/shrujancheruku/issho/backend/internal/staff"
 )
+
+// defaultCity is the Pilot's only listed city, which people.New wants for the
+// accounts it makes; the worker makes none (it reads profiles), so the value
+// is never used. cmd/api has the same constant and the same lookup to come.
+const defaultCity = "da-nang-hoi-an"
 
 // stopTimeout is how long a deploy's SIGTERM waits for running jobs to finish
 // before River cancels them; a canceled job is retried by the next worker.
@@ -55,10 +64,15 @@ func run(ctx context.Context, log *slog.Logger) error {
 	_ = emails
 
 	// The real clock is built here and only here (tools/clockcheck enforces it);
-	// everything below takes it as a clock.Clock. No domain package has a job
-	// yet; each registers its queue kinds on kinds and its workers here.
+	// everything below takes it as a clock.Clock. Each domain package with a job
+	// registers its queue kinds on kinds and its workers on workers here.
+	clk := clock.Real{}
 	kinds := staff.NewKinds()
-	client, err := jobs.New(pool, jobs.NewWorkers(clock.Real{}, pool, kinds), log)
+	workers := jobs.NewWorkers(clk, pool, kinds)
+	cs := cities.New(pool)
+	ppl := people.New(clk, pool, cs, people.Config{DefaultCity: defaultCity})
+	outings.AddWorker(workers, outings.New(clk, pool, plans.NewSignups(clk, pool, cs), ppl))
+	client, err := jobs.New(pool, workers, log)
 	if err != nil {
 		return err
 	}
