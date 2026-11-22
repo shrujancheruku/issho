@@ -45,7 +45,9 @@ The API has no CORS, by design: no browser origin is trusted to call it from ano
 - **The admin**, at `admin-dev.joinissho.com`: the Worker forwards the same paths to `https://api-dev.joinissho.com` and serves everything else as static files (`apps/admin/README.md`).
 - **Phones** are not a browser: they call `api-dev.joinissho.com` directly.
 
-Choosing a forwarder on each page's own origin over adding CORS kept the API unchanged and closed. If a page ever has to call the API from another origin, that needs a CORS rule written in the API's own ticket, with an allowed-origin list, not a loosening here.
+Both forwarders drop the headers that carry the member's address (`cf-connecting-ip`, `x-forwarded-for`, `x-real-ip`, `forwarded`, `true-client-ip` and the like), since Issho keeps no IP address anywhere ([ADR 0005](adr/0005-no-phone-number-and-no-ip-address.md)); the API sees the forwarder's address instead.
+
+Why a forwarder and not CORS, what it costs and what would reverse it: [ADR 0006](adr/0006-browsers-reach-the-api-on-their-own-origin.md).
 
 ## Rolling back
 
