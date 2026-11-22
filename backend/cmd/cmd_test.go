@@ -502,3 +502,52 @@ func TestSeedHostedDevNeedsTheDevEnvironmentMarker(t *testing.T) {
 		})
 	}
 }
+
+// A session can set `issho.environment` itself: a URL's `options` parameter, or
+// PGOPTIONS in the environment, sends `-c issho.environment=dev` at connect. The
+// marker that counts is the one stored on the database, so none of these may
+// seed an unmarked database. And a --hosted-dev URL that sets any runtime
+// parameter is refused before it connects, even on a database that is marked,
+// so nothing the session says is ever in play. The refusal never prints the URL.
+func TestSeedHostedDevRefusesASessionThatSetsTheMarker(t *testing.T) {
+	bin := buildSeed(t)
+	const options = "&options=-c%20issho.environment%3Ddev"
+	for _, tc := range []struct {
+		name   string
+		query  string   // appended to the database's URL
+		env    []string // extra environment
+		marked bool
+	}{
+		{"options in the URL, database unmarked", options, nil, false},
+		{"options in the URL, database marked", options, nil, true},
+		{"another runtime parameter, database marked", "&application_name=seed", nil, true},
+		{"PGOPTIONS, database unmarked", "", []string{"PGOPTIONS=-c issho.environment=dev"}, false},
+		{"PGOPTIONS, database marked", "", []string{"PGOPTIONS=-c issho.environment=dev"}, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			pool := testdb.NewDatabase(t)
+			ctx := context.Background()
+			if err := db.Up(ctx, pool); err != nil {
+				t.Fatal(err)
+			}
+			if tc.marked {
+				if _, err := pool.Exec(ctx, `do $$ begin execute format('alter database %I set issho.environment = %L', current_database(), 'dev'); end $$`); err != nil {
+					t.Fatal(err)
+				}
+			}
+			cmd := exec.Command(bin, "--hosted-dev")
+			cmd.Env = append(append(os.Environ(), "DATABASE_URL="+testdb.URL(pool)+tc.query), tc.env...)
+			out, err := cmd.CombinedOutput()
+			var cities int
+			if qerr := pool.QueryRow(ctx, `select count(*) from app.cities`).Scan(&cities); qerr != nil {
+				t.Fatal(qerr)
+			}
+			if err == nil || cities != 0 {
+				t.Fatalf("seed went ahead with a session that sets parameters: err %v, cities %d\n%s", err, cities, out)
+			}
+			if strings.Contains(string(out), "issho.environment=dev") && strings.Contains(string(out), "options") {
+				t.Errorf("refusal echoes the URL:\n%s", out)
+			}
+		})
+	}
+}
