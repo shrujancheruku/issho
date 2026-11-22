@@ -1,6 +1,6 @@
 # apps/app
 
-The member app: one Expo project for iOS, Android and the web ([Architecture and stack](../../docs/spec/architecture.md#what-v2-is-built-from)). The web is the same project, server-rendered (`web.output: "server"` in `app.json`). Right now it is the shell (three tabs, the strings and the theme), sign-in by email code, and on the You tab the person's email, their profile (with a way to change it), a sign-out button and the version the API reports (also on the sign-in screen, where a signed-out visit to `/you` lands) (`src/components/api-version.tsx`), which is what the dev deploy checks. Members never see the version: it shows only when the build's `EXPO_PUBLIC_API_URL` is an API that holds no real people (`isDevApi` in `src/api/api-url.ts`: a local address, or a name whose first label is `dev` or ends in `-dev`, as `dev.joinissho.com` and `api-dev.joinissho.com` do). Any other address, production's included, shows nothing and makes no call. The real screens come in later tickets.
+The member app: one Expo project for iOS, Android and the web ([Architecture and stack](../../docs/spec/architecture.md#what-v2-is-built-from)). The web is the same project, server-rendered (`web.output: "server"` in `app.json`). Right now it is the shell (three tabs, the strings and the theme), the Plans tab and a plan's page (below), sign-in by email code, and on the You tab the person's email, their profile (with a way to change it), a sign-out button and the version the API reports (also on the sign-in screen, where a signed-out visit to `/you` lands) (`src/components/api-version.tsx`), which is what the dev deploy checks. Members never see the version: it shows only when the build's `EXPO_PUBLIC_API_URL` is an API that holds no real people (`isDevApi` in `src/api/api-url.ts`: a local address, or a name whose first label is `dev` or ends in `-dev`, as `dev.joinissho.com` and `api-dev.joinissho.com` do). Any other address, production's included, shows nothing and makes no call. The rest of the screens come in later tickets.
 
 ## Setup
 
@@ -17,9 +17,21 @@ pnpm --filter @issho/app web      # the web, server-rendered, at http://localhos
 pnpm --filter @issho/app start    # Expo's dev server for a phone or simulator
 ```
 
-Pass `--port <n>` after `expo start` to use another port. To see the server render, fetch a page without running any JavaScript: `curl localhost:8081/plans` holds the tab bar and "No plans yet." A visitor who opens `/` is sent to `/plans` by the browser (`src/app/index.tsx`).
+Pass `--port <n>` after `expo start` to use another port. To see the server render, fetch a page without running any JavaScript: `curl localhost:8081/plans/<id>` holds the plan's text, its link-card tags (`<title>`, `description`, `og:*`, `twitter:*`) and a `Cache-Control` header, and `curl localhost:8081/plans` holds the list. A visitor who opens `/` is sent to `/plans` by the server (a 302 from `src/app/+middleware.ts`; the `redirects` setting in `app.json` crashes the native app, which then finds `/` twice), and `src/app/index.tsx` does the same on a phone.
 
-Screenshots of every empty tab at phone width, light and dark, English and Vietnamese, are in `docs/screenshots/` (`<tab>-<language>-<theme>.png`). The You tab's are of a dev build, so they show the API's version: the web image (`apps/web/Dockerfile`) built with `EXPO_PUBLIC_API_URL` set to its own origin and run with `API_ORIGIN` pointing at a local API, as on dev, and captured with Playwright's Chromium at 390×780, device scale 2, with the language and colour scheme set. A production build shows the tab without that line.
+## The Plans tab and the plan page
+
+`/plans` (the Plans tab, `src/app/(tabs)/plans.tsx`) lists the city's plans and `/plans/<id>` (`src/app/plans/[id].tsx`) is the one screen a plan is drawn on: title, description, price, when, the stops with the leg to the next, where to meet, what to bring. Both are public: a visitor sees them, the same as a member. Both call `api.plans` (`@issho/api-client`), whose RPCs need no token. The server decides what is shown (a closed city's plans, and a plan before its opening day, are NotFound): the app never filters.
+
+- **On the web they are server-rendered.** Each route exports a `loader` (Expo Router's data loader) that runs on the Expo server, asks the API in English with no token, and returns the plans; the data is in the HTML and seeds the screen on hydration. A route's `generateMetadata` writes the plan's title and description into `<head>` for the browser tab and for the link card a messenger draws. The server sets `Cache-Control: public, max-age=60, s-maxage=300, stale-while-revalidate=600` (`src/plans/server-loaders.ts`) and holds no token or cookie, so nothing per-visitor is in a cached page. A shared cache never keeps a page the API failed to fill, whichever part failed. Expo Router runs a plan page's `generateMetadata` and then its `loader`, and expo-server applies their header updates in the order they were queued, so a plan page makes one call to the API and both read it (kept a few seconds, failure included: a plan holds nothing per visitor); a failure answers `Cache-Control: no-store`, and a success sets the public header only where `no-store` isn't already set, so no order or timing can end a failed page public. It calls the API at `API_ORIGIN` when set (the same address `apps/web` forwards the browser's calls to), else at `EXPO_PUBLIC_API_URL`.
+- **A reader in another language** gets the server's English HTML first and the text in their language right after hydration (`src/plans/use-loaded.ts`): the server doesn't know the visitor, so a page that varied by language couldn't be cached.
+- **On a phone** there is no server: the screens call the API themselves (`src/plans/server-data.ts` has no data, `server-data.web.ts` reads the loader's). A server that could not reach the API hands over nothing, and the screen fetches for itself.
+- **A plan that doesn't exist** shows "We could not find that plan." with a link to the list, and the page is `noindex`. The status is still 200: Expo's loaders cannot set a status without replacing the page, so a real 404 (and the 410 for a retired plan, [Architecture and stack](../../docs/spec/architecture.md#the-web-at-one-address)) waits for plan states.
+- The city is the Pilot's one, `DEFAULT_CITY` (`src/plans/city.ts`), until the You tab's settings give a member their own.
+
+`ScreenFrame` (`src/components/screen-frame.tsx`) puts a screen's content below the top inset, as sign-in does; Android draws edge to edge and the title was under the status bar.
+
+Screenshots of the tabs (Plans as the list, from a stand-in API that returns two plans; `plan-<language>-<theme>.png` is a plan's page and `plan-not-found-<language>-<theme>.png` a plan that is missing) and `plans-empty-…`, `plans-failed-…` and `plan-failed-…` the list with no plans, the list the API failed to fill and a plan page it failed to fill (web only: Android has one shot per screen, the empty and failed states on the emulator are the founder's call), at phone width, light and dark, English and Vietnamese, are in `docs/screenshots/` (`<tab>-<language>-<theme>.png`). The You tab's are of a dev build, so they show the API's version: the web image (`apps/web/Dockerfile`) built with `EXPO_PUBLIC_API_URL` set to its own origin and run with `API_ORIGIN` pointing at a local API, as on dev, and captured with Playwright's Chromium at 390×780, device scale 2, with the language and colour scheme set. A production build shows the tab without that line.
 
 The sign-in screens (`sign-in-email`, `sign-in-code`, `sign-in-wrong-code`) and the signed-in You tab (`you-signed-in`) are in `docs/screenshots/` as `<state>-en-<theme>.png` from the web at 390 wide, and `<state>-android.png` from the emulator. They were taken against a local stand-in for Supabase Auth and the API (a throwaway script, not in the repo: code `123456` right, any other wrong), with `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_API_URL` pointed at it. The iOS simulator's are not attached: `make native-ios` still fails in `expo-modules-jsi` ([#631](https://github.com/shrujancheruku/issho/issues/631)). The same states in Vietnamese are `<state>-vi-<theme>.png`. `together-<language>-<theme>.png` are of a signed-in member (a session in the browser's storage, against the same stand-in), since Together is behind sign-in.
 
@@ -42,7 +54,10 @@ The sign-in screens (`sign-in-email`, `sign-in-code`, `sign-in-wrong-code`) and 
 | The session is encrypted at rest on a phone, and unreadable if the key is gone | `src/auth/__tests__/encrypted-storage.test.ts` |
 | A 401 from the API sends the person to sign-in, from any screen | `src/app/__tests__/you-account.test.tsx` |
 | The Supabase adapter (code sent, code checked, session kept across a restart, sign-out) against a fake Auth server | `src/auth/__tests__/supabase-session-client.test.ts` |
-| The date and time formatter | `src/lib/__tests__/format.test.ts` |
+| The Plans tab lists the city's plans (in the display language, with an empty and a failed state) and a plan opens its page with its stops and legs, price, meeting point and what to bring; a plan that doesn't exist says so; both start below the top inset | `src/app/__tests__/plans.test.tsx` |
+| A page the Expo server already filled in is not fetched again, but is when the reader's language differs; the server's loaders ask the API in English with no token at `API_ORIGIN`, set `Cache-Control` (`no-store` when the API failed, for the list, the plan's head or its loader, in Expo's order; a plan page makes one call to the API), and answer a missing plan as not found | `src/app/__tests__/plans-server.test.tsx` |
+| A plan page's `<head>`: title, description and link-card tags; `noindex` for a missing plan | `src/plans/__tests__/metadata.test.ts` |
+| The date and time formatter, price and time range | `src/lib/__tests__/format.test.ts` |
 | Strings: language choice, `{placeholders}`, the device language | `src/i18n/__tests__/` |
 | The strings check (`make lint`) | `scripts/__tests__/check-strings.test.js` |
 | Lint fails on a string literal in a screen file | `src/__tests__/screen-lint.test.ts` |
@@ -57,7 +72,8 @@ Tests use Jest with `jest-expo` and React Native Testing Library. A screen test 
 | `src/app/` | The routes (expo-router). `index.tsx` redirects to `/plans`; `sign-in.tsx` is the email-and-code screen; `(tabs)/` is Together, Plans and You (Together and You wrap themselves in `RequireSignIn`; Plans is public) |
 | `src/components/` | Shared pieces. Screens and components are "screen files" for the string lint |
 | `src/i18n/` | `en.json`, `vi.json`, `strings.ts` (`translate`, `pickLanguage`), the provider and `useDeviceLanguage` |
-| `src/lib/format.ts` | The one date and time formatter |
+| `src/lib/format.ts` | The one date, time and price formatter |
+| `src/plans/` | What the Plans screens read: `load.ts` (the API calls, shared by the server and the client), `use-loaded.ts`, `server-data*.ts`, `server-loaders.ts`, `server-api.ts`, `metadata.ts`, `city.ts` |
 | `src/constants/theme.ts`, `src/hooks/use-theme.ts` | Colour tokens and the theme in use |
 | `src/hooks/use-color-scheme.ts` (and `.web.ts`) | The device's light or dark setting; the web version settles after hydration so the server render matches |
 | `src/test-support/` | `providers.tsx` (`TestProviders`) and `fake-api.ts` (`fakeApi()`), shared by the screen tests |
@@ -136,3 +152,4 @@ Colours come from `useTheme()` (`src/constants/theme.ts`, light and dark) and fo
 ## Not here yet
 
 The real screens, Making, push, the Sentry setup and EAS configuration.
+

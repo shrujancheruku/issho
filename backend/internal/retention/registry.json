@@ -1,7 +1,9 @@
 [
   {"table": "app.accounts", "personal_data": "the person's email address, city and display language, under their Supabase Auth user ID", "lifetime": "While the account exists; a waitlisted account never given a place, or any account with no sign-in for 24 months, is deleted after one warning email 30 days before"},
+  {"table": "app.admissions", "personal_data": "when an account was admitted and how (a join link or the seed), and the account of the member whose join link admitted it", "lifetime": "While the account exists"},
   {"table": "app.cities", "personal_data": "none"},
   {"table": "app.city_names", "personal_data": "none"},
+  {"table": "app.join_links", "personal_data": "the account of the member who made a link, the link's secret code, when it was made, and whether it was used or cancelled and when", "lifetime": "While the account exists"},
   {"table": "app.outings", "personal_data": "none"},
   {"table": "app.plans", "personal_data": "none"},
   {"table": "app.plan_rounds", "personal_data": "none"},

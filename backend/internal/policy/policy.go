@@ -61,3 +61,11 @@ const (
 // clock (docs/spec/matching.md, "Rounds"). It is also the least notice an
 // outing's date gets after its invitations go out.
 const MinTickLeadDays = 3 // docs/spec/matching.md
+
+// Join links: each member has 3, and a link expires 14 days after it was made.
+// An expired or cancelled link returns to the member's 3; one that was used does
+// not (docs/spec/people.md, "Join links").
+const (
+	JoinLinksPerMember = 3                   // docs/spec/people.md
+	JoinLinkLife       = 14 * 24 * time.Hour // docs/spec/people.md
+)

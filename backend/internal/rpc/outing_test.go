@@ -25,10 +25,11 @@ func newOutingRig(t *testing.T) *outingRig {
 	return &outingRig{signupRig: r, outings: isshov1connect.NewOutingServiceClient(r.srv.Client(), r.srv.URL)}
 }
 
-// named is a signed-in account with a profile under its own name.
+// named is an admitted, signed-in account with a profile under its own name.
 func (r *outingRig) named(t *testing.T, id, email, name string) string {
 	t.Helper()
 	tok := r.signedIn(t, id, email)
+	r.admit(t, email)
 	req := goodSave()
 	req.Name = name
 	if _, err := r.save(tok, req); err != nil {

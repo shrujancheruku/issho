@@ -89,5 +89,22 @@
   "you.profile.onlyWomen": "Chỉ phụ nữ và người phi nhị nguyên",
   "you.profile.yes": "Có",
   "you.profile.no": "Không",
-  "you.profile.gender": "Giới tính"
+  "you.profile.gender": "Giới tính",
+  "plans.free": "Miễn phí",
+  "plans.loadFailed": "Không tải được các kế hoạch.",
+  "plans.retry": "Thử lại",
+  "plan.loadFailed": "Không tải được kế hoạch này.",
+  "plan.notFound": "Chúng tôi không tìm thấy kế hoạch đó.",
+  "plan.seeAll": "Xem tất cả kế hoạch",
+  "plan.notTranslated": "Kế hoạch này chưa có bản tiếng Việt, nên hiện bằng tiếng Anh.",
+  "plan.stops": "Các điểm dừng",
+  "plan.stay": "{minutes} phút",
+  "plan.leg.walk": "Đi bộ {minutes} phút đến điểm tiếp theo",
+  "plan.leg.ride": "Đi xe {minutes} phút đến điểm tiếp theo",
+  "plan.leg.transit": "Đi phương tiện công cộng {minutes} phút đến điểm tiếp theo",
+  "plan.leg.other": "{minutes} phút đến điểm tiếp theo",
+  "plan.price": "Giá mỗi người",
+  "plan.when": "Thời gian",
+  "plan.meeting": "Điểm hẹn",
+  "plan.whatToBring": "Mang theo"
 }

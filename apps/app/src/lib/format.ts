@@ -22,3 +22,14 @@ const format = (date: Date, { timeZone, lang }: FormatOptions, style: Intl.DateT
 export const formatDate = (date: Date, opts: FormatOptions) => format(date, opts, DATE);
 export const formatTime = (date: Date, opts: FormatOptions) => format(date, opts, TIME);
 export const formatDateTime = (date: Date, opts: FormatOptions) => format(date, opts, { ...DATE, ...TIME });
+
+/**
+ * A price in whole units of the plan's currency, in the display language's
+ * conventions. Prices are never converted (proto/issho/v1/plan.proto), and
+ * whole units: a dong has no minor unit worth showing.
+ */
+export const formatPrice = (amount: number, currency: string, lang: Language) =>
+  new Intl.NumberFormat(lang, { style: 'currency', currency, maximumFractionDigits: 0 }).format(amount);
+
+/** A plan's start and end, "HH:MM" on the city's clock, as one range. They are already the city's time, so nothing is converted. */
+export const formatTimeRange = (startsAt: string, endsAt: string) => `${startsAt}–${endsAt}`;

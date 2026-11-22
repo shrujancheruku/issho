@@ -31,6 +31,9 @@ const (
 	SignupProblemReason_SIGNUP_PROBLEM_REASON_TICK_PART_NOT_ALLOWED SignupProblemReason = 2
 	// A tick is more than a round past the end of the round.
 	SignupProblemReason_SIGNUP_PROBLEM_REASON_TICK_TOO_FAR SignupProblemReason = 3
+	// The caller hasn't been admitted: in the Pilot a signup needs a join link
+	// (FAILED_PRECONDITION). Plans stay readable without it.
+	SignupProblemReason_SIGNUP_PROBLEM_REASON_NOT_ADMITTED SignupProblemReason = 4
 )
 
 // Enum value maps for SignupProblemReason.
@@ -40,12 +43,14 @@ var (
 		1: "SIGNUP_PROBLEM_REASON_TICK_TOO_SOON",
 		2: "SIGNUP_PROBLEM_REASON_TICK_PART_NOT_ALLOWED",
 		3: "SIGNUP_PROBLEM_REASON_TICK_TOO_FAR",
+		4: "SIGNUP_PROBLEM_REASON_NOT_ADMITTED",
 	}
 	SignupProblemReason_value = map[string]int32{
 		"SIGNUP_PROBLEM_REASON_UNSPECIFIED":           0,
 		"SIGNUP_PROBLEM_REASON_TICK_TOO_SOON":         1,
 		"SIGNUP_PROBLEM_REASON_TICK_PART_NOT_ALLOWED": 2,
 		"SIGNUP_PROBLEM_REASON_TICK_TOO_FAR":          3,
+		"SIGNUP_PROBLEM_REASON_NOT_ADMITTED":          4,
 	}
 )
 
@@ -525,12 +530,13 @@ const file_issho_v1_signup_proto_rawDesc = "" +
 	"\x05ticks\x18\x02 \x03(\v2\x0e.issho.v1.TickR\x05ticks\x12\x17\n" +
 	"\ahear_by\x18\x03 \x01(\tR\x06hearBy\"F\n" +
 	"\rSignupProblem\x125\n" +
-	"\x06reason\x18\x01 \x01(\x0e2\x1d.issho.v1.SignupProblemReasonR\x06reason*\xbe\x01\n" +
+	"\x06reason\x18\x01 \x01(\x0e2\x1d.issho.v1.SignupProblemReasonR\x06reason*\xe6\x01\n" +
 	"\x13SignupProblemReason\x12%\n" +
 	"!SIGNUP_PROBLEM_REASON_UNSPECIFIED\x10\x00\x12'\n" +
 	"#SIGNUP_PROBLEM_REASON_TICK_TOO_SOON\x10\x01\x12/\n" +
 	"+SIGNUP_PROBLEM_REASON_TICK_PART_NOT_ALLOWED\x10\x02\x12&\n" +
-	"\"SIGNUP_PROBLEM_REASON_TICK_TOO_FAR\x10\x032\x85\x02\n" +
+	"\"SIGNUP_PROBLEM_REASON_TICK_TOO_FAR\x10\x03\x12&\n" +
+	"\"SIGNUP_PROBLEM_REASON_NOT_ADMITTED\x10\x042\x85\x02\n" +
 	"\rSignupService\x12A\n" +
 	"\x06SignUp\x12\x17.issho.v1.SignUpRequest\x1a\x18.issho.v1.SignUpResponse\"\x04\x88\xb5\x18\x02\x12Y\n" +
 	"\x0eWithdrawSignup\x12\x1f.issho.v1.WithdrawSignupRequest\x1a .issho.v1.WithdrawSignupResponse\"\x04\x88\xb5\x18\x02\x12V\n" +

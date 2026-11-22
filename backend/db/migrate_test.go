@@ -310,6 +310,7 @@ func TestSeatAnswersMigrationDownThenUp(t *testing.T) {
 		t.Fatalf("a seat can't be accepted after up: %v", err)
 	}
 
+	downPast(t, pool, 8)
 	if err := db.Down(ctx, pool); err != nil {
 		t.Fatal(err)
 	}
@@ -326,5 +327,62 @@ func TestSeatAnswersMigrationDownThenUp(t *testing.T) {
 	}
 	if err := update("accepted"); err != nil {
 		t.Fatalf("a seat can't be accepted after up, down, up: %v", err)
+	}
+}
+
+// The join links migration (00009) makes the links and admissions tables. A
+// link ends one way (used or cancelled, not both) and has one code, and a link
+// admits one account. Its Down drops both and goes up again.
+func TestJoinLinksMigrationDownThenUp(t *testing.T) {
+	ctx := context.Background()
+	pool := testdb.NewDatabase(t)
+	if err := db.Up(ctx, pool); err != nil {
+		t.Fatal(err)
+	}
+	for _, table := range []string{"join_links", "admissions"} {
+		if !slices.Contains(objectsIn(t, pool, "app"), table) {
+			t.Fatalf("app.%s missing after up", table)
+		}
+	}
+	if _, err := pool.Exec(ctx, `
+		insert into app.cities (slug, state, time_zone, currency) values ('x', 'open', 'UTC', 'USD');
+		insert into app.accounts (id, email, city, display_language, created_at) values
+		  ('00000000-0000-4000-8000-000000000001', 'a@example.com', 'x', 'en', now()),
+		  ('00000000-0000-4000-8000-000000000002', 'b@example.com', 'x', 'en', now()),
+		  ('00000000-0000-4000-8000-000000000003', 'c@example.com', 'x', 'en', now());
+		insert into app.join_links (id, member_id, code, created_at) values
+		  ('00000000-0000-4000-8000-0000000000d1', '00000000-0000-4000-8000-000000000001', 'code-1', now());`); err != nil {
+		t.Fatal(err)
+	}
+	for name, stmt := range map[string]string{
+		"a code is used by one link":     `insert into app.join_links (member_id, code, created_at) values ('00000000-0000-4000-8000-000000000001', 'code-1', now())`,
+		"a link ends one way":            `update app.join_links set cancelled_at = now(), redeemed_at = now()`,
+		"via is a join link or the seed": `insert into app.admissions (account_id, admitted_at, via) values ('00000000-0000-4000-8000-000000000002', now(), 'other')`,
+	} {
+		if _, err := pool.Exec(ctx, stmt); err == nil {
+			t.Errorf("%s: the database accepted it", name)
+		}
+	}
+	// A link admits one account.
+	if _, err := pool.Exec(ctx, `insert into app.admissions (account_id, admitted_at, via, brought_by, link_id)
+		values ('00000000-0000-4000-8000-000000000002', now(), 'join-link', '00000000-0000-4000-8000-000000000001', '00000000-0000-4000-8000-0000000000d1')`); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := pool.Exec(ctx, `insert into app.admissions (account_id, admitted_at, via, brought_by, link_id)
+		values ('00000000-0000-4000-8000-000000000003', now(), 'join-link', '00000000-0000-4000-8000-000000000001', '00000000-0000-4000-8000-0000000000d1')`); err == nil {
+		t.Error("one link admitted two accounts")
+	}
+
+	downPast(t, pool, 9)
+	if err := db.Down(ctx, pool); err != nil {
+		t.Fatal(err)
+	}
+	for _, table := range []string{"join_links", "admissions"} {
+		if slices.Contains(objectsIn(t, pool, "app"), table) {
+			t.Errorf("app.%s remains after down", table)
+		}
+	}
+	if err := db.Up(ctx, pool); err != nil {
+		t.Fatalf("up after down: %v", err)
 	}
 }

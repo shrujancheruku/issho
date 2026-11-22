@@ -47,7 +47,10 @@ const (
 type SignupServiceClient interface {
 	// Signs the caller up to a plan with a set of ticks, or replaces the ticks of
 	// the signup they already have: changing your times is signing up again.
-	// Member: any signed-in person, but a caller with no profile is refused with
+	// Member: any signed-in person, but one who hasn't been admitted is refused
+	// with FAILED_PRECONDITION and the SignupProblem reason NOT_ADMITTED (in the
+	// Pilot a join link is the only way in; plans stay readable without it), and
+	// a caller with no profile is refused with
 	// FAILED_PRECONDITION and the ProfileProblem reason PROFILE_REQUIRED (the app
 	// opens the profile's questions, then returns here). A tick that is less than
 	// 3 days ahead on the city's clock, falls on a part of the day the plan
@@ -124,7 +127,10 @@ func (c *signupServiceClient) ListMySignups(ctx context.Context, req *connect.Re
 type SignupServiceHandler interface {
 	// Signs the caller up to a plan with a set of ticks, or replaces the ticks of
 	// the signup they already have: changing your times is signing up again.
-	// Member: any signed-in person, but a caller with no profile is refused with
+	// Member: any signed-in person, but one who hasn't been admitted is refused
+	// with FAILED_PRECONDITION and the SignupProblem reason NOT_ADMITTED (in the
+	// Pilot a join link is the only way in; plans stay readable without it), and
+	// a caller with no profile is refused with
 	// FAILED_PRECONDITION and the ProfileProblem reason PROFILE_REQUIRED (the app
 	// opens the profile's questions, then returns here). A tick that is less than
 	// 3 days ahead on the city's clock, falls on a part of the day the plan
