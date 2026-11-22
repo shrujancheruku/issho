@@ -224,6 +224,9 @@ importers:
 
   apps/app:
     dependencies:
+      '@connectrpc/connect':
+        specifier: ^2.3.0
+        version: 2.3.0(@bufbuild/protobuf@2.17.0)
       '@issho/api-client':
         specifier: workspace:*
         version: link:../../packages/api-client
@@ -257,6 +260,9 @@ importers:
       expo-secure-store:
         specifier: ~58.0.3
         version: 58.0.3(expo@58.0.26)
+      expo-server:
+        specifier: ~58.1.0
+        version: 58.1.0
       expo-splash-screen:
         specifier: ~58.0.11
         version: 58.0.14(expo@58.0.26)(supports-color@8.1.1)(typescript@6.0.3)

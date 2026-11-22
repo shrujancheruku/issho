@@ -26,7 +26,7 @@ Cloudflare is in front of all of it (proxied, SSL mode Full (strict)). The VM ta
 4. **Deploy the API and the worker** (`kamal deploy --skip-push`: the VM pulls the images pushed in step 2, so what runs is what was built). kamal-proxy sends the new API container traffic only when `GET /up` answers 200, then drains the old one.
 5. **Deploy the Expo server** the same way, `GET /up` of `apps/web/server.js` being its probe.
 6. **Deploy the admin**: `pnpm --filter @issho/admin build`, then `wrangler deploy --env dev`.
-7. **Check from outside** (`scripts/deploy-dev-verify.sh`): the API, the web's address and the admin's Worker each report the commit just deployed through the API's public health check; the web's `/plans` holds its words in the HTML a client with no JavaScript gets; and a real headless Chrome shows `API version <commit>` on the web's You tab and on the admin's page. A deploy that left an old API running fails here.
+7. **Check from outside** (`scripts/deploy-dev-verify.sh`): the API, the web's address and the admin's Worker each report the commit just deployed through the API's public health check; the web's `/plans` holds its tab bar in the HTML a client with no JavaScript gets; and a real headless Chrome shows `API version <commit>` on the web's You tab and on the admin's page. A deploy that left an old API running fails here.
 8. The VM's memory is printed (`free -m` and `docker stats`).
 
 ### Where the secrets are and how CI gets at them

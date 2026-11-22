@@ -23,5 +23,22 @@
   "signIn.notConfigured": "Bản dựng này chưa được cấu hình để đăng nhập: thiếu {missing}.",
   "you.email": "Đã đăng nhập là {email}",
   "you.signOut": "Đăng xuất",
-  "you.accountError": "Không tải được tài khoản của bạn."
+  "you.accountError": "Không tải được tài khoản của bạn.",
+  "plans.free": "Miễn phí",
+  "plans.loadFailed": "Không tải được các kế hoạch.",
+  "plans.retry": "Thử lại",
+  "plan.loadFailed": "Không tải được kế hoạch này.",
+  "plan.notFound": "Chúng tôi không tìm thấy kế hoạch đó.",
+  "plan.seeAll": "Xem tất cả kế hoạch",
+  "plan.notTranslated": "Kế hoạch này chưa có bản tiếng Việt, nên hiện bằng tiếng Anh.",
+  "plan.stops": "Các điểm dừng",
+  "plan.stay": "{minutes} phút",
+  "plan.leg.walk": "Đi bộ {minutes} phút đến điểm tiếp theo",
+  "plan.leg.ride": "Đi xe {minutes} phút đến điểm tiếp theo",
+  "plan.leg.transit": "Đi phương tiện công cộng {minutes} phút đến điểm tiếp theo",
+  "plan.leg.other": "{minutes} phút đến điểm tiếp theo",
+  "plan.price": "Giá mỗi người",
+  "plan.when": "Thời gian",
+  "plan.meeting": "Điểm hẹn",
+  "plan.whatToBring": "Mang theo"
 }

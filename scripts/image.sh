@@ -87,9 +87,11 @@ done
 [ -n "$up" ] || { docker logs "$web_container" >&2; echo "image: the web container's /up never answered 200" >&2; exit 1; }
 
 # Server-rendered: the page's own words are in the HTML a client with no
-# JavaScript gets, and the bundle it points at is served.
+# JavaScript gets, and the bundle it points at is served. The plans themselves
+# come from the API, which this container has none of, so the check reads the
+# words around them: the tab bar's names.
 html=$(curl -fsS "$base/plans")
-grep -q 'No plans yet.' <<<"$html" || { echo "image: /plans is not server-rendered (no 'No plans yet.' in its HTML)" >&2; exit 1; }
+grep -q '>Together<' <<<"$html" && grep -q '>Plans<' <<<"$html" || { echo "image: /plans is not server-rendered (no tab bar in its HTML)" >&2; exit 1; }
 script=$(grep -oE '/_expo/static/js/web/[^"]+\.js' <<<"$html" | head -n1)
 [ -n "$script" ] || { echo "image: /plans names no script" >&2; exit 1; }
 [ "$(curl -s -o /dev/null -w '%{http_code}' "$base$script")" = 200 ] || { echo "image: $script is not served" >&2; exit 1; }
