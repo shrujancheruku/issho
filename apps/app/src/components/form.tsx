@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text, TextInput, View, type TextInputProps } from 'react-native';
+import { Pressable, StyleSheet, Switch, Text, TextInput, View, type TextInputProps } from 'react-native';
 
 import { FontSize, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -52,7 +52,64 @@ export function ErrorText({ children }: { children: string }) {
   );
 }
 
+/** One answer among several (`radio`) or one of many ticked (`checkbox`). `label` is the translated text. */
+export function Choice({ label, selected, onPress, kind }: { label: string; selected: boolean; onPress: () => void; kind: 'radio' | 'checkbox' }) {
+  const theme = useTheme();
+  return (
+    <Pressable
+      accessibilityRole={kind}
+      accessibilityLabel={label}
+      accessibilityState={kind === 'radio' ? { selected } : { checked: selected }}
+      onPress={onPress}
+      style={[
+        styles.choice,
+        { borderColor: selected ? theme.accent : theme.lineStrong, backgroundColor: selected ? theme.accent : theme.backgroundElement },
+      ]}
+    >
+      <Text style={[styles.buttonText, { color: selected ? theme.onAccent : theme.text }]}>
+        {/* A tick, so a ticked box does not rest on colour alone. The label read aloud is the accessibilityLabel. */}
+        {kind === 'checkbox' && selected ? `✓ ${label}` : label}
+      </Text>
+    </Pressable>
+  );
+}
+
+/**
+ * An on-off setting with its label and a line of help. The whole row is the
+ * target (the label too), at least 44 points tall; the switch inside only shows
+ * the state.
+ */
+export function Toggle({ label, help, value, onValueChange }: { label: string; help?: string; value: boolean; onValueChange: (value: boolean) => void }) {
+  const theme = useTheme();
+  return (
+    <Pressable
+      accessibilityRole="switch"
+      accessibilityLabel={label}
+      accessibilityState={{ checked: value }}
+      onPress={() => onValueChange(!value)}
+      style={styles.toggle}
+    >
+      <View style={styles.toggleText}>
+        <Text style={[styles.buttonText, { color: theme.text }]}>{label}</Text>
+        {help ? <Text style={[styles.label, { color: theme.textSecondary }]}>{help}</Text> : null}
+      </View>
+      <View pointerEvents="none" accessible={false} importantForAccessibility="no-hide-descendants">
+        <Switch value={value} trackColor={{ true: theme.accent }} />
+      </View>
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
+  choice: {
+    minHeight: 48,
+    borderRadius: 8,
+    borderWidth: 1,
+    justifyContent: 'center',
+    paddingHorizontal: Spacing.three,
+  },
+  toggle: { minHeight: 48, paddingVertical: Spacing.one, flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
+  toggleText: { flex: 1, gap: Spacing.half },
   field: { gap: Spacing.one },
   label: { fontSize: FontSize.small },
   input: {

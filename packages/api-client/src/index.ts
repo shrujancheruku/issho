@@ -64,3 +64,6 @@ export function createApi({ baseUrl, getAccessToken, onUnauthenticated, fetch }:
 }
 
 export type Api = ReturnType<typeof createApi>;
+
+// The profile screens (#614): reading the reason a profile RPC refused with.
+export { profileProblem } from './profile-problem';

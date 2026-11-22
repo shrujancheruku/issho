@@ -25,5 +25,12 @@ export function fakeApi(): {
         },
       }),
     },
+    // No profile yet: an empty response, which is how the app knows to ask the questions.
+    profile: {
+      getProfile: jest.fn().mockResolvedValue({}),
+      saveProfile: jest.fn().mockImplementation(async (req: Record<string, unknown>) => ({
+        profile: { ...req, codeOfConductVersion: 1 },
+      })),
+    },
   } as never;
 }

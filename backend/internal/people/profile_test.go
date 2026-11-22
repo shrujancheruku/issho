@@ -170,6 +170,42 @@ func TestTheCodeOfConductMustBeAccepted(t *testing.T) {
 	}
 }
 
+// A change to a profile that exists never asks for the code of conduct again:
+// it may send false, and the version and the time it was accepted stay as the
+// first save stamped them. (The first save still needs it: the test above.)
+func TestAChangeKeepsTheAcceptedCodeOfConductAndNeedsNoNewTick(t *testing.T) {
+	r := newRig(t)
+	ctx := context.Background()
+	joined(t, r, ada, "ada@example.com")
+	if _, err := r.svc.SaveProfile(ctx, ada, goodProfile()); err != nil {
+		t.Fatal(err)
+	}
+	accepted := func() (int, time.Time) {
+		var v int
+		var at time.Time
+		if err := r.pool.QueryRow(ctx, `select code_of_conduct_version, code_of_conduct_accepted_at from app.profiles where account_id = $1`, ada).Scan(&v, &at); err != nil {
+			t.Fatal(err)
+		}
+		return v, at
+	}
+	v0, at0 := accepted()
+	r.clk.Advance(48 * time.Hour)
+	change := goodProfile()
+	change.DateOfBirth = ""
+	change.Name = "Ada L."
+	change.AcceptedCodeOfConduct = false
+	got, err := r.svc.SaveProfile(ctx, ada, change)
+	if err != nil {
+		t.Fatalf("a change without an acceptance: %v", err)
+	}
+	if got.Name != "Ada L." || got.CodeOfConductVersion != v0 {
+		t.Fatalf("profile = %+v, want the new name and version %d", got, v0)
+	}
+	if v1, at1 := accepted(); v1 != v0 || !at1.Equal(at0) {
+		t.Fatalf("accepted = v%d at %v, want v%d at %v unchanged", v1, at1, v0, at0)
+	}
+}
+
 // Under 18 on the day, by the city's clock, is refused. The city's clock is
 // Asia/Ho_Chi_Minh (UTC+7): at 20:00 UTC on 2026-01-05 it is already
 // 2026-01-06 there, so a person born 2008-01-06 turns 18 that day.
