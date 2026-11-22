@@ -28,10 +28,11 @@ type formWorker struct {
 // NewFormWorker returns the worker for FormArgs.
 func NewFormWorker(svc *Service) river.Worker[FormArgs] { return &formWorker{svc: svc} }
 
-// AddWorker registers the forming worker on workers (cmd/worker calls it, as
+// AddWorker registers the forming and the expiring workers on workers (cmd/worker calls it, as
 // jobs.NewWorkers' comment says each domain package does).
 func AddWorker(workers *river.Workers, svc *Service) {
 	river.AddWorker(workers, NewFormWorker(svc))
+	river.AddWorker(workers, NewExpireWorker(svc))
 }
 
 func (w *formWorker) Work(ctx context.Context, job *river.Job[FormArgs]) error {
@@ -42,4 +43,27 @@ func (w *formWorker) Work(ctx context.Context, job *river.Job[FormArgs]) error {
 		return nil
 	}
 	return err
+}
+
+// ExpireArgs is the job that records an outing's unanswered invitations: the
+// outing, scheduled for the end of its 48 hours when the invitations are made.
+// It holds an outing's id and nothing about a person, as FormArgs holds a plan's.
+type ExpireArgs struct {
+	OutingID string `json:"outing_id"`
+}
+
+func (ExpireArgs) Kind() string { return "outings_expire_invitations" }
+
+// expireWorker calls Service.Expire, which closes only what is due and so is
+// safe to run twice, as River may.
+type expireWorker struct {
+	river.WorkerDefaults[ExpireArgs]
+	svc *Service
+}
+
+// NewExpireWorker returns the worker for ExpireArgs.
+func NewExpireWorker(svc *Service) river.Worker[ExpireArgs] { return &expireWorker{svc: svc} }
+
+func (w *expireWorker) Work(ctx context.Context, job *river.Job[ExpireArgs]) error {
+	return w.svc.Expire(ctx, job.Args.OutingID)
 }

@@ -10,6 +10,123 @@ import (
 	"time"
 )
 
+const countYeses = `-- name: CountYeses :many
+select outing_id, count(*)::int as yeses
+from app.seats
+where outing_id = any($1::uuid[]) and state in ('accepted', 'going')
+group by outing_id
+`
+
+type CountYesesRow struct {
+	OutingID string
+	Yeses    int32
+}
+
+// How many in each outing have said yes: those going and those whose yes waits
+// for the outing to be set. A number, never who.
+func (q *Queries) CountYeses(ctx context.Context, outingIds []string) ([]CountYesesRow, error) {
+	rows, err := q.db.Query(ctx, countYeses, outingIds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []CountYesesRow
+	for rows.Next() {
+		var i CountYesesRow
+		if err := rows.Scan(&i.OutingID, &i.Yeses); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const expireUnansweredSeats = `-- name: ExpireUnansweredSeats :exec
+update app.seats set state = 'unanswered'
+where outing_id = $1 and state = 'invited' and invitation_ends_at <= $2
+`
+
+type ExpireUnansweredSeatsParams struct {
+	OutingID         string
+	InvitationEndsAt time.Time
+}
+
+// A seat still invited when its 48 hours end is recorded as unanswered.
+func (q *Queries) ExpireUnansweredSeats(ctx context.Context, arg ExpireUnansweredSeatsParams) error {
+	_, err := q.db.Exec(ctx, expireUnansweredSeats, arg.OutingID, arg.InvitationEndsAt)
+	return err
+}
+
+const getSeat = `-- name: GetSeat :one
+select state, invited_at, invitation_ends_at from app.seats where outing_id = $1 and account_id = $2
+`
+
+type GetSeatParams struct {
+	OutingID  string
+	AccountID string
+}
+
+type GetSeatRow struct {
+	State            string
+	InvitedAt        time.Time
+	InvitationEndsAt time.Time
+}
+
+func (q *Queries) GetSeat(ctx context.Context, arg GetSeatParams) (GetSeatRow, error) {
+	row := q.db.QueryRow(ctx, getSeat, arg.OutingID, arg.AccountID)
+	var i GetSeatRow
+	err := row.Scan(&i.State, &i.InvitedAt, &i.InvitationEndsAt)
+	return i, err
+}
+
+const getSeatOfAccount = `-- name: GetSeatOfAccount :one
+select o.id as outing_id, o.plan_id, o.date, o.part, o.starts_at, o.languages, o.state as outing_state,
+       s.state, s.invited_at, s.invitation_ends_at
+from app.seats s
+join app.outings o on o.id = s.outing_id
+where s.account_id = $1 and o.id = $2
+`
+
+type GetSeatOfAccountParams struct {
+	AccountID string
+	ID        string
+}
+
+type GetSeatOfAccountRow struct {
+	OutingID         string
+	PlanID           string
+	Date             time.Time
+	Part             string
+	StartsAt         string
+	Languages        []string
+	OutingState      string
+	State            string
+	InvitedAt        time.Time
+	InvitationEndsAt time.Time
+}
+
+// One of the account's own seats, the same columns.
+func (q *Queries) GetSeatOfAccount(ctx context.Context, arg GetSeatOfAccountParams) (GetSeatOfAccountRow, error) {
+	row := q.db.QueryRow(ctx, getSeatOfAccount, arg.AccountID, arg.ID)
+	var i GetSeatOfAccountRow
+	err := row.Scan(
+		&i.OutingID,
+		&i.PlanID,
+		&i.Date,
+		&i.Part,
+		&i.StartsAt,
+		&i.Languages,
+		&i.OutingState,
+		&i.State,
+		&i.InvitedAt,
+		&i.InvitationEndsAt,
+	)
+	return i, err
+}
+
 const insertOuting = `-- name: InsertOuting :one
 insert into app.outings (plan_id, round_id, date, part, starts_at, languages, state, created_at)
 values ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -69,6 +186,51 @@ func (q *Queries) InsertSeat(ctx context.Context, arg InsertSeatParams) error {
 	return err
 }
 
+const lastInvitationEnd = `-- name: LastInvitationEnd :one
+select max(invitation_ends_at)::timestamptz as ends from app.seats where outing_id = $1
+`
+
+// When the last of an outing's invitations ends.
+func (q *Queries) LastInvitationEnd(ctx context.Context, outingID string) (time.Time, error) {
+	row := q.db.QueryRow(ctx, lastInvitationEnd, outingID)
+	var ends time.Time
+	err := row.Scan(&ends)
+	return ends, err
+}
+
+const listGoing = `-- name: ListGoing :many
+select outing_id, account_id
+from app.seats
+where outing_id = any($1::uuid[]) and state = 'going'
+order by outing_id, account_id
+`
+
+type ListGoingRow struct {
+	OutingID  string
+	AccountID string
+}
+
+// Who is going to each outing: for the first names a person going sees.
+func (q *Queries) ListGoing(ctx context.Context, outingIds []string) ([]ListGoingRow, error) {
+	rows, err := q.db.Query(ctx, listGoing, outingIds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListGoingRow
+	for rows.Next() {
+		var i ListGoingRow
+		if err := rows.Scan(&i.OutingID, &i.AccountID); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listSeatedInRound = `-- name: ListSeatedInRound :many
 select account_id from app.seats where round_id = $1
 `
@@ -95,7 +257,7 @@ func (q *Queries) ListSeatedInRound(ctx context.Context, roundID string) ([]stri
 }
 
 const listSeatsOfAccount = `-- name: ListSeatsOfAccount :many
-select o.id as outing_id, o.plan_id, o.date, o.part, o.starts_at, o.languages,
+select o.id as outing_id, o.plan_id, o.date, o.part, o.starts_at, o.languages, o.state as outing_state,
        s.state, s.invited_at, s.invitation_ends_at
 from app.seats s
 join app.outings o on o.id = s.outing_id
@@ -110,6 +272,7 @@ type ListSeatsOfAccountRow struct {
 	Part             string
 	StartsAt         string
 	Languages        []string
+	OutingState      string
 	State            string
 	InvitedAt        time.Time
 	InvitationEndsAt time.Time
@@ -133,6 +296,7 @@ func (q *Queries) ListSeatsOfAccount(ctx context.Context, accountID string) ([]L
 			&i.Part,
 			&i.StartsAt,
 			&i.Languages,
+			&i.OutingState,
 			&i.State,
 			&i.InvitedAt,
 			&i.InvitationEndsAt,
@@ -147,6 +311,36 @@ func (q *Queries) ListSeatsOfAccount(ctx context.Context, accountID string) ([]L
 	return items, nil
 }
 
+const lockOuting = `-- name: LockOuting :one
+select id, plan_id, round_id, date, part, state from app.outings where id = $1 for update
+`
+
+type LockOutingRow struct {
+	ID      string
+	PlanID  string
+	RoundID string
+	Date    time.Time
+	Part    string
+	State   string
+}
+
+// Answering is one at a time per outing: the row lock is held to the end of the
+// transaction, so three people saying yes at once are counted one after the
+// other and the third sets the outing, once.
+func (q *Queries) LockOuting(ctx context.Context, id string) (LockOutingRow, error) {
+	row := q.db.QueryRow(ctx, lockOuting, id)
+	var i LockOutingRow
+	err := row.Scan(
+		&i.ID,
+		&i.PlanID,
+		&i.RoundID,
+		&i.Date,
+		&i.Part,
+		&i.State,
+	)
+	return i, err
+}
+
 const lockRound = `-- name: LockRound :exec
 
 select pg_advisory_xact_lock(hashtextextended($1::text, 0))
@@ -159,5 +353,60 @@ select pg_advisory_xact_lock(hashtextextended($1::text, 0))
 // seats and forms nothing twice. The key is the round's id.
 func (q *Queries) LockRound(ctx context.Context, roundID string) error {
 	_, err := q.db.Exec(ctx, lockRound, roundID)
+	return err
+}
+
+const promoteAcceptedSeats = `-- name: PromoteAcceptedSeats :many
+update app.seats set state = 'going' where outing_id = $1 and state = 'accepted' returning account_id
+`
+
+// Setting the outing makes every seat that said yes going; the accounts come
+// back so their time can be taken off their other signups.
+func (q *Queries) PromoteAcceptedSeats(ctx context.Context, outingID string) ([]string, error) {
+	rows, err := q.db.Query(ctx, promoteAcceptedSeats, outingID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var account_id string
+		if err := rows.Scan(&account_id); err != nil {
+			return nil, err
+		}
+		items = append(items, account_id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const setOutingState = `-- name: SetOutingState :exec
+update app.outings set state = $2 where id = $1
+`
+
+type SetOutingStateParams struct {
+	ID    string
+	State string
+}
+
+func (q *Queries) SetOutingState(ctx context.Context, arg SetOutingStateParams) error {
+	_, err := q.db.Exec(ctx, setOutingState, arg.ID, arg.State)
+	return err
+}
+
+const setSeatState = `-- name: SetSeatState :exec
+update app.seats set state = $3 where outing_id = $1 and account_id = $2
+`
+
+type SetSeatStateParams struct {
+	OutingID  string
+	AccountID string
+	State     string
+}
+
+func (q *Queries) SetSeatState(ctx context.Context, arg SetSeatStateParams) error {
+	_, err := q.db.Exec(ctx, setSeatState, arg.OutingID, arg.AccountID, arg.State)
 	return err
 }

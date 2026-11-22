@@ -70,3 +70,16 @@ select account_id, tick_date, part
 from app.signup_ticks
 where round_id = $1 and tick_date >= sqlc.arg(from_date)::date
 order by account_id, tick_date, part;
+
+-- A person who is going to an outing is busy then: the same date and part of
+-- the day is taken off their signups to every round but the outing's own.
+-- name: DeleteOtherTicksAt :exec
+delete from app.signup_ticks
+where account_id = $1 and tick_date = $2 and part = $3 and round_id <> $4;
+
+-- A signup always has a tick, so one left with none is withdrawn. Only the
+-- account's signups to rounds but the outing's own are looked at.
+-- name: DeleteEmptySignups :exec
+delete from app.signups s
+where s.account_id = $1 and s.round_id <> $2
+  and not exists (select 1 from app.signup_ticks t where t.round_id = s.round_id and t.account_id = s.account_id);

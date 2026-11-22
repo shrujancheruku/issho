@@ -681,3 +681,68 @@ func TestFormingLeavesOutTicksNowLessThanThreeDaysAhead(t *testing.T) {
 		t.Fatalf("entries = %+v, want only ada's tick on the 10th", got.Entries)
 	}
 }
+
+// release runs ReleaseTime in a transaction of its own, as outings does inside
+// the one that makes a person going.
+func (r *signupRig) release(t *testing.T, account, date, part, exceptRound string) {
+	t.Helper()
+	ctx := context.Background()
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	if err := r.svc.ReleaseTime(ctx, tx, account, date, part, exceptRound); err != nil {
+		t.Fatal(err)
+	}
+	if err := tx.Commit(ctx); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// An outing a person is going to takes that time from their other signups: the
+// tick on the same date and part of the day goes from every signup but the
+// outing's own round, the rest of those signups stay, and a signup left with no
+// tick goes with it (a signup always has one).
+func TestReleasingATimeTakesItFromTheOtherSignupsOfThePerson(t *testing.T) {
+	r := newSignupRig(t)
+	ctx := context.Background()
+	// The sunrise plan also runs in the evening, so the same part of the day can
+	// be ticked on two plans.
+	if _, err := r.pool.Exec(ctx, `update app.plans set parts_of_day = '{morning,evening}' where id = $1`, sunrise); err != nil {
+		t.Fatal(err)
+	}
+	set := func(account, plan string, ticks ...plans.Tick) {
+		t.Helper()
+		if _, err := r.svc.Set(ctx, account, plan, ticks); err != nil {
+			t.Fatal(err)
+		}
+	}
+	evening9, evening10, morning9 := plans.Tick{Date: "2026-01-09", Part: "evening"}, plans.Tick{Date: "2026-01-10", Part: "evening"}, plans.Tick{Date: "2026-01-09", Part: "morning"}
+	set(ada, lanterns, evening9, evening10)
+	set(ada, sunrise, evening9, evening10, morning9)
+	set(grace, sunrise, evening9) // someone else's signup is never touched
+	round, err := r.svc.Forming(ctx, lanterns)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	r.release(t, ada, "2026-01-09", "evening", round.RoundID)
+
+	if got := ticksOf(t, r, ada, sunrise); !reflect.DeepEqual(got, []plans.Tick{morning9, evening10}) {
+		t.Errorf("ada's sunrise ticks = %v, want the 9th's evening gone and the rest kept", got)
+	}
+	if got := ticksOf(t, r, ada, lanterns); !reflect.DeepEqual(got, []plans.Tick{evening9, evening10}) {
+		t.Errorf("ada's lantern ticks = %v, want them kept (it is the outing's own round)", got)
+	}
+	if got := ticksOf(t, r, grace, sunrise); !reflect.DeepEqual(got, []plans.Tick{evening9}) {
+		t.Errorf("grace's ticks = %v, want them kept", got)
+	}
+
+	// A signup whose last tick is released is withdrawn.
+	r.release(t, grace, "2026-01-09", "evening", round.RoundID)
+	mine, err := r.svc.Mine(ctx, grace)
+	if err != nil || len(mine) != 0 {
+		t.Errorf("grace's signups = %v, %v; want none once its only tick was released", mine, err)
+	}
+}

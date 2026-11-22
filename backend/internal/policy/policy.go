@@ -29,6 +29,11 @@ const (
 // counted from delivery, so quiet hours never eat into it (docs/spec/outings.md).
 const InvitationWindow = 48 * time.Hour
 
+// YesesToSet is how many yeses set an outing: it is set as soon as that many
+// invited people say yes, and with fewer when the invitations' 48 hours end it
+// is not set (docs/spec/outings.md, "Invited").
+const YesesToSet = 3 // docs/spec/outings.md
+
 // RoundLength is a plan's round: a fixed 7 days, the same for everyone signed
 // up (docs/spec/matching.md).
 const RoundLength = 7 * 24 * time.Hour

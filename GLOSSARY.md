@@ -315,6 +315,9 @@ _Avoid_: invitation for joining Issho (that is a join link)
 One person's place in one outing. It holds their stage or how they left: *declined*, *unanswered*, *full*, *cancelled*, *late cancel* or *removed*.
 _Avoid_: slot, spot, RSVP
 
+**Accepted** (of a seat):
+Said yes while the outing is not set yet: the yes waits for the third, which makes everyone accepted *going*. The spec gives it no word; it is what a seat holds between *invited* and *going*.
+
 **Stage**:
 Where an outing stands for one person: *invited*, *going*, *on the day* or *after*.
 _Avoid_: step, phase, status
