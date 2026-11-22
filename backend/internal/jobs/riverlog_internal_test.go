@@ -3,8 +3,9 @@ package jobs
 import (
 	"bytes"
 	"encoding/json"
-	"log/slog"
 	"testing"
+
+	"github.com/shrujancheruku/issho/backend/internal/logging"
 )
 
 // River logs through riverLog, and what survives of its lines is riverKeeps:
@@ -13,7 +14,7 @@ import (
 // send, because no real job makes River log a warning with these attributes.
 func TestRiverLogKeepsOnlyTheListedAttributesOfAWarning(t *testing.T) {
 	var out bytes.Buffer
-	log := riverLog(slog.New(slog.NewJSONHandler(&out, nil)))
+	log := riverLog(logging.New(&out, "worker"))
 
 	log.Warn("Job stuck", "job_id", 7, "job_kind", "email", "queue", "default",
 		"err", "bad address a@example.com", "error", "send to a@example.com failed",
@@ -29,7 +30,7 @@ func TestRiverLogKeepsOnlyTheListedAttributesOfAWarning(t *testing.T) {
 	}
 	for k := range got {
 		switch k {
-		case "time", "level", "msg":
+		case "time", "level", "msg", "cmd":
 		default:
 			if !kept[k] {
 				t.Errorf("attribute %q survived, and is not in riverKeeps", k)
@@ -53,7 +54,7 @@ func TestRiverLogKeepsOnlyTheListedAttributesOfAWarning(t *testing.T) {
 
 func TestRiverLogDropsAJobLineBelowAWarningAndAnyPanicValue(t *testing.T) {
 	var out bytes.Buffer
-	log := riverLog(slog.New(slog.NewJSONHandler(&out, nil)))
+	log := riverLog(logging.New(&out, "worker"))
 
 	log.Info("Job errored", "job_id", 7, "error", "a@example.com")
 	log.Error("Job panicked", "job_id", 7, "panic_val", "a@example.com")
