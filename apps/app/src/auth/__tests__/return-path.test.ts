@@ -15,7 +15,11 @@ describe('where to go after signing in', () => {
     ['/\r\\evil.example', '/'],
     ['/ /evil.example', '/'],
     ['/\u0000/evil.example', '/'],
-    ['/ /evil.example', '/'],
+    ['/\u00a0/evil.example', '/'], // a no-break space
+    // A dot segment resolves away, leaving "//evil.example".
+    ['/.//evil.example', '/'],
+    ['/%2e//evil.example', '/'],
+    ['/plans/..//evil.example', '/'],
   ])('%j goes to %j', (next, expected) => {
     expect(returnPath(next)).toBe(expected);
   });
