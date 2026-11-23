@@ -2,6 +2,7 @@ package rpc_test
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"testing"
 	"time"
@@ -574,5 +575,54 @@ func TestNoRPCTellsAPersonWhoPickedThem(t *testing.T) {
 
 	if after := read(graceTok); after != before {
 		t.Errorf("Grace is sent something different once Ada picks her:\nbefore %s\nafter  %s", before, after)
+	}
+}
+
+// A yes at a time the caller is already going to another outing is refused over
+// the API with the time-taken message, which the app's refusal copy reads.
+func TestAYesAtATimeAlreadyTakenIsRefusedOverTheAPI(t *testing.T) {
+	r := newOutingRig(t)
+	ctx := context.Background()
+	// The sunrise plan also runs in the evening, so two outings can share one.
+	if _, err := r.pool.Exec(ctx, `update app.plans set parts_of_day = '{morning,evening}' where id = $1`, sunrise); err != nil {
+		t.Fatal(err)
+	}
+	adaTok, graceTok, thirdTok := r.formedGroup(t)
+	lanternOuting := r.outingOf(t, adaTok).GetId()
+	fourthTok := r.named(t, fourth, "fourth@example.com", "Mary Jackson")
+	fifthTok := r.named(t, "55555555-5555-4555-8555-555555555555", "fifth@example.com", "Dorothy Vaughan")
+	for _, tok := range []string{adaTok, fourthTok, fifthTok} {
+		if _, err := r.signUp(tok, sunrise, tick("2026-01-09", "evening")); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if formed, err := r.forming.Form(ctx, sunrise); err != nil || formed != 1 {
+		t.Fatalf("Form = %d, %v; want 1 outing", formed, err)
+	}
+	var sunriseOuting string
+	list, err := r.list(adaTok)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, o := range list.GetOutings() {
+		if o.GetId() != lanternOuting {
+			sunriseOuting = o.GetId()
+		}
+	}
+	if sunriseOuting == "" {
+		t.Fatalf("ada has no second outing: %v", list)
+	}
+	for _, tok := range []string{adaTok, graceTok, thirdTok} {
+		if _, err := r.answer(tok, lanternOuting, isshov1.InvitationAnswer_INVITATION_ANSWER_YES); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	_, err = r.answer(adaTok, sunriseOuting, isshov1.InvitationAnswer_INVITATION_ANSWER_YES)
+
+	wantCode(t, err, connect.CodeFailedPrecondition)
+	var ce *connect.Error
+	if !errors.As(err, &ce) || ce.Message() != "you are going to another outing at that time" {
+		t.Fatalf("refusal = %v, want the time-taken message", err)
 	}
 }

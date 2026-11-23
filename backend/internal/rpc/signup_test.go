@@ -98,6 +98,21 @@ func TestSigningUpWithNoProfileIsRefusedWithProfileRequired(t *testing.T) {
 	}
 }
 
+// Admission is checked before the profile: someone not admitted and with no
+// profile is told NOT_ADMITTED, not asked the profile's questions first
+// (signup.proto, SignUp).
+func TestSigningUpUnadmittedWithNoProfileIsRefusedWithNotAdmittedFirst(t *testing.T) {
+	r := newSignupRig(t)
+	tok := r.signedIn(t, ada, "ada@example.com")
+
+	_, err := r.signUp(tok, lanterns, tick("2026-01-09", "evening"))
+
+	wantCode(t, err, connect.CodeFailedPrecondition)
+	if got := signupReason(err); got != isshov1.SignupProblemReason_SIGNUP_PROBLEM_REASON_NOT_ADMITTED {
+		t.Fatalf("reason = %v (profile reason %v), want NOT_ADMITTED", got, problemOf(err))
+	}
+}
+
 func (r *signupRig) mine(t *testing.T, token string) []*isshov1.Signup {
 	t.Helper()
 	res, err := r.signups.ListMySignups(context.Background(), authed(token, &isshov1.ListMySignupsRequest{}))
