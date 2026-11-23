@@ -52,12 +52,18 @@ step "Check that every secret the deploy names exists"
 # does (the accessor permission the deploy account has) and discards the value
 # unseen: `secrets describe` would need secretmanager.secrets.get, which that
 # account is not given (docs/deploy.md), and every deploy would stop here with a
-# false "no secret named".
+# false "could not read". gcloud's own message stays on stderr (the value, on
+# stdout, is discarded): a read can fail for a missing secret, expired auth or the
+# network, and the message says which.
+names=$(sed -n 's/^SECRETS=.*issho-dev-512213 //p' .kamal/secrets.dev | tr -d ')')
+# A SECRETS= line in another format, or another project id, would leave no names,
+# and a check of nothing would pass.
+[ -n "$names" ] || { echo "found no secret names on .kamal/secrets.dev's SECRETS= line" >&2; exit 1; }
 missing=()
-for name in $(sed -n 's/^SECRETS=.*issho-dev-512213 //p' .kamal/secrets.dev | tr -d ')'); do
-  gcloud secrets versions access latest --secret="$name" --project="$project" >/dev/null 2>&1 || missing+=("$name")
+for name in $names; do
+  gcloud secrets versions access latest --secret="$name" --project="$project" >/dev/null || missing+=("$name")
 done
-[ "${#missing[@]}" -eq 0 ] || { echo "Secret Manager has no secret named: ${missing[*]}" >&2; exit 1; }
+[ "${#missing[@]}" -eq 0 ] || { echo "could not read from Secret Manager: ${missing[*]}" >&2; exit 1; }
 
 # The web's two sign-in values must not be empty either: an empty one would build an
 # app that cannot sign in. Their digest goes to the build as SUPABASE_VALUES_HASH

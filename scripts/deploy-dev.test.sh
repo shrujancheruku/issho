@@ -128,6 +128,20 @@ for name in dev-database-url dev-supabase-auth-url dev-supabase-url dev-supabase
   ! grep -q 'value-of-secret' "$work/out" || bad "the preflight printed a secret's value"
 done
 
+# A SECRETS= line the preflight can't read names from stops the deploy, rather than
+# checking no secret at all and passing. The script runs from a copy of the repo's
+# two files it reads first, with the line's project changed.
+mkdir -p "$work/copy/scripts" "$work/copy/.kamal"
+cp "$script" "$work/copy/scripts/"
+sed 's/issho-dev-512213/another-project/' "$repo/.kamal/secrets.dev" > "$work/copy/.kamal/secrets.dev"
+: > "$work/log"
+if PATH="$work/bin:$PATH" LOG="$work/log" DEPLOY_HOST=203.0.113.7 KAMAL_REGISTRY_PASSWORD=stub \
+  "$work/copy/scripts/deploy-dev.sh" >"$work/out" 2>&1; then
+  bad "the script succeeded although it found no secret names"
+fi
+grep -q 'found no secret names' "$work/out" || bad "an unreadable SECRETS= line is not reported: $(cat "$work/out")"
+[ "$(grep -c '^kamal\|^go \|^pnpm' "$work/log")" -eq 0 ] || bad "a tool ran although no secret names were found"
+
 # An empty Supabase value fails like a missing one, before Kamal is called.
 for name in dev-supabase-url dev-supabase-publishable-key; do
   if EMPTY_SECRET=$name run ""; then bad "the script succeeded although $name is empty"; fi
