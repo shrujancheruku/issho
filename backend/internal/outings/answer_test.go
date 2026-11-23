@@ -16,6 +16,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/outings"
 	"github.com/shrujancheruku/issho/backend/internal/people"
 	"github.com/shrujancheruku/issho/backend/internal/plans"
+	"github.com/shrujancheruku/issho/backend/internal/testdb"
 )
 
 // formed forms the lanterns round from n people who all ticked the evening of
@@ -217,7 +218,7 @@ func TestThreeYesesAtTheSameTimeSetTheOutingOnce(t *testing.T) {
 		}()
 	}
 	close(start)
-	r.waitForLockWaiters(t, "LockOuting", 3)
+	testdb.WaitForLockWaiters(t, r.pool, "LockOuting", 3)
 	release()
 	wg.Wait()
 
@@ -671,7 +672,7 @@ func TestTwoThirdYesesAtOnceOnOutingsSharingAPersonSetOneAndDoNotDeadlock(t *tes
 		}()
 	}
 	close(start)
-	r.waitForLockWaiters(t, "LockOuting", 2)
+	testdb.WaitForLockWaiters(t, r.pool, "LockOuting", 2)
 	release()
 	wg.Wait()
 
@@ -718,28 +719,5 @@ func (r *rig) holdOutings(t *testing.T, ids ...string) (release func()) {
 		if err := tx.Rollback(ctx); err != nil {
 			t.Fatal(err)
 		}
-	}
-}
-
-// waitForLockWaiters waits until n sessions are blocked on a lock while running
-// the named sqlc query, so a concurrency test knows its calls overlap.
-func (r *rig) waitForLockWaiters(t *testing.T, query string, n int) {
-	t.Helper()
-	// Ten seconds of 10ms polls, counted: only internal/clock reads the wall clock.
-	polls := 0
-	for {
-		var waiting int
-		err := r.pool.QueryRow(context.Background(), `select count(*) from pg_stat_activity
-			where datname = current_database() and wait_event_type = 'Lock' and query like '-- name: ' || $1 || ' %'`, query).Scan(&waiting)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if waiting >= n {
-			return
-		}
-		if polls++; polls > 1000 {
-			t.Fatalf("%d of %d calls waited on a lock in %s", waiting, n, query)
-		}
-		time.Sleep(10 * time.Millisecond)
 	}
 }

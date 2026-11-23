@@ -17,6 +17,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/clock"
 	"github.com/shrujancheruku/issho/backend/internal/people"
 	"github.com/shrujancheruku/issho/backend/internal/plans"
+	"github.com/shrujancheruku/issho/backend/internal/testdb"
 )
 
 const (
@@ -932,21 +933,8 @@ func TestReleasingATimeWaitsForASetOnTheSameSignupWithoutDeadlocking(t *testing.
 	}()
 
 	// The barrier: wait until ReleaseTime is blocked on a lock Set holds.
-	// Ten seconds of 10ms polls, counted: only internal/clock reads the wall clock.
-	polls := 0
-	for {
-		var waiting bool
-		if err := r.pool.QueryRow(ctx, `select exists (select 1 from pg_stat_activity where pid = $1 and wait_event_type = 'Lock')`, pid).Scan(&waiting); err != nil {
-			t.Fatal(err)
-		}
-		if waiting {
-			break
-		}
-		if polls++; polls > 1000 {
-			t.Fatal("ReleaseTime never waited on the signup Set holds")
-		}
-		time.Sleep(10 * time.Millisecond)
-	}
+	testdb.WaitUntil(t, r.pool, "ReleaseTime to wait on the signup Set holds",
+		`select exists (select 1 from pg_stat_activity where pid = $1 and wait_event_type = 'Lock')`, pid)
 
 	// Set's second step: its ticks. Then it writes the new ones and commits.
 	if _, err := set.Exec(ctx, `delete from app.signup_ticks where round_id = $1 and account_id = $2`, sunriseRound.RoundID, ada); err != nil {
