@@ -719,8 +719,10 @@ type LockAccountTimeParams struct {
 // A person's time is one at a time: whoever is about to become going, or to be
 // turned down because another outing took their time, holds this lock on the
 // person's date and part of the day to the end of the transaction. Two outings
-// that share a person can't then both make them going, and since the locks are
-// taken in account order after the outing's own row, they can't deadlock either.
+// that share a person can't then both make them going. The locks are taken in
+// account order after the outing's own row, so two answers queue rather than
+// wait on each other; the key is a 64-bit hash, so two different keys can still
+// collide, and then Postgres may end one answer with a deadlock (40P01).
 func (q *Queries) LockAccountTime(ctx context.Context, arg LockAccountTimeParams) error {
 	_, err := q.db.Exec(ctx, lockAccountTime, arg.AccountID, arg.Date, arg.Part)
 	return err
