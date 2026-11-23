@@ -89,17 +89,21 @@ export function outingOfPlan(outings: Outing[], planId: string, now: Date): Outi
 }
 
 /** What a refused answer or cancel comes to, in words the screen has strings for. */
-export type OutingRefusal = 'timeTaken' | 'ranOut' | 'full' | 'failed' | 'checkedIn' | 'cannotCancel' | 'cancelFailed' | 'checkInEarly' | 'checkInOver' | 'checkInFailed';
+export type OutingRefusal = 'gone' | 'timeTaken' | 'ranOut' | 'full' | 'failed' | 'checkedIn' | 'cannotCancel' | 'cancelFailed' | 'checkInEarly' | 'checkInOver' | 'checkInFailed';
 
 /**
  * Why the server refused. It answers FAILED_PRECONDITION with a message and no
  * structured reason, so the cause is read from the outing as the server now
  * has it (the app reloads before asking): a full seat is full; an invitation
  * past its 48 hours, not set, or unanswered has run out; a yes on a seat still
- * open can only have been the time taken by another outing. Any other failure
- * is a plain failure.
+ * open can only have been the time taken by another outing. An outing the
+ * server no longer gives the person a seat in (NOT_FOUND, PERMISSION_DENIED) is
+ * gone whatever the action, as trying again cannot help. Any other failure is a
+ * plain failure.
  */
 export function refusalOf(err: unknown, action: 'answer' | 'cancel' | 'checkIn', after: Outing | undefined, now: Date): OutingRefusal {
+  const code = ConnectError.from(err).code;
+  if (code === Code.NotFound || code === Code.PermissionDenied) return 'gone';
   if (action === 'checkIn') {
     // Check-in is refused outside its window (or for a seat not going): the window is the outing's own, so the screen can say which side of it.
     if (ConnectError.from(err).code !== Code.FailedPrecondition || !after) return 'checkInFailed';

@@ -180,6 +180,7 @@
   "outing.status.outingOver": "Đã kết thúc",
   "outing.yes": "Có",
   "outing.no": "Không",
+  "outing.refused.gone": "Buổi đi này không còn là của bạn nữa.",
   "outing.refused.timeTaken": "Bạn đã đi một buổi khác vào giờ đó nên không thể đi buổi này.",
   "outing.refused.ranOut": "Lời mời này đã hết hạn.",
   "outing.refused.full": "Nhóm này đã đủ người.",

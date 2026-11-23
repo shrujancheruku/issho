@@ -180,6 +180,7 @@
   "outing.status.outingOver": "Over",
   "outing.yes": "Yes",
   "outing.no": "No",
+  "outing.refused.gone": "This outing is no longer yours.",
   "outing.refused.timeTaken": "You are already going to another outing at that time, so you can't go to this one.",
   "outing.refused.ranOut": "This invitation has run out.",
   "outing.refused.full": "This group is full.",

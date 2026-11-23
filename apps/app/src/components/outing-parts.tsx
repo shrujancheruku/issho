@@ -13,6 +13,7 @@ import { languagesText } from '@/outings/text';
 import { useMyOutings } from '@/outings/use-my-outings';
 
 const refusalKeys: Record<OutingRefusal, StringKey> = {
+  gone: 'outing.refused.gone',
   timeTaken: 'outing.refused.timeTaken',
   ranOut: 'outing.refused.ranOut',
   full: 'outing.refused.full',
@@ -31,6 +32,26 @@ export function RefusalText({ outingId }: { outingId: string }) {
   const { refusals } = useMyOutings();
   const refusal = refusals[outingId];
   return refusal ? <ErrorText>{t(refusalKeys[refusal])}</ErrorText> : null;
+}
+
+/**
+ * The refusals of outings the reload took off the list (the person no longer
+ * has a seat in them), which no card, row or strip is left to draw: without
+ * this the person would press a button and see nothing happen.
+ */
+export function LostRefusals() {
+  const { t } = useI18n();
+  const { state, refusals } = useMyOutings();
+  if (state.status !== 'ready') return null;
+  const listed = new Set(state.outings.map((o) => o.id));
+  const lost = Object.entries(refusals).filter(([id]) => !listed.has(id));
+  return (
+    <>
+      {lost.map(([id, refusal]) => (
+        <ErrorText key={id}>{t(refusalKeys[refusal])}</ErrorText>
+      ))}
+    </>
+  );
 }
 
 /** The date and time on the city's clock, with the device's beside it when it reads differently (docs/spec/outings.md). */

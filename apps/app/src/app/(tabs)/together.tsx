@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { useApi } from '@/api/api-provider';
 import { Button } from '@/components/form';
+import { LostRefusals } from '@/components/outing-parts';
 import { FeedbackCard, NeedsYouCard, OutingRow, SignupRow } from '@/components/together-rows';
 import { RequireSignIn } from '@/components/require-sign-in';
 import { ScreenFrame } from '@/components/screen-frame';
@@ -63,6 +64,7 @@ function TogetherList() {
       <Text accessibilityRole="header" style={[styles.title, { color: theme.text }]}>
         {t('tabs.together')}
       </Text>
+      <LostRefusals />
       {ready && plans && cards.length + rows.length === 0 ? <Text style={[styles.body, { color: theme.textSecondary }]}>{t('together.empty')}</Text> : null}
       {failed ? (
         <>

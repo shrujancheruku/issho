@@ -157,6 +157,29 @@ describe('an invitation in "Needs you"', () => {
     expect(within(screen.getByTestId('needs-you-o1')).getByRole('button', { name: 'Yes' })).toBeTruthy();
   });
 
+  it('says the outing is no longer theirs when it is not found, even once it has left the list', async () => {
+    const api = fakeApi();
+    api.outing.listMyOutings.mockResolvedValueOnce({ outings: [anOuting()] });
+    await open('/together', { api });
+    const card = await screen.findByTestId('needs-you-o1');
+    api.outing.answerInvitation.mockRejectedValue(new ConnectError('no such outing', Code.NotFound));
+    api.outing.listMyOutings.mockResolvedValue({ outings: [] });
+    await fireEvent.press(within(card).getByRole('button', { name: 'Yes' }));
+    expect(await screen.findByText('This outing is no longer yours.')).toBeTruthy();
+    expect(screen.queryByTestId('needs-you-o1')).toBeNull();
+    expect(screen.queryByText('We could not record your answer. Try again.')).toBeNull();
+  });
+
+  it('says the outing is no longer theirs when the seat is not theirs to answer', async () => {
+    const api = fakeApi();
+    api.outing.listMyOutings.mockResolvedValue({ outings: [anOuting()] });
+    await open('/together', { api });
+    const card = await screen.findByTestId('needs-you-o1');
+    api.outing.answerInvitation.mockRejectedValue(new ConnectError('not yours', Code.PermissionDenied));
+    await fireEvent.press(within(card).getByRole('button', { name: 'Yes' }));
+    expect(await screen.findByText('This outing is no longer yours.')).toBeTruthy();
+  });
+
   it('reads in Vietnamese', async () => {
     const api = fakeApi();
     api.outing.listMyOutings.mockResolvedValue({ outings: [anOuting()] });
