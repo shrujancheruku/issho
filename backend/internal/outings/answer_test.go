@@ -201,16 +201,24 @@ func TestThreeYesesAtTheSameTimeSetTheOutingOnce(t *testing.T) {
 	r := newRig(t)
 	ids, outing := r.formed(t, 4)
 
+	// The answers queue on the outing's row, which the test holds, and are let go
+	// together: they overlap for certain, and only the lock sets it once.
+	release := r.holdOutings(t, outing)
+	start := make(chan struct{})
 	var wg sync.WaitGroup
 	for _, id := range ids[:3] {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
+			<-start
 			if _, err := r.svc.Answer(context.Background(), id, outing, outings.Yes); err != nil {
 				t.Error(err)
 			}
 		}()
 	}
+	close(start)
+	r.waitForLockWaiters(t, "LockOuting", 3)
+	release()
 	wg.Wait()
 
 	for _, id := range ids[:3] {
@@ -647,16 +655,24 @@ func TestTwoThirdYesesAtOnceOnOutingsSharingAPersonSetOneAndDoNotDeadlock(t *tes
 	r.answer(t, a[1], outingA, outings.Yes)
 	r.answer(t, b[1], outingB, outings.Yes)
 
+	// Both answers queue on their outings' rows, which the test holds, and are
+	// let go together, so they overlap for certain.
+	release := r.holdOutings(t, outingA, outingB)
+	start := make(chan struct{})
 	var wg sync.WaitGroup
 	for _, c := range []struct{ id, outing string }{{a[2], outingA}, {b[2], outingB}} {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
+			<-start
 			if _, err := r.svc.Answer(context.Background(), c.id, c.outing, outings.Yes); err != nil {
 				t.Errorf("%s answers: %v", c.id, err)
 			}
 		}()
 	}
+	close(start)
+	r.waitForLockWaiters(t, "LockOuting", 2)
+	release()
 	wg.Wait()
 
 	going := 0
@@ -667,5 +683,62 @@ func TestTwoThirdYesesAtOnceOnOutingsSharingAPersonSetOneAndDoNotDeadlock(t *tes
 	}
 	if going != 1 {
 		t.Errorf("the shared person is going to %d outings, want 1", going)
+	}
+	// Exactly one outing is set. The other is still offered, with the yeses of
+	// its two others, and the shared person's seat there is declined.
+	set, other, otherPeople := outingA, outingB, b
+	if r.seatIn(t, b[1], outingB).OutingState == outings.OutingSet {
+		set, other, otherPeople = outingB, outingA, a
+	}
+	if got := r.seatIn(t, shared, set); got.State != outings.SeatGoing || got.OutingState != outings.OutingSet {
+		t.Errorf("in the set outing the shared person is %q and it is %q, want going in a set one", got.State, got.OutingState)
+	}
+	if got := r.seatIn(t, otherPeople[1], other); got.OutingState != outings.OutingOffered || got.YesCount != 2 {
+		t.Errorf("the other outing is %q with %d yeses, want offered with 2", got.OutingState, got.YesCount)
+	}
+	if got := r.seatIn(t, shared, other).State; got != outings.SeatDeclined {
+		t.Errorf("the shared person's seat in the other outing is %q, want declined", got)
+	}
+}
+
+// holdOutings locks the outings' rows in a transaction of the test's own, so
+// answers to them queue; the returned func lets them go.
+func (r *rig) holdOutings(t *testing.T, ids ...string) (release func()) {
+	t.Helper()
+	ctx := context.Background()
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = tx.Rollback(ctx) })
+	if _, err := tx.Exec(ctx, `select 1 from app.outings where id = any($1::uuid[]) order by id for update`, ids); err != nil {
+		t.Fatal(err)
+	}
+	return func() {
+		if err := tx.Rollback(ctx); err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
+// waitForLockWaiters waits until n sessions are blocked on a lock while running
+// the named sqlc query, so a concurrency test knows its calls overlap.
+func (r *rig) waitForLockWaiters(t *testing.T, query string, n int) {
+	t.Helper()
+	deadline := time.Now().Add(10 * time.Second)
+	for {
+		var waiting int
+		err := r.pool.QueryRow(context.Background(), `select count(*) from pg_stat_activity
+			where datname = current_database() and wait_event_type = 'Lock' and query like '-- name: ' || $1 || ' %'`, query).Scan(&waiting)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if waiting >= n {
+			return
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("%d of %d calls waited on a lock in %s", waiting, n, query)
+		}
+		time.Sleep(10 * time.Millisecond)
 	}
 }
