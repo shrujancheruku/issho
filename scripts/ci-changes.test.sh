@@ -30,6 +30,7 @@ want "the web server, which only the web image runs" "e2e image typescript" apps
 want "the generated client, which the web image builds in" "e2e image native-bundle typescript" packages/api-client/src/index.ts
 want "a proto file" "backend boundaries e2e native-bundle policy proto-breaking retention rpc-auth typescript" proto/issho/v1/health.proto
 want "the e2e package" "e2e typescript" e2e/tests/version.spec.ts
+want "the sign-in email template, which the e2e stack sends" "e2e" supabase/templates/code.html
 want "the Makefile runs every job" "$all" Makefile
 want "the workflow runs every job" "$all" .github/workflows/ci.yml
 want "another workflow runs nothing" "" .github/workflows/release-please.yml

@@ -1,7 +1,8 @@
 import { defineConfig, devices } from '@playwright/test';
 
-// `make e2e` (scripts/e2e.sh) picks two free ports, builds the API with a
-// version of its own, and sets these. Nothing here has a default, so running
+// `make e2e` (scripts/e2e.sh) starts the throwaway stack (Postgres, Auth, a mail
+// catcher), picks free ports, builds the API for end-to-end with a version of
+// its own, and sets these. Nothing here has a default, so running
 // `playwright test` by hand fails loudly rather than finding another stack.
 function env(name: string): string {
   const value = process.env[name];
@@ -14,6 +15,8 @@ const webPort = env('E2E_WEB_PORT');
 const appPort = env('E2E_APP_PORT');
 const appDist = env('E2E_APP_DIST');
 const apiBinary = env('E2E_API_BINARY');
+const databaseUrl = env('E2E_DATABASE_URL');
+const authUrl = env('E2E_AUTH_URL');
 
 export default defineConfig({
   testDir: './tests',
@@ -21,6 +24,11 @@ export default defineConfig({
   // passes is reported as flaky (the list and GitHub reporters both say so), so
   // the retry is never silent (docs/spec/quality.md, "What CI requires").
   retries: 1,
+  // A journey drives three browsers through a day of the app's life.
+  // The journeys share one stack and one clock, so they run one at a time.
+  workers: 1,
+  timeout: 180_000,
+  expect: { timeout: 10_000 },
   forbidOnly: true,
   reporter: process.env.CI ? [['list'], ['github']] : 'list',
   use: {
@@ -31,7 +39,9 @@ export default defineConfig({
   webServer: [
     {
       command: apiBinary,
-      env: { API_ADDR: `127.0.0.1:${apiPort}` },
+      // The API as `make e2e` built it (a fake clock, the worker in-process, the
+      // test-only RPCs), on the throwaway database and Auth.
+      env: { API_ADDR: `127.0.0.1:${apiPort}`, DATABASE_URL: databaseUrl, SUPABASE_AUTH_URL: authUrl },
       // The API answers every path it doesn't serve with 404, which Playwright
       // doesn't take for ready, so wait for the port to accept connections.
       port: Number(apiPort),

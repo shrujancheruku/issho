@@ -36,7 +36,7 @@ ts="(apps|packages|proto|e2e)/.*|package\.json|pnpm-.*"
 patterns=$(cat <<PATTERNS
 backend|^($shared|scripts/proto-breaking.*|$go)$
 boundaries|^($shared|$go)$
-e2e|^($shared|scripts/e2e.*|backend/.*|$ts)$
+e2e|^($shared|scripts/e2e.*|backend/.*|supabase/templates/.*|$ts)$
 image|^($shared|scripts/image.*|backend/.*|apps/(app|web)/.*|packages/.*)$
 native-bundle|^($shared|scripts/native-.*|apps/app/.*|packages/.*|proto/.*|package\.json|pnpm-.*)$
 policy|^($shared|$go)$

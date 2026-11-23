@@ -17,6 +17,14 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/plans"
 )
 
+// Mount makes one more service of the process, handed the access interceptor
+// every service here is served behind: it is the shape of the generated
+// `New<Name>ServiceHandler`, so `isshov1connect.NewHealthServiceHandler(h, opts...)`
+// is a Mount once `h` is bound. Only a build with a service of its own sets any
+// (the end-to-end build's clock, cmd/api/e2e_on.go); the production process sets
+// none.
+type Mount func(opts ...connect.HandlerOption) (path string, handler http.Handler)
+
 // Config is what the handler needs from the process that builds it.
 type Config struct {
 	// Version is the build's version, reported by the health check.
@@ -39,6 +47,8 @@ type Config struct {
 	// Outings keeps the groups matching formed and serves OutingService; nil
 	// leaves it unserved, as it is for a process with no database.
 	Outings *outings.Service
+	// Mounts are further services, served behind the same interceptor.
+	Mounts []Mount
 	// Log gets one line per request (see logRequests), timed by Clock. Nil logs
 	// nothing; set, Clock is required.
 	Log   *slog.Logger
@@ -65,6 +75,9 @@ func NewHandler(cfg Config) http.Handler {
 	}
 	if cfg.Outings != nil {
 		mux.Handle(isshov1connect.NewOutingServiceHandler(outingService{outings: cfg.Outings}, opts))
+	}
+	for _, mount := range cfg.Mounts {
+		mux.Handle(mount(opts))
 	}
 	var rpcs http.Handler = mux
 	if cfg.Log != nil {

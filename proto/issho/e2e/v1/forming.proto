@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package issho.e2e.v1;
+
+import "issho/v1/access.proto";
+
+// Triggers forming in the end-to-end build, which nothing schedules yet (rounds
+// on the real clock come with milestone 4). Built only under the Go build tag
+// `e2e`, like ClockService (clock.proto).
+service FormingService {
+  // Inserts the River job that forms a plan's groups (outings.FormArgs), the job
+  // a schedule will insert, and returns when the job has run. Public for the same
+  // reason as ClockService.GetTime.
+  rpc FormPlan(FormPlanRequest) returns (FormPlanResponse) {
+    option (issho.v1.access) = ACCESS_PUBLIC;
+  }
+}
+
+message FormPlanRequest {
+  // The plan to form groups for.
+  string plan_id = 1;
+}
+
+message FormPlanResponse {}

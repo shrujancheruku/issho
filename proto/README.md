@@ -2,6 +2,7 @@
 
 The API's contract. **These files are the source of truth** for the Go server stubs (`backend/gen/issho`) and the TypeScript client (`packages/api-client/src/gen`). Both are generated: never edit them.
 
+- Package `issho.e2e.v1`, in `issho/e2e/v1/`: the end-to-end build's test-only RPCs (`ClockService` and `FormingService`; see `backend/internal/e2eclock`). Kept in a package of their own so the production binaries never link their generated code, and left out of the api client's `index.ts`. Their `access` is public, because only the throwaway end-to-end stack serves them.
 - Package `issho.v1`, in `issho/v1/`. One file per service (`health.proto` holds `HealthService`, `account.proto` holds `AccountService`, `plan.proto` holds `PlanService`, `signup.proto` holds `SignupService`, `outing.proto` holds `OutingService`, `join_link.proto` holds `JoinLinkService`).
 - `access.proto` defines the `Access` enum and the `access` method option every RPC must set.
 - Config: `../buf.yaml` (lint `STANDARD`, breaking `FILE`) and `../buf.gen.yaml` (the generators). `make gen` needs `make setup` first, for the TypeScript plugin.

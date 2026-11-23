@@ -33,7 +33,10 @@ type accounts struct {
 	signups *plans.Signups
 	outings *outings.Service
 	auth    rpc.Authenticator
-	close   func()
+	// pool is the app's connection pool, which the end-to-end build also gives
+	// its in-process job client (e2e_on.go).
+	pool  *pgxpool.Pool
+	close func()
 }
 
 // newAccounts reads DATABASE_URL (the Supabase pooler's URL for the app) and
@@ -67,6 +70,7 @@ func newAccounts(ctx context.Context, log *slog.Logger, getenv func(string) stri
 		signups: signups,
 		outings: outings.New(clk, pool, signups, ppl),
 		auth:    rpc.NewAuthenticator(verifier),
+		pool:    pool,
 		close:   pool.Close,
 	}, nil
 }

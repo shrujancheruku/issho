@@ -15,6 +15,7 @@ One Go module (`github.com/shrujancheruku/issho/backend`), part of the root `go.
 | `db` | The goose migrations (`db/migrations`), embedded, and the `Up` and `Down` that run them; the schema sqlc reads |
 | `internal/<pkg>/store` | The Go that sqlc generates from `internal/<pkg>/queries`, one pair per package (`internal/staff`, `internal/people`). Generated: never edit it |
 | `internal/clock` | The injected clock: `Clock`, `Real` (wired only in `cmd/`) and the test `Fake` |
+| `internal/e2eclock` | The end-to-end build's test-only RPCs (`ClockService`, `FormingService`), built only under the `e2e` tag and absent from the image (see its README and `e2e/README.md`) |
 | `internal/cityclock` | The one city-clock helper: a city's date, "HH:MM on a date", part of the day, midnight-crossing windows |
 | `tools/clockcheck` | The lint check that fails on `time.Now`, `time.Since` and `time.Until` outside `internal/clock`, and on `clock.Real` outside `cmd/` |
 | `gen/issho` | The Go that buf generates from `proto/`: the messages and the ConnectRPC service stubs. Generated: never edit it |
@@ -109,7 +110,7 @@ Background work is River's, in Postgres. `internal/jobs.New` builds the client; 
 
 ## Time
 
-Code never asks the system for the time. It takes a `clock.Clock`: `cmd/worker` builds `clock.Real{}` and passes it to `jobs.NewWorkers`, and tests pass a `clock.NewFake(start)` that stands still until `Set` or `Advance` moves it. `cmd/api` builds its own `clock.Real{}`, which times the request log. `make lint` runs `tools/clockcheck`, which fails on `time.Now`, `time.Since` and `time.Until` in any package but `internal/clock`, and on `clock.Real` outside `cmd/` (tests included). See `internal/clock/README.md`, `internal/cityclock/README.md` and `tools/clockcheck/README.md`.
+Code never asks the system for the time. It takes a `clock.Clock`: `cmd/worker` builds `clock.Real{}` and passes it to `jobs.NewWorkers`, and tests pass a `clock.NewFake(start)` that stands still until `Set` or `Advance` moves it. `cmd/api` builds its own `clock.Real{}`, which times the request log. Built with `-tags e2e` (`make e2e` only, `cmd/api/e2e_on.go`), it builds a `clock.Fake` instead, which the test-only clock RPC moves, and runs the worker's jobs in its own process on that same clock. `make lint` runs `tools/clockcheck`, which fails on `time.Now`, `time.Since` and `time.Until` in any package but `internal/clock`, and on `clock.Real` outside `cmd/` (tests included). See `internal/clock/README.md`, `internal/cityclock/README.md` and `tools/clockcheck/README.md`.
 
 Every time on a city's clock goes through `cityclock.New(zone, dayParts)`, built from the city's IANA time zone and its clock hours of morning, afternoon and evening (a city setting). Its methods take an instant, so they are pure and testable with a fake clock: `Date` (the city's date), `At` (an instant from a date and "HH:MM"), `PartOfDay` and `InWindow` (a from-to window that may cross midnight, from inclusive, to exclusive). `At` puts a time the clocks skip after the gap and takes the first of a time they repeat.
 
@@ -138,14 +139,14 @@ Each outside service (email, then push, Places and the models) follows the patte
 
 ## The image
 
-`Dockerfile` builds `api` and `worker` into one image at `/usr/local/bin`, on a distroless base that runs as a non-root user; the command defaults to `api`, and the deploy runs the worker by naming its command. `make image` builds it, checks both binaries are in it and removes it again (`scripts/image.sh`). `--build-arg VERSION=1.2.3` is what the API's health check reports.
+`Dockerfile` builds `api` and `worker` into one image at `/usr/local/bin`, on a distroless base that runs as a non-root user; the command defaults to `api`, and the deploy runs the worker by naming its command. `make image` builds it, checks both binaries are in it and removes it again (`scripts/image.sh`). `--build-arg VERSION=1.2.3` is what the API's health check reports. The test-only RPCs of the end-to-end build (`internal/e2eclock`) are not in it: they are built only under `-tags e2e`, and `make image` and `make test` fail if either binary holds their package name (`issho.e2e.v1`).
 
 ## Testing
 
 Run from the repo root:
 
 ```sh
-make test   # go test -race ./... in backend/, and the api-client's tests
+make test   # go test -race ./... in backend/ (and the e2e-tagged packages), and the api-client's tests
 make lint   # gofmt, go vet, buf lint, buf breaking, rpc-auth and the api-client's type check
 make policy-lint   # the policy lint, which make lint also runs
 make boundaries    # the seam check, which make lint also runs
