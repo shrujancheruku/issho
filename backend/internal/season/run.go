@@ -655,6 +655,11 @@ func (r *runner) observe() error {
 		}
 	}
 	r.world.Sweeps = append(r.world.Sweeps, Sweep{Live: live})
+	// A sweep with nobody going checks nothing, so these are counted apart: a
+	// season in which nobody is ever going must not pass as swept.
+	if len(live) > 0 {
+		r.checked["live seats swept"]++
+	}
 	for _, id := range order {
 		group := byOuting[id]
 		first := group[0].seat
