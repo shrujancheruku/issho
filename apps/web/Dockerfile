@@ -50,7 +50,8 @@ RUN --mount=type=secret,id=EXPO_PUBLIC_SUPABASE_URL \
     : "${SUPABASE_VALUES_HASH}" \
     && export EXPO_PUBLIC_SUPABASE_URL="$(cat /run/secrets/EXPO_PUBLIC_SUPABASE_URL)" \
     && export EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY="$(cat /run/secrets/EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY)" \
-    && [ -n "$EXPO_PUBLIC_SUPABASE_URL" ] && [ -n "$EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY" ] \
+    && { { [ -n "$EXPO_PUBLIC_SUPABASE_URL" ] && [ -n "$EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY" ]; } \
+         || { echo "EXPO_PUBLIC_SUPABASE_URL or _PUBLISHABLE_KEY is empty" >&2; exit 1; }; } \
     && cd apps/app && CI=1 pnpm exec expo export --platform web --output-dir /out
 
 # The server needs only express and expo-server: the export holds its own code.

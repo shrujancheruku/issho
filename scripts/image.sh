@@ -79,8 +79,19 @@ build_web "$web_image_b" "$url_b" "$key_b"
 bundle_has "$web_image_b" "$url_b" && bundle_has "$web_image_b" "$key_b" \
   || { echo "image: a rebuild with new Supabase values kept the old bundle" >&2; exit 1; }
 ! bundle_has "$web_image_b" "$url_a" || { echo "image: the rebuilt bundle still holds the first URL" >&2; exit 1; }
-# An empty value is refused, as a missing one is.
-if build_web "$web_image-empty" "" "$key_a" >/dev/null 2>&1; then echo "image: the build accepted an empty Supabase URL" >&2; exit 1; fi
+# An empty value is refused, as a missing one is, and by the Dockerfile's own
+# guard: any other failure (a pull, BuildKit) is not this check passing, so the
+# build's output must name the cause.
+refused_empty() { # refused_empty <what> <url> <key>
+  local out
+  if out=$(BUILDKIT_PROGRESS=plain build_web "$web_image-empty" "$2" "$3" 2>&1); then
+    echo "image: the build accepted an empty $1" >&2; exit 1
+  fi
+  grep -qF "EXPO_PUBLIC_SUPABASE_URL or _PUBLISHABLE_KEY is empty" <<<"$out" \
+    || { printf '%s\n' "$out" | tail -n 20 >&2; echo "image: the build with an empty $1 failed, but not at the guard" >&2; exit 1; }
+}
+refused_empty "Supabase URL" "" "$key_a"
+refused_empty "publishable key" "$url_a" ""
 # Docker picks the host port, so nothing on a laptop (Metro's 8081 included) clashes.
 web_container=$(docker run --detach --publish 127.0.0.1::8081 "$web_image")
 port=$(docker port "$web_container" 8081/tcp | head -n1 | sed 's/.*://')
