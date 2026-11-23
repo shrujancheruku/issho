@@ -316,11 +316,11 @@ The offer of a seat in an outing, with its date, open 48 hours.
 _Avoid_: invitation for joining Issho (that is a join link)
 
 **Seat**:
-One person's place in one outing. It holds their stage or how they left: *declined*, *unanswered*, *full*, *cancelled*, *late cancel* or *removed*.
+One person's place in one outing. It holds their stage or how they left: *accepted* (a yes waiting for the outing to be set), *declined*, *unanswered*, *full*, *cancelled*, *late cancel* or *removed*.
 _Avoid_: slot, spot, RSVP
 
 **Accepted** (of a seat):
-Said yes while the outing is not set yet: the yes waits for the third, which makes everyone accepted *going*. The spec gives it no word; it is what a seat holds between *invited* and *going*.
+Said yes while the outing is not set yet: the yes waits for the third, which makes everyone accepted *going*. It is what a seat holds between *invited* and *going* ([Outings](docs/spec/outings.md#what-an-outing-is)).
 
 **Stage**:
 Where an outing stands for one person: *invited*, *going*, *on the day* or *after*.
