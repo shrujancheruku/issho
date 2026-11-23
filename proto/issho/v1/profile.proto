@@ -50,7 +50,8 @@ message SaveProfileRequest {
   // Whether they live in the city: self-declared, and either answer is
   // accepted.
   bool lives_in_city = 5;
-  // Must be true: the code of conduct is accepted with the profile.
+  // Must be true on the first save, which accepts the code of conduct;
+  // ignored on later saves, which keep the version already accepted.
   bool accepted_code_of_conduct = 6;
   // "Only women and non-binary people". Only for those whose gender is woman or
   // non-binary; for anyone else, turning it on is INVALID_ARGUMENT with the

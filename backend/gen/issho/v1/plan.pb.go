@@ -262,8 +262,8 @@ type Plan struct {
 	SignedUp int32 `protobuf:"varint,16,opt,name=signed_up,json=signedUp,proto3" json:"signed_up,omitempty"`
 	// The last day of the plan's running round, or of the round a signup made
 	// today would be in when none is running: the city's calendar date
-	// "YYYY-MM-DD". People can tick from 3 days ahead to a round (7 days) after
-	// it, so the app offers exactly the dates SignUp accepts. It is the same for
+	// "YYYY-MM-DD". People can tick from 3 days ahead to 7 days after the round's
+	// last day, so the app offers exactly the dates SignUp accepts. It is the same for
 	// every visitor and changes only when a round ends.
 	RoundEnds     string `protobuf:"bytes,17,opt,name=round_ends,json=roundEnds,proto3" json:"round_ends,omitempty"`
 	unknownFields protoimpl.UnknownFields

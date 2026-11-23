@@ -92,8 +92,8 @@ message Plan {
   int32 signed_up = 16;
   // The last day of the plan's running round, or of the round a signup made
   // today would be in when none is running: the city's calendar date
-  // "YYYY-MM-DD". People can tick from 3 days ahead to a round (7 days) after
-  // it, so the app offers exactly the dates SignUp accepts. It is the same for
+  // "YYYY-MM-DD". People can tick from 3 days ahead to 7 days after the round's
+  // last day, so the app offers exactly the dates SignUp accepts. It is the same for
   // every visitor and changes only when a round ends.
   string round_ends = 17;
 }

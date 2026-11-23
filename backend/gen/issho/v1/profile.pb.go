@@ -177,7 +177,8 @@ type SaveProfileRequest struct {
 	// Whether they live in the city: self-declared, and either answer is
 	// accepted.
 	LivesInCity bool `protobuf:"varint,5,opt,name=lives_in_city,json=livesInCity,proto3" json:"lives_in_city,omitempty"`
-	// Must be true: the code of conduct is accepted with the profile.
+	// Must be true on the first save, which accepts the code of conduct;
+	// ignored on later saves, which keep the version already accepted.
 	AcceptedCodeOfConduct bool `protobuf:"varint,6,opt,name=accepted_code_of_conduct,json=acceptedCodeOfConduct,proto3" json:"accepted_code_of_conduct,omitempty"`
 	// "Only women and non-binary people". Only for those whose gender is woman or
 	// non-binary; for anyone else, turning it on is INVALID_ARGUMENT with the

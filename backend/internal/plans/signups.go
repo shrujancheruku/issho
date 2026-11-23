@@ -27,7 +27,7 @@ var (
 	// ErrTickTooSoon: a tick less than policy.MinTickLeadDays ahead, counted on
 	// the city's clock.
 	ErrTickTooSoon = errors.New("plans: a tick is less than 3 days ahead")
-	// ErrTickTooFar: a tick later than a round (policy.RoundLength) after the
+	// ErrTickTooFar: a tick more than policy.RoundLength (7) days after the
 	// round's last day.
 	ErrTickTooFar = errors.New("plans: a tick is too far ahead")
 	// ErrTickPartNotAllowed: a tick on a part of the day the plan doesn't allow.

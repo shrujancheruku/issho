@@ -89,7 +89,8 @@ export type SaveProfileRequest = Message<"issho.v1.SaveProfileRequest"> & {
   livesInCity: boolean;
 
   /**
-   * Must be true: the code of conduct is accepted with the profile.
+   * Must be true on the first save, which accepts the code of conduct;
+   * ignored on later saves, which keep the version already accepted.
    *
    * @generated from field: bool accepted_code_of_conduct = 6;
    */
