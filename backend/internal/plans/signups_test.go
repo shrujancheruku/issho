@@ -876,3 +876,96 @@ func TestEveryDateTheAppOffersIsAcceptedAndTheDayAfterTheLastIsNot(t *testing.T)
 		}
 	}
 }
+
+// Releasing a time takes the person's other signups before their ticks, the
+// order Set takes them in, so a person who resubmits their times on another
+// plan at the moment they become going waits instead of deadlocking (40P01).
+// The test plays Set's two steps by hand around a ReleaseTime: Set holds the
+// signup row, ReleaseTime runs until it waits on a lock, and then Set reaches
+// for the ticks. With ReleaseTime taking ticks first, the two would deadlock.
+func TestReleasingATimeWaitsForASetOnTheSameSignupWithoutDeadlocking(t *testing.T) {
+	r := newSignupRig(t)
+	ctx := context.Background()
+	if _, err := r.svc.Set(ctx, ada, lanterns, []plans.Tick{{Date: "2026-01-09", Part: "evening"}}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := r.svc.Set(ctx, ada, sunrise, []plans.Tick{{Date: "2026-01-09", Part: "morning"}}); err != nil {
+		t.Fatal(err)
+	}
+	lanternRound, err := r.svc.Forming(ctx, lanterns)
+	if err != nil {
+		t.Fatal(err)
+	}
+	sunriseRound, err := r.svc.Forming(ctx, sunrise)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Set's first step, on ada's sunrise signup: the upsert that locks its row.
+	set, err := r.pool.Begin(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = set.Rollback(ctx) }()
+	if _, err := set.Exec(ctx, `update app.signups set updated_at = now() where round_id = $1 and account_id = $2`, sunriseRound.RoundID, ada); err != nil {
+		t.Fatal(err)
+	}
+
+	// ReleaseTime of ada's only sunrise tick, as making ada going on a lantern
+	// outing does.
+	release, err := r.pool.Begin(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = release.Rollback(ctx) }()
+	var pid int
+	if err := release.QueryRow(ctx, `select pg_backend_pid()`).Scan(&pid); err != nil {
+		t.Fatal(err)
+	}
+	released := make(chan error, 1)
+	go func() {
+		if err := r.svc.ReleaseTime(ctx, release, ada, "2026-01-09", "morning", lanternRound.RoundID); err != nil {
+			released <- err
+			return
+		}
+		released <- release.Commit(ctx)
+	}()
+
+	// The barrier: wait until ReleaseTime is blocked on a lock Set holds.
+	deadline := time.Now().Add(10 * time.Second)
+	for {
+		var waiting bool
+		if err := r.pool.QueryRow(ctx, `select exists (select 1 from pg_stat_activity where pid = $1 and wait_event_type = 'Lock')`, pid).Scan(&waiting); err != nil {
+			t.Fatal(err)
+		}
+		if waiting {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("ReleaseTime never waited on the signup Set holds")
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+
+	// Set's second step: its ticks. Then it writes the new ones and commits.
+	if _, err := set.Exec(ctx, `delete from app.signup_ticks where round_id = $1 and account_id = $2`, sunriseRound.RoundID, ada); err != nil {
+		t.Fatalf("Set's ticks: %v (want no deadlock)", err)
+	}
+	if _, err := set.Exec(ctx, `insert into app.signup_ticks (round_id, account_id, tick_date, part) values ($1, $2, '2026-01-10', 'morning')`, sunriseRound.RoundID, ada); err != nil {
+		t.Fatal(err)
+	}
+	if err := set.Commit(ctx); err != nil {
+		t.Fatalf("Set's commit: %v", err)
+	}
+	if err := <-released; err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "40P01" {
+			t.Fatalf("ReleaseTime deadlocked against Set: %v", err)
+		}
+		t.Fatal(err)
+	}
+	// Set's new tick, on another day, is kept: the release ran after it.
+	if got := ticksOf(t, r, ada, sunrise); !reflect.DeepEqual(got, []plans.Tick{{Date: "2026-01-10", Part: "morning"}}) {
+		t.Errorf("ada's sunrise ticks = %v, want Set's new tick kept", got)
+	}
+}

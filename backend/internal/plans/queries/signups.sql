@@ -71,6 +71,15 @@ from app.signup_ticks
 where round_id = $1 and tick_date >= sqlc.arg(from_date)::date
 order by account_id, tick_date, part;
 
+-- Releasing a time locks the account's other signups before their ticks, the
+-- order Set and Withdraw take them in (a signup, then its ticks). Taking the
+-- ticks first would deadlock against a Set on one of those signups.
+-- name: LockOtherSignups :exec
+select 1 from app.signups
+where account_id = $1 and round_id <> $2
+order by round_id
+for update;
+
 -- A person who is going to an outing is busy then: the same date and part of
 -- the day is taken off their signups to every round but the outing's own.
 -- name: DeleteOtherTicksAt :exec

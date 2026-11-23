@@ -262,6 +262,13 @@ func (s *Signups) ReleaseTime(ctx context.Context, tx pgx.Tx, accountID, date, p
 		return fmt.Errorf("%w: date %q", ErrInvalid, date)
 	}
 	q := store.New(tx)
+	// Lock the signups before deleting their ticks: Set locks a signup (its
+	// upsert) and then its ticks, so taking ticks first here would let a person
+	// resubmitting times on another plan, at the moment they become going,
+	// deadlock against this (40P01).
+	if err := q.LockOtherSignups(ctx, store.LockOtherSignupsParams{AccountID: accountID, RoundID: exceptRound}); err != nil {
+		return fmt.Errorf("plans: release time: lock: %w", err)
+	}
 	if err := q.DeleteOtherTicksAt(ctx, store.DeleteOtherTicksAtParams{AccountID: accountID, TickDate: day, Part: part, RoundID: exceptRound}); err != nil {
 		return fmt.Errorf("plans: release time: %w", err)
 	}

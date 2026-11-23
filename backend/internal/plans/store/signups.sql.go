@@ -317,6 +317,26 @@ func (q *Queries) ListTicksOfAccount(ctx context.Context, arg ListTicksOfAccount
 	return items, nil
 }
 
+const lockOtherSignups = `-- name: LockOtherSignups :exec
+select 1 from app.signups
+where account_id = $1 and round_id <> $2
+order by round_id
+for update
+`
+
+type LockOtherSignupsParams struct {
+	AccountID string
+	RoundID   string
+}
+
+// Releasing a time locks the account's other signups before their ticks, the
+// order Set and Withdraw take them in (a signup, then its ticks). Taking the
+// ticks first would deadlock against a Set on one of those signups.
+func (q *Queries) LockOtherSignups(ctx context.Context, arg LockOtherSignupsParams) error {
+	_, err := q.db.Exec(ctx, lockOtherSignups, arg.AccountID, arg.RoundID)
+	return err
+}
+
 const openRound = `-- name: OpenRound :one
 insert into app.plan_rounds (plan_id, number, starts_on, ends_on)
 values ($1, $2, $3, $4)
