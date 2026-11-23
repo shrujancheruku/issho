@@ -29,8 +29,12 @@ export E2E_APP_DIST="$work/app-dist"
 pnpm --filter @issho/admin build
 # The member app, built as the web image builds it: for its own origin (the Expo
 # server forwards the API's paths, as in deployment), and 127.0.0.1 counts as a
-# dev API, so the You tab shows the API's version.
+# dev API, so the page shows the API's version. Nobody is signed in, so /you sends
+# the page to sign-in, which shows the version too. The Supabase values are
+# stand-ins, so the build is "set up" and shows no configuration error: nothing
+# calls them (no session is stored, no code is sent), and no real project is named.
 (cd "$repo/apps/app" && CI=1 EXPO_PUBLIC_API_URL="http://127.0.0.1:$E2E_APP_PORT" \
+  EXPO_PUBLIC_SUPABASE_URL="http://127.0.0.1:1" EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY="e2e-stand-in-key" \
   pnpm exec expo export --platform web --output-dir "$E2E_APP_DIST")
 pnpm --filter @issho/e2e exec playwright install chromium
 

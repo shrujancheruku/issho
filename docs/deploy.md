@@ -26,14 +26,14 @@ Cloudflare is in front of all of it (proxied, SSL mode Full (strict)). The VM ta
 4. **Deploy the API and the worker** (`kamal deploy --skip-push`: the VM pulls the images pushed in step 2, so what runs is what was built). kamal-proxy sends the new API container traffic only when `GET /up` answers 200, then drains the old one.
 5. **Deploy the Expo server** the same way, `GET /up` of `apps/web/server.js` being its probe.
 6. **Deploy the admin**: `pnpm --filter @issho/admin build`, then `wrangler deploy --env dev`.
-7. **Check from outside** (`scripts/deploy-dev-verify.sh`): the API, the web's address and the admin's Worker each report the commit just deployed through the API's public health check; the web's `/plans` holds its words in the HTML a client with no JavaScript gets; and a real headless Chrome shows `API version <commit>` on the web's You tab and on the admin's page. A deploy that left an old API running fails here.
+7. **Check from outside** (`scripts/deploy-dev-verify.sh`): the API, the web's address and the admin's Worker each report the commit just deployed through the API's public health check; the web's `/plans` holds its tab bar in the HTML a client with no JavaScript gets; and a real headless Chrome shows `API version <commit>` on the web's You tab and on the admin's page. A deploy that left an old API running fails here.
 8. The VM's memory is printed (`free -m` and `docker stats`).
 
 ### Where the secrets are and how CI gets at them
 
 - **No cloud key or token is stored in GitHub.** The workflow signs in to Google Cloud by Workload Identity Federation: GitHub gives the run a short-lived OIDC token (`id-token: write`), and Google exchanges it for the access of `issho-deploy@issho-dev-512213.iam.gserviceaccount.com` through the provider `projects/94737271594/locations/global/workloadIdentityPools/github/providers/issho`, which accepts only this repository. That account can only access secrets in Secret Manager. The only secret the job holds is its own `GITHUB_TOKEN` (`packages: write`), which pushes the images, is what the VM pulls with, and expires with the job.
 - **Kamal reads its secrets from Secret Manager itself.** This answers the spec's check ([Technical operations](spec/operations.md#where-it-runs)). Kamal 2.12's `kamal secrets fetch --adapter gcp_secret_manager` runs `gcloud secrets versions access`, which the service account's role allows, and `.kamal/secrets.dev` uses it: the file names secrets and holds no value. CI does not have to read them and hand them over. The two secrets Kamal does not read (the migration's connection and the Cloudflare token) are read by `scripts/deploy-dev.sh` with the same `gcloud` call, put in the environment of the one command that needs each, and masked in the log. Kamal's `config` command prints the SSH key it read, so never run it where its output is kept.
-- The secrets are `dev-worker-database-url`, `dev-resend-api-key`, `dev-email-from`, `dev-ssh-private-key`, `dev-origin-cert`, `dev-origin-key`, `dev-ssh-host-key`, `dev-migrate-database-url` and `dev-cloudflare-api-token`. The Cloudflare token's stored value ends in a newline, which Cloudflare rejects; the script strips it. `dev-database-url` is not read yet, since the API has no database connection until a ticket gives it one.
+- The secrets are `dev-worker-database-url`, `dev-resend-api-key`, `dev-email-from`, `dev-ssh-private-key`, `dev-origin-cert`, `dev-origin-key`, `dev-ssh-host-key`, `dev-migrate-database-url` and `dev-cloudflare-api-token`. The Cloudflare token's stored value ends in a newline, which Cloudflare rejects; the script strips it. The API reads `dev-database-url` (the transaction pooler's URL, as `DATABASE_URL`) and `dev-supabase-auth-url` (`https://<ref>.supabase.co/auth/v1`, as `SUPABASE_AUTH_URL`): `cmd/api` uses them to keep accounts and check sign-in tokens. The web image is built with the sign-in's two values, `dev-supabase-url` (`https://<ref>.supabase.co`) and `dev-supabase-publishable-key`, which Kamal reads by name and gives the build as builder secrets (`config/deploy.web.yml`; `apps/web/Dockerfile` mounts them for the one `expo export`. Both are in the bundle, public by design, but not in the repository, a build argument or the image's config and history. An empty value fails the preflight and the build like a missing one. `scripts/deploy-dev.sh` also gives the build a digest of the two, `SUPABASE_VALUES_HASH`: BuildKit's cache ignores secret mounts, so without it a daemon that had built before would reuse the old export after a value changed). **Founder step:** create both in Secret Manager before the deploy that carries #639; without them the preflight stops the deploy, naming the missing one. The native builds read the same values from EAS environment variables, which the founder sets ([docs/secrets.md](secrets.md#dev-google-secret-manager)). The Auth URL is public; it is in Secret Manager only so the project's ref stays out of this repository. Both must exist before a deploy: the script's first step checks every secret `.kamal/secrets.dev` names, by reading it with `gcloud secrets versions access` (the permission the account already has; the value is discarded, never printed), and stops before Kamal runs if one is missing.
 - **The VM's address is stored nowhere.** The service account has a custom role, `isshoDeployAddressReader`, with only `compute.addresses.get`, and `scripts/dev-host.sh` asks Google Cloud for the reserved address `issho-dev-ip` each run. The workflow masks it (`::add-mask::`) the moment it is read, before Kamal prints the host it connects to: this repository's Actions logs are public.
 - **The VM's SSH host key is pinned.** Its public key is the secret `dev-ssh-host-key` (one line, `ssh-ed25519 AAAA…`, no address). Before Kamal connects, `scripts/dev-ssh-pin.sh` writes a `known_hosts` line from the address just looked up and that key, and an ssh config with `StrictHostKeyChecking yes` that reads only that file; both destinations give it to Kamal (`ssh: config:`, from `DEV_SSH_CONFIG`). An unknown or changed key is refused, never added, so a machine posing as the VM gets no secret. If the VM is rebuilt, its new key goes into `dev-ssh-host-key` (`gcloud compute instances get-guest-attributes issho-dev --zone asia-southeast1-b --query-path=hostkeys/`, the `ssh-ed25519` one) before the next deploy, or the deploy fails at its first Kamal step.
 
@@ -55,6 +55,16 @@ Both forwarders drop the headers that carry the member's address (`cf-connecting
 - **To confirm it,** read one request from the proxy's log in a CI run or on the VM (`kamal proxy logs -d dev`, never on a laptop) and check its `remote_addr`: it must be one of Cloudflare's published ranges ([cloudflare.com/ips](https://www.cloudflare.com/ips/)), not the address of the machine that made the request. Make the request from a machine whose address you know. Check again after any change to the zone's rules, and before the first production deploy.
 
 Why a forwarder and not CORS, what it costs and what would reverse it: [ADR 0006](adr/0006-browsers-reach-the-api-on-their-own-origin.md).
+
+## Checking the API after a deploy
+
+A request with no sign-in token must be refused. It shows the deployed API is up and holds its Auth address:
+
+```sh
+curl -s -X POST https://api-dev.joinissho.com/issho.v1.AccountService/GetAccount -H 'content-type: application/json' -d '{}'
+```
+
+Expect a body with code `unauthenticated` (HTTP 401). The owner runs this once after the first merge that carries the database and Auth settings.
 
 ## Rolling back
 
@@ -94,3 +104,29 @@ gcloud compute instances start issho-dev --zone asia-southeast1-b --project issh
 ## Not here yet
 
 Production's destination, release-driven deploys, backups, Sentry, alerts and the Google Cloud logging of the containers (all later milestones'), and a deploy hold for the two hours before an outing ([Technical operations](spec/operations.md#what-the-promise-means)), which has no outings to protect until they exist.
+
+## Seeding the dev city
+
+A freshly migrated `issho-dev` has no city, so the API refuses every city and nobody can sign in. The founder, not CI and not a worker, seeds it. The city row is upserted to the fixture's values (state, time zone, currency, names), and the plan rows are rewritten (deleted, then inserted) with the fixture's content, so running it again is safe but puts the fixture back over any change made to those rows by hand.
+
+First, once, mark the dev database as dev. The marker is a database setting stored in the database itself (`pg_db_role_setting`), so the operator can't supply it the way they supply a ref, and a connection can't fake it: the seed reads the stored setting, not the session's, so `?options=-c issho.environment=dev` or `SET` do nothing. Run this against issho-dev only, and never on production:
+
+```sql
+alter database postgres set issho.environment = 'dev';
+```
+
+Then seed:
+
+```sh
+export DATABASE_URL=...            # dev's migration connection (secret dev-migrate-database-url)
+export SEED_DEV_PROJECT_REF=...    # the issho-dev project's ref
+make seed-dev
+```
+
+`cmd/seed` refuses any database that isn't on this machine unless `--hosted-dev` is given. Then it checks three things before writing anything: the URL (and the `PG*` environment) sets no session parameters such as `options`, the target is the project named by `SEED_DEV_PROJECT_REF` (its `db.<ref>.supabase.co` host, or `postgres.<ref>` on the pooler, judged on the connection pgx would make, so a `?user=` in the query counts), and the database's stored `issho.environment` setting is exactly `dev`. The marker check and the writes share one transaction, so the database that was checked is the one written. The ref is what the operator typed, so on its own it would let production's URL through with production's ref; the marker is why that fails, since production never has it. Take the ref from the dev project anyway. The marker is set by hand, in no committed file, and the local `make seed` never reads it.
+
+Check afterwards with the public `ListPlans` call, which needs no token and lists the fixture's plans once the city exists:
+
+```sh
+curl -s -X POST https://api-dev.joinissho.com/issho.v1.PlanService/ListPlans -H 'content-type: application/json' -d '{"city":"da-nang-hoi-an"}'
+```

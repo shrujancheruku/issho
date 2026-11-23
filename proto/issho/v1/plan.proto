@@ -1,0 +1,119 @@
+syntax = "proto3";
+
+package issho.v1;
+
+import "issho/v1/access.proto";
+
+// A city's plans, readable by anyone: a plan page is public, so a visitor sees
+// it, and can share it, before they have an account.
+service PlanService {
+  // Lists a city's plans, earliest start first, with their text in the
+  // caller's display language. Public: anyone may see a city's plans with no
+  // token (docs/spec/core-loop.md). It returns a plan's page fields, which are
+  // the same for everyone, and nothing about any person but how many are signed
+  // up. A plan is left out until its opening day on the city's calendar, and a
+  // closed city's plans are all left out: the spec has no "opening soon".
+  rpc ListPlans(ListPlansRequest) returns (ListPlansResponse) {
+    option (issho.v1.access) = ACCESS_PUBLIC;
+  }
+
+  // Returns one plan with its text in the caller's display language. Public,
+  // for the same reason as ListPlans. A plan that doesn't exist is NOT_FOUND,
+  // never an empty plan, and so is one ListPlans leaves out (not yet open, or
+  // in a closed city): the same error, so a caller can't tell which.
+  rpc GetPlan(GetPlanRequest) returns (GetPlanResponse) {
+    option (issho.v1.access) = ACCESS_PUBLIC;
+  }
+}
+
+message ListPlansRequest {
+  // The city's slug, e.g. "da-nang-hoi-an". A city that isn't listed is
+  // NOT_FOUND.
+  string city = 1;
+  // The language to read the plans in, "en" or "vi"; empty means English. Any
+  // other is INVALID_ARGUMENT. The caller sends it because a public call has no
+  // account to take it from. A plan with no text in the language reads in
+  // English, and its `language` says so.
+  string display_language = 2;
+}
+
+message ListPlansResponse {
+  repeated Plan plans = 1;
+}
+
+message GetPlanRequest {
+  // The plan's id. One that is malformed is the same NOT_FOUND as one that
+  // doesn't exist.
+  string id = 1;
+  // As in ListPlansRequest.
+  string display_language = 2;
+}
+
+message GetPlanResponse {
+  Plan plan = 1;
+}
+
+// A plan, with what a plan page shows. The prose is in `language`; every other
+// field is the same in every language, so a translation can't change what must
+// be true on the day.
+message Plan {
+  string id = 1;
+  // The city's slug.
+  string city = 2;
+  // The language of the prose fields (title, description, meeting_point,
+  // what_to_bring, and each stop's name and note): the one asked for, or "en"
+  // when the plan has no text in it.
+  string language = 3;
+  string title = 4;
+  string description = 5;
+  // The price per person, in whole units of `currency`.
+  int32 price = 6;
+  // ISO 4217, the city's currency. Prices are never converted.
+  string currency = 7;
+  // The meeting point's street address; a place's real local name, never
+  // translated.
+  string meeting_address = 8;
+  // What to look for at the meeting address.
+  string meeting_point = 9;
+  repeated string what_to_bring = 10;
+  // The parts of the day the plan can run in: "morning", "afternoon" or
+  // "evening".
+  repeated string parts_of_day = 11;
+  // When the plan starts and ends, "HH:MM" on the city's clock.
+  string starts_at = 12;
+  string ends_at = 13;
+  // The city's IANA time zone, e.g. "Asia/Ho_Chi_Minh", which starts_at and
+  // ends_at are in.
+  string time_zone = 14;
+  // The stops, in order.
+  repeated Stop stops = 15;
+  // How many people are signed up to the plan's running round: a number, never
+  // who. 0 when no round is running.
+  int32 signed_up = 16;
+  // The last day of the plan's running round, or of the round a signup made
+  // today would be in when none is running: the city's calendar date
+  // "YYYY-MM-DD". People can tick from 3 days ahead to a round (7 days) after
+  // it, so the app offers exactly the dates SignUp accepts. It is the same for
+  // every visitor and changes only when a round ends.
+  string round_ends = 17;
+}
+
+// One stop of a plan.
+message Stop {
+  // Counts from 1.
+  int32 position = 1;
+  // Minutes spent at the stop.
+  int32 stay_minutes = 2;
+  // The place's name in the plan's language.
+  string name = 3;
+  string note = 4;
+  // The way to the next stop. Unset for the last stop.
+  Leg leg = 5;
+}
+
+// The way between two stops: a field, not prose.
+message Leg {
+  // "walk", "ride" or "transit".
+  string mode = 1;
+  int32 minutes = 2;
+}

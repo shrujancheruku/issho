@@ -46,14 +46,14 @@ chmod +x "$work/gcloud"
 kamal() {
   docker run --rm -v "$work/project:/workdir" -v "$work/gcloud:/usr/local/bin/gcloud:ro" \
     -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0='*' \
-    -e DEPLOY_HOST=203.0.113.7 -e KAMAL_REGISTRY_PASSWORD=stub -e DEV_SSH_CONFIG=/pin/ssh_config \
+    -e DEPLOY_HOST=203.0.113.7 -e SUPABASE_VALUES_HASH=stand-in-digest -e KAMAL_REGISTRY_PASSWORD=stub -e DEV_SSH_CONFIG=/pin/ssh_config \
     "$kamal_image" "$@"
 }
 
 # What each service's configuration comes to, from Kamal's own loader.
 facts=$(docker run --rm -v "$work/project:/workdir" -v "$work/gcloud:/usr/local/bin/gcloud:ro" \
   -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0='*' \
-  -e DEPLOY_HOST=203.0.113.7 -e KAMAL_REGISTRY_PASSWORD=stub -e DEV_SSH_CONFIG=/pin/ssh_config \
+  -e DEPLOY_HOST=203.0.113.7 -e SUPABASE_VALUES_HASH=stand-in-digest -e KAMAL_REGISTRY_PASSWORD=stub -e DEV_SSH_CONFIG=/pin/ssh_config \
   --entrypoint ruby "$kamal_image" -e '
 require "kamal"
 require "json"
@@ -72,6 +72,8 @@ out = {}
     ssh_config: c.ssh.options[:config],
     cert: c.proxy.certificate_pem_content,
     build_args: c.builder.args,
+    build_secrets: c.raw_config.builder["secrets"],
+    secret_values: %w[EXPO_PUBLIC_SUPABASE_URL EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY].map { |k| c.secrets[k] },
     env_clear: c.raw_config.env&.dig("clear"),
     worker_secrets: c.raw_config.servers["worker"]&.dig("env", "secret"),
   }
@@ -126,6 +128,18 @@ expect "the API is built with the commit's version, as a string" '.backend.build
 
 # The web is built for the page's own origin.
 expect "the web is built against the page's origin" '.web.build_args.EXPO_PUBLIC_API_URL' https://dev.joinissho.com
+
+# The sign-in's Supabase values reach the build as builder secrets, read by name
+# from Secret Manager (never a build argument, which would sit in the image's history).
+expect "the web build takes the Supabase URL as a secret" '.web.build_secrets | index("EXPO_PUBLIC_SUPABASE_URL") != null' true
+expect "the web build takes the publishable key as a secret" '.web.build_secrets | index("EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY") != null' true
+expect "the Supabase URL is read from dev-supabase-url" '.web.secret_values[0]' value-of-dev-supabase-url
+expect "the publishable key is read from dev-supabase-publishable-key" '.web.secret_values[1]' value-of-dev-supabase-publishable-key
+expect "no Supabase value is a build argument" '.web.build_args | keys | map(select(test("SUPABASE") and . != "SUPABASE_VALUES_HASH")) | length' 0
+
+# The digest of the values (not a value) reaches the build, so a changed value is not
+# served from BuildKit's cache; it is a build argument that holds no Supabase value.
+expect "the web build is given the values' digest" '.web.build_args.SUPABASE_VALUES_HASH' stand-in-digest
 
 # The Expo server forwards the API's paths to the API's own name.
 expect "the web forwards the API's paths to api-dev" '.web.env_clear.API_ORIGIN' https://api-dev.joinissho.com

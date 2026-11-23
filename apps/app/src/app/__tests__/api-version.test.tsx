@@ -52,7 +52,7 @@ describe('the You tab', () => {
     const api = fakeApi();
     api.health.check.mockResolvedValue({ version: 'a1b2c3d' });
     await renderYou('en', api);
-    expect(await screen.findByText('Nothing here yet.')).toBeTruthy();
+    expect(await screen.findByText('Signed in as ada@example.com')).toBeTruthy();
     expect(screen.queryByTestId('api-version')).toBeNull();
     expect(api.health.check).not.toHaveBeenCalled();
   });

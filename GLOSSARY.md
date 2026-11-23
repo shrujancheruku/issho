@@ -64,6 +64,10 @@ _Avoid_: log in, register
 A one-use link from a member that admits whoever signs in with it, valid 14 days.
 _Avoid_: invitation (that is an outing's), invite, referral
 
+**Admission**:
+The fact that an account has been let in: by a join link, or for the owner by the seed. In the Pilot a signup needs it; plans can be read without it. Issho records who brought in whom, which only a moderator sees.
+_Avoid_: approval, invite
+
 **Guest**:
 A person a member adds to their own signup to a plan, by a link that shows the plan and lets them join and sign up. Admitting a guest who isn't a member uses one of the member's join links.
 _Avoid_: vouch for, join offer; a guest of a crew
@@ -266,6 +270,14 @@ _Avoid_: cycle, window
 One person's entry to one round of a plan, with the times they can go.
 _Avoid_: registration, booking, RSVP
 
+**Tick**:
+One part of one real date a person can go, in a signup: "Saturday 10 January, evening". A signup holds a set of ticks, from 3 days ahead.
+_Avoid_: slot (that is matching's own word for a tick it has read), availability
+
+**Hear-by date**:
+A round's last day, the same for everyone signed up: by then each has an invitation or a "no group this round".
+_Avoid_: deadline, results day
+
 **Matching**:
 Forming groups and setting dates among the signups to plans.
 _Avoid_: pool, audience, recommendation
@@ -307,6 +319,9 @@ _Avoid_: invitation for joining Issho (that is a join link)
 One person's place in one outing. It holds their stage or how they left: *declined*, *unanswered*, *full*, *cancelled*, *late cancel* or *removed*.
 _Avoid_: slot, spot, RSVP
 
+**Accepted** (of a seat):
+Said yes while the outing is not set yet: the yes waits for the third, which makes everyone accepted *going*. The spec gives it no word; it is what a seat holds between *invited* and *going*.
+
 **Stage**:
 Where an outing stands for one person: *invited*, *going*, *on the day* or *after*.
 _Avoid_: step, phase, status
@@ -333,6 +348,10 @@ _Avoid_: went, showed up
 
 **Attendee**:
 A person who attended an outing.
+
+**Check-in**:
+One tap ("I'm here") by a person going, with no proof of place, from 30 minutes before the start to the plan's stated end. Once checked in there is no cancel; the group sees who has checked in.
+_Avoid_: arrive, confirm
 
 **The group's word**:
 What most of at least 2 others said about whether a person was there.

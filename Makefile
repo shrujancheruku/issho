@@ -269,3 +269,27 @@ deploy-test:
 
 test: deploy-test
 ci-test: deploy-test
+
+# Load the development fixture (the city Da Nang–Hoi An and its two plans, backend/fixtures)
+# into the local database that `make migrate-up` migrated. It refuses a database that
+# isn't on this machine and is not in the production image (backend/cmd/seed).
+# `make seed ADMIT=<email>` also admits the account that signed in with that email (the owner).
+.PHONY: seed
+seed:
+	cd backend && DATABASE_URL='$(DATABASE_URL)' go run ./cmd/seed $(if $(ADMIT),--admit '$(ADMIT)')
+
+# Seed the hosted dev database (issho-dev) only. The founder runs it, once, after dev is
+# migrated; no worker or CI job does. DATABASE_URL (dev's migration connection) and
+# SEED_DEV_PROJECT_REF (the dev project's ref) come from the shell's environment, not this
+# file; the seed refuses any target that isn't that project's, or whose stored
+# issho.environment setting isn't 'dev' (set once by the founder on dev). See docs/deploy.md.
+.PHONY: seed-dev
+seed-dev:
+	cd backend && go run ./cmd/seed --hosted-dev $(if $(ADMIT),--admit '$(ADMIT)')
+
+# The season (#623): the scripted run of people and plans through the real
+# packages on the fake clock, and its scorecard. It starts its own throwaway
+# Postgres in Docker (backend/cmd/season); `make test` runs it as a test too.
+.PHONY: season
+season:
+	cd backend && go run ./cmd/season

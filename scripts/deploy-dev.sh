@@ -45,6 +45,33 @@ secret() {
 
 step() { echo "== $*"; }
 
+step "Check that every secret the deploy names exists"
+# The names are the ones .kamal/secrets.dev fetches. Kamal would fail on a missing
+# one at its first call anyway; checking here fails first and says which, before
+# the VM, a build or a container is touched. It reads each secret the way Kamal
+# does (the accessor permission the deploy account has) and discards the value
+# unseen: `secrets describe` would need secretmanager.secrets.get, which that
+# account is not given (docs/deploy.md), and every deploy would stop here with a
+# false "no secret named".
+missing=()
+for name in $(sed -n 's/^SECRETS=.*issho-dev-512213 //p' .kamal/secrets.dev | tr -d ')'); do
+  gcloud secrets versions access latest --secret="$name" --project="$project" >/dev/null 2>&1 || missing+=("$name")
+done
+[ "${#missing[@]}" -eq 0 ] || { echo "Secret Manager has no secret named: ${missing[*]}" >&2; exit 1; }
+
+# The web's two sign-in values must not be empty either: an empty one would build an
+# app that cannot sign in. Their digest goes to the build as SUPABASE_VALUES_HASH
+# (apps/web/Dockerfile): BuildKit's cache ignores secret mounts, so a build on a
+# daemon that has built before would otherwise reuse the old bundle after a value
+# changed. The digest is not a value; the values themselves are masked on Actions.
+secret dev-supabase-url supabase_url
+secret dev-supabase-publishable-key supabase_key
+for pair in "dev-supabase-url:$supabase_url" "dev-supabase-publishable-key:$supabase_key"; do
+  [ -n "${pair#*:}" ] || { echo "Secret Manager's ${pair%%:*} is empty" >&2; exit 1; }
+done
+SUPABASE_VALUES_HASH=$(printf '%s\n%s' "$supabase_url" "$supabase_key" | shasum -a 256 | cut -d' ' -f1)
+export SUPABASE_VALUES_HASH
+
 step "Docker on the VM (installs it on the first run)"
 kamal server bootstrap "${backend[@]}"
 

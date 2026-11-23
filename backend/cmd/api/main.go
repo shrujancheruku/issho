@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
@@ -26,10 +27,27 @@ func main() {
 	if addr == "" {
 		addr = ":8080"
 	}
-	// No Auth yet: the token verifier is #608's, and until it exists only the
-	// public RPCs can be called.
-	if err := serve.HTTP(ctx, log, addr, rpc.NewHandler(rpc.Config{Version: version, Log: log, Clock: clock.Real{}})); err != nil {
+	if err := run(ctx, log, addr); err != nil {
 		log.Error("exited", "err", err)
 		os.Exit(1)
 	}
+}
+
+func run(ctx context.Context, log *slog.Logger, addr string) error {
+	// The real clock is built here and only here (tools/clockcheck enforces it).
+	clk := clock.Real{}
+	cfg := rpc.Config{Version: version, Log: log, Clock: clk}
+	acc, err := newAccounts(ctx, log, os.Getenv, clk)
+	if err != nil {
+		return err
+	}
+	if acc != nil {
+		defer acc.close()
+		cfg.People, cfg.Auth = acc.people, acc.auth
+		cfg.Cities, cfg.Plans, cfg.Signups, cfg.Outings = acc.cities, acc.plans, acc.signups, acc.outings
+	} else {
+		// Without them every token is refused and only the public RPCs work.
+		log.Warn("accounts are not configured: DATABASE_URL and SUPABASE_AUTH_URL are unset")
+	}
+	return serve.HTTP(ctx, log, addr, rpc.NewHandler(cfg))
 }

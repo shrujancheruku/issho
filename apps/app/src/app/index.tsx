@@ -1,10 +1,16 @@
-import { Redirect } from 'expo-router';
+import { useRouter } from 'expo-router';
+
+import { useOpenOnTogether } from '@/signup/use-open-on-together';
 
 /**
- * Plans opens first for a visitor with no account (docs/spec/app-shape.md,
- * "What opens first"). Together takes over for a person with something in play
- * once sign-in exists.
+ * What the app opens on (docs/spec/app-shape.md, "What opens first"): Together
+ * when the person has something in play, Plans for everyone else, a visitor
+ * with no account included. On the web the server never gets here: it sends
+ * `/` to `/plans?open=1` (`+middleware.ts`), and the Plans screen applies the
+ * same rule once it knows who is looking.
  */
 export default function Index() {
-  return <Redirect href="/plans" />;
+  const router = useRouter();
+  useOpenOnTogether(() => router.replace('/plans'));
+  return null;
 }

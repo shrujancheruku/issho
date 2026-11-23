@@ -44,11 +44,12 @@ for pair in "API:$api" "API through the web's address:$web" "API through the adm
   [ "$got" = "$want" ] && echo "ok   $what reports $got" || bad "$what reports '$got', want '$want'"
 done
 
-# The page is built on the server: its words are in the HTML before any script runs.
-if curl -fsS --max-time 20 "$web/plans" | grep -q 'No plans yet.'; then
+# The page is built on the server: its words are in the HTML before any script
+# runs. The plans come from the API and change, so the check reads the tab bar.
+if curl -fsS --max-time 20 "$web/plans" | grep -q '>Together<'; then
   echo "ok   the web page is server-rendered"
 else
-  bad "the web page is not server-rendered: /plans has no 'No plans yet.' in its HTML"
+  bad "the web page is not server-rendered: /plans has no tab bar in its HTML"
 fi
 
 # And the pages show it: a real browser runs their script and dumps the result.

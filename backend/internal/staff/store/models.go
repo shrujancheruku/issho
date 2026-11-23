@@ -60,6 +60,137 @@ func (ns NullRiverRiverJobState) Value() (driver.Value, error) {
 	return string(ns.RiverRiverJobState), nil
 }
 
+type AppAccount struct {
+	ID              pgtype.UUID
+	Email           string
+	City            string
+	DisplayLanguage string
+	CreatedAt       time.Time
+}
+
+type AppAdmission struct {
+	AccountID  pgtype.UUID
+	AdmittedAt time.Time
+	Via        string
+	BroughtBy  pgtype.UUID
+	LinkID     pgtype.UUID
+}
+
+type AppCity struct {
+	Slug     string
+	State    string
+	TimeZone string
+	Currency string
+}
+
+type AppCityName struct {
+	City     string
+	Language string
+	Name     string
+}
+
+type AppFeedback struct {
+	OutingID   pgtype.UUID
+	AccountID  pgtype.UUID
+	Went       bool
+	AnsweredAt time.Time
+	UpdatedAt  time.Time
+}
+
+type AppFeedbackUntick struct {
+	OutingID  pgtype.UUID
+	RaterID   pgtype.UUID
+	SubjectID pgtype.UUID
+}
+
+type AppJoinLink struct {
+	ID          pgtype.UUID
+	MemberID    pgtype.UUID
+	Code        string
+	CreatedAt   time.Time
+	CancelledAt *time.Time
+	RedeemedAt  *time.Time
+}
+
+type AppOuting struct {
+	ID        pgtype.UUID
+	PlanID    pgtype.UUID
+	RoundID   pgtype.UUID
+	Date      pgtype.Date
+	Part      string
+	StartsAt  string
+	Languages []string
+	State     string
+	CreatedAt time.Time
+	EndsAt    string
+	TimeZone  string
+}
+
+type AppPick struct {
+	OutingID  pgtype.UUID
+	PickerID  pgtype.UUID
+	PickedID  pgtype.UUID
+	CreatedAt time.Time
+}
+
+type AppPlan struct {
+	ID             pgtype.UUID
+	City           string
+	Price          int32
+	MeetingAddress string
+	PartsOfDay     []string
+	StartsAt       string
+	EndsAt         string
+	OpensOn        pgtype.Date
+}
+
+type AppPlanRound struct {
+	ID       pgtype.UUID
+	PlanID   pgtype.UUID
+	Number   int32
+	StartsOn pgtype.Date
+	EndsOn   pgtype.Date
+}
+
+type AppPlanStop struct {
+	PlanID      pgtype.UUID
+	Position    int32
+	StayMinutes int32
+	LegMode     *string
+	LegMinutes  *int32
+}
+
+type AppPlanStopText struct {
+	PlanID   pgtype.UUID
+	Position int32
+	Language string
+	Name     string
+	Note     string
+}
+
+type AppPlanText struct {
+	PlanID       pgtype.UUID
+	Language     string
+	Title        string
+	Description  string
+	MeetingPoint string
+	WhatToBring  []string
+}
+
+type AppProfile struct {
+	AccountID               pgtype.UUID
+	Name                    string
+	Gender                  string
+	Languages               []string
+	LivesInCity             bool
+	OnlyWomenAndNonBinary   bool
+	SaidAdultOn             pgtype.Date
+	CodeOfConductVersion    int32
+	CodeOfConductAcceptedAt time.Time
+	CreatedAt               time.Time
+	UpdatedAt               time.Time
+}
+
 type AppQueueItem struct {
 	ID        int64
 	Kind      string
@@ -69,6 +200,33 @@ type AppQueueItem struct {
 	Reason    *string
 	CreatedAt time.Time
 	ClosedAt  *time.Time
+}
+
+type AppSeat struct {
+	OutingID         pgtype.UUID
+	RoundID          pgtype.UUID
+	AccountID        pgtype.UUID
+	State            string
+	InvitedAt        time.Time
+	InvitationEndsAt time.Time
+	GoingAt          *time.Time
+	LeftGoingAt      *time.Time
+	CheckedInAt      *time.Time
+	Handle           pgtype.UUID
+}
+
+type AppSignup struct {
+	RoundID   pgtype.UUID
+	AccountID pgtype.UUID
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
+type AppSignupTick struct {
+	RoundID   pgtype.UUID
+	AccountID pgtype.UUID
+	TickDate  pgtype.Date
+	Part      string
 }
 
 type RiverRiverJob struct {

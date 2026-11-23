@@ -17,6 +17,9 @@ func TestThinLoopNumbers(t *testing.T) {
 	if InvitationWindow != 48*time.Hour {
 		t.Errorf("invitation window = %v, spec says 48 hours", InvitationWindow)
 	}
+	if YesesToSet != 3 {
+		t.Errorf("yeses to set an outing = %d, spec says 3", YesesToSet)
+	}
 	if RoundLength != 7*24*time.Hour {
 		t.Errorf("round length = %v, spec says 7 days", RoundLength)
 	}
@@ -31,5 +34,35 @@ func TestThinLoopNumbers(t *testing.T) {
 func TestPreferredSizesLieWithinTheGroupRange(t *testing.T) {
 	if !(MinGroupSize <= PreferredGroupSizeLow && PreferredGroupSizeLow <= PreferredGroupSizeHigh && PreferredGroupSizeHigh <= MaxGroupSize) {
 		t.Errorf("want %d <= %d <= %d <= %d", MinGroupSize, PreferredGroupSizeLow, PreferredGroupSizeHigh, MaxGroupSize)
+	}
+}
+
+// The profile's numbers, from docs/spec/people.md ("Adults only", "The
+// profile"), written out independently of the constants.
+func TestProfileNumbers(t *testing.T) {
+	if MinAge != 18 {
+		t.Errorf("minimum age = %d, spec says 18", MinAge)
+	}
+	if NameMinLength != 1 || NameMaxLength != 40 {
+		t.Errorf("name length = %d to %d, spec says 1 to 40", NameMinLength, NameMaxLength)
+	}
+}
+
+// A tick is on a real date from 3 days ahead (docs/spec/matching.md, "Rounds"),
+// written out independently of the constant.
+func TestSignupLeadDays(t *testing.T) {
+	if MinTickLeadDays != 3 {
+		t.Errorf("a tick's lead = %d days, spec says 3", MinTickLeadDays)
+	}
+}
+
+// A member has 3 join links and a link lasts 14 days (docs/spec/people.md,
+// "Join links"), written out independently of the constants.
+func TestJoinLinkNumbers(t *testing.T) {
+	if JoinLinksPerMember != 3 {
+		t.Errorf("join links per member = %d, spec says 3", JoinLinksPerMember)
+	}
+	if JoinLinkLife != 14*24*time.Hour {
+		t.Errorf("a join link lasts %v, spec says 14 days", JoinLinkLife)
 	}
 }

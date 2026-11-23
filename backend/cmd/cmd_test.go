@@ -251,3 +251,373 @@ func TestRPCAuthFailsOnAnRPCWithNoRuleAndPassesOtherwise(t *testing.T) {
 		t.Fatalf("the repo's proto: %v\n%s", err, out)
 	}
 }
+
+// The API needs its database and its sign-in together: with only one, it says
+// which is missing and exits 1 rather than serving accounts it can't keep or
+// can't check.
+func TestAPIWithHalfOfItsAccountsConfigExitsWithAnError(t *testing.T) {
+	bin := filepath.Join(t.TempDir(), "api")
+	if out, err := exec.Command("go", "build", "-o", bin, "./api").CombinedOutput(); err != nil {
+		t.Fatalf("build: %v\n%s", err, out)
+	}
+	for name, tc := range map[string]struct{ env, missing string }{
+		"no sign-in":  {"DATABASE_URL=postgres://localhost/x", "SUPABASE_AUTH_URL"},
+		"no database": {"SUPABASE_AUTH_URL=http://127.0.0.1:1/auth/v1", "DATABASE_URL"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			cmd := exec.Command(bin)
+			cmd.Env = append(os.Environ(), "API_ADDR=127.0.0.1:0", "DATABASE_URL=", "SUPABASE_AUTH_URL=", tc.env)
+			out, err := cmd.CombinedOutput()
+			if ee, ok := err.(*exec.ExitError); !ok || ee.ExitCode() != 1 {
+				t.Fatalf("err = %v, want exit status 1; output:\n%s", err, out)
+			}
+			if !strings.Contains(string(out), tc.missing) {
+				t.Fatalf("output does not name %s:\n%s", tc.missing, out)
+			}
+		})
+	}
+}
+
+// With its database and sign-in configured the API serves accounts, behind the
+// token check: a call with no good token is refused as unauthenticated (an API
+// that didn't serve accounts would answer unimplemented).
+func TestAPIWithAccountsConfiguredServesThemBehindTheTokenCheck(t *testing.T) {
+	bin := filepath.Join(t.TempDir(), "api")
+	if out, err := exec.Command("go", "build", "-o", bin, "./api").CombinedOutput(); err != nil {
+		t.Fatalf("build: %v\n%s", err, out)
+	}
+	pool := testdb.NewDatabase(t)
+	if err := db.Up(context.Background(), pool); err != nil {
+		t.Fatal(err)
+	}
+	cmd := exec.Command(bin)
+	// The key set's address is never reached: the token is refused first.
+	cmd.Env = append(os.Environ(), "API_ADDR=127.0.0.1:0", "DATABASE_URL="+testdb.URL(pool), "SUPABASE_AUTH_URL=http://127.0.0.1:1/auth/v1")
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := cmd.Start(); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = cmd.Process.Kill() })
+
+	addrs := make(chan string, 1)
+	go func() {
+		addr := regexp.MustCompile(`"addr":"([^"]+)"`)
+		sc := bufio.NewScanner(stdout)
+		for sc.Scan() {
+			if m := addr.FindStringSubmatch(sc.Text()); m != nil && strings.Contains(sc.Text(), "started") {
+				addrs <- m[1]
+				break
+			}
+		}
+		for sc.Scan() {
+		}
+	}()
+	var addr string
+	select {
+	case addr = <-addrs:
+	case <-time.After(10 * time.Second):
+		t.Fatal("did not report its address")
+	}
+
+	client := isshov1connect.NewAccountServiceClient(http.DefaultClient, "http://"+addr)
+	req := connect.NewRequest(&isshov1.GetAccountRequest{})
+	req.Header().Set("Authorization", "Bearer forged")
+	_, err = client.GetAccount(context.Background(), req)
+	if got := connect.CodeOf(err); got != connect.CodeUnauthenticated {
+		t.Fatalf("GetAccount with a forged token: code %v (%v), want unauthenticated", got, err)
+	}
+}
+
+const fixturesPkg = "github.com/shrujancheruku/issho/backend/fixtures"
+
+// depsOf lists every package the commands are built from, tests excluded.
+func depsOf(t *testing.T, commands ...string) string {
+	t.Helper()
+	args := []string{"list", "-deps"}
+	for _, c := range commands {
+		args = append(args, "./"+c)
+	}
+	out, err := exec.Command("go", args...).CombinedOutput()
+	if err != nil {
+		t.Fatalf("go list: %v\n%s", err, out)
+	}
+	return string(out)
+}
+
+// Nothing loads the fixture in production: the image holds api and worker, and
+// neither is built from the fixtures. migrate is the third command the
+// deploy might run, and it doesn't either. Only seed, which the image doesn't
+// hold, imports them.
+func TestProductionProcessesDoNotImportTheFixtures(t *testing.T) {
+	for _, name := range []string{"api", "worker", "migrate"} {
+		if strings.Contains(depsOf(t, name), fixturesPkg+"\n") {
+			t.Errorf("cmd/%s is built from the fixtures package", name)
+		}
+	}
+	if !strings.Contains(depsOf(t, "seed"), fixturesPkg+"\n") {
+		t.Error("cmd/seed is not built from the fixtures package: this test checks nothing")
+	}
+	dockerfile, err := os.ReadFile("../Dockerfile")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(dockerfile), "cmd/seed") {
+		t.Error("the image builds cmd/seed")
+	}
+}
+
+func buildSeed(t *testing.T) string {
+	t.Helper()
+	bin := filepath.Join(t.TempDir(), "seed")
+	if out, err := exec.Command("go", "build", "-o", bin, "./seed").CombinedOutput(); err != nil {
+		t.Fatalf("build: %v\n%s", err, out)
+	}
+	return bin
+}
+
+// `seed` loads the fixture city and plans into a migrated local database, and
+// can be run again.
+func TestSeedLoadsTheFixtureIntoALocalDatabase(t *testing.T) {
+	bin := buildSeed(t)
+	pool := testdb.NewDatabase(t)
+	if err := db.Up(context.Background(), pool); err != nil {
+		t.Fatal(err)
+	}
+	for range 2 {
+		cmd := exec.Command(bin)
+		cmd.Env = append(os.Environ(), "DATABASE_URL="+testdb.URL(pool))
+		if out, err := cmd.CombinedOutput(); err != nil {
+			t.Fatalf("seed: %v\n%s", err, out)
+		}
+	}
+	var cities, plans int
+	if err := pool.QueryRow(context.Background(), `select (select count(*) from app.cities), (select count(*) from app.plans)`).Scan(&cities, &plans); err != nil {
+		t.Fatal(err)
+	}
+	if cities != 1 || plans != 2 {
+		t.Fatalf("cities, plans = %d, %d; want 1, 2", cities, plans)
+	}
+}
+
+// Criterion: the owner's account can be admitted by a seed, so the first links
+// have a source. `seed --admit EMAIL` admits the account that signed in with
+// that email, with no link and nobody who brought it in, and can be run again.
+func TestSeedAdmitsTheAccountNamedByTheFlag(t *testing.T) {
+	bin := buildSeed(t)
+	pool := testdb.NewDatabase(t)
+	ctx := context.Background()
+	if err := db.Up(ctx, pool); err != nil {
+		t.Fatal(err)
+	}
+	const owner = "6f1c2a64-6f0e-4d0e-9a6a-0c4a6f3a0001"
+	seed := func(args ...string) ([]byte, error) {
+		cmd := exec.Command(bin, args...)
+		cmd.Env = append(os.Environ(), "DATABASE_URL="+testdb.URL(pool))
+		return cmd.CombinedOutput()
+	}
+	if out, err := seed(); err != nil { // the fixture city first: an account has a city
+		t.Fatalf("seed: %v\n%s", err, out)
+	}
+	if _, err := pool.Exec(ctx, `insert into app.accounts (id, email, city, display_language, created_at)
+		values ($1, 'owner@example.com', 'da-nang-hoi-an', 'en', now())`, owner); err != nil {
+		t.Fatal(err)
+	}
+	admitted := func() (n int, via string) {
+		t.Helper()
+		if err := pool.QueryRow(ctx, `select count(*), coalesce(min(via), '') from app.admissions where account_id = $1 and brought_by is null and link_id is null`, owner).Scan(&n, &via); err != nil {
+			t.Fatal(err)
+		}
+		return n, via
+	}
+	if n, _ := admitted(); n != 0 {
+		t.Fatal("the account was admitted before the seed")
+	}
+	for range 2 {
+		if out, err := seed("--admit", "Owner@Example.com"); err != nil {
+			t.Fatalf("seed --admit: %v\n%s", err, out)
+		}
+	}
+	if n, via := admitted(); n != 1 || via != "seed" {
+		t.Fatalf("admissions of the owner = %d via %q; want 1 via seed", n, via)
+	}
+}
+
+// An email nobody signed in with admits nobody, writes nothing, and the error
+// doesn't repeat the email (a log is no place for it).
+func TestSeedAdmitOfAnUnknownEmailWritesNothingAndDoesNotEchoIt(t *testing.T) {
+	bin := buildSeed(t)
+	pool := testdb.NewDatabase(t)
+	ctx := context.Background()
+	if err := db.Up(ctx, pool); err != nil {
+		t.Fatal(err)
+	}
+	cmd := exec.Command(bin, "--admit", "nobody@example.com")
+	cmd.Env = append(os.Environ(), "DATABASE_URL="+testdb.URL(pool))
+	out, err := cmd.CombinedOutput()
+	if err == nil {
+		t.Fatal("seed --admit of an unknown account succeeded")
+	}
+	if strings.Contains(string(out), "nobody@example.com") {
+		t.Errorf("seed echoed the email:\n%s", out)
+	}
+	var cities, admissions int
+	if err := pool.QueryRow(ctx, `select (select count(*) from app.cities), (select count(*) from app.admissions)`).Scan(&cities, &admissions); err != nil {
+		t.Fatal(err)
+	}
+	if cities != 0 || admissions != 0 {
+		t.Fatalf("cities, admissions = %d, %d after a refused seed; want nothing written", cities, admissions)
+	}
+}
+
+// `seed` is for development: it refuses a database that isn't on this machine,
+// before it connects, and says so without printing the URL (it holds the
+// password).
+func TestSeedRefusesADatabaseThatIsNotLocal(t *testing.T) {
+	bin := buildSeed(t)
+	for _, url := range []string{
+		"postgresql://postgres:hunter2@db.abcdefghij.supabase.co:5432/postgres",
+		"postgresql://postgres.abcdefghij:hunter2@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres",
+		"postgresql://postgres:hunter2@10.0.0.5/postgres",
+		"postgresql://postgres:hunter2@127.0.0.1/postgres?host=db.abcdefghij.supabase.co",
+		"not a url",
+		"",
+	} {
+		cmd := exec.Command(bin)
+		cmd.Env = append(os.Environ(), "DATABASE_URL="+url)
+		out, err := cmd.CombinedOutput()
+		if err == nil {
+			t.Errorf("seed accepted %q", url)
+		}
+		if strings.Contains(string(out), "hunter2") {
+			t.Errorf("seed printed the password:\n%s", out)
+		}
+	}
+}
+
+// The hosted-dev opt-in does not open the door to production: with the flag
+// and a dev ref set, a target that is not that project's is refused before it
+// connects, and the password is not printed. Without SEED_DEV_PROJECT_REF the
+// flag alone reaches nothing.
+func TestSeedHostedDevOptInRefusesAProductionLikeTarget(t *testing.T) {
+	bin := buildSeed(t)
+	const devRef = "abcdefghijklmnopqrst"
+	for _, tc := range []struct{ url, ref string }{
+		{"postgresql://postgres:hunter2@db.zzzzzzzzzzzzzzzzzzzz.supabase.co:5432/postgres", devRef},
+		{"postgresql://postgres.zzzzzzzzzzzzzzzzzzzz:hunter2@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres", devRef},
+		{"postgresql://postgres:hunter2@db." + devRef + ".supabase.co:5432/postgres", ""},
+	} {
+		cmd := exec.Command(bin, "--hosted-dev")
+		cmd.Env = append(os.Environ(), "DATABASE_URL="+tc.url, "SEED_DEV_PROJECT_REF="+tc.ref)
+		out, err := cmd.CombinedOutput()
+		if err == nil {
+			t.Errorf("seed --hosted-dev accepted %q with ref %q", tc.url, tc.ref)
+		}
+		if strings.Contains(string(out), "hunter2") {
+			t.Errorf("seed printed the password:\n%s", out)
+		}
+	}
+}
+
+// With --hosted-dev the seed also reads the database's own environment marker
+// (`issho.environment`) before writing anything, and goes on only if it is
+// exactly `dev`: the operator supplies the ref, but not what is stored in the
+// database. The test database is local, so the target check passes and only the
+// marker decides. No marker and `prod` are refused with nothing written; `dev`
+// seeds. Without the flag the marker is never read: a local seed needs none.
+func TestSeedHostedDevNeedsTheDevEnvironmentMarker(t *testing.T) {
+	bin := buildSeed(t)
+	for _, tc := range []struct {
+		name   string
+		marker string // "" sets none
+		seeds  bool
+	}{
+		{"no marker", "", false},
+		{"prod", "prod", false},
+		{"dev with other case", "Dev", false},
+		{"dev", "dev", true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			pool := testdb.NewDatabase(t)
+			ctx := context.Background()
+			if err := db.Up(ctx, pool); err != nil {
+				t.Fatal(err)
+			}
+			if tc.marker != "" {
+				if _, err := pool.Exec(ctx, `do $$ begin execute format('alter database %I set issho.environment = %L', current_database(), '`+tc.marker+`'); end $$`); err != nil {
+					t.Fatal(err)
+				}
+			}
+			cmd := exec.Command(bin, "--hosted-dev")
+			cmd.Env = append(os.Environ(), "DATABASE_URL="+testdb.URL(pool))
+			out, err := cmd.CombinedOutput()
+			var cities int
+			if qerr := pool.QueryRow(ctx, `select count(*) from app.cities`).Scan(&cities); qerr != nil {
+				t.Fatal(qerr)
+			}
+			if tc.seeds {
+				if err != nil || cities != 1 {
+					t.Fatalf("seed: err %v, cities %d\n%s", err, cities, out)
+				}
+				return
+			}
+			if err == nil || cities != 0 {
+				t.Fatalf("seed went ahead without the dev marker: err %v, cities %d\n%s", err, cities, out)
+			}
+			if !strings.Contains(string(out), "issho.environment") {
+				t.Errorf("refusal does not name the marker:\n%s", out)
+			}
+		})
+	}
+}
+
+// A session can set `issho.environment` itself: a URL's `options` parameter, or
+// PGOPTIONS in the environment, sends `-c issho.environment=dev` at connect. The
+// marker that counts is the one stored on the database, so none of these may
+// seed an unmarked database. And a --hosted-dev URL that sets any runtime
+// parameter is refused before it connects, even on a database that is marked,
+// so nothing the session says is ever in play. The refusal never prints the URL.
+func TestSeedHostedDevRefusesASessionThatSetsTheMarker(t *testing.T) {
+	bin := buildSeed(t)
+	const options = "&options=-c%20issho.environment%3Ddev"
+	for _, tc := range []struct {
+		name   string
+		query  string   // appended to the database's URL
+		env    []string // extra environment
+		marked bool
+	}{
+		{"options in the URL, database unmarked", options, nil, false},
+		{"options in the URL, database marked", options, nil, true},
+		{"another runtime parameter, database marked", "&application_name=seed", nil, true},
+		{"PGOPTIONS, database unmarked", "", []string{"PGOPTIONS=-c issho.environment=dev"}, false},
+		{"PGOPTIONS, database marked", "", []string{"PGOPTIONS=-c issho.environment=dev"}, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			pool := testdb.NewDatabase(t)
+			ctx := context.Background()
+			if err := db.Up(ctx, pool); err != nil {
+				t.Fatal(err)
+			}
+			if tc.marked {
+				if _, err := pool.Exec(ctx, `do $$ begin execute format('alter database %I set issho.environment = %L', current_database(), 'dev'); end $$`); err != nil {
+					t.Fatal(err)
+				}
+			}
+			cmd := exec.Command(bin, "--hosted-dev")
+			cmd.Env = append(append(os.Environ(), "DATABASE_URL="+testdb.URL(pool)+tc.query), tc.env...)
+			out, err := cmd.CombinedOutput()
+			var cities int
+			if qerr := pool.QueryRow(ctx, `select count(*) from app.cities`).Scan(&cities); qerr != nil {
+				t.Fatal(qerr)
+			}
+			if err == nil || cities != 0 {
+				t.Fatalf("seed went ahead with a session that sets parameters: err %v, cities %d\n%s", err, cities, out)
+			}
+			if strings.Contains(string(out), "issho.environment=dev") && strings.Contains(string(out), "options") {
+				t.Errorf("refusal echoes the URL:\n%s", out)
+			}
+		})
+	}
+}

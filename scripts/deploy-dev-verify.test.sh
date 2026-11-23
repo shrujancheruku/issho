@@ -44,7 +44,7 @@ print(s.server_address[1], flush=True)
 s.serve_forever()
 PY
 echo abc1234 > "$work/version"
-echo '<html><body>No plans yet.</body></html>' > "$work/plans.html"
+echo '<html><body><div>Together</div></body></html>' > "$work/plans.html"
 python3 "$work/server.py" _ "$work/version" "$work/plans.html" > "$work/port" &
 server_pid=$!
 for _ in $(seq 1 50); do [ -s "$work/port" ] && break; sleep 0.1; done

@@ -13,6 +13,16 @@ Configuration for the **local** Supabase stack: `supabase start` runs Postgres 1
 | Migrations and seed | **off** (`[db.migrations]`, `[db.seed]`) | goose owns the migrations (`backend/db/migrations`). Never use `supabase db push`, `supabase db pull`, `supabase migration new` or a `supabase/migrations/` directory. |
 | Realtime, Storage, Edge Functions, Analytics | off | Chat and jobs run in the Go API and the worker, and v2 has no file storage. |
 
+## Sign-in
+
+Sign-in is a 6-digit code emailed by Auth (`[auth.email]`: `otp_length = 6`, good for ten minutes), never a link. `enable_confirmations = true`: an address becomes a user only when its owner confirms it with a code, and signing in by code is that confirmation (a new person is sent the "confirmation" email, which shows the code, and enters it; a returning one is sent the "magic link" one). A new person is sent the "confirmation" email and a returning one the "magic link" email, so `[auth.email.template.confirmation]` and `[auth.email.template.magic_link]` both use `templates/code.html`, which shows the code. Locally the email lands in the mail catcher (`[local_smtp]`, http://127.0.0.1:54324); a hosted project sends it through Resend's SMTP, set in its `[remotes.<project>]` override when one exists. The Go API checks the tokens against the project's public JWKS (`<auth url>/.well-known/jwks.json`), accepts ES256 and RS256 only, and never uses the JWT secret (`backend/README.md`, "Accounts and sign-in").
+
+### A password for one account
+
+The store reviewers sign in with an email and a password ([Technical operations](../docs/spec/operations.md#the-store-reviewers-way-in)). Auth allows it beside the code: the email provider offers both methods to every account, and password sign-in works only for an account that has a password. An account made by the code never has one, so creating the reviewer's account with a password (the dashboard's "Add user", or the admin API with the email confirmed) gives that one account a password and leaves every other on the code. There is no per-account switch, and Auth's own `signUp` with a password stays callable by anyone who reaches the project's Auth URL; the app never calls it. With `enable_confirmations = true` that call no longer makes a usable user: the address is unconfirmed until its owner enters the emailed code, so a password can't be registered for an address that hasn't joined (the founder's decision, 2026-11-22). Open question for the first `supabase start`: whether an unconfirmed sign-up's password survives the owner's later code confirmation; if it does, whoever signed up first holds a password on that account. Checked against Supabase's documentation, not yet against a running stack (workers never start one): the first `supabase start` should sign in once by code and once by password.
+
+The CLI (3.2.0) warns that `[auth.email] enable_signup` is deprecated in favour of `enabled`; it still works and is left as the Foundation set it.
+
 ## Commands
 
 ```sh
@@ -27,4 +37,4 @@ supabase stop       # stop the stack, keeping its data
 
 A local database left by v1 (it used the same project ID, `issho`) still holds v1's `app` schema, so `make migrate-up` stops with `schema "app" already exists`. Wipe it once with `supabase stop --no-backup` and start again; this deletes the local data.
 
-Hosted configuration is pushed from this file with `supabase config diff` and `supabase config push`, using a `[remotes.<project>]` override for each project. Always review `config diff` first. No project is set up here yet.
+Hosted configuration is pushed from this file with `supabase config diff` and `supabase config push`, using a `[remotes.<project>]` override for each project. Always review `config diff` first. No project is set up here yet. When one is, `enable_confirmations = true` must reach it: review `config diff` for it before `config push`, which is a founder step.
