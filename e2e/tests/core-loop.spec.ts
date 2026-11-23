@@ -131,7 +131,16 @@ async function expectInvitedSeesNoNames(p: Person, others: string[]): Promise<Ou
   // page nor in what the API sent the page.
   const text = await p.screenText();
   for (const other of others) expect(text).not.toContain(other);
-  const bodies = await p.takeReceived();
+  expectNoNamesIn(await p.takeReceived(), others);
+  return outing;
+}
+
+/**
+ * Asserts that no body the API sent names any of `others`, and that every
+ * outing in them has `othersGoing` and `checkedInNames` empty: what someone not
+ * yet going is sent, whether invited or holding a yes.
+ */
+function expectNoNamesIn(bodies: string[], others: string[]) {
   expect(bodies.length).toBeGreaterThan(0);
   for (const body of bodies) {
     for (const other of others) expect(body).not.toContain(other);
@@ -140,7 +149,6 @@ async function expectInvitedSeesNoNames(p: Person, others: string[]): Promise<Ou
       expect(o.checkedInNames ?? []).toEqual([]);
     }
   }
-  return outing;
 }
 
 /** Moves the API's clock, its worker's, and every browser's to the same instant. */
@@ -245,6 +253,11 @@ test('journey 1: from a join link to feedback, three people in one outing', asyn
         // Still only a yes of their own: no names yet.
         const text = await p.screenText();
         for (const other of namesOf(p)) expect(text).not.toContain(other);
+        // Nor in what the API sent them, before the yes or after it: a name sent
+        // but not drawn would pass the screen check alone.
+        const [held] = await p.reload();
+        expect(held.seatState).toBe('SEAT_STATE_ACCEPTED');
+        expectNoNamesIn(await p.takeReceived(), namesOf(p));
         // And everyone not yet answered, who now has others' yeses behind them,
         // reloads Together and still sees no name.
         for (const waiting of everyone.slice(i + 1)) await expectInvitedSeesNoNames(waiting, namesOf(waiting));
