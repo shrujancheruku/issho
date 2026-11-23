@@ -105,8 +105,8 @@ describe('formatInstantDay', () => {
   // 05:30 UTC on 2 December: the 2nd in Da Nang (12:30), the 1st at 21:30 in Los Angeles.
   const at = new Date('2026-12-02T05:30:00Z');
 
-  it('writes the city day alone when the device is on the same day', () => {
-    expect(formatInstantDay(at, { timeZone: danang, lang: 'en', deviceZone: 'Asia/Bangkok' })).toEqual({ city: 'Wed, Dec 2', device: null });
+  it('writes the city day alone when the device is on the same day at another offset', () => {
+    expect(formatInstantDay(at, { timeZone: danang, lang: 'en', deviceZone: 'Asia/Tokyo' })).toEqual({ city: 'Wed, Dec 2', device: null });
   });
 
   it("writes the device's day and time beside it when the device is on another day", () => {
