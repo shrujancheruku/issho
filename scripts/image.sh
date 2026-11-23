@@ -38,7 +38,15 @@ for bin in api worker; do
   [ "$(head -c 4 "$work/$bin" | od -An -tx1 | tr -d ' \n')" = "7f454c46" ] \
     || { echo "image: /usr/local/bin/$bin is not a binary" >&2; exit 1; }
 done
-echo "image: ok (backend holds api and worker)"
+# The test-only RPCs (the end-to-end build's clock and forming trigger, built only
+# under the `e2e` tag) are compiled out: neither binary holds their package name,
+# which is in the binary's own descriptors and route names if they are linked in
+# (#622). The same check on a binary built with the tag, in
+# backend/cmd/cmd_test.go, proves this one can find them.
+for bin in api worker; do
+  ! grep -aqF -- "issho.e2e.v1" "$work/$bin" || { echo "image: /usr/local/bin/$bin holds the test-only RPCs (issho.e2e.v1)" >&2; exit 1; }
+done
+echo "image: ok (backend holds api and worker, and neither holds the test-only RPCs)"
 
 # The web image: built from the repository root, as the deploy builds it.
 # The sign-in values are build secrets the Dockerfile requires; these stand-ins are

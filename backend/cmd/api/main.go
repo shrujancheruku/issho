@@ -7,7 +7,6 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/shrujancheruku/issho/backend/internal/clock"
 	"github.com/shrujancheruku/issho/backend/internal/logging"
 	"github.com/shrujancheruku/issho/backend/internal/rpc"
 	"github.com/shrujancheruku/issho/backend/internal/serve"
@@ -34,8 +33,9 @@ func main() {
 }
 
 func run(ctx context.Context, log *slog.Logger, addr string) error {
-	// The real clock is built here and only here (tools/clockcheck enforces it).
-	clk := clock.Real{}
+	// The real clock is built here and only here (tools/clockcheck enforces it),
+	// in newClock: the end-to-end build's is a fake a test moves (e2e_on.go).
+	clk := newClock()
 	cfg := rpc.Config{Version: version, Log: log, Clock: clk}
 	acc, err := newAccounts(ctx, log, os.Getenv, clk)
 	if err != nil {
@@ -49,5 +49,11 @@ func run(ctx context.Context, log *slog.Logger, addr string) error {
 		// Without them every token is refused and only the public RPCs work.
 		log.Warn("accounts are not configured: DATABASE_URL and SUPABASE_AUTH_URL are unset")
 	}
+	mounts, stopE2E, err := e2eServices(ctx, log, clk, acc)
+	if err != nil {
+		return err
+	}
+	defer stopE2E()
+	cfg.Mounts = mounts
 	return serve.HTTP(ctx, log, addr, rpc.NewHandler(cfg))
 }

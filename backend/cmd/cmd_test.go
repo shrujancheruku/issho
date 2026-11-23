@@ -621,3 +621,38 @@ func TestSeedHostedDevRefusesASessionThatSetsTheMarker(t *testing.T) {
 		})
 	}
 }
+
+// The test-only RPCs (the end-to-end build's clock and forming trigger) exist
+// only under the `e2e` build tag: a production api or worker built as the
+// Dockerfile builds them holds none of their service names, and the same source
+// built with the tag does, so the first check can't pass for lack of looking.
+// scripts/image.sh makes the same check on the image's own binaries.
+func TestTestOnlyRPCsAreInTheE2EBuildAndNotInProduction(t *testing.T) {
+	const marker = "issho.e2e.v1"
+	hasMarker := func(name string, tags ...string) bool {
+		t.Helper()
+		bin := filepath.Join(t.TempDir(), name)
+		args := []string{"build", "-trimpath", "-ldflags", "-s -w"}
+		if len(tags) > 0 {
+			args = append(args, "-tags", strings.Join(tags, ","))
+		}
+		args = append(args, "-o", bin, "./"+name)
+		if out, err := exec.Command("go", args...).CombinedOutput(); err != nil {
+			t.Fatalf("build %s %v: %v\n%s", name, tags, err, out)
+		}
+		data, err := os.ReadFile(bin)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return strings.Contains(string(data), marker)
+	}
+
+	if !hasMarker("api", "e2e") {
+		t.Fatalf("the api built with the e2e tag does not hold %q: the check below proves nothing", marker)
+	}
+	for _, name := range []string{"api", "worker"} {
+		if hasMarker(name) {
+			t.Errorf("the production %s holds %q: the test-only RPCs must be compiled out", name, marker)
+		}
+	}
+}

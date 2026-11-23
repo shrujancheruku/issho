@@ -43,7 +43,7 @@ It **forms outings and makes their invitations**, takes each invited person's **
 
 **The 48 hours** count from `invited_at`, which is the moment of forming until delivery exists. They are `policy.InvitationWindow`, and the 3 yeses `policy.YesesToSet`; both are constants.
 
-**When it runs.** Nothing enqueues the job yet: rounds on the real clock are milestone 4's, and the end-to-end test's clock RPC (#622) enqueues `FormArgs` itself. A caller enqueues it with `client.InsertTx(ctx, tx, outings.FormArgs{PlanID: id}, nil)`, in the transaction that causes it.
+**When it runs.** Nothing enqueues the job yet: rounds on the real clock are milestone 4's, and the end-to-end build's test-only `FormingService.FormPlan` (`internal/e2eclock`, #622) enqueues `FormArgs` itself. A caller enqueues it with `client.InsertTx(ctx, tx, outings.FormArgs{PlanID: id}, nil)`, in the transaction that causes it.
 
 ## Retention
 

@@ -1,0 +1,59 @@
+syntax = "proto3";
+
+package issho.e2e.v1;
+
+import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
+import "issho/v1/access.proto";
+
+// The clock of the end-to-end build, and nothing else. This package is built
+// only under the Go build tag `e2e` (backend/cmd/api/e2e_on.go): the production
+// api and worker never import it, so neither holds this service, and `make image`
+// fails if the image does (scripts/image.sh). It is a service of its own,
+// outside issho.v1, so the generated code that production imports does not
+// carry it either.
+service ClockService {
+  // Reports the end-to-end API's clock. Public: the build holds no data worth
+  // protecting, and a test calls it with no token.
+  rpc GetTime(GetTimeRequest) returns (GetTimeResponse) {
+    option (issho.v1.access) = ACCESS_PUBLIC;
+  }
+
+  // Jumps the clock to an instant, forwards or back. The API and the jobs it
+  // works read this one clock. Public for the same reason as GetTime.
+  rpc SetTime(SetTimeRequest) returns (SetTimeResponse) {
+    option (issho.v1.access) = ACCESS_PUBLIC;
+  }
+
+  // Moves the clock on by a duration. Public for the same reason as GetTime.
+  rpc AdvanceTime(AdvanceTimeRequest) returns (AdvanceTimeResponse) {
+    option (issho.v1.access) = ACCESS_PUBLIC;
+  }
+}
+
+message GetTimeRequest {}
+
+message GetTimeResponse {
+  // The clock's current instant.
+  google.protobuf.Timestamp now = 1;
+}
+
+message SetTimeRequest {
+  // The instant to jump to.
+  google.protobuf.Timestamp now = 1;
+}
+
+message SetTimeResponse {
+  // The clock's instant after the jump.
+  google.protobuf.Timestamp now = 1;
+}
+
+message AdvanceTimeRequest {
+  // How far to move on; not negative.
+  google.protobuf.Duration by = 1;
+}
+
+message AdvanceTimeResponse {
+  // The clock's instant after the move.
+  google.protobuf.Timestamp now = 1;
+}

@@ -195,6 +195,7 @@ backend:
 	cd backend && go run ./tools/clockcheck
 	go tool buf lint
 	cd backend && go test -race -count=1 ./...
+	$(MAKE) e2e-build-vet e2e-build-test
 	scripts/proto-breaking.test.sh
 
 # `make gen` leaves no diff: nothing changed and nothing new. Needs `make setup`
@@ -229,10 +230,25 @@ strings:
 image:
 	scripts/image.sh
 
-# Playwright against the API binary and the web build, on free ports. Starts
-# neither Supabase nor a database. See e2e/README.md.
+# Playwright against the API binary and the web build, on free ports, with a
+# throwaway Postgres, Auth and mail catcher in Docker that the script removes at
+# the end. It never touches `supabase start` or anything hosted. See e2e/README.md.
 e2e:
 	scripts/e2e.sh
+
+# The end-to-end build (#622) is the backend with the `e2e` build tag, which adds
+# the test-only clock and forming RPCs (backend/internal/e2eclock). The untagged
+# build never compiles them, so they are vetted and tested here under the tag;
+# backend/cmd/cmd_test.go and scripts/image.sh prove production holds none of them.
+.PHONY: e2e-build-vet e2e-build-test
+e2e-build-vet:
+	cd backend && go vet -tags e2e ./...
+
+e2e-build-test:
+	cd backend && go test -race -count=1 -tags e2e ./internal/e2eclock/ ./cmd/api/
+
+lint: e2e-build-vet
+test: e2e-build-test
 
 # The workflow files are valid (actionlint, pinned in tools/go.mod) and
 # ci.yml keeps its required checks, skips and no-retry rule.
