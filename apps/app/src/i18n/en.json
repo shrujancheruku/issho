@@ -153,6 +153,7 @@
   "together.hearAbout": "You will hear about {plan}",
   "together.loadFailed": "Your plans could not be loaded.",
   "tabs.togetherNeedsYou": "Together, {count} need an answer",
+  "tabs.togetherNeedsYouOne": "Together, 1 needs an answer",
   "together.needsYou": "Needs you",
   "outing.stripTitle": "Your outing",
   "outing.yesOne": "1 has said yes",

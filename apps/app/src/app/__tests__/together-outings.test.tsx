@@ -207,7 +207,7 @@ describe('the Together tab', () => {
     expect(await screen.findByLabelText('Together, 2 need an answer')).toBeTruthy();
     api.outing.listMyOutings.mockResolvedValue({ outings: [anOuting({ seatState: SeatState.ACCEPTED }), anOuting({ id: 'o2', planId: 'p2' })] });
     await fireEvent.press(within(screen.getByTestId('needs-you-o1')).getByRole('button', { name: 'Yes' }));
-    expect(await screen.findByLabelText('Together, 1 need an answer')).toBeTruthy();
+    expect(await screen.findByLabelText('Together, 1 needs an answer')).toBeTruthy();
     expect(screen.queryByLabelText('Together, 2 need an answer')).toBeNull();
   });
 
@@ -216,7 +216,7 @@ describe('the Together tab', () => {
     api.outing.listMyOutings.mockResolvedValue({ outings: [anOuting({ seatState: SeatState.GOING, outingState: OutingState.SET })] });
     await open('/together', { api });
     await screen.findByText('Lantern making in Hoi An');
-    expect(screen.queryByLabelText(/need an answer/)).toBeNull();
+    expect(screen.queryByLabelText(/needs? an answer/)).toBeNull();
   });
 
   it('opens on Together for someone whose only play is an outing', async () => {

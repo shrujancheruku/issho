@@ -64,7 +64,7 @@ describe('after the plan\'s end, in Together', () => {
     expect(screen.getByText('Needs you')).toBeTruthy();
     expect(within(card).getByText('Lantern making in Hoi An')).toBeTruthy();
     expect(within(card).getByText('How did it go? Feedback closes Wed, Dec 2.')).toBeTruthy();
-    expect(screen.getByLabelText('Together, 1 need an answer')).toBeTruthy();
+    expect(screen.getByLabelText('Together, 1 needs an answer')).toBeTruthy();
     expect(api.outing.getFeedback).toHaveBeenCalledWith({ outingId: 'o1' });
   });
 
@@ -128,7 +128,7 @@ describe('after the plan\'s end, in Together', () => {
     await open('/together', { api });
     const row = await screen.findByTestId('together-row-o1');
     expect(screen.queryByTestId('needs-you-o1')).toBeNull();
-    expect(screen.queryByLabelText(/need an answer/)).toBeNull();
+    expect(screen.queryByLabelText(/needs? an answer/)).toBeNull();
     expect(within(row).getByText('Feedback closes Wed, Dec 2.')).toBeTruthy();
     const links = screen.getAllByRole('link').map((l) => within(l).queryAllByText(/./).map((t) => t.props.children).flat().join(' '));
     expect(links).toEqual([expect.stringContaining('Nov 30'), expect.stringContaining('Dec 2'), expect.stringContaining('Dec 4')]);

@@ -41,7 +41,7 @@ export default function TabsLayout() {
         options={{
           title: t('tabs.together'),
           ...tab('together'),
-          ...(needs > 0 ? { tabBarBadge: needs, tabBarAccessibilityLabel: t('tabs.togetherNeedsYou', { count: needs }) } : {}),
+          ...(needs > 0 ? { tabBarBadge: needs, tabBarAccessibilityLabel: needs === 1 ? t('tabs.togetherNeedsYouOne') : t('tabs.togetherNeedsYou', { count: needs }) } : {}),
         }}
       />
       <Tabs.Screen name="plans" options={{ title: t('tabs.plans'), ...tab('plans') }} />
