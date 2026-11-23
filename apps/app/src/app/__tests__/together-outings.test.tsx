@@ -200,6 +200,17 @@ describe('the Together tab', () => {
     expect(await screen.findByLabelText('Together, 2 need an answer')).toBeTruthy();
   });
 
+  it('drops its count once an invitation is answered', async () => {
+    const api = fakeApi();
+    api.outing.listMyOutings.mockResolvedValueOnce({ outings: [anOuting(), anOuting({ id: 'o2', planId: 'p2' })] });
+    await open('/together', { api });
+    expect(await screen.findByLabelText('Together, 2 need an answer')).toBeTruthy();
+    api.outing.listMyOutings.mockResolvedValue({ outings: [anOuting({ seatState: SeatState.ACCEPTED }), anOuting({ id: 'o2', planId: 'p2' })] });
+    await fireEvent.press(within(screen.getByTestId('needs-you-o1')).getByRole('button', { name: 'Yes' }));
+    expect(await screen.findByLabelText('Together, 1 need an answer')).toBeTruthy();
+    expect(screen.queryByLabelText('Together, 2 need an answer')).toBeNull();
+  });
+
   it('carries no count when nothing needs an answer', async () => {
     const api = fakeApi();
     api.outing.listMyOutings.mockResolvedValue({ outings: [anOuting({ seatState: SeatState.GOING, outingState: OutingState.SET })] });
