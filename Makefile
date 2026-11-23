@@ -151,7 +151,7 @@ native-stop:
 	NATIVE_AVD="$(NATIVE_AVD)" NATIVE_IOS_DEVICE="$(NATIVE_IOS_DEVICE)" scripts/native-metro.sh stop
 
 native-ios:
-	pnpm --filter @issho/app exec expo run:ios --device "$(NATIVE_IOS_DEVICE)" --no-bundler
+	scripts/native-ios.sh "$(NATIVE_IOS_DEVICE)"
 
 native-android:
 	android emulator start $(NATIVE_AVD)

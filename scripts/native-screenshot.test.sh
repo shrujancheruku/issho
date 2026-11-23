@@ -25,4 +25,8 @@ expect_refusal "unknown platform" web plans
 expect_refusal "name with a path separator" ios "../plans"
 expect_refusal "name with uppercase" ios "Plans"
 
+status=0
+"$ROOT/scripts/native-ios.sh" >/dev/null 2>&1 || status=$?
+[ "$status" -eq 2 ] || { echo "native-ios.sh: no device name must exit 2, got $status" >&2; exit 1; }
+
 echo "native-screenshot.test.sh: passed (bad arguments are refused before a device is touched)"
