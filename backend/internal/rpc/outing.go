@@ -153,7 +153,7 @@ func outingError(err error, msg string) error {
 	case errors.Is(err, outings.ErrNotFound):
 		return connect.NewError(connect.CodeNotFound, errors.New("no such outing"))
 	case errors.Is(err, outings.ErrInvalid):
-		return connect.NewError(connect.CodeInvalidArgument, errors.New("the answer is not one the outing takes"))
+		return connect.NewError(connect.CodeInvalidArgument, errors.New("the request is not one the outing takes"))
 	case errors.Is(err, outings.ErrInvitationClosed):
 		return connect.NewError(connect.CodeFailedPrecondition, errors.New("the invitation is closed"))
 	case errors.Is(err, outings.ErrTimeTaken):

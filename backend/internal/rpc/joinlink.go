@@ -73,8 +73,9 @@ func (s joinLinkService) ListMyJoinLinks(ctx context.Context, _ *connect.Request
 	return connect.NewResponse(out), nil
 }
 
-// RedeemJoinLink admits the caller with the link's code. Every way a code can
-// fail to admit anyone reads the same, so a code can't be probed.
+// RedeemJoinLink admits the caller with the link's code. Every unusable code
+// reads the same, so a code can't be probed; an admitted caller is told so
+// before the code is looked at, which says nothing about the code.
 func (s joinLinkService) RedeemJoinLink(ctx context.Context, req *connect.Request[isshov1.RedeemJoinLinkRequest]) (*connect.Response[isshov1.RedeemJoinLinkResponse], error) {
 	id, ok := IdentityFrom(ctx)
 	if !ok {

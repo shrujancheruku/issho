@@ -355,9 +355,9 @@ func TestJoinLinksMigrationDownThenUp(t *testing.T) {
 		t.Fatal(err)
 	}
 	for name, stmt := range map[string]string{
-		"a code is used by one link":     `insert into app.join_links (member_id, code, created_at) values ('00000000-0000-4000-8000-000000000001', 'code-1', now())`,
-		"a link ends one way":            `update app.join_links set cancelled_at = now(), redeemed_at = now()`,
-		"via is a join link or the seed": `insert into app.admissions (account_id, admitted_at, via) values ('00000000-0000-4000-8000-000000000002', now(), 'other')`,
+		"a code is used by one link":            `insert into app.join_links (member_id, code, created_at) values ('00000000-0000-4000-8000-000000000001', 'code-1', now())`,
+		"a link is not both cancelled and used": `update app.join_links set cancelled_at = now(), redeemed_at = now()`,
+		"via is a join link or the seed":        `insert into app.admissions (account_id, admitted_at, via) values ('00000000-0000-4000-8000-000000000002', now(), 'other')`,
 	} {
 		if _, err := pool.Exec(ctx, stmt); err == nil {
 			t.Errorf("%s: the database accepted it", name)
