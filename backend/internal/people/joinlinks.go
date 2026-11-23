@@ -192,11 +192,21 @@ func (s *Service) MyJoinLinks(ctx context.Context, memberID string) (JoinLinks, 
 	memberID = lowerASCII(memberID)
 	now := s.clock.Now()
 	q := store.New(s.pool)
-	rows, err := q.ListJoinLinks(ctx, memberID)
+	// An account that isn't admitted has no links to give, so it has none left
+	// to make: without this it would read as JoinLinksPerMember left, and the app
+	// would offer a link that MakeJoinLink then refuses.
+	ok, err := q.IsAdmitted(ctx, memberID)
 	if err != nil {
 		if isBadID(err) {
 			return JoinLinks{}, nil
 		}
+		return JoinLinks{}, fmt.Errorf("people: join links: %w", err)
+	}
+	if !ok {
+		return JoinLinks{}, nil
+	}
+	rows, err := q.ListJoinLinks(ctx, memberID)
+	if err != nil {
 		return JoinLinks{}, fmt.Errorf("people: join links: %w", err)
 	}
 	out := JoinLinks{Links: make([]JoinLink, len(rows))}

@@ -127,6 +127,20 @@ func TestSomeoneNotAdmittedCannotMakeALink(t *testing.T) {
 	wantErr(t, err, people.ErrNotAdmitted)
 }
 
+// An account that isn't admitted has none left to make, so the app never offers
+// a link MakeJoinLink would refuse.
+func TestSomeoneNotAdmittedHasNoLinksLeftToMake(t *testing.T) {
+	r := newRig(t)
+	r.account(t, ada, "ada@example.com")
+	got, err := r.svc.MyJoinLinks(context.Background(), ada)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Remaining != 0 || len(got.Links) != 0 {
+		t.Fatalf("MyJoinLinks = %+v, want no links and none left", got)
+	}
+}
+
 // Criterion: redeeming a link admits the signed-in account and uses the link,
 // and a second redeem of the same link fails.
 func TestRedeemingALinkAdmitsTheAccountAndASecondRedeemFails(t *testing.T) {
