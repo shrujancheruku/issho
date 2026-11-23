@@ -291,6 +291,7 @@ describe('the profile, asked at the first signup', () => {
 
   // Every kind of control on these screens: text boxes, radios, switches, checkboxes and buttons.
   const targets = () => [
+    ...screen.queryAllByRole('textbox'),
     ...screen.queryAllByRole('radio'),
     ...screen.queryAllByRole('checkbox'),
     ...screen.queryAllByRole('switch'),

@@ -92,6 +92,12 @@ function recentPlan(id: string, lang: 'en'): Promise<Outcome<PlanPageData>> {
   if (kept && kept.expires > now) return kept.outcome;
 
   for (const [k, v] of recentPlans) if (v.expires <= now) recentPlans.delete(k);
+  // A bound, so a crawl of every plan can't grow the map without end. It drops
+  // calls still in flight too, so a head and a body that straddle the clear can
+  // make two calls and disagree: that takes 200 plans asked for inside a few
+  // seconds, a flood the Pilot's handful of plans never sees, and the cost is one
+  // page whose head and body differ until its next load. Accepted for the
+  // simpler map.
   if (recentPlans.size >= RECENT_MAX) recentPlans.clear();
 
   // It counts as in flight until it settles, so a slow call is not asked twice either.
