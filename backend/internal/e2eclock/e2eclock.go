@@ -17,6 +17,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -81,7 +82,10 @@ func (s formingService) FormPlan(ctx context.Context, req *connect.Request[e2ev1
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("FormPlan needs a plan"))
 	}
 	if err := s.former.Form(ctx, req.Msg.GetPlanId()); err != nil {
-		return nil, connect.NewError(connect.CodeInternal, err)
+		// The error may quote River or the database, so it goes to the log and
+		// the caller gets a fixed message, as from every other handler.
+		slog.ErrorContext(ctx, "e2e: forming failed", "plan", req.Msg.GetPlanId(), "err", err)
+		return nil, connect.NewError(connect.CodeInternal, errors.New("could not form the plan"))
 	}
 	return connect.NewResponse(&e2ev1.FormPlanResponse{}), nil
 }

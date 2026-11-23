@@ -4,6 +4,7 @@ package e2eclock_test
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http/httptest"
 	"testing"
@@ -154,6 +155,25 @@ func TestFormPlanRefusesARequestWithNoPlan(t *testing.T) {
 	_, err := f.FormPlan(ctx, connect.NewRequest(&e2ev1.FormPlanRequest{PlanId: ""}))
 	if connect.CodeOf(err) != connect.CodeInvalidArgument {
 		t.Fatalf("FormPlan with no plan = %v, want invalid_argument", err)
+	}
+}
+
+type failingFormer struct{}
+
+func (failingFormer) Form(context.Context, string) error {
+	return fmt.Errorf("river: insert: ERROR: relation \"river_job\" does not exist")
+}
+
+// A forming that fails answers with a fixed message, never the error's text,
+// which may quote River or the database.
+func TestFormPlanThatFailsSendsNoErrorText(t *testing.T) {
+	_, f := serve(t, clock.NewFake(start), failingFormer{})
+
+	_, err := f.FormPlan(context.Background(), connect.NewRequest(&e2ev1.FormPlanRequest{PlanId: lanterns}))
+
+	var ce *connect.Error
+	if !errors.As(err, &ce) || ce.Code() != connect.CodeInternal || ce.Message() != "could not form the plan" {
+		t.Fatalf("FormPlan = %v, want internal with a fixed message", err)
 	}
 }
 
