@@ -366,12 +366,30 @@ func TestTwoLinksMadeAtOnceCannotPassTheThree(t *testing.T) {
 	r.makeLink(t, ada)
 	r.makeLink(t, ada)
 
+	// Hold ada's account row so every call queues on it, then let them go: the
+	// calls overlap for certain, and only the lock keeps them to one link.
+	ctx := context.Background()
+	hold, err := r.pool.Begin(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = hold.Rollback(ctx) }()
+	if _, err := hold.Exec(ctx, `select 1 from app.accounts where id = $1 for update`, ada); err != nil {
+		t.Fatal(err)
+	}
+	start := make(chan struct{})
 	errs := make(chan error, 6)
 	for i := 0; i < 6; i++ {
 		go func() {
-			_, err := r.svc.MakeJoinLink(context.Background(), ada)
+			<-start
+			_, err := r.svc.MakeJoinLink(ctx, ada)
 			errs <- err
 		}()
+	}
+	close(start)
+	waitForLockWaiters(t, r, "LockAccount", 6)
+	if err := hold.Rollback(ctx); err != nil {
+		t.Fatal(err)
 	}
 	made := 0
 	for i := 0; i < 6; i++ {
@@ -394,9 +412,29 @@ func TestTwoRedeemsAtOnceAdmitOne(t *testing.T) {
 	r.account(t, grace, "grace@example.com")
 	r.account(t, hopper, "hopper@example.com")
 
+	// Hold the link's row so both redeems queue on it, then let them go: they
+	// overlap for certain, and only UseJoinLink's guard admits one.
+	ctx := context.Background()
+	hold, err := r.pool.Begin(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = hold.Rollback(ctx) }()
+	if _, err := hold.Exec(ctx, `select 1 from app.join_links where code = $1 for update`, l.Code); err != nil {
+		t.Fatal(err)
+	}
+	start := make(chan struct{})
 	errs := make(chan error, 2)
 	for _, id := range []string{grace, hopper} {
-		go func() { errs <- r.svc.RedeemJoinLink(context.Background(), id, l.Code) }()
+		go func() {
+			<-start
+			errs <- r.svc.RedeemJoinLink(ctx, id, l.Code)
+		}()
+	}
+	close(start)
+	waitForLockWaiters(t, r, "UseJoinLink", 2)
+	if err := hold.Rollback(ctx); err != nil {
+		t.Fatal(err)
 	}
 	var failed int
 	for i := 0; i < 2; i++ {
@@ -407,5 +445,93 @@ func TestTwoRedeemsAtOnceAdmitOne(t *testing.T) {
 	}
 	if failed != 1 {
 		t.Fatalf("%d of 2 simultaneous redeems failed, want 1", failed)
+	}
+}
+
+// One account redeeming two members' links at once is admitted once: the
+// account row is locked (LockAccount), so the second call sees it admitted,
+// is refused with ErrAlreadyAdmitted, and leaves its link unused.
+func TestOneAccountRedeemingTwoLinksAtOnceIsAdmittedOnce(t *testing.T) {
+	r := newRig(t)
+	ctx := context.Background()
+	r.admitted(t, ada, "ada@example.com")
+	r.admitted(t, grace, "grace@example.com")
+	codes := []string{r.makeLink(t, ada).Code, r.makeLink(t, grace).Code}
+	r.account(t, hopper, "hopper@example.com")
+
+	// Hold hopper's account row so both redeems queue on it, then let them go:
+	// without that, the second could simply start after the first committed.
+	hold, err := r.pool.Begin(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = hold.Rollback(ctx) }()
+	if _, err := hold.Exec(ctx, `select 1 from app.accounts where id = $1 for update`, hopper); err != nil {
+		t.Fatal(err)
+	}
+
+	start := make(chan struct{})
+	errs := make([]error, len(codes))
+	done := make(chan struct{})
+	for i, code := range codes {
+		go func() {
+			defer func() { done <- struct{}{} }()
+			<-start
+			errs[i] = r.svc.RedeemJoinLink(ctx, hopper, code)
+		}()
+	}
+	close(start)
+	waitForLockWaiters(t, r, "LockAccount", len(codes))
+	if err := hold.Rollback(ctx); err != nil {
+		t.Fatal(err)
+	}
+	for range codes {
+		<-done
+	}
+
+	admitted, refused := -1, -1
+	for i, err := range errs {
+		switch {
+		case err == nil:
+			admitted = i
+		case errors.Is(err, people.ErrAlreadyAdmitted):
+			refused = i
+		default:
+			t.Fatalf("redeem %d: %v", i, err)
+		}
+	}
+	if admitted < 0 || refused < 0 {
+		t.Fatalf("redeems = %v, want one admitted and one ErrAlreadyAdmitted", errs)
+	}
+	// The refused call's link is still outstanding, not used.
+	owner := []string{ada, grace}[refused]
+	links, err := r.svc.MyJoinLinks(ctx, owner)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(links.Links) != 1 || links.Links[0].State != people.JoinLinkOutstanding {
+		t.Errorf("the refused call's link = %+v, want it unused", links.Links)
+	}
+}
+
+// waitForLockWaiters waits until n sessions are blocked on a lock while running
+// the named sqlc query, so a concurrency test knows its calls overlap.
+func waitForLockWaiters(t *testing.T, r *rig, query string, n int) {
+	t.Helper()
+	deadline := time.Now().Add(10 * time.Second)
+	for {
+		var waiting int
+		err := r.pool.QueryRow(context.Background(), `select count(*) from pg_stat_activity
+			where datname = current_database() and wait_event_type = 'Lock' and query like '-- name: ' || $1 || ' %'`, query).Scan(&waiting)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if waiting >= n {
+			return
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("%d of %d calls waited on a lock in %s", waiting, n, query)
+		}
+		time.Sleep(10 * time.Millisecond)
 	}
 }
