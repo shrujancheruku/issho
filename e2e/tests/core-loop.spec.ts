@@ -105,6 +105,44 @@ async function tick(box: Locator) {
   await expect(box).toContainText('✓');
 }
 
+/**
+ * Loads Together afresh for a person who is still only invited and asserts that
+ * nobody else's name reaches them: not on the screen, not in any body the page
+ * received, and `othersGoing` and `checkedInNames` empty. It is run for each
+ * person still invited at the invited step and again after every yes, since that
+ * is when a name could leak: others have said yes, this person has not.
+ * Returns the outing the API sent.
+ */
+async function expectInvitedSeesNoNames(p: Person, others: string[]): Promise<Outing> {
+  await p.takeReceived();
+  const outings = await p.goto('/together');
+  expect(outings).toHaveLength(1);
+  const outing = outings[0];
+  expect(outing.seatState).toBe('SEAT_STATE_INVITED');
+  expect(outing.outingState).toBe('OUTING_STATE_OFFERED');
+
+  const card = p.page.getByTestId(`needs-you-${outing.id}`);
+  await expect(p.page.getByRole('heading', { name: 'Needs you' })).toBeVisible();
+  await expect(card).toContainText(LANTERNS_TITLE);
+  await expect(card).toContainText('You share: English');
+  await expect(card.getByRole('button', { name: 'Yes' })).toBeVisible();
+
+  // An invited person sees counts and languages, never a name, neither on the
+  // page nor in what the API sent the page.
+  const text = await p.screenText();
+  for (const other of others) expect(text).not.toContain(other);
+  const bodies = await p.takeReceived();
+  expect(bodies.length).toBeGreaterThan(0);
+  for (const body of bodies) {
+    for (const other of others) expect(body).not.toContain(other);
+    for (const o of (JSON.parse(body) as { outings?: Outing[] }).outings ?? []) {
+      expect(o.othersGoing ?? []).toEqual([]);
+      expect(o.checkedInNames ?? []).toEqual([]);
+    }
+  }
+  return outing;
+}
+
 /** Moves the API's clock, its worker's, and every browser's to the same instant. */
 async function moveClock(people: Person[], instant: Date) {
   await serverClock.set(instant);
@@ -190,34 +228,9 @@ test('journey 1: from a join link to feedback, three people in one outing', asyn
   await test.step('forming invites each of the three, who see no names', async () => {
     await formPlan(LANTERNS);
     for (const p of everyone) {
-      await p.takeReceived();
-      const outings = await p.goto('/together');
-      expect(outings).toHaveLength(1);
-      outing = outings[0];
-      expect(outing.seatState).toBe('SEAT_STATE_INVITED');
-      expect(outing.outingState).toBe('OUTING_STATE_OFFERED');
+      outing = await expectInvitedSeesNoNames(p, namesOf(p));
       // The sign-up's shared time is the outing's: the fixture plan runs in the evening.
       expect(outing.date).toMatch(/^2026-12-0[4-9]$/);
-
-      const card = p.page.getByTestId(`needs-you-${outing.id}`);
-      await expect(p.page.getByRole('heading', { name: 'Needs you' })).toBeVisible();
-      await expect(card).toContainText(LANTERNS_TITLE);
-      await expect(card).toContainText('You share: English');
-      await expect(card.getByRole('button', { name: 'Yes' })).toBeVisible();
-
-      // The privacy assertion: an invited person sees counts and languages, never
-      // a name, neither on the page nor in what the API sent the page.
-      const text = await p.screenText();
-      for (const other of namesOf(p)) expect(text).not.toContain(other);
-      const bodies = await p.takeReceived();
-      expect(bodies.length).toBeGreaterThan(0);
-      for (const body of bodies) {
-        for (const other of namesOf(p)) expect(body).not.toContain(other);
-        for (const o of ((JSON.parse(body) as { outings?: Outing[] }).outings ?? [])) {
-          expect(o.othersGoing ?? []).toEqual([]);
-          expect(o.checkedInNames ?? []).toEqual([]);
-        }
-      }
     }
   });
 
@@ -232,6 +245,9 @@ test('journey 1: from a join link to feedback, three people in one outing', asyn
         // Still only a yes of their own: no names yet.
         const text = await p.screenText();
         for (const other of namesOf(p)) expect(text).not.toContain(other);
+        // And everyone not yet answered, who now has others' yeses behind them,
+        // reloads Together and still sees no name.
+        for (const waiting of everyone.slice(i + 1)) await expectInvitedSeesNoNames(waiting, namesOf(waiting));
       } else {
         await expect(p.page.getByTestId(`together-row-${outing.id}`)).toContainText("You're going");
       }

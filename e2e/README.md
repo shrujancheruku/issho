@@ -10,7 +10,7 @@ make e2e   # from the repo root
 
 - **Go and `make setup`** (pnpm install), and a network the first time: for Playwright's Chromium and for Docker to pull the images below.
 - **Docker, running.** The journeys need a database, an Auth server that mails a code and a mail catcher, so `make e2e` now starts them as **throwaway containers** (the Go tests' Postgres is the same kind of thing). It is the only part of `make e2e` that needs Docker.
-- It **never** starts, stops, resets or connects to the developer's local Supabase (`supabase start`, port 54322) or anything hosted, and it reads no `.env*`. The database password, the Auth JWT secret and the Auth signing key are made fresh for each run (in `scripts/e2e.sh`), live only in that process and its containers, and are gone with them. `make secrets-scan` stays clean with no allowlist entry.
+- It **never** starts, stops, resets or connects to the developer's local Supabase (`supabase start`, port 54322) or anything hosted, and the script reads no `.env*`. The database password, the Auth JWT secret and the Auth signing key are made fresh for each run (in `scripts/e2e.sh`), live only in that process and its containers, and are gone with them. `make secrets-scan` stays clean with no allowlist entry.
 
 ## What `make e2e` does
 
