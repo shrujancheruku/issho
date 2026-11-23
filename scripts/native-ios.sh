@@ -17,7 +17,9 @@ if [ "$#" -ne 1 ]; then
   exit 2
 fi
 
-HUB="$(xcode-select -p 2>/dev/null | sed 's|/Contents/Developer.*||')/Contents/Applications/DeviceHub.app"
+# `|| true`: with no developer directory selected there is no Device Hub to open,
+# and pipefail would otherwise end the script before Expo can say what is wrong.
+HUB="$({ xcode-select -p 2>/dev/null || true; } | sed 's|/Contents/Developer.*||')/Contents/Applications/DeviceHub.app"
 # DEVELOPER_DIR, when set, wins over xcode-select, as it does for xcodebuild.
 if [ -n "${DEVELOPER_DIR:-}" ]; then
   HUB="${DEVELOPER_DIR%/Contents/Developer*}/Contents/Applications/DeviceHub.app"
