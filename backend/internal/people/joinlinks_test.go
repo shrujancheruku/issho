@@ -518,7 +518,8 @@ func TestOneAccountRedeemingTwoLinksAtOnceIsAdmittedOnce(t *testing.T) {
 // the named sqlc query, so a concurrency test knows its calls overlap.
 func waitForLockWaiters(t *testing.T, r *rig, query string, n int) {
 	t.Helper()
-	deadline := time.Now().Add(10 * time.Second)
+	// Ten seconds of 10ms polls, counted: only internal/clock reads the wall clock.
+	polls := 0
 	for {
 		var waiting int
 		err := r.pool.QueryRow(context.Background(), `select count(*) from pg_stat_activity
@@ -529,7 +530,7 @@ func waitForLockWaiters(t *testing.T, r *rig, query string, n int) {
 		if waiting >= n {
 			return
 		}
-		if time.Now().After(deadline) {
+		if polls++; polls > 1000 {
 			t.Fatalf("%d of %d calls waited on a lock in %s", waiting, n, query)
 		}
 		time.Sleep(10 * time.Millisecond)
