@@ -3,9 +3,11 @@ package season_test
 import (
 	"bytes"
 	"context"
+	"errors"
 	"log"
 	"log/slog"
 	"reflect"
+	"runtime"
 	"strings"
 	"sync"
 	"testing"
@@ -14,10 +16,6 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/season"
 	"github.com/shrujancheruku/issho/backend/internal/testdb"
 )
-
-// minute is the budget for one run: the ticket's "under a minute" (the whole
-// package is a few runs, each of which must fit on its own).
-const minute = 60 * time.Second
 
 // lockedBuffer is a writer River's goroutines and the run can both log to.
 type lockedBuffer struct {
@@ -51,13 +49,19 @@ func run(t *testing.T, opts season.Options) (season.Result, []byte) {
 }
 
 // runE is run that returns the season's error instead of failing the test, for
-// the shared run, which must keep it. The budget starts once the database is
-// up, so a slow Postgres start is not charged to the season.
+// the shared run, which must keep it. A run takes about 10 seconds on an idle
+// machine, but a loaded one has taken 96 (#623), so it has no fixed budget of
+// its own: it ends a little before the test binary's deadline, so a run that
+// hangs fails as the season's error rather than as go test's panic.
 func runE(t *testing.T, opts season.Options) (season.Result, []byte, error) {
 	t.Helper()
 	pool := testdb.NewDatabase(t)
-	ctx, cancel := context.WithTimeout(context.Background(), minute)
-	defer cancel()
+	ctx := context.Background()
+	if deadline, ok := t.Deadline(); ok {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithDeadline(ctx, deadline.Add(-10*time.Second))
+		defer cancel()
+	}
 	std := &lockedBuffer{}
 	prev := log.Writer()
 	log.SetOutput(std)
@@ -69,24 +73,62 @@ func runE(t *testing.T, opts season.Options) (season.Result, []byte, error) {
 	return res, append(append([]byte(nil), res.Log...), std.Bytes()...), nil
 }
 
-var (
-	once    sync.Once
-	first   season.Result
-	firstLg []byte
-	// firstErr is why the shared season did not run, kept so every test that
-	// reads it reports the real error, not a bare "did not run".
-	firstErr error
-)
+// errDidNotFinish is the shared run's error when the run never returned: the
+// first test to ask for it failed (t.Fatal) while setting it up. sync.Once
+// counts a run that exits by runtime.Goexit as done, so without this every
+// later test would read an empty Result and fail for the wrong reason.
+var errDidNotFinish = errors.New("the shared season never finished; see the first test that read it")
+
+// sharedRun runs the season once for every test that reads it, and keeps its
+// error.
+type sharedRun struct {
+	once sync.Once
+	res  season.Result
+	lg   []byte
+	err  error
+}
+
+func (s *sharedRun) get(f func() (season.Result, []byte, error)) (season.Result, []byte, error) {
+	s.once.Do(func() {
+		// Set before the run, cleared by its return: a run that never returns
+		// leaves it set.
+		s.err = errDidNotFinish
+		s.res, s.lg, s.err = f()
+	})
+	return s.res, s.lg, s.err
+}
+
+var shared sharedRun
 
 // theSeason is the one run most tests read; the tests that need another make
 // their own.
 func theSeason(t *testing.T) (season.Result, []byte) {
 	t.Helper()
-	once.Do(func() { first, firstLg, firstErr = runE(t, season.Options{}) })
-	if firstErr != nil {
-		t.Fatalf("the shared season did not run: %v", firstErr)
+	res, lg, err := shared.get(func() (season.Result, []byte, error) { return runE(t, season.Options{}) })
+	if err != nil {
+		t.Fatalf("the shared season did not run: %v", err)
 	}
-	return first, firstLg
+	return res, lg
+}
+
+// A shared run whose first caller fails mid-setup is an error for every later
+// caller, not an empty season.
+func TestASharedRunThatNeverReturnedIsAnErrorForEveryLaterTest(t *testing.T) {
+	var s sharedRun
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		_, _, _ = s.get(func() (season.Result, []byte, error) {
+			runtime.Goexit() // what t.Fatal does in the first test
+			return season.Result{}, nil, nil
+		})
+	}()
+	<-done
+	called := false
+	_, _, err := s.get(func() (season.Result, []byte, error) { called = true; return season.Result{}, nil, nil })
+	if !errors.Is(err, errDidNotFinish) || called {
+		t.Fatalf("a later read = %v (ran again: %v), want errDidNotFinish without running again", err, called)
+	}
 }
 
 // Criterion: a cast of about 20 signs up to the two fixture plans over 2 weeks
@@ -142,7 +184,7 @@ func TestTheSeasonEndsWithEveryInvariantHolding(t *testing.T) {
 	if len(res.Violations) != 0 {
 		t.Fatalf("broken invariants:\n%s", strings.Join(res.Violations, "\n"))
 	}
-	if res.Checked["set outings"] < 4 || res.Checked["double-booking sweeps"] == 0 || res.Checked["not admitted"] == 0 {
+	if res.Checked["set outings"] < 4 || res.Checked["double-booking sweeps"] == 0 || res.Checked["live seats swept"] == 0 || res.Checked["not admitted"] == 0 {
 		t.Errorf("the invariants checked too little to mean anything: %v", res.Checked)
 	}
 }
