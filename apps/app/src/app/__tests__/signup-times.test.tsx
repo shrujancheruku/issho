@@ -9,6 +9,7 @@ import { Spacing } from '@/constants/theme';
 import { fakeApi } from '@/test-support/fake-api';
 import { fakeSessionClient } from '@/test-support/fake-session-client';
 import { aPlan } from '@/test-support/plan-fixtures';
+import { viWeekday } from '@/test-support/weekday';
 import { signupRefusal } from '@/test-support/problems';
 import { TestProviders } from '@/test-support/providers';
 
@@ -197,7 +198,7 @@ describe('a plan the person has signed up to', () => {
 
   it('writes the day on the city clock in Vietnamese', async () => {
     await signedUp({ lang: 'vi' });
-    expect(await screen.findByText(/Bạn đã đăng ký\. Bạn sẽ nhận được tin trước Th 7, 28 thg 11\./)).toBeTruthy();
+    expect(await screen.findByText(`Bạn đã đăng ký. Bạn sẽ nhận được tin trước ${viWeekday('2026-11-28')}, 28 thg 11.`, { exact: false })).toBeTruthy();
   });
 
   it('changes the times, starting from the ones already ticked', async () => {

@@ -6,6 +6,7 @@ import type { ReactNode } from 'react';
 
 import * as format from '@/lib/format';
 import { fakeApi } from '@/test-support/fake-api';
+import { viWeekday } from '@/test-support/weekday';
 import { aFeedback, anOuting } from '@/test-support/outing-fixtures';
 import { aPlan } from '@/test-support/plan-fixtures';
 import { TestProviders } from '@/test-support/providers';
@@ -155,7 +156,7 @@ describe('after the plan\'s end, in Together', () => {
   it('reads in Vietnamese', async () => {
     await open('/together', { lang: 'vi', api: afterTheOuting() });
     const card = await screen.findByTestId('needs-you-o1');
-    expect(within(card).getByText('Buổi đi thế nào? Nhận ý kiến đến Th 4, 2 thg 12.')).toBeTruthy();
+    expect(within(card).getByText(`Buổi đi thế nào? Nhận ý kiến đến ${viWeekday('2026-12-02')}, 2 thg 12.`)).toBeTruthy();
     expect(within(card).getByRole('link', { name: 'Gửi ý kiến' })).toBeTruthy();
   });
 });

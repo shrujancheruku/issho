@@ -1,4 +1,5 @@
 import { cityDateKey, formatCalendarDate, formatDate, formatDateTime, formatInstantDay, formatInstantWhen, formatOutingWhen, formatPrice, formatTime, formatTimeRange } from '../format';
+import { viWeekday } from '@/test-support/weekday';
 
 // 17:30 UTC on 21 November is already 00:30 on the 22nd in Da Nang (UTC+7, no
 // daylight saving), so each expectation also shows the city's clock, not the
@@ -12,7 +13,7 @@ describe('formatDate', () => {
   });
 
   it('writes the date in Vietnamese on the city clock', () => {
-    expect(formatDate(instant, { timeZone: danang, lang: 'vi' })).toBe('CN, 22 thg 11');
+    expect(formatDate(instant, { timeZone: danang, lang: 'vi' })).toBe(`${viWeekday('2026-11-22')}, 22 thg 11`);
   });
 
   it('reads another city clock for the same instant', () => {
@@ -30,7 +31,7 @@ describe('formatTime', () => {
 describe('formatDateTime', () => {
   it('joins the date and the time in each language', () => {
     expect(formatDateTime(instant, { timeZone: danang, lang: 'en' })).toBe('Sun, Nov 22, 12:30 AM');
-    expect(formatDateTime(instant, { timeZone: danang, lang: 'vi' })).toBe('0:30 CN, 22 thg 11');
+    expect(formatDateTime(instant, { timeZone: danang, lang: 'vi' })).toBe(`0:30 ${viWeekday('2026-11-22')}, 22 thg 11`);
   });
 });
 
@@ -50,7 +51,7 @@ describe('formatTimeRange', () => {
 describe('formatCalendarDate', () => {
   it("writes the city's calendar date as it is, whatever the device's zone", () => {
     expect(formatCalendarDate('2026-11-28', 'en')).toBe('Sat, Nov 28');
-    expect(formatCalendarDate('2026-11-28', 'vi')).toBe('Th 7, 28 thg 11');
+    expect(formatCalendarDate('2026-11-28', 'vi')).toBe(`${viWeekday('2026-11-28')}, 28 thg 11`);
   });
 });
 
@@ -74,7 +75,7 @@ describe('formatOutingWhen', () => {
   });
 
   it('writes both in Vietnamese', () => {
-    expect(formatOutingWhen({ ...when, lang: 'vi', deviceZone: 'America/Los_Angeles' })).toEqual({ city: '9:00 Th 4, 25 thg 11', device: '18:00 Th 3, 24 thg 11' });
+    expect(formatOutingWhen({ ...when, lang: 'vi', deviceZone: 'America/Los_Angeles' })).toEqual({ city: `9:00 ${viWeekday('2026-11-25')}, 25 thg 11`, device: `18:00 ${viWeekday('2026-11-24')}, 24 thg 11` });
   });
 
   it('writes the city clock alone for another zone with the same time (no daylight saving in Da Nang)', () => {

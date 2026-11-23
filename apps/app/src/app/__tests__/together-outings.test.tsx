@@ -6,6 +6,7 @@ import type { ReactNode } from 'react';
 
 import * as format from '@/lib/format';
 import { fakeApi } from '@/test-support/fake-api';
+import { viWeekday } from '@/test-support/weekday';
 import { fakeSessionClient } from '@/test-support/fake-session-client';
 import { anOuting } from '@/test-support/outing-fixtures';
 import { aPlan } from '@/test-support/plan-fixtures';
@@ -162,7 +163,7 @@ describe('an invitation in "Needs you"', () => {
     await open('/together', { lang: 'vi', api });
     const card = await screen.findByTestId('needs-you-o1');
     expect(screen.getByText('Cần bạn trả lời')).toBeTruthy();
-    expect(within(card).getByText('9:00 Th 4, 25 thg 11')).toBeTruthy();
+    expect(within(card).getByText(`9:00 ${viWeekday('2026-11-25')}, 25 thg 11`)).toBeTruthy();
     expect(within(card).getByText('2 người đã đồng ý')).toBeTruthy();
     expect(within(card).getByText('Cùng nói được: Tiếng Anh, Tiếng Việt')).toBeTruthy();
   });
