@@ -40,14 +40,15 @@ type Former interface {
 }
 
 // Mounts are the services for rpc.Config.Mounts. The API's handlers and the
-// jobs the process works read clk, so moving it moves both.
-func Mounts(clk *clock.Fake, former Former) []rpc.Mount {
+// jobs the process works read clk, so moving it moves both. log gets a forming
+// error the caller is not told.
+func Mounts(log *slog.Logger, clk *clock.Fake, former Former) []rpc.Mount {
 	return []rpc.Mount{
 		func(opts ...connect.HandlerOption) (string, http.Handler) {
 			return e2ev1connect.NewClockServiceHandler(clockService{clk: clk}, opts...)
 		},
 		func(opts ...connect.HandlerOption) (string, http.Handler) {
-			return e2ev1connect.NewFormingServiceHandler(formingService{former: former}, opts...)
+			return e2ev1connect.NewFormingServiceHandler(formingService{log: log, former: former}, opts...)
 		},
 	}
 }
@@ -75,7 +76,10 @@ func (s clockService) AdvanceTime(_ context.Context, req *connect.Request[e2ev1.
 	return connect.NewResponse(&e2ev1.AdvanceTimeResponse{Now: timestamppb.New(s.clk.Now())}), nil
 }
 
-type formingService struct{ former Former }
+type formingService struct {
+	log    *slog.Logger
+	former Former
+}
 
 func (s formingService) FormPlan(ctx context.Context, req *connect.Request[e2ev1.FormPlanRequest]) (*connect.Response[e2ev1.FormPlanResponse], error) {
 	if req.Msg.GetPlanId() == "" {
@@ -84,7 +88,7 @@ func (s formingService) FormPlan(ctx context.Context, req *connect.Request[e2ev1
 	if err := s.former.Form(ctx, req.Msg.GetPlanId()); err != nil {
 		// The error may quote River or the database, so it goes to the log and
 		// the caller gets a fixed message, as from every other handler.
-		slog.ErrorContext(ctx, "e2e: forming failed", "plan", req.Msg.GetPlanId(), "err", err)
+		s.log.ErrorContext(ctx, "e2e: forming failed", "plan", req.Msg.GetPlanId(), "err", err)
 		return nil, connect.NewError(connect.CodeInternal, errors.New("could not form the plan"))
 	}
 	return connect.NewResponse(&e2ev1.FormPlanResponse{}), nil

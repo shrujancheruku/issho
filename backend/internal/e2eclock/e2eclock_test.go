@@ -3,10 +3,13 @@
 package e2eclock_test
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -23,6 +26,7 @@ import (
 	"github.com/shrujancheruku/issho/backend/internal/clock"
 	"github.com/shrujancheruku/issho/backend/internal/e2eclock"
 	"github.com/shrujancheruku/issho/backend/internal/jobs"
+	"github.com/shrujancheruku/issho/backend/internal/logging"
 	"github.com/shrujancheruku/issho/backend/internal/outings"
 	"github.com/shrujancheruku/issho/backend/internal/people"
 	"github.com/shrujancheruku/issho/backend/internal/plans"
@@ -41,7 +45,13 @@ var start = time.Date(2026, 1, 5, 9, 0, 0, 0, time.UTC)
 // access interceptor, and returns clients for them.
 func serve(t *testing.T, clk *clock.Fake, former e2eclock.Former) (e2ev1connect.ClockServiceClient, e2ev1connect.FormingServiceClient) {
 	t.Helper()
-	srv := httptest.NewServer(rpc.NewHandler(rpc.Config{Version: "e2e", Mounts: e2eclock.Mounts(clk, former)}))
+	return serveLogging(t, logging.Discard(), clk, former)
+}
+
+// serveLogging is serve with the services' logger.
+func serveLogging(t *testing.T, log *slog.Logger, clk *clock.Fake, former e2eclock.Former) (e2ev1connect.ClockServiceClient, e2ev1connect.FormingServiceClient) {
+	t.Helper()
+	srv := httptest.NewServer(rpc.NewHandler(rpc.Config{Version: "e2e", Mounts: e2eclock.Mounts(log, clk, former)}))
 	t.Cleanup(srv.Close)
 	return e2ev1connect.NewClockServiceClient(srv.Client(), srv.URL), e2ev1connect.NewFormingServiceClient(srv.Client(), srv.URL)
 }
@@ -167,13 +177,18 @@ func (failingFormer) Form(context.Context, string) error {
 // A forming that fails answers with a fixed message, never the error's text,
 // which may quote River or the database.
 func TestFormPlanThatFailsSendsNoErrorText(t *testing.T) {
-	_, f := serve(t, clock.NewFake(start), failingFormer{})
+	var logged bytes.Buffer
+	_, f := serveLogging(t, logging.New(&logged, "api"), clock.NewFake(start), failingFormer{})
 
 	_, err := f.FormPlan(context.Background(), connect.NewRequest(&e2ev1.FormPlanRequest{PlanId: lanterns}))
 
 	var ce *connect.Error
 	if !errors.As(err, &ce) || ce.Code() != connect.CodeInternal || ce.Message() != "could not form the plan" {
 		t.Fatalf("FormPlan = %v, want internal with a fixed message", err)
+	}
+	// The text the caller is not given is in the API's log, through the logger it was handed.
+	if !strings.Contains(logged.String(), "river_job") {
+		t.Errorf("the forming error is not in the log: %q", logged.String())
 	}
 }
 

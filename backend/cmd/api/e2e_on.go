@@ -48,5 +48,5 @@ func e2eServices(ctx context.Context, log *slog.Logger, clk clock.Clock, acc *ac
 		defer cancel()
 		_ = client.Stop(stopCtx)
 	}
-	return e2eclock.Mounts(clk.(*clock.Fake), e2eclock.NewRiverFormer(client)), stop, nil
+	return e2eclock.Mounts(log, clk.(*clock.Fake), e2eclock.NewRiverFormer(client)), stop, nil
 }
