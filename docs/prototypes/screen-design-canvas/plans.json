@@ -1,0 +1,404 @@
+[
+ {
+  "n": 1,
+  "title": "Home cooking on Lê Hồng Phong, then the river after dark",
+  "area": "Hải Châu",
+  "type": "Walk",
+  "price": 250000,
+  "day": "Wednesday",
+  "starts": "18:00",
+  "ends": "20:30",
+  "part": "Evening",
+  "note": "",
+  "meet": "Front gate of Da Nang Cathedral (the pink church), 156 Trần Phú",
+  "cost": "About 150,000–250,000₫ each",
+  "bring": "Nothing. On weekdays the dragon doesn't breathe fire, so the riverside is quiet.",
+  "stops": [
+   {
+    "time": "18:00",
+    "what": "Meet at the cathedral gate",
+    "leg": "Walk 500 m"
+   },
+   {
+    "time": "18:15",
+    "what": "Bếp Hên, 47 Lê Hồng Phong. Central Vietnamese home cooking, dishes shared at one table booked for the group",
+    "leg": "Walk 1.3 km: down to the Dragon Bridge head, then north along the Bạch Đằng riverside"
+   }
+  ],
+  "made": "Composed from vetted pieces",
+  "round": 1,
+  "go": "No",
+  "friend": 2
+ },
+ {
+  "n": 2,
+  "title": "Garden dinner and gelato on Trần Phú",
+  "area": "Hải Châu",
+  "type": "Walk",
+  "price": 400000,
+  "day": "Wednesday",
+  "starts": "18:30",
+  "ends": "20:45",
+  "part": "Evening",
+  "note": "",
+  "meet": "Entrance of Xóm Mới Garden, 222 Trần Phú",
+  "cost": "About 250,000–400,000₫ each",
+  "bring": "Nothing",
+  "stops": [
+   {
+    "time": "18:30",
+    "what": "Xóm Mới Garden, 222 Trần Phú. Vietnamese dishes to share in a garden courtyard",
+    "leg": "Walk 550 m"
+   },
+   {
+    "time": "20:10",
+    "what": "Boulevard Gelato, Pastry & Coffee, 77 Trần Quốc Toản. Gelato to finish",
+    "leg": ""
+   }
+  ],
+  "made": "Google data alone",
+  "round": 1,
+  "go": "No",
+  "friend": 2
+ },
+ {
+  "n": 3,
+  "title": "Bánh xèo at the end of the alley, then durian chè",
+  "area": "Hải Châu",
+  "type": "Walk",
+  "price": 120000,
+  "day": "Wednesday",
+  "starts": "18:00",
+  "ends": "20:00",
+  "part": "Evening",
+  "note": "",
+  "meet": "The mouth of alley K280 on Hoàng Diệu, under the alley sign",
+  "cost": "About 80,000–120,000₫ each",
+  "bring": "Cash",
+  "stops": [
+   {
+    "time": "18:00",
+    "what": "Meet at the alley and walk in together",
+    "leg": "100 m"
+   },
+   {
+    "time": "18:05",
+    "what": "Bánh xèo Bà Dưỡng, K280/23 Hoàng Diệu. Crisp bánh xèo and nem lụi, rolled at the table and dipped in peanut-and-liver sauce. Early, because it can sell out by 20:00",
+    "leg": "Walk 350 m up Hoàng Diệu"
+   },
+   {
+    "time": "19:30",
+    "what": "Chè Liên, 189 Hoàng Diệu. Chè sầu riêng (durian sweet soup)",
+    "leg": ""
+   }
+  ],
+  "made": "Local sources",
+  "round": 1,
+  "go": "Yes",
+  "friend": 4
+ },
+ {
+  "n": 4,
+  "title": "The fish market on the sand at Mân Thái, then mì Quảng",
+  "area": "Sơn Trà",
+  "type": "Watch",
+  "price": 60000,
+  "day": "Saturday",
+  "starts": "05:15",
+  "ends": "07:30",
+  "part": "Morning",
+  "note": "",
+  "meet": "The beach side of Hoàng Sa road at Mân Thái fish market (Chợ Cá Mân Thái)",
+  "cost": "About 40,000–60,000₫ each",
+  "bring": "Sandals you can get wet. Runs only when the boats go out.",
+  "stops": [
+   {
+    "time": "05:15",
+    "what": "Watch the basket boats bring the night's catch ashore and the market form on the sand",
+    "leg": "Walk 1.2 km inland through the Mân Thái lanes"
+   },
+   {
+    "time": "06:20",
+    "what": "Mì Quảng Nia, 57 Phùng Tá Chu. A morning-only noodle shop",
+    "leg": ""
+   }
+  ],
+  "made": "Local sources",
+  "round": 1,
+  "go": "Yes",
+  "friend": 4
+ },
+ {
+  "n": 5,
+  "title": "Mỹ Khê beachfront at first light, coffee down an alley",
+  "area": "Sơn Trà",
+  "type": "Walk",
+  "price": 60000,
+  "day": "Saturday",
+  "starts": "06:00",
+  "ends": "08:00",
+  "part": "Morning",
+  "note": "",
+  "meet": "The dove square in East Sea Park (Công viên Biển Đông), on Võ Nguyên Giáp",
+  "cost": "About 30,000–60,000₫ each",
+  "bring": "A hat. By 08:00 the sun is strong.",
+  "stops": [
+   {
+    "time": "06:00",
+    "what": "Meet among the doves",
+    "leg": "Walk 1.4 km south along the beachfront while the beach is full of swimmers, runners and tai chi groups, then 300 m inland"
+   },
+   {
+    "time": "06:40",
+    "what": "Cửa Ngõ Café, alley 65 Tô Hiến Thành. Coffee in a courtyard",
+    "leg": ""
+   }
+  ],
+  "made": "Composed from vetted pieces",
+  "round": 1,
+  "go": "No",
+  "friend": 2
+ },
+ {
+  "n": 6,
+  "title": "Lady Buddha at opening time, then bánh mì and coffee",
+  "area": "Sơn Trà",
+  "type": "Watch",
+  "price": 100000,
+  "day": "Saturday",
+  "starts": "06:45",
+  "ends": "09:15",
+  "part": "Morning",
+  "note": "",
+  "meet": "Main gate of Linh Ứng Pagoda (Lady Buddha), Hoàng Sa road, Sơn Trà",
+  "cost": "About 60,000–100,000₫ each, plus a shared ride",
+  "bring": "Covered shoulders and knees for the pagoda",
+  "stops": [
+   {
+    "time": "06:45",
+    "what": "Walk the pagoda grounds to the 67 m statue and the view back over the bay",
+    "leg": "Ride 7 km, about 15 minutes"
+   },
+   {
+    "time": "08:20",
+    "what": "Banh mi & Coffee Nhà Việt, 04 Hà Chương. Bánh mì and coffee",
+    "leg": ""
+   }
+  ],
+  "made": "Google data alone",
+  "round": 1,
+  "go": "Yes",
+  "friend": 4
+ },
+ {
+  "n": 7,
+  "title": "Night market, dinner by the river, a walk on the promenade",
+  "area": "Hội An",
+  "type": "Walk",
+  "price": 350000,
+  "day": "Thursday",
+  "starts": "17:30",
+  "ends": "20:30",
+  "part": "Evening",
+  "note": "",
+  "meet": "Entrance of Hoi An Night Market, 3 Nguyễn Hoàng, on the An Hội side",
+  "cost": "About 200,000–350,000₫ each",
+  "bring": "Nothing",
+  "stops": [
+   {
+    "time": "17:30",
+    "what": "Hoi An Night Market. Lantern stalls and street snacks",
+    "leg": "Walk 500 m back across the An Hội bridge"
+   },
+   {
+    "time": "18:30",
+    "what": "Hoi An Heart Restaurant, 68 Bạch Đằng. Vietnamese and vegetarian dishes",
+    "leg": "Walk 600 m along the Old Town promenade"
+   }
+  ],
+  "made": "Google data alone",
+  "round": 1,
+  "go": "No",
+  "friend": 1
+ },
+ {
+  "n": 8,
+  "title": "The Old Town lanes while the motorbikes are out, then mì Quảng",
+  "area": "Hội An",
+  "type": "Walk",
+  "price": 90000,
+  "day": "Thursday",
+  "starts": "16:45",
+  "ends": "19:15",
+  "part": "Afternoon",
+  "note": "",
+  "meet": "The Kazik statue, in the small park at 138 Trần Phú",
+  "cost": "About 50,000–90,000₫ each",
+  "bring": "Nothing. Doesn't run on the lantern night (14th of the lunar month) or when the riverfront is flooded.",
+  "stops": [
+   {
+    "time": "16:45",
+    "what": "Meet at the statue",
+    "leg": "Walk a 1.3 km loop through the car-free lanes: west on Trần Phú to the Japanese Bridge, back along Nguyễn Thái Học, down to the Bạch Đằng riverfront and east to the market"
+   },
+   {
+    "time": "18:00",
+    "what": "Leave the market",
+    "leg": "Walk 400 m"
+   },
+   {
+    "time": "18:10",
+    "what": "Mì Quảng Ông Hai, 6A Trương Minh Lượng. Mì Quảng and cao lầu",
+    "leg": ""
+   }
+  ],
+  "made": "Composed from vetted pieces",
+  "round": 1,
+  "go": "Yes",
+  "friend": 4
+ },
+ {
+  "n": 9,
+  "title": "Black sesame chè in an alley, then over the bridge to Cẩm Nam",
+  "area": "Hội An",
+  "type": "Walk",
+  "price": 100000,
+  "day": "Thursday",
+  "starts": "17:00",
+  "ends": "19:15",
+  "part": "Evening",
+  "note": "",
+  "meet": "The mouth of alley 45 on Trần Hưng Đạo",
+  "cost": "About 60,000–100,000₫ each",
+  "bring": "Cash",
+  "stops": [
+   {
+    "time": "17:00",
+    "what": "Xí mà stall, 45/17 Trần Hưng Đạo. A small bowl of warm black sesame sweet soup, sold from mid-afternoon until it runs out",
+    "leg": "Walk 1 km south through the Old Town and across the Cẩm Nam bridge"
+   },
+   {
+    "time": "17:50",
+    "what": "Bánh đập Ni Bà Già, 34 Nguyễn Tri Phương. Bánh đập (rice crackers smashed at the table), hến xào (stir-fried baby clams), and chè bắp when corn is in season",
+    "leg": "Walk 400 m back over the bridge at dusk"
+   }
+  ],
+  "made": "Local sources",
+  "round": 1,
+  "go": "Yes",
+  "friend": 5
+ },
+ {
+  "n": 10,
+  "title": "Bánh xèo, then throw a cup on the wheel",
+  "area": "Hải Châu",
+  "type": "Make",
+  "price": 310000,
+  "day": "Wednesday",
+  "starts": "17:30",
+  "ends": "20:45",
+  "part": "Evening",
+  "note": "",
+  "meet": "The shopfront of Chè Liên, 189 Hoàng Diệu",
+  "cost": "About 60,000₫ for dinner, plus the pottery session (about 150,000–250,000₫, to confirm)",
+  "bring": "Clothes you don't mind getting clay on",
+  "stops": [
+   {
+    "time": "17:30",
+    "what": "Meet at Chè Liên and walk 350 m to the alley together",
+    "leg": ""
+   },
+   {
+    "time": "17:40",
+    "what": "Bánh xèo Bà Dưỡng, K280/23 Hoàng Diệu. Bánh xèo and nem lụi rolled at the table, early, before it sells out",
+    "leg": "Walk 1.8 km north up Hoàng Diệu. On the way if you like: chè sầu riêng back at Chè Liên; the board-game café at 27 Hoàng Diệu"
+   },
+   {
+    "time": "19:15",
+    "what": "Gốm An Nhiên, 84 Nguyễn Chí Thanh. A pottery session: everyone shapes a cup on the wheel. The studio fires it and you collect it later",
+    "leg": ""
+   }
+  ],
+  "made": "Local sources, activity at the centre",
+  "round": 2,
+  "go": "Yes",
+  "friend": 5
+ },
+ {
+  "n": 11,
+  "title": "The fish market at dawn, a sunrise paddle, then mì Quảng",
+  "area": "Sơn Trà",
+  "type": "Move",
+  "price": 160000,
+  "day": "Saturday",
+  "starts": "05:00",
+  "ends": "08:45",
+  "part": "Morning",
+  "note": "calm-sea months only",
+  "meet": "In front of Mân Thái Beach – Chợ Cá Gỗ café, on Hoàng Sa road",
+  "cost": "About 100,000₫ each for the board (200,000₫ per board for two at weekends), plus 40,000–60,000₫ for breakfast",
+  "bring": "Swimwear, a towel, a dry bag for your phone. You must be able to swim. Life jackets are provided.",
+  "stops": [
+   {
+    "time": "05:00",
+    "what": "Walk down to the sand: basket boats land the night's catch and the market forms around them",
+    "leg": ""
+   },
+   {
+    "time": "05:30",
+    "what": "Stand-up paddle boards from the rental on the beach, two to a board. Paddle out past the moored boats and watch the sun come up over Sơn Trà",
+    "leg": "Walk 1 km inland through the Mân Thái lanes. On the way if you like: Mân Thái market"
+   },
+   {
+    "time": "07:20",
+    "what": "Mì Quảng Nia, 57 Phùng Tá Chu. A morning-only noodle shop",
+    "leg": "Optional: 200 m to Cà Phê Lối Nhỏ, 122 Trần Duy Chiến, for coffee"
+   }
+  ],
+  "made": "Local sources, activity at the centre",
+  "round": 2,
+  "go": "Yes",
+  "friend": 5
+ },
+ {
+  "n": 12,
+  "title": "Make a lantern, black sesame chè, then over the bridge to Cẩm Nam",
+  "area": "Hội An",
+  "type": "Make",
+  "price": 350000,
+  "day": "Thursday",
+  "starts": "15:45",
+  "ends": "19:45",
+  "part": "Afternoon",
+  "note": "",
+  "meet": "The Kazik statue, in the small park at 138 Trần Phú",
+  "cost": "About 60,000–100,000₫ for food, plus the lantern class (about 150,000–250,000₫, to confirm)",
+  "bring": "Cash. Doesn't run on the lantern night or when the riverfront is flooded.",
+  "stops": [
+   {
+    "time": "15:45",
+    "what": "Meet at the statue",
+    "leg": "Walk 250 m"
+   },
+   {
+    "time": "16:00",
+    "what": "Hằng Dũng lantern class, 51 Nguyễn Thái Học. Everyone builds and covers a silk lantern to take home",
+    "leg": "Walk 400 m north"
+   },
+   {
+    "time": "17:30",
+    "what": "Xí mà stall, 45/17 Trần Hưng Đạo. Warm black sesame sweet soup, sold until it runs out",
+    "leg": "Walk 1 km south through the car-free Old Town and across the Cẩm Nam bridge. On the way if you like: Hội An market, the riverfront"
+   },
+   {
+    "time": "18:20",
+    "what": "Bánh đập Ni Bà Già, 34 Nguyễn Tri Phương. Bánh đập, hến xào, and chè bắp in season",
+    "leg": "Walk 400 m back over the bridge. Optional after: bài chòi, the sung card game, at the foot of the An Hội bridge from 19:00"
+   }
+  ],
+  "made": "Local sources, activity at the centre",
+  "round": 2,
+  "go": "No",
+  "friend": 4
+ }
+]
