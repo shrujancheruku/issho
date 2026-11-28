@@ -7,6 +7,9 @@ GITLEAKS := go tool gitleaks
 # this, never DATABASE_URL from the environment: a shell or .env that exports it
 # usually points at a hosted project. To migrate anything else, name it on the
 # command line (make migrate-up DATABASE_URL=...).
+# seed-dev alone wants the shell's DATABASE_URL (dev's), and the line below replaces it
+# for every recipe, so the shell's value is kept here first (#667).
+SHELL_DATABASE_URL := $(DATABASE_URL)
 DATABASE_URL = postgresql://postgres:postgres@127.0.0.1:54322/postgres
 
 .PHONY: setup gen lint test rpc-auth migrate-up migrate-down tracker-check secrets-scan
@@ -300,6 +303,9 @@ seed:
 # file; the seed refuses any target that isn't that project's, or whose database
 # comment isn't 'issho.environment=dev' (set once by the founder on dev). See docs/deploy.md.
 .PHONY: seed-dev
+# Exported for the recipe rather than written into it, so make never echoes the URL
+# (it holds a password).
+seed-dev: export DATABASE_URL := $(SHELL_DATABASE_URL)
 seed-dev:
 	cd backend && go run ./cmd/seed --hosted-dev $(if $(ADMIT),--admit '$(ADMIT)')
 
