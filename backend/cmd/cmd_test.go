@@ -522,8 +522,8 @@ func TestSeedHostedDevOptInRefusesAProductionLikeTarget(t *testing.T) {
 }
 
 // With --hosted-dev the seed also reads the database's own environment marker
-// (`issho.environment`) before writing anything, and goes on only if it is
-// exactly `dev`: the operator supplies the ref, but not what is stored in the
+// (its comment, `issho.environment=dev`) before writing anything, and goes on
+// only if it says exactly `dev`: the operator supplies the ref, but not what is stored in the
 // database. The test database is local, so the target check passes and only the
 // marker decides. No marker and `prod` are refused with nothing written; `dev`
 // seeds. Without the flag the marker is never read: a local seed needs none.
@@ -546,7 +546,7 @@ func TestSeedHostedDevNeedsTheDevEnvironmentMarker(t *testing.T) {
 				t.Fatal(err)
 			}
 			if tc.marker != "" {
-				if _, err := pool.Exec(ctx, `do $$ begin execute format('alter database %I set issho.environment = %L', current_database(), '`+tc.marker+`'); end $$`); err != nil {
+				if _, err := pool.Exec(ctx, `do $$ begin execute format('comment on database %I is %L', current_database(), 'issho.environment=`+tc.marker+`'); end $$`); err != nil {
 					t.Fatal(err)
 				}
 			}
@@ -575,7 +575,7 @@ func TestSeedHostedDevNeedsTheDevEnvironmentMarker(t *testing.T) {
 
 // A session can set `issho.environment` itself: a URL's `options` parameter, or
 // PGOPTIONS in the environment, sends `-c issho.environment=dev` at connect. The
-// marker that counts is the one stored on the database, so none of these may
+// marker that counts is the database's comment, so none of these may
 // seed an unmarked database. And a --hosted-dev URL that sets any runtime
 // parameter is refused before it connects, even on a database that is marked,
 // so nothing the session says is ever in play. The refusal never prints the URL.
@@ -601,7 +601,7 @@ func TestSeedHostedDevRefusesASessionThatSetsTheMarker(t *testing.T) {
 				t.Fatal(err)
 			}
 			if tc.marked {
-				if _, err := pool.Exec(ctx, `do $$ begin execute format('alter database %I set issho.environment = %L', current_database(), 'dev'); end $$`); err != nil {
+				if _, err := pool.Exec(ctx, `do $$ begin execute format('comment on database %I is %L', current_database(), 'issho.environment=dev'); end $$`); err != nil {
 					t.Fatal(err)
 				}
 			}
