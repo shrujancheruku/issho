@@ -110,10 +110,10 @@ Production's destination, release-driven deploys, backups, Sentry, alerts and th
 
 A freshly migrated `issho-dev` has no city, so the API refuses every city and nobody can sign in. The founder, not CI and not a worker, seeds it. The city row is upserted to the fixture's values (state, time zone, currency, names), and the plan rows are rewritten (deleted, then inserted) with the fixture's content, so running it again is safe but puts the fixture back over any change made to those rows by hand.
 
-First, once, mark the dev database as dev. The marker is a database setting stored in the database itself (`pg_db_role_setting`), so the operator can't supply it the way they supply a ref, and a connection can't fake it: the seed reads the stored setting, not the session's, so `?options=-c issho.environment=dev` or `SET` do nothing. Run this against issho-dev only, and never on production:
+First, once, mark the dev database as dev. The marker is the database's comment, stored in the database itself (`pg_shdescription`), so the operator can't supply it the way they supply a ref, and a connection can't fake it: no URL parameter, `PGOPTIONS` or `SET` reaches it. It is a comment, not a database setting, because on hosted Supabase the `postgres` role may not set a custom parameter on the database (`permission denied to set parameter`), while it owns the database and may comment on it (#665). Run this against issho-dev only, and never on production (the Supabase SQL editor runs it as `postgres`):
 
 ```sql
-alter database postgres set issho.environment = 'dev';
+comment on database postgres is 'issho.environment=dev';
 ```
 
 Then seed:
@@ -124,7 +124,7 @@ export SEED_DEV_PROJECT_REF=...    # the issho-dev project's ref
 make seed-dev
 ```
 
-`cmd/seed` refuses any database that isn't on this machine unless `--hosted-dev` is given. Then it checks three things before writing anything: the URL (and the `PG*` environment) sets no session parameters such as `options`, the target is the project named by `SEED_DEV_PROJECT_REF` (its `db.<ref>.supabase.co` host, or `postgres.<ref>` on the pooler, judged on the connection pgx would make, so a `?user=` in the query counts), and the database's stored `issho.environment` setting is exactly `dev`. The marker check and the writes share one transaction, so the database that was checked is the one written. The ref is what the operator typed, so on its own it would let production's URL through with production's ref; the marker is why that fails, since production never has it. Take the ref from the dev project anyway. The marker is set by hand, in no committed file, and the local `make seed` never reads it.
+`cmd/seed` refuses any database that isn't on this machine unless `--hosted-dev` is given. Then it checks three things before writing anything: the URL (and the `PG*` environment) sets no session parameters such as `options`, the target is the project named by `SEED_DEV_PROJECT_REF` (its `db.<ref>.supabase.co` host, or `postgres.<ref>` on the pooler, judged on the connection pgx would make, so a `?user=` in the query counts), and the database's comment is exactly `issho.environment=dev`. The marker check and the writes share one transaction, so the database that was checked is the one written. The ref is what the operator typed, so on its own it would let production's URL through with production's ref; the marker is why that fails, since production never has it. Take the ref from the dev project anyway. The marker is set by hand, in no committed file, and the local `make seed` never reads it.
 
 Check afterwards with the public `ListPlans` call, which needs no token and lists the fixture's plans once the city exists:
 

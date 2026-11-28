@@ -13,16 +13,16 @@ import (
 
 func markDev(t *testing.T, pool *pgxpool.Pool) {
 	t.Helper()
-	if _, err := pool.Exec(context.Background(), `do $$ begin execute format('alter database %I set issho.environment = %L', current_database(), 'dev'); end $$`); err != nil {
+	if _, err := pool.Exec(context.Background(), `do $$ begin execute format('comment on database %I is %L', current_database(), 'issho.environment=dev'); end $$`); err != nil {
 		t.Fatal(err)
 	}
 }
 
-// The marker is the database's stored setting, which a session can't change.
+// The marker is the database's comment, which a session can't change.
 // A session `SET` (what a URL's `options` or PGOPTIONS does at connect) on an
 // unmarked database must not read as dev, and on a marked one it must not
 // read as anything else.
-func TestCheckEnvironmentReadsTheStoredSettingNotTheSession(t *testing.T) {
+func TestCheckEnvironmentReadsTheCommentNotTheSession(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("a session SET on an unmarked database is refused", func(t *testing.T) {
@@ -56,19 +56,28 @@ func TestCheckEnvironmentReadsTheStoredSettingNotTheSession(t *testing.T) {
 		}
 	})
 
-	t.Run("a setting for one role is not the database's marker", func(t *testing.T) {
-		pool := testdb.NewDatabase(t)
-		if _, err := pool.Exec(ctx, `do $$ begin execute format('alter role postgres in database %I set issho.environment = %L', current_database(), 'dev'); end $$`); err != nil {
-			t.Fatal(err)
-		}
-		if err := checkEnvironment(ctx, pool); err == nil {
-			t.Fatal("a per-role setting passed for the database's marker")
-		}
-	})
+	// The marker used to be a stored parameter, which hosted Supabase won't let
+	// the postgres role set (#665). Where a superuser can set one, it still
+	// isn't the marker, and neither is a comment that only nearly says dev.
+	for name, mark := range map[string]string{
+		"a stored parameter is not the marker": `do $$ begin execute format('alter database %I set issho.environment = %L', current_database(), 'dev'); end $$`,
+		"a comment in another case":            `do $$ begin execute format('comment on database %I is %L', current_database(), 'issho.environment=Dev'); end $$`,
+		"a comment with more after it":         `do $$ begin execute format('comment on database %I is %L', current_database(), 'issho.environment=dev ') ; end $$`,
+	} {
+		t.Run(name, func(t *testing.T) {
+			pool := testdb.NewDatabase(t)
+			if _, err := pool.Exec(ctx, mark); err != nil {
+				t.Fatal(err)
+			}
+			if err := checkEnvironment(ctx, pool); err == nil {
+				t.Fatal("passed for the database's marker")
+			}
+		})
+	}
 }
 
-// Hosted dev connects as a role that is not a superuser, so the stored setting
-// has to be readable by one. If it weren't, the check could only fail closed.
+// Hosted dev connects as a role that is not a superuser, so the comment has to
+// be readable by one. If it weren't, the check could only fail closed.
 func TestCheckEnvironmentIsReadableByANonSuperuser(t *testing.T) {
 	ctx := context.Background()
 	pool := testdb.NewDatabase(t)

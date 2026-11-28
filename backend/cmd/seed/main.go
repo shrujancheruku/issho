@@ -18,12 +18,13 @@
 //
 //   - The ref comes from the operator, so it alone can't tell dev from
 //     production. With the opt-in the seed also reads the database's own marker,
-//     `issho.environment`, and writes nothing unless it is exactly `dev`
-//     (checkEnvironment). The founder sets it once on issho-dev, never on
-//     production, and nothing in the repo sets it. It reads the stored setting
-//     (pg_db_role_setting), never the session's, which a URL's `options` could
-//     set; a URL that sets any session parameter is refused (checkNoSessionParameters);
-//     and the check runs in the transaction that writes, before its first write.
+//     its comment, and writes nothing unless it is exactly
+//     `issho.environment=dev` (checkEnvironment). The founder sets it once on
+//     issho-dev, never on production, and nothing in the repo sets it. It is
+//     stored in the catalog, so no session can supply it the way a URL's
+//     `options` sets a parameter; a URL that sets any session parameter is
+//     refused anyway (checkNoSessionParameters); and the check runs in the
+//     transaction that writes, before its first write.
 //
 // Running it again replaces the fixture's rows with the fixture's.
 //
@@ -130,7 +131,7 @@ func run(ctx context.Context, databaseURL string, hostedDev bool, devRef, admit 
 // or any other `name=value` in the query. Whatever the session says is not the
 // database's own answer to "which environment am I", so with --hosted-dev
 // nothing is allowed to say it. checkEnvironment doesn't depend on this (it
-// reads the stored setting), so this is the second lock. The error never
+// reads the database's comment), so this is the second lock. The error never
 // echoes the URL.
 func checkNoSessionParameters(cfg *pgxpool.Config) error {
 	if len(cfg.ConnConfig.RuntimeParams) > 0 {
@@ -224,32 +225,32 @@ type querier interface {
 	QueryRow(ctx context.Context, sql string, args ...any) pgx.Row
 }
 
-// checkEnvironment refuses unless the database says it is dev: the setting
-// `issho.environment = dev` must be stored on the database itself
-// (`alter database postgres set issho.environment = 'dev'`, run once by the
-// founder on issho-dev). It reads pg_db_role_setting, the stored setting for
-// this database and no particular role (setrole = 0), and not current_setting:
-// a session can set that for itself (`options=-c issho.environment=dev`, `SET`),
-// so on production it would read whatever the URL said. The stored setting is
-// readable by any role and nothing in a connection can change it. Unlike the
-// ref, the operator can't supply it, so production's URL fails here even with
-// production's ref passed as the dev ref. Case matters: `Dev` is refused.
+// checkEnvironment refuses unless the database says it is dev: its comment
+// must be exactly `issho.environment=dev` (`comment on database postgres is
+// 'issho.environment=dev'`, run once by the founder on issho-dev). A comment,
+// not a stored setting (`alter database ... set issho.environment`): on hosted
+// Supabase the postgres role is not a superuser and supautils lets it set no
+// custom parameter on the database, while it owns the database and may comment
+// on it (#665). The comment is in the catalog (pg_shdescription), which any role
+// can read, and nothing in a connection can change it: unlike a parameter,
+// there is no session value for a URL's `options`, PGOPTIONS or SET to supply.
+// Unlike the ref, the operator can't supply it, so production's URL fails here
+// even with production's ref passed as the dev ref. Case and spacing matter:
+// `issho.environment=Dev` is refused.
 func checkEnvironment(ctx context.Context, q querier) error {
-	var isDev bool
+	var comment *string
 	err := q.QueryRow(ctx, `
-		select exists (
-			select 1
-			from pg_catalog.pg_db_role_setting s
-			join pg_catalog.pg_database d on d.oid = s.setdatabase
-			where d.datname = current_database()
-			  and s.setrole = 0
-			  and 'issho.environment=dev' = any (s.setconfig)
-		)`).Scan(&isDev)
+		select pg_catalog.shobj_description(d.oid, 'pg_database')
+		from pg_catalog.pg_database d
+		where d.datname = current_database()`).Scan(&comment)
 	if err != nil {
-		return errors.New("could not read the database's issho.environment setting")
+		return errors.New("could not read the database's issho.environment marker (its comment)")
 	}
-	if !isDev {
-		return errors.New("--hosted-dev seeds only a database whose stored issho.environment setting is 'dev'; the founder sets it once on issho-dev (see docs/deploy.md)")
+	if comment == nil || *comment != devMarker {
+		return errors.New("--hosted-dev seeds only a database whose comment is 'issho.environment=dev'; the founder sets it once on issho-dev (see docs/deploy.md)")
 	}
 	return nil
 }
+
+// devMarker is the database comment that marks issho-dev (checkEnvironment).
+const devMarker = "issho.environment=dev"
