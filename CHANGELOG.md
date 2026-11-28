@@ -1,5 +1,27 @@
 # Changelog
 
+## [2.0.0](https://github.com/shrujancheruku/issho/compare/v1.0.0...v2.0.0) (2026-11-28)
+
+
+### ⚠ BREAKING CHANGES
+
+* v1 is deleted; the last v1 commit is tagged v1-final.
+
+### Features
+
+* v2's thin loop ([#637](https://github.com/shrujancheruku/issho/issues/637)) ([866299a](https://github.com/shrujancheruku/issho/commit/866299a7f56495b61b6bd8100219b3a3bd722209))
+
+
+### Bug Fixes
+
+* **backend:** mark the dev database with its comment ([#666](https://github.com/shrujancheruku/issho/issues/666)) ([2673a48](https://github.com/shrujancheruku/issho/commit/2673a489f5e97dfec376c54ee8114a035af4d37b))
+* **backend:** pass the shell's DATABASE_URL to make seed-dev ([#668](https://github.com/shrujancheruku/issho/issues/668)) ([59ea708](https://github.com/shrujancheruku/issho/commit/59ea70870561021f6211b6b2ccce9b99419920ad))
+
+
+### Build System
+
+* v2's Foundation ([#628](https://github.com/shrujancheruku/issho/issues/628)) ([c038dec](https://github.com/shrujancheruku/issho/commit/c038decb0ec6c73690a5f57bdec9c5a75e9184b3)), closes [#587](https://github.com/shrujancheruku/issho/issues/587) [#593](https://github.com/shrujancheruku/issho/issues/593) [#594](https://github.com/shrujancheruku/issho/issues/594) [#595](https://github.com/shrujancheruku/issho/issues/595) [#596](https://github.com/shrujancheruku/issho/issues/596) [#597](https://github.com/shrujancheruku/issho/issues/597) [#598](https://github.com/shrujancheruku/issho/issues/598) [#599](https://github.com/shrujancheruku/issho/issues/599) [#600](https://github.com/shrujancheruku/issho/issues/600) [#601](https://github.com/shrujancheruku/issho/issues/601) [#602](https://github.com/shrujancheruku/issho/issues/602) [#603](https://github.com/shrujancheruku/issho/issues/603) [#604](https://github.com/shrujancheruku/issho/issues/604) [#605](https://github.com/shrujancheruku/issho/issues/605) [#606](https://github.com/shrujancheruku/issho/issues/606) [#630](https://github.com/shrujancheruku/issho/issues/630)
+
 ## [1.0.0](https://github.com/shrujancheruku/issho/compare/v0.10.0...v1.0.0) (2026-11-22)
 
 The last release of v1. v2 replaces it wholesale from 2.0.0; this is the code tagged `v1-final`.
