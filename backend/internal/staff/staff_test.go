@@ -293,18 +293,7 @@ func TestTwoDueJobsRunningAtOnceApplyTheDefaultOnce(t *testing.T) {
 	ctx := context.Background()
 	r := newRig(t)
 	// Each concurrent job holds a transaction and a connection of its own, as does
-	// the poll below, so the rig's pool (as small as four) is not enough.
-	cfg, err := pgxpool.ParseConfig(testdb.URL(r.pool))
-	if err != nil {
-		t.Fatal(err)
-	}
-	cfg.MaxConns = 8
-	pool, err := pgxpool.NewWithConfig(ctx, cfg)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(pool.Close)
-
+	// the poll below: three of the rig pool's testdb.MaxConns.
 	var mu sync.Mutex
 	applied := 0
 	release := make(chan struct{})
@@ -320,7 +309,7 @@ func TestTwoDueJobsRunningAtOnceApplyTheDefaultOnce(t *testing.T) {
 
 	errs := make(chan error, 2)
 	for range 2 {
-		go func() { errs <- r.workOn(t, pool, item) }()
+		go func() { errs <- r.workOn(t, r.pool, item) }()
 	}
 
 	// Wait until the second job is blocked on the first's row lock, or (with no
@@ -332,11 +321,16 @@ func TestTwoDueJobsRunningAtOnceApplyTheDefaultOnce(t *testing.T) {
 		mu.Lock()
 		n := applied
 		mu.Unlock()
+		// Bounded, so a pool with no connection to spare fails here in seconds.
+		pollCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
 		var waiting bool
-		if err := r.pool.QueryRow(ctx,
+		err := r.pool.QueryRow(pollCtx,
 			`select exists (select 1 from pg_stat_activity
-			 where datname = current_database() and wait_event_type = 'Lock')`).Scan(&waiting); err != nil {
-			t.Fatal(err)
+			 where datname = current_database() and wait_event_type = 'Lock')`).Scan(&waiting)
+		cancel()
+		if err != nil {
+			close(release)
+			t.Fatalf("polling for a job waiting on the row lock: %v", err)
 		}
 		if n >= 2 || (n == 1 && waiting) {
 			break

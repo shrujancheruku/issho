@@ -8,7 +8,7 @@ An **outing** is one group on one date for a plan, from its invitations until fe
 
 An outing is **proposed** (formed, awaiting the owner's approval in the Pilot), **offered** (its invitations are out and fewer than 3 have said yes), **set** (at least 3 have said yes) or **over**. It ends early as **not set** or **cancelled**.
 
-A **seat** is one person's place in one outing. It holds their stage, or how they left: declined, unanswered, full, cancelled, late cancel or removed. The app shows an outing that is over, or that the person is out of, as muted.
+A **seat** is one person's place in one outing. It holds their stage, or how they left: declined, unanswered, full, cancelled, late cancel or removed. A seat whose person said yes while the outing is not set yet is **accepted**: the yes waits for the third, and it still counts as a yes. The app shows an outing that is over, or that the person is out of, as muted.
 
 ## The stages
 
@@ -22,7 +22,7 @@ A **seat** is one person's place in one outing. It holds their stage, or how the
 ## Invited
 
 - An invitation is open for a **fixed 48 hours**, counted from delivery, so quiet hours never eat into it ([Notifications](notifications.md)).
-- The outing is set as soon as 3 say yes. With fewer than 3 yeses at 48 hours it is not set, and those who said yes count as left waiting.
+- A yes before the outing is set makes the seat **accepted**. The outing is set as soon as 3 say yes, which makes every accepted seat going. With fewer than 3 yeses at 48 hours it is not set, and the accepted seats count as left waiting.
 - A no can be changed to a yes inside the 48 hours while a seat is free.
 - The person sees how many said yes, never who, and the languages the group shares.
 

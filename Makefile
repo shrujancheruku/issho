@@ -151,7 +151,7 @@ native-stop:
 	NATIVE_AVD="$(NATIVE_AVD)" NATIVE_IOS_DEVICE="$(NATIVE_IOS_DEVICE)" scripts/native-metro.sh stop
 
 native-ios:
-	pnpm --filter @issho/app exec expo run:ios --device "$(NATIVE_IOS_DEVICE)" --no-bundler
+	scripts/native-ios.sh "$(NATIVE_IOS_DEVICE)"
 
 native-android:
 	android emulator start $(NATIVE_AVD)
@@ -195,6 +195,7 @@ backend:
 	cd backend && go run ./tools/clockcheck
 	go tool buf lint
 	cd backend && go test -race -count=1 ./...
+	$(MAKE) e2e-build-vet e2e-build-test
 	scripts/proto-breaking.test.sh
 
 # `make gen` leaves no diff: nothing changed and nothing new. Needs `make setup`
@@ -229,10 +230,25 @@ strings:
 image:
 	scripts/image.sh
 
-# Playwright against the API binary and the web build, on free ports. Starts
-# neither Supabase nor a database. See e2e/README.md.
+# Playwright against the API binary and the web build, on free ports, with a
+# throwaway Postgres, Auth and mail catcher in Docker that the script removes at
+# the end. It never touches `supabase start` or anything hosted. See e2e/README.md.
 e2e:
 	scripts/e2e.sh
+
+# The end-to-end build (#622) is the backend with the `e2e` build tag, which adds
+# the test-only clock and forming RPCs (backend/internal/e2eclock). The untagged
+# build never compiles them, so they are vetted and tested here under the tag;
+# backend/cmd/cmd_test.go and scripts/image.sh prove production holds none of them.
+.PHONY: e2e-build-vet e2e-build-test
+e2e-build-vet:
+	cd backend && go vet -tags e2e ./...
+
+e2e-build-test:
+	cd backend && go test -race -count=1 -tags e2e ./internal/e2eclock/ ./cmd/api/
+
+lint: e2e-build-vet
+test: e2e-build-test
 
 # The workflow files are valid (actionlint, pinned in tools/go.mod) and
 # ci.yml keeps its required checks, skips and no-retry rule.
@@ -269,3 +285,27 @@ deploy-test:
 
 test: deploy-test
 ci-test: deploy-test
+
+# Load the development fixture (the city Da Nang–Hoi An and its two plans, backend/fixtures)
+# into the local database that `make migrate-up` migrated. It refuses a database that
+# isn't on this machine and is not in the production image (backend/cmd/seed).
+# `make seed ADMIT=<email>` also admits the account that signed in with that email (the owner).
+.PHONY: seed
+seed:
+	cd backend && DATABASE_URL='$(DATABASE_URL)' go run ./cmd/seed $(if $(ADMIT),--admit '$(ADMIT)')
+
+# Seed the hosted dev database (issho-dev) only. The founder runs it, once, after dev is
+# migrated; no worker or CI job does. DATABASE_URL (dev's migration connection) and
+# SEED_DEV_PROJECT_REF (the dev project's ref) come from the shell's environment, not this
+# file; the seed refuses any target that isn't that project's, or whose stored
+# issho.environment setting isn't 'dev' (set once by the founder on dev). See docs/deploy.md.
+.PHONY: seed-dev
+seed-dev:
+	cd backend && go run ./cmd/seed --hosted-dev $(if $(ADMIT),--admit '$(ADMIT)')
+
+# The season (#623): the scripted run of people and plans through the real
+# packages on the fake clock, and its scorecard. It starts its own throwaway
+# Postgres in Docker (backend/cmd/season); `make test` runs it as a test too.
+.PHONY: season
+season:
+	cd backend && go run ./cmd/season

@@ -23,6 +23,13 @@ import (
 	"github.com/testcontainers/testcontainers-go/wait"
 )
 
+// MaxConns sizes every test pool. pgxpool's default is max(4, NumCPU), so a
+// test that holds a lock in one transaction, queues several calls behind it and
+// polls pg_stat_activity for them needs more connections than a 4-CPU CI runner
+// gets, and hangs there while passing on a bigger machine. A fixed size makes
+// that the same everywhere; it is well under Postgres's 100 connections.
+const MaxConns = 16
+
 var (
 	once   sync.Once
 	dsn    string
@@ -87,6 +94,7 @@ func New(t testing.TB) *pgxpool.Pool {
 		t.Fatal(err)
 	}
 	cfg.ConnConfig.RuntimeParams["search_path"] = schema
+	cfg.MaxConns = MaxConns
 	pool, err := pgxpool.NewWithConfig(ctx, cfg)
 	if err != nil {
 		admin.Close()
@@ -127,6 +135,7 @@ func NewDatabase(t testing.TB) *pgxpool.Pool {
 		t.Fatal(err)
 	}
 	cfg.ConnConfig.Database = name
+	cfg.MaxConns = MaxConns
 	pool, err := pgxpool.NewWithConfig(ctx, cfg)
 	if err != nil {
 		admin.Close()

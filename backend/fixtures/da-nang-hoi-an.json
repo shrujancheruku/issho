@@ -1,0 +1,114 @@
+{
+  "city": {
+    "slug": "da-nang-hoi-an",
+    "state": "open",
+    "time_zone": "Asia/Ho_Chi_Minh",
+    "currency": "VND",
+    "names": {
+      "en": "Da Nang–Hoi An",
+      "vi": "Đà Nẵng – Hội An"
+    }
+  },
+  "plans": [
+    {
+      "id": "6a1f0c52-3d1b-4f0e-9a52-0d7c9a1b0001",
+      "city": "da-nang-hoi-an",
+      "price": 180000,
+      "meeting_address": "Nguyễn Thị Minh Khai, Cẩm Châu, Hội An",
+      "parts_of_day": ["evening"],
+      "starts_at": "17:00",
+      "ends_at": "20:30",
+      "opens_on": "2026-01-05",
+      "texts": {
+        "en": {
+          "title": "Hoi An old town at lantern time",
+          "description": "Walk the old town as the lanterns come on, eat cao lầu at a family stall, then finish with a drink by the river.",
+          "meeting_point": "At the east end of the Japanese Covered Bridge, by the stone dog.",
+          "what_to_bring": ["Comfortable walking shoes", "Cash for the stall", "A light rain jacket in the wet months"]
+        },
+        "vi": {
+          "title": "Phố cổ Hội An lúc lên đèn lồng",
+          "description": "Dạo phố cổ khi đèn lồng bắt đầu sáng, ăn cao lầu ở một quán gia đình, rồi uống gì đó bên sông để kết thúc buổi tối.",
+          "meeting_point": "Ở đầu phía đông của Chùa Cầu, cạnh tượng chó đá.",
+          "what_to_bring": ["Giày đi bộ thoải mái", "Tiền mặt để trả quán", "Áo mưa mỏng vào mùa mưa"]
+        }
+      },
+      "stops": [
+        {
+          "stay_minutes": 30,
+          "leg": {"mode": "walk", "minutes": 8},
+          "texts": {
+            "en": {"name": "Chùa Cầu (Japanese Covered Bridge)", "note": "Meet here and say hello; the bridge is free to look at."},
+            "vi": {"name": "Chùa Cầu", "note": "Gặp nhau ở đây và làm quen; ngắm cầu không mất phí."}
+          }
+        },
+        {
+          "stay_minutes": 75,
+          "leg": {"mode": "walk", "minutes": 6},
+          "texts": {
+            "en": {"name": "Quán cao lầu Bà Bé", "note": "Cao lầu is a Hoi An noodle dish; the stall has a vegetarian bowl."},
+            "vi": {"name": "Quán cao lầu Bà Bé", "note": "Cao lầu là món mì đặc trưng của Hội An; quán có phần ăn chay."}
+          }
+        },
+        {
+          "stay_minutes": 60,
+          "leg": null,
+          "texts": {
+            "en": {"name": "Bờ sông Hoài", "note": "A drink on the riverside; the lantern boats go past."},
+            "vi": {"name": "Bờ sông Hoài", "note": "Uống gì đó bên bờ sông; thuyền hoa đăng đi ngang qua."}
+          }
+        }
+      ]
+    },
+    {
+      "id": "6a1f0c52-3d1b-4f0e-9a52-0d7c9a1b0002",
+      "city": "da-nang-hoi-an",
+      "price": 120000,
+      "meeting_address": "Võ Nguyên Giáp, Phước Mỹ, Sơn Trà, Đà Nẵng",
+      "parts_of_day": ["morning"],
+      "starts_at": "06:30",
+      "ends_at": "10:00",
+      "opens_on": "2026-01-05",
+      "texts": {
+        "en": {
+          "title": "My Khe at sunrise, then bánh mì and coffee",
+          "description": "Watch the sun come up over My Khe beach, ride to a bánh mì counter for breakfast, then finish with a Vietnamese iced coffee.",
+          "meeting_point": "At the lifeguard tower nearest the Võ Nguyên Giáp entrance.",
+          "what_to_bring": ["A hat and sunscreen", "A scooter or a ride to the coffee shop", "Small notes for the stalls"]
+        },
+        "vi": {
+          "title": "Bình minh ở Mỹ Khê, rồi bánh mì và cà phê",
+          "description": "Ngắm mặt trời mọc trên biển Mỹ Khê, chạy xe đến quầy bánh mì để ăn sáng, rồi kết thúc bằng một ly cà phê sữa đá.",
+          "meeting_point": "Ở chòi cứu hộ gần lối vào đường Võ Nguyên Giáp nhất.",
+          "what_to_bring": ["Mũ và kem chống nắng", "Xe máy hoặc xe đi đến quán cà phê", "Tiền lẻ để trả các quán"]
+        }
+      },
+      "stops": [
+        {
+          "stay_minutes": 60,
+          "leg": {"mode": "ride", "minutes": 10},
+          "texts": {
+            "en": {"name": "Biển Mỹ Khê (My Khe beach)", "note": "Sunrise is a little before 6:00 in the dry months; we start after it, when the beach is still quiet."},
+            "vi": {"name": "Biển Mỹ Khê", "note": "Mặt trời mọc hơi sớm hơn 6:00 vào mùa khô; chúng ta bắt đầu sau đó, khi bãi biển còn vắng."}
+          }
+        },
+        {
+          "stay_minutes": 40,
+          "leg": {"mode": "walk", "minutes": 5},
+          "texts": {
+            "en": {"name": "Bánh mì Bà Lan", "note": "Order the bánh mì xíu mại, or the egg one if you don't eat pork."},
+            "vi": {"name": "Bánh mì Bà Lan", "note": "Gọi bánh mì xíu mại, hoặc bánh mì trứng nếu bạn không ăn thịt heo."}
+          }
+        },
+        {
+          "stay_minutes": 60,
+          "leg": null,
+          "texts": {
+            "en": {"name": "Cà phê Cộng", "note": "A cà phê sữa đá, and time to talk before everyone heads off."},
+            "vi": {"name": "Cà phê Cộng", "note": "Một ly cà phê sữa đá, và thời gian trò chuyện trước khi mọi người ra về."}
+          }
+        }
+      ]
+    }
+  ]
+}

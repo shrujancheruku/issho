@@ -24,3 +24,98 @@ sql:
             go_type:
               type: time.Time
               pointer: true
+  - engine: postgresql
+    schema: db/migrations
+    queries: internal/people/queries
+    gen:
+      go:
+        package: store
+        out: internal/people/store
+        sql_package: pgx/v5
+        emit_pointers_for_null_types: true
+        overrides:
+          - db_type: timestamptz
+            go_type: time.Time
+          - db_type: timestamptz
+            nullable: true
+            go_type:
+              type: time.Time
+              pointer: true
+          # The account id is Supabase Auth's user id, which the API handles as text.
+          - db_type: uuid
+            go_type: string
+          # Who brought an account in is nullable (the seed brings nobody).
+          - db_type: uuid
+            nullable: true
+            go_type:
+              type: string
+              pointer: true
+          # The day a person said they were 18 or over is the city's calendar
+          # date, handled as a time at midnight UTC.
+          - db_type: date
+            go_type: time.Time
+  - engine: postgresql
+    schema: db/migrations
+    queries: internal/cities/queries
+    gen:
+      go:
+        package: store
+        out: internal/cities/store
+        sql_package: pgx/v5
+        emit_pointers_for_null_types: true
+        overrides:
+          - db_type: timestamptz
+            go_type: time.Time
+          - db_type: timestamptz
+            nullable: true
+            go_type:
+              type: time.Time
+              pointer: true
+  - engine: postgresql
+    schema: db/migrations
+    queries: internal/plans/queries
+    gen:
+      go:
+        package: store
+        out: internal/plans/store
+        sql_package: pgx/v5
+        emit_pointers_for_null_types: true
+        overrides:
+          - db_type: timestamptz
+            go_type: time.Time
+          - db_type: timestamptz
+            nullable: true
+            go_type:
+              type: time.Time
+              pointer: true
+          # A plan's id is a uuid the API handles as text.
+          - db_type: uuid
+            go_type: string
+          # A round's days are the city's calendar dates, handled as a time at
+          # midnight UTC.
+          - db_type: date
+            go_type: time.Time
+  - engine: postgresql
+    schema: db/migrations
+    queries: internal/outings/queries
+    gen:
+      go:
+        package: store
+        out: internal/outings/store
+        sql_package: pgx/v5
+        emit_pointers_for_null_types: true
+        overrides:
+          - db_type: timestamptz
+            go_type: time.Time
+          - db_type: timestamptz
+            nullable: true
+            go_type:
+              type: time.Time
+              pointer: true
+          # Ids are uuids the API handles as text.
+          - db_type: uuid
+            go_type: string
+          # An outing's date is the city's calendar date, handled as a time at
+          # midnight UTC.
+          - db_type: date
+            go_type: time.Time

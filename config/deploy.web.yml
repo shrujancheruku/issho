@@ -45,3 +45,9 @@ builder:
   # The repository root: the image installs the workspace (apps/web/Dockerfile).
   context: .
   # args: EXPO_PUBLIC_API_URL: per destination
+  # The sign-in's Supabase values (#612), read by name from .kamal/secrets.<destination>
+  # and given to the build as BuildKit secrets (apps/web/Dockerfile). Public once
+  # bundled, but the URL holds the project's ref, which stays out of the repository.
+  secrets:
+    - EXPO_PUBLIC_SUPABASE_URL
+    - EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY

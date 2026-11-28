@@ -1,0 +1,98 @@
+syntax = "proto3";
+
+package issho.v1;
+
+import "issho/v1/access.proto";
+
+// A person's own profile: the answers asked once, at the first signup to a
+// plan, not before (docs/spec/people.md, "The profile").
+service ProfileService {
+  // Returns the caller's own profile, or an empty response while they have
+  // none, which is how the app knows to ask the profile's questions. Member: it
+  // needs a signed-in caller, and the caller is the only profile it can ever
+  // return, since it takes no account id: no RPC returns another person's
+  // profile beyond their first name.
+  rpc GetProfile(GetProfileRequest) returns (GetProfileResponse) {
+    option (issho.v1.access) = ACCESS_MEMBER;
+  }
+
+  // Makes the caller's profile on the first call, and changes it on later ones.
+  // Member: any signed-in person may give their own profile, and none can give
+  // another's. The first call needs every answer, including the date of birth,
+  // which is checked against the city's clock and thrown away: only "said they
+  // were 18 or over, on this day" is kept. A later call changes everything but
+  // the date of birth. Refusals are INVALID_ARGUMENT, with a ProfileProblem
+  // detail when the app has something to say about it (see ProfileProblem).
+  rpc SaveProfile(SaveProfileRequest) returns (SaveProfileResponse) {
+    option (issho.v1.access) = ACCESS_MEMBER;
+  }
+}
+
+message GetProfileRequest {}
+
+message GetProfileResponse {
+  // The caller's profile; unset while they have none.
+  Profile profile = 1;
+}
+
+message SaveProfileRequest {
+  // The name they go by: 1 to 40 characters.
+  string name = 1;
+  // The date of birth, "YYYY-MM-DD". Required on the first call and refused on
+  // later ones. Under 18 on the day, by the city's clock, is INVALID_ARGUMENT
+  // with the reason UNDER_AGE.
+  string date_of_birth = 2;
+  // "woman", "man", "non-binary" or "prefer-not-to-say".
+  string gender = 3;
+  // The languages they can comfortably hold a conversation in for a whole
+  // outing: at least one, any language, as language codes ("en", "vi", "pt-BR").
+  repeated string languages = 4;
+  // Whether they live in the city: self-declared, and either answer is
+  // accepted.
+  bool lives_in_city = 5;
+  // Must be true on the first save, which accepts the code of conduct;
+  // ignored on later saves, which keep the version already accepted.
+  bool accepted_code_of_conduct = 6;
+  // "Only women and non-binary people". Only for those whose gender is woman or
+  // non-binary; for anyone else, turning it on is INVALID_ARGUMENT with the
+  // reason WOMEN_ONLY_NOT_AVAILABLE.
+  bool only_women_and_non_binary = 7;
+}
+
+message SaveProfileResponse {
+  Profile profile = 1;
+}
+
+// A person's own profile. It carries no date of birth, and is only ever the
+// caller's own.
+message Profile {
+  string name = 1;
+  string gender = 2;
+  repeated string languages = 3;
+  bool lives_in_city = 4;
+  bool only_women_and_non_binary = 5;
+  // The version of the code of conduct they accepted.
+  int32 code_of_conduct_version = 6;
+}
+
+// Why an RPC refused the caller, when the app has something particular to do
+// about it. It is attached to the Connect error as a detail
+// (`error.findDetails(ProfileProblemSchema)` in TypeScript); the error's code
+// and message are the same as without it.
+message ProfileProblem {
+  ProfileProblemReason reason = 1;
+}
+
+enum ProfileProblemReason {
+  PROFILE_PROBLEM_REASON_UNSPECIFIED = 0;
+  // FAILED_PRECONDITION: the caller has no profile, and what they asked for
+  // (a signup) needs one. The app opens the profile's questions, then returns
+  // to what the person started.
+  PROFILE_PROBLEM_REASON_PROFILE_REQUIRED = 1;
+  // INVALID_ARGUMENT: the date of birth is under 18 on the day. The app stops
+  // the person with a plain message.
+  PROFILE_PROBLEM_REASON_UNDER_AGE = 2;
+  // INVALID_ARGUMENT: "only women and non-binary people" was asked for by
+  // someone whose gender isn't woman or non-binary.
+  PROFILE_PROBLEM_REASON_WOMEN_ONLY_NOT_AVAILABLE = 3;
+}

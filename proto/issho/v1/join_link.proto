@@ -1,0 +1,116 @@
+syntax = "proto3";
+
+package issho.v1;
+
+import "google/protobuf/timestamp.proto";
+import "issho/v1/access.proto";
+
+// A member admits a friend with a join link: a one-use link they share any way
+// they like, redeemed by whichever email the friend signs in with. Each member
+// has 3, a link expires after 14 days, and an expired or cancelled link
+// returns to the member's 3 (docs/spec/people.md, "Join links"). In the Pilot
+// a signup needs admission and a join link is the only way in.
+//
+// Issho records who brought in whom, but only a moderator sees it: nothing here
+// returns the member who made a link to the person who used it, or the other
+// way round, and a link never says who used it.
+service JoinLinkService {
+  // Makes a link for the caller. FAILED_PRECONDITION with a JoinLinkProblem
+  // when the caller isn't admitted (NOT_ADMITTED) or has no links left
+  // (NONE_LEFT). Member: any signed-in caller may call it, and the account is
+  // the verified identity, so nobody makes a link as another person.
+  rpc CreateJoinLink(CreateJoinLinkRequest) returns (CreateJoinLinkResponse) {
+    option (issho.v1.access) = ACCESS_MEMBER;
+  }
+
+  // Cancels one of the caller's own links while it is outstanding; it returns
+  // to their 3. NOT_FOUND for a link that is not the caller's, was used, has
+  // expired or doesn't exist, without saying which. Member.
+  rpc CancelJoinLink(CancelJoinLinkRequest) returns (CancelJoinLinkResponse) {
+    option (issho.v1.access) = ACCESS_MEMBER;
+  }
+
+  // Lists the caller's own links and how many more they can make. Member: it
+  // takes no account id, so it only ever returns the caller's own.
+  rpc ListMyJoinLinks(ListMyJoinLinksRequest) returns (ListMyJoinLinksResponse) {
+    option (issho.v1.access) = ACCESS_MEMBER;
+  }
+
+  // Admits the signed-in caller with the link's code and uses the link. The
+  // caller is signed in but not yet admitted, so this is Member: any signed-in
+  // caller. FAILED_PRECONDITION with a JoinLinkProblem LINK_UNUSABLE for a code
+  // that is no link's or a link that was used, cancelled or has expired (the
+  // same answer for all of them, so a code can't be probed), and
+  // ALREADY_ADMITTED for someone already admitted, which leaves the link
+  // unused.
+  rpc RedeemJoinLink(RedeemJoinLinkRequest) returns (RedeemJoinLinkResponse) {
+    option (issho.v1.access) = ACCESS_MEMBER;
+  }
+}
+
+message CreateJoinLinkRequest {}
+
+message CreateJoinLinkResponse {
+  JoinLink link = 1;
+}
+
+message CancelJoinLinkRequest {
+  string id = 1;
+}
+
+message CancelJoinLinkResponse {}
+
+message ListMyJoinLinksRequest {}
+
+message ListMyJoinLinksResponse {
+  // The caller's links that haven't been cancelled, newest first.
+  repeated JoinLink links = 1;
+  // How many more links the caller can make: 3 less those used or still
+  // outstanding.
+  int32 remaining = 2;
+}
+
+message RedeemJoinLinkRequest {
+  // The code in the link the friend was sent.
+  string code = 1;
+}
+
+message RedeemJoinLinkResponse {}
+
+// One of the caller's links. The code is the secret in the URL they share.
+message JoinLink {
+  string id = 1;
+  string code = 2;
+  JoinLinkState state = 3;
+  google.protobuf.Timestamp created_at = 4;
+  // When it stops working if it is still outstanding.
+  google.protobuf.Timestamp expires_at = 5;
+}
+
+enum JoinLinkState {
+  JOIN_LINK_STATE_UNSPECIFIED = 0;
+  // Can still admit someone.
+  JOIN_LINK_STATE_OUTSTANDING = 1;
+  // Has admitted someone. It does not return to the member's 3.
+  JOIN_LINK_STATE_USED = 2;
+  // Older than 14 days; it has returned to the member's 3.
+  JOIN_LINK_STATE_EXPIRED = 3;
+}
+
+// The detail on a refused join-link call, for the app to act on
+// (`error.findDetails(JoinLinkProblemSchema)` in TypeScript).
+message JoinLinkProblem {
+  JoinLinkProblemReason reason = 1;
+}
+
+enum JoinLinkProblemReason {
+  JOIN_LINK_PROBLEM_REASON_UNSPECIFIED = 0;
+  // The caller hasn't been admitted, so has no links to give.
+  JOIN_LINK_PROBLEM_REASON_NOT_ADMITTED = 1;
+  // The caller has made all 3 and none has returned.
+  JOIN_LINK_PROBLEM_REASON_NONE_LEFT = 2;
+  // The code is no link's, or the link was used, cancelled or has expired.
+  JOIN_LINK_PROBLEM_REASON_LINK_UNUSABLE = 3;
+  // The caller is already admitted; the link is left unused.
+  JOIN_LINK_PROBLEM_REASON_ALREADY_ADMITTED = 4;
+}
